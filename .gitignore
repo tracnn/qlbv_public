@@ -9,7 +9,6 @@
 
 # Ignore the storage directory
 /storage/*
-!/storage/app/public/.gitignore
 
 # Ignore cache
 /bootstrap/cache/*
