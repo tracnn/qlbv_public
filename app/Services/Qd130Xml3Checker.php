@@ -59,7 +59,7 @@ class Qd130Xml3Checker
             $errors = $errors->merge($this->checkNgayKq($data)); // Thêm kiểm tra NGAY_KQ
         }
 
-        // $errors = $errors->merge($this->checkMissingServiceOrMaterial($data));
+        $errors = $errors->merge($this->checkMissingServiceOrMaterial($data));
         // $errors = $errors->merge($this->checkBedGroupCodeConditions($data));
         // $errors = $errors->merge($this->checkTTranttAndTBhtt($data)); // Thêm kiểm tra T_TRANTT và T_BHTT
         // $errors = $errors->merge($this->checkBedDayQuantity($data)); // Thêm kiểm tra số lượng ngày giường
