@@ -1,0 +1,31 @@
+# Ignore .env file containing sensitive information
+.env
+
+# Ignore the Laravel /vendor directory
+/vendor/
+
+# Ignore the public storage symlink
+/public/storage/*
+
+# Ignore the storage directory
+/storage/*
+!/storage/app/public/.gitignore
+
+# Ignore cache
+/bootstrap/cache/*
+!/bootstrap/cache/.gitignore
+
+# Ignore node_modules directory
+/node_modules/
+
+# Ignore config files
+/config/database.php
+/config/filesystems.php
+
+# Ignore IDE files
+.idea/
+/.vscode/
+
+# Ignore system files
+.DS_Store
+Thumbs.db
