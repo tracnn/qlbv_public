@@ -234,10 +234,16 @@ class BHYTQd130Controller extends Controller
                 $filePath = storage_path('app/uploads');
                 $fileName = $file->getClientOriginalName();
                 $file->move($filePath, $fileName);
-                $xmldata = simplexml_load_file($filePath . '/' . $fileName);
+                $fileFullPath = $filePath . '/' . $fileName;
+                $xmldata = simplexml_load_file($fileFullPath);
                 
                 if (!$this->processXmlData($xmldata)) {
                     $errors[] = "File {$fileName} has invalid structure.";
+                }
+
+                // Delete the file after processing
+                if (file_exists($fileFullPath)) {
+                    unlink($fileFullPath);
                 }
             }
 

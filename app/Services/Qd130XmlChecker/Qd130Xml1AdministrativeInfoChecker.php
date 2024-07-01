@@ -281,6 +281,14 @@ class Qd130Xml1AdministrativeInfoChecker
                     'description' => 'Giá trị thẻ đến ngày không được để trống khi có mã thẻ BHYT'
                 ]);
             }
+
+            if (empty($data->ly_do_vv)) {
+                $errors->push((object)[
+                    'error_code' => $this->prefix . 'ADMIN_INFO_ERROR_LY_DO_VV',
+                    'error_name' => 'Thiếu lý do vào viện',
+                    'description' => 'Lý do vào viện không được để trống'
+                ]);
+            }
         }
         
         return $errors;
