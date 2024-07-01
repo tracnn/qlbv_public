@@ -349,7 +349,7 @@ return [
             'checkrole'   => 'administrator',
             'submenu' => [
                 [
-                    'text'    => 'Xml 130',
+                    'text'    => 'Xml 4750',
                     'icon'    => 'archive',
                     'checkrole'   => 'administrator',
                     'submenu' => [
