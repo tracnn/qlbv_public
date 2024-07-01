@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Mail;
 use App\Models\System\email_receive_report;
 use App\Models\CheckBHYT\check_hein_card;
 use App\Models\XmlErrorCheck;
-;
+
 class WordOfTheDay extends Command
 {
     /**
