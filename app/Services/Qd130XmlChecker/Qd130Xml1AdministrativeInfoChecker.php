@@ -56,6 +56,32 @@ class Qd130Xml1AdministrativeInfoChecker
             ]);
         }
 
+        if (empty($data->can_nang)) {
+            $errors->push((object)[
+                'error_code' => $this->prefix . 'ADMIN_INFO_ERROR_CAN_NANG',
+                'error_name' => 'Thiếu cân nặng',
+                'description' => 'Cân nặng không được để trống'
+            ]);
+        } else {
+            // Ensure can_nang is numeric before casting
+            if (is_numeric($data->can_nang)) {
+                $can_nang_value = (double)$data->can_nang;
+                if ($can_nang_value > 200) {
+                    $errors->push((object)[
+                        'error_code' => $this->prefix . 'ADMIN_INFO_ERROR_TO_MUCH_CAN_NANG',
+                        'error_name' => 'Cân nặng không hợp lý',
+                        'description' => 'Cân nặng không hợp lý: ' . number_format($can_nang_value)
+                    ]);
+                }
+            } else {
+                $errors->push((object)[
+                    'error_code' => $this->prefix . 'ADMIN_INFO_ERROR_INVALID_CAN_NANG',
+                    'error_name' => 'Cân nặng không hợp lệ',
+                    'description' => 'Giá trị cân nặng không hợp lệ'
+                ]);
+            }
+        }
+
         if (empty($data->dia_chi)) {
             $errors->push((object)[
                 'error_code' => $this->prefix . 'ADMIN_INFO_ERROR_DIA_CHI',

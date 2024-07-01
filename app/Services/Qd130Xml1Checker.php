@@ -69,6 +69,7 @@ class Qd130Xml1Checker
         //$errors = $errors->merge($this->checkReasonForAdmission($data));
         $errors = $errors->merge($this->checkLongTermTreatment($data));
         $errors = $errors->merge($this->checkInvalidBedDays($data));
+        $errors = $errors->merge($this->checkSpecialInpatientConditions($data));
 
         // Save errors to xml_error_checks table
         $this->xmlErrorService->saveErrors($this->xmlType, $data->ma_lk, $data->stt, $errors);
@@ -158,6 +159,53 @@ class Qd130Xml1Checker
                     'error_code' => $this->prefix . 'INVALID_BED_DAYS',
                     'error_name' => 'Thanh toán ngày giường sai quy định (trừ trường hợp đặc biệt)',
                     'description' => 'Thanh toán ngày giường sai quy định (trừ trường hợp đặc biệt)'
+                ]);
+            }
+        }
+
+        return $errors;
+    }
+    
+    /**
+     * Check for special inpatient conditions errors
+     *
+     * @param Qd130Xml1 $data
+     * @return Collection
+     */
+    private function checkSpecialInpatientConditions(Qd130Xml1 $data): Collection
+    {
+        $errors = collect();
+
+        if (in_array($data->ma_loai_kcb, $this->treatmentTypeInpatient)) {
+            if (empty($data->ly_do_vnt)) {
+                $errors->push((object)[
+                    'error_code' => $this->prefix . 'SPECIAL_INPATIENT_ERROR_LY_DO_VNT',
+                    'error_name' => 'Thiếu lý do vào nội trú',
+                    'description' => 'Lý do vào nội trú không được để trống'
+                ]);
+            }
+
+            if (empty($data->ma_ly_do_vnt)) {
+                $errors->push((object)[
+                    'error_code' => $this->prefix . 'SPECIAL_INPATIENT_ERROR_MA_LY_DO_VNT',
+                    'error_name' => 'Thiếu mã lý do vào nội trú',
+                    'description' => 'Mã lý do vào nội trú không được để trống'
+                ]);
+            }
+
+            if (empty($data->ngay_vao_noi_tru)) {
+                $errors->push((object)[
+                    'error_code' => $this->prefix . 'SPECIAL_INPATIENT_ERROR_NGAY_VAO_NOI_TRU',
+                    'error_name' => 'Thiếu ngày vào nội trú',
+                    'description' => 'Ngày vào nội trú không được để trống'
+                ]);
+            }
+
+            if (empty($data->pp_dieu_tri)) {
+                $errors->push((object)[
+                    'error_code' => $this->prefix . 'SPECIAL_INPATIENT_ERROR_PP_DIEU_TRI',
+                    'error_name' => 'Thiếu phương pháp điều trị',
+                    'description' => 'Phương pháp điều trị không được để trống'
                 ]);
             }
         }
