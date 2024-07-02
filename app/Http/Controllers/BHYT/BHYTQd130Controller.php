@@ -294,33 +294,34 @@ class BHYTQd130Controller extends Controller
                     $this->qd130XmlService->storeQd130Xml5($data);
                     break;
                 case 'XML6':
+                    $this->qd130XmlService->storeQd130Xml6($data);
                     break;
                 case 'XML7':
-                    
+                     $this->qd130XmlService->storeQd130Xml7($data);
                     break;
                 case 'XML8':
-                    
+                     $this->qd130XmlService->storeQd130Xml8($data);
                     break;
                 case 'XML9':
-                    
+                     $this->qd130XmlService->storeQd130Xml9($data);
                     break;
                 case 'XML10':
-                    
+                     $this->qd130XmlService->storeQd130Xml10($data);
                     break;
                 case 'XML11':
-                    
+                     $this->qd130XmlService->storeQd130Xml11($data);
                     break;
                 case 'XML12':
                     
                     break;
                 case 'XML13':
-                    
+                     $this->qd130XmlService->storeQd130Xml13($data);
                     break;
                 case 'XML14':
-                    
+                     $this->qd130XmlService->storeQd130Xml14($data);
                     break;
                 case 'XML15':
-                    
+                     $this->qd130XmlService->storeQd130Xml15($data);
                     break;
                 case 'XML16':
                         

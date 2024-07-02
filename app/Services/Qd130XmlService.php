@@ -337,6 +337,51 @@ class Qd130XmlService
 
     }
 
+    public function storeQd130Xml6($data)
+    {
+        $expectedStructure = XmlStructures::$expectedStructures130['XML6'];
+    }
+
+    public function storeQd130Xml7($data)
+    {
+        $expectedStructure = XmlStructures::$expectedStructures130['XML7'];
+    }
+
+    public function storeQd130Xml8($data)
+    {
+        $expectedStructure = XmlStructures::$expectedStructures130['XML8'];
+    }
+
+    public function storeQd130Xml9($data)
+    {
+        $expectedStructure = XmlStructures::$expectedStructures130['XML9'];
+    }
+
+    public function storeQd130Xml10($data)
+    {
+        $expectedStructure = XmlStructures::$expectedStructures130['XML10'];
+    }
+
+    public function storeQd130Xml11($data)
+    {
+        $expectedStructure = XmlStructures::$expectedStructures130['XML11'];
+    }
+
+    public function storeQd130Xml13($data)
+    {
+        $expectedStructure = XmlStructures::$expectedStructures130['XML13'];
+    }
+
+    public function storeQd130Xml14($data)
+    {
+        $expectedStructure = XmlStructures::$expectedStructures130['XML14'];
+    }
+
+    public function storeQd130Xml15($data)
+    {
+        $expectedStructure = XmlStructures::$expectedStructures130['XML15'];
+    }
+
     private function processQd130Xml1CheckBHYT($data): void
     {
         $ngaySinh = (string)$data->ngay_sinh;
