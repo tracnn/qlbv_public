@@ -18,6 +18,7 @@ class Qd130Xml3Checker
     protected $outpatientTypes;
     protected $examinationGroupCodes;
     protected $transportGroupCodes;
+    protected $bedCodePattern;
 
 
     public function __construct(Qd130XmlErrorService $xmlErrorService)
@@ -37,6 +38,7 @@ class Qd130Xml3Checker
         $this->outpatientTypes = ['01', '02'];
         $this->examinationGroupCodes = [13];
         $this->transportGroupCodes = [12];
+        $this->bedCodePattern = '/^[HTCK]\d{3}$/';
     }
 
     /**
@@ -132,7 +134,7 @@ class Qd130Xml3Checker
 
         if (in_array($data->ma_nhom, $this->bedGroupCodes)) {
             // Kiểm tra định dạng của ma_giuong
-            if (!preg_match('/^[HTCK]\d{3}$/', $data->ma_giuong)) {
+            if (!preg_match($this->bedCodePattern, $data->ma_giuong)) {
                 $errors->push((object)[
                     'error_code' => $this->prefix . 'INVALID_BED_CODE_FORMAT',
                     'error_name' => 'Mã giường không đúng định dạng',
