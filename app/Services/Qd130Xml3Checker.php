@@ -60,7 +60,7 @@ class Qd130Xml3Checker
         }
 
         $errors = $errors->merge($this->checkMissingServiceOrMaterial($data));
-        // $errors = $errors->merge($this->checkBedGroupCodeConditions($data));
+        $errors = $errors->merge($this->checkBedGroupCodeConditions($data));
         // $errors = $errors->merge($this->checkTTranttAndTBhtt($data)); // Thêm kiểm tra T_TRANTT và T_BHTT
         // $errors = $errors->merge($this->checkBedDayQuantity($data)); // Thêm kiểm tra số lượng ngày giường
         // $errors = $errors->merge($this->checkMedicalSupplyCatalog($data)); // Thêm kiểm tra VTYT
@@ -131,6 +131,15 @@ class Qd130Xml3Checker
         $errors = collect();
 
         if (in_array($data->ma_nhom, $this->bedGroupCodes)) {
+            // Kiểm tra định dạng của ma_giuong
+            if (!preg_match('/^[HTCK]\d{3}$/', $data->ma_giuong)) {
+                $errors->push((object)[
+                    'error_code' => $this->prefix . 'INVALID_BED_CODE_FORMAT',
+                    'error_name' => 'Mã giường không đúng định dạng',
+                    'description' => 'Mã giường: ' . $data->ma_giuong . ' không đúng định dạng 
+                    (ký tự đầu phải là H, T, C, K và 3 ký tự sau là số từ 0 đến 9)'
+                ]);
+            }
             // Kiểm tra nếu MA_KHOA thuộc danh sách những khoa không kiểm tra giường
             if (in_array($data->ma_khoa, $this->excludedBedDepartments)) {
                 return $errors;
@@ -143,6 +152,7 @@ class Qd130Xml3Checker
                     'description' => 'Khoa chỉ định: ' . $data->ma_khoa . '; Mã giường: ' . $data->ma_dich_vu
                 ]);
             }
+
         }
 
         return $errors;

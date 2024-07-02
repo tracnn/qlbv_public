@@ -95,6 +95,12 @@ class Qd130Xml1 extends Model
         return $this->hasMany('App\Models\BHYT\Qd130Xml5', 'ma_lk', 'ma_lk');
     }
 
+    public function Qd130Xml11()
+    {
+        return $this->hasMany('App\Models\BHYT\Qd130Xml11', 'ma_lk', 'ma_lk');
+    }
+
+
     public function check_hein_card()
     {
         return $this->hasOne('App\Models\CheckBHYT\check_hein_card', 'ma_lk', 'ma_lk');
