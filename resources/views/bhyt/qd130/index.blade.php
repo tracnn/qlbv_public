@@ -21,8 +21,8 @@
         <table id="xml-list" class="table display table-hover responsive nowrap datatable dtr-inline" width="100%">
             <thead>
                 <tr>
-                    <th><input type="checkbox" id="select-all"></th>
                     <th>Mã điều trị</th>
+                    <th><input type="checkbox" id="select-all"></th>
                     <th>Mã BN</th>
                     <th>Họ tên</th>
                     <th>Mã thẻ</th>
@@ -108,10 +108,10 @@
                 }
             },
             "columns": [
+                { "data": "ma_lk" },
                 { "data": null, "render": function (data, type, row) {
                     return '<input type="checkbox" class="row-select" value="' + row.ma_lk + '">';
                 }, "orderable": false },
-                { "data": "ma_lk" },
                 { "data": "ma_bn" },
                 { "data": "ho_ten" },
                 { "data": "ma_the_bhyt" },

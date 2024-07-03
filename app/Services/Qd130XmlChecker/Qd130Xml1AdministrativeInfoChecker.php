@@ -122,11 +122,11 @@ class Qd130Xml1AdministrativeInfoChecker
             ]);
         }
 
-        if ($data->ma_quoctich !== '0' && empty($data->ma_quoctich)) {
+        if (empty($data->ma_quoctich)) {
             $errors->push((object)[
                 'error_code' => $this->prefix . 'ADMIN_INFO_ERROR_MA_QUOCTICH',
                 'error_name' => 'Thiếu mã quốc tịch',
-                'description' => 'Mã quốc tịch không được để trống'
+                'description' => 'Mã quốc tịch không được để trống hoặc không đúng định dạng'
             ]);
         }
 

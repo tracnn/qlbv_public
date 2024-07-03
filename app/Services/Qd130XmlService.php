@@ -673,6 +673,10 @@ class Qd130XmlService
 
             $xml14 = Qd130Xml14::updateOrCreate($attributes, $values);
 
+            // Đẩy công việc kiểm tra vào hàng đợi
+            CheckQd130XmlErrorsJob::dispatch($xml14, 'XML14')
+            ->onQueue($this->queueName);
+
         } catch (\Exception $e) {
             \Log::error('Error in storeQd130Xml14: ' . $e->getMessage());
         }

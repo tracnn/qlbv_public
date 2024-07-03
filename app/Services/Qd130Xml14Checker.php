@@ -2,11 +2,11 @@
 
 namespace App\Services;
 
-use App\Models\BHYT\Qd130Xml13;
+use App\Models\BHYT\Qd130Xml14;
 use App\Models\BHYT\MedicalStaff;
 use Illuminate\Support\Collection;
 
-class Qd130Xml13Checker
+class Qd130Xml14Checker
 {
     protected $xmlErrorService;
     protected $prefix;
@@ -21,18 +21,18 @@ class Qd130Xml13Checker
 
     protected function setConditions()
     {
-        $this->xmlType = 'XML13';
+        $this->xmlType = 'XML14';
         $this->prefix = $this->xmlType . '_';
 
     }
 
     /**
-     * Check Qd130Xml13 Errors
+     * Check Qd130Xml14 Errors
      *
-     * @param Qd130Xml13 $data
+     * @param Qd130Xml14 $data
      * @return void
      */
-    public function checkErrors(Qd130Xml13 $data): void
+    public function checkErrors(Qd130Xml14 $data): void
     {
         // Thực hiện kiểm tra lỗi
         $errors = collect();
@@ -47,34 +47,18 @@ class Qd130Xml13Checker
     /**
      * Check for reason for admission errors
      *
-     * @param Qd130Xml13 $data
+     * @param Qd130Xml14 $data
      * @return Collection
      */
-    private function infoChecker(Qd130Xml13 $data): Collection
+    private function infoChecker(Qd130Xml14 $data): Collection
     {
         $errors = collect();
 
-        if (empty($data->so_hoso)) {
+        if (empty($data->so_giayhen_kl)) {
             $errors->push((object)[
-                'error_code' => $this->prefix . 'INFO_ERROR_SO_HOSO',
-                'error_name' => 'Thiếu số hồ sơ',
-                'description' => 'Số hồ sơ không được để trống'
-            ]);
-        }
-
-        if (empty($data->so_chuyentuyen)) {
-            $errors->push((object)[
-                'error_code' => $this->prefix . 'INFO_ERROR_SO_CHUYENTUYEN',
-                'error_name' => 'Thiếu số chuyển tuyến',
-                'description' => 'Số chuyển tuyến không được để trống'
-            ]);
-        }
-
-        if (empty($data->giay_chuyen_tuyen)) {
-            $errors->push((object)[
-                'error_code' => $this->prefix . 'INFO_ERROR_GIAY_CHUYEN_TUYEN',
-                'error_name' => 'Thiếu giấy chuyển tuyến',
-                'description' => 'Giấy chuyển tuyến không được để trống'
+                'error_code' => $this->prefix . 'INFO_ERROR_SO_GIAYHEN_KL',
+                'error_name' => 'Thiếu số giấy hẹn khám lại',
+                'description' => 'Số giấy hẹn khám lại không được để trống'
             ]);
         }
 
@@ -86,30 +70,37 @@ class Qd130Xml13Checker
             ]);
         }
 
-        if (empty($data->ma_noi_den)) {
+        if (empty($data->ngay_vao)) {
             $errors->push((object)[
-                'error_code' => $this->prefix . 'INFO_ERROR_MA_NOI_DEN',
-                'error_name' => 'Thiếu mã nơi đến',
-                'description' => 'Mã nơi đến không được để trống'
+                'error_code' => $this->prefix . 'INFO_ERROR_NGAY_VAO',
+                'error_name' => 'Thiếu ngày vào',
+                'description' => 'Ngày vào không được để trống'
             ]);
         }
 
-        if (!empty($data->ngay_vao_noi_tru)) {
-            if (empty($data->tomtat_kq)) {
+        if (empty($data->ngay_ra)) {
+            $errors->push((object)[
+                'error_code' => $this->prefix . 'INFO_ERROR_NGAY_RA',
+                'error_name' => 'Thiếu ngày ra',
+                'description' => 'Ngày ra không được để trống'
+            ]);
+        }
+
+        if (empty($data->ngay_hen_kl)) {
+            $errors->push((object)[
+                'error_code' => $this->prefix . 'INFO_ERROR_NGAY_HEN_KL',
+                'error_name' => 'Thiếu ngày hẹn khám lại',
+                'description' => 'Ngày hẹn khám lại không được để trống'
+            ]);
+        } else {
+            if (!empty($data->ngay_ra) && ($data->ngay_hen_kl < $data->ngay_ra)) {
                 $errors->push((object)[
-                    'error_code' => $this->prefix . 'INFO_ERROR_TOMTAT_KQ',
-                    'error_name' => 'Thiếu tóm tắt kết quả',
-                    'description' => 'Tóm tắt kết quả không được để trống đối với điều trị nội trú'
+                    'error_code' => $this->prefix . 'INFO_ERROR_NGAY_HEN_KL_SMALLER_NGAY_RA',
+                    'error_name' => 'Ngày hẹn khám lại nhỏ hơn ngày ra',
+                    'description' => 'Ngày hẹn khám lại không được nhỏ hơn ngày ra: ' . $data->ngay_hen_kl .
+                    ' < ' . $data->ngay_ra
                 ]);
             }
-        }
-
-        if (empty($data->dau_hieu_ls)) {
-            $errors->push((object)[
-                'error_code' => $this->prefix . 'INFO_ERROR_DAU_HIEU_LS',
-                'error_name' => 'Thiếu dấu hiệu lâm sàng',
-                'description' => 'Dấu hiệu lâm sàng không được để trống'
-            ]);
         }
 
         if (empty($data->chan_doan_rv)) {
@@ -117,14 +108,6 @@ class Qd130Xml13Checker
                 'error_code' => $this->prefix . 'INFO_ERROR_CHAN_DOAN_RV',
                 'error_name' => 'Thiếu chẩn đoán ra viện',
                 'description' => 'Chẩn đoán ra viện không được để trống'
-            ]);
-        }
-
-        if (empty($data->qt_benhly)) {
-            $errors->push((object)[
-                'error_code' => $this->prefix . 'INFO_ERROR_QT_BENHLY',
-                'error_name' => 'Thiếu quá trình bệnh lý',
-                'description' => 'Quá trình bệnh lý không được để trống'
             ]);
         }
 
@@ -147,43 +130,11 @@ class Qd130Xml13Checker
             }
         }
 
-        if (empty($data->ten_dich_vu)) {
+        if (empty($data->ma_doituong_kcb)) {
             $errors->push((object)[
-                'error_code' => $this->prefix . 'INFO_ERROR_TEN_DICH_VU',
-                'error_name' => 'Thiếu dịch vụ',
-                'description' => 'Dịch vụ không được để trống'
-            ]);
-        }
-
-        if (empty($data->ma_loai_rv)) {
-            $errors->push((object)[
-                'error_code' => $this->prefix . 'INFO_ERROR_MA_LOAI_RV',
-                'error_name' => 'Thiếu mã loại ra viện',
-                'description' => 'Mã loại ra viện không được để trống'
-            ]);
-        }
-
-        if (empty($data->ma_lydo_ct)) {
-            $errors->push((object)[
-                'error_code' => $this->prefix . 'INFO_ERROR_MA_LYDO_CT',
-                'error_name' => 'Thiếu mã lý do chuyển tuyến',
-                'description' => 'Mã lý do chuyển tuyến không được để trống'
-            ]);
-        }
-
-        if (empty($data->huong_dieu_tri)) {
-            $errors->push((object)[
-                'error_code' => $this->prefix . 'INFO_ERROR_HUONG_DIEU_TRI',
-                'error_name' => 'Thiếu hướng điều trị',
-                'description' => 'Hướng điều trị không được để trống'
-            ]);
-        }
-
-        if (empty($data->phuongtien_vc)) {
-            $errors->push((object)[
-                'error_code' => $this->prefix . 'INFO_ERROR_PHUONGTIEN_VC',
-                'error_name' => 'Thiếu phương tiện vận chuyển',
-                'description' => 'Phương tiện vận chuyển không được để trống'
+                'error_code' => $this->prefix . 'INFO_ERROR_MA_DOITUONG_KCB',
+                'error_name' => 'Thiếu mã đối tượng KCB',
+                'description' => 'Đối tượng KCB không được để trống'
             ]);
         }
 
@@ -221,6 +172,13 @@ class Qd130Xml13Checker
             }
         }
 
+        if (empty($data->ngay_ct)) {
+            $errors->push((object)[
+                'error_code' => $this->prefix . 'INFO_ERROR_NGAY_CT',
+                'error_name' => 'Thiếu ngày chứng từ',
+                'description' => 'Ngày chứng từ không được để trống'
+            ]);
+        }
 
         return $errors;
     }
