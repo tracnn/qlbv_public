@@ -7,6 +7,15 @@ use App\Models\BHYT\Qd130Xml2;
 use App\Models\BHYT\Qd130Xml3;
 use App\Models\BHYT\Qd130Xml4;
 use App\Models\BHYT\Qd130Xml5;
+use App\Models\BHYT\Qd130Xml6;
+use App\Models\BHYT\Qd130Xml7;
+use App\Models\BHYT\Qd130Xml8;
+use App\Models\BHYT\Qd130Xml9;
+use App\Models\BHYT\Qd130Xml10;
+use App\Models\BHYT\Qd130Xml11;
+use App\Models\BHYT\Qd130Xml13;
+use App\Models\BHYT\Qd130Xml14;
+use App\Models\BHYT\Qd130Xml15;
 use App\Services\XmlStructures;
 
 use App\Jobs\CheckQd130XmlErrorsJob;
@@ -345,16 +354,165 @@ class Qd130XmlService
     public function storeQd130Xml7($data)
     {
         $expectedStructure = XmlStructures::$expectedStructures130['XML7'];
+
+         if (!validateDataStructure($data, $expectedStructure)) {
+            \Log::error('Invalid data structure for XML7');
+            return;
+        }
+
+        try {
+            $attributes = [
+                'ma_lk' => $data->MA_LK,
+            ];
+            $values = [
+                'so_luu_tru' => $data->SO_LUU_TRU ?: null,
+                'ma_yte' => $data->MA_YTE ?: null,
+                'ma_khoa_rv' => $data->MA_KHOA_RV ?: null,
+                'ngay_vao' => $data->NGAY_VAO ?: null,
+                'ngay_ra' => $data->NGAY_RA ?: null,
+                'ma_dinh_chi_thai' => intval($data->MA_DINH_CHI_THAI) ?: null,
+                'nguyennhan_dinhchi' => $data->NGUYENNHAN_DINHCHI ?: null,
+                'thoigian_dinhchi' => $data->THOIGIAN_DINHCHI ?: null,
+                'tuoi_thai' => intval($data->TUOI_THAI) ?: null,
+                'chan_doan_rv' => $data->CHAN_DOAN_RV ?: null,
+                'pp_dieu_tri' => $data->PP_DIEUTRI ?: null,
+                'ghi_chu' => $data->GHI_CHU ?: null,
+                'ma_ttdv' => $data->MA_TTDV ?: null,
+                'ma_bs' => $data->MA_BS ?: null,
+                'ten_bs' => $data->TEN_BS ?: null,
+                'ngay_ct' => $data->NGAY_CT ?: null,
+                'ma_cha' => $data->MA_CHA ?: null,
+                'ma_me' => $data->MA_ME ?: null,
+                'ma_the_tam' => $data->MA_THE_TAM ?: null,
+                'ho_ten_cha' => $data->HO_TEN_CHA ?: null,
+                'ho_ten_me' => $data->HO_TEN_ME ?: null,
+                'so_ngay_nghi' => intval($data->SO_NGAY_NGHI) ?: null,
+                'ngoaitru_tungay' => $data->NGOAITRU_TUNGAY ?: null,
+                'ngoaitru_denngay' => $data->NGOAITRU_DENNGAY ?: null,
+                'du_phong' => $data->DU_PHONG ?: null,
+            ];
+
+            $xml7 = Qd130Xml7::updateOrCreate($attributes, $values);
+
+            // Đẩy công việc kiểm tra vào hàng đợi
+            // CheckQd130XmlErrorsJob::dispatch($xml7, 'XML7')
+            //     ->onQueue($this->queueName);
+
+        } catch (\Exception $e) {
+            \Log::error('Error in storeQd130Xml7: ' . $e->getMessage());
+        }
     }
 
     public function storeQd130Xml8($data)
     {
         $expectedStructure = XmlStructures::$expectedStructures130['XML8'];
+
+        if (!validateDataStructure($data, $expectedStructure)) {
+            \Log::error('Invalid data structure for XML8');
+            return;
+        }
+
+        try {
+            $attributes = [
+                'ma_lk' => $data->MA_LK,
+            ];
+            $values = [
+                'ma_loai_kcb' => $data->MA_LOAI_KCB ?: null,
+                'ho_ten_cha' => $data->HO_TEN_CHA ?: null,
+                'ho_ten_me' => $data->HO_TEN_ME ?: null,
+                'nguoi_giam_ho' => $data->NGUOI_GIAM_HO ?: null,
+                'don_vi' => $data->DON_VI ?: null,
+                'ngay_vao' => $data->NGAY_VAO ?: null,
+                'ngay_ra' => $data->NGAY_RA ?: null,
+                'chan_doan_vao' => $data->CHAN_DOAN_VAO ?: null,
+                'chan_doan_rv' => $data->CHAN_DOAN_RV ?: null,
+                'qt_benhly' => $data->QT_BENHLY ?: null,
+                'tomtat_kq' => $data->TOMTAT_KQ ?: null,
+                'pp_dieu_tri' => $data->PP_DIEUTRI ?: null,
+                'ngay_sinhcon' => $data->NGAY_SINHCON ?: null,
+                'ngay_conchet' => $data->NGAY_CONCHET ?: null,
+                'so_conchet' => intval($data->SO_CONCHET) ?: null,
+                'ket_qua_dtri' => intval($data->KET_QUA_DTRI) ?: null,
+                'ghi_chu' => $data->GHI_CHU ?: null,
+                'ma_ttdv' => $data->MA_TTDV ?: null,
+                'ngay_ct' => $data->NGAY_CT ?: null,
+                'ma_the_tam' => $data->MA_THE_TAM ?: null,
+                'du_phong' => $data->DU_PHONG ?: null,
+            ];
+
+            $xml8 = Qd130Xml8::updateOrCreate($attributes, $values);
+
+            // Đẩy công việc kiểm tra vào hàng đợi
+            // CheckQd130XmlErrorsJob::dispatch($xml8, 'XML8')
+            //     ->onQueue($this->queueName);
+
+        } catch (\Exception $e) {
+            \Log::error('Error in storeQd130Xml8: ' . $e->getMessage());
+        }
+
     }
 
     public function storeQd130Xml9($data)
     {
         $expectedStructure = XmlStructures::$expectedStructures130['XML9'];
+
+        if (isset($data->DSACH_GIAYCHUNGSINH->DU_LIEU_GIAY_CHUNG_SINH) && 
+            is_iterable($data->DSACH_GIAYCHUNGSINH->DU_LIEU_GIAY_CHUNG_SINH)){
+            foreach ($data->DSACH_GIAYCHUNGSINH->DU_LIEU_GIAY_CHUNG_SINH as $chungSinh) {
+                if (!validateDataStructure($chungSinh, $expectedStructure)) {
+                    \Log::error('Invalid data structure for XML9');
+                    continue;
+                }
+
+                try {
+                    $attributes = [
+                        'ma_lk' => $chungSinh->MA_LK,
+                    ];
+
+                    $values = [
+                        'ma_bhxh_nnd' => $chungSinh->MA_BHXH_NND ?: null,
+                        'ma_the_nnd' => $chungSinh->MA_THE_NND ?: null,
+                        'ho_ten_nnd' => $chungSinh->HO_TEN_NND ?: null,
+                        'ngaysinh_nnd' => $chungSinh->NGAYSINH_NND ?: null,
+                        'ma_dantoc_nnd' => $chungSinh->MA_DANTOC_NND ?: null,
+                        'so_cccd_nnd' => $chungSinh->SO_CCCD_NND ?: null,
+                        'ngaycap_cccd_nnd' => $chungSinh->NGAYCAP_CCCD_NND ?: null,
+                        'noicap_cccd_nnd' => $chungSinh->NOICAP_CCCD_NND ?: null,
+                        'noi_cu_tru_nnd' => $chungSinh->NOI_CU_TRU_NND ?: null,
+                        'ma_quoctich' => $chungSinh->MA_QUOCTICH ?: null,
+                        'matinh_cu_tru' => $chungSinh->MATINH_CU_TRU ?: null,
+                        'mahuyen_cu_tru' => $chungSinh->MAHUYEN_CU_TRU ?: null,
+                        'maxa_cu_tru' => $chungSinh->MAXA_CU_TRU ?: null,
+                        'ho_ten_cha' => $chungSinh->HO_TEN_CHA ?: null,
+                        'ma_the_tam' => $chungSinh->MA_THE_TAM ?: null,
+                        'ho_ten_con' => $chungSinh->HO_TEN_CON ?: null,
+                        'gioi_tinh_con' => intval($chungSinh->GIOI_TINH_CON) ?: null,
+                        'so_con' => intval($chungSinh->SO_CON) ?: null,
+                        'lan_sinh' => intval($chungSinh->LAN_SINH) ?: null,
+                        'so_con_song' => intval($chungSinh->SO_CON_SONG) ?: null,
+                        'can_nang_con' => intval($chungSinh->CAN_NANG_CON) ?: null,
+                        'ngay_sinh_con' => $chungSinh->NGAY_SINH_CON ?: null,
+                        'noi_sinh_con' => $chungSinh->NOI_SINH_CON ?: null,
+                        'tinh_trang_con' => $chungSinh->TINH_TRANG_CON ?: null,
+                        'sinhcon_phauthuat' => intval($chungSinh->SINHCON_PHAUTHUAT) ?: null,
+                        'sinhcon_duoi32tuan' => intval($chungSinh->SINHCON_DUOI32TUAN) ?: null,
+                        'ghi_chu' => $chungSinh->GHI_CHU ?: null,
+                        'nguoi_do_de' => $chungSinh->NGUOI_DO_DE ?: null,
+                        'nguoi_ghi_phieu' => $chungSinh->NGUOI_GHI_PHIEU ?: null,
+                        'ngay_ct' => $chungSinh->NGAY_CT ?: null,
+                        'so' => $chungSinh->SO ?: null,
+                        'quyen_so' => $chungSinh->QUYEN_SO ?: null,
+                        'ma_ttdv' => $chungSinh->MA_TTDV ?: null,
+                        'du_phong' => $chungSinh->DU_PHONG ?: null,
+                    ];
+
+                    $xml9 = Qd130Xml9::updateOrCreate($attributes, $values);
+
+                } catch (\Exception $e) {
+                    \Log::error('Error in storeQd130Xml9: ' . $e->getMessage());
+                }
+            }
+        }
     }
 
     public function storeQd130Xml10($data)
@@ -365,16 +523,159 @@ class Qd130XmlService
     public function storeQd130Xml11($data)
     {
         $expectedStructure = XmlStructures::$expectedStructures130['XML11'];
+
+        if (!validateDataStructure($data, $expectedStructure)) {
+            \Log::error('Invalid data structure for XML11');
+            return;
+        }
+
+        try {
+            $attributes = [
+                'ma_lk' => $data->MA_LK,
+            ];
+            $values = [
+                'so_seri' => $data->SO_SERI ?: null,
+                'so_ct' => $data->SO_CT ?: null,
+                'so_kcb' => $data->SO_KCB ?: null,
+                'don_vi' => $data->DON_VI ?: null,
+                'ma_bhxh' => $data->MA_BHXH ?: null,
+                'ma_the_bhyt' => $data->MA_THE_BHYT ?: null,
+                'chan_doan_rv' => $data->CHAN_DOAN_RV ?: null,
+                'pp_dieu_tri' => $data->PP_DIEUTRI ?: null,
+                'ma_dinh_chi_thai' => intval($data->MA_DINH_CHI_THAI) ?: null,
+                'nguyennhan_dinhchi' => $data->NGUYENNHAN_DINHCHI ?: null,
+                'tuoi_thai' => intval($data->TUOI_THAI) ?: null,
+                'so_ngay_nghi' => intval($data->SO_NGAY_NGHI) ?: null,
+                'tu_ngay' => $data->TU_NGAY ?: null,
+                'den_ngay' => $data->DEN_NGAY ?: null,
+                'ho_ten_cha' => $data->HO_TEN_CHA ?: null,
+                'ho_ten_me' => $data->HO_TEN_ME ?: null,
+                'ma_ttdv' => $data->MA_TTDV ?: null,
+                'ma_bs' => $data->MA_BS ?: null,
+                'ngay_ct' => $data->NGAY_CT ?: null,
+                'ma_the_tam' => $data->MA_THE_TAM ?: null,
+                'mau_so' => $data->MAU_SO ?: null,
+                'du_phong' => $data->DU_PHONG ?: null,
+            ];
+
+            $xml11 = Qd130Xml11::updateOrCreate($attributes, $values);
+
+            // Đẩy công việc kiểm tra vào hàng đợi
+            // CheckQd130XmlErrorsJob::dispatch($xml11, 'XML11')
+            //     ->onQueue($this->queueName);
+
+        } catch (\Exception $e) {
+            \Log::error('Error in storeQd130Xml11: ' . $e->getMessage());
+        }
     }
 
     public function storeQd130Xml13($data)
     {
         $expectedStructure = XmlStructures::$expectedStructures130['XML13'];
+
+        if (!validateDataStructure($data, $expectedStructure)) {
+            \Log::error('Invalid data structure for XML13');
+            return;
+        }
+
+        try {
+            $attributes = [
+                'ma_lk' => $data->MA_LK,
+            ];
+            $values = [
+                'so_hoso' => $data->SO_HOSO ?: null,
+                'so_chuyentuyen' => $data->SO_CHUYENTUYEN ?: null,
+                'giay_chuyen_tuyen' => $data->GIAY_CHUYEN_TUYEN ?: null,
+                'ma_cskcb' => $data->MA_CSKCB ?: null,
+                'ma_noi_di' => $data->MA_NOI_DI ?: null,
+                'ma_noi_den' => $data->MA_NOI_DEN ?: null,
+                'ho_ten' => $data->HO_TEN ?: null,
+                'ngay_sinh' => $data->NGAY_SINH ?: null,
+                'gioi_tinh' => intval($data->GIOI_TINH) ?: null,
+                'ma_quoctich' => $data->MA_QUOCTICH ?: null,
+                'ma_dantoc' => $data->MA_DANTOC ?: null,
+                'ma_nghe_nghiep' => $data->MA_NGHE_NGHIEP ?: null,
+                'dia_chi' => $data->DIA_CHI ?: null,
+                'ma_the_bhyt' => $data->MA_THE_BHYT ?: null,
+                'gt_the_den' => $data->GT_THE_DEN ?: null,
+                'ngay_vao' => $data->NGAY_VAO ?: null,
+                'ngay_vao_noi_tru' => $data->NGAY_VAO_NOI_TRU ?: null,
+                'ngay_ra' => $data->NGAY_RA ?: null,
+                'dau_hieu_ls' => $data->DAU_HIEU_LS ?: null,
+                'chan_doan_rv' => $data->CHAN_DOAN_RV ?: null,
+                'qt_benhly' => $data->QT_BENHLY ?: null,
+                'tomtat_kq' => $data->TOMTAT_KQ ?: null,
+                'pp_dieu_tri' => $data->PP_DIEUTRI ?: null,
+                'ma_benh_chinh' => $data->MA_BENH_CHINH ?: null,
+                'ma_benh_kt' => $data->MA_BENH_KT ?: null,
+                'ma_benh_yhct' => $data->MA_BENH_YHCT ?: null,
+                'ten_dich_vu' => $data->TEN_DICH_VU ?: null,
+                'ten_thuoc' => $data->TEN_THUOC ?: null,
+                'ma_loai_rv' => intval($data->MA_LOAI_RV) ?: null,
+                'ma_lydo_ct' => intval($data->MA_LYDO_CT) ?: null,
+                'huong_dieu_tri' => $data->HUONG_DIEU_TRI ?: null,
+                'phuongtien_vc' => $data->PHUONGTIEN_VC ?: null,
+                'hoten_nguoi_ht' => $data->HOTEN_NGUOI_HT ?: null,
+                'chucdanh_nguoi_ht' => $data->CHUCDANH_NGUOI_HT ?: null,
+                'ma_bac_si' => $data->MA_BAC_SI ?: null,
+                'ma_ttdv' => $data->MA_TTDV ?: null,
+                'du_phong' => $data->DU_PHONG ?: null,
+            ];
+
+            $xml13 = Qd130Xml13::updateOrCreate($attributes, $values);
+
+            // Đẩy công việc kiểm tra vào hàng đợi
+            CheckQd130XmlErrorsJob::dispatch($xml13, 'XML13')
+            ->onQueue($this->queueName);
+
+        } catch (\Exception $e) {
+            \Log::error('Error in storeQd130Xml13: ' . $e->getMessage());
+        }
     }
 
     public function storeQd130Xml14($data)
     {
         $expectedStructure = XmlStructures::$expectedStructures130['XML14'];
+
+        if (!validateDataStructure($data, $expectedStructure)) {
+            \Log::error('Invalid data structure for XML14');
+            return;
+        }
+
+         try {
+            $attributes = [
+                'ma_lk' => $data->MA_LK,
+            ];
+
+            $values = [
+                'so_giayhen_kl' => $data->SO_GIAYHEN_KL ?: null,
+                'ma_cskcb' => $data->MA_CSKCB ?: null,
+                'ho_ten' => $data->HO_TEN ?: null,
+                'ngay_sinh' => $data->NGAY_SINH ?: null,
+                'gioi_tinh' => intval($data->GIOI_TINH) ?: null,
+                'dia_chi' => $data->DIA_CHI ?: null,
+                'ma_the_bhyt' => $data->MA_THE_BHYT ?: null,
+                'gt_the_den' => $data->GT_THE_DEN ?: null,
+                'ngay_vao' => $data->NGAY_VAO ?: null,
+                'ngay_vao_noi_tru' => $data->NGAY_VAO_NOI_TRU ?: null,
+                'ngay_ra' => $data->NGAY_RA ?: null,
+                'ngay_hen_kl' => $data->NGAY_HEN_KL ?: null,
+                'chan_doan_rv' => $data->CHAN_DOAN_RV ?: null,
+                'ma_benh_chinh' => $data->MA_BENH_CHINH ?: null,
+                'ma_benh_kt' => $data->MA_BENH_KT ?: null,
+                'ma_benh_yhct' => $data->MA_BENH_YHCT ?: null,
+                'ma_doituong_kcb' => $data->MA_DOITUONG_KCB ?: null,
+                'ma_bac_si' => $data->MA_BAC_SI ?: null,
+                'ma_ttdv' => $data->MA_TTDV ?: null,
+                'ngay_ct' => $data->NGAY_CT ?: null,
+                'du_phong' => $data->DU_PHONG ?: null,
+            ];
+
+            $xml14 = Qd130Xml14::updateOrCreate($attributes, $values);
+
+        } catch (\Exception $e) {
+            \Log::error('Error in storeQd130Xml14: ' . $e->getMessage());
+        }
     }
 
     public function storeQd130Xml15($data)

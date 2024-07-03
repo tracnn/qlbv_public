@@ -95,9 +95,49 @@ class Qd130Xml1 extends Model
         return $this->hasMany('App\Models\BHYT\Qd130Xml5', 'ma_lk', 'ma_lk');
     }
 
+    public function Qd130Xml6()
+    {
+        return $this->hasMany('App\Models\BHYT\Qd130Xml6', 'ma_lk', 'ma_lk');
+    }
+
+    public function Qd130Xml7()
+    {
+        return $this->hasMany('App\Models\BHYT\Qd130Xml7', 'ma_lk', 'ma_lk');
+    }
+
+    public function Qd130Xml8()
+    {
+        return $this->hasMany('App\Models\BHYT\Qd130Xml8', 'ma_lk', 'ma_lk');
+    }
+
+    public function Qd130Xml9()
+    {
+        return $this->hasMany('App\Models\BHYT\Qd130Xml9', 'ma_lk', 'ma_lk');
+    }
+
+    public function Qd130Xml10()
+    {
+        return $this->hasMany('App\Models\BHYT\Qd130Xml10', 'ma_lk', 'ma_lk');
+    }
+
     public function Qd130Xml11()
     {
         return $this->hasMany('App\Models\BHYT\Qd130Xml11', 'ma_lk', 'ma_lk');
+    }
+
+    public function Qd130Xml13()
+    {
+        return $this->hasMany('App\Models\BHYT\Qd130Xml13', 'ma_lk', 'ma_lk');
+    }
+
+    public function Qd130Xml14()
+    {
+        return $this->hasMany('App\Models\BHYT\Qd130Xml14', 'ma_lk', 'ma_lk');
+    }
+
+    public function Qd130Xml15()
+    {
+        return $this->hasMany('App\Models\BHYT\Qd130Xml15', 'ma_lk', 'ma_lk');
     }
 
 

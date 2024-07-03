@@ -7,10 +7,6 @@ use App\Http\Controllers\Controller;
 
 use Yajra\Datatables\Datatables;
 use App\Models\BHYT\Qd130Xml1;
-use App\Models\BHYT\Qd130Xml2;
-use App\Models\BHYT\Qd130Xml3;
-use App\Models\BHYT\Qd130Xml4;
-use App\Models\BHYT\Qd130Xml5;
 
 use App\Models\BHYT\Qd130XmlErrorResult;
 use App\Models\BHYT\Qd130XmlErrorCatalog;
@@ -53,6 +49,7 @@ class BHYTQd130Controller extends Controller
 
         $hein_card_filter = $request->input('hein_card_filter');
         $payment_date_filter = $request->input('payment_date_filter');
+        $treatment_type_fillter = $request->input('treatment_type_fillter');
 
         $dateFrom = $request->input('date_from');
         $dateTo = $request->input('date_to');
@@ -171,6 +168,11 @@ class BHYTQd130Controller extends Controller
                 $result = $result->where('ngay_ttoan', '<>', '');
             } elseif ($payment_date_filter === 'no_payment_date') {
                 $result = $result->where('ngay_ttoan', '=', '');
+            }
+
+            // Apply filter based on treatment_type_fillter
+            if ($treatment_type_fillter) {
+                $result = $result->where('ma_loai_kcb', $treatment_type_fillter);
             }
         }
 
@@ -339,5 +341,43 @@ class BHYTQd130Controller extends Controller
         }
 
         return true;
+    }
+
+    // BhytController.php
+    public function exportXml(Request $request)
+    {
+        $selectedRecords = $request->input('records');
+
+        return response()->json(['success' => true, 'records' => $selectedRecords]);
+
+        // Truy vấn dữ liệu từ cơ sở dữ liệu theo danh sách hồ sơ đã chọn
+        $data = $this->qd130XmlService->getDataForXmlExport($selectedRecords);
+
+        // Chuyển đổi dữ liệu sang định dạng XML
+        $xml = new SimpleXMLElement('<root/>');
+        foreach ($data as $record) {
+            $this->arrayToXml($record, $xml);
+        }
+
+        // Lưu XML thành file và trả về đường dẫn file để người dùng tải về
+        $fileName = 'exported_records_' . time() . '.xml';
+        $filePath = storage_path('app/public/' . $fileName);
+        $xml->asXML($filePath);
+
+        return response()->json(['success' => true, 'file' => asset('storage/' . $fileName)]);
+    }
+
+    private function arrayToXml($data, &$xmlData) {
+        foreach ($data as $key => $value) {
+            if (is_array($value)) {
+                if (is_numeric($key)) {
+                    $key = 'item' . $key; // dealing with <0/>..<n/> issues
+                }
+                $subnode = $xmlData->addChild($key);
+                $this->arrayToXml($value, $subnode);
+            } else {
+                $xmlData->addChild("$key", htmlspecialchars("$value"));
+            }
+        }
     }
 }

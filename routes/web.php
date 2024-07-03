@@ -232,6 +232,7 @@ Route::group(['middleware' => 'auth'], function () {
         ->name('category-bhyt.equipment-catalog');
         Route::get('bhyt/fetch-equipment-catalog', 'Category\CategoryBHYTController@fetchEquipmentCatalog')
         ->name('category-bhyt.fetch-equipment-catalog');
+
     });
 
 	/* Insurance , 'middleware' => ['checkrole:manager'] */
@@ -326,6 +327,8 @@ Route::group(['middleware' => 'auth'], function () {
         Route::get('qd130/import/index', 'BHYT\BHYTQd130Controller@importIndex')->name('bhyt.qd130.import.index');
         Route::post('qd130/index/upload-data', 'BHYT\BHYTQd130Controller@uploadData')->name('bhyt.qd130.upload-data');
         Route::get('qd130/index/detail-xml/{ma_lk}', 'BHYT\BHYTQd130Controller@detailXml')->name('bhyt.qd130.detail-xml');
+
+        Route::post('qd130/export-xml', 'BHYT\BHYTQd130Controller@exportXml')->name('bhyt.qd130.export-xml');
     });
 
     /*

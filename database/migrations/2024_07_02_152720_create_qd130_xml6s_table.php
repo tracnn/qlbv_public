@@ -16,18 +16,18 @@ class CreateQd130Xml6sTable extends Migration
         Schema::create('qd130_xml6s', function (Blueprint $table) {
             $table->increments('id');
             $table->string('ma_lk', 100)->unique();
-            $table->string('ma_the_bhyt');
-            $table->string('so_cccd', 15);
-            $table->string('ngay_sinh', 12);
-            $table->unsignedTinyInteger('gioi_tinh');
-            $table->string('dia_chi', 1024);
-            $table->string('matinh_cu_tru', 3);
-            $table->string('mahuyen_cu_tru', 3);
-            $table->string('maxa_cu_tru', 5);
+            $table->string('ma_the_bhyt')->nullable();
+            $table->string('so_cccd', 15)->nullable();
+            $table->string('ngay_sinh', 12)->nullable();
+            $table->unsignedTinyInteger('gioi_tinh')->nullable();
+            $table->string('dia_chi', 1024)->nullable();
+            $table->string('matinh_cu_tru', 3)->nullable();
+            $table->string('mahuyen_cu_tru', 3)->nullable();
+            $table->string('maxa_cu_tru', 5)->nullable();
             $table->string('ngaykd_hiv', 8)->nullable();
-            $table->string('noi_lay_mau_xn', 5);
-            $table->string('noi_xn_kd', 5);
-            $table->string('noi_bddt_arv', 5);
+            $table->string('noi_lay_mau_xn', 5)->nullable();
+            $table->string('noi_xn_kd', 5)->nullable();
+            $table->string('noi_bddt_arv', 5)->nullable();
             $table->string('bddt_arv', 8)->nullable();
             $table->string('ma_phac_do_dieu_tri_bd', 200)->nullable();
             $table->unsignedTinyInteger('ma_bac_phac_do_bd')->nullable();
@@ -60,7 +60,7 @@ class CreateQd130Xml6sTable extends Migration
             $table->unsignedSmallInteger('so_ngay_cap_thuoc_arv')->nullable();
             $table->string('ngay_chuyen_phac_do', 8)->nullable();
             $table->unsignedTinyInteger('ly_do_chuyen_phac_do')->nullable();
-            $table->string('ma_cskcb', 5);
+            $table->string('ma_cskcb', 5)->nullable();
             $table->text('du_phong')->nullable();
             $table->timestamps();
         });

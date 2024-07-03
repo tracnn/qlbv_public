@@ -21,6 +21,7 @@
         <table id="xml-list" class="table display table-hover responsive nowrap datatable dtr-inline" width="100%">
             <thead>
                 <tr>
+                    <th><input type="checkbox" id="select-all"></th>
                     <th>Mã điều trị</th>
                     <th>Mã BN</th>
                     <th>Họ tên</th>
@@ -62,7 +63,7 @@
         </div>
     </div>
 </div>
-
+<button id="bulk-action-btn" class="btn btn-primary" disabled>Xuất XML4750</button>
 @stop
 
 @push('after-scripts')
@@ -91,6 +92,7 @@
                     d.qd130_xml_error_catalog = $('#qd130_xml_error_catalog').val();
                     d.hein_card_filter = $('#hein_card_filter').val();
                     d.payment_date_filter = $('#payment_date_filter').val();
+                    d.treatment_type_fillter = $('#treatment_type_fillter').val();
                 },
                 beforeSend: function(xhr) {
                     currentAjaxRequest = xhr;
@@ -106,6 +108,9 @@
                 }
             },
             "columns": [
+                { "data": null, "render": function (data, type, row) {
+                    return '<input type="checkbox" class="row-select" value="' + row.ma_lk + '">';
+                }, "orderable": false },
                 { "data": "ma_lk" },
                 { "data": "ma_bn" },
                 { "data": "ho_ten" },
@@ -147,6 +152,16 @@
     }
 
     $(document).ready(function() {
+        $('#select-all').on('click', function(){
+            var rows = table.rows({ 'search': 'applied' }).nodes();
+            $('input[type="checkbox"]', rows).prop('checked', this.checked);
+            toggleBulkActionBtn();
+        });
+
+        $('#xml-list tbody').on('change', '.row-select', function() {
+            toggleBulkActionBtn();
+        });
+
         $('#xml-list tbody').on('dblclick', 'tr', function () {
             let data = table.row(this).data();
             // Tải chi tiết hồ sơ bằng AJAX
@@ -165,7 +180,51 @@
                 }
             });
         });
+
+        $('#bulk-action-btn').on('click', function(){
+            var selectedRecords = [];
+            $('.row-select:checked').each(function() {
+                selectedRecords.push($(this).val());
+            });
+            
+            if (selectedRecords.length > 0) {
+                exportSelectedRecordsToXml(selectedRecords);
+            } else {
+                alert('Vui lòng chọn ít nhất một hồ sơ.');
+            }
+        });
+
     });
+
+    function toggleBulkActionBtn() {
+        if ($('.row-select:checked').length > 0) {
+            $('#bulk-action-btn').prop('disabled', false);
+        } else {
+            $('#bulk-action-btn').prop('disabled', true);
+        }
+    }
+
+    function exportSelectedRecordsToXml(selectedRecords) {
+        $.ajax({
+            url: '{{ route("bhyt.qd130.export-xml") }}',
+            type: 'POST',
+            data: {
+                _token: '{{ csrf_token() }}',
+                records: selectedRecords
+            },
+            success: function(response) {
+                if (response.success) {
+                    console.log(response.records);
+                    //window.location.href = response.file; // Chuyển hướng để tải file
+                } else {
+                    alert('Có lỗi xảy ra, vui lòng thử lại.');
+                }
+            },
+            error: function(xhr, error, code) {
+                alert('Có lỗi xảy ra, vui lòng thử lại.');
+            }
+        });
+    }
 
     function initializeModalDataTables() {
         $('#thuocvt').DataTable();

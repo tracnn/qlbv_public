@@ -3,6 +3,7 @@
         @include('partials.date_range', ['showDateType' => true])
         <div class="col-sm-12">
             <div class="form-group row">
+                @include('partials.treatment_type_fillter')
                 @include('partials.xml_filter_status')
                 @include('partials.qd130_xml_error_catalog')
                 @include('partials.hein_card_filter')

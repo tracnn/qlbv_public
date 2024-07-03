@@ -6,6 +6,8 @@ use App\Services\Qd130Xml1Checker;
 use App\Services\Qd130Xml2Checker;
 use App\Services\Qd130Xml3Checker;
 
+use App\Services\Qd130Xml13Checker;
+
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;
@@ -47,6 +49,9 @@ class CheckQd130XmlErrorsJob implements ShouldQueue
                 break;
             case 'XML3':
                 $checker = app(Qd130Xml3Checker::class);
+                break;
+            case 'XML13':
+                $checker = app(Qd130Xml13Checker::class);
                 break;
             // Add more cases for other XML types
             default:
