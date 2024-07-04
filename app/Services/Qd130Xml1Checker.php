@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Services\Qd130XmlChecker\Qd130Xml1AdministrativeInfoChecker;
 
 use App\Models\BHYT\Qd130Xml1;
+use App\Models\BHYT\Icd10Category;
 use Illuminate\Support\Collection;
 
 class Qd130Xml1Checker
@@ -70,6 +71,7 @@ class Qd130Xml1Checker
         $errors = $errors->merge($this->checkLongTermTreatment($data));
         $errors = $errors->merge($this->checkInvalidBedDays($data));
         $errors = $errors->merge($this->checkSpecialInpatientConditions($data));
+        $errors = $errors->merge($this->checkDiseaseIcdCodes($data));
 
         // Save errors to xml_error_checks table
         $this->xmlErrorService->saveErrors($this->xmlType, $data->ma_lk, $data->stt, $errors);
@@ -207,6 +209,42 @@ class Qd130Xml1Checker
                     'error_name' => 'Thiếu phương pháp điều trị',
                     'description' => 'Phương pháp điều trị không được để trống'
                 ]);
+            }
+        }
+
+        return $errors;
+    }
+
+    /**
+     * Check for disease codes errors
+     *
+     * @param Qd130Xml1 $data
+     * @return Collection
+     */
+    private function checkDiseaseIcdCodes(Qd130Xml1 $data): Collection
+    {
+        $errors = collect();
+
+        // Check ma_benh_chinh
+        if (!Icd10Category::where('icd_code', $data->ma_benh_chinh)->exists()) {
+            $errors->push((object)[
+                'error_code' => $this->prefix . 'DISEASE_ICD_CODE_ERROR_MA_BENH_CHINH',
+                'error_name' => 'Mã bệnh chính không tồn tại',
+                'description' => 'Mã bệnh chính không tồn tại trong danh mục ICD10: ' . $data->ma_benh_chinh
+            ]);
+        }
+
+        // Check ma_benh_kt
+        if (!empty($data->ma_benh_kt)) {
+            $ma_benh_kt_array = explode(';', $data->ma_benh_kt);
+            foreach ($ma_benh_kt_array as $ma_benh_kt) {
+                if (!Icd10Category::where('icd_code', $ma_benh_kt)->exists()) {
+                    $errors->push((object)[
+                        'error_code' => $this->prefix . 'DISEASE_ICD_CODE_ERROR_MA_BENH_KT',
+                        'error_name' => 'Mã bệnh kèm theo không tồn tại',
+                        'description' => 'Mã bệnh kèm theo không tồn tại trong danh mục ICD10: ' . $ma_benh_kt
+                    ]);
+                }
             }
         }
 
