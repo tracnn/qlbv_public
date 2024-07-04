@@ -6603,6 +6603,7 @@ INSERT INTO icd10_categories (icd_code, icd_name, is_chronic, is_active, created
 INSERT INTO icd10_categories (icd_code, icd_name, is_chronic, is_active, created_at, updated_at) VALUES('N17.8', 'Suy thận cấp khác',0, 1, NOW(), NOW());
 INSERT INTO icd10_categories (icd_code, icd_name, is_chronic, is_active, created_at, updated_at) VALUES('N17.9', 'Suy thận cấp không đặc hiệu',0, 1, NOW(), NOW());
 INSERT INTO icd10_categories (icd_code, icd_name, is_chronic, is_active, created_at, updated_at) VALUES('N18', 'Suy thận mạn',1, 1, NOW(), NOW());
+INSERT INTO icd10_categories (icd_code, icd_name, is_chronic, is_active, created_at, updated_at) VALUES('N18.0', 'Bệnh thận giai đoạn cuối',1, 1, NOW(), NOW());
 INSERT INTO icd10_categories (icd_code, icd_name, is_chronic, is_active, created_at, updated_at) VALUES('N18.1', 'Suy thận mạn, giai đoạn 1',0, 1, NOW(), NOW());
 INSERT INTO icd10_categories (icd_code, icd_name, is_chronic, is_active, created_at, updated_at) VALUES('N18.2', 'Suy thận mạn, giai đoạn 2',0, 1, NOW(), NOW());
 INSERT INTO icd10_categories (icd_code, icd_name, is_chronic, is_active, created_at, updated_at) VALUES('N18.3', 'Suy thận mạn, giai đoạn 3',0, 1, NOW(), NOW());

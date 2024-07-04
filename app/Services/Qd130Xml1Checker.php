@@ -6,6 +6,7 @@ use App\Services\Qd130XmlChecker\Qd130Xml1AdministrativeInfoChecker;
 
 use App\Models\BHYT\Qd130Xml1;
 use App\Models\BHYT\Icd10Category;
+use App\Models\BHYT\IcdYhctCategory;
 use Illuminate\Support\Collection;
 
 class Qd130Xml1Checker
@@ -243,6 +244,20 @@ class Qd130Xml1Checker
                         'error_code' => $this->prefix . 'DISEASE_ICD_CODE_ERROR_MA_BENH_KT',
                         'error_name' => 'Mã bệnh kèm theo không tồn tại',
                         'description' => 'Mã bệnh kèm theo không tồn tại trong danh mục ICD10: ' . $ma_benh_kt
+                    ]);
+                }
+            }
+        }
+
+        // Check ma_benh_yhct
+        if (!empty($data->ma_benh_yhct)) {
+            $ma_benh_yhct_array = explode(';', $data->ma_benh_yhct);
+            foreach ($ma_benh_yhct_array as $ma_benh_yhct) {
+                if (!IcdYhctCategory::where('icd_code', $ma_benh_yhct)->exists()) {
+                    $errors->push((object)[
+                        'error_code' => $this->prefix . 'DISEASE_ICD_CODE_ERROR_MA_BENH_YHCT',
+                        'error_name' => 'Mã bệnh YHCT không tồn tại',
+                        'description' => 'Mã bệnh YHCT không tồn tại trong danh mục ICD YHCT: ' . $ma_benh_yhct
                     ]);
                 }
             }

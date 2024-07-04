@@ -69,15 +69,15 @@ class Qd130Xml1AdministrativeInfoChecker
                 if ($can_nang_value > 200) {
                     $errors->push((object)[
                         'error_code' => $this->prefix . 'ADMIN_INFO_ERROR_TO_MUCH_CAN_NANG',
-                        'error_name' => 'Cân nặng không hợp lý',
-                        'description' => 'Cân nặng không hợp lý: ' . number_format($can_nang_value)
+                        'error_name' => 'Cân nặng không hợp lệ',
+                        'description' => 'Cân nặng không hợp lệ: ' . number_format($can_nang_value)
                     ]);
                 }
             } else {
                 $errors->push((object)[
                     'error_code' => $this->prefix . 'ADMIN_INFO_ERROR_INVALID_CAN_NANG',
                     'error_name' => 'Cân nặng không hợp lệ',
-                    'description' => 'Giá trị cân nặng không hợp lệ'
+                    'description' => 'Giá trị cân nặng không hợp lệ: ' . $data->can_nang
                 ]);
             }
         }
