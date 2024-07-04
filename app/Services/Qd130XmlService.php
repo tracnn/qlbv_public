@@ -1090,8 +1090,8 @@ class Qd130XmlService
                         $duLieuGiayChungSinh->addChild('NGAY_SINH_CON', $record->ngay_sinh_con);
                         $this->addChildWithCDATA($duLieuGiayChungSinh, 'NOI_SINH_CON', $record->noi_sinh_con);
                         $this->addChildWithCDATA($duLieuGiayChungSinh, 'TINH_TRANG_CON', $record->tinh_trang_con);
-                        $duLieuGiayChungSinh->addChild('SINHCON_PHAUTHUAT', $record->sinhcon_phauthuat);
-                        $duLieuGiayChungSinh->addChild('SINHCON_DUOI32TUAN', $record->sinhcon_duoi32tuan);
+                        $duLieuGiayChungSinh->addChild('SINHCON_PHAUTHUAT', $record->sinhcon_phauthuat ?? 0);
+                        $duLieuGiayChungSinh->addChild('SINHCON_DUOI32TUAN', $record->sinhcon_duoi32tuan ?? 0);
                         $this->addChildWithCDATA($duLieuGiayChungSinh, 'GHI_CHU', $record->ghi_chu);
                         $this->addChildWithCDATA($duLieuGiayChungSinh, 'NGUOI_DO_DE', $record->nguoi_do_de);
                         $this->addChildWithCDATA($duLieuGiayChungSinh, 'NGUOI_GHI_PHIEU', $record->nguoi_ghi_phieu);
@@ -1182,28 +1182,28 @@ class Qd130XmlService
                 $xmlContent = new \SimpleXMLElement('<CHI_TIEU_GIAYHEN_KHAMLAI></CHI_TIEU_GIAYHEN_KHAMLAI>');
 
                 foreach ($records as $record) {
-                    $recordElement = $xmlContent->addChild('RECORD');
-                    $recordElement->addChild('MA_LK', $record->ma_lk);
-                    $recordElement->addChild('SO_GIAYHEN_KL', $record->so_giayhen_kl);
-                    $recordElement->addChild('MA_CSKCB', $record->ma_cskcb);
-                    $this->addChildWithCDATA($recordElement, 'HO_TEN', $record->ho_ten);
-                    $recordElement->addChild('NGAY_SINH', $record->ngay_sinh);
-                    $recordElement->addChild('GIOI_TINH', $record->gioi_tinh);
-                    $this->addChildWithCDATA($recordElement, 'DIA_CHI', $record->dia_chi);
-                    $recordElement->addChild('MA_THE_BHYT', $record->ma_the_bhyt);
-                    $recordElement->addChild('GT_THE_DEN', $record->gt_the_den);
-                    $recordElement->addChild('NGAY_VAO', $record->ngay_vao);
-                    $recordElement->addChild('NGAY_VAO_NOI_TRU', $record->ngay_vao_noi_tru);
-                    $recordElement->addChild('NGAY_RA', $record->ngay_ra);
-                    $recordElement->addChild('NGAY_HEN_KL', $record->ngay_hen_kl);
-                    $this->addChildWithCDATA($recordElement, 'CHAN_DOAN_RV', $record->chan_doan_rv);
-                    $recordElement->addChild('MA_BENH_CHINH', $record->ma_benh_chinh);
-                    $recordElement->addChild('MA_BENH_KT', $record->ma_benh_kt);
-                    $recordElement->addChild('MA_DOITUONG_KCB', $record->ma_doituong_kcb);
-                    $recordElement->addChild('MA_BAC_SI', $record->ma_bacsi);
-                    $recordElement->addChild('MA_TTDV', $record->ma_ttdv);
-                    $recordElement->addChild('NGAY_CT', $record->ngay_ct);
-                    $this->addChildWithCDATA($recordElement, 'DU_PHONG', $record->du_phong);
+                    $xmlContent->addChild('MA_LK', $record->ma_lk);
+                    $xmlContent->addChild('SO_GIAYHEN_KL', $record->so_giayhen_kl);
+                    $xmlContent->addChild('MA_CSKCB', $record->ma_cskcb);
+                    $this->addChildWithCDATA($xmlContent, 'HO_TEN', $record->ho_ten);
+                    $xmlContent->addChild('NGAY_SINH', $record->ngay_sinh);
+                    $xmlContent->addChild('GIOI_TINH', $record->gioi_tinh);
+                    $this->addChildWithCDATA($xmlContent, 'DIA_CHI', $record->dia_chi);
+                    $xmlContent->addChild('MA_THE_BHYT', $record->ma_the_bhyt);
+                    $xmlContent->addChild('GT_THE_DEN', $record->gt_the_den);
+                    $xmlContent->addChild('NGAY_VAO', $record->ngay_vao);
+                    $xmlContent->addChild('NGAY_VAO_NOI_TRU', $record->ngay_vao_noi_tru);
+                    $xmlContent->addChild('NGAY_RA', $record->ngay_ra);
+                    $xmlContent->addChild('NGAY_HEN_KL', $record->ngay_hen_kl);
+                    $this->addChildWithCDATA($xmlContent, 'CHAN_DOAN_RV', $record->chan_doan_rv);
+                    $xmlContent->addChild('MA_BENH_CHINH', $record->ma_benh_chinh);
+                    $xmlContent->addChild('MA_BENH_KT', $record->ma_benh_kt);
+                    $xmlContent->addChild('MA_BENH_YHCT', $record->ma_benh_yhct);
+                    $xmlContent->addChild('MA_DOITUONG_KCB', $record->ma_doituong_kcb);
+                    $xmlContent->addChild('MA_BAC_SI', $record->ma_bac_si);
+                    $xmlContent->addChild('MA_TTDV', $record->ma_ttdv);
+                    $xmlContent->addChild('NGAY_CT', $record->ngay_ct);
+                    $this->addChildWithCDATA($xmlContent, 'DU_PHONG', $record->du_phong);
                 }
                 break;
 
