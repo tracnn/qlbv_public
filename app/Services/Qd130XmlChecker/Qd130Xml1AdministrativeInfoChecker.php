@@ -4,6 +4,7 @@ namespace App\Services\Qd130XmlChecker;
 
 use Illuminate\Support\Collection;
 use App\Models\BHYT\Qd130Xml1;
+use App\Models\BHYT\MedicalStaff;
 
 class Qd130Xml1AdministrativeInfoChecker
 {
@@ -277,10 +278,19 @@ class Qd130Xml1AdministrativeInfoChecker
 
         if (empty($data->ma_ttdv)) {
             $errors->push((object)[
-                'error_code' => $this->prefix . 'ADMIN_INFO_ERROR_MA_TTDV',
+                'error_code' => $this->prefix . 'INFO_ERROR_MA_TTDV',
                 'error_name' => 'Thiếu mã thủ trưởng đơn vị',
-                'description' => 'Mã thủ trưởng đơn vị không được để trống'
+                'description' => 'Thủ trưởng đơn vị không được để trống'
             ]);
+        } else {
+            $staff = MedicalStaff::where('ma_bhxh', $data->ma_ttdv)->first();
+            if (!$staff) {
+                $errors->push((object)[
+                    'error_code' => $this->prefix . 'INVALID_MEDICAL_STAFF_MA_TTDV',
+                    'error_name' => 'Mã thủ trưởng đơn vị chưa được duyệt',
+                    'description' => 'Mã thủ trưởng đơn vị chưa được duyệt danh mục (Mã BHXH: ' . $data->ma_ttdv . ')'
+                ]);
+            }
         }
 
         if (!empty($data->ma_the_bhyt)) {
