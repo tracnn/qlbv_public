@@ -36,6 +36,7 @@ class Qd130Xml13 extends Model
         'ma_benh_yhct',
         'ten_dich_vu',
         'ten_thuoc',
+        'pp_dieu_tri',
         'ma_loai_rv',
         'ma_lydo_ct',
         'huong_dieu_tri',

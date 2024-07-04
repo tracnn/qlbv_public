@@ -370,12 +370,12 @@ class Qd130XmlService
                 'ma_khoa_rv' => $data->MA_KHOA_RV ?: null,
                 'ngay_vao' => $data->NGAY_VAO ?: null,
                 'ngay_ra' => $data->NGAY_RA ?: null,
-                'ma_dinh_chi_thai' => intval($data->MA_DINH_CHI_THAI) ?: null,
+                'ma_dinh_chi_thai' => $data->MA_DINH_CHI_THAI,
                 'nguyennhan_dinhchi' => $data->NGUYENNHAN_DINHCHI ?: null,
                 'thoigian_dinhchi' => $data->THOIGIAN_DINHCHI ?: null,
                 'tuoi_thai' => intval($data->TUOI_THAI) ?: null,
                 'chan_doan_rv' => $data->CHAN_DOAN_RV ?: null,
-                'pp_dieu_tri' => $data->PP_DIEUTRI ?: null,
+                'pp_dieutri' => $data->PP_DIEUTRI ?: null,
                 'ghi_chu' => $data->GHI_CHU ?: null,
                 'ma_ttdv' => $data->MA_TTDV ?: null,
                 'ma_bs' => $data->MA_BS ?: null,
@@ -428,7 +428,7 @@ class Qd130XmlService
                 'chan_doan_rv' => $data->CHAN_DOAN_RV ?: null,
                 'qt_benhly' => $data->QT_BENHLY ?: null,
                 'tomtat_kq' => $data->TOMTAT_KQ ?: null,
-                'pp_dieu_tri' => $data->PP_DIEUTRI ?: null,
+                'pp_dieutri' => $data->PP_DIEUTRI ?: null,
                 'ngay_sinhcon' => $data->NGAY_SINHCON ?: null,
                 'ngay_conchet' => $data->NGAY_CONCHET ?: null,
                 'so_conchet' => intval($data->SO_CONCHET) ?: null,
@@ -541,7 +541,7 @@ class Qd130XmlService
                 'ma_bhxh' => $data->MA_BHXH ?: null,
                 'ma_the_bhyt' => $data->MA_THE_BHYT ?: null,
                 'chan_doan_rv' => $data->CHAN_DOAN_RV ?: null,
-                'pp_dieu_tri' => $data->PP_DIEUTRI ?: null,
+                'pp_dieutri' => $data->PP_DIEUTRI ?: null,
                 'ma_dinh_chi_thai' => intval($data->MA_DINH_CHI_THAI) ?: null,
                 'nguyennhan_dinhchi' => $data->NGUYENNHAN_DINHCHI ?: null,
                 'tuoi_thai' => intval($data->TUOI_THAI) ?: null,
@@ -605,12 +605,13 @@ class Qd130XmlService
                 'chan_doan_rv' => $data->CHAN_DOAN_RV ?: null,
                 'qt_benhly' => $data->QT_BENHLY ?: null,
                 'tomtat_kq' => $data->TOMTAT_KQ ?: null,
-                'pp_dieu_tri' => $data->PP_DIEUTRI ?: null,
+                'pp_dieutri' => $data->PP_DIEUTRI ?: null,
                 'ma_benh_chinh' => $data->MA_BENH_CHINH ?: null,
                 'ma_benh_kt' => $data->MA_BENH_KT ?: null,
                 'ma_benh_yhct' => $data->MA_BENH_YHCT ?: null,
                 'ten_dich_vu' => $data->TEN_DICH_VU ?: null,
                 'ten_thuoc' => $data->TEN_THUOC ?: null,
+                'pp_dieu_tri' => $data->PP_DIEU_TRI ?: null,
                 'ma_loai_rv' => intval($data->MA_LOAI_RV) ?: null,
                 'ma_lydo_ct' => intval($data->MA_LYDO_CT) ?: null,
                 'huong_dieu_tri' => $data->HUONG_DIEU_TRI ?: null,
@@ -878,20 +879,20 @@ class Qd130XmlService
                     $this->addChildWithCDATA($chiTietThuoc, 'SO_DANG_KY', $record->so_dang_ky);
                     $this->addChildWithCDATA($chiTietThuoc, 'TT_THAU', $record->tt_thau);
                     $chiTietThuoc->addChild('PHAM_VI', $record->pham_vi);
-                    $chiTietThuoc->addChild('TYLE_TT_BH', $record->tyle_tt_bh);
-                    $chiTietThuoc->addChild('SO_LUONG', $record->so_luong);
-                    $chiTietThuoc->addChild('DON_GIA', $record->don_gia);
-                    $chiTietThuoc->addChild('THANH_TIEN_BV', $record->thanh_tien_bv);
-                    $chiTietThuoc->addChild('THANH_TIEN_BH', $record->thanh_tien_bh);
-                    $chiTietThuoc->addChild('T_NGUONKHAC_NSNN', $record->t_nguonkhac_nsnn);
-                    $chiTietThuoc->addChild('T_NGUONKHAC_VTNN', $record->t_nguonkhac_vtnn);
-                    $chiTietThuoc->addChild('T_NGUONKHAC_VTTN', $record->t_nguonkhac_vttn);
-                    $chiTietThuoc->addChild('T_NGUONKHAC_CL', $record->t_nguonkhac_cl);
-                    $chiTietThuoc->addChild('T_NGUONKHAC', $record->t_nguonkhac);
-                    $chiTietThuoc->addChild('MUC_HUONG', $record->muc_huong);
-                    $chiTietThuoc->addChild('T_BHTT', $record->t_bhtt);
-                    $chiTietThuoc->addChild('T_BNCCT', $record->t_bncct);
-                    $chiTietThuoc->addChild('T_BNTT', $record->t_bntt);
+                    $chiTietThuoc->addChild('TYLE_TT_BH', $record->tyle_tt_bh ?? 0);
+                    $chiTietThuoc->addChild('SO_LUONG', $record->so_luong ?? 0);
+                    $chiTietThuoc->addChild('DON_GIA', $record->don_gia ?? 0);
+                    $chiTietThuoc->addChild('THANH_TIEN_BV', $record->thanh_tien_bv ?? 0);
+                    $chiTietThuoc->addChild('THANH_TIEN_BH', $record->thanh_tien_bh ?? 0);
+                    $chiTietThuoc->addChild('T_NGUONKHAC_NSNN', $record->t_nguonkhac_nsnn ?? 0);
+                    $chiTietThuoc->addChild('T_NGUONKHAC_VTNN', $record->t_nguonkhac_vtnn ?? 0);
+                    $chiTietThuoc->addChild('T_NGUONKHAC_VTTN', $record->t_nguonkhac_vttn ?? 0);
+                    $chiTietThuoc->addChild('T_NGUONKHAC_CL', $record->t_nguonkhac_cl ?? 0);
+                    $chiTietThuoc->addChild('T_NGUONKHAC', $record->t_nguonkhac ?? 0);
+                    $chiTietThuoc->addChild('MUC_HUONG', $record->muc_huong ?? 0);
+                    $chiTietThuoc->addChild('T_BHTT', $record->t_bhtt ?? 0);
+                    $chiTietThuoc->addChild('T_BNCCT', $record->t_bncct ?? 0);
+                    $chiTietThuoc->addChild('T_BNTT', $record->t_bntt ?? 0);
                     $chiTietThuoc->addChild('MA_KHOA', $record->ma_khoa);
                     $chiTietThuoc->addChild('MA_BAC_SI', $record->ma_bac_si);
                     $chiTietThuoc->addChild('MA_DICH_VU', $record->ma_dich_vu);
@@ -1011,7 +1012,7 @@ class Qd130XmlService
                     $this->addChildWithCDATA($xmlContent, 'THOIGIAN_DINHCHI', $record->thoigian_dinhchi);
                     $this->addChildWithCDATA($xmlContent, 'TUOI_THAI', $record->tuoi_thai);
                     $this->addChildWithCDATA($xmlContent, 'CHAN_DOAN_RV', $record->chan_doan_rv);
-                    $this->addChildWithCDATA($xmlContent, 'PP_DIEUTRI', $record->pp_dieu_tri);
+                    $this->addChildWithCDATA($xmlContent, 'PP_DIEUTRI', $record->pp_dieutri);
                     $this->addChildWithCDATA($xmlContent, 'GHI_CHU', $record->ghi_chu);
                     $xmlContent->addChild('MA_TTDV', $record->ma_ttdv);
                     $xmlContent->addChild('MA_BS', $record->ma_bs);
@@ -1045,7 +1046,7 @@ class Qd130XmlService
                     $this->addChildWithCDATA($xmlContent, 'CHAN_DOAN_RV', $record->chan_doan_rv);
                     $this->addChildWithCDATA($xmlContent, 'QT_BENHLY', $record->qt_benhly);
                     $this->addChildWithCDATA($xmlContent, 'TOMTAT_KQ', $record->tomtat_kq);
-                    $this->addChildWithCDATA($xmlContent, 'PP_DIEUTRI', $record->pp_dieu_tri);
+                    $this->addChildWithCDATA($xmlContent, 'PP_DIEUTRI', $record->pp_dieutri);
                     $this->addChildWithCDATA($xmlContent, 'NGAY_SINHCON', $record->ngay_sinhcon);
                     $this->addChildWithCDATA($xmlContent, 'NGAY_CONCHET', $record->ngay_conchet);
                     $this->addChildWithCDATA($xmlContent, 'SO_CONCHET', $record->so_conchet);
@@ -1113,7 +1114,7 @@ class Qd130XmlService
                     $xmlContent->addChild('MA_BHXH', $record->ma_bhxh);
                     $xmlContent->addChild('MA_THE_BHYT', $record->ma_the_bhyt);
                     $this->addChildWithCDATA($xmlContent, 'CHAN_DOAN_RV', $record->chan_doan_rv);
-                    $this->addChildWithCDATA($xmlContent, 'PP_DIEUTRI', $record->pp_dieu_tri);
+                    $this->addChildWithCDATA($xmlContent, 'PP_DIEUTRI', $record->pp_dieutri);
                     $xmlContent->addChild('MA_DINH_CHI_THAI', $record->ma_dinh_chi_thai);
                     $this->addChildWithCDATA($xmlContent, 'NGUYENNHAN_DINHCHI', $record->nguyennhan_dinhchi);
                     $this->addChildWithCDATA($xmlContent, 'TUOI_THAI', $record->tuoi_thai);
@@ -1138,7 +1139,7 @@ class Qd130XmlService
                     $xmlContent->addChild('MA_LK', $record->ma_lk);
                     $xmlContent->addChild('SO_HOSO', $record->so_hoso);
                     $xmlContent->addChild('SO_CHUYENTUYEN', $record->so_chuyentuyen);
-                    $xmlContent->addChild('GIAY_CHUYEN_TUYEN', $record->giay_chuyentuyen);
+                    $xmlContent->addChild('GIAY_CHUYEN_TUYEN', $record->giay_chuyen_tuyen);
                     $xmlContent->addChild('MA_CSKCB', $record->ma_cskcb);
                     $xmlContent->addChild('MA_NOI_DI', $record->ma_noi_di);
                     $xmlContent->addChild('MA_NOI_DEN', $record->ma_noi_den);
@@ -1158,7 +1159,7 @@ class Qd130XmlService
                     $this->addChildWithCDATA($xmlContent, 'CHAN_DOAN_RV', $record->chan_doan_rv);
                     $this->addChildWithCDATA($xmlContent, 'QT_BENHLY', $record->qt_benhly);
                     $this->addChildWithCDATA($xmlContent, 'TOMTAT_KQ', $record->tomtat_kq);
-                    $this->addChildWithCDATA($xmlContent, 'PP_DIEU_TRI', $record->pp_dieu_tri);
+                    $this->addChildWithCDATA($xmlContent, 'PP_DIEUTRI', $record->pp_dieutri);
                     $xmlContent->addChild('MA_BENH_CHINH', $record->ma_benh_chinh);
                     $xmlContent->addChild('MA_BENH_KT', $record->ma_benh_kt);
                     $xmlContent->addChild('MA_BENH_YHCT', $record->ma_benh_yhct);
