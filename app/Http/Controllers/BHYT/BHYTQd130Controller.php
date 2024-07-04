@@ -14,7 +14,8 @@ use App\Services\Qd130XmlService;
 use App\Services\XmlStructures;
 
 use Carbon\Carbon;
-
+use Illuminate\Support\Facades\Storage;
+use ZipArchive;
 
 class BHYTQd130Controller extends Controller
 {
@@ -343,41 +344,61 @@ class BHYTQd130Controller extends Controller
         return true;
     }
 
-    // BhytController.php
     public function exportXml(Request $request)
     {
         $selectedRecords = $request->input('records');
+        $fileNames = [];
+        $chunkSize = 50;
+        $chunks = array_chunk($selectedRecords, $chunkSize);
 
-        return response()->json(['success' => true, 'records' => $selectedRecords]);
+        $storagePath = 'public/xml130/';
 
-        // Truy vấn dữ liệu từ cơ sở dữ liệu theo danh sách hồ sơ đã chọn
-        $data = $this->qd130XmlService->getDataForXmlExport($selectedRecords);
-
-        // Chuyển đổi dữ liệu sang định dạng XML
-        $xml = new SimpleXMLElement('<root/>');
-        foreach ($data as $record) {
-            $this->arrayToXml($record, $xml);
+        // Ensure the storage path exists
+        if (!Storage::exists($storagePath)) {
+            Storage::makeDirectory($storagePath);
         }
 
-        // Lưu XML thành file và trả về đường dẫn file để người dùng tải về
-        $fileName = 'exported_records_' . time() . '.xml';
-        $filePath = storage_path('app/public/' . $fileName);
-        $xml->asXML($filePath);
+        foreach ($chunks as $chunkIndex => $chunk) {
+            foreach ($chunk as $selectedRecord) {
+                // Truy vấn dữ liệu từ cơ sở dữ liệu theo hồ sơ đã chọn
+                $xmlData = $this->qd130XmlService->getDataForXmlExport($selectedRecord);
 
-        return response()->json(['success' => true, 'file' => asset('storage/' . $fileName)]);
-    }
+                $formattedDateTime = date('d.m.Y_H.i.s');
+                // Tạo tên file XML
+                $fileName = $formattedDateTime . '_' . $selectedRecord . '.xml';
 
-    private function arrayToXml($data, &$xmlData) {
-        foreach ($data as $key => $value) {
-            if (is_array($value)) {
-                if (is_numeric($key)) {
-                    $key = 'item' . $key; // dealing with <0/>..<n/> issues
+                $filePath = storage_path('app/' . $storagePath . $fileName);
+
+
+                // Lưu XML thành file
+                if (file_put_contents($filePath, $xmlData) === false) {
+                    \Log::error('Failed to write XML file: ' . $filePath);
+                    continue;
                 }
-                $subnode = $xmlData->addChild($key);
-                $this->arrayToXml($value, $subnode);
-            } else {
-                $xmlData->addChild("$key", htmlspecialchars("$value"));
+
+                $fileNames[] = $filePath;
             }
         }
+
+        // Tạo file ZIP
+        $zipFileName = 'exported_xml_' . date('d.m.Y_H.i.s') . '.zip';
+        $zipFilePath = storage_path('app/' . $storagePath . $zipFileName);
+
+        $zip = new ZipArchive;
+        if ($zip->open($zipFilePath, ZipArchive::CREATE) === TRUE) {
+            foreach ($fileNames as $file) {
+                $zip->addFile($file, basename($file));
+            }
+            $zip->close();
+        } else {
+            return response()->json(['success' => false, 'message' => 'Failed to create ZIP file.'], 500);
+        }
+
+        // Xóa các file XML sau khi nén
+        foreach ($fileNames as $file) {
+            unlink($file);
+        }
+
+        return response()->json(['success' => true, 'file' => asset('storage/xml130/' . $zipFileName)]);
     }
 }

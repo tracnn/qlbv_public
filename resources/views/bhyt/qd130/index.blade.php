@@ -15,7 +15,7 @@
 @include('includes.message')
 <!-- /Messages -->
 @include('bhyt.qd130.partials.search')
-
+<button id="bulk-action-btn" class="btn btn-primary" disabled>Xuất XML4750</button>
 <div class="panel panel-default">
     <div class="panel-body table-responsive">
         <table id="xml-list" class="table display table-hover responsive nowrap datatable dtr-inline" width="100%">
@@ -63,7 +63,6 @@
         </div>
     </div>
 </div>
-<button id="bulk-action-btn" class="btn btn-primary" disabled>Xuất XML4750</button>
 @stop
 
 @push('after-scripts')
@@ -109,9 +108,14 @@
             },
             "columns": [
                 { "data": "ma_lk" },
-                { "data": null, "render": function (data, type, row) {
-                    return '<input type="checkbox" class="row-select" value="' + row.ma_lk + '">';
-                }, "orderable": false },
+                { 
+                    "data": null, 
+                    "render": function (data, type, row) {
+                        return '<input type="checkbox" class="row-select" value="' + row.ma_lk + '">';
+                    }, 
+                    "orderable": false,
+                    "searchable": false 
+                },
                 { "data": "ma_bn" },
                 { "data": "ho_ten" },
                 { "data": "ma_the_bhyt" },
@@ -214,8 +218,8 @@
             },
             success: function(response) {
                 if (response.success) {
-                    console.log(response.records);
-                    //window.location.href = response.file; // Chuyển hướng để tải file
+                    //console.log(response.records);
+                    window.location.href = response.file; // Chuyển hướng để tải file
                 } else {
                     alert('Có lỗi xảy ra, vui lòng thử lại.');
                 }
