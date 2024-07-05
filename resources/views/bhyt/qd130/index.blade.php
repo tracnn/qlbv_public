@@ -101,6 +101,8 @@
                 complete: function(xhr, status) {
                     currentAjaxRequest = null;
                     //populateErrorCodeDropdown(xhr.responseJSON.errorCodes);
+                    $('#select-all').prop('checked', false);
+                    toggleBulkActionBtn();
                 },
                 error: function(xhr, error, code) {
                     console.log('Error:', error);

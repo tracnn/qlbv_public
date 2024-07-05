@@ -31,9 +31,9 @@
                                     <th>Tên chỉ số</th>
                                     <th>Giá trị</th>
                                     <th>Mã máy</th>
-                                    <th>Mô tả</th>
                                     <th>Kết luận</th>
                                     <th>Ngày KQ</th>
+                                    <th>BS đọc KQ</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -45,9 +45,9 @@
                                     <td>{{ $value_xml4->ten_chi_so }}</td>
                                     <td>{{ $value_xml4->gia_tri }}</td>
                                     <td>{{ $value_xml4->ma_may }}</td> 
-                                    <td>{{ $value_xml4->mo_ta }}</td> 
                                     <td>{{ $value_xml4->ket_luan }}</td>  
-                                    <td>{{ strtodatetime($value_xml4->ngay_kq) }}</td>         
+                                    <td>{{ strtodatetime($value_xml4->ngay_kq) }}</td>
+                                    <td>{{ $value_xml4->ma_bs_doc_kq }}</td>         
                                 </tr>
                                 @endforeach
                             </tbody>
