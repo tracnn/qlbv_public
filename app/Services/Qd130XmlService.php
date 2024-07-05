@@ -1007,7 +1007,7 @@ class Qd130XmlService
                     $xmlContent->addChild('MA_KHOA_RV', $record->ma_khoa_rv);
                     $xmlContent->addChild('NGAY_VAO', $record->ngay_vao);
                     $xmlContent->addChild('NGAY_RA', $record->ngay_ra);
-                    $xmlContent->addChild('MA_DINH_CHI_THAI', $record->ma_dinh_chi_thai);
+                    $xmlContent->addChild('MA_DINH_CHI_THAI', $record->ma_dinh_chi_thai ?? 0);
                     $this->addChildWithCDATA($xmlContent, 'NGUYENNHAN_DINHCHI', $record->nguyennhan_dinhchi);
                     $this->addChildWithCDATA($xmlContent, 'THOIGIAN_DINHCHI', $record->thoigian_dinhchi);
                     $this->addChildWithCDATA($xmlContent, 'TUOI_THAI', $record->tuoi_thai);

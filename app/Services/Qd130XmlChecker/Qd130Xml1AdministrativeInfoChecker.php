@@ -5,6 +5,7 @@ namespace App\Services\Qd130XmlChecker;
 use Illuminate\Support\Collection;
 use App\Models\BHYT\Qd130Xml1;
 use App\Models\BHYT\MedicalStaff;
+use App\Models\BHYT\MedicalOrganization;
 
 class Qd130Xml1AdministrativeInfoChecker
 {
@@ -266,6 +267,65 @@ class Qd130Xml1AdministrativeInfoChecker
                 'error_name' => 'Thiếu mã cơ sở KCB',
                 'description' => 'Mã cơ sở KCB không được để trống'
             ]);
+        }  else {
+            // Kiểm tra nếu ma_cskcb không có trong MedicalOrganization
+            $organizationExists = MedicalOrganization::where('ma_cskcb', $data->ma_cskcb)->exists();
+
+            if (!$organizationExists) {
+                $errors->push((object)[
+                    'error_code' => $this->prefix . 'ADMIN_INFO_ERROR_MA_CSKCB_NOT_FOUND',
+                    'error_name' => 'Mã cơ sở KCB không có trong danh mục',
+                    'description' => 'Mã cơ sở KCB: ' . $data->ma_cskcb . ' không có trong danh mục CSKCB'
+                ]);
+            }
+        }
+
+        // Kiểm tra mã nơi đến
+        if (!empty($data->ma_noi_den)) {
+            $destinationExists = MedicalOrganization::where('ma_cskcb', $data->ma_noi_den)->exists();
+
+            if (!$destinationExists) {
+                $errors->push((object)[
+                    'error_code' => $this->prefix . 'ADMIN_INFO_ERROR_MA_NOI_DEN_NOT_FOUND',
+                    'error_name' => 'Mã nơi đến không có trong danh mục',
+                    'description' => 'Mã nơi đến: ' . $data->ma_noi_den . ' không có trong danh mục CSKCB'
+                ]);
+            }
+        }
+
+        // Kiểm tra mã đơn vị khám bệnh đa khoa ban đầu
+        if (!empty($data->ma_dkbd)) {
+            $initialExaminationUnitExists = MedicalOrganization::where('ma_cskcb', $data->ma_dkbd)->exists();
+
+            if (!$initialExaminationUnitExists) {
+                $errors->push((object)[
+                    'error_code' => $this->prefix . 'ADMIN_INFO_ERROR_MA_DKBD_NOT_FOUND',
+                    'error_name' => 'Mã đăng ký ban đầu không có trong danh mục',
+                    'description' => 'Mã đăng ký ban đầu: ' . $data->ma_dkbd . ' không có trong danh mục CSKCB'
+                ]);
+            }
+        }
+
+        // Kiểm tra mã nơi đi
+        if (!empty($data->ma_noi_di)) {
+            $departureExists = MedicalOrganization::where('ma_cskcb', $data->ma_noi_di)->exists();
+
+            if (!$departureExists) {
+                $errors->push((object)[
+                    'error_code' => $this->prefix . 'ADMIN_INFO_ERROR_MA_NOI_DI_NOT_FOUND',
+                    'error_name' => 'Mã nơi đi không có trong danh mục',
+                    'description' => 'Mã nơi đi: ' . $data->ma_noi_di . ' không có trong danh mục CSKCB'
+                ]);
+            }
+
+            // Kiểm tra giấy chuyển tuyến
+            if (empty($data->giay_chuyen_tuyen)) {
+                $errors->push((object)[
+                    'error_code' => $this->prefix . 'ADMIN_INFO_ERROR_GIAY_CHUYEN_TUYEN',
+                    'error_name' => 'Thiếu giấy chuyển tuyến',
+                    'description' => 'Giấy chuyển tuyến không được để trống khi BN chuyển đến KCB'
+                ]);
+            }
         }
 
         if (empty($data->ma_hsba)) {

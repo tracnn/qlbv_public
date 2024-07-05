@@ -15,7 +15,9 @@
 @include('includes.message')
 <!-- /Messages -->
 @include('bhyt.qd130.partials.search')
+
 <button id="bulk-action-btn" class="btn btn-primary" disabled>Xuất XML4750</button>
+
 <div class="panel panel-default">
     <div class="panel-body table-responsive">
         <table id="xml-list" class="table display table-hover responsive nowrap datatable dtr-inline" width="100%">
@@ -106,7 +108,10 @@
                     console.log('XHR:', xhr);
                 }
             },
-            "lengthMenu": [[10, 25, 50, 100, 200, 500, 1000, 2000], [10, 25, 50, 100, 200, 500, 1000, 2000]],
+            "lengthMenu": [
+                [10, 25, 50, 100, 200, 500, 1000, 2000], 
+                [10, 25, 50, 100, 200, 500, 1000, 2000]
+            ],
             "columns": [
                 { "data": "ma_lk" },
                 { 

@@ -19,6 +19,7 @@ class Qd130Xml3Checker
     protected $examinationGroupCodes;
     protected $transportGroupCodes;
     protected $bedCodePattern;
+    protected $excludedMaterialGroupCodes;
 
 
     public function __construct(Qd130XmlErrorService $xmlErrorService)
@@ -39,6 +40,7 @@ class Qd130Xml3Checker
         $this->examinationGroupCodes = [13];
         $this->transportGroupCodes = [12];
         $this->bedCodePattern = '/^[HTCK]\d{3}$/';
+        $this->excludedMaterialGroupCodes = [11];
     }
 
     /**
@@ -63,6 +65,7 @@ class Qd130Xml3Checker
 
         $errors = $errors->merge($this->checkMissingServiceOrMaterial($data));
         $errors = $errors->merge($this->checkBedGroupCodeConditions($data));
+         $errors = $errors->merge($this->checkExcludedMaterialGroupCode($data));
         // $errors = $errors->merge($this->checkTTranttAndTBhtt($data)); // Thêm kiểm tra T_TRANTT và T_BHTT
         // $errors = $errors->merge($this->checkBedDayQuantity($data)); // Thêm kiểm tra số lượng ngày giường
         // $errors = $errors->merge($this->checkMedicalSupplyCatalog($data)); // Thêm kiểm tra VTYT
@@ -362,6 +365,27 @@ class Qd130Xml3Checker
 
         return $errors;
     }
-    
+
+    /**
+     * Check if material group code is excluded
+     *
+     * @param Qd130Xml3 $data
+     * @return Collection
+     */
+    private function checkExcludedMaterialGroupCode(Qd130Xml3 $data): Collection
+    {
+        $errors = collect();
+
+        if (in_array($data->ma_nhom, $this->excludedMaterialGroupCodes)) {
+            $errors->push((object)[
+                'error_code' => $this->prefix . 'EXCLUDED_MATERIAL_GROUP_CODE',
+                'error_name' => 'Vật tư nằm ngoài danh mục hoặc vật tư thay thế',
+                'description' => 'Mã vật tư: ' . $data->ma_vat_tu . ' nằm ngoài danh mục hoặc là vật tư thay thế'
+            ]);
+        }
+
+        return $errors;
+    }
+
     // Thêm các phương thức kiểm tra khác ở đây
 }
