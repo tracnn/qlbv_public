@@ -1,4 +1,4 @@
-<div id="menu6" class="tab-pane fade">
+<div id="menu-xml-errors" class="tab-pane fade">
     <div class="panel panel-default">
         <div class="panel-body table-responsive">
             @if($xml1->Qd130XmlErrorResult->isNotEmpty())

@@ -4,18 +4,18 @@
     Mã thẻ - {{ $xml1->ma_the_bhyt }}; Nơi ĐKBĐ - {{ $xml1->ma_dkbd }}
 </label>
 <ul class="nav nav-tabs">
-    <li class="active"><a data-toggle="tab" href="#menu0">XML1</a></li>
+    <li class="active"><a data-toggle="tab" href="#menu1">XML1</a></li>
     @if($xml1->Qd130Xml2->isNotEmpty())
-    <li><a data-toggle="tab" href="#menu1">XML2</a></li>
+    <li><a data-toggle="tab" href="#menu2">XML2</a></li>
     @endif
     @if($xml1->Qd130Xml3->isNotEmpty())
-    <li><a data-toggle="tab" href="#menu2">XML3</a></li>
+    <li><a data-toggle="tab" href="#menu3">XML3</a></li>
     @endif
     @if($xml1->Qd130Xml4->isNotEmpty())
-    <li><a data-toggle="tab" href="#menu3">XML4</a></li>
+    <li><a data-toggle="tab" href="#menu4">XML4</a></li>
     @endif
     @if($xml1->Qd130Xml5->isNotEmpty())
-    <li><a data-toggle="tab" href="#menu4">XML5</a></li>
+    <li><a data-toggle="tab" href="#menu5">XML5</a></li>
     @endif
     @if($xml1->Qd130Xml7->isNotEmpty())
     <li><a data-toggle="tab" href="#menu7">XML7</a></li>
@@ -37,11 +37,11 @@
     @endif
     <li class="{{ ($xml1->check_hein_card && ($xml1->check_hein_card->ma_tracuu != '000' || 
         $xml1->check_hein_card->ma_kiemtra != '00')) ? 'highlight-red' : '' }}">
-        <a data-toggle="tab" href="#menu5">Thẻ BHYT</a>
+        <a data-toggle="tab" href="#menu-hein-card">Thẻ BHYT</a>
     </li>
     @if($xml1->Qd130XmlErrorResult->isNotEmpty())
     <li class="{{ $xml1->Qd130XmlErrorResult->isNotEmpty() ? 'highlight-red' : '' }}">
-        <a data-toggle="tab" href="#menu6">Lỗi XML</a>
+        <a data-toggle="tab" href="#menu-xml-errors">Lỗi XML</a>
     </li>
     @endif
 </ul>

@@ -1,4 +1,4 @@
-<div id="menu0" class="tab-pane fade in active">
+<div id="menu1" class="tab-pane fade in active">
     <ul class="nav nav-tabs">
         <li class="active"><a data-toggle="tab" href="#admin_info">Thông tin hành chính</a></li>
         <li><a data-toggle="tab" href="#treatment_info">Quá trình điều trị</a></li>

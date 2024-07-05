@@ -1,4 +1,4 @@
-<div id="menu5" class="tab-pane fade">
+<div id="menu-hein-card" class="tab-pane fade">
     <div class="panel panel-default">
         <div class="panel-body table-responsive">
             @if($xml1->check_hein_card)
