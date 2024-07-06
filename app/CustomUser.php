@@ -6,6 +6,8 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Laratrust\Traits\LaratrustUserTrait;
 
+use App\UserConfiguration;
+
 class CustomUser extends Authenticatable
 {
     use LaratrustUserTrait;

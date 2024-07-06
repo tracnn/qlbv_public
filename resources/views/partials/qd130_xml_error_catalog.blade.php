@@ -1,7 +1,7 @@
 <!-- resources/views/partials/xml_error_catalog.blade.php -->
 <div class="col-sm-2">
     <div class="form-group row">
-        <label for="qd130_xml_error_catalog">Danh mục lỗi XML</label>
+        <label for="qd130_xml_error_catalog">Lỗi XML</label>
         <select id="qd130_xml_error_catalog" class="form-control">
             <option value="">Tất cả</option>
         </select>
