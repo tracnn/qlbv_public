@@ -5,6 +5,9 @@ namespace App\Services;
 use App\Models\BHYT\Qd130Xml13;
 use App\Models\BHYT\MedicalStaff;
 use Illuminate\Support\Collection;
+use App\Models\BHYT\MedicalOrganization;
+use App\Models\BHYT\Icd10Category;
+use App\Models\BHYT\IcdYhctCategory;
 
 class Qd130Xml13Checker
 {
@@ -84,6 +87,17 @@ class Qd130Xml13Checker
                 'error_name' => 'Thiếu mã CSKCB',
                 'description' => 'CSKCB không được để trống'
             ]);
+        }  else {
+            // Kiểm tra nếu ma_cskcb không có trong MedicalOrganization
+            $organizationExists = MedicalOrganization::where('ma_cskcb', $data->ma_cskcb)->exists();
+
+            if (!$organizationExists) {
+                $errors->push((object)[
+                    'error_code' => $this->prefix . 'INFO_ERROR_MA_CSKCB_NOT_FOUND',
+                    'error_name' => 'Mã cơ sở KCB không có trong danh mục',
+                    'description' => 'Mã cơ sở KCB: ' . $data->ma_cskcb . ' không có trong danh mục CSKCB'
+                ]);
+            }
         }
 
         if (empty($data->ma_noi_den)) {
@@ -92,6 +106,17 @@ class Qd130Xml13Checker
                 'error_name' => 'Thiếu mã nơi đến',
                 'description' => 'Mã nơi đến không được để trống'
             ]);
+        }  else {
+            // Kiểm tra nếu ma_cskcb không có trong MedicalOrganization
+            $organizationExists = MedicalOrganization::where('ma_cskcb', $data->ma_noi_den)->exists();
+
+            if (!$organizationExists) {
+                $errors->push((object)[
+                    'error_code' => $this->prefix . 'INFO_ERROR_MA_NOI_DEN_NOT_FOUND',
+                    'error_name' => 'Mã nơi đến không có trong danh mục',
+                    'description' => 'Mã cơ sở KCB: ' . $data->ma_noi_den . ' không có trong danh mục CSKCB'
+                ]);
+            }
         }
 
         if (!empty($data->ngay_vao_noi_tru)) {
@@ -134,7 +159,14 @@ class Qd130Xml13Checker
                 'error_name' => 'Thiếu mã bệnh chính',
                 'description' => 'Mã bệnh chính không được để trống'
             ]);
+        } elseif (!Icd10Category::where('icd_code', $data->ma_benh_chinh)->exists()) {
+            $errors->push((object)[
+                'error_code' => $this->prefix . 'INFO_ERROR_MA_BENH_CHINH_NOT_FOUND',
+                'error_name' => 'Mã bệnh chính không tồn tại',
+                'description' => 'Mã bệnh chính không tồn tại trong danh mục ICD10: ' . $data->ma_benh_chinh
+            ]);
         }
+
 
         if (!empty($data->ma_benh_kt)) {
             $ma_benh_kt_array = explode(';', $data->ma_benh_kt);
@@ -144,6 +176,29 @@ class Qd130Xml13Checker
                     'error_name' => 'Mã bệnh kèm theo vượt quá 12 mã',
                     'description' => 'Mã bệnh kèm theo không được vượt quá 12 mã'
                 ]);
+            }
+            foreach ($ma_benh_kt_array as $ma_benh_kt) {
+                if (!Icd10Category::where('icd_code', $ma_benh_kt)->exists()) {
+                    $errors->push((object)[
+                        'error_code' => $this->prefix . 'INFO_ERROR_MA_BENH_KT_NOT_FOUND',
+                        'error_name' => 'Mã bệnh kèm theo không tồn tại',
+                        'description' => 'Mã bệnh kèm theo không tồn tại trong danh mục ICD10: ' . $ma_benh_kt
+                    ]);
+                }
+            }
+        }
+
+        // Check ma_benh_yhct
+        if (!empty($data->ma_benh_yhct)) {
+            $ma_benh_yhct_array = explode(';', $data->ma_benh_yhct);
+            foreach ($ma_benh_yhct_array as $ma_benh_yhct) {
+                if (!IcdYhctCategory::where('icd_code', $ma_benh_yhct)->exists()) {
+                    $errors->push((object)[
+                        'error_code' => $this->prefix . 'INFO_ERROR_MA_BENH_YHCT_NOT_FOUND',
+                        'error_name' => 'Mã bệnh YHCT không tồn tại',
+                        'description' => 'Mã bệnh YHCT không tồn tại trong danh mục ICD YHCT: ' . $ma_benh_yhct
+                    ]);
+                }
             }
         }
 
