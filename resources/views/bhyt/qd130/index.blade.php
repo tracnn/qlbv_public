@@ -71,6 +71,7 @@
 <script type="text/javascript">
     var currentAjaxRequest = null; // Biến để lưu trữ yêu cầu AJAX hiện tại
     var table = null;
+    var selectedRecords = [];
 
     function fetchData(startDate, endDate) {
         // Kiểm tra và hủy yêu cầu AJAX trước đó (nếu có)
@@ -101,7 +102,7 @@
                 complete: function(xhr, status) {
                     currentAjaxRequest = null;
                     //populateErrorCodeDropdown(xhr.responseJSON.errorCodes);
-                    $('#select-all').prop('checked', false);
+                    applySelectedCheckboxes(); // Áp dụng lại trạng thái checkbox
                     toggleBulkActionBtn();
                 },
                 error: function(xhr, error, code) {
@@ -167,10 +168,15 @@
         $('#select-all').on('click', function(){
             var rows = table.rows({ 'search': 'applied' }).nodes();
             $('input[type="checkbox"]', rows).prop('checked', this.checked);
+            updateSelectedRecords();
             toggleBulkActionBtn();
         });
 
         $('#xml-list tbody').on('change', '.row-select', function() {
+            updateSelectedRecords();
+            if (!this.checked) {
+                $('#select-all').prop('checked', false);
+            }
             toggleBulkActionBtn();
         });
 
@@ -207,6 +213,22 @@
         });
 
     });
+
+    function updateSelectedRecords() {
+        selectedRecords = [];
+        $('.row-select:checked').each(function() {
+            selectedRecords.push($(this).val());
+        });
+    }
+
+    function applySelectedCheckboxes() {
+        var rows = table.rows().nodes();
+        $('input[type="checkbox"]', rows).each(function() {
+            if (selectedRecords.includes($(this).val())) {
+                $(this).prop('checked', true);
+            }
+        });
+    }
 
     function toggleBulkActionBtn() {
         if ($('.row-select:checked').length > 0) {
