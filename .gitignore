@@ -21,9 +21,6 @@
 /config/database.php
 /config/filesystems.php
 
-# Ignore tests directory
-/tests/
-
 # Ignore IDE files
 .idea/
 /.vscode/
