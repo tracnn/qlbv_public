@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\BHYT\Qd130Xml3;
 use App\Models\BHYT\MedicalSupplyCatalog;
+use App\Models\BHYT\MedicalStaff;
 use Illuminate\Support\Collection;
 
 class Qd130Xml3Checker
@@ -20,6 +21,7 @@ class Qd130Xml3Checker
     protected $transportGroupCodes;
     protected $bedCodePattern;
     protected $excludedMaterialGroupCodes;
+    protected $groupCodeWithExecutor;
 
 
     public function __construct(Qd130XmlErrorService $xmlErrorService)
@@ -41,6 +43,7 @@ class Qd130Xml3Checker
         $this->transportGroupCodes = [12];
         $this->bedCodePattern = '/^[HTCK]\d{3}$/';
         $this->excludedMaterialGroupCodes = [11];
+        $this->groupCodeWithExecutor = [1,2,3,8,18];
     }
 
     /**
@@ -62,11 +65,11 @@ class Qd130Xml3Checker
             $errors = $errors->merge($this->checkOrderTime($data));
             $errors = $errors->merge($this->checkNgayKq($data)); // Thêm kiểm tra NGAY_KQ
         }
-
+        $errors = $errors->merge($this->infoChecker($data));
         $errors = $errors->merge($this->checkMissingServiceOrMaterial($data));
         $errors = $errors->merge($this->checkBedGroupCodeConditions($data));
-         $errors = $errors->merge($this->checkExcludedMaterialGroupCode($data));
-        // $errors = $errors->merge($this->checkTTranttAndTBhtt($data)); // Thêm kiểm tra T_TRANTT và T_BHTT
+        $errors = $errors->merge($this->checkExcludedMaterialGroupCode($data));
+        //$errors = $errors->merge($this->checkGroupCodeWithExecutor($data));
         // $errors = $errors->merge($this->checkBedDayQuantity($data)); // Thêm kiểm tra số lượng ngày giường
         // $errors = $errors->merge($this->checkMedicalSupplyCatalog($data)); // Thêm kiểm tra VTYT
 
@@ -80,6 +83,59 @@ class Qd130Xml3Checker
 
         // Save errors to xml_error_checks table
         $this->xmlErrorService->saveErrors($this->xmlType, $data->ma_lk, $data->stt, $errors, $additionalData);
+    }
+
+    /**
+     * Check for outpatient bed day errors
+     *
+     * @param Qd130Xml3 $data
+     * @return Collection
+     */
+    private function infoChecker(Qd130Xml3 $data): Collection
+    {
+        $errors = collect();
+
+        if (in_array($data->ma_nhom, $this->groupCodeWithExecutor) && empty($data->nguoi_thuc_hien)) {
+            $errors->push((object)[
+                'error_code' => $this->prefix . 'INFO_ERROR_GROUP_CODE_NGUOI_THUC_HIEN',
+                'error_name' => 'Thiếu người thực hiện',
+                'description' => 'Người thực hiện không được để trống đối với DVKT tên dịch vụ: ' . $data->ten_dich_vu
+            ]);
+        }
+
+        if (!empty($data->nguoi_thuc_hien)) {
+            $nguoi_thuc_hien_array = explode(';', $data->nguoi_thuc_hien);
+            foreach ($nguoi_thuc_hien_array as $nguoi_thuc_hien) {
+                if (!MedicalStaff::where('macchn', $nguoi_thuc_hien)->exists()) {
+                    $errors->push((object)[
+                        'error_code' => $this->prefix . 'INFO_ERROR_NGUOI_THUC_HIEN_NOT_FOUND',
+                        'error_name' => 'Người thực hiện không tồn tại',
+                        'description' => 'Người thực hiện không tồn tại trong danh mục NVYT: ' . $nguoi_thuc_hien
+                    ]);
+                }
+            }
+        }
+
+        if (empty($data->ma_bac_si)) {
+            $errors->push((object)[
+                'error_code' => $this->prefix . 'INFO_ERROR_MA_BAC_SI',
+                'error_name' => 'Thiếu mã bác sĩ',
+                'description' => 'Mã bác sĩ không được để trống'
+            ]);
+        } else {
+            $ma_bac_si_array = explode(';', $data->ma_bac_si);
+            foreach ($ma_bac_si_array as $ma_ba_si) {
+                if (!MedicalStaff::where('macchn', $ma_ba_si)->exists()) {
+                    $errors->push((object)[
+                        'error_code' => $this->prefix . 'INFO_ERROR_MA_BAC_SI_NOT_FOUND',
+                        'error_name' => 'Mã bác sĩ không tồn tại',
+                        'description' => 'Mã bác sĩ tồn tại trong danh mục NVYT: ' . $ma_ba_si
+                    ]);
+                }
+            }
+        }
+
+        return $errors;
     }
 
     /**

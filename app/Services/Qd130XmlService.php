@@ -507,6 +507,9 @@ class Qd130XmlService
                     ];
 
                     $xml9 = Qd130Xml9::updateOrCreate($attributes, $values);
+                    // Đẩy công việc kiểm tra vào hàng đợi
+                    CheckQd130XmlErrorsJob::dispatch($xml9, 'XML9')
+                    ->onQueue($this->queueName);
 
                 } catch (\Exception $e) {
                     \Log::error('Error in storeQd130Xml9: ' . $e->getMessage());
