@@ -5,7 +5,11 @@ namespace App\Jobs;
 use App\Services\Qd130Xml1Checker;
 use App\Services\Qd130Xml2Checker;
 use App\Services\Qd130Xml3Checker;
+use App\Services\Qd130Xml4Checker;
+use App\Services\Qd130Xml5Checker;
 
+use App\Services\Qd130Xml7Checker;
+use App\Services\Qd130Xml8Checker;
 use App\Services\Qd130Xml9Checker;
 use App\Services\Qd130Xml11Checker;
 use App\Services\Qd130Xml13Checker;
@@ -51,6 +55,18 @@ class CheckQd130XmlErrorsJob implements ShouldQueue
                 break;
             case 'XML3':
                 $checker = app(Qd130Xml3Checker::class);
+                break;
+            case 'XML4':
+                $checker = app(Qd130Xml4Checker::class);
+                break;
+            case 'XML5':
+                $checker = app(Qd130Xml5Checker::class);
+                break;
+            case 'XML7':
+                $checker = app(Qd130Xml7Checker::class);
+                break;
+            case 'XML8':
+                $checker = app(Qd130Xml8Checker::class);
                 break;
             case 'XML9':
                 $checker = app(Qd130Xml9Checker::class);

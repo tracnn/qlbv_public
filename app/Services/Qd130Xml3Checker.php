@@ -99,7 +99,7 @@ class Qd130Xml3Checker
             $errors->push((object)[
                 'error_code' => $this->prefix . 'INFO_ERROR_GROUP_CODE_NGUOI_THUC_HIEN',
                 'error_name' => 'Thiếu người thực hiện',
-                'description' => 'Người thực hiện không được để trống đối với DVKT tên dịch vụ: ' . $data->ten_dich_vu
+                'description' => 'Người thực hiện không được để trống đối với DVKT: ' . $data->ten_dich_vu
             ]);
         }
 

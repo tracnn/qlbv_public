@@ -300,6 +300,9 @@ class Qd130XmlService
                     ];
 
                     $xml4 = Qd130Xml4::updateOrCreate($attributes, $values);
+                    // Đẩy công việc kiểm tra vào hàng đợi
+                    CheckQd130XmlErrorsJob::dispatch($xml4, 'XML4')
+                    ->onQueue($this->queueName);
 
                 } catch (\Exception $e) {
                     \Log::error('Error in storeQd130Xml4: ' . $e->getMessage());
@@ -322,21 +325,24 @@ class Qd130XmlService
 
                 try {
                     $attributes = [
-                    'ma_lk' => $dienbien->MA_LK,
-                    'stt' => $dienbien->STT,
-                ];
+                        'ma_lk' => $dienbien->MA_LK,
+                        'stt' => $dienbien->STT,
+                    ];
 
-                $values = [
-                    'dien_bien_ls' => $dienbien->DIEN_BIEN_LS ?: null,
-                    'giai_doan_benh' => $dienbien->GIAI_DOAN_BENH ?: null,
-                    'hoi_chan' => $dienbien->HOI_CHAN ?: null,
-                    'phau_thuat' => $dienbien->PHAU_THUAT ?: null,
-                    'thoi_diem_dbls' => $dienbien->THOI_DIEM_DBLS ?: null,
-                    'nguoi_thuc_hien' => $dienbien->NGUOI_THUC_HIEN ?: null,
-                    'du_phong' => $dienbien->DU_PHONG ?: null,
-                ];
+                    $values = [
+                        'dien_bien_ls' => $dienbien->DIEN_BIEN_LS ?: null,
+                        'giai_doan_benh' => $dienbien->GIAI_DOAN_BENH ?: null,
+                        'hoi_chan' => $dienbien->HOI_CHAN ?: null,
+                        'phau_thuat' => $dienbien->PHAU_THUAT ?: null,
+                        'thoi_diem_dbls' => $dienbien->THOI_DIEM_DBLS ?: null,
+                        'nguoi_thuc_hien' => $dienbien->NGUOI_THUC_HIEN ?: null,
+                        'du_phong' => $dienbien->DU_PHONG ?: null,
+                    ];
 
                     $xml5 = Qd130Xml5::updateOrCreate($attributes, $values);
+                    // Đẩy công việc kiểm tra vào hàng đợi
+                    CheckQd130XmlErrorsJob::dispatch($xml5, 'XML5')
+                    ->onQueue($this->queueName);
 
                 } catch (\Exception $e) {
                     \Log::error('Error in storeQd130Xml5: ' . $e->getMessage());
@@ -395,8 +401,8 @@ class Qd130XmlService
             $xml7 = Qd130Xml7::updateOrCreate($attributes, $values);
 
             // Đẩy công việc kiểm tra vào hàng đợi
-            // CheckQd130XmlErrorsJob::dispatch($xml7, 'XML7')
-            //     ->onQueue($this->queueName);
+            CheckQd130XmlErrorsJob::dispatch($xml7, 'XML7')
+            ->onQueue($this->queueName);
 
         } catch (\Exception $e) {
             \Log::error('Error in storeQd130Xml7: ' . $e->getMessage());
@@ -443,8 +449,8 @@ class Qd130XmlService
             $xml8 = Qd130Xml8::updateOrCreate($attributes, $values);
 
             // Đẩy công việc kiểm tra vào hàng đợi
-            // CheckQd130XmlErrorsJob::dispatch($xml8, 'XML8')
-            //     ->onQueue($this->queueName);
+            CheckQd130XmlErrorsJob::dispatch($xml8, 'XML8')
+            ->onQueue($this->queueName);
 
         } catch (\Exception $e) {
             \Log::error('Error in storeQd130Xml8: ' . $e->getMessage());
