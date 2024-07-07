@@ -104,16 +104,16 @@ class Qd130Xml1AdministrativeInfoChecker
         if (empty($data->matinh_cu_tru)) {
             $errors->push((object)[
                 'error_code' => $this->prefix . 'ADMIN_INFO_ERROR_MATINH_CU_TRU',
-                'error_name' => 'Thiếu mã tỉnh cư trú',
-                'description' => 'Mã tỉnh cư trú không được để trống'
+                'error_name' => 'Thiếu mã tỉnh',
+                'description' => 'Mã tỉnh không được để trống'
             ]);
         } else {
             $provinceExists = AdministrativeUnit::where('province_code', $data->matinh_cu_tru)->exists();
             if (!$provinceExists) {
                 $errors->push((object)[
                     'error_code' => $this->prefix . 'ADMIN_INFO_ERROR_MATINH_CU_TRU_NOT_FOUND',
-                    'error_name' => 'Mã tỉnh cư trú không tồn tại',
-                    'description' => 'Mã tỉnh cư trú không tồn tại trong danh mục: ' . $data->matinh_cu_tru
+                    'error_name' => 'Mã tỉnh không tồn tại',
+                    'description' => 'Mã tỉnh không tồn tại trong danh mục: ' . $data->matinh_cu_tru
                 ]);
             }
         }
@@ -121,16 +121,16 @@ class Qd130Xml1AdministrativeInfoChecker
         if (empty($data->mahuyen_cu_tru)) {
             $errors->push((object)[
                 'error_code' => $this->prefix . 'ADMIN_INFO_ERROR_MAHUYEN_CU_TRU',
-                'error_name' => 'Thiếu mã huyện cư trú',
-                'description' => 'Mã huyện cư trú không được để trống'
+                'error_name' => 'Thiếu mã quận huyện',
+                'description' => 'Mã quận huyện không được để trống'
             ]);
         } else {
             $districtExists = AdministrativeUnit::where('district_code', $data->mahuyen_cu_tru)->exists();
             if (!$districtExists) {
                 $errors->push((object)[
                     'error_code' => $this->prefix . 'ADMIN_INFO_ERROR_MAHUYEN_CU_TRU_NOT_FOUND',
-                    'error_name' => 'Mã huyện cư trú không tồn tại',
-                    'description' => 'Mã huyện cư trú không tồn tại trong danh mục: ' . $data->mahuyen_cu_tru
+                    'error_name' => 'Mã quận huyện không tồn tại',
+                    'description' => 'Mã quận huyện không tồn tại trong danh mục: ' . $data->mahuyen_cu_tru
                 ]);
             } else {
                 $districtInProvinceExists = AdministrativeUnit::where('province_code', $data->matinh_cu_tru)
@@ -139,8 +139,8 @@ class Qd130Xml1AdministrativeInfoChecker
                 if (!$districtInProvinceExists) {
                     $errors->push((object)[
                         'error_code' => $this->prefix . 'ADMIN_INFO_ERROR_MAHUYEN_CU_TRU_NOT_FOUND_IN_MATINH_CU_TRU',
-                        'error_name' => 'Mã huyện cư trú không thuộc mã tỉnh cư trú',
-                        'description' => 'Mã huyện cư trú không thuộc mã tỉnh cư trú: ' . $data->mahuyen_cu_tru . '/' . $data->matinh_cu_tru
+                        'error_name' => 'Mã quận huyện không thuộc mã tỉnh',
+                        'description' => 'Mã quận huyện không thuộc mã tỉnh: ' . $data->mahuyen_cu_tru . '/' . $data->matinh_cu_tru
                     ]);
                 }
             }
@@ -149,16 +149,16 @@ class Qd130Xml1AdministrativeInfoChecker
         if (empty($data->maxa_cu_tru)) {
             $errors->push((object)[
                 'error_code' => $this->prefix . 'ADMIN_INFO_ERROR_MAXA_CU_TRU',
-                'error_name' => 'Thiếu mã xã cư trú',
-                'description' => 'Mã xã cư trú không được để trống'
+                'error_name' => 'Thiếu mã phường xã',
+                'description' => 'Mã phường xã không được để trống'
             ]);
         } else {
             $wardExists = AdministrativeUnit::where('commune_code', $data->maxa_cu_tru)->exists();
             if (!$wardExists) {
                 $errors->push((object)[
                     'error_code' => $this->prefix . 'ADMIN_INFO_ERROR_MAXA_CU_TRU_NOT_FOUND',
-                    'error_name' => 'Mã xã cư trú không tồn tại',
-                    'description' => 'Mã xã cư trú không tồn tại trong danh mục: ' . $data->maxa_cu_tru
+                    'error_name' => 'Mã phường xã không tồn tại',
+                    'description' => 'Mã phường xã không tồn tại trong danh mục: ' . $data->maxa_cu_tru
                 ]);
             } else {
                 $wardExistsInDistrict = AdministrativeUnit::where('district_code', $data->mahuyen_cu_tru)
@@ -167,8 +167,8 @@ class Qd130Xml1AdministrativeInfoChecker
                 if (!$wardExistsInDistrict) {
                     $errors->push((object)[
                         'error_code' => $this->prefix . 'ADMIN_INFO_ERROR_MAXA_CU_TRU_NOT_FOUND_IN_MAHUYEN_CU_TRU',
-                        'error_name' => 'Mã xã cư trú không thuộc mã huyện cư trú',
-                        'description' => 'Mã xã cư trú không thuộc mã huyện cư trú: ' . $data->maxa_cu_tru . '/' . $data->mahuyen_cu_tru
+                        'error_name' => 'Mã phường xã không thuộc mã quận huyện',
+                        'description' => 'Mã phường xã không thuộc mã quận huyện: ' . $data->maxa_cu_tru . '/' . $data->mahuyen_cu_tru
                     ]);
                 }
             }
