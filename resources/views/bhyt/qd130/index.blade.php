@@ -212,6 +212,22 @@
             }
         });
 
+        $('#export_xlsx').click(function() {
+            var dateRange = $('#date_range').data('daterangepicker');
+
+            var startDate = dateRange.startDate.format('YYYY-MM-DD HH:mm:ss');
+            var endDate = dateRange.endDate.format('YYYY-MM-DD HH:mm:ss');
+            
+            // Tạo URL với các tham số query
+            var href = '{{ route("bhyt.qd130.export-qd130-xml-errors") }}?' + $.param({
+                'date_from': startDate,
+                'date_to': endDate
+            });
+            
+            // Chuyển hướng tới URL với các tham số
+            window.location.href = href;
+        });
+
     });
 
     function updateSelectedRecords() {

@@ -141,8 +141,7 @@ class Qd130Xml3Checker
                 $errors->push((object)[
                     'error_code' => $this->prefix . 'INVALID_BED_CODE_FORMAT',
                     'error_name' => 'Mã giường không đúng định dạng',
-                    'description' => 'Mã giường: ' . $data->ma_giuong . ' không đúng định dạng 
-                    (ký tự đầu phải là H, T, C, K và 3 ký tự sau là số từ 0 đến 9)'
+                    'description' => 'Mã giường: ' . $data->ma_giuong . ' không đúng định dạng (ký tự đầu phải là H, T, C, K và 3 ký tự sau là số từ 0 đến 9)'
                 ]);
             }
             // Kiểm tra nếu MA_KHOA thuộc danh sách những khoa không kiểm tra giường
@@ -182,8 +181,7 @@ class Qd130Xml3Checker
                 $errors->push((object)[
                     'error_code' => $this->prefix . 'INVALID_ORDER_TIME',
                     'error_name' => 'Thời gian chỉ định không hợp lệ',
-                    'description' => 'Thời gian y lệnh không nằm trong khoảng thời gian vào (' . 
-                    strtodatetime($ngayVao) . ') và ra (' . strtodatetime($ngayRa) . ')'
+                    'description' => 'Thời gian y lệnh không nằm trong khoảng thời gian vào (' . strtodatetime($ngayVao) . ') và ra (' . strtodatetime($ngayRa) . ')'
                 ]);
             }
         }
@@ -257,8 +255,7 @@ class Qd130Xml3Checker
                 $errors->push((object)[
                     'error_code' => $this->prefix . 'INVALID_NGAY_KQ',
                     'error_name' => 'Ngày trả kết quả không hợp lệ',
-                    'description' => 'Ngày trả kết quả (NGAY_KQ) không nằm trong khoảng thời gian vào (' . 
-                    strtodatetime($ngayVao) . ') và ra (' . strtodatetime($ngayRa) . ')'
+                    'description' => 'Ngày trả kết quả (NGAY_KQ) không nằm trong khoảng thời gian vào (' . strtodatetime($ngayVao) . ') và ra (' . strtodatetime($ngayRa) . ')'
                 ]);
             }
         }
@@ -331,8 +328,7 @@ class Qd130Xml3Checker
                                 $errors->push((object)[
                                     'error_code' => $this->prefix . 'EXCEEDS_APPROVED_PRICE',
                                     'error_name' => 'Giá vật tư cao hơn giá được phê duyệt',
-                                    'description' => 'Mã VTYT: ' . $data->ma_vat_tu . '; Có giá: ' . $data->don_gia . 
-                                    '; Giá phê duyệt: ' . $approvedPrice
+                                    'description' => 'Mã VTYT: ' . $data->ma_vat_tu . '; Có giá: ' . $data->don_gia . '; Giá phê duyệt: ' . $approvedPrice
                                 ]);
                             }
 
@@ -342,8 +338,7 @@ class Qd130Xml3Checker
                                     'error_code' => $this->prefix . 'INVALID_MATERIAL_NAME',
                                     'error_name' => 'Tên vật tư không khớp với danh mục phê duyệt',
                                     'description' => 'Mã VTYT: ' . $data->ma_vat_tu . ' có tên: ' . 
-                                    formatDescription($data->ten_vat_tu) . 
-                                    '; Tên phê duyệt: ' . $supply->ten_vat_tu
+                                    formatDescription($data->ten_vat_tu) . '; Tên phê duyệt: ' . $supply->ten_vat_tu
                                 ]);
                             }
 

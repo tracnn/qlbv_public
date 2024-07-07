@@ -92,8 +92,7 @@ class Qd130Xml2Checker
                     $errors->push((object)[
                         'error_code' => $this->prefix . 'INVALID_ORDER_TIME',
                         'error_name' => 'Thời gian y lệnh không hợp lệ',
-                        'description' => 'Thời gian y lệnh nhỏ hơn ngày vào hoặc lớn hơn ngày ra (Mã thuốc: ' . 
-                        $data->ma_thuoc .')'
+                        'description' => 'Thời gian y lệnh nhỏ hơn ngày vào hoặc lớn hơn ngày ra (Mã thuốc: ' . $data->ma_thuoc .')'
                     ]);
                 }
             }
@@ -234,8 +233,7 @@ class Qd130Xml2Checker
                             $errors->push((object)[
                                 'error_code' => $this->prefix . 'INVALID_DRUG_NAME',
                                 'error_name' => 'Mã thuốc sai tên trong danh mục BHYT',
-                                'description' => 'Mã thuốc: ' . $data->ma_thuoc . '; Thuốc sai tên so với danh mục được duyệt: ' . 
-                                formatDescription($data->ten_thuoc) . ' # ' . $medicine->ten_thuoc
+                                'description' => 'Mã thuốc: ' . $data->ma_thuoc . '; Thuốc sai tên so với danh mục được duyệt: ' . formatDescription($data->ten_thuoc) . ' # ' . $medicine->ten_thuoc
                             ]);
                         }
 

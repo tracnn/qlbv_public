@@ -13,6 +13,9 @@ use App\Models\BHYT\Qd130XmlErrorCatalog;
 use App\Services\Qd130XmlService;
 use App\Services\XmlStructures;
 
+use App\Exports\Qd130ErrorExport;
+use Maatwebsite\Excel\Facades\Excel;
+
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage;
 use ZipArchive;
@@ -400,5 +403,14 @@ class BHYTQd130Controller extends Controller
         }
 
         return response()->json(['success' => true, 'file' => asset('storage/xml130/' . $zipFileName)]);
+    }
+
+    public function exportQd130XmlErrors(Request $request)
+    {
+        $date_from = $request->input('date_from');
+        $date_to = $request->input('date_to');
+
+        $fileName = 'qd130_error_data_' . Carbon::now()->format('YmdHis') . '.xlsx';
+        return Excel::download(new Qd130ErrorExport($date_from, $date_to), $fileName);
     }
 }

@@ -97,8 +97,7 @@ class Qd130Xml14Checker
                 $errors->push((object)[
                     'error_code' => $this->prefix . 'INFO_ERROR_NGAY_HEN_KL_SMALLER_NGAY_RA',
                     'error_name' => 'Ngày hẹn khám lại nhỏ hơn ngày ra',
-                    'description' => 'Ngày hẹn khám lại không được nhỏ hơn ngày ra: ' . $data->ngay_hen_kl .
-                    ' < ' . $data->ngay_ra
+                    'description' => 'Ngày hẹn khám lại không được nhỏ hơn ngày ra: ' . $data->ngay_hen_kl . ' < ' . $data->ngay_ra
                 ]);
             }
         }

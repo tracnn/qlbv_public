@@ -228,8 +228,7 @@ class Qd130Xml11Checker
             $errors->push((object)[
                 'error_code' => $this->prefix . 'INFO_ERROR_INVALID_MAU_SO',
                 'error_name' => 'Mẫu số không hợp lệ',
-                'description' => 'Mẫu số không thuộc loại hợp lệ. Mẫu số: ' . $data->mau_so . '. Loại hợp lệ: ' .
-                $this->docXml11Type
+                'description' => 'Mẫu số không thuộc loại hợp lệ. Mẫu số: ' . $data->mau_so . '. Loại hợp lệ: ' . $this->docXml11Type
             ]);
         }
 
