@@ -144,7 +144,7 @@ class Qd130Xml14Checker
                 'description' => 'Mã bác sĩ (CCHN) không được để trống'
             ]);
         } else {
-            $staff = MedicalStaff::where('macchn', $data->ma_bac_si)->first();
+            $staff = MedicalStaff::where('macchn', $data->ma_bac_si)->exists();
             if (!$staff) {
                 $errors->push((object)[
                     'error_code' => $this->prefix . 'INVALID_MEDICAL_STAFF_MA_BAC_SI',
@@ -161,7 +161,7 @@ class Qd130Xml14Checker
                 'description' => 'Thủ trưởng đơn vị không được để trống'
             ]);
         } else {
-            $staff = MedicalStaff::where('ma_bhxh', $data->ma_ttdv)->first();
+            $staff = MedicalStaff::where('ma_bhxh', $data->ma_ttdv)->exists();
             if (!$staff) {
                 $errors->push((object)[
                     'error_code' => $this->prefix . 'INVALID_MEDICAL_STAFF_MA_TTDV',

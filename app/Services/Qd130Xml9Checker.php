@@ -266,7 +266,7 @@ class Qd130Xml9Checker
                 'description' => 'Thủ trưởng đơn vị không được để trống'
             ]);
         } else {
-            $staff = MedicalStaff::where('ma_bhxh', $data->ma_ttdv)->first();
+            $staff = MedicalStaff::where('ma_bhxh', $data->ma_ttdv)->exists();
             if (!$staff) {
                 $errors->push((object)[
                     'error_code' => $this->prefix . 'INVALID_MEDICAL_STAFF_MA_TTDV',

@@ -118,7 +118,7 @@ class Qd130Xml2Checker
                 'description' => 'Không có mã bác sĩ'
             ]);
         } else {
-            $staff = MedicalStaff::where('macchn', $data->ma_bac_si)->first();
+            $staff = MedicalStaff::where('macchn', $data->ma_bac_si)->exists();
             if (!$staff) {
                 $errors->push((object)[
                     'error_code' => $this->prefix . 'INVALID_MEDICAL_STAFF_CODE',
@@ -199,7 +199,7 @@ class Qd130Xml2Checker
                         ->where('ham_luong', $data->ham_luong)
                         ->where('so_dang_ky', $data->so_dang_ky)
                         ->where('tt_thau', 'LIKE', $ttThau . '%')
-                        ->first();
+                        ->exists();
 
                     if (!$medicine) {
                         if (!MedicineCatalog::where('ma_thuoc', $data->ma_thuoc)->exists()) {
