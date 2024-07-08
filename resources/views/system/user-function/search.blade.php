@@ -29,7 +29,7 @@
                     Khóa
                 </button>
                 @endif
-                @if($result->treatment_end_type_id == 9)
+                @if($result->treatment_end_type_id == 4 && !empty($result->medi_org_code))
                 <button class="btn btn-primary" onclick="entry_update($(treatment_code).val())">
                 <i class="glyphicon glyphicon-ok"></i>
                     Mở khóa

@@ -151,10 +151,11 @@ class UpdateCV extends Command
                     ->where('create_time', '<=', $to_date)
                     ->whereNotNull('fee_lock_time')
                     ->whereNotNull('is_lock_hein')
+                    ->whereNotNull('medi_org_code')
                     ->where('treatment_end_type_id', config('__tech.treatment_end_type_cv'))
                     ->where('tdl_treatment_type_id', config('__tech.treatment_type_kham'))
                     ->where('fee_lock_loginname', $doctor)
-                    ->update(['treatment_end_type_id' => 9,
+                    ->update(['treatment_end_type_id' => 4,
                         'creator' => $creator_des,
                         'modifier' => $creator_des,
                         'doctor_loginname' => $doctor_des,
@@ -169,8 +170,9 @@ class UpdateCV extends Command
                     ->where('create_time', '<=', $to_date)
                     ->whereNotNull('fee_lock_time')
                     ->whereNotNull('is_lock_hein')
+                    ->whereNotNull('medi_org_code')
                     ->where('fee_lock_loginname', $doctor)
-                    ->where('treatment_end_type_id', 9)
+                    ->where('treatment_end_type_id', 4)
                     ->get();
 
                     foreach (array_chunk($treatments->pluck('treatment_code')->toArray(), 1000) as $key => $value) {
@@ -231,27 +233,37 @@ class UpdateCV extends Command
                 }
                 
                 if($this->option('lock')) {
-                    DB::connection('HISPro')
-                    ->statement('update his_treatment set in_time = in_time - 00030000000000,
-                        in_date = in_date - 00030000000000,
-                        out_time = out_time - 00030000000000,
-                        out_date = out_date - 00030000000000 where create_time >= ' .
-                        $from_date .' and create_time <= ' . $to_date .
-                        ' and fee_lock_time <= out_time and treatment_end_type_id = 9' .
-                        'and fee_lock_loginname =\'' . $doctor .'\''
-                    );
+                        DB::connection('HISPro')->statement('
+                            UPDATE his_treatment
+                            SET in_time = TO_CHAR(ADD_MONTHS(TO_DATE(in_time, \'YYYYMMDDHH24MISS\'), -36), \'YYYYMMDDHH24MISS\'),
+                                out_time = TO_CHAR(ADD_MONTHS(TO_DATE(out_time, \'YYYYMMDDHH24MISS\'), -36), \'YYYYMMDDHH24MISS\')
+                            WHERE create_time BETWEEN :from_date AND :to_date
+                              AND fee_lock_time <= out_time
+                              AND treatment_end_type_id = 4
+                              AND medi_org_code IS NOT NULL
+                              AND fee_lock_loginname = :doctor
+                        ', [
+                            'from_date' => $from_date,
+                            'to_date' => $to_date,
+                            'doctor' => $doctor
+                        ]);
                 }
 
                 if($this->option('unlock')) {
-                    DB::connection('HISPro')
-                    ->statement('update his_treatment set in_time = in_time + 00030000000000,
-                        in_date = in_date + 00030000000000,
-                        out_time = out_time + 00030000000000,
-                        out_date = out_date + 00030000000000 where create_time >= ' .
-                        $from_date .' and create_time <= ' . $to_date .
-                        ' and fee_lock_time > out_time and treatment_end_type_id = 9' .
-                        'and fee_lock_loginname =\'' . $doctor .'\''
-                    );
+                        DB::connection('HISPro')->statement('
+                            UPDATE his_treatment
+                            SET in_time = TO_CHAR(ADD_MONTHS(TO_DATE(in_time, \'YYYYMMDDHH24MISS\'), 36), \'YYYYMMDDHH24MISS\'),
+                                out_time = TO_CHAR(ADD_MONTHS(TO_DATE(out_time, \'YYYYMMDDHH24MISS\'), 36), \'YYYYMMDDHH24MISS\')
+                            WHERE create_time BETWEEN :from_date AND :to_date
+                              AND fee_lock_time > out_time
+                              AND treatment_end_type_id = 4
+                              AND medi_org_code IS NOT NULL
+                              AND fee_lock_loginname = :doctor
+                        ', [
+                            'from_date' => $from_date,
+                            'to_date' => $to_date,
+                            'doctor' => $doctor
+                        ]);
                 }
 
                 if($this->option('restore')) {
@@ -271,8 +283,9 @@ class UpdateCV extends Command
                     ->where('create_time', '>=', $from_date)
                     ->where('create_time', '<=', $to_date)
                     ->whereNotNull('fee_lock_time')
+                    ->whereNotNull('medi_org_code')
                     ->where('fee_lock_loginname', $doctor)
-                    ->where('treatment_end_type_id', 9)
+                    ->where('treatment_end_type_id', 4)
                     ->get();
 
                     foreach (array_chunk($treatments->pluck('treatment_code')->toArray(), 1000) as $key => $value) {
@@ -297,7 +310,8 @@ class UpdateCV extends Command
                     ->where('create_time', '>=', $from_date)
                     ->where('create_time', '<=', $to_date)
                     ->whereNotNull('fee_lock_time')
-                    ->where('treatment_end_type_id', 9)
+                    ->whereNotNull('medi_org_code')
+                    ->where('treatment_end_type_id', 4)
                     ->where('tdl_treatment_type_id', config('__tech.treatment_type_kham'))
                     ->where('fee_lock_loginname', $doctor)
                     ->update(['treatment_end_type_id' => config('__tech.treatment_end_type_cv')]);

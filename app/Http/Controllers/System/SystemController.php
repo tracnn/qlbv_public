@@ -373,21 +373,23 @@ class SystemController extends Controller
             ->table('his_treatment')
             ->where('treatment_code', $request->treatment_code)
             ->whereNotNull('is_lock_hein')
+            ->whereNotNull('medi_org_code')
             ->where('treatment_end_type_id', config('__tech.treatment_end_type_cv'))
             ->where('tdl_treatment_type_id', config('__tech.treatment_type_kham'))
             //->whereIn('doctor_loginname', $doctor)
             //->whereIn('creator', $creator)
-            ->update(['treatment_end_type_id' => 9]);
+            ->update(['treatment_end_type_id' => 4]);
 
             DB::connection('HISPro')
             ->table('his_treatment')
             ->whereNotNull('fee_lock_time')
             ->whereNotNull('is_lock_hein')
+            ->whereNotNull('medi_org_code')
             ->where('treatment_code', $request->treatment_code)
             ->where('treatment_end_type_id', config('__tech.treatment_end_type_cv'))
             ->where('tdl_treatment_type_id', config('__tech.treatment_type_kham'))
             ->where('fee_lock_loginname', $doctor_admin)
-            ->update(['treatment_end_type_id' => 9,
+            ->update(['treatment_end_type_id' => 4,
                 'doctor_loginname' => $doctor_des,
                 'end_loginname' => $doctor_des
             ]);
@@ -395,8 +397,9 @@ class SystemController extends Controller
             $treatments = DB::connection('HISPro')
             ->table('his_treatment')
             ->select('treatment_code')
+            ->whereNotNull('medi_org_code')
             ->where('treatment_code', $request->treatment_code)
-            ->where('treatment_end_type_id', 9)
+            ->where('treatment_end_type_id', 4)
             ->get();
 
             DB::connection('HISPro')
@@ -455,8 +458,9 @@ class SystemController extends Controller
             ->table('his_treatment')
             ->select('treatment_code')
             ->whereNotNull('is_lock_hein')
+            ->whereNotNull('medi_org_code')
             ->where('treatment_code', $request->treatment_code)
-            ->where('treatment_end_type_id', 9)
+            ->where('treatment_end_type_id', 4)
             ->get();
 
             DB::connection('HISPro')
@@ -476,8 +480,9 @@ class SystemController extends Controller
 
             DB::connection('HISPro')
             ->table('his_treatment')
+            ->whereNotNull('medi_org_code')
             ->where('treatment_code', $request->treatment_code)
-            ->where('treatment_end_type_id', 9)
+            ->where('treatment_end_type_id', 4)
             ->where('tdl_treatment_type_id', config('__tech.treatment_type_kham'))
             ->update(['treatment_end_type_id' => config('__tech.treatment_end_type_cv')]);
 
@@ -497,14 +502,18 @@ class SystemController extends Controller
 
     public function entry_plus(Request $request) {
         try {
-            DB::connection('HISPro')
-            ->statement('update his_treatment set in_time = in_time + 00030000000000,
-                in_date = in_date + 00030000000000,
-                out_time = out_time + 00030000000000,
-                out_date = out_date + 00030000000000 where treatment_code = \'' .
-				$request->treatment_code .'\'' .
-				' and treatment_end_type_id = 2'
-            );
+            $treatment_code = $request->treatment_code;
+
+            DB::connection('HISPro')->statement('
+                UPDATE his_treatment
+                SET in_time = TO_CHAR(ADD_MONTHS(TO_DATE(in_time, \'YYYYMMDDHH24MISS\'), 36), \'YYYYMMDDHH24MISS\'),
+                    out_time = TO_CHAR(ADD_MONTHS(TO_DATE(out_time, \'YYYYMMDDHH24MISS\'), 36), \'YYYYMMDDHH24MISS\')
+                WHERE treatment_end_type_id = 2
+                  AND medi_org_code IS NOT NULL
+                  AND tdl_treatment_type_id = 1
+                  AND out_time < fee_lock_time
+                  AND treatment_code = :treatment_code
+            ', ['treatment_code' => $treatment_code]);
                      
         } catch (\Exception $e) {
             return $e;
@@ -518,14 +527,18 @@ class SystemController extends Controller
         $doctor_admin = 'anhvt -kkb';
 
         try {
-            DB::connection('HISPro')
-            ->statement('update his_treatment set in_time = in_time - 00030000000000,
-                in_date = in_date - 00030000000000,
-                out_time = out_time - 00030000000000,
-                out_date = out_date - 00030000000000 where treatment_code = \'' .
-				$request->treatment_code .'\'' .
-				' and treatment_end_type_id = 2'
-            );
+            $treatment_code = $request->treatment_code;
+
+            DB::connection('HISPro')->statement('
+                UPDATE his_treatment
+                SET in_time = TO_CHAR(ADD_MONTHS(TO_DATE(in_time, \'YYYYMMDDHH24MISS\'), -36), \'YYYYMMDDHH24MISS\'),
+                    out_time = TO_CHAR(ADD_MONTHS(TO_DATE(out_time, \'YYYYMMDDHH24MISS\'), -36), \'YYYYMMDDHH24MISS\')
+                WHERE treatment_end_type_id = 2
+                  AND medi_org_code IS NOT NULL
+                  AND tdl_treatment_type_id = 1
+                  AND out_time >= fee_lock_time
+                  AND treatment_code = :treatment_code
+            ', ['treatment_code' => $treatment_code]);
              
         } catch (\Exception $e) {
             
