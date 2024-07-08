@@ -277,7 +277,7 @@
                                     <td>{{ $xml1->ma_hsba }}</td>
                                 </tr>
                                 <tr>
-                                    <th>Mã TT dịch vụ</th>
+                                    <th>Mã thủ trưởng đơn vị</th>
                                     <td>{{ $xml1->ma_ttdv }}</td>
                                 </tr>
                                 <tr>

@@ -90,7 +90,7 @@
                                     <td>{{ $xml11->ho_ten_me }}</td>
                                 </tr>
                                 <tr>
-                                    <th>Mã TT dịch vụ</th>
+                                    <th>Mã thủ trưởng đơn vị</th>
                                     <td>{{ $xml11->ma_ttdv }}</td>
                                 </tr>
                                 <tr>
@@ -180,7 +180,7 @@
                         <div class="col-md-6">
                             <table class="table table-hover">
                                 <tr>
-                                    <th>Mã TT dịch vụ</th>
+                                    <th>Mã thủ trưởng đơn vị</th>
                                     <td>{{ $xml11->ma_ttdv }}</td>
                                 </tr>
                                 <tr>

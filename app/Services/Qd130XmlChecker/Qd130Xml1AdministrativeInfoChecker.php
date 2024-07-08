@@ -7,6 +7,7 @@ use App\Models\BHYT\Qd130Xml1;
 use App\Models\BHYT\MedicalStaff;
 use App\Models\BHYT\MedicalOrganization;
 use App\Models\BHYT\AdministrativeUnit;
+use App\Models\BHYT\JobCategory;
 
 class Qd130Xml1AdministrativeInfoChecker
 {
@@ -196,12 +197,15 @@ class Qd130Xml1AdministrativeInfoChecker
                 'error_name' => 'Thiếu mã nghề nghiệp',
                 'description' => 'Mã nghề nghiệp không được để trống'
             ]);
-        } elseif (strlen($data->ma_nghe_nghiep) !== 5) {
-            $errors->push((object)[
-                'error_code' => $this->prefix . 'ADMIN_INFO_ERROR_MA_NGHE_NGHIEP_LENGTH',
-                'error_name' => 'Mã nghề nghiệp không hợp lệ',
-                'description' => 'Mã nghề nghiệp phải có 5 ký tự'
-            ]);
+        } else {
+            $jobExists = JobCategory::where('job_code', $data->ma_nghe_nghiep)->exists();
+            if (!$jobExists) {
+                $errors->push((object)[
+                    'error_code' => $this->prefix . 'ADMIN_INFO_ERROR_MA_NGHE_NGHIEP_NOT_FOUND',
+                    'error_name' => 'Mã nghề nghiệp không tồn tại',
+                    'description' => 'Mã nghề nghiệp không tồn tại trong danh mục nghề nghiệp: ' .$data->ma_nghe_nghiep
+                ]);
+            }
         }
 
         if (empty($data->chan_doan_vao)) {

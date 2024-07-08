@@ -11,11 +11,7 @@
 |
 */
 
-Route::get('/', function(){
-	return redirect()->route('home');
-});
-
-//Route::get('/', 'WelcomeController@index')->name('welcome');
+Route::get('/', 'WelcomeController@index')->name('welcome');
 Route::get('get-district-by-city','WelcomeController@getdistrictbycity')->name('get-district-by-city');
 Route::get('get-ward-by-district','WelcomeController@getwardbydistrict')->name('get-ward-by-district');
 
@@ -55,6 +51,7 @@ Route::group(['middleware' => 'auth'], function () {
     //Please do not remove this if you want adminlte:route and adminlte:link commands to works correctly.
     #adminlte_routes
     
+    Route::get('/', 'HomeController@index')->name('home');
     Route::get('/home', 'HomeController@index')->name('home');
 
     /* Báo cáo dịch vụ kỹ thuật */
@@ -401,22 +398,6 @@ Route::group(['middleware' => 'auth'], function () {
         Route::get('/manage','QueueNumberController@manager')->name('queue.manage');
         Route::get('/ticket-print','QueueNumberController@printTicket')->name('queue.ticket.print');
     });
-
-    Route::group(['prefix' => 'face'], function () { 
-        Route::get('/', 'FaceRecognitionController@index')->name('face.index');
-        Route::post('/upload-image', 'FaceRecognitionController@uploadImage')->name('face.upload-image');
-        Route::post('/get-next-image', 'FaceRecognitionController@getNextImage')->name('face.get-next-image');
-        Route::get('/reset-index', 'FaceRecognitionController@resetIndex')->name('face.reset-index');
-        Route::post('/compare-image-encoding', 'FaceRecognitionController@compareImageEncoding')->name('face.compare-image-encoding');
-    });
-    Route::group(['prefix' => 'chatbot'], function () {
-        Route::get('/ask-openai', 'ChatbotController@askOpenAI')->name('chatbot.askOpenAI');
-        Route::get('/', 'ChatbotController@index')->name('chatbot.index');
-    });
-
-    Route::get('/upload-image', 'FaceRecognitionController@showForm')->name('face.upload-form');
-    Route::post('/upload-image', 'UploadController@handleForm')->name('face.upload-handle');
-    Route::post('/upload-image-encoding', 'FaceRecognitionController@encodingImage')->name('face.upload-image-encoding');
 
     /*
         User

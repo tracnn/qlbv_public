@@ -213,14 +213,6 @@ return [
                     'active'=> ['khth/cong-van-19031-index*'],
                 ],
                 [
-                    'text'  => 'Upload Image',
-                    'icon'  => 'bar-chart',
-                    'checkrole'   => 'manager',
-                    'route'   => 'face.upload-form',
-                    'active'=> ['upload-image*'],
-                ],
-                
-                [
                     'text'  => 'Dashboard',
                     'icon'  => 'tachometer',
                     'checkrole'   => 'administrator',

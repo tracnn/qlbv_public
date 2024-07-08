@@ -168,11 +168,11 @@ class Qd130Xml11Checker
             $den_ngay_date = \DateTime::createFromFormat('Ymd', $data->den_ngay);
 
             if ($tu_ngay_date && $den_ngay_date) {
-                if ($den_ngay_date <= $tu_ngay_date) {
+                if ($den_ngay_date < $tu_ngay_date) {
                     $errors->push((object)[
                         'error_code' => $this->prefix . 'INFO_ERROR_DATE_RANGE',
                         'error_name' => 'Ngày không hợp lệ',
-                        'description' => 'Đến ngày phải lớn hơn từ ngày'
+                        'description' => 'Đến ngày phải lớn hơn hoặc bằng từ ngày'
                     ]);
                 }
             } else {

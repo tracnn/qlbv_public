@@ -203,7 +203,7 @@
                                     <td>{{ $xml13->ma_bac_si }}</td>
                                 </tr>
                                 <tr>
-                                    <th>Mã TT dịch vụ</th>
+                                    <th>Mã thủ trưởng đơn vị</th>
                                     <td>{{ $xml13->ma_ttdv }}</td>
                                 </tr>
                                 <tr>

@@ -171,7 +171,7 @@
                                 <td>{{ $xml9->quyen_so }}</td>
                             </tr>
                             <tr>
-                                <th>Mã TT dịch vụ</th>
+                                <th>Mã thủ trưởng đơn vị</th>
                                 <td>{{ $xml9->ma_ttdv }}</td>
                             </tr>
                             <tr>

@@ -105,7 +105,7 @@
                     var statusCell = newRow.insertCell(2);
 
                     nameCell.innerText = file.name;
-                    sizeCell.innerText = (file.size / 1024 / 1024).toFixed(2) + ' MB';
+                    sizeCell.innerText = (file.size / 1024).toFixed(2) + ' KB';
                     statusCell.innerHTML = '<i class="fa fa-spinner fa-spin"></i>'; // Add a spinner while uploading
                     statusCell.classList.add('status');
                 }

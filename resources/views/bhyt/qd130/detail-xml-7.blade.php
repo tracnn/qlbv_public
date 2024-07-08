@@ -74,7 +74,7 @@
                                     <td>{{ $xml7->ghi_chu }}</td>
                                 </tr>
                                 <tr>
-                                    <th>Mã TT dịch vụ</th>
+                                    <th>Mã thủ trưởng đơn vị</th>
                                     <td>{{ $xml7->ma_ttdv }}</td>
                                 </tr>
                                 <tr>
