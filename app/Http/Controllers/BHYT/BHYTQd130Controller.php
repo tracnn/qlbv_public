@@ -15,6 +15,7 @@ use App\Services\XmlStructures;
 
 use App\Exports\Qd130ErrorExport;
 use App\Jobs\CheckCompleteQd130RecordJob;
+
 use Maatwebsite\Excel\Facades\Excel;
 
 use Carbon\Carbon;
@@ -24,7 +25,7 @@ use ZipArchive;
 class BHYTQd130Controller extends Controller
 {
     protected $qd130XmlService;
-    protected $completeCheckQueueName = 'JobQd130CompleteCheck';
+    protected $completeCheckQueueName = 'JobQd130CheckComplete';
 
     public function __construct(Qd130XmlService $qd130XmlService)
     {

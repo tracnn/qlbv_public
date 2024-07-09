@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\Storage;
 use App\Services\Qd130XmlService;
 use App\Services\XmlStructures;
 
+use App\Jobs\CheckCompleteQd130RecordJob;
+
 class XML130Import extends Command
 {
     protected $signature = 'xml130import:day';
@@ -65,6 +67,11 @@ class XML130Import extends Command
                     continue;
                 }
 
+                $ma_lk = null; // Khởi tạo ma_lk là null
+
+                // Biến lưu trữ các loại file đã xử lý thành công
+                $processedFileTypes = [];
+
                 $xmldata = simplexml_load_string(Storage::disk($disk)->get($file));
 
                 foreach ($xmldata->THONGTINHOSO[0]->DANHSACHHOSO[0]->HOSO[0]->FILEHOSO as $file_hs) {
@@ -89,6 +96,12 @@ class XML130Import extends Command
                             $this->info($data->MA_LK);
 
                             $this->qd130XmlService->storeQd130Xml1($data, $fileType);
+
+                            $processedFileTypes[] = $fileType;
+
+                            // Lấy ma_lk từ XML1
+                            $ma_lk = (string)$data->MA_LK;
+
                             break;
                         case 'XML2':
                             $this->qd130XmlService->storeQd130Xml2($data, $fileType);
@@ -146,8 +159,14 @@ class XML130Import extends Command
                             break;
                     }
 
-                    // Delete file after import
-                    Storage::disk($disk)->delete($file);
+                }
+
+                // Delete file after import
+                Storage::disk($disk)->delete($file);
+
+                // Sau khi hoàn thành import hồ sơ thì mới check nghiệp vụ tổng thể liên quan tới hồ sơ đó
+                if ($ma_lk !== null && !empty($processedFileTypes)) {
+                    CheckCompleteQd130RecordJob::dispatch($ma_lk)->onQueue('JobQd130CheckComplete');
                 }
             }
         } catch (Exception $e) {
