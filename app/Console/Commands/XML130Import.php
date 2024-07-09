@@ -41,6 +41,9 @@ class XML130Import extends Command
                 $this->info('Processing xml130 disk');
                 $this->importFilesFromDisk('xml130');
 
+                $this->info('Processing xml130 google drive disk');
+                $this->importFilesFromDisk('xml130GoogleDrive');
+
                 $this->info($this->description);
 
                 sleep(10);

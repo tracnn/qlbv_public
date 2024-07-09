@@ -124,12 +124,12 @@ class Qd130Xml3Checker
             ]);
         } else {
             $ma_bac_si_array = explode(';', $data->ma_bac_si);
-            foreach ($ma_bac_si_array as $ma_ba_si) {
-                if (!MedicalStaff::where('macchn', $ma_ba_si)->exists()) {
+            foreach ($ma_bac_si_array as $ma_bac_si) {
+                if (!MedicalStaff::where('macchn', $ma_bac_si)->exists()) {
                     $errors->push((object)[
                         'error_code' => $this->prefix . 'INFO_ERROR_MA_BAC_SI_NOT_FOUND',
                         'error_name' => 'Mã bác sĩ không tồn tại',
-                        'description' => 'Mã bác sĩ tồn tại trong danh mục NVYT: ' . $ma_ba_si
+                        'description' => 'Mã bác sĩ tồn tại trong danh mục NVYT: ' . $ma_bac_si
                     ]);
                 }
             }

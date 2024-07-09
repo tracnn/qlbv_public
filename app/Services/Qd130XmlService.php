@@ -571,7 +571,7 @@ class Qd130XmlService
 
             // Đẩy công việc kiểm tra vào hàng đợi
             CheckQd130XmlErrorsJob::dispatch($xml11, 'XML11')
-                ->onQueue($this->queueName);
+            ->onQueue($this->queueName);
 
         } catch (\Exception $e) {
             \Log::error('Error in storeQd130Xml11: ' . $e->getMessage());

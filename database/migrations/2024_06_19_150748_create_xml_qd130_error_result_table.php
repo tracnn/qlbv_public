@@ -25,7 +25,6 @@ class CreateXmlQd130ErrorResultTable extends Migration
             $table->timestamps();
 
             //Add index
-            $table->unique(['xml', 'ma_lk', 'stt', 'error_code'], 'unique_xml_ma_lk_stt_error_code');
             $table->index(['xml']);
             $table->index(['ma_lk']);
             $table->index(['error_code']);
