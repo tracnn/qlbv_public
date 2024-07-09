@@ -199,7 +199,7 @@ class Qd130Xml2Checker
                         ->where('ham_luong', $data->ham_luong)
                         ->where('so_dang_ky', $data->so_dang_ky)
                         ->where('tt_thau', 'LIKE', $ttThau . '%')
-                        ->exists();
+                        ->first(); //* Không được thay bằng exists() *\\
 
                     if (!$medicine) {
                         if (!MedicineCatalog::where('ma_thuoc', $data->ma_thuoc)->exists()) {

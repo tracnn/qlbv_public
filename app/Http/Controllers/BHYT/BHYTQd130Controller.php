@@ -14,6 +14,7 @@ use App\Services\Qd130XmlService;
 use App\Services\XmlStructures;
 
 use App\Exports\Qd130ErrorExport;
+use App\Jobs\CheckCompleteQd130RecordJob;
 use Maatwebsite\Excel\Facades\Excel;
 
 use Carbon\Carbon;
@@ -23,6 +24,7 @@ use ZipArchive;
 class BHYTQd130Controller extends Controller
 {
     protected $qd130XmlService;
+    protected $completeCheckQueueName = 'JobQd130CompleteCheck';
 
     public function __construct(Qd130XmlService $qd130XmlService)
     {
@@ -267,6 +269,11 @@ class BHYTQd130Controller extends Controller
 
     private function processXmlData($xmldata)
     {
+        $ma_lk = null; // Khởi tạo ma_lk là null
+
+        // Biến lưu trữ các loại file đã xử lý thành công
+        $processedFileTypes = [];
+
         foreach ($xmldata->THONGTINHOSO->DANHSACHHOSO->HOSO->FILEHOSO as $file_hs) {
             $fileContent = base64_decode($file_hs->NOIDUNGFILE);
             $data = simplexml_load_string($fileContent);
@@ -285,49 +292,55 @@ class BHYTQd130Controller extends Controller
                         \Log::error('Invalid data structure for ' . $fileType);
                         return false;
                     }
-                    $this->qd130XmlService->storeQd130Xml1($data);
+                    $this->qd130XmlService->storeQd130Xml1($data, $fileType);
+
+                    $processedFileTypes[] = $fileType;
+
+                    // Lấy ma_lk từ XML1
+                    $ma_lk = (string)$data->MA_LK;
+
                     break;
                 case 'XML2':
-                    $this->qd130XmlService->storeQd130Xml2($data);
+                    $this->qd130XmlService->storeQd130Xml2($data, $fileType);
                     break;
                 case 'XML3':
-                    $this->qd130XmlService->storeQd130Xml3($data);
+                    $this->qd130XmlService->storeQd130Xml3($data, $fileType);
                     break;
                 case 'XML4':
-                    $this->qd130XmlService->storeQd130Xml4($data);
+                    $this->qd130XmlService->storeQd130Xml4($data, $fileType);
                     break;
                 case 'XML5':
-                    $this->qd130XmlService->storeQd130Xml5($data);
+                    $this->qd130XmlService->storeQd130Xml5($data, $fileType);
                     break;
                 case 'XML6':
-                    $this->qd130XmlService->storeQd130Xml6($data);
+                    $this->qd130XmlService->storeQd130Xml6($data, $fileType);
                     break;
                 case 'XML7':
-                     $this->qd130XmlService->storeQd130Xml7($data);
+                     $this->qd130XmlService->storeQd130Xml7($data, $fileType);
                     break;
                 case 'XML8':
-                     $this->qd130XmlService->storeQd130Xml8($data);
+                     $this->qd130XmlService->storeQd130Xml8($data, $fileType);
                     break;
                 case 'XML9':
-                     $this->qd130XmlService->storeQd130Xml9($data);
+                     $this->qd130XmlService->storeQd130Xml9($data, $fileType);
                     break;
                 case 'XML10':
-                     $this->qd130XmlService->storeQd130Xml10($data);
+                     $this->qd130XmlService->storeQd130Xml10($data, $fileType);
                     break;
                 case 'XML11':
-                     $this->qd130XmlService->storeQd130Xml11($data);
+                     $this->qd130XmlService->storeQd130Xml11($data, $fileType);
                     break;
                 case 'XML12':
                     
                     break;
                 case 'XML13':
-                     $this->qd130XmlService->storeQd130Xml13($data);
+                     $this->qd130XmlService->storeQd130Xml13($data, $fileType);
                     break;
                 case 'XML14':
-                     $this->qd130XmlService->storeQd130Xml14($data);
+                     $this->qd130XmlService->storeQd130Xml14($data, $fileType);
                     break;
                 case 'XML15':
-                     $this->qd130XmlService->storeQd130Xml15($data);
+                     $this->qd130XmlService->storeQd130Xml15($data, $fileType);
                     break;
                 case 'XML16':
                         
@@ -342,6 +355,11 @@ class BHYTQd130Controller extends Controller
                     \Log::warning('Unknown XML type: ' . $file_hs->LOAIHOSO);
                     break;
             }
+        }
+
+        // Sau khi hoàn thành import hồ sơ thì mới check nghiệp vụ tổng thể liên quan tới hồ sơ đó
+        if ($ma_lk !== null && !empty($processedFileTypes)) {
+            CheckCompleteQd130RecordJob::dispatch($ma_lk)->onQueue($this->completeCheckQueueName);
         }
 
         return true;

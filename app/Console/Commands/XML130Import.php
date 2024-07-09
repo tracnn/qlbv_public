@@ -88,49 +88,49 @@ class XML130Import extends Command
 
                             $this->info($data->MA_LK);
 
-                            $this->qd130XmlService->storeQd130Xml1($data);
+                            $this->qd130XmlService->storeQd130Xml1($data, $fileType);
                             break;
                         case 'XML2':
-                            $this->qd130XmlService->storeQd130Xml2($data);
+                            $this->qd130XmlService->storeQd130Xml2($data, $fileType);
                             break;
                         case 'XML3':
-                            $this->qd130XmlService->storeQd130Xml3($data);
+                            $this->qd130XmlService->storeQd130Xml3($data, $fileType);
                             break;
                         case 'XML4':
-                            $this->qd130XmlService->storeQd130Xml4($data);
+                            $this->qd130XmlService->storeQd130Xml4($data, $fileType);
                             break;
                         case 'XML5':
-                            $this->qd130XmlService->storeQd130Xml5($data);
+                            $this->qd130XmlService->storeQd130Xml5($data, $fileType);
                             break;
                         case 'XML6':
-                            $this->qd130XmlService->storeQd130Xml6($data);
+                            $this->qd130XmlService->storeQd130Xml6($data, $fileType);
                             break;
                         case 'XML7':
-                            $this->qd130XmlService->storeQd130Xml7($data);
+                            $this->qd130XmlService->storeQd130Xml7($data, $fileType);
                             break;
                         case 'XML8':
-                            $this->qd130XmlService->storeQd130Xml8($data);
+                            $this->qd130XmlService->storeQd130Xml8($data, $fileType);
                             break;
                         case 'XML9':
-                            $this->qd130XmlService->storeQd130Xml9($data);
+                            $this->qd130XmlService->storeQd130Xml9($data, $fileType);
                             break;
                         case 'XML10':
-                            $this->qd130XmlService->storeQd130Xml10($data);
+                            $this->qd130XmlService->storeQd130Xml10($data, $fileType);
                             break;
                         case 'XML11':
-                            $this->qd130XmlService->storeQd130Xml11($data);
+                            $this->qd130XmlService->storeQd130Xml11($data, $fileType);
                             break;
                         case 'XML12':
                             
                             break;
                         case 'XML13':
-                            $this->qd130XmlService->storeQd130Xml13($data);
+                            $this->qd130XmlService->storeQd130Xml13($data, $fileType);
                             break;
                         case 'XML14':
-                            $this->qd130XmlService->storeQd130Xml14($data);
+                            $this->qd130XmlService->storeQd130Xml14($data, $fileType);
                             break;
                         case 'XML15':
-                            $this->qd130XmlService->storeQd130Xml15($data);
+                            $this->qd130XmlService->storeQd130Xml15($data, $fileType);
                             break;
                         case 'XML16':
                                 

@@ -25,9 +25,9 @@ class Qd130XmlService
 {
     protected $queueName = 'JobQd130XmlCheckError';
 
-    public function storeQd130Xml1($data)
+    public function storeQd130Xml1($data, $xmlType)
     {
-        $expectedStructure = XmlStructures::$expectedStructures130['XML1'];
+        $expectedStructure = XmlStructures::$expectedStructures130[$xmlType];
 
         if (!validateDataStructure($data, $expectedStructure)) {
             \Log::error('Invalid data structure for XML1');
@@ -111,7 +111,8 @@ class Qd130XmlService
 
             // Đẩy công việc kiểm tra vào hàng đợi
             $this->processQd130Xml1CheckBHYT($xml1);
-            CheckQd130XmlErrorsJob::dispatch($xml1, 'XML1')
+
+            CheckQd130XmlErrorsJob::dispatch($xml1, $xmlType)
             ->onQueue($this->queueName);
 
         } catch (\Exception $e) {
@@ -119,9 +120,9 @@ class Qd130XmlService
         }
     }
 
-    public function storeQd130Xml2($data)
+    public function storeQd130Xml2($data, $xmlType)
     {
-        $expectedStructure = XmlStructures::$expectedStructures130['XML2'];
+        $expectedStructure = XmlStructures::$expectedStructures130[$xmlType];
 
         if (isset($data->DSACH_CHI_TIET_THUOC->CHI_TIET_THUOC) && is_iterable($data->DSACH_CHI_TIET_THUOC->CHI_TIET_THUOC)) {
             foreach ($data->DSACH_CHI_TIET_THUOC->CHI_TIET_THUOC as $thuoc) {
@@ -180,8 +181,9 @@ class Qd130XmlService
                     $xml2 = Qd130Xml2::updateOrCreate($attributes, $values);
 
                     //Đẩy công việc kiểm tra vào hàng đợi
-                    CheckQd130XmlErrorsJob::dispatch($xml2, 'XML2')
+                    CheckQd130XmlErrorsJob::dispatch($xml2, $xmlType)
                     ->onQueue($this->queueName);
+
                 } catch (\Exception $e) {
                     \Log::error('Error in storeQd130Xml2: ' . $e->getMessage());
                 }
@@ -190,9 +192,9 @@ class Qd130XmlService
         
     }
 
-    public function storeQd130Xml3($data)
+    public function storeQd130Xml3($data, $xmlType)
     {
-        $expectedStructure = XmlStructures::$expectedStructures130['XML3'];
+        $expectedStructure = XmlStructures::$expectedStructures130[$xmlType];
 
         if (isset($data->DSACH_CHI_TIET_DVKT->CHI_TIET_DVKT) && is_iterable($data->DSACH_CHI_TIET_DVKT->CHI_TIET_DVKT)) {
             foreach ($data->DSACH_CHI_TIET_DVKT->CHI_TIET_DVKT as $dvkt) {
@@ -258,7 +260,7 @@ class Qd130XmlService
                     $xml3 = Qd130Xml3::updateOrCreate($attributes, $values);
 
                     // Đẩy công việc kiểm tra vào hàng đợi
-                    CheckQd130XmlErrorsJob::dispatch($xml3, 'XML3')
+                    CheckQd130XmlErrorsJob::dispatch($xml3, $xmlType)
                     ->onQueue($this->queueName);
 
                 } catch (\Exception $e) {
@@ -269,9 +271,9 @@ class Qd130XmlService
         
     }
 
-    public function storeQd130Xml4($data)
+    public function storeQd130Xml4($data, $xmlType)
     {
-        $expectedStructure = XmlStructures::$expectedStructures130['XML4'];
+        $expectedStructure = XmlStructures::$expectedStructures130[$xmlType];
 
         if (isset($data->DSACH_CHI_TIET_CLS->CHI_TIET_CLS) && is_iterable($data->DSACH_CHI_TIET_CLS->CHI_TIET_CLS)) {
             foreach ($data->DSACH_CHI_TIET_CLS->CHI_TIET_CLS as $cls) {
@@ -301,7 +303,7 @@ class Qd130XmlService
 
                     $xml4 = Qd130Xml4::updateOrCreate($attributes, $values);
                     // Đẩy công việc kiểm tra vào hàng đợi
-                    CheckQd130XmlErrorsJob::dispatch($xml4, 'XML4')
+                    CheckQd130XmlErrorsJob::dispatch($xml4, $xmlType)
                     ->onQueue($this->queueName);
 
                 } catch (\Exception $e) {
@@ -311,9 +313,9 @@ class Qd130XmlService
         }
     }
 
-    public function storeQd130Xml5($data)
+    public function storeQd130Xml5($data, $xmlType)
     {
-        $expectedStructure = XmlStructures::$expectedStructures130['XML5'];
+        $expectedStructure = XmlStructures::$expectedStructures130[$xmlType];
 
         if (isset($data->DSACH_CHI_TIET_DIEN_BIEN_BENH->CHI_TIET_DIEN_BIEN_BENH) && 
             is_iterable($data->DSACH_CHI_TIET_DIEN_BIEN_BENH->CHI_TIET_DIEN_BIEN_BENH)){
@@ -341,8 +343,8 @@ class Qd130XmlService
 
                     $xml5 = Qd130Xml5::updateOrCreate($attributes, $values);
                     // Đẩy công việc kiểm tra vào hàng đợi
-                    CheckQd130XmlErrorsJob::dispatch($xml5, 'XML5')
-                    ->onQueue($this->queueName);
+                    CheckQd130XmlErrorsJob::dispatch($xml5, $xmlType)
+                    ->onQueue($this->queueName);            
 
                 } catch (\Exception $e) {
                     \Log::error('Error in storeQd130Xml5: ' . $e->getMessage());
@@ -352,14 +354,14 @@ class Qd130XmlService
 
     }
 
-    public function storeQd130Xml6($data)
+    public function storeQd130Xml6($data, $xmlType)
     {
-        $expectedStructure = XmlStructures::$expectedStructures130['XML6'];
+        $expectedStructure = XmlStructures::$expectedStructures130[$xmlType];
     }
 
-    public function storeQd130Xml7($data)
+    public function storeQd130Xml7($data, $xmlType)
     {
-        $expectedStructure = XmlStructures::$expectedStructures130['XML7'];
+        $expectedStructure = XmlStructures::$expectedStructures130[$xmlType];
 
          if (!validateDataStructure($data, $expectedStructure)) {
             \Log::error('Invalid data structure for XML7');
@@ -401,17 +403,17 @@ class Qd130XmlService
             $xml7 = Qd130Xml7::updateOrCreate($attributes, $values);
 
             // Đẩy công việc kiểm tra vào hàng đợi
-            CheckQd130XmlErrorsJob::dispatch($xml7, 'XML7')
-            ->onQueue($this->queueName);
+            CheckQd130XmlErrorsJob::dispatch($xml7, $xmlType)
+            ->onQueue($this->queueName);  
 
         } catch (\Exception $e) {
             \Log::error('Error in storeQd130Xml7: ' . $e->getMessage());
         }
     }
 
-    public function storeQd130Xml8($data)
+    public function storeQd130Xml8($data, $xmlType)
     {
-        $expectedStructure = XmlStructures::$expectedStructures130['XML8'];
+        $expectedStructure = XmlStructures::$expectedStructures130[$xmlType];
 
         if (!validateDataStructure($data, $expectedStructure)) {
             \Log::error('Invalid data structure for XML8');
@@ -449,8 +451,8 @@ class Qd130XmlService
             $xml8 = Qd130Xml8::updateOrCreate($attributes, $values);
 
             // Đẩy công việc kiểm tra vào hàng đợi
-            CheckQd130XmlErrorsJob::dispatch($xml8, 'XML8')
-            ->onQueue($this->queueName);
+            CheckQd130XmlErrorsJob::dispatch($xml8, $xmlType)
+            ->onQueue($this->queueName);   
 
         } catch (\Exception $e) {
             \Log::error('Error in storeQd130Xml8: ' . $e->getMessage());
@@ -458,9 +460,9 @@ class Qd130XmlService
 
     }
 
-    public function storeQd130Xml9($data)
+    public function storeQd130Xml9($data, $xmlType)
     {
-        $expectedStructure = XmlStructures::$expectedStructures130['XML9'];
+        $expectedStructure = XmlStructures::$expectedStructures130[$xmlType];
 
         if (isset($data->DSACH_GIAYCHUNGSINH->DU_LIEU_GIAY_CHUNG_SINH) && 
             is_iterable($data->DSACH_GIAYCHUNGSINH->DU_LIEU_GIAY_CHUNG_SINH)){
@@ -514,7 +516,7 @@ class Qd130XmlService
 
                     $xml9 = Qd130Xml9::updateOrCreate($attributes, $values);
                     // Đẩy công việc kiểm tra vào hàng đợi
-                    CheckQd130XmlErrorsJob::dispatch($xml9, 'XML9')
+                    CheckQd130XmlErrorsJob::dispatch($xml9, $xmlType)
                     ->onQueue($this->queueName);
 
                 } catch (\Exception $e) {
@@ -524,14 +526,14 @@ class Qd130XmlService
         }
     }
 
-    public function storeQd130Xml10($data)
+    public function storeQd130Xml10($data, $xmlType)
     {
-        $expectedStructure = XmlStructures::$expectedStructures130['XML10'];
+        $expectedStructure = XmlStructures::$expectedStructures130[$xmlType];
     }
 
-    public function storeQd130Xml11($data)
+    public function storeQd130Xml11($data, $xmlType)
     {
-        $expectedStructure = XmlStructures::$expectedStructures130['XML11'];
+        $expectedStructure = XmlStructures::$expectedStructures130[$xmlType];
 
         if (!validateDataStructure($data, $expectedStructure)) {
             \Log::error('Invalid data structure for XML11');
@@ -570,17 +572,17 @@ class Qd130XmlService
             $xml11 = Qd130Xml11::updateOrCreate($attributes, $values);
 
             // Đẩy công việc kiểm tra vào hàng đợi
-            CheckQd130XmlErrorsJob::dispatch($xml11, 'XML11')
-            ->onQueue($this->queueName);
+            CheckQd130XmlErrorsJob::dispatch($xml11, $xmlType)
+            ->onQueue($this->queueName); 
 
         } catch (\Exception $e) {
             \Log::error('Error in storeQd130Xml11: ' . $e->getMessage());
         }
     }
 
-    public function storeQd130Xml13($data)
+    public function storeQd130Xml13($data, $xmlType)
     {
-        $expectedStructure = XmlStructures::$expectedStructures130['XML13'];
+        $expectedStructure = XmlStructures::$expectedStructures130[$xmlType];
 
         if (!validateDataStructure($data, $expectedStructure)) {
             \Log::error('Invalid data structure for XML13');
@@ -635,7 +637,7 @@ class Qd130XmlService
             $xml13 = Qd130Xml13::updateOrCreate($attributes, $values);
 
             // Đẩy công việc kiểm tra vào hàng đợi
-            CheckQd130XmlErrorsJob::dispatch($xml13, 'XML13')
+            CheckQd130XmlErrorsJob::dispatch($xml13, $xmlType)
             ->onQueue($this->queueName);
 
         } catch (\Exception $e) {
@@ -643,9 +645,9 @@ class Qd130XmlService
         }
     }
 
-    public function storeQd130Xml14($data)
+    public function storeQd130Xml14($data, $xmlType)
     {
-        $expectedStructure = XmlStructures::$expectedStructures130['XML14'];
+        $expectedStructure = XmlStructures::$expectedStructures130[$xmlType];
 
         if (!validateDataStructure($data, $expectedStructure)) {
             \Log::error('Invalid data structure for XML14');
@@ -684,7 +686,7 @@ class Qd130XmlService
             $xml14 = Qd130Xml14::updateOrCreate($attributes, $values);
 
             // Đẩy công việc kiểm tra vào hàng đợi
-            CheckQd130XmlErrorsJob::dispatch($xml14, 'XML14')
+            CheckQd130XmlErrorsJob::dispatch($xml14, $xmlType)
             ->onQueue($this->queueName);
 
         } catch (\Exception $e) {
@@ -692,9 +694,9 @@ class Qd130XmlService
         }
     }
 
-    public function storeQd130Xml15($data)
+    public function storeQd130Xml15($data, $xmlType)
     {
-        $expectedStructure = XmlStructures::$expectedStructures130['XML15'];
+        $expectedStructure = XmlStructures::$expectedStructures130[$xmlType];
     }
 
     private function processQd130Xml1CheckBHYT($data): void
