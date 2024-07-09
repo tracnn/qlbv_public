@@ -2,6 +2,8 @@
 
 namespace App\Jobs;
 
+use App\Services\Qd130XmlCompleteChecker;
+
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
@@ -29,8 +31,8 @@ class CheckCompleteQd130RecordJob implements ShouldQueue
      *
      * @return void
      */
-    public function handle()
+    public function handle(Qd130XmlCompleteChecker $xmlCompleteChecker)
     {
-         \Log::info("Comprehensive check for complete record with MA_LK: {$this->ma_lk}");
+         $xmlCompleteChecker->checkErrors($this->ma_lk);
     }
 }
