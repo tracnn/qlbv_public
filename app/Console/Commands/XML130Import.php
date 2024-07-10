@@ -163,7 +163,7 @@ class XML130Import extends Command
 
                 // Sau khi hoàn thành import hồ sơ thì mới check nghiệp vụ tổng thể liên quan tới hồ sơ đó
                 if ($ma_lk !== null && !empty($processedFileTypes)) {
-                    CheckCompleteQd130RecordJob::dispatch($ma_lk)->onQueue('JobQd130XmlCheckError');
+                    $this->qd130XmlService->checkQd130XmlComplete($ma_lk);
                 }
 
                 // Delete file after import

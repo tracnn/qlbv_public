@@ -19,6 +19,7 @@ use App\Models\BHYT\Qd130Xml15;
 use App\Services\XmlStructures;
 
 use App\Jobs\CheckQd130XmlErrorsJob;
+use App\Jobs\CheckCompleteQd130RecordJob;
 use App\Jobs\jobKtTheBHYT;
 
 class Qd130XmlService
@@ -697,6 +698,12 @@ class Qd130XmlService
     public function storeQd130Xml15($data, $xmlType)
     {
         $expectedStructure = XmlStructures::$expectedStructures130[$xmlType];
+    }
+
+    public function checkQd130XmlComplete($ma_lk)
+    {
+        CheckCompleteQd130RecordJob::dispatch($ma_lk)
+        ->onQueue($this->queueName);
     }
 
     private function processQd130Xml1CheckBHYT($data): void

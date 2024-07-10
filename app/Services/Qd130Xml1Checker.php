@@ -228,11 +228,20 @@ class Qd130Xml1Checker
 
         // Check ma_benh_chinh
         if (!Icd10Category::where('icd_code', $data->ma_benh_chinh)->exists()) {
-            $errors->push((object)[
-                'error_code' => $this->prefix . 'DISEASE_ICD_CODE_ERROR_MA_BENH_CHINH',
-                'error_name' => 'Mã bệnh chính không tồn tại',
-                'description' => 'Mã bệnh chính không tồn tại trong danh mục ICD10: ' . $data->ma_benh_chinh
-            ]);
+            $existIcdYhct = IcdYhctCategory::where('icd_code', $data->ma_benh_chinh)->first();
+            if($existIcdYhct) {
+               $errors->push((object)[
+                    'error_code' => $this->prefix . 'DISEASE_ICD_CODE_ERROR_MA_BENH_CHINH_IN_YHCT',
+                    'error_name' => 'Mã bệnh chính thuộc mã bệnh YHCT',
+                    'description' => 'Mã bệnh chính: ' . $data->ma_benh_chinh . ' thuộc DM YHCT tương đương với: ' . $existIcdYhct->icd10_code . ' trong DM ICD10'
+                ]); 
+            } else {
+                $errors->push((object)[
+                    'error_code' => $this->prefix . 'DISEASE_ICD_CODE_ERROR_MA_BENH_CHINH',
+                    'error_name' => 'Mã bệnh chính không tồn tại',
+                    'description' => 'Mã bệnh chính không tồn tại trong danh mục ICD10: ' . $data->ma_benh_chinh
+                ]);                
+            }
         }
 
         // Check ma_benh_kt

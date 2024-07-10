@@ -14,7 +14,6 @@ use App\Services\Qd130XmlService;
 use App\Services\XmlStructures;
 
 use App\Exports\Qd130ErrorExport;
-use App\Jobs\CheckCompleteQd130RecordJob;
 
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -359,7 +358,7 @@ class BHYTQd130Controller extends Controller
 
         // Sau khi hoàn thành import hồ sơ thì mới check nghiệp vụ tổng thể liên quan tới hồ sơ đó
         if ($ma_lk !== null && !empty($processedFileTypes)) {
-            CheckCompleteQd130RecordJob::dispatch($ma_lk)->onQueue('JobQd130XmlCheckError');
+            $this->qd130XmlService->checkQd130XmlComplete($ma_lk);
         }
 
         return true;
