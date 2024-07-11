@@ -55,3 +55,33 @@
     height: calc(100% - 56px - 56px); /* Subtracting header and footer height */
     overflow-y: auto;
 }
+
+/* Custom CSS for tooltips */
+.tooltip-inner {
+    background-color: #cc0000; /* Darker red background */
+    color: #fff; /* White text */
+    font-size: 14px; /* Larger text */
+    font-weight: bold; /* Bold text */
+}
+
+.tooltip.top .tooltip-arrow {
+    border-top-color: #cc0000; /* Darker red arrow */
+}
+
+.tooltip.right .tooltip-arrow {
+    border-right-color: #cc0000; /* Darker red arrow */
+}
+
+.tooltip.bottom .tooltip-arrow {
+    border-bottom-color: #cc0000; /* Darker red arrow */
+}
+
+.tooltip.left .tooltip-arrow {
+    border-left-color: #cc0000; /* Darker red arrow */
+}
+
+/* Custom badge styling */
+.badge-error {
+    background-color: #cc0000; /* Darker red background */
+    color: white;
+}

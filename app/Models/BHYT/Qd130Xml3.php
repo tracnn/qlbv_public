@@ -60,4 +60,11 @@ class Qd130Xml3 extends Model
     {
         return $this->belongsTo('App\Models\BHYT\Qd130Xml1', 'ma_lk', 'ma_lk');
     }
+
+    public function errorResult()
+    {
+        return $this->hasMany('App\Models\BHYT\Qd130XmlErrorResult', 'ma_lk', 'ma_lk')
+                    ->where('xml', 'XML3')
+                    ->whereColumn('stt', 'stt');
+    }
 }

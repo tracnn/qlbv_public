@@ -41,7 +41,14 @@
                             </thead>
                             <tbody>
                                 @foreach($group as $value_xml2)
-                                <tr>
+                                @php
+                                    $errorDescriptions = $value_xml2
+                                    ->errorResult()
+                                    ->where('stt', $value_xml2->stt)
+                                    ->pluck('description')
+                                    ->implode('; ');
+                                @endphp
+                                <tr @if($errorDescriptions) class="highlight-red" data-toggle="tooltip" title="{{ $errorDescriptions }}" @endif>
                                     <td align="right">{{ $value_xml2->stt }}</td>
                                     <td>{{ $value_xml2->ma_thuoc }}</td>
                                     <td>{{ $value_xml2->ten_thuoc }}</td>

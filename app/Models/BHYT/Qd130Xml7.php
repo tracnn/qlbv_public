@@ -33,4 +33,11 @@ class Qd130Xml7 extends Model
         'ngoaitru_tungay',
         'ngoaitru_denngay',
     ];
+
+    public function errorResult()
+    {
+        return $this->hasMany('App\Models\BHYT\Qd130XmlErrorResult', 'ma_lk', 'ma_lk')
+                    ->where('xml', 'XML7');
+    }
+
 }

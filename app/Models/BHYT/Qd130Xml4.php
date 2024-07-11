@@ -20,4 +20,11 @@ class Qd130Xml4 extends Model
         'ma_bs_doc_kq',
         'du_phong'
     ];
+
+    public function errorResult()
+    {
+        return $this->hasMany('App\Models\BHYT\Qd130XmlErrorResult', 'ma_lk', 'ma_lk')
+                    ->where('xml', 'XML4')
+                    ->whereColumn('stt', 'stt');
+    }
 }

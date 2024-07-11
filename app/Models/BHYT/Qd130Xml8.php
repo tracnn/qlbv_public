@@ -30,4 +30,10 @@ class Qd130Xml8 extends Model
         'ma_the_tam',
         'du_phong',
     ];
+
+    public function errorResult()
+    {
+        return $this->hasMany('App\Models\BHYT\Qd130XmlErrorResult', 'ma_lk', 'ma_lk')
+                    ->where('xml', 'XML8');
+    }
 }

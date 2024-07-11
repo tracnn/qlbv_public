@@ -6,22 +6,109 @@
 <ul class="nav nav-tabs">
     <li class="active"><a data-toggle="tab" href="#menu1">XML1</a></li>
     @if($xml1->Qd130Xml2->isNotEmpty())
-    <li><a data-toggle="tab" href="#menu2">XML2</a></li>
+    <li>
+        <a data-toggle="tab" href="#menu2">XML2
+             @php
+                $errorCountXml = $xml1->Qd130Xml2->filter(function($item) {
+                    return $item->errorResult()->where('xml', 'XML2')
+                    ->where('ma_lk', $item->ma_lk)
+                    ->where('stt', $item->stt)
+                    ->exists();
+                })->count();
+            @endphp
+            @if($errorCountXml > 0)
+                <span class="badge badge-error">{{ $errorCountXml }}</span>
+            @endif
+        </a>
+    </li>
     @endif
     @if($xml1->Qd130Xml3->isNotEmpty())
-    <li><a data-toggle="tab" href="#menu3">XML3</a></li>
+    <li>
+        <a data-toggle="tab" href="#menu3">XML3
+            @php
+                $errorCountXml = $xml1->Qd130Xml3->filter(function($item) {
+                    return $item->errorResult()
+                    ->where('xml', 'XML3')
+                    ->where('ma_lk', $item->ma_lk)
+                    ->where('stt', $item->stt)
+                    ->exists();
+                })->count();
+            @endphp
+            @if($errorCountXml > 0)
+                <span class="badge badge-error">{{ $errorCountXml }}</span>
+            @endif
+        </a>
+    </li>
     @endif
     @if($xml1->Qd130Xml4->isNotEmpty())
-    <li><a data-toggle="tab" href="#menu4">XML4</a></li>
+    <li>
+        <a data-toggle="tab" href="#menu4">XML4
+            @php
+                $errorCountXml = $xml1->Qd130Xml4->filter(function($item) {
+                    return $item->errorResult()
+                    ->where('xml', 'XML4')
+                    ->where('ma_lk', $item->ma_lk)
+                    ->where('stt', $item->stt)
+                    ->exists();
+                })->count();
+            @endphp
+            @if($errorCountXml > 0)
+                <span class="badge badge-error">{{ $errorCountXml }}</span>
+            @endif
+        </a>
+    </li>
     @endif
     @if($xml1->Qd130Xml5->isNotEmpty())
-    <li><a data-toggle="tab" href="#menu5">XML5</a></li>
+    <li>
+        <a data-toggle="tab" href="#menu5">XML5
+            @php
+                $errorCountXml = $xml1->Qd130Xml5->filter(function($item) {
+                    return $item->errorResult()
+                    ->where('xml', 'XML5')
+                    ->where('ma_lk', $item->ma_lk)
+                    ->where('stt', $item->stt)
+                    ->exists();
+                })->count();
+            @endphp
+            @if($errorCountXml > 0)
+                <span class="badge badge-error">{{ $errorCountXml }}</span>
+            @endif
+        </a>
+    </li>
     @endif
     @if($xml1->Qd130Xml7->isNotEmpty())
-    <li><a data-toggle="tab" href="#menu7">XML7</a></li>
+    <li>
+        <a data-toggle="tab" href="#menu7">XML7
+            @php
+                $errorCountXml = $xml1->Qd130Xml7->filter(function($item) {
+                    return $item->errorResult()
+                    ->where('xml', 'XML7')
+                    ->where('ma_lk', $item->ma_lk)
+                    ->exists();
+                })->count();
+            @endphp
+            @if($errorCountXml > 0)
+                <span class="badge badge-error">{{ $errorCountXml }}</span>
+            @endif
+        </a>
+    </li>
     @endif
     @if($xml1->Qd130Xml8->isNotEmpty())
-    <li><a data-toggle="tab" href="#menu8">XML8</a></li>
+    <li>
+        <a data-toggle="tab" href="#menu8">XML8
+            @php
+                $errorCountXml = $xml1->Qd130Xml8->filter(function($item) {
+                    return $item->errorResult()
+                    ->where('xml', 'XML8')
+                    ->where('ma_lk', $item->ma_lk)
+                    ->exists();
+                })->count();
+            @endphp
+            @if($errorCountXml > 0)
+                <span class="badge badge-error">{{ $errorCountXml }}</span>
+            @endif
+        </a>
+    </li>
     @endif
     @if($xml1->Qd130Xml9->isNotEmpty())
     <li><a data-toggle="tab" href="#menu9">XML9</a></li>
@@ -63,3 +150,9 @@
     @include('bhyt.qd130.detail-xml-errors')
 
 </div>
+
+<script>
+    $(document).ready(function(){
+        $('[data-toggle="tooltip"]').tooltip(); 
+    });
+</script>

@@ -17,4 +17,11 @@ class Qd130Xml5 extends Model
         'nguoi_thuc_hien',
         'du_phong'
     ];
+
+    public function errorResult()
+    {
+        return $this->hasMany('App\Models\BHYT\Qd130XmlErrorResult', 'ma_lk', 'ma_lk')
+                    ->where('xml', 'XML5')
+                    ->whereColumn('stt', 'stt');
+    }
 }
