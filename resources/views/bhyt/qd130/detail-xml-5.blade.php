@@ -40,7 +40,6 @@
                                     ->implode('; ');
                                 @endphp
                                 <tr @if($errorDescriptions) class="highlight-red" data-toggle="tooltip" title="{{ $errorDescriptions }}" @endif>
-                                <tr>
                                     <td>{{ $value_xml5->stt }}</td>
                                     <td>{{ $value_xml5->dien_bien_ls }}</td>
                                     <td>{{ $value_xml5->hoi_chan }}</td>

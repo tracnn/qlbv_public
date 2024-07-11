@@ -111,16 +111,72 @@
     </li>
     @endif
     @if($xml1->Qd130Xml9->isNotEmpty())
-    <li><a data-toggle="tab" href="#menu9">XML9</a></li>
+    <li>
+        <a data-toggle="tab" href="#menu9">XML9
+            @php
+                $errorCountXml = $xml1->Qd130Xml9->filter(function($item) {
+                    return $item->errorResult()
+                    ->where('xml', 'XML9')
+                    ->where('ma_lk', $item->ma_lk)
+                    ->exists();
+                })->count();
+            @endphp
+            @if($errorCountXml > 0)
+                <span class="badge badge-error">{{ $errorCountXml }}</span>
+            @endif
+        </a>
+    </li>
     @endif
     @if($xml1->Qd130Xml11->isNotEmpty())
-    <li><a data-toggle="tab" href="#menu11">XML11</a></li>
+    <li>
+        <a data-toggle="tab" href="#menu11">XML11
+            @php
+                $errorCountXml = $xml1->Qd130Xml11->filter(function($item) {
+                    return $item->errorResult()
+                    ->where('xml', 'XML11')
+                    ->where('ma_lk', $item->ma_lk)
+                    ->exists();
+                })->count();
+            @endphp
+            @if($errorCountXml > 0)
+                <span class="badge badge-error">{{ $errorCountXml }}</span>
+            @endif
+        </a>
+    </li>
     @endif
     @if($xml1->Qd130Xml13->isNotEmpty())
-    <li><a data-toggle="tab" href="#menu13">XML13</a></li>
+    <li>
+        <a data-toggle="tab" href="#menu13">XML13
+            @php
+                $errorCountXml = $xml1->Qd130Xml13->filter(function($item) {
+                    return $item->errorResult()
+                    ->where('xml', 'XML13')
+                    ->where('ma_lk', $item->ma_lk)
+                    ->exists();
+                })->count();
+            @endphp
+            @if($errorCountXml > 0)
+                <span class="badge badge-error">{{ $errorCountXml }}</span>
+            @endif
+        </a>
+    </li>
     @endif
     @if($xml1->Qd130Xml14->isNotEmpty())
-    <li><a data-toggle="tab" href="#menu14">XML14</a></li>
+    <li>
+        <a data-toggle="tab" href="#menu14">XML14
+            @php
+                $errorCountXml = $xml1->Qd130Xml14->filter(function($item) {
+                    return $item->errorResult()
+                    ->where('xml', 'XML14')
+                    ->where('ma_lk', $item->ma_lk)
+                    ->exists();
+                })->count();
+            @endphp
+            @if($errorCountXml > 0)
+                <span class="badge badge-error">{{ $errorCountXml }}</span>
+            @endif
+        </a>
+    </li>
     @endif
     <li class="{{ ($xml1->check_hein_card && ($xml1->check_hein_card->ma_tracuu != '000' || 
         $xml1->check_hein_card->ma_kiemtra != '00')) ? 'highlight-red' : '' }}">
