@@ -70,8 +70,8 @@ class Qd130Xml3Checker
         $errors = $errors->merge($this->checkBedGroupCodeConditions($data));
         $errors = $errors->merge($this->checkExcludedMaterialGroupCode($data));
         //$errors = $errors->merge($this->checkGroupCodeWithExecutor($data));
-        // $errors = $errors->merge($this->checkBedDayQuantity($data)); // Thêm kiểm tra số lượng ngày giường
-        // $errors = $errors->merge($this->checkMedicalSupplyCatalog($data)); // Thêm kiểm tra VTYT
+        $errors = $errors->merge($this->checkBedDayQuantity($data)); // Thêm kiểm tra số lượng ngày giường
+        $errors = $errors->merge($this->checkMedicalSupplyCatalog($data)); // Thêm kiểm tra VTYT
 
         $additionalData = [
             'ngay_yl' => $data->ngay_yl
@@ -348,16 +348,16 @@ class Qd130Xml3Checker
                 ]);
             }
 
-            // Kiểm tra định dạng tt_thau trong XML3 (năm.thầu.gói thầu)
-            $parts = explode('.', $data->tt_thau);
-            if (count($parts) < 3 || !preg_match('/^\d{4}$/', $parts[0])) {
+            // Kiểm tra định dạng tt_thau trong XML3 (mã thầu;gói thầu;nhóm thầu;năm thầu)
+            $parts = explode(';', $data->tt_thau);
+            if (count($parts) < 4 || in_array('', $parts, true)) {
                 $errors->push((object)[
                     'error_code' => $this->prefix . 'INVALID_TT_THAU_FORMAT',
                     'error_name' => 'Thông tin thầu không đúng định dạng',
-                    'description' => 'TT_THAU không đúng định dạng năm.thầu.gói thầu'
+                    'description' => 'Mã vật tư: ' . $data->ma_vat_tu . '; có TT_THAU không đúng định dạng: ' . $data->tt_thau
                 ]);
             } else {
-                list($dataYear, $dataPackage, $dataDecision) = $parts;
+                list($dataDecision, $dataPackage, $dataGroup, $dataYear) = $parts;
 
                 // Lấy các bản ghi từ MedicalSupplyCatalog có ma_vat_tu khớp với ma_vat_tu trong $data
                 $medicalSupplies = MedicalSupplyCatalog::where('ma_vat_tu', $data->ma_vat_tu)->get();
@@ -372,19 +372,20 @@ class Qd130Xml3Checker
                     if (count($supplyParts) >= 4) {
                         $supplyDecision = $supplyParts[0];
                         $supplyPackage = $supplyParts[1];
+                        $supplyGroup = $supplyParts[2];
                         $supplyYear = $supplyParts[3];
 
                         // Kiểm tra từng phần
-                        if ($supplyDecision == $dataDecision && $supplyPackage == $dataPackage && $supplyYear == $dataYear) {
+                        if ($supplyDecision == $dataDecision && $supplyPackage == $dataPackage && 
+                            $supplyGroup == $dataGroup && $supplyYear == $dataYear) {
                             $found = true;
 
                             // Kiểm tra giá
-                            $approvedPrice = min($supply->don_gia, $supply->don_gia_bh);
-                            if ($data->don_gia > $approvedPrice) {
+                            if ($data->don_gia_bh > $supply->don_gia_bh) {
                                 $errors->push((object)[
                                     'error_code' => $this->prefix . 'EXCEEDS_APPROVED_PRICE',
                                     'error_name' => 'Giá vật tư cao hơn giá được phê duyệt',
-                                    'description' => 'Mã VTYT: ' . $data->ma_vat_tu . '; Có giá: ' . $data->don_gia . '; Giá phê duyệt: ' . $approvedPrice
+                                    'description' => 'Mã VTYT: ' . $data->ma_vat_tu . '; Có giá: ' . $data->don_gia_bh . '; Giá phê duyệt: ' . $supply->don_gia_bh
                                 ]);
                             }
 
