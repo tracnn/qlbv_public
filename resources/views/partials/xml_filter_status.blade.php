@@ -6,8 +6,8 @@
             <option value="no_error">HS không lỗi</option>
             <option value="has_error">HS có lỗi</option>
             <option value="has_error_hein_card">HS lỗi thẻ</option>
-            <option value="has_error_critical">HS lỗi critical</option>
             <option value="has_error_warning">HS lỗi warning</option>
+            <option value="has_error_critical">HS lỗi critical</option>
         </select>
     </div> 
 </div>
