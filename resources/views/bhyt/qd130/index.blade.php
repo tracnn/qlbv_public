@@ -10,6 +10,23 @@
 {{ Breadcrumbs::render('bhyt.index') }}
 @stop
 
+@push('after-styles')
+<style>
+    .modal-body {
+        max-height: 500px; /* Set a fixed height for the modal body */
+        overflow-y: auto; /* Enable vertical scrolling */
+        overflow-x: auto; /* Enable horizontal scrolling */
+    }
+    .table-responsive {
+        display: block;
+        width: 100%;
+        overflow-x: auto;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+</style>
+@endpush
+
 @section('content')
 <!-- Messages -->
 @include('includes.message')
@@ -56,8 +73,10 @@
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
-            <div class="modal-body" id="modalContent">
-                <!-- Nội dung chi tiết sẽ được tải ở đây -->
+            <div class="modal-body">
+                <div id="modalContent" class="table-responsive">
+                    <!-- Nội dung chi tiết sẽ được tải ở đây -->
+                </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>

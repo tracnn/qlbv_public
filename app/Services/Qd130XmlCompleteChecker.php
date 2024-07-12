@@ -26,6 +26,11 @@ class Qd130XmlCompleteChecker
     protected $xmlType;
 
     protected $xmlTypeMustHaveXml7;
+    protected $invalidKetQuaDtri;
+    protected $invalidMaLoaiRV;
+    protected $bedGroupCodes;
+    protected $treatmentTypeInpatient;
+
 
     public function __construct(Qd130XmlErrorService $xmlErrorService)
     {
@@ -38,6 +43,11 @@ class Qd130XmlCompleteChecker
         $this->xmlType = 'XMLComplete';
         $this->prefix = $this->xmlType . '_';
         $this->xmlTypeMustHaveXml7 = ['03', '04','09'];
+        
+        $this->invalidKetQuaDtri = [3, 4, 5, 6];
+        $this->invalidMaLoaiRV = [2, 3, 4];
+        $this->bedGroupCodes = [14, 15, 16];
+        $this->treatmentTypeInpatient = ['03', '04', '09'];
     }
 
     /**
@@ -48,13 +58,17 @@ class Qd130XmlCompleteChecker
      */
     public function checkErrors($ma_lk): void
     {
+        $data = Qd130Xml1::where('ma_lk', $ma_lk)->first();
         // Thực hiện kiểm tra lỗi
-        $errors = collect();
+        if ($data) {
+            $errors = collect();
+        
+            $errors = $errors->merge($this->infoChecker($ma_lk));
+            $errors = $errors->merge($this->checkInvalidBedDays($data));
 
-        $errors = $errors->merge($this->infoChecker($ma_lk));
-
-        // Save errors to xml_error_checks table
-        $this->xmlErrorService->saveErrors($this->xmlType, $ma_lk, 1, $errors);
+            // Save errors to xml_error_checks table
+            $this->xmlErrorService->saveErrors($this->xmlType, $data->ma_lk, $data->stt, $errors);
+        }
     }
 
     /**
@@ -95,6 +109,64 @@ class Qd130XmlCompleteChecker
                 }
             }
         }
+        return $errors;
+    }
+
+    /**
+     * Check for invalid bed days errors
+     *
+     * @param XML1 $data
+     * @return Collection
+     */
+    private function checkInvalidBedDays(Qd130Xml1 $data): Collection
+    {
+        $errors = collect();
+
+        // Convert ngay_vao and ngay_ra to DateTime objects
+        $ngayVao = DateTime::createFromFormat('YmdHi', $data->ngay_vao);
+        $ngayRa = DateTime::createFromFormat('YmdHi', $data->ngay_ra);
+
+        // Calculate the difference in hours
+        $interval = $ngayRa->diff($ngayVao);
+        $hoursDifference = ($interval->days * 24) + $interval->h + ($interval->i / 60);
+        if (in_array($data->ma_loai_kcb, $this->treatmentTypeInpatient) && $data->so_ngay_dtri <= 2) {
+            $totalBedDays = $data->Qd130Xml3()->whereIn('ma_nhom', $this->bedGroupCodes)->sum('so_luong');
+            if ($hoursDifference < 4) {
+                // Check if there are bed charges in Qd130Xml3
+                if ($totalBedDays > 0) {
+                    $errors->push((object)[
+                        'error_code' => $this->prefix . 'SHORT_INPATIENT_STAY',
+                        'error_name' => 'Điều trị nội trú < 4h không được tính tiền giường',
+                        'description' => 'Thời gian điều trị nội trú nhỏ hơn 4 giờ, không được tính tiền giường.'
+                    ]);
+                }
+            } elseif ($hoursDifference >= 4 && $hoursDifference <= 24) {
+                // Check if the total bed days exceed the treatment days
+                if ($totalBedDays >= 2) {
+                    $errors->push((object)[
+                        'error_code' => $this->prefix . 'EXCESS_BED_DAYS',
+                        'error_name' => 'Điều trị nội trú >= 4h và <=24h tính thừa ngày giường',
+                        'description' => 'Thời gian điều trị nội trú từ 4 đến 24 giờ, tính thừa ngày giường: ' .$totalBedDays
+                    ]);
+                }
+            }
+        }
+
+        if (in_array($data->ma_loai_kcb, $this->treatmentTypeInpatient) && $data->so_ngay_dtri >= 2 &&
+            (!in_array($data->ket_qua_dtri, $this->invalidKetQuaDtri) ||
+            !in_array($data->ma_loai_rv, $this->invalidMaLoaiRV))) {
+
+            $totalBedDays = $data->Qd130Xml3()->whereIn('ma_nhom', $this->bedGroupCodes)->sum('so_luong');
+
+            if ($totalBedDays >= $data->so_ngay_dtri) {
+                $errors->push((object)[
+                    'error_code' => $this->prefix . 'INVALID_BED_DAYS',
+                    'error_name' => 'Thanh toán ngày giường sai quy định (trừ trường hợp đặc biệt)',
+                    'description' => 'Thanh toán ngày giường sai quy định (trừ trường hợp đặc biệt)'
+                ]);
+            }
+        }
+
         return $errors;
     }
 

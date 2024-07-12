@@ -3,8 +3,27 @@
     Họ tên - {{ $xml1->ho_ten }}; Ngày sinh - {{ dob($xml1->ngay_sinh) }}
     Mã thẻ - {{ $xml1->ma_the_bhyt }}; Nơi ĐKBĐ - {{ $xml1->ma_dkbd }}
 </label>
+<!-- @php
+    $errorDescriptions = $xml1
+    ->Qd130XmlErrorResult()
+    ->where('xml', 'XML1')
+    ->pluck('description')
+    ->implode('; ');
+@endphp
+<ul class="nav nav-tabs" @if($errorDescriptions) class="highlight-red" data-toggle="tooltip" title="{{ $errorDescriptions }}" @endif> -->
 <ul class="nav nav-tabs">
-    <li class="active"><a data-toggle="tab" href="#menu1">XML1</a></li>
+    <li class="active">
+        <a data-toggle="tab" href="#menu1">XML1
+            @php
+                $errorCountXml = $xml1->Qd130XmlErrorResult()
+                    ->where('xml', 'XML1')
+                    ->count();
+            @endphp
+            @if($errorCountXml > 0)
+                <span class="badge badge-error">{{ $errorCountXml }}</span>
+            @endif       
+        </a>
+    </li>
     @if($xml1->Qd130Xml2->isNotEmpty())
     <li>
         <a data-toggle="tab" href="#menu2">XML2

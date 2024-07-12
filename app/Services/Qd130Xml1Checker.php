@@ -70,7 +70,7 @@ class Qd130Xml1Checker
         $errors = $errors->merge($this->adminInfoChecker->check($data));
         //$errors = $errors->merge($this->checkReasonForAdmission($data));
         $errors = $errors->merge($this->checkLongTermTreatment($data));
-        $errors = $errors->merge($this->checkInvalidBedDays($data));
+        //$errors = $errors->merge($this->checkInvalidBedDays($data));
         $errors = $errors->merge($this->checkSpecialInpatientConditions($data));
         $errors = $errors->merge($this->checkDiseaseIcdCodes($data));
 

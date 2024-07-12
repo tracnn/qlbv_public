@@ -1,4 +1,12 @@
 <div id="menu1" class="tab-pane fade in active">
+<!--     @php
+        $errorDescriptions = $xml1
+        ->Qd130XmlErrorResult()
+        ->where('xml', 'XML1')
+        ->pluck('description')
+        ->implode('; ');
+    @endphp
+    <ul class="nav nav-tabs" @if($errorDescriptions) class="highlight-red" data-toggle="tooltip" title="{{ $errorDescriptions }}" @endif> -->
     <ul class="nav nav-tabs">
         <li class="active"><a data-toggle="tab" href="#admin_info">Thông tin hành chính</a></li>
         <li><a data-toggle="tab" href="#treatment_info">Quá trình điều trị</a></li>
