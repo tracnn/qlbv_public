@@ -47,4 +47,10 @@ class Qd130Xml13 extends Model
         'ma_ttdv',
         'du_phong',
     ];
+
+    public function errorResult()
+    {
+        return $this->hasMany('App\Models\BHYT\Qd130XmlErrorResult', 'ma_lk', 'ma_lk')
+                    ->where('xml', 'XML13');
+    }
 }

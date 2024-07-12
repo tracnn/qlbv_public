@@ -28,4 +28,11 @@ class Qd130Xml15 extends Model
         'ngay_bat_dau_dt_ctx',
         'du_phong',
     ];
+
+    public function errorResult()
+    {
+        return $this->hasMany('App\Models\BHYT\Qd130XmlErrorResult', 'ma_lk', 'ma_lk')
+                    ->where('xml', 'XML15')
+                    ->whereColumn('stt', 'stt');;
+    }
 }

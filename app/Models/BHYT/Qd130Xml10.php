@@ -21,4 +21,10 @@ class Qd130Xml10 extends Model
         'ngay_ct',
         'du_phong',
     ];
+
+    public function errorResult()
+    {
+        return $this->hasMany('App\Models\BHYT\Qd130XmlErrorResult', 'ma_lk', 'ma_lk')
+                    ->where('xml', 'XML10');
+    }
 }
