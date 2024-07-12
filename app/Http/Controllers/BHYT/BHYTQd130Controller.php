@@ -288,6 +288,14 @@ class BHYTQd130Controller extends Controller
         // Biến lưu trữ các loại file đã xử lý thành công
         $processedFileTypes = [];
 
+        // Check if macskcb exists in the XML data
+        if (!isset($xmldata->THONGTINDONVI->MACSKCB) || empty($xmldata->THONGTINDONVI->MACSKCB)) {
+            \Log::error('MACSKCB not found or is empty in XML data');
+            return false;
+        }
+
+        $macskcb = (string)$xmldata->THONGTINDONVI->MACSKCB;
+
         foreach ($xmldata->THONGTINHOSO->DANHSACHHOSO->HOSO->FILEHOSO as $file_hs) {
             $fileContent = base64_decode($file_hs->NOIDUNGFILE);
             $data = simplexml_load_string($fileContent);
@@ -370,9 +378,10 @@ class BHYTQd130Controller extends Controller
                     break;
             }
         }
-
+            
         // Sau khi hoàn thành import hồ sơ thì mới check nghiệp vụ tổng thể liên quan tới hồ sơ đó
         if ($ma_lk !== null && !empty($processedFileTypes)) {
+            $this->qd130XmlService->storeQd130XmlInfomation($ma_lk, $macskcb, 'import');
             $this->qd130XmlService->checkQd130XmlComplete($ma_lk);
         }
 

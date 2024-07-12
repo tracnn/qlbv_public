@@ -16,11 +16,14 @@ use App\Models\BHYT\Qd130Xml11;
 use App\Models\BHYT\Qd130Xml13;
 use App\Models\BHYT\Qd130Xml14;
 use App\Models\BHYT\Qd130Xml15;
+use App\Models\BHYT\Qd130XmlInformation;
 use App\Services\XmlStructures;
 
 use App\Jobs\CheckQd130XmlErrorsJob;
 use App\Jobs\CheckCompleteQd130RecordJob;
 use App\Jobs\jobKtTheBHYT;
+
+use Carbon\Carbon;
 
 class Qd130XmlService
 {
@@ -695,6 +698,31 @@ class Qd130XmlService
         }
     }
 
+    public function storeQd130XmlInfomation($ma_lk, $macskcb, $operationType)
+    {
+
+         try {
+            $attributes = [
+                'ma_lk' => $ma_lk,
+            ];
+
+            $values = [
+                'macskcb' => $macskcb,
+            ];
+
+            if ($operationType === 'import') {
+                $values['imported_at'] = Carbon::now();
+            } elseif ($operationType === 'export') {
+                $values['exported_at'] = Carbon::now();
+            }
+
+            Qd130XmlInformation::updateOrCreate($attributes, $values);
+
+        } catch (\Exception $e) {
+            \Log::error('Error in Qd130XmlInformation: ' . $e->getMessage());
+        }
+    }
+
     public function storeQd130Xml15($data, $xmlType)
     {
         $expectedStructure = XmlStructures::$expectedStructures130[$xmlType];
@@ -739,10 +767,16 @@ class Qd130XmlService
 
     public function getDataForXmlExport($selectedRecord)
     {
+        $xmlInformation = $this->getXmlInformation($selectedRecord);
+
+        if (empty($xmlInformation)) {
+            return false;
+        }
+
         $xmlData = new \SimpleXMLElement('<?xml version="1.0" encoding="utf-8"?><GIAMDINHHS xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"></GIAMDINHHS>');
 
         $thongTinDonVi = $xmlData->addChild('THONGTINDONVI');
-        $thongTinDonVi->addChild('MACSKCB', '01013'); // example value
+        $thongTinDonVi->addChild('MACSKCB', $xmlInformation->macskcb); // example value
 
         $thongTinHoSo = $xmlData->addChild('THONGTINHOSO');
         $thongTinHoSo->addChild('NGAYLAP', date('Ymd')); // current date
@@ -764,7 +798,14 @@ class Qd130XmlService
         $dom = dom_import_simplexml($xmlData)->ownerDocument;
         $dom->formatOutput = true;
 
+        $this->storeQd130XmlInfomation($selectedRecord, $xmlInformation->macskcb, 'export');
+
         return $dom->saveXML();
+    }
+
+    private function getXmlInformation($ma_lk)
+    {
+        return Qd130XmlInformation::where('ma_lk', $ma_lk)->first();
     }
 
     private function getContentsForRecord($ma_lk)

@@ -74,6 +74,14 @@ class XML130Import extends Command
 
                 $xmldata = simplexml_load_string(Storage::disk($disk)->get($file));
 
+                // Check if macskcb exists in the XML data
+                if (!isset($xmldata->THONGTINDONVI->MACSKCB) || empty($xmldata->THONGTINDONVI->MACSKCB)) {
+                    \Log::error('MACSKCB not found or is empty in XML data');
+                    return false;
+                }
+
+                $macskcb = (string)$xmldata->THONGTINDONVI->MACSKCB;
+
                 foreach ($xmldata->THONGTINHOSO[0]->DANHSACHHOSO[0]->HOSO[0]->FILEHOSO as $file_hs) {
                     $fileContent = base64_decode($file_hs->NOIDUNGFILE);
                     $data = simplexml_load_string($fileContent);
@@ -163,6 +171,7 @@ class XML130Import extends Command
 
                 // Sau khi hoàn thành import hồ sơ thì mới check nghiệp vụ tổng thể liên quan tới hồ sơ đó
                 if ($ma_lk !== null && !empty($processedFileTypes)) {
+                    $this->qd130XmlService->storeQd130XmlInfomation($ma_lk, $macskcb, 'import');
                     $this->qd130XmlService->checkQd130XmlComplete($ma_lk);
                 }
 
