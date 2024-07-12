@@ -92,6 +92,7 @@ class Qd130Xml2Checker
                     $errors->push((object)[
                         'error_code' => $this->prefix . 'INVALID_ORDER_TIME',
                         'error_name' => 'Thời gian y lệnh không hợp lệ',
+                        'critical_error' => true,
                         'description' => 'Thời gian y lệnh nhỏ hơn ngày vào hoặc lớn hơn ngày ra (Mã thuốc: ' . $data->ma_thuoc .')'
                     ]);
                 }
@@ -114,8 +115,9 @@ class Qd130Xml2Checker
         if (empty($data->ma_bac_si)) {
             $errors->push((object)[
                 'error_code' => $this->prefix . 'MISSING_MEDICAL_STAFF_CODE',
-                'error_name' => 'Không có mã bác sĩ (Mã CCHN)',
-                'description' => 'Không có mã bác sĩ'
+                'error_name' => 'Thiếu mã bác sĩ',
+                'critical_error' => true,
+                'description' => 'Không có mã bác sĩ chỉ định'
             ]);
         } else {
             $staff = MedicalStaff::where('macchn', $data->ma_bac_si)->exists();
@@ -123,6 +125,7 @@ class Qd130Xml2Checker
                 $errors->push((object)[
                     'error_code' => $this->prefix . 'INVALID_MEDICAL_STAFF_CODE',
                     'error_name' => 'Mã CCHN chưa được duyệt',
+                    'critical_error' => true,
                     'description' => 'Mã bác sĩ chưa được duyệt danh mục trên cổng BHXH (Mã CCHN: ' . $data->ma_bac_si . ')'
                 ]);
             }
@@ -149,6 +152,7 @@ class Qd130Xml2Checker
                     $errors->push((object)[
                         'error_code' => $this->prefix . 'MISSING_DRUG_CODE',
                         'error_name' => 'Không có mã thuốc',
+                        'critical_error' => true,
                         'description' => 'Không có mã thuốc'
                     ]);
                 }
@@ -156,6 +160,7 @@ class Qd130Xml2Checker
                     $errors->push((object)[
                         'error_code' => $this->prefix . 'MISSING_DRUG_NAME',
                         'error_name' => 'Không có tên thuốc',
+                        'critical_error' => true,
                         'description' => $data->ma_thuoc . '; Không có tên thuốc'
                     ]);
                 }
@@ -163,6 +168,7 @@ class Qd130Xml2Checker
                     $errors->push((object)[
                         'error_code' => $this->prefix . 'MISSING_DRUG_CONCENTRATION',
                         'error_name' => 'Không có hàm lượng thuốc',
+                        'critical_error' => true,
                         'description' => $data->ma_thuoc . '; Không có hàm lượng thuốc'
                     ]);
                 }
@@ -170,6 +176,7 @@ class Qd130Xml2Checker
                     $errors->push((object)[
                         'error_code' => $this->prefix . 'MISSING_REGISTRATION_NUMBER',
                         'error_name' => 'Không có số đăng ký thuốc',
+                        'critical_error' => true,
                         'description' => $data->ma_thuoc . '; Không có số đăng ký thuốc'
                     ]);
                 }
@@ -177,6 +184,7 @@ class Qd130Xml2Checker
                     $errors->push((object)[
                         'error_code' => $this->prefix . 'MISSING_TT_THAU',
                         'error_name' => 'Không có thông tin thầu thuốc',
+                        'critical_error' => true,
                         'description' => $data->ma_thuoc . '; Không có TT_THAU'
                     ]);
                 }
@@ -190,6 +198,7 @@ class Qd130Xml2Checker
                     $errors->push((object)[
                         'error_code' => $this->prefix . 'INVALID_TT_THAU_FORMAT',
                         'error_name' => 'Thông tin thầu không đúng định dạng',
+                        'critical_error' => true,
                         'description' => 'TT_THAU không đúng định dạng (Mã thuốc: ' . $data->ma_thuoc . ')'
                     ]);
                 } else {

@@ -206,8 +206,8 @@
                 url: '{{ route('bhyt.qd130.detail-xml', '') }}/' + data.ma_lk,
                 type: 'GET',
                 success: function(response) {
-                    $('#modalContent').html(response);
                     $('#infoModal').modal('show');
+                    $('#modalContent').html(response);
                     initializeModalDataTables();
                 },
                 error: function(xhr, error, code) {

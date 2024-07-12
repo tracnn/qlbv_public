@@ -93,18 +93,21 @@ class Qd130Xml1Checker
             $errors->push((object)[
                 'error_code' => $this->prefix . 'REASON_ERROR_SPECIAL',
                 'error_name' => 'Lý do vào viện không hợp lệ với MA_DKBD đúng tuyến',
+                'critical_error' => true,
                 'description' => 'Lý do vào viện không hợp lệ với MA_DKBD thuộc danh sách đặc biệt'
             ]);
         } elseif (!in_array($data->ma_dkbd, $this->specialDKBD) && $data->ma_loai_kcb == 4) {
             $errors->push((object)[
                 'error_code' => $this->prefix . 'REASON_ERROR_NON_SPECIAL',
                 'error_name' => 'Lý do vào viện không hợp lệ với MA_DKBD trái tuyến',
+                'critical_error' => true,
                 'description' => 'Lý do vào viện không hợp lệ với MA_DKBD không thuộc danh sách đặc biệt'
             ]);
         } elseif ($data->ma_loai_kcb == 1 && !in_array($data->ma_dkbd, $this->specialDKBD) && empty($data->ma_noi_di)) {
             $errors->push((object)[
                 'error_code' => $this->prefix . 'REASON_ERROR_LYDO_1',
                 'error_name' => 'Đúng tuyến nhưng Nơi DKBD <> CSKCB và Không có nơi chuyển đến',
+                'critical_error' => true,
                 'description' => 'Lý do vào viện không hợp lệ: Đúng tuyến nhưng Nơi DKBD <> CSKCB và Không có nơi chuyển đến'
             ]);
         }
@@ -184,6 +187,7 @@ class Qd130Xml1Checker
                 $errors->push((object)[
                     'error_code' => $this->prefix . 'SPECIAL_INPATIENT_ERROR_LY_DO_VNT',
                     'error_name' => 'Thiếu lý do vào nội trú',
+                    'critical_error' => true,
                     'description' => 'Lý do vào nội trú không được để trống'
                 ]);
             }
@@ -200,6 +204,7 @@ class Qd130Xml1Checker
                 $errors->push((object)[
                     'error_code' => $this->prefix . 'SPECIAL_INPATIENT_ERROR_NGAY_VAO_NOI_TRU',
                     'error_name' => 'Thiếu ngày vào nội trú',
+                    'critical_error' => true,
                     'description' => 'Ngày vào nội trú không được để trống'
                 ]);
             }
@@ -208,6 +213,7 @@ class Qd130Xml1Checker
                 $errors->push((object)[
                     'error_code' => $this->prefix . 'SPECIAL_INPATIENT_ERROR_PP_DIEU_TRI',
                     'error_name' => 'Thiếu phương pháp điều trị',
+                    'critical_error' => true,
                     'description' => 'Phương pháp điều trị không được để trống'
                 ]);
             }
@@ -233,12 +239,14 @@ class Qd130Xml1Checker
                $errors->push((object)[
                     'error_code' => $this->prefix . 'DISEASE_ICD_CODE_ERROR_MA_BENH_CHINH_IN_YHCT',
                     'error_name' => 'Mã bệnh chính thuộc bệnh YHCT',
+                    'critical_error' => true,
                     'description' => 'Mã bệnh chính: ' . $data->ma_benh_chinh . ' thuộc DM YHCT tương đương với: ' . $existIcdYhct->icd10_code . ' trong DM ICD10'
                 ]); 
             } else {
                 $errors->push((object)[
                     'error_code' => $this->prefix . 'DISEASE_ICD_CODE_ERROR_MA_BENH_CHINH',
                     'error_name' => 'Mã bệnh chính không tồn tại',
+                    'critical_error' => true,
                     'description' => 'Mã bệnh chính không tồn tại trong danh mục ICD10: ' . $data->ma_benh_chinh
                 ]);                
             }
@@ -254,12 +262,14 @@ class Qd130Xml1Checker
                         $errors->push((object)[
                             'error_code' => $this->prefix . 'DISEASE_ICD_CODE_ERROR_MA_BENH_KT_IN_YHCT',
                             'error_name' => 'Mã bệnh kèm theo thuộc bệnh YHCT',
+                            'critical_error' => true,
                             'description' => 'Mã bệnh kèm theo: ' . $ma_benh_kt .' thuộc DM YHCT tương đương với: ' . $existIcdYhct->icd10_code . ' trong DM ICD10'
                         ]);
                     } else {
                         $errors->push((object)[
                             'error_code' => $this->prefix . 'DISEASE_ICD_CODE_ERROR_MA_BENH_KT',
                             'error_name' => 'Mã bệnh kèm theo không tồn tại',
+                            'critical_error' => true,
                             'description' => 'Mã bệnh kèm theo không tồn tại trong danh mục ICD10: ' . $ma_benh_kt
                         ]);                        
                     }
@@ -275,6 +285,7 @@ class Qd130Xml1Checker
                     $errors->push((object)[
                         'error_code' => $this->prefix . 'DISEASE_ICD_CODE_ERROR_MA_BENH_YHCT',
                         'error_name' => 'Mã bệnh YHCT không tồn tại',
+                        'critical_error' => true,
                         'description' => 'Mã bệnh YHCT không tồn tại trong danh mục ICD YHCT: ' . $ma_benh_yhct
                     ]);
                 }

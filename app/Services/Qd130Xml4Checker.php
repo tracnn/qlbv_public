@@ -66,6 +66,7 @@ class Qd130Xml4Checker
             $errors->push((object)[
                 'error_code' => $this->prefix . 'INFO_ERROR_MA_DICH_VU',
                 'error_name' => 'Thiếu mã dịch vụ',
+                'critical_error' => true,
                 'description' => 'Mã dịch vụ không được để trống'
             ]);
         } else {
@@ -73,6 +74,7 @@ class Qd130Xml4Checker
                 $errors->push((object)[
                     'error_code' => $this->prefix . 'INFO_ERROR_MA_DICH_VU_NOT_FOUND',
                     'error_name' => 'Mã dịch vụ không tồn tại',
+                    'critical_error' => true,
                     'description' => 'Mã dịch vụ không tồn tại trong danh mục DVKT: ' . $data->ma_dich_vu
                 ]);
             }
@@ -82,6 +84,7 @@ class Qd130Xml4Checker
             $errors->push((object)[
                 'error_code' => $this->prefix . 'INFO_ERROR_NGAY_KQ',
                 'error_name' => 'Thiếu ngày trả kết quả',
+                'critical_error' => true,
                 'description' => 'Ngày trả kết quả không được để trống'
             ]);
         }
@@ -90,6 +93,7 @@ class Qd130Xml4Checker
             $errors->push((object)[
                 'error_code' => $this->prefix . 'INFO_ERROR_MA_BS_DOC_KQ',
                 'error_name' => 'Thiếu mã bác sĩ đọc kết quả',
+                'critical_error' => true,
                 'description' => 'Mã bác sĩ đọc kết quả không được để trống'
             ]);
         } else {
@@ -97,6 +101,7 @@ class Qd130Xml4Checker
                 $errors->push((object)[
                     'error_code' => $this->prefix . 'INFO_ERROR_MA_BS_DOC_KQ_NOT_FOUND',
                     'error_name' => 'Mã bác sĩ đọc kết quả chưa được duyệt',
+                    'critical_error' => true,
                     'description' => 'Mã bác sĩ đọc kết quả chưa được duyệt danh mục NVYT: ' . $data->ma_bs_doc_kq
                 ]);
             }

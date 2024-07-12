@@ -65,6 +65,7 @@ class Qd130Xml5Checker
             $errors->push((object)[
                 'error_code' => $this->prefix . 'INFO_ERROR_DIEN_BIEN_LS',
                 'error_name' => 'Thiếu diễn biến lâm sàng',
+                'critical_error' => true,
                 'description' => 'Diễn biến lâm sàng không được để trống'
             ]);
         }
@@ -73,6 +74,7 @@ class Qd130Xml5Checker
             $errors->push((object)[
                 'error_code' => $this->prefix . 'INFO_ERROR_THOI_DIEM_DBLS',
                 'error_name' => 'Thiếu thời điểm diễn biến lâm sàng',
+                'critical_error' => true,
                 'description' => 'Thời điểm diễn biến lâm sàng không được để trống'
             ]);
         } 
@@ -81,6 +83,7 @@ class Qd130Xml5Checker
             $errors->push((object)[
                 'error_code' => $this->prefix . 'INFO_ERROR_NGUOI_THUC_HIEN',
                 'error_name' => 'Thiếu người thực hiện',
+                'critical_error' => true,
                 'description' => 'Người thực hiện không được để trống'
             ]);
         } else {
@@ -88,6 +91,7 @@ class Qd130Xml5Checker
                 $errors->push((object)[
                     'error_code' => $this->prefix . 'INFO_ERROR_NGUOI_THUC_HIEN_NOT_FOUND',
                     'error_name' => 'Người thực hiện chưa được duyệt',
+                    'critical_error' => true,
                     'description' => 'Người thực hiện chưa được duyệt danh mục NVYT: ' . $data->nguoi_thuc_hien
                 ]);
             }

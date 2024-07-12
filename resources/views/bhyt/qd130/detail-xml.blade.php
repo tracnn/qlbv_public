@@ -202,9 +202,19 @@
         <a data-toggle="tab" href="#menu-hein-card">Thẻ BHYT</a>
     </li>
     @if($xml1->Qd130XmlErrorResult->isNotEmpty())
-    <li class="{{ $xml1->Qd130XmlErrorResult->isNotEmpty() ? 'highlight-red' : '' }}">
-        <a data-toggle="tab" href="#menu-xml-errors">Lỗi XML</a>
-    </li>
+        @php
+            $hasCriticalError = $xml1->Qd130XmlErrorResult->contains(function ($error) {
+                return $error->critical_error;
+            });
+        @endphp
+        <li class="{{ $xml1->Qd130XmlErrorResult->isNotEmpty() ? 'highlight-red' : '' }}">
+            <a data-toggle="tab" href="#menu-xml-errors">
+                Lỗi XML
+                @if($hasCriticalError)
+                    <i class="fa fa-exclamation-triangle text-danger" aria-hidden="true" title="Critical Error"></i>
+                @endif
+            </a>
+        </li>
     @endif
 </ul>
 

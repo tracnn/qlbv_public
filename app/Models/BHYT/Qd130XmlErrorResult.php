@@ -13,7 +13,8 @@ class Qd130XmlErrorResult extends Model
         'ngay_yl', 
         'ngay_kq', 
         'error_code', 
-        'description'
+        'description',
+        'critical_error',
     ];
 
     public function Qd130XmlErrorCatalog()

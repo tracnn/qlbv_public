@@ -85,6 +85,7 @@ class Qd130XmlCompleteChecker
             $errors->push((object)[
                 'error_code' => $this->prefix . 'INFO_ERROR_XML_COMPLETE_MA_LK',
                 'error_name' => 'Thiếu mã liên kết hồ sơ',
+                'critical_error' => true,
                 'description' => 'Mã liên kết hồ sơ không được để trống'
             ]);
         } else {
@@ -93,6 +94,7 @@ class Qd130XmlCompleteChecker
                 $errors->push((object)[
                     'error_code' => $this->prefix . 'INFO_ERROR_XML_COMPLETE_MA_LK_NOT_FOUND',
                     'error_name' => 'Hồ sơ không tồn tại',
+                    'critical_error' => true,
                     'description' => 'Hồ sơ không tồn tại. Mã hồ sơ: ' . $ma_lk
                 ]);
             } else {
@@ -103,6 +105,7 @@ class Qd130XmlCompleteChecker
                         $errors->push((object)[
                             'error_code' => $this->prefix . 'INFO_ERROR_XML_COMPLETE_MISSING_XML7',
                             'error_name' => 'Thiếu hồ sơ XML7 (Giấy ra viện)',
+                            'critical_error' => true,
                             'description' => 'Không tồn tại hồ sơ XML7 (Giấy ra viện) với loại KCB thuộc: ' . implode(', ', $this->xmlTypeMustHaveXml7)
                         ]);
                     }

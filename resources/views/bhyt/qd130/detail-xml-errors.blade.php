@@ -22,17 +22,26 @@
                     <thead>
                         <tr>
                             <th>Error Code</th>
+                            <th>Loại</th>
                             <th>XML</th>
                             <th>STT</th>
                             <th>Ngày y lệnh</th>
                             <th>Ngày kết quả</th>
                             <th>Description</th>
+                            
                         </tr>
                     </thead>
                     <tbody>
                         @foreach($errors as $error)
                         <tr>
                             <td>{{ $error->Qd130XmlErrorCatalog->error_name }}</td>
+                            <td>
+                                @if($error->critical_error)
+                                <i class="fa fa-exclamation-triangle text-danger" aria-hidden="true" title="Critical Error"></i>
+                                @else
+                                <i class="fa fa-exclamation-triangle text-primary" aria-hidden="true" title="Warning Error"></i>
+                                @endif
+                            </td>
                             <td>{{ $error->xml }}</td>
                             <td>{{ $error->stt }}</td>
                             <td>{{ strtodatetime($error->ngay_yl) }}</td>

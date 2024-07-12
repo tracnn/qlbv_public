@@ -148,17 +148,32 @@ class BHYTQd130Controller extends Controller
             if ($xml_filter_status === 'has_error') {
                 $result = $result->where(function ($query) {
                     $query->whereHas('Qd130XmlErrorResult')
-                    ->orWhereHas('check_hein_card', function ($subQuery) {
-                        $subQuery->where('ma_kiemtra', '<>', '00')
-                        ->orWhere('ma_tracuu', '<>', '000');
-                    });
+                          ->orWhereHas('check_hein_card', function ($subQuery) {
+                              $subQuery->where('ma_kiemtra', '<>', '00')
+                                       ->orWhere('ma_tracuu', '<>', '000');
+                          });
                 });
             } elseif ($xml_filter_status === 'no_error') {
                 $result = $result->whereDoesntHave('Qd130XmlErrorResult')
-                ->whereDoesntHave('check_hein_card', function ($subQuery) {
-                    $subQuery->where('ma_kiemtra', '<>', '00')
-                    ->orWhere('ma_tracuu', '<>', '000');
-                 });
+                                 ->whereDoesntHave('check_hein_card', function ($subQuery) {
+                                     $subQuery->where('ma_kiemtra', '<>', '00')
+                                              ->orWhere('ma_tracuu', '<>', '000');
+                                 });
+            } elseif ($xml_filter_status === 'has_error_critical') {
+                $result = $result->whereHas('Qd130XmlErrorResult', function ($query) {
+                    $query->where('critical_error', true);
+                });
+            } elseif ($xml_filter_status === 'has_error_warning') {
+                $result = $result->whereHas('Qd130XmlErrorResult', function ($query) {
+                    $query->where('critical_error', false);
+                })->whereDoesntHave('Qd130XmlErrorResult', function ($query) {
+                    $query->where('critical_error', true);
+                });
+            } elseif ($xml_filter_status === 'has_error_hein_card') {
+                $result = $result->whereHas('check_hein_card', function ($query) {
+                    $query->where('ma_kiemtra', '<>', '00')
+                          ->orWhere('ma_tracuu', '<>', '000');
+                })->whereDoesntHave('Qd130XmlErrorResult');
             }
 
             // Apply filter based on has_hein_card

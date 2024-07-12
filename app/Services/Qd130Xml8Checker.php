@@ -58,6 +58,7 @@ class Qd130Xml8Checker
             $errors->push((object)[
                 'error_code' => $this->prefix . 'INFO_ERROR_PP_DIEUTRI',
                 'error_name' => 'Thiếu phương pháp điều trị',
+                'critical_error' => true,
                 'description' => 'Phương pháp điều trị không được để trống'
             ]);
         }
@@ -66,6 +67,7 @@ class Qd130Xml8Checker
             $errors->push((object)[
                 'error_code' => $this->prefix . 'INFO_ERROR_TOMTAT_KQ',
                 'error_name' => 'Thiếu tóm tắt kết quả',
+                'critical_error' => true,
                 'description' => 'Tóm tắt kết quả không được để trống'
             ]);
         }
@@ -74,6 +76,7 @@ class Qd130Xml8Checker
             $errors->push((object)[
                 'error_code' => $this->prefix . 'INFO_ERROR_MA_TTDV',
                 'error_name' => 'Thiếu mã thủ trưởng đơn vị',
+                'critical_error' => true,
                 'description' => 'Thủ trưởng đơn vị không được để trống'
             ]);
         } else {
@@ -81,6 +84,7 @@ class Qd130Xml8Checker
                 $errors->push((object)[
                     'error_code' => $this->prefix . 'INFO_ERROR_MA_TTDV_NOT_FOUND',
                     'error_name' => 'Mã thủ trưởng đơn vị chưa được duyệt',
+                    'critical_error' => true,
                     'description' => 'Mã thủ trưởng đơn vị chưa được duyệt danh mục (Mã CCHN: ' . $data->ma_ttdv . ')'
                 ]);
             }

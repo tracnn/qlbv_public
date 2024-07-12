@@ -33,7 +33,8 @@ class Qd130XmlErrorService
                 'ma_lk' => $ma_lk,
                 'stt' => $stt,
                 'error_code' => $error->error_code,
-                'description' => $error->description
+                'description' => $error->description,
+                'critical_error' => $error->critical_error ?? false
             ];
 
             // Merge additional data if provided

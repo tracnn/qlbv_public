@@ -58,6 +58,7 @@ class Qd130Xml14Checker
             $errors->push((object)[
                 'error_code' => $this->prefix . 'INFO_ERROR_SO_GIAYHEN_KL',
                 'error_name' => 'Thiếu số giấy hẹn khám lại',
+                'critical_error' => true,
                 'description' => 'Số giấy hẹn khám lại không được để trống'
             ]);
         }
@@ -66,6 +67,7 @@ class Qd130Xml14Checker
             $errors->push((object)[
                 'error_code' => $this->prefix . 'INFO_ERROR_MA_CSKCB',
                 'error_name' => 'Thiếu mã CSKCB',
+                'critical_error' => true,
                 'description' => 'CSKCB không được để trống'
             ]);
         }
@@ -74,6 +76,7 @@ class Qd130Xml14Checker
             $errors->push((object)[
                 'error_code' => $this->prefix . 'INFO_ERROR_NGAY_VAO',
                 'error_name' => 'Thiếu ngày vào',
+                'critical_error' => true,
                 'description' => 'Ngày vào không được để trống'
             ]);
         }
@@ -82,6 +85,7 @@ class Qd130Xml14Checker
             $errors->push((object)[
                 'error_code' => $this->prefix . 'INFO_ERROR_NGAY_RA',
                 'error_name' => 'Thiếu ngày ra',
+                'critical_error' => true,
                 'description' => 'Ngày ra không được để trống'
             ]);
         }
@@ -90,6 +94,7 @@ class Qd130Xml14Checker
             $errors->push((object)[
                 'error_code' => $this->prefix . 'INFO_ERROR_NGAY_HEN_KL',
                 'error_name' => 'Thiếu ngày hẹn khám lại',
+                'critical_error' => true,
                 'description' => 'Ngày hẹn khám lại không được để trống'
             ]);
         } else {
@@ -97,6 +102,7 @@ class Qd130Xml14Checker
                 $errors->push((object)[
                     'error_code' => $this->prefix . 'INFO_ERROR_NGAY_HEN_KL_SMALLER_NGAY_RA',
                     'error_name' => 'Ngày hẹn khám lại nhỏ hơn ngày ra',
+                    'critical_error' => true,
                     'description' => 'Ngày hẹn khám lại không được nhỏ hơn ngày ra: ' . $data->ngay_hen_kl . ' < ' . $data->ngay_ra
                 ]);
             }
@@ -106,6 +112,7 @@ class Qd130Xml14Checker
             $errors->push((object)[
                 'error_code' => $this->prefix . 'INFO_ERROR_CHAN_DOAN_RV',
                 'error_name' => 'Thiếu chẩn đoán ra viện',
+                'critical_error' => true,
                 'description' => 'Chẩn đoán ra viện không được để trống'
             ]);
         }
@@ -114,6 +121,7 @@ class Qd130Xml14Checker
             $errors->push((object)[
                 'error_code' => $this->prefix . 'INFO_ERROR_MA_BENH_CHINH',
                 'error_name' => 'Thiếu mã bệnh chính',
+                'critical_error' => true,
                 'description' => 'Mã bệnh chính không được để trống'
             ]);
         }
@@ -124,6 +132,7 @@ class Qd130Xml14Checker
                 $errors->push((object)[
                     'error_code' => $this->prefix . 'INFO_ERROR_MA_BENH_KT',
                     'error_name' => 'Mã bệnh kèm theo vượt quá 12 mã',
+                    'critical_error' => true,
                     'description' => 'Mã bệnh kèm theo không được vượt quá 12 mã'
                 ]);
             }
@@ -133,6 +142,7 @@ class Qd130Xml14Checker
             $errors->push((object)[
                 'error_code' => $this->prefix . 'INFO_ERROR_MA_DOITUONG_KCB',
                 'error_name' => 'Thiếu mã đối tượng KCB',
+                'critical_error' => true,
                 'description' => 'Đối tượng KCB không được để trống'
             ]);
         }
@@ -141,6 +151,7 @@ class Qd130Xml14Checker
             $errors->push((object)[
                 'error_code' => $this->prefix . 'INFO_ERROR_MA_BAC_SI',
                 'error_name' => 'Thiếu mã bác sĩ (CCHN)',
+                'critical_error' => true,
                 'description' => 'Mã bác sĩ (CCHN) không được để trống'
             ]);
         } else {
@@ -149,6 +160,7 @@ class Qd130Xml14Checker
                 $errors->push((object)[
                     'error_code' => $this->prefix . 'INVALID_MEDICAL_STAFF_MA_BAC_SI',
                     'error_name' => 'Mã bác sĩ (CCHN) chưa được duyệt',
+                    'critical_error' => true,
                     'description' => 'Mã bác sĩ chưa được duyệt danh mục (Mã CCHN: ' . $data->ma_bac_si . ')'
                 ]);
             }
@@ -158,6 +170,7 @@ class Qd130Xml14Checker
             $errors->push((object)[
                 'error_code' => $this->prefix . 'INFO_ERROR_MA_TTDV',
                 'error_name' => 'Thiếu mã thủ trưởng đơn vị',
+                'critical_error' => true,
                 'description' => 'Thủ trưởng đơn vị không được để trống'
             ]);
         } else {
@@ -166,6 +179,7 @@ class Qd130Xml14Checker
                 $errors->push((object)[
                     'error_code' => $this->prefix . 'INVALID_MEDICAL_STAFF_MA_TTDV',
                     'error_name' => 'Mã thủ trưởng đơn vị chưa được duyệt',
+                    'critical_error' => true,
                     'description' => 'Mã thủ trưởng đơn vị chưa được duyệt danh mục (Mã CCHN: ' . $data->ma_ttdv . ')'
                 ]);
             }
@@ -175,6 +189,7 @@ class Qd130Xml14Checker
             $errors->push((object)[
                 'error_code' => $this->prefix . 'INFO_ERROR_NGAY_CT',
                 'error_name' => 'Thiếu ngày chứng từ',
+                'critical_error' => true,
                 'description' => 'Ngày chứng từ không được để trống'
             ]);
         }

@@ -61,6 +61,7 @@ class Qd130Xml11Checker
             $errors->push((object)[
                 'error_code' => $this->prefix . 'INFO_ERROR_SO_CT',
                 'error_name' => 'Thiếu số chứng từ',
+                'critical_error' => true,
                 'description' => 'Số chứng từ không được để trống'
             ]);
         }
@@ -69,6 +70,7 @@ class Qd130Xml11Checker
             $errors->push((object)[
                 'error_code' => $this->prefix . 'INFO_ERROR_SO_SERI',
                 'error_name' => 'Thiếu số serial',
+                'critical_error' => true,
                 'description' => 'Số serial không được để trống'
             ]);
         }
@@ -77,6 +79,7 @@ class Qd130Xml11Checker
             $errors->push((object)[
                 'error_code' => $this->prefix . 'INFO_ERROR_SO_KCB',
                 'error_name' => 'Thiếu số KCB',
+                'critical_error' => true,
                 'description' => 'Số KCB không được để trống'
             ]);
         }
@@ -85,12 +88,14 @@ class Qd130Xml11Checker
             $errors->push((object)[
                 'error_code' => $this->prefix . 'INFO_ERROR_MA_BHXH',
                 'error_name' => 'Thiếu mã BHXH',
+                'critical_error' => true,
                 'description' => 'Mã BHXH không được để trống'
             ]);
         } elseif (strlen($data->ma_bhxh) !== 10) {
             $errors->push((object)[
                 'error_code' => $this->prefix . 'INFO_ERROR_MA_BHXH_LENGTH',
                 'error_name' => 'Mã BHXH không hợp lệ',
+                'critical_error' => true,
                 'description' => 'Mã BHXH phải có độ dài là 10 ký tự: ' . $data->ma_bhxh
             ]);
         }
@@ -99,12 +104,14 @@ class Qd130Xml11Checker
             $errors->push((object)[
                 'error_code' => $this->prefix . 'INFO_ERROR_MA_THE_BHYT',
                 'error_name' => 'Thiếu mã thẻ BHYT',
+                'critical_error' => true,
                 'description' => 'Mã thẻ BHYT không được để trống'
             ]);
         } elseif (strlen($data->ma_the_bhyt) !== 15) {
             $errors->push((object)[
                 'error_code' => $this->prefix . 'INFO_ERROR_MA_THE_BHYT_LENGTH',
                 'error_name' => 'Mã thẻ BHYT không hợp lệ',
+                'critical_error' => true,
                 'description' => 'Mã thẻ BHYT phải có độ dài là 15 ký tự: ' . $data->ma_the_bhyt
             ]);
         }
@@ -113,6 +120,7 @@ class Qd130Xml11Checker
             $errors->push((object)[
                 'error_code' => $this->prefix . 'INFO_ERROR_CHAN_DOAN_RV',
                 'error_name' => 'Thiếu chẩn đoán ra viện',
+                'critical_error' => true,
                 'description' => 'Chẩn đoán ra viện không được để trống'
             ]);
         }
@@ -121,6 +129,7 @@ class Qd130Xml11Checker
             $errors->push((object)[
                 'error_code' => $this->prefix . 'INFO_ERROR_PP_DIEUTRI',
                 'error_name' => 'Thiếu phương pháp điều trị',
+                'critical_error' => true,
                 'description' => 'Phương pháp điều trị không được để trống'
             ]);
         }
@@ -129,12 +138,14 @@ class Qd130Xml11Checker
             $errors->push((object)[
                 'error_code' => $this->prefix . 'INFO_ERROR_SO_NGAY_NGHI',
                 'error_name' => 'Thiếu số ngày nghỉ',
+                'critical_error' => true,
                 'description' => 'Số ngày nghỉ không được để trống'
             ]);
         } elseif (!ctype_digit((string)$data->so_ngay_nghi) || (int)$data->so_ngay_nghi <= 0) {
             $errors->push((object)[
                 'error_code' => $this->prefix . 'INFO_ERROR_SO_NGAY_NGHI_NOT_INT',
                 'error_name' => 'Số ngày nghỉ không hợp lệ',
+                'critical_error' => true,
                 'description' => 'Số ngày nghỉ phải là một số nguyên lớn hơn 0: ' . $data->so_ngay_nghi
             ]);
         }
@@ -143,6 +154,7 @@ class Qd130Xml11Checker
             $errors->push((object)[
                 'error_code' => $this->prefix . 'INFO_ERROR_TU_NGAY',
                 'error_name' => 'Thiếu từ ngày',
+                'critical_error' => true,
                 'description' => 'Từ ngày không được để trống'
             ]);
         }
@@ -151,6 +163,7 @@ class Qd130Xml11Checker
             $errors->push((object)[
                 'error_code' => $this->prefix . 'INFO_ERROR_DEN_NGAY',
                 'error_name' => 'Thiếu đến ngày',
+                'critical_error' => true,
                 'description' => 'Đến ngày không được để trống'
             ]);
         }
@@ -159,6 +172,7 @@ class Qd130Xml11Checker
             $errors->push((object)[
                 'error_code' => $this->prefix . 'INFO_ERROR_NGAY_CT',
                 'error_name' => 'Thiếu ngày chứng từ',
+                'critical_error' => true,
                 'description' => 'Ngày chứng từ không được để trống'
             ]);
         }
@@ -172,6 +186,7 @@ class Qd130Xml11Checker
                     $errors->push((object)[
                         'error_code' => $this->prefix . 'INFO_ERROR_DATE_RANGE',
                         'error_name' => 'Ngày không hợp lệ',
+                        'critical_error' => true,
                         'description' => 'Đến ngày phải lớn hơn hoặc bằng từ ngày'
                     ]);
                 }
@@ -179,6 +194,7 @@ class Qd130Xml11Checker
                 $errors->push((object)[
                     'error_code' => $this->prefix . 'INFO_ERROR_DATE_FORMAT',
                     'error_name' => 'Định dạng ngày không hợp lệ',
+                    'critical_error' => true,
                     'description' => 'Định dạng ngày phải là Ymd'
                 ]);
             }
@@ -188,6 +204,7 @@ class Qd130Xml11Checker
             $errors->push((object)[
                 'error_code' => $this->prefix . 'INFO_ERROR_MA_BS',
                 'error_name' => 'Thiếu mã bác sĩ (Mã BHXH)',
+                'critical_error' => true,
                 'description' => 'Mã bác sĩ (Mã BHXH) không được để trống'
             ]);
         } else {
@@ -196,6 +213,7 @@ class Qd130Xml11Checker
                 $errors->push((object)[
                     'error_code' => $this->prefix . 'INVALID_MEDICAL_STAFF_MA_BS',
                     'error_name' => 'Mã bác sĩ (Mã BHXH) chưa được duyệt',
+                    'critical_error' => true,
                     'description' => 'Mã bác sĩ chưa được duyệt danh mục (Mã BHXH: ' . $data->ma_bs . ')'
                 ]);
             }
@@ -205,6 +223,7 @@ class Qd130Xml11Checker
             $errors->push((object)[
                 'error_code' => $this->prefix . 'INFO_ERROR_MA_TTDV',
                 'error_name' => 'Thiếu mã thủ trưởng đơn vị',
+                'critical_error' => true,
                 'description' => 'Thủ trưởng đơn vị không được để trống'
             ]);
         } else {
@@ -213,6 +232,7 @@ class Qd130Xml11Checker
                 $errors->push((object)[
                     'error_code' => $this->prefix . 'INVALID_MEDICAL_STAFF_MA_TTDV',
                     'error_name' => 'Mã thủ trưởng đơn vị chưa được duyệt',
+                    'critical_error' => true,
                     'description' => 'Mã thủ trưởng đơn vị chưa được duyệt danh mục (Mã CCHN: ' . $data->ma_ttdv . ')'
                 ]);
             }
@@ -222,12 +242,14 @@ class Qd130Xml11Checker
             $errors->push((object)[
                 'error_code' => $this->prefix . 'INFO_ERROR_MAU_SO',
                 'error_name' => 'Thiếu mẫu số',
+                'critical_error' => true,
                 'description' => 'Mẫu số không được để trống'
             ]);
         } elseif (!in_array($data->mau_so, $this->docXml11Type)) {
             $errors->push((object)[
                 'error_code' => $this->prefix . 'INFO_ERROR_INVALID_MAU_SO',
                 'error_name' => 'Mẫu số không hợp lệ',
+                'critical_error' => true,
                 'description' => 'Mẫu số không thuộc loại hợp lệ. Mẫu số: ' . $data->mau_so . '. Loại hợp lệ: ' . $this->docXml11Type
             ]);
         }

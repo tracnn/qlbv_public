@@ -32,6 +32,7 @@ class Qd130Xml1AdministrativeInfoChecker
             $errors->push((object)[
                 'error_code' => $this->prefix . 'ADMIN_INFO_ERROR_MA_BN',
                 'error_name' => 'Thiếu mã bệnh nhân',
+                'critical_error' => true,
                 'description' => 'Mã bệnh nhân không được để trống'
             ]);
         }
@@ -40,6 +41,7 @@ class Qd130Xml1AdministrativeInfoChecker
             $errors->push((object)[
                 'error_code' => $this->prefix . 'ADMIN_INFO_ERROR_HO_TEN',
                 'error_name' => 'Thiếu họ tên',
+                'critical_error' => true,
                 'description' => 'Họ tên không được để trống'
             ]);
         }
@@ -48,6 +50,7 @@ class Qd130Xml1AdministrativeInfoChecker
             $errors->push((object)[
                 'error_code' => $this->prefix . 'ADMIN_INFO_ERROR_NGAY_SINH',
                 'error_name' => 'Thiếu ngày sinh',
+                'critical_error' => true,
                 'description' => 'Ngày sinh không được để trống'
             ]);
         }
@@ -56,6 +59,7 @@ class Qd130Xml1AdministrativeInfoChecker
             $errors->push((object)[
                 'error_code' => $this->prefix . 'ADMIN_INFO_ERROR_GIOI_TINH',
                 'error_name' => 'Thiếu giới tính',
+                'critical_error' => true,
                 'description' => 'Giới tính không được để trống'
             ]);
         }
@@ -64,6 +68,7 @@ class Qd130Xml1AdministrativeInfoChecker
             $errors->push((object)[
                 'error_code' => $this->prefix . 'ADMIN_INFO_ERROR_CAN_NANG',
                 'error_name' => 'Thiếu cân nặng',
+                'critical_error' => true,
                 'description' => 'Cân nặng không được để trống'
             ]);
         } else {
@@ -80,8 +85,8 @@ class Qd130Xml1AdministrativeInfoChecker
             } else {
                 $errors->push((object)[
                     'error_code' => $this->prefix . 'ADMIN_INFO_ERROR_INVALID_CAN_NANG',
-                    'error_name' => 'Cân nặng không hợp lệ',
-                    'description' => 'Giá trị cân nặng không hợp lệ: ' . $data->can_nang
+                    'error_name' => 'Cân nặng không phải là số',
+                    'description' => 'Giá trị cân nặng không phải là số: ' . $data->can_nang
                 ]);
             }
         }
@@ -90,6 +95,7 @@ class Qd130Xml1AdministrativeInfoChecker
             $errors->push((object)[
                 'error_code' => $this->prefix . 'ADMIN_INFO_ERROR_DIA_CHI',
                 'error_name' => 'Thiếu địa chỉ',
+                'critical_error' => true,
                 'description' => 'Địa chỉ không được để trống'
             ]);
         }
@@ -106,6 +112,7 @@ class Qd130Xml1AdministrativeInfoChecker
             $errors->push((object)[
                 'error_code' => $this->prefix . 'ADMIN_INFO_ERROR_MATINH_CU_TRU',
                 'error_name' => 'Thiếu mã tỉnh',
+                'critical_error' => true,
                 'description' => 'Mã tỉnh không được để trống'
             ]);
         } else {
@@ -114,6 +121,7 @@ class Qd130Xml1AdministrativeInfoChecker
                 $errors->push((object)[
                     'error_code' => $this->prefix . 'ADMIN_INFO_ERROR_MATINH_CU_TRU_NOT_FOUND',
                     'error_name' => 'Mã tỉnh không tồn tại',
+                    'critical_error' => true,
                     'description' => 'Mã tỉnh không tồn tại trong danh mục: ' . $data->matinh_cu_tru
                 ]);
             }
@@ -123,6 +131,7 @@ class Qd130Xml1AdministrativeInfoChecker
             $errors->push((object)[
                 'error_code' => $this->prefix . 'ADMIN_INFO_ERROR_MAHUYEN_CU_TRU',
                 'error_name' => 'Thiếu mã quận huyện',
+                'critical_error' => true,
                 'description' => 'Mã quận huyện không được để trống'
             ]);
         } else {
@@ -131,6 +140,7 @@ class Qd130Xml1AdministrativeInfoChecker
                 $errors->push((object)[
                     'error_code' => $this->prefix . 'ADMIN_INFO_ERROR_MAHUYEN_CU_TRU_NOT_FOUND',
                     'error_name' => 'Mã quận huyện không tồn tại',
+                    'critical_error' => true,
                     'description' => 'Mã quận huyện không tồn tại trong danh mục: ' . $data->mahuyen_cu_tru
                 ]);
             } else {
@@ -141,6 +151,7 @@ class Qd130Xml1AdministrativeInfoChecker
                     $errors->push((object)[
                         'error_code' => $this->prefix . 'ADMIN_INFO_ERROR_MAHUYEN_CU_TRU_NOT_FOUND_IN_MATINH_CU_TRU',
                         'error_name' => 'Mã quận huyện không thuộc mã tỉnh',
+                        'critical_error' => true,
                         'description' => 'Mã quận huyện không thuộc mã tỉnh: ' . $data->mahuyen_cu_tru . '/' . $data->matinh_cu_tru
                     ]);
                 }
@@ -151,6 +162,7 @@ class Qd130Xml1AdministrativeInfoChecker
             $errors->push((object)[
                 'error_code' => $this->prefix . 'ADMIN_INFO_ERROR_MAXA_CU_TRU',
                 'error_name' => 'Thiếu mã phường xã',
+                'critical_error' => true,
                 'description' => 'Mã phường xã không được để trống'
             ]);
         } else {
@@ -159,6 +171,7 @@ class Qd130Xml1AdministrativeInfoChecker
                 $errors->push((object)[
                     'error_code' => $this->prefix . 'ADMIN_INFO_ERROR_MAXA_CU_TRU_NOT_FOUND',
                     'error_name' => 'Mã phường xã không tồn tại',
+                    'critical_error' => true,
                     'description' => 'Mã phường xã không tồn tại trong danh mục: ' . $data->maxa_cu_tru
                 ]);
             } else {
@@ -169,6 +182,7 @@ class Qd130Xml1AdministrativeInfoChecker
                     $errors->push((object)[
                         'error_code' => $this->prefix . 'ADMIN_INFO_ERROR_MAXA_CU_TRU_NOT_FOUND_IN_MAHUYEN_CU_TRU',
                         'error_name' => 'Mã phường xã không thuộc mã quận huyện',
+                        'critical_error' => true,
                         'description' => 'Mã phường xã không thuộc mã quận huyện: ' . $data->maxa_cu_tru . '/' . $data->mahuyen_cu_tru
                     ]);
                 }
@@ -179,6 +193,7 @@ class Qd130Xml1AdministrativeInfoChecker
             $errors->push((object)[
                 'error_code' => $this->prefix . 'ADMIN_INFO_ERROR_MA_QUOCTICH',
                 'error_name' => 'Thiếu mã quốc tịch',
+                'critical_error' => true,
                 'description' => 'Mã quốc tịch không được để trống hoặc không đúng định dạng'
             ]);
         }
@@ -187,6 +202,7 @@ class Qd130Xml1AdministrativeInfoChecker
             $errors->push((object)[
                 'error_code' => $this->prefix . 'ADMIN_INFO_ERROR_MA_DANTOC',
                 'error_name' => 'Thiếu mã dân tộc',
+                'critical_error' => true,
                 'description' => 'Mã dân tộc không được để trống'
             ]);
         }
@@ -195,6 +211,7 @@ class Qd130Xml1AdministrativeInfoChecker
             $errors->push((object)[
                 'error_code' => $this->prefix . 'ADMIN_INFO_ERROR_MA_NGHE_NGHIEP',
                 'error_name' => 'Thiếu mã nghề nghiệp',
+                'critical_error' => true,
                 'description' => 'Mã nghề nghiệp không được để trống'
             ]);
         } else {
@@ -203,6 +220,7 @@ class Qd130Xml1AdministrativeInfoChecker
                 $errors->push((object)[
                     'error_code' => $this->prefix . 'ADMIN_INFO_ERROR_MA_NGHE_NGHIEP_NOT_FOUND',
                     'error_name' => 'Mã nghề nghiệp không tồn tại',
+                    'critical_error' => true,
                     'description' => 'Mã nghề nghiệp không tồn tại trong danh mục nghề nghiệp: ' .$data->ma_nghe_nghiep
                 ]);
             }
@@ -212,6 +230,7 @@ class Qd130Xml1AdministrativeInfoChecker
             $errors->push((object)[
                 'error_code' => $this->prefix . 'ADMIN_INFO_ERROR_CHAN_DOAN_VAO',
                 'error_name' => 'Thiếu chẩn đoán vào',
+                'critical_error' => true,
                 'description' => 'Chẩn đoán vào không được để trống'
             ]);
         }
@@ -220,6 +239,7 @@ class Qd130Xml1AdministrativeInfoChecker
             $errors->push((object)[
                 'error_code' => $this->prefix . 'ADMIN_INFO_ERROR_CHAN_DOAN_RV',
                 'error_name' => 'Thiếu chẩn đoán ra viện',
+                'critical_error' => true,
                 'description' => 'Chẩn đoán ra viện không được để trống'
             ]);
         }
@@ -228,6 +248,7 @@ class Qd130Xml1AdministrativeInfoChecker
             $errors->push((object)[
                 'error_code' => $this->prefix . 'ADMIN_INFO_ERROR_MA_BENH_CHINH',
                 'error_name' => 'Thiếu mã bệnh chính',
+                'critical_error' => true,
                 'description' => 'Mã bệnh chính không được để trống'
             ]);
         }
@@ -238,6 +259,7 @@ class Qd130Xml1AdministrativeInfoChecker
                 $errors->push((object)[
                     'error_code' => $this->prefix . 'ADMIN_INFO_ERROR_MA_BENH_KT',
                     'error_name' => 'Mã bệnh kèm theo vượt quá 12 mã',
+                    'critical_error' => true,
                     'description' => 'Mã bệnh kèm theo không được vượt quá 12 mã'
                 ]);
             }
@@ -247,6 +269,7 @@ class Qd130Xml1AdministrativeInfoChecker
             $errors->push((object)[
                 'error_code' => $this->prefix . 'ADMIN_INFO_ERROR_MA_DOITUONG_KCB',
                 'error_name' => 'Thiếu mã đối tượng KCB',
+                'critical_error' => true,
                 'description' => 'Mã đối tượng KCB không được để trống'
             ]);
         }
@@ -255,6 +278,7 @@ class Qd130Xml1AdministrativeInfoChecker
             $errors->push((object)[
                 'error_code' => $this->prefix . 'ADMIN_INFO_ERROR_NGAY_VAO',
                 'error_name' => 'Thiếu ngày vào',
+                'critical_error' => true,
                 'description' => 'Ngày vào không được để trống'
             ]);
         }
@@ -263,6 +287,7 @@ class Qd130Xml1AdministrativeInfoChecker
             $errors->push((object)[
                 'error_code' => $this->prefix . 'ADMIN_INFO_ERROR_NGAY_RA',
                 'error_name' => 'Thiếu ngày ra',
+                'critical_error' => true,
                 'description' => 'Ngày ra không được để trống'
             ]);
         }
@@ -271,6 +296,7 @@ class Qd130Xml1AdministrativeInfoChecker
             $errors->push((object)[
                 'error_code' => $this->prefix . 'ADMIN_INFO_ERROR_NAM_QT',
                 'error_name' => 'Thiếu năm quyết toán',
+                'critical_error' => true,
                 'description' => 'Năm quyết toán không được để trống'
             ]);
         }
@@ -279,6 +305,7 @@ class Qd130Xml1AdministrativeInfoChecker
             $errors->push((object)[
                 'error_code' => $this->prefix . 'ADMIN_INFO_ERROR_THANG_QT',
                 'error_name' => 'Thiếu tháng quyết toán',
+                'critical_error' => true,
                 'description' => 'Tháng quyết toán không được để trống'
             ]);
         }
@@ -287,6 +314,7 @@ class Qd130Xml1AdministrativeInfoChecker
             $errors->push((object)[
                 'error_code' => $this->prefix . 'ADMIN_INFO_ERROR_MA_LOAI_KCB',
                 'error_name' => 'Thiếu mã loại KCB',
+                'critical_error' => true,
                 'description' => 'Mã loại KCB không được để trống'
             ]);
         }
@@ -295,6 +323,7 @@ class Qd130Xml1AdministrativeInfoChecker
             $errors->push((object)[
                 'error_code' => $this->prefix . 'ADMIN_INFO_ERROR_KET_QUA_DTRI',
                 'error_name' => 'Thiếu kết quả điều trị',
+                'critical_error' => true,
                 'description' => 'Kết quả điều trị không được để trống'
             ]);
         }
@@ -303,6 +332,7 @@ class Qd130Xml1AdministrativeInfoChecker
             $errors->push((object)[
                 'error_code' => $this->prefix . 'ADMIN_INFO_ERROR_MA_LOAI_RV',
                 'error_name' => 'Thiếu mã loại ra viện',
+                'critical_error' => true,
                 'description' => 'Mã loại ra viện không được để trống'
             ]);
         }
@@ -311,6 +341,7 @@ class Qd130Xml1AdministrativeInfoChecker
             $errors->push((object)[
                 'error_code' => $this->prefix . 'ADMIN_INFO_ERROR_MA_KHOA',
                 'error_name' => 'Thiếu mã khoa',
+                'critical_error' => true,
                 'description' => 'Mã khoa không được để trống'
             ]);
         }
@@ -319,6 +350,7 @@ class Qd130Xml1AdministrativeInfoChecker
             $errors->push((object)[
                 'error_code' => $this->prefix . 'ADMIN_INFO_ERROR_MA_CSKCB',
                 'error_name' => 'Thiếu mã cơ sở KCB',
+                'critical_error' => true,
                 'description' => 'Mã cơ sở KCB không được để trống'
             ]);
         }  else {
@@ -394,6 +426,7 @@ class Qd130Xml1AdministrativeInfoChecker
             $errors->push((object)[
                 'error_code' => $this->prefix . 'INFO_ERROR_MA_TTDV',
                 'error_name' => 'Thiếu mã thủ trưởng đơn vị',
+                'critical_error' => true,
                 'description' => 'Thủ trưởng đơn vị không được để trống'
             ]);
         } else {
@@ -402,6 +435,7 @@ class Qd130Xml1AdministrativeInfoChecker
                 $errors->push((object)[
                     'error_code' => $this->prefix . 'INVALID_MEDICAL_STAFF_MA_TTDV',
                     'error_name' => 'Mã thủ trưởng đơn vị chưa được duyệt',
+                    'critical_error' => true,
                     'description' => 'Mã thủ trưởng đơn vị chưa được duyệt danh mục (Mã BHXH: ' . $data->ma_ttdv . ')'
                 ]);
             }
@@ -412,6 +446,7 @@ class Qd130Xml1AdministrativeInfoChecker
                 $errors->push((object)[
                     'error_code' => $this->prefix . 'ADMIN_INFO_ERROR_MA_DKBD',
                     'error_name' => 'Thiếu mã đăng ký khám bệnh ban đầu',
+                    'critical_error' => true,
                     'description' => 'Mã đăng ký khám bệnh ban đầu không được để trống khi có mã thẻ BHYT'
                 ]);
             }
@@ -420,6 +455,7 @@ class Qd130Xml1AdministrativeInfoChecker
                 $errors->push((object)[
                     'error_code' => $this->prefix . 'ADMIN_INFO_ERROR_GT_THE_TU',
                     'error_name' => 'Thiếu giá trị thẻ từ ngày',
+                    'critical_error' => true,
                     'description' => 'Giá trị thẻ từ ngày không được để trống khi có mã thẻ BHYT'
                 ]);
             }
@@ -428,6 +464,7 @@ class Qd130Xml1AdministrativeInfoChecker
                 $errors->push((object)[
                     'error_code' => $this->prefix . 'ADMIN_INFO_ERROR_GT_THE_DEN',
                     'error_name' => 'Thiếu giá trị thẻ đến ngày',
+                    'critical_error' => true,
                     'description' => 'Giá trị thẻ đến ngày không được để trống khi có mã thẻ BHYT'
                 ]);
             }
@@ -436,6 +473,7 @@ class Qd130Xml1AdministrativeInfoChecker
                 $errors->push((object)[
                     'error_code' => $this->prefix . 'ADMIN_INFO_ERROR_LY_DO_VV',
                     'error_name' => 'Thiếu lý do vào viện',
+                    'critical_error' => true,
                     'description' => 'Lý do vào viện không được để trống'
                 ]);
             }

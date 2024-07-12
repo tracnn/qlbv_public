@@ -99,6 +99,7 @@ class Qd130Xml3Checker
             $errors->push((object)[
                 'error_code' => $this->prefix . 'INFO_ERROR_GROUP_CODE_NGUOI_THUC_HIEN',
                 'error_name' => 'Thiếu người thực hiện',
+                'critical_error' => true,
                 'description' => 'Người thực hiện không được để trống đối với DVKT: ' . $data->ten_dich_vu
             ]);
         }
@@ -110,6 +111,7 @@ class Qd130Xml3Checker
                     $errors->push((object)[
                         'error_code' => $this->prefix . 'INFO_ERROR_NGUOI_THUC_HIEN_NOT_FOUND',
                         'error_name' => 'Người thực hiện không tồn tại',
+                        'critical_error' => true,
                         'description' => 'Người thực hiện không tồn tại trong danh mục NVYT: ' . $nguoi_thuc_hien
                     ]);
                 }
@@ -120,6 +122,7 @@ class Qd130Xml3Checker
             $errors->push((object)[
                 'error_code' => $this->prefix . 'INFO_ERROR_MA_BAC_SI',
                 'error_name' => 'Thiếu mã bác sĩ',
+                'critical_error' => true,
                 'description' => 'Mã bác sĩ không được để trống'
             ]);
         } else {
@@ -129,6 +132,7 @@ class Qd130Xml3Checker
                     $errors->push((object)[
                         'error_code' => $this->prefix . 'INFO_ERROR_MA_BAC_SI_NOT_FOUND',
                         'error_name' => 'Mã bác sĩ không tồn tại',
+                        'critical_error' => true,
                         'description' => 'Mã bác sĩ tồn tại trong danh mục NVYT: ' . $ma_bac_si
                     ]);
                 }
@@ -153,6 +157,7 @@ class Qd130Xml3Checker
             $errors->push((object)[
                 'error_code' => $this->prefix . 'OUTPATIENT_BED_DAY_ERROR',
                 'error_name' => 'Mã loại KCB không được chỉ định ngày giường',
+                'critical_error' => true,
                 'description' => 'MA_LOAI_KCB là (Khám hoặc Điều trị ngoại trú) nhưng có chỉ định dịch vụ ngày giường'
             ]);
         }
@@ -174,6 +179,7 @@ class Qd130Xml3Checker
             $errors->push((object)[
                 'error_code' => $this->prefix . 'MISSING_SERVICE_OR_MATERIAL',
                 'error_name' => 'Mã dịch vụ và Mã vật tư rỗng',
+                'critical_error' => true,
                 'description' => 'MA_DICH_VU và MA_VAT_TU rỗng'
             ]);
         }
@@ -197,6 +203,7 @@ class Qd130Xml3Checker
                 $errors->push((object)[
                     'error_code' => $this->prefix . 'INVALID_BED_CODE_FORMAT',
                     'error_name' => 'Mã giường không đúng định dạng',
+                    'critical_error' => true,
                     'description' => 'Mã giường: ' . $data->ma_giuong . ' không đúng định dạng (ký tự đầu phải là H, T, C, K và 3 ký tự sau là số từ 0 đến 9)'
                 ]);
             }
@@ -237,6 +244,7 @@ class Qd130Xml3Checker
                 $errors->push((object)[
                     'error_code' => $this->prefix . 'INVALID_ORDER_TIME',
                     'error_name' => 'Thời gian chỉ định không hợp lệ',
+                    'critical_error' => true,
                     'description' => 'Thời gian y lệnh không nằm trong khoảng thời gian vào (' . strtodatetime($ngayVao) . ') và ra (' . strtodatetime($ngayRa) . ')'
                 ]);
             }
@@ -336,6 +344,7 @@ class Qd130Xml3Checker
                 $errors->push((object)[
                     'error_code' => $this->prefix . 'MISSING_MATERIAL_CODE',
                     'error_name' => 'Mã vật tư rỗng',
+                    'critical_error' => true,
                     'description' => 'Không được để trống trường mã vật tư. Ngày y lệnh: ' . strtodatetime($data->ngay_yl)
                 ]);
             }
@@ -344,6 +353,7 @@ class Qd130Xml3Checker
                 $errors->push((object)[
                     'error_code' => $this->prefix . 'MISSING_MATERIAL_NAME',
                     'error_name' => 'Tên vật tư rỗng',
+                    'critical_error' => true,
                     'description' => 'Không được để trống trường tên vật tư. Ngày y lệnh: ' . strtodatetime($data->ngay_yl)
                 ]);
             }
@@ -354,6 +364,7 @@ class Qd130Xml3Checker
                 $errors->push((object)[
                     'error_code' => $this->prefix . 'INVALID_TT_THAU_FORMAT',
                     'error_name' => 'Thông tin thầu không đúng định dạng',
+                    'critical_error' => true,
                     'description' => 'Mã vật tư: ' . $data->ma_vat_tu . '; có TT_THAU không đúng định dạng: ' . $data->tt_thau
                 ]);
             } else {
@@ -432,6 +443,7 @@ class Qd130Xml3Checker
             $errors->push((object)[
                 'error_code' => $this->prefix . 'EXCLUDED_MATERIAL_GROUP_CODE',
                 'error_name' => 'Vật tư nằm ngoài danh mục hoặc vật tư thay thế',
+                'critical_error' => true,
                 'description' => 'Mã vật tư: ' . $data->ma_vat_tu . ' nằm ngoài danh mục hoặc là vật tư thay thế'
             ]);
         }
