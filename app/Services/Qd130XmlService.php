@@ -698,7 +698,7 @@ class Qd130XmlService
         }
     }
 
-    public function storeQd130XmlInfomation($ma_lk, $macskcb, $operationType)
+    public function storeQd130XmlInfomation($ma_lk, $macskcb, $operationType, $soluonghoso = 1, $error = null)
     {
 
          try {
@@ -712,8 +712,13 @@ class Qd130XmlService
 
             if ($operationType === 'import') {
                 $values['imported_at'] = Carbon::now();
+                $values['soluonghoso'] = $soluonghoso;
+                $values['import_error'] = $error;
+                $values['exported_at'] = null;
+                $values['export_error'] = $error;
             } elseif ($operationType === 'export') {
                 $values['exported_at'] = Carbon::now();
+                $values['export_error'] = $error;
             }
 
             Qd130XmlInformation::updateOrCreate($attributes, $values);
@@ -780,7 +785,7 @@ class Qd130XmlService
 
         $thongTinHoSo = $xmlData->addChild('THONGTINHOSO');
         $thongTinHoSo->addChild('NGAYLAP', date('Ymd')); // current date
-        $thongTinHoSo->addChild('SOLUONGHOSO', 1);
+        $thongTinHoSo->addChild('SOLUONGHOSO', $xmlInformation->soluonghoso);
 
         $danhSachHoSo = $thongTinHoSo->addChild('DANHSACHHOSO');
         $hoso = $danhSachHoSo->addChild('HOSO');

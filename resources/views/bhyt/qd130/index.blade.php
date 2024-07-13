@@ -45,6 +45,7 @@
                 <tr>
                     <th>Mã điều trị</th>
                     <th><input type="checkbox" id="select-all"></th>
+                    <th>XML</th>
                     <th>Mã BN</th>
                     <th>Họ tên</th>
                     <th>Mã thẻ</th>
@@ -147,6 +148,7 @@
                     "orderable": false,
                     "searchable": false 
                 },
+                { "data": "exported_at", "orderable": false, "searchable": false },
                 { "data": "ma_bn" },
                 { "data": "ho_ten" },
                 { "data": "ma_the_bhyt" },

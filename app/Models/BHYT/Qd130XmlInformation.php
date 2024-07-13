@@ -8,8 +8,11 @@ class Qd130XmlInformation extends Model
 {
     protected $fillable = [
         'ma_lk',
-        'macskcb', 
-        'imported_at', 
+        'macskcb',
+        'soluonghoso',
+        'imported_at',
         'exported_at',
+        'import_error',
+        'export_error',
     ];
 }

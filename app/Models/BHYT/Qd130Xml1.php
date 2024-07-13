@@ -153,6 +153,6 @@ class Qd130Xml1 extends Model
 
     public function Qd130XmlInformation()
     {
-        return $this->hasMany('App\Models\BHYT\Qd130XmlInformation', 'ma_lk', 'ma_lk');
+        return $this->hasOne('App\Models\BHYT\Qd130XmlInformation', 'ma_lk', 'ma_lk');
     }
 }

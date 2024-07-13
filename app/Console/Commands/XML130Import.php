@@ -81,6 +81,7 @@ class XML130Import extends Command
                 }
 
                 $macskcb = (string)$xmldata->THONGTINDONVI->MACSKCB;
+                $soluonghoso = count($xmldata->THONGTINHOSO->SOLUONGHOSO);
 
                 foreach ($xmldata->THONGTINHOSO[0]->DANHSACHHOSO[0]->HOSO[0]->FILEHOSO as $file_hs) {
                     $fileContent = base64_decode($file_hs->NOIDUNGFILE);
@@ -171,7 +172,7 @@ class XML130Import extends Command
 
                 // Sau khi hoàn thành import hồ sơ thì mới check nghiệp vụ tổng thể liên quan tới hồ sơ đó
                 if ($ma_lk !== null && !empty($processedFileTypes)) {
-                    $this->qd130XmlService->storeQd130XmlInfomation($ma_lk, $macskcb, 'import');
+                    $this->qd130XmlService->storeQd130XmlInfomation($ma_lk, $macskcb, 'import', $soluonghoso);
                     $this->qd130XmlService->checkQd130XmlComplete($ma_lk);
                 }
 

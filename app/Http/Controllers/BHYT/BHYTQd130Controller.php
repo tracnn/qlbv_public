@@ -62,13 +62,14 @@ class BHYTQd130Controller extends Controller
         if ($treatment_code) {
             $result = Qd130Xml1::select('ma_lk', 'ma_bn', 'ho_ten', 'ma_the_bhyt', 'ngay_sinh', 
                 'ngay_vao', 'ngay_ra', 'ngay_ttoan', 'created_at', 'updated_at')
-            ->where('ma_lk', $treatment_code)
-            ->with(['check_hein_card' => function($query) {
-                $query->select('ma_lk', 'ma_kiemtra', 'ma_tracuu', 'ghi_chu');
-            }])
-            ->with(['Qd130XmlErrorResult' => function($query) {
-                $query->select('ma_lk', 'error_code', 'ngay_yl', 'description');
-            }]);            
+                ->where('ma_lk', $treatment_code)
+                ->with(['check_hein_card' => function($query) {
+                    $query->select('ma_lk', 'ma_kiemtra', 'ma_tracuu', 'ghi_chu');
+                }, 'Qd130XmlErrorResult' => function($query) {
+                    $query->select('ma_lk', 'error_code', 'ngay_yl', 'description');
+                }, 'Qd130XmlInformation' => function($query) {
+                    $query->select('ma_lk', 'exported_at');
+                }]);           
         } else {
             // Check and convert date format
             if (strlen($dateFrom) == 10) { // Format YYYY-MM-DD
@@ -125,9 +126,14 @@ class BHYTQd130Controller extends Controller
                 'ngay_vao', 'ngay_ra', 'ngay_ttoan', 'created_at', 'updated_at')
             ->whereBetween($dateField, [$formattedDateFrom, $formattedDateTo]);
 
-            // Apply relationships
+            // Apply relationships: check_hein_card
             $result = $result->with(['check_hein_card' => function($query) {
                 $query->select('ma_lk', 'ma_kiemtra', 'ma_tracuu', 'ghi_chu');
+            }]);
+
+            // Apply relationships: Qd130XmlInformation
+            $result = $result->with(['Qd130XmlInformation' => function($query) {
+                $query->select('ma_lk', 'exported_at', 'export_error');
             }]);
 
             if ($qd130_xml_error_catalog_id) {
@@ -209,6 +215,19 @@ class BHYTQd130Controller extends Controller
         ->editColumn('ngay_ttoan', function($result) {
             return $result->ngay_ttoan ? strtodatetime($result->ngay_ttoan) : $result->ngay_ttoan;
         })
+        ->addColumn('exported_at', function ($result) {
+            $tooltip = $result->Qd130XmlInformation && $result->Qd130XmlInformation->exported_at 
+                ? $result->Qd130XmlInformation->exported_at
+                : ($result->Qd130XmlInformation && $result->Qd130XmlInformation->export_error
+                    ? $result->Qd130XmlInformation->export_error
+                    : 'Not exported');
+            $icon = $result->Qd130XmlInformation && $result->Qd130XmlInformation->export_error
+                ? '<i class="fa fa-file-code-o text-warning" title="'.$tooltip.'"></i>'
+                : ($result->Qd130XmlInformation && $result->Qd130XmlInformation->exported_at
+                    ? '<i class="fa fa-file-code-o text-success" title="'.$tooltip.'"></i>'
+                    : '<i class="fa fa-file-code-o text-secondary" title="'.$tooltip.'"></i>');
+            return $icon;
+        })
         ->addColumn('action', function ($result) {
             return '<a href="' . route('insurance.check-card.search',['card-number' => $result->ma_the_bhyt, 'name' => $result->ho_ten, 'birthday' => dob($result->ngay_sinh,0,8)]) . '" class="btn btn-sm btn-success" target="_blank"><span class="glyphicon glyphicon-check"></span> Tra thẻ</a>
                 <a href="javascript:void(0);" onclick="deleteXML(\'' . $result->ma_lk . '\');" class="btn btn-sm btn-danger">
@@ -226,6 +245,7 @@ class BHYTQd130Controller extends Controller
             }
             return $highlight ? 'highlight-red' : '';
         })
+        ->rawColumns(['exported_at', 'action'])
         ->toJson();
     }
 
@@ -301,6 +321,7 @@ class BHYTQd130Controller extends Controller
             $data = simplexml_load_string($fileContent);
 
             $fileType = (string)$file_hs->LOAIHOSO;
+            $soluonghoso = count($xmldata->THONGTINHOSO->SOLUONGHOSO);
 
             if (!is_string($fileType)) {
                 \Log::error('Invalid file type or missing expected structure for ' . $fileType);
@@ -381,7 +402,7 @@ class BHYTQd130Controller extends Controller
             
         // Sau khi hoàn thành import hồ sơ thì mới check nghiệp vụ tổng thể liên quan tới hồ sơ đó
         if ($ma_lk !== null && !empty($processedFileTypes)) {
-            $this->qd130XmlService->storeQd130XmlInfomation($ma_lk, $macskcb, 'import');
+            $this->qd130XmlService->storeQd130XmlInfomation($ma_lk, $macskcb, 'import', $soluonghoso);
             $this->qd130XmlService->checkQd130XmlComplete($ma_lk);
         }
 
