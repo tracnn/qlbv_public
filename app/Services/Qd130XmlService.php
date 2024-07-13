@@ -1300,7 +1300,7 @@ class Qd130XmlService
         }
 
         // Định dạng thời gian hiện tại để đặt tên file
-        $formattedDateTime = date('d.m.Y_H.i.s');
+        $formattedDateTime = date('Y.m.d_H.i.s');
 
         // Tạo tên file XML
         $fileName = $formattedDateTime . '_' . $ma_lk . '.xml';

@@ -438,7 +438,7 @@ class BHYTQd130Controller extends Controller
                 // Truy vấn dữ liệu từ cơ sở dữ liệu theo hồ sơ đã chọn
                 $xmlData = $this->qd130XmlService->getDataForXmlExport($selectedRecord);
 
-                $formattedDateTime = date('d.m.Y_H.i.s');
+                $formattedDateTime = date('Y.m.d_H.i.s');
                 // Tạo tên file XML
                 $fileName = $formattedDateTime . '_' . $selectedRecord . '.xml';
 
@@ -456,7 +456,7 @@ class BHYTQd130Controller extends Controller
         }
 
         // Tạo file ZIP
-        $zipFileName = 'exported_xml_' . date('d.m.Y_H.i.s') . '.zip';
+        $zipFileName = 'exported_xml_' . date('Y.m.d_H.i.s') . '.zip';
         $zipFilePath = storage_path('app/' . $storagePath . $zipFileName);
 
         $zip = new ZipArchive;
