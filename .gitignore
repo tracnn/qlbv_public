@@ -20,6 +20,7 @@
 # Ignore config files
 /config/database.php
 /config/filesystems.php
+/config/__tech.php
 
 # Ignore IDE files
 .idea/

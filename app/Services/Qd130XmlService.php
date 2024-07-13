@@ -22,8 +22,10 @@ use App\Services\XmlStructures;
 use App\Jobs\CheckQd130XmlErrorsJob;
 use App\Jobs\CheckCompleteQd130RecordJob;
 use App\Jobs\jobKtTheBHYT;
+use App\Jobs\ExportQd130XmlJob;
 
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Storage;
 
 class Qd130XmlService
 {
@@ -1279,6 +1281,34 @@ class Qd130XmlService
         $dom->formatOutput = true;
 
         return $dom->saveXML();
+    }
+
+    public function exportQd130Xml($ma_lk)
+    {
+        ExportQd130XmlJob::dispatch($ma_lk)
+        ->onQueue($this->queueName);
+    }
+
+    public function processExportXml($ma_lk)
+    {
+        $xmlData = $this->getDataForXmlExport($ma_lk);
+
+        // Kiểm tra xem dữ liệu XML có được lấy thành công không
+        if (!$xmlData) {
+            \Log::error('Failed to get XML data for ma_lk: ' . $ma_lk);
+            return false;
+        }
+
+        // Định dạng thời gian hiện tại để đặt tên file
+        $formattedDateTime = date('d.m.Y_H.i.s');
+
+        // Tạo tên file XML
+        $fileName = $formattedDateTime . '_' . $ma_lk . '.xml';
+
+        if (!Storage::disk('exportXml130')->put($fileName, $xmlData)) {
+            \Log::error('Failed to write XML file: ' . $fileName);
+            return false;
+        }
     }
 
     private function addChildWithCDATA($xmlElement, $name, $value)

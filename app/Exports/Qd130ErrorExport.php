@@ -38,7 +38,7 @@ class Qd130ErrorExport implements FromQuery, WithHeadings, ShouldAutoSize, WithS
         return Qd130XmlErrorResult::whereBetween('qd130_xml_error_results.updated_at', [$dateFrom, $dateTo])
         ->join('qd130_xml_error_catalogs', 'qd130_xml_error_results.error_code', '=', 'qd130_xml_error_catalogs.error_code')
         ->select('qd130_xml_error_results.*', 'qd130_xml_error_catalogs.error_name as catalog_error_name')
-        ->orderBy('qd130_xml_error_results.xml','qd130_xml_error_results.ma_lk','qd130_xml_error_results.ngay_yl');
+        ->orderBy('qd130_xml_error_results.ma_lk');
     }
 
     public function headings(): array
@@ -67,8 +67,8 @@ class Qd130ErrorExport implements FromQuery, WithHeadings, ShouldAutoSize, WithS
                 $sheet->getColumnDimension('D')->setWidth(8);
                 $sheet->getColumnDimension('E')->setWidth(16);
                 $sheet->getColumnDimension('F')->setWidth(16);
-                $sheet->getColumnDimension('G')->setWidth(30);
-                $sheet->getColumnDimension('H')->setWidth(50);
+                $sheet->getColumnDimension('G')->setWidth(35);
+                $sheet->getColumnDimension('H')->setWidth(60);
 
                 // $sheet->getStyle('D')->getNumberFormat()->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER);
                 // $sheet->getStyle('O')->getNumberFormat()->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER);

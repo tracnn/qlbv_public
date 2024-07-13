@@ -272,20 +272,25 @@ class BHYTQd130Controller extends Controller
 
             $errors = [];
 
-            foreach ($files as $file) {
-                $filePath = storage_path('app/uploads');
-                $fileName = $file->getClientOriginalName();
-                $file->move($filePath, $fileName);
-                $fileFullPath = $filePath . '/' . $fileName;
-                $xmldata = simplexml_load_file($fileFullPath);
-                
-                if (!$this->processXmlData($xmldata)) {
-                    $errors[] = "File {$fileName} has invalid structure.";
-                }
+            // Chunk the files array into smaller pieces of 100 files each
+            $fileChunks = array_chunk($files, 100);
+            
+            foreach ($fileChunks as $chunk) {
+                foreach ($chunk as $file) {
+                    $filePath = storage_path('app/uploads');
+                    $fileName = $file->getClientOriginalName();
+                    $file->move($filePath, $fileName);
+                    $fileFullPath = $filePath . '/' . $fileName;
+                    $xmldata = simplexml_load_file($fileFullPath);
+                    
+                    if (!$this->processXmlData($xmldata)) {
+                        $errors[] = "File {$fileName} has invalid structure.";
+                    }
 
-                // Delete the file after processing
-                if (file_exists($fileFullPath)) {
-                    unlink($fileFullPath);
+                    // Delete the file after processing
+                    if (file_exists($fileFullPath)) {
+                        unlink($fileFullPath);
+                    }
                 }
             }
 
@@ -404,6 +409,7 @@ class BHYTQd130Controller extends Controller
         if ($ma_lk !== null && !empty($processedFileTypes)) {
             $this->qd130XmlService->storeQd130XmlInfomation($ma_lk, $macskcb, 'import', $soluonghoso);
             $this->qd130XmlService->checkQd130XmlComplete($ma_lk);
+            $this->qd130XmlService->exportQd130Xml($ma_lk);
         }
 
         return true;

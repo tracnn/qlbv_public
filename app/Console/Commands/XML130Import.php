@@ -62,124 +62,129 @@ class XML130Import extends Command
         try {
             $files = Storage::disk($disk)->allFiles();
 
-            foreach ($files as $file) {
-                if (Storage::disk($disk)->mimeType($file) != 'text/xml') {
-                    continue;
-                }
+            $fileChunks = array_chunk($files, 100);
 
-                $ma_lk = null; // Khởi tạo ma_lk là null
+            foreach ($fileChunks as $chunk) {
+                foreach ($chunk as $file) {
+                    if (Storage::disk($disk)->mimeType($file) != 'text/xml') {
+                        continue;
+                    }
 
-                // Biến lưu trữ các loại file đã xử lý thành công
-                $processedFileTypes = [];
+                    $ma_lk = null; // Khởi tạo ma_lk là null
 
-                $xmldata = simplexml_load_string(Storage::disk($disk)->get($file));
+                    // Biến lưu trữ các loại file đã xử lý thành công
+                    $processedFileTypes = [];
 
-                // Check if macskcb exists in the XML data
-                if (!isset($xmldata->THONGTINDONVI->MACSKCB) || empty($xmldata->THONGTINDONVI->MACSKCB)) {
-                    \Log::error('MACSKCB not found or is empty in XML data');
-                    return false;
-                }
+                    $xmldata = simplexml_load_string(Storage::disk($disk)->get($file));
 
-                $macskcb = (string)$xmldata->THONGTINDONVI->MACSKCB;
-                $soluonghoso = count($xmldata->THONGTINHOSO->SOLUONGHOSO);
-
-                foreach ($xmldata->THONGTINHOSO[0]->DANHSACHHOSO[0]->HOSO[0]->FILEHOSO as $file_hs) {
-                    $fileContent = base64_decode($file_hs->NOIDUNGFILE);
-                    $data = simplexml_load_string($fileContent);
-
-                    $fileType = (string)$file_hs->LOAIHOSO;
-
-                    if (!is_string($fileType)) {
-                        \Log::error('Invalid file type or missing expected structure for ' . $fileType);
+                    // Check if macskcb exists in the XML data
+                    if (!isset($xmldata->THONGTINDONVI->MACSKCB) || empty($xmldata->THONGTINDONVI->MACSKCB)) {
+                        \Log::error('MACSKCB not found or is empty in XML data');
                         return false;
                     }
 
-                    switch ($fileType) {
-                        case 'XML1':
-                            $expectedStructure = XmlStructures::$expectedStructures130[$fileType];
-                            if (!validateDataStructure($data, $expectedStructure)) {
-                                \Log::error('Invalid data structure for ' . $fileType);
-                                return false;
-                            }
+                    $macskcb = (string)$xmldata->THONGTINDONVI->MACSKCB;
+                    $soluonghoso = count($xmldata->THONGTINHOSO->SOLUONGHOSO);
 
-                            $this->info($data->MA_LK);
+                    foreach ($xmldata->THONGTINHOSO[0]->DANHSACHHOSO[0]->HOSO[0]->FILEHOSO as $file_hs) {
+                        $fileContent = base64_decode($file_hs->NOIDUNGFILE);
+                        $data = simplexml_load_string($fileContent);
 
-                            $this->qd130XmlService->storeQd130Xml1($data, $fileType);
+                        $fileType = (string)$file_hs->LOAIHOSO;
 
-                            $processedFileTypes[] = $fileType;
+                        if (!is_string($fileType)) {
+                            \Log::error('Invalid file type or missing expected structure for ' . $fileType);
+                            return false;
+                        }
 
-                            // Lấy ma_lk từ XML1
-                            $ma_lk = (string)$data->MA_LK;
+                        switch ($fileType) {
+                            case 'XML1':
+                                $expectedStructure = XmlStructures::$expectedStructures130[$fileType];
+                                if (!validateDataStructure($data, $expectedStructure)) {
+                                    \Log::error('Invalid data structure for ' . $fileType);
+                                    return false;
+                                }
 
-                            break;
-                        case 'XML2':
-                            $this->qd130XmlService->storeQd130Xml2($data, $fileType);
-                            break;
-                        case 'XML3':
-                            $this->qd130XmlService->storeQd130Xml3($data, $fileType);
-                            break;
-                        case 'XML4':
-                            $this->qd130XmlService->storeQd130Xml4($data, $fileType);
-                            break;
-                        case 'XML5':
-                            $this->qd130XmlService->storeQd130Xml5($data, $fileType);
-                            break;
-                        case 'XML6':
-                            $this->qd130XmlService->storeQd130Xml6($data, $fileType);
-                            break;
-                        case 'XML7':
-                            $this->qd130XmlService->storeQd130Xml7($data, $fileType);
-                            break;
-                        case 'XML8':
-                            $this->qd130XmlService->storeQd130Xml8($data, $fileType);
-                            break;
-                        case 'XML9':
-                            $this->qd130XmlService->storeQd130Xml9($data, $fileType);
-                            break;
-                        case 'XML10':
-                            $this->qd130XmlService->storeQd130Xml10($data, $fileType);
-                            break;
-                        case 'XML11':
-                            $this->qd130XmlService->storeQd130Xml11($data, $fileType);
-                            break;
-                        case 'XML12':
-                            
-                            break;
-                        case 'XML13':
-                            $this->qd130XmlService->storeQd130Xml13($data, $fileType);
-                            break;
-                        case 'XML14':
-                            $this->qd130XmlService->storeQd130Xml14($data, $fileType);
-                            break;
-                        case 'XML15':
-                            $this->qd130XmlService->storeQd130Xml15($data, $fileType);
-                            break;
-                        case 'XML16':
+                                $this->info($data->MA_LK);
+
+                                $this->qd130XmlService->storeQd130Xml1($data, $fileType);
+
+                                $processedFileTypes[] = $fileType;
+
+                                // Lấy ma_lk từ XML1
+                                $ma_lk = (string)$data->MA_LK;
+
+                                break;
+                            case 'XML2':
+                                $this->qd130XmlService->storeQd130Xml2($data, $fileType);
+                                break;
+                            case 'XML3':
+                                $this->qd130XmlService->storeQd130Xml3($data, $fileType);
+                                break;
+                            case 'XML4':
+                                $this->qd130XmlService->storeQd130Xml4($data, $fileType);
+                                break;
+                            case 'XML5':
+                                $this->qd130XmlService->storeQd130Xml5($data, $fileType);
+                                break;
+                            case 'XML6':
+                                $this->qd130XmlService->storeQd130Xml6($data, $fileType);
+                                break;
+                            case 'XML7':
+                                $this->qd130XmlService->storeQd130Xml7($data, $fileType);
+                                break;
+                            case 'XML8':
+                                $this->qd130XmlService->storeQd130Xml8($data, $fileType);
+                                break;
+                            case 'XML9':
+                                $this->qd130XmlService->storeQd130Xml9($data, $fileType);
+                                break;
+                            case 'XML10':
+                                $this->qd130XmlService->storeQd130Xml10($data, $fileType);
+                                break;
+                            case 'XML11':
+                                $this->qd130XmlService->storeQd130Xml11($data, $fileType);
+                                break;
+                            case 'XML12':
                                 
-                            break;
-                        case 'XML17':
-                            
-                            break;
-                        case 'XML18':
-                            
-                            break;
-                        default:
-                            \Log::warning('Unknown XML type: ' . $file_hs->LOAIHOSO);
-                            break;
+                                break;
+                            case 'XML13':
+                                $this->qd130XmlService->storeQd130Xml13($data, $fileType);
+                                break;
+                            case 'XML14':
+                                $this->qd130XmlService->storeQd130Xml14($data, $fileType);
+                                break;
+                            case 'XML15':
+                                $this->qd130XmlService->storeQd130Xml15($data, $fileType);
+                                break;
+                            case 'XML16':
+                                    
+                                break;
+                            case 'XML17':
+                                
+                                break;
+                            case 'XML18':
+                                
+                                break;
+                            default:
+                                \Log::warning('Unknown XML type: ' . $file_hs->LOAIHOSO);
+                                break;
+                        }
+
                     }
 
-                }
+                    // Sau khi hoàn thành import hồ sơ thì mới check nghiệp vụ tổng thể liên quan tới hồ sơ đó
+                    if ($ma_lk !== null && !empty($processedFileTypes)) {
+                        $this->qd130XmlService->storeQd130XmlInfomation($ma_lk, $macskcb, 'import', $soluonghoso);
+                        $this->qd130XmlService->checkQd130XmlComplete($ma_lk);
+                        $this->qd130XmlService->exportQd130Xml($ma_lk);
+                    }
 
-                // Sau khi hoàn thành import hồ sơ thì mới check nghiệp vụ tổng thể liên quan tới hồ sơ đó
-                if ($ma_lk !== null && !empty($processedFileTypes)) {
-                    $this->qd130XmlService->storeQd130XmlInfomation($ma_lk, $macskcb, 'import', $soluonghoso);
-                    $this->qd130XmlService->checkQd130XmlComplete($ma_lk);
+                    // Delete file after import
+                    Storage::disk($disk)->delete($file);           
                 }
-
-                // Delete file after import
-                Storage::disk($disk)->delete($file);
-                         
             }
+
         } catch (Exception $e) {
             \Log::error($e->getMessage());
         }
