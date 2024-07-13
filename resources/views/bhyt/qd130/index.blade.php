@@ -299,7 +299,11 @@
                 }
             },
             error: function(xhr, error, code) {
-                alert('Có lỗi xảy ra, vui lòng thử lại.');
+                if (xhr.status === 403) {
+                    alert('Bạn không có quyền thực hiện chức năng này.');
+                } else {
+                    alert('Có lỗi xảy ra, vui lòng thử lại.');
+                }
             }
         });
     }
