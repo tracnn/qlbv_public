@@ -8,7 +8,7 @@
         <div class="col-sm-2">
             <div class="form-group row">
                 <label for="default_range">Kiểu lọc</label>
-                <select id="default_range" class="form-control">
+                <select id="default_range" class="form-control select2">
                     <option value="day">Ngày</option>
                     <option value="week">Tuần</option>
                     <option value="month">Tháng</option>
@@ -64,6 +64,8 @@
             
             // Set the select value to the saved range
             $('#date_type').val(savedDateType);
+
+            $('#date_type').select2();
 
             $('#date_type').change(function() {
                 var selectedDateType = $(this).val();

@@ -245,13 +245,15 @@
 
             var startDate = dateRange.startDate.format('YYYY-MM-DD HH:mm:ss');
             var endDate = dateRange.endDate.format('YYYY-MM-DD HH:mm:ss');
+            var xml_filter_status = $('#xml_filter_status').val();
             
             // Tạo URL với các tham số query
             var href = '{{ route("bhyt.qd130.export-qd130-xml-errors") }}?' + $.param({
                 'date_from': startDate,
-                'date_to': endDate
+                'date_to': endDate,
+                'xml_filter_status': xml_filter_status
             });
-            
+
             // Chuyển hướng tới URL với các tham số
             window.location.href = href;
         });

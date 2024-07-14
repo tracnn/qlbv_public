@@ -18,13 +18,15 @@ class Qd130ErrorExport implements FromQuery, WithHeadings, ShouldAutoSize, WithS
 {
     protected $fromDate;
     protected $toDate;
+    protected $xml_filter_status;
 
     protected $rowNumber = 0;
 
-    public function __construct($fromDate = null, $toDate = null)
+    public function __construct($fromDate = null, $toDate = null, $xml_filter_status = null)
     {
         $this->fromDate = $fromDate;
         $this->toDate = $toDate;
+        $this->xml_filter_status = $xml_filter_status;
     }
 
     /**
@@ -34,11 +36,20 @@ class Qd130ErrorExport implements FromQuery, WithHeadings, ShouldAutoSize, WithS
     {
         $dateFrom = $this->fromDate;
         $dateTo = $this->toDate;
+        $xml_filter_status = $this->xml_filter_status;
 
-        return Qd130XmlErrorResult::whereBetween('qd130_xml_error_results.updated_at', [$dateFrom, $dateTo])
-        ->join('qd130_xml_error_catalogs', 'qd130_xml_error_results.error_code', '=', 'qd130_xml_error_catalogs.error_code')
-        ->select('qd130_xml_error_results.*', 'qd130_xml_error_catalogs.error_name as catalog_error_name')
-        ->orderBy('qd130_xml_error_results.ma_lk');
+        $query = Qd130XmlErrorResult::whereBetween('qd130_xml_error_results.updated_at', [$dateFrom, $dateTo])
+            ->join('qd130_xml_error_catalogs', 'qd130_xml_error_results.error_code', '=', 'qd130_xml_error_catalogs.error_code')
+            ->select('qd130_xml_error_results.*', 'qd130_xml_error_catalogs.error_name as catalog_error_name')
+            ->orderBy('qd130_xml_error_results.ma_lk');
+
+        if ($xml_filter_status === 'has_error_critical') {
+            $query->where('qd130_xml_error_results.critical_error', true);
+        } elseif ($xml_filter_status === 'has_error_warning') {
+            $query->where('qd130_xml_error_results.critical_error', false);
+        }
+
+        return $query;
     }
 
     public function headings(): array
@@ -52,6 +63,7 @@ class Qd130ErrorExport implements FromQuery, WithHeadings, ShouldAutoSize, WithS
             'Ngày Kết Quả',
             'Mã Lỗi',
             'Mô Tả',
+            'Loại lỗi',
         ];
     }
 
@@ -69,6 +81,7 @@ class Qd130ErrorExport implements FromQuery, WithHeadings, ShouldAutoSize, WithS
                 $sheet->getColumnDimension('F')->setWidth(16);
                 $sheet->getColumnDimension('G')->setWidth(35);
                 $sheet->getColumnDimension('H')->setWidth(60);
+                $sheet->getColumnDimension('I')->setWidth(15);
 
                 // $sheet->getStyle('D')->getNumberFormat()->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER);
                 // $sheet->getStyle('O')->getNumberFormat()->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER);
@@ -107,6 +120,7 @@ class Qd130ErrorExport implements FromQuery, WithHeadings, ShouldAutoSize, WithS
             $data->ngay_kq ? Carbon::parse($data->ngay_kq)->format('d/m/Y H:i') : null,
             $data->catalog_error_name,
             $data->description,
+            $data->critical_error ? 'Nghiêm trọng' : 'Cảnh báo',
         ];
     }
 }

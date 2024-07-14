@@ -11,6 +11,7 @@ class Qd130XmlErrorCatalog extends Model
         'error_code',
         'error_name',
         'description',
+        'critical_error',
     ];
 
     /**
@@ -21,7 +22,7 @@ class Qd130XmlErrorCatalog extends Model
      * @param string $description
      * @return void
      */
-    public static function createOrUpdate(string $xmlType, string $errorCode, string $errorName = null): void
+    public static function createOrUpdate(string $xmlType, string $errorCode, string $errorName = null, bool $criticalError = false): void
     {
         static::updateOrCreate(
             [
@@ -30,7 +31,8 @@ class Qd130XmlErrorCatalog extends Model
             ],
             [
                 'error_name' => $errorName,
-                'description' => $errorName
+                'description' => $errorName,
+                'critical_error' => $criticalError,
             ]
         );
     }

@@ -45,7 +45,7 @@ class Qd130XmlErrorService
             Qd130XmlErrorResult::create($data);
 
             // Create or update in Qd130XmlErrorCatalog
-            Qd130XmlErrorCatalog::createOrUpdate($xmlType, $error->error_code, $error->error_name ?? null);
+            Qd130XmlErrorCatalog::createOrUpdate($xmlType, $error->error_code, $error->error_name ?? null, $error->critical_error ?? false);
         }
     }
 }
