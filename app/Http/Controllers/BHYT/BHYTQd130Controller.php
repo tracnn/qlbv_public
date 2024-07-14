@@ -222,9 +222,9 @@ class BHYTQd130Controller extends Controller
                     ? $result->Qd130XmlInformation->export_error
                     : 'Not exported');
             $icon = $result->Qd130XmlInformation && $result->Qd130XmlInformation->export_error
-                ? '<i class="fa fa-file-code-o text-warning" title="'.$tooltip.'"></i>'
+                ? '<i class="fa fa-times-circle" text-warning" title="'.$tooltip.'"></i>'
                 : ($result->Qd130XmlInformation && $result->Qd130XmlInformation->exported_at
-                    ? '<i class="fa fa-file-code-o text-success" title="'.$tooltip.'"></i>'
+                    ? '<i class="fa fa-check-circle text-success" title="'.$tooltip.'"></i>'
                     : '<i class="fa fa-file-code-o text-secondary" title="'.$tooltip.'"></i>');
             return $icon;
         })

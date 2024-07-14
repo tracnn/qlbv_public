@@ -293,6 +293,7 @@
             success: function(response) {
                 if (response.success) {
                     //console.log(response.records);
+                    table.ajax.reload();
                     window.location.href = response.file; // Chuyển hướng để tải file
                 } else {
                     alert('Có lỗi xảy ra, vui lòng thử lại.');

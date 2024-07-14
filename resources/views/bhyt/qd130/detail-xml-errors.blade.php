@@ -7,9 +7,19 @@
     @if($groupedErrors->isNotEmpty())
     <ul class="nav nav-tabs">
         @foreach($groupedErrors as $xml => $errors)
+            @php
+                $hasCriticalError = $errors->contains(function($error) {
+                    return $error->critical_error;
+                });
+            @endphp
             <li class="{{ $loop->first ? 'active' : '' }}">
                 <a data-toggle="tab" href="#tab_{{ $xml }}">
                     Lỗi: {{ $xml }}
+                    @if($hasCriticalError)
+                        <i class="fa fa-exclamation-triangle text-danger" aria-hidden="true" title="Critical Error"></i>
+                    @else
+                        <i class="fa fa-exclamation-triangle text-primary" aria-hidden="true" title="Warning Error"></i>
+                    @endif
                 </a>
             </li>
         @endforeach
