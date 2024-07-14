@@ -31,6 +31,15 @@ class Qd130XmlService
 {
     protected $queueName = 'JobQd130XmlCheckError';
 
+    public function deleteExistingQd130Xml($ma_lk)
+    {
+        //Chỉ cần xóa Qd130Xml2, Qd130Xml3, Qd130Xml4, Qd130Xml5
+        Qd130Xml2::where('ma_lk', $ma_lk)->delete();
+        Qd130Xml3::where('ma_lk', $ma_lk)->delete();
+        Qd130Xml4::where('ma_lk', $ma_lk)->delete();
+        Qd130Xml5::where('ma_lk', $ma_lk)->delete();
+    }
+
     public function storeQd130Xml1($data, $xmlType)
     {
         $expectedStructure = XmlStructures::$expectedStructures130[$xmlType];

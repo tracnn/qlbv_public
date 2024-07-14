@@ -340,12 +340,15 @@ class BHYTQd130Controller extends Controller
                         \Log::error('Invalid data structure for ' . $fileType);
                         return false;
                     }
-                    $this->qd130XmlService->storeQd130Xml1($data, $fileType);
-
+                    
                     $processedFileTypes[] = $fileType;
 
                     // Lấy ma_lk từ XML1
                     $ma_lk = (string)$data->MA_LK;
+
+                    $this->qd130XmlService->deleteExistingQd130Xml($ma_lk);
+
+                    $this->qd130XmlService->storeQd130Xml1($data, $fileType);
 
                     break;
                 case 'XML2':
