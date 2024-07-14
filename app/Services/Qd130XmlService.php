@@ -33,11 +33,21 @@ class Qd130XmlService
 
     public function deleteExistingQd130Xml($ma_lk)
     {
-        //Chỉ cần xóa Qd130Xml2, Qd130Xml3, Qd130Xml4, Qd130Xml5
+        //Khong xoa Qd130Xml1 - Khong xoa Qd130Xml12 vi no ko co lien ket
         Qd130Xml2::where('ma_lk', $ma_lk)->delete();
         Qd130Xml3::where('ma_lk', $ma_lk)->delete();
         Qd130Xml4::where('ma_lk', $ma_lk)->delete();
         Qd130Xml5::where('ma_lk', $ma_lk)->delete();
+        Qd130Xml6::where('ma_lk', $ma_lk)->delete();
+        Qd130Xml7::where('ma_lk', $ma_lk)->delete();
+        Qd130Xml8::where('ma_lk', $ma_lk)->delete();
+        Qd130Xml9::where('ma_lk', $ma_lk)->delete();
+        Qd130Xml10::where('ma_lk', $ma_lk)->delete();
+        Qd130Xml11::where('ma_lk', $ma_lk)->delete();
+        Qd130Xml13::where('ma_lk', $ma_lk)->delete();
+        Qd130Xml14::where('ma_lk', $ma_lk)->delete();
+        Qd130Xml15::where('ma_lk', $ma_lk)->delete();
+
     }
 
     public function storeQd130Xml1($data, $xmlType)

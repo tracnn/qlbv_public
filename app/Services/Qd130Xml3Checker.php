@@ -22,6 +22,7 @@ class Qd130Xml3Checker
     protected $bedCodePattern;
     protected $excludedMaterialGroupCodes;
     protected $groupCodeWithExecutor;
+    protected $serviceGroupsRequiringAnesthesia;
 
 
     public function __construct(Qd130XmlErrorService $xmlErrorService)
@@ -44,6 +45,7 @@ class Qd130Xml3Checker
         $this->bedCodePattern = '/^[HTCK]\d{3}$/';
         $this->excludedMaterialGroupCodes = [11];
         $this->groupCodeWithExecutor = [1,2,3,8,18];
+        $this->serviceGroupsRequiringAnesthesia = [8];
     }
 
     /**
@@ -138,7 +140,25 @@ class Qd130Xml3Checker
                 }
             }
         }
-
+        
+        // Check for serviceGroupsRequiringAnesthesia
+        if (in_array($data->ma_nhom, $this->serviceGroupsRequiringAnesthesia)) {
+            if (empty($data->pp_vo_cam)) {
+                $errors->push((object)[
+                    'error_code' => $this->prefix . 'INFO_ERROR_PP_VO_CAM_EMPTY',
+                    'error_name' => 'Thiếu phương pháp vô cảm',
+                    'critical_error' => true,
+                    'description' => 'Phương pháp vô cảm không được để trống đối với dịch vụ: ' . $data->ten_dich_vu
+                ]);
+            } elseif (!in_array($data->pp_vo_cam, [1, 2, 3, 4])) {
+                $errors->push((object)[
+                    'error_code' => $this->prefix . 'INFO_ERROR_PP_VO_CAM_INVALID',
+                    'error_name' => 'Phương pháp vô cảm không hợp lệ',
+                    'critical_error' => true,
+                    'description' => 'Phương pháp vô cảm không hợp lệ. Giá trị phải thuộc [1, 2, 3, 4]: ' . $data->pp_vo_cam
+                ]);
+            }
+        }
         return $errors;
     }
 
