@@ -65,6 +65,7 @@ class Qd130XmlCompleteChecker
         
             $errors = $errors->merge($this->infoChecker($ma_lk));
             $errors = $errors->merge($this->checkInvalidBedDays($data));
+            $errors = $errors->merge($this->checkExpenseXml2Errors($data));
 
             // Save errors to xml_error_checks table
             $this->xmlErrorService->saveErrors($this->xmlType, $data->ma_lk, $data->stt, $errors);
@@ -168,6 +169,26 @@ class Qd130XmlCompleteChecker
                     'description' => 'Thanh toán ngày giường sai quy định (trừ trường hợp đặc biệt)'
                 ]);
             }
+        }
+
+        return $errors;
+    }
+
+    /**
+     * Hàm kiểm tra các loại tiền chi phí trong hồ sơ tổng hợp và hồ sơ chi tiết
+     */
+    private function checkExpenseXml2Errors($data)
+    {
+        $errors = collect();
+
+        // Kiểm tra tiền thuốc giữa Xml1 và Xml2
+        $sum_thanh_tien_bh = Qd130Xml2::where('ma_lk', $data->ma_lk)->sum('thanh_tien_bh');
+        if ($data->tien_thuoc != $sum_thanh_tien_bh) {
+            $errors->push((object)[
+                'error_code' => $this->prefix . 'INVALID_EXPENSE_DRUG',
+                'error_name' => 'Tiền thuốc không khớp',
+                'description' => 'Tiền thuốc trong XML1 không khớp với tổng thanh_tien_bh trong XML2.'
+            ]);
         }
 
         return $errors;

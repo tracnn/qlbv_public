@@ -70,6 +70,13 @@ class Qd130Xml8Checker
                 'critical_error' => true,
                 'description' => 'Tóm tắt kết quả không được để trống'
             ]);
+        } elseif (strlen($data->tomtat_kq) > 4000) {
+            $errors->push((object)[
+                'error_code' => $this->prefix . 'INFO_ERROR_TOMTAT_KQ_LENGTH',
+                'error_name' => 'Tóm tắt kết quả vượt quá 4000 ký tự',
+                'critical_error' => true,
+                'description' => 'Tóm tắt kết quả không được vượt quá 4000 ký tự'
+            ]);
         }
 
         if (empty($data->ma_ttdv)) {
