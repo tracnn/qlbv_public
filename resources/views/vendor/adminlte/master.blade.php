@@ -70,13 +70,6 @@
 
 @yield('adminlte_js')
 
-<script>
-    $(document).ready(function() {
-        // Initialize all elements with class 'select2'
-        $('.select2').select2();
-    });
-</script>
-
 @stack('after-scripts')
 
 </body>

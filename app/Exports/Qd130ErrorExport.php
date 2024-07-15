@@ -4,6 +4,7 @@ namespace App\Exports;
 
 use App\Models\BHYT\Qd130XmlErrorResult;
 use App\Models\BHYT\Qd130XmlErrorCatalog;
+use App\Models\BHYT\Qd130Xml1;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
@@ -19,14 +20,16 @@ class Qd130ErrorExport implements FromQuery, WithHeadings, ShouldAutoSize, WithS
     protected $fromDate;
     protected $toDate;
     protected $xml_filter_status;
+    protected $date_type;
 
     protected $rowNumber = 0;
 
-    public function __construct($fromDate = null, $toDate = null, $xml_filter_status = null)
+    public function __construct($fromDate = null, $toDate = null, $xml_filter_status = null, $date_type)
     {
         $this->fromDate = $fromDate;
         $this->toDate = $toDate;
         $this->xml_filter_status = $xml_filter_status;
+        $this->date_type = $date_type;
     }
 
     /**
@@ -37,11 +40,59 @@ class Qd130ErrorExport implements FromQuery, WithHeadings, ShouldAutoSize, WithS
         $dateFrom = $this->fromDate;
         $dateTo = $this->toDate;
         $xml_filter_status = $this->xml_filter_status;
+        $date_type = $this->date_type;
 
-        $query = Qd130XmlErrorResult::whereBetween('qd130_xml_error_results.updated_at', [$dateFrom, $dateTo])
+        // Convert date format from 'YYYY-MM-DD HH:mm:ss' to 'YYYYMMDDHHI' for specific fields
+        $formattedDateFromForFields = Carbon::createFromFormat('Y-m-d H:i:s', $dateFrom)->format('YmdHi');
+        $formattedDateToForFields = Carbon::createFromFormat('Y-m-d H:i:s', $dateTo)->format('YmdHi');
+
+        // Convert date format to 'Y-m-d H:i:s' for created_at and updated_at
+        $formattedDateFromForTimestamp = Carbon::createFromFormat('Y-m-d H:i:s', $dateFrom)->format('Y-m-d H:i:s');
+        $formattedDateToForTimestamp = Carbon::createFromFormat('Y-m-d H:i:s', $dateTo)->format('Y-m-d H:i:s');
+
+        // Define the date field based on date_type
+        switch ($date_type) {
+            case 'date_in':
+                $dateField = 'qd130_xml1s.ngay_vao';
+                $formattedDateFrom = $formattedDateFromForFields;
+                $formattedDateTo = $formattedDateToForFields;
+                break;
+            case 'date_out':
+                $dateField = 'qd130_xml1s.ngay_ra';
+                $formattedDateFrom = $formattedDateFromForFields;
+                $formattedDateTo = $formattedDateToForFields;
+                break;
+            case 'date_payment':
+                $dateField = 'qd130_xml1s.ngay_ttoan';
+                $formattedDateFrom = $formattedDateFromForFields;
+                $formattedDateTo = $formattedDateToForFields;
+                break;
+            case 'date_create':
+                $dateField = 'qd130_xml1s.created_at';
+                $formattedDateFrom = $formattedDateFromForTimestamp;
+                $formattedDateTo = $formattedDateToForTimestamp;
+                break;
+            case 'date_update':
+                $dateField = 'qd130_xml1s.updated_at';
+                $formattedDateFrom = $formattedDateFromForTimestamp;
+                $formattedDateTo = $formattedDateToForTimestamp;
+                break;
+            default:
+                $dateField = 'qd130_xml1s.ngay_ttoan';
+                $formattedDateFrom = $formattedDateFromForFields;
+                $formattedDateTo = $formattedDateToForFields;
+                break;
+        }
+
+        $query = Qd130Xml1::whereBetween($dateField, [$formattedDateFrom, $formattedDateTo])
+            ->join('qd130_xml_error_results', 'qd130_xml_error_results.ma_lk', '=', 'qd130_xml1s.ma_lk')
             ->join('qd130_xml_error_catalogs', 'qd130_xml_error_results.error_code', '=', 'qd130_xml_error_catalogs.error_code')
-            ->select('qd130_xml_error_results.*', 'qd130_xml_error_catalogs.error_name as catalog_error_name')
-            ->orderBy('qd130_xml_error_results.ma_lk');
+            ->select('qd130_xml_error_results.*', 'qd130_xml_error_catalogs.error_name as catalog_error_name',
+                'qd130_xml1s.ngay_vao', 'qd130_xml1s.ngay_ra', 'qd130_xml1s.ma_bn', 'qd130_xml1s.ho_ten',
+                'qd130_xml1s.ngay_sinh', 'qd130_xml1s.ma_the_bhyt')
+            ->orderBy('qd130_xml_error_results.ma_lk')
+            ->orderBy('qd130_xml_error_results.xml')
+            ->orderBy('qd130_xml_error_results.stt');
 
         if ($xml_filter_status === 'has_error_critical') {
             $query->where('qd130_xml_error_results.critical_error', true);
@@ -57,8 +108,14 @@ class Qd130ErrorExport implements FromQuery, WithHeadings, ShouldAutoSize, WithS
         return [
             'STT',
             'Loại XML',
-            'Mã Liên Kết',
             'STT XML',
+            'Mã Liên Kết',
+            'Mã Bệnh Nhân',
+            'Họ Và Tên',
+            'Ngày Sinh',
+            'Mã Thẻ BHYT',
+            'Ngày Vào',
+            'Ngày Ra',
             'Ngày Y Lệnh',
             'Ngày Kết Quả',
             'Mã Lỗi',
@@ -73,20 +130,27 @@ class Qd130ErrorExport implements FromQuery, WithHeadings, ShouldAutoSize, WithS
             AfterSheet::class => function(AfterSheet $event) {
                 $sheet = $event->sheet->getDelegate();
                 // Thiết lập độ rộng cụ thể cho các cột
-                $sheet->getColumnDimension('A')->setWidth(8);
+                $sheet->getColumnDimension('A')->setWidth(5);
                 $sheet->getColumnDimension('B')->setWidth(10);
-                $sheet->getColumnDimension('C')->setWidth(15);
-                $sheet->getColumnDimension('D')->setWidth(8);
-                $sheet->getColumnDimension('E')->setWidth(16);
-                $sheet->getColumnDimension('F')->setWidth(16);
-                $sheet->getColumnDimension('G')->setWidth(35);
-                $sheet->getColumnDimension('H')->setWidth(60);
-                $sheet->getColumnDimension('I')->setWidth(15);
+                $sheet->getColumnDimension('C')->setWidth(8);
+                $sheet->getColumnDimension('D')->setWidth(13);
+                $sheet->getColumnDimension('E')->setWidth(14);
+                $sheet->getColumnDimension('F')->setWidth(20);
+                $sheet->getColumnDimension('G')->setWidth(13);
+                $sheet->getColumnDimension('H')->setWidth(16);
+                $sheet->getColumnDimension('I')->setWidth(13);
+                $sheet->getColumnDimension('J')->setWidth(13);
+                $sheet->getColumnDimension('K')->setWidth(13);
+                $sheet->getColumnDimension('L')->setWidth(13);
+                $sheet->getColumnDimension('M')->setWidth(30);
+                $sheet->getColumnDimension('N')->setWidth(50);
+                $sheet->getColumnDimension('O')->setWidth(13);
 
-                // $sheet->getStyle('D')->getNumberFormat()->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER);
-                // $sheet->getStyle('O')->getNumberFormat()->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER);
-                // $sheet->getStyle('P')->getNumberFormat()->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER);
-                // $sheet->getStyle('V')->getNumberFormat()->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER);
+                $sheet->getStyle('G')->getNumberFormat()->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER);
+                $sheet->getStyle('I')->getNumberFormat()->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER);
+                $sheet->getStyle('J')->getNumberFormat()->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER);
+                $sheet->getStyle('K')->getNumberFormat()->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER);
+                $sheet->getStyle('L')->getNumberFormat()->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER);
             },
         ];
     }
@@ -114,10 +178,16 @@ class Qd130ErrorExport implements FromQuery, WithHeadings, ShouldAutoSize, WithS
         return [
             $this->rowNumber,
             $data->xml,
-            $data->ma_lk,
             $data->stt,
-            $data->ngay_yl ? Carbon::parse($data->ngay_yl)->format('d/m/Y H:i') : null,
-            $data->ngay_kq ? Carbon::parse($data->ngay_kq)->format('d/m/Y H:i') : null,
+            $data->ma_lk,
+            $data->ma_bn,
+            $data->ho_ten,
+            $data->ngay_sinh,
+            $data->ma_the_bhyt,
+            $data->ngay_vao,
+            $data->ngay_ra,
+            $data->ngay_yl,
+            $data->ngay_kq,
             $data->catalog_error_name,
             $data->description,
             $data->critical_error ? 'Nghiêm trọng' : 'Cảnh báo',

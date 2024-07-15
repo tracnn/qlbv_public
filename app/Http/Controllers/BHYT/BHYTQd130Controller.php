@@ -485,8 +485,20 @@ class BHYTQd130Controller extends Controller
         $date_from = $request->input('date_from');
         $date_to = $request->input('date_to');
         $xml_filter_status = $request->input('xml_filter_status');
+        $date_type = $request->input('date_type');
 
         $fileName = 'qd130_error_data_' . Carbon::now()->format('YmdHis') . '.xlsx';
-        return Excel::download(new Qd130ErrorExport($date_from, $date_to, $xml_filter_status), $fileName);
+        return Excel::download(new Qd130ErrorExport($date_from, $date_to, $xml_filter_status, $date_type), $fileName);
     }
+
+    public function deleteXml($ma_lk)
+    {
+
+        if ($this->qd130XmlService->deleteQd130XmlAndError($ma_lk)) {
+            return response()->json(['success' => true, 'message' => 'Record deleted successfully.']);    
+        } ;
+        return response()->json(['success' => false, 'message' => 'Incomplete.']);
+    }
+
+          
 }

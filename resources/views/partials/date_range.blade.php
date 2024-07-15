@@ -20,7 +20,7 @@
             <div class="col-sm-2">
                 <div class="form-group row">
                     <label for="date_type">Lọc theo</label>
-                    <select id="date_type" class="form-control">
+                    <select id="date_type" class="form-control select2">
                         <option value="date_in">Ngày vào</option>
                         <option value="date_out">Ngày ra</option>
                         <option value="date_payment">Ngày thanh toán</option>

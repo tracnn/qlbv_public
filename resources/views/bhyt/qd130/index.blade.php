@@ -168,17 +168,17 @@
     function deleteXML(ma_lk) {
         if (confirm('Chắc chắn xóa?')) {
             $.ajax({
-                url: '{{ route('xml.delete', ['ma_lk' => '']) }}/' + ma_lk,
+                url: '{{ route('bhyt.qd130.delete-xml', ['ma_lk' => '']) }}/' + ma_lk,
                 type: 'DELETE',
                 data: {
                     _token: '{{ csrf_token() }}'
                 },
                 success: function(response) {
                     if (response.success) {
-                        toastr.success(response.success);
-                        $('#xml-list').DataTable().ajax.reload();
+                        toastr.success(response.message);
+                        table.ajax.reload();
                     } else {
-                        alert('Có lỗi xảy ra, vui lòng thử lại.');
+                        toastr.error(response.message);
                     }
                 },
                 error: function(response) {
@@ -189,6 +189,7 @@
     }
 
     $(document).ready(function() {
+        $('.select2').select2();
         $('#select-all').on('click', function(){
             var rows = table.rows({ 'search': 'applied' }).nodes();
             $('input[type="checkbox"]', rows).prop('checked', this.checked);
@@ -246,12 +247,14 @@
             var startDate = dateRange.startDate.format('YYYY-MM-DD HH:mm:ss');
             var endDate = dateRange.endDate.format('YYYY-MM-DD HH:mm:ss');
             var xml_filter_status = $('#xml_filter_status').val();
+            var date_type = $('#date_type').val();
             
             // Tạo URL với các tham số query
             var href = '{{ route("bhyt.qd130.export-qd130-xml-errors") }}?' + $.param({
                 'date_from': startDate,
                 'date_to': endDate,
-                'xml_filter_status': xml_filter_status
+                'xml_filter_status': xml_filter_status,
+                'date_type': date_type
             });
 
             // Chuyển hướng tới URL với các tham số

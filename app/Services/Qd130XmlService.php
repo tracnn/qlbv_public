@@ -17,6 +17,7 @@ use App\Models\BHYT\Qd130Xml13;
 use App\Models\BHYT\Qd130Xml14;
 use App\Models\BHYT\Qd130Xml15;
 use App\Models\BHYT\Qd130XmlInformation;
+use App\Models\BHYT\Qd130XmlErrorResult;
 use App\Services\XmlStructures;
 
 use App\Jobs\CheckQd130XmlErrorsJob;
@@ -29,7 +30,33 @@ use Illuminate\Support\Facades\Storage;
 
 class Qd130XmlService
 {
-    protected $queueName = 'JobQd130XmlCheckError';
+    protected $queueName = 'JobQd130Xml';
+
+    public function deleteQd130XmlAndError($ma_lk)
+    {
+        try {
+            //Khong xoa Qd130Xml1 - Khong xoa Qd130Xml12 vi no ko co lien ket
+            Qd130Xml1::where('ma_lk', $ma_lk)->delete();
+            Qd130Xml2::where('ma_lk', $ma_lk)->delete();
+            Qd130Xml3::where('ma_lk', $ma_lk)->delete();
+            Qd130Xml4::where('ma_lk', $ma_lk)->delete();
+            Qd130Xml5::where('ma_lk', $ma_lk)->delete();
+            Qd130Xml6::where('ma_lk', $ma_lk)->delete();
+            Qd130Xml7::where('ma_lk', $ma_lk)->delete();
+            Qd130Xml8::where('ma_lk', $ma_lk)->delete();
+            Qd130Xml9::where('ma_lk', $ma_lk)->delete();
+            Qd130Xml10::where('ma_lk', $ma_lk)->delete();
+            Qd130Xml11::where('ma_lk', $ma_lk)->delete();
+            Qd130Xml13::where('ma_lk', $ma_lk)->delete();
+            Qd130Xml14::where('ma_lk', $ma_lk)->delete();
+            Qd130Xml15::where('ma_lk', $ma_lk)->delete();
+            Qd130XmlErrorResult::where('ma_lk', $ma_lk)->delete();
+            Qd130XmlInformation::where('ma_lk', $ma_lk)->delete(); 
+        } catch (Exception $e) {
+            return false;
+        }
+        return true;
+    }
 
     public function deleteExistingQd130Xml($ma_lk)
     {
@@ -1320,12 +1347,24 @@ class Qd130XmlService
 
         // Định dạng thời gian hiện tại để đặt tên file
         $formattedDateTime = date('Y.m.d_H.i.s');
+        $currentDate = date('Ymd');
 
         // Tạo tên file XML
         $fileName = $formattedDateTime . '_' . $ma_lk . '.xml';
 
-        if (!Storage::disk('exportXml130')->put($fileName, $xmlData)) {
-            \Log::error('Failed to write XML file: ' . $fileName);
+        // Tạo đường dẫn thư mục
+        $directoryPath = $currentDate;
+
+        // Kiểm tra và tạo thư mục nếu chưa tồn tại
+        if (!Storage::disk('exportXml130')->exists($directoryPath)) {
+            Storage::disk('exportXml130')->makeDirectory($directoryPath);
+        }
+
+        // Đường dẫn đầy đủ cho file XML
+        $filePath = $directoryPath . '/' . $fileName;
+
+        if (!Storage::disk('exportXml130')->put($filePath, $xmlData)) {
+            \Log::error('Failed to write XML file: ' . $filePath);
             return false;
         }
     }
