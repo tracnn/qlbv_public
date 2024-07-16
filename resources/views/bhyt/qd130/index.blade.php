@@ -45,7 +45,7 @@
                 <tr>
                     <th>Mã điều trị</th>
                     <th><input type="checkbox" id="select-all"></th>
-                    <th>XML</th>
+                    <th>Export</th>
                     <th>Mã BN</th>
                     <th>Họ tên</th>
                     <th>Mã thẻ</th>
@@ -248,13 +248,15 @@
             var endDate = dateRange.endDate.format('YYYY-MM-DD HH:mm:ss');
             var xml_filter_status = $('#xml_filter_status').val();
             var date_type = $('#date_type').val();
+            var qd130_xml_error_catalog = $('#qd130_xml_error_catalog').val();
             
             // Tạo URL với các tham số query
             var href = '{{ route("bhyt.qd130.export-qd130-xml-errors") }}?' + $.param({
                 'date_from': startDate,
                 'date_to': endDate,
                 'xml_filter_status': xml_filter_status,
-                'date_type': date_type
+                'date_type': date_type,
+                'qd130_xml_error_catalog': qd130_xml_error_catalog
             });
 
             // Chuyển hướng tới URL với các tham số

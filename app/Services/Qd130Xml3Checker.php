@@ -5,6 +5,8 @@ namespace App\Services;
 use App\Models\BHYT\Qd130Xml3;
 use App\Models\BHYT\MedicalSupplyCatalog;
 use App\Models\BHYT\MedicalStaff;
+use App\Models\BHYT\Icd10Category;
+use App\Models\BHYT\IcdYhctCategory;
 use Illuminate\Support\Collection;
 
 class Qd130Xml3Checker
@@ -135,7 +137,7 @@ class Qd130Xml3Checker
                         'error_code' => $this->prefix . 'INFO_ERROR_MA_BAC_SI_NOT_FOUND',
                         'error_name' => 'Mã bác sĩ không tồn tại',
                         'critical_error' => true,
-                        'description' => 'Mã bác sĩ tồn tại trong danh mục NVYT: ' . $ma_bac_si
+                        'description' => 'Mã bác sĩ không tồn tại trong danh mục NVYT: ' . $ma_bac_si
                     ]);
                 }
             }
@@ -159,6 +161,72 @@ class Qd130Xml3Checker
                 ]);
             }
         }
+
+        // Check for serviceGroupsRequiringAnesthesia
+        if (in_array($data->ma_nhom, $this->serviceGroupsRequiringAnesthesia)) {
+            if (empty($data->pp_vo_cam)) {
+                $errors->push((object)[
+                    'error_code' => $this->prefix . 'INFO_ERROR_PP_VO_CAM_EMPTY',
+                    'error_name' => 'Thiếu phương pháp vô cảm',
+                    'critical_error' => true,
+                    'description' => 'Phương pháp vô cảm không được để trống đối với dịch vụ: ' . $data->ten_dich_vu
+                ]);
+            } elseif (!in_array($data->pp_vo_cam, [1, 2, 3, 4])) {
+                $errors->push((object)[
+                    'error_code' => $this->prefix . 'INFO_ERROR_PP_VO_CAM_INVALID',
+                    'error_name' => 'Phương pháp vô cảm không hợp lệ',
+                    'critical_error' => true,
+                    'description' => 'Phương pháp vô cảm không hợp lệ. Giá trị phải thuộc [1, 2, 3, 4]: ' . $data->pp_vo_cam
+                ]);
+            }
+        }
+
+        // Check ma_benh
+        if (!empty($data->ma_benh)) {
+            if (strlen($data->ma_benh) > 100) {
+                $errors->push((object)[
+                    'error_code' => $this->prefix . 'INFO_ERROR_MA_BENH_TOO_LONG',
+                    'error_name' => 'Mã bệnh quá dài',
+                    'critical_error' => true,
+                    'description' => 'Mã bệnh: ' . $data->ma_benh . ' vượt quá 100 kí tự'
+                ]);
+            }
+            $ma_benh_array = explode(';', $data->ma_benh);
+            foreach ($ma_benh_array as $ma_benh) {
+                if (!Icd10Category::where('icd_code', $ma_benh)->exists()) {
+                    $errors->push((object)[
+                        'error_code' => $this->prefix . 'INFO_ERROR_MA_BENH_INVALID',
+                        'error_name' => 'Mã bệnh không thuộc ICD',
+                        'critical_error' => true,
+                        'description' => 'Mã bệnh: ' . $ma_benh .' không nằm trong DM ICD10'
+                    ]);
+                }
+            }
+        }
+
+        // Check ma_benh_yhct
+        if (!empty($data->ma_benh_yhct)) {
+            if (strlen($data->ma_benh_yhct) > 255) {
+                $errors->push((object)[
+                    'error_code' => $this->prefix . 'INFO_ERROR_MA_BENH_YHCT_TOO_LONG',
+                    'error_name' => 'Mã bệnh YHCT quá dài',
+                    'critical_error' => true,
+                    'description' => 'Mã bệnh: ' . $data->ma_benh_yhct . ' vượt quá 255 kí tự'
+                ]);
+            }
+            $ma_benh_yhct_array = explode(';', $data->ma_benh_yhct);
+            foreach ($ma_benh_yhct_array as $ma_benh_yhct) {
+                if (!IcdYhctCategory::where('icd_code', $ma_benh_yhct)->exists()) {
+                    $errors->push((object)[
+                        'error_code' => $this->prefix . 'INFO_ERROR_MA_BENH_YHCT_INVALID',
+                        'error_name' => 'Mã bệnh không thuộc ICD YHCT',
+                        'critical_error' => true,
+                        'description' => 'Mã bệnh: ' . $ma_benh_yhct .' không nằm trong DM ICD YHCT'
+                    ]);
+                }
+            }
+        }
+
         return $errors;
     }
 

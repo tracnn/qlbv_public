@@ -39,7 +39,7 @@ class CreateQd130Xml13sTable extends Migration
             $table->text('qt_benhly')->nullable();
             $table->text('tomtat_kq')->nullable();
             $table->text('pp_dieutri')->nullable();
-            $table->string('ma_benh_chinh', 7)->nullable();
+            $table->string('ma_benh_chinh', 100)->nullable();
             $table->string('ma_benh_kt', 100)->nullable();
             $table->string('ma_benh_yhct', 255)->nullable();
             $table->string('ten_dich_vu', 1024)->nullable();

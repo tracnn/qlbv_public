@@ -29,7 +29,7 @@ class CreateQd130Xml14sTable extends Migration
             $table->string('ngay_ra', 12)->nullable();
             $table->string('ngay_hen_kl', 12)->nullable();
             $table->text('chan_doan_rv')->nullable();
-            $table->string('ma_benh_chinh', 7)->nullable();
+            $table->string('ma_benh_chinh', 100)->nullable();
             $table->string('ma_benh_kt', 100)->nullable();
             $table->string('ma_benh_yhct', 255)->nullable();
             $table->string('ma_doituong_kcb', 4)->nullable();

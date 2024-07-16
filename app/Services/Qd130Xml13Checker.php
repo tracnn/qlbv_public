@@ -73,6 +73,13 @@ class Qd130Xml13Checker
                 'critical_error' => true,
                 'description' => 'Số chuyển tuyến không được để trống'
             ]);
+        } elseif (strlen($data->so_chuyentuyen) > 50) {
+            $errors->push((object)[
+                'error_code' => $this->prefix . 'INFO_ERROR_SO_CHUYENTUYEN_LENGTH',
+                'error_name' => 'Số chuyển tuyến vượt quá 50 ký tự',
+                'critical_error' => true,
+                'description' => 'Số chuyển tuyến không được vượt quá 50 ký tự'
+            ]);
         }
 
         if (empty($data->giay_chuyen_tuyen)) {
@@ -81,6 +88,13 @@ class Qd130Xml13Checker
                 'error_name' => 'Thiếu giấy chuyển tuyến',
                 'critical_error' => true,
                 'description' => 'Giấy chuyển tuyến không được để trống'
+            ]);
+        } elseif (strlen($data->giay_chuyen_tuyen) > 50) {
+            $errors->push((object)[
+                'error_code' => $this->prefix . 'INFO_ERROR_GIAY_CHUYEN_TUYEN_LENGTH',
+                'error_name' => 'Giấy chuyển tuyến vượt quá 50 ký tự',
+                'critical_error' => true,
+                'description' => 'Giấy chuyển tuyến không được vượt quá 50 ký tự'
             ]);
         }
 
@@ -223,6 +237,22 @@ class Qd130Xml13Checker
                 'critical_error' => true,
                 'description' => 'Dịch vụ không được để trống'
             ]);
+        } elseif (mb_strlen($data->ten_dich_vu) > 1024) {
+            $errors->push((object)[
+                'error_code' => $this->prefix . 'INFO_ERROR_TEN_DICH_VU_LENGTH',
+                'error_name' => 'Tên dịch vụ vượt quá 1024 ký tự',
+                'critical_error' => true,
+                'description' => 'Tên dịch vụ không được vượt quá 1024 ký tự'
+            ]);
+        }
+
+        if (!empty($data->ten_thuoc) && mb_strlen($data->ten_thuoc) > 1024) {
+            $errors->push((object)[
+                'error_code' => $this->prefix . 'INFO_ERROR_TEN_THUOC_LENGTH',
+                'error_name' => 'Tên thuốc vượt quá 1024 ký tự',
+                'critical_error' => true,
+                'description' => 'Tên thuốc không được vượt quá 1024 ký tự'
+            ]);
         }
 
         if (empty($data->ma_loai_rv)) {
@@ -258,6 +288,13 @@ class Qd130Xml13Checker
                 'error_name' => 'Thiếu phương tiện vận chuyển',
                 'critical_error' => true,
                 'description' => 'Phương tiện vận chuyển không được để trống'
+            ]);
+        }  elseif (strlen($data->phuongtien_vc) > 255) {
+            $errors->push((object)[
+                'error_code' => $this->prefix . 'INFO_ERROR_PHUONGTIEN_VC_LENGTH',
+                'error_name' => 'Phương tiện vận chuyển vượt quá 255 ký tự',
+                'critical_error' => true,
+                'description' => 'Phương tiện vận chuyển không được vượt quá 255 ký tự'
             ]);
         }
 
@@ -298,7 +335,6 @@ class Qd130Xml13Checker
                 ]);
             }
         }
-
 
         return $errors;
     }

@@ -30,6 +30,7 @@ class Qd130XmlCompleteChecker
     protected $invalidMaLoaiRV;
     protected $bedGroupCodes;
     protected $treatmentTypeInpatient;
+    protected $materialGroupCodes;
 
 
     public function __construct(Qd130XmlErrorService $xmlErrorService)
@@ -44,6 +45,7 @@ class Qd130XmlCompleteChecker
         $this->prefix = $this->xmlType . '_';
         $this->xmlTypeMustHaveXml7 = ['03', '04','09'];
         
+        $this->materialGroupCodes = [10, 11];
         $this->invalidKetQuaDtri = [3, 4, 5, 6];
         $this->invalidMaLoaiRV = [2, 3, 4];
         $this->bedGroupCodes = [14, 15, 16];
@@ -177,17 +179,18 @@ class Qd130XmlCompleteChecker
     /**
      * Hàm kiểm tra các loại tiền chi phí trong hồ sơ tổng hợp và hồ sơ chi tiết
      */
-    private function checkExpenseXml2Errors($data)
+    private function checkExpenseXml2Errors(Qd130Xml1 $data): Collection
     {
         $errors = collect();
 
         // Kiểm tra tiền thuốc giữa Xml1 và Xml2
-        $sum_thanh_tien_bh = Qd130Xml2::where('ma_lk', $data->ma_lk)->sum('thanh_tien_bh');
-        if ($data->tien_thuoc != $sum_thanh_tien_bh) {
+        $sum_thanh_tien_bv = Qd130Xml2::where('ma_lk', $data->ma_lk)->sum('thanh_tien_bv');
+        if ($data->t_thuoc != round($sum_thanh_tien_bv,2)) {
             $errors->push((object)[
                 'error_code' => $this->prefix . 'INVALID_EXPENSE_DRUG',
                 'error_name' => 'Tiền thuốc không khớp',
-                'description' => 'Tiền thuốc trong XML1 không khớp với tổng thanh_tien_bh trong XML2.'
+                'critical_error' => true,
+                'description' => 'Tiền thuốc trong XML1: ' . $data->t_thuoc . ' <> tổng tiền trong XML2: ' . $sum_thanh_tien_bv
             ]);
         }
 
