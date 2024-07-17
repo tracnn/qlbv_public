@@ -48,7 +48,7 @@ class XML130Import extends Command
 
                 $this->info($this->description);
 
-                sleep(10);
+                sleep(3);
             } catch (\Exception $e) {
                 $this->info($e->getMessage());
             }

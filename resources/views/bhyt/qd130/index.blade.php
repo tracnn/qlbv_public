@@ -49,7 +49,7 @@
                     <th>Mã BN</th>
                     <th>Họ tên</th>
                     <th>Mã thẻ</th>
-                    <th>Năm sinh</th>
+                    <th>Ngày sinh</th>
                     <th>Ngày vào</th>
                     <th>Ngày ra</th>
                     <th>Ngày t.toán</th>

@@ -193,13 +193,24 @@ class Qd130Xml3Checker
             }
             $ma_benh_array = explode(';', $data->ma_benh);
             foreach ($ma_benh_array as $ma_benh) {
+                // Check ma_benh in array
                 if (!Icd10Category::where('icd_code', $ma_benh)->exists()) {
-                    $errors->push((object)[
-                        'error_code' => $this->prefix . 'INFO_ERROR_MA_BENH_INVALID',
-                        'error_name' => 'Mã bệnh không thuộc ICD',
-                        'critical_error' => true,
-                        'description' => 'Mã bệnh: ' . $ma_benh .' không nằm trong DM ICD10'
-                    ]);
+                    $existIcdYhct = IcdYhctCategory::where('icd_code', $ma_benh)->first();
+                    if($existIcdYhct) {
+                       $errors->push((object)[
+                            'error_code' => $this->prefix . 'INFO_ERROR_MA_BENH_IN_YHCT',
+                            'error_name' => 'Mã bệnh thuộc bệnh YHCT',
+                            'critical_error' => true,
+                            'description' => 'Mã bệnh: ' . $ma_benh . ' thuộc DM YHCT tương đương với: ' . $existIcdYhct->icd10_code . ' trong DM ICD10'
+                        ]); 
+                    } else {
+                        $errors->push((object)[
+                            'error_code' => $this->prefix . 'INFO_ERROR_MA_BENH_INVALID',
+                            'error_name' => 'Mã bệnh không tồn tại trong DM ICD10',
+                            'critical_error' => true,
+                            'description' => 'Mã bệnh chính không tồn tại trong danh mục ICD10: ' . $ma_benh
+                        ]);                
+                    }
                 }
             }
         }

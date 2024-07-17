@@ -24,7 +24,7 @@ class Qd130Xml1AdministrativeInfoChecker
      * @param Qd130Xml1 $data
      * @return Collection
      */
-    public function check(Qd130Xml1 $data): Collection
+    private function check(Qd130Xml1 $data): Collection
     {
         $errors = collect();
 
