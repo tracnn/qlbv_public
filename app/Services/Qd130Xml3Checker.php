@@ -194,8 +194,8 @@ class Qd130Xml3Checker
             $ma_benh_array = explode(';', $data->ma_benh);
             foreach ($ma_benh_array as $ma_benh) {
                 // Check ma_benh in array
-                if (!Icd10Category::where('icd_code', $ma_benh)->exists()) {
-                    $existIcdYhct = IcdYhctCategory::where('icd_code', $ma_benh)->first();
+                if (!Icd10Category::where('icd_code', $ma_benh)->where('is_active', true)->exists()) {
+                    $existIcdYhct = IcdYhctCategory::where('icd_code', $ma_benh)->where('is_active', true)->first();
                     if($existIcdYhct) {
                        $errors->push((object)[
                             'error_code' => $this->prefix . 'INFO_ERROR_MA_BENH_IN_YHCT',
@@ -227,7 +227,7 @@ class Qd130Xml3Checker
             }
             $ma_benh_yhct_array = explode(';', $data->ma_benh_yhct);
             foreach ($ma_benh_yhct_array as $ma_benh_yhct) {
-                if (!IcdYhctCategory::where('icd_code', $ma_benh_yhct)->exists()) {
+                if (!IcdYhctCategory::where('icd_code', $ma_benh_yhct)->where('is_active', true)->exists()) {
                     $errors->push((object)[
                         'error_code' => $this->prefix . 'INFO_ERROR_MA_BENH_YHCT_INVALID',
                         'error_name' => 'Mã bệnh không thuộc ICD YHCT',

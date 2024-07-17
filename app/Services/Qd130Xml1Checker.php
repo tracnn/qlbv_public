@@ -690,8 +690,8 @@ class Qd130Xml1Checker
         $errors = collect();
 
         // Check ma_benh_chinh
-        if (!Icd10Category::where('icd_code', $data->ma_benh_chinh)->exists()) {
-            $existIcdYhct = IcdYhctCategory::where('icd_code', $data->ma_benh_chinh)->first();
+        if (!Icd10Category::where('icd_code', $data->ma_benh_chinh)->where('is_active', true)->exists()) {
+            $existIcdYhct = IcdYhctCategory::where('icd_code', $data->ma_benh_chinh)->where('is_active', true)->first();
             if($existIcdYhct) {
                $errors->push((object)[
                     'error_code' => $this->prefix . 'DISEASE_ICD_CODE_ERROR_MA_BENH_CHINH_IN_YHCT',
@@ -713,8 +713,8 @@ class Qd130Xml1Checker
         if (!empty($data->ma_benh_kt)) {
             $ma_benh_kt_array = explode(';', $data->ma_benh_kt);
             foreach ($ma_benh_kt_array as $ma_benh_kt) {
-                if (!Icd10Category::where('icd_code', $ma_benh_kt)->exists()) {
-                    $existIcdYhct = IcdYhctCategory::where('icd_code', $ma_benh_kt)->first();
+                if (!Icd10Category::where('icd_code', $ma_benh_kt)->where('is_active', true)->exists()) {
+                    $existIcdYhct = IcdYhctCategory::where('icd_code', $ma_benh_kt)->where('is_active', true)->first();
                     if($existIcdYhct) {
                         $errors->push((object)[
                             'error_code' => $this->prefix . 'DISEASE_ICD_CODE_ERROR_MA_BENH_KT_IN_YHCT',
@@ -738,7 +738,7 @@ class Qd130Xml1Checker
         if (!empty($data->ma_benh_yhct)) {
             $ma_benh_yhct_array = explode(';', $data->ma_benh_yhct);
             foreach ($ma_benh_yhct_array as $ma_benh_yhct) {
-                if (!IcdYhctCategory::where('icd_code', $ma_benh_yhct)->exists()) {
+                if (!IcdYhctCategory::where('icd_code', $ma_benh_yhct)->where('is_active', true)->exists()) {
                     $errors->push((object)[
                         'error_code' => $this->prefix . 'DISEASE_ICD_CODE_ERROR_MA_BENH_YHCT',
                         'error_name' => 'Mã bệnh YHCT không tồn tại',

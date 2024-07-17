@@ -183,7 +183,7 @@ class Qd130Xml13Checker
                 'critical_error' => true,
                 'description' => 'Mã bệnh chính không được để trống'
             ]);
-        } elseif (!Icd10Category::where('icd_code', $data->ma_benh_chinh)->exists()) {
+        } elseif (!Icd10Category::where('icd_code', $data->ma_benh_chinh)->where('is_active', true)->exists()) {
             $errors->push((object)[
                 'error_code' => $this->prefix . 'INFO_ERROR_MA_BENH_CHINH_NOT_FOUND',
                 'error_name' => 'Mã bệnh chính không tồn tại',
@@ -204,7 +204,7 @@ class Qd130Xml13Checker
                 ]);
             }
             foreach ($ma_benh_kt_array as $ma_benh_kt) {
-                if (!Icd10Category::where('icd_code', $ma_benh_kt)->exists()) {
+                if (!Icd10Category::where('icd_code', $ma_benh_kt)->where('is_active', true)->exists()) {
                     $errors->push((object)[
                         'error_code' => $this->prefix . 'INFO_ERROR_MA_BENH_KT_NOT_FOUND',
                         'error_name' => 'Mã bệnh kèm theo không tồn tại',
@@ -219,7 +219,7 @@ class Qd130Xml13Checker
         if (!empty($data->ma_benh_yhct)) {
             $ma_benh_yhct_array = explode(';', $data->ma_benh_yhct);
             foreach ($ma_benh_yhct_array as $ma_benh_yhct) {
-                if (!IcdYhctCategory::where('icd_code', $ma_benh_yhct)->exists()) {
+                if (!IcdYhctCategory::where('icd_code', $ma_benh_yhct)->where('is_active', true)->exists()) {
                     $errors->push((object)[
                         'error_code' => $this->prefix . 'INFO_ERROR_MA_BENH_YHCT_NOT_FOUND',
                         'error_name' => 'Mã bệnh YHCT không tồn tại',
