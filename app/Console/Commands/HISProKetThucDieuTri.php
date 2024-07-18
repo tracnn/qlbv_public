@@ -83,6 +83,12 @@ class HISProKetThucDieuTri extends Command
             ->whereNotIn('his_service_req.service_req_type_id', [6,11])
             ->where('his_service_req.tdl_treatment_code', $value->treatment_code);
             
+
+            // $this->info($value->treatment_code);
+            // DB::connection('HISPro')
+            //     ->table('his_service_req')
+            //     ->where('tdl_treatment_code', $value->treatment_code)
+            //     ->update(['service_req_stt_id' => 3]);
             if (!$test_bn->count()) {
                 $this->info($value->treatment_code);
                 $result = DB::connection('HISPro')
