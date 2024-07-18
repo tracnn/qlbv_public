@@ -208,7 +208,7 @@ class Qd130Xml3Checker
                             'error_code' => $this->prefix . 'INFO_ERROR_MA_BENH_INVALID',
                             'error_name' => 'Mã bệnh không tồn tại trong DM ICD10',
                             'critical_error' => true,
-                            'description' => 'Mã bệnh chính không tồn tại trong danh mục ICD10: ' . $ma_benh
+                            'description' => 'Mã bệnh không tồn tại trong danh mục ICD10: ' . $ma_benh
                         ]);                
                     }
                 }
@@ -222,7 +222,7 @@ class Qd130Xml3Checker
                     'error_code' => $this->prefix . 'INFO_ERROR_MA_BENH_YHCT_TOO_LONG',
                     'error_name' => 'Mã bệnh YHCT quá dài',
                     'critical_error' => true,
-                    'description' => 'Mã bệnh: ' . $data->ma_benh_yhct . ' vượt quá 255 kí tự'
+                    'description' => 'Mã bệnh YHCT vượt quá 255 kí tự: ' . $data->ma_benh_yhct
                 ]);
             }
             $ma_benh_yhct_array = explode(';', $data->ma_benh_yhct);
@@ -230,9 +230,9 @@ class Qd130Xml3Checker
                 if (!IcdYhctCategory::where('icd_code', $ma_benh_yhct)->where('is_active', true)->exists()) {
                     $errors->push((object)[
                         'error_code' => $this->prefix . 'INFO_ERROR_MA_BENH_YHCT_INVALID',
-                        'error_name' => 'Mã bệnh không thuộc ICD YHCT',
+                        'error_name' => 'Mã bệnh không thuộc DM ICD YHCT',
                         'critical_error' => true,
-                        'description' => 'Mã bệnh: ' . $ma_benh_yhct .' không nằm trong DM ICD YHCT'
+                        'description' => 'Mã bệnh không thuộc DM ICD YHCT: ' . $ma_benh_yhct
                     ]);
                 }
             }

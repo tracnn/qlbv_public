@@ -237,7 +237,7 @@ class Qd130Xml13Checker
                 'critical_error' => true,
                 'description' => 'Dịch vụ không được để trống'
             ]);
-        } elseif (mb_strlen($data->ten_dich_vu) > 1024) {
+        } elseif (strlen($data->ten_dich_vu) > 1024) {
             $errors->push((object)[
                 'error_code' => $this->prefix . 'INFO_ERROR_TEN_DICH_VU_LENGTH',
                 'error_name' => 'Tên dịch vụ vượt quá 1024 ký tự',
@@ -246,7 +246,7 @@ class Qd130Xml13Checker
             ]);
         }
 
-        if (!empty($data->ten_thuoc) && mb_strlen($data->ten_thuoc) > 1024) {
+        if (!empty($data->ten_thuoc) && strlen($data->ten_thuoc) > 1024) {
             $errors->push((object)[
                 'error_code' => $this->prefix . 'INFO_ERROR_TEN_THUOC_LENGTH',
                 'error_name' => 'Tên thuốc vượt quá 1024 ký tự',
