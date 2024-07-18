@@ -1347,21 +1347,25 @@ class Qd130XmlService
 
         // Định dạng thời gian hiện tại để đặt tên file
         $formattedDateTime = date('Y.m.d_H.i.s');
-        $currentDate = date('Ymd');
 
         // Tạo tên file XML
         $fileName = $formattedDateTime . '_' . $ma_lk . '.xml';
 
-        // Tạo đường dẫn thư mục
-        $directoryPath = $currentDate;
+        // Kiểm tra option config('qd130xml.export_to_directory_by_day')
+        if (config('qd130xml.export_to_directory_by_day')) {
+            $currentDate = date('Ymd');
+            $directoryPath = $currentDate;
+        } else {
+            $directoryPath = '';
+        }
 
-        // Kiểm tra và tạo thư mục nếu chưa tồn tại
-        if (!Storage::disk('exportXml130')->exists($directoryPath)) {
+        // Kiểm tra và tạo thư mục nếu cần thiết
+        if ($directoryPath && !Storage::disk('exportXml130')->exists($directoryPath)) {
             Storage::disk('exportXml130')->makeDirectory($directoryPath);
         }
 
         // Đường dẫn đầy đủ cho file XML
-        $filePath = $directoryPath . '/' . $fileName;
+        $filePath = $directoryPath ? $directoryPath . '/' . $fileName : $fileName;
 
         if (!Storage::disk('exportXml130')->put($filePath, $xmlData)) {
             \Log::error('Failed to write XML file: ' . $filePath);

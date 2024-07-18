@@ -21,7 +21,7 @@ class HomeController extends Controller
      */
     public function index()
     {
-        //dd(Auth::user()->hasRole('ksk'));
+        //dd(config('qd130xml.export_to_directory_by_day'));
         return view('home');
     }
 
