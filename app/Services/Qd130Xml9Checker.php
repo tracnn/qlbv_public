@@ -26,7 +26,7 @@ class Qd130Xml9Checker
     {
         $this->xmlType = 'XML9';
         $this->prefix = $this->xmlType . '_';
-        $this->heinCardTempPattern = '/^TE101\d{10}$/';
+        $this->heinCardTempPattern = config('qd130xml.hein_card_temp_pattern');
     }
 
     /**

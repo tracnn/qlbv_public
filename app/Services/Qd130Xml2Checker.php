@@ -36,11 +36,11 @@ class Qd130Xml2Checker
         $this->xmlType = 'XML2';
         $this->prefix = $this->xmlType . '_';
 
-        $this->drugGroups = [4, 5]; // Mã nhóm thuốc cần kiểm tra
-        $this->bloodGroup = [7]; // Mã nhóm máu
-        $this->excludedDepartments = []; //Mã khoa không cần kiểm tra
-        $this->drugGroupNotCheck = ['05V', '05C', 'HD'];
-        $this->drugCodeNotCheck = ['40.17']; // Các mã thuốc cụ thể không cần kiểm tra
+        $this->drugGroups = config('qd130xml.drug_group_code'); // Mã nhóm thuốc cần kiểm tra
+        $this->bloodGroup = config('qd130xml.blood_group_code'); // Mã nhóm máu
+        $this->excludedDepartments = config('qd130xml.exclude_department'); //Mã khoa không cần kiểm tra
+        $this->drugGroupNotCheck = config('qd130xml.drug_group_not_check');
+        $this->drugCodeNotCheck = config('qd130xml.drug_code_not_check'); // Các mã thuốc cụ thể không cần kiểm tra
     }
 
     /**

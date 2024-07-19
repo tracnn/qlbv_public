@@ -30,7 +30,12 @@ use Illuminate\Support\Facades\Storage;
 
 class Qd130XmlService
 {
-    protected $queueName = 'JobQd130Xml';
+    protected $queueName;
+
+    public function __construct()
+    {
+        $this->queueName = config('qd130xml.queue_name');
+    }
 
     public function deleteQd130XmlAndError($ma_lk)
     {

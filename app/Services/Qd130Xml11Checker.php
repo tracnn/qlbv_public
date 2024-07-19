@@ -25,7 +25,7 @@ class Qd130Xml11Checker
     {
         $this->xmlType = 'XML11';
         $this->prefix = $this->xmlType . '_';
-        $this->docXml11Type = ['CT07'];
+        $this->docXml11Type = config('qd130xml.type_xml11_doc');
 
     }
 

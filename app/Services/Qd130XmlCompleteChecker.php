@@ -43,13 +43,12 @@ class Qd130XmlCompleteChecker
     {
         $this->xmlType = 'XMLComplete';
         $this->prefix = $this->xmlType . '_';
-        $this->xmlTypeMustHaveXml7 = ['03', '04','09'];
-        
-        $this->materialGroupCodes = [10, 11];
-        $this->invalidKetQuaDtri = [3, 4, 5, 6];
-        $this->invalidMaLoaiRV = [2, 3, 4];
-        $this->bedGroupCodes = [14, 15, 16];
-        $this->treatmentTypeInpatient = ['03', '04', '09'];
+        $this->xmlTypeMustHaveXml7 = config('qd130xml.treatment_type_inpatient');
+        $this->materialGroupCodes = config('qd130xml.material_group_code');
+        $this->invalidKetQuaDtri = config('qd130xml.invalid_treatment_result');
+        $this->invalidMaLoaiRV = config('qd130xml.invalid_end_type_treatment');
+        $this->bedGroupCodes = config('qd130xml.bed_group_code');
+        $this->treatmentTypeInpatient = config('qd130xml.treatment_type_inpatient');
     }
 
     /**

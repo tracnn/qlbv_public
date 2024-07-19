@@ -38,16 +38,16 @@ class Qd130Xml3Checker
         $this->xmlType = 'XML3';
         $this->prefix = $this->xmlType . '_';
         
-        $this->materialGroupCodes = [10, 11];
-        $this->bedGroupCodes = [14, 15, 16];
-        $this->excludedBedDepartments = ['K0249', 'K26'];
-        $this->outpatientTypes = ['01', '02'];
-        $this->examinationGroupCodes = [13];
-        $this->transportGroupCodes = [12];
-        $this->bedCodePattern = '/^[HTCK]\d{3}$/';
-        $this->excludedMaterialGroupCodes = [11];
-        $this->groupCodeWithExecutor = [1,2,3,8,18];
-        $this->serviceGroupsRequiringAnesthesia = [8];
+        $this->materialGroupCodes = config('qd130xml.material_group_code');
+        $this->bedGroupCodes = config('qd130xml.bed_group_code');
+        $this->excludedBedDepartments = config('qd130xml.exclude_department');
+        $this->outpatientTypes = config('qd130xml.treatment_type_outpatient');
+        $this->examinationGroupCodes = config('qd130xml.examination_group_code');
+        $this->transportGroupCodes = config('qd130xml.transport_group_code');
+        $this->bedCodePattern = config('qd130xml.bed_code_pattern');
+        $this->excludedMaterialGroupCodes = config('qd130xml.excluded_material_group_code');
+        $this->groupCodeWithExecutor = config('qd130xml.group_code_with_executor');
+        $this->serviceGroupsRequiringAnesthesia = config('qd130xml.service_groups_requiring_anesthesia');
     }
 
     /**
@@ -152,7 +152,7 @@ class Qd130Xml3Checker
                     'critical_error' => true,
                     'description' => 'Phương pháp vô cảm không được để trống đối với dịch vụ: ' . $data->ten_dich_vu
                 ]);
-            } elseif (!in_array($data->pp_vo_cam, [1, 2, 3, 4])) {
+            } elseif (!in_array($data->pp_vo_cam, config('qd130xml.anesthesia_code'))) {
                 $errors->push((object)[
                     'error_code' => $this->prefix . 'INFO_ERROR_PP_VO_CAM_INVALID',
                     'error_name' => 'Phương pháp vô cảm không hợp lệ',
@@ -171,7 +171,7 @@ class Qd130Xml3Checker
                     'critical_error' => true,
                     'description' => 'Phương pháp vô cảm không được để trống đối với dịch vụ: ' . $data->ten_dich_vu
                 ]);
-            } elseif (!in_array($data->pp_vo_cam, [1, 2, 3, 4])) {
+            } elseif (!in_array($data->pp_vo_cam, config('qd130xml.anesthesia_code'))) {
                 $errors->push((object)[
                     'error_code' => $this->prefix . 'INFO_ERROR_PP_VO_CAM_INVALID',
                     'error_name' => 'Phương pháp vô cảm không hợp lệ',

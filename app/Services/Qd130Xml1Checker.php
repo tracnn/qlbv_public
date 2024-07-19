@@ -36,13 +36,13 @@ class Qd130Xml1Checker
         $this->xmlType = 'XML1';
         $this->prefix = $this->xmlType . '_';
 
-        $this->maxWeight = 200;
-        $this->specialDKBD = ['01013', '01061'];
+        $this->maxWeight = config('qd130xml.max_weight_patient');
+        $this->specialDKBD = config('qd130xml.correct_facility_code');
         $this->admissionReasons = [3, 4];
-        $this->invalidKetQuaDtri = [3, 4, 5, 6];
-        $this->invalidMaLoaiRV = [2, 3, 4];
-        $this->bedGroupCodes = [14, 15, 16];
-        $this->treatmentTypeInpatient = ['03'];
+        $this->invalidKetQuaDtri = config('qd130xml.invalid_treatment_result');
+        $this->invalidMaLoaiRV = config('qd130xml.invalid_end_type_treatment');
+        $this->bedGroupCodes = config('qd130xml.bed_group_code');
+        $this->treatmentTypeInpatient = config('qd130xml.treatment_type_inpatient');
     }
 
     /**
@@ -129,10 +129,11 @@ class Qd130Xml1Checker
             // Ensure can_nang is numeric before casting
             if (is_numeric($data->can_nang)) {
                 $can_nang_value = (double)$data->can_nang;
-                if ($can_nang_value > 200) {
+                if ($can_nang_value > $this->maxWeight) {
                     $errors->push((object)[
                         'error_code' => $this->prefix . 'ADMIN_INFO_ERROR_TO_MUCH_CAN_NANG',
                         'error_name' => 'Cân nặng không hợp lệ',
+                        'critical_error' => true,
                         'description' => 'Cân nặng không hợp lệ: ' . number_format($can_nang_value)
                     ]);
                 }
@@ -140,6 +141,7 @@ class Qd130Xml1Checker
                 $errors->push((object)[
                     'error_code' => $this->prefix . 'ADMIN_INFO_ERROR_INVALID_CAN_NANG',
                     'error_name' => 'Cân nặng không phải là số',
+                    'critical_error' => true,
                     'description' => 'Giá trị cân nặng không phải là số: ' . $data->can_nang
                 ]);
             }
