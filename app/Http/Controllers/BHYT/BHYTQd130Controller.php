@@ -408,13 +408,10 @@ class BHYTQd130Controller extends Controller
             }
         }
             
-        // Sau khi hoàn thành import hồ sơ thì mới check nghiệp vụ tổng thể liên quan tới hồ sơ đó
-        $canExport = config('__tech.export_qd130_enabled') ?? false;
-
         if ($ma_lk !== null && !empty($processedFileTypes)) {
             $this->qd130XmlService->storeQd130XmlInfomation($ma_lk, $macskcb, 'import', $soluonghoso);
             $this->qd130XmlService->checkQd130XmlComplete($ma_lk);
-            if ($canExport) {
+            if (config('qd130xml.export_qd130_xml_enabled')) {
                 $this->qd130XmlService->exportQd130Xml($ma_lk);
             } 
         }

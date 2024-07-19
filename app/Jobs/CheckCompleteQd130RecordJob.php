@@ -33,6 +33,6 @@ class CheckCompleteQd130RecordJob implements ShouldQueue
      */
     public function handle(Qd130XmlCompleteChecker $xmlCompleteChecker)
     {
-         $xmlCompleteChecker->checkErrors($this->ma_lk);
+        $xmlCompleteChecker->checkErrors($this->ma_lk);
     }
 }

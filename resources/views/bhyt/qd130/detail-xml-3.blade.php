@@ -35,6 +35,7 @@
                                     <th>Bác sĩ</th>
                                     <th>Ngày YL</th>
                                     <th>Mã giường</th>
+                                    <th>Mã máy</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -62,6 +63,7 @@
                                     <td>{{ $value_xml3->ma_bac_si }}</td>
                                     <td>{{ strtodatetime($value_xml3->ngay_yl) }}</td>
                                     <td>{{ $value_xml3->ma_giuong }}</td>
+                                    <td>{{ $value_xml3->ma_may }}</td>
                                 </tr>
                                 @endforeach
                             </tbody>

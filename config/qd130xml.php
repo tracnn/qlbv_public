@@ -29,4 +29,5 @@ return [
     'anesthesia_code' => [1, 2, 3, 4], //Mã phương pháp vô cảm
     'hein_card_temp_pattern' => '/^TE101\d{10}$/', //Mẫu mã thẻ tạm
     'queue_name' => 'JobQd130Xml', //Job name sử dụng cho Qd130/4750 Xml
+    'export_qd130_xml_enabled' => true, //Có xuất Xml theo Qd130 tự động không (Chỉ những hồ sơ không có lỗi critical mới xuất)
 ];
