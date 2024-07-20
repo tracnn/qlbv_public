@@ -79,6 +79,15 @@ class Qd130Xml8Checker
             ]);
         }
 
+        if (empty($data->ket_qua_dtri)) {
+            $errors->push((object)[
+                'error_code' => $this->prefix . 'INFO_ERROR_KET_QUA_DTRI',
+                'error_name' => 'Thiếu kết quả điều trị',
+                'critical_error' => true,
+                'description' => 'Kết quả điều trị không được để trống'
+            ]);
+        }
+
         if (empty($data->ma_ttdv)) {
             $errors->push((object)[
                 'error_code' => $this->prefix . 'INFO_ERROR_MA_TTDV',

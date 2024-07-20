@@ -66,7 +66,7 @@ class Qd130XmlCompleteChecker
         
             $errors = $errors->merge($this->infoChecker($ma_lk));
             $errors = $errors->merge($this->checkInvalidBedDays($data));
-            $errors = $errors->merge($this->checkExpenseXml2Errors($data));
+            $errors = $errors->merge($this->checkExpenseErrors($data));
 
             // Save errors to xml_error_checks table
             $this->xmlErrorService->saveErrors($this->xmlType, $data->ma_lk, $data->stt, $errors);
@@ -134,6 +134,8 @@ class Qd130XmlCompleteChecker
         // Calculate the difference in hours
         $interval = $ngayRa->diff($ngayVao);
         $hoursDifference = ($interval->days * 24) + $interval->h + ($interval->i / 60);
+        $hoursExcludeDaysDifference = $interval->h + ($interval->i / 60);
+
         if (in_array($data->ma_loai_kcb, $this->treatmentTypeInpatient) && $data->so_ngay_dtri <= 2) {
             $totalBedDays = $data->Qd130Xml3()->whereIn('ma_nhom', $this->bedGroupCodes)->sum('so_luong');
             if ($hoursDifference < 4) {
@@ -150,7 +152,7 @@ class Qd130XmlCompleteChecker
                 if ($totalBedDays >= 2) {
                     $errors->push((object)[
                         'error_code' => $this->prefix . 'EXCESS_BED_DAYS',
-                        'error_name' => 'Điều trị nội trú >= 4h và <=24h tính thừa ngày giường',
+                        'error_name' => 'Điều trị nội trú >= 4h và <= 24h tính thừa ngày giường',
                         'description' => 'Thời gian điều trị nội trú từ 4 đến 24 giờ, tính thừa ngày giường: ' .$totalBedDays
                     ]);
                 }
@@ -163,11 +165,11 @@ class Qd130XmlCompleteChecker
 
             $totalBedDays = $data->Qd130Xml3()->whereIn('ma_nhom', $this->bedGroupCodes)->sum('so_luong');
 
-            if ($totalBedDays >= $data->so_ngay_dtri) {
+            if ($totalBedDays >= $data->so_ngay_dtri && $hoursExcludeDaysDifference < 4) {
                 $errors->push((object)[
                     'error_code' => $this->prefix . 'INVALID_BED_DAYS',
                     'error_name' => 'Thanh toán ngày giường sai quy định (trừ trường hợp đặc biệt)',
-                    'description' => 'Thanh toán ngày giường sai quy định (trừ trường hợp đặc biệt)'
+                    'description' => 'Tổng ngày giường: ' . $totalBedDays . ' lớn hơn hoặc bằng số ngày điều trị + 1: ' . $data->so_ngay_dtri
                 ]);
             }
         }
@@ -178,7 +180,7 @@ class Qd130XmlCompleteChecker
     /**
      * Hàm kiểm tra các loại tiền chi phí trong hồ sơ tổng hợp và hồ sơ chi tiết
      */
-    private function checkExpenseXml2Errors(Qd130Xml1 $data): Collection
+    private function checkExpenseErrors(Qd130Xml1 $data): Collection
     {
         $errors = collect();
 
@@ -190,6 +192,21 @@ class Qd130XmlCompleteChecker
                 'error_name' => 'Tiền thuốc không khớp',
                 'critical_error' => true,
                 'description' => 'Tiền thuốc trong XML1: ' . $data->t_thuoc . ' <> tổng tiền trong XML2: ' . $sum_thanh_tien_bv
+            ]);
+        }
+
+        // Kiểm tra tiền t_bhtt_gdv
+        $sum_t_bhtt_xml2 = Qd130Xml2::where('ma_lk', $data->ma_lk)->where('ma_pttt', 1)->sum('t_bhtt');
+        $sum_t_bhtt_xml3 = Qd130Xml3::where('ma_lk', $data->ma_lk)->where('ma_pttt', 1)->sum('t_bhtt');
+        $total_t_bhtt = $sum_t_bhtt_xml2 + $sum_t_bhtt_xml3;
+        $t_bhtt_gdv = doubleval($data->t_bhtt_gdv) ?? 0;
+
+        if ($data->t_bhtt_gdv != round($total_t_bhtt, 2)) {
+            $errors->push((object)[
+                'error_code' => $this->prefix . 'INVALID_EXPENSE_T_BHTT_GDV',
+                'error_name' => 'Tiền bảo hiểm thanh toán GDV không khớp',
+                'critical_error' => true,
+                'description' => 'Tiền bảo hiểm thanh toán GDV trong XML1: ' . $t_bhtt_gdv . ' <> tổng tiền trong XML2 và XML3: ' . $total_t_bhtt
             ]);
         }
 
