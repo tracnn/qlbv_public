@@ -7,6 +7,7 @@ use App\Models\BHYT\MedicalSupplyCatalog;
 use App\Models\BHYT\MedicalStaff;
 use App\Models\BHYT\Icd10Category;
 use App\Models\BHYT\IcdYhctCategory;
+use App\Models\BHYT\ServiceCatalog;
 use Illuminate\Support\Collection;
 
 class Qd130Xml3Checker
@@ -25,7 +26,6 @@ class Qd130Xml3Checker
     protected $excludedMaterialGroupCodes;
     protected $groupCodeWithExecutor;
     protected $serviceGroupsRequiringAnesthesia;
-
 
     public function __construct(Qd130XmlErrorService $xmlErrorService)
     {
@@ -76,6 +76,7 @@ class Qd130Xml3Checker
         //$errors = $errors->merge($this->checkGroupCodeWithExecutor($data));
         $errors = $errors->merge($this->checkBedDayQuantity($data)); // Thêm kiểm tra số lượng ngày giường
         $errors = $errors->merge($this->checkMedicalSupplyCatalog($data)); // Thêm kiểm tra VTYT
+        $errors = $errors->merge($this->checkMedicalService($data)); // Kiểm tra dịch vụ kỹ thuật
 
         $additionalData = [
             'ngay_yl' => $data->ngay_yl
@@ -545,6 +546,47 @@ class Qd130Xml3Checker
                 'critical_error' => true,
                 'description' => 'Mã vật tư: ' . $data->ma_vat_tu . ' nằm ngoài danh mục hoặc là vật tư thay thế'
             ]);
+        }
+
+        return $errors;
+    }
+
+    private function checkMedicalService(Qd130Xml3 $data): Collection
+    {
+        $errors = collect();
+
+        if (!in_array($data->ma_nhom, $this->materialGroupCodes) &&
+            !in_array($data->ma_nhom, $this->bedGroupCodes) &&
+            !in_array($data->ma_nhom, $this->examinationGroupCodes)) {
+
+            $seviceExists = ServiceCatalog::where('ma_dich_vu', $data->ma_dich_vu)->exists();
+            if (!$seviceExists) {
+                $errors->push((object)[
+                    'error_code' => $this->prefix . 'INVALID_MA_DICH_VU',
+                    'error_name' => 'Mã dịch vụ không tồn tại',
+                    'critical_error' => true,
+                    'description' => 'Dịch vụ không tồn tại trong DM DVKT: ' . $data->ma_dich_vu
+                ]);                
+            } else {
+
+                $ngayVao = \DateTime::createFromFormat('YmdHi', $data->Qd130Xml1->ngay_vao)->format('Ymd');
+                
+                $validServiceExists = ServiceCatalog::where('ma_dich_vu', $data->ma_dich_vu)
+                ->where('tu_ngay', '<=', $ngayVao)
+                ->where(function ($query) use ($ngayVao) {
+                    $query->where('den_ngay', '>=', $ngayVao)
+                          ->orWhereNull('den_ngay');
+                })->exists();
+
+                if (!$validServiceExists) {
+                    $errors->push((object)[
+                        'error_code' => $this->prefix . 'INVALID_MA_DICH_VU_NGAY_VAO',
+                        'error_name' => 'Không tìm thấy dịch vụ hợp lệ',
+                        'critical_error' => true,
+                        'description' => 'Không tìm thấy dịch vụ hợp lệ cho mã dịch vụ: ' . $data->ma_dich_vu . ' với ngày vào: ' . strtodatetime($data->Qd130Xml1->ngay_vao)
+                    ]);
+                }
+            }
         }
 
         return $errors;
