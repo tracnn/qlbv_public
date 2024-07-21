@@ -246,7 +246,7 @@ class ImportCatalogBHXHFromFiles extends Command
             case $firstRow === $expectedStaffColumns:
                 $data = $data->slice(1); // Bỏ qua dòng đầu tiên
                 foreach ($data as $row) {
-                    if (empty($row[1]) || empty($row[2]) || empty($row[3]) || empty($row[4]) || empty($row[5]) || empty($row[6]) || empty($row[7]) || empty($row[9]) || empty($row[10]) || empty($row[11]) || empty($row[16]) || empty($row[17]) || empty($row[18]) || empty($row[22])) {
+                    if (empty($row[2]) || empty($row[3]) || empty($row[4]) || empty($row[5]) || empty($row[6]) || empty($row[7]) || empty($row[9]) || empty($row[10]) || empty($row[11]) || empty($row[16]) || empty($row[17]) || empty($row[18]) || empty($row[22])) {
                         continue;
                     }
 

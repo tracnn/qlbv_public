@@ -15,7 +15,7 @@ class CreateNhanVienYTeTable extends Migration
     {
         Schema::create('medical_staffs', function (Blueprint $table) {
             $table->increments('id');
-            $table->integer('ma_loai_kcb');
+            $table->integer('ma_loai_kcb')->nullable();
             $table->string('ma_khoa');
             $table->string('ten_khoa');
             $table->string('ma_bhxh');
@@ -28,7 +28,7 @@ class CreateNhanVienYTeTable extends Migration
             $table->string('noicap_cchn');
             $table->string('phamvi_cm')->nullable();
             $table->string('phamvi_cmbs')->nullable();
-            $table->string('dvkt_khac')->nullable();
+            $table->string('dvkt_khac', 1024)->nullable();
             $table->string('vb_phancong')->nullable();
             $table->integer('thoigian_dk');
             $table->string('thoigian_ngay');

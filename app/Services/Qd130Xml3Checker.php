@@ -576,7 +576,7 @@ class Qd130Xml3Checker
                 ->where(function ($query) use ($ngayVao) {
                     $query->where('den_ngay', '>=', $ngayVao)
                           ->orWhereNull('den_ngay');
-                })->exists();
+                })->first();
 
                 if (!$validServiceExists) {
                     $errors->push((object)[
@@ -585,6 +585,26 @@ class Qd130Xml3Checker
                         'critical_error' => true,
                         'description' => 'Không tìm thấy dịch vụ hợp lệ cho mã dịch vụ: ' . $data->ma_dich_vu . ' với ngày vào: ' . strtodatetime($data->Qd130Xml1->ngay_vao)
                     ]);
+                } else {
+                    // Kiểm tra giá
+                    if ($data->don_gia_bh > $validServiceExists->don_gia) {
+                        $errors->push((object)[
+                            'error_code' => $this->prefix . 'INVALID_APPROVED_DON_GIA_BH',
+                            'error_name' => 'Giá DVKT cao hơn giá được phê duyệt',
+                            'description' => 'Mã DVKT: ' . $data->ma_dich_vu . '; Có giá: ' . $data->don_gia_bh . '; Giá phê duyệt: ' . $validServiceExists->don_gia
+                        ]);
+                    }
+
+                    // Kiểm tra tên
+                    if ($data->ten_dich_vu != $validServiceExists->ten_dich_vu) {
+                        $errors->push((object)[
+                            'error_code' => $this->prefix . 'INVALID_TEN_DICH_VU',
+                            'error_name' => 'Tên dịch vụ kỹ thuật khác tên được phê duyệt',
+                            'critical_error' => true,
+                            'description' => 'Mã DVKT: ' . $data->ma_dich_vu . ' có tên: ' . 
+                                    formatDescription($data->ten_dich_vu) . '; Tên phê duyệt: ' . $validServiceExists->ten_dich_vu
+                        ]);
+                    }
                 }
             }
         }

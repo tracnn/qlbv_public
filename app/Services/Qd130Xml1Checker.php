@@ -465,7 +465,7 @@ class Qd130Xml1Checker
                 $errors->push((object)[
                     'error_code' => $this->prefix . 'ADMIN_INFO_ERROR_GIAY_CHUYEN_TUYEN',
                     'error_name' => 'Thiếu số giấy chuyển tuyến',
-                    'description' => 'Số giấy chuyển tuyến không được để trống khi BN đến KCB tại CS'
+                    'description' => 'Số giấy chuyển tuyến không được để trống khi chuyển từ CSKCB khác'
                 ]);
             }
         }
