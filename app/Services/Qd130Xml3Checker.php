@@ -595,16 +595,16 @@ class Qd130Xml3Checker
                         ]);
                     }
 
-                    // Kiểm tra tên
-                    if ($data->ten_dich_vu != $validServiceExists->ten_dich_vu) {
-                        $errors->push((object)[
-                            'error_code' => $this->prefix . 'INVALID_TEN_DICH_VU',
-                            'error_name' => 'Tên dịch vụ kỹ thuật khác tên được phê duyệt',
-                            'critical_error' => true,
-                            'description' => 'Mã DVKT: ' . $data->ma_dich_vu . ' có tên: ' . 
-                                    formatDescription($data->ten_dich_vu) . '; Tên phê duyệt: ' . $validServiceExists->ten_dich_vu
-                        ]);
-                    }
+                    // Kiểm tra tên: Tạm thời chưa xử lý vì liên quan đến tên ánh xạ trên cổng BHXH
+                    // if ($data->ten_dich_vu != $validServiceExists->ten_dich_vu) {
+                    //     $errors->push((object)[
+                    //         'error_code' => $this->prefix . 'INVALID_TEN_DICH_VU',
+                    //         'error_name' => 'Tên dịch vụ kỹ thuật khác tên được phê duyệt',
+                    //         'critical_error' => true,
+                    //         'description' => 'Mã DVKT: ' . $data->ma_dich_vu . ' có tên: ' . 
+                    //                 formatDescription($data->ten_dich_vu) . '; Tên phê duyệt: ' . $validServiceExists->ten_dich_vu
+                    //     ]);
+                    // }
                 }
             }
         }

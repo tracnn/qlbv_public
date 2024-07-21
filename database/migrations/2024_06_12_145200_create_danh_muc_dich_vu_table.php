@@ -26,7 +26,7 @@ class CreateDanhMucDichVuTable extends Migration
             $table->timestamps();
 
              // Adding unique constraint
-            $table->unique(['ma_dich_vu', 'don_gia', 'quy_trinh', 'tu_ngay']);
+            $table->unique(['ma_dich_vu', 'ten_dich_vu', 'don_gia', 'quy_trinh', 'tu_ngay']);
 
             //Adding index
             $table->index(['ma_dich_vu', 'quy_trinh']);

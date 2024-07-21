@@ -228,12 +228,12 @@ class ImportCatalogBHXHFromFiles extends Command
                     ServiceCatalog::updateOrCreate(
                         [
                             'ma_dich_vu' => $row[1],
+                            'ten_dich_vu' => $row[2],
                             'don_gia' => $row[3],
                             'quy_trinh' => $row[4],
                             'tu_ngay' => $row[7],
                         ],
                         [
-                            'ten_dich_vu' => $row[2],
                             'cskcb_cgkt' => $row[5],
                             'cskcb_cls' => $row[6],
                             'den_ngay' => $row[8]
