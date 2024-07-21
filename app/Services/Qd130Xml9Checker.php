@@ -266,7 +266,6 @@ class Qd130Xml9Checker
             ]);
         } else {
             $fullPattern = str_replace('xx', $data->matinh_cu_tru, $this->heinCardTempPattern);
-            \Log::info($fullPattern);
             
             if (!preg_match($fullPattern, $data->ma_the_tam)) {
                 $errorDescription = 'Mã thẻ tạm không đúng theo quy định: ' . $data->ma_the_tam;
