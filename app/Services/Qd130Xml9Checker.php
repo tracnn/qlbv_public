@@ -265,12 +265,34 @@ class Qd130Xml9Checker
                 'description' => 'Mã thẻ tạm không được để trống'
             ]);
         } else {
-            if (!preg_match($this->heinCardTempPattern, $data->ma_the_tam)) {
+            $fullPattern = str_replace('xx', $data->matinh_cu_tru, $this->heinCardTempPattern);
+            \Log::info($fullPattern);
+            
+            if (!preg_match($fullPattern, $data->ma_the_tam)) {
+                $errorDescription = 'Mã thẻ tạm không đúng theo quy định: ' . $data->ma_the_tam;
+                
+                // Kiểm tra phần TE1
+                if (!preg_match('/^TE1/', $data->ma_the_tam)) {
+                    $errorDescription .= ' - Phần đầu tiên không phải là "TE1".';
+                }
+
+                // Kiểm tra phần ma_tinh_cutru
+                $maTinhPattern = '/^TE1' . $data->matinh_cu_tru . '/';
+                if (!preg_match($maTinhPattern, $data->ma_the_tam)) {
+                    $errorDescription .= ' - Phần mã tỉnh của thẻ tạm không đúng, Mã đúng: ' . $data->matinh_cu_tru;
+                }
+
+                // Kiểm tra phần cuối cùng (10 chữ số)
+                $numPattern = '/\d{10}$/';
+                if (!preg_match($numPattern, $data->ma_the_tam)) {
+                    $errorDescription .= ' - Phần cuối không chứa 10 chữ số.';
+                }
+
                 $errors->push((object)[
                     'error_code' => $this->prefix . 'INFO_ERROR_INVALID_MA_THE_TAM',
                     'error_name' => 'Định dạng mã thẻ tạm không hợp lệ',
                     'critical_error' => true,
-                    'description' => 'Mã thẻ tạm không đúng theo quy định: ' . $data->ma_the_tam
+                    'description' => $errorDescription
                 ]);
             }
         }
