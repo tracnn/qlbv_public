@@ -182,6 +182,10 @@ class BHYTQd130Controller extends Controller
                     $query->where('ma_kiemtra', '<>', '00')
                           ->orWhere('ma_tracuu', '<>', '000');
                 })->whereDoesntHave('Qd130XmlErrorResult');
+            } elseif ($xml_filter_status === 'no_error_critical') {
+                $result = $result->whereDoesntHave('Qd130XmlErrorResult', function ($query) {
+                    $query->where('critical_error', true);
+                });
             }
 
             // Apply filter based on has_hein_card
