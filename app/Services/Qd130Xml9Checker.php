@@ -14,7 +14,6 @@ class Qd130Xml9Checker
     protected $prefix;
 
     protected $xmlType;
-    protected $heinCardTempPattern;
 
     public function __construct(Qd130XmlErrorService $xmlErrorService)
     {
@@ -26,7 +25,6 @@ class Qd130Xml9Checker
     {
         $this->xmlType = 'XML9';
         $this->prefix = $this->xmlType . '_';
-        $this->heinCardTempPattern = config('qd130xml.hein_card_temp_pattern');
     }
 
     /**
@@ -265,25 +263,30 @@ class Qd130Xml9Checker
                 'description' => 'Mã thẻ tạm không được để trống'
             ]);
         } else {
-            $fullPattern = str_replace('xx', $data->matinh_cu_tru, $this->heinCardTempPattern);
-            
+            $prefixPattern = config('qd130xml.hein_card_temp_prefix_pattern'); // '/^TE1'
+            $prefixCheckPattern = config('qd130xml.hein_card_temp_prefix_pattern') . '/'; // '/^TE1/'
+            $numPattern = config('qd130xml.hein_card_temp_num_pattern'); // '\d{10}$/'
+            $maTinhPattern = $prefixPattern . $data->matinh_cu_tru;
+            $maTinhCheckPattern = $maTinhPattern . '/';
+            $numCheckPattern = '/' . $numPattern;
+
+            $fullPattern = $maTinhPattern . $numPattern;
+
             if (!preg_match($fullPattern, $data->ma_the_tam)) {
                 $errorDescription = 'Mã thẻ tạm không đúng theo quy định: ' . $data->ma_the_tam;
                 
                 // Kiểm tra phần TE1
-                if (!preg_match('/^TE1/', $data->ma_the_tam)) {
-                    $errorDescription .= ' - Phần đầu tiên không phải là "TE1".';
+                if (!preg_match($prefixCheckPattern, $data->ma_the_tam)) {
+                    $errorDescription .= ' - Phần đầu tiên không phải là: ' . substr($prefixPattern, 2);;
                 }
 
                 // Kiểm tra phần ma_tinh_cutru
-                $maTinhPattern = '/^TE1' . $data->matinh_cu_tru . '/';
-                if (!preg_match($maTinhPattern, $data->ma_the_tam)) {
+                if (!preg_match($maTinhCheckPattern, $data->ma_the_tam)) {
                     $errorDescription .= ' - Phần mã tỉnh của thẻ tạm không đúng, Mã đúng: ' . $data->matinh_cu_tru;
                 }
 
                 // Kiểm tra phần cuối cùng (10 chữ số)
-                $numPattern = '/\d{10}$/';
-                if (!preg_match($numPattern, $data->ma_the_tam)) {
+                if (!preg_match($numCheckPattern, $data->ma_the_tam)) {
                     $errorDescription .= ' - Phần cuối không chứa 10 chữ số.';
                 }
 

@@ -28,6 +28,8 @@ return [
     'service_groups_requiring_anesthesia' => [8], //Mã nhóm bắt buộc phải có phương pháp vô cẳm
     'anesthesia_code' => [1, 2, 3, 4], //Mã phương pháp vô cảm
     'hein_card_temp_pattern' => '/^TE1xx\d{10}$/', //Mẫu mã thẻ tạm "xx" được thay bằng mã tỉnh cư trú trong hàm check
+    'hein_card_temp_prefix_pattern' => '/^TE1', //Khai báo phần đầu mã thẻ tạm
+    'hein_card_temp_num_pattern' => '\d{10}$/', //Khai báo phần mã BHXH của mã thẻ tạm
     'queue_name' => 'JobQd130Xml', //Job name sử dụng cho Qd130/4750 Xml
     'export_qd130_xml_enabled' => true, //Có xuất Xml theo Qd130 tự động không (Chỉ những hồ sơ không có lỗi critical mới xuất)
 ];

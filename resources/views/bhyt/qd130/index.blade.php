@@ -118,6 +118,7 @@
                     d.hein_card_filter = $('#hein_card_filter').val();
                     d.payment_date_filter = $('#payment_date_filter').val();
                     d.treatment_type_fillter = $('#treatment_type_fillter').val();
+                    d.xml_export_status = $('#xml_export_status').val();
                 },
                 beforeSend: function(xhr) {
                     currentAjaxRequest = xhr;
@@ -241,7 +242,7 @@
             }
         });
 
-        $('#export_xlsx').click(function() {
+        $('#export_qd130_xml_error').click(function() {
             var dateRange = $('#date_range').data('daterangepicker');
 
             var startDate = dateRange.startDate.format('YYYY-MM-DD HH:mm:ss');
@@ -257,6 +258,30 @@
                 'xml_filter_status': xml_filter_status,
                 'date_type': date_type,
                 'qd130_xml_error_catalog': qd130_xml_error_catalog
+            });
+
+            // Chuyển hướng tới URL với các tham số
+            window.location.href = href;
+        });
+
+        $('#export_xlsx').click(function() {
+            var dateRange = $('#date_range').data('daterangepicker');
+
+            var startDate = dateRange.startDate.format('YYYY-MM-DD HH:mm:ss');
+            var endDate = dateRange.endDate.format('YYYY-MM-DD HH:mm:ss');
+            var xml_filter_status = $('#xml_filter_status').val();
+            var date_type = $('#date_type').val();
+            var qd130_xml_error_catalog = $('#qd130_xml_error_catalog').val();
+            var xml_export_status = $('#xml_export_status').val();
+            
+            // Tạo URL với các tham số query
+            var href = '{{ route("bhyt.qd130.export-qd130-xml-xlsx") }}?' + $.param({
+                'date_from': startDate,
+                'date_to': endDate,
+                'xml_filter_status': xml_filter_status,
+                'date_type': date_type,
+                'qd130_xml_error_catalog': qd130_xml_error_catalog,
+                'xml_export_status': xml_export_status
             });
 
             // Chuyển hướng tới URL với các tham số

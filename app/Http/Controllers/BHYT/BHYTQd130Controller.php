@@ -14,6 +14,7 @@ use App\Services\Qd130XmlService;
 use App\Services\XmlStructures;
 
 use App\Exports\Qd130ErrorExport;
+use App\Exports\Qd130XmlExport;
 
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -55,6 +56,7 @@ class BHYTQd130Controller extends Controller
         $hein_card_filter = $request->input('hein_card_filter');
         $payment_date_filter = $request->input('payment_date_filter');
         $treatment_type_fillter = $request->input('treatment_type_fillter');
+        $xml_export_status = $request->input('xml_export_status');
 
         $dateFrom = $request->input('date_from');
         $dateTo = $request->input('date_to');
@@ -199,6 +201,17 @@ class BHYTQd130Controller extends Controller
             // Apply filter based on treatment_type_fillter
             if ($treatment_type_fillter) {
                 $result = $result->where('ma_loai_kcb', $treatment_type_fillter);
+            }
+
+            //Apply filter based on xml_export_status
+            if ($xml_export_status === 'has_export') {
+                $result = $result->whereHas('Qd130XmlInformation', function ($query) {
+                    $query->whereNotNull('exported_at');
+                });
+            } elseif ($xml_export_status === 'no_export') {
+                $result = $result->whereHas('Qd130XmlInformation', function ($query) {
+                    $query->whereNull('exported_at');
+                });
             }
         }
 
@@ -488,6 +501,20 @@ class BHYTQd130Controller extends Controller
         $fileName = 'qd130_error_data_' . Carbon::now()->format('YmdHis') . '.xlsx';
         return Excel::download(new Qd130ErrorExport($date_from, $date_to, $xml_filter_status, 
             $date_type, $qd130_xml_error_catalog_id), $fileName);
+    }
+
+    public function exportQd130XmlXlsx(Request $request)
+    {
+        $date_from = $request->input('date_from');
+        $date_to = $request->input('date_to');
+        $xml_filter_status = $request->input('xml_filter_status');
+        $date_type = $request->input('date_type');
+        $qd130_xml_error_catalog_id = $request->input('qd130_xml_error_catalog');
+        $xml_export_status = $request->input('xml_export_status');
+
+        $fileName = 'qd130_xml_data_' . Carbon::now()->format('YmdHis') . '.xlsx';
+        return Excel::download(new Qd130XmlExport($date_from, $date_to, $xml_filter_status, 
+            $date_type, $qd130_xml_error_catalog_id, $xml_export_status), $fileName);
     }
 
     public function deleteXml($ma_lk)

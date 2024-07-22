@@ -331,6 +331,8 @@ Route::group(['middleware' => 'auth'], function () {
         Route::get('qd130/export-qd130-xml-errors', 'BHYT\BHYTQd130Controller@exportQd130XmlErrors')
         ->name('bhyt.qd130.export-qd130-xml-errors');
         Route::delete('qd130/delete-xml/{ma_lk}', 'BHYT\BHYTQd130Controller@deleteXml')->name('bhyt.qd130.delete-xml');
+        Route::get('qd130/export-qd130-xml-xlsx', 'BHYT\BHYTQd130Controller@exportQd130XmlXlsx')
+        ->name('bhyt.qd130.export-qd130-xml-xlsx');
     });
 
     /*

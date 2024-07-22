@@ -184,14 +184,103 @@ class Qd130XmlCompleteChecker
     {
         $errors = collect();
 
-        // Kiểm tra tiền thuốc giữa Xml1 và Xml2
-        $sum_thanh_tien_bv = Qd130Xml2::where('ma_lk', $data->ma_lk)->sum('thanh_tien_bv');
-        if ($data->t_thuoc != round($sum_thanh_tien_bv,2)) {
+        // Kiểm tra t_thuoc
+        $sum_t_thuoc = Qd130Xml2::where('ma_lk', $data->ma_lk)->sum('thanh_tien_bv');
+        if ($data->t_thuoc != round($sum_t_thuoc,2)) {
             $errors->push((object)[
                 'error_code' => $this->prefix . 'INVALID_EXPENSE_DRUG',
                 'error_name' => 'Tiền thuốc không khớp',
                 'critical_error' => true,
-                'description' => 'Tiền thuốc trong XML1: ' . $data->t_thuoc . ' <> tổng tiền trong XML2: ' . $sum_thanh_tien_bv
+                'description' => 'Tiền thuốc trong XML1: ' . number_format($data->t_thuoc) . ' <> tổng tiền trong XML2: ' . number_format($sum_t_thuoc)
+            ]);
+        }
+
+        //Kiểm tra tiền VTYT
+        $sum_t_vtyt = Qd130Xml3::where('ma_lk', $data->ma_lk)->whereIn('ma_nhom', $this->materialGroupCodes)->sum('thanh_tien_bv');
+        if ($data->t_vtyt != round($sum_t_vtyt,2)) {
+            $errors->push((object)[
+                'error_code' => $this->prefix . 'INVALID_EXPENSE_T_VTYT',
+                'error_name' => 'Tiền vật tư y tế không khớp',
+                'critical_error' => true,
+                'description' => 'Tiền VTYT trong XML1: ' . number_format($data->t_vtyt) . ' <> tổng tiền VTYT trong XML3: ' . number_format($sum_t_vtyt)
+            ]);
+        }
+
+        //Kiểm tra t_tongchi_bv
+        $sum_t_tongchi_bv_xml2 = Qd130Xml2::where('ma_lk', $data->ma_lk)->sum('thanh_tien_bv');
+        $sum_t_tongchi_bv_xml3 = Qd130Xml3::where('ma_lk', $data->ma_lk)->sum('thanh_tien_bv');
+        $sum_t_tongchi_bv = $sum_t_tongchi_bv_xml2 + $sum_t_tongchi_bv_xml3;
+        if ($data->t_tongchi_bv != round($sum_t_tongchi_bv,2)) {
+            $errors->push((object)[
+                'error_code' => $this->prefix . 'INVALID_EXPENSE_T_TONGCHI_BV',
+                'error_name' => 'Tổng chi phí không khớp',
+                'critical_error' => true,
+                'description' => 'Tiền tổng chi phí trong XML1: ' . number_format($data->t_tongchi_bv) . ' <> chi phí trong XML2 và XML3: ' . number_format($sum_t_tongchi_bv)
+            ]);
+        }
+
+        //Kiểm tra t_tongchi_bh
+        $sum_t_tongchi_bh_xml2 = Qd130Xml2::where('ma_lk', $data->ma_lk)->sum('thanh_tien_bh');
+        $sum_t_tongchi_bh_xml3 = Qd130Xml3::where('ma_lk', $data->ma_lk)->sum('thanh_tien_bh');
+        $sum_t_tongchi_bh = $sum_t_tongchi_bh_xml2 + $sum_t_tongchi_bh_xml3;
+        if ($data->t_tongchi_bh != round($sum_t_tongchi_bh,2)) {
+            $errors->push((object)[
+                'error_code' => $this->prefix . 'INVALID_EXPENSE_T_TONGCHI_BH',
+                'error_name' => 'Tổng chi phí BH thanh toán không khớp',
+                'critical_error' => true,
+                'description' => 'Tiền tổng chi phí BH trong XML1: ' . number_format($data->sum_t_tongchi_bh) . ' <> chi phí BH trong XML2 và XML3: ' . number_format($sum_t_tongchi_bh)
+            ]);
+        }
+
+        //Kiểm tra t_bntt
+        $sum_t_bntt_xml2 = Qd130Xml2::where('ma_lk', $data->ma_lk)->sum('t_bntt');
+        $sum_t_bntt_xml3 = Qd130Xml3::where('ma_lk', $data->ma_lk)->sum('t_bntt');
+        $sum_t_bntt = $sum_t_bntt_xml2 + $sum_t_bntt_xml3;
+        if ($data->t_bntt != round($sum_t_bntt,2)) {
+            $errors->push((object)[
+                'error_code' => $this->prefix . 'INVALID_EXPENSE_T_BNTT',
+                'error_name' => 'Tổng chi phí BN thanh toán không khớp',
+                'critical_error' => true,
+                'description' => 'Tiền tổng chi phí BN trong XML1: ' . number_format($data->t_bntt) . ' <> chi phí BN trong XML2 và XML3: ' . number_format($sum_t_bntt)
+            ]);
+        }
+
+        //Kiểm tra t_bncct
+        $sum_t_bncct_xml2 = Qd130Xml2::where('ma_lk', $data->ma_lk)->sum('t_bncct');
+        $sum_t_bncct_xml3 = Qd130Xml3::where('ma_lk', $data->ma_lk)->sum('t_bncct');
+        $sum_t_bncct = $sum_t_bncct_xml2 + $sum_t_bncct_xml3;
+        if ($data->t_bncct != round($sum_t_bncct,2)) {
+            $errors->push((object)[
+                'error_code' => $this->prefix . 'INVALID_EXPENSE_T_BNCCT',
+                'error_name' => 'Tổng chi phí BN CCT không khớp',
+                'critical_error' => true,
+                'description' => 'Tiền tổng chi phí BN CCT trong XML1: ' . number_format($data->sum_t_bncct) . ' <> chi phí BN CCT trong XML2 và XML3: ' . number_format($sum_t_bncct)
+            ]);
+        }
+
+        //Kiểm tra t_bhtt
+        $t_tongchi_bh = Qd130Xml1::where('ma_lk', $data->ma_lk)->sum('t_tongchi_bh');
+        $t_bncct = Qd130Xml1::where('ma_lk', $data->ma_lk)->sum('t_bncct');
+        $t_bhtt = $t_tongchi_bh - $t_bncct;
+        if ($data->t_bhtt != round($t_bhtt,2)) {
+            $errors->push((object)[
+                'error_code' => $this->prefix . 'INVALID_EXPENSE_T_BHTT',
+                'error_name' => 'Tiền BHTT không khớp',
+                'critical_error' => true,
+                'description' => 'Tiền BHTT trong XML1: ' . number_format($data->t_bhtt) . ' <> chi phí T_TONGCHI_BH trong XML1 - T_BNCCT trong XML1: ' . number_format($t_bhtt)
+            ]);
+        }
+
+        //Kiểm tra t_nguonkhac
+        $t_nguonkhac_xml2 = Qd130Xml2::where('ma_lk', $data->ma_lk)->sum('t_nguonkhac');
+        $t_nguonkhac_xml3 = Qd130Xml3::where('ma_lk', $data->ma_lk)->sum('t_nguonkhac');
+        $t_nguonkhac = $t_nguonkhac_xml2 + $t_nguonkhac_xml3;
+        if ($data->t_nguonkhac != round($t_nguonkhac,2)) {
+            $errors->push((object)[
+                'error_code' => $this->prefix . 'INVALID_EXPENSE_T_NGUONKHAC',
+                'error_name' => 'Tiền nguồn khác chi trả ngoài BH không khớp',
+                'critical_error' => true,
+                'description' => 'Tiền nguồn khác trong XML1: ' . number_format($data->t_nguonkhac) . ' <> chi phí tổng tiền nguồn khác trong XML2 và XML3: ' . number_format($t_nguonkhac)
             ]);
         }
 
