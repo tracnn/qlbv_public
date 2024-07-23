@@ -27,7 +27,7 @@ class CreateXml2Qd130sTable extends Migration
             $table->string('duong_dung')->nullable();
             $table->string('dang_bao_che')->nullable();
             $table->text('lieu_dung')->nullable();
-            $table->string('cach_dung')->nullable();
+            $table->text('cach_dung')->nullable();
             $table->string('so_dang_ky')->nullable();
             $table->string('tt_thau')->nullable();
             $table->integer('pham_vi')->nullable();

@@ -199,7 +199,7 @@ class Qd130Xml2Checker
                         'error_code' => $this->prefix . 'INVALID_TT_THAU_FORMAT',
                         'error_name' => 'Thông tin thầu không đúng định dạng',
                         'critical_error' => true,
-                        'description' => 'TT_THAU không đúng định dạng (Mã thuốc: ' . $data->ma_thuoc . ')'
+                        'description' => 'TT_THAU không đúng định dạng (Mã thuốc: ' . $data->ma_thuoc . '). TT_THAU: ' . $data->tt_thau
                     ]);
                 } else {
                     $ttThau = $ttThauParts[0] . ";" . $ttThauParts[1] . ";" . $ttThauParts[2];
