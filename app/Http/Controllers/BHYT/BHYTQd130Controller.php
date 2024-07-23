@@ -21,6 +21,7 @@ use Maatwebsite\Excel\Facades\Excel;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage;
 use ZipArchive;
+use DB;
 
 class BHYTQd130Controller extends Controller
 {
@@ -530,5 +531,16 @@ class BHYTQd130Controller extends Controller
         return response()->json(['success' => false, 'message' => 'Incomplete.']);
     }
 
+    public function checkJobStatus(Request $request)
+    {
+        // Query bảng jobs để kiểm tra số lượng job chưa thực hiện
+        $jobsCount = DB::table('jobs')
+            ->where('queue', config('qd130xml.queue_name'))
+            ->whereNull('reserved_at') // Job chưa được bắt đầu
+            ->count();
+
+        // Trả về kết quả dưới dạng JSON
+        return response()->json(['jobs_count' => $jobsCount]);
+    }
           
 }

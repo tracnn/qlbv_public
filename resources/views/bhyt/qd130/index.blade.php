@@ -27,6 +27,16 @@
     .highlight-row {
         background-color: #f0f8ff !important; /* Light blue background for highlighted row */
     }
+    .job-status-icon {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 1000;
+        background: white;
+        padding: 10px;
+        border-radius: 50%;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
 </style>
 @endpush
 
@@ -62,10 +72,10 @@
     </div>
 </div>
 
-<!-- Dynamic Error Code Dropdown -->
-<!-- <select id="error_code_xml" name="error_code">
-    <option value="">Select Error Code</option>
-</select> -->
+<div id="job-status-icon" class="job-status-icon" style="display: none;">
+    <i class="fa fa-spinner fa-spin"></i>
+    <span id="job-count" style="display: none;"></span>
+</div>
 
 <!-- Modal hiển thị chi tiết -->
 <div id="infoModal" class="modal fade" tabindex="-1" role="dialog">
@@ -164,6 +174,9 @@
         });
 
         table.ajax.reload();
+        
+        // Kiểm tra trạng thái job
+        checkJobStatus();
     }
 
     function deleteXML(ma_lk) {
@@ -287,7 +300,6 @@
             // Chuyển hướng tới URL với các tham số
             window.location.href = href;
         });
-
     });
 
     function updateSelectedRecords() {
@@ -348,6 +360,25 @@
         $('#dienbien').DataTable();
         $('#checkHeinCard').DataTable();
         $('#xmlErrorChecks').DataTable();
+    }
+
+    function checkJobStatus() {
+        $.ajax({
+            url: '{{ route('bhyt.qd130.jobs.status') }}',
+            type: 'GET',
+            success: function(response) {
+                if (response.jobs_count > 0) {
+                    $('#job-status-icon').show();
+                    $('#job-count').text(response.jobs_count).show(); // Hiển thị số lượng job
+                } else {
+                    $('#job-status-icon').hide();
+                    $('#job-count').hide();
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Error fetching job status:', error);
+            }
+        });
     }
 </script>
 @endpush

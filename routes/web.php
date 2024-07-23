@@ -333,6 +333,8 @@ Route::group(['middleware' => 'auth'], function () {
         Route::delete('qd130/delete-xml/{ma_lk}', 'BHYT\BHYTQd130Controller@deleteXml')->name('bhyt.qd130.delete-xml');
         Route::get('qd130/export-qd130-xml-xlsx', 'BHYT\BHYTQd130Controller@exportQd130XmlXlsx')
         ->name('bhyt.qd130.export-qd130-xml-xlsx');
+        Route::get('qd130/job-status', 'BHYT\BHYTQd130Controller@checkJobStatus')
+        ->name('bhyt.qd130.jobs.status');
     });
 
     /*
