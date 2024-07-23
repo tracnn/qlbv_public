@@ -101,7 +101,8 @@ class Qd130XmlCompleteChecker
                 ]);
             } else {
                 // Kiểm tra ma_loai_kcb thuộc xmlTypeMustHaveXml7
-                if (in_array($existXml1->ma_loai_kcb, $this->xmlTypeMustHaveXml7)) {
+                if (in_array($existXml1->ma_loai_kcb, $this->xmlTypeMustHaveXml7) 
+                    && !in_array($existXml1->ma_loai_rv, config('qd130xml.treatment_end_type_absconding'))) {
                     $existXml7 = Qd130Xml7::where('ma_lk', $ma_lk)->exists();
                     if (!$existXml7) {
                         $errors->push((object)[

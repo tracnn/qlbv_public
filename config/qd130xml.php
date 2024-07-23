@@ -32,4 +32,5 @@ return [
     'hein_card_temp_num_pattern' => '\d{10}$/', //Khai báo phần mã BHXH của mã thẻ tạm
     'queue_name' => 'JobQd130Xml', //Job name sử dụng cho Qd130/4750 Xml
     'export_qd130_xml_enabled' => true, //Có xuất Xml theo Qd130 tự động không (Chỉ những hồ sơ không có lỗi critical mới xuất)
+    'treatment_end_type_absconding' => [3], //Bổ sung loại ra viện là trốn viện để không kiểm tra giấy ra viện
 ];
