@@ -8,6 +8,7 @@ use App\Models\BHYT\MedicalStaff;
 use App\Models\BHYT\Icd10Category;
 use App\Models\BHYT\IcdYhctCategory;
 use App\Models\BHYT\ServiceCatalog;
+use App\Models\BHYT\EquipmentCatalog;
 use Illuminate\Support\Collection;
 
 class Qd130Xml3Checker
@@ -284,6 +285,16 @@ class Qd130Xml3Checker
                                 'description' => 'Mã cơ sở KBCB trong MA_MAY: ' . $yyyyy . ' không thuộc: ' . config('qd130xml.correct_facility_code')
                             ]);
                         }
+                    }
+                    //Validate in EquipmentCatalog
+                    $existEquipment = EquipmentCatalog::where('ma_may', $data->ma_may)->exists();
+                    if (!$existEquipment) {
+                        $errors->push((object)[
+                            'error_code' => $this->prefix . 'INFO_ERROR_MA_MAY_NOT_FOUND',
+                            'error_name' => 'Mã máy không tồn tại trong danh mục trang thiết bị',
+                            //'critical_error' => true,
+                            'description' => 'Mã máy không tồn tại: ' . $data->ma_may
+                        ]);
                     }
                 }
             }
