@@ -58,7 +58,7 @@ class CreateXml3Qd130sTable extends Migration
             $table->string('vet_thuong_tp')->nullable();
             $table->string('pp_vo_cam')->nullable();
             $table->string('vi_tri_th_dvkt')->nullable();
-            $table->string('ma_may')->nullable();
+            $table->text('ma_may')->nullable();
             $table->string('ma_hieu_sp')->nullable();
             $table->string('tai_su_dung')->nullable();
             $table->text('du_phong')->nullable();

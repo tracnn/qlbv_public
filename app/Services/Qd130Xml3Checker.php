@@ -239,6 +239,56 @@ class Qd130Xml3Checker
             }
         }
 
+        // Check ma_may
+        if (!empty($data->ma_may)) {
+            if (strlen($data->ma_may) > 1024) {
+                $errors->push((object)[
+                    'error_code' => $this->prefix . 'INFO_ERROR_MA_MAY_TOO_LONG',
+                    'error_name' => 'Mã máy quá dài',
+                    'critical_error' => true,
+                    'description' => 'Mã máy vượt quá 1024 kí tự: ' . $data->ma_may
+                ]);
+            } else {
+                if (!preg_match('/^[A-ZĐÁÀẠÂẦẬẨẤẪÃẢĂẰẶẲẮẴÈÉẸÊỀỆỂẾỄẺÍÌỊĨỈÒÓỌÔỒỘỔỐỖÕỎƠỜỢỞỚỠÙÚỤƯỪỰỬỨỮŨỦÝỲỴỶỸ]{2,3}\.\d\.\d{5}\.[\w;]+$/u', $data->ma_may)) {
+                    $errors->push((object)[
+                        'error_code' => $this->prefix . 'INFO_ERROR_INVALID_MA_MAY_FORMAT',
+                        'error_name' => 'Mã máy không đúng định dạng',
+                        'critical_error' => true,
+                        'description' => 'Mã máy không đúng định dạng: ' . $data->ma_may
+                    ]);
+                } else {
+                    list($xx, $n, $yyyyy, $z) = explode('.', $data->ma_may);
+                    // Validate n
+                    if (!in_array($n, ['1', '2', '3'])) {
+                        $errors->push((object)[
+                            'error_code' => $this->prefix . 'INFO_ERROR_INVALID_N',
+                            'error_name' => 'Ký hiệu nguồn kinh phí không hợp lệ',
+                            'critical_error' => true,
+                            'description' => 'Ký hiệu nguồn kinh phí không hợp lệ: ' . $n
+                        ]);
+                    }
+                    // Validate YYYYY
+                    if (strlen($yyyyy) !== 5 || !ctype_digit($yyyyy)) {
+                        $errors->push((object)[
+                            'error_code' => $this->prefix . 'INFO_ERROR_INVALID_YYYYY',
+                            'error_name' => 'Mã cơ sở KBCB trong MA_MAY không hợp lệ',
+                            'critical_error' => true,
+                            'description' => 'Mã cơ sở KBCB trong MA_MAY không hợp lệ: ' . $yyyyy
+                        ]);
+                    } else {
+                        if (!in_array($yyyyy, config('qd130xml.correct_facility_code'))) {
+                            $errors->push((object)[
+                                'error_code' => $this->prefix . 'INFO_ERROR_INVALID_YYYYY_NOT_FOUND',
+                                'error_name' => 'Mã cơ sở KBCB trong MA_MAY không đúng',
+                                'critical_error' => true,
+                                'description' => 'Mã cơ sở KBCB trong MA_MAY: ' . $yyyyy . ' không thuộc: ' . config('qd130xml.correct_facility_code')
+                            ]);
+                        }
+                    }
+                }
+            }
+        }
+
         return $errors;
     }
 
