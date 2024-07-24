@@ -197,8 +197,7 @@
         </a>
     </li>
     @endif
-    <li class="{{ ($xml1->check_hein_card && ($xml1->check_hein_card->ma_tracuu != '000' || 
-        $xml1->check_hein_card->ma_kiemtra != '00')) ? 'highlight-red' : '' }}">
+    <li class="{{ ($xml1->check_hein_card && (in_array($xml1->check_hein_card->ma_tracuu, config('qd130xml.hein_card_invalid.result_code')) || in_array($xml1->check_hein_card->ma_kiemtra, config('qd130xml.hein_card_invalid.check_code')))) ? 'highlight-red' : '' }}">
         <a data-toggle="tab" href="#menu-hein-card">Thẻ BHYT</a>
     </li>
     @if($xml1->Qd130XmlErrorResult->isNotEmpty())

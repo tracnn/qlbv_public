@@ -5,7 +5,8 @@
             <option value="">Tất cả</option>
             <option value="no_error">HS không lỗi</option>
             <option value="has_error">HS có lỗi</option>
-            <option value="has_error_hein_card">HS lỗi thẻ</option>
+            <option value="has_error_hein_card">HS lỗi thẻ (Chung)</option>
+            <option value="has_error_hein_card_without_xml">HS lỗi thẻ (Riêng)</option>
             <option value="has_error_warning">HS lỗi warning</option>
             <option value="has_error_critical">HS lỗi critical</option>
             <option value="no_error_critical">HS không critical</option>

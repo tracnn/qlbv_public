@@ -456,6 +456,7 @@ class Qd130Xml1Checker
                 $errors->push((object)[
                     'error_code' => $this->prefix . 'ADMIN_INFO_ERROR_MA_NOI_DI_NOT_FOUND',
                     'error_name' => 'Mã nơi đi không có trong danh mục',
+                    'critical_error' => true,
                     'description' => 'Mã nơi đi: ' . $data->ma_noi_di . ' không có trong danh mục CSKCB'
                 ]);
             }

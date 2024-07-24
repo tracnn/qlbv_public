@@ -158,15 +158,15 @@ class BHYTQd130Controller extends Controller
                 $result = $result->where(function ($query) {
                     $query->whereHas('Qd130XmlErrorResult')
                           ->orWhereHas('check_hein_card', function ($subQuery) {
-                              $subQuery->where('ma_kiemtra', '<>', '00')
-                                       ->orWhere('ma_tracuu', '<>', '000');
+                              $subQuery->whereIn('ma_kiemtra', config('qd130xml.hein_card_invalid.check_code'))
+                                       ->orWhereIn('ma_tracuu', config('qd130xml.hein_card_invalid.result_code'));
                           });
                 });
             } elseif ($xml_filter_status === 'no_error') {
                 $result = $result->whereDoesntHave('Qd130XmlErrorResult')
                                  ->whereDoesntHave('check_hein_card', function ($subQuery) {
-                                     $subQuery->where('ma_kiemtra', '<>', '00')
-                                              ->orWhere('ma_tracuu', '<>', '000');
+                                     $subQuery->whereIn('ma_kiemtra', config('qd130xml.hein_card_invalid.check_code'))
+                                              ->orWhereIn('ma_tracuu', config('qd130xml.hein_card_invalid.result_code'));
                                  });
             } elseif ($xml_filter_status === 'has_error_critical') {
                 $result = $result->whereHas('Qd130XmlErrorResult', function ($query) {
@@ -180,8 +180,13 @@ class BHYTQd130Controller extends Controller
                 });
             } elseif ($xml_filter_status === 'has_error_hein_card') {
                 $result = $result->whereHas('check_hein_card', function ($query) {
-                    $query->where('ma_kiemtra', '<>', '00')
-                          ->orWhere('ma_tracuu', '<>', '000');
+                    $query->whereIn('ma_kiemtra', config('qd130xml.hein_card_invalid.check_code'))
+                          ->orWhereIn('ma_tracuu', config('qd130xml.hein_card_invalid.result_code'));
+                });
+            } elseif ($xml_filter_status === 'has_error_hein_card_without_xml') {
+                $result = $result->whereHas('check_hein_card', function ($query) {
+                    $query->whereIn('ma_kiemtra', config('qd130xml.hein_card_invalid.check_code'))
+                          ->orWhereIn('ma_tracuu', config('qd130xml.hein_card_invalid.result_code'));
                 })->whereDoesntHave('Qd130XmlErrorResult');
             } elseif ($xml_filter_status === 'no_error_critical') {
                 $result = $result->whereDoesntHave('Qd130XmlErrorResult', function ($query) {
@@ -255,7 +260,9 @@ class BHYTQd130Controller extends Controller
         })
         ->setRowClass(function ($result) {
             $highlight = false;
-            if ($result->check_hein_card && ($result->check_hein_card->ma_kiemtra !== '00' || $result->check_hein_card->ma_tracuu !== '000')) {
+            if ($result->check_hein_card && (in_array($result->check_hein_card->ma_kiemtra, 
+                config('qd130xml.hein_card_invalid.check_code')) || in_array($result->check_hein_card->ma_tracuu, 
+                    config('qd130xml.hein_card_invalid.result_code')))) {
                 $highlight = true;
             }
             if (!$highlight && $result->Qd130XmlErrorResult->isNotEmpty()) {
