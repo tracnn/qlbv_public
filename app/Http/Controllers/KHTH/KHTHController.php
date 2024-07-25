@@ -752,7 +752,7 @@ class KHTHController extends Controller
 				'his_sere_serv.tdl_service_name', 'his_sere_serv.tdl_intruction_time', 'his_sere_serv.hein_card_number', 
 				'his_sere_serv.tdl_request_username', 'his_sere_serv.amount', 'his_sere_serv.price', 
 				'his_execute_room.execute_room_name')
-			->whereBetween('tdl_intruction_time', [$date_from, $date_to])
+			->whereBetween('tdl_intruction_date', [$date_from, $date_to])
 			->where([
 				['his_sere_serv.is_active', 1],
 				['his_sere_serv.is_delete', 0],

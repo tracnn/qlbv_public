@@ -29,6 +29,9 @@ class DVKTExport implements FromQuery, WithHeadings, ShouldAutoSize
     */
     public function query()
     {
+        set_time_limit(1800); // Tăng thời gian thực thi lên 1800 giây (30 phút)
+        ini_set('memory_limit', '4096M'); // Tăng giới hạn bộ nhớ nếu cần thiết
+        
         $model = DB::connection('HISPro')
             ->table('his_sere_serv')
             ->join('his_service_req', 'his_service_req.id', '=' ,'his_sere_serv.service_req_id')

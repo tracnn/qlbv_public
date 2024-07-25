@@ -98,12 +98,12 @@ class Qd130Xml14Checker
                 'description' => 'Ngày hẹn khám lại không được để trống'
             ]);
         } else {
-            if (!empty($data->ngay_ra) && ($data->ngay_hen_kl < $data->ngay_ra)) {
+            if (!empty($data->ngay_ra) && ($data->ngay_hen_kl <= $data->ngay_ra)) {
                 $errors->push((object)[
                     'error_code' => $this->prefix . 'INFO_ERROR_NGAY_HEN_KL_SMALLER_NGAY_RA',
-                    'error_name' => 'Ngày hẹn khám lại nhỏ hơn ngày ra',
+                    'error_name' => 'Ngày hẹn khám lại nhỏ hơn hoặc bằng ngày ra',
                     'critical_error' => true,
-                    'description' => 'Ngày hẹn khám lại không được nhỏ hơn ngày ra: ' . $data->ngay_hen_kl . ' < ' . $data->ngay_ra
+                    'description' => 'Ngày hẹn khám lại không được nhỏ hơn hoặc bằng ngày ra: ' . strtodatetime($data->ngay_hen_kl) . ' <= ' . strtodatetime($data->ngay_ra)
                 ]);
             }
         }
