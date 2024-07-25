@@ -70,12 +70,65 @@ class Qd130Xml4Checker
                 'description' => 'Mã dịch vụ không được để trống'
             ]);
         } else {
+            if (strlen($data->ma_dich_vu) > 15) {
+                $errors->push((object)[
+                    'error_code' => $this->prefix . 'INFO_ERROR_MA_DICH_VU_LENGTH',
+                    'error_name' => 'Mã dịch vụ quá dài',
+                    'critical_error' => true,
+                    'description' => 'Mã dịch vụ không được lớn hơn 15 kí tự: ' . $data->ma_dich_vu
+                ]);
+            }
+
             if (!ServiceCatalog::where('ma_dich_vu', $data->ma_dich_vu)->exists()) {
                 $errors->push((object)[
                     'error_code' => $this->prefix . 'INFO_ERROR_MA_DICH_VU_NOT_FOUND',
                     'error_name' => 'Mã dịch vụ không tồn tại',
                     'critical_error' => true,
                     'description' => 'Mã dịch vụ không tồn tại trong danh mục DVKT: ' . $data->ma_dich_vu
+                ]);
+            }
+        }
+
+        if (!empty($data->ma_chi_so)) {
+            if (strlen($data->ma_chi_so) > 50) {
+                $errors->push((object)[
+                    'error_code' => $this->prefix . 'INFO_ERROR_MA_CHI_SO_LENGTH',
+                    'error_name' => 'Mã chỉ số quá dài',
+                    'critical_error' => true,
+                    'description' => 'Mã chỉ số không được lớn hơn 50 kí tự: ' . $data->ma_chi_so
+                ]);
+            }
+        }
+
+        if (!empty($data->ten_chi_so)) {
+            if (strlen($data->ten_chi_so) > 255) {
+                $errors->push((object)[
+                    'error_code' => $this->prefix . 'INFO_ERROR_TEN_CHI_SO_LENGTH',
+                    'error_name' => 'Tên chỉ số quá dài',
+                    'critical_error' => true,
+                    'description' => 'Tên chỉ số không được lớn hơn 255 kí tự: ' . $data->ten_chi_so
+                ]);
+            }
+        }
+
+        if (!empty($data->gia_tri)) {
+            if (strlen($data->gia_tri) > 50) {
+                $errors->push((object)[
+                    'error_code' => $this->prefix . 'INFO_ERROR_GIA_TRI_LENGTH',
+                    'error_name' => 'Giá trị quá dài',
+                    'critical_error' => true,
+                    'description' => 'Giá trị không được lớn hơn 50 kí tự: ' . $data->gia_tri
+                ]);
+            }
+        }
+
+        if (!empty($data->don_vi_do)) {
+            if (strlen($data->don_vi_do) > 50) {
+                $errors->push((object)[
+                    'error_code' => $this->prefix . 'INFO_ERROR_DON_VI_DO_LENGTH',
+                    'error_name' => 'Đơn vị đo quá dài',
+                    'critical_error' => true,
+                    'description' => 'Đơn vị đo không được lớn hơn 50 kí tự: ' . $data->don_vi_do
                 ]);
             }
         }

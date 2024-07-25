@@ -55,7 +55,7 @@ class jobKtTheBHYT implements ShouldQueue
         // Kiểm tra token trong cache
         $tokens = Cache::get('bhyt_tokens');
 
-        if (!$tokens || strtotime($tokens['expires_in']) <= time()) {
+        if (!$tokens || strtotime($tokens['expires_in']) < time()) {
             // Đăng nhập để lấy token mới
             try {
                 $loginResponse = $client->post($this->login_url, [

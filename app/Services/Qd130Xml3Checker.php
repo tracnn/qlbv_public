@@ -282,7 +282,7 @@ class Qd130Xml3Checker
                                 'error_code' => $this->prefix . 'INFO_ERROR_INVALID_YYYYY_NOT_FOUND',
                                 'error_name' => 'Mã cơ sở KBCB trong MA_MAY không đúng',
                                 'critical_error' => true,
-                                'description' => 'Mã cơ sở KBCB trong MA_MAY: ' . $yyyyy . ' không thuộc: ' . config('qd130xml.correct_facility_code')
+                                'description' => 'Mã cơ sở KBCB trong MA_MAY: ' . $yyyyy . ' không thuộc: ' . implode(',', config('qd130xml.correct_facility_code'))
                             ]);
                         }
                     }
