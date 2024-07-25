@@ -15,7 +15,9 @@
 
 @section('body')
     <div class="wrapper">
-        <div class="center-block loading_center" id="loading_center" style="display: none; padding: 10px;"></div>
+        <div class="center-block loading_center" id="loading_center" style="display: none; padding: 10px;">
+            <i class="fa fa-spinner fa-spin" style="font-size: 3em; color: #ffffff;"></i>
+        </div>
         <!-- Main Header -->
         <header class="main-header">
             @if(config('adminlte.layout') == 'top-nav')

@@ -2,18 +2,18 @@
     text-transform: uppercase;
 }
 
-.loading_center{
+.loading_center {
     position: fixed;
     top: 0;
     right: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(102, 102, 102, 0.4); /* Sử dụng rgba để dễ dàng điều chỉnh độ mờ */
-    background-image: url('/images/loading-center.gif');
-    background-repeat: no-repeat;
-    background-position: center;
+    background-color: rgba(102, 102, 102, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
     z-index: 10000000;
-    transition: opacity 0.5s ease; /* Thêm hiệu ứng điều chỉnh độ mờ */
+    transition: opacity 0.5s ease;
 }
 
 @keyframes spin {
