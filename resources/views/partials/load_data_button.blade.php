@@ -1,7 +1,9 @@
 <div class="col-sm-12">
     <div class="form-group row">
         <div class="input-group-append">
-            <button type="button" class="btn btn-primary form-control" id="load_data_button">Tải dữ liệu...</button>
+            <button type="button" class="btn btn-primary form-control" id="load_data_button">
+                <i class="fa fa-refresh" aria-hidden="true"></i> Tải dữ liệu...
+            </button>
         </div>
     </div>
 </div>

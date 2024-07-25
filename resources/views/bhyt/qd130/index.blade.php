@@ -46,7 +46,9 @@
 <!-- /Messages -->
 @include('bhyt.qd130.partials.search')
 
-<button id="bulk-action-btn" class="btn btn-primary" disabled>Xuất XML4750</button>
+<button id="bulk-action-btn" class="btn btn-primary" disabled>
+    <i class="fa fa-download" aria-hidden="true"></i> Xuất XML4750
+</button>
 
 <div class="panel panel-default">
     <div class="panel-body table-responsive">
@@ -191,6 +193,8 @@
                     if (response.success) {
                         toastr.success(response.message);
                         table.ajax.reload();
+                        // Kiểm tra trạng thái job
+                        checkJobStatus();
                     } else {
                         toastr.error(response.message);
                     }
@@ -233,6 +237,8 @@
                     $('#infoModal').modal('show');
                     $('#modalContent').html(response);
                     initializeModalDataTables();
+                    // Kiểm tra trạng thái job
+                    checkJobStatus();
                 },
                 error: function(xhr, error, code) {
                     console.log('Error:', error);

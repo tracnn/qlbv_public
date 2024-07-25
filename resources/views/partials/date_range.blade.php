@@ -40,7 +40,9 @@
         <div class="col-sm-2">
             <div class="form-group row">
                 <label for="export_xlsx">XLS</label>
-                <button type="button" class="btn btn-success form-control" id="export_xlsx">Export...</button>
+                <button type="button" class="btn btn-success form-control" id="export_xlsx">
+                    <i class="fa fa-download" aria-hidden="true"></i> Export...
+                </button>
             </div>
         </div>
     </div>
