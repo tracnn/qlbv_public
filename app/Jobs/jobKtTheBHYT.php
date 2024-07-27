@@ -38,6 +38,10 @@ class jobKtTheBHYT implements ShouldQueue
 
     public function handle()
     {
+        if (!config('__tech.BHYT.enableCheck')) {
+            return;
+        }
+
         // Cấu hình kiểm tra từ kết quả tra cứu cũ. Mặc định là true
         if ($this->checkOldValue) {
             $existingCardCheck = check_hein_card::where('ma_lk', $this->params['ma_lk'])

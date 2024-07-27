@@ -53,7 +53,7 @@
 <script src="{{ asset('vendor/adminlte/vendor/bootstrap/dist/js/bootstrap.min.js') }}"></script>
 <script src="{{asset('vendor/print-this/printThis.js')}}"></script>
 <script src="{{ asset('/js/jquery.countdown.js')}}"></script>
-<script src="{{ asset('/js/customize.js')}}"></script>
+<script src="{{ asset('/js/customize.js')}}?v={{ time() }}"></script>
 <script src="{{asset('vendor/ckeditor/ckeditor.js')}}"></script>
 <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/js/toastr.min.js"></script>
 
