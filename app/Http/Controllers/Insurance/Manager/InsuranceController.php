@@ -60,10 +60,12 @@ class InsuranceController extends Controller
 
         $result_insurance = BHYT::checkInsuranceCard($params['card-number'],$params['name'],$params['birthday'],
             $login_result['APIKey']['access_token'],$login_result['APIKey']['id_token']);
+
         if ($result_insurance['maKetQua'] == '000') {
            $params = $this->__setSearchParam($result_insurance['maThe'], 
             $result_insurance['hoTen'], $result_insurance['ngaySinh'], $request);
         }
+
         $insurance_code = config('__tech.insurance_error_code');
         $ket_qua_dtri = config('__tech.ket_qua_dtri');
         $tinh_trang_rv = config('__tech.tinh_trang_rv');

@@ -8,6 +8,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\ClientException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use App\Models\CheckBHYT\check_hein_card;
@@ -32,7 +33,7 @@ class jobKtTheBHYT implements ShouldQueue
         // Lưu các giá trị cấu hình trong các biến đơn giản để tránh vấn đề tuần tự hóa
         $this->username = config('__tech.BHYT.username');
         $this->password = config('__tech.BHYT.password');
-        $this->check_card_url = config('__tech.BHYT.check_card_url');
+        $this->check_card_url = config('__tech.BHYT.check_card_url_2024');
         $this->login_url = config('__tech.BHYT.login_url');
     }
 
@@ -96,12 +97,17 @@ class jobKtTheBHYT implements ShouldQueue
 
     private function checkInsuranceCard($client, $access_token, $id_token, $params)
     {
+        $result_check = null;
+        $error_message = null;
+
         try {
             $response = $client->post($this->check_card_url, [
                 'form_params' => [
                     'maThe' => $params['maThe'],
                     'hoTen' => $params['hoTen'],
                     'ngaySinh' => $params['ngaySinh'],
+                    'hoTenCb' => config('__tech.BHYT.hoTenCb'),
+                    'cccdCb' => config('__tech.BHYT.cccdCb'),
                 ],
                 'query' => [
                     'token' => $access_token,
@@ -113,12 +119,34 @@ class jobKtTheBHYT implements ShouldQueue
 
             $result_check = json_decode($response->getBody(), true);
 
-            $result_insurance_code = $this->lichSuKCB($params, $result_check['maDKBD'], $result_check['gioiTinh'], 
-                $result_check['gtTheTu'], $result_check['gtTheDen']);
-            $this->addCheckHeinCard($params['ma_lk'], $result_check['maKetQua'], $result_insurance_code, $result_check);
+            // $result_insurance_code = $this->lichSuKCB($params, $result_check['maDKBD'], $result_check['gioiTinh'], 
+            //     $result_check['gtTheTu'], $result_check['gtTheDen']);
+            // $this->addCheckHeinCard($params['ma_lk'], $result_check['maKetQua'], $result_insurance_code, $result_check);
+        } catch (ClientException $e) {
+            $response = $e->getResponse();
+            $responseBody = $response->getBody()->getContents();
+            Log::error('Error during checkInsuranceCard: ' . $responseBody);
 
+            // Parse the error response
+            $result_check = json_decode($responseBody, true);
         } catch (\Exception $e) {
-            Log::error('Error during checkInsuranceCard: ' . $e->getMessage());
+            Log::error('Unexpected error during checkInsuranceCard: ' . $e->getMessage());
+            $error_message = $e->getMessage();
+        } finally {
+            // Ensure addCheckHeinCard is called regardless of error
+            $result_insurance_code = $this->lichSuKCB(
+                $params, 
+                $result_check['maDKBD'] ?? null, 
+                $result_check['gioiTinh'] ?? null, 
+                $result_check['gtTheTu'] ?? null, 
+                $result_check['gtTheDen'] ?? null
+            );
+            $this->addCheckHeinCard(
+                $params['ma_lk'], 
+                $result_check['maKetQua'], 
+                $result_insurance_code, 
+                $result_check
+            );
         }
     }
 
