@@ -207,6 +207,7 @@
     }
 
     $(document).ready(function() {
+        setInterval(checkJobStatus, 5000);
         $('.select2').select2();
         $('#select-all').on('click', function(){
             var rows = table.rows({ 'search': 'applied' }).nodes();
