@@ -473,6 +473,8 @@ class KHTHController extends Controller
 
     public function viewEmr(Request $request)
     {
+        $emr_document = null;
+        $emr_treatment = null;
         $document_type_code = [22,47,94];
         $patient_type_code = ['03','99'];
         $param = $request->get('treatment_code') ? $request->get('treatment_code') : '';
