@@ -39,4 +39,9 @@ class CustomUser extends Authenticatable
       return $this->hasRole($roles) || 
              abort(401, 'This action is unauthorized.');
     }
+
+    public function his_employee()
+    {
+        return $this->hasOne('App\Models\HISPro\HIS_EMPLOYEE', 'loginname', 'loginname');
+    }
 }

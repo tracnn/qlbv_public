@@ -36,6 +36,15 @@ class BHYT
         $username = config('__tech.BHYT.username');
         $password = config('__tech.BHYT.password');
 
+        if (config('__tech.BHYT.check_by_user')) {
+            $user = \Auth::user();
+            $hoTenCb =  $user->username;
+            $cccdCb = $user->his_employee->identification_number;
+        } else {
+            $hoTenCb =  config('__tech.BHYT.hoTenCb');
+            $cccdCb = config('__tech.BHYT.cccdCb');
+        }
+
         $client = new GuzzleHttp\Client();
         try {
             $res = $client->request('POST', $check_card_url,
@@ -44,8 +53,8 @@ class BHYT
                     'maThe' => $number,
                     'hoTen' => $name,
                     'ngaySinh' => $birthday,
-                    'hoTenCb' => config('__tech.BHYT.hoTenCb'),
-                    'cccdCb' => config('__tech.BHYT.cccdCb'),
+                    'hoTenCb' => $hoTenCb,
+                    'cccdCb' => $cccdCb,
                 ],
                 'query' => [
                     'token' => $access_token,
