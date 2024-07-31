@@ -25,3 +25,7 @@ Cập nhật API tra cứu thẻ BHYT 2024: KQNhanLichSuKCB2024
 6. Toàn bộ chi phí của lần khám bệnh, chữa bệnh BHYT có sử dụng thuốc chống thải ghép đối với người bệnh ghép tạng;
 7. Toàn bộ chi phí của lần khám bệnh, chữa bệnh BHYT có sử dụng thuốc điều trị viêm gan C của người bệnh bị bệnh viên gan C;
 8. Toàn bộ chi phí của lần khám bệnh, chữa bệnh BHYT có sử dụng thuốc kháng HIV hoặc dịch vụ xét nghiệm tải lượng HIV của người bệnh có thẻ BHYT được chẩn đoán bệnh HIV.
+
+- Cập nhật kiểm tra trường KET_LUAN trong Xml4
+Bổ sung mã nhóm trong Xml3 bắt buộc phải có KET_LUAN trong Xml4: config.qd130xml.xml4.xml3_ma_nhom_require_ket_luan
+Bổ sung kiểm tra bắt buộc phải có trường KET_LUAN trong Qd130Xml4Checker

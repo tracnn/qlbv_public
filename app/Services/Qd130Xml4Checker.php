@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\BHYT\Qd130Xml4;
+use App\Models\BHYT\Qd130Xml3;
 use App\Models\BHYT\ServiceCatalog;
 use App\Models\BHYT\MedicalStaff;
 use Illuminate\Support\Collection;
@@ -85,6 +86,32 @@ class Qd130Xml4Checker
                     'error_name' => 'Mã dịch vụ không tồn tại',
                     'critical_error' => true,
                     'description' => 'Mã dịch vụ không tồn tại trong danh mục DVKT: ' . $data->ma_dich_vu
+                ]);
+            }
+        }
+
+        //ket_luan & mo_ta không được để trống
+        if (!empty($data->ma_dich_vu)) {
+            $require_mo_ta_ket_luan = Qd130Xml3::where('ma_lk', $data->ma_lk)
+            ->where('ma_dich_vu', $data->ma_dich_vu)
+            ->whereIn('ma_nhom', config('qd130xml.xml4.xml3_ma_nhom_require_ket_luan'))
+            ->exists();
+
+            if ($require_mo_ta_ket_luan && empty($data->mo_ta)) {
+                $errors->push((object)[
+                    'error_code' => $this->prefix . 'INFO_ERROR_MO_TA_EMPTY',
+                    'error_name' => 'Mô tả không được để trống',
+                    'critical_error' => true,
+                    'description' => 'Mô tả không được để trống đối với DVKT: ' . $data->ma_dich_vu
+                ]);
+            }
+            
+            if ($require_mo_ta_ket_luan && empty($data->ket_luan)) {
+                $errors->push((object)[
+                    'error_code' => $this->prefix . 'INFO_ERROR_KET_LUAN_EMPTY',
+                    'error_name' => 'Kết luận không được để trống',
+                    'critical_error' => true,
+                    'description' => 'Kết luận không được để trống đối với DVKT: ' . $data->ma_dich_vu
                 ]);
             }
         }
