@@ -286,18 +286,32 @@ class Qd130XmlCompleteChecker
         }
 
         // Kiểm tra tiền t_bhtt_gdv
-        $sum_t_bhtt_xml2 = Qd130Xml2::where('ma_lk', $data->ma_lk)->where('ma_pttt', 1)->sum('t_bhtt');
-        $sum_t_bhtt_xml3 = Qd130Xml3::where('ma_lk', $data->ma_lk)->where('ma_pttt', 1)->sum('t_bhtt');
-        $total_t_bhtt = $sum_t_bhtt_xml2 + $sum_t_bhtt_xml3;
-        $t_bhtt_gdv = doubleval($data->t_bhtt_gdv) ?? 0;
+        $prefix_hein_card_exclude_t_bhtt_gdv = config('qd130xml.prefix_hein_card_exclude_t_bhtt_gdv');
+        // Check if the ma_the_bhyt starts with any of the excluded prefixes
+        $excluded = false;
+        foreach ($prefix_hein_card_exclude_t_bhtt_gdv as $prefix) {
+            if (strpos($data->ma_the_bhyt, $prefix) === 0) {
+                $excluded = true;
+                break;
+            }
+        }
 
-        if ($data->t_bhtt_gdv != round($total_t_bhtt, 2)) {
-            $errors->push((object)[
-                'error_code' => $this->prefix . 'INVALID_EXPENSE_T_BHTT_GDV',
-                'error_name' => 'Tiền bảo hiểm thanh toán GDV không khớp',
-                'critical_error' => true,
-                'description' => 'Tiền bảo hiểm thanh toán GDV trong XML1: ' . $t_bhtt_gdv . ' <> tổng tiền trong XML2 và XML3: ' . $total_t_bhtt
-            ]);
+        if ( !$excluded ) {
+            $sum_t_bhtt_xml2 = Qd130Xml2::where('ma_lk', $data->ma_lk)->where('ma_pttt', 1)->sum('t_bhtt');
+            $sum_t_bhtt_xml3 = Qd130Xml3::where('ma_lk', $data->ma_lk)->where('ma_pttt', 1)->sum('t_bhtt');
+            $total_t_bhtt = $sum_t_bhtt_xml2 + $sum_t_bhtt_xml3;
+            $t_bhtt_gdv = doubleval($data->t_bhtt_gdv) ?? 0;
+
+
+            if ($data->t_bhtt_gdv != round($total_t_bhtt, 2)) {
+                $errors->push((object)[
+                    'error_code' => $this->prefix . 'INVALID_EXPENSE_T_BHTT_GDV',
+                    'error_name' => 'Tiền bảo hiểm thanh toán GDV không khớp',
+                    'critical_error' => true,
+                    'description' => 'Tiền bảo hiểm thanh toán GDV trong XML1: ' . $t_bhtt_gdv . ' <> tổng tiền trong XML2 và XML3: ' . $total_t_bhtt
+                ]);
+            }
+
         }
 
         return $errors;

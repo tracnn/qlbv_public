@@ -38,4 +38,5 @@ return [
         'result_code' => ['003', '010', '050', '051', '052', '053', '060', 
         '061', '070', '110', '120', '121' ,'122', '123', '124', '130'],
     ],
+    'prefix_hein_card_exclude_t_bhtt_gdv' => ['CA', 'CY', 'QN'], //Bổ sung không check completeXml đối với những thẻ này
 ];

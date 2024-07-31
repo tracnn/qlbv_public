@@ -8,6 +8,7 @@
                         <th>Mã Tra Cứu</th>
                         <th>Mã Kiểm Tra</th>
                         <th>Ghi Chú</th>
+                        <th>Thời Gian</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -15,6 +16,7 @@
                         <td>{{ config('__tech.insurance_error_code')[$xml1->check_hein_card->ma_tracuu] }}</td>
                         <td>{{ config('__tech.check_insurance_code')[$xml1->check_hein_card->ma_kiemtra] }}</td>
                         <td>{{ $xml1->check_hein_card->ghi_chu }}</td>
+                        <td>{{ $xml1->check_hein_card->created_at }}</td>
                     </tr>
                 </tbody>
             </table>
