@@ -483,6 +483,15 @@ class Qd130Xml3Checker
                     'description' => 'Ngày trả kết quả (NGAY_KQ) không nằm trong khoảng thời gian vào (' . strtodatetime($ngayVao) . ') và ra (' . strtodatetime($ngayRa) . ')'
                 ]);
             }
+
+            if ($data->ngay_kq < $data->ngay_yl) {
+                $errors->push((object)[
+                    'error_code' => $this->prefix . 'INVALID_NGAY_KQ_LESSTHEN_NGAY_YL',
+                    'error_name' => 'Ngày kết quả nhỏ hơn ngày y lệnh',
+                    'critical_error' => true,
+                    'description' => 'Ngày kết quả của: ' . $data->ten_dich_vu . '. Không được nhỏ hơn ngày y lệnh: ' . strtodatetime($data->ngay_kq) . ' < ' . strtodatetime($data->ngay_yl)
+                ]);
+            }
         }
 
         return $errors;
