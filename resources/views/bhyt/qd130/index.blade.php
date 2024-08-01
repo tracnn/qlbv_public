@@ -225,11 +225,14 @@
         });
 
         $('#xml-list tbody').on('dblclick', 'tr', function () {
+            $("#loading_center").show();
             let data = table.row(this).data();
             // Remove highlight from any previously highlighted row
             $('#xml-list tbody tr').removeClass('highlight-row');
             // Add highlight to the current row
             $(this).addClass('highlight-row');
+            // Show loading spinner
+            $("#loading_center").show();
             // Tải chi tiết hồ sơ bằng AJAX
             $.ajax({
                 url: '{{ route('bhyt.qd130.detail-xml', '') }}/' + data.ma_lk,
@@ -245,6 +248,10 @@
                     console.log('Error:', error);
                     console.log('Code:', code);
                     console.log('XHR:', xhr);
+                },
+                complete: function() {
+                    // Hide loading spinner
+                    $("#loading_center").hide();
                 }
             });
         });
