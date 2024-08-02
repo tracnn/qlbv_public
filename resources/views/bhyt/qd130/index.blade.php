@@ -57,7 +57,7 @@
                 <tr>
                     <th>Mã điều trị</th>
                     <th><input type="checkbox" id="select-all"></th>
-                    <th>Export</th>
+                    <th>Exported</th>
                     <th>Mã BN</th>
                     <th>Họ tên</th>
                     <th>Mã thẻ</th>
