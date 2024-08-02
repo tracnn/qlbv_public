@@ -24,6 +24,24 @@
     overflow: hidden; /* Ngăn chặn text bị tràn nếu quá dài */
     text-overflow: ellipsis; /* Thêm dấu ... nếu text quá dài */
 }
+
+.modal-body {
+    margin-top: 10px;
+}
+
+#qrcodeCanvas {
+    margin-top: 20px;
+    display: none;
+}
+
+#qrcodeImage {
+    margin-top: 20px;
+    max-width: 100%;
+    display: none;
+    margin-left: auto;
+    margin-right: auto;
+    display: block;
+}
 </style>
 <div class="container">
   <!-- Brand and toggle get grouped for better mobile display -->
@@ -48,7 +66,94 @@
         <li><a href="#">Các dịch vụ</a></li>
         <li><a href="#">Bảng giá</a></li>
         <li><a href="#">Liên hệ</a></li>
+        <li><a href="#" data-toggle="modal" data-target="#qrcodeModal">Gen QRCode</a></li>
       </ul>
     </div><!-- /.navbar-collapse -->
   </nav>
 </div>
+
+<!-- Modal -->
+<div class="modal fade" id="qrcodeModal" tabindex="-1" role="dialog" aria-labelledby="qrcodeModalLabel">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="qrcodeModalLabel">Gen QRCode</h4>
+      </div>
+      <div class="modal-body">
+        <form id="qrcodeForm">
+          <div class="form-group">
+            <label for="qrcodeText">Nhập chuỗi:</label>
+            <input type="text" class="form-control" id="qrcodeText" required>
+          </div>
+          <div class="form-group">
+            <label for="qrcodeLogo">Upload logo:</label>
+            <input type="file" class="form-control" id="qrcodeLogo" accept="image/*" required>
+          </div>
+          <button type="submit" class="btn btn-primary">Generate QRCode</button>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <canvas id="qrcodeCanvas" style="display:none;"></canvas>
+        <img id="qrcodeImage" style="max-width: 100%; display:none;">
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script>
+document.getElementById('qrcodeForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    var text = document.getElementById('qrcodeText').value;
+    var logo = document.getElementById('qrcodeLogo').files[0];
+    var canvas = document.getElementById('qrcodeCanvas');
+    var ctx = canvas.getContext('2d');
+
+    // Tạo QRCode
+    var qr = qrcode(0, 'H');
+    qr.addData(text);
+    qr.make();
+
+    canvas.width = canvas.height = 300; // Kích thước QRCode
+    var qrSize = canvas.width;
+
+    // Vẽ QRCode lên canvas
+    qr.renderTo2dContext(ctx, qrSize / qr.getModuleCount());
+
+    // Thêm logo vào QRCode
+    if (logo) {
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            var img = new Image();
+            img.src = e.target.result;
+            img.onload = function() {
+                var logoSize = qrSize / 5;
+                var logoX = (qrSize - logoSize) / 2;
+                var logoY = (qrSize - logoSize) / 2;
+                ctx.drawImage(img, logoX, logoY, logoSize, logoSize);
+                // Hiển thị QRCode
+                document.getElementById('qrcodeImage').src = canvas.toDataURL();
+                document.getElementById('qrcodeImage').style.display = 'block';
+            };
+        };
+        reader.readAsDataURL(logo);
+    } else {
+        // Hiển thị QRCode không có logo
+        document.getElementById('qrcodeImage').src = canvas.toDataURL();
+        document.getElementById('qrcodeImage').style.display = 'block';
+    }
+});
+
+// Xóa các giá trị cũ khi modal bị đóng
+document.getElementById('qrcodeModal').addEventListener('hidden.bs.modal', function () {
+    document.getElementById('qrcodeText').value = '';
+    document.getElementById('qrcodeLogo').value = '';
+    var canvas = document.getElementById('qrcodeCanvas');
+    var ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    document.getElementById('qrcodeImage').style.display = 'none';
+    document.getElementById('qrcodeImage').src = '';
+});
+</script>
