@@ -487,6 +487,13 @@ return [
                     'route'   => 'reports-administrator.accoutant-payment-index',
                     'active'=> ['reports-administrator/accoutant-payment-index*'],
                 ],
+                [
+                    'text'  => 'Danh sách BN PT',
+                    'icon'  => 'bar-chart',
+                    'checkrole'   => 'qlcl',
+                    'route'   => 'reports-administrator.list-patient-pt',
+                    'active'=> ['reports-administrator/list-patient-pt*'],
+                ],
             ],
         ],
         [

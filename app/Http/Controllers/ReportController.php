@@ -370,4 +370,30 @@ class ReportController extends Controller
         $fileName = 'apd_data_' . Carbon::now()->format('YmdHis') . '.xlsx';
         return Excel::download(new APDataExport($date_from, $date_to), $fileName);
     }
+
+    public function listPatientPt()
+    {
+        return view('administrator.list-patient-pt');
+    }
+
+    public function fetchPatientPt(Request $request)
+    {
+        // list($sql, $bindings) = $this->reportDataService->buildSqlQueryAndBindingsPa($request);
+
+        // // Execute the query and get the results
+        // $results = DB::connection('HISPro')->select(DB::raw($sql), $bindings);
+
+        // // Return the results as DataTables and use editColumn and addColumn
+        // return DataTables::of($results)
+        // ->editColumn('amount', function($result) {
+        //     return number_format($result->amount);
+        // })
+        // ->editColumn('tdl_patient_dob', function($result) {
+        //     return strtodate($result->tdl_patient_dob);
+        // })
+        // ->editColumn('transaction_time', function($result) {
+        //     return strtodatetime($result->transaction_time);
+        // })
+        // ->make(true);
+    }
 }

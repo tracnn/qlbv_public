@@ -466,6 +466,13 @@ Route::group(['middleware' => 'auth'], function () {
         ->name('reports-administrator.export-accoutant-payment-data');
     });
 
+    /* Reports Account Payment*/
+    Route::group(['prefix' => 'reports-administrator/', 'middleware' => ['checkrole:qlcl']], function () {  
+        Route::get('list-patient-pt', 'ReportController@listPatientPt')
+        ->name('reports-administrator.list-patient-pt');
+        Route::get('fetch-patient-pt', 'ReportController@fetchPatientPt')
+        ->name('reports-administrator.fetch-patient-pt');
+    });
 
 });
 
