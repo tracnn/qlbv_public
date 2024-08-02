@@ -341,6 +341,7 @@
     }
 
     function exportSelectedRecordsToXml(selectedRecords) {
+        $("#loading_center").show();
         $.ajax({
             url: '{{ route("bhyt.qd130.export-xml") }}',
             type: 'POST',
@@ -363,6 +364,10 @@
                 } else {
                     alert('Có lỗi xảy ra, vui lòng thử lại.');
                 }
+            },
+            complete: function() {
+                // Hide loading spinner
+                $("#loading_center").hide();
             }
         });
     }
