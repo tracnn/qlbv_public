@@ -189,6 +189,8 @@
                 return \DateTime::createFromFormat('Ymd', $dob)->format('d/m/Y');
             } elseif (strlen($dob) === 12) {
                 return \DateTime::createFromFormat('YmdHi', $dob)->format('d/m/Y');
+            } elseif (strlen($dob) === 14) {
+                return \DateTime::createFromFormat('YmdHis', $dob)->format('d/m/Y');
             } else {
                 return null; // Hoặc xử lý theo cách khác nếu cần
             }

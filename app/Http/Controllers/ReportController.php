@@ -378,22 +378,89 @@ class ReportController extends Controller
 
     public function fetchPatientPt(Request $request)
     {
-        // list($sql, $bindings) = $this->reportDataService->buildSqlQueryAndBindingsPa($request);
+        $dateFrom = $request->input('date_from');
+        $dateTo = $request->input('date_to');
+        $date_type = $request->input('date_type');
+        // Kiểm tra và chuyển đổi định dạng ngày tháng
+        if (strlen($dateFrom) == 10) { // Định dạng YYYY-MM-DD
+            $dateFrom = Carbon::createFromFormat('Y-m-d', $dateFrom)->startOfDay()->format('Y-m-d H:i:s');
+        }
 
-        // // Execute the query and get the results
-        // $results = DB::connection('HISPro')->select(DB::raw($sql), $bindings);
+        if (strlen($dateTo) == 10) { // Định dạng YYYY-MM-DD
+            $dateTo = Carbon::createFromFormat('Y-m-d', $dateTo)->endOfDay()->format('Y-m-d H:i:s');
+        }
+        // Chuyển đổi định dạng ngày tháng từ 'YYYY-MM-DD HH:mm:ss' sang 'YYYYMMDDHHiiss'
+        $formattedDateFrom = Carbon::createFromFormat('Y-m-d H:i:s', $dateFrom)->format('YmdHis');
+        $formattedDateTo = Carbon::createFromFormat('Y-m-d H:i:s', $dateTo)->format('YmdHis');
+        
+        // Define the date field based on date_type
+        switch ($date_type) {
+            case 'date_in':
+                $dateField = 'tm.in_time';
+                break;
+            case 'date_out':
+                $dateField = 'tm.out_time';
+                break;
+            case 'date_payment':
+                $dateField = 'tm.fee_lock_time';
+                break;
+            case 'date_intruction':
+                $dateField = 'sr.intruction_time';
+                break;
+            default:
+                $dateField = 'sr.intruction_time';
+                break;
+        }
 
-        // // Return the results as DataTables and use editColumn and addColumn
-        // return DataTables::of($results)
-        // ->editColumn('amount', function($result) {
-        //     return number_format($result->amount);
-        // })
-        // ->editColumn('tdl_patient_dob', function($result) {
-        //     return strtodate($result->tdl_patient_dob);
-        // })
-        // ->editColumn('transaction_time', function($result) {
-        //     return strtodatetime($result->transaction_time);
-        // })
-        // ->make(true);
+        $service_req_type_pt = [10];
+
+        $query = DB::connection('HISPro')
+            ->table('his_sere_serv as ss')
+            ->join('his_service_req as sr', 'sr.id', '=', 'ss.service_req_id')
+            ->join('his_patient_type as pt', 'pt.id', '=', 'sr.tdl_patient_type_id')
+            ->join('his_treatment as tm', 'tm.id', '=', 'sr.treatment_id')
+            ->join('his_patient as pa', 'pa.id', '=', 'tm.patient_id')
+            ->join('his_treatment_type as tt', 'tt.id', '=', 'sr.treatment_type_id')
+            ->leftJoin('his_department as re_dept', 're_dept.id', '=', 'ss.tdl_request_department_id')
+            ->select(
+                'sr.tdl_patient_name',
+                'sr.tdl_patient_gender_name',
+                'sr.tdl_patient_dob',
+                'sr.tdl_treatment_code',
+                'sr.tdl_patient_code',
+                'sr.request_username',
+                'sr.execute_username',
+                'pt.patient_type_name',
+                'tm.in_time',
+                'tm.out_time',
+                'tm.tdl_patient_phone',
+                'tm.tdl_patient_address',
+                'tm.tdl_patient_district_name',
+                'pa.relative_name',
+                'pa.relative_mobile',
+                'tt.treatment_type_name',
+                'ss.tdl_service_name',
+                're_dept.department_name',
+                'sr.intruction_time',
+            )
+            ->where('ss.is_delete', 0)
+            ->whereIn('sr.service_req_type_id', $service_req_type_pt)
+            ->whereNull('ss.is_expend')
+            ->whereBetween($dateField, [$formattedDateFrom, $formattedDateTo]);
+
+        return DataTables::of($query)
+        ->editColumn('tdl_patient_dob', function($result) {
+            return dob($result->tdl_patient_dob);
+        })
+        ->editColumn('in_time', function($result) {
+            return strtodatetime($result->in_time);
+        })
+        ->editColumn('out_time', function($result) {
+            return strtodatetime($result->out_time);
+        })
+        ->editColumn('intruction_time', function($result) {
+            return strtodatetime($result->intruction_time);
+        })
+        ->toJson();
     }
 }

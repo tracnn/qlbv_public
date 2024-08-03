@@ -19,13 +19,17 @@
             <thead>
                 <tr>
                     <th>Mã Điều Trị</th>
-                    <th>Mã BN</th>
                     <th>Họ Và Tên</th>
+                    <th>Địa chỉ</th>
                     <th>Ngày Sinh</th>
                     <th>Số điện thoại</th>
                     <th>Ngày vào</th>
                     <th>Ngày ra</th>
-                    <th>Khoa Điều Trị</th>
+                    <th>Ngày chỉ định</th>
+                    <th>Tên dịch vụ</th>
+                    <th>BS chỉ định</th>
+                    <th>Người nhà</th>
+                    <th>Số người nhà</th>
                 </tr>
             </thead>
         </table>
@@ -53,6 +57,7 @@
                 data: function(d) {
                     d.date_from = startDate;
                     d.date_to = endDate;
+                    d.date_type = $('#date_type').val();
                 },
                 beforeSend: function(xhr) {
                     currentAjaxRequest = xhr;
@@ -68,16 +73,17 @@
             },
             "columns": [
                 { data: 'tdl_treatment_code' },
-                { data: 'tdl_patient_code' },
                 { data: 'tdl_patient_name' },
+                { data: 'tdl_patient_district_name' },
                 { data: 'tdl_patient_dob' },
-                { data: 'transaction_code' },
-                { data: 'transaction_time' },
-                { data: 'amount', className: 'text-right' },
-                { data: 'cashier_username' },
-                { data: 'transaction_type_name' },
-                { data: 'pay_form_name' },
-                { data: 'department_name' },
+                { data: 'tdl_patient_phone' },
+                { data: 'in_time' },
+                { data: 'out_time' },
+                { data: 'intruction_time' },
+                { data: 'tdl_service_name' },
+                { data: 'request_username' },
+                { data: 'relative_name' },
+                { data: 'relative_mobile' },
             ],
         });
 
