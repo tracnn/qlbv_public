@@ -28,6 +28,7 @@
                     <th>Ngày chỉ định</th>
                     <th>Tên dịch vụ</th>
                     <th>BS chỉ định</th>
+                    <th>Khoa chỉ định</th>
                     <th>Người nhà</th>
                     <th>Số người nhà</th>
                 </tr>
@@ -82,6 +83,7 @@
                 { data: 'intruction_time' },
                 { data: 'tdl_service_name' },
                 { data: 'request_username' },
+                { data: 'department_name' },
                 { data: 'relative_name' },
                 { data: 'relative_mobile' },
             ],
