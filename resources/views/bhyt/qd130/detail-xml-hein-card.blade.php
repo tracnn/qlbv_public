@@ -16,7 +16,7 @@
                         <td>{{ config('__tech.insurance_error_code')[$xml1->check_hein_card->ma_tracuu] }}</td>
                         <td>{{ config('__tech.check_insurance_code')[$xml1->check_hein_card->ma_kiemtra] }}</td>
                         <td>{{ $xml1->check_hein_card->ghi_chu }}</td>
-                        <td>{{ $xml1->check_hein_card->created_at }}</td>
+                        <td>{{ $xml1->check_hein_card->updated_at }}</td>
                     </tr>
                 </tbody>
             </table>
