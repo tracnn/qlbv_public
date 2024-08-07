@@ -31,3 +31,6 @@ Bổ sung mã nhóm trong Xml3 bắt buộc phải có KET_LUAN trong Xml4: conf
 Bổ sung kiểm tra bắt buộc phải có trường KET_LUAN trong Qd130Xml4Checker
 
 - Bổ sung kiểm tra Ngày trả kết quả trong Xml3 đối với DVKT < Ngày y lệnh
+
+# 07/08/2024
+- Cập nhật kiểm tra Xml5, thời điểm dbls phải nằm trong khoảng thời gian vào và ra
