@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Storage;
 use DataTables;
 use DB;
 use App\Exports\KSKExport;
+use Carbon\Carbon;
 
 class KskController extends Controller
 {
@@ -93,9 +94,18 @@ class KskController extends Controller
             return redirect()->route('home');
         }
 
-        $ParamNgay = $this->ParamNgay($request);
-        $date_from = date_format(date_create($ParamNgay['tu_ngay']),'Ymd000000');
-        $date_to = date_format(date_create($ParamNgay['den_ngay']),'Ymd235959');
+        $dateFrom = $request->input('date_from');
+        $dateTo = $request->input('date_to');
+        if (strlen($dateFrom) == 10) { // Format YYYY-MM-DD
+            $dateFrom = Carbon::createFromFormat('Y-m-d', $dateFrom)->startOfDay()->format('Y-m-d H:i:s');
+        }
+
+        if (strlen($dateTo) == 10) { // Format YYYY-MM-DD
+            $dateTo = Carbon::createFromFormat('Y-m-d', $dateTo)->endOfDay()->format('Y-m-d H:i:s');
+        }
+
+        $formattedDateFrom = Carbon::createFromFormat('Y-m-d H:i:s', $dateFrom)->format('YmdHis');
+        $formattedDateTo = Carbon::createFromFormat('Y-m-d H:i:s', $dateTo)->format('YmdHis');
 
         $execute_room_id = [58,126,642];
      
@@ -123,7 +133,7 @@ class KskController extends Controller
         'his_service_req.health_exam_rank_id','his_service_req.note as service_req_note', 'his_service_req.treatment_instruction',
         'his_service_req.pathological_history','his_treatment.tdl_patient_avatar_url','his_service_req.subclinical',
         'his_treatment.tdl_patient_phone','his_service_req.next_treatment_instruction')
-        ->whereBetween('his_service_req.intruction_time', [$date_from, $date_to])
+        ->whereBetween('his_service_req.intruction_time', [$formattedDateFrom, $formattedDateTo])
         ->where([
             ['his_service_req.is_active', 1],
             ['his_service_req.is_delete', 0],
@@ -140,7 +150,7 @@ class KskController extends Controller
 
         return DataTables::of($model)
         ->editColumn('tdl_patient_dob', function($result) {
-            return substr($result->tdl_patient_dob, 0, 4);
+            return dob($result->tdl_patient_dob);
         })
         ->editColumn('tdl_patient_phone', function($result) {
             return '<a href="tel:' .$result->tdl_patient_phone .'">' .$result->tdl_patient_phone .'</a>';

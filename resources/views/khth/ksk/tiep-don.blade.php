@@ -121,6 +121,7 @@ $(document).on('click', '.edit-modal-tiepdon', function() {
     $('#giay_tuy_than').val("");
 
     if ($(this).data('tdl_patient_avatar_url_tiepdon')) {
+        $("#loading_center").show();
         $.ajax({
             type: 'GET',
             url: '{{route("ksk.download-avatar")}}',
@@ -142,11 +143,16 @@ $(document).on('click', '.edit-modal-tiepdon', function() {
                         $('#avatar').attr("src", data);
                     }
                 }
+            },
+            complete: function() {
+                // Hide loading spinner
+                $("#loading_center").hide();
             }
         });   
     }
 
     if ($(this).data('id')) {
+        $("#loading_center").show();
         $.ajax({
             type: 'GET',
             url: '{{route("ksk.get-patient")}}',
@@ -177,6 +183,10 @@ $(document).on('click', '.edit-modal-tiepdon', function() {
                         $('#hospitalization_reason').val(data.hospitalization_reason);
                     }
                 }
+            },
+            complete: function() {
+                // Hide loading spinner
+                $("#loading_center").hide();
             }
         });   
     }
@@ -216,7 +226,6 @@ function tiepdon() {
             'hospitalization_reason': $('#hospitalization_reason').val(),
         },
         success: function(data) {
-            $('#loading_center').hide();
             switch (data.maKetqua)
             {
                 case '500': {
@@ -233,6 +242,10 @@ function tiepdon() {
                 }
             }
             $('#ksk-index').DataTable().ajax.reload();
+        },
+        complete: function() {
+            // Hide loading spinner
+            $("#loading_center").hide();
         }
     });        
 }

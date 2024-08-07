@@ -26,6 +26,31 @@ class LoginController extends Controller
 
     public function login(Request $request)
     {
+        // Kiểm tra model được cấu hình
+        $userModel = config('auth.providers.users.model');
+
+        if ($userModel == 'App\User') {
+            // Sử dụng logic đăng nhập mặc định của Laravel
+            return $this->defaultLogin($request);
+        } else {
+            // Sử dụng logic đăng nhập tùy chỉnh
+            return $this->customLogin($request);
+        }
+    }
+
+    protected function defaultLogin(Request $request)
+    {
+        $this->validateLogin($request);
+
+        if ($this->attemptLogin($request)) {
+            return $this->sendLoginResponse($request);
+        }
+
+        return $this->sendFailedLoginResponse($request);
+    }
+
+    protected function customLogin(Request $request)
+    {
         $this->validateLogin($request);
 
         // Lấy thông tin đăng nhập từ request

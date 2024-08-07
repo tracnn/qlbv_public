@@ -549,6 +549,7 @@ $(document).on('click', '.edit-modal-tongket', function() {
     $('#subclinical').val($(this).data('subclinical'));
     $('#editModalTongket').modal('show');
 
+    $("#loading_center").show();
     $.ajax({
         type: 'GET',
         url: '{{route("ksk.kq-cls")}}',
@@ -570,6 +571,10 @@ $(document).on('click', '.edit-modal-tongket', function() {
                     $('#kq_cls').html(data);
                 }
             }
+        },
+        complete: function() {
+            // Hide loading spinner
+            $("#loading_center").hide();
         }
     });  
 });
@@ -577,6 +582,7 @@ $(document).on('click', '.edit-modal-tongket', function() {
 function khamtongket() {
     if (window.confirm("Bạn có chắc chắn không?")) 
     {
+        $("#loading_center").show();
         $.ajax({
             type: 'POST',
             url: '{{route("ksk.kham-tongket")}}',
@@ -606,6 +612,10 @@ function khamtongket() {
                 }
                 location.reload();
                 //$('#ksk-index').DataTable().ajax.reload();
+            },
+            complete: function() {
+                // Hide loading spinner
+                $("#loading_center").hide();
             }
         });        
     }

@@ -12,7 +12,7 @@
 
 @section('content')
 @include('includes.message')
-@include('khth.ksk.search')
+@include('khth.ksk..partials.search')
 <div class="panel panel-default">
     <div class="panel-heading">
         Danh sách hồ sơ
@@ -602,38 +602,58 @@
 @stop
 
 @push('after-scripts')
-<script>
-$(document).ready( function () {
-    $('#ksk-index').DataTable({
-        "processing": true,
-        "serverSide": true,
-        "stateSave": true,
-        "searchDelay" : 1000,
-        "ajax": {
-            url: "{{ route('ksk.get-danh-sach') }}",
-            data: {
-                tu_ngay: $('#tu_ngay').val(),
-                den_ngay: $('#den_ngay').val(),
-                hop_dong: $('#hop_dong').val(),
-                trang_thai: $('#trang_thai').val(),
-            }
-        },
-        "columns": [
-            {"data": "num_order", "name": "num_order"},
-            {"data": "service_req_stt_name", "name": "his_service_req_stt.service_req_stt_name"},
-            {"data": "tdl_treatment_code", "name": "tdl_treatment_code"},
-            {"data": "tdl_patient_name", "name": "tdl_patient_name"},
-            {"data": "tdl_patient_dob", "name": "tdl_patient_dob"},
-            {"data": "tdl_patient_gender_name", "name": "tdl_patient_gender_name"},
-            {"data": "tdl_patient_phone", "name": "tdl_patient_phone"},
-            {"data": "action", "name": "action"},
-        ],
-        "oLanguage": {
-          "sUrl": "{{asset('vendor/datatables/lang/vi.json')}}"
-        },
-    });
+<script type="text/javascript">
+    var currentAjaxRequest = null; // Biến để lưu trữ yêu cầu AJAX hiện tại
+    var table = null;
 
-});
+    function fetchData(startDate, endDate) {
+        // Kiểm tra và hủy yêu cầu AJAX trước đó (nếu có)
+        if (currentAjaxRequest != null) {
+            currentAjaxRequest.abort();
+        }
+
+        table = $('#ksk-index').DataTable({
+            "processing": true,
+            "serverSide": true,
+            "destroy": true, // Destroy any existing DataTable before reinitializing
+            "ajax": {
+                url: "{{ route('ksk.get-danh-sach') }}",
+                data: function(d) {
+                    d.date_from = startDate;
+                    d.date_to = endDate;
+                },
+                beforeSend: function(xhr) {
+                    currentAjaxRequest = xhr;
+                },
+                complete: function(xhr, status) {
+                    currentAjaxRequest = null;
+                },
+                error: function(xhr, error, code) {
+                    console.log('Error:', error);
+                    console.log('Code:', code);
+                    console.log('XHR:', xhr);
+                }
+            },
+            "columns": [
+                {"data": "num_order", "name": "num_order"},
+                {"data": "service_req_stt_name", "name": "his_service_req_stt.service_req_stt_name"},
+                {"data": "tdl_treatment_code", "name": "tdl_treatment_code"},
+                {"data": "tdl_patient_name", "name": "tdl_patient_name"},
+                {"data": "tdl_patient_dob", "name": "tdl_patient_dob"},
+                {"data": "tdl_patient_gender_name", "name": "tdl_patient_gender_name"},
+                {"data": "tdl_patient_phone", "name": "tdl_patient_phone"},
+                {"data": "action", "name": "action"},
+            ],
+            "oLanguage": {
+              "sUrl": "{{asset('vendor/datatables/lang/vi.json')}}"
+            },
+        });
+
+        table.ajax.reload();
+    }
+</script>
+
+<script>
 
 $(document).on('click', '.edit-modal-theluc', function() {
     $('.modal-title').html('Khám thể lực: ' + $(this).data('title'));
@@ -731,6 +751,7 @@ $('#maukhamrhm').on('click', function() {
 });
 
 function khamtheluc() {
+    $("#loading_center").show();
     $.ajax({
         type: 'POST',
         url: '{{route("ksk.kham-the-luc")}}',
@@ -761,11 +782,16 @@ function khamtheluc() {
                 }
             }
             $('#ksk-index').DataTable().ajax.reload();
+        },
+        complete: function() {
+            // Hide loading spinner
+            $("#loading_center").hide();
         }
     });
 }
 
 function khamnoi() {
+    $("#loading_center").show();
     $.ajax({
         type: 'POST',
         url: '{{route("ksk.kham-noi")}}',
@@ -802,11 +828,16 @@ function khamnoi() {
                 }
             }
             $('#ksk-index').DataTable().ajax.reload();
+        },
+        complete: function() {
+            // Hide loading spinner
+            $("#loading_center").hide();
         }
     });
 }
  
 function khamrhm() {
+    $("#loading_center").show();
     $.ajax({
         type: 'POST',
         url: '{{route("ksk.kham-rhm")}}',
@@ -833,6 +864,10 @@ function khamrhm() {
                 }
             }
             $('#ksk-index').DataTable().ajax.reload();
+        },
+        complete: function() {
+            // Hide loading spinner
+            $("#loading_center").hide();
         }
     });
 }
@@ -869,6 +904,7 @@ $('#maukhamtmh').on('click', function() {
 });
 
 function khamtmh() {
+    $("#loading_center").show();
     $.ajax({
         type: 'POST',
         url: '{{route("ksk.kham-tmh")}}',
@@ -899,6 +935,10 @@ function khamtmh() {
                 }
             }
             $('#ksk-index').DataTable().ajax.reload();
+        },
+        complete: function() {
+            // Hide loading spinner
+            $("#loading_center").hide();
         }
     });
 }
@@ -1036,6 +1076,7 @@ function khammat() {
         $part_exam_eye_blind_color = 9;
     };
 
+    $("#loading_center").show();
     $.ajax({
         type: 'POST',
         url: '{{route("ksk.kham-mat")}}',
@@ -1069,6 +1110,10 @@ function khammat() {
                 }
             }
             $('#ksk-index').DataTable().ajax.reload();
+        },
+        complete: function() {
+            // Hide loading spinner
+            $("#loading_center").hide();
         }
     });
 }
@@ -1081,6 +1126,7 @@ $(document).on('click', '.edit-modal-san', function() {
 });
 
 function khamsan() {
+    $("#loading_center").show();
     $.ajax({
         type: 'POST',
         url: '{{route("ksk.kham-san")}}',
@@ -1105,6 +1151,10 @@ function khamsan() {
                 }
             }
             $('#ksk-index').DataTable().ajax.reload();
+        },
+        complete: function() {
+            // Hide loading spinner
+            $("#loading_center").hide();
         }
     });
 }
@@ -1137,6 +1187,7 @@ $(document).on('click', '.edit-modal-tuvan', function() {
 });
 
 function tuvan() {
+    $("#loading_center").show();
     $.ajax({
         type: 'POST',
         url: '{{route("ksk.tuvan")}}',
@@ -1161,6 +1212,10 @@ function tuvan() {
                 }
             }
             $('#ksk-index').DataTable().ajax.reload();
+        },
+        complete: function() {
+            // Hide loading spinner
+            $("#loading_center").hide();
         }
     });
 }
