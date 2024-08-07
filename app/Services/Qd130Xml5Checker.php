@@ -77,7 +77,22 @@ class Qd130Xml5Checker
                 'critical_error' => true,
                 'description' => 'Thời điểm diễn biến lâm sàng không được để trống'
             ]);
-        } 
+        } else {
+            if ($data->Qd130Xml1) {
+                $ngayVao = $data->Qd130Xml1->ngay_vao;
+                $ngayRa = $data->Qd130Xml1->ngay_ra;
+                $thoi_diem_dbls = $data->thoi_diem_dbls;
+
+                if ($thoi_diem_dbls < $ngayVao || $thoi_diem_dbls > $ngayRa) {
+                    $errors->push((object)[
+                        'error_code' => $this->prefix . 'INVALID_THOI_DIEM_BDLS',
+                        'error_name' => 'Thời điểm BĐLS không hợp lệ',
+                        'critical_error' => true,
+                        'description' => 'THOI_DIEM_BDLS: ' . strtodatetime($thoi_diem_dbls) . ' không nằm trong khoảng thời gian vào (' . strtodatetime($ngayVao) . ') và ra (' . strtodatetime($ngayRa) . ')'
+                    ]);
+                }
+            }
+        }
 
         if (empty($data->nguoi_thuc_hien)) {
             $errors->push((object)[

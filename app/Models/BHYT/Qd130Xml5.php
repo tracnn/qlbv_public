@@ -24,4 +24,9 @@ class Qd130Xml5 extends Model
                     ->where('xml', 'XML5')
                     ->whereColumn('stt', 'stt');
     }
+
+    public function Qd130Xml1()
+    {
+        return $this->belongsTo('App\Models\BHYT\Qd130Xml1', 'ma_lk', 'ma_lk');
+    }
 }
