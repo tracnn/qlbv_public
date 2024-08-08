@@ -610,7 +610,7 @@ function khamtongket() {
                         toastr.success(data.noiDung);
                     }
                 }
-                location.reload();
+                table.ajax.reload();
                 //$('#ksk-index').DataTable().ajax.reload();
             },
             complete: function() {

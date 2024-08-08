@@ -261,17 +261,6 @@ function take_snapshot() {
 }
 
 $(document).ready(function() {
-    $('#work_place_id').select2({ 
-        width: '100%',
-        allowClear: true,
-        placeholder: 'Chọn một...'
-    });
-    $('#hospitalization_reason_select').select2({ 
-        width: '100%',
-        allowClear: true,
-        placeholder: 'Chọn một...'
-    });
-
     $('#hospitalization_reason_select').on('change', function (e) {
         $('#hospitalization_reason').val(this.value);
     });
