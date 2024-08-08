@@ -14,9 +14,6 @@
 @include('includes.message')
 @include('khth.ksk..partials.search')
 <div class="panel panel-default">
-    <div class="panel-heading">
-        Danh sách hồ sơ
-    </div>
     <div class="panel-body table-responsive">
         <table id="ksk-index" class="table display table-hover responsive nowrap datatable dtr-inline" width="100%">
             <thead>
