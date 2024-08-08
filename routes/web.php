@@ -184,6 +184,9 @@ Route::group(['middleware' => 'auth'], function () {
         Route::get('index/ksk-get-patient', 'KHTH\KskController@getPatient')->name('ksk.get-patient');
         Route::get('index/ksk-get-check-emr', 'KHTH\KskController@getCheckEmr')->name('ksk.get-check-emr');
         Route::post('index/ksk-tu-van', 'KHTH\KskController@tuvan')->name('ksk.tuvan');
+
+        Route::get('index/category-ksk-contract', 'Category\CategoryHISController@listKskContract')
+        ->name('category-his.fetch-ksk-contract');
     });
 
 	/*

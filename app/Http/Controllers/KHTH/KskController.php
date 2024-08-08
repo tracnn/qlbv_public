@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Storage;
 
+use App\Http\Controllers\Category\CategoryHISController;
+
 use DataTables;
 use DB;
 use App\Exports\KSKExport;
@@ -13,36 +15,6 @@ use Carbon\Carbon;
 
 class KskController extends Controller
 {
-    protected $hop_dong;
-    protected $trang_thai;
-    public function __construct()
-    {
-        $this->hop_dong = DB::connection('HISPro')
-        ->table('his_ksk_contract')
-        ->join('his_work_place', 'his_work_place.id', '=', 'his_ksk_contract.work_place_id')
-        ->select('his_ksk_contract.id', 'his_ksk_contract.ksk_contract_code', 'his_work_place.work_place_name')
-        ->where('his_ksk_contract.is_active', 1)
-        ->where('his_ksk_contract.is_delete', 0)
-        ->get();
-
-        $this->trang_thai = DB::connection('HISPro')
-        ->table('his_service_req_stt')
-        ->select('his_service_req_stt.id', 'his_service_req_stt.service_req_stt_name')
-        ->where('his_service_req_stt.is_active', 1)
-        ->where('his_service_req_stt.is_delete', 0)
-        ->get();
-    }
-    
-    private function ParamNgay($request)
-    {
-        return [
-            'tu_ngay' => $request->get('tu_ngay') ? $request->get('tu_ngay') : 
-                    date_format(now(),'Y-m-d'),
-            'den_ngay' => $request->get('den_ngay') ? $request->get('den_ngay') : 
-                    date_format(now(),'Y-m-d'),
-        ];
-    }
-
     private function health_rank()
     {
         return DB::connection('HISPro')
@@ -64,28 +36,11 @@ class KskController extends Controller
 
     public function index(Request $request)
     {
-        $hop_dong = $this->hop_dong;
-        $param_hop_dong = $request->get('hop_dong') ? $request->get('hop_dong') : [];
-        $trang_thai = $this->trang_thai;
-        $param_trang_thai = $request->get('trang_thai') ? $request->get('trang_thai') : [];
-        $ParamNgay = $this->ParamNgay($request);
-        $health_rank = $this->health_rank();
-        $work_place = $this->work_place();
-        return view('khth.ksk.index',
-            compact('ParamNgay','health_rank','hop_dong','param_hop_dong','trang_thai','param_trang_thai','work_place'));
-    }
 
-    public function search(Request $request)
-    {
-        $hop_dong = $this->hop_dong;
-        $param_hop_dong = $request->get('hop_dong') ? $request->get('hop_dong') : [];
-        $trang_thai = $this->trang_thai;
-        $param_trang_thai = $request->get('trang_thai') ? $request->get('trang_thai') : [];
-        $ParamNgay = $this->ParamNgay($request);
         $health_rank = $this->health_rank();
         $work_place = $this->work_place();
         return view('khth.ksk.index',
-            compact('ParamNgay','health_rank','hop_dong','param_hop_dong','trang_thai','param_trang_thai','work_place'));
+            compact('health_rank','work_place'));
     }
 
     public function get_danhsach(Request $request)
@@ -96,6 +51,8 @@ class KskController extends Controller
 
         $dateFrom = $request->input('date_from');
         $dateTo = $request->input('date_to');
+        $kskContract = $request->input('ksk_contract');
+        
         if (strlen($dateFrom) == 10) { // Format YYYY-MM-DD
             $dateFrom = Carbon::createFromFormat('Y-m-d', $dateFrom)->startOfDay()->format('Y-m-d H:i:s');
         }
@@ -141,8 +98,8 @@ class KskController extends Controller
         ])
         ->whereIn('his_service_req.execute_room_id', $execute_room_id);
 
-        if ($request->get('hop_dong')) {
-            $model = $model->whereIn('his_treatment.tdl_ksk_contract_id', $request->get('hop_dong'));
+        if ($kskContract) {
+            $model = $model->where('his_treatment.tdl_ksk_contract_id', $kskContract);
         }
         if ($request->get('trang_thai')) {
             $model = $model->whereIn('his_service_req.service_req_stt_id', $request->get('trang_thai'));

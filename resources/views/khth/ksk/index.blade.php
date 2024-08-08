@@ -621,6 +621,7 @@
                 data: function(d) {
                     d.date_from = startDate;
                     d.date_to = endDate;
+                    d.ksk_contract = $('#ksk_contract').val();
                 },
                 beforeSend: function(xhr) {
                     currentAjaxRequest = xhr;
@@ -654,6 +655,9 @@
 </script>
 
 <script>
+$(document).ready(function() {
+    $('.select2').select2();
+})
 
 $(document).on('click', '.edit-modal-theluc', function() {
     $('.modal-title').html('Khám thể lực: ' + $(this).data('title'));
