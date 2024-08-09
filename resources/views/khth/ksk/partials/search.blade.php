@@ -4,6 +4,7 @@
         <div class="col-sm-12">
             <div class="form-group row">
                 @include('partials.ksk_contract')
+                @include('partials.service_req_stt')
             </div>
         </div>
         @include('partials.load_data_button')

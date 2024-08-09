@@ -618,6 +618,7 @@
                     d.date_from = startDate;
                     d.date_to = endDate;
                     d.ksk_contract = $('#ksk_contract').val();
+                    d.service_req_stt = $('#service_req_stt').val();
                 },
                 beforeSend: function(xhr) {
                     currentAjaxRequest = xhr;

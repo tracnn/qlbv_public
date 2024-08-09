@@ -52,6 +52,7 @@ class KskController extends Controller
         $dateFrom = $request->input('date_from');
         $dateTo = $request->input('date_to');
         $kskContract = $request->input('ksk_contract');
+        $serviceReqStt = $request->input('service_req_stt');
         
         if (strlen($dateFrom) == 10) { // Format YYYY-MM-DD
             $dateFrom = Carbon::createFromFormat('Y-m-d', $dateFrom)->startOfDay()->format('Y-m-d H:i:s');
@@ -101,8 +102,8 @@ class KskController extends Controller
         if ($kskContract) {
             $model = $model->where('his_treatment.tdl_ksk_contract_id', $kskContract);
         }
-        if ($request->get('trang_thai')) {
-            $model = $model->whereIn('his_service_req.service_req_stt_id', $request->get('trang_thai'));
+        if ($serviceReqStt) {
+            $model = $model->where('his_service_req.service_req_stt_id', $serviceReqStt);
         }
 
         return DataTables::of($model)
