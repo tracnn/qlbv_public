@@ -17,6 +17,7 @@
     <div class="panel-body table-responsive">
         <table id="ksk-index" class="table display table-hover responsive nowrap datatable dtr-inline" width="100%">
             <thead>
+                <th>STT</th>
                 <th>Mã điều trị</th>
                 <th>Trạng thái</th>
                 <th>Họ và tên</th>
@@ -633,6 +634,7 @@
                 }
             },
             "columns": [
+                {"data": "num_order", "name": "num_order"},
                 {"data": "tdl_treatment_code", "name": "tdl_treatment_code"},
                 {"data": "service_req_stt_name", "name": "his_service_req_stt.service_req_stt_name"},
                 {"data": "tdl_patient_name", "name": "tdl_patient_name"},
