@@ -103,13 +103,19 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script>
-document.getElementById('qrcodeForm').addEventListener('submit', function(e) {
-    e.preventDefault();
+// Hàm để lấy URI đầy đủ bao gồm cả query string
+function getFullURI() {
+    return window.location.href;
+}
 
-    var text = document.getElementById('qrcodeText').value;
-    var logo = document.getElementById('qrcodeLogo').files[0];
+function generateQRCode(text, logoURI) {
     var canvas = document.getElementById('qrcodeCanvas');
     var ctx = canvas.getContext('2d');
+
+    // Xóa các giá trị cũ
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    document.getElementById('qrcodeImage').style.display = 'none';
+    document.getElementById('qrcodeImage').src = '';
 
     // Tạo QRCode
     var qr = qrcode(0, 'H');
@@ -123,27 +129,51 @@ document.getElementById('qrcodeForm').addEventListener('submit', function(e) {
     qr.renderTo2dContext(ctx, qrSize / qr.getModuleCount());
 
     // Thêm logo vào QRCode
-    if (logo) {
-        var reader = new FileReader();
-        reader.onload = function(e) {
-            var img = new Image();
-            img.src = e.target.result;
-            img.onload = function() {
-                var logoSize = qrSize / 5;
-                var logoX = (qrSize - logoSize) / 2;
-                var logoY = (qrSize - logoSize) / 2;
-                ctx.drawImage(img, logoX, logoY, logoSize, logoSize);
-                // Hiển thị QRCode
-                document.getElementById('qrcodeImage').src = canvas.toDataURL();
-                document.getElementById('qrcodeImage').style.display = 'block';
-            };
+    if (logoURI) {
+        var img = new Image();
+        img.src = logoURI;
+        img.onload = function() {
+            var logoSize = qrSize / 5;
+            var logoX = (qrSize - logoSize) / 2;
+            var logoY = (qrSize - logoSize) / 2;
+            ctx.drawImage(img, logoX, logoY, logoSize, logoSize);
+            // Hiển thị QRCode
+            document.getElementById('qrcodeImage').src = canvas.toDataURL();
+            document.getElementById('qrcodeImage').style.display = 'block';
         };
-        reader.readAsDataURL(logo);
     } else {
         // Hiển thị QRCode không có logo
         document.getElementById('qrcodeImage').src = canvas.toDataURL();
         document.getElementById('qrcodeImage').style.display = 'block';
     }
+}
+
+document.getElementById('qrcodeForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    var text = document.getElementById('qrcodeText').value;
+    var logoFile = document.getElementById('qrcodeLogo').files[0];
+    
+    if (logoFile) {
+        // Nếu người dùng upload logo mới, sử dụng logo đó
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            generateQRCode(text, e.target.result);
+        };
+        reader.readAsDataURL(logoFile);
+    } else {
+        // Nếu không có logo mới, sử dụng logo mặc định
+        generateQRCode(text, '/images/logo.png');
+    }
+});
+
+// Tự động tạo QRCode dựa trên URI hiện tại và logo mặc định
+window.addEventListener('DOMContentLoaded', function () {
+    var fullURI = getFullURI();
+    
+    document.getElementById('qrcodeText').value = fullURI;
+
+    generateQRCode(fullURI, '/images/logo.png');
 });
 
 // Xóa các giá trị cũ khi modal bị đóng

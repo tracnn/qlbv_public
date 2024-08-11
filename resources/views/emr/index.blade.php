@@ -265,10 +265,31 @@ $(document).ready( function () {
 
 $(document).on('click', '.show-qr', function() {
     var qrUrl = $(this).data('qr-url');
+    var logoURI = '/images/logo.png'; // Đường dẫn logo mặc định
 
-    // Giả sử bạn có một modal với ID là #qrModal và trong đó có một <div> để chứa mã QR có ID là #qrCodeContainer
-    $('#qrCodeContainer').empty(); // Xóa mã QR cũ nếu có
-    new QRCode(document.getElementById("qrCodeContainer"), qrUrl); // Tạo mã QR mới
+    // Xóa mã QR cũ nếu có
+    $('#qrCodeContainer').empty();
+
+    // Tạo mã QR mới với logo
+    var qrCodeContainer = document.getElementById("qrCodeContainer");
+    var qr = new QRCode(qrCodeContainer, {
+        text: qrUrl,
+        width: 300,
+        height: 300,
+        correctLevel: QRCode.CorrectLevel.H
+    });
+
+    // Thêm logo vào mã QR
+    var img = new Image();
+    img.src = logoURI;
+    img.onload = function() {
+        var canvas = qrCodeContainer.querySelector('canvas');
+        var ctx = canvas.getContext('2d');
+        var logoSize = canvas.width / 5;
+        var logoX = (canvas.width - logoSize) / 2;
+        var logoY = (canvas.height - logoSize) / 2;
+        ctx.drawImage(img, logoX, logoY, logoSize, logoSize);
+    };
 
     // Hiển thị modal
     $('#qrModal').modal('show');
