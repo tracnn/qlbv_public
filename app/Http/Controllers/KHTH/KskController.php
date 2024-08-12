@@ -617,13 +617,12 @@ class KskController extends Controller
 
     public function exportXLS(Request $request)
     {
-        $ParamNgay = $this->ParamNgay($request);
-        $from_date = date_format(date_create($ParamNgay['tu_ngay']),'Ymd000000');
-        $to_date = date_format(date_create($ParamNgay['den_ngay']),'Ymd235959');
-        return \Excel::download(new KSKExport($from_date, $to_date, $request), date('YmdHi', strtotime(now())) . '_KSK.xlsx');
-        // return response()->make(\Excel::download(new KSKExport($from_date, $to_date, $request), date('YmdHi', strtotime(now())) . '_KSK.pdf'));
-        // return (new KSKExport($from_date, $to_date, $request))
-        // ->download(date('YmdHi', strtotime(now())) . '_KSK.pdf', \Maatwebsite\Excel\Excel::DOMPDF);
+        $date_from = $request->input('date_from');
+        $date_to = $request->input('date_to');
+        $ksk_contract = $request->input('ksk_contract');
+        $service_req_stt = $request->input('service_req_stt');
+
+        return \Excel::download(new KSKExport($date_from, $date_to, $ksk_contract, $service_req_stt), date('YmdHi', strtotime(now())) . '_ksk.xlsx');
     }
 
     /*

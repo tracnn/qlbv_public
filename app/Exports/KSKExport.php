@@ -8,17 +8,21 @@ use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Illuminate\Http\Request;
 
 use DB;
+use Carbon\Carbon;
 
 class KSKExport implements FromCollection, WithHeadings, ShouldAutoSize
 {
-    protected $from_date;
-    protected $to_date;
-    protected $dvkt;
+    protected $date_from;
+    protected $date_to;
+    protected $ksk_contract;
+    protected $service_req_stt;
 
-    public function __construct(string $from_date, string $to_date, Request $request) {
-     $this->request = $request;
-     $this->from_date = $from_date;
-     $this->to_date = $to_date;
+    public function __construct($date_from, $date_to, $ksk_contract, $service_req_stt) 
+    {
+        $this->date_from = $date_from;
+        $this->date_to = $date_to;
+        $this->ksk_contract = $ksk_contract;
+        $this->service_req_stt = $service_req_stt;
     }
 
     /**
@@ -26,6 +30,20 @@ class KSKExport implements FromCollection, WithHeadings, ShouldAutoSize
     */
     public function collection()
     {
+        set_time_limit(1800); // Tăng thời gian thực thi lên 1800 giây (30 phút)
+        ini_set('memory_limit', '4096M'); // Tăng giới hạn bộ nhớ nếu cần thiết
+
+        if (strlen($this->date_from) == 10) { // Format YYYY-MM-DD
+            $this->date_from = Carbon::createFromFormat('Y-m-d', $this->date_from)->startOfDay()->format('Y-m-d H:i:s');
+        }
+
+        if (strlen($this->date_to) == 10) { // Format YYYY-MM-DD
+            $this->date_to = Carbon::createFromFormat('Y-m-d', $this->date_to)->endOfDay()->format('Y-m-d H:i:s');
+        }
+
+        $formattedDateFrom = Carbon::createFromFormat('Y-m-d H:i:s', $this->date_from)->format('YmdHis');
+        $formattedDateTo = Carbon::createFromFormat('Y-m-d H:i:s', $this->date_to)->format('YmdHis');
+
         $execute_room_id = [58,126,642];
      
         $model = DB::connection('HISPro')
@@ -45,19 +63,21 @@ class KSKExport implements FromCollection, WithHeadings, ShouldAutoSize
         part_exam_upper_jaw,part_exam_ear,part_exam_nose,part_exam_throat,part_exam_obstetric,part_exam_eye,
         his_service_req.subclinical,his_health_exam_rank.health_exam_rank_name,his_service_req.note as service_req_note,
         his_service_req.treatment_instruction||his_service_req.next_treatment_instruction')
-        ->where('his_service_req.intruction_time', '>=', $this->from_date)
-        ->where('his_service_req.intruction_time', '<=', $this->to_date)
-        ->where('his_service_req.is_active', 1)
-        ->where('his_service_req.is_delete', 0)
-        ->where('his_service_req.service_req_type_id', 1)
+        ->whereBetween('his_service_req.intruction_time', [$formattedDateFrom, $formattedDateTo])
+        ->where([
+            ['his_service_req.is_active', 1],
+            ['his_service_req.is_delete', 0],
+            ['his_service_req.service_req_type_id', 1],
+        ])
         ->whereIn('his_service_req.execute_room_id', $execute_room_id);
 
-        if ($this->request->get('hop_dong')) {
-            $model = $model->whereIn('his_treatment.tdl_ksk_contract_id', $this->request->get('hop_dong'));
+        if ($this->ksk_contract) {
+            $model = $model->where('his_treatment.tdl_ksk_contract_id', $this->ksk_contract);
         }
-        if ($this->request->get('trang_thai')) {
-            $model = $model->whereIn('his_service_req.service_req_stt_id', $this->request->get('trang_thai'));
+        if ($this->service_req_stt) {
+            $model = $model->where('his_service_req.service_req_stt_id', $this->service_req_stt);
         }
+
         return $model
         ->orderBy('num_order')
         ->get();

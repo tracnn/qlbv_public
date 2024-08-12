@@ -655,6 +655,26 @@
 <script>
 $(document).ready(function() {
     $('.select2').select2();
+
+    $('#export_xlsx').click(function() {
+        var dateRange = $('#date_range').data('daterangepicker');
+
+        var startDate = dateRange.startDate.format('YYYY-MM-DD HH:mm:ss');
+        var endDate = dateRange.endDate.format('YYYY-MM-DD HH:mm:ss');
+        var ksk_contract = $('#ksk_contract').val();
+        var service_req_stt = $('#service_req_stt').val();
+        
+        // Tạo URL với các tham số query
+        var href = '{{ route('ksk.export-xls') }}?' + $.param({
+            'date_from': startDate,
+            'date_to': endDate,
+            'ksk_contract': ksk_contract,
+            'service_req_stt': service_req_stt,
+        });
+
+        // Chuyển hướng tới URL với các tham số
+        window.location.href = href;
+    });
 })
 
 $(document).on('click', '.edit-modal-theluc', function() {

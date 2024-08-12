@@ -381,6 +381,19 @@ return [
             ],
         ],
         [
+            'text'    => 'Điều dưỡng',
+            'icon'    => 'user-md',
+            'checkrole'   => 'dieuduong',
+            'submenu' => [
+                [
+                    'text'  => 'Thực hiện y lệnh',
+                    'icon'  => 'user-md',
+                    'route'   => 'bhyt.qd130.index',
+                    'active'=> ['bhyt/qd130/index*'],
+                ],
+            ],
+        ],
+        [
             'text'    => 'Quản lý danh mục',
             'icon'    => 'book',
             'checkrole'   => 'administrator',
