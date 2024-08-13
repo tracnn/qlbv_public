@@ -39,7 +39,7 @@
                     <div class="form-group">
                         <label class="control-label col-sm-3">Chọn một lý do</label>
                         <div class="col-sm-9">
-                            <select class="form-control" id="hospitalization_reason_select">
+                            <select class="form-control select2" id="hospitalization_reason_select">
                                 <option></option>
                                 <option value="Khám sức khỏe đi làm">Khám sức khỏe đi làm</option>
                                 <option value="Khám sức khỏe đi học">Khám sức khỏe đi học</option>
@@ -71,7 +71,7 @@
                     <div class="form-group">
                         <label class="control-label col-sm-3">Địa chỉ nơi làm việc</label>
                         <div class="col-sm-9">
-                            <select class="form-control" id="work_place_id">
+                            <select class="form-control select2" id="work_place_id">
                                 @foreach($work_place as $key => $value)
                                 <option value="{{$value->id}}">{{$value->work_place_name}}</option>
                                 @endforeach

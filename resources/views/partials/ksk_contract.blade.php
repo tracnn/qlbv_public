@@ -25,7 +25,9 @@
                     select.append(optionElement);
                 });
 
-                select.select2();
+                select.select2({
+                    width: '100%' // Đặt chiều rộng của Select2 là 100%
+                });
             },
             error: function(jqXHR, textStatus, errorThrown) {
                 console.log("AJAX error: " + textStatus + ' : ' + errorThrown);

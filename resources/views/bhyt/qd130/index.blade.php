@@ -208,7 +208,9 @@
 
     $(document).ready(function() {
         setInterval(checkJobStatus, 5000);
-        $('.select2').select2();
+        $('.select2').select2({
+            width: '100%' // Đặt chiều rộng của Select2 là 100%
+        });
         $('#select-all').on('click', function(){
             var rows = table.rows({ 'search': 'applied' }).nodes();
             $('input[type="checkbox"]', rows).prop('checked', this.checked);

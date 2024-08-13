@@ -31,7 +31,8 @@
 
                 select.select2({
                     templateResult: formatState,
-                    templateSelection: formatState
+                    templateSelection: formatState,
+                    width: '100%'
                 });
             },
             error: function(jqXHR, textStatus, errorThrown) {
