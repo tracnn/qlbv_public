@@ -178,7 +178,10 @@ class XML130Import extends Command
                         $this->qd130XmlService->storeQd130XmlInfomation($ma_lk, $macskcb, 'import', $soluonghoso);
                         $this->qd130XmlService->checkQd130XmlComplete($ma_lk);
                         if (config('qd130xml.export_qd130_xml_enabled')) {
-                            $this->qd130XmlService->exportQd130Xml($ma_lk);
+                            //Kiểm tra nếu là XML thông tuyến và inexportable_tt = true thì không thực hiện exportQd130Xml
+                            if (!($disk === 'xml130tt' && config('qd130xml.exportable_tt') == false)) {
+                                $this->qd130XmlService->exportQd130Xml($ma_lk);
+                            }                          
                         } 
                     }
 
