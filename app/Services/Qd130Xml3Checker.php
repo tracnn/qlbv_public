@@ -250,15 +250,19 @@ class Qd130Xml3Checker
                     'description' => 'Mã máy vượt quá 1024 kí tự: ' . $data->ma_may
                 ]);
             } else {
-                if (!preg_match('/^[A-ZĐÁÀẠÂẦẬẨẤẪÃẢĂẰẶẲẮẴÈÉẸÊỀỆỂẾỄẺÍÌỊĨỈÒÓỌÔỒỘỔỐỖÕỎƠỜỢỞỚỠÙÚỤƯỪỰỬỨỮŨỦÝỲỴỶỸ]{2,3}\.\d\.\d{5}\.[\w;]+$/u', $data->ma_may)) {
+                // Tách các mã máy bằng dấu ';'
+                // $maMays = explode(';', $data->ma_may);
+                $maMay = $data->ma_may;
+                // foreach ($maMays as $maMay) {
+                if (!preg_match('/^[A-ZĐÁÀẠÂẦẬẨẤẪÃẢĂẰẶẲẮẴÈÉẸÊỀỆỂẾỄẺÍÌỊĨỈÒÓỌÔỒỘỔỐỖÕỎƠỜỢỞỚỠÙÚỤƯỪỰỬỨỮŨỦÝỲỴỶỸ]{2,3}\.\d\.\d{5}\.[\w;]+$/u', $maMay)) {
                     $errors->push((object)[
                         'error_code' => $this->prefix . 'INFO_ERROR_INVALID_MA_MAY_FORMAT',
                         'error_name' => 'Mã máy không đúng định dạng',
                         'critical_error' => true,
-                        'description' => 'Mã máy không đúng định dạng: ' . $data->ma_may
+                        'description' => 'Mã máy không đúng định dạng: ' . $maMay
                     ]);
                 } else {
-                    list($xx, $n, $yyyyy, $z) = explode('.', $data->ma_may);
+                    list($xx, $n, $yyyyy, $z) = explode('.', $maMay);
                     // Validate n
                     if (!in_array($n, ['1', '2', '3'])) {
                         $errors->push((object)[
@@ -286,17 +290,18 @@ class Qd130Xml3Checker
                             ]);
                         }
                     }
-                    //Validate in EquipmentCatalog
-                    $existEquipment = EquipmentCatalog::where('ma_may', $data->ma_may)->exists();
+                    // Validate in EquipmentCatalog
+                    $existEquipment = EquipmentCatalog::where('ma_may', $maMay)->exists();
                     if (!$existEquipment) {
                         $errors->push((object)[
                             'error_code' => $this->prefix . 'INFO_ERROR_MA_MAY_NOT_FOUND',
                             'error_name' => 'Mã máy không tồn tại trong danh mục trang thiết bị',
                             //'critical_error' => true,
-                            'description' => 'Mã máy không tồn tại: ' . $data->ma_may
+                            'description' => 'Mã máy không tồn tại: ' . $maMay
                         ]);
                     }
                 }
+                // }
             }
         }
 
