@@ -162,6 +162,16 @@ class Qd130Xml9Checker
                     'critical_error' => true,
                     'description' => 'Ngày cấp CCCD người nuôi dưỡng phải đúng định dạng Ymd: ' . $data->ngaycap_cccd_nnd
                 ]);
+            } else {
+                $currentDate = new DateTime(); // Lấy ngày hiện tại
+                if ($ngaycap_cccd_nnd_date > $currentDate) {
+                    $errors->push((object)[
+                        'error_code' => $this->prefix . 'INFO_ERROR_NGAYCAP_CCCD_NND_FUTURE_DATE',
+                        'error_name' => 'Ngày cấp CCCD không được lớn hơn ngày hiện tại',
+                        'critical_error' => true,
+                        'description' => 'Ngày cấp CCCD người nuôi dưỡng: ' . $data->ngaycap_cccd_nnd . ' không được lớn hơn ngày hiện tại'
+                    ]);
+                }
             }
         }
 

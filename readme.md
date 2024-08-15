@@ -34,3 +34,6 @@ Bổ sung kiểm tra bắt buộc phải có trường KET_LUAN trong Qd130Xml4C
 
 # 07/08/2024
 - Cập nhật kiểm tra Xml5, thời điểm dbls phải nằm trong khoảng thời gian vào và ra
+
+# 15/08/2024
+- Cập nhật kiểm tra Xml9 Thông tin trẻ sơ sinh
