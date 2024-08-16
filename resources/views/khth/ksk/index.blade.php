@@ -12,7 +12,7 @@
 
 @section('content')
 @include('includes.message')
-@include('khth.ksk..partials.search')
+@include('khth.ksk.partials.search')
 <div class="panel panel-default">
     <div class="panel-body table-responsive">
         <table id="ksk-index" class="table display table-hover responsive nowrap datatable dtr-inline" width="100%">

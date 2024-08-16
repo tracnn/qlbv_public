@@ -477,5 +477,11 @@ Route::group(['middleware' => 'auth'], function () {
         ->name('reports-administrator.fetch-patient-pt');
     });
 
+    /* Nurse Module*/
+    Route::group(['prefix' => 'nurse/', 'middleware' => ['checkrole:đieuuong']], function () {  
+        Route::get('execute/medication/order/index', 'NurseController@executeMedicationOrderIndex')
+        ->name('nurse.execute.medication.order.index');
+    });
+
 });
 

@@ -388,8 +388,8 @@ return [
                 [
                     'text'  => 'Thực hiện y lệnh',
                     'icon'  => 'user-md',
-                    'route'   => 'bhyt.qd130.index',
-                    'active'=> ['bhyt/qd130/index*'],
+                    'route'   => 'nurse.execute.medication.order.index',
+                    'active'=> ['nurse/execute/medication/order/index*'],
                 ],
             ],
         ],
