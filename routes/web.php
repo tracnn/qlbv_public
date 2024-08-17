@@ -481,6 +481,8 @@ Route::group(['middleware' => 'auth'], function () {
     Route::group(['prefix' => 'nurse/', 'middleware' => ['checkrole:đieuuong']], function () {  
         Route::get('execute/medication/order/index', 'NurseController@executeMedicationOrderIndex')
         ->name('nurse.execute.medication.order.index');
+        Route::get('execute/medication/fetch/data', 'NurseController@fetchDataNurseExecute')
+        ->name('nurse.execute.medication.fetch.data');
     });
 
 });
