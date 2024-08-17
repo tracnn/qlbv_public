@@ -13,7 +13,7 @@ return [
     |
     */
 
-    'title' => 'BVĐKNN',
+    'title' => 'QLBV',
 
     'title_prefix' => '',
 
@@ -30,9 +30,9 @@ return [
     |
     */
 
-    'logo' => '<b>BVĐKNN</b>',
+    'logo' => '<img src="/images/logo.png" alt="QLBV" style="height: 40px;">',
 
-    'logo_mini' => '<b>QT</b>',
+    'logo_mini' => '<img src="/images/logo.png" alt="QT" style="height: 40px;">',
 
     /*
     |--------------------------------------------------------------------------
