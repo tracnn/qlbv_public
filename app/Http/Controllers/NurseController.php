@@ -20,6 +20,7 @@ class NurseController extends Controller
         $dateFrom = $request->input('date_from');
         $dateTo = $request->input('date_to');
         $date_type = $request->input('date_type');
+        $department_catalog = $request->input('department_catalog');
 
         // Check and convert date format
         if (strlen($dateFrom) == 10) { // Format YYYY-MM-DD
@@ -105,7 +106,13 @@ class NurseController extends Controller
                 his_treatment_bed_room.remove_time IS NULL
         ";
 
-        // Thực hiện truy vấn và lấy kết quả
+        // Add department_catalog condition if it's provided
+        if (!empty($department_catalog)) {
+            // Directly embedding the variable into the query string (make sure this is safe)
+            $sql .= " AND his_room.department_id = '".addslashes($department_catalog)."'";
+        }
+
+        // Execute the query and get the results
         $results = DB::connection('HISPro')->select(DB::raw($sql));
 
         return DataTables::of($results)

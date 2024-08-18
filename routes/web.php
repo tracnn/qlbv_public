@@ -189,6 +189,9 @@ Route::group(['middleware' => 'auth'], function () {
         ->name('category-his.fetch-ksk-contract');
     });
 
+    Route::get('index/category-department-catalog', 'Category\CategoryHISController@listDepartmentCatalog')
+    ->name('category-his.fetch-department-catalog');
+
 	/*
 		Category
 	*/

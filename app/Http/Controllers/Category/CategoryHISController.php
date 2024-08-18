@@ -18,4 +18,14 @@ class CategoryHISController extends Controller
         ->select('his_ksk_contract.id', 'his_ksk_contract.ksk_contract_code', 'his_work_place.id as work_place_id', 'his_work_place.work_place_code', 'his_work_place.work_place_name')
         ->get();
     }
+
+    public function listDepartmentCatalog()
+    {
+        return DB::connection('HISPro')
+        ->table('his_department')
+        ->where('his_department.is_active', 1)
+        ->where('his_department.is_delete', 0)
+        ->select('his_department.id', 'his_department.department_code', 'his_department.department_name')
+        ->get();
+    }
 }

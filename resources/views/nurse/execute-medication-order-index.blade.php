@@ -70,6 +70,7 @@
                     d.date_from = startDate;
                     d.date_to = endDate;
                     d.date_type = $('#date_type').val();
+                    d.department_catalog = $('#department_catalog').val();
                 },
                 beforeSend: function(xhr) {
                     currentAjaxRequest = xhr;
