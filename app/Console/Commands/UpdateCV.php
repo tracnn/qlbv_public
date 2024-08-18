@@ -220,10 +220,10 @@ class UpdateCV extends Command
                         XML1::whereIn('ma_lk', $value)
                         ->delete();
                         
-                        check_hein_card::whereIn('ma_lk', $value)
-                        ->delete();
-                        XmlErrorCheck::whereIn('ma_lk', $value)
-                        ->delete();
+                        // check_hein_card::whereIn('ma_lk', $value)
+                        // ->delete();
+                        // XmlErrorCheck::whereIn('ma_lk', $value)
+                        // ->delete();
                         /* End Del XML */
 
                     }
