@@ -571,6 +571,7 @@ class Qd130Xml3Checker
                                 $errors->push((object)[
                                     'error_code' => $this->prefix . 'EXCEEDS_APPROVED_PRICE',
                                     'error_name' => 'Giá vật tư cao hơn giá được phê duyệt',
+                                    'critical_error' => true,
                                     'description' => 'Mã VTYT: ' . $data->ma_vat_tu . '; Có giá: ' . $data->don_gia_bh . '; Giá phê duyệt: ' . $supply->don_gia_bh
                                 ]);
                             }

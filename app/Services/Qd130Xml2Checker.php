@@ -251,6 +251,7 @@ class Qd130Xml2Checker
                             $errors->push((object)[
                                 'error_code' => $this->prefix . 'PRICE_EXCEEDS_APPROVED',
                                 'error_name' => 'Giá thuốc cao hơn giá được duyệt',
+                                'critical_error' => true,
                                 'description' => 'Mã thuốc: ' . $data->ma_thuoc . '; Giá cao hơn giá được duyệt: ' . $data->don_gia . ' > ' . $medicine->don_gia
                             ]);
                         }    
