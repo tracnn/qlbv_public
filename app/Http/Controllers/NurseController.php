@@ -8,6 +8,8 @@ use DataTables;
 use DB;
 use Carbon\Carbon;
 
+use App\Models\HISPro\HIS_USER_ROOM;
+
 class NurseController extends Controller
 {
     public function executeMedicationOrderIndex()
@@ -21,6 +23,10 @@ class NurseController extends Controller
         $dateTo = $request->input('date_to');
         $date_type = $request->input('date_type');
         $department_catalog = $request->input('department_catalog');
+        $treatment_code = $request->input('treatment_code');
+
+        // Get the list of room IDs that the user has access to
+        $his_user_room = HIS_USER_ROOM::where('loginname', \Auth::user()->loginname)->pluck('room_id')->toArray();
 
         // Check and convert date format
         if (strlen($dateFrom) == 10) { // Format YYYY-MM-DD
@@ -104,12 +110,19 @@ class NurseController extends Controller
                 his_bed ON his_bed.id = his_treatment_bed_room.bed_id
             WHERE
                 his_treatment_bed_room.remove_time IS NULL
+                AND his_bed_room.room_id IN (" . implode(',', $his_user_room) . ")
         ";
 
         // Add department_catalog condition if it's provided
         if (!empty($department_catalog)) {
             // Directly embedding the variable into the query string (make sure this is safe)
-            $sql .= " AND his_room.department_id = '".addslashes($department_catalog)."'";
+            $sql .= " AND his_room.department_id = '" . addslashes($department_catalog) . "'";
+        }
+
+        // Add treatment_code condition if it's provided
+        if (!empty($treatment_code)) {
+            // Directly embedding the variable into the query string (make sure this is safe)
+            $sql .= " AND his_treatment.treatment_code = '" . addslashes($treatment_code) . "'";
         }
 
         // Execute the query and get the results

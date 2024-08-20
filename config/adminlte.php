@@ -383,11 +383,12 @@ return [
         [
             'text'    => 'Điều dưỡng',
             'icon'    => 'user-md',
-            'checkrole'   => 'dieuduong',
+            'checkrole'   => 'dieu-duong',
             'submenu' => [
                 [
                     'text'  => 'Thực hiện y lệnh',
                     'icon'  => 'user-md',
+                    'checkrole'   => 'dieu-duong',
                     'route'   => 'nurse.execute.medication.order.index',
                     'active'=> ['nurse/execute/medication/order/index*'],
                 ],

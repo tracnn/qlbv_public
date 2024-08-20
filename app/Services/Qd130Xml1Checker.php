@@ -328,6 +328,24 @@ class Qd130Xml1Checker
                 'critical_error' => true,
                 'description' => 'Mã đối tượng KCB không được để trống'
             ]);
+        } else {
+            $is_ma_doituong_kcb_invalid = false;
+            
+            foreach (config('qd130xml.xml1.ma_doituong_kcb_trai_tuyen') as $ma_doituong) {
+                if (strpos($data->ma_doituong_kcb, (string)$ma_doituong) === 0) {
+                    $is_ma_doituong_kcb_invalid = true;
+                    break;
+                }
+            }
+            
+            if ($is_ma_doituong_kcb_invalid && in_array($data->ma_dkbd, $this->specialDKBD)) {
+                $errors->push((object)[
+                    'error_code' => $this->prefix . 'ADMIN_INFO_ERROR_MA_DOITUONG_KCB_INVALID',
+                    'error_name' => 'Mã đối tượng KCB không hợp lệ',
+                    'critical_error' => true,
+                    'description' => 'Mã đối tượng KCB Trái tuyến nhưng thẻ BHYT Đúng tuyến'
+                ]);                
+            }
         }
 
         if (empty($data->ngay_vao)) {

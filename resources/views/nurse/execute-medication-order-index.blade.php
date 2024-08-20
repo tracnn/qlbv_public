@@ -71,6 +71,7 @@
                     d.date_to = endDate;
                     d.date_type = $('#date_type').val();
                     d.department_catalog = $('#department_catalog').val();
+                    d.treatment_code = $('#treatment_code').val();
                 },
                 beforeSend: function(xhr) {
                     currentAjaxRequest = xhr;
@@ -140,5 +141,11 @@
 
         table.ajax.reload();
     }
+
+    $(document).ready(function() {
+        $('.select2').select2({
+            width: '100%' // Đặt chiều rộng của Select2 là 100%
+        });
+    });
 </script>
 @endpush

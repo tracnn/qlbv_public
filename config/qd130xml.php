@@ -43,4 +43,7 @@ return [
         'xml3_ma_nhom_require_ket_luan' => [2],
     ],
     'exportable_tt' => false, //Xuất xml thông tuyến (true: có xuất; false: không xuất)
+    'xml1' => [
+        'ma_doituong_kcb_trai_tuyen' => ['3'],
+    ],
 ];
