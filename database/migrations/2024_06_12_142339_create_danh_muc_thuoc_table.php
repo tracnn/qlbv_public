@@ -16,7 +16,7 @@ class CreateDanhMucThuocTable extends Migration
         Schema::create('medicine_catalogs', function (Blueprint $table) {
             $table->increments('id');
             $table->string('ma_thuoc');
-            $table->string('ten_hoat_chat');
+            $table->string('ten_hoat_chat', 1024);
             $table->string('ten_thuoc');
             $table->string('don_vi_tinh');
             $table->string('ham_luong', 1024);

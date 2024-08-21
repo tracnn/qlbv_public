@@ -159,7 +159,7 @@ class Qd130Xml3Checker
                     'error_code' => $this->prefix . 'INFO_ERROR_PP_VO_CAM_INVALID',
                     'error_name' => 'Phương pháp vô cảm không hợp lệ',
                     'critical_error' => true,
-                    'description' => 'Phương pháp vô cảm không hợp lệ. Giá trị phải thuộc ' . config('qd130xml.anesthesia_code') . ' : ' . $data->pp_vo_cam
+                    'description' => 'Phương pháp vô cảm không hợp lệ. Giá trị phải thuộc ' . implode(',', config('qd130xml.anesthesia_code')) . ' : ' . $data->pp_vo_cam
                 ]);
             }
         }
