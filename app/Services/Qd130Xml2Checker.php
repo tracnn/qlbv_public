@@ -194,7 +194,7 @@ class Qd130Xml2Checker
                 }
 
                 $ttThauParts = explode(";", $data->tt_thau);
-                if (count($ttThauParts) !== 3 && count($ttThauParts) !== 4) {
+                if (count($ttThauParts) < 4) {
                     $errors->push((object)[
                         'error_code' => $this->prefix . 'INVALID_TT_THAU_FORMAT',
                         'error_name' => 'Thông tin thầu không đúng định dạng',
@@ -202,7 +202,7 @@ class Qd130Xml2Checker
                         'description' => 'TT_THAU không đúng định dạng (Mã thuốc: ' . $data->ma_thuoc . '). TT_THAU: ' . $data->tt_thau
                     ]);
                 } else {
-                    $ttThau = $ttThauParts[0] . ";" . $ttThauParts[1] . ";" . $ttThauParts[2];
+                    $ttThau = $ttThauParts[0] . ";" . $ttThauParts[1] . ";" . $ttThauParts[2] . ";" . $ttThauParts[3];
 
                     $medicine = MedicineCatalog::where('ma_thuoc', $data->ma_thuoc)
                         ->where('ham_luong', $data->ham_luong)
