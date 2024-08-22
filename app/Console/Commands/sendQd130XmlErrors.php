@@ -111,8 +111,8 @@ class sendQd130XmlErrors extends Command
     private function getCheckHeinCardErrors($fromDateTime, $toDateTime)
     {
         return check_hein_card::where(function($query) {
-            $query->where('ma_kiemtra', '<>', '00')
-            ->orWhere('ma_tracuu', '<>', '000');
+            $query->whereIn('ma_kiemtra', config('qd130xml.hein_card_invalid.check_code'))
+            ->orWhereIn('ma_tracuu', config('qd130xml.hein_card_invalid.result_code'));
         })
         ->whereBetween('updated_at', [$fromDateTime, $toDateTime])
         ->get();
