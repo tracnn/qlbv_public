@@ -194,7 +194,7 @@ class Qd130Xml2Checker
                 }
 
                 $ttThauParts = explode(";", $data->tt_thau);
-                if (count($ttThauParts) < 4) {
+                if (count($ttThauParts) < 4 || in_array('', $ttThauParts, true)) {
                     $errors->push((object)[
                         'error_code' => $this->prefix . 'INVALID_TT_THAU_FORMAT',
                         'error_name' => 'Thông tin thầu không đúng định dạng',
