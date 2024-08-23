@@ -60,6 +60,7 @@ class Qd130Xml2Checker
             $errors = $errors->merge($this->checkOrderTime($data));
         }
 
+        $errors = $errors->merge($this->infoChecker($data));
         $errors = $errors->merge($this->checkMedicalStaff($data));
         $errors = $errors->merge($this->checkDrugCatalog($data));
         
@@ -73,6 +74,59 @@ class Qd130Xml2Checker
 
         // Save errors to xml_error_checks table
         $this->xmlErrorService->saveErrors($this->xmlType, $data->ma_lk, $data->stt, $errors, $additionalData);
+    }
+
+    private function infoChecker(Qd130Xml2 $data): Collection
+    {
+        $errors = collect();
+
+        if (!empty($data->tt_thau)) {
+            $ttThauParts = explode(';', $data->tt_thau);
+
+            // Ensure we have exactly 4 parts (QĐ thầu, Gói thầu, Nhóm thầu, Năm thầu)
+            if (count($ttThauParts) == 4) {
+                [$qdThau, $goiThau, $nhomThau, $namThau] = $ttThauParts;
+
+                // Load the patterns from the configuration
+                $config = config('qd130xml.xml2.tt_thau');
+
+                $goiThauPattern = $config['goi_thau_pattern'] ?? null;
+                $nhomThauPattern = $config['nhom_thau_pattern'] ?? null;
+                $namThauPattern = $config['nam_thau_pattern'] ?? null;
+
+               // Validate Gói thầu
+                if ($goiThauPattern && !preg_match($goiThauPattern, $goiThau)) {
+                    $errors->push((object)[
+                        'error_code' => $this->prefix . 'INFO_ERROR_GOI_THAU',
+                        'error_name' => 'Gói thầu không đúng định dạng',
+                        //'critical_error' => true,
+                        'description' => 'Gói thầu của dịch vụ: ' . $data->ten_thuoc . '; không đúng định dạng: ' . $data->tt_thau
+                    ]);
+                }
+
+                // Validate Nhóm thầu
+                if ($nhomThauPattern && !preg_match($nhomThauPattern, $nhomThau)) {
+                    $errors->push((object)[
+                        'error_code' => $this->prefix . 'INFO_ERROR_NHOM_THAU',
+                        'error_name' => 'Nhóm thầu không đúng định dạng',
+                        //'critical_error' => true,
+                        'description' => 'Nhóm thầu của dịch vụ: ' . $data->ten_thuoc . '; không đúng định dạng: ' . $data->tt_thau
+                    ]);
+                }
+
+                // Validate Năm thầu
+                if ($namThauPattern && !preg_match($namThauPattern, $namThau)) {
+                    $errors->push((object)[
+                        'error_code' => $this->prefix . 'INFO_ERROR_NAM_THAU',
+                        'error_name' => 'Năm thầu không đúng định dạng',
+                        //'critical_error' => true,
+                        'description' => 'Năm thầu của dịch vụ: ' . $data->ten_thuoc . '; không đúng định dạng: ' . $data->tt_thau
+                    ]);
+                }
+            }
+        }
+
+        return $errors;
     }
 
 

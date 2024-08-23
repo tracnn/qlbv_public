@@ -48,17 +48,17 @@ return [
         'ma_doituong_kcb_trai_tuyen' => ['3'],
     ],
     'xml2' => [
-        'tt_thau' => [ //Bổ sung quy tắc định dạng tt_thau
-            'goi_thau_pattern' => '',
-            'nhom_thau_pattern' => '',
-            'nam_thau_pattern' => '',
+        'tt_thau' => [ // Bổ sung quy tắc định dạng tt_thau
+            'goi_thau_pattern' => '/^G[1-5]$/', // 2 ký tự; ký tự đầu tiên là G, ký tự thứ 2 là số 1 đến 5
+            'nhom_thau_pattern' => '/^N[1-5]$/', // 2 ký tự; ký tự đầu tiên là N, ký tự thứ 2 là số từ 1 đến 5
+            'nam_thau_pattern' => '/^\d{4}$/',   // Định dạng năm 4 ký tự
         ],
     ],
     'xml3' => [
-        'tt_thau' => [ //Bổ sung quy tắc định dạng tt_thau
-            'goi_thau_pattern' => '',
-            'nhom_thau_pattern' => '',
-            'nam_thau_pattern' => '',
+        'tt_thau' => [ // Bổ sung quy tắc định dạng tt_thau
+            'goi_thau_pattern' => '/^G[1-9]$/', // 2 ký tự; ký tự đầu tiên là G, ký tự thứ 2 là số 1 đến 9
+            'nhom_thau_pattern' => '/^N[0-6]$/', // 2 ký tự; ký tự đầu tiên là N, ký tự thứ 2 là số từ 0 đến 6
+            'nam_thau_pattern' => '/^\d{4}$/',   // Định dạng năm 4 ký tự
         ],
     ],
     'general' => [

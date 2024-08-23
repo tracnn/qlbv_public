@@ -43,3 +43,6 @@ Bổ sung kiểm tra bắt buộc phải có trường KET_LUAN trong Qd130Xml4C
 	+ Khoa khám bệnh (K01) chỉ định dịch vụ/vtyt (xml3) và thuốc (xml2) cho BN nội trú - trái tuyến
 	+ Thêm key trong config.qd130xml
 	+ Bổ sung quy tắc trong Qd130Xml2Checker và Qd130Xml3Checker
+- Bổ sung kiểm tra quy tắc TT_THAU đúng định dạng Gx;Nx trong Xml2 và Xml3 nếu có (Warning)
+	+ thêm key trong config.qd130xml
+	+ Bổ sung quy tắc infoChecker trong Qd130Xml2Checker và Qd130Xml3Checker
