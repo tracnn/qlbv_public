@@ -78,7 +78,10 @@ class Qd130Xml3Checker
         $errors = $errors->merge($this->checkBedDayQuantity($data)); // Thêm kiểm tra số lượng ngày giường
         $errors = $errors->merge($this->checkMedicalSupplyCatalog($data)); // Thêm kiểm tra VTYT
         $errors = $errors->merge($this->checkMedicalService($data)); // Kiểm tra dịch vụ kỹ thuật
-        $errors = $errors->merge($this->checkValidMakhoaReq($data)); // Kiểm tra tính hợp lệ của khoa chỉ định
+
+        if (config('qd130xml.general.check_valid_department_req')) {
+            $errors = $errors->merge($this->checkValidMakhoaReq($data)); // Kiểm tra tính hợp lệ của khoa chỉ định
+        }
 
         $additionalData = [
             'ngay_yl' => $data->ngay_yl

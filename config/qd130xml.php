@@ -62,6 +62,7 @@ return [
         ],
     ],
     'general' => [
+        'check_valid_department_req' => true, //Kiểm tra tính hợp lệ của khoa chỉ định; Tuyến TW/Tỉnh => true
         'ma_khoa_kkb' => ['K01'],
     ],
 ];

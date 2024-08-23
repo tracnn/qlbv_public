@@ -62,7 +62,10 @@ class Qd130Xml2Checker
 
         $errors = $errors->merge($this->checkMedicalStaff($data));
         $errors = $errors->merge($this->checkDrugCatalog($data));
-        $errors = $errors->merge($this->checkValidMakhoaReq($data)); // Kiểm tra tính hợp lệ của khoa chỉ định
+        
+        if (config('qd130xml.general.check_valid_department_req')) {
+            $errors = $errors->merge($this->checkValidMakhoaReq($data)); // Kiểm tra tính hợp lệ của khoa chỉ định
+        }
 
         $additionalData = [
             'ngay_yl' => $data->ngay_yl
