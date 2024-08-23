@@ -47,11 +47,12 @@ class HISProKiemTraTheBHYT extends Command
             ->join('his_room','his_bed_room.room_id','=','his_room.id')
             ->join('his_department','his_room.department_id','=','his_department.id')
             ->join('his_treatment','his_treatment_bed_room.treatment_id','=','his_treatment.id')
+            ->join('his_gender', 'his_gender.id', '=', 'his_treatment.tdl_patient_gender_id')
             ->leftjoin('his_co_treatment','his_treatment_bed_room.co_treatment_id','=','his_co_treatment.id')
             ->selectRaw('his_treatment.treatment_code, his_treatment.tdl_hein_card_number, his_treatment.tdl_patient_name,
                 his_treatment.tdl_patient_gender_id, his_treatment.tdl_hein_medi_org_code,
                 his_treatment.tdl_hein_card_from_time, his_treatment.tdl_hein_card_to_time,
-                his_room.department_id,
+                his_room.department_id, his_gender.gender_code,
                 his_treatment.tdl_patient_dob, his_department.department_name')
             ->whereNull('his_treatment_bed_room.remove_time')
             ->whereNull('his_co_treatment.id')
@@ -68,9 +69,9 @@ class HISProKiemTraTheBHYT extends Command
             $ngaySinhFormatted  = dob($value->tdl_patient_dob);
             $ma_lk = $value->treatment_code;
             $maDKBD = $value->tdl_hein_medi_org_code;
-            $gioiTinh = $value->tdl_patient_gender_id;
+            $gioiTinh = (int)$value->gender_code;
 
-            $this->info($maThe);
+            $this->info($ma_lk);
 
             $params = [
                 'maThe' => $maThe,
