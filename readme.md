@@ -41,3 +41,5 @@ Bổ sung kiểm tra bắt buộc phải có trường KET_LUAN trong Qd130Xml4C
 # 23/08/2024
 - Bổ sung kiểm tra quy tắc kiểm tra Khoa chỉ định không hợp lệ (Warning)
 	+ Khoa khám bệnh (K01) chỉ định dịch vụ/vtyt (xml3) và thuốc (xml2) cho BN nội trú - trái tuyến
+	+ Thêm key trong config.qd130xml
+	+ Bổ sung quy tắc trong Qd130Xml2Checker và Qd130Xml3Checker
