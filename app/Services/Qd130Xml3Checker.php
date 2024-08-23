@@ -78,6 +78,7 @@ class Qd130Xml3Checker
         $errors = $errors->merge($this->checkBedDayQuantity($data)); // Thêm kiểm tra số lượng ngày giường
         $errors = $errors->merge($this->checkMedicalSupplyCatalog($data)); // Thêm kiểm tra VTYT
         $errors = $errors->merge($this->checkMedicalService($data)); // Kiểm tra dịch vụ kỹ thuật
+        $errors = $errors->merge($this->checkValidMakhoaReq($data)); // Kiểm tra tính hợp lệ của khoa chỉ định
 
         $additionalData = [
             'ngay_yl' => $data->ngay_yl
@@ -682,6 +683,34 @@ class Qd130Xml3Checker
                     //     ]);
                     // }
                 }
+            }
+        }
+
+        return $errors;
+    }
+
+    private function checkValidMakhoaReq(Qd130Xml3 $data): Collection
+    {
+        $errors = collect();
+
+        if (in_array($data->Qd130Xml1->ma_loai_kcb, config('qd130xml.treatment_type_inpatient'))) {
+            
+            $is_ma_doituong_kcb_trai_tuyen = false;
+            foreach (config('qd130xml.xml1.ma_doituong_kcb_trai_tuyen') as $ma_doituong) {
+                if (strpos($data->Qd130Xml1->ma_doituong_kcb, (string)$ma_doituong) === 0) {
+                    $is_ma_doituong_kcb_trai_tuyen = true;
+                    break;
+                }
+            }
+            
+            if ($is_ma_doituong_kcb_trai_tuyen && 
+                in_array($data->ma_khoa, config('qd130xml.general.ma_khoa_kkb'))) {
+                $errors->push((object)[
+                    'error_code' => $this->prefix . 'MA_KHOA_REQ_INVALID',
+                    'error_name' => 'Khoa chỉ định dịch vụ không hợp lệ',
+                    //'critical_error' => true,
+                    'description' => 'Khoa khám bệnh: ' . implode(',', config('qd130xml.general.ma_khoa_kkb')) . '; không được chỉ định: ' . $data->ten_dich_vu . '; Đối với BN Nội trú - Trái tuyến'
+                ]);                
             }
         }
 

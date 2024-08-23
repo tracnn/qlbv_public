@@ -43,7 +43,25 @@ return [
         'xml3_ma_nhom_require_ket_luan' => [2],
     ],
     'exportable_tt' => false, //Xuất xml thông tuyến (true: có xuất; false: không xuất)
+    /* Bổ sung key 2024.08.23 */
     'xml1' => [
         'ma_doituong_kcb_trai_tuyen' => ['3'],
+    ],
+    'xml2' => [
+        'tt_thau' => [ //Bổ sung quy tắc định dạng tt_thau
+            'goi_thau_pattern' => '',
+            'nhom_thau_pattern' => '',
+            'nam_thau_pattern' => '',
+        ],
+    ],
+    'xml3' => [
+        'tt_thau' => [ //Bổ sung quy tắc định dạng tt_thau
+            'goi_thau_pattern' => '',
+            'nhom_thau_pattern' => '',
+            'nam_thau_pattern' => '',
+        ],
+    ],
+    'general' => [
+        'ma_khoa_kkb' => ['K01'],
     ],
 ];

@@ -37,3 +37,7 @@ Bổ sung kiểm tra bắt buộc phải có trường KET_LUAN trong Qd130Xml4C
 
 # 15/08/2024
 - Cập nhật kiểm tra Xml9 Thông tin trẻ sơ sinh
+
+# 23/08/2024
+- Bổ sung kiểm tra quy tắc kiểm tra Khoa chỉ định không hợp lệ 
+	+ Khoa khám bệnh (K01) chỉ định dịch vụ/vtyt (xml3) và thuốc (xml2) cho BN nội trú - trái tuyến
