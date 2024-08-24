@@ -50,4 +50,5 @@ Bổ sung kiểm tra bắt buộc phải có trường KET_LUAN trong Qd130Xml4C
 - Bổ sung tự động quét kiểm tra thẻ BHYT đối với BN đang điều trị (His Pro Vietsens)
 	+ Bổ sung artisan command HISProKiemTraTheBHYT
 	+ Chỉ quét một lần trong suốt quá trình điều trị đối với thẻ đúng
-	+ Chỉ thực hiện quét lại đối với thẻ sai
+	+ Thực hiện quét lại đối với thẻ sai
+	+ Cho phép cấu hình thời gian chạy quét bằng task schedule (Windows) hoặc supersivor (Linux/Unix)
