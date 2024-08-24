@@ -46,3 +46,8 @@ Bổ sung kiểm tra bắt buộc phải có trường KET_LUAN trong Qd130Xml4C
 - Bổ sung kiểm tra quy tắc TT_THAU đúng định dạng Gx;Nx trong Xml2 và Xml3 nếu có (Warning)
 	+ thêm key trong config.qd130xml
 	+ Bổ sung quy tắc infoChecker trong Qd130Xml2Checker và Qd130Xml3Checker
+# 24/08/2024
+- Bổ sung tự động quét kiểm tra thẻ BHYT đối với BN đang điều trị (His Pro Vietsens)
+	+ Bổ sung artisan command HISProKiemTraTheBHYT
+	+ Chỉ quét một lần trong suốt quá trình điều trị đối với thẻ đúng
+	+ Chỉ thực hiện quét lại đối với thẻ sai
