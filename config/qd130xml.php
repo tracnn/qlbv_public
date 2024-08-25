@@ -42,7 +42,7 @@ return [
     'xml4' => [
         'xml3_ma_nhom_require_ket_luan' => [2],
     ],
-    'exportable_tt' => true, //Xuất xml thông tuyến (true: có xuất; false: không xuất)
+    'exportable_tt' => true, //Sau khi import từ thư mục xml thông tuyến thì có xuất Xml hay không (true: có xuất; false: không xuất)
     /* Bổ sung key 2024.08.23 */
     'xml1' => [
         'ma_doituong_kcb_trai_tuyen' => ['3'],
