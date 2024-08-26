@@ -34,7 +34,7 @@ return [
     'export_qd130_xml_enabled' => true, //Có xuất Xml theo Qd130 tự động không (Chỉ những hồ sơ không có lỗi critical mới xuất)
     'treatment_end_type_absconding' => [3], //Bổ sung loại ra viện là trốn viện để không kiểm tra giấy ra viện
     'hein_card_invalid' => [ //Bổ sung mã kiểm tra thẻ được coi là lỗi
-        'check_code' => ['01', '02', '03', '04', '06', '07', '08', '09'],
+        'check_code' => ['01', '02', '03', '04', '05', '06', '07', '08', '09', '11'],
         'result_code' => ['003', '010', '050', '051', '052', '053', '060', 
         '061', '070', '110', '120', '121' ,'122', '123', '124', '130'],
     ],
