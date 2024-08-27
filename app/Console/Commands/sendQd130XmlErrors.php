@@ -114,7 +114,7 @@ class sendQd130XmlErrors extends Command
             $query->whereIn('ma_kiemtra', config('qd130xml.hein_card_invalid.check_code'))
             ->orWhereIn('ma_tracuu', config('qd130xml.hein_card_invalid.result_code'));
         })
-        ->whereBetween('updated_at', [$fromDateTime, $toDateTime])
+        ->where('updated_at', '>=', $fromDateTime)
         ->get();
     }
 

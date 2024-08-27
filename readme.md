@@ -52,3 +52,7 @@ Bổ sung kiểm tra bắt buộc phải có trường KET_LUAN trong Qd130Xml4C
 	+ Chỉ quét một lần trong suốt quá trình điều trị đối với thẻ đúng
 	+ Thực hiện quét lại đối với thẻ sai
 	+ Cho phép cấu hình thời gian chạy quét bằng task schedule (Windows) hoặc supersivor (Linux/Unix)
+# 27/08/2024
+- Tối ưu chức năng tự động quét thẻ BHYT
+	+ Đối với những thẻ bị sai thông tin được quy định trong config qd130xml.hein_card_invalid.check_code và qd130xml.hein_card_invalid.result_code thì thực hiện quét lại thẻ BHYT, kể cả không có sự thay đổi thông tin thì vẫn cập nhật updated_at tại thời điểm kiểm tra nhằm mục đích gửi thông báo tới các khoa phòng liên quan để sửa lỗi thông tin thẻ
+	+ Sửa job jobKtTheBHYT: phương thức handle() và phương thức addCheckHeinCard()

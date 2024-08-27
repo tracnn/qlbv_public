@@ -46,9 +46,9 @@ class jobKtTheBHYT implements ShouldQueue
         // Cấu hình kiểm tra từ kết quả tra cứu cũ. Mặc định là true
         if ($this->checkOldValue) {
             $existingCardCheck = check_hein_card::where('ma_lk', $this->params['ma_lk'])
-                ->where('ma_tracuu', '000')
-                ->where('ma_kiemtra', '00')
-                ->first();
+            ->whereNotIn('ma_kiemtra', config('qd130xml.hein_card_invalid.check_code'))
+            ->whereNotIn('ma_tracuu', config('qd130xml.hein_card_invalid.result_code'))
+            ->first();
 
             if ($existingCardCheck) {
                 return;
@@ -166,7 +166,7 @@ class jobKtTheBHYT implements ShouldQueue
 
     private function addCheckHeinCard($ma_lk, $ma_tracuu, $ma_kiemtra, $result_check)
     {
-        check_hein_card::updateOrCreate(
+        $checkHeinCard = check_hein_card::updateOrCreate(
             [
                 'ma_lk' => $ma_lk,
             ],
@@ -195,5 +195,6 @@ class jobKtTheBHYT implements ShouldQueue
                 'ten_dkbd_moi' => $result_check['tenDKBDMoi'],
             ]
         );
+        $checkHeinCard->touch();
     }
 }
