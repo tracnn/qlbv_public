@@ -5,7 +5,7 @@
 - Bổ sung kiểm tra tyle_tt_dv và tyle_tt_bh trong Xml2 và Xml3 chỉ được nằm trong khoảng từ 0 đến 100
 	+ Bổ sung thêm trong phương thức infoChecker() của Services Qd130Xml2Checker
 	+ Bổ sung thêm trong phương thức infoChecker() của Services Qd130Xml3Checker
-	ty
+
 # 24/08/2024
 - Bổ sung tự động quét kiểm tra thẻ BHYT đối với BN đang điều trị (His Pro Vietsens)
 	+ Bổ sung artisan command HISProKiemTraTheBHYT
