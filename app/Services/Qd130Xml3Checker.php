@@ -355,6 +355,26 @@ class Qd130Xml3Checker
             }
         }
 
+        // Check tyle_tt_bh value
+        if (isset($data->tyle_tt_bh) && ($data->tyle_tt_bh < 0 || $data->tyle_tt_bh > 100)) {
+            $errors->push((object)[
+                'error_code' => $this->prefix . 'INFO_ERROR_TYLE_TT_BH',
+                'error_name' => 'Tỷ lệ TT BH không nằm trong khoảng cho phép',
+                'critical_error' => true,
+                'description' => 'Tỷ lệ TT BH của dịch vụ: ' . $data->ten_dich_vu . '; không nằm trong khoảng 0-100: ' . $data->tyle_tt_bh
+            ]);
+        }
+
+        // Check tyle_tt_dv value
+        if (isset($data->tyle_tt_dv) && ($data->tyle_tt_dv < 0 || $data->tyle_tt_dv > 100)) {
+            $errors->push((object)[
+                'error_code' => $this->prefix . 'INFO_ERROR_TYLE_TT_DV',
+                'error_name' => 'Tỷ lệ TT DV không nằm trong khoảng cho phép',
+                'critical_error' => true,
+                'description' => 'Tỷ lệ TT DV của dịch vụ: ' . $data->ten_dich_vu . '; không nằm trong khoảng 0-100: ' . $data->tyle_tt_dv
+            ]);
+        }
+
         return $errors;
     }
 

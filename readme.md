@@ -2,7 +2,10 @@
 - Tối ưu chức năng tự động quét thẻ BHYT
 	+ Đối với những thẻ bị sai thông tin được quy định trong config qd130xml.hein_card_invalid.check_code và qd130xml.hein_card_invalid.result_code thì thực hiện quét lại thẻ BHYT, kể cả không có sự thay đổi thông tin thì vẫn cập nhật updated_at tại thời điểm kiểm tra nhằm mục đích gửi thông báo tới các khoa phòng liên quan để sửa lỗi thông tin thẻ
 	+ Sửa job jobKtTheBHYT: phương thức handle() và phương thức addCheckHeinCard()
-
+- Bổ sung kiểm tra tyle_tt_dv và tyle_tt_bh trong Xml2 và Xml3 chỉ nằm trong khoảng từ 0 đến 100
+	+ Bổ sung thêm trong phương thức inforChecker() của Services Qd130Xml2Checker
+	+ Bổ sung thêm trong phương thức inforChecker() của Services Qd130Xml3Checker
+	ty
 # 24/08/2024
 - Bổ sung tự động quét kiểm tra thẻ BHYT đối với BN đang điều trị (His Pro Vietsens)
 	+ Bổ sung artisan command HISProKiemTraTheBHYT
