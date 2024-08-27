@@ -390,7 +390,10 @@
             success: function(response) {
                 if (response.jobs_count > 0) {
                     $('#job-status-icon').show();
-                    $('#job-count').text(response.jobs_count).show(); // Hiển thị số lượng job
+                    // Format the jobs_count with commas
+                    var formattedCount = response.jobs_count.toLocaleString();
+                    
+                    $('#job-count').text(formattedCount).show(); // Hiển thị số lượng job
                 } else {
                     $('#job-status-icon').hide();
                     $('#job-count').hide();
