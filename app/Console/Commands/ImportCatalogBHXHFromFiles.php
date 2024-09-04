@@ -147,7 +147,7 @@ class ImportCatalogBHXHFromFiles extends Command
         ];
 
         $firstRow = $data->first()->values()->toArray();
-    //dd($firstRow);    
+   
         switch (true) {
             case $firstRow === $expectedMedicineColumns:
                 $data = $data->slice(1); // Bỏ qua dòng đầu tiên
