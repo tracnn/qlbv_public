@@ -22,7 +22,7 @@ class CreateNhanVienYTeTable extends Migration
             $table->string('ho_ten');
             $table->tinyInteger('gioi_tinh');
             $table->integer('chucdanh_nn');
-            $table->integer('vi_tri')->nullable();
+            $table->string('vi_tri')->nullable();
             $table->string('macchn');
             $table->string('ngaycap_cchn');
             $table->string('noicap_cchn');

@@ -21,6 +21,7 @@ class CreateAdministrativeUnitsTable extends Migration
             $table->string('district_name');
             $table->string('commune_code', 10);            
             $table->string('commune_name');
+            $table->boolean('is_active')->default(true);
             $table->timestamps();
 
             $table->index('province_code');

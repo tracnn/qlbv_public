@@ -15,7 +15,7 @@ use App\Models\BHYT\ServiceCatalog;
 use App\Models\BHYT\MedicalStaff;
 use App\Models\BHYT\DepartmentBedCatalog;
 use App\Models\BHYT\EquipmentCatalog;
-
+use App\Models\BHYT\AdministrativeUnit;
 
 class ImportCatalogBHXHFromFiles extends Command
 {
@@ -139,6 +139,11 @@ class ImportCatalogBHXHFromFiles extends Command
             "STT", "TEN_TB", "KY_HIEU", "CONGTY_SX", "NUOC_SX",
             "NAM_SX", "NAM_SD", "MA_MAY", "SO_LUU_HANH", "HD_TU",
             "HD_DEN", "TU_NGAY", "DEN_NGAY", "ID"
+        ];
+
+        $expectedAdministrativeUnitsColumns = [
+            "Tỉnh Thành Phố", "Mã TP", "Quận Huyện", "Mã QH", "Phường Xã",
+            "Mã PX", "Cấp", "Tên Tiếng Anh"
         ];
 
         $firstRow = $data->first()->values()->toArray();
@@ -349,6 +354,40 @@ class ImportCatalogBHXHFromFiles extends Command
                         ]
                     );
                 }
+                Storage::disk($disk)->delete($file);
+                break;
+
+            case $firstRow === $expectedAdministrativeUnitsColumns:
+                
+                // Deactivate all existing active records
+                AdministrativeUnit::where('is_active', true)->update(['is_active' => false]);
+
+                $data = $data->slice(1); // Skip the first row
+                foreach ($data as $row) {
+                    // Continue if any of the required fields are empty
+                    if (empty($row[0]) || empty($row[1]) || empty($row[2])
+                        || empty($row[3]) || empty($row[4]) || empty($row[5])
+                    ) {
+                        continue;
+                    }
+
+                    // Update or create the record and set it as active
+                    AdministrativeUnit::updateOrCreate(
+                        [
+                            'commune_code' => $row[5]
+                        ],
+                        [
+                            'province_code' => $row[1],
+                            'province_name' => $row[0],
+                            'district_code' => $row[3],
+                            'district_name' => $row[2],
+                            'commune_name' => $row[4],
+                            'is_active' => true,
+                        ]
+                    );
+                }
+
+                // Delete the processed file from storage
                 Storage::disk($disk)->delete($file);
                 break;
 
