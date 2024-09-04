@@ -1,6 +1,6 @@
 <!-- resources/views/bhyt/detail-xml.blade.php -->
 <label>Hồ Sơ - {{ $xml1->ma_lk }}; Mã BN - {{ $xml1->ma_bn }}; 
-    Họ tên - {{ $xml1->ho_ten }}; Ngày sinh - {{ dob($xml1->ngay_sinh) }}
+    Họ tên - {{ $xml1->ho_ten }}; Ngày sinh - {{ dob($xml1->ngay_sinh) }};
     Mã thẻ - {{ $xml1->ma_the_bhyt }}; Nơi ĐKBĐ - {{ $xml1->ma_dkbd }}; 
     Ngày vào: {{ strtodatetime($xml1->ngay_vao) }} - 
     Ngày ra: {{ strtodatetime($xml1->ngay_ra) }}

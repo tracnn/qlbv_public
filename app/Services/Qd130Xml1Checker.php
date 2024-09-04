@@ -172,7 +172,9 @@ class Qd130Xml1Checker
                 'description' => 'Mã tỉnh không được để trống'
             ]);
         } else {
-            $provinceExists = AdministrativeUnit::where('province_code', $data->matinh_cu_tru)->exists();
+            $provinceExists = AdministrativeUnit::where('province_code', $data->matinh_cu_tru)
+            ->where('is_active', true)
+            ->exists();
             if (!$provinceExists) {
                 $errors->push((object)[
                     'error_code' => $this->prefix . 'ADMIN_INFO_ERROR_MATINH_CU_TRU_NOT_FOUND',
@@ -191,7 +193,9 @@ class Qd130Xml1Checker
                 'description' => 'Mã quận huyện không được để trống'
             ]);
         } else {
-            $districtExists = AdministrativeUnit::where('district_code', $data->mahuyen_cu_tru)->exists();
+            $districtExists = AdministrativeUnit::where('district_code', $data->mahuyen_cu_tru)
+            ->where('is_active', true)
+            ->exists();
             if (!$districtExists) {
                 $errors->push((object)[
                     'error_code' => $this->prefix . 'ADMIN_INFO_ERROR_MAHUYEN_CU_TRU_NOT_FOUND',
@@ -201,8 +205,9 @@ class Qd130Xml1Checker
                 ]);
             } else {
                 $districtInProvinceExists = AdministrativeUnit::where('province_code', $data->matinh_cu_tru)
-                    ->where('district_code', $data->mahuyen_cu_tru)
-                    ->exists();
+                ->where('district_code', $data->mahuyen_cu_tru)
+                ->where('is_active', true)
+                ->exists();
                 if (!$districtInProvinceExists) {
                     $errors->push((object)[
                         'error_code' => $this->prefix . 'ADMIN_INFO_ERROR_MAHUYEN_CU_TRU_NOT_FOUND_IN_MATINH_CU_TRU',
@@ -222,7 +227,9 @@ class Qd130Xml1Checker
                 'description' => 'Mã phường xã không được để trống'
             ]);
         } else {
-            $wardExists = AdministrativeUnit::where('commune_code', $data->maxa_cu_tru)->exists();
+            $wardExists = AdministrativeUnit::where('commune_code', $data->maxa_cu_tru)
+            ->where('is_active', true)
+            ->exists();
             if (!$wardExists) {
                 $errors->push((object)[
                     'error_code' => $this->prefix . 'ADMIN_INFO_ERROR_MAXA_CU_TRU_NOT_FOUND',
@@ -232,8 +239,9 @@ class Qd130Xml1Checker
                 ]);
             } else {
                 $wardExistsInDistrict = AdministrativeUnit::where('district_code', $data->mahuyen_cu_tru)
-                    ->where('commune_code', $data->maxa_cu_tru)
-                    ->exists();
+                ->where('commune_code', $data->maxa_cu_tru)
+                ->where('is_active', true)
+                ->exists();
                 if (!$wardExistsInDistrict) {
                     $errors->push((object)[
                         'error_code' => $this->prefix . 'ADMIN_INFO_ERROR_MAXA_CU_TRU_NOT_FOUND_IN_MAHUYEN_CU_TRU',
