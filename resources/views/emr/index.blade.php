@@ -175,8 +175,8 @@ $(document).ready( function () {
                     var actionButtons = `<button class="btn btn-sm btn-info show-qr" data-qr-url="${qrCodeUrl}"><span class="glyphicon glyphicon-qrcode"></span> Mã QR</button>`;
 
                     if (canPayment) {
-                        actionButtons += `<button id="payment" class="btn btn-sm btn-warning" data-id="${id}"><span class="glyphicon glyphicon-qrcode"></span> T.toán</button>
-                                          <button id="deposit" class="btn btn-sm btn-success" data-id="${id}"><span class="glyphicon glyphicon-qrcode"></span> T.ứng</button>`;
+                        // <button id="payment" class="btn btn-sm btn-warning" data-id="${id}"><span class="glyphicon glyphicon-qrcode"></span> T.toán</button>
+                        actionButtons += `<button id="deposit" class="btn btn-sm btn-success" data-id="${id}"><span class="glyphicon glyphicon-qrcode"></span> T.ứng</button>`;
                     }
                     return actionButtons;
                 }
