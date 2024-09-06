@@ -18,6 +18,7 @@ class CreateMedicalOrganizationsTable extends Migration
             $table->string('ma_cskcb', 5)->unique();
             $table->string('ten_cskcb');
             $table->string('dia_chi_cskcb');
+            $table->boolean('is_active')->default(true);
             $table->timestamps();
         });
     }

@@ -16,6 +16,7 @@ use App\Models\BHYT\MedicalStaff;
 use App\Models\BHYT\DepartmentBedCatalog;
 use App\Models\BHYT\EquipmentCatalog;
 use App\Models\BHYT\AdministrativeUnit;
+use App\Models\BHYT\MedicalOrganization;
 
 class ImportCatalogBHXHFromFiles extends Command
 {
@@ -146,8 +147,13 @@ class ImportCatalogBHXHFromFiles extends Command
             "Mã PX", "Cấp", "Tên Tiếng Anh"
         ];
 
+        $expectedMedicalOrganizationColumns = [
+            "STT", "Mã", "Tên", "Tuyến CMKT", "Hạng bệnh viện",
+            "Địa chỉ"
+        ];
+
         $firstRow = $data->first()->values()->toArray();
-   
+
         switch (true) {
             case $firstRow === $expectedMedicineColumns:
                 $data = $data->slice(1); // Bỏ qua dòng đầu tiên
@@ -382,6 +388,37 @@ class ImportCatalogBHXHFromFiles extends Command
                             'district_code' => $row[3],
                             'district_name' => $row[2],
                             'commune_name' => $row[4],
+                            'is_active' => true,
+                        ]
+                    );
+                }
+
+                // Delete the processed file from storage
+                Storage::disk($disk)->delete($file);
+                break;
+
+            case $firstRow === $expectedMedicalOrganizationColumns:
+                
+                // Deactivate all existing active records
+                MedicalOrganization::where('is_active', true)->update(['is_active' => false]);
+
+                $data = $data->slice(1); // Skip the first row
+                foreach ($data as $row) {
+                    // Continue if any of the required fields are empty
+                    if (empty($row[0]) || empty($row[1]) || empty($row[2])
+                        || empty($row[3]) || empty($row[4]) || empty($row[5])
+                    ) {
+                        continue;
+                    }
+
+                    // Update or create the record and set it as active
+                    MedicalOrganization::updateOrCreate(
+                        [
+                            'ma_cskcb' => $row[1]
+                        ],
+                        [
+                            'ten_cskcb' => $row[2],
+                            'dia_chi_cskcb' => $row[5],
                             'is_active' => true,
                         ]
                     );

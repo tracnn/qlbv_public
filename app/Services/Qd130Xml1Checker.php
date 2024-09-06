@@ -684,6 +684,12 @@ class Qd130Xml1Checker
                     'error_name' => 'Thiếu mã lý do vào nội trú',
                     'description' => 'Mã lý do vào nội trú không được để trống'
                 ]);
+            } elseif (strlen($data->ma_ly_do_vnt) > 5) {
+                $errors->push((object)[
+                    'error_code' => $this->prefix . 'SPECIAL_INPATIENT_ERROR_MA_LY_DO_VNT_LENGTH',
+                    'error_name' => 'Mã lý do vào nội trú không hợp lệ',
+                    'description' => 'Mã lý do vào nội trú không được vượt quá 5 ký tự'
+                ]);
             }
 
             if (empty($data->ngay_vao_noi_tru)) {

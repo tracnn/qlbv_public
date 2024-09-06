@@ -1,3 +1,13 @@
+# 06/09/2024
+- Bổ sung chức năng tự động import danh mục cơ sở khám chữa bệnh
+	+ Bổ sung fillable trong Models\MedicalOrganization
+	+ Tải danh mục đơn vị hành chính từ trang: https://gdbhyt.baohiemxahoi.gov.vn/DM_COSOKCB
+	+ Sửa Artisan Command ImportCatalogBHXHFromFiles
+		+ Bổ sung kiểm tra cấu trúc file danh mục
+		+ Bổ sung thêm case $firstRow === $expectedMedicalOrganizationColumns:
+- Sửa Service Check Xml lọc MedicalOrganization với is_active = true
+	+ Sửa Service Qd130Xml1Checker
+
 # 04/09/2024
 - Bổ sung chức năng tự động import danh mục đơn vị hành chính
 	+ Bổ sung fillable trong Models\AdministrativeUnit
