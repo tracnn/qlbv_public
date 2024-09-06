@@ -99,7 +99,7 @@ class Qd130Xml2Checker
                     $errors->push((object)[
                         'error_code' => $this->prefix . 'INFO_ERROR_GOI_THAU',
                         'error_name' => 'Gói thầu không đúng định dạng',
-                        //'critical_error' => true,
+                        'critical_error' => true,
                         'description' => 'Gói thầu của dịch vụ: ' . $data->ten_thuoc . '; không đúng định dạng: ' . $data->tt_thau
                     ]);
                 }
@@ -109,7 +109,7 @@ class Qd130Xml2Checker
                     $errors->push((object)[
                         'error_code' => $this->prefix . 'INFO_ERROR_NHOM_THAU',
                         'error_name' => 'Nhóm thầu không đúng định dạng',
-                        //'critical_error' => true,
+                        'critical_error' => true,
                         'description' => 'Nhóm thầu của dịch vụ: ' . $data->ten_thuoc . '; không đúng định dạng: ' . $data->tt_thau
                     ]);
                 }
@@ -119,7 +119,7 @@ class Qd130Xml2Checker
                     $errors->push((object)[
                         'error_code' => $this->prefix . 'INFO_ERROR_NAM_THAU',
                         'error_name' => 'Năm thầu không đúng định dạng',
-                        //'critical_error' => true,
+                        'critical_error' => true,
                         'description' => 'Năm thầu của dịch vụ: ' . $data->ten_thuoc . '; không đúng định dạng: ' . $data->tt_thau
                     ]);
                 }
