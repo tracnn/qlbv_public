@@ -688,7 +688,8 @@ class Qd130Xml1Checker
                 $errors->push((object)[
                     'error_code' => $this->prefix . 'SPECIAL_INPATIENT_ERROR_MA_LY_DO_VNT_LENGTH',
                     'error_name' => 'Mã lý do vào nội trú không hợp lệ',
-                    'description' => 'Mã lý do vào nội trú không được vượt quá 5 ký tự'
+                    'critical_error' => true,
+                    'description' => 'Mã lý do vào nội trú: ' . $data->ma_ly_do_vnt . ' vượt quá 5 ký tự'
                 ]);
             }
 
