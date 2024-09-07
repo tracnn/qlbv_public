@@ -209,16 +209,16 @@ class UpdateCV extends Command
                         ]);
 
                         /* Delete XML */
-                        XML5::whereIn('ma_lk', $value)
-                        ->delete();
-                        XML4::whereIn('ma_lk', $value)
-                        ->delete();
-                        XML3::whereIn('ma_lk', $value)
-                        ->delete();
-                        XML2::whereIn('ma_lk', $value)
-                        ->delete();
-                        XML1::whereIn('ma_lk', $value)
-                        ->delete();
+                        // XML5::whereIn('ma_lk', $value)
+                        // ->delete();
+                        // XML4::whereIn('ma_lk', $value)
+                        // ->delete();
+                        // XML3::whereIn('ma_lk', $value)
+                        // ->delete();
+                        // XML2::whereIn('ma_lk', $value)
+                        // ->delete();
+                        // XML1::whereIn('ma_lk', $value)
+                        // ->delete();
                         
                         // check_hein_card::whereIn('ma_lk', $value)
                         // ->delete();
