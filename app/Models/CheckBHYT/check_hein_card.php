@@ -17,4 +17,9 @@ class check_hein_card extends Model
     {
         return $this->belongsTo('App\Models\BHYT\XML1', 'ma_lk', 'ma_lk');
     }
+
+    public function his_treatment()
+    {
+        return $this->belongsTo('App\Models\HISPro\HIS_TREATMENT', 'ma_lk', 'treatment_code');
+    }
 }

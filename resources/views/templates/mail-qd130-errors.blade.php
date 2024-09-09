@@ -74,7 +74,7 @@
           <tr>
             <th>STT</th>
             <th>Mã LK</th>
-            <th>Mã Thẻ (XML)</th>
+            <th>Mã Thẻ (HISPro)</th>
             <th>Mã Lỗi</th>
             <th>Ghi Chú</th>
           </tr>
@@ -84,7 +84,7 @@
           <tr>
             <td>{{ $index + 1 }}</td>
             <td>{{ $error->ma_lk }}</td>
-            <td>{{ optional($error->xml1)->ma_the }}</td>
+            <td>{{ optional($error->his_treatment)->tdl_hein_card_number }}</td>
             <td>
               @if($error->ma_tracuu != '000')
                 {{ config('__tech.insurance_error_code')[$error->ma_tracuu] }}
