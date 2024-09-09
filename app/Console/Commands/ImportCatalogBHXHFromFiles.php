@@ -430,6 +430,7 @@ class ImportCatalogBHXHFromFiles extends Command
 
             default:
                 $this->error('Unrecognized file structure: ' . $file);
+                \Log::error('Unrecognized file structure: ' . $file);
                 break;
         }
     }
