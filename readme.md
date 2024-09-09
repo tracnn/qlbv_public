@@ -1,7 +1,7 @@
 # 09/09/2024
 - Sửa mail gửi lỗi thẻ BHYT, bổ sung Mã thẻ HISPro của Vietsens trong trường hợp không tra cứu được thông tin
 	+ Bổ sung mối quan hệ Models\CheckBHYT\check_hein_card với bảng his_treatment của Hispro
-	+ Sửa template gửi email resources\template\mail-qd130-errors.blade
+	+ Sửa template gửi email resources\templates\mail-qd130-errors.blade
 # 06/09/2024
 - Bổ sung chức năng tự động import danh mục cơ sở khám chữa bệnh
 	+ Bổ sung fillable trong Models\MedicalOrganization
