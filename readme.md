@@ -1,8 +1,8 @@
 # 10/09/2024
 - Sửa Qd130Xml3Checker 
-	+ Lấy bổ sung $this->serviceDisplay ưu tiên lấy ten_vat_tu nếu không có mới lấy ten_dich_vu
-	+ Phù hợp với export Xml3 của His
-	
+	+ Bổ sung $this->serviceDisplay ưu tiên lấy ten_vat_tu nếu không có mới lấy ten_dich_vu
+	+ Phù hợp với export Xml3 của HisPro Vietsens
+
 # 09/09/2024
 - Sửa mail gửi lỗi thẻ BHYT, bổ sung Mã thẻ HISPro của Vietsens trong trường hợp không tra cứu được thông tin
 	+ Bổ sung mối quan hệ Models\CheckBHYT\check_hein_card với bảng his_treatment của Hispro
