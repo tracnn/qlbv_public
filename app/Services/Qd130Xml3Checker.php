@@ -27,6 +27,7 @@ class Qd130Xml3Checker
     protected $excludedMaterialGroupCodes;
     protected $groupCodeWithExecutor;
     protected $serviceGroupsRequiringAnesthesia;
+    protected $serviceDisplay;
 
     public function __construct(Qd130XmlErrorService $xmlErrorService)
     {
@@ -64,6 +65,7 @@ class Qd130Xml3Checker
 
         // Load related XML1
         $data->load('Qd130Xml1');
+        $this->serviceDisplay = !empty($data->ten_vat_tu) ? $data->ten_vat_tu : $data->ten_dich_vu;
 
         if ($data->Qd130Xml1) {
             $errors = $errors->merge($this->checkOutpatientBedDayErrors($data));
@@ -125,7 +127,7 @@ class Qd130Xml3Checker
                         'error_code' => $this->prefix . 'INFO_ERROR_GOI_THAU',
                         'error_name' => 'Gói thầu không đúng định dạng',
                         'critical_error' => true,
-                        'description' => 'Gói thầu của dịch vụ: ' . $data->ten_dich_vu . '; không đúng định dạng: ' . $data->tt_thau
+                        'description' => 'Gói thầu của dịch vụ: ' . $this->serviceDisplay . '; không đúng định dạng: ' . $data->tt_thau
                     ]);
                 }
 
@@ -135,7 +137,7 @@ class Qd130Xml3Checker
                         'error_code' => $this->prefix . 'INFO_ERROR_NHOM_THAU',
                         'error_name' => 'Nhóm thầu không đúng định dạng',
                         'critical_error' => true,
-                        'description' => 'Nhóm thầu của dịch vụ: ' . $data->ten_dich_vu . '; không đúng định dạng: ' . $data->tt_thau
+                        'description' => 'Nhóm thầu của dịch vụ: ' . $this->serviceDisplay . '; không đúng định dạng: ' . $data->tt_thau
                     ]);
                 }
 
@@ -145,7 +147,7 @@ class Qd130Xml3Checker
                         'error_code' => $this->prefix . 'INFO_ERROR_NAM_THAU',
                         'error_name' => 'Năm thầu không đúng định dạng',
                         'critical_error' => true,
-                        'description' => 'Năm thầu của dịch vụ: ' . $data->ten_dich_vu . '; không đúng định dạng: ' . $data->tt_thau
+                        'description' => 'Năm thầu của dịch vụ: ' . $this->serviceDisplay . '; không đúng định dạng: ' . $data->tt_thau
                     ]);
                 }
             }
@@ -156,7 +158,7 @@ class Qd130Xml3Checker
                 'error_code' => $this->prefix . 'INFO_ERROR_GROUP_CODE_NGUOI_THUC_HIEN',
                 'error_name' => 'Thiếu người thực hiện',
                 'critical_error' => true,
-                'description' => 'Người thực hiện không được để trống đối với DVKT: ' . $data->ten_dich_vu
+                'description' => 'Người thực hiện không được để trống đối với DVKT: ' . $this->serviceDisplay
             ]);
         }
 
@@ -202,7 +204,7 @@ class Qd130Xml3Checker
                     'error_code' => $this->prefix . 'INFO_ERROR_PP_VO_CAM_EMPTY',
                     'error_name' => 'Thiếu phương pháp vô cảm',
                     'critical_error' => true,
-                    'description' => 'Phương pháp vô cảm không được để trống đối với dịch vụ: ' . $data->ten_dich_vu
+                    'description' => 'Phương pháp vô cảm không được để trống đối với dịch vụ: ' . $this->serviceDisplay
                 ]);
             } elseif (!in_array($data->pp_vo_cam, config('qd130xml.anesthesia_code'))) {
                 $errors->push((object)[
@@ -221,7 +223,7 @@ class Qd130Xml3Checker
                     'error_code' => $this->prefix . 'INFO_ERROR_PP_VO_CAM_EMPTY',
                     'error_name' => 'Thiếu phương pháp vô cảm',
                     'critical_error' => true,
-                    'description' => 'Phương pháp vô cảm không được để trống đối với dịch vụ: ' . $data->ten_dich_vu
+                    'description' => 'Phương pháp vô cảm không được để trống đối với dịch vụ: ' . $this->serviceDisplay
                 ]);
             } elseif (!in_array($data->pp_vo_cam, config('qd130xml.anesthesia_code'))) {
                 $errors->push((object)[
@@ -361,7 +363,7 @@ class Qd130Xml3Checker
                 'error_code' => $this->prefix . 'INFO_ERROR_TYLE_TT_BH',
                 'error_name' => 'Tỷ lệ TT BH không nằm trong khoảng cho phép',
                 'critical_error' => true,
-                'description' => 'Tỷ lệ TT BH của dịch vụ: ' . $data->ten_dich_vu . '; không nằm trong khoảng 0-100: ' . $data->tyle_tt_bh
+                'description' => 'Tỷ lệ TT BH của dịch vụ: ' . $this->serviceDisplay . '; không nằm trong khoảng 0-100: ' . $data->tyle_tt_bh
             ]);
         }
 
@@ -371,7 +373,7 @@ class Qd130Xml3Checker
                 'error_code' => $this->prefix . 'INFO_ERROR_TYLE_TT_DV',
                 'error_name' => 'Tỷ lệ TT DV không nằm trong khoảng cho phép',
                 'critical_error' => true,
-                'description' => 'Tỷ lệ TT DV của dịch vụ: ' . $data->ten_dich_vu . '; không nằm trong khoảng 0-100: ' . $data->tyle_tt_dv
+                'description' => 'Tỷ lệ TT DV của dịch vụ: ' . $this->serviceDisplay . '; không nằm trong khoảng 0-100: ' . $data->tyle_tt_dv
             ]);
         }
 
@@ -564,7 +566,7 @@ class Qd130Xml3Checker
                     'error_code' => $this->prefix . 'INVALID_NGAY_KQ_LESSTHEN_NGAY_YL',
                     'error_name' => 'Ngày kết quả nhỏ hơn ngày y lệnh',
                     'critical_error' => true,
-                    'description' => 'Ngày kết quả của: ' . $data->ten_dich_vu . '. Không được nhỏ hơn ngày y lệnh: ' . strtodatetime($data->ngay_kq) . ' < ' . strtodatetime($data->ngay_yl)
+                    'description' => 'Ngày kết quả của: ' . $this->serviceDisplay . '. Không được nhỏ hơn ngày y lệnh: ' . strtodatetime($data->ngay_kq) . ' < ' . strtodatetime($data->ngay_yl)
                 ]);
             }
         }
@@ -778,7 +780,7 @@ class Qd130Xml3Checker
                     'error_code' => $this->prefix . 'MA_KHOA_REQ_INVALID',
                     'error_name' => 'Khoa chỉ định dịch vụ không hợp lệ',
                     //'critical_error' => true,
-                    'description' => 'Khoa khám bệnh: ' . implode(',', config('qd130xml.general.ma_khoa_kkb')) . '; không được chỉ định: ' . $data->ten_dich_vu . '; Đối với BN Nội trú - Trái tuyến'
+                    'description' => 'Khoa khám bệnh: ' . implode(',', config('qd130xml.general.ma_khoa_kkb')) . '; không được chỉ định: ' . $this->serviceDisplay . '; Đối với BN Nội trú - Trái tuyến'
                 ]);                
             }
         }
