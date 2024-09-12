@@ -6,6 +6,8 @@ use App\Models\BHYT\Qd130Xml11;
 use App\Models\BHYT\MedicalStaff;
 use Illuminate\Support\Collection;
 
+use Carbon\Carbon;
+
 class Qd130Xml11Checker
 {
     protected $xmlErrorService;
@@ -157,6 +159,31 @@ class Qd130Xml11Checker
                 'critical_error' => true,
                 'description' => 'Từ ngày không được để trống'
             ]);
+        } else {
+            try {
+                // Parse tu_ngay (Ymd format) using Carbon and remove time (set to 00:00:00)
+                $tuNgayDate = Carbon::createFromFormat('Ymd', $data->tu_ngay)->startOfDay();
+
+                // Parse ngay_ra (YmdHi format) using Carbon and remove time (set to 00:00:00)
+                $ngayRaDate = Carbon::createFromFormat('YmdHi', $data->Qd130Xml1->ngay_ra)->startOfDay();
+
+                // Check if tu_ngay is greater than ngay_ra
+                if ($tuNgayDate->gt($ngayRaDate)) {
+                    $errors->push((object)[
+                        'error_code' => $this->prefix . 'INFO_ERROR_TU_NGAY_GREATER_NGAY_RA',
+                        'error_name' => 'Từ ngày lớn hơn ngày ra',
+                        'critical_error' => true,
+                        'description' => 'Từ ngày: ' . $tuNgayDate->format('d/m/Y') . ' không được lớn hơn ngày ra: ' . $ngayRaDate->format('d/m/Y')
+                    ]);
+                }
+            } catch (\Exception $e) {
+                $errors->push((object)[
+                    'error_code' => $this->prefix . 'INFO_ERROR_INVALID_DATE_TU_NGAY',
+                    'error_name' => 'Định dạng từ ngày không hợp lệ',
+                    'critical_error' => true,
+                    'description' => 'Định dạng ngày không đúng, vui lòng kiểm tra lại: ' .$data->tu_ngay
+                ]);
+            }
         }
 
         if (empty($data->den_ngay)) {
@@ -166,6 +193,31 @@ class Qd130Xml11Checker
                 'critical_error' => true,
                 'description' => 'Đến ngày không được để trống'
             ]);
+        } else {
+            try {
+                // Parse den_ngay (Ymd format) using Carbon and remove time (set to 00:00:00)
+                $denNgayDate = Carbon::createFromFormat('Ymd', $data->den_ngay)->startOfDay();
+
+                // Parse ngay_ra (YmdHi format) using Carbon and remove time (set to 00:00:00)
+                $ngayRaDate = Carbon::createFromFormat('YmdHi', $data->Qd130Xml1->ngay_ra)->startOfDay();
+
+                // Check if den_ngay is smaller than ngay_ra
+                if ($denNgayDate->lt($ngayRaDate)) {
+                    $errors->push((object)[
+                        'error_code' => $this->prefix . 'INFO_ERROR_DEN_NGAY_LESS_THAN_NGAY_RA',
+                        'error_name' => 'Đến ngày nhỏ hơn ngày ra',
+                        'critical_error' => true,
+                        'description' => 'Đến ngày: ' . $denNgayDate->format('d/m/Y') . ' không được nhỏ hơn ngày ra: ' . $ngayRaDate->format('d/m/Y')
+                    ]);
+                }
+            } catch (\Exception $e) {
+                $errors->push((object)[
+                    'error_code' => $this->prefix . 'INFO_ERROR_INVALID_DATE',
+                    'error_name' => 'Định dạng đến ngày không hợp lệ',
+                    'critical_error' => true,
+                    'description' => 'Định dạng ngày không đúng, vui lòng kiểm tra lại: ' .$data->den_ngay
+                ]);
+            }
         }
 
         if (empty($data->ngay_ct)) {

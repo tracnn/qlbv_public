@@ -1,3 +1,8 @@
+# 12/09/2024
+- Bổ sung kiểm tra tính hợp lệ của giấy nghỉ việc hưởng BHXH
+	+ Bổ sung Qd130Xml11Checker kiểm tra tu_ngay không được lớn hơn qd130_xml1.ngay_ra
+	+ Bổ sung Qd130Xml11Checker kiểm tra den_ngay không được nhỏ hơn qd130_xml1.ngay_ra
+	
 # 10/09/2024
 - Sửa Qd130Xml3Checker 
 	+ Bổ sung $this->serviceDisplay ưu tiên lấy ten_vat_tu nếu không có mới lấy ten_dich_vu
