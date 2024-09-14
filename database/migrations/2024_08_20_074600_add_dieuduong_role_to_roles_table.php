@@ -28,8 +28,6 @@ class AddDieuduongRoleToRolesTable extends Migration
      */
     public function down()
     {
-        Schema::table('roles', function (Blueprint $table) {
-            Role::where('name', 'dieu-duong')->delete();
-        });
+        Role::where('name', 'dieu-duong')->delete();
     }
 }

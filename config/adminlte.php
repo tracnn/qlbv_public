@@ -281,6 +281,13 @@ return [
             'icon'    => 'film',
             'submenu' => [
                 [
+                    'text'  => 'Kiểm tra hồ sơ chi tiết',
+                    'icon'  => 'check',
+                    'checkrole'   => 'emr-check',
+                    'route'   => 'emr-checker.emr-checker-detail',
+                    'active'=> ['emr-checker/emr-checker-detail*'],
+                ],
+                [
                     'text'  => 'Tra soát hồ sơ bệnh án',
                     'icon'  => 'check',
                     //'checkrole'   => 'check-hein-card',

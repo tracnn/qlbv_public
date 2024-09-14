@@ -99,7 +99,13 @@ Route::group(['middleware' => 'auth'], function () {
         Route::get('index/get-list-emr-treatment', 'Emr\EmrController@list_emr_treatment')->name('emr.get-list-emr-treatment');
     });
     
-    
+    Route::group(['prefix' => 'emr-checker/'], function () {  
+        Route::get('emr-checker-detail', 'Emr\EmrCheckerController@indexEmrCheckerDetail')
+        ->name('emr-checker.emr-checker-detail');
+        Route::get('emr-checker-detail-fetch-data', 'Emr\EmrCheckerController@fetchDataCheckDetail')
+        ->name('emr-checker.emr-checker-detail-fetch-data');
+    });
+
     /*
         Treatment result manage
         //, 'middleware' => ['permission:check-hein-card']
