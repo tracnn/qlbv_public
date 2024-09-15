@@ -1,3 +1,7 @@
+# 15/09/2024
+- Bổ sung Chức năng kiểm tra hồ sơ Emr
+	+ Kiểm tra chữ ký của BN trên bảng kê thanh toán
+
 # 12/09/2024
 - Bổ sung kiểm tra tính hợp lệ của giấy nghỉ việc hưởng BHXH
 	+ Bổ sung Qd130Xml11Checker kiểm tra tu_ngay không được lớn hơn qd130_xml1.ngay_ra
