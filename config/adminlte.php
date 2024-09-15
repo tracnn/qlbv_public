@@ -282,7 +282,7 @@ return [
             'submenu' => [
                 [
                     'text'  => 'Kiểm tra hồ sơ chi tiết',
-                    'icon'  => 'check',
+                    'icon'  => 'info',
                     'checkrole'   => 'emr-check',
                     'route'   => 'emr-checker.emr-checker-detail',
                     'active'=> ['emr-checker/emr-checker-detail*'],
