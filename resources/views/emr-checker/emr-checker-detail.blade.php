@@ -34,12 +34,20 @@
             currentAjaxRequest.abort();
         }
 
+        let treatmentCode = $('#treatment_code').val(); // Lấy giá trị từ input
+
+        if (!treatmentCode) {
+            alert('Vui lòng nhập Mã điều trị!');
+            $('#treatment_code').focus(); // Đặt lại focus vào trường nhập liệu
+            return;
+        }
+
         // Bắt đầu yêu cầu AJAX mới
         currentAjaxRequest = $.ajax({
             url: '{{ route('emr-checker.emr-checker-detail-fetch-data') }}', // Đặt URL cho endpoint bạn muốn gọi
             method: 'GET',
             data: {
-                treatment_code: $('#treatment_code').val() // Lấy dữ liệu từ treatment_code
+                treatment_code: treatmentCode // Lấy dữ liệu từ treatment_code
             },
             success: function(response) {
                 $('#result').html(response);

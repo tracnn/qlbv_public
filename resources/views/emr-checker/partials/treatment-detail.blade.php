@@ -2,9 +2,16 @@
 @if($results->isNotEmpty())
     @foreach($results as $item)
         <p>
-            Mã điều trị: {{ strtoupper($item->treatment_code) }};
-            Họ và tên: {{ ucfirst($item->tdl_patient_name) }};
-            Ngày vào: {{ strtodatetime($item->in_time) }}
+            <label>Mã ĐT:</label> {{ strtoupper($item->treatment_code) }};
+            <label>Họ tên:</label> {{ ucfirst($item->tdl_patient_name) }};
+            <label>Ngày sinh:</label> {{ dob($item->tdl_patient_dob) }};
+            <label>Địa chỉ:</label> {{ $item->tdl_patient_address }};
+            <label>Số ĐT:</label> {{ $item->tdl_patient_mobile ?? $item->tdl_patient_phone ?? $item->tdl_patient_relative_mobile ?? $item->tdl_patient_relative_phone }};
+            <label>Diện:</label> {{ $item->treatment_type_name }};
+            <label>Đối tượng:</label> {{ $item->patient_type_name }};
+            <label>Khoa:</label> {{ $item->last_department }};
+            <label>Ngày vào:</label> {{ strtodatetime($item->in_time) }};
+            <label>Ngày ra:</label> {{ strtodatetime($item->out_time) }}
         </p>
     @endforeach
 @else
