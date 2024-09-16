@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Emr;
 
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
-use DB;
 
 use App\Services\CheckEmrService;
 
