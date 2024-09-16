@@ -1,3 +1,8 @@
+# 16/09/2024
+- Bổ sung Chức năng kiểm tra hồ sơ Emr
+	+ Kiểm tra nợ viện phí
+	+ Hiển thị đơn thuốc phòng khám
+
 # 15/09/2024
 - Bổ sung Chức năng kiểm tra hồ sơ Emr
 	+ Kiểm tra chữ ký của BN trên bảng kê thanh toán
