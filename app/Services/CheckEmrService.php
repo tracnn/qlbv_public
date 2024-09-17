@@ -155,12 +155,14 @@ class CheckEmrService
         //1. Kiểm tra BBHC DVKT
         $dvktBbhcExists = DB::connection('HISPro')
             ->table('his_service_req')
-            ->where('tdl_treatment_code', $treatment_code)
+            ->join('his_sere_serv', 'his_sere_serv.service_req_id', '=', 'his_service_req.id')
+            ->where('his_service_req.tdl_treatment_code', $treatment_code)
             ->whereIn('execute_room_id', [66, 162, 249, 322])
-            ->where('is_delete', 0)
-            ->exists();
+            ->where('his_service_req.is_delete', 0)
+            ->where('his_sere_serv.is_delete', 0)
+            ->get();
 
-        if ($dvktBbhcExists) {
+        if ($dvktBbhcExists->isNotEmpty()) {
             $html = $messages['emr-check-bbhc-dvkt']['check'];
             $dvktDebateExists = DB::connection('HISPro')
                 ->table('v_his_debate')
@@ -169,8 +171,9 @@ class CheckEmrService
                 ->get();
 
             if ($dvktDebateExists->isNotEmpty()) {
-                $html .= $messages['emr-check-bbhc-dvkt']['bbhc-dvkt-his']['success'];
                 foreach ($dvktDebateExists as $key => $value) {
+                    $html .= '<h4>' . ($key + 1) . '. ' . $value->request_content . '</h4>';
+                    $html .= $messages['emr-check-bbhc-dvkt']['bbhc-dvkt-his']['success'];
                     $textCompare = 'DEBATE_ID:' . $value->id;
                     $documentExists = DB::connection('EMR_RS')
                         ->table('emr_document')
@@ -200,7 +203,68 @@ class CheckEmrService
                     }
                 }
             } else {
-                $html .= $messages['emr-check-bbhc-dvkt']['bbhc-dvkt-his']['error'];
+                foreach ($dvktBbhcExists as $key => $value) {
+                    $html .= '<h4>' . ($key + 1) . '. ' . $value->tdl_service_name . '</h4>';
+                    $html .= $messages['emr-check-bbhc-dvkt']['bbhc-dvkt-his']['error'];
+                }
+            }
+        }    
+
+        //2. Kiểm tra BBHC PTTT
+        $ptttBbhcExists = DB::connection('HISPro')
+            ->table('his_service_req')
+            ->join('his_sere_serv', 'his_sere_serv.service_req_id', '=', 'his_service_req.id')
+            ->where('his_service_req.tdl_treatment_code', $treatment_code)
+            ->where('service_req_type_id', 10)
+            ->where('his_service_req.is_delete', 0)
+            ->where('his_sere_serv.is_delete', 0)
+            ->get();
+
+        if ($ptttBbhcExists->isNotEmpty()) {
+            $html = $messages['emr-check-bbhc-pttt']['check'];
+            $dvktDebateExists = DB::connection('HISPro')
+                ->table('v_his_debate')
+                ->where('treatment_code', $treatment_code)
+                ->where('is_delete', 0)
+                ->get();
+
+            if ($dvktDebateExists->isNotEmpty()) {
+                foreach ($dvktDebateExists as $key => $value) {
+                    $html .= '<h4>' . ($key + 1) . '. ' . $value->request_content . '</h4>';
+                    $html .= $messages['emr-check-bbhc-pttt']['bbhc-pttt-his']['success'];
+                    $textCompare = 'DEBATE_ID:' . $value->id;
+                    $documentExists = DB::connection('EMR_RS')
+                        ->table('emr_document')
+                        ->where('treatment_code', $treatment_code)
+                        ->where('document_type_id', 17)
+                        ->where('his_code', 'like', '%' . $textCompare . '%') 
+                        ->where('is_delete', 0)
+                        ->exists();
+                    if (!$documentExists) {
+                        $html .= $messages['emr-check-bbhc-pttt']['bbhc-pttt-emr']['error'];
+                    } else {
+                        $html .= $messages['emr-check-bbhc-pttt']['bbhc-pttt-emr']['success'];
+                        $documentExists = DB::connection('EMR_RS')
+                            ->table('emr_document')
+                            ->where('treatment_code', $treatment_code)
+                            ->where('document_type_id', 17)
+                            ->where('his_code', 'like', '%' . $textCompare . '%') 
+                            ->where('is_delete', 0)
+                            ->whereNotNull('next_signer')
+                            ->whereNotNull('un_signers')
+                            ->exists();
+                        if ($documentExists) {
+                            $html .= $messages['emr-check-bbhc-pttt']['bbhc-pttt-emr-signer']['error'];
+                        } else {
+                            $html .= $messages['emr-check-bbhc-pttt']['bbhc-pttt-emr-signer']['success'];
+                        }
+                    }
+                }
+            } else {
+                foreach ($ptttBbhcExists as $key => $value) {
+                    $html .= '<h4>' . ($key + 1) . '. ' . $value->tdl_service_name . '</h4>';
+                    $html .= $messages['emr-check-bbhc-pttt']['bbhc-pttt-his']['error'];
+                }
             }
         }    
 

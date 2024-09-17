@@ -44,18 +44,33 @@ return [
         ],
     ],
     'emr-check-bbhc-dvkt' => [
-        'check' => '<h4>Biên bản hội chẩn:</h4>',
+        'check' => '<h4><strong>Biên bản hội chẩn DVKT:</strong></h4>',
         'bbhc-dvkt-his' => [
             'error' => '<div style="display: inline-block;"><label class="alert alert-danger">Chưa tạo BBHC DVKT (MRI/CT) trên HIS</label></div>',
             'success' => '<div style="display: inline-block;"><label class="alert alert-success">Đã tạo BBHC DVKT (MRI/CT) trên HIS</label></div>',
         ],
         'bbhc-dvkt-emr' => [
-            'error' => '<div style="display: inline-block;"><label class="alert alert-danger">Chưa tạo BBHC DVKT trên EMR</label></div>',
-            'success' => '<div style="display: inline-block;"><label class="alert alert-success">Đã tạo BBHC DVKT trên EMR</label></div>',
+            'error' => '<div style="display: inline-block;"><label class="alert alert-danger">Chưa thiết lập ký BBHC DVKT trên EMR</label></div>',
+            'success' => '<div style="display: inline-block;"><label class="alert alert-success">Đã thiết lập ký BBHC DVKT trên EMR</label></div>',
         ],
         'bbhc-dvkt-emr-signer' => [
             'error' => '<div style="display: inline-block;"><label class="alert alert-danger">BBHC DVKT chưa ký đủ</label></div>',
             'success' => '<div style="display: inline-block;"><label class="alert alert-success">BBHC DVKT đã ký đủ</label></div>',
+        ],
+    ],
+    'emr-check-bbhc-pttt' => [
+        'check' => '<h4><strong>Biên bản hội chẩn PTTT:</strong></h4>',
+        'bbhc-pttt-his' => [
+            'error' => '<div style="display: inline-block;"><label class="alert alert-danger">Chưa tạo BBHC PTTT (MRI/CT) trên HIS</label></div>',
+            'success' => '<div style="display: inline-block;"><label class="alert alert-success">Đã tạo BBHC PTTT (MRI/CT) trên HIS</label></div>',
+        ],
+        'bbhc-pttt-emr' => [
+            'error' => '<div style="display: inline-block;"><label class="alert alert-danger">Chưa thiết lập ký BBHC PTTT trên EMR</label></div>',
+            'success' => '<div style="display: inline-block;"><label class="alert alert-success">Đã thiết lập ký BBHC PTTT trên EMR</label></div>',
+        ],
+        'bbhc-pttt-emr-signer' => [
+            'error' => '<div style="display: inline-block;"><label class="alert alert-danger">BBHC PTTT chưa ký đủ</label></div>',
+            'success' => '<div style="display: inline-block;"><label class="alert alert-success">BBHC PTTT đã ký đủ</label></div>',
         ],
     ],
     'no_permission' => [

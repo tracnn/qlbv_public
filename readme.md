@@ -1,6 +1,8 @@
-# 17/09/2024 - /09/2024
+# 17/09/2024
 - Bổ sung kiểm tra các thông tin chung của hồ sơ bệnh án
-
+	+ Bổ sung kiểm tra BBHC PTTT
+	+ Bổ sung kiểm tra BBHC DVKT
+	
 # 16/09/2024
 - Bổ sung Chức năng kiểm tra hồ sơ Emr
 	+ Kiểm tra nợ viện phí
