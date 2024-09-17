@@ -11,6 +11,7 @@
                     <th>{{ __('Số lượng') }}</th>
                     <th>{{ __('Đơn vị') }}</th>
                     <th>{{ __('Hàm lượng') }}</th>
+                    <th>{{ __('Hướng dẫn') }}</th>
                     <th>{{ __('Trạng thái') }}</th>
                 </tr>
             </thead>
@@ -19,10 +20,11 @@
                     <tr>
                         <td>{{ $loop->iteration }}</td>
                         <td>{{ $item->tdl_service_code }}</td>
-                        <td>{{ $item->tdl_service_name }}</td>
-                        <td class="text-right">{{ number_format($item->amount) }}</td>
+                        <td><strong>{{ $item->tdl_service_name }}</strong></td>
+                        <td class="text-right"><strong>{{ number_format($item->amount) }}</strong></td>
                         <td>{{ $item->service_unit_name }}</td>
-                        <td>{{ $item->tdl_medicine_concentra}}</td>
+                        <td>{{ \Illuminate\Support\Str::limit($item->tdl_medicine_concentra, 30) }}</td>
+                        <td>{{ \Illuminate\Support\Str::limit($item->tutorial, 30) }}</td>
                         <td>{{ $item->service_req_stt_name }}</td>
                     </tr>
                 @endforeach

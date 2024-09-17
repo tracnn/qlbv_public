@@ -8,26 +8,7 @@ class CheckEmrService
     // Lấy các thông báo (messages)
     public function getMessages()
     {
-        return [
-            'emr-check-bangke-signer' => [
-                'check' => '<h4>Bảng kê thanh toán: Chữ ký của bệnh nhân</h4>',
-                'error' => '<label class="alert alert-danger">Bảng kê chưa có chữ ký của bệnh nhân</label>',
-                'success' => '<label class="alert alert-success">Bảng kê đã có chữ ký của bệnh nhân</label>',
-            ],
-            'emr-check-bangke' => [
-                'check' => '<h4>Bảng kê thanh toán:</h4>',
-                'error' => '<label class="alert alert-danger">Chưa tạo bảng kê</label>',
-                'success' => '<label class="alert alert-success">Đã tạo bảng kê</label>',
-            ],
-            'emr-check-accountant' => [
-                'check' => '<h4>Viện phí:</h4>',
-                'error' => '<label class="alert alert-danger">Còn nợ viện phí: <strong>{amount} VNĐ</strong></label>',
-                'success' => '<label class="alert alert-success">Không nợ viện phí</label>',
-            ],
-            'no_permission' => [
-                'error' => '<div class="alert alert-danger"><strong>Bạn chưa được phân quyền để kiểm tra hồ sơ</strong></div>',
-            ]
-        ];
+        return config('emr_messages');
     }
 
     // Lấy thông tin treatment từ bảng his_treatment
@@ -56,15 +37,17 @@ class CheckEmrService
             ->join('his_service_req as sr', 'sr.id', '=', 'ss.service_req_id')
             ->join('his_service_req_stt as srs', 'srs.id', '=', 'sr.service_req_stt_id')
             ->join('his_service_unit as su', 'su.id', '=', 'ss.tdl_service_unit_id')
+            ->leftJoin('his_exp_mest_medicine as emm', 'emm.id', '=', 'ss.exp_mest_medicine_id')
             ->where('ss.tdl_treatment_code', $treatment_code)
             ->where('ss.is_delete', 0)
             ->where('service_req_type_id', 6)
-            ->select('tdl_service_code',
-                'tdl_service_name',
-                'amount',
-                'service_unit_name',
-                'service_req_stt_name',
-                'tdl_medicine_concentra'
+            ->select('ss.tdl_service_code',
+                'ss.tdl_service_name',
+                'ss.amount',
+                'su.service_unit_name',
+                'srs.service_req_stt_name',
+                'ss.tdl_medicine_concentra',
+                'emm.tutorial'
             )
             ->get();
     }
@@ -163,4 +146,98 @@ class CheckEmrService
         return $html . $messages['emr-check-accountant']['success'];
     }
 
+    // emr-check-general-info
+    public function checkGeneralInfo($treatment_code)
+    {
+        $messages = $this->getMessages();
+         $html = '';
+        $treatmentInpatientExists = DB::connection('EMR_RS')
+            ->table('emr_treatment')
+            ->where('treatment_code', $treatment_code)
+            ->where('treatment_type_code', '03')
+            ->exists();
+
+        if ($treatmentInpatientExists) {
+            $html = $messages['emr-check-general-info']['check'];
+            //1. Kiểm tra Vỏ bệnh án nếu Diện điều trị là nội trú
+            $documentExists = DB::connection('EMR_RS')
+                ->table('emr_document')
+                ->where('treatment_code', $treatment_code)
+                ->where('document_type_id', 1)
+                ->where('is_delete', 0)
+                ->exists();
+            if (!$documentExists) {
+                $html .= $messages['emr-check-general-info']['vo-benh-an-hanh-chinh']['error'];
+            } else {
+                $html .= $messages['emr-check-general-info']['vo-benh-an-hanh-chinh']['success'];
+
+                $documentExists = DB::connection('EMR_RS')
+                ->table('emr_document')
+                ->where('treatment_code', $treatment_code)
+                ->where('document_type_id', 1)
+                ->where('is_delete', 0)
+                ->whereNotNull('next_signer')
+                ->whereNotNull('un_signers')
+                ->exists();
+                if ($documentExists) {
+                    $html .= $messages['emr-check-general-info']['vo-benh-an-hanh-chinh-signer']['error'];
+                } else {
+                    $html .= $messages['emr-check-general-info']['vo-benh-an-hanh-chinh-signer']['success'];
+                }
+            }
+            
+            $documentExists = DB::connection('EMR_RS')
+                ->table('emr_document')
+                ->where('treatment_code', $treatment_code)
+                ->where('document_type_id', 41)
+                ->where('is_delete', 0)
+                ->exists();
+            if (!$documentExists) {
+                $html .= $messages['emr-check-general-info']['vo-benh-an-hoi-benh']['error'];
+            } else {
+                $html .= $messages['emr-check-general-info']['vo-benh-an-hoi-benh']['success'];
+
+                $documentExists = DB::connection('EMR_RS')
+                ->table('emr_document')
+                ->where('treatment_code', $treatment_code)
+                ->where('document_type_id', 41)
+                ->where('is_delete', 0)
+                ->whereNotNull('next_signer')
+                ->whereNotNull('un_signers')
+                ->exists();
+                if ($documentExists) {
+                    $html .= $messages['emr-check-general-info']['vo-benh-an-hoi-benh-signer']['error'];
+                } else {
+                    $html .= $messages['emr-check-general-info']['vo-benh-an-hoi-benh-signer']['success'];
+                }
+            }
+
+            $documentExists = DB::connection('EMR_RS')
+                ->table('emr_document')
+                ->where('treatment_code', $treatment_code)
+                ->where('document_type_id', 42)
+                ->where('is_delete', 0)
+                ->exists();
+            if (!$documentExists) {
+                $html .= $messages['emr-check-general-info']['vo-benh-an-tong-ket']['error'];
+            } else {
+                $html .= $messages['emr-check-general-info']['vo-benh-an-tong-ket']['success'];
+                $documentExists = DB::connection('EMR_RS')
+                ->table('emr_document')
+                ->where('treatment_code', $treatment_code)
+                ->where('document_type_id', 42)
+                ->where('is_delete', 0)
+                ->whereNotNull('next_signer')
+                ->whereNotNull('un_signers')
+                ->exists();
+                if ($documentExists) {
+                    $html .= $messages['emr-check-general-info']['vo-benh-an-tong-ket-signer']['error'];
+                } else {
+                    $html .= $messages['emr-check-general-info']['vo-benh-an-tong-ket-signer']['success'];
+                }
+            }
+        }
+
+        return $html;
+    }
 }
