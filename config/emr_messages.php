@@ -43,6 +43,21 @@ return [
             'success' => '<div style="display: inline-block;"><label class="alert alert-success">Vỏ tổng kết đã đủ người ký</label></div>',
         ],
     ],
+    'emr-check-bbhc-dvkt' => [
+        'check' => '<h4>Biên bản hội chẩn:</h4>',
+        'bbhc-dvkt-his' => [
+            'error' => '<div style="display: inline-block;"><label class="alert alert-danger">Chưa tạo BBHC DVKT (MRI/CT) trên HIS</label></div>',
+            'success' => '<div style="display: inline-block;"><label class="alert alert-success">Đã tạo BBHC DVKT (MRI/CT) trên HIS</label></div>',
+        ],
+        'bbhc-dvkt-emr' => [
+            'error' => '<div style="display: inline-block;"><label class="alert alert-danger">Chưa tạo BBHC DVKT trên EMR</label></div>',
+            'success' => '<div style="display: inline-block;"><label class="alert alert-success">Đã tạo BBHC DVKT trên EMR</label></div>',
+        ],
+        'bbhc-dvkt-emr-signer' => [
+            'error' => '<div style="display: inline-block;"><label class="alert alert-danger">BBHC DVKT chưa ký đủ</label></div>',
+            'success' => '<div style="display: inline-block;"><label class="alert alert-success">BBHC DVKT đã ký đủ</label></div>',
+        ],
+    ],
     'no_permission' => [
         'error' => '<div class="alert alert-danger" style="display: inline-block;"><strong>Bạn chưa được phân quyền để kiểm tra hồ sơ</strong></div>',
     ]

@@ -146,6 +146,67 @@ class CheckEmrService
         return $html . $messages['emr-check-accountant']['success'];
     }
 
+    // emr-check-bbhc-info
+    public function checkBbhcInfo($treatment_code)
+    {
+        $messages = $this->getMessages();
+        $html = '';
+        
+        //1. Kiểm tra BBHC DVKT
+        $dvktBbhcExists = DB::connection('HISPro')
+            ->table('his_service_req')
+            ->where('tdl_treatment_code', $treatment_code)
+            ->whereIn('execute_room_id', [66, 162, 249, 322])
+            ->where('is_delete', 0)
+            ->exists();
+
+        if ($dvktBbhcExists) {
+            $html = $messages['emr-check-bbhc-dvkt']['check'];
+            $dvktDebateExists = DB::connection('HISPro')
+                ->table('v_his_debate')
+                ->where('treatment_code', $treatment_code)
+                ->where('is_delete', 0)
+                ->get();
+
+            if ($dvktDebateExists->isNotEmpty()) {
+                $html .= $messages['emr-check-bbhc-dvkt']['bbhc-dvkt-his']['success'];
+                foreach ($dvktDebateExists as $key => $value) {
+                    $textCompare = 'DEBATE_ID:' . $value->id;
+                    $documentExists = DB::connection('EMR_RS')
+                        ->table('emr_document')
+                        ->where('treatment_code', $treatment_code)
+                        ->where('document_type_id', 17)
+                        ->where('his_code', 'like', '%' . $textCompare . '%') 
+                        ->where('is_delete', 0)
+                        ->exists();
+                    if (!$documentExists) {
+                        $html .= $messages['emr-check-bbhc-dvkt']['bbhc-dvkt-emr']['error'];
+                    } else {
+                        $html .= $messages['emr-check-bbhc-dvkt']['bbhc-dvkt-emr']['success'];
+                        $documentExists = DB::connection('EMR_RS')
+                            ->table('emr_document')
+                            ->where('treatment_code', $treatment_code)
+                            ->where('document_type_id', 17)
+                            ->where('his_code', 'like', '%' . $textCompare . '%') 
+                            ->where('is_delete', 0)
+                            ->whereNotNull('next_signer')
+                            ->whereNotNull('un_signers')
+                            ->exists();
+                        if ($documentExists) {
+                            $html .= $messages['emr-check-bbhc-dvkt']['bbhc-dvkt-emr-signer']['error'];
+                        } else {
+                            $html .= $messages['emr-check-bbhc-dvkt']['bbhc-dvkt-emr-signer']['success'];
+                        }
+                    }
+                }
+            } else {
+                $html .= $messages['emr-check-bbhc-dvkt']['bbhc-dvkt-his']['error'];
+            }
+        }    
+
+        return $html;
+    }
+
     // emr-check-general-info
     public function checkGeneralInfo($treatment_code)
     {

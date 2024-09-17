@@ -72,6 +72,11 @@ class EmrCheckerController extends Controller
             $html .= $this->checkEmrService->checkGeneralInfo($treatment_code);
         }
 
+        // Kiểm tra quyền 'emr-check-bbhc-info'
+        if (auth()->user()->can('emr-check-bbhc-info')) {
+            $html .= $this->checkEmrService->checkBbhcInfo($treatment_code);
+        }
+
         // Nếu không có quyền nào được kiểm tra
         if (empty($html)) {
             $messages = $this->checkEmrService->getMessages();
