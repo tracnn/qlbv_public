@@ -1,5 +1,9 @@
+# 18/09/2024
+- Bổ sung Chức năng kiểm tra hồ sơ Emr
+	+ Bổ sung kiểm tra BBHC thuốc có dấu sao
+	
 # 17/09/2024
-- Bổ sung kiểm tra các thông tin chung của hồ sơ bệnh án
+- Bổ sung Chức năng kiểm tra hồ sơ Emr
 	+ Bổ sung kiểm tra BBHC PTTT
 	+ Bổ sung kiểm tra BBHC DVKT
 	
