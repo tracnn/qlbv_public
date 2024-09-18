@@ -104,6 +104,7 @@
                     d.date_to = endDate;
                     d.treatment_code = $('#treatment_code').val();
                     d.date_type = $('#date_type').val();
+                    d.department_catalog = $('#department_catalog').val();
                 },
                 beforeSend: function(xhr) {
                     currentAjaxRequest = xhr;
@@ -123,11 +124,11 @@
                 { "data": "tdl_patient_code" },
                 { "data": "tdl_patient_name" },
                 { "data": "tdl_patient_dob" },
-                { "data": "phone" },
-                { "data": "treatment_type_name" },
-                { "data": "patient_type_name" },
+                { "data": "phone"},
+                { "data": "treatment_type_name", "name": "his_treatment_type.treatment_type_name" },
+                { "data": "patient_type_name", "name": "his_patient_type.patient_type_name" },
                 { "data": "tdl_hein_card_number" },
-                { "data": "last_department" },
+                { "data": "last_department", "name": "last_department.department_name"},
                 { "data": "in_time" },
                 { "data": "out_time" },
                 { "data": "fee_lock_time" },

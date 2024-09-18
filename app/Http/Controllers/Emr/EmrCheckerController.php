@@ -27,12 +27,13 @@ class EmrCheckerController extends Controller
     }
     public function listEmrChecker(Request $request)
     {
-        // if (!$request->ajax()) {
-        //     return redirect()->route('home');
-        // }
+        if (!$request->ajax()) {
+            return redirect()->route('home');
+        }
 
         $treatment_code = $request->input('treatment_code');
         $date_type = $request->input('date_type');
+        $department_catalog = $request->input('department_catalog');
 
         $dateFrom = $request->input('date_from');
         $dateTo = $request->input('date_to');
@@ -57,39 +58,60 @@ class EmrCheckerController extends Controller
         // Define the date field based on date_type
         switch ($date_type) {
             case 'date_in':
-                $dateField = 'tm.in_time';
+                $dateField = 'his_treatment.in_time';
                 $formattedDateFrom = $formattedDateFromForFields;
                 $formattedDateTo = $formattedDateToForFields;
                 break;
             case 'date_out':
-                $dateField = 'tm.out_time';
+                $dateField = 'his_treatment.out_time';
                 $formattedDateFrom = $formattedDateFromForFields;
                 $formattedDateTo = $formattedDateToForFields;
                 break;
             case 'date_payment':
-                $dateField = 'tm.fee_lock_time';
+                $dateField = 'his_treatment.fee_lock_time';
                 $formattedDateFrom = $formattedDateFromForFields;
                 $formattedDateTo = $formattedDateToForFields;
                 break;
             default:
-                $dateField = 'tm.fee_lock_time';
+                $dateField = 'his_treatment.fee_lock_time';
                 $formattedDateFrom = $formattedDateFromForFields;
                 $formattedDateTo = $formattedDateToForFields;
                 break;
         }
 
-        $result = DB::connection('HISPro')
-            ->table('his_treatment as tm')
-            ->join('his_treatment_type as tt', 'tt.id', '=', 'tm.tdl_treatment_type_id')
-            ->join('his_department as last_department', 'last_department.id', '=', 'tm.last_department_id')
-            ->join('his_patient_type as pt', 'pt.id', '=', 'tm.tdl_patient_type_id')
-            ->select('treatment_code', 'tdl_patient_name', 'tdl_patient_dob', 'tdl_patient_address',
-                'tdl_patient_mobile', 'tdl_patient_phone', 'tdl_patient_relative_mobile',
-                'tdl_patient_relative_phone', 'treatment_type_name',
-                'last_department.department_name as last_department',
-                'pt.patient_type_name', 'tdl_patient_code', 'tdl_hein_card_number',
-                'in_time', 'out_time', 'fee_lock_time')
-            ->whereBetween($dateField, [$formattedDateFrom, $formattedDateTo]);
+        if ($treatment_code) {
+            $result = DB::connection('HISPro')
+                ->table('his_treatment')
+                ->join('his_treatment_type', 'his_treatment_type.id', '=', 'his_treatment.tdl_treatment_type_id')
+                ->join('his_department as last_department', 'last_department.id', '=', 'his_treatment.last_department_id')
+                ->join('his_patient_type', 'his_patient_type.id', '=', 'his_treatment.tdl_patient_type_id')
+                ->select('treatment_code', 'tdl_patient_name', 'tdl_patient_dob', 'tdl_patient_address',
+                    'tdl_patient_mobile', 'tdl_patient_phone', 'tdl_patient_relative_mobile',
+                    'tdl_patient_relative_phone', 'treatment_type_name',
+                    'last_department.department_name as last_department',
+                    'patient_type_name', 'tdl_patient_code', 'tdl_hein_card_number',
+                    'in_time', 'out_time', 'fee_lock_time')
+                ->where('treatment_code', $treatment_code);
+        } else {
+            $result = DB::connection('HISPro')
+                ->table('his_treatment')
+                ->join('his_treatment_type', 'his_treatment_type.id', '=', 'his_treatment.tdl_treatment_type_id')
+                ->join('his_department as last_department', 'last_department.id', '=', 'his_treatment.last_department_id')
+                ->join('his_patient_type', 'his_patient_type.id', '=', 'his_treatment.tdl_patient_type_id')
+                ->select('treatment_code', 'tdl_patient_name', 'tdl_patient_dob', 'tdl_patient_address',
+                    'tdl_patient_mobile', 'tdl_patient_phone', 'tdl_patient_relative_mobile',
+                    'tdl_patient_relative_phone', 'treatment_type_name',
+                    'last_department.department_name as last_department',
+                    'patient_type_name', 'tdl_patient_code', 'tdl_hein_card_number',
+                    'in_time', 'out_time', 'fee_lock_time')
+                ->whereBetween($dateField, [$formattedDateFrom, $formattedDateTo]);
+
+            // Add department_catalog condition if it's provided
+            if (!empty($department_catalog)) {
+                // Directly embedding the variable into the query string (make sure this is safe)
+                $result = $result->where('last_department_id', $department_catalog);
+            }
+        }
 
         return Datatables::of($result)
         ->editColumn('tdl_patient_dob', function($result) {

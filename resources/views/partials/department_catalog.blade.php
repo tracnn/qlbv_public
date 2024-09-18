@@ -1,4 +1,4 @@
-<!-- resources/views/partials/xml_error_catalog.blade.php -->
+<!-- resources/views/partials/department_catalog.blade.php -->
 <div class="col-sm-2">
     <div class="form-group row">
         <label for="department_catalog">Khoa/Phòng/TT</label>
