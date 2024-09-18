@@ -5,6 +5,10 @@ namespace App\Http\Controllers\Emr;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 
+use DB;
+use Carbon\Carbon;
+use Yajra\Datatables\Datatables;
+
 use App\Services\CheckEmrService;
 
 class EmrCheckerController extends Controller
@@ -15,6 +19,98 @@ class EmrCheckerController extends Controller
     public function __construct(CheckEmrService $checkEmrService)
     {
         $this->checkEmrService = $checkEmrService;
+    }
+    
+    public function indexEmrChecker()
+    {
+        return view('emr-checker.emr-checker-index');
+    }
+    public function listEmrChecker(Request $request)
+    {
+        // if (!$request->ajax()) {
+        //     return redirect()->route('home');
+        // }
+
+        $treatment_code = $request->input('treatment_code');
+        $date_type = $request->input('date_type');
+
+        $dateFrom = $request->input('date_from');
+        $dateTo = $request->input('date_to');
+
+        // Check and convert date format
+        if (strlen($dateFrom) == 10) { // Format YYYY-MM-DD
+            $dateFrom = Carbon::createFromFormat('Y-m-d', $dateFrom)->startOfDay()->format('Y-m-d H:i:s');
+        }
+
+        if (strlen($dateTo) == 10) { // Format YYYY-MM-DD
+            $dateTo = Carbon::createFromFormat('Y-m-d', $dateTo)->endOfDay()->format('Y-m-d H:i:s');
+        }
+
+        // Convert date format from 'YYYY-MM-DD HH:mm:ss' to 'YYYYMMDDHHI' for specific fields
+        $formattedDateFromForFields = Carbon::createFromFormat('Y-m-d H:i:s', $dateFrom)->format('YmdHis');
+        $formattedDateToForFields = Carbon::createFromFormat('Y-m-d H:i:s', $dateTo)->format('YmdHis');
+
+        // Convert date format to 'Y-m-d H:i:s' for created_at and updated_at
+        $formattedDateFromForTimestamp = Carbon::createFromFormat('Y-m-d H:i:s', $dateFrom)->format('Y-m-d H:i:s');
+        $formattedDateToForTimestamp = Carbon::createFromFormat('Y-m-d H:i:s', $dateTo)->format('Y-m-d H:i:s');
+
+        // Define the date field based on date_type
+        switch ($date_type) {
+            case 'date_in':
+                $dateField = 'tm.in_time';
+                $formattedDateFrom = $formattedDateFromForFields;
+                $formattedDateTo = $formattedDateToForFields;
+                break;
+            case 'date_out':
+                $dateField = 'tm.out_time';
+                $formattedDateFrom = $formattedDateFromForFields;
+                $formattedDateTo = $formattedDateToForFields;
+                break;
+            case 'date_payment':
+                $dateField = 'tm.fee_lock_time';
+                $formattedDateFrom = $formattedDateFromForFields;
+                $formattedDateTo = $formattedDateToForFields;
+                break;
+            default:
+                $dateField = 'tm.fee_lock_time';
+                $formattedDateFrom = $formattedDateFromForFields;
+                $formattedDateTo = $formattedDateToForFields;
+                break;
+        }
+
+        $result = DB::connection('HISPro')
+            ->table('his_treatment as tm')
+            ->join('his_treatment_type as tt', 'tt.id', '=', 'tm.tdl_treatment_type_id')
+            ->join('his_department as last_department', 'last_department.id', '=', 'tm.last_department_id')
+            ->join('his_patient_type as pt', 'pt.id', '=', 'tm.tdl_patient_type_id')
+            ->select('treatment_code', 'tdl_patient_name', 'tdl_patient_dob', 'tdl_patient_address',
+                'tdl_patient_mobile', 'tdl_patient_phone', 'tdl_patient_relative_mobile',
+                'tdl_patient_relative_phone', 'treatment_type_name',
+                'last_department.department_name as last_department',
+                'pt.patient_type_name', 'tdl_patient_code', 'tdl_hein_card_number',
+                'in_time', 'out_time', 'fee_lock_time')
+            ->whereBetween($dateField, [$formattedDateFrom, $formattedDateTo]);
+
+        return Datatables::of($result)
+        ->editColumn('tdl_patient_dob', function($result) {
+            return dob($result->tdl_patient_dob);
+        })
+        ->editColumn('in_time', function($result) {
+            return strtodatetime($result->in_time);
+        })
+        ->editColumn('out_time', function($result) {
+            return strtodatetime($result->out_time);
+        })
+        ->editColumn('fee_lock_time', function($result) {
+            return strtodatetime($result->fee_lock_time);
+        })
+        ->addColumn('phone', function ($result) {
+            return $result->tdl_patient_mobile ?? $result->tdl_patient_phone ?? $result->tdl_patient_relative_mobile ?? $result->tdl_patient_relative_phone;
+        })
+        ->addColumn('action', function ($result) {
+            return '';
+        })
+        ->toJson();
     }
 
     public function indexEmrCheckerDetail()

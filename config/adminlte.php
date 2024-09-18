@@ -288,6 +288,13 @@ return [
                     'active'=> ['emr-checker/emr-checker-detail*'],
                 ],
                 [
+                    'text'  => 'Danh sách hồ sơ bệnh án',
+                    'icon'  => 'file',
+                    'checkrole'   => 'emr-check',
+                    'route'   => 'emr-checker.emr-checker-index',
+                    'active'=> ['emr-checker/emr-checker-index*'],
+                ],
+                [
                     'text'  => 'Tra soát hồ sơ bệnh án',
                     'icon'  => 'check',
                     //'checkrole'   => 'check-hein-card',

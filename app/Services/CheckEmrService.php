@@ -2,6 +2,7 @@
 
 namespace App\Services;
 use DB;
+use App\Models\CheckBHYT\check_hein_card;
 
 class CheckEmrService
 {
@@ -24,7 +25,7 @@ class CheckEmrService
                 'tdl_patient_mobile', 'tdl_patient_phone', 'tdl_patient_relative_mobile',
                 'tdl_patient_relative_phone', 'treatment_type_name',
                 'last_department.department_name as last_department',
-                'pt.patient_type_name',
+                'pt.patient_type_name', 'tdl_patient_code', 'tdl_hein_card_number',
                 'in_time', 'out_time')
             ->get();
     }
@@ -266,7 +267,68 @@ class CheckEmrService
                     $html .= $messages['emr-check-bbhc-pttt']['bbhc-pttt-his']['error'];
                 }
             }
-        }    
+        }
+
+        //3. Kiểm tra BBHC thuốc (*)
+        $thuocBbhcExists = DB::connection('HISPro')
+            ->table('his_sere_serv')
+            ->join('his_medicine', 'his_medicine.id', '=', 'his_sere_serv.medicine_id')
+            ->join('his_medicine_type', 'his_medicine_type.id', '=', 'his_medicine.medicine_type_id')
+            ->where('his_sere_serv.tdl_treatment_code', $treatment_code)
+            ->whereNotNull('his_medicine_type.is_star_mark')
+            ->where('his_sere_serv.is_delete', 0)
+            ->groupBy('his_sere_serv.tdl_service_name')
+            ->select('his_sere_serv.tdl_service_name')
+            ->get();
+
+        if ($thuocBbhcExists->isNotEmpty()) {
+            $html = $messages['emr-check-bbhc-thuoc']['check'];
+            $dvktDebateExists = DB::connection('HISPro')
+                ->table('v_his_debate')
+                ->where('treatment_code', $treatment_code)
+                ->where('content_type', 2)
+                ->where('is_delete', 0)
+                ->get();
+
+            if ($dvktDebateExists->isNotEmpty()) {
+                foreach ($dvktDebateExists as $key => $value) {
+                    $html .= '<h4>' . ($key + 1) . '. ' . $value->request_content . '</h4>';
+                    $html .= $messages['emr-check-bbhc-thuoc']['bbhc-thuoc-his']['success'];
+                    $textCompare = 'DEBATE_ID:' . $value->id;
+                    $documentExists = DB::connection('EMR_RS')
+                        ->table('emr_document')
+                        ->where('treatment_code', $treatment_code)
+                        ->where('document_type_id', 17)
+                        ->where('his_code', 'like', '%' . $textCompare . '%') 
+                        ->where('is_delete', 0)
+                        ->exists();
+                    if (!$documentExists) {
+                        $html .= $messages['emr-check-bbhc-thuoc']['bbhc-thuoc-emr']['error'];
+                    } else {
+                        $html .= $messages['emr-check-bbhc-thuoc']['bbhc-thuoc-emr']['success'];
+                        $documentExists = DB::connection('EMR_RS')
+                            ->table('emr_document')
+                            ->where('treatment_code', $treatment_code)
+                            ->where('document_type_id', 17)
+                            ->where('his_code', 'like', '%' . $textCompare . '%') 
+                            ->where('is_delete', 0)
+                            ->whereNotNull('next_signer')
+                            ->whereNotNull('un_signers')
+                            ->exists();
+                        if ($documentExists) {
+                            $html .= $messages['emr-check-bbhc-thuoc']['bbhc-thuoc-emr-signer']['error'];
+                        } else {
+                            $html .= $messages['emr-check-bbhc-thuoc']['bbhc-thuoc-emr-signer']['success'];
+                        }
+                    }
+                }
+            } else {
+                foreach ($thuocBbhcExists as $key => $value) {
+                    $html .= '<h4>' . ($key + 1) . '. ' . $value->tdl_service_name . '</h4>';
+                    $html .= $messages['emr-check-bbhc-thuoc']['bbhc-thuoc-his']['error'];
+                }
+            }
+        }
 
         return $html;
     }
@@ -275,7 +337,36 @@ class CheckEmrService
     public function checkGeneralInfo($treatment_code)
     {
         $messages = $this->getMessages();
-         $html = '';
+        $html = '';
+
+        // Lấy dữ liệu check thẻ BHYT. Nếu có lỗi thì trả về chuổi html
+        $theBhyt = check_hein_card::where('ma_lk', $treatment_code)
+            ->where(function($query) {
+                    $query->whereIn('ma_kiemtra', config('qd130xml.hein_card_invalid.check_code'))
+                    ->orWhereIn('ma_tracuu', config('qd130xml.hein_card_invalid.result_code'));
+                })
+            ->first();
+
+        if ($theBhyt) {
+            $msgBhyt = 'Thẻ BHYT:';
+            
+            // Kiểm tra ma_kiemtra thuộc config('qd130xml.hein_card_invalid.check_code')
+            if (in_array($theBhyt->ma_kiemtra, config('qd130xml.hein_card_invalid.check_code'))) {
+                $msgBhyt .= ' ' . config('__tech.check_insurance_code')[$theBhyt->ma_kiemtra];
+            }
+            
+            // Kiểm tra ma_tracuu thuộc config('qd130xml.hein_card_invalid.result_code')
+            if (in_array($theBhyt->ma_tracuu, config('qd130xml.hein_card_invalid.result_code'))) {
+                // Nối thêm thông báo ma_tracuu nếu có
+                $msgBhyt .= ' ' . config('__tech.insurance_error_code')[$theBhyt->ma_tracuu];
+            }
+            
+            // Nếu có lỗi, hiển thị thông báo lỗi
+            if ($msgBhyt) {
+                $html .= '<div style="display: inline-block;"><label class="alert alert-danger">' . $msgBhyt . '</label></div>';
+            }
+        }
+
         $treatmentInpatientExists = DB::connection('EMR_RS')
             ->table('emr_treatment')
             ->where('treatment_code', $treatment_code)

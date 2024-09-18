@@ -104,6 +104,10 @@ Route::group(['middleware' => 'auth'], function () {
         ->name('emr-checker.emr-checker-detail');
         Route::get('emr-checker-detail-fetch-data', 'Emr\EmrCheckerController@fetchDataCheckDetail')
         ->name('emr-checker.emr-checker-detail-fetch-data');
+        Route::get('emr-checker-index', 'Emr\EmrCheckerController@indexEmrChecker')
+        ->name('emr-checker.emr-checker-index');
+        Route::get('emr-checker-list', 'Emr\EmrCheckerController@listEmrChecker')
+        ->name('emr-checker.emr-checker-list');
     });
 
     /*

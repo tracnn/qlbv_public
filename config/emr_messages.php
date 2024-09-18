@@ -61,8 +61,8 @@ return [
     'emr-check-bbhc-pttt' => [
         'check' => '<h4><strong>Biên bản hội chẩn PTTT:</strong></h4>',
         'bbhc-pttt-his' => [
-            'error' => '<div style="display: inline-block;"><label class="alert alert-danger">Chưa tạo BBHC PTTT (MRI/CT) trên HIS</label></div>',
-            'success' => '<div style="display: inline-block;"><label class="alert alert-success">Đã tạo BBHC PTTT (MRI/CT) trên HIS</label></div>',
+            'error' => '<div style="display: inline-block;"><label class="alert alert-danger">Chưa tạo BBHC PTTT trên HIS</label></div>',
+            'success' => '<div style="display: inline-block;"><label class="alert alert-success">Đã tạo BBHC PTTT trên HIS</label></div>',
         ],
         'bbhc-pttt-emr' => [
             'error' => '<div style="display: inline-block;"><label class="alert alert-danger">Chưa thiết lập ký BBHC PTTT trên EMR</label></div>',
@@ -71,6 +71,21 @@ return [
         'bbhc-pttt-emr-signer' => [
             'error' => '<div style="display: inline-block;"><label class="alert alert-danger">BBHC PTTT chưa ký đủ</label></div>',
             'success' => '<div style="display: inline-block;"><label class="alert alert-success">BBHC PTTT đã ký đủ</label></div>',
+        ],
+    ],
+    'emr-check-bbhc-thuoc' => [
+        'check' => '<h4><strong>Biên bản hội chẩn thuốc (*):</strong></h4>',
+        'bbhc-thuoc-his' => [
+            'error' => '<div style="display: inline-block;"><label class="alert alert-danger">Chưa tạo/Tạo không đúng loại BBHC thuốc (*) trên HIS</label></div>',
+            'success' => '<div style="display: inline-block;"><label class="alert alert-success">Đã tạo BBHC thuốc (*) trên HIS</label></div>',
+        ],
+        'bbhc-thuoc-emr' => [
+            'error' => '<div style="display: inline-block;"><label class="alert alert-danger">Chưa thiết lập ký BBHC thuốc (*) trên EMR</label></div>',
+            'success' => '<div style="display: inline-block;"><label class="alert alert-success">Đã thiết lập ký BBHC thuốc (*) trên EMR</label></div>',
+        ],
+        'bbhc-thuoc-emr-signer' => [
+            'error' => '<div style="display: inline-block;"><label class="alert alert-danger">BBHC thuốc (*) chưa ký đủ</label></div>',
+            'success' => '<div style="display: inline-block;"><label class="alert alert-success">BBHC thuốc (*) đã ký đủ</label></div>',
         ],
     ],
     'no_permission' => [

@@ -23,8 +23,8 @@
                         <td><strong>{{ $item->tdl_service_name }}</strong></td>
                         <td class="text-right"><strong>{{ number_format($item->amount) }}</strong></td>
                         <td>{{ $item->service_unit_name }}</td>
-                        <td>{{ \Illuminate\Support\Str::limit($item->tdl_medicine_concentra, 30) }}</td>
-                        <td>{{ \Illuminate\Support\Str::limit($item->tutorial, 30) }}</td>
+                        <td>{{ $item->tdl_medicine_concentra }}</td>
+                        <td>{{ $item->tutorial }}</td>
                         <td>{{ $item->service_req_stt_name }}</td>
                     </tr>
                 @endforeach
