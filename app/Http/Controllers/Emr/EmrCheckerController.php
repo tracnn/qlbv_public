@@ -34,6 +34,7 @@ class EmrCheckerController extends Controller
         $treatment_code = $request->input('treatment_code');
         $date_type = $request->input('date_type');
         $department_catalog = $request->input('department_catalog');
+        $patient_type = $request->input('patient_type');
 
         $dateFrom = $request->input('date_from');
         $dateTo = $request->input('date_to');
@@ -110,6 +111,11 @@ class EmrCheckerController extends Controller
             if (!empty($department_catalog)) {
                 // Directly embedding the variable into the query string (make sure this is safe)
                 $result = $result->where('last_department_id', $department_catalog);
+            }
+            // Add patient_type condition if it's provided
+            if (!empty($patient_type)) {
+                // Directly embedding the variable into the query string (make sure this is safe)
+                $result = $result->where('tdl_patient_type_id', $patient_type);
             }
         }
 

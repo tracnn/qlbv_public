@@ -201,6 +201,8 @@ Route::group(['middleware' => 'auth'], function () {
 
     Route::get('index/category-department-catalog', 'Category\CategoryHISController@listDepartmentCatalog')
     ->name('category-his.fetch-department-catalog');
+    Route::get('index/category-patient-type', 'Category\CategoryHISController@listPatientType')
+    ->name('category-his.fetch-patient-type');
 
 	/*
 		Category

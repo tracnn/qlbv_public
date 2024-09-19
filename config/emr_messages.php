@@ -31,8 +31,8 @@ return [
             'success' => '<div style="display: inline-block;"><label class="alert alert-success">Đã tạo vỏ hỏi bệnh</label></div>',
         ],
         'vo-benh-an-hoi-benh-signer' => [
-            'error' => '<div style="display: inline-block;"><label class="alert alert-danger">Vỏ hỏi bệnh chưa ký đủ</label></div>',
-            'success' => '<div style="display: inline-block;"><label class="alert alert-success">Vỏ hỏi bệnh đã ký đủ</label></div>',
+            'error' => '<div style="display: inline-block;"><label class="alert alert-danger">Vỏ hỏi bệnh chưa đủ người ký</label></div>',
+            'success' => '<div style="display: inline-block;"><label class="alert alert-success">Vỏ hỏi bệnh đã đủ người ký</label></div>',
         ],
         'vo-benh-an-tong-ket' => [
             'error' => '<div style="display: inline-block;"><label class="alert alert-danger">Chưa tạo vỏ tổng kết</label></div>',
@@ -54,8 +54,8 @@ return [
             'success' => '<div style="display: inline-block;"><label class="alert alert-success">Đã thiết lập ký BBHC DVKT trên EMR</label></div>',
         ],
         'bbhc-dvkt-emr-signer' => [
-            'error' => '<div style="display: inline-block;"><label class="alert alert-danger">BBHC DVKT chưa ký đủ</label></div>',
-            'success' => '<div style="display: inline-block;"><label class="alert alert-success">BBHC DVKT đã ký đủ</label></div>',
+            'error' => '<div style="display: inline-block;"><label class="alert alert-danger">BBHC DVKT chưa đủ người ký</label></div>',
+            'success' => '<div style="display: inline-block;"><label class="alert alert-success">BBHC DVKT đã đủ người ký</label></div>',
         ],
     ],
     'emr-check-bbhc-pttt' => [
@@ -69,8 +69,8 @@ return [
             'success' => '<div style="display: inline-block;"><label class="alert alert-success">Đã thiết lập ký BBHC PTTT trên EMR</label></div>',
         ],
         'bbhc-pttt-emr-signer' => [
-            'error' => '<div style="display: inline-block;"><label class="alert alert-danger">BBHC PTTT chưa ký đủ</label></div>',
-            'success' => '<div style="display: inline-block;"><label class="alert alert-success">BBHC PTTT đã ký đủ</label></div>',
+            'error' => '<div style="display: inline-block;"><label class="alert alert-danger">BBHC PTTT chưa đủ người ký</label></div>',
+            'success' => '<div style="display: inline-block;"><label class="alert alert-success">BBHC PTTT đã đủ người ký</label></div>',
         ],
     ],
     'emr-check-bbhc-thuoc' => [
@@ -84,11 +84,14 @@ return [
             'success' => '<div style="display: inline-block;"><label class="alert alert-success">Đã thiết lập ký BBHC thuốc (*) trên EMR</label></div>',
         ],
         'bbhc-thuoc-emr-signer' => [
-            'error' => '<div style="display: inline-block;"><label class="alert alert-danger">BBHC thuốc (*) chưa ký đủ</label></div>',
-            'success' => '<div style="display: inline-block;"><label class="alert alert-success">BBHC thuốc (*) đã ký đủ</label></div>',
+            'error' => '<div style="display: inline-block;"><label class="alert alert-danger">BBHC thuốc (*) chưa đủ người ký</label></div>',
+            'success' => '<div style="display: inline-block;"><label class="alert alert-success">BBHC thuốc (*) đã đủ người ký</label></div>',
         ],
     ],
     'no_permission' => [
         'error' => '<div class="alert alert-danger" style="display: inline-block;"><strong>Bạn chưa được phân quyền để kiểm tra hồ sơ</strong></div>',
-    ]
+    ],
+    'inpatient_keywords' => [
+        'sốt', 'co giật', 'nôn ra máu', 'khó thở', 'chóng mặt', 'tiêm', 'truyền'
+    ],
 ];
