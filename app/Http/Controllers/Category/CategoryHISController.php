@@ -38,4 +38,14 @@ class CategoryHISController extends Controller
         ->select('his_patient_type.id', 'his_patient_type.patient_type_code', 'his_patient_type.patient_type_name')
         ->get();
     }
+
+    public function listTreatmentType()
+    {
+        return DB::connection('HISPro')
+        ->table('his_treatment_type')
+        ->where('his_treatment_type.is_active', 1)
+        ->where('his_treatment_type.is_delete', 0)
+        ->select('his_treatment_type.id', 'his_treatment_type.treatment_type_code', 'his_treatment_type.treatment_type_name')
+        ->get();
+    }
 }

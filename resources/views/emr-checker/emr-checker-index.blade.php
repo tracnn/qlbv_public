@@ -106,6 +106,7 @@
                     d.date_type = $('#date_type').val();
                     d.department_catalog = $('#department_catalog').val();
                     d.patient_type = $('#patient_type').val();
+                    d.treatment_type = $('#treatment_type').val();
                 },
                 beforeSend: function(xhr) {
                     currentAjaxRequest = xhr;

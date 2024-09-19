@@ -6,6 +6,7 @@
                 @include('partials.treatment_code')
                 @include('partials.department_catalog')
                 @include('partials.patient_type')
+                @include('partials.treatment_type')
             </div>
         </div>
         @include('partials.load_data_button')
@@ -17,5 +18,6 @@
     @stack('after-scripts-treatment-code')
     @stack('after-scripts-department-catalog')
     @stack('after-scripts-patient-type')
+    @stack('after-scripts-treatment-type')
     @stack('after-scripts-load-data-button')
 @endpush

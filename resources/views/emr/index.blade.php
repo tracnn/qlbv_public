@@ -176,7 +176,7 @@ $(document).ready( function () {
 
                     if (canPayment) {
                         // <button id="payment" class="btn btn-sm btn-warning" data-id="${id}"><span class="glyphicon glyphicon-qrcode"></span> T.toán</button>
-                        actionButtons += `<button id="deposit" class="btn btn-sm btn-success" data-id="${id}"><span class="glyphicon glyphicon-qrcode"></span> T.ứng</button>`;
+                        // actionButtons += `<button id="deposit" class="btn btn-sm btn-success" data-id="${id}"><span class="glyphicon glyphicon-qrcode"></span> T.ứng</button>`;
                     }
                     return actionButtons;
                 }
