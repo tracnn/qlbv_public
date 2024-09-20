@@ -122,6 +122,14 @@ class UpdateCV extends Command
                     ->update(['creator' => $creator_des,
                         'modifier' => $creator_des
                     ]);
+                    DB::connection('EMR_RS')
+                    ->table('emr_sign')
+                    ->where('create_time', '>=', $from_date)
+                    ->where('create_time', '<=', $to_date)
+                    ->where('loginname', $doctor)
+                    ->update(['loginname' => 'anhvt-kkb', //$creator_des
+                        'username' => 'Vũ Tuấn Anh' //$creator_des
+                    ]);
                 }
 
                 DB::connection('HISPro')

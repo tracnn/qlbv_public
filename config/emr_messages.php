@@ -91,7 +91,15 @@ return [
     'no_permission' => [
         'error' => '<div class="alert alert-danger" style="display: inline-block;"><strong>Bạn chưa được phân quyền để kiểm tra hồ sơ</strong></div>',
     ],
-    'inpatient_keywords' => [
-        'sốt', 'co giật', 'nôn ra máu', 'khó thở', 'chóng mặt', 'tiêm', 'truyền'
+    'inpatient' => [
+        'check' => '<h4><strong>BN điều trị nội trú</strong></h4>',
+        'keywords' => [
+            'sốt', '38.5', '38,5', 'co giật', 'đau đầu nhiều', 'chóng mặt', 'nôn nhiều',
+            'khó thở', 'huyết áp thấp', 'huyết áp tối thiểu', 'nôn ra máu',
+            'ỉa máu', 'chảy máu', 'ban xuất huyết', 'tiêm', 'truyền', 'phẫu thuật', 'bụng cấp', 'đau ngực'
+        ],
+        'no_exam' => '<div style="display: inline-block;"><label class="alert alert-danger">Không có thông tin phiếu khám</label></div>',
+        'error' => '<div style="display: inline-block;"><label class="alert alert-danger">Không cần nhập viện</label></div>',
+        'success' => '<div style="display: inline-block;"><label class="alert alert-success">Cần nhập viện</label></div>',
     ],
 ];

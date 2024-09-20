@@ -456,4 +456,96 @@ class CheckEmrService
 
         return $html;
     }
+
+    // emr-check-advnace-info
+    public function checkAdvanceInfo($treatment_code)
+    {
+        $messages = $this->getMessages();
+        $html = '';
+
+        $treatmentExits = DB::connection('HISPro')
+            ->table('his_treatment')
+            ->where('treatment_code', $treatment_code)
+            ->whereIn('tdl_treatment_type_id', [3, 4])
+            ->exists();
+        if ($treatmentExits) {
+            $keywords = $messages['inpatient']['keywords'];
+
+            $html .= $messages['inpatient']['check'];
+
+            $examResult = DB::connection('HISPro')
+                ->table('his_service_req')
+                ->leftJoin('his_dhst', 'his_dhst.id', '=', 'his_service_req.dhst_id')
+                ->where('his_service_req.tdl_treatment_code', $treatment_code)
+                ->where('his_service_req.service_req_type_id', 1)
+                ->where('is_main_exam', 1)
+                ->where('his_service_req.is_delete', 0)
+                ->select(
+                    DB::raw("COALESCE(his_service_req.icd_name, '') || ' ' || 
+                             COALESCE(his_service_req.icd_text, '') || ' ' || 
+                             COALESCE(his_service_req.hospitalization_reason, '') || ' ' || 
+                             COALESCE(his_service_req.pathological_process, '') || ' ' || 
+                             COALESCE(his_service_req.pathological_history, '') || ' ' || 
+                             COALESCE(his_service_req.full_exam, '') || ' ' || 
+                             COALESCE(his_service_req.part_exam, '') || ' ' || 
+                             COALESCE(his_service_req.part_exam_circulation, '') || ' ' || 
+                             COALESCE(his_service_req.part_exam_respiratory, '') || ' ' || 
+                             COALESCE(his_service_req.part_exam_digestion, '') || ' ' || 
+                             COALESCE(his_service_req.part_exam_kidney_urology, '') || ' ' || 
+                             COALESCE(his_service_req.part_exam_neurological, '') || ' ' || 
+                             COALESCE(his_service_req.part_exam_muscle_bone, '') || ' ' || 
+                             COALESCE(his_service_req.part_exam_ent, '') || ' ' || 
+                             COALESCE(his_service_req.part_exam_ear, '') || ' ' || 
+                             COALESCE(his_service_req.part_exam_nose, '') || ' ' || 
+                             COALESCE(his_service_req.part_exam_throat, '') || ' ' || 
+                             COALESCE(his_service_req.part_exam_stomatology, '') || ' ' || 
+                             COALESCE(his_service_req.part_exam_eye, '') || ' ' || 
+                             COALESCE(his_service_req.part_exam_eye_tension_left, '') || ' ' || 
+                             COALESCE(his_service_req.part_exam_eye_tension_right, '') || ' ' || 
+                             COALESCE(his_service_req.part_exam_eyesight_left, '') || ' ' || 
+                             COALESCE(his_service_req.part_exam_eyesight_right, '') || ' ' || 
+                             COALESCE(his_service_req.part_exam_eyesight_glass_left, '') || ' ' || 
+                             COALESCE(his_service_req.part_exam_eyesight_glass_right, '') || ' ' || 
+                             COALESCE(his_service_req.part_exam_oend, '') || ' ' || 
+                             COALESCE(his_service_req.part_exam_mental, '') || ' ' || 
+                             COALESCE(his_service_req.part_exam_obstetric, '') || ' ' || 
+                             COALESCE(his_service_req.part_exam_nutrition, '') || ' ' || 
+                             COALESCE(his_service_req.part_exam_motion, '') AS clinical_text"),
+                    'his_dhst.temperature',
+                    'his_dhst.blood_pressure_max',
+                    'his_dhst.blood_pressure_min'
+                )
+                ->first();
+            if ($examResult) {
+                $html .= $examResult->clinical_text;
+
+                // Chuyển văn bản lâm sàng thành chữ thường để đối chiếu
+                $clinicalText = mb_strtolower($examResult->clinical_text, 'UTF-8');
+                
+                // Mảng để lưu các từ khóa đã khớp
+                $matchedKeywords = [];
+                // Danh sách từ khóa đã lọc
+                $keywords = $messages['inpatient']['keywords'];
+
+                // Kiểm tra từng từ khóa trong văn bản lâm sàng
+                foreach ($keywords as $keyword) {
+                    if (strpos($clinicalText, mb_strtolower($keyword, 'UTF-8')) !== false) {
+                        $matchedKeywords[] = $keyword;
+                    }
+                }
+
+                // Kiểm tra nếu tìm thấy từ khóa nào trong văn bản
+                if (count($matchedKeywords) > 0) {
+                    $html .= $messages['inpatient']['success'];
+                    $html .= implode(', ', $matchedKeywords);
+                } else {
+                    $html .= $messages['inpatient']['error'];
+                }                
+            } else {
+                $html .= $messages['inpatient']['no_exam'];
+            }
+        }
+
+        return $html;
+    }
 }
