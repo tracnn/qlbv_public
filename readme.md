@@ -1,3 +1,6 @@
+# 23/09/2024
+- Sửa export Xml130 ra thư mục với Ma CSKCB tương ứng trong XmlContent
+
 # 18/09/2024
 - Bổ sung Chức năng kiểm tra hồ sơ Emr
 	+ Bổ sung kiểm tra BBHC thuốc có dấu sao

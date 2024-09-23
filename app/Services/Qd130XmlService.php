@@ -1350,6 +1350,10 @@ class Qd130XmlService
             return false;
         }
 
+        // Extract MACSKCB from the XML data (assuming getDataForXmlExport returns it)
+        $xmlInformation = $this->getXmlInformation($ma_lk);
+        $macskcb = $xmlInformation->macskcb;
+
         // Định dạng thời gian hiện tại để đặt tên file
         $formattedDateTime = date('Y.m.d_H.i.s');
 
@@ -1359,9 +1363,9 @@ class Qd130XmlService
         // Kiểm tra option config('qd130xml.export_to_directory_by_day')
         if (config('qd130xml.export_to_directory_by_day')) {
             $currentDate = date('Ymd');
-            $directoryPath = $currentDate;
+            $directoryPath = $currentDate . '/' . $macskcb; // Include MACSKCB in the directory path
         } else {
-            $directoryPath = '';
+            $directoryPath = $macskcb; // Use MACSKCB as the directory
         }
 
         // Kiểm tra và tạo thư mục nếu cần thiết
