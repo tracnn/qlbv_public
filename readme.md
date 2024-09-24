@@ -1,5 +1,6 @@
 # 23/09/2024
 - Sửa export Xml130 ra thư mục với Ma CSKCB tương ứng trong XmlContent
+- Bổ sung lọc Xml4750 theo mã bệnh nhân
 
 # 18/09/2024
 - Bổ sung Chức năng kiểm tra hồ sơ Emr

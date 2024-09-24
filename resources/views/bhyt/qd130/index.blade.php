@@ -131,6 +131,7 @@
                     d.payment_date_filter = $('#payment_date_filter').val();
                     d.treatment_type_fillter = $('#treatment_type_fillter').val();
                     d.xml_export_status = $('#xml_export_status').val();
+                    d.patient_code = $('#patient_code').val();
                 },
                 beforeSend: function(xhr) {
                     currentAjaxRequest = xhr;

@@ -49,6 +49,7 @@ class BHYTQd130Controller extends Controller
         }
         
         $treatment_code = $request->input('treatment_code');
+        $patient_code = $request->input('patient_code');
         $date_type = $request->input('date_type');
         $xml_filter_status = $request->input('xml_filter_status');
 
@@ -74,154 +75,167 @@ class BHYTQd130Controller extends Controller
                     $query->select('ma_lk', 'exported_at');
                 }]);           
         } else {
-            // Check and convert date format
-            if (strlen($dateFrom) == 10) { // Format YYYY-MM-DD
-                $dateFrom = Carbon::createFromFormat('Y-m-d', $dateFrom)->startOfDay()->format('Y-m-d H:i:s');
-            }
+            if ($patient_code) {
+                $result = Qd130Xml1::select('ma_lk', 'ma_bn', 'ho_ten', 'ma_the_bhyt', 'ngay_sinh', 
+                    'ngay_vao', 'ngay_ra', 'ngay_ttoan', 'created_at', 'updated_at')
+                    ->where('ma_bn', $patient_code)
+                    ->with(['check_hein_card' => function($query) {
+                        $query->select('ma_lk', 'ma_kiemtra', 'ma_tracuu', 'ghi_chu');
+                    }, 'Qd130XmlErrorResult' => function($query) {
+                        $query->select('ma_lk', 'error_code', 'ngay_yl', 'description');
+                    }, 'Qd130XmlInformation' => function($query) {
+                        $query->select('ma_lk', 'exported_at');
+                    }]); 
+            } else {
+                // Check and convert date format
+                if (strlen($dateFrom) == 10) { // Format YYYY-MM-DD
+                    $dateFrom = Carbon::createFromFormat('Y-m-d', $dateFrom)->startOfDay()->format('Y-m-d H:i:s');
+                }
 
-            if (strlen($dateTo) == 10) { // Format YYYY-MM-DD
-                $dateTo = Carbon::createFromFormat('Y-m-d', $dateTo)->endOfDay()->format('Y-m-d H:i:s');
-            }
+                if (strlen($dateTo) == 10) { // Format YYYY-MM-DD
+                    $dateTo = Carbon::createFromFormat('Y-m-d', $dateTo)->endOfDay()->format('Y-m-d H:i:s');
+                }
 
-            // Convert date format from 'YYYY-MM-DD HH:mm:ss' to 'YYYYMMDDHHI' for specific fields
-            $formattedDateFromForFields = Carbon::createFromFormat('Y-m-d H:i:s', $dateFrom)->format('YmdHi');
-            $formattedDateToForFields = Carbon::createFromFormat('Y-m-d H:i:s', $dateTo)->format('YmdHi');
+                // Convert date format from 'YYYY-MM-DD HH:mm:ss' to 'YYYYMMDDHHI' for specific fields
+                $formattedDateFromForFields = Carbon::createFromFormat('Y-m-d H:i:s', $dateFrom)->format('YmdHi');
+                $formattedDateToForFields = Carbon::createFromFormat('Y-m-d H:i:s', $dateTo)->format('YmdHi');
 
-            // Convert date format to 'Y-m-d H:i:s' for created_at and updated_at
-            $formattedDateFromForTimestamp = Carbon::createFromFormat('Y-m-d H:i:s', $dateFrom)->format('Y-m-d H:i:s');
-            $formattedDateToForTimestamp = Carbon::createFromFormat('Y-m-d H:i:s', $dateTo)->format('Y-m-d H:i:s');
+                // Convert date format to 'Y-m-d H:i:s' for created_at and updated_at
+                $formattedDateFromForTimestamp = Carbon::createFromFormat('Y-m-d H:i:s', $dateFrom)->format('Y-m-d H:i:s');
+                $formattedDateToForTimestamp = Carbon::createFromFormat('Y-m-d H:i:s', $dateTo)->format('Y-m-d H:i:s');
 
-            // Define the date field based on date_type
-            switch ($date_type) {
-                case 'date_in':
-                    $dateField = 'ngay_vao';
-                    $formattedDateFrom = $formattedDateFromForFields;
-                    $formattedDateTo = $formattedDateToForFields;
-                    break;
-                case 'date_out':
-                    $dateField = 'ngay_ra';
-                    $formattedDateFrom = $formattedDateFromForFields;
-                    $formattedDateTo = $formattedDateToForFields;
-                    break;
-                case 'date_payment':
-                    $dateField = 'ngay_ttoan';
-                    $formattedDateFrom = $formattedDateFromForFields;
-                    $formattedDateTo = $formattedDateToForFields;
-                    break;
-                case 'date_create':
-                    $dateField = 'created_at';
-                    $formattedDateFrom = $formattedDateFromForTimestamp;
-                    $formattedDateTo = $formattedDateToForTimestamp;
-                    break;
-                case 'date_update':
-                    $dateField = 'updated_at';
-                    $formattedDateFrom = $formattedDateFromForTimestamp;
-                    $formattedDateTo = $formattedDateToForTimestamp;
-                    break;
-                default:
-                    $dateField = 'ngay_ttoan';
-                    $formattedDateFrom = $formattedDateFromForFields;
-                    $formattedDateTo = $formattedDateToForFields;
-                    break;
-            }
+                // Define the date field based on date_type
+                switch ($date_type) {
+                    case 'date_in':
+                        $dateField = 'ngay_vao';
+                        $formattedDateFrom = $formattedDateFromForFields;
+                        $formattedDateTo = $formattedDateToForFields;
+                        break;
+                    case 'date_out':
+                        $dateField = 'ngay_ra';
+                        $formattedDateFrom = $formattedDateFromForFields;
+                        $formattedDateTo = $formattedDateToForFields;
+                        break;
+                    case 'date_payment':
+                        $dateField = 'ngay_ttoan';
+                        $formattedDateFrom = $formattedDateFromForFields;
+                        $formattedDateTo = $formattedDateToForFields;
+                        break;
+                    case 'date_create':
+                        $dateField = 'created_at';
+                        $formattedDateFrom = $formattedDateFromForTimestamp;
+                        $formattedDateTo = $formattedDateToForTimestamp;
+                        break;
+                    case 'date_update':
+                        $dateField = 'updated_at';
+                        $formattedDateFrom = $formattedDateFromForTimestamp;
+                        $formattedDateTo = $formattedDateToForTimestamp;
+                        break;
+                    default:
+                        $dateField = 'ngay_ttoan';
+                        $formattedDateFrom = $formattedDateFromForFields;
+                        $formattedDateTo = $formattedDateToForFields;
+                        break;
+                }
 
-            $result = Qd130Xml1::select('ma_lk', 'ma_bn', 'ho_ten', 'ma_the_bhyt', 'ngay_sinh', 
-                'ngay_vao', 'ngay_ra', 'ngay_ttoan', 'created_at', 'updated_at')
-            ->whereBetween($dateField, [$formattedDateFrom, $formattedDateTo]);
+                $result = Qd130Xml1::select('ma_lk', 'ma_bn', 'ho_ten', 'ma_the_bhyt', 'ngay_sinh', 
+                    'ngay_vao', 'ngay_ra', 'ngay_ttoan', 'created_at', 'updated_at')
+                ->whereBetween($dateField, [$formattedDateFrom, $formattedDateTo]);
 
-            // Apply relationships: check_hein_card
-            $result = $result->with(['check_hein_card' => function($query) {
-                $query->select('ma_lk', 'ma_kiemtra', 'ma_tracuu', 'ghi_chu');
-            }]);
+                // Apply relationships: check_hein_card
+                $result = $result->with(['check_hein_card' => function($query) {
+                    $query->select('ma_lk', 'ma_kiemtra', 'ma_tracuu', 'ghi_chu');
+                }]);
 
-            // Apply relationships: Qd130XmlInformation
-            $result = $result->with(['Qd130XmlInformation' => function($query) {
-                $query->select('ma_lk', 'exported_at', 'export_error');
-            }]);
+                // Apply relationships: Qd130XmlInformation
+                $result = $result->with(['Qd130XmlInformation' => function($query) {
+                    $query->select('ma_lk', 'exported_at', 'export_error');
+                }]);
 
-            if ($qd130_xml_error_catalog_id) {
-                $qd130XmlErrorCatalog = Qd130XmlErrorCatalog::find($qd130_xml_error_catalog_id);
-                if ($qd130XmlErrorCatalog) {
-                    $result = $result->whereHas('Qd130XmlErrorResult', function($query) use ($qd130XmlErrorCatalog) {
-                        $query->where('xml', $qd130XmlErrorCatalog->xml)
-                              ->where('error_code', $qd130XmlErrorCatalog->error_code);
+                if ($qd130_xml_error_catalog_id) {
+                    $qd130XmlErrorCatalog = Qd130XmlErrorCatalog::find($qd130_xml_error_catalog_id);
+                    if ($qd130XmlErrorCatalog) {
+                        $result = $result->whereHas('Qd130XmlErrorResult', function($query) use ($qd130XmlErrorCatalog) {
+                            $query->where('xml', $qd130XmlErrorCatalog->xml)
+                                  ->where('error_code', $qd130XmlErrorCatalog->error_code);
+                        });
+                    }
+                } else {
+                    $result = $result->with(['Qd130XmlErrorResult' => function($query) {
+                        $query->select('ma_lk', 'error_code', 'ngay_yl', 'description');
+                    }]);
+                }
+                
+                // Apply filter based on xml_filter_status
+                if ($xml_filter_status === 'has_error') {
+                    $result = $result->where(function ($query) {
+                        $query->whereHas('Qd130XmlErrorResult')
+                              ->orWhereHas('check_hein_card', function ($subQuery) {
+                                  $subQuery->whereIn('ma_kiemtra', config('qd130xml.hein_card_invalid.check_code'))
+                                           ->orWhereIn('ma_tracuu', config('qd130xml.hein_card_invalid.result_code'));
+                              });
+                    });
+                } elseif ($xml_filter_status === 'no_error') {
+                    $result = $result->whereDoesntHave('Qd130XmlErrorResult')
+                                     ->whereDoesntHave('check_hein_card', function ($subQuery) {
+                                         $subQuery->whereIn('ma_kiemtra', config('qd130xml.hein_card_invalid.check_code'))
+                                                  ->orWhereIn('ma_tracuu', config('qd130xml.hein_card_invalid.result_code'));
+                                     });
+                } elseif ($xml_filter_status === 'has_error_critical') {
+                    $result = $result->whereHas('Qd130XmlErrorResult', function ($query) {
+                        $query->where('critical_error', true);
+                    });
+                } elseif ($xml_filter_status === 'has_error_warning') {
+                    $result = $result->whereHas('Qd130XmlErrorResult', function ($query) {
+                        $query->where('critical_error', false);
+                    })->whereDoesntHave('Qd130XmlErrorResult', function ($query) {
+                        $query->where('critical_error', true);
+                    });
+                } elseif ($xml_filter_status === 'has_error_hein_card') {
+                    $result = $result->whereHas('check_hein_card', function ($query) {
+                        $query->whereIn('ma_kiemtra', config('qd130xml.hein_card_invalid.check_code'))
+                              ->orWhereIn('ma_tracuu', config('qd130xml.hein_card_invalid.result_code'));
+                    });
+                } elseif ($xml_filter_status === 'has_error_hein_card_without_xml') {
+                    $result = $result->whereHas('check_hein_card', function ($query) {
+                        $query->whereIn('ma_kiemtra', config('qd130xml.hein_card_invalid.check_code'))
+                              ->orWhereIn('ma_tracuu', config('qd130xml.hein_card_invalid.result_code'));
+                    })->whereDoesntHave('Qd130XmlErrorResult');
+                } elseif ($xml_filter_status === 'no_error_critical') {
+                    $result = $result->whereDoesntHave('Qd130XmlErrorResult', function ($query) {
+                        $query->where('critical_error', true);
                     });
                 }
-            } else {
-                $result = $result->with(['Qd130XmlErrorResult' => function($query) {
-                    $query->select('ma_lk', 'error_code', 'ngay_yl', 'description');
-                }]);
-            }
-            
-            // Apply filter based on xml_filter_status
-            if ($xml_filter_status === 'has_error') {
-                $result = $result->where(function ($query) {
-                    $query->whereHas('Qd130XmlErrorResult')
-                          ->orWhereHas('check_hein_card', function ($subQuery) {
-                              $subQuery->whereIn('ma_kiemtra', config('qd130xml.hein_card_invalid.check_code'))
-                                       ->orWhereIn('ma_tracuu', config('qd130xml.hein_card_invalid.result_code'));
-                          });
-                });
-            } elseif ($xml_filter_status === 'no_error') {
-                $result = $result->whereDoesntHave('Qd130XmlErrorResult')
-                                 ->whereDoesntHave('check_hein_card', function ($subQuery) {
-                                     $subQuery->whereIn('ma_kiemtra', config('qd130xml.hein_card_invalid.check_code'))
-                                              ->orWhereIn('ma_tracuu', config('qd130xml.hein_card_invalid.result_code'));
-                                 });
-            } elseif ($xml_filter_status === 'has_error_critical') {
-                $result = $result->whereHas('Qd130XmlErrorResult', function ($query) {
-                    $query->where('critical_error', true);
-                });
-            } elseif ($xml_filter_status === 'has_error_warning') {
-                $result = $result->whereHas('Qd130XmlErrorResult', function ($query) {
-                    $query->where('critical_error', false);
-                })->whereDoesntHave('Qd130XmlErrorResult', function ($query) {
-                    $query->where('critical_error', true);
-                });
-            } elseif ($xml_filter_status === 'has_error_hein_card') {
-                $result = $result->whereHas('check_hein_card', function ($query) {
-                    $query->whereIn('ma_kiemtra', config('qd130xml.hein_card_invalid.check_code'))
-                          ->orWhereIn('ma_tracuu', config('qd130xml.hein_card_invalid.result_code'));
-                });
-            } elseif ($xml_filter_status === 'has_error_hein_card_without_xml') {
-                $result = $result->whereHas('check_hein_card', function ($query) {
-                    $query->whereIn('ma_kiemtra', config('qd130xml.hein_card_invalid.check_code'))
-                          ->orWhereIn('ma_tracuu', config('qd130xml.hein_card_invalid.result_code'));
-                })->whereDoesntHave('Qd130XmlErrorResult');
-            } elseif ($xml_filter_status === 'no_error_critical') {
-                $result = $result->whereDoesntHave('Qd130XmlErrorResult', function ($query) {
-                    $query->where('critical_error', true);
-                });
-            }
 
-            // Apply filter based on has_hein_card
-            if ($hein_card_filter === 'has_hein_card') {
-                $result = $result->where('ma_the_bhyt', '<>', '');
-            } elseif ($hein_card_filter === 'no_hein_card') {
-                $result = $result->where('ma_the_bhyt', '=', '');
-            }
+                // Apply filter based on has_hein_card
+                if ($hein_card_filter === 'has_hein_card') {
+                    $result = $result->where('ma_the_bhyt', '<>', '');
+                } elseif ($hein_card_filter === 'no_hein_card') {
+                    $result = $result->where('ma_the_bhyt', '=', '');
+                }
 
-            // Apply filter based on payment_date_filter
-            if ($payment_date_filter === 'has_payment_date') {
-                $result = $result->where('ngay_ttoan', '<>', '');
-            } elseif ($payment_date_filter === 'no_payment_date') {
-                $result = $result->where('ngay_ttoan', '=', '');
-            }
+                // Apply filter based on payment_date_filter
+                if ($payment_date_filter === 'has_payment_date') {
+                    $result = $result->where('ngay_ttoan', '<>', '');
+                } elseif ($payment_date_filter === 'no_payment_date') {
+                    $result = $result->where('ngay_ttoan', '=', '');
+                }
 
-            // Apply filter based on treatment_type_fillter
-            if ($treatment_type_fillter) {
-                $result = $result->where('ma_loai_kcb', $treatment_type_fillter);
-            }
+                // Apply filter based on treatment_type_fillter
+                if ($treatment_type_fillter) {
+                    $result = $result->where('ma_loai_kcb', $treatment_type_fillter);
+                }
 
-            //Apply filter based on xml_export_status
-            if ($xml_export_status === 'has_export') {
-                $result = $result->whereHas('Qd130XmlInformation', function ($query) {
-                    $query->whereNotNull('exported_at');
-                });
-            } elseif ($xml_export_status === 'no_export') {
-                $result = $result->whereHas('Qd130XmlInformation', function ($query) {
-                    $query->whereNull('exported_at');
-                });
+                //Apply filter based on xml_export_status
+                if ($xml_export_status === 'has_export') {
+                    $result = $result->whereHas('Qd130XmlInformation', function ($query) {
+                        $query->whereNotNull('exported_at');
+                    });
+                } elseif ($xml_export_status === 'no_export') {
+                    $result = $result->whereHas('Qd130XmlInformation', function ($query) {
+                        $query->whereNull('exported_at');
+                    });
+                }
             }
         }
 
