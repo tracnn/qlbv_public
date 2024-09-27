@@ -9,14 +9,14 @@ use Illuminate\Support\Collection;
 class Qd130XmlErrorService
 {
     /**
-     * Xóa các lỗi cũ và lưu các lỗi mới
-     *
-     * @param string $xmlType
-     * @param string $ma_lk
-     * @param int $stt
-     * @param Collection $errors
-     * @return void
-     */
+    * Xóa các lỗi cũ và lưu các lỗi mới
+    *
+    * @param string $xmlType
+    * @param string $ma_lk
+    * @param int $stt
+    * @param Collection $errors
+    * @return void
+    **/
     public function deleteErrors(string $ma_lk): void
     {
         // Delete old errors
