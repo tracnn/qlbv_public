@@ -28,6 +28,24 @@ class CustomUser extends Authenticatable
         'password', 'remember_token',
     ];
 
+    /**
+     * Override để vô hiệu hóa cột remember_token.
+     */
+    public function setRememberToken($value)
+    {
+        // Không cần lưu giá trị token
+    }
+
+    public function getRememberToken()
+    {
+        return null; // Không trả về giá trị remember_token
+    }
+
+    public function getRememberTokenName()
+    {
+        return null; // Trả về null vì không có cột remember_token
+    }
+
     public function authorizePermissions($permissions)
     {
       return $this->can($permissions) || 
