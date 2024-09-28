@@ -463,4 +463,30 @@ class ReportController extends Controller
         })
         ->toJson();
     }
+
+    public function debtAccountant()
+    {
+        return view('administrator.list-debt-accountant');
+    }
+
+    public function fetchAccountantDebt(Request $request)
+    {
+        list($sql, $bindings) = $this->reportDataService->buildSqlQueryAndBindingsDebt($request);
+
+        // Execute the query and get the results
+        $results = DB::connection('HISPro')->select(DB::raw($sql), $bindings);
+
+        // Return the results as DataTables and use editColumn and addColumn
+        return DataTables::of($results)
+        // ->editColumn('amount', function($result) {
+        //     return number_format($result->amount);
+        // })
+        // ->editColumn('tdl_patient_dob', function($result) {
+        //     return strtodate($result->tdl_patient_dob);
+        // })
+        // ->editColumn('transaction_time', function($result) {
+        //     return strtodatetime($result->transaction_time);
+        // })
+        ->make(true);
+    }
 }

@@ -263,4 +263,123 @@ class ReportDataService
 
         return [$sql, $bindings];
     }
+
+    public function buildSqlQueryAndBindingsDebt(Request $request)
+    {
+        $dateFrom = $request->input('date_from');
+        $dateTo = $request->input('date_to');
+        $date_type = $request->input('date_type');
+
+        // Convert the dates if they're in the expected 'Y-m-d' format
+        if (strlen($dateFrom) == 10) {
+            $dateFrom = Carbon::createFromFormat('Y-m-d', $dateFrom)->startOfDay()->format('Y-m-d H:i:s');
+        }
+
+        if (strlen($dateTo) == 10) {
+            $dateTo = Carbon::createFromFormat('Y-m-d', $dateTo)->endOfDay()->format('Y-m-d H:i:s');
+        }
+
+        // Convert the formatted dates to the required 'YmdHis' format
+        $formattedDateFrom = Carbon::createFromFormat('Y-m-d H:i:s', $dateFrom)->format('YmdHis');
+        $formattedDateTo = Carbon::createFromFormat('Y-m-d H:i:s', $dateTo)->format('YmdHis');
+
+        // Define the date field based on date_type
+        switch ($date_type) {
+            case 'date_in':
+                $dateField = 'ht.in_time';
+                break;
+            case 'date_out':
+                $dateField = 'ht.out_time';
+                break;
+            case 'date_payment':
+                $dateField = 'ht.fee_lock_time';
+                break;
+            default:
+                $dateField = 'ht.fee_lock_time';
+                break;
+        }
+
+        // Build the conditions for the WHERE clause and bindings
+        $conditions = [];
+        $bindings = [];
+
+        // Add the date condition using placeholders
+        $conditions[] = "$dateField BETWEEN :formattedDateFrom AND :formattedDateTo";
+        $bindings['formattedDateFrom'] = $formattedDateFrom;
+        $bindings['formattedDateTo'] = $formattedDateTo;
+
+        // SQL Query
+        $sql = "
+            WITH transaction_totals AS (
+                SELECT
+                    treatment_id,
+                    COALESCE(SUM(CASE WHEN transaction_type_id = 1 THEN amount ELSE 0 END), 0) AS tam_ung,
+                    COALESCE(SUM(CASE WHEN transaction_type_id = 2 THEN amount ELSE 0 END), 0) AS hoan_ung,
+                    COALESCE(SUM(CASE WHEN transaction_type_id = 3 AND sale_type_id IS NULL THEN amount ELSE 0 END), 0) AS da_thanh_toan,
+                    COALESCE(SUM(CASE WHEN transaction_type_id = 3 AND sale_type_id = 2 THEN amount ELSE 0 END), 0) AS tu_nhap,
+                    COALESCE(SUM(CASE WHEN transaction_type_id = 3 AND sale_type_id = 1 THEN amount ELSE 0 END), 0) AS xuat_ban,
+                    COALESCE(SUM(CASE WHEN transaction_type_id = 3 AND sale_type_id = 3 THEN amount ELSE 0 END), 0) AS vitamin_a
+                FROM
+                    his_transaction
+                WHERE
+                    is_cancel IS NULL
+                    AND is_delete = 0
+                GROUP BY
+                    treatment_id
+            ),
+            service_totals AS (
+                SELECT
+                    hs.tdl_treatment_id,
+                    COALESCE(SUM(hs.vir_total_price), 0) AS total_price,
+                    COALESCE(SUM(hs.vir_total_hein_price), 0) AS total_hein_price,
+                    COALESCE(SUM(hs.vir_total_patient_price), 0) AS total_patient_price
+                FROM
+                    his_sere_serv hs
+                INNER JOIN
+                    his_treatment ht ON ht.id = hs.tdl_treatment_id
+                WHERE
+                    hs.is_delete = 0
+                    AND hs.is_expend IS NULL
+                    AND hs.is_no_pay IS NULL
+                    AND hs.is_no_execute IS NULL
+                    AND $dateField BETWEEN :formattedDateFrom AND :formattedDateTo
+                GROUP BY
+                    hs.tdl_treatment_id
+            )
+            SELECT
+                ht.treatment_code,
+                ht.tdl_patient_name,
+                ht.tdl_patient_address,
+                ht.in_time,
+                ht.out_time,
+                ht.tdl_patient_mobile,
+                ht.tdl_patient_phone,
+                last_department.department_name,
+                COALESCE(t.treatment_id, s.tdl_treatment_id) AS treatment_id,
+                t.tam_ung,
+                t.hoan_ung,
+                t.da_thanh_toan,
+                t.tu_nhap,
+                t.xuat_ban,
+                t.vitamin_a,
+                s.total_price,
+                s.total_hein_price,
+                s.total_patient_price,
+                s.total_patient_price - t.tam_ung - t.hoan_ung - t.da_thanh_toan AS can_thanh_toan
+            FROM
+                service_totals s
+            LEFT JOIN
+                transaction_totals t ON t.treatment_id = s.tdl_treatment_id
+            INNER JOIN
+                his_treatment ht ON ht.id = s.tdl_treatment_id
+            INNER JOIN
+                his_department last_department ON last_department.id = ht.last_department_id
+            WHERE
+                s.total_patient_price - t.tam_ung - t.hoan_ung - t.da_thanh_toan > 0
+            ORDER BY
+                s.tdl_treatment_id
+        ";
+
+        return [$sql, $bindings];
+    }
 }

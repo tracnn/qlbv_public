@@ -522,6 +522,13 @@ return [
                     'route'   => 'reports-administrator.list-patient-pt',
                     'active'=> ['reports-administrator/list-patient-pt*'],
                 ],
+                [
+                    'text'  => 'Danh sách nợ viện phí',
+                    'icon'  => 'bar-chart',
+                    'checkrole'   => 'thungan',
+                    'route'   => 'reports-administrator.accoutant-debt-index',
+                    'active'=> ['reports-administrator/accoutant-debt-index*'],
+                ],
             ],
         ],
         [

@@ -1,3 +1,6 @@
+# 28/09/2024
+- Bổ sung báo cáo BN nợ viện phí (thêm thông tin và cải thiện tốc độ xử lý so với HIS)
+
 # 23/09/2024
 - Sửa export Xml130 ra thư mục với Ma CSKCB tương ứng trong XmlContent
 - Bổ sung lọc Xml4750 theo mã bệnh nhân
