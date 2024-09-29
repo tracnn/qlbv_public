@@ -478,15 +478,39 @@ class ReportController extends Controller
 
         // Return the results as DataTables and use editColumn and addColumn
         return DataTables::of($results)
-        // ->editColumn('amount', function($result) {
-        //     return number_format($result->amount);
-        // })
-        // ->editColumn('tdl_patient_dob', function($result) {
-        //     return strtodate($result->tdl_patient_dob);
-        // })
-        // ->editColumn('transaction_time', function($result) {
-        //     return strtodatetime($result->transaction_time);
-        // })
-        ->make(true);
+        ->editColumn('in_time', function($result) {
+            return strtodatetime($result->in_time);
+        })
+        ->editColumn('out_time', function($result) {
+            return strtodatetime($result->out_time);
+        })
+        ->editColumn('tam_ung', function($result) {
+            return number_format($result->tam_ung);
+        })
+        ->editColumn('hoan_ung', function($result) {
+            return number_format($result->hoan_ung);
+        })
+        ->editColumn('da_thanh_toan', function($result) {
+            return number_format($result->da_thanh_toan);
+        })
+        ->editColumn('tu_nhap', function($result) {
+            return number_format($result->tu_nhap);
+        })
+        ->editColumn('xuat_ban', function($result) {
+            return number_format($result->xuat_ban);
+        })
+        ->editColumn('total_price', function($result) {
+            return number_format($result->total_price);
+        })
+        ->editColumn('total_hein_price', function($result) {
+            return number_format($result->total_hein_price);
+        })
+        ->editColumn('total_patient_price', function($result) {
+            return number_format($result->total_patient_price);
+        })
+        ->editColumn('can_thanh_toan', function($result) {
+            return number_format($result->can_thanh_toan);
+        })
+        ->toJson();
     }
 }

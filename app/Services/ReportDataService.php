@@ -354,6 +354,7 @@ class ReportDataService
                 ht.out_time,
                 ht.tdl_patient_mobile,
                 ht.tdl_patient_phone,
+                hpt.patient_type_name,
                 last_department.department_name,
                 COALESCE(t.treatment_id, s.tdl_treatment_id) AS treatment_id,
                 t.tam_ung,
@@ -374,6 +375,8 @@ class ReportDataService
                 his_treatment ht ON ht.id = s.tdl_treatment_id
             INNER JOIN
                 his_department last_department ON last_department.id = ht.last_department_id
+            INNER JOIN
+                his_patient_type hpt ON hpt.id = ht.tdl_patient_type_id
             WHERE
                 s.total_patient_price - t.tam_ung - t.hoan_ung - t.da_thanh_toan > 0
             ORDER BY

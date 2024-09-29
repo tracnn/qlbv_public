@@ -24,14 +24,15 @@
                     <th>Ngày vào</th>
                     <th>Ngày ra</th>
                     <th>Số ĐT</th>
+                    <th>Đối tượng</th>
                     <th>Khoa ĐT</th>
-                    <th>Tạm ứng</th>
-                    <th>Hoàn ứng</th>
-                    <th>Đã t.toán</th>
-                    <th>Chi phí khác</th>
                     <th>Tổng chi phí</th>
                     <th>BH t.toán</th>
                     <th>BN t.toán</th>
+                    <th>Đã t.toán</th>
+                    <th>Tạm ứng</th>
+                    <th>Hoàn ứng</th>
+                    <th>Chi phí khác</th>
                     <th>Cần t.toán</th>
                 </tr>
             </thead>
@@ -75,21 +76,22 @@
                 }
             },
             "columns": [
-                { data: 'treatment_code', name: "treatment_code"},
-                { data: 'tdl_patient_name', name: "tdl_patient_name"},
-                { data: 'tdl_patient_address', name: "tdl_patient_address"},
-                { data: 'in_time', name: "in_time"},
+                { data: 'treatment_code', name: "treatment_code" },
+                { data: 'tdl_patient_name', name: "tdl_patient_name" },
+                { data: 'tdl_patient_address', name: "tdl_patient_address" },
+                { data: 'in_time', name: "in_time" },
                 { data: 'out_time', name: "out_time"},
-                { data: 'tdl_patient_phone', name: "tdl_patient_phone"},
-                { data: 'department_name', name: "department_name"},
-                { data: 'tam_ung', name: "tam_ung"},
-                { data: 'hoan_ung', name: "hoan_ung"},
-                { data: 'da_thanh_toan', name: "da_thanh_toan"},
-                { data: 'tu_nhap', name: "tu_nhap"},
-                { data: 'total_price', name: "total_price"},
-                { data: 'total_hein_price', name: "total_hein_price"},
-                { data: 'total_patient_price', name: "total_patient_price"},
-                { data: 'can_thanh_toan', name: "can_thanh_toan"},
+                { data: 'tdl_patient_phone', name: "tdl_patient_phone" },
+                { data: 'patient_type_name', name: "patient_type_name" },
+                { data: 'department_name', name: "department_name" },
+                { data: 'total_price', name: "total_price", className: "text-right" },
+                { data: 'total_hein_price', name: "total_hein_price", className: "text-right" },
+                { data: 'total_patient_price', name: "total_patient_price", className: "text-right" },
+                { data: 'da_thanh_toan', name: "da_thanh_toan", className: "text-right" },
+                { data: 'tam_ung', name: "tam_ung", className: "text-right" },
+                { data: 'hoan_ung', name: "hoan_ung", className: "text-right" },
+                { data: 'tu_nhap', name: "tu_nhap", className: "text-right" },
+                { data: 'can_thanh_toan', name: "can_thanh_toan", className: "text-right" },
             ],
         });
 
