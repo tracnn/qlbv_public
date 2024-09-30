@@ -1,0 +1,21 @@
+Hướng dẫn cài đặt và cập nhật phần mềm
+# I. Những phần mềm cần thiết
+1. Windows Server
+	- Xampp: apache server & mysql
+	- Composer: instal và update các gói vendor
+	- Git: clone và pull source
+	- Oracle client instant: Kết nối csdl Oracle
+	- Nssm: Cài đặt windows service
+	- ImageMagick: Gói xử lý qr (Sẽ bỏ trong tương lai)
+	- export cấu trúc database trên bản đang chạy (qlbv.sql)
+2. Cài đặt và cập nhật tool
+	- Cài đặt: Sử dụng cmd chạy lệnh: 
+		git clone https://github.com/tracnn/qlbv.git
+	- Cài đặt các gói cần thiết: Tại thư mục chứa tool chạy lệnh: 
+		composer install
+	- Cập nhật tool (Định kỳ hoặc có hướng dẫn của tác giả)
+		+ Tại thư mục chứa tool chạy lệnh: 
+			git pull origin master
+		+ Update cấu trúc csdl nếu có, tại thư mục chưa tool chạy lệnh: 
+			php artisan migrate
+3. Truy cập github tại địa chỉ: https://github.com/tracnn/qlbv để xem nội dung các bản cập nhật (theo tuần)
