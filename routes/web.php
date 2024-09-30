@@ -44,7 +44,7 @@ Route::get('/view-document', 'Emr\EmrController@viewDocument')->name('view-docum
 Route::get('index/view-doc', 'Emr\EmrController@viewDocByAdmin')->name('view-doc');
 //->middleware('throttle:60,1');//Test
 
-Route::group(['middleware' => 'auth'], function () {
+Route::group(['middleware' => ['auth', 'check.first.login']], function () {
     //    Route::get('/link1', function ()    {
 //        // Uses Auth Middleware
 //    });

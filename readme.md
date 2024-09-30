@@ -1,5 +1,7 @@
 # 30/09/2024
 - Bổ sung export data BN nợ viện phí dạng xlsx
+- Bổ sung chức năng gán quyền superadmin cho user đầu tiên đăng nhập hệ thống: 
+Phục vụ cho việc triển khai tool ở một đơn vị mới: Nếu lần đầu tiên đăng nhập, hệ thống sẽ kiểm tra xem đã có User nào được gán quyền superadmin chưa. Nếu chưa có thì sẽ gán cho user đăng nhập hiện tại, nếu có rồi thì bỏ qua.
 
 # 28/09/2024
 - Bổ sung báo cáo BN nợ viện phí (thêm thông tin và cải thiện tốc độ xử lý so với HIS)
