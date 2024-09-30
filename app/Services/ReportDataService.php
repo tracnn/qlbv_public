@@ -349,6 +349,7 @@ class ReportDataService
             SELECT
                 ht.treatment_code,
                 ht.tdl_patient_name,
+                ht.tdl_patient_dob,
                 ht.tdl_patient_address,
                 ht.in_time,
                 ht.out_time,

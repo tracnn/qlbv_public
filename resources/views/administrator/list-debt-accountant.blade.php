@@ -19,7 +19,8 @@
             <thead>
                 <tr>
                     <th>Mã ĐT</th>
-                    <th>Mã BN</th>
+                    <th>Họ tên</th>
+                    <th>Ngày sinh</th>
                     <th>Địa chỉ</th>
                     <th>Ngày vào</th>
                     <th>Ngày ra</th>
@@ -78,6 +79,7 @@
             "columns": [
                 { data: 'treatment_code', name: "treatment_code" },
                 { data: 'tdl_patient_name', name: "tdl_patient_name" },
+                { data: 'tdl_patient_dob', name: "tdl_patient_dob" },
                 { data: 'tdl_patient_address', name: "tdl_patient_address" },
                 { data: 'in_time', name: "in_time" },
                 { data: 'out_time', name: "out_time"},
@@ -97,5 +99,25 @@
 
         table.ajax.reload();
     }
+
+    $(document).ready(function() {
+        $('#export_xlsx').click(function() {
+            var dateRange = $('#date_range').data('daterangepicker');
+
+            var startDate = dateRange.startDate.format('YYYY-MM-DD HH:mm:ss');
+            var endDate = dateRange.endDate.format('YYYY-MM-DD HH:mm:ss');
+            var date_type = $('#date_type').val();
+            
+            // Tạo URL với các tham số query
+            var href = '{{ route("reports-administrator.export-debt-data") }}?' + $.param({
+                'date_from': startDate,
+                'date_to': endDate,
+                'date_type': date_type
+            });
+            
+            // Chuyển hướng tới URL với các tham số
+            window.location.href = href;
+        });
+    });
 </script>
 @endpush

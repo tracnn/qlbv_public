@@ -488,6 +488,8 @@ Route::group(['middleware' => 'auth'], function () {
         ->name('reports-administrator.accoutant-debt-index');
         Route::get('fetch-accoutant-debt', 'ReportController@fetchAccountantDebt')
         ->name('reports-administrator.fetch-accoutant-debt');
+        Route::get('export-debt-data', 'ReportController@exportDebtData')
+        ->name('reports-administrator.export-debt-data');
     });
 
     /* Reports Account Payment*/

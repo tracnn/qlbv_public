@@ -1,3 +1,6 @@
+# 30/09/2024
+- Bổ sung export data BN nợ viện phí dạng xlsx
+
 # 28/09/2024
 - Bổ sung báo cáo BN nợ viện phí (thêm thông tin và cải thiện tốc độ xử lý so với HIS)
 

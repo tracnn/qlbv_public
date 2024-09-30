@@ -9,6 +9,7 @@ use App\Exports\NDPDataExport;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\DrugUseExport;
 use App\Exports\APDataExport;
+use App\Exports\DebtDataExport;
 
 use DB;
 use Yajra\Datatables\Datatables;
@@ -478,6 +479,9 @@ class ReportController extends Controller
 
         // Return the results as DataTables and use editColumn and addColumn
         return DataTables::of($results)
+        ->editColumn('tdl_patient_dob', function($result) {
+            return strtodate($result->tdl_patient_dob);
+        })
         ->editColumn('in_time', function($result) {
             return strtodatetime($result->in_time);
         })
@@ -512,5 +516,11 @@ class ReportController extends Controller
             return number_format($result->can_thanh_toan);
         })
         ->toJson();
+    }
+
+    public function exportDebtData(Request $request)
+    {
+        $fileName = 'debt_data_' . Carbon::now()->format('YmdHis') . '.xlsx';
+        return Excel::download(new DebtDataExport($request), $fileName);
     }
 }
