@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Config;
 use App\Role;
 use App\RoleUser;
 
@@ -19,6 +20,8 @@ class CheckFirstLogin
     public function handle($request, Closure $next)
     {
         $user = Auth::user();
+
+        $userType = Config::get('auth.providers.users.model');
         
         $role = Role::where('name', 'superadministrator')->first();
 
@@ -32,7 +35,7 @@ class CheckFirstLogin
             RoleUser::updateOrCreate([
                 'user_id' => $user->id, // ID của user
                 'role_id' => $role->id, // ID của role
-                'user_type' => 'App\CustomUser',
+                'user_type' => $userType, // Lấy giá trị từ config
             ]);
         }
 

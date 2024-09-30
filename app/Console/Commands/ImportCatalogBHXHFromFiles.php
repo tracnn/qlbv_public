@@ -161,35 +161,42 @@ class ImportCatalogBHXHFromFiles extends Command
                     if (empty($row[1]) || empty($row[5]) || empty($row[9]) || empty($row[17]) || empty($row[2]) || empty($row[3]) || empty($row[4]) || empty($row[6]) || empty($row[7]) || empty($row[8]) || empty($row[11]) || empty($row[12])) {
                         continue;
                     }
-                    MedicineCatalog::updateOrCreate(
-                        [
-                            'ma_thuoc' => $row[1],
-                            'ten_thuoc' => $row[3],
-                            'ham_luong' => $row[5],
-                            'so_dang_ky' => $row[9],
-                            'tt_thau' => $row[17]
-                        ],
-                        [
-                            'ten_hoat_chat' => $row[2],
-                            'don_vi_tinh' => $row[4],
-                            'duong_dung' => $row[6],
-                            'ma_duong_dung' => $row[7],
-                            'dang_bao_che' => $row[8],
-                            'so_luong' => $row[10],
-                            'don_gia' => $row[11],
-                            'don_gia_bh' => $row[12],
-                            'quy_cach' => $row[13],
-                            'nha_sx' => $row[14],
-                            'nuoc_sx' => $row[15],
-                            'nha_thau' => $row[16],
-                            'tu_ngay' => $row[18],
-                            'den_ngay' => $row[19],
-                            'ma_cskcb' => $row[20],
-                            'loai_thuoc' => $row[21],
-                            'loai_thau' => $row[22],
-                            'ht_thau' => $row[23]
-                        ]
-                    );
+                    try {
+                        MedicineCatalog::updateOrCreate(
+                            [
+                                'ma_thuoc' => $row[1],
+                                'ten_thuoc' => $row[3],
+                                'ham_luong' => $row[5],
+                                'so_dang_ky' => $row[9],
+                                'tt_thau' => $row[17]
+                            ],
+                            [
+                                'ten_hoat_chat' => $row[2],
+                                'don_vi_tinh' => $row[4],
+                                'duong_dung' => $row[6],
+                                'ma_duong_dung' => $row[7],
+                                'dang_bao_che' => $row[8],
+                                'so_luong' => $row[10],
+                                'don_gia' => $row[11],
+                                'don_gia_bh' => $row[12],
+                                'quy_cach' => $row[13],
+                                'nha_sx' => $row[14],
+                                'nuoc_sx' => $row[15],
+                                'nha_thau' => $row[16],
+                                'tu_ngay' => $row[18],
+                                'den_ngay' => $row[19],
+                                'ma_cskcb' => $row[20],
+                                'loai_thuoc' => $row[21],
+                                'loai_thau' => $row[22],
+                                'ht_thau' => $row[23]
+                            ]
+                        );                        
+                    } catch (Exception $e) {
+                        \Log::error('Error updating or creating MedicineCatalog record', [
+                            'error' => $e->getMessage(),
+                            'row' => $row // Ghi lại dữ liệu của hàng bị lỗi nếu cần
+                        ]);                        
+                    }
                 }
                 Storage::disk($disk)->delete($file);
                 break;
@@ -200,33 +207,40 @@ class ImportCatalogBHXHFromFiles extends Command
                     if (empty($row[1]) || empty($row[2]) || empty($row[3]) || empty($row[15])) {
                         continue;
                     }
-                    MedicalSupplyCatalog::updateOrCreate(
-                        [
-                            'ma_vat_tu' => $row[1],
-                            'tt_thau' => $row[15]
-                        ],
-                        [
-                            'nhom_vat_tu' => $row[2],
-                            'ten_vat_tu' => $row[3],
-                            'ma_hieu' => $row[4],
-                            'quy_cach' => $row[5],
-                            'hang_sx' => $row[6],
-                            'nuoc_sx' => $row[7],
-                            'don_vi_tinh' => $row[8],
-                            'don_gia' => $row[9],
-                            'don_gia_bh' => $row[10],
-                            'tyle_tt_bh' => $row[11],
-                            'so_luong' => $row[12],
-                            'dinh_muc' => $row[13],
-                            'nha_thau' => $row[14],
-                            'tu_ngay' => $row[16],
-                            'den_ngay_hd' => $row[17],
-                            'ma_cskcb' => $row[18],
-                            'loai_thau' => $row[19],
-                            'ht_thau' => $row[20],
-                            'den_ngay' => $row[21]
-                        ]
-                    );
+                    try {
+                        MedicalSupplyCatalog::updateOrCreate(
+                            [
+                                'ma_vat_tu' => $row[1],
+                                'tt_thau' => $row[15]
+                            ],
+                            [
+                                'nhom_vat_tu' => $row[2],
+                                'ten_vat_tu' => $row[3],
+                                'ma_hieu' => $row[4],
+                                'quy_cach' => $row[5],
+                                'hang_sx' => $row[6],
+                                'nuoc_sx' => $row[7],
+                                'don_vi_tinh' => $row[8],
+                                'don_gia' => $row[9],
+                                'don_gia_bh' => $row[10],
+                                'tyle_tt_bh' => $row[11],
+                                'so_luong' => $row[12],
+                                'dinh_muc' => $row[13],
+                                'nha_thau' => $row[14],
+                                'tu_ngay' => $row[16],
+                                'den_ngay_hd' => $row[17],
+                                'ma_cskcb' => $row[18],
+                                'loai_thau' => $row[19],
+                                'ht_thau' => $row[20],
+                                'den_ngay' => $row[21]
+                            ]
+                        );                        
+                    } catch (Exception $e) {
+                        \Log::error('Error updating or creating MedicalSupplyCatalog record', [
+                            'error' => $e->getMessage(),
+                            'row' => $row // Ghi lại dữ liệu của hàng bị lỗi nếu cần
+                        ]);   
+                    }
                 }
                 Storage::disk($disk)->delete($file);
                 break;
@@ -236,20 +250,27 @@ class ImportCatalogBHXHFromFiles extends Command
                     if (empty($row[1]) || empty($row[2]) || empty($row[3]) || empty($row[4]) || empty($row[7])) {
                         continue;
                     }
-                    ServiceCatalog::updateOrCreate(
-                        [
-                            'ma_dich_vu' => $row[1],
-                            'ten_dich_vu' => $row[2],
-                            'don_gia' => $row[3],
-                            'quy_trinh' => $row[4],
-                            'tu_ngay' => $row[7],
-                        ],
-                        [
-                            'cskcb_cgkt' => $row[5],
-                            'cskcb_cls' => $row[6],
-                            'den_ngay' => $row[8]
-                        ]
-                    );
+                    try {
+                        ServiceCatalog::updateOrCreate(
+                            [
+                                'ma_dich_vu' => $row[1],
+                                'ten_dich_vu' => $row[2],
+                                'don_gia' => $row[3],
+                                'quy_trinh' => $row[4],
+                                'tu_ngay' => $row[7],
+                            ],
+                            [
+                                'cskcb_cgkt' => $row[5],
+                                'cskcb_cls' => $row[6],
+                                'den_ngay' => $row[8]
+                            ]
+                        );                        
+                    } catch (Exception $e) {
+                        \Log::error('Error updating or creating ServiceCatalog record', [
+                            'error' => $e->getMessage(),
+                            'row' => $row // Ghi lại dữ liệu của hàng bị lỗi nếu cần
+                        ]);  
+                    }
                 }
                 Storage::disk($disk)->delete($file);
                 break;
@@ -268,36 +289,43 @@ class ImportCatalogBHXHFromFiles extends Command
                     } else {
                         $ngaycap_cchn = Carbon::createFromFormat('m/d/Y H:i', $ngaycap_cchn)->format('Ymd');
                     }
-                    
-                    MedicalStaff::updateOrCreate(
-                        [
-                            'ma_bhxh' => $row[4]
-                        ],
-                        [
-                            'ma_loai_kcb' => $row[1],
-                            'ma_khoa' => $row[2],
-                            'ten_khoa' => $row[3],
-                            'ho_ten' => $row[5],
-                            'gioi_tinh' => $row[6],
-                            'chucdanh_nn' => $row[7],
-                            'vi_tri' => $row[8],
-                            'macchn' => $row[9],
-                            'ngaycap_cchn' => $ngaycap_cchn,
-                            'noicap_cchn' => $row[11],
-                            'phamvi_cm' => $row[12],
-                            'phamvi_cmbs' => $row[13],
-                            'dvkt_khac' => $row[14],
-                            'vb_phancong' => $row[15],
-                            'thoigian_dk' => $row[16],
-                            'thoigian_ngay' => $row[17],
-                            'thoigian_tuan' => $row[18],
-                            'cskcb_khac' => $row[19],
-                            'cskcb_cgkt' => $row[20],
-                            'qd_cgkt' => $row[21],
-                            'tu_ngay' => $row[22],
-                            'den_ngay' => $row[23]
-                        ]
-                    );
+                    try {
+                        MedicalStaff::updateOrCreate(
+                            [
+                                'ma_bhxh' => $row[4]
+                            ],
+                            [
+                                'ma_loai_kcb' => $row[1],
+                                'ma_khoa' => $row[2],
+                                'ten_khoa' => $row[3],
+                                'ho_ten' => $row[5],
+                                'gioi_tinh' => $row[6],
+                                'chucdanh_nn' => $row[7],
+                                'vi_tri' => $row[8],
+                                'macchn' => $row[9],
+                                'ngaycap_cchn' => $ngaycap_cchn,
+                                'noicap_cchn' => $row[11],
+                                'phamvi_cm' => $row[12],
+                                'phamvi_cmbs' => $row[13],
+                                'dvkt_khac' => $row[14],
+                                'vb_phancong' => $row[15],
+                                'thoigian_dk' => $row[16],
+                                'thoigian_ngay' => $row[17],
+                                'thoigian_tuan' => $row[18],
+                                'cskcb_khac' => $row[19],
+                                'cskcb_cgkt' => $row[20],
+                                'qd_cgkt' => $row[21],
+                                'tu_ngay' => $row[22],
+                                'den_ngay' => $row[23]
+                            ]
+                        );                        
+                    } catch (Exception $e) {
+                        \Log::error('Error updating or creating MedicalStaff record', [
+                            'error' => $e->getMessage(),
+                            'row' => $row // Ghi lại dữ liệu của hàng bị lỗi nếu cần
+                        ]);  
+                    }
+
                 }
                 Storage::disk($disk)->delete($file);
                 break;
@@ -308,25 +336,31 @@ class ImportCatalogBHXHFromFiles extends Command
                     if (empty($row[2]) || empty($row[3])) {
                         continue;
                     }
-
-                    DepartmentBedCatalog::updateOrCreate(
-                        [
-                            'ma_khoa' => $row[2]
-                        ],
-                        [
-                            'ma_loai_kcb' => $row[1],
-                            'ten_khoa' => $row[3],
-                            'ban_kham' => $row[4],
-                            'giuong_pd' => $row[5],
-                            'giuong_2015' => $row[6],
-                            'giuong_tk' => $row[7],
-                            'giuong_hstc' => $row[8],
-                            'giuong_hscc' => $row[9],
-                            'ldlk' => $row[10],
-                            'lien_khoa' => $row[11],
-                            'den_ngay' => $row[12]
-                        ]
-                    );
+                    try {
+                        DepartmentBedCatalog::updateOrCreate(
+                            [
+                                'ma_khoa' => $row[2]
+                            ],
+                            [
+                                'ma_loai_kcb' => $row[1],
+                                'ten_khoa' => $row[3],
+                                'ban_kham' => $row[4],
+                                'giuong_pd' => $row[5],
+                                'giuong_2015' => $row[6],
+                                'giuong_tk' => $row[7],
+                                'giuong_hstc' => $row[8],
+                                'giuong_hscc' => $row[9],
+                                'ldlk' => $row[10],
+                                'lien_khoa' => $row[11],
+                                'den_ngay' => $row[12]
+                            ]
+                        );                        
+                    } catch (Exception $e) {
+                        \Log::error('Error updating or creating DepartmentBedCatalog record', [
+                            'error' => $e->getMessage(),
+                            'row' => $row // Ghi lại dữ liệu của hàng bị lỗi nếu cần
+                        ]);  
+                    }
                 }
                 Storage::disk($disk)->delete($file);
                 break;
@@ -340,25 +374,31 @@ class ImportCatalogBHXHFromFiles extends Command
                     ) {
                         continue;
                     }
-
-                    EquipmentCatalog::updateOrCreate(
-                        [
-                            'ma_may' => $row[7]
-                        ],
-                        [
-                            'ten_tb' => $row[1],
-                            'ky_hieu' => $row[2],
-                            'congty_sx' => $row[3],
-                            'nuoc_sx' => $row[4],
-                            'nam_sx' => $row[5],
-                            'nam_sd' => $row[6],
-                            'so_luu_hanh' => $row[8],
-                            'hd_tu' => $row[9],
-                            'hd_den' => $row[10],
-                            'tu_ngay' => $row[11],
-                            'den_ngay' => $row[12]
-                        ]
-                    );
+                    try {
+                        EquipmentCatalog::updateOrCreate(
+                            [
+                                'ma_may' => $row[7]
+                            ],
+                            [
+                                'ten_tb' => $row[1],
+                                'ky_hieu' => $row[2],
+                                'congty_sx' => $row[3],
+                                'nuoc_sx' => $row[4],
+                                'nam_sx' => $row[5],
+                                'nam_sd' => $row[6],
+                                'so_luu_hanh' => $row[8],
+                                'hd_tu' => $row[9],
+                                'hd_den' => $row[10],
+                                'tu_ngay' => $row[11],
+                                'den_ngay' => $row[12]
+                            ]
+                        );                        
+                    } catch (Exception $e) {
+                        \Log::error('Error updating or creating EquipmentCatalog record', [
+                            'error' => $e->getMessage(),
+                            'row' => $row // Ghi lại dữ liệu của hàng bị lỗi nếu cần
+                        ]); 
+                    }
                 }
                 Storage::disk($disk)->delete($file);
                 break;
@@ -377,20 +417,27 @@ class ImportCatalogBHXHFromFiles extends Command
                         continue;
                     }
 
-                    // Update or create the record and set it as active
-                    AdministrativeUnit::updateOrCreate(
-                        [
-                            'commune_code' => $row[5]
-                        ],
-                        [
-                            'province_code' => $row[1],
-                            'province_name' => $row[0],
-                            'district_code' => $row[3],
-                            'district_name' => $row[2],
-                            'commune_name' => $row[4],
-                            'is_active' => true,
-                        ]
-                    );
+                    try {
+                        // Update or create the record and set it as active
+                        AdministrativeUnit::updateOrCreate(
+                            [
+                                'commune_code' => $row[5]
+                            ],
+                            [
+                                'province_code' => $row[1],
+                                'province_name' => $row[0],
+                                'district_code' => $row[3],
+                                'district_name' => $row[2],
+                                'commune_name' => $row[4],
+                                'is_active' => true,
+                            ]
+                        );                        
+                    } catch (Exception $e) {
+                        \Log::error('Error updating or creating AdministrativeUnit record', [
+                            'error' => $e->getMessage(),
+                            'row' => $row // Ghi lại dữ liệu của hàng bị lỗi nếu cần
+                        ]); 
+                    }
                 }
 
                 // Delete the processed file from storage
@@ -410,18 +457,24 @@ class ImportCatalogBHXHFromFiles extends Command
                     ) {
                         continue;
                     }
-
-                    // Update or create the record and set it as active
-                    MedicalOrganization::updateOrCreate(
-                        [
-                            'ma_cskcb' => $row[1]
-                        ],
-                        [
-                            'ten_cskcb' => $row[2],
-                            'dia_chi_cskcb' => $row[5],
-                            'is_active' => true,
-                        ]
-                    );
+                    try {
+                        // Update or create the record and set it as active
+                        MedicalOrganization::updateOrCreate(
+                            [
+                                'ma_cskcb' => $row[1]
+                            ],
+                            [
+                                'ten_cskcb' => $row[2],
+                                'dia_chi_cskcb' => $row[5],
+                                'is_active' => true,
+                            ]
+                        );                        
+                    } catch (Exception $e) {
+                        \Log::error('Error updating or creating MedicalOrganization record', [
+                            'error' => $e->getMessage(),
+                            'row' => $row // Ghi lại dữ liệu của hàng bị lỗi nếu cần
+                        ]); 
+                    }
                 }
 
                 // Delete the processed file from storage
