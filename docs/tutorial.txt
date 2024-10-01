@@ -21,14 +21,13 @@ I. Những phần mềm cần thiết
 			. Import CSDL từ file qlbv_public/docs/qlbv.sql
 		+ Xóa thư mục qlbv_public/public/storage
 		+ Copy thư mục qlbv_public/storage/framework/cache ra thư mục gốc chứa phần mềm
-		+ Tại thư mục gốc chứa phần mềm chạy lệnh: php artisan storage:link
 		+ copy file docs/.env_example ra thư mục gốc thành .env
 		+ copy 3 file: __tech.php / database.php / filesystems.php vào thư mục qlbv_public/config (Chỉnh sửa giá trị cấu hình phù hợp)
-		+ Chạy lệnh: php artisan key:generate
-	b. Cài đặt các gói cần thiết: Tại thư mục chứa tool chạy lệnh: 
 		+ composer update
-		+ php artisan migrate
-	c. Các service
+		+ php artisan migrate --force
+		+ Tại thư mục gốc chứa phần mềm chạy lệnh: php artisan storage:link
+		+ Chạy lệnh: php artisan key:generate
+	b. Các service
 		- Cài đặt service:
 			Mở cmd với quyền Administrator, vào thư mục của phần mềm chạy instal_service.bat
 		- Gỡ bỏ service
