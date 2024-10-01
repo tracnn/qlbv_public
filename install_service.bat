@@ -33,4 +33,4 @@ set LARAVEL_PATH=%~dp0
 %NSSM_PATH%\nssm start "QLBV ImportCatalog"
 %NSSM_PATH%\nssm start "QLBV XMLImport"
 
-echo Dịch vụ đã được cài đặt và khởi động thành công.
+echo Service install completed successfully.

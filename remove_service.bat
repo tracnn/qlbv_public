@@ -21,5 +21,5 @@ set NSSM_PATH=%~dp0
 %NSSM_PATH%\nssm stop "QLBV XMLImport"
 %NSSM_PATH%\nssm remove "QLBV XMLImport" confirm
 
-echo Các dịch vụ đã được xóa thành công.
+echo Services uninstall completed successfully.
 pause

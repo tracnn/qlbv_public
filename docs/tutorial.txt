@@ -29,9 +29,10 @@ I. Những phần mềm cần thiết
 		+ Chạy lệnh: php artisan key:generate
 	b. Các service
 		- Cài đặt service:
-			Mở cmd với quyền Administrator, vào thư mục của phần mềm chạy instal_service.bat
+			Mở cmd với quyền Administrator, vào thư mục của phần mềm chạy install_service.bat
 		- Gỡ bỏ service
 			Mở cmd với quyền Administrator, vào thư mục của phần mềm chạy remove_service.bat
 		- Update phần mềm
 			Mở cmd với quyền Administrator, vào thư mục của phần mềm chạy update.bat
 3. Truy cập github tại địa chỉ: https://github.com/tracnn/qlbv_public để xem nội dung các bản cập nhật (theo tuần)
+II. Một số lưu ý
