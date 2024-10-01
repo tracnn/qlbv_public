@@ -4,11 +4,7 @@ cd /d "%~dp0"
 
 :: Cập nhật mã nguồn từ GitHub
 echo Pulling latest changes from GitHub...
-git pull origin master
-
-:: Cập nhật các gói phụ thuộc của PHP bằng Composer
-echo Installing PHP dependencies...
-composer install --no-interaction --prefer-dist --optimize-autoloader
+git pull origin main
 
 :: Chạy các migration (nếu có)
 echo Running migrations...
@@ -25,6 +21,18 @@ php artisan view:clear
 echo Optimizing configuration...
 php artisan config:cache
 php artisan route:cache
+
+:: Restart các dịch vụ đã cài đặt
+echo Restarting services...
+
+:: Đường dẫn đến nssm.exe (giả sử nằm trong thư mục gốc của dự án)
+set NSSM_PATH=%~dp0
+
+:: Restart từng dịch vụ
+%NSSM_PATH%\nssm restart "QLBV JobQd130Xml" || echo Failed to restart QLBV JobQd130Xml
+%NSSM_PATH%\nssm restart "QLBV JobKtTheBHYT" || echo Failed to restart QLBV JobKtTheBHYT
+%NSSM_PATH%\nssm restart "QLBV ImportCatalog" || echo Failed to restart QLBV ImportCatalog
+%NSSM_PATH%\nssm restart "QLBV XMLImport" || echo Failed to restart QLBV XMLImport
 
 echo Update completed successfully!
 pause
