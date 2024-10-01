@@ -11,9 +11,15 @@ Hướng dẫn cài đặt và cập nhật phần mềm
 2. Cài đặt và cập nhật tool
 	- Cài đặt: Sử dụng cmd chạy lệnh: 
 		+ git clone https://github.com/tracnn/qlbv_public.git
+		+ Import Database
+			. Vào giao diện quản trị của mysql. Tạo Database có tên là qlbv
+			. Import CSDL từ file qlbv_public/docs/qlbv.sql
 		+ Xóa thư mục qlbv_public/public/storage
 		+ Copy thư mục qlbv_public/storage/framework/cache ra thư mục gốc chứa phần mềm
 		+ Tại thư mục gốc chứa phần mềm chạy lệnh: php artisan storage:link
+		+ copy file docs/.env_example ra thư mục gốc thành .env
+		+ copy 3 file: __tech.php / database.php / filesystems.php vào thư mục qlbv_public/config (Chỉnh sửa giá trị cấu hình phù hợp)
+		+ Chạy lệnh: php artisan key:generate
 	- Cài đặt các gói cần thiết: Tại thư mục chứa tool chạy lệnh: 
 		composer update
 	- Cập nhật tool (Định kỳ hoặc có hướng dẫn của đội triển khai)
