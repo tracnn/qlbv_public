@@ -12,7 +12,7 @@ Hướng dẫn cài đặt và cập nhật phần mềm
 	- Cài đặt: Sử dụng cmd chạy lệnh: 
 		+ git clone https://github.com/tracnn/qlbv_public.git
 		+ Xóa thư mục qlbv_public/public/storage
-		+ Copy thư mục qlbv_public/docs/storage ra thư mục gốc chứa phần mềm
+		+ Tạo thư mục qlbv_public/storage/framework/cache
 	- Cài đặt các gói cần thiết: Tại thư mục chứa tool chạy lệnh: 
 		composer update
 	- Cập nhật tool (Định kỳ hoặc có hướng dẫn của tác giả)
