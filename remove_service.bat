@@ -22,4 +22,3 @@ set NSSM_PATH=%~dp0
 %NSSM_PATH%\nssm remove "QLBV XMLImport" confirm
 
 echo Services uninstall completed successfully.
-pause

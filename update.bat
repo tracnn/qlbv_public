@@ -35,4 +35,3 @@ set NSSM_PATH=%~dp0
 %NSSM_PATH%\nssm restart "QLBV XMLImport" || echo Failed to restart QLBV XMLImport
 
 echo Update completed successfully!
-pause

@@ -199,15 +199,15 @@ class Qd130Xml11Checker
                 $denNgayDate = Carbon::createFromFormat('Ymd', $data->den_ngay)->startOfDay();
 
                 // Parse ngay_ra (YmdHi format) using Carbon and remove time (set to 00:00:00)
-                $ngayRaDate = Carbon::createFromFormat('YmdHi', $data->Qd130Xml1->ngay_ra)->startOfDay();
+                $ngayVaoDate = Carbon::createFromFormat('YmdHi', $data->Qd130Xml1->ngay_vao)->startOfDay();
 
                 // Check if den_ngay is smaller than ngay_ra
-                if ($denNgayDate->lt($ngayRaDate)) {
+                if ($denNgayDate->lt($ngayVaoDate)) {
                     $errors->push((object)[
-                        'error_code' => $this->prefix . 'INFO_ERROR_DEN_NGAY_LESS_THAN_NGAY_RA',
-                        'error_name' => 'Đến ngày nhỏ hơn ngày ra',
+                        'error_code' => $this->prefix . 'INFO_ERROR_DEN_NGAY_LESS_THAN_NGAY_VAO',
+                        'error_name' => 'Đến ngày nhỏ hơn ngày vào',
                         'critical_error' => true,
-                        'description' => 'Đến ngày: ' . $denNgayDate->format('d/m/Y') . ' không được nhỏ hơn ngày ra: ' . $ngayRaDate->format('d/m/Y')
+                        'description' => 'Đến ngày: ' . $denNgayDate->format('d/m/Y') . ' không được nhỏ hơn ngày vào: ' . $ngayVaoDate->format('d/m/Y')
                     ]);
                 }
             } catch (\Exception $e) {
