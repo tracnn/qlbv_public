@@ -2,6 +2,15 @@
 :: Đổi sang thư mục dự án (nếu cần)
 cd /d "%~dp0"
 
+:: Đường dẫn đến nssm.exe (giả sử nằm trong thư mục gốc của dự án)
+set NSSM_PATH=%~dp0
+
+:: Stop từng dịch vụ
+%NSSM_PATH%\nssm stop "QLBV JobQd130Xml"
+%NSSM_PATH%\nssm stop "QLBV JobKtTheBHYT"
+%NSSM_PATH%\nssm stop "QLBV ImportCatalog"
+%NSSM_PATH%\nssm stop "QLBV XMLImport"
+
 :: Cập nhật mã nguồn từ GitHub
 echo Pulling latest changes from GitHub...
 git pull origin main
@@ -25,13 +34,12 @@ php artisan route:cache
 :: Restart các dịch vụ đã cài đặt
 echo Restarting services...
 
-:: Đường dẫn đến nssm.exe (giả sử nằm trong thư mục gốc của dự án)
-set NSSM_PATH=%~dp0
+
 
 :: Restart từng dịch vụ
-%NSSM_PATH%\nssm restart "QLBV JobQd130Xml"
-%NSSM_PATH%\nssm restart "QLBV JobKtTheBHYT"
-%NSSM_PATH%\nssm restart "QLBV ImportCatalog"
-%NSSM_PATH%\nssm restart "QLBV XMLImport"
+%NSSM_PATH%\nssm start "QLBV JobQd130Xml"
+%NSSM_PATH%\nssm start "QLBV JobKtTheBHYT"
+%NSSM_PATH%\nssm start "QLBV ImportCatalog"
+%NSSM_PATH%\nssm start "QLBV XMLImport"
 
 echo Update completed successfully!
