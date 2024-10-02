@@ -352,12 +352,12 @@ return [
         [
             'text'    => 'Hồ sơ XML',
             'icon'    => 'file',
-            'checkrole'   => 'administrator',
+            'checkrole'   => 'xml-man',
             'submenu' => [
                 [
                     'text'    => 'Xml 4750',
                     'icon'    => 'archive',
-                    'checkrole'   => 'administrator',
+                    'checkrole'   => 'xml-man',
                     'submenu' => [
                         [
                             'text'  => 'Danh sách hồ sơ',
@@ -376,7 +376,7 @@ return [
                 [
                     'text'    => 'Xml 4210',
                     'icon'    => 'archive',
-                    'checkrole'   => 'administrator',
+                    'checkrole'   => 'xml-man',
                     'submenu' => [
                         [
                             'text'  => 'Danh sách hồ sơ',

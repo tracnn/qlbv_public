@@ -324,7 +324,7 @@ Route::group(['middleware' => ['auth', 'check.first.login']], function () {
     });
 
     /* Hồ sơ BHYT */
-    Route::group(['prefix' => 'bhyt/', 'middleware' => ['checkrole:administrator']], function () {
+    Route::group(['prefix' => 'bhyt/', 'middleware' => ['checkrole:xml-man']], function () {
         /* BHYT */
         Route::get('index', 'BHYT\BHYTController@index')->name('bhyt.index');
         Route::get('index/search', 'BHYT\BHYTController@searchXML')->name('bhyt.search');
