@@ -21,6 +21,7 @@
 /config/database.php
 /config/filesystems.php
 /config/__tech.php
+/config/qd130xml.php
 
 # Ignore IDE files
 .idea/
