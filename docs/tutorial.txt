@@ -25,8 +25,8 @@ I. Những phần mềm cần thiết
 		+ copy 3 file: __tech.php / database.php / filesystems.php vào thư mục qlbv_public/config (Chỉnh sửa giá trị cấu hình phù hợp)
 		+ composer update
 		+ php artisan migrate --force
-		+ Tại thư mục gốc chứa phần mềm chạy lệnh: php artisan storage:link
-		+ Chạy lệnh: php artisan key:generate
+		+ php artisan storage:link
+		+ php artisan key:generate
 	b. Các service
 		- Cài đặt service:
 			Mở cmd với quyền Administrator, vào thư mục của phần mềm chạy install_service.bat
