@@ -22,7 +22,12 @@ I. Những phần mềm cần thiết
 		+ Xóa thư mục qlbv_public/public/storage
 		+ Copy thư mục qlbv_public/storage/framework/cache ra thư mục gốc chứa phần mềm
 		+ copy file docs/.env_example ra thư mục gốc thành .env
-		+ copy 3 file: __tech.php / database.php / filesystems.php vào thư mục qlbv_public/config (Chỉnh sửa giá trị cấu hình phù hợp)
+		+ copy 4 file: 
+			__tech.php
+			database.php
+			filesystems.php
+			qd130xml.php
+			vào thư mục qlbv_public/config (Và chỉnh sửa giá trị cấu hình phù hợp)
 		+ composer update
 		+ php artisan migrate --force
 		+ php artisan storage:link
