@@ -29,9 +29,9 @@ echo Restarting services...
 set NSSM_PATH=%~dp0
 
 :: Restart từng dịch vụ
-%NSSM_PATH%\nssm restart "QLBV JobQd130Xml" || echo Failed to restart QLBV JobQd130Xml
-%NSSM_PATH%\nssm restart "QLBV JobKtTheBHYT" || echo Failed to restart QLBV JobKtTheBHYT
-%NSSM_PATH%\nssm restart "QLBV ImportCatalog" || echo Failed to restart QLBV ImportCatalog
-%NSSM_PATH%\nssm restart "QLBV XMLImport" || echo Failed to restart QLBV XMLImport
+%NSSM_PATH%\nssm restart "QLBV JobQd130Xml"
+%NSSM_PATH%\nssm restart "QLBV JobKtTheBHYT"
+%NSSM_PATH%\nssm restart "QLBV ImportCatalog"
+%NSSM_PATH%\nssm restart "QLBV XMLImport"
 
 echo Update completed successfully!
