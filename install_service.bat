@@ -6,7 +6,7 @@ cd /d "%~dp0"
 set NSSM_PATH=%~dp0
 
 :: Đường dẫn đến PHP executable
-set PHP_PATH=C:\xampp\php\php.exe
+set PHP_PATH=php.exe
 
 :: Thư mục gốc chứa ứng dụng Laravel (thư mục hiện tại là thư mục gốc của dự án)
 set LARAVEL_PATH=%~dp0
