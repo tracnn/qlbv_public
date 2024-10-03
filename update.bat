@@ -38,8 +38,6 @@ php artisan route:cache
 :: Restart các dịch vụ đã cài đặt
 echo Restarting services...
 
-
-
 :: Restart từng dịch vụ
 %NSSM_PATH%\nssm start "QLBV JobQd130Xml"
 %NSSM_PATH%\nssm start "QLBV JobKtTheBHYT"
