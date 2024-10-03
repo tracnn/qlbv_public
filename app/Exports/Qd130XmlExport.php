@@ -140,7 +140,7 @@ class Qd130XmlExport implements FromQuery, WithHeadings, ShouldAutoSize, WithSty
                 $sheet->getColumnDimension('A')->setWidth(5);
                 $sheet->getColumnDimension('B')->setWidth(13);
                 $sheet->getColumnDimension('C')->setWidth(14);
-                $sheet->getColumnDimension('D')->setWidth(20);
+                $sheet->getColumnDimension('D')->setWidth(22);
                 $sheet->getColumnDimension('E')->setWidth(13);
                 $sheet->getColumnDimension('F')->setWidth(18);
                 $sheet->getColumnDimension('G')->setWidth(13);

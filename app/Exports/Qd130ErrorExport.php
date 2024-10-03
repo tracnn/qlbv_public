@@ -155,9 +155,9 @@ class Qd130ErrorExport implements FromQuery, WithHeadings, ShouldAutoSize, WithS
                 $sheet->getColumnDimension('C')->setWidth(8);
                 $sheet->getColumnDimension('D')->setWidth(13);
                 $sheet->getColumnDimension('E')->setWidth(14);
-                $sheet->getColumnDimension('F')->setWidth(20);
+                $sheet->getColumnDimension('F')->setWidth(22);
                 $sheet->getColumnDimension('G')->setWidth(13);
-                $sheet->getColumnDimension('H')->setWidth(16);
+                $sheet->getColumnDimension('H')->setWidth(18);
                 $sheet->getColumnDimension('I')->setWidth(13);
                 $sheet->getColumnDimension('J')->setWidth(13);
                 $sheet->getColumnDimension('K')->setWidth(13);
