@@ -248,6 +248,12 @@ Route::group(['middleware' => ['auth', 'check.first.login']], function () {
         ->name('category-bhyt.equipment-catalog');
         Route::get('bhyt/fetch-equipment-catalog', 'Category\CategoryBHYTController@fetchEquipmentCatalog')
         ->name('category-bhyt.fetch-equipment-catalog');
+        Route::get('bhyt/qd130-xml-error-catalog', 'Category\CategoryBHYTController@indexQd130XmlErrorCatalog')
+        ->name('category-bhyt.qd130-xml-error-catalog');
+        Route::get('bhyt/category-bhyt-fetch-qd130-xml-error-catalog-datatable', 'Category\CategoryBHYTController@fetchQd130XmlErrorCatalogDatatable')
+        ->name('category-bhyt.fetch-qd130-xml-error-catalog-datatable');
+        Route::post('/category-bhyt/update-qd130-xml-error-catalog', 'Category\CategoryBHYTController@updateQd130XmlErrorCatalog')
+        ->name('category-bhyt.update-qd130-xml-error-catalog');
 
     });
 

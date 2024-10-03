@@ -453,6 +453,12 @@ return [
                             'route'   => 'category-bhyt.equipment-catalog',
                             'active'=> ['category/bhyt/equipment-catalog*'],
                         ],
+                        [
+                            'text'  => 'DM lỗi Xml 4750',
+                            'icon'  => 'book',
+                            'route'   => 'category-bhyt.qd130-xml-error-catalog',
+                            'active'=> ['category/bhyt/qd130-xml-error-catalog*'],
+                        ],
                     ],
                 ],
                 

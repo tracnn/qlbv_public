@@ -28,6 +28,16 @@ class Qd130XmlErrorService
     {
         // Save errors to xml_error_checks table
         foreach ($errors as $error) {
+            // Xem lỗi này có được đánh dấu kiểm tra không
+            $skipCheck = Qd130XmlErrorCatalog::where('error_code', $error->error_code)
+                ->where('is_check', false)
+                ->exists();
+
+            // Nếu lỗi được đánh dấu là không kiểm tra thì bỏ qua
+            if ($skipCheck) {
+                continue;
+            }
+
             $data = [
                 'xml' => $xmlType,
                 'ma_lk' => $ma_lk,

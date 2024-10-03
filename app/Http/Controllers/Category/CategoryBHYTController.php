@@ -106,4 +106,43 @@ class CategoryBHYTController extends Controller
         $qd130XmlErrorCatalogs = Qd130XmlErrorCatalog::orderBy('xml')->get();
         return response()->json($qd130XmlErrorCatalogs);
     }
+
+    public function indexQd130XmlErrorCatalog()
+    {
+        return view('category.bhyt.qd130_xml_error_catalog');
+    }
+
+    public function fetchQd130XmlErrorCatalogDatatable()
+    {
+        $result = Qd130XmlErrorCatalog::query();
+
+        return Datatables::of($result)
+        ->editColumn('critical_error', function ($row) {
+            return '<input type="checkbox" ' . ($row->critical_error ? 'checked' : '') . ' disabled>';
+        })
+        ->editColumn('is_check', function ($row) {
+            return '<input type="checkbox" class="is-check-toggle" data-id="' . $row->id . '" ' . ($row->is_check ? 'checked' : '') . '>';
+        })
+        ->rawColumns(['critical_error', 'is_check']) // Đảm bảo các cột này được render HTML
+        ->toJson();
+    }
+
+    public function updateQd130XmlErrorCatalog(Request $request)
+    {
+        $id = $request->input('id');
+        $isCheck = $request->input('is_check');
+
+        // Tìm và cập nhật giá trị is_not_check (chuyển đổi giữa is_check và is_not_check)
+        $catalog = Qd130XmlErrorCatalog::find($id);
+
+        if ($catalog) {
+            // Cập nhật is_not_check, giá trị ngược với is_check
+            $catalog->is_check = $isCheck;
+            $catalog->save();
+
+            return response()->json(['success' => true]);
+        }
+
+        return response()->json(['success' => false], 404);
+    }
 }
