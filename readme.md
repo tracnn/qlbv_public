@@ -110,7 +110,7 @@ Bổ sung kiểm tra bắt buộc phải có trường KET_LUAN trong Qd130Xml4C
 
 # 28/07/2024
 Cập nhật API tra cứu thẻ BHYT 2024: KQNhanLichSuKCB2024
-- Bổ sung thêm config __tech.BHYT.hoTenCb và __tech.BHYT.cccdCb
+- Bổ sung thêm config organization.BHYT.hoTenCb và organization.BHYT.cccdCb
 - Sửa hàm tra cứu -> chức năng tra cứu thẻ: App\BHYT.php
 - Sửa job thực hiện tra cứu khi import hồ sơ: App\Job\jobKtTheBHYT
 

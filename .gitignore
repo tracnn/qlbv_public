@@ -20,8 +20,6 @@
 # Ignore config files
 /config/database.php
 /config/filesystems.php
-/config/__tech.php
-/config/qd130xml.php
 /config/organization.php
 
 # Ignore IDE files

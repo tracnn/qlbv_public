@@ -42,7 +42,7 @@ class Qd130Xml3Checker
         
         $this->materialGroupCodes = config('qd130xml.material_group_code');
         $this->bedGroupCodes = config('qd130xml.bed_group_code');
-        $this->excludedBedDepartments = config('qd130xml.exclude_department');
+        $this->excludedBedDepartments = config('organization.exclude_department');
         $this->outpatientTypes = config('qd130xml.treatment_type_outpatient');
         $this->examinationGroupCodes = config('qd130xml.examination_group_code');
         $this->transportGroupCodes = config('qd130xml.transport_group_code');
@@ -333,12 +333,12 @@ class Qd130Xml3Checker
                             'description' => 'Mã cơ sở KBCB trong MA_MAY không hợp lệ: ' . $yyyyy
                         ]);
                     } else {
-                        if (!in_array($yyyyy, config('qd130xml.correct_facility_code'))) {
+                        if (!in_array($yyyyy, config('organization.correct_facility_code'))) {
                             $errors->push((object)[
                                 'error_code' => $this->prefix . 'INFO_ERROR_INVALID_YYYYY_NOT_FOUND',
                                 'error_name' => 'Mã cơ sở KBCB trong MA_MAY không đúng',
                                 'critical_error' => true,
-                                'description' => 'Mã cơ sở KBCB trong MA_MAY: ' . $yyyyy . ' không thuộc: ' . implode(',', config('qd130xml.correct_facility_code'))
+                                'description' => 'Mã cơ sở KBCB trong MA_MAY: ' . $yyyyy . ' không thuộc: ' . implode(',', config('organization.correct_facility_code'))
                             ]);
                         }
                     }

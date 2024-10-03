@@ -27,10 +27,10 @@ class InsuranceController extends Controller
 	{
 		$this->logined = false;
 
-        $this->username = config('__tech.BHYT.username');
-        $this->password = config('__tech.BHYT.password');
-        $this->login_url = config('__tech.BHYT.login_url');
-        $this->check_card_url = config('__tech.BHYT.check_card_url');
+        $this->username = config('organization.BHYT.username');
+        $this->password = config('organization.BHYT.password');
+        $this->login_url = config('organization.BHYT.login_url');
+        $this->check_card_url = config('organization.BHYT.check_card_url');
 
         $this->searchParams = [
             'card-number' => null,

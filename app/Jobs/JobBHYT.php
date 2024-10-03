@@ -43,12 +43,12 @@ class JobBHYT implements ShouldQueue
         $this->count = $count;
         $this->the = $the;
 
-        $this->username = config('__tech.BHYT.username');
-        $this->password = config('__tech.BHYT.password');
+        $this->username = config('organization.BHYT.username');
+        $this->password = config('organization.BHYT.password');
         $this->access_token = $access_token;
         $this->id_token = $id_token;
-        // $this->login_url = config('__tech.BHYT.login_url');
-        $this->check_card_url = config('__tech.BHYT.check_card_url');
+        // $this->login_url = config('organization.BHYT.login_url');
+        $this->check_card_url = config('organization.BHYT.check_card_url');
     }
 
     /**

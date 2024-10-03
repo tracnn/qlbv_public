@@ -31,15 +31,15 @@ class jobKtTheBHYT implements ShouldQueue
         $this->checkOldValue = $checkOldValue;
 
         // Lưu các giá trị cấu hình trong các biến đơn giản để tránh vấn đề tuần tự hóa
-        $this->username = config('__tech.BHYT.username');
-        $this->password = config('__tech.BHYT.password');
-        $this->check_card_url = config('__tech.BHYT.check_card_url_2024');
-        $this->login_url = config('__tech.BHYT.login_url');
+        $this->username = config('organization.BHYT.username');
+        $this->password = config('organization.BHYT.password');
+        $this->check_card_url = config('organization.BHYT.check_card_url_2024');
+        $this->login_url = config('organization.BHYT.login_url');
     }
 
     public function handle()
     {
-        if (!config('__tech.BHYT.enableCheck')) {
+        if (!config('organization.BHYT.enableCheck')) {
             return;
         }
 
@@ -106,8 +106,8 @@ class jobKtTheBHYT implements ShouldQueue
                     'maThe' => $params['maThe'],
                     'hoTen' => $params['hoTen'],
                     'ngaySinh' => $params['ngaySinh'],
-                    'hoTenCb' => config('__tech.BHYT.hoTenCb'),
-                    'cccdCb' => config('__tech.BHYT.cccdCb'),
+                    'hoTenCb' => config('organization.BHYT.hoTenCb'),
+                    'cccdCb' => config('organization.BHYT.cccdCb'),
                 ],
                 'query' => [
                     'token' => $access_token,

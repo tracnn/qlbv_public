@@ -107,8 +107,8 @@ class SystemController extends Controller
         $params = array(
             'token' => $login_result['APIKey']['access_token'],
             'id_token' => $login_result['APIKey']['id_token'],
-            'username' => config('__tech.BHYT.username'),
-            'password' => config('__tech.BHYT.password'),
+            'username' => config('organization.BHYT.username'),
+            'password' => config('organization.BHYT.password'),
             'maCSKCB' => '01013'
         );
 

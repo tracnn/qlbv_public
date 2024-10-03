@@ -38,7 +38,7 @@ class Qd130Xml2Checker
 
         $this->drugGroups = config('qd130xml.drug_group_code'); // Mã nhóm thuốc cần kiểm tra
         $this->bloodGroup = config('qd130xml.blood_group_code'); // Mã nhóm máu
-        $this->excludedDepartments = config('qd130xml.exclude_department'); //Mã khoa không cần kiểm tra
+        $this->excludedDepartments = config('organization.exclude_department'); //Mã khoa không cần kiểm tra
         $this->drugGroupNotCheck = config('qd130xml.drug_group_not_check');
         $this->drugCodeNotCheck = config('qd130xml.drug_code_not_check'); // Các mã thuốc cụ thể không cần kiểm tra
     }

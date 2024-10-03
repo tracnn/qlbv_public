@@ -37,7 +37,7 @@ class Qd130Xml1Checker
         $this->prefix = $this->xmlType . '_';
 
         $this->maxWeight = config('qd130xml.max_weight_patient');
-        $this->specialDKBD = config('qd130xml.correct_facility_code');
+        $this->specialDKBD = config('organization.correct_facility_code');
         $this->admissionReasons = [3, 4];
         $this->invalidKetQuaDtri = config('qd130xml.invalid_treatment_result');
         $this->invalidMaLoaiRV = config('qd130xml.invalid_end_type_treatment');

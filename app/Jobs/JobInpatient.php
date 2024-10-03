@@ -48,11 +48,11 @@ class JobInpatient implements ShouldQueue
         $this->count = $count;
         $this->params = $params;
 
-        $this->username = config('__tech.BHYT.username');
-        $this->password = config('__tech.BHYT.password');
+        $this->username = config('organization.BHYT.username');
+        $this->password = config('organization.BHYT.password');
         $this->access_token = $access_token;
         $this->id_token = $id_token;
-        $this->check_card_url = config('__tech.BHYT.check_card_url');
+        $this->check_card_url = config('organization.BHYT.check_card_url');
 
         $this->ngay = $ngay;
         $this->tenkhp = $tenkhp;
@@ -92,8 +92,8 @@ class JobInpatient implements ShouldQueue
     {
         $params = json_encode($params);
 
-        $username = config('__tech.BHYT.username');
-        $password = config('__tech.BHYT.password'); 
+        $username = config('organization.BHYT.username');
+        $password = config('organization.BHYT.password'); 
         $url = "https://egw.baohiemxahoi.gov.vn/api/egw/nhanLichSuKCB?token=$access_token&id_token=$id_token&username=$username&password=$password";
 
         $ch=curl_init($url);

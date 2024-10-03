@@ -13,9 +13,9 @@ class BHYT
 
     public static function loginBHYT()
     {
-        $username = config('__tech.BHYT.username');
-        $password = config('__tech.BHYT.password');
-        $login_url = config('__tech.BHYT.login_url');
+        $username = config('organization.BHYT.username');
+        $password = config('organization.BHYT.password');
+        $login_url = config('organization.BHYT.login_url');
 
         $client = new GuzzleHttp\Client();
 
@@ -32,17 +32,17 @@ class BHYT
 
     public static function checkInsuranceCard($number, $name, $birthday,$access_token,$id_token)
     {
-        $check_card_url = config('__tech.BHYT.check_card_url_2024');
-        $username = config('__tech.BHYT.username');
-        $password = config('__tech.BHYT.password');
+        $check_card_url = config('organization.BHYT.check_card_url_2024');
+        $username = config('organization.BHYT.username');
+        $password = config('organization.BHYT.password');
 
-        if (config('__tech.BHYT.check_by_user')) {
+        if (config('organization.BHYT.check_by_user')) {
             $user = \Auth::user();
             $hoTenCb =  $user->username;
             $cccdCb = $user->his_employee->identification_number;
         } else {
-            $hoTenCb =  config('__tech.BHYT.hoTenCb');
-            $cccdCb = config('__tech.BHYT.cccdCb');
+            $hoTenCb =  config('organization.BHYT.hoTenCb');
+            $cccdCb = config('organization.BHYT.cccdCb');
         }
 
         $client = new GuzzleHttp\Client();
@@ -95,8 +95,8 @@ class BHYT
     {
         $params = json_encode($params);
 
-        // $username = config('__tech.BHYT.username');
-        // $password = config('__tech.BHYT.password'); 
+        // $username = config('organization.BHYT.username');
+        // $password = config('organization.BHYT.password'); 
         $url = "https://egw.baohiemxahoi.gov.vn/api/egw/nhanChiTietHSNgay4210";
 
         $ch=curl_init($url);
