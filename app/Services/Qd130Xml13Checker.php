@@ -57,6 +57,35 @@ class Qd130Xml13Checker
     {
         $errors = collect();
 
+        if (!empty($data->ma_the_bhyt)) {
+            if (empty($data->gt_the_den)) {
+                $errors->push((object)[
+                    'error_code' => $this->prefix . 'INFO_ERROR_GT_THE_DEN',
+                    'error_name' => 'Thiếu giá trị thẻ đến ngày',
+                    'critical_error' => true,
+                    'description' => 'Giá trị thẻ đến ngày không được để trống khi có mã thẻ BHYT'
+                ]);
+            } else {
+                $maTheBhytList = explode(';', $data->ma_the_bhyt);
+                $gtTheDenList = explode(';', $data->gt_the_den);
+
+                $numberOfElements = count($maTheBhytList);
+
+                if ($numberOfElements >= 1) {
+                    if ( 
+                        count($gtTheDenList) != $numberOfElements
+                    ) {
+                        $errors->push((object)[
+                            'error_code' => $this->prefix . 'INFO_ERROR_MISMATCH_COUNT',
+                            'error_name' => 'Số lượng các thành phần không khớp',
+                            'critical_error' => true,
+                            'description' => 'Mã thẻ BHYT: ' . $data->ma_the_bhyt . ', GT đến ngày: ' . $data->gt_the_den . ' phải tương đồng'
+                        ]);
+                    }
+                }
+            }
+        }        
+
         if (empty($data->so_hoso)) {
             $errors->push((object)[
                 'error_code' => $this->prefix . 'INFO_ERROR_SO_HOSO',

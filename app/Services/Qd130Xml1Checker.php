@@ -532,7 +532,7 @@ class Qd130Xml1Checker
 
             $numberOfElements = count($maTheBhytList);
 
-            if ($numberOfElements > 1) {
+            if ($numberOfElements >= 1) {
                 if (
                     count($maDkbdList) != $numberOfElements || 
                     count($gtTheTuList) != $numberOfElements || 
