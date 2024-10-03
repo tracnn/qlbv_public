@@ -23,10 +23,11 @@ class Qd130XmlExport implements FromQuery, WithHeadings, ShouldAutoSize, WithSty
     protected $date_type;
     protected $qd130_xml_error_catalog_id;
     protected $xml_export_status;
+    protected $payment_date_filter;
     protected $rowNumber = 0;
 
     public function __construct($fromDate = null, $toDate = null, $xml_filter_status = null, 
-        $date_type, $qd130_xml_error_catalog_id = null, $xml_export_status = null)
+        $date_type, $qd130_xml_error_catalog_id = null, $xml_export_status = null, $payment_date_filter = null)
     {
         $this->fromDate = $fromDate;
         $this->toDate = $toDate;
@@ -34,6 +35,7 @@ class Qd130XmlExport implements FromQuery, WithHeadings, ShouldAutoSize, WithSty
         $this->date_type = $date_type;
         $this->qd130_xml_error_catalog_id = $qd130_xml_error_catalog_id;
         $this->xml_export_status = $xml_export_status;
+        $this->payment_date_filter = $payment_date_filter;
     }
 
     /**
@@ -50,6 +52,7 @@ class Qd130XmlExport implements FromQuery, WithHeadings, ShouldAutoSize, WithSty
         $date_type = $this->date_type;
         $qd130_xml_error_catalog_id = $this->qd130_xml_error_catalog_id;
         $xml_export_status = $this->xml_export_status;
+        $payment_date_filter = $this->payment_date_filter;
 
         // Convert date format from 'YYYY-MM-DD HH:mm:ss' to 'YYYYMMDDHHI' for specific fields
         $formattedDateFromForFields = Carbon::createFromFormat('Y-m-d H:i:s', $dateFrom)->format('YmdHi');
@@ -104,6 +107,12 @@ class Qd130XmlExport implements FromQuery, WithHeadings, ShouldAutoSize, WithSty
             $query->whereNull('qd130_xml_informations.exported_at');
         }
 
+        if ($payment_date_filter === 'has_payment_date') {
+            $query->where('qd130_xml1s.ngay_ttoan', '!=', '');
+        } elseif ($payment_date_filter === 'no_payment_date') {
+            $query->where('qd130_xml1s.ngay_ttoan', '=', '');
+        }
+
         return $query;
     }
 
@@ -133,7 +142,7 @@ class Qd130XmlExport implements FromQuery, WithHeadings, ShouldAutoSize, WithSty
                 $sheet->getColumnDimension('C')->setWidth(14);
                 $sheet->getColumnDimension('D')->setWidth(20);
                 $sheet->getColumnDimension('E')->setWidth(13);
-                $sheet->getColumnDimension('F')->setWidth(16);
+                $sheet->getColumnDimension('F')->setWidth(18);
                 $sheet->getColumnDimension('G')->setWidth(13);
                 $sheet->getColumnDimension('H')->setWidth(13);
                 $sheet->getColumnDimension('I')->setWidth(13);

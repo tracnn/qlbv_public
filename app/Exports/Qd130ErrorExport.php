@@ -22,16 +22,18 @@ class Qd130ErrorExport implements FromQuery, WithHeadings, ShouldAutoSize, WithS
     protected $xml_filter_status;
     protected $date_type;
     protected $qd130_xml_error_catalog_id;
+    protected $payment_date_filter;
     protected $rowNumber = 0;
 
     public function __construct($fromDate = null, $toDate = null, $xml_filter_status = null, 
-        $date_type, $qd130_xml_error_catalog_id = null)
+        $date_type, $qd130_xml_error_catalog_id = null, $payment_date_filter = null)
     {
         $this->fromDate = $fromDate;
         $this->toDate = $toDate;
         $this->xml_filter_status = $xml_filter_status;
         $this->date_type = $date_type;
         $this->qd130_xml_error_catalog_id = $qd130_xml_error_catalog_id;
+        $this->payment_date_filter = $payment_date_filter;
     }
 
     /**
@@ -47,6 +49,7 @@ class Qd130ErrorExport implements FromQuery, WithHeadings, ShouldAutoSize, WithS
         $xml_filter_status = $this->xml_filter_status;
         $date_type = $this->date_type;
         $qd130_xml_error_catalog_id = $this->qd130_xml_error_catalog_id;
+        $payment_date_filter = $this->payment_date_filter;
 
         // Convert date format from 'YYYY-MM-DD HH:mm:ss' to 'YYYYMMDDHHI' for specific fields
         $formattedDateFromForFields = Carbon::createFromFormat('Y-m-d H:i:s', $dateFrom)->format('YmdHi');
@@ -108,6 +111,12 @@ class Qd130ErrorExport implements FromQuery, WithHeadings, ShouldAutoSize, WithS
 
         if (!empty($qd130_xml_error_catalog_id)) {
             $query->where('qd130_xml_error_catalogs.id', $qd130_xml_error_catalog_id);
+        }
+
+        if ($payment_date_filter === 'has_payment_date') {
+            $query->where('qd130_xml1s.ngay_ttoan', '!=', '');
+        } elseif ($payment_date_filter === 'no_payment_date') {
+            $query->where('qd130_xml1s.ngay_ttoan', '=', '');
         }
 
         return $query;

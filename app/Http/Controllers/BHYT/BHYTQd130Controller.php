@@ -523,10 +523,11 @@ class BHYTQd130Controller extends Controller
         $xml_filter_status = $request->input('xml_filter_status');
         $date_type = $request->input('date_type');
         $qd130_xml_error_catalog_id = $request->input('qd130_xml_error_catalog');
+        $payment_date_filter = $request->input('payment_date_filter');
 
         $fileName = 'qd130_error_data_' . Carbon::now()->format('YmdHis') . '.xlsx';
         return Excel::download(new Qd130ErrorExport($date_from, $date_to, $xml_filter_status, 
-            $date_type, $qd130_xml_error_catalog_id), $fileName);
+            $date_type, $qd130_xml_error_catalog_id, $payment_date_filter), $fileName);
     }
 
     public function exportQd130XmlXlsx(Request $request)
@@ -537,10 +538,11 @@ class BHYTQd130Controller extends Controller
         $date_type = $request->input('date_type');
         $qd130_xml_error_catalog_id = $request->input('qd130_xml_error_catalog');
         $xml_export_status = $request->input('xml_export_status');
+        $payment_date_filter = $request->input('payment_date_filter');
 
         $fileName = 'qd130_xml_data_' . Carbon::now()->format('YmdHis') . '.xlsx';
         return Excel::download(new Qd130XmlExport($date_from, $date_to, $xml_filter_status, 
-            $date_type, $qd130_xml_error_catalog_id, $xml_export_status), $fileName);
+            $date_type, $qd130_xml_error_catalog_id, $xml_export_status, $payment_date_filter), $fileName);
     }
 
     public function deleteXml($ma_lk)
