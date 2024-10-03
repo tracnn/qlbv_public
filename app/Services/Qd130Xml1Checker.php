@@ -525,6 +525,28 @@ class Qd130Xml1Checker
         }
 
         if (!empty($data->ma_the_bhyt)) {
+            $maTheBhytList = explode(';', $data->ma_the_bhyt);
+            $maDkbdList = explode(';', $data->ma_dkbd);
+            $gtTheTuList = explode(';', $data->gt_the_tu);
+            $gtTheDenList = explode(';', $data->gt_the_den);
+
+            $numberOfElements = count($maTheBhytList);
+
+            if ($numberOfElements > 1) {
+                if (
+                    count($maDkbdList) != $numberOfElements || 
+                    count($gtTheTuList) != $numberOfElements || 
+                    count($gtTheDenList) != $numberOfElements
+                ) {
+                    $errors->push((object)[
+                        'error_code' => $this->prefix . 'ADMIN_INFO_ERROR_MISMATCH_COUNT',
+                        'error_name' => 'Số lượng các thành phần không khớp',
+                        'critical_error' => true,
+                        'description' => 'Mã thẻ BHYT: ' . $data->ma_the_bhyt . ', mã ĐKBĐ: ' .$data->ma_dkbd  . ', GT từ ngày : ' . $data->gt_the_tu . ', GT đến ngày: ' . $data->gt_the_den . ' phải tương đồng'
+                    ]);
+                }
+            }
+
             if (empty($data->ma_dkbd)) {
                 $errors->push((object)[
                     'error_code' => $this->prefix . 'ADMIN_INFO_ERROR_MA_DKBD',
