@@ -44,7 +44,7 @@ class InsuranceController extends Controller
     {
     	$params = $this->searchParams;
         // Check if the organization allows checking insurance
-        if (!config('organization.enableCheck')) {
+        if (!config('organization.BHYT.enableCheck')) {
             // Return an error message and stop execution
             flash('Chưa thiết lập chức năng tra cứu thẻ BHYT cho phần mềm')->error();
         }
@@ -54,12 +54,12 @@ class InsuranceController extends Controller
     public function search(InsuranceRequest $request)
     {
         // Check if the organization allows checking insurance
-        if (!config('organization.enableCheck')) {
+        if (!config('organization.BHYT.enableCheck')) {
             // Return an error message and redirect to the index page
             flash('Chưa thiết lập chức năng tra cứu thẻ BHYT cho phần mềm')->error();
             return redirect()->route('insurance.check-card');
         }
-        
+
         $params = $this->__getSearchParam($request);
 
         $login_result = BHYT::loginBHYT();
