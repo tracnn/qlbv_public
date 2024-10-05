@@ -8,7 +8,7 @@
 /public/storage/*
 
 # Ignore the storage directory
-/storage/*
+/storage/
 
 # Ignore cache
 /bootstrap/cache/*
