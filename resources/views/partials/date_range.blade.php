@@ -1,6 +1,6 @@
 @push('after-styles')
-<!-- Include daterangepicker CSS -->
-<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
+<!-- Include daterangepicker CSS from local -->
+<link rel="stylesheet" type="text/css" href="{{ asset('css/daterangepicker.css') }}" />
 @endpush
 
 <div class="col-sm-12">
@@ -50,9 +50,10 @@
 
 @push('after-scripts-date-range')
 
-<!-- Include daterangepicker JS -->
-<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/moment/min/moment.min.js"></script>
-<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+<!-- Include moment.js from local -->
+<script type="text/javascript" src="{{ asset('js/moment.min.js') }}"></script>
+<!-- Include daterangepicker JS from local -->
+<script type="text/javascript" src="{{ asset('js/daterangepicker.min.js') }}"></script>
 
 <script type="text/javascript">
     $(document).ready(function() {
