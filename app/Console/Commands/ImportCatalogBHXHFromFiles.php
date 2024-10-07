@@ -60,6 +60,7 @@ class ImportCatalogBHXHFromFiles extends Command
                 sleep(10);
             } catch (\Exception $e) {
                 $this->info($e->getMessage());
+                Log::error('ImportCatalogBHXHFromFiles - Error occurred: ' . $e->getMessage());
             }
         } while (true);
 
@@ -77,8 +78,13 @@ class ImportCatalogBHXHFromFiles extends Command
 
             if ($extension == 'xls' || $extension == 'xlsx') {
                 $this->importExcelFile($disk, $file);
+                // Xóa file sau khi import thành công
+                Storage::disk($disk)->delete($file);
             } else {
                 $this->error('Unsupported file type: ' . $file);
+                Log::error('Error processing file: ' . $file, [
+                    'error' => $e->getMessage()
+                ]);
             }
         }
     }
@@ -198,7 +204,7 @@ class ImportCatalogBHXHFromFiles extends Command
                         ]);                        
                     }
                 }
-                Storage::disk($disk)->delete($file);
+                
                 break;
 
             case $firstRow === $expectedSupplyColumns:
@@ -242,7 +248,7 @@ class ImportCatalogBHXHFromFiles extends Command
                         ]);   
                     }
                 }
-                Storage::disk($disk)->delete($file);
+                
                 break;
             case $firstRow === $expectedServiceColumns:
                 $data = $data->slice(1); // Bỏ qua dòng đầu tiên
@@ -272,7 +278,7 @@ class ImportCatalogBHXHFromFiles extends Command
                         ]);  
                     }
                 }
-                Storage::disk($disk)->delete($file);
+                
                 break;
 
             case $firstRow === $expectedStaffColumns:
@@ -327,7 +333,7 @@ class ImportCatalogBHXHFromFiles extends Command
                     }
 
                 }
-                Storage::disk($disk)->delete($file);
+                
                 break;
 
             case $firstRow === $expectedDepartmentColumns:
@@ -362,7 +368,7 @@ class ImportCatalogBHXHFromFiles extends Command
                         ]);  
                     }
                 }
-                Storage::disk($disk)->delete($file);
+                
                 break;
 
             case $firstRow === $expectedEquipmentColumns:
@@ -400,7 +406,7 @@ class ImportCatalogBHXHFromFiles extends Command
                         ]); 
                     }
                 }
-                Storage::disk($disk)->delete($file);
+                
                 break;
 
             case $firstRow === $expectedAdministrativeUnitsColumns:
@@ -441,7 +447,7 @@ class ImportCatalogBHXHFromFiles extends Command
                 }
 
                 // Delete the processed file from storage
-                Storage::disk($disk)->delete($file);
+                
                 break;
 
             case $firstRow === $expectedMedicalOrganizationColumns:
@@ -478,7 +484,7 @@ class ImportCatalogBHXHFromFiles extends Command
                 }
 
                 // Delete the processed file from storage
-                Storage::disk($disk)->delete($file);
+                
                 break;
 
             default:
