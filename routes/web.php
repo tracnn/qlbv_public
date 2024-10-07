@@ -177,7 +177,6 @@ Route::group(['middleware' => ['auth', 'check.first.login']], function () {
     */
     Route::group(['prefix' => 'ksk/', 'middleware' => ['checkrole:ksk']], function () {  
         Route::get('index', 'KHTH\KskController@index')->name('ksk.index');
-        Route::get('index/search', 'KHTH\KskController@search')->name('ksk.search');
         Route::get('index/get-danh-sach', 'KHTH\KskController@get_danhsach')->name('ksk.get-danh-sach');
         Route::post('index/ksk-kham-the-luc', 'KHTH\KskController@khamtheluc')->name('ksk.kham-the-luc');
         Route::post('index/ksk-kham-noi', 'KHTH\KskController@khamnoi')->name('ksk.kham-noi');
