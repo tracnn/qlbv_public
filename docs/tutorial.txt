@@ -6,23 +6,20 @@ I. Những phần mềm cần thiết
 	- Composer: instal và update các gói vendor
 	- Git: clone và pull source
 	- Oracle client instant: Kết nối csdl Oracle (Khuyến cáo tải phiên bản phù hợp với thư viện .NET đã cài trên Windows)
-	- Nssm: Cài đặt windows service
-	- ImageMagick: Gói xử lý qr (Sẽ bỏ trong tương lai)
-	- export cấu trúc database trên bản đang chạy (qlbv.sql)
 	b. Cấu hình kết nối Oracle
 	- Giải nén Oracle client instant, tạo System Path Environment Variables trỏ tới thư mục đã giải nén
 	- Chỉnh sửa php.ini bỏ đánh dấu dòng ";extension=oci8_12c" thành "extension=oci8_12c"
 	- Kiểm tra lại bằng cmd: php -v nếu không báo lỗi là thành công
-2. Cài đặt và cập nhật tool
+2. Cài đặt và cập nhật phần mềm
 	a. Cài đặt phần mềm: Sử dụng cmd chạy lệnh: 
 		+ git clone https://github.com/tracnn/qlbv_public.git
 		+ Import Database
 			. Vào giao diện quản trị của mysql. Tạo Database có tên là qlbv
 			. Import CSDL từ file qlbv_public/docs/qlbv.sql
-		+ Copy thư mục /docs/storage/framework/cache ra thư mục gốc chứa phần mềm
+		+ copy thư mục /docs/storage/ ra thư mục gốc chứa phần mềm
 		+ copy file /docs/.env_example ra thư mục gốc thành .env
 		+ copy 3 file: 
-			organization
+			organization.php
 			database.php
 			filesystems.php
 			vào thư mục qlbv_public/config (Và chỉnh sửa giá trị cấu hình phù hợp)
