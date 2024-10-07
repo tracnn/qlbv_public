@@ -5,10 +5,10 @@
 /vendor/
 
 # Ignore the public storage symlink
-/public/storage/*
+/public/storage/
 
 # Ignore the storage directory
-/storage/*
+/storage/
 
 # Ignore cache
 /bootstrap/cache/*

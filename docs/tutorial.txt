@@ -19,9 +19,8 @@ I. Những phần mềm cần thiết
 		+ Import Database
 			. Vào giao diện quản trị của mysql. Tạo Database có tên là qlbv
 			. Import CSDL từ file qlbv_public/docs/qlbv.sql
-		+ Xóa thư mục qlbv_public/public/storage
-		+ Copy thư mục qlbv_public/storage/framework/cache ra thư mục gốc chứa phần mềm
-		+ copy file docs/.env_example ra thư mục gốc thành .env
+		+ Copy thư mục /docs/storage/framework/cache ra thư mục gốc chứa phần mềm
+		+ copy file /docs/.env_example ra thư mục gốc thành .env
 		+ copy 3 file: 
 			organization
 			database.php
