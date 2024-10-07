@@ -82,9 +82,7 @@ class ImportCatalogBHXHFromFiles extends Command
                 Storage::disk($disk)->delete($file);
             } else {
                 $this->error('Unsupported file type: ' . $file);
-                Log::error('Error processing file: ' . $file, [
-                    'error' => $e->getMessage()
-                ]);
+                Log::error('Error processing file: ' . $file);
             }
         }
     }
