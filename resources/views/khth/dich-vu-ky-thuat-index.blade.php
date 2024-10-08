@@ -462,6 +462,8 @@ $(document).ready(function() {
         "processing": true,
         "serverSide": true,
         "searchDelay": 1000,
+        "responsive": true, // Giữ responsive
+        "scrollX": true, // Đảm bảo cuộn ngang khi bảng quá rộng
         "ajax": {
             url: "{{ route('khth.get-dvkt') }}",
             data: {
@@ -488,9 +490,6 @@ $(document).ready(function() {
             { "data": "amount", "name": "amount" },
             { "data": "price", "name": "price" },
         ],
-        "oLanguage": {
-          "sUrl": "{{asset('vendor/datatables/lang/vi.json')}}"
-        },
     });
 
     // $("#myform").submit(function() {
