@@ -162,7 +162,7 @@ $(document).ready( function () {
             { "data": "in_time", "name": "in_time" },
             { "data": "out_time", "name": "out_time" },
             {
-                "data": "qr_code",
+                "data": null,
                 "name": "qr_code",
                 "searchable": false, // Vô hiệu hóa tìm kiếm cho cột này
                 "orderable": false, // Đặt là false nếu bạn cũng muốn vô hiệu hóa chức năng sắp xếp cho cột này
