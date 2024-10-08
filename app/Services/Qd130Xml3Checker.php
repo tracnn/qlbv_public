@@ -316,7 +316,7 @@ class Qd130Xml3Checker
                 // $maMays = explode(';', $data->ma_may);
                 $maMay = $data->ma_may;
                 // foreach ($maMays as $maMay) {
-                if (!preg_match('/^[A-ZĐÁÀẠÂẦẬẨẤẪÃẢĂẰẶẲẮẴÈÉẸÊỀỆỂẾỄẺÍÌỊĨỈÒÓỌÔỒỘỔỐỖÕỎƠỜỢỞỚỠÙÚỤƯỪỰỬỨỮŨỦÝỲỴỶỸ]{2,3}\.\d\.\d{5}\.[\w;]+$/u', $maMay)) {
+                if (!preg_match('/^[A-ZĐÁÀẠÂẦẬẨẤẪÃẢĂẰẶẲẮẴÈÉẸÊỀỆỂẾỄẺÍÌỊĨỈÒÓỌÔỒỘỔỐỖÕỎƠỜỢỞỚỠÙÚỤƯỪỰỬỨỮŨỦÝỲỴỶỸ]{2,3}\.\d\.\d{5}\.[\w\-;]+$/u', $maMay)) {
                     $errors->push((object)[
                         'error_code' => $this->prefix . 'INFO_ERROR_INVALID_MA_MAY_FORMAT',
                         'error_name' => 'Mã máy không đúng định dạng',
