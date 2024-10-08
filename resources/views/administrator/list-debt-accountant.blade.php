@@ -88,14 +88,62 @@
                 { data: 'tdl_patient_phone', name: "tdl_patient_phone" },
                 { data: 'patient_type_name', name: "patient_type_name" },
                 { data: 'department_name', name: "department_name" },
-                { data: 'total_price', name: "total_price", className: "text-right" },
-                { data: 'total_hein_price', name: "total_hein_price", className: "text-right" },
-                { data: 'total_patient_price', name: "total_patient_price", className: "text-right" },
-                { data: 'da_thanh_toan', name: "da_thanh_toan", className: "text-right" },
-                { data: 'tam_ung', name: "tam_ung", className: "text-right" },
-                { data: 'hoan_ung', name: "hoan_ung", className: "text-right" },
-                { data: 'tu_nhap', name: "tu_nhap", className: "text-right" },
-                { data: 'can_thanh_toan', name: "can_thanh_toan", className: "text-right" },
+                {
+                    data: 'total_price', 
+                    name: "total_price",
+                    createdCell: function(td, cellData, rowData, row, col) {
+                        $(td).addClass('text-right');
+                    }
+                },
+                {
+                    data: 'total_hein_price', 
+                    name: "total_hein_price",
+                    createdCell: function(td, cellData, rowData, row, col) {
+                        $(td).addClass('text-right');
+                    }
+                },
+                {
+                    data: 'total_patient_price', 
+                    name: "total_patient_price",
+                    createdCell: function(td, cellData, rowData, row, col) {
+                        $(td).addClass('text-right');
+                    }
+                },
+                {
+                    data: 'da_thanh_toan', 
+                    name: "da_thanh_toan",
+                    createdCell: function(td, cellData, rowData, row, col) {
+                        $(td).addClass('text-right');
+                    }
+                },
+                {
+                    data: 'tam_ung', 
+                    name: "tam_ung",
+                    createdCell: function(td, cellData, rowData, row, col) {
+                        $(td).addClass('text-right');
+                    }
+                },
+                {
+                    data: 'hoan_ung', 
+                    name: "hoan_ung",
+                    createdCell: function(td, cellData, rowData, row, col) {
+                        $(td).addClass('text-right');
+                    }
+                },
+                {
+                    data: 'tu_nhap', 
+                    name: "tu_nhap",
+                    createdCell: function(td, cellData, rowData, row, col) {
+                        $(td).addClass('text-right');
+                    }
+                },
+                {
+                    data: 'can_thanh_toan', 
+                    name: "can_thanh_toan",
+                    createdCell: function(td, cellData, rowData, row, col) {
+                        $(td).addClass('text-right');
+                    }
+                }
             ],
         });
 
