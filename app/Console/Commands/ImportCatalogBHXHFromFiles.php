@@ -161,8 +161,10 @@ class ImportCatalogBHXHFromFiles extends Command
             case $firstRow === $expectedMedicineColumns:
                 $data = $data->slice(1); // Bỏ qua dòng đầu tiên
                 foreach ($data as $row) {
-                    //Loại bỏ ký tự đặc biệt
-                    $row[14] = preg_replace('/[^\x20-\x7E]/u', '', $row[14]);
+                    // Loại bỏ ký tự đặc biệt cho tất cả các cột
+                    foreach ($row as $key => $value) {
+                        $row[$key] = preg_replace('/[^\x20-\x7E]/u', '', $value);
+                    }
                     
                     if (empty($row[1]) || empty($row[5]) || empty($row[9]) || empty($row[17]) || empty($row[2]) || empty($row[3]) || empty($row[4]) || empty($row[6]) || empty($row[7]) || empty($row[8]) || empty($row[11]) || empty($row[12])) {
                         continue;
@@ -211,9 +213,16 @@ class ImportCatalogBHXHFromFiles extends Command
             case $firstRow === $expectedSupplyColumns:
                 $data = $data->slice(1); // Bỏ qua dòng đầu tiên
                 foreach ($data as $row) {
+                    
+                    // Loại bỏ ký tự đặc biệt cho tất cả các cột
+                    foreach ($row as $key => $value) {
+                        $row[$key] = preg_replace('/[^\x20-\x7E]/u', '', $value);
+                    }    
+
                     if (empty($row[1]) || empty($row[2]) || empty($row[3]) || empty($row[15])) {
                         continue;
                     }
+
                     try {
                         MedicalSupplyCatalog::updateOrCreate(
                             [
