@@ -50,6 +50,8 @@
             "processing": true,
             "serverSide": true,
             "destroy": true, // Destroy any existing DataTable before reinitializing
+            "responsive": true, // Giữ responsive
+            "scrollX": true, // Đảm bảo cuộn ngang khi bảng quá rộng
             "ajax": {
                 url: "{{ route('category-bhyt.fetch-service-catalog') }}",
                 beforeSend: function(xhr) {

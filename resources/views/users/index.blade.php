@@ -84,6 +84,8 @@
 		$('#users-index').DataTable({
 	        "processing": true,
 	        "serverSide": true,
+	        "responsive": true, // Giữ responsive
+          "scrollX": true, // Đảm bảo cuộn ngang khi bảng quá rộng
 	        "ajax": {
 	            url: "{{ route('users.get-users') }}",
 	        },

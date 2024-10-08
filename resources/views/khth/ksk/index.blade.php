@@ -613,6 +613,8 @@
             "processing": true,
             "serverSide": true,
             "destroy": true, // Destroy any existing DataTable before reinitializing
+            "responsive": true, // Giữ responsive
+            "scrollX": true, // Đảm bảo cuộn ngang khi bảng quá rộng
             "ajax": {
                 url: "{{ route('ksk.get-danh-sach') }}",
                 data: function(d) {
@@ -643,9 +645,6 @@
                 {"data": "tdl_patient_phone", "name": "tdl_patient_phone"},
                 {"data": "action", "name": "action"},
             ],
-            "oLanguage": {
-              "sUrl": "{{asset('vendor/datatables/lang/vi.json')}}"
-            },
         });
 
         table.ajax.reload();

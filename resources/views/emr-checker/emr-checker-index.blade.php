@@ -97,6 +97,8 @@
             "processing": true,
             "serverSide": true,
             "destroy": true, // Destroy any existing DataTable before reinitializing
+            "responsive": true, // Giữ responsive
+            "scrollX": true, // Đảm bảo cuộn ngang khi bảng quá rộng
             "ajax": {
                 url: '{{ route('emr-checker.emr-checker-list') }}',
                 data: function(d) {

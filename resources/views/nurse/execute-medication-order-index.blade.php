@@ -64,6 +64,8 @@
             "processing": true,
             "serverSide": true,
             "destroy": true,
+            "responsive": true, // Giữ responsive
+            "scrollX": true, // Đảm bảo cuộn ngang khi bảng quá rộng
             "ajax": {
                 url: "{{ route('nurse.execute.medication.fetch.data') }}",
                 data: function(d) {
