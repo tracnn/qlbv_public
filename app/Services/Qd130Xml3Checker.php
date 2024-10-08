@@ -199,6 +199,16 @@ class Qd130Xml3Checker
         
         // Check for serviceGroupsRequiringAnesthesia
         if (in_array($data->ma_nhom, $this->serviceGroupsRequiringAnesthesia)) {
+            // Kiểm tra số lượng không được lớn hơn 1
+            if ($data->so_luong > 1) {
+                $errors->push((object)[
+                    'error_code' => $this->prefix . 'INFO_ERROR_SO_LUONG_INVALID',
+                    'error_name' => 'Số lượng không hợp lệ',
+                    'critical_error' => true,
+                    'description' => 'Số lượng không được > 1 cho dịch vụ: ' . $this->serviceDisplay
+                ]);
+            }
+            // Kiểm tra phương pháp vô cảm
             if (empty($data->pp_vo_cam)) {
                 $errors->push((object)[
                     'error_code' => $this->prefix . 'INFO_ERROR_PP_VO_CAM_EMPTY',
