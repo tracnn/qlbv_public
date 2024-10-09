@@ -5,6 +5,10 @@ cd /d "%~dp0"
 :: Đường dẫn đến nssm.exe (giả sử nằm trong thư mục gốc của dự án)
 set NSSM_PATH=%~dp0
 
+:: Đưa ứng dụng vào chế độ bảo trì
+echo Putting the application into maintenance mode...
+php artisan down
+
 :: Cập nhật mã nguồn từ GitHub
 echo Pulling latest changes from GitHub...
 git pull origin main
@@ -43,5 +47,9 @@ echo Restarting services...
 %NSSM_PATH%\nssm start "QLBV JobKtTheBHYT"
 %NSSM_PATH%\nssm start "QLBV ImportCatalog"
 %NSSM_PATH%\nssm start "QLBV XMLImport"
+
+:: Đưa ứng dụng ra khỏi chế độ bảo trì
+echo Bringing the application out of maintenance mode...
+php artisan up
 
 echo Update completed successfully!

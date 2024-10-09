@@ -54,14 +54,13 @@ class AddConfigOrganizationKey extends Command
         $addedKeys = [];
         $existingKeys = [];
 
-        // Lặp qua các key-value và thêm vào cấu hình nếu chưa tồn tại hoặc nếu giá trị trống
+        // Lặp qua các key-value và thêm vào cấu hình nếu chưa tồn tại
         foreach ($newKeys as $key => $value) {
-            // Kiểm tra nếu key đã tồn tại và không rỗng thì không ghi đè
-            if (array_key_exists($key, $config) && !empty($config[$key])) {
-                $existingKeys[] = $key;  // Giữ nguyên key và giá trị cũ
-            } else {
-                $config[$key] = $value;  // Thêm key mới hoặc ghi đè nếu giá trị trống
+            if (!array_key_exists($key, $config)) {
+                $config[$key] = $value;
                 $addedKeys[] = $key;
+            } else {
+                $existingKeys[] = $key;
             }
         }
 
