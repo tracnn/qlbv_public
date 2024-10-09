@@ -1,3 +1,6 @@
+# 09/10/2024
+- Bổ sung kiểm tra VTYT kèm theo DVKT phải có y lệnh trùng ngày y lệnh DVKT.
+
 # 30/09/2024
 - Bổ sung export data BN nợ viện phí dạng xlsx
 - Bổ sung chức năng gán quyền superadmin cho user đầu tiên đăng nhập hệ thống: 

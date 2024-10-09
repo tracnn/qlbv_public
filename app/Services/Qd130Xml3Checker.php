@@ -684,6 +684,29 @@ class Qd130Xml3Checker
             }
         }
 
+        // Bổ sung kiểm tra với ma_dich_vu
+        if (!empty($data->ma_dich_vu)) {
+            $matchedService = Qd130Xml3::where('ma_dich_vu', $data->ma_dich_vu)
+                ->where('ma_lk', $data->ma_lk)
+                ->where('ma_vat_tu', '')
+                ->first();
+
+            if ($matchedService) {
+                // Chỉ kiểm tra định dạng Ymd của ngay_yl
+                $dataDate = substr($data->ngay_yl, 0, 8);
+                $matchedDate = substr($matchedService->ngay_yl, 0, 8);
+
+                if ($dataDate != $matchedDate) {
+                    $errors->push((object)[
+                        'error_code' => $this->prefix . 'DATE_MISMATCH',
+                        'error_name' => 'Ngày y lệnh không khớp',
+                        'description' => 'Mã dịch vụ: ' . $data->ma_dich_vu . '; Có ngày y lệnh: ' . strtodate($matchedDate) . 
+                        '; Không khớp với ngày y lệnh của vật tư: ' . $data->ma_vat_tu
+                    ]);
+                }
+            }
+        }
+
         return $errors;
     }
 
