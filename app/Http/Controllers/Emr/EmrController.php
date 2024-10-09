@@ -485,7 +485,7 @@ class EmrController extends Controller
         // $qr->qrCode(300, $request->document_code);
         $img = QrCode::size(1200)
             ->format('png')
-            ->merge(public_path('images/logo.png'))
+            //->merge(public_path('images/logo.png'))
              //->backgroundColor(225, 0, 0)
              //->color(0, 0, 255)
             ->generate($url);
