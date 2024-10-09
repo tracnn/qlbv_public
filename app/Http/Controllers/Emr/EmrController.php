@@ -478,8 +478,10 @@ class EmrController extends Controller
             return redirect()->route('home');
         }
 
-        $url = 'http://benhviendakhoanongnghiep.vn:6868/view-document?document_code=' . $request->document_code;
-        //$url = 'https://drive.google.com/drive/folders/178quyZ6GtKDGZIWDRsPHKWC0UYcOyPZi?usp=sharing';
+        // Lấy base_url từ file config
+        $baseUrl = config('organization.base_url');
+        $url = $baseUrl . '/view-document?document_code=' . $request->document_code;
+        
         $url = preg_match("#^https?\:\/\/#", $url) ? $url : "http://{$url}";
         // $qr->url($url .$request->document_code);
         // $qr->qrCode(300, $request->document_code);

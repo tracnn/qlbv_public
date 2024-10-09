@@ -42,7 +42,7 @@ class AddConfigOrganizationKey extends Command
 
         // Mảng chứa các key-value mới muốn thêm vào
         $newKeys = [
-            //'TTDV' => '0198077858',
+            'base_url' => '',
         ];
 
         // Kiểm tra nếu mảng `newKeys` trống
