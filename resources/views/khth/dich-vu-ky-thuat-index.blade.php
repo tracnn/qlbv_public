@@ -30,10 +30,6 @@
 
 <div class="panel panel-default">
     <div class="panel-body">
-        <div class="form-group">
-            <b>Điều kiện lọc</b>
-        </div>
-
         <form type="GET" id="myform" action="{{route('khth.dich-vu-ky-thuat-search')}}">
             <div class="col-sm-12">
                 <div class="form-group row">
@@ -259,9 +255,6 @@
 </div>
 
 <div class="panel panel-default">
-    <div class="panel-heading">
-        Danh sách DVKT
-    </div>
     <div class="panel-body table-responsive">
         <table id="dvkt-index" class="table display table-hover responsive datatable dtr-inline" width="100%">
             <thead>
