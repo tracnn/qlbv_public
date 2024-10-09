@@ -13,10 +13,6 @@ git pull origin main
 echo Running migrations...
 php artisan migrate --force
 
-:: Thêm key config mới
-echo Adding new config key...
-php artisan config:add-keys
-
 :: Stop từng dịch vụ
 %NSSM_PATH%\nssm stop "QLBV JobQd130Xml"
 %NSSM_PATH%\nssm stop "QLBV JobKtTheBHYT"
@@ -29,6 +25,10 @@ php artisan config:clear
 php artisan cache:clear
 php artisan route:clear
 php artisan view:clear
+
+:: Thêm key config mới
+echo Adding new config key...
+php artisan config:add-keys
 
 :: Tạo cache mới
 echo Optimizing configuration...
