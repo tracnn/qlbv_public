@@ -77,7 +77,7 @@
             $(this).DataTable({
                 responsive: true,
                 autoWidth: false,
-                paging: true,
+                paging: false,
                 searching: true,
                 ordering: true,
             });
