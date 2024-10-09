@@ -68,7 +68,7 @@ class AddConfigOrganizationKey extends Command
         $configFile = config_path('organization.php');
         $configContent = var_export($config, true);
         $configContent = str_replace('array (', '[', $configContent);
-        $configContent = str_replace(')', ']', $configContent)
+        $configContent = str_replace(')', ']', $configContent);
         file_put_contents($configFile, "<?php\n\nreturn " . $configContent . ";\n");
 
         // Thông báo những key đã được thêm thành công
