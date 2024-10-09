@@ -120,6 +120,9 @@ class CategoryBHYTController extends Controller
         ->editColumn('critical_error', function ($row) {
             return '<input type="checkbox" ' . ($row->critical_error ? 'checked' : '') . ' disabled>';
         })
+        ->editColumn('critical_error', function ($row) {
+            return '<input type="checkbox" class="critical-error-toggle" data-id="' . $row->id . '" ' . ($row->critical_error ? 'checked' : '') . '>';
+        })
         ->editColumn('is_check', function ($row) {
             return '<input type="checkbox" class="is-check-toggle" data-id="' . $row->id . '" ' . ($row->is_check ? 'checked' : '') . '>';
         })
@@ -130,16 +133,19 @@ class CategoryBHYTController extends Controller
     public function updateQd130XmlErrorCatalog(Request $request)
     {
         $id = $request->input('id');
-        $isCheck = $request->input('is_check');
 
         // Tìm và cập nhật giá trị is_not_check (chuyển đổi giữa is_check và is_not_check)
         $catalog = Qd130XmlErrorCatalog::find($id);
 
         if ($catalog) {
-            // Cập nhật is_not_check, giá trị ngược với is_check
-            $catalog->is_check = $isCheck;
+            if ($request->has('is_check')) {
+                $catalog->is_check = $request->is_check;
+            }
+            if ($request->has('critical_error')) {
+                $catalog->critical_error = $request->critical_error;
+            }
             $catalog->save();
-
+            
             return response()->json(['success' => true]);
         }
 

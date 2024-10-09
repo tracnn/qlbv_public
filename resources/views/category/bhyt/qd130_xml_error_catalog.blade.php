@@ -109,6 +109,34 @@
                 }
             });
         });
+
+        // Sự kiện thay đổi checkbox cho critical_error
+        $('#qd130-xml-error-catalog-list').on('change', '.critical-error-toggle', function() {
+            var isChecked = $(this).is(':checked');
+            var catalogId = $(this).data('id');
+            // Gửi yêu cầu AJAX để cập nhật giá trị critical_error
+            $.ajax({
+                url: "{{ route('category-bhyt.update-qd130-xml-error-catalog') }}", // Route để cập nhật
+                method: "POST",
+                data: {
+                    _token: "{{ csrf_token() }}",
+                    id: catalogId,
+                    critical_error: isChecked ? 1 : 0
+                },
+                success: function(response) {
+                    if (response.success) {
+                        toastr.success('Cập nhật thành công!');
+                    } else {
+                        toastr.error('Có lỗi xảy ra khi cập nhật.');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    toastr.error('Có lỗi xảy ra khi gửi yêu cầu: ' + error);
+                    console.log('Error:', error);
+                }
+            });
+        });
+        
     });
 </script>
 @endpush
