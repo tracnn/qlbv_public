@@ -700,6 +700,7 @@ class Qd130Xml3Checker
                     $errors->push((object)[
                         'error_code' => $this->prefix . 'DATE_MISMATCH',
                         'error_name' => 'Ngày y lệnh không khớp',
+                        'critical_error' => true,
                         'description' => 'Mã dịch vụ: ' . $data->ma_dich_vu . '; Có ngày y lệnh: ' . strtodate($matchedDate) . 
                         '; Không khớp với ngày y lệnh của vật tư: ' . $data->ma_vat_tu
                     ]);
