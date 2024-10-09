@@ -28,7 +28,7 @@
     <div class="tab-content">
         @foreach($groupedErrors as $xml => $errors)
             <div id="tab_{{ $xml }}" class="tab-pane fade {{ $loop->first ? 'in active' : '' }}">
-                <table id="xmlErrorChecks_{{ $xml }}" class="table table-hover responsive datatable" cellspacing="0" width="100%">
+                <table id="xmlErrorChecks_{{ $xml }}" class="table table-hover responsive datatable-xml-errors" cellspacing="0" width="100%">
                     <thead>
                         <tr>
                             <th>Error Code</th>
@@ -69,3 +69,18 @@
     @endif
 
 </div>
+<!-- DataTables initialization script -->
+<script>
+    $(document).ready(function() {
+        // Khởi tạo DataTables cho tất cả các bảng có class datatable-xml-errors
+        $('.datatable-xml-errors').each(function() {
+            $(this).DataTable({
+                responsive: true,
+                autoWidth: false,
+                paging: true,
+                searching: true,
+                ordering: true,
+            });
+        });
+    });
+</script>
