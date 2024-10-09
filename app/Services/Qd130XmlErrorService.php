@@ -24,6 +24,15 @@ class Qd130XmlErrorService
         ->delete();
     }
 
+    public function getCriticalErrorStatus($errorCode)
+    {
+        // Tìm bản ghi trong Qd130XmlErrorCatalog theo error_code
+        $errorCatalog = Qd130XmlErrorCatalog::where('error_code', $errorCode)->first();
+
+        // Trả về critical_error nếu có, nếu không thì trả về true
+        return $errorCatalog ? $errorCatalog->critical_error : true;
+    }
+
     public function saveErrors(string $xmlType, string $ma_lk, int $stt, Collection $errors,  array $additionalData = []): void
     {
         // Save errors to xml_error_checks table

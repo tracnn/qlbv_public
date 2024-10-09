@@ -355,10 +355,11 @@ class Qd130Xml3Checker
                     // Validate in EquipmentCatalog
                     $existEquipment = EquipmentCatalog::where('ma_may', $maMay)->exists();
                     if (!$existEquipment) {
+                        $errorCode = $this->prefix . 'INFO_ERROR_MA_MAY_NOT_FOUND';
                         $errors->push((object)[
-                            'error_code' => $this->prefix . 'INFO_ERROR_MA_MAY_NOT_FOUND',
+                            'error_code' => $errorCode,
                             'error_name' => 'Mã máy không tồn tại trong danh mục trang thiết bị',
-                            //'critical_error' => true,
+                            'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
                             'description' => 'Mã máy không tồn tại: ' . $maMay
                         ]);
                     }
