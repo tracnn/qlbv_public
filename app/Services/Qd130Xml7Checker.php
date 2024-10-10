@@ -27,6 +27,11 @@ class Qd130Xml7Checker
         $this->prefix = $this->xmlType . '_';
     }
 
+    protected function generateErrorCode(string $errorKey): string
+    {
+        return $this->prefix . $errorKey;
+    }
+
     /**
      * Check Qd130Xml7 Errors
      *
@@ -55,46 +60,51 @@ class Qd130Xml7Checker
         $errors = collect();
 
         if (empty($data->pp_dieutri)) {
+            $errorCode = $this->generateErrorCode('INFO_ERROR_PP_DIEUTRI');
             $errors->push((object)[
-                'error_code' => $this->prefix . 'INFO_ERROR_PP_DIEUTRI',
+                'error_code' => $errorCode,
                 'error_name' => 'Thiếu phương pháp điều trị',
-                'critical_error' => true,
+                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
                 'description' => 'Phương pháp điều trị không được để trống'
             ]);
         }
 
         if (empty($data->ma_ttdv)) {
+            $errorCode = $this->generateErrorCode('INFO_ERROR_MA_TTDV');
             $errors->push((object)[
-                'error_code' => $this->prefix . 'INFO_ERROR_MA_TTDV',
+                'error_code' => $errorCode,
                 'error_name' => 'Thiếu mã thủ trưởng đơn vị',
-                'critical_error' => true,
+                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
                 'description' => 'Thủ trưởng đơn vị không được để trống'
             ]);
         } else {
-            if(!MedicalStaff::where('ma_bhxh', $data->ma_ttdv)->exists()) {
+            if (!MedicalStaff::where('ma_bhxh', $data->ma_ttdv)->exists()) {
+                $errorCode = $this->generateErrorCode('INFO_ERROR_MA_TTDV_NOT_FOUND');
                 $errors->push((object)[
-                    'error_code' => $this->prefix . 'INFO_ERROR_MA_TTDV_NOT_FOUND',
+                    'error_code' => $errorCode,
                     'error_name' => 'Mã thủ trưởng đơn vị chưa được duyệt',
-                    'critical_error' => true,
+                    'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
                     'description' => 'Mã thủ trưởng đơn vị chưa được duyệt danh mục (Mã CCHN: ' . $data->ma_ttdv . ')'
                 ]);
             }
         }
 
         if (empty($data->ma_bs)) {
+            $errorCode = $this->generateErrorCode('INFO_ERROR_MA_BS');
             $errors->push((object)[
-                'error_code' => $this->prefix . 'INFO_ERROR_MA_BS',
+                'error_code' => $errorCode,
                 'error_name' => 'Thiếu mã bác sĩ',
-                'critical_error' => true,
+                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
                 'description' => 'Mã bác sĩ không được để trống'
             ]);
         } else {
             if (!MedicalStaff::where('ma_bhxh', $data->ma_bs)->exists()) {
+                $errorCode = $this->generateErrorCode('INFO_ERROR_MA_BS_NOT_FOUND');
                 $errors->push((object)[
-                    'error_code' => $this->prefix . 'INFO_ERROR_MA_BS_NOT_FOUND',
+                    'error_code' => $errorCode,
                     'error_name' => 'Mã bác sĩ chưa được duyệt',
-                    'critical_error' => true,
-                    'description' => 'Mã bác sí chưa được duyệt danh mục NVYT: ' . $data->ma_bs
+                    'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+                    'description' => 'Mã bác sĩ chưa được duyệt danh mục NVYT: ' . $data->ma_bs
                 ]);
             }
         }

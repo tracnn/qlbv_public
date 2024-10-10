@@ -25,6 +25,11 @@ class Qd130Xml5Checker
         $this->prefix = $this->xmlType . '_';
     }
 
+    protected function generateErrorCode(string $errorKey): string
+    {
+        return $this->prefix . $errorKey;
+    }
+
     /**
      * Check Qd130Xml4 Errors
      *
@@ -62,19 +67,21 @@ class Qd130Xml5Checker
 
 
         if (empty($data->dien_bien_ls)) {
+            $errorCode = $this->generateErrorCode('INFO_ERROR_DIEN_BIEN_LS');
             $errors->push((object)[
-                'error_code' => $this->prefix . 'INFO_ERROR_DIEN_BIEN_LS',
+                'error_code' => $errorCode,
                 'error_name' => 'Thiếu diễn biến lâm sàng',
-                'critical_error' => true,
+                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
                 'description' => 'Diễn biến lâm sàng không được để trống'
             ]);
         }
 
         if (empty($data->thoi_diem_dbls)) {
+            $errorCode = $this->generateErrorCode('INFO_ERROR_THOI_DIEM_DBLS');
             $errors->push((object)[
-                'error_code' => $this->prefix . 'INFO_ERROR_THOI_DIEM_DBLS',
+                'error_code' => $errorCode,
                 'error_name' => 'Thiếu thời điểm diễn biến lâm sàng',
-                'critical_error' => true,
+                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
                 'description' => 'Thời điểm diễn biến lâm sàng không được để trống'
             ]);
         } else {
@@ -84,10 +91,11 @@ class Qd130Xml5Checker
                 $thoi_diem_dbls = $data->thoi_diem_dbls;
 
                 if ($thoi_diem_dbls < $ngayVao || $thoi_diem_dbls > $ngayRa) {
+                    $errorCode = $this->generateErrorCode('INVALID_THOI_DIEM_BDLS');
                     $errors->push((object)[
-                        'error_code' => $this->prefix . 'INVALID_THOI_DIEM_BDLS',
+                        'error_code' => $errorCode,
                         'error_name' => 'Thời điểm BĐLS không hợp lệ',
-                        'critical_error' => true,
+                        'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
                         'description' => 'THOI_DIEM_BDLS: ' . strtodatetime($thoi_diem_dbls) . ' không nằm trong khoảng thời gian vào (' . strtodatetime($ngayVao) . ') và ra (' . strtodatetime($ngayRa) . ')'
                     ]);
                 }
@@ -95,18 +103,20 @@ class Qd130Xml5Checker
         }
 
         if (empty($data->nguoi_thuc_hien)) {
+            $errorCode = $this->generateErrorCode('INFO_ERROR_NGUOI_THUC_HIEN');
             $errors->push((object)[
-                'error_code' => $this->prefix . 'INFO_ERROR_NGUOI_THUC_HIEN',
+                'error_code' => $errorCode,
                 'error_name' => 'Thiếu người thực hiện',
-                'critical_error' => true,
+                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
                 'description' => 'Người thực hiện không được để trống'
             ]);
         } else {
             if (!MedicalStaff::where('ma_bhxh', $data->nguoi_thuc_hien)->exists()) {
+                $errorCode = $this->generateErrorCode('INFO_ERROR_NGUOI_THUC_HIEN_NOT_FOUND');
                 $errors->push((object)[
-                    'error_code' => $this->prefix . 'INFO_ERROR_NGUOI_THUC_HIEN_NOT_FOUND',
+                    'error_code' => $errorCode,
                     'error_name' => 'Người thực hiện chưa được duyệt',
-                    'critical_error' => true,
+                    'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
                     'description' => 'Người thực hiện chưa được duyệt danh mục NVYT: ' . $data->nguoi_thuc_hien
                 ]);
             }

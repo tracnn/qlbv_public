@@ -27,6 +27,11 @@ class Qd130Xml4Checker
         $this->prefix = $this->xmlType . '_';
     }
 
+    protected function generateErrorCode(string $errorKey): string
+    {
+        return $this->prefix . $errorKey;
+    }
+
     /**
      * Check Qd130Xml4 Errors
      *
@@ -64,27 +69,30 @@ class Qd130Xml4Checker
 
 
         if (empty($data->ma_dich_vu)) {
+            $errorCode = $this->generateErrorCode('INFO_ERROR_MA_DICH_VU');
             $errors->push((object)[
-                'error_code' => $this->prefix . 'INFO_ERROR_MA_DICH_VU',
+                'error_code' => $errorCode,
                 'error_name' => 'Thiếu mã dịch vụ',
-                'critical_error' => true,
+                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
                 'description' => 'Mã dịch vụ không được để trống'
             ]);
         } else {
             if (strlen($data->ma_dich_vu) > 15) {
+                $errorCode = $this->generateErrorCode('INFO_ERROR_MA_DICH_VU_LENGTH');
                 $errors->push((object)[
-                    'error_code' => $this->prefix . 'INFO_ERROR_MA_DICH_VU_LENGTH',
+                    'error_code' => $errorCode,
                     'error_name' => 'Mã dịch vụ quá dài',
-                    'critical_error' => true,
+                    'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
                     'description' => 'Mã dịch vụ không được lớn hơn 15 kí tự: ' . $data->ma_dich_vu
                 ]);
             }
 
             if (!ServiceCatalog::where('ma_dich_vu', $data->ma_dich_vu)->exists()) {
+                $errorCode = $this->generateErrorCode('INFO_ERROR_MA_DICH_VU_NOT_FOUND');
                 $errors->push((object)[
-                    'error_code' => $this->prefix . 'INFO_ERROR_MA_DICH_VU_NOT_FOUND',
+                    'error_code' => $errorCode,
                     'error_name' => 'Mã dịch vụ không tồn tại',
-                    'critical_error' => true,
+                    'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
                     'description' => 'Mã dịch vụ không tồn tại trong danh mục DVKT: ' . $data->ma_dich_vu
                 ]);
             }
@@ -93,24 +101,26 @@ class Qd130Xml4Checker
         //ket_luan & mo_ta không được để trống
         if (!empty($data->ma_dich_vu)) {
             $require_mo_ta_ket_luan = Qd130Xml3::where('ma_lk', $data->ma_lk)
-            ->where('ma_dich_vu', $data->ma_dich_vu)
-            ->whereIn('ma_nhom', config('qd130xml.xml4.xml3_ma_nhom_require_ket_luan'))
-            ->exists();
+                ->where('ma_dich_vu', $data->ma_dich_vu)
+                ->whereIn('ma_nhom', config('qd130xml.xml4.xml3_ma_nhom_require_ket_luan'))
+                ->exists();
 
             if ($require_mo_ta_ket_luan && empty($data->mo_ta)) {
+                $errorCode = $this->generateErrorCode('INFO_ERROR_MO_TA_EMPTY');
                 $errors->push((object)[
-                    'error_code' => $this->prefix . 'INFO_ERROR_MO_TA_EMPTY',
+                    'error_code' => $errorCode,
                     'error_name' => 'Mô tả không được để trống',
-                    'critical_error' => true,
+                    'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
                     'description' => 'Mô tả không được để trống đối với DVKT: ' . $data->ma_dich_vu
                 ]);
             }
-            
+
             if ($require_mo_ta_ket_luan && empty($data->ket_luan)) {
+                $errorCode = $this->generateErrorCode('INFO_ERROR_KET_LUAN_EMPTY');
                 $errors->push((object)[
-                    'error_code' => $this->prefix . 'INFO_ERROR_KET_LUAN_EMPTY',
+                    'error_code' => $errorCode,
                     'error_name' => 'Kết luận không được để trống',
-                    'critical_error' => true,
+                    'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
                     'description' => 'Kết luận không được để trống đối với DVKT: ' . $data->ma_dich_vu
                 ]);
             }
@@ -118,10 +128,11 @@ class Qd130Xml4Checker
 
         if (!empty($data->ma_chi_so)) {
             if (strlen($data->ma_chi_so) > 50) {
+                $errorCode = $this->generateErrorCode('INFO_ERROR_MA_CHI_SO_LENGTH');
                 $errors->push((object)[
-                    'error_code' => $this->prefix . 'INFO_ERROR_MA_CHI_SO_LENGTH',
+                    'error_code' => $errorCode,
                     'error_name' => 'Mã chỉ số quá dài',
-                    'critical_error' => true,
+                    'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
                     'description' => 'Mã chỉ số không được lớn hơn 50 kí tự: ' . $data->ma_chi_so
                 ]);
             }
@@ -129,10 +140,11 @@ class Qd130Xml4Checker
 
         if (!empty($data->ten_chi_so)) {
             if (strlen($data->ten_chi_so) > 255) {
+                $errorCode = $this->generateErrorCode('INFO_ERROR_TEN_CHI_SO_LENGTH');
                 $errors->push((object)[
-                    'error_code' => $this->prefix . 'INFO_ERROR_TEN_CHI_SO_LENGTH',
+                    'error_code' => $errorCode,
                     'error_name' => 'Tên chỉ số quá dài',
-                    'critical_error' => true,
+                    'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
                     'description' => 'Tên chỉ số không được lớn hơn 255 kí tự: ' . $data->ten_chi_so
                 ]);
             }
@@ -140,10 +152,11 @@ class Qd130Xml4Checker
 
         if (!empty($data->gia_tri)) {
             if (strlen($data->gia_tri) > 50) {
+                $errorCode = $this->generateErrorCode('INFO_ERROR_GIA_TRI_LENGTH');
                 $errors->push((object)[
-                    'error_code' => $this->prefix . 'INFO_ERROR_GIA_TRI_LENGTH',
+                    'error_code' => $errorCode,
                     'error_name' => 'Giá trị quá dài',
-                    'critical_error' => true,
+                    'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
                     'description' => 'Giá trị không được lớn hơn 50 kí tự: ' . $data->gia_tri
                 ]);
             }
@@ -151,37 +164,41 @@ class Qd130Xml4Checker
 
         if (!empty($data->don_vi_do)) {
             if (strlen($data->don_vi_do) > 50) {
+                $errorCode = $this->generateErrorCode('INFO_ERROR_DON_VI_DO_LENGTH');
                 $errors->push((object)[
-                    'error_code' => $this->prefix . 'INFO_ERROR_DON_VI_DO_LENGTH',
+                    'error_code' => $errorCode,
                     'error_name' => 'Đơn vị đo quá dài',
-                    'critical_error' => true,
+                    'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
                     'description' => 'Đơn vị đo không được lớn hơn 50 kí tự: ' . $data->don_vi_do
                 ]);
             }
         }
-
+        
         if (empty($data->ngay_kq)) {
+            $errorCode = $this->generateErrorCode('INFO_ERROR_NGAY_KQ');
             $errors->push((object)[
-                'error_code' => $this->prefix . 'INFO_ERROR_NGAY_KQ',
+                'error_code' => $errorCode,
                 'error_name' => 'Thiếu ngày trả kết quả',
-                'critical_error' => true,
+                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
                 'description' => 'Ngày trả kết quả không được để trống'
             ]);
         }
 
         if (empty($data->ma_bs_doc_kq)) {
+            $errorCode = $this->generateErrorCode('INFO_ERROR_MA_BS_DOC_KQ');
             $errors->push((object)[
-                'error_code' => $this->prefix . 'INFO_ERROR_MA_BS_DOC_KQ',
+                'error_code' => $errorCode,
                 'error_name' => 'Thiếu mã bác sĩ đọc kết quả',
-                'critical_error' => true,
+                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
                 'description' => 'Mã bác sĩ đọc kết quả không được để trống'
             ]);
         } else {
             if (!MedicalStaff::where('ma_bhxh', $data->ma_bs_doc_kq)->exists()) {
+                $errorCode = $this->generateErrorCode('INFO_ERROR_MA_BS_DOC_KQ_NOT_FOUND');
                 $errors->push((object)[
-                    'error_code' => $this->prefix . 'INFO_ERROR_MA_BS_DOC_KQ_NOT_FOUND',
+                    'error_code' => $errorCode,
                     'error_name' => 'Mã bác sĩ đọc kết quả chưa được duyệt',
-                    'critical_error' => true,
+                    'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
                     'description' => 'Mã bác sĩ đọc kết quả chưa được duyệt danh mục NVYT: ' . $data->ma_bs_doc_kq
                 ]);
             }

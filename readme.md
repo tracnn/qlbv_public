@@ -1,5 +1,8 @@
-# 09/10/2024
+# 11/10/2024
 - Bổ sung kiểm tra VTYT kèm theo DVKT phải có y lệnh trùng ngày y lệnh DVKT.
+- Bổ sung cho phép người dùng lựa chọn Lỗi Xml: 
+	+ Cho phép kiểm tra/không kiểm tra lỗi.
+	+ Cho phép lựa chọn lỗi đó là lỗi critical hoặc không.
 
 # 30/09/2024
 - Bổ sung export data BN nợ viện phí dạng xlsx

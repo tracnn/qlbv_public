@@ -27,6 +27,11 @@ class Qd130Xml8Checker
         $this->prefix = $this->xmlType . '_';
     }
 
+    protected function generateErrorCode(string $errorKey): string
+    {
+        return $this->prefix . $errorKey;
+    }
+
     /**
      * Check Qd130Xml8 Errors
      *
@@ -55,52 +60,58 @@ class Qd130Xml8Checker
         $errors = collect();
 
         if (empty($data->pp_dieutri)) {
+            $errorCode = $this->generateErrorCode('INFO_ERROR_PP_DIEUTRI');
             $errors->push((object)[
-                'error_code' => $this->prefix . 'INFO_ERROR_PP_DIEUTRI',
+                'error_code' => $errorCode,
                 'error_name' => 'Thiếu phương pháp điều trị',
-                'critical_error' => true,
+                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
                 'description' => 'Phương pháp điều trị không được để trống'
             ]);
         }
 
         if (empty($data->tomtat_kq)) {
+            $errorCode = $this->generateErrorCode('INFO_ERROR_TOMTAT_KQ');
             $errors->push((object)[
-                'error_code' => $this->prefix . 'INFO_ERROR_TOMTAT_KQ',
+                'error_code' => $errorCode,
                 'error_name' => 'Thiếu tóm tắt kết quả',
-                'critical_error' => true,
+                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
                 'description' => 'Tóm tắt kết quả không được để trống'
             ]);
         } elseif (mb_strlen($data->tomtat_kq) > 4000) {
+            $errorCode = $this->generateErrorCode('INFO_ERROR_TOMTAT_KQ_LENGTH');
             $errors->push((object)[
-                'error_code' => $this->prefix . 'INFO_ERROR_TOMTAT_KQ_LENGTH',
+                'error_code' => $errorCode,
                 'error_name' => 'Tóm tắt kết quả vượt quá 4000 ký tự',
-                'critical_error' => true,
+                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
                 'description' => 'Tóm tắt kết quả không được vượt quá 4000 ký tự'
             ]);
         }
 
         if (empty($data->ket_qua_dtri)) {
+            $errorCode = $this->generateErrorCode('INFO_ERROR_KET_QUA_DTRI');
             $errors->push((object)[
-                'error_code' => $this->prefix . 'INFO_ERROR_KET_QUA_DTRI',
+                'error_code' => $errorCode,
                 'error_name' => 'Thiếu kết quả điều trị',
-                'critical_error' => true,
+                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
                 'description' => 'Kết quả điều trị không được để trống'
             ]);
         }
 
         if (empty($data->ma_ttdv)) {
+            $errorCode = $this->generateErrorCode('INFO_ERROR_MA_TTDV');
             $errors->push((object)[
-                'error_code' => $this->prefix . 'INFO_ERROR_MA_TTDV',
+                'error_code' => $errorCode,
                 'error_name' => 'Thiếu mã thủ trưởng đơn vị',
-                'critical_error' => true,
+                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
                 'description' => 'Thủ trưởng đơn vị không được để trống'
             ]);
         } else {
-            if(!MedicalStaff::where('ma_bhxh', $data->ma_ttdv)->exists()) {
+            if (!MedicalStaff::where('ma_bhxh', $data->ma_ttdv)->exists()) {
+                $errorCode = $this->generateErrorCode('INFO_ERROR_MA_TTDV_NOT_FOUND');
                 $errors->push((object)[
-                    'error_code' => $this->prefix . 'INFO_ERROR_MA_TTDV_NOT_FOUND',
+                    'error_code' => $errorCode,
                     'error_name' => 'Mã thủ trưởng đơn vị chưa được duyệt',
-                    'critical_error' => true,
+                    'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
                     'description' => 'Mã thủ trưởng đơn vị chưa được duyệt danh mục (Mã CCHN: ' . $data->ma_ttdv . ')'
                 ]);
             }
