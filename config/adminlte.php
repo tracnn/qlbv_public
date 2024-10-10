@@ -411,7 +411,7 @@ return [
         [
             'text'    => 'Quản lý danh mục',
             'icon'    => 'book',
-            'checkrole'   => 'administrator',
+            'checkrole'   => 'superadministrator',
             'submenu' => [
                 [
                     'text'    => 'BHYT',
