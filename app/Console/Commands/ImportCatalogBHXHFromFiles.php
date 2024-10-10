@@ -161,7 +161,12 @@ class ImportCatalogBHXHFromFiles extends Command
             case $firstRow === $expectedMedicineColumns:
                 $data = $data->slice(1); // Bỏ qua dòng đầu tiên
                 foreach ($data as $row) {
-                    
+
+                    if (isset($row[3])) {
+                        // Loại bỏ ký tự đặc biệt chỉ trong cột $row[3]
+                        $row[3] = preg_replace('/[^\p{L}\p{N}\s]/u', '', $row[3]);
+                    }
+
                     if (empty($row[1]) || empty($row[5]) || empty($row[9]) || empty($row[17]) || empty($row[2]) || empty($row[3]) || empty($row[4]) || empty($row[6]) || empty($row[7]) || empty($row[8]) || empty($row[11]) || empty($row[12])) {
                         continue;
                     }
@@ -172,6 +177,7 @@ class ImportCatalogBHXHFromFiles extends Command
                                 'ma_thuoc' => $row[1],
                                 'ten_thuoc' => $row[3],
                                 'ham_luong' => $row[5],
+                                'so_dang_ky' => $row[9],
                                 'don_gia_bh' => $row[12],
                                 'tt_thau' => $row[17],
                                 'tu_ngay' => $row[18],
@@ -182,7 +188,6 @@ class ImportCatalogBHXHFromFiles extends Command
                                 'duong_dung' => $row[6],
                                 'ma_duong_dung' => $row[7],
                                 'dang_bao_che' => $row[8],
-                                'so_dang_ky' => $row[9],
                                 'so_luong' => $row[10],
                                 'don_gia' => $row[11],
                                 'quy_cach' => $row[13],
@@ -209,6 +214,11 @@ class ImportCatalogBHXHFromFiles extends Command
             case $firstRow === $expectedSupplyColumns:
                 $data = $data->slice(1); // Bỏ qua dòng đầu tiên
                 foreach ($data as $row) {
+
+                    if (isset($row[3])) {
+                        // Loại bỏ ký tự đặc biệt chỉ trong cột $row[3]
+                        $row[3] = preg_replace('/[^\p{L}\p{N}\s]/u', '', $row[3]);
+                    }
 
                     if (empty($row[1]) || empty($row[2]) || empty($row[3]) || empty($row[15]) || empty($row[9]) || empty($row[10]) || empty($row[16]) || empty($row[11])) {
                         continue;
