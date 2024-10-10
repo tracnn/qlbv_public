@@ -163,7 +163,7 @@ class ImportCatalogBHXHFromFiles extends Command
                 foreach ($data as $row) {
                     // Loại bỏ ký tự đặc biệt cho tất cả các cột
                     foreach ($row as $key => $value) {
-                        $row[$key] = preg_replace('/[^\x20-\x7E]/u', '', $value);
+                        $row[$key] = preg_replace('/[^\p{L}\p{N}\s]/u', '', $value);
                     }
                     
                     if (empty($row[1]) || empty($row[5]) || empty($row[9]) || empty($row[17]) || empty($row[2]) || empty($row[3]) || empty($row[4]) || empty($row[6]) || empty($row[7]) || empty($row[8]) || empty($row[11]) || empty($row[12])) {
@@ -176,8 +176,9 @@ class ImportCatalogBHXHFromFiles extends Command
                                 'ma_thuoc' => $row[1],
                                 'ten_thuoc' => $row[3],
                                 'ham_luong' => $row[5],
-                                'so_dang_ky' => $row[9],
-                                'tt_thau' => $row[17]
+                                'don_gia_bh' => $row[12],
+                                'tt_thau' => $row[17],
+                                'tu_ngay' => $row[18],
                             ],
                             [
                                 'ten_hoat_chat' => $row[2],
@@ -185,14 +186,13 @@ class ImportCatalogBHXHFromFiles extends Command
                                 'duong_dung' => $row[6],
                                 'ma_duong_dung' => $row[7],
                                 'dang_bao_che' => $row[8],
+                                'so_dang_ky' => $row[9],
                                 'so_luong' => $row[10],
                                 'don_gia' => $row[11],
-                                'don_gia_bh' => $row[12],
                                 'quy_cach' => $row[13],
                                 'nha_sx' => $row[14],
                                 'nuoc_sx' => $row[15],
                                 'nha_thau' => $row[16],
-                                'tu_ngay' => $row[18],
                                 'den_ngay' => $row[19],
                                 'ma_cskcb' => $row[20],
                                 'loai_thuoc' => $row[21],
@@ -216,10 +216,10 @@ class ImportCatalogBHXHFromFiles extends Command
                     
                     // Loại bỏ ký tự đặc biệt cho tất cả các cột
                     foreach ($row as $key => $value) {
-                        $row[$key] = preg_replace('/[^\x20-\x7E]/u', '', $value);
+                        $row[$key] = preg_replace('/[^\p{L}\p{N}\s]/u', '', $value);
                     }    
 
-                    if (empty($row[1]) || empty($row[2]) || empty($row[3]) || empty($row[15])) {
+                    if (empty($row[1]) || empty($row[2]) || empty($row[3]) || empty($row[15]) || empty($row[9]) || empty($row[10]) || empty($row[16]) || empty($row[11])) {
                         continue;
                     }
 
@@ -227,7 +227,9 @@ class ImportCatalogBHXHFromFiles extends Command
                         MedicalSupplyCatalog::updateOrCreate(
                             [
                                 'ma_vat_tu' => $row[1],
-                                'tt_thau' => $row[15]
+                                'tt_thau' => $row[15],
+                                'don_gia_bh' => $row[10],
+                                'tu_ngay' => $row[16],
                             ],
                             [
                                 'nhom_vat_tu' => $row[2],
@@ -238,16 +240,14 @@ class ImportCatalogBHXHFromFiles extends Command
                                 'nuoc_sx' => $row[7],
                                 'don_vi_tinh' => $row[8],
                                 'don_gia' => $row[9],
-                                'don_gia_bh' => $row[10],
                                 'tyle_tt_bh' => $row[11],
                                 'so_luong' => $row[12],
-                                'dinh_muc' => $row[13],
+                                'dinh_muc' => empty($row[13]) ?: null,
                                 'nha_thau' => $row[14],
-                                'tu_ngay' => $row[16],
                                 'den_ngay_hd' => $row[17],
                                 'ma_cskcb' => $row[18],
                                 'loai_thau' => $row[19],
-                                'ht_thau' => $row[20],
+                                'ht_thau' => empty($row[20]) ?: null,
                                 'den_ngay' => $row[21]
                             ]
                         );                        
