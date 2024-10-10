@@ -18,7 +18,8 @@ class UpdateUniqueConstraintOnMedicineCatalogs extends Migration
             $table->dropUnique('medicine_catalogs_ma_thuoc_ham_luong_so_dang_ky_tt_thau_unique'); // Thay 'ma_thuoc' bằng tên của unique constraint cũ nếu có
 
             // Thêm unique constraint mới
-            $table->unique(['ma_thuoc', 'ten_thuoc', 'ham_luong', 'don_gia_bh', 'tt_thau', 'tu_ngay'], 'unique_medicine_catalog');
+            $table->unique(['ma_thuoc', 'ten_thuoc', 'ham_luong', 'so_dang_ky', 'don_gia_bh', 
+                'tt_thau', 'tu_ngay'], 'unique_medicine_catalog');
         });
     }
 
