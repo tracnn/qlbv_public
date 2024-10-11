@@ -4,7 +4,7 @@
         <select id="hein_card_filter" class="form-control select2">
             <option value="">Tất cả</option>
             <option value="has_hein_card">Có thẻ BHYT</option>
-            <option value="has_hein_cards">Có nhiều hơn 1 thẻ</option>
+            <option value="has_hein_cards">Có nhiều thẻ BHYT</option>
             <option value="no_hein_card">Không có thẻ BHYT</option>
         </select>
     </div> 
