@@ -9,7 +9,7 @@ return [
         SET 
             hospitalize_reason_name = hospitalization_reason 
         WHERE 
-            his_treatment.treatment_code = \'ma_dieu_tri\'
+            his_treatment.treatment_code = \'{ma_dieu_tri}\'
             AND hospitalize_reason_name IS NULL
             AND tdl_treatment_type_id = 3;
         COMMIT;',
@@ -40,6 +40,6 @@ return [
                                                 AND 
                                                     his_sere_serv.patient_type_id = 1
                                                 AND 
-                                                    his_treatment.treatment_code =\'ma_dieu_tri\');
+                                                    his_treatment.treatment_code =\'{ma_dieu_tri}\');
                                             COMMIT;',
 ];

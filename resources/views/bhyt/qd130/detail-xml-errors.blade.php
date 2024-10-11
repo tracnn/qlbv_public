@@ -57,7 +57,18 @@
                             <td>{{ strtodatetime($error->ngay_yl) }}</td>
                             <td>{{ strtodatetime($error->ngay_kq) }}</td>
                             <td>{{ $error->description }}</td>
-                            <td>{!! config("qd130xml_suggestions.$error->error_code", config("qd130xml_suggestions.general")) !!}</td>
+                            <td>
+                                @php
+                                    // Các giá trị động có thể cần thay thế, ví dụ như mã điều trị
+                                    $placeholders = [
+                                        'ma_dieu_tri' => $error->treatment_code ?? 'N/A', // Bạn có thể lấy mã điều trị từ error hoặc nguồn khác
+                                    ];
+
+                                    // Sử dụng helper getFormattedSuggestion() để lấy và thay thế nội dung
+                                    $suggestion = getFormattedSuggestion($error->error_code, $placeholders);
+                                @endphp
+                                {!! nl2br(e($suggestion)) !!}
+                            </td>
                         </tr>
                         @endforeach
                     </tbody>

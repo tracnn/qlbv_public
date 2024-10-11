@@ -219,3 +219,25 @@
         }
     }
     
+
+    if (!function_exists('getFormattedSuggestion')) {
+        /**
+         * Lấy thông báo từ config và thay thế các placeholder bằng giá trị thực tế.
+         *
+         * @param string $key - Key trong config qd130xml_suggestions
+         * @param array $placeholders - Mảng các giá trị cần thay thế cho các placeholder
+         * @return string - Chuỗi thông báo đã được thay thế
+         */
+        function getFormattedSuggestion($key, $placeholders = [])
+        {
+            // Lấy thông báo từ file config
+            $message = config("qd130xml_suggestions.$key", 'Liên hệ quản trị hệ thống');
+
+            // Thay thế các placeholder bằng giá trị thực tế
+            foreach ($placeholders as $placeholder => $value) {
+                $message = str_replace('{' . $placeholder . '}', $value, $message);
+            }
+
+            return $message;
+        }
+    }
