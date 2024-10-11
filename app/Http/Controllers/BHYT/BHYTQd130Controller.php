@@ -212,6 +212,8 @@ class BHYTQd130Controller extends Controller
                     $result = $result->where('ma_the_bhyt', '<>', '');
                 } elseif ($hein_card_filter === 'no_hein_card') {
                     $result = $result->where('ma_the_bhyt', '=', '');
+                } elseif ($hein_card_filter === 'has_hein_cards') {
+                    $result = $result->where('ma_the_bhyt', 'LIKE', '%;%');
                 }
 
                 // Apply filter based on payment_date_filter
