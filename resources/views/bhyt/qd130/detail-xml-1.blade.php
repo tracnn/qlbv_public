@@ -99,11 +99,15 @@
                                 </tr>
                                 <tr>
                                     <th>GT thẻ từ</th>
-                                    <td>{{ strtodate($xml1->gt_the_tu) }}</td>
+                                    <td>
+                                        {{ implode(';', array_map('strtodate', explode(';', $xml1->gt_the_tu))) }}
+                                    </td>
                                 </tr>
                                 <tr>
                                     <th>GT thẻ đến</th>
-                                    <td>{{ strtodate($xml1->gt_the_den) }}</td>
+                                    <td>
+                                        {{ implode(';', array_map('strtodate', explode(';', $xml1->gt_the_den))) }}
+                                    </td>
                                 </tr>
                             </table>
                         </div>
