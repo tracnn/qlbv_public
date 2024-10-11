@@ -231,7 +231,7 @@
         function getFormattedSuggestion($key, $placeholders = [])
         {
             // Lấy thông báo từ file config
-            $message = config("qd130xml_suggestions.$key", 'Liên hệ quản trị hệ thống');
+            $message = config("qd130xml_suggestions.$key", config("qd130xml_suggestions.general"));
 
             // Thay thế các placeholder bằng giá trị thực tế
             foreach ($placeholders as $placeholder => $value) {
