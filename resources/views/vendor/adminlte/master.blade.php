@@ -19,6 +19,8 @@
 
     <link href="//cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/css/toastr.min.css" rel="stylesheet">
 
+    <link rel="stylesheet" href="{{ asset('css/sweetalert2.min.css') }}">
+
     @if(config('adminlte.plugins.select2'))
         <!-- Select2 -->
         <link href="{{ asset('vendor/select2/css/select2.min.css')}}" rel="stylesheet">
@@ -56,6 +58,7 @@
 <script src="{{ asset('/js/customize.js')}}?v={{ time() }}"></script>
 <script src="{{asset('vendor/ckeditor/ckeditor.js')}}"></script>
 <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/js/toastr.min.js"></script>
+<script src="{{ asset('js/sweetalert2.all.min.js') }}"></script>
 
 @if(config('adminlte.plugins.select2'))
     <!-- Select2 -->

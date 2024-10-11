@@ -83,29 +83,43 @@
     $(document).ready(function() {
         fetchData();
 
-        // Sự kiện thay đổi checkbox
+        // Sự kiện thay đổi checkbox cho is_check
         $('#qd130-xml-error-catalog-list').on('change', '.is-check-toggle', function() {
             var isChecked = $(this).is(':checked');
             var catalogId = $(this).data('id');
-            // Gửi yêu cầu AJAX để cập nhật giá trị is_check
-            $.ajax({
-                url: "{{ route('category-bhyt.update-qd130-xml-error-catalog') }}", // Route để cập nhật
-                method: "POST",
-                data: {
-                    _token: "{{ csrf_token() }}",
-                    id: catalogId,
-                    is_check: isChecked ? 1 : 0
-                },
-                success: function(response) {
-                    if (response.success) {
-                        toastr.success('Cập nhật thành công!');
-                    } else {
-                        toastr.error('Có lỗi xảy ra khi cập nhật.');
-                    }
-                },
-                error: function(xhr, status, error) {
-                    toastr.error('Có lỗi xảy ra khi gửi yêu cầu: ' + error);
-                    console.log('Error:', error);
+            var self = $(this);
+
+            // Hỏi người dùng xem có chắc chắn muốn thay đổi không
+            Swal.fire({
+                title: 'Bạn có chắc chắn?',
+                icon: 'warning',
+                showCancelButton: true,
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Gửi yêu cầu AJAX để cập nhật giá trị is_check
+                    $.ajax({
+                        url: "{{ route('category-bhyt.update-qd130-xml-error-catalog') }}",
+                        method: "POST",
+                        data: {
+                            _token: "{{ csrf_token() }}",
+                            id: catalogId,
+                            is_check: isChecked ? 1 : 0
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                toastr.success('Cập nhật thành công.');
+                            } else {
+                                toastr.error('Có lỗi xảy ra khi cập nhật.');
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            toastr.error('Có lỗi xảy ra khi gửi yêu cầu: ' + error);
+                            console.log('Error:', error);
+                        }
+                    });
+                } else {
+                    // Nếu người dùng chọn hủy, không thay đổi trạng thái checkbox
+                    self.prop('checked', !isChecked);
                 }
             });
         });
@@ -114,25 +128,39 @@
         $('#qd130-xml-error-catalog-list').on('change', '.critical-error-toggle', function() {
             var isChecked = $(this).is(':checked');
             var catalogId = $(this).data('id');
-            // Gửi yêu cầu AJAX để cập nhật giá trị critical_error
-            $.ajax({
-                url: "{{ route('category-bhyt.update-qd130-xml-error-catalog') }}", // Route để cập nhật
-                method: "POST",
-                data: {
-                    _token: "{{ csrf_token() }}",
-                    id: catalogId,
-                    critical_error: isChecked ? 1 : 0
-                },
-                success: function(response) {
-                    if (response.success) {
-                        toastr.success('Cập nhật thành công!');
-                    } else {
-                        toastr.error('Có lỗi xảy ra khi cập nhật.');
-                    }
-                },
-                error: function(xhr, status, error) {
-                    toastr.error('Có lỗi xảy ra khi gửi yêu cầu: ' + error);
-                    console.log('Error:', error);
+            var self = $(this);
+
+            // Hỏi người dùng xem có chắc chắn muốn thay đổi không
+            Swal.fire({
+                title: 'Bạn có chắc chắn?',
+                icon: 'warning',
+                showCancelButton: true,
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Gửi yêu cầu AJAX để cập nhật giá trị critical_error
+                    $.ajax({
+                        url: "{{ route('category-bhyt.update-qd130-xml-error-catalog') }}",
+                        method: "POST",
+                        data: {
+                            _token: "{{ csrf_token() }}",
+                            id: catalogId,
+                            critical_error: isChecked ? 1 : 0
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                toastr.success('Cập nhật thành công.');
+                            } else {
+                                toastr.error('Có lỗi xảy ra khi cập nhật.');
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            toastr.error('Có lỗi xảy ra khi gửi yêu cầu: ' + error);
+                            console.log('Error:', error);
+                        }
+                    });
+                } else {
+                    // Nếu người dùng chọn hủy, không thay đổi trạng thái checkbox
+                    self.prop('checked', !isChecked);
                 }
             });
         });
