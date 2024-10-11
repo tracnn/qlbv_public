@@ -61,13 +61,13 @@
                                 @php
                                     // Các giá trị động có thể cần thay thế, ví dụ như mã điều trị
                                     $placeholders = [
-                                        'ma_dieu_tri' => $error->treatment_code ?? 'N/A', // Bạn có thể lấy mã điều trị từ error hoặc nguồn khác
+                                        'ma_dieu_tri' => $error->ma_lk ?? 'N/A', // Bạn có thể lấy mã điều trị từ error hoặc nguồn khác
                                     ];
 
                                     // Sử dụng helper getFormattedSuggestion() để lấy và thay thế nội dung
                                     $suggestion = getFormattedSuggestion($error->error_code, $placeholders);
                                 @endphp
-                                {!! nl2br(e($suggestion)) !!}
+                                {{ $suggestion }}
                             </td>
                         </tr>
                         @endforeach
