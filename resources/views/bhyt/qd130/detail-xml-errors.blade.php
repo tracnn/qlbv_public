@@ -59,9 +59,8 @@
                             <td>{{ $error->description }}</td>
                             <td>
                                 @php
-                                    // Các giá trị động có thể cần thay thế, ví dụ như mã điều trị
                                     $placeholders = [
-                                        'ma_dieu_tri' => $error->ma_lk ?? 'N/A', // Bạn có thể lấy mã điều trị từ error hoặc nguồn khác
+                                        'ma_dieu_tri' => $error->ma_lk ?? 'N/A',
                                     ];
 
                                     // Sử dụng helper getFormattedSuggestion() để lấy và thay thế nội dung
