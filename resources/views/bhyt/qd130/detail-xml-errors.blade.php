@@ -38,7 +38,7 @@
                             <th>Ngày y lệnh</th>
                             <th>Ngày kết quả</th>
                             <th>Description</th>
-                            
+                            <th>Hướng xử lý</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -57,6 +57,7 @@
                             <td>{{ strtodatetime($error->ngay_yl) }}</td>
                             <td>{{ strtodatetime($error->ngay_kq) }}</td>
                             <td>{{ $error->description }}</td>
+                            <td>{!! config("qd130xml_suggestions.$error->error_code", config("qd130xml_suggestions.general")) !!}</td>
                         </tr>
                         @endforeach
                     </tbody>
