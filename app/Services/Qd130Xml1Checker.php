@@ -501,16 +501,19 @@ class Qd130Xml1Checker
 
         // Kiểm tra mã đơn vị khám bệnh đa khoa ban đầu
         if (!empty($data->ma_dkbd)) {
-            $initialExaminationUnitExists = MedicalOrganization::where('ma_cskcb', $data->ma_dkbd)->exists();
+            $maDkbdList = explode(';', $data->ma_dkbd); // Tách các mã DKBD phân cách bởi dấu ";"
+            foreach ($maDkbdList as $maDkbd) {
+                $initialExaminationUnitExists = MedicalOrganization::where('ma_cskcb', trim($maDkbd))->exists();
 
-            if (!$initialExaminationUnitExists) {
-                $errorCode = $this->generateErrorCode('ADMIN_INFO_ERROR_MA_DKBD_NOT_FOUND');
-                $errors->push((object)[
-                    'error_code' => $errorCode,
-                    'error_name' => 'Mã đăng ký ban đầu không có trong danh mục',
-                    'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
-                    'description' => 'Mã đăng ký ban đầu: ' . $data->ma_dkbd . ' không có trong danh mục CSKCB'
-                ]);
+                if (!$initialExaminationUnitExists) {
+                    $errorCode = $this->generateErrorCode('ADMIN_INFO_ERROR_MA_DKBD_NOT_FOUND');
+                    $errors->push((object)[
+                        'error_code' => $errorCode,
+                        'error_name' => 'Mã đăng ký ban đầu không có trong danh mục',
+                        'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+                        'description' => 'Mã đăng ký ban đầu: ' . $maDkbd . ' không có trong danh mục CSKCB'
+                    ]);
+                }
             }
         }
 
