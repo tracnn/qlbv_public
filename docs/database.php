@@ -161,21 +161,6 @@ return [
             'prefix_schema'  => '',
             'server_version' => '12g',
         ],
-
-        'sys' => [
-            'driver'         => 'oracle',
-            'tns'            => '',
-            'host'           => '',
-            'port'           => '1521',
-            'database'       => 'orcl',
-            'username'       => 'sys',
-            'password'       => 'Vss1234$',
-            'charset'        => 'AL32UTF8',
-            'prefix'         => '',
-            'prefix_schema'  => '',
-            'server_version' => '12g',
-        ],
-
     ],
 
     /*
