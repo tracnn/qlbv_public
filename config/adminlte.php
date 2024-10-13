@@ -459,6 +459,12 @@ return [
                             'route'   => 'category-bhyt.qd130-xml-error-catalog',
                             'active'=> ['category/bhyt/qd130-xml-error-catalog*'],
                         ],
+                        [
+                            'text'  => 'Import danh mục',
+                            'icon'  => 'book',
+                            'route'   => 'category-bhyt.import-index',
+                            'active'=> ['category/bhyt/category-bhyt-import-index*'],
+                        ],
                     ],
                 ],
                 

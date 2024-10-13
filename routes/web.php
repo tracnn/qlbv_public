@@ -254,6 +254,11 @@ Route::group(['middleware' => ['auth', 'check.first.login']], function () {
         Route::post('/category-bhyt/update-qd130-xml-error-catalog', 'Category\CategoryBHYTController@updateQd130XmlErrorCatalog')
         ->name('category-bhyt.update-qd130-xml-error-catalog');
 
+        Route::get('bhyt/category-bhyt-import-index', 'Category\CategoryBHYTController@importIndex')
+        ->name('category-bhyt.import-index');
+        Route::post('bhyt/category-bhyt-import', 'Category\CategoryBHYTController@import')
+        ->name('category-bhyt.import');
+
     });
 
 	/* Insurance , 'middleware' => ['checkrole:manager'] */

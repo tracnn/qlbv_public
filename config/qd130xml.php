@@ -44,6 +44,7 @@ return [
     /* Bổ sung key 2024.08.23 */
     'xml1' => [
         'ma_doituong_kcb_trai_tuyen' => ['3'],
+        'the_bhyt_cbcs_pattern' => ['CA', 'QN', 'CY'],
     ],
     'xml2' => [
         'tt_thau' => [ // Bổ sung quy tắc định dạng tt_thau

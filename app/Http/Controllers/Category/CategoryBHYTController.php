@@ -151,4 +151,10 @@ class CategoryBHYTController extends Controller
 
         return response()->json(['success' => false], 404);
     }
+
+    public function importIndex()
+    {
+        return view('category.bhyt.import');
+    }
+
 }
