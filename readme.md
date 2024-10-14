@@ -4,6 +4,7 @@
 	+ Cho phép kiểm tra/không kiểm tra lỗi.
 	+ Cho phép lựa chọn lỗi đó là lỗi critical hoặc warning.
 - Bổ sung hướng xử lý trên form hiển thị lỗi Xml: Hướng dẫn cách xử lý một số lỗi cơ bản
+- Bổ sung chức năng import danh mục trên giao diện người dùng
 
 # 30/09/2024
 - Bổ sung export data BN nợ viện phí dạng xlsx
