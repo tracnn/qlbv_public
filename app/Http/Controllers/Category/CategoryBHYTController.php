@@ -15,9 +15,17 @@ use App\Models\BHYT\DepartmentBedCatalog;
 use App\Models\BHYT\EquipmentCatalog;
 use App\Models\BHYT\XmlErrorCatalog;
 use App\Models\BHYT\Qd130XmlErrorCatalog;
+use App\Services\CatalogImportService;
 
 class CategoryBHYTController extends Controller
 {
+    protected $importService;
+    
+    public function __construct(CatalogImportService $importService)
+    {
+        $this->importService = $importService;
+    }
+
     public function indexMedicineCatalog()
     {
         return view('category.bhyt.medicine_catalog');
@@ -155,6 +163,38 @@ class CategoryBHYTController extends Controller
     public function importIndex()
     {
         return view('category.bhyt.import');
+    }
+
+    public function import(Request $request)
+    {
+        if ($request->hasFile('import_file')) {
+            $files = $request->file('import_file'); // Nhận tất cả các file được gửi lên
+
+            // Nếu $files không phải là mảng, chuyển thành mảng
+            if (!is_array($files)) {
+                $files = [$files];
+            }
+
+            foreach ($files as $file) {
+                // Kiểm tra và xử lý từng file
+                $extension = $file->getClientOriginalExtension();
+                
+                if (!in_array($extension, ['xls', 'xlsx'])) {
+                    return response()->json(['message' => 'Định dạng file không hợp lệ. Vui lòng chọn file Excel (.xls hoặc .xlsx)'], 422);
+                }
+
+                try {
+                    // Xử lý import file tại đây
+                    $this->importService->import($file);
+                } catch (\Exception $e) {
+                    return response()->json(['message' => $e->getMessage()], 500);
+                }
+            }
+
+            return response()->json(['message' => 'File đã upload và xử lý thành công!'], 200);
+        }
+
+        return response()->json(['message' => 'Chưa chọn file để import'], 422);
     }
 
 }
