@@ -68,11 +68,11 @@ class Qd130Xml2Checker
         $errors = $errors->merge($this->infoChecker($data));
         $errors = $errors->merge($this->checkMedicalStaff($data));
         $errors = $errors->merge($this->checkDrugCatalog($data));
+        //$errors = $errors->merge($this->checkValidPhamVi($data));
         
         if (config('qd130xml.general.check_valid_department_req')) {
             $errors = $errors->merge($this->checkValidMakhoaReq($data)); // Kiểm tra tính hợp lệ của khoa chỉ định
         }
-
         $additionalData = [
             'ngay_yl' => $data->ngay_yl
         ];
@@ -391,6 +391,46 @@ class Qd130Xml2Checker
         }
 
         return $errors;
+    }
+
+    // Kiểm tra phạm vi
+    private function checkValidPhamVi(Qd130Xml2 $data): Collection
+    {
+        $errors = collect();
+
+        if ($this->isPhamViInvalid($data)) {
+            $errorCode = $this->generateErrorCode('PHAM_VI_INVALID');
+            $errors->push((object)[
+                'error_code' => $errorCode,
+                'error_name' => 'Phạm vi không hợp lệ',
+                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+                'description' => 'Phạm vi của thuốc: ' . $data->ten_thuoc . ' không hợp lệ. Phạm vi phải là 3 đối với mã thẻ CBCS.'
+            ]);
+        }
+
+        return $errors;
+    }
+
+    private function isPhamViInvalid(Qd130Xml2 $data): bool
+    {
+        // Lấy các tiền tố CBCS từ cấu hình
+        $theBhytCbcsPatterns = config('qd130xml.xml1.the_bhyt_cbcs_pattern');
+        
+        // Nếu không có cấu hình hoặc không có giá trị trong cấu hình, trả về false
+        if (empty($theBhytCbcsPatterns)) {
+            return false;
+        }
+
+        $maTheBhyt = $data->Qd130Xml1->ma_the_bhyt;
+
+        // Kiểm tra nếu mã thẻ BHYT bắt đầu với bất kỳ tiền tố nào trong danh sách
+        foreach ($theBhytCbcsPatterns as $pattern) {
+            if (strpos($maTheBhyt, $pattern) === 0 && $data->pham_vi != 3) {
+                return true; // Phạm vi không hợp lệ nếu mã thẻ CBCS và pham_vi không bằng 3
+            }
+        }
+
+        return false; // Phạm vi hợp lệ
     }
 
     // Thêm các phương thức kiểm tra khác ở đây
