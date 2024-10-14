@@ -72,7 +72,11 @@
                 updateFileStatus(file, 'success', response.message);
                 if (uploadedFiles === totalFiles) {
                     isUploading = false;
-                    toastr.success("Đã hoàn thành việc tải lên hồ sơ!");
+                    Swal.fire({
+                        title: 'Thành công!',
+                        text: 'Đã hoàn thành việc tải lên hồ sơ!',
+                        icon: 'success',
+                    });
                 }
             });
 
