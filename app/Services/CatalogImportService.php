@@ -367,6 +367,7 @@ class CatalogImportService
                     'error' => $e->getMessage(),
                     'row' => $row // Ghi lại dữ liệu của hàng bị lỗi
                 ]);
+                continue; // Bỏ qua lỗi và tiếp tục với hàng tiếp theo
             }
         }
     }
@@ -406,6 +407,7 @@ class CatalogImportService
                     'error' => $e->getMessage(),
                     'row' => $row // Ghi lại dữ liệu của hàng bị lỗi
                 ]);
+                continue; // Bỏ qua lỗi và tiếp tục với hàng tiếp theo
             }
         }
     }
@@ -443,6 +445,7 @@ class CatalogImportService
                     'error' => $e->getMessage(),
                     'row' => $row // Ghi lại dữ liệu của hàng bị lỗi
                 ]);
+                continue; // Bỏ qua lỗi và tiếp tục với hàng tiếp theo
             }
         }
     }
@@ -479,6 +482,7 @@ class CatalogImportService
                     'error' => $e->getMessage(),
                     'row' => $row // Ghi lại dữ liệu của hàng bị lỗi
                 ]);
+                continue; // Bỏ qua lỗi và tiếp tục với hàng tiếp theo
             }
         }
     }
