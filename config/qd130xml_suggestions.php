@@ -13,6 +13,13 @@ return [
             AND hospitalize_reason_name IS NULL
             AND tdl_treatment_type_id = 3;
         COMMIT;',
+    'XML1_SPECIAL_INPATIENT_ERROR_PP_DIEU_TRI' => 'UPDATE 
+            his_treatment 
+        SET 
+            treatment_method = \'Nội khoa\' 
+        WHERE 
+            treatment_code = \'{ma_dieu_tri}\';
+        COMMIT;',
 
     //XML3
     'XML3_INFO_ERROR_MA_MAY_NOT_FOUND' => '1. Bổ sung máy trong danh mục HIS; 2. Đẩy cổng BHXH phê duyệt; 3. Tải danh mục trang thiết bị trên cổng import vào phần mềm GĐBHYT',
