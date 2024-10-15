@@ -8,6 +8,7 @@
     <small>Danh sách</small>
 </h1>
 {{ Breadcrumbs::render('ksk.index') }}
+
 @stop
 
 @section('content')
@@ -652,6 +653,20 @@
 </script>
 
 <script>
+$('body').on('shown.bs.dropdown', '.btn-group', function () {
+    var $menu = $(this).find('.dropdown-menu');
+    var offset = $menu.offset();
+    var height = $menu.outerHeight();
+    var windowHeight = $(window).height();
+
+    // Kiểm tra nếu menu bị cắt bởi chiều cao cửa sổ
+    if (offset.top + height > windowHeight) {
+        $(this).addClass('dropup');
+    } else {
+        $(this).removeClass('dropup');
+    }
+});
+
 $(document).ready(function() {
     $('.select2').select2({
         width: '100%' // Đặt chiều rộng của Select2 là 100%
