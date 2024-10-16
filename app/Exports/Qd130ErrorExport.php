@@ -120,7 +120,13 @@ class Qd130ErrorExport implements FromQuery, WithHeadings, ShouldAutoSize, WithS
         } elseif ($payment_date_filter === 'no_payment_date') {
             $query->where('qd130_xml1s.ngay_ttoan', '=', '');
         }
-
+        // Kiểm tra role của user
+        if (!\Auth::user()->hasRole(['superadministrator', 'administrator'])) {
+            // Nếu không có vai trò superadministrator hoặc administrator thì lọc theo người import
+            $query = $query->whereHas('Qd130XmlInformation', function($query) {
+                $query->where('imported_by', \Auth::user()->loginname); // Lọc theo loginname của user hiện tại
+            });
+        } 
         return $query;
     }
 
