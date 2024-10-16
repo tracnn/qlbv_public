@@ -9,10 +9,18 @@
             <div class="form-group row">
                 <label for="default_range">Kiểu lọc</label>
                 <select id="default_range" class="form-control select2">
-                    <option value="day">Ngày</option>
-                    <option value="week">Tuần</option>
-                    <option value="month">Tháng</option>
-                    <option value="year">Năm</option>
+                    <option value="day_today">Hôm nay</option>
+                    <option value="day_yesterday">Hôm qua</option>
+                    <option value="day_tomorrow">Ngày mai</option>
+                    <option value="week_current">Tuần này</option>
+                    <option value="week_previous">Tuần trước</option>
+                    <option value="week_next">Tuần sau</option>
+                    <option value="month_current">Tháng này</option>
+                    <option value="month_previous">Tháng trước</option>
+                    <option value="month_next">Tháng sau</option>
+                    <option value="year_current">Năm nay</option>
+                    <option value="year_previous">Năm trước</option>
+                    <option value="year_next">Năm sau</option>
                 </select>
             </div> 
         </div>
@@ -90,21 +98,46 @@
         function setDefaultDates(range) {
             var startDate, endDate;
             var today = moment().startOf('day');
-            
-            if (range === 'day') {
-                startDate = today.clone().startOf('day');
-                endDate = today.clone().endOf('day');
-            } else if (range === 'week') {
+
+            if (range === 'day_today') {
+                startDate = today.clone();
+                endDate = today.clone();
+            } else if (range === 'day_yesterday') {
+                startDate = today.clone().subtract(1, 'days');
+                endDate = today.clone().subtract(1, 'days');
+            } else if (range === 'day_tomorrow') {
+                startDate = today.clone().add(1, 'days');
+                endDate = today.clone().add(1, 'days');
+            } else if (range === 'week_current') {
                 startDate = today.clone().startOf('isoWeek');
                 endDate = today.clone().endOf('isoWeek');
-            } else if (range === 'month') {
+            } else if (range === 'week_previous') {
+                startDate = today.clone().subtract(1, 'weeks').startOf('isoWeek');
+                endDate = today.clone().subtract(1, 'weeks').endOf('isoWeek');
+            } else if (range === 'week_next') {
+                startDate = today.clone().add(1, 'weeks').startOf('isoWeek');
+                endDate = today.clone().add(1, 'weeks').endOf('isoWeek');
+            } else if (range === 'month_current') {
                 startDate = today.clone().startOf('month');
                 endDate = today.clone().endOf('month');
-            } else if (range === 'year') {
+            } else if (range === 'month_previous') {
+                startDate = today.clone().subtract(1, 'months').startOf('month');
+                endDate = today.clone().subtract(1, 'months').endOf('month');
+            } else if (range === 'month_next') {
+                startDate = today.clone().add(1, 'months').startOf('month');
+                endDate = today.clone().add(1, 'months').endOf('month');
+            } else if (range === 'year_current') {
                 startDate = today.clone().startOf('year');
                 endDate = today.clone().endOf('year');
+            } else if (range === 'year_previous') {
+                startDate = today.clone().subtract(1, 'years').startOf('year');
+                endDate = today.clone().subtract(1, 'years').endOf('year');
+            } else if (range === 'year_next') {
+                startDate = today.clone().add(1, 'years').startOf('year');
+                endDate = today.clone().add(1, 'years').endOf('year');
             }
 
+            // Set the date range picker with the calculated start and end dates
             $('#date_range').daterangepicker({
                 startDate: startDate,
                 endDate: endDate,
