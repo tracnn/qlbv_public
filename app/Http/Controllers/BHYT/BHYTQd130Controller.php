@@ -76,12 +76,12 @@ class BHYTQd130Controller extends Controller
                 }]);
 
                 // Kiểm tra role của user
-                if (!\Auth::user()->hasAnyRole(['superadministrator', 'administrator'])) {
+                if (!\Auth::user()->hasRole(['superadministrator', 'administrator'])) {
                     // Nếu không có vai trò superadministrator hoặc administrator thì lọc theo người import
                     $result = $result->whereHas('Qd130XmlInformation', function($query) {
                         $query->where('imported_by', \Auth::user()->loginname); // Lọc theo loginname của user hiện tại
                     });
-                }                       
+                }                      
         } else {
             if ($patient_code) {
                 $result = Qd130Xml1::select('ma_lk', 'ma_bn', 'ho_ten', 'ma_the_bhyt', 'ngay_sinh', 
@@ -95,7 +95,7 @@ class BHYTQd130Controller extends Controller
                         $query->select('ma_lk', 'exported_at', 'imported_by');
                     }]);
                     // Kiểm tra role của user
-                    if (!\Auth::user()->hasAnyRole(['superadministrator', 'administrator'])) {
+                    if (!\Auth::user()->hasRole(['superadministrator', 'administrator'])) {
                         // Nếu không có vai trò superadministrator hoặc administrator thì lọc theo người import
                         $result = $result->whereHas('Qd130XmlInformation', function($query) {
                             $query->where('imported_by', \Auth::user()->loginname); // Lọc theo loginname của user hiện tại
@@ -255,7 +255,7 @@ class BHYTQd130Controller extends Controller
                 }
 
                 // Kiểm tra role của user
-                if (!\Auth::user()->hasAnyRole(['superadministrator', 'administrator'])) {
+                if (!\Auth::user()->hasRole(['superadministrator', 'administrator'])) {
                     // Nếu không có vai trò superadministrator hoặc administrator thì lọc theo người import
                     $result = $result->whereHas('Qd130XmlInformation', function($query) {
                         $query->where('imported_by', \Auth::user()->loginname); // Lọc theo loginname của user hiện tại
