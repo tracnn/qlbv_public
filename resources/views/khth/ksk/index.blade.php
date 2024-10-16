@@ -8,7 +8,18 @@
     <small>Danh sách</small>
 </h1>
 {{ Breadcrumbs::render('ksk.index') }}
+@push('after-styles')
+<style type="text/css">
+    .table td.action-buttons {
+        white-space: normal; /* Cho phép xuống dòng */
+    }
 
+    .table td.action-buttons a {
+        display: inline-block; /* Hiển thị từng nút như một khối riêng */
+        margin-bottom: 5px; /* Tạo khoảng cách giữa các nút */
+    }
+</style>
+@endpush
 @stop
 
 @section('content')
@@ -16,7 +27,7 @@
 @include('khth.ksk.partials.search')
 <div class="panel panel-default">
     <div class="panel-body table-responsive">
-        <table id="ksk-index" class="table display table-hover responsive nowrap datatable dtr-inline" width="100%">
+        <table id="ksk-index" class="table display table-hover datatable dtr-inline" width="100%">
             <thead>
                 <th>STT</th>
                 <th>Mã điều trị</th>
@@ -653,21 +664,8 @@
 </script>
 
 <script>
-$('body').on('shown.bs.dropdown', '.btn-group', function () {
-    var $menu = $(this).find('.dropdown-menu');
-    var offset = $menu.offset();
-    var height = $menu.outerHeight();
-    var windowHeight = $(window).height();
-
-    // Kiểm tra nếu menu bị cắt bởi chiều cao cửa sổ
-    if (offset.top + height > windowHeight) {
-        $(this).addClass('dropup');
-    } else {
-        $(this).removeClass('dropup');
-    }
-});
-
 $(document).ready(function() {
+
     $('.select2').select2({
         width: '100%' // Đặt chiều rộng của Select2 là 100%
     });
@@ -1257,6 +1255,14 @@ function tuvan() {
         }
     });
 }
+
+    $('#ksk-index').DataTable({
+        "scrollY": "calc(100vh - 160px)", // Chiều cao tính toán dựa trên chiều cao của trang
+        "scrollCollapse": true, // Cho phép bảng co giãn tùy thuộc vào số lượng dữ liệu
+        "paging": true, // Bật phân trang nếu có nhiều dữ liệu
+        "responsive": true, // Đảm bảo bảng hiển thị tốt trên mọi thiết bị
+        "scrollX": true // Bật cuộn ngang nếu cần
+    });
 
 </script>
 

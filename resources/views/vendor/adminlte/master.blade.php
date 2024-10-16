@@ -31,7 +31,7 @@
 
     @if(config('adminlte.plugins.datatables'))
         <!-- DataTables -->
-        <link rel="stylesheet" href="{{ asset('css/dataTables.min.css')}}">
+        <link rel="stylesheet" href="{{ asset('vendor/datatables/dataTables.min.css')}}">
         <!-- <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/bs/dt-1.10.18/r-2.2.2/datatables.min.css"/> -->
     @endif
 
@@ -67,7 +67,7 @@
 
 @if(config('adminlte.plugins.datatables'))
     <!-- DataTables -->
-    <script src="{{ asset('js/dataTables.min.js')}}"></script>
+    <script src="{{ asset('vendor/datatables/dataTables.min.js')}}"></script>
     <!-- <script type="text/javascript" src="https://cdn.datatables.net/v/bs/dt-1.10.18/r-2.2.2/datatables.min.js"></script> -->
 @endif
 

@@ -142,84 +142,90 @@ class KskController extends Controller
                     $rtnData = '';
                     break;                
                 default:
-                    $rtnData = '<div class="btn-group">
-                        <button type="button" class="btn btn-sm btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                        <span class="glyphicon glyphicon-check"></span> Khám
-                        </button>
-                        <div class="dropdown-menu">
-                            <a class="dropdown-item edit-modal-theluc" href="#" data-title="' .$result->tdl_patient_name .' - ' 
-                            .substr($result->tdl_patient_dob, 0, 4) .' - ' .$result->tdl_patient_gender_name .'" data-weight="' .$result->weight .'" data-height="' .$result->height .'" data-blood_pressure_max="' .$result->blood_pressure_max .'" data-blood_pressure_min="' .$result->blood_pressure_min .'" data-pulse="' .$result->pulse .'" data-note="' .$result->note .'" data-id="' .$result->id .'" data-dhst_id="' .$result->dhst_id .'"><span class="glyphicon glyphicon-check"></span> Thể lực</a></br>
+                $rtnData = '';
 
-                            <a class="dropdown-item edit-modal-noi" href="#" data-title="' .$result->tdl_patient_name .' - ' 
-                            .substr($result->tdl_patient_dob, 0, 4) .' - ' .$result->tdl_patient_gender_name
-                            .'" data-theluc="Mạch: ' .$result->pulse .'; HA: ' .$result->blood_pressure_max .'/' .$result->blood_pressure_min
-                            .'" data-pathological_history="' .$result->pathological_history
-                            .'" data-part_exam="' .$result->part_exam
-                            .'" data-part_exam_circulation="' .$result->part_exam_circulation
-                            .'" data-part_exam_respiratory="' .$result->part_exam_respiratory
-                            .'" data-part_exam_digestion="' .$result->part_exam_digestion
-                            .'" data-part_exam_kidney_urology="' .$result->part_exam_kidney_urology
-                            .'" data-part_exam_neurological="' .$result->part_exam_neurological
-                            .'" data-part_exam_muscle_bone="' .$result->part_exam_muscle_bone
-                            .'" data-part_exam_oend="' .$result->part_exam_oend
-                            .'" data-part_exam_mental="' .$result->part_exam_mental
-                            .'" data-part_exam_nutrition="' .$result->part_exam_nutrition
-                            .'" data-part_exam_motion="' .$result->part_exam_motion
-                            .'" data-part_exam_dermatology="' .$result->part_exam_dermatology
-                            .'" data-id="' .$result->id
-                            .'"><span class="glyphicon glyphicon-check"></span> Nội, ngoại, da liễu</a></br>';
+                // Nút "Thể lực"
+                $rtnData .= '<a class="btn btn-sm btn-primary edit-modal-theluc" href="#" data-title="' .$result->tdl_patient_name .' - ' 
+                    .substr($result->tdl_patient_dob, 0, 4) .' - ' .$result->tdl_patient_gender_name 
+                    .'" data-weight="' .$result->weight .'" data-height="' .$result->height 
+                    .'" data-blood_pressure_max="' .$result->blood_pressure_max 
+                    .'" data-blood_pressure_min="' .$result->blood_pressure_min 
+                    .'" data-pulse="' .$result->pulse .'" data-note="' .$result->note 
+                    .'" data-id="' .$result->id .'" data-dhst_id="' .$result->dhst_id .'">
+                    <span class="glyphicon glyphicon-check"></span> Thể lực</a> ';
 
-                            if (\Auth::user()->hasPermission('ksk-rhm') || \Auth::user()->hasRole('superadministrator')) {
-                                $rtnData = $rtnData . '<a class="dropdown-item edit-modal-rhm" href="#" data-title="' .$result->tdl_patient_name .' - ' 
-                            .substr($result->tdl_patient_dob, 0, 4) .' - ' .$result->tdl_patient_gender_name
-                            .'" data-part_exam_stomatology="' .$result->part_exam_stomatology
-                            .'" data-part_exam_lower_jaw="' .$result->part_exam_lower_jaw
-                            .'" data-part_exam_upper_jaw="' .$result->part_exam_upper_jaw
-                            .'" data-id="' .$result->id
-                            .'"><span class="glyphicon glyphicon-check"></span> RHM</a></br>';
-                            }
-                            
-                            if (\Auth::user()->hasPermission('ksk-tmh') || \Auth::user()->hasRole('superadministrator')) {
-                                $rtnData = $rtnData . '<a class="dropdown-item edit-modal-tmh" href="#" data-title="' .$result->tdl_patient_name .' - ' 
-                                .substr($result->tdl_patient_dob, 0, 4) .' - ' .$result->tdl_patient_gender_name
-                                .'" data-part_exam_ear="' .$result->part_exam_ear
-                                .'" data-part_exam_nose="' .$result->part_exam_nose
-                                .'" data-part_exam_throat="' .$result->part_exam_throat
-                                .'" data-part_exam_ear_right_normal="' .$result->part_exam_ear_right_normal
-                                .'" data-part_exam_ear_right_whisper="' .$result->part_exam_ear_right_whisper
-                                .'" data-part_exam_ear_left_normal="' .$result->part_exam_ear_left_normal
-                                .'" data-part_exam_ear_left_whisper="' .$result->part_exam_ear_left_whisper
-                                .'" data-id="' .$result->id
-                                .'"><span class="glyphicon glyphicon-check"></span> TMH</a></br>';
-                            }
+                // Nút "Nội, Ngoại, Da liễu"
+                $rtnData .= '<a class="btn btn-sm btn-primary edit-modal-noi" href="#" data-title="' .$result->tdl_patient_name .' - ' 
+                    .substr($result->tdl_patient_dob, 0, 4) .' - ' .$result->tdl_patient_gender_name 
+                    .'" data-theluc="Mạch: ' .$result->pulse .'; HA: ' .$result->blood_pressure_max .'/' .$result->blood_pressure_min 
+                    .'" data-pathological_history="' .$result->pathological_history 
+                    .'" data-part_exam="' .$result->part_exam 
+                    .'" data-part_exam_circulation="' .$result->part_exam_circulation 
+                    .'" data-part_exam_respiratory="' .$result->part_exam_respiratory 
+                    .'" data-part_exam_digestion="' .$result->part_exam_digestion 
+                    .'" data-part_exam_kidney_urology="' .$result->part_exam_kidney_urology 
+                    .'" data-part_exam_neurological="' .$result->part_exam_neurological 
+                    .'" data-part_exam_muscle_bone="' .$result->part_exam_muscle_bone 
+                    .'" data-part_exam_oend="' .$result->part_exam_oend 
+                    .'" data-part_exam_mental="' .$result->part_exam_mental 
+                    .'" data-part_exam_nutrition="' .$result->part_exam_nutrition 
+                    .'" data-part_exam_motion="' .$result->part_exam_motion 
+                    .'" data-part_exam_dermatology="' .$result->part_exam_dermatology 
+                    .'" data-id="' .$result->id .'">
+                    <span class="glyphicon glyphicon-check"></span> Nội, Ngoại, Da liễu</a> ';
 
-                            if (\Auth::user()->hasPermission('ksk-mat') || \Auth::user()->hasRole('superadministrator')) {
-                                $rtnData = $rtnData .'<a class="dropdown-item edit-modal-mat" href="#" data-title="' .$result->tdl_patient_name .' - ' 
-                                .substr($result->tdl_patient_dob, 0, 4) .' - ' .$result->tdl_patient_gender_name
-                                .'" data-part_exam_horizontal_sight="' .$result->part_exam_horizontal_sight
-                                .'" data-part_exam_vertical_sight="' .$result->part_exam_vertical_sight
-                                .'" data-part_exam_eye_blind_color="' .$result->part_exam_eye_blind_color
-                                .'" data-part_exam_eye="' .$result->part_exam_eye
-                                .'" data-part_exam_eye_tension_left="' .$result->part_exam_eye_tension_left
-                                .'" data-part_exam_eye_tension_right="' .$result->part_exam_eye_tension_right
-                                .'" data-part_exam_eyesight_left="' .$result->part_exam_eyesight_left
-                                .'" data-part_exam_eyesight_right="' .$result->part_exam_eyesight_right
-                                .'" data-part_exam_eyesight_glass_left="' .$result->part_exam_eyesight_glass_left
-                                .'" data-part_exam_eyesight_glass_right="' .$result->part_exam_eyesight_glass_right
-                                .'" data-id="' .$result->id
-                                .'"><span class="glyphicon glyphicon-check"></span> Mắt</a></br>';
-                            }
+                // Nút "RHM" (Nếu có quyền)
+                if (\Auth::user()->hasPermission('ksk-rhm') || \Auth::user()->hasRole('superadministrator')) {
+                    $rtnData .= '<a class="btn btn-sm btn-primary edit-modal-rhm" href="#" data-title="' .$result->tdl_patient_name .' - ' 
+                        .substr($result->tdl_patient_dob, 0, 4) .' - ' .$result->tdl_patient_gender_name 
+                        .'" data-part_exam_stomatology="' .$result->part_exam_stomatology 
+                        .'" data-part_exam_lower_jaw="' .$result->part_exam_lower_jaw 
+                        .'" data-part_exam_upper_jaw="' .$result->part_exam_upper_jaw 
+                        .'" data-id="' .$result->id .'">
+                        <span class="glyphicon glyphicon-check"></span> RHM</a> ';
+                }
 
-                            if (\Auth::user()->hasPermission('ksk-san') || \Auth::user()->hasRole('superadministrator')) {
-                                $rtnData = $rtnData .'<a class="dropdown-item edit-modal-san" href="#" data-title="' .$result->tdl_patient_name .' - ' 
-                            .substr($result->tdl_patient_dob, 0, 4) .' - ' .$result->tdl_patient_gender_name
-                            .'" data-part_exam_obstetric="' .$result->part_exam_obstetric
-                            .'" data-id="' .$result->id
-                            .'"><span class="glyphicon glyphicon-check"></span> Sản phụ khoa</a>';
-                            }
-                            
-                        $rtnData = $rtnData .'</div>
-                    </div>';
+                // Nút "TMH" (Nếu có quyền)
+                if (\Auth::user()->hasPermission('ksk-tmh') || \Auth::user()->hasRole('superadministrator')) {
+                    $rtnData .= '<a class="btn btn-sm btn-primary edit-modal-tmh" href="#" data-title="' .$result->tdl_patient_name .' - ' 
+                        .substr($result->tdl_patient_dob, 0, 4) .' - ' .$result->tdl_patient_gender_name 
+                        .'" data-part_exam_ear="' .$result->part_exam_ear 
+                        .'" data-part_exam_nose="' .$result->part_exam_nose 
+                        .'" data-part_exam_throat="' .$result->part_exam_throat 
+                        .'" data-part_exam_ear_right_normal="' .$result->part_exam_ear_right_normal 
+                        .'" data-part_exam_ear_right_whisper="' .$result->part_exam_ear_right_whisper 
+                        .'" data-part_exam_ear_left_normal="' .$result->part_exam_ear_left_normal 
+                        .'" data-part_exam_ear_left_whisper="' .$result->part_exam_ear_left_whisper 
+                        .'" data-id="' .$result->id .'">
+                        <span class="glyphicon glyphicon-check"></span> TMH</a> ';
+                }
+
+                // Nút "Mắt" (Nếu có quyền)
+                if (\Auth::user()->hasPermission('ksk-mat') || \Auth::user()->hasRole('superadministrator')) {
+                    $rtnData .= '<a class="btn btn-sm btn-primary edit-modal-mat" href="#" data-title="' .$result->tdl_patient_name .' - ' 
+                        .substr($result->tdl_patient_dob, 0, 4) .' - ' .$result->tdl_patient_gender_name 
+                        .'" data-part_exam_horizontal_sight="' .$result->part_exam_horizontal_sight 
+                        .'" data-part_exam_vertical_sight="' .$result->part_exam_vertical_sight 
+                        .'" data-part_exam_eye_blind_color="' .$result->part_exam_eye_blind_color 
+                        .'" data-part_exam_eye="' .$result->part_exam_eye 
+                        .'" data-part_exam_eye_tension_left="' .$result->part_exam_eye_tension_left 
+                        .'" data-part_exam_eye_tension_right="' .$result->part_exam_eye_tension_right 
+                        .'" data-part_exam_eyesight_left="' .$result->part_exam_eyesight_left 
+                        .'" data-part_exam_eyesight_right="' .$result->part_exam_eyesight_right 
+                        .'" data-part_exam_eyesight_glass_left="' .$result->part_exam_eyesight_glass_left 
+                        .'" data-part_exam_eyesight_glass_right="' .$result->part_exam_eyesight_glass_right 
+                        .'" data-id="' .$result->id .'">
+                        <span class="glyphicon glyphicon-check"></span> Mắt</a> ';
+                }
+
+                // Nút "Sản phụ khoa" (Nếu có quyền)
+                if (\Auth::user()->hasPermission('ksk-san') || \Auth::user()->hasRole('superadministrator')) {
+                    $rtnData .= '<a class="btn btn-sm btn-primary edit-modal-san" href="#" data-title="' .$result->tdl_patient_name .' - ' 
+                        .substr($result->tdl_patient_dob, 0, 4) .' - ' .$result->tdl_patient_gender_name 
+                        .'" data-part_exam_obstetric="' .$result->part_exam_obstetric 
+                        .'" data-id="' .$result->id .'">
+                        <span class="glyphicon glyphicon-check"></span> Sản phụ khoa</a>';
+                }
                     break;
             }
 
