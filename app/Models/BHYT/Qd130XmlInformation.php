@@ -14,5 +14,7 @@ class Qd130XmlInformation extends Model
         'exported_at',
         'import_error',
         'export_error',
+        'imported_by',
+        'exported_by',
     ];
 }

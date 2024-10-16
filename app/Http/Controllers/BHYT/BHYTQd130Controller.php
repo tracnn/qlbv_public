@@ -72,8 +72,16 @@ class BHYTQd130Controller extends Controller
                 }, 'Qd130XmlErrorResult' => function($query) {
                     $query->select('ma_lk', 'error_code', 'ngay_yl', 'description');
                 }, 'Qd130XmlInformation' => function($query) {
-                    $query->select('ma_lk', 'exported_at');
-                }]);           
+                    $query->select('ma_lk', 'exported_at', 'imported_by');
+                }]);
+
+                // Kiểm tra role của user
+                if (!\Auth::user()->hasRole('superadministrator')) {
+                    // Nếu không phải superadministrator thì lọc theo người import
+                    $result = $result->whereHas('Qd130XmlInformation', function($query) {
+                        $query->where('imported_by', \Auth::user()->loginname); // Lọc theo loginname của user hiện tại
+                    });
+                }                           
         } else {
             if ($patient_code) {
                 $result = Qd130Xml1::select('ma_lk', 'ma_bn', 'ho_ten', 'ma_the_bhyt', 'ngay_sinh', 
@@ -84,8 +92,15 @@ class BHYTQd130Controller extends Controller
                     }, 'Qd130XmlErrorResult' => function($query) {
                         $query->select('ma_lk', 'error_code', 'ngay_yl', 'description');
                     }, 'Qd130XmlInformation' => function($query) {
-                        $query->select('ma_lk', 'exported_at');
-                    }]); 
+                        $query->select('ma_lk', 'exported_at', 'imported_by');
+                    }]);
+                    // Kiểm tra role của user
+                    if (!\Auth::user()->hasRole('superadministrator')) {
+                        // Nếu không phải superadministrator thì lọc theo người import
+                        $result = $result->whereHas('Qd130XmlInformation', function($query) {
+                            $query->where('imported_by', \Auth::user()->loginname); // Lọc theo loginname của user hiện tại
+                        });
+                    } 
             } else {
                 // Check and convert date format
                 if (strlen($dateFrom) == 10) { // Format YYYY-MM-DD
@@ -149,7 +164,7 @@ class BHYTQd130Controller extends Controller
 
                 // Apply relationships: Qd130XmlInformation
                 $result = $result->with(['Qd130XmlInformation' => function($query) {
-                    $query->select('ma_lk', 'exported_at', 'export_error');
+                    $query->select('ma_lk', 'exported_at', 'export_error', 'imported_by');
                 }]);
 
                 if ($qd130_xml_error_catalog_id) {
@@ -238,6 +253,14 @@ class BHYTQd130Controller extends Controller
                         $query->whereNull('exported_at');
                     });
                 }
+
+                // Kiểm tra role của user
+                if (!\Auth::user()->hasRole('superadministrator')) {
+                    // Nếu không phải superadministrator thì lọc theo người import
+                    $result = $result->whereHas('Qd130XmlInformation', function($query) {
+                        $query->where('imported_by', \Auth::user()->loginname); // Lọc theo loginname của user hiện tại
+                    });
+                }
             }
         }
 
@@ -266,6 +289,10 @@ class BHYTQd130Controller extends Controller
                     ? '<i class="fa fa-check-circle text-success" title="'.$tooltip.'"></i>'
                     : '<i class="fa fa-file-code-o text-secondary" title="'.$tooltip.'"></i>');
             return $icon;
+        })
+        // Thêm cột 'imported_by'
+        ->addColumn('imported_by', function ($result) {
+            return $result->Qd130XmlInformation->imported_by ?? null;
         })
         ->addColumn('action', function ($result) {
             return '<a href="' . route('insurance.check-card.search',['card-number' => $result->ma_the_bhyt, 'name' => $result->ho_ten, 'birthday' => dob($result->ngay_sinh,0,8)]) . '" class="btn btn-sm btn-success" target="_blank"><span class="glyphicon glyphicon-check"></span> Tra thẻ</a>
@@ -484,7 +511,6 @@ class BHYTQd130Controller extends Controller
                 $fileName = $formattedDateTime . '_' . $selectedRecord . '.xml';
 
                 $filePath = storage_path('app/' . $storagePath . $fileName);
-
 
                 // Lưu XML thành file
                 if (file_put_contents($filePath, $xmlData) === false) {

@@ -96,9 +96,11 @@ class Qd130ErrorExport implements FromQuery, WithHeadings, ShouldAutoSize, WithS
         $query = Qd130Xml1::whereBetween($dateField, [$formattedDateFrom, $formattedDateTo])
             ->join('qd130_xml_error_results', 'qd130_xml_error_results.ma_lk', '=', 'qd130_xml1s.ma_lk')
             ->join('qd130_xml_error_catalogs', 'qd130_xml_error_results.error_code', '=', 'qd130_xml_error_catalogs.error_code')
+            ->join('qd130_xml_informations', 'qd130_xml_informations.ma_lk', '=', 'qd130_xml1s.ma_lk')
             ->select('qd130_xml_error_results.*', 'qd130_xml_error_catalogs.error_name as catalog_error_name',
                 'qd130_xml1s.ngay_vao', 'qd130_xml1s.ngay_ra', 'qd130_xml1s.ma_bn', 'qd130_xml1s.ho_ten',
-                'qd130_xml1s.ngay_sinh', 'qd130_xml1s.ma_the_bhyt', 'qd130_xml1s.ngay_ttoan')
+                'qd130_xml1s.ngay_sinh', 'qd130_xml1s.ma_the_bhyt', 'qd130_xml1s.ngay_ttoan', 
+                'qd130_xml_informations.imported_by' , 'qd130_xml_informations.exported_by')
             ->orderBy('qd130_xml_error_results.ma_lk')
             ->orderBy('qd130_xml_error_results.xml')
             ->orderBy('qd130_xml_error_results.stt');
@@ -141,6 +143,8 @@ class Qd130ErrorExport implements FromQuery, WithHeadings, ShouldAutoSize, WithS
             'Mã Lỗi',
             'Mô Tả',
             'Loại lỗi',
+            'Imported by',
+            'Exported by'
         ];
     }
 
@@ -166,6 +170,8 @@ class Qd130ErrorExport implements FromQuery, WithHeadings, ShouldAutoSize, WithS
                 $sheet->getColumnDimension('N')->setWidth(30);
                 $sheet->getColumnDimension('O')->setWidth(50);
                 $sheet->getColumnDimension('P')->setWidth(13);
+                $sheet->getColumnDimension('Q')->setWidth(12);
+                $sheet->getColumnDimension('R')->setWidth(12);
 
                 $sheet->getStyle('G')->getNumberFormat()->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER);
                 $sheet->getStyle('I')->getNumberFormat()->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER);
@@ -214,6 +220,8 @@ class Qd130ErrorExport implements FromQuery, WithHeadings, ShouldAutoSize, WithS
             $data->catalog_error_name,
             $data->description,
             $data->critical_error ? 'Nghiêm trọng' : 'Cảnh báo',
+            $data->imported_by,
+            $data->exported_by,
         ];
     }
 }

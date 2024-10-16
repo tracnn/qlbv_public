@@ -123,6 +123,10 @@
                     console.log('XHR:', xhr);
                 }
             },
+            "lengthMenu": [
+                [10, 25, 50, 100, 200, 500, 1000, 2000], 
+                [10, 25, 50, 100, 200, 500, 1000, 2000]
+            ],
             "columns": [
                 { "data": "treatment_code" },
                 { "data": "tdl_patient_code" },

@@ -1,3 +1,6 @@
+# 18/11/2024
+- Bổ sung lấy thông tin người dùng nào đã import/export hồ sơ (Đối với trường hợp import/export hồ sơ tự động thì để trống)
+
 # 11/10/2024
 - Bổ sung kiểm tra VTYT kèm theo DVKT phải có y lệnh trùng ngày y lệnh DVKT.
 - Bổ sung cho phép người dùng lựa chọn Lỗi Xml: 

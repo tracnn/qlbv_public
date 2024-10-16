@@ -753,6 +753,11 @@ class Qd130XmlService
 
     public function storeQd130XmlInfomation($ma_lk, $macskcb, $operationType, $soluonghoso = 1, $error = null)
     {
+        $loginname = null;
+
+        if (\Auth::check()) {
+            $loginname = \Auth::user()->loginname;
+        }
 
          try {
             $attributes = [
@@ -769,9 +774,11 @@ class Qd130XmlService
                 $values['import_error'] = $error;
                 $values['exported_at'] = null;
                 $values['export_error'] = $error;
+                $values['imported_by'] = $loginname;
             } elseif ($operationType === 'export') {
                 $values['exported_at'] = Carbon::now();
                 $values['export_error'] = $error;
+                $values['exported_by'] = $loginname;
             }
 
             Qd130XmlInformation::updateOrCreate($attributes, $values);
