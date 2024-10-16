@@ -185,28 +185,34 @@
     }
 
     function deleteXML(ma_lk) {
-        if (confirm('Chắc chắn xóa?')) {
-            $.ajax({
-                url: '{{ route('bhyt.qd130.delete-xml', ['ma_lk' => '']) }}/' + ma_lk,
-                type: 'DELETE',
-                data: {
-                    _token: '{{ csrf_token() }}'
-                },
-                success: function(response) {
-                    if (response.success) {
-                        toastr.success(response.message);
-                        table.ajax.reload();
-                        // Kiểm tra trạng thái job
-                        checkJobStatus();
-                    } else {
-                        toastr.error(response.message);
+        Swal.fire({
+            title: 'Bạn có chắc chắn muốn xóa?',
+            icon: 'warning',
+            showCancelButton: true,
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: '{{ route('bhyt.qd130.delete-xml', ['ma_lk' => '']) }}/' + ma_lk,
+                    type: 'DELETE',
+                    data: {
+                        _token: '{{ csrf_token() }}'
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            toastr.success(response.message);
+                            table.ajax.reload();
+                            // Kiểm tra trạng thái job
+                            checkJobStatus();
+                        } else {
+                            toastr.error(response.message);
+                        }
+                    },
+                    error: function(response) {
+                        Swal.fire('Có lỗi xảy ra', 'Vui lòng thử lại.', 'error');
                     }
-                },
-                error: function(response) {
-                    alert('Có lỗi xảy ra, vui lòng thử lại.');
-                }
-            });
-        }
+                });
+            }
+        });
     }
 
     $(document).ready(function() {
