@@ -18,6 +18,13 @@
         display: inline-block; /* Hiển thị từng nút như một khối riêng */
         margin-bottom: 5px; /* Tạo khoảng cách giữa các nút */
     }
+    .table-responsive {
+        display: block;
+        width: 100%;
+        overflow-x: auto;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
 </style>
 @endpush
 @stop
