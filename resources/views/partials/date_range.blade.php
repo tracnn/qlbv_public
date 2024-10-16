@@ -100,41 +100,41 @@
             var today = moment().startOf('day');
 
             if (range === 'day_today') {
-                startDate = today.clone();
-                endDate = today.clone();
+                startDate = today.clone().startOf('day');
+                endDate = today.clone().endOf('day');
             } else if (range === 'day_yesterday') {
-                startDate = today.clone().subtract(1, 'days');
-                endDate = today.clone().subtract(1, 'days');
+                startDate = today.clone().subtract(1, 'days').startOf('day');
+                endDate = today.clone().subtract(1, 'days').endOf('day');
             } else if (range === 'day_tomorrow') {
-                startDate = today.clone().add(1, 'days');
-                endDate = today.clone().add(1, 'days');
+                startDate = today.clone().add(1, 'days').startOf('day');
+                endDate = today.clone().add(1, 'days').endOf('day');
             } else if (range === 'week_current') {
                 startDate = today.clone().startOf('isoWeek');
-                endDate = today.clone().endOf('isoWeek');
+                endDate = today.clone().endOf('isoWeek').endOf('day');
             } else if (range === 'week_previous') {
                 startDate = today.clone().subtract(1, 'weeks').startOf('isoWeek');
-                endDate = today.clone().subtract(1, 'weeks').endOf('isoWeek');
+                endDate = today.clone().subtract(1, 'weeks').endOf('isoWeek').endOf('day');
             } else if (range === 'week_next') {
                 startDate = today.clone().add(1, 'weeks').startOf('isoWeek');
-                endDate = today.clone().add(1, 'weeks').endOf('isoWeek');
+                endDate = today.clone().add(1, 'weeks').endOf('isoWeek').endOf('day');
             } else if (range === 'month_current') {
                 startDate = today.clone().startOf('month');
-                endDate = today.clone().endOf('month');
+                endDate = today.clone().endOf('month').endOf('day');
             } else if (range === 'month_previous') {
                 startDate = today.clone().subtract(1, 'months').startOf('month');
-                endDate = today.clone().subtract(1, 'months').endOf('month');
+                endDate = today.clone().subtract(1, 'months').endOf('month').endOf('day');
             } else if (range === 'month_next') {
                 startDate = today.clone().add(1, 'months').startOf('month');
-                endDate = today.clone().add(1, 'months').endOf('month');
+                endDate = today.clone().add(1, 'months').endOf('month').endOf('day');
             } else if (range === 'year_current') {
                 startDate = today.clone().startOf('year');
-                endDate = today.clone().endOf('year');
+                endDate = today.clone().endOf('year').endOf('day');
             } else if (range === 'year_previous') {
                 startDate = today.clone().subtract(1, 'years').startOf('year');
-                endDate = today.clone().subtract(1, 'years').endOf('year');
+                endDate = today.clone().subtract(1, 'years').endOf('year').endOf('day');
             } else if (range === 'year_next') {
                 startDate = today.clone().add(1, 'years').startOf('year');
-                endDate = today.clone().add(1, 'years').endOf('year');
+                endDate = today.clone().add(1, 'years').endOf('year').endOf('day');
             }
 
             // Set the date range picker with the calculated start and end dates
