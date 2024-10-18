@@ -20,15 +20,6 @@ return [
         WHERE 
             treatment_code = \'{ma_dieu_tri}\';
         COMMIT;',
-    'XML1_ADMIN_INFO_ERROR_MAXA_CU_TRU_NOT_FOUND' => 'UPDATE 
-            his_treatment 
-        SET
-            tdl_patient_province_code = 'ma_tinh',
-            tdl_patient_district_code = 'ma_huyen',
-            tdl_patient_commune_code = 'ma_xa'
-        WHERE 
-            treatment_code = \'{ma_dieu_tri}\';
-        COMMIT;',
 
     //XML3
     'XML3_INFO_ERROR_MA_MAY_NOT_FOUND' => '1. Bổ sung máy trong danh mục HIS; 2. Đẩy cổng BHXH phê duyệt; 3. Tải danh mục trang thiết bị trên cổng import vào phần mềm GĐBHYT',
