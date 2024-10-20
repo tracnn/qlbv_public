@@ -41,12 +41,12 @@ class Qd130Xml7980aExport implements FromQuery, WithHeadings, ShouldAutoSize, Wi
         $xml_export_status = $this->request->input('xml_export_status');
 
         // Convert date format from 'YYYY-MM-DD HH:mm:ss' to 'YYYYMMDDHHI' for specific fields
-        $formattedDateFromForFields = Carbon::createFromFormat('Y-m-d H:i:s', $dateFrom)->format('YmdHi');
-        $formattedDateToForFields = Carbon::createFromFormat('Y-m-d H:i:s', $dateTo)->format('YmdHi');
+        $formattedDateFromForFields = Carbon::createFromFormat('Y-m-d H:i:s', $date_from)->format('YmdHi');
+        $formattedDateToForFields = Carbon::createFromFormat('Y-m-d H:i:s', $date_to)->format('YmdHi');
 
         // Convert date format to 'Y-m-d H:i:s' for created_at and updated_at
-        $formattedDateFromForTimestamp = Carbon::createFromFormat('Y-m-d H:i:s', $dateFrom)->format('Y-m-d H:i:s');
-        $formattedDateToForTimestamp = Carbon::createFromFormat('Y-m-d H:i:s', $dateTo)->format('Y-m-d H:i:s');
+        $formattedDateFromForTimestamp = Carbon::createFromFormat('Y-m-d H:i:s', $date_from)->format('Y-m-d H:i:s');
+        $formattedDateToForTimestamp = Carbon::createFromFormat('Y-m-d H:i:s', $date_to)->format('Y-m-d H:i:s');
 
         // Define the date field based on date_type
         switch ($date_type) {
