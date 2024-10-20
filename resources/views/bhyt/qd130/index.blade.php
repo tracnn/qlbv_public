@@ -49,6 +49,9 @@
 <button id="bulk-action-btn" class="btn btn-primary" disabled>
     <i class="fa fa-download" aria-hidden="true"></i> Xuất XML4750
 </button>
+<button id="bulk-7980a-btn" class="btn btn-primary" enable>
+    <i class="fa fa-download" aria-hidden="true"></i> 7980a
+</button>
 
 <div class="panel panel-default">
     <div class="panel-body table-responsive">
@@ -280,6 +283,30 @@
             } else {
                 alert('Vui lòng chọn ít nhất một hồ sơ.');
             }
+        });
+
+        $('#bulk-7980a-btn').on('click', function(){
+            var dateRange = $('#date_range').data('daterangepicker');
+
+            var startDate = dateRange.startDate.format('YYYY-MM-DD HH:mm:ss');
+            var endDate = dateRange.endDate.format('YYYY-MM-DD HH:mm:ss');
+            var xml_filter_status = $('#xml_filter_status').val();
+            var date_type = $('#date_type').val();
+            var qd130_xml_error_catalog = $('#qd130_xml_error_catalog').val();
+            var payment_date_filter = $('#payment_date_filter').val();
+            
+            // Tạo URL với các tham số query
+            var href = '{{ route("bhyt.qd130.export-7980a-data") }}?' + $.param({
+                'date_from': startDate,
+                'date_to': endDate,
+                'xml_filter_status': xml_filter_status,
+                'date_type': date_type,
+                'qd130_xml_error_catalog': qd130_xml_error_catalog,
+                'payment_date_filter': payment_date_filter
+            });
+
+            // Chuyển hướng tới URL với các tham số
+            window.location.href = href;
         });
 
         $('#export_qd130_xml_error').click(function() {

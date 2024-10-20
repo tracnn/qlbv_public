@@ -364,6 +364,8 @@ Route::group(['middleware' => ['auth', 'check.first.login']], function () {
         ->name('bhyt.qd130.export-qd130-xml-xlsx');
         Route::get('qd130/job-status', 'BHYT\BHYTQd130Controller@checkJobStatus')
         ->name('bhyt.qd130.jobs.status');
+        Route::get('qd130/export-7980a-data', 'BHYT\BHYTQd130Controller@export7980aData')
+        ->name('bhyt.qd130.export-7980a-data');
     });
 
     /*

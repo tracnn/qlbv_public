@@ -558,6 +558,19 @@ class BHYTQd130Controller extends Controller
             $date_type, $qd130_xml_error_catalog_id, $payment_date_filter), $fileName);
     }
 
+    public function export7980aData(Request $request)
+    {
+        // $date_from = $request->input('date_from');
+        // $date_to = $request->input('date_to');
+        // $xml_filter_status = $request->input('xml_filter_status');
+        // $date_type = $request->input('date_type');
+        // $qd130_xml_error_catalog_id = $request->input('qd130_xml_error_catalog');
+        // $payment_date_filter = $request->input('payment_date_filter');
+return 'ok';
+        $fileName = '7980a_' . Carbon::now()->format('YmdHis') . '.xlsx';
+        // return Excel::download(new Qd130Xml7980aExport($request), $fileName);
+    }
+
     public function exportQd130XmlXlsx(Request $request)
     {
         $date_from = $request->input('date_from');
