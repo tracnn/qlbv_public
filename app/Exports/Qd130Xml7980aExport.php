@@ -184,11 +184,6 @@ class Qd130Xml7980aExport implements FromQuery, WithHeadings, ShouldAutoSize, Wi
             $query->where('qd130_xml1s.qd130_xml_error_catalog_id', '=', $qd130_xml_error_catalog_id);
         }
 
-        // Điều kiện lọc theo vai trò người dùng
-        if (!\Auth::user()->hasRole(['superadministrator', 'administrator'])) {
-            $query->where('qd130_xml1s.imported_by', '=', \Auth::user()->loginname);
-        }
-
         return $query;
     }
 
