@@ -30,7 +30,7 @@ class Qd130Xml7980aExport implements FromQuery, WithHeadings, ShouldAutoSize, Wi
     {
         set_time_limit(1800); // Tăng thời gian thực thi lên 1800 giây (30 phút)
         ini_set('memory_limit', '4096M'); // Tăng giới hạn bộ nhớ nếu cần thiết
-        
+
         $date_from = $this->request->input('date_from');
         $date_to = $this->request->input('date_to');
 
@@ -40,23 +40,45 @@ class Qd130Xml7980aExport implements FromQuery, WithHeadings, ShouldAutoSize, Wi
         $payment_date_filter = $this->request->input('payment_date_filter');
         $xml_export_status = $this->request->input('xml_export_status');
 
-        // Định dạng ngày phù hợp cho truy vấn
-        $formattedDateFrom = Carbon::createFromFormat('Y-m-d H:i:s', $date_from)->format('YmdHi');
-        $formattedDateTo = Carbon::createFromFormat('Y-m-d H:i:s', $date_to)->format('YmdHi');
+        // Convert date format from 'YYYY-MM-DD HH:mm:ss' to 'YYYYMMDDHHI' for specific fields
+        $formattedDateFromForFields = Carbon::createFromFormat('Y-m-d H:i:s', $dateFrom)->format('YmdHi');
+        $formattedDateToForFields = Carbon::createFromFormat('Y-m-d H:i:s', $dateTo)->format('YmdHi');
 
-        // Xác định trường ngày dựa trên loại ngày được chọn
+        // Convert date format to 'Y-m-d H:i:s' for created_at and updated_at
+        $formattedDateFromForTimestamp = Carbon::createFromFormat('Y-m-d H:i:s', $dateFrom)->format('Y-m-d H:i:s');
+        $formattedDateToForTimestamp = Carbon::createFromFormat('Y-m-d H:i:s', $dateTo)->format('Y-m-d H:i:s');
+
+        // Define the date field based on date_type
         switch ($date_type) {
             case 'date_in':
                 $dateField = 'qd130_xml1s.ngay_vao';
+                $formattedDateFrom = $formattedDateFromForFields;
+                $formattedDateTo = $formattedDateToForFields;
                 break;
             case 'date_out':
                 $dateField = 'qd130_xml1s.ngay_ra';
+                $formattedDateFrom = $formattedDateFromForFields;
+                $formattedDateTo = $formattedDateToForFields;
                 break;
             case 'date_payment':
                 $dateField = 'qd130_xml1s.ngay_ttoan';
+                $formattedDateFrom = $formattedDateFromForFields;
+                $formattedDateTo = $formattedDateToForFields;
+                break;
+            case 'date_create':
+                $dateField = 'qd130_xml1s.created_at';
+                $formattedDateFrom = $formattedDateFromForTimestamp;
+                $formattedDateTo = $formattedDateToForTimestamp;
+                break;
+            case 'date_update':
+                $dateField = 'qd130_xml1s.updated_at';
+                $formattedDateFrom = $formattedDateFromForTimestamp;
+                $formattedDateTo = $formattedDateToForTimestamp;
                 break;
             default:
-                $dateField = 'qd130_xml1s.ngay_ra'; // Mặc định là ngày ra
+                $dateField = 'qd130_xml1s.ngay_ttoan';
+                $formattedDateFrom = $formattedDateFromForFields;
+                $formattedDateTo = $formattedDateToForFields;
                 break;
         }
 
