@@ -15,6 +15,7 @@ use App\Services\XmlStructures;
 
 use App\Exports\Qd130ErrorExport;
 use App\Exports\Qd130XmlExport;
+use App\Exports\Qd130Xml7980aExport;
 
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -566,9 +567,8 @@ class BHYTQd130Controller extends Controller
         // $date_type = $request->input('date_type');
         // $qd130_xml_error_catalog_id = $request->input('qd130_xml_error_catalog');
         // $payment_date_filter = $request->input('payment_date_filter');
-return 'ok';
         $fileName = '7980a_' . Carbon::now()->format('YmdHis') . '.xlsx';
-        // return Excel::download(new Qd130Xml7980aExport($request), $fileName);
+        return Excel::download(new Qd130Xml7980aExport($request), $fileName);
     }
 
     public function exportQd130XmlXlsx(Request $request)
