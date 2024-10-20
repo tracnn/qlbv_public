@@ -28,6 +28,9 @@ class Qd130Xml7980aExport implements FromQuery, WithHeadings, ShouldAutoSize, Wi
 
     public function query()
     {
+        set_time_limit(1800); // Tăng thời gian thực thi lên 1800 giây (30 phút)
+        ini_set('memory_limit', '4096M'); // Tăng giới hạn bộ nhớ nếu cần thiết
+        
         $date_from = $this->request->input('date_from');
         $date_to = $this->request->input('date_to');
 
@@ -57,88 +60,88 @@ class Qd130Xml7980aExport implements FromQuery, WithHeadings, ShouldAutoSize, Wi
                 break;
         }
 
-$query = Qd130Xml1::selectRaw("
-        qd130_xml1s.ma_bn, 
-        qd130_xml1s.ho_ten, 
-        CASE 
-            WHEN SUBSTRING(qd130_xml1s.ngay_sinh, 5, 2) <> '00' AND SUBSTRING(qd130_xml1s.ngay_sinh, 7, 2) <> '00' 
-            THEN LEFT(qd130_xml1s.ngay_sinh, 8)
-            ELSE LEFT(qd130_xml1s.ngay_sinh, 4)
-        END AS ngay_sinh,
-        qd130_xml1s.gioi_tinh, 
-        qd130_xml1s.dia_chi, 
-        SUBSTRING_INDEX(qd130_xml1s.ma_the_bhyt, ';', 1) AS ma_the, 
-        SUBSTRING_INDEX(qd130_xml1s.ma_dkbd, ';', 1) AS ma_dkbd,   
-        SUBSTRING_INDEX(qd130_xml1s.gt_the_tu, ';', 1) AS gt_the_tu, 
-        SUBSTRING_INDEX(qd130_xml1s.gt_the_den, ';', 1) AS gt_the_den, 
-        qd130_xml1s.ma_benh_chinh AS ma_benh, 
-        qd130_xml1s.ma_benh_kt AS ma_benhkhac,
-        LEFT(qd130_xml1s.ma_doituong_kcb, 1) AS ma_lydo_vvien, 
-        qd130_xml1s.ma_noi_di AS ma_noi_chuyen, 
-        qd130_xml1s.ngay_vao, 
-        qd130_xml1s.ngay_ra,
-        qd130_xml1s.so_ngay_dtri, 
-        qd130_xml1s.ket_qua_dtri, 
-        qd130_xml1s.ma_loai_rv AS tinh_trang_rv,
-        qd130_xml1s.t_tongchi_bh AS t_tongchi,
-        SUM(CASE WHEN qd130_xml3s.ma_nhom = 1 THEN qd130_xml3s.thanh_tien_bh ELSE NULL END) AS t_xn,
-        SUM(CASE WHEN qd130_xml3s.ma_nhom = 2 THEN qd130_xml3s.thanh_tien_bh ELSE NULL END) AS t_cdha,
-        qd130_xml1s.t_thuoc AS t_thuoc,
-        SUM(CASE WHEN qd130_xml3s.ma_nhom = 7 THEN qd130_xml3s.thanh_tien_bh ELSE NULL END) AS t_mau,
-        SUM(CASE WHEN qd130_xml3s.ma_nhom IN (8,18) THEN qd130_xml3s.thanh_tien_bh ELSE NULL END) AS t_pttt,
-        qd130_xml1s.t_vtyt AS t_vtyt,
-        NULL AS t_dvkt_tyle,
-        NULL AS t_thuoc_tyle,
-        NULL AS t_vtyt_tyle,
-        SUM(CASE WHEN qd130_xml3s.ma_nhom = 13 THEN qd130_xml3s.thanh_tien_bh ELSE NULL END) AS t_kham,
-        SUM(CASE WHEN qd130_xml3s.ma_nhom IN (14,15,16) THEN qd130_xml3s.thanh_tien_bh ELSE NULL END) AS t_giuong,
-        SUM(CASE WHEN qd130_xml3s.ma_nhom IN (12) THEN qd130_xml3s.thanh_tien_bh ELSE NULL END) AS t_vchuyen,
-        (COALESCE(qd130_xml1s.t_bntt, 0) + COALESCE(qd130_xml1s.t_bncct, 0)) AS t_bntt,
-        qd130_xml1s.t_bhtt, 
-        NULL AS t_ngoaids,
-        qd130_xml1s.ma_khoa, 
-        qd130_xml1s.nam_qt, 
-        qd130_xml1s.thang_qt, 
-        qd130_xml1s.ma_khuvuc, 
-        qd130_xml1s.ma_loai_kcb AS ma_loaikcb,
-        qd130_xml1s.ma_cskcb,
-        qd130_xml1s.t_nguonkhac
-    ")
-    ->join('qd130_xml3s', 'qd130_xml3s.ma_lk', '=', 'qd130_xml1s.ma_lk')
-    ->whereBetween($dateField, [$formattedDateFrom, $formattedDateTo])
-    ->groupBy(
-        'qd130_xml1s.ma_bn', 
-        'qd130_xml1s.ho_ten', 
-        'qd130_xml1s.ngay_sinh', 
-        'qd130_xml1s.gioi_tinh', 
-        'qd130_xml1s.dia_chi', 
-        'ma_the', 
-        'ma_dkbd', 
-        'gt_the_tu', 
-        'gt_the_den', 
-        'qd130_xml1s.ma_benh_chinh', 
-        'qd130_xml1s.ma_benh_kt',
-        'qd130_xml1s.ma_doituong_kcb', 
-        'qd130_xml1s.ma_noi_di', 
-        'qd130_xml1s.ngay_vao', 
-        'qd130_xml1s.ngay_ra',
-        'qd130_xml1s.so_ngay_dtri', 
-        'qd130_xml1s.ket_qua_dtri', 
-        'qd130_xml1s.ma_loai_rv', 
-        'qd130_xml1s.t_tongchi_bh',
-        'qd130_xml1s.t_thuoc',
-        'qd130_xml1s.t_vtyt',
-        'qd130_xml1s.t_bntt', 
-        'qd130_xml1s.t_bncct', 
-        'qd130_xml1s.t_bhtt', 
-        'qd130_xml1s.ma_khoa', 
-        'qd130_xml1s.nam_qt', 
-        'qd130_xml1s.thang_qt', 
-        'qd130_xml1s.ma_khuvuc',
-        'qd130_xml1s.ma_loai_kcb',
-        'qd130_xml1s.ma_cskcb',
-        'qd130_xml1s.t_nguonkhac'
-    );
+        $query = Qd130Xml1::selectRaw("
+            qd130_xml1s.ma_bn, 
+            qd130_xml1s.ho_ten, 
+            CASE 
+                WHEN SUBSTRING(qd130_xml1s.ngay_sinh, 5, 2) <> '00' AND SUBSTRING(qd130_xml1s.ngay_sinh, 7, 2) <> '00' 
+                THEN LEFT(qd130_xml1s.ngay_sinh, 8)
+                ELSE LEFT(qd130_xml1s.ngay_sinh, 4)
+            END AS ngay_sinh,
+            qd130_xml1s.gioi_tinh, 
+            qd130_xml1s.dia_chi, 
+            SUBSTRING_INDEX(qd130_xml1s.ma_the_bhyt, ';', 1) AS ma_the, 
+            SUBSTRING_INDEX(qd130_xml1s.ma_dkbd, ';', 1) AS ma_dkbd,   
+            SUBSTRING_INDEX(qd130_xml1s.gt_the_tu, ';', 1) AS gt_the_tu, 
+            SUBSTRING_INDEX(qd130_xml1s.gt_the_den, ';', 1) AS gt_the_den, 
+            qd130_xml1s.ma_benh_chinh AS ma_benh, 
+            qd130_xml1s.ma_benh_kt AS ma_benhkhac,
+            LEFT(qd130_xml1s.ma_doituong_kcb, 1) AS ma_lydo_vvien, 
+            qd130_xml1s.ma_noi_di AS ma_noi_chuyen, 
+            qd130_xml1s.ngay_vao, 
+            qd130_xml1s.ngay_ra,
+            qd130_xml1s.so_ngay_dtri, 
+            qd130_xml1s.ket_qua_dtri, 
+            qd130_xml1s.ma_loai_rv AS tinh_trang_rv,
+            qd130_xml1s.t_tongchi_bh AS t_tongchi,
+            SUM(CASE WHEN qd130_xml3s.ma_nhom = 1 THEN qd130_xml3s.thanh_tien_bh ELSE NULL END) AS t_xn,
+            SUM(CASE WHEN qd130_xml3s.ma_nhom = 2 THEN qd130_xml3s.thanh_tien_bh ELSE NULL END) AS t_cdha,
+            qd130_xml1s.t_thuoc AS t_thuoc,
+            SUM(CASE WHEN qd130_xml3s.ma_nhom = 7 THEN qd130_xml3s.thanh_tien_bh ELSE NULL END) AS t_mau,
+            SUM(CASE WHEN qd130_xml3s.ma_nhom IN (8,18) THEN qd130_xml3s.thanh_tien_bh ELSE NULL END) AS t_pttt,
+            qd130_xml1s.t_vtyt AS t_vtyt,
+            NULL AS t_dvkt_tyle,
+            NULL AS t_thuoc_tyle,
+            NULL AS t_vtyt_tyle,
+            SUM(CASE WHEN qd130_xml3s.ma_nhom = 13 THEN qd130_xml3s.thanh_tien_bh ELSE NULL END) AS t_kham,
+            SUM(CASE WHEN qd130_xml3s.ma_nhom IN (14,15,16) THEN qd130_xml3s.thanh_tien_bh ELSE NULL END) AS t_giuong,
+            SUM(CASE WHEN qd130_xml3s.ma_nhom IN (12) THEN qd130_xml3s.thanh_tien_bh ELSE NULL END) AS t_vchuyen,
+            (COALESCE(qd130_xml1s.t_bntt, 0) + COALESCE(qd130_xml1s.t_bncct, 0)) AS t_bntt,
+            qd130_xml1s.t_bhtt, 
+            NULL AS t_ngoaids,
+            qd130_xml1s.ma_khoa, 
+            qd130_xml1s.nam_qt, 
+            qd130_xml1s.thang_qt, 
+            qd130_xml1s.ma_khuvuc, 
+            qd130_xml1s.ma_loai_kcb AS ma_loaikcb,
+            qd130_xml1s.ma_cskcb,
+            qd130_xml1s.t_nguonkhac
+        ")
+        ->join('qd130_xml3s', 'qd130_xml3s.ma_lk', '=', 'qd130_xml1s.ma_lk')
+        ->whereBetween($dateField, [$formattedDateFrom, $formattedDateTo])
+        ->groupBy(
+            'qd130_xml1s.ma_bn', 
+            'qd130_xml1s.ho_ten', 
+            'qd130_xml1s.ngay_sinh', 
+            'qd130_xml1s.gioi_tinh', 
+            'qd130_xml1s.dia_chi', 
+            'ma_the', 
+            'ma_dkbd', 
+            'gt_the_tu', 
+            'gt_the_den', 
+            'qd130_xml1s.ma_benh_chinh', 
+            'qd130_xml1s.ma_benh_kt',
+            'qd130_xml1s.ma_doituong_kcb', 
+            'qd130_xml1s.ma_noi_di', 
+            'qd130_xml1s.ngay_vao', 
+            'qd130_xml1s.ngay_ra',
+            'qd130_xml1s.so_ngay_dtri', 
+            'qd130_xml1s.ket_qua_dtri', 
+            'qd130_xml1s.ma_loai_rv', 
+            'qd130_xml1s.t_tongchi_bh',
+            'qd130_xml1s.t_thuoc',
+            'qd130_xml1s.t_vtyt',
+            'qd130_xml1s.t_bntt', 
+            'qd130_xml1s.t_bncct', 
+            'qd130_xml1s.t_bhtt', 
+            'qd130_xml1s.ma_khoa', 
+            'qd130_xml1s.nam_qt', 
+            'qd130_xml1s.thang_qt', 
+            'qd130_xml1s.ma_khuvuc',
+            'qd130_xml1s.ma_loai_kcb',
+            'qd130_xml1s.ma_cskcb',
+            'qd130_xml1s.t_nguonkhac'
+        );
 
         // Điều kiện lọc theo trạng thái xuất XML
         if ($xml_export_status === 'has_export') {
