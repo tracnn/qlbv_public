@@ -49,9 +49,45 @@
 <button id="bulk-action-btn" class="btn btn-primary" disabled>
     <i class="fa fa-download" aria-hidden="true"></i> Xuất XML4750
 </button>
-<button id="bulk-7980a-btn" class="btn btn-primary" enable>
-    <i class="fa fa-download" aria-hidden="true"></i> 7980a
+<!-- Button to trigger the modal -->
+<button id="openDownloadModalBtn" class="btn btn-success">
+    <i class="fa fa-download" aria-hidden="true"></i> Tải xuống tổng hợp
 </button>
+
+<!-- Modal chứa các nút tải xuống -->
+<div class="modal fade" id="downloadModal" tabindex="-1" role="dialog" aria-labelledby="downloadModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="downloadModalLabel">Tùy chọn tải xuống</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <!-- Nút 7980a -->
+                <button id="bulk-7980a-btn" class="btn btn-primary">
+                    <i class="fa fa-download" aria-hidden="true"></i> Hồ sơ 79/80a
+                </button>
+
+                <!-- Thêm các nút khác tương tự -->
+                <button id="bulk-19-btn" class="btn btn-info">
+                    <i class="fa fa-download" aria-hidden="true"></i> Hồ sơ 19/BHYT
+                </button>
+
+                <button id="bulk-20-btn" class="btn btn-info">
+                    <i class="fa fa-download" aria-hidden="true"></i> Hồ sơ 20/BHYT
+                </button>
+                <button id="bulk-21-btn" class="btn btn-info">
+                    <i class="fa fa-download" aria-hidden="true"></i> Hồ sơ 21/BHYT
+                </button>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <div class="panel panel-default">
     <div class="panel-body table-responsive">
@@ -222,6 +258,10 @@
 
     $(document).ready(function() {
         setInterval(checkJobStatus, 5000);
+        // Mở modal khi người dùng bấm vào nút "Tải xuống"
+        $('#openDownloadModalBtn').on('click', function() {
+            $('#downloadModal').modal('show'); // Hiển thị modal
+        });
         $('.select2').select2({
             width: '100%' // Đặt chiều rộng của Select2 là 100%
         });
