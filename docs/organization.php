@@ -16,5 +16,5 @@ return [
         //https://egw.baohiemxahoi.gov.vn
         //http://14.160.70.2:1431
     ],
-    'base_url' => 'http://benhviendakhoanongnghiep.vn:6868',
+    'base_url' => '',
 ];
