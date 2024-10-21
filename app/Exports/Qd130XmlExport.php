@@ -97,7 +97,7 @@ class Qd130XmlExport implements FromQuery, WithHeadings, ShouldAutoSize, WithSty
         }
 
         $query = Qd130Xml1::whereBetween($dateField, [$formattedDateFrom, $formattedDateTo])
-            ->join('qd130_xml_informations', 'qd130_xml_informations.ma_lk', '=', 'qd130_xml1s.ma_lk')
+            ->leftJoin('qd130_xml_informations', 'qd130_xml_informations.ma_lk', '=', 'qd130_xml1s.ma_lk')
             ->select('qd130_xml1s.*')
             ->orderBy('qd130_xml1s.ma_lk');
 

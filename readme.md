@@ -1,3 +1,6 @@
+# 21/10/2024
+- Bổ sung kiểm tra bắt buộc phải có mã máy đối với những dịch vụ thuộc nhóm cần kiểm tra (XN/CĐHA...)
+
 # 18/11/2024
 - Bổ sung lấy thông tin người dùng nào đã import/export hồ sơ (Đối với trường hợp import/export hồ sơ tự động thì để trống)
 - Bổ sung tải về 7980a (Tải về file excel)

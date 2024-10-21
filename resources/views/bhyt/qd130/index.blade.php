@@ -334,6 +334,7 @@
             var date_type = $('#date_type').val();
             var qd130_xml_error_catalog = $('#qd130_xml_error_catalog').val();
             var payment_date_filter = $('#payment_date_filter').val();
+            var treatment_code = $('#treatment_code').val();
             
             // Tạo URL với các tham số query
             var href = '{{ route("bhyt.qd130.export-7980a-data") }}?' + $.param({
@@ -342,7 +343,8 @@
                 'xml_filter_status': xml_filter_status,
                 'date_type': date_type,
                 'qd130_xml_error_catalog': qd130_xml_error_catalog,
-                'payment_date_filter': payment_date_filter
+                'payment_date_filter': payment_date_filter,
+                'treatment_code': treatment_code
             });
 
             // Chuyển hướng tới URL với các tham số

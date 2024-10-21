@@ -186,6 +186,17 @@ class Qd130Xml3Checker
             }
         }
 
+        // Bổ sung kiểm tra bắt buộc phải có mã máy đối với những nhóm
+        if (in_array($data->ma_nhom, config('qd130xml.xml3.service_groups_requiring_machine')) && empty($data->ma_may)) {
+            $errorCode = $this->generateErrorCode('INFO_ERROR_GROUP_CODE_MA_MAY');
+            $errors->push((object)[
+                'error_code' => $errorCode,
+                'error_name' => 'Thiếu mã máy',
+                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+                'description' => 'Mã máy không được để trống đối với DVKT: ' . $this->serviceDisplay
+            ]);
+        }
+
         if (empty($data->ma_bac_si)) {
             $errorCode = $this->generateErrorCode('INFO_ERROR_MA_BAC_SI');
             $errors->push((object)[

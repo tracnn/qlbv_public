@@ -59,6 +59,7 @@ return [
             'nhom_thau_pattern' => '/^N[0-6]$/', // 2 ký tự; ký tự đầu tiên là N, ký tự thứ 2 là số từ 0 đến 6
             'nam_thau_pattern' => '/^\d{4}$/',   // Định dạng năm 4 ký tự
         ],
+        'service_groups_requiring_machine' => [1],
     ],
     'general' => [
         'check_valid_department_req' => true, //Kiểm tra tính hợp lệ của khoa chỉ định; Tuyến TW/Tỉnh => true
