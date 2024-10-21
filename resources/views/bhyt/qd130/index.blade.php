@@ -50,8 +50,8 @@
     <i class="fa fa-download" aria-hidden="true"></i> Xuất XML4750
 </button>
 <!-- Button to trigger the modal -->
-<button id="openDownloadModalBtn" class="btn btn-success">
-    <i class="fa fa-download" aria-hidden="true"></i> Tải xuống tổng hợp
+<button id="openDownloadModalBtn" class="btn btn-primary">
+    <i class="fa fa-download" aria-hidden="true"></i> Tải xuống 7980a/19/20/21
 </button>
 
 <!-- Modal chứa các nút tải xuống -->
