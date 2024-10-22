@@ -14,7 +14,6 @@ return [
         'cccdCb' => '', 
         'check_by_user' => true,
         //https://egw.baohiemxahoi.gov.vn
-        //http://14.160.70.2:1431
     ],
     'base_url' => '',
 ];

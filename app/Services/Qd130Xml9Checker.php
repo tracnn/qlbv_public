@@ -306,15 +306,15 @@ class Qd130Xml9Checker
             $numPattern = config('qd130xml.hein_card_temp_num_pattern'); // ví dụ: '\d{10}$'
 
             // Mẫu đầy đủ sẽ là: 'TE1' + 'mã tỉnh cư trú' + 10 chữ số
-            $maTinhPattern = $prefixPattern . $data->matinh_cu_tru;
-            $fullPattern = $maTinhPattern . $numPattern;
+            $maTinhPattern = preg_quote($prefixPattern . $data->matinh_cu_tru, '/'); // Escape any special characters and include delimiters
+            $fullPattern = '/' . $maTinhPattern . $numPattern . '/'; // Properly wrap the full pattern with delimiters
 
             if (!preg_match($fullPattern, $data->ma_the_tam)) {
                 $errorDescription = 'Mã thẻ tạm không đúng theo quy định: ' . $data->ma_the_tam;
 
                 // Kiểm tra phần đầu TE1
-                if (!preg_match($prefixPattern, $data->ma_the_tam)) {
-                    $errorDescription .= ' - Phần đầu tiên không phải là: ' . substr($prefixPattern, 2);
+                if (!preg_match('/' . $prefixPattern . '/', $data->ma_the_tam)) {
+                    $errorDescription .= ' - Phần đầu tiên không phải là: ' . substr($prefixPattern, 1); // Bỏ dấu ^
                 }
 
                 // Kiểm tra phần mã tỉnh
