@@ -585,7 +585,45 @@ class Qd130XmlService
 
     public function storeQd130Xml10($data, $xmlType)
     {
+        // Xác định cấu trúc cho XML10
         $expectedStructure = XmlStructures::$expectedStructures130[$xmlType];
+
+        if (!validateDataStructure($data, $expectedStructure)) {
+            \Log::error('Invalid data structure for XML10');
+            return;
+        }
+
+        try {
+            // Định nghĩa các thuộc tính và giá trị cần lưu
+            $attributes = [
+                'ma_lk' => $data->MA_LK,
+            ];
+
+            $values = [
+                'so_seri' => $data->SO_SERI ?: null,
+                'so_ct' => $data->SO_CT ?: null,
+                'so_ngay' => intval($data->SO_NGAY) ?: null,
+                'don_vi' => $data->DON_VI ?: null,
+                'chan_doan_rv' => $data->CHAN_DOAN_RV ?: null,
+                'tu_ngay' => $data->TU_NGAY ?: null,
+                'den_ngay' => $data->DEN_NGAY ?: null,
+                'ma_ttdv' => $data->MA_TTDV ?: null,
+                'ten_bs' => $data->TEN_BS ?: null,
+                'ma_bs' => $data->MA_BS ?: null,
+                'ngay_ct' => $data->NGAY_CT ?: null,
+                'du_phong' => $data->DU_PHONG ?: null,
+            ];
+
+            // Lưu dữ liệu hoặc cập nhật nếu đã tồn tại
+            $xml10 = Qd130Xml10::updateOrCreate($attributes, $values);
+            
+            // Đẩy công việc kiểm tra vào hàng đợi
+            CheckQd130XmlErrorsJob::dispatch($xml10, $xmlType)
+            ->onQueue($this->queueName);
+
+        } catch (\Exception $e) {
+            \Log::error('Error in storeQd130Xml10: ' . $e->getMessage());
+        }
     }
 
     public function storeQd130Xml11($data, $xmlType)
@@ -1183,49 +1221,68 @@ class Qd130XmlService
                 }
                 break;
 
-                case 'XML9':
-                    $xmlContent = new \SimpleXMLElement('<CHI_TIEU_DU_LIEU_GIAY_CHUNG_SINH></CHI_TIEU_DU_LIEU_GIAY_CHUNG_SINH>');
+            case 'XML9':
+                $xmlContent = new \SimpleXMLElement('<CHI_TIEU_DU_LIEU_GIAY_CHUNG_SINH></CHI_TIEU_DU_LIEU_GIAY_CHUNG_SINH>');
 
-                    $dsachGiayChungSinh = $xmlContent->addChild('DSACH_GIAYCHUNGSINH');
-                    foreach ($records as $record) {
-                        $duLieuGiayChungSinh = $dsachGiayChungSinh->addChild('DU_LIEU_GIAY_CHUNG_SINH');
-                        $duLieuGiayChungSinh->addChild('MA_LK', $record->ma_lk);
-                        $duLieuGiayChungSinh->addChild('MA_BHXH_NND', $record->ma_bhxh_nnd);
-                        $duLieuGiayChungSinh->addChild('MA_THE_NND', $record->ma_the_nnd);
-                        $this->addChildWithCDATA($duLieuGiayChungSinh, 'HO_TEN_NND', $record->ho_ten_nnd);
-                        $duLieuGiayChungSinh->addChild('NGAYSINH_NND', $record->ngaysinh_nnd);
-                        $duLieuGiayChungSinh->addChild('MA_DANTOC_NND', $record->ma_dantoc_nnd);
-                        $duLieuGiayChungSinh->addChild('SO_CCCD_NND', $record->so_cccd_nnd);
-                        $duLieuGiayChungSinh->addChild('NGAYCAP_CCCD_NND', $record->ngaycap_cccd_nnd);
-                        $this->addChildWithCDATA($duLieuGiayChungSinh, 'NOICAP_CCCD_NND', $record->noicap_cccd_nnd);
-                        $this->addChildWithCDATA($duLieuGiayChungSinh, 'NOI_CU_TRU_NND', $record->noi_cu_tru_nnd);
-                        $duLieuGiayChungSinh->addChild('MA_QUOCTICH', $record->ma_quoctich);
-                        $duLieuGiayChungSinh->addChild('MATINH_CU_TRU', $record->matinh_cu_tru);
-                        $duLieuGiayChungSinh->addChild('MAHUYEN_CU_TRU', $record->mahuyen_cu_tru);
-                        $duLieuGiayChungSinh->addChild('MAXA_CU_TRU', $record->maxa_cu_tru);
-                        $this->addChildWithCDATA($duLieuGiayChungSinh, 'HO_TEN_CHA', $record->ho_ten_cha);
-                        $duLieuGiayChungSinh->addChild('MA_THE_TAM', $record->ma_the_tam);
-                        $this->addChildWithCDATA($duLieuGiayChungSinh, 'HO_TEN_CON', $record->ho_ten_con);
-                        $duLieuGiayChungSinh->addChild('GIOI_TINH_CON', $record->gioi_tinh_con);
-                        $duLieuGiayChungSinh->addChild('SO_CON', $record->so_con);
-                        $duLieuGiayChungSinh->addChild('LAN_SINH', $record->lan_sinh);
-                        $duLieuGiayChungSinh->addChild('SO_CON_SONG', $record->so_con_song);
-                        $duLieuGiayChungSinh->addChild('CAN_NANG_CON', $record->can_nang_con);
-                        $duLieuGiayChungSinh->addChild('NGAY_SINH_CON', $record->ngay_sinh_con);
-                        $this->addChildWithCDATA($duLieuGiayChungSinh, 'NOI_SINH_CON', $record->noi_sinh_con);
-                        $this->addChildWithCDATA($duLieuGiayChungSinh, 'TINH_TRANG_CON', $record->tinh_trang_con);
-                        $duLieuGiayChungSinh->addChild('SINHCON_PHAUTHUAT', $record->sinhcon_phauthuat ?? 0);
-                        $duLieuGiayChungSinh->addChild('SINHCON_DUOI32TUAN', $record->sinhcon_duoi32tuan ?? 0);
-                        $this->addChildWithCDATA($duLieuGiayChungSinh, 'GHI_CHU', $record->ghi_chu);
-                        $this->addChildWithCDATA($duLieuGiayChungSinh, 'NGUOI_DO_DE', $record->nguoi_do_de);
-                        $this->addChildWithCDATA($duLieuGiayChungSinh, 'NGUOI_GHI_PHIEU', $record->nguoi_ghi_phieu);
-                        $duLieuGiayChungSinh->addChild('NGAY_CT', $record->ngay_ct);
-                        $duLieuGiayChungSinh->addChild('SO', $record->so);
-                        $this->addChildWithCDATA($duLieuGiayChungSinh, 'QUYEN_SO', $record->quyen_so);
-                        $duLieuGiayChungSinh->addChild('MA_TTDV', $record->ma_ttdv);
-                        $this->addChildWithCDATA($duLieuGiayChungSinh, 'DU_PHONG', $record->du_phong);
-                    }
-                    break;
+                $dsachGiayChungSinh = $xmlContent->addChild('DSACH_GIAYCHUNGSINH');
+                foreach ($records as $record) {
+                    $duLieuGiayChungSinh = $dsachGiayChungSinh->addChild('DU_LIEU_GIAY_CHUNG_SINH');
+                    $duLieuGiayChungSinh->addChild('MA_LK', $record->ma_lk);
+                    $duLieuGiayChungSinh->addChild('MA_BHXH_NND', $record->ma_bhxh_nnd);
+                    $duLieuGiayChungSinh->addChild('MA_THE_NND', $record->ma_the_nnd);
+                    $this->addChildWithCDATA($duLieuGiayChungSinh, 'HO_TEN_NND', $record->ho_ten_nnd);
+                    $duLieuGiayChungSinh->addChild('NGAYSINH_NND', $record->ngaysinh_nnd);
+                    $duLieuGiayChungSinh->addChild('MA_DANTOC_NND', $record->ma_dantoc_nnd);
+                    $duLieuGiayChungSinh->addChild('SO_CCCD_NND', $record->so_cccd_nnd);
+                    $duLieuGiayChungSinh->addChild('NGAYCAP_CCCD_NND', $record->ngaycap_cccd_nnd);
+                    $this->addChildWithCDATA($duLieuGiayChungSinh, 'NOICAP_CCCD_NND', $record->noicap_cccd_nnd);
+                    $this->addChildWithCDATA($duLieuGiayChungSinh, 'NOI_CU_TRU_NND', $record->noi_cu_tru_nnd);
+                    $duLieuGiayChungSinh->addChild('MA_QUOCTICH', $record->ma_quoctich);
+                    $duLieuGiayChungSinh->addChild('MATINH_CU_TRU', $record->matinh_cu_tru);
+                    $duLieuGiayChungSinh->addChild('MAHUYEN_CU_TRU', $record->mahuyen_cu_tru);
+                    $duLieuGiayChungSinh->addChild('MAXA_CU_TRU', $record->maxa_cu_tru);
+                    $this->addChildWithCDATA($duLieuGiayChungSinh, 'HO_TEN_CHA', $record->ho_ten_cha);
+                    $duLieuGiayChungSinh->addChild('MA_THE_TAM', $record->ma_the_tam);
+                    $this->addChildWithCDATA($duLieuGiayChungSinh, 'HO_TEN_CON', $record->ho_ten_con);
+                    $duLieuGiayChungSinh->addChild('GIOI_TINH_CON', $record->gioi_tinh_con);
+                    $duLieuGiayChungSinh->addChild('SO_CON', $record->so_con);
+                    $duLieuGiayChungSinh->addChild('LAN_SINH', $record->lan_sinh);
+                    $duLieuGiayChungSinh->addChild('SO_CON_SONG', $record->so_con_song);
+                    $duLieuGiayChungSinh->addChild('CAN_NANG_CON', $record->can_nang_con);
+                    $duLieuGiayChungSinh->addChild('NGAY_SINH_CON', $record->ngay_sinh_con);
+                    $this->addChildWithCDATA($duLieuGiayChungSinh, 'NOI_SINH_CON', $record->noi_sinh_con);
+                    $this->addChildWithCDATA($duLieuGiayChungSinh, 'TINH_TRANG_CON', $record->tinh_trang_con);
+                    $duLieuGiayChungSinh->addChild('SINHCON_PHAUTHUAT', $record->sinhcon_phauthuat ?? 0);
+                    $duLieuGiayChungSinh->addChild('SINHCON_DUOI32TUAN', $record->sinhcon_duoi32tuan ?? 0);
+                    $this->addChildWithCDATA($duLieuGiayChungSinh, 'GHI_CHU', $record->ghi_chu);
+                    $this->addChildWithCDATA($duLieuGiayChungSinh, 'NGUOI_DO_DE', $record->nguoi_do_de);
+                    $this->addChildWithCDATA($duLieuGiayChungSinh, 'NGUOI_GHI_PHIEU', $record->nguoi_ghi_phieu);
+                    $duLieuGiayChungSinh->addChild('NGAY_CT', $record->ngay_ct);
+                    $duLieuGiayChungSinh->addChild('SO', $record->so);
+                    $this->addChildWithCDATA($duLieuGiayChungSinh, 'QUYEN_SO', $record->quyen_so);
+                    $duLieuGiayChungSinh->addChild('MA_TTDV', $record->ma_ttdv);
+                    $this->addChildWithCDATA($duLieuGiayChungSinh, 'DU_PHONG', $record->du_phong);
+                }
+                break;
+
+            case 'XML10':
+                $xmlContent = new \SimpleXMLElement('<CHI_TIEU_DU_LIEU_GIAY_NGHI_DUONG_THAI></CHI_TIEU_DU_LIEU_GIAY_NGHI_DUONG_THAI>');
+                foreach ($records as $record) {
+                    $xmlContent->addChild('MA_LK', $record->ma_lk);
+                    $this->addChildWithCDATA($xmlContent, 'SO_SERI', $record->so_seri);
+                    $this->addChildWithCDATA($xmlContent, 'SO_CT', $record->so_ct);
+                    $xmlContent->addChild('SO_NGAY', $record->so_ngay);
+                    $this->addChildWithCDATA($xmlContent, 'DON_VI', $record->don_vi);
+                    $this->addChildWithCDATA($xmlContent, 'CHAN_DOAN_RV', $record->chan_doan_rv);
+                    $xmlContent->addChild('TU_NGAY', $record->tu_ngay);
+                    $xmlContent->addChild('DEN_NGAY', $record->den_ngay);
+                    $xmlContent->addChild('MA_TTDV', $record->ma_ttdv);
+                    $this->addChildWithCDATA($xmlContent, 'TEN_BS', $record->ten_bs);
+                    $xmlContent->addChild('MA_BS', $record->ma_bs);
+                    $xmlContent->addChild('NGAY_CT', $record->ngay_ct);
+                    $this->addChildWithCDATA($xmlContent, 'DU_PHONG', $record->du_phong);
+                }
+                break;
 
             case 'XML11':
                 $xmlContent = new \SimpleXMLElement('<CHI_TIEU_DU_LIEU_GIAY_CHUNG_NHAN_NGHI_VIEC_HUONG_BAO_HIEM_XA_HOI></CHI_TIEU_DU_LIEU_GIAY_CHUNG_NHAN_NGHI_VIEC_HUONG_BAO_HIEM_XA_HOI>');

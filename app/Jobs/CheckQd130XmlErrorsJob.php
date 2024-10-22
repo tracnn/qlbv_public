@@ -11,6 +11,7 @@ use App\Services\Qd130Xml5Checker;
 use App\Services\Qd130Xml7Checker;
 use App\Services\Qd130Xml8Checker;
 use App\Services\Qd130Xml9Checker;
+use App\Services\Qd130Xml10Checker;
 use App\Services\Qd130Xml11Checker;
 use App\Services\Qd130Xml13Checker;
 use App\Services\Qd130Xml14Checker;
@@ -70,6 +71,9 @@ class CheckQd130XmlErrorsJob implements ShouldQueue
                 break;
             case 'XML9':
                 $checker = app(Qd130Xml9Checker::class);
+                break;
+            case 'XML10':
+                $checker = app(Qd130Xml10Checker::class);
                 break;
             case 'XML11':
                 $checker = app(Qd130Xml11Checker::class);

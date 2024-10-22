@@ -1,3 +1,10 @@
+# 22/10/2024
+- Bổ sung Import/Export XML10 (Giấy nghỉ việc dưỡng thai)
+	+ Bổ sung Import
+	+ Bổ sung Export
+	+ Bổ sung form hiển thị thông tin
+	+ Bổ sung các quy tắc giám định
+	
 # 21/10/2024
 - Bổ sung kiểm tra bắt buộc phải có mã máy đối với những dịch vụ thuộc nhóm cần kiểm tra (XN/CĐHA...)
 

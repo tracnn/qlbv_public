@@ -148,6 +148,23 @@
         </a>
     </li>
     @endif
+    @if($xml1->Qd130Xml10->isNotEmpty())
+    <li>
+        <a data-toggle="tab" href="#menu10">XML10
+            @php
+                $errorCountXml = $xml1->Qd130Xml10->filter(function($item) {
+                    return $item->errorResult()
+                    ->where('xml', 'XML10')
+                    ->where('ma_lk', $item->ma_lk)
+                    ->exists();
+                })->count();
+            @endphp
+            @if($errorCountXml > 0)
+                <span class="badge badge-error">{{ $errorCountXml }}</span>
+            @endif
+        </a>
+    </li>
+    @endif
     @if($xml1->Qd130Xml11->isNotEmpty())
     <li>
         <a data-toggle="tab" href="#menu11">XML11
@@ -229,6 +246,7 @@
     @include('bhyt.qd130.detail-xml-7')
     @include('bhyt.qd130.detail-xml-8')
     @include('bhyt.qd130.detail-xml-9')
+    @include('bhyt.qd130.detail-xml-10')
     @include('bhyt.qd130.detail-xml-11')
     @include('bhyt.qd130.detail-xml-13')
     @include('bhyt.qd130.detail-xml-14')
