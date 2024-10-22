@@ -505,6 +505,7 @@ class Qd130Xml3Checker
                 $errors->push((object)[
                     'error_code' => $errorCode,
                     'error_name' => 'Khoa chỉ định giường không đúng quy định',
+                    'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
                     'description' => 'Khoa chỉ định: ' . $data->ma_khoa . '; Mã giường: ' . $data->ma_dich_vu
                 ]);
             }
