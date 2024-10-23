@@ -2,6 +2,7 @@
 
 namespace App\Exports;
 
+use Maatwebsite\Excel\Concerns\WithTitle;
 use App\Models\BHYT\Qd130XmlErrorResult;
 use App\Models\BHYT\Qd130XmlErrorCatalog;
 use App\Models\BHYT\Qd130Xml1;
@@ -15,7 +16,7 @@ use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Carbon\Carbon;
 
-class Qd130ErrorExport implements FromQuery, WithHeadings, ShouldAutoSize, WithStyles, WithEvents, WithMapping
+class Qd130ErrorExport implements FromQuery, WithHeadings, ShouldAutoSize, WithStyles, WithEvents, WithMapping, WithTitle
 {
     protected $fromDate;
     protected $toDate;
@@ -229,5 +230,10 @@ class Qd130ErrorExport implements FromQuery, WithHeadings, ShouldAutoSize, WithS
             $data->imported_by,
             $data->exported_by,
         ];
+    }
+
+    public function title(): string
+    {
+        return 'Lỗi XML'; // Tên cho sheet này
     }
 }

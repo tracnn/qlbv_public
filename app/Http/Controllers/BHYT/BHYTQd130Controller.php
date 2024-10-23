@@ -13,7 +13,7 @@ use App\Models\BHYT\Qd130XmlErrorCatalog;
 use App\Services\Qd130XmlService;
 use App\Services\XmlStructures;
 
-use App\Exports\Qd130ErrorExport;
+use App\Exports\Qd130ErrorMultiSheetExport;
 use App\Exports\Qd130XmlExport;
 use App\Exports\Qd130Xml7980aExport;
 
@@ -555,7 +555,7 @@ class BHYTQd130Controller extends Controller
         $payment_date_filter = $request->input('payment_date_filter');
 
         $fileName = 'qd130_error_data_' . Carbon::now()->format('YmdHis') . '.xlsx';
-        return Excel::download(new Qd130ErrorExport($date_from, $date_to, $xml_filter_status, 
+        return Excel::download(new Qd130ErrorMultiSheetExport($date_from, $date_to, $xml_filter_status, 
             $date_type, $qd130_xml_error_catalog_id, $payment_date_filter), $fileName);
     }
 
