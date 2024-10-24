@@ -1,3 +1,6 @@
+# 24/10/2024
+- Bổ sung lọc Hồ sơ XML4750 theo người import
+
 # 23/10/2024
 - Export Excel lỗi: Bổ sung sheet lỗi thẻ
 - Update logic Kiểm tra mã thẻ tạm

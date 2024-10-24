@@ -25,9 +25,10 @@ class Qd130ErrorExport implements FromQuery, WithHeadings, ShouldAutoSize, WithS
     protected $qd130_xml_error_catalog_id;
     protected $payment_date_filter;
     protected $rowNumber = 0;
+    protected $imported_by;
 
     public function __construct($fromDate = null, $toDate = null, $xml_filter_status = null, 
-        $date_type, $qd130_xml_error_catalog_id = null, $payment_date_filter = null)
+        $date_type, $qd130_xml_error_catalog_id = null, $payment_date_filter = null, $imported_by = null)
     {
         $this->fromDate = $fromDate;
         $this->toDate = $toDate;
@@ -35,6 +36,7 @@ class Qd130ErrorExport implements FromQuery, WithHeadings, ShouldAutoSize, WithS
         $this->date_type = $date_type;
         $this->qd130_xml_error_catalog_id = $qd130_xml_error_catalog_id;
         $this->payment_date_filter = $payment_date_filter;
+        $this->imported_by = $imported_by;
     }
 
     /**
@@ -51,6 +53,7 @@ class Qd130ErrorExport implements FromQuery, WithHeadings, ShouldAutoSize, WithS
         $date_type = $this->date_type;
         $qd130_xml_error_catalog_id = $this->qd130_xml_error_catalog_id;
         $payment_date_filter = $this->payment_date_filter;
+        $imported_by = $this->imported_by;
 
         // Convert date format from 'YYYY-MM-DD HH:mm:ss' to 'YYYYMMDDHHI' for specific fields
         $formattedDateFromForFields = Carbon::createFromFormat('Y-m-d H:i:s', $dateFrom)->format('YmdHi');
@@ -121,13 +124,22 @@ class Qd130ErrorExport implements FromQuery, WithHeadings, ShouldAutoSize, WithS
         } elseif ($payment_date_filter === 'no_payment_date') {
             $query->where('qd130_xml1s.ngay_ttoan', '=', '');
         }
-        // Kiểm tra role của user
-        if (!\Auth::user()->hasRole(['superadministrator', 'administrator'])) {
-            // Nếu không có vai trò superadministrator hoặc administrator thì lọc theo người import
-            $query = $query->whereHas('Qd130XmlInformation', function($query) {
-                $query->where('imported_by', \Auth::user()->loginname); // Lọc theo loginname của user hiện tại
+
+        // Apply filter based on imported_by
+        if (!empty($imported_by)) {
+            $query = $query->whereHas('Qd130XmlInformation', function ($query) use ($imported_by) {
+                $query->where('imported_by', $imported_by);
             });
-        } 
+        } else {
+            // Kiểm tra role của user
+            if (!\Auth::user()->hasRole(['superadministrator', 'administrator'])) {
+                // Nếu không có vai trò superadministrator hoặc administrator thì lọc theo người import
+                $query = $query->whereHas('Qd130XmlInformation', function($query) {
+                    $query->where('imported_by', \Auth::user()->loginname); // Lọc theo loginname của user hiện tại
+                });
+            }
+        }
+
         return $query;
     }
 
