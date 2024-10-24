@@ -302,28 +302,28 @@ class Qd130Xml9Checker
                 'description' => 'Mã thẻ tạm không được để trống'
             ]);
         } else {
-            $prefixPattern = config('qd130xml.hein_card_temp_prefix_pattern'); // ví dụ: '/^TE1'
-            $numPattern = config('qd130xml.hein_card_temp_num_pattern'); // ví dụ: '\d{10}$'
+            $prefixPattern = config('qd130xml.hein_card_temp_prefix_pattern'); // '^TE1'
+            $numPattern = config('qd130xml.hein_card_temp_num_pattern'); // '\d{10}$'
 
-            // Mẫu đầy đủ sẽ là: 'TE1' + 'mã tỉnh cư trú' + 10 chữ số
-            $maTinhPattern = preg_quote($prefixPattern . $data->matinh_cu_tru, '/'); // Escape any special characters and include delimiters
-            $fullPattern = '/' . $maTinhPattern . $numPattern . '/'; // Properly wrap the full pattern with delimiters
+            // Escape mã tỉnh để tránh các ký tự đặc biệt
+            $maTinhPattern = preg_quote($data->matinh_cu_tru, '/');
+            $fullPattern = '/' . $prefixPattern . $maTinhPattern . $numPattern . '/';
 
             if (!preg_match($fullPattern, $data->ma_the_tam)) {
                 $errorDescription = 'Mã thẻ tạm không đúng theo quy định: ' . $data->ma_the_tam;
 
                 // Kiểm tra phần đầu TE1
-                if (!preg_match('/' . $prefixPattern . '/', $data->ma_the_tam)) {
-                    $errorDescription .= ' - Phần đầu tiên không phải là: ' . substr($prefixPattern, 1); // Bỏ dấu ^
+                if (!preg_match('/^TE1/', $data->ma_the_tam)) {
+                    $errorDescription .= ' - Phần đầu tiên không phải là: TE1';
                 }
 
-                // Kiểm tra phần mã tỉnh
-                if (!preg_match('/^' . $data->matinh_cu_tru . '/', $data->ma_the_tam)) {
+                // Kiểm tra phần mã tỉnh cụ thể tại vị trí 4 và 5
+                if (substr($data->ma_the_tam, 3, 2) !== $data->matinh_cu_tru) { // Vị trí 3 và 4 vì 'TE1' chiếm 3 ký tự đầu
                     $errorDescription .= ' - Phần mã tỉnh của thẻ tạm không đúng, mã đúng: ' . $data->matinh_cu_tru;
                 }
 
                 // Kiểm tra phần 10 chữ số cuối
-                if (!preg_match('/' . $numPattern . '/', $data->ma_the_tam)) {
+                if (!preg_match('/\d{10}$/', $data->ma_the_tam)) {
                     $errorDescription .= ' - Phần cuối không chứa 10 chữ số.';
                 }
 
