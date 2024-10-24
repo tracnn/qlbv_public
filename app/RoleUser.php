@@ -10,4 +10,9 @@ class RoleUser extends Model
     protected $table = 'role_user';
     public $timestamps = false;
     protected $fillable = ['role_id', 'user_id', 'user_type'];
+
+    public function role()
+    {
+        return $this->belongsTo(Role::class, 'role_id');
+    }
 }

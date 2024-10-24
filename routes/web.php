@@ -335,6 +335,9 @@ Route::group(['middleware' => ['auth', 'check.first.login']], function () {
 
     /* Hồ sơ BHYT */
     Route::group(['prefix' => 'bhyt/', 'middleware' => ['checkrole:xml-man']], function () {
+        Route::get('index/category-imported-by', 'Category\CategoryHISController@fetchImportedBy')
+        ->name('category-his.fetch-imported-by');
+
         /* BHYT */
         Route::get('index', 'BHYT\BHYTController@index')->name('bhyt.index');
         Route::get('index/search', 'BHYT\BHYTController@searchXML')->name('bhyt.search');

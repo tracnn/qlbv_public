@@ -6,6 +6,10 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\DB;
 
+use App\RoleUser;
+use App\CustomUser;
+use App\Role;
+
 class CategoryHISController extends Controller
 {
     public function listKskContract()
@@ -46,6 +50,19 @@ class CategoryHISController extends Controller
         ->where('his_treatment_type.is_active', 1)
         ->where('his_treatment_type.is_delete', 0)
         ->select('his_treatment_type.id', 'his_treatment_type.treatment_type_code', 'his_treatment_type.treatment_type_name')
+        ->get();
+    }
+
+    public function fetchImportedBy()
+    {
+        $userIds = RoleUser::whereHas('role', function ($query) {
+            $query->whereIn('name', ['superadministrator', 'administrator', 'xml-man']);
+        })->pluck('user_id')->toArray();
+
+        return CustomUser::whereIn('id', $userIds)
+        ->where('is_active', 1)
+        ->where('is_delete', 0)
+        ->select('id', 'loginname', 'username')
         ->get();
     }
 }

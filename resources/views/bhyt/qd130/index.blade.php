@@ -174,6 +174,7 @@
                     d.treatment_type_fillter = $('#treatment_type_fillter').val();
                     d.xml_export_status = $('#xml_export_status').val();
                     d.patient_code = $('#patient_code').val();
+                    d.imported_by = $('#imported_by').val();
                 },
                 beforeSend: function(xhr) {
                     currentAjaxRequest = xhr;
@@ -335,6 +336,7 @@
             var qd130_xml_error_catalog = $('#qd130_xml_error_catalog').val();
             var payment_date_filter = $('#payment_date_filter').val();
             var treatment_code = $('#treatment_code').val();
+            var imported_by = $('#imported_by').val();
             
             // Tạo URL với các tham số query
             var href = '{{ route("bhyt.qd130.export-7980a-data") }}?' + $.param({
@@ -344,7 +346,8 @@
                 'date_type': date_type,
                 'qd130_xml_error_catalog': qd130_xml_error_catalog,
                 'payment_date_filter': payment_date_filter,
-                'treatment_code': treatment_code
+                'treatment_code': treatment_code,
+                'imported_by': imported_by
             });
 
             // Chuyển hướng tới URL với các tham số
@@ -360,6 +363,7 @@
             var date_type = $('#date_type').val();
             var qd130_xml_error_catalog = $('#qd130_xml_error_catalog').val();
             var payment_date_filter = $('#payment_date_filter').val();
+            var imported_by = $('#imported_by').val();
             
             // Tạo URL với các tham số query
             var href = '{{ route("bhyt.qd130.export-qd130-xml-errors") }}?' + $.param({
@@ -368,7 +372,8 @@
                 'xml_filter_status': xml_filter_status,
                 'date_type': date_type,
                 'qd130_xml_error_catalog': qd130_xml_error_catalog,
-                'payment_date_filter': payment_date_filter
+                'payment_date_filter': payment_date_filter,
+                'imported_by': imported_by
             });
 
             // Chuyển hướng tới URL với các tham số
@@ -385,6 +390,7 @@
             var qd130_xml_error_catalog = $('#qd130_xml_error_catalog').val();
             var xml_export_status = $('#xml_export_status').val();
             var payment_date_filter = $('#payment_date_filter').val();
+            var imported_by = $('#imported_by').val();
             
             // Tạo URL với các tham số query
             var href = '{{ route("bhyt.qd130.export-qd130-xml-xlsx") }}?' + $.param({
@@ -394,7 +400,8 @@
                 'date_type': date_type,
                 'qd130_xml_error_catalog': qd130_xml_error_catalog,
                 'xml_export_status': xml_export_status,
-                'payment_date_filter': payment_date_filter
+                'payment_date_filter': payment_date_filter,
+                'imported_by': imported_by
             });
 
             // Chuyển hướng tới URL với các tham số

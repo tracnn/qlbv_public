@@ -5,6 +5,7 @@
             <div class="form-group row">
                 @include('partials.treatment_code')
                 @include('partials.patient_code')
+                @include('partials.imported_by')
                 @include('partials.export_qd130_xml_error')
             </div>
         </div>
@@ -26,5 +27,6 @@
     @stack('after-scripts-qd130-xml-error-catalog')
     @stack('after-scripts-date-range')
     @stack('after-scripts-treatment-code')
+    @stack('after-scripts-imported-by')
     @stack('after-scripts-load-data-button')
 @endpush
