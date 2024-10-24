@@ -57,7 +57,7 @@ return [
 
     'from' => [
         'address' => env('MAIL_FROM_ADDRESS', 'mail@app.com'),
-        'name' => env('MAIL_FROM_NAME', 'Bệnh viện Đa khoa Nông nghiệp'),
+        'name' => env('MAIL_FROM_NAME', 'Hệ thống quản trị'),
     ],
 
     /*
