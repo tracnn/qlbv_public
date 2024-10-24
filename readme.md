@@ -1,5 +1,6 @@
 # 23/10/2024
 - Export Excel lỗi: Bổ sung sheet lỗi thẻ
+- Update logic Kiểm tra mã thẻ tạm
 
 # 22/10/2024
 - Bổ sung Import/Export XML10 (Giấy nghỉ việc dưỡng thai)
