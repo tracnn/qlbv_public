@@ -83,7 +83,7 @@ class Qd130Xml4Checker
                     'error_code' => $errorCode,
                     'error_name' => 'Mã dịch vụ quá dài',
                     'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
-                    'description' => 'Mã dịch vụ không được lớn hơn 15 kí tự: ' . $data->ma_dich_vu
+                    'description' => 'Mã dịch vụ không được lớn hơn 20 kí tự: ' . $data->ma_dich_vu
                 ]);
             }
 

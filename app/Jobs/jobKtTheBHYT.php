@@ -43,6 +43,11 @@ class jobKtTheBHYT implements ShouldQueue
             return;
         }
 
+        // Kiểm tra nếu thẻ BHYT có các ký tự đầu trùng với pattern trong cấu hình thì bỏ qua kiểm tra
+        if ($this->startsWithPatternCbcs($this->params['maThe'])) {
+            return;
+        }
+        
         // Cấu hình kiểm tra từ kết quả tra cứu cũ. Mặc định là true
         if ($this->checkOldValue) {
             $existingCardCheck = check_hein_card::where('ma_lk', $this->params['ma_lk'])
@@ -93,6 +98,21 @@ class jobKtTheBHYT implements ShouldQueue
 
         // Thực hiện kiểm tra thẻ bảo hiểm y tế
         $this->checkInsuranceCard($client, $tokens['access_token'], $tokens['id_token'], $this->params);
+    }
+
+    private function startsWithPatternCbcs($maThe)
+    {
+        // Lấy danh sách các mẫu từ cấu hình
+        $patterns = config('qd130xml.xml1.the_bhyt_cbcs_pattern');
+
+        // Kiểm tra nếu bất kỳ mẫu nào trong danh sách khớp với các ký tự đầu của mã thẻ
+        foreach ($patterns as $pattern) {
+            if (strpos($maThe, $pattern) === 0) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function checkInsuranceCard($client, $access_token, $id_token, $params)
