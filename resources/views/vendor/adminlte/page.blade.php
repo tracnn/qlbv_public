@@ -141,7 +141,7 @@
             <div class="pull-right hidden-xs">
                 <b>Version</b> 3.0.1
             </div>
-            {!! config('adminlte.footer', 'Copyright &#9400; by <b> <a href="http://facebook.com/trac.nguyenngoc" target="_blank">NGUYỄN NGỌC TRÁC</a></b>') !!}
+            {!! config('adminlte.footer', 'Copyright &#9400; by <b> <a href="http://facebook.com/trac.nguyenngoc" target="_blank">NNT</a></b>') !!}
         </footer>
 
     </div>
