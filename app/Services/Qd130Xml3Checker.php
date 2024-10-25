@@ -733,24 +733,31 @@ class Qd130Xml3Checker
 
             // Bổ sung kiểm tra với ma_dich_vu
             if (!empty($data->ma_dich_vu)) {
-                $matchedService = Qd130Xml3::where('ma_dich_vu', $data->ma_dich_vu)
-                    ->where('ma_lk', $data->ma_lk)
-                    ->where('ma_vat_tu', '')
-                    ->first();
+                $matchedServices = Qd130Xml3::where('ma_dich_vu', $data->ma_dich_vu)
+                ->where('ma_lk', $data->ma_lk)
+                ->where('ma_vat_tu', '')
+                ->get();
 
-                if ($matchedService) {
-                    $dataDate = substr($data->ngay_yl, 0, 8);
+                $dataDate = substr($data->ngay_yl, 0, 8);
+                $hasMatchingDate = false;
+
+                foreach ($matchedServices as $matchedService) {
                     $matchedDate = substr($matchedService->ngay_yl, 0, 8);
 
-                    if ($dataDate != $matchedDate) {
-                        $errorCode = $this->generateErrorCode('DATE_MISMATCH');
-                        $errors->push((object)[
-                            'error_code' => $errorCode,
-                            'error_name' => 'Ngày y lệnh không khớp',
-                            'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
-                            'description' => 'Mã dịch vụ: ' . $data->ma_dich_vu . '; Có ngày y lệnh: ' . strtodate($matchedDate) . '; Không khớp với ngày y lệnh của vật tư: ' . $data->ma_vat_tu
-                        ]);
+                    if ($dataDate == $matchedDate) {
+                        $hasMatchingDate = true;
+                        break; // Dừng vòng lặp khi tìm thấy ngày khớp
                     }
+                }
+
+                if (!$hasMatchingDate) {
+                    $errorCode = $this->generateErrorCode('DATE_MISMATCH');
+                    $errors->push((object)[
+                        'error_code' => $errorCode,
+                        'error_name' => 'Ngày y lệnh không khớp',
+                        'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+                        'description' => 'Mã dịch vụ: ' . $data->ma_dich_vu . '; Không tìm thấy ngày y lệnh khớp với vật tư: ' . $data->ma_vat_tu
+                    ]);
                 }
             }
         }

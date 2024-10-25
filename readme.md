@@ -1,5 +1,6 @@
 # 25/10/2024
 - Bổ sung chức năng kiểm tra thẻ: Bỏ qua không kiểm tra những thẻ BHYT của CBCS (CA, QN, CY)
+- Bổ sung kiểm tra thời gian y lệnh của VTYT trong gói có khớp với thời gian y lệnh của DVKT không
 
 # 24/10/2024
 - Bổ sung lọc Hồ sơ XML4750 theo người import
