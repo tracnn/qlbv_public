@@ -77,7 +77,7 @@ class Qd130Xml4Checker
                 'description' => 'Mã dịch vụ không được để trống'
             ]);
         } else {
-            if (strlen($data->ma_dich_vu) > 15) {
+            if (strlen($data->ma_dich_vu) > 20) {
                 $errorCode = $this->generateErrorCode('INFO_ERROR_MA_DICH_VU_LENGTH');
                 $errors->push((object)[
                     'error_code' => $errorCode,
