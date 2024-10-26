@@ -346,17 +346,21 @@ class Qd130Xml3Checker
                     'description' => 'Mã máy vượt quá 1024 kí tự: ' . $data->ma_may
                 ]);
             } else {
-                $maMay = $data->ma_may;
-                if (!preg_match('/^[A-ZĐÁÀẠÂẦẬẨẤẪÃẢĂẰẶẲẮẴÈÉẸÊỀỆỂẾỄẺÍÌỊĨỈÒÓỌÔỒỘỔỐỖÕỎƠỜỢỞỚỠÙÚỤƯỪỰỬỨỮŨỦÝỲỴỶỸ]{2,3}\.\d\.\d{5}\.[\w\-;]+$/u', $maMay)) {
-                    $errorCode = $this->generateErrorCode('INFO_ERROR_INVALID_MA_MAY_FORMAT');
-                    $errors->push((object)[
-                        'error_code' => $errorCode,
-                        'error_name' => 'Mã máy không đúng định dạng',
-                        'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
-                        'description' => 'Mã máy không đúng định dạng: ' . $maMay
-                    ]);
-                } else {
+                $maMayList = explode(';', $data->ma_may);
+                foreach ($maMayList as $maMay) {
+                    if (!preg_match('/^[A-ZĐÁÀẠÂẦẬẨẤẪÃẢĂẰẶẲẮẴÈÉẸÊỀỆỂẾỄẺÍÌỊĨỈÒÓỌÔỒỘỔỐỖÕỎƠỜỢỞỚỠÙÚỤƯỪỰỬỨỮŨỦÝỲỴỶỸ]{2,3}\.\d\.\d{5}\.[\w\-]+$/u', $maMay)) {
+                        $errorCode = $this->generateErrorCode('INFO_ERROR_INVALID_MA_MAY_FORMAT');
+                        $errors->push((object)[
+                            'error_code' => $errorCode,
+                            'error_name' => 'Mã máy không đúng định dạng',
+                            'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+                            'description' => 'Mã máy không đúng định dạng: ' . $maMay
+                        ]);
+                        continue;
+                    }
+
                     list($xx, $n, $yyyyy, $z) = explode('.', $maMay);
+
                     // Validate n
                     if (!in_array($n, ['1', '2', '3'])) {
                         $errorCode = $this->generateErrorCode('INFO_ERROR_INVALID_N');
@@ -366,7 +370,9 @@ class Qd130Xml3Checker
                             'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
                             'description' => 'Ký hiệu nguồn kinh phí không hợp lệ: ' . $n
                         ]);
+                        continue;
                     }
+
                     // Validate YYYYY
                     if (strlen($yyyyy) !== 5 || !ctype_digit($yyyyy)) {
                         $errorCode = $this->generateErrorCode('INFO_ERROR_INVALID_YYYYY');
@@ -376,6 +382,7 @@ class Qd130Xml3Checker
                             'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
                             'description' => 'Mã cơ sở KBCB trong MA_MAY không hợp lệ: ' . $yyyyy
                         ]);
+                        continue;
                     } else {
                         if (!in_array($yyyyy, config('organization.correct_facility_code'))) {
                             $errorCode = $this->generateErrorCode('INFO_ERROR_INVALID_YYYYY_NOT_FOUND');
@@ -385,8 +392,10 @@ class Qd130Xml3Checker
                                 'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
                                 'description' => 'Mã cơ sở KBCB trong MA_MAY: ' . $yyyyy . ' không thuộc: ' . implode(',', config('organization.correct_facility_code'))
                             ]);
+                            continue;
                         }
                     }
+
                     // Validate in EquipmentCatalog
                     $existEquipment = EquipmentCatalog::where('ma_may', $maMay)->exists();
                     if (!$existEquipment) {
