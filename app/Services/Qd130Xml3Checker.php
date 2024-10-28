@@ -495,6 +495,36 @@ class Qd130Xml3Checker
                     'description' => 'Mã giường: ' . $data->ma_giuong . ' không đúng định dạng (ký tự đầu phải là H, T, C, K và 3 ký tự sau là số từ 0 đến 9)'
                 ]);
             }
+
+            // Thêm kiểm tra trùng giường
+            $overlappingRecords = Qd130Xml3::where('ma_khoa', $data->ma_khoa)
+            ->where('ma_giuong', $data->ma_giuong)
+            ->where('id', '!=', $data->id) // Loại trừ chính bản ghi hiện tại
+            ->where(function ($query) use ($data) {
+                $query->where(function ($q) use ($data) {
+                        $q->where('ngay_th_yl', '<', $data->ngay_kq)  // ngay_th_yl phải nhỏ hơn ngay_kq hiện tại
+                          ->where('ngay_kq', '>', $data->ngay_th_yl); // ngay_kq phải lớn hơn ngay_th_yl hiện tại
+                    });
+            })
+            ->get();
+
+            if ($overlappingRecords->isNotEmpty()) {
+                foreach ($overlappingRecords as $overlappingRecord) {
+                    $errorCode = $this->generateErrorCode('OVERLAPPING_BED_USAGE');
+                    $errors->push((object)[
+                        'error_code' => $errorCode,
+                        'error_name' => 'Giường sử dụng trùng lặp',
+                        'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+                        'description' => 'Giường ' . $data->ma_giuong . ' tại khoa ' . $data->ma_khoa . 
+                                         ' sử dụng trùng lặp trong khoảng thời gian từ ' . 
+                                         strtodatetime($data->ngay_th_yl) . ' đến ' . strtodatetime($data->ngay_kq) . 
+                                         '. Trùng lặp với hồ sơ có mã: ' . $overlappingRecord->ma_lk . 
+                                         ' (NGAY_TH_YL: ' . strtodatetime($overlappingRecord->ngay_th_yl) . 
+                                         ', NGAY_KQ: ' . strtodatetime($overlappingRecord->ngay_kq) . ').'
+                    ]);
+                }
+            }
+
             // Kiểm tra nếu MA_KHOA thuộc danh sách những khoa không kiểm tra giường
             if (in_array($data->ma_khoa, $this->excludedBedDepartments)) {
                 return $errors;

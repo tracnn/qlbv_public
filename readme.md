@@ -1,3 +1,6 @@
+# 28/10/2024
+- Bổ sung chức năng kiểm tra trùng lặp giường: Key kiểm tra ma_giuong + ma_khoa + ngay_th_yl
+
 # 25/10/2024
 - Bổ sung chức năng kiểm tra thẻ: Bỏ qua không kiểm tra những thẻ BHYT của CBCS (CA, QN, CY)
 - Bổ sung kiểm tra thời gian y lệnh của VTYT trong gói có khớp với thời gian y lệnh của DVKT không
