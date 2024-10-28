@@ -35,4 +35,3 @@ I. Những phần mềm cần thiết
 		- Update phần mềm
 			Mở cmd với quyền Administrator, vào thư mục của phần mềm chạy update.bat
 3. Truy cập github tại địa chỉ: https://github.com/tracnn/qlbv_public để xem nội dung các bản cập nhật (theo tuần)
-II. Một số lưu ý
