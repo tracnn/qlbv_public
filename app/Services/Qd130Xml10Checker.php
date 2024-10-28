@@ -87,6 +87,14 @@ class Qd130Xml10Checker
                 'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
                 'description' => 'Số ngày không được để trống'
             ]);
+        } elseif ($data->so_ngay > 180) {
+            $errorCode = $this->generateErrorCode('INFO_ERROR_SO_NGAY_EXCEEDS');
+            $errors->push((object)[
+                'error_code' => $errorCode,
+                'error_name' => 'Số ngày vượt quá giới hạn cho phép',
+                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+                'description' => 'Số ngày không được vượt quá 180 ngày. Giá trị hiện tại: ' . $data->so_ngay
+            ]);
         }
 
         if (empty($data->don_vi)) {
