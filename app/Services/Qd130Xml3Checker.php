@@ -520,7 +520,7 @@ class Qd130Xml3Checker
                                          strtodatetime($data->ngay_th_yl) . ' đến ' . strtodatetime($data->ngay_kq) . 
                                          '. Trùng lặp với hồ sơ có mã: ' . $overlappingRecord->ma_lk . 
                                          ' (NGAY_TH_YL: ' . strtodatetime($overlappingRecord->ngay_th_yl) . 
-                                         ', NGAY_KQ: ' . strtodatetime($overlappingRecord->ngay_kq) . ').'
+                                         ', NGAY_KQ: ' . strtodatetime($overlappingRecord->ngay_kq) . ')'
                     ]);
                 }
             }
