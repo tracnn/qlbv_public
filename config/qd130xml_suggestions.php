@@ -49,4 +49,13 @@ return [
             AND 
                 his_treatment.treatment_code =\'{ma_dieu_tri}\');
         COMMIT;',
+    
+    //XML13
+    'XML13_INFO_ERROR_HUONG_DIEU_TRI' => 'UPDATE 
+            his_treatment 
+        SET 
+            treatment_method = \'Nội khoa\' 
+        WHERE 
+            treatment_code = \'{ma_dieu_tri}\';
+        COMMIT;',
 ];
