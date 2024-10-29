@@ -90,7 +90,7 @@ class Qd130Xml7980aExport implements FromQuery, WithHeadings, ShouldAutoSize, Wi
                 qd130_xml1s.ma_cskcb,
                 qd130_xml1s.t_nguonkhac
             ")
-            ->join('qd130_xml3s', 'qd130_xml3s.ma_lk', '=', 'qd130_xml1s.ma_lk')
+            ->leftJoin('qd130_xml3s', 'qd130_xml3s.ma_lk', '=', 'qd130_xml1s.ma_lk')
             ->where('qd130_xml1s.ma_lk', $treatmentCode)
             ->groupBy(
                 'qd130_xml1s.ma_bn', 
