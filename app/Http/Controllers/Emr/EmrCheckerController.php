@@ -173,7 +173,9 @@ class EmrCheckerController extends Controller
                 $medicine_results = $this->checkEmrService->getMedicineOutpatientDetails($treatment_code);
 
                 if ($medicine_results->isNotEmpty()) {
-                    $html .= view('emr-checker.partials.medicine-outpatient-detail', compact('medicine_results'))->render();
+                    $html .= view('emr-checker.partials.medicine-outpatient-detail', compact(
+                        'medicine_results', 'results'))
+                    ->render();
                 }
             }
             
