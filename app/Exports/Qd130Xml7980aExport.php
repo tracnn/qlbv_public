@@ -44,6 +44,7 @@ class Qd130Xml7980aExport implements FromQuery, WithHeadings, ShouldAutoSize, Wi
         // Nếu có truyền treatment_code, chỉ lấy hồ sơ có ma_lk bằng treatmentCode và bỏ qua tất cả các điều kiện khác
         if ($treatmentCode) {
             return Qd130Xml1::selectRaw("
+                qd130_xml1s.ma_lk,
                 qd130_xml1s.ma_bn, 
                 qd130_xml1s.ho_ten, 
                 CASE 
@@ -93,6 +94,7 @@ class Qd130Xml7980aExport implements FromQuery, WithHeadings, ShouldAutoSize, Wi
             ->leftJoin('qd130_xml3s', 'qd130_xml3s.ma_lk', '=', 'qd130_xml1s.ma_lk')
             ->where('qd130_xml1s.ma_lk', $treatmentCode)
             ->groupBy(
+                'qd130_xml1s.ma_lk',
                 'qd130_xml1s.ma_bn', 
                 'qd130_xml1s.ho_ten', 
                 'qd130_xml1s.ngay_sinh', 
@@ -172,6 +174,7 @@ class Qd130Xml7980aExport implements FromQuery, WithHeadings, ShouldAutoSize, Wi
         }
 
         $query = Qd130Xml1::selectRaw("
+            qd130_xml1s.ma_lk,
             qd130_xml1s.ma_bn, 
             qd130_xml1s.ho_ten, 
             CASE 
@@ -221,6 +224,7 @@ class Qd130Xml7980aExport implements FromQuery, WithHeadings, ShouldAutoSize, Wi
         ->join('qd130_xml3s', 'qd130_xml3s.ma_lk', '=', 'qd130_xml1s.ma_lk')
         ->whereBetween($dateField, [$formattedDateFrom, $formattedDateTo])
         ->groupBy(
+            'qd130_xml1s.ma_lk',
             'qd130_xml1s.ma_bn', 
             'qd130_xml1s.ho_ten', 
             'qd130_xml1s.ngay_sinh', 
@@ -280,6 +284,7 @@ class Qd130Xml7980aExport implements FromQuery, WithHeadings, ShouldAutoSize, Wi
     {
         return [
             'STT',
+            'MA_LK',
             'MA_BN',
             'HO_TEN',
             'NGAY_SINH',
@@ -335,23 +340,24 @@ class Qd130Xml7980aExport implements FromQuery, WithHeadings, ShouldAutoSize, Wi
                 }
                 // Đặt độ rộng các cột theo file Excel đã gửi
                 $sheet->getColumnDimension('A')->setWidth(5);   // STT
-                $sheet->getColumnDimension('B')->setWidth(20);  // MA_BN
-                $sheet->getColumnDimension('C')->setWidth(8);   // HO_TEN
-                $sheet->getColumnDimension('D')->setWidth(7);   // NGAY_SINH
-                $sheet->getColumnDimension('F')->setWidth(90);  // DIA_CHI
-                $sheet->getColumnDimension('G')->setWidth(16);   // MA_THE
-                $sheet->getColumnDimension('H')->setWidth(9);   // MA_DKBD
-                $sheet->getColumnDimension('I')->setWidth(11);  // GT_THE_TU
-                $sheet->getColumnDimension('J')->setWidth(12);  // GT_THE_DEN
-                $sheet->getColumnDimension('K')->setWidth(12);  // MA_BENH
-                $sheet->getColumnDimension('L')->setWidth(9);   // MA_BENHKHAC
-                $sheet->getColumnDimension('M')->setWidth(10);  // MA_LYDO_VVIEN
-                $sheet->getColumnDimension('N')->setWidth(9);   // MA_NOI_CHUYEN
-                $sheet->getColumnDimension('O')->setWidth(15);   // MA_NOI_CHUYEN
+                $sheet->getColumnDimension('B')->setWidth(20);  // MA_LK
+                $sheet->getColumnDimension('C')->setWidth(20);  // MA_BN
+                $sheet->getColumnDimension('D')->setWidth(8);   // HO_TEN
+                $sheet->getColumnDimension('E')->setWidth(7);   // NGAY_SINH
+                $sheet->getColumnDimension('G')->setWidth(90);  // DIA_CHI
+                $sheet->getColumnDimension('H')->setWidth(16);   // MA_THE
+                $sheet->getColumnDimension('I')->setWidth(9);   // MA_DKBD
+                $sheet->getColumnDimension('J')->setWidth(11);  // GT_THE_TU
+                $sheet->getColumnDimension('K')->setWidth(12);  // GT_THE_DEN
+                $sheet->getColumnDimension('L')->setWidth(12);  // MA_BENH
+                $sheet->getColumnDimension('M')->setWidth(9);   // MA_BENHKHAC
+                $sheet->getColumnDimension('N')->setWidth(10);  // MA_LYDO_VVIEN
+                $sheet->getColumnDimension('O')->setWidth(9);   // MA_NOI_CHUYEN
                 $sheet->getColumnDimension('P')->setWidth(15);   // MA_NOI_CHUYEN
+                $sheet->getColumnDimension('Q')->setWidth(15);   // MA_NOI_CHUYEN
                 
                 // Các cột từ T_U_XN đến T_NGUONKHAC đều có độ rộng 15
-                foreach (range('Q', 'AN') as $columnID) {
+                foreach (range('R', 'AN') as $columnID) {
                     $sheet->getColumnDimension($columnID)->setWidth(15);
                 }
                 $sheet->getStyle('O:P')->getNumberFormat()->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER);
@@ -381,6 +387,7 @@ class Qd130Xml7980aExport implements FromQuery, WithHeadings, ShouldAutoSize, Wi
 
         return [
             $this->rowNumber,
+            $data->ma_lk,
             $data->ma_bn,
             $data->ho_ten,
             $data->ngay_sinh,
