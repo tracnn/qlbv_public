@@ -353,14 +353,14 @@ class Qd130Xml7980aExport implements FromQuery, WithHeadings, ShouldAutoSize, Wi
                 $sheet->getColumnDimension('M')->setWidth(9);   // MA_BENHKHAC
                 $sheet->getColumnDimension('N')->setWidth(10);  // MA_LYDO_VVIEN
                 $sheet->getColumnDimension('O')->setWidth(9);   // MA_NOI_CHUYEN
-                $sheet->getColumnDimension('P')->setWidth(15);   // MA_NOI_CHUYEN
-                $sheet->getColumnDimension('Q')->setWidth(15);   // MA_NOI_CHUYEN
+                $sheet->getColumnDimension('P')->setWidth(15);   // NGAY_VAO
+                $sheet->getColumnDimension('Q')->setWidth(15);   // NGAY_RA
                 
                 // Các cột từ T_U_XN đến T_NGUONKHAC đều có độ rộng 15
                 foreach (range('R', 'AN') as $columnID) {
                     $sheet->getColumnDimension($columnID)->setWidth(15);
                 }
-                $sheet->getStyle('O:P')->getNumberFormat()->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER);
+                $sheet->getStyle('P:Q')->getNumberFormat()->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER);
             },
         ];
     }
