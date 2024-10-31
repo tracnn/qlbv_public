@@ -34,6 +34,10 @@ php artisan view:clear
 echo Adding new config key...
 php artisan config:add-keys
 
+:: Dọn dẹp job failed và restart job mắc kẹt
+echo Restart stuck jobs
+php artisan job:restart-stuck
+
 :: Tạo cache mới
 echo Optimizing configuration...
 php artisan config:cache
