@@ -1,3 +1,6 @@
+# 31/10/2024
+- Bổ sung kiểm tra Xml3 đối với một dịch vụ có nhiều giá hợp lệ
+
 # 28/10/2024
 - Bổ sung chức năng kiểm tra trùng lặp giường: Key kiểm tra ma_giuong + ma_khoa + ngay_th_yl
 

@@ -827,6 +827,7 @@ class Qd130Xml3Checker
             !in_array($data->ma_nhom, $this->examinationGroupCodes)) {
 
             $serviceExists = ServiceCatalog::where('ma_dich_vu', $data->ma_dich_vu)->exists();
+
             if (!$serviceExists) {
                 $errorCode = $this->generateErrorCode('INVALID_MA_DICH_VU');
                 $errors->push((object)[
@@ -839,13 +840,13 @@ class Qd130Xml3Checker
                 $ngayVao = \DateTime::createFromFormat('YmdHi', $data->Qd130Xml1->ngay_vao)->format('Ymd');
 
                 $validServiceExists = ServiceCatalog::where('ma_dich_vu', $data->ma_dich_vu)
-                    ->where('tu_ngay', '<=', $ngayVao)
-                    ->where(function ($query) use ($ngayVao) {
-                        $query->where('den_ngay', '>=', $ngayVao)
-                              ->orWhereNull('den_ngay');
-                    })->first();
+                ->where('tu_ngay', '<=', $ngayVao)
+                ->where(function ($query) use ($ngayVao) {
+                    $query->where('den_ngay', '>=', $ngayVao)
+                          ->orWhereNull('den_ngay');
+                })->get();
 
-                if (!$validServiceExists) {
+                if ($validServiceExists->isEmpty()) {
                     $errorCode = $this->generateErrorCode('INVALID_MA_DICH_VU_NGAY_VAO');
                     $errors->push((object)[
                         'error_code' => $errorCode,
@@ -854,14 +855,18 @@ class Qd130Xml3Checker
                         'description' => 'Không tìm thấy dịch vụ hợp lệ cho mã dịch vụ: ' . $data->ma_dich_vu . ' với ngày vào: ' . strtodatetime($data->Qd130Xml1->ngay_vao)
                     ]);
                 } else {
-                    // Kiểm tra giá
-                    if ($data->don_gia_bh > $validServiceExists->don_gia) {
+                    // Kiểm tra giá: Nếu tất cả các don_gia đều nhỏ hơn $data->don_gia_bh thì báo lỗi
+                    $allPricesLower = $validServiceExists->every(function ($service) use ($data) {
+                        return $service->don_gia < $data->don_gia_bh;
+                    });
+
+                    if ($allPricesLower) {
                         $errorCode = $this->generateErrorCode('INVALID_APPROVED_DON_GIA_BH');
                         $errors->push((object)[
                             'error_code' => $errorCode,
                             'error_name' => 'Giá DVKT cao hơn giá được phê duyệt',
                             'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
-                            'description' => 'Mã DVKT: ' . $data->ma_dich_vu . '; Có giá: ' . $data->don_gia_bh . '; Giá phê duyệt: ' . $validServiceExists->don_gia
+                            'description' => 'Mã DVKT: ' . $data->ma_dich_vu . '; Có giá: ' . $data->don_gia_bh . '; Giá phê duyệt nhỏ hơn: ' . $validServiceExists->pluck('don_gia')->implode(', ')
                         ]);
                     }
 
