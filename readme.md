@@ -1,3 +1,6 @@
+# 05/11/2024
+- Bổ sung kiểm tra chỉ cho phép tối đa 1 công khám đối với điều trị nội trú
+
 # 31/10/2024
 - Bổ sung kiểm tra Xml3 đối với một dịch vụ có nhiều giá hợp lệ
 

@@ -31,7 +31,7 @@ class Qd130XmlCompleteChecker
     protected $bedGroupCodes;
     protected $treatmentTypeInpatient;
     protected $materialGroupCodes;
-
+    protected $examinationGroupCodes;
 
     public function __construct(Qd130XmlErrorService $xmlErrorService)
     {
@@ -49,6 +49,7 @@ class Qd130XmlCompleteChecker
         $this->invalidMaLoaiRV = config('qd130xml.invalid_end_type_treatment');
         $this->bedGroupCodes = config('qd130xml.bed_group_code');
         $this->treatmentTypeInpatient = config('qd130xml.treatment_type_inpatient');
+        $this->examinationGroupCodes = config('qd130xml.examination_group_code');
     }
 
     protected function generateErrorCode(string $errorKey): string
@@ -72,10 +73,40 @@ class Qd130XmlCompleteChecker
             $errors = $errors->merge($this->infoChecker($ma_lk));
             $errors = $errors->merge($this->checkInvalidBedDays($data));
             $errors = $errors->merge($this->checkExpenseErrors($data));
+            $errors = $errors->merge($this->checkExaminationErrors($data));
 
             // Save errors to xml_error_checks table
             $this->xmlErrorService->saveErrors($this->xmlType, $data->ma_lk, $data->stt, $errors);
         }
+    }
+
+    /**
+     * Check for reason for admission errors
+     *
+     * @param Qd130Xml11 $data
+     * @return Collection
+     */
+    private function checkExaminationErrors(Qd130Xml1 $data): Collection
+    {
+        $errors = collect();
+
+        // Check for multiple records in Qd130Xml3 with ma_lk and ma_nhom in examinationGroupCodes
+        $records = Qd130Xml3::where('ma_lk', $data->ma_lk)
+            ->whereIn('ma_nhom', $this->examinationGroupCodes)
+            ->get();
+
+        // Check if the treatment type is inpatient and there are multiple examination fees
+        if (in_array($data->ma_loai_kcb, $this->treatmentTypeInpatient) && $records->count() >= 2) {
+            $errorCode = $this->generateErrorCode('ERROR_MULTIPLE_EXAMINATION_FEES_INPATIENT');
+            $errors->push((object)[
+                'error_code' => $errorCode,
+                'error_name' => 'Thừa công khám cho Điều trị nội trú',
+                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+                'description' => 'Chỉ cho phép có một lần công khám, số lượng hiện tại: ' . $records->count()
+            ]);
+        }
+
+        return $errors;
     }
 
     /**
