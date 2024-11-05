@@ -185,7 +185,7 @@ class PatientController extends Controller
 
                 $sere_serv_cdha = DB::connection('HISPro')  
                 ->table('his_sere_serv')
-                ->select('id', 'tdl_service_name')
+                ->select('id', 'tdl_service_name', 'tdl_intruction_time')
                 ->where('is_delete', 0)
                 ->where('tdl_service_type_id', 3)
                 ->where('tdl_treatment_id', $treatment->id)
