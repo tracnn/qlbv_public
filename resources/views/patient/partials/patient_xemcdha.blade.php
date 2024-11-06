@@ -26,7 +26,7 @@
                     <i class="fa fa-film"></i> Xem
                   </a>
                 @else
-                  <a href="http://benhviendakhoanongnghiep.vn:82/VrPacs/viewImgsH?scode={{ $value->id }}" class="btn btn-info btn-sm" target="_blank">
+                  <a href="http://benhviendakhoanongnghiep.vn:82/VrPacs/viewImgsH?pcode={{$value->tdl_patient_code}}&scode={{ $value->id }}" class="btn btn-info btn-sm" target="_blank">
                     <i class="fa fa-film"></i> Xem
                   </a>
                 @endif
