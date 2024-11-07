@@ -14,6 +14,7 @@ use Illuminate\Support\Collection;
 class Qd130Xml1Checker
 {
     protected $xmlErrorService;
+    protected $commonValidationService;
     protected $prefix;
 
     protected $xmlType;
@@ -25,9 +26,10 @@ class Qd130Xml1Checker
     protected $bedGroupCodes;
     protected $treatmentTypeInpatient;
 
-    public function __construct(Qd130XmlErrorService $xmlErrorService)
+    public function __construct(Qd130XmlErrorService $xmlErrorService, CommonValidationService $commonValidationService)
     {
         $this->xmlErrorService = $xmlErrorService;
+        $this->commonValidationService = $commonValidationService;
         $this->setConditions();
     }
 
@@ -562,14 +564,13 @@ class Qd130Xml1Checker
                 'description' => 'Thủ trưởng đơn vị không được để trống'
             ]);
         } else {
-            $staff = MedicalStaff::where('ma_bhxh', $data->ma_ttdv)->exists();
-            if (!$staff) {
+            if (!$this->commonValidationService->isMedicalStaffValid($data->ma_ttdv, 'ma_bhxh')) {
                 $errorCode = $this->generateErrorCode('INVALID_MEDICAL_STAFF_MA_TTDV');
                 $errors->push((object)[
                     'error_code' => $errorCode,
                     'error_name' => 'Mã thủ trưởng đơn vị chưa được duyệt',
                     'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
-                    'description' => 'Mã thủ trưởng đơn vị chưa được duyệt danh mục (Mã BHXH: ' . $data->ma_ttdv . ')'
+                    'description' => 'Mã thủ trưởng đơn vị chưa được duyệt danh mục: ' . $data->ma_ttdv
                 ]);
             }
         }
