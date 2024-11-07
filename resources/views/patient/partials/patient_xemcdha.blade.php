@@ -26,7 +26,7 @@
                     <i class="fa fa-film"></i> Xem
                   </a>
                 @else
-                  <a href="http://benhviendakhoanongnghiep.vn:82/viewImgsH?ris_exam_id={{ $value->id }}" class="btn btn-info btn-sm" target="_blank">
+                  <a href="http://benhviendakhoanongnghiep.vn:82/viewImgsH?ris_exam_id={{ $value->id }}&service_id={{ $value->id }}" class="btn btn-info btn-sm" target="_blank">
                     <i class="fa fa-film"></i> Xem
                   </a>
                 @endif
