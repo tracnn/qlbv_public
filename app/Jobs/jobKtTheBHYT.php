@@ -178,7 +178,7 @@ class jobKtTheBHYT implements ShouldQueue
         if ($params['maCSKCB'] != $maDKBD) {
             return '09';
         }
-        if (($params['gioiTinh'] == 1 && $gioiTinh == 'Nữ') || ($params['gioiTinh'] == 2 && $gioiTinh == 'Nam')) {
+        if (($params['gioiTinh'] == 1 && $gioiTinh == 'Nữ') || ($params['gioiTinh'] == 2 && $gioiTinh == 'Nam') || ($params['gioiTinh'] == 3 && $gioiTinh == 'Chưa xác định')) {
             return '08';
         }
         return '00';
