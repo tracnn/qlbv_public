@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Models\BHYT\Qd130Xml7;
-use App\Models\BHYT\MedicalStaff;
 use Illuminate\Support\Collection;
 
 use DateTime;
@@ -11,13 +10,15 @@ use DateTime;
 class Qd130Xml7Checker
 {
     protected $xmlErrorService;
+    protected $commonValidationService;
     protected $prefix;
 
     protected $xmlType;
 
-    public function __construct(Qd130XmlErrorService $xmlErrorService)
+    public function __construct(Qd130XmlErrorService $xmlErrorService, CommonValidationService $commonValidationService)
     {
         $this->xmlErrorService = $xmlErrorService;
+        $this->commonValidationService = $commonValidationService;
         $this->setConditions();
     }
 
@@ -78,7 +79,7 @@ class Qd130Xml7Checker
                 'description' => 'Thủ trưởng đơn vị không được để trống'
             ]);
         } else {
-            if (!MedicalStaff::where('ma_bhxh', $data->ma_ttdv)->exists()) {
+            if (!$this->commonValidationService->isMedicalStaffValid($data->ma_ttdv, 'ma_bhxh')) {
                 $errorCode = $this->generateErrorCode('INFO_ERROR_MA_TTDV_NOT_FOUND');
                 $errors->push((object)[
                     'error_code' => $errorCode,
@@ -98,7 +99,7 @@ class Qd130Xml7Checker
                 'description' => 'Mã bác sĩ không được để trống'
             ]);
         } else {
-            if (!MedicalStaff::where('ma_bhxh', $data->ma_bs)->exists()) {
+            if (!$this->commonValidationService->isMedicalStaffValid($data->ma_bs, 'ma_bhxh')) {
                 $errorCode = $this->generateErrorCode('INFO_ERROR_MA_BS_NOT_FOUND');
                 $errors->push((object)[
                     'error_code' => $errorCode,

@@ -5,19 +5,20 @@ namespace App\Services;
 use App\Models\BHYT\Qd130Xml4;
 use App\Models\BHYT\Qd130Xml3;
 use App\Models\BHYT\ServiceCatalog;
-use App\Models\BHYT\MedicalStaff;
 use Illuminate\Support\Collection;
 
 class Qd130Xml4Checker
 {
     protected $xmlErrorService;
+    protected $commonValidationService;
     protected $prefix;
 
     protected $xmlType;
 
-    public function __construct(Qd130XmlErrorService $xmlErrorService)
+    public function __construct(Qd130XmlErrorService $xmlErrorService, CommonValidationService $commonValidationService)
     {
         $this->xmlErrorService = $xmlErrorService;
+        $this->commonValidationService = $commonValidationService;
         $this->setConditions();
     }
 
@@ -193,7 +194,7 @@ class Qd130Xml4Checker
                 'description' => 'Mã bác sĩ đọc kết quả không được để trống'
             ]);
         } else {
-            if (!MedicalStaff::where('ma_bhxh', $data->ma_bs_doc_kq)->exists()) {
+            if (!$this->commonValidationService->isMedicalStaffValid($data->ma_bs_doc_kq, 'ma_bhxh')) {
                 $errorCode = $this->generateErrorCode('INFO_ERROR_MA_BS_DOC_KQ_NOT_FOUND');
                 $errors->push((object)[
                     'error_code' => $errorCode,

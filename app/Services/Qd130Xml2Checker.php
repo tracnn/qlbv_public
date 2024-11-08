@@ -6,7 +6,6 @@ use App\Models\BHYT\Qd130Xml2;
 use App\Models\BHYT\Qd130Xml1;
 use App\Models\BHYT\DepartmentBedCatalog;
 use App\Models\BHYT\EquipmentCatalog;
-use App\Models\BHYT\MedicalStaff;
 use App\Models\BHYT\MedicalSupplyCatalog;
 use App\Models\BHYT\MedicineCatalog;
 use App\Models\BHYT\ServiceCatalog;
@@ -16,6 +15,7 @@ use Illuminate\Support\Collection;
 class Qd130Xml2Checker
 {
     protected $xmlErrorService;
+    protected $commonValidationService;
     protected $prefix;
 
     protected $xmlType;
@@ -25,9 +25,10 @@ class Qd130Xml2Checker
     protected $drugGroupNotCheck;
     protected $drugCodeNotCheck;
 
-    public function __construct(Qd130XmlErrorService $xmlErrorService)
+    public function __construct(Qd130XmlErrorService $xmlErrorService, CommonValidationService $commonValidationService)
     {
         $this->xmlErrorService = $xmlErrorService;
+        $this->commonValidationService = $commonValidationService;
         $this->setConditions();
     }
 
@@ -199,8 +200,7 @@ class Qd130Xml2Checker
                 'description' => 'Không có mã bác sĩ chỉ định'
             ]);
         } else {
-            $staff = MedicalStaff::where('macchn', $data->ma_bac_si)->exists();
-            if (!$staff) {
+            if (!$this->commonValidationService->isMedicalStaffValid($data->ma_bac_si)) {
                 $errorCode = $this->generateErrorCode('INVALID_MEDICAL_STAFF_CODE');
                 $errors->push((object)[
                     'error_code' => $errorCode,

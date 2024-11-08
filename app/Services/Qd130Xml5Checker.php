@@ -3,19 +3,20 @@
 namespace App\Services;
 
 use App\Models\BHYT\Qd130Xml5;
-use App\Models\BHYT\MedicalStaff;
 use Illuminate\Support\Collection;
 
 class Qd130Xml5Checker
 {
     protected $xmlErrorService;
+    protected $commonValidationService;
     protected $prefix;
 
     protected $xmlType;
 
-    public function __construct(Qd130XmlErrorService $xmlErrorService)
+    public function __construct(Qd130XmlErrorService $xmlErrorService, CommonValidationService $commonValidationService)
     {
         $this->xmlErrorService = $xmlErrorService;
+        $this->commonValidationService = $commonValidationService;
         $this->setConditions();
     }
 
@@ -111,7 +112,7 @@ class Qd130Xml5Checker
                 'description' => 'Người thực hiện không được để trống'
             ]);
         } else {
-            if (!MedicalStaff::where('ma_bhxh', $data->nguoi_thuc_hien)->exists()) {
+            if (!$this->commonValidationService->isMedicalStaffValid($data->nguoi_thuc_hien, 'ma_bhxh')) {
                 $errorCode = $this->generateErrorCode('INFO_ERROR_NGUOI_THUC_HIEN_NOT_FOUND');
                 $errors->push((object)[
                     'error_code' => $errorCode,

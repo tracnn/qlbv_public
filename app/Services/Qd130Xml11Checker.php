@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Models\BHYT\Qd130Xml11;
-use App\Models\BHYT\MedicalStaff;
 use Illuminate\Support\Collection;
 
 use Carbon\Carbon;
@@ -11,15 +10,17 @@ use Carbon\Carbon;
 class Qd130Xml11Checker
 {
     protected $xmlErrorService;
+    protected $commonValidationService;
     protected $prefix;
 
     protected $xmlType;
 
     protected $docXml11Type;
 
-    public function __construct(Qd130XmlErrorService $xmlErrorService)
+    public function __construct(Qd130XmlErrorService $xmlErrorService, CommonValidationService $commonValidationService)
     {
         $this->xmlErrorService = $xmlErrorService;
+        $this->commonValidationService = $commonValidationService;
         $this->setConditions();
     }
 
@@ -286,8 +287,7 @@ class Qd130Xml11Checker
                 'description' => 'Mã bác sĩ (Mã BHXH) không được để trống'
             ]);
         } else {
-            $staff = MedicalStaff::where('ma_bhxh', $data->ma_bs)->exists();
-            if (!$staff) {
+            if (!$this->commonValidationService->isMedicalStaffValid($data->ma_bs, 'ma_bhxh')) {
                 $errorCode = $this->generateErrorCode('INVALID_MEDICAL_STAFF_MA_BS');
                 $errors->push((object)[
                     'error_code' => $errorCode,
@@ -307,8 +307,7 @@ class Qd130Xml11Checker
                 'description' => 'Thủ trưởng đơn vị không được để trống'
             ]);
         } else {
-            $staff = MedicalStaff::where('ma_bhxh', $data->ma_ttdv)->exists();
-            if (!$staff) {
+            if (!$this->commonValidationService->isMedicalStaffValid($data->ma_ttdv, 'ma_bhxh')) {
                 $errorCode = $this->generateErrorCode('INVALID_MEDICAL_STAFF_MA_TTDV');
                 $errors->push((object)[
                     'error_code' => $errorCode,

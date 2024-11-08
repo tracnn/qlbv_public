@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Models\BHYT\Qd130Xml3;
 use App\Models\BHYT\MedicalSupplyCatalog;
-use App\Models\BHYT\MedicalStaff;
 use App\Models\BHYT\Icd10Category;
 use App\Models\BHYT\IcdYhctCategory;
 use App\Models\BHYT\ServiceCatalog;
@@ -14,6 +13,7 @@ use Illuminate\Support\Collection;
 class Qd130Xml3Checker
 {
     protected $xmlErrorService;
+    protected $commonValidationService;
     protected $prefix;
 
     protected $xmlType;
@@ -29,9 +29,10 @@ class Qd130Xml3Checker
     protected $serviceGroupsRequiringAnesthesia;
     protected $serviceDisplay;
 
-    public function __construct(Qd130XmlErrorService $xmlErrorService)
+    public function __construct(Qd130XmlErrorService $xmlErrorService, CommonValidationService $commonValidationService)
     {
         $this->xmlErrorService = $xmlErrorService;
+        $this->commonValidationService = $commonValidationService;
         $this->setConditions();
     }
 
@@ -174,7 +175,7 @@ class Qd130Xml3Checker
         if (!empty($data->nguoi_thuc_hien)) {
             $nguoi_thuc_hien_array = explode(';', $data->nguoi_thuc_hien);
             foreach ($nguoi_thuc_hien_array as $nguoi_thuc_hien) {
-                if (!MedicalStaff::where('macchn', $nguoi_thuc_hien)->exists()) {
+                if (!$this->commonValidationService->isMedicalStaffValid($nguoi_thuc_hien)) {
                     $errorCode = $this->generateErrorCode('INFO_ERROR_NGUOI_THUC_HIEN_NOT_FOUND');
                     $errors->push((object)[
                         'error_code' => $errorCode,
@@ -208,7 +209,7 @@ class Qd130Xml3Checker
         } else {
             $ma_bac_si_array = explode(';', $data->ma_bac_si);
             foreach ($ma_bac_si_array as $ma_bac_si) {
-                if (!MedicalStaff::where('macchn', $ma_bac_si)->exists()) {
+                if (!$this->commonValidationService->isMedicalStaffValid($data->ma_bac_si)) {
                     $errorCode = $this->generateErrorCode('INFO_ERROR_MA_BAC_SI_NOT_FOUND');
                     $errors->push((object)[
                         'error_code' => $errorCode,

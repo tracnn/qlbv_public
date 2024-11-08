@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Models\BHYT\Qd130Xml9;
-use App\Models\BHYT\MedicalStaff;
 use Illuminate\Support\Collection;
 
 use DateTime;
@@ -11,13 +10,15 @@ use DateTime;
 class Qd130Xml9Checker
 {
     protected $xmlErrorService;
+    protected $commonValidationService;
     protected $prefix;
 
     protected $xmlType;
 
-    public function __construct(Qd130XmlErrorService $xmlErrorService)
+    public function __construct(Qd130XmlErrorService $xmlErrorService, CommonValidationService $commonValidationService)
     {
         $this->xmlErrorService = $xmlErrorService;
+        $this->commonValidationService = $commonValidationService;
         $this->setConditions();
     }
 
@@ -356,8 +357,7 @@ class Qd130Xml9Checker
                 'description' => 'Thủ trưởng đơn vị không được để trống'
             ]);
         } else {
-            $staffExists = MedicalStaff::where('ma_bhxh', $data->ma_ttdv)->exists();
-            if (!$staffExists) {
+            if (!$this->commonValidationService->isMedicalStaffValid($data->ma_ttdv, 'ma_bhxh')) {
                 $errorCode = $this->generateErrorCode('INVALID_MEDICAL_STAFF_MA_TTDV');
                 $errors->push((object)[
                     'error_code' => $errorCode,

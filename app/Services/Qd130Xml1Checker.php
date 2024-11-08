@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Models\BHYT\Qd130Xml1;
 use App\Models\BHYT\Icd10Category;
 use App\Models\BHYT\IcdYhctCategory;
-use App\Models\BHYT\MedicalStaff;
 use App\Models\BHYT\MedicalOrganization;
 use App\Models\BHYT\AdministrativeUnit;
 use App\Models\BHYT\JobCategory;
