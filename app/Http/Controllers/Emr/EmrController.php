@@ -436,41 +436,41 @@ class EmrController extends Controller
             $pdfUrl = url('/api/view-pdf') . '?document_code=' . $request->get('document_code') . '&treatment_code=' . $request->get('treatment_code');
             return redirect(url('/vendor/pdfjsv2/web/viewer.html?file=' . urlencode($pdfUrl)));
 
-            $result = DB::connection('EMR_RS')
-                ->table('emr_version')
-                ->join('emr_document', 'emr_document.id', '=', 'emr_version.document_id')
-                ->where('emr_version.is_delete', 0)
-                ->where('emr_version.is_active', 1)
-                ->where('emr_document.is_delete', 0)
-                ->where('emr_document.document_code', base64_decode($request->get('document_code')))
-                ->where('emr_document.treatment_code', $request->get('treatment_code'))
-                ->orderBy('emr_version.id', 'desc')
-                ->first();
+            // $result = DB::connection('EMR_RS')
+            //     ->table('emr_version')
+            //     ->join('emr_document', 'emr_document.id', '=', 'emr_version.document_id')
+            //     ->where('emr_version.is_delete', 0)
+            //     ->where('emr_version.is_active', 1)
+            //     ->where('emr_document.is_delete', 0)
+            //     ->where('emr_document.document_code', base64_decode($request->get('document_code')))
+            //     ->where('emr_document.treatment_code', $request->get('treatment_code'))
+            //     ->orderBy('emr_version.id', 'desc')
+            //     ->first();
 
-            if(!$result)
-            {
-                throw new \Exception('Invalid request');
-            }
+            // if(!$result)
+            // {
+            //     throw new \Exception('Invalid request');
+            // }
 
-            $content = Storage::disk('emr')->get($result->url);
-            $base64Pdf = base64_encode($content);
-            //$type = Storage::disk('emr')->mimeType($filePath);
+            // $content = Storage::disk('emr')->get($result->url);
+            // $base64Pdf = base64_encode($content);
+            // //$type = Storage::disk('emr')->mimeType($filePath);
 
-            if (Browser::isAndroid()) {
-                if (session('_token') && Storage::disk('public')->put('/upload/' .$request->get('treatment_code') .'.pdf', $content)) {
-                    $url_pdf = url('storage') .'/upload/' .$request->get('treatment_code') .'.pdf';
-                    return redirect(url('/' .'vendor/pdfjsv2/web/viewer.html?file=' .$url_pdf));
-                 } else {
-                    throw new \Exception('Invalid request');
-                 }
+            // if (Browser::isAndroid()) {
+            //     if (session('_token') && Storage::disk('public')->put('/upload/' .$request->get('treatment_code') .'.pdf', $content)) {
+            //         $url_pdf = url('storage') .'/upload/' .$request->get('treatment_code') .'.pdf';
+            //         return redirect(url('/' .'vendor/pdfjsv2/web/viewer.html?file=' .$url_pdf));
+            //      } else {
+            //         throw new \Exception('Invalid request');
+            //      }
 
-                // return response()->json(['base64Pdf' => $base64Pdf]);
-            }
+            //     // return response()->json(['base64Pdf' => $base64Pdf]);
+            // }
 
-            return response()->make($content, 200, [
-                'Content-Type' => 'application/pdf',
-                'Content-Disposition' => 'inline; filename="' .$request->get('document_code') .'.pdf"'
-            ]);            
+            // return response()->make($content, 200, [
+            //     'Content-Type' => 'application/pdf',
+            //     'Content-Disposition' => 'inline; filename="' .$request->get('document_code') .'.pdf"'
+            // ]);            
         } catch (\Exception $e) {
             return $e->getMessage();
         }
@@ -629,6 +629,10 @@ class EmrController extends Controller
     public function viewPdf(Request $request)
     {
         try {
+            if (!session('_token') || session('_token') !== $request->get('token')) {
+                throw new \Exception('Unauthorized access');
+            }
+
             $result = DB::connection('EMR_RS')
                 ->table('emr_version')
                 ->join('emr_document', 'emr_document.id', '=', 'emr_version.document_id')
