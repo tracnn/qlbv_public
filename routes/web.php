@@ -525,3 +525,4 @@ Route::group(['middleware' => ['auth', 'check.first.login']], function () {
 
 });
 
+Route::get('/api/view-pdf', 'Emr\EmrController@viewPdf')->name('api.view-pdf');

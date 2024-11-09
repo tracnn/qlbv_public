@@ -432,6 +432,10 @@ class EmrController extends Controller
     public function viewDocByAdmin(Request $request)
     {
         try {
+
+            $pdfUrl = url('/api/view-pdf') . '?document_code=' . $request->get('document_code') . '&treatment_code=' . $request->get('treatment_code');
+            return redirect(url('/vendor/pdfjsv2/web/viewer.html?file=' . urlencode($pdfUrl)));
+
             $result = DB::connection('EMR_RS')
                 ->table('emr_version')
                 ->join('emr_document', 'emr_document.id', '=', 'emr_version.document_id')
@@ -621,5 +625,34 @@ class EmrController extends Controller
             compact('organizedResults')
         );
     }
+
+    public function viewPdf(Request $request)
+    {
+        try {
+            $result = DB::connection('EMR_RS')
+                ->table('emr_version')
+                ->join('emr_document', 'emr_document.id', '=', 'emr_version.document_id')
+                ->where('emr_version.is_delete', 0)
+                ->where('emr_version.is_active', 1)
+                ->where('emr_document.is_delete', 0)
+                ->where('emr_document.document_code', base64_decode($request->get('document_code')))
+                ->where('emr_document.treatment_code', $request->get('treatment_code'))
+                ->orderBy('emr_version.id', 'desc')
+                ->first();
+
+            if (!$result) {
+                throw new \Exception('Invalid request');
+            }
+
+            $content = Storage::disk('emr')->get($result->url);
+
+            return response()->make($content, 200, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'inline'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 400);
+        }
+    }   
 
 }
