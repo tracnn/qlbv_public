@@ -629,7 +629,7 @@ class EmrController extends Controller
     public function viewPdf(Request $request)
     {
         try {
-            if (!session('_token') || session('_token') !== $request->get('token')) {
+            if (!session('_token')) {
                 throw new \Exception('Unauthorized access');
             }
 
