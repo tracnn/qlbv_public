@@ -4,9 +4,6 @@ namespace App\Services;
 
 use App\Models\BHYT\Qd130Xml13;
 use Illuminate\Support\Collection;
-use App\Models\BHYT\MedicalOrganization;
-use App\Models\BHYT\Icd10Category;
-use App\Models\BHYT\IcdYhctCategory;
 
 class Qd130Xml13Checker
 {
@@ -148,7 +145,7 @@ class Qd130Xml13Checker
             ]);
         } else {
             // Kiểm tra nếu ma_cskcb không có trong MedicalOrganization
-            $organizationExists = MedicalOrganization::where('ma_cskcb', $data->ma_cskcb)->exists();
+            $organizationExists = $this->commonValidationService->isMedicalOrganizationValid($data->ma_cskcb);
 
             if (!$organizationExists) {
                 $errorCode = $this->generateErrorCode('INFO_ERROR_MA_CSKCB_NOT_FOUND');
@@ -171,7 +168,7 @@ class Qd130Xml13Checker
             ]);
         } else {
             // Kiểm tra nếu ma_noi_den không có trong MedicalOrganization
-            $organizationExists = MedicalOrganization::where('ma_cskcb', $data->ma_noi_den)->exists();
+            $organizationExists = $this->commonValidationService->isMedicalOrganizationValid($data->ma_noi_den);
 
             if (!$organizationExists) {
                 $errorCode = $this->generateErrorCode('INFO_ERROR_MA_NOI_DEN_NOT_FOUND');
@@ -234,7 +231,7 @@ class Qd130Xml13Checker
                 'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
                 'description' => 'Mã bệnh chính không được để trống'
             ]);
-        } elseif (!Icd10Category::where('icd_code', $data->ma_benh_chinh)->where('is_active', true)->exists()) {
+        } elseif (!$this->commonValidationService->isIcd10CategoryValid($data->ma_benh_chinh)) {
             $errorCode = $this->generateErrorCode('INFO_ERROR_MA_BENH_CHINH_NOT_FOUND');
             $errors->push((object)[
                 'error_code' => $errorCode,
@@ -256,7 +253,7 @@ class Qd130Xml13Checker
                 ]);
             }
             foreach ($ma_benh_kt_array as $ma_benh_kt) {
-                if (!Icd10Category::where('icd_code', $ma_benh_kt)->where('is_active', true)->exists()) {
+                if (!$this->commonValidationService->isIcd10CategoryValid($ma_benh_kt)) {
                     $errorCode = $this->generateErrorCode('INFO_ERROR_MA_BENH_KT_NOT_FOUND');
                     $errors->push((object)[
                         'error_code' => $errorCode,
@@ -272,7 +269,7 @@ class Qd130Xml13Checker
         if (!empty($data->ma_benh_yhct)) {
             $ma_benh_yhct_array = explode(';', $data->ma_benh_yhct);
             foreach ($ma_benh_yhct_array as $ma_benh_yhct) {
-                if (!IcdYhctCategory::where('icd_code', $ma_benh_yhct)->where('is_active', true)->exists()) {
+                if (!$this->commonValidationService->isIcdYhctCategoryValid($ma_benh_yhct)) {
                     $errorCode = $this->generateErrorCode('INFO_ERROR_MA_BENH_YHCT_NOT_FOUND');
                     $errors->push((object)[
                         'error_code' => $errorCode,

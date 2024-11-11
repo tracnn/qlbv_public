@@ -3,11 +3,6 @@
 namespace App\Services;
 
 use App\Models\BHYT\Qd130Xml1;
-use App\Models\BHYT\Icd10Category;
-use App\Models\BHYT\IcdYhctCategory;
-use App\Models\BHYT\MedicalOrganization;
-use App\Models\BHYT\AdministrativeUnit;
-use App\Models\BHYT\JobCategory;
 use Illuminate\Support\Collection;
 
 class Qd130Xml1Checker
@@ -181,9 +176,7 @@ class Qd130Xml1Checker
                 'description' => 'Mã tỉnh không được để trống'
             ]);
         } else {
-            $provinceExists = AdministrativeUnit::where('province_code', $data->matinh_cu_tru)
-                ->where('is_active', true)
-                ->exists();
+            $provinceExists = $this->commonValidationService->isAdministrativeUnitProvinceValid($data->matinh_cu_tru);
             if (!$provinceExists) {
                 $errorCode = $this->generateErrorCode('ADMIN_INFO_ERROR_MATINH_CU_TRU_NOT_FOUND');
                 $errors->push((object)[
@@ -204,9 +197,7 @@ class Qd130Xml1Checker
                 'description' => 'Mã quận huyện không được để trống'
             ]);
         } else {
-            $districtExists = AdministrativeUnit::where('district_code', $data->mahuyen_cu_tru)
-                ->where('is_active', true)
-                ->exists();
+            $districtExists = $this->commonValidationService->isAdministrativeUnitDistrictValid($data->mahuyen_cu_tru);
             if (!$districtExists) {
                 $errorCode = $this->generateErrorCode('ADMIN_INFO_ERROR_MAHUYEN_CU_TRU_NOT_FOUND');
                 $errors->push((object)[
@@ -216,10 +207,9 @@ class Qd130Xml1Checker
                     'description' => 'Mã quận huyện không tồn tại trong danh mục: ' . $data->mahuyen_cu_tru
                 ]);
             } else {
-                $districtInProvinceExists = AdministrativeUnit::where('province_code', $data->matinh_cu_tru)
-                    ->where('district_code', $data->mahuyen_cu_tru)
-                    ->where('is_active', true)
-                    ->exists();
+                $districtInProvinceExists = $this->commonValidationService
+                ->isAdministrativeUnitDistrictInProvinceValid($data->matinh_cu_tru, $data->mahuyen_cu_tru);
+
                 if (!$districtInProvinceExists) {
                     $errorCode = $this->generateErrorCode('ADMIN_INFO_ERROR_MAHUYEN_CU_TRU_NOT_FOUND_IN_MATINH_CU_TRU');
                     $errors->push((object)[
@@ -241,9 +231,7 @@ class Qd130Xml1Checker
                 'description' => 'Mã phường xã không được để trống'
             ]);
         } else {
-            $wardExists = AdministrativeUnit::where('commune_code', $data->maxa_cu_tru)
-                ->where('is_active', true)
-                ->exists();
+            $wardExists = $this->commonValidationService->isAdministrativeUnitCommuneValid($data->maxa_cu_tru);
             if (!$wardExists) {
                 $errorCode = $this->generateErrorCode('ADMIN_INFO_ERROR_MAXA_CU_TRU_NOT_FOUND');
                 $errors->push((object)[
@@ -253,10 +241,9 @@ class Qd130Xml1Checker
                     'description' => 'Mã phường xã không tồn tại trong danh mục: ' . $data->maxa_cu_tru
                 ]);
             } else {
-                $wardExistsInDistrict = AdministrativeUnit::where('district_code', $data->mahuyen_cu_tru)
-                    ->where('commune_code', $data->maxa_cu_tru)
-                    ->where('is_active', true)
-                    ->exists();
+                $wardExistsInDistrict = $this->commonValidationService
+                ->isAdministrativeUnitWardInDistrictValid($data->mahuyen_cu_tru, $data->maxa_cu_tru);
+
                 if (!$wardExistsInDistrict) {
                     $errorCode = $this->generateErrorCode('ADMIN_INFO_ERROR_MAXA_CU_TRU_NOT_FOUND_IN_MAHUYEN_CU_TRU');
                     $errors->push((object)[
@@ -298,7 +285,8 @@ class Qd130Xml1Checker
                 'description' => 'Mã nghề nghiệp không được để trống'
             ]);
         } else {
-            $jobExists = JobCategory::where('job_code', $data->ma_nghe_nghiep)->exists();
+            $jobExists = $this->commonValidationService->isJobCategoryValid($data->ma_nghe_nghiep);
+
             if (!$jobExists) {
                 $errorCode = $this->generateErrorCode('ADMIN_INFO_ERROR_MA_NGHE_NGHIEP_NOT_FOUND');
                 $errors->push((object)[
@@ -471,10 +459,7 @@ class Qd130Xml1Checker
                 'description' => 'Mã cơ sở KCB không được để trống'
             ]);
         } else {
-            // Kiểm tra nếu ma_cskcb không có trong MedicalOrganization
-            $organizationExists = MedicalOrganization::where('ma_cskcb', $data->ma_cskcb)->exists();
-
-            if (!$organizationExists) {
+            if (!$this->commonValidationService->isMedicalOrganizationValid($data->ma_cskcb)) {
                 $errorCode = $this->generateErrorCode('ADMIN_INFO_ERROR_MA_CSKCB_NOT_FOUND');
                 $errors->push((object)[
                     'error_code' => $errorCode,
@@ -487,9 +472,7 @@ class Qd130Xml1Checker
 
         // Kiểm tra mã nơi đến
         if (!empty($data->ma_noi_den)) {
-            $destinationExists = MedicalOrganization::where('ma_cskcb', $data->ma_noi_den)->exists();
-
-            if (!$destinationExists) {
+            if (!$this->commonValidationService->isMedicalOrganizationValid($data->ma_noi_den)) {
                 $errorCode = $this->generateErrorCode('ADMIN_INFO_ERROR_MA_NOI_DEN_NOT_FOUND');
                 $errors->push((object)[
                     'error_code' => $errorCode,
@@ -504,9 +487,8 @@ class Qd130Xml1Checker
         if (!empty($data->ma_dkbd)) {
             $maDkbdList = explode(';', $data->ma_dkbd); // Tách các mã DKBD phân cách bởi dấu ";"
             foreach ($maDkbdList as $maDkbd) {
-                $initialExaminationUnitExists = MedicalOrganization::where('ma_cskcb', trim($maDkbd))->exists();
 
-                if (!$initialExaminationUnitExists) {
+                if (!$this->commonValidationService->isMedicalOrganizationValid(trim($maDkbd))) {
                     $errorCode = $this->generateErrorCode('ADMIN_INFO_ERROR_MA_DKBD_NOT_FOUND');
                     $errors->push((object)[
                         'error_code' => $errorCode,
@@ -520,9 +502,7 @@ class Qd130Xml1Checker
 
         // Kiểm tra mã nơi đi
         if (!empty($data->ma_noi_di)) {
-            $departureExists = MedicalOrganization::where('ma_cskcb', $data->ma_noi_di)->exists();
-
-            if (!$departureExists) {
+            if (!$this->commonValidationService->isMedicalOrganizationValid($data->ma_noi_di)) {
                 $errorCode = $this->generateErrorCode('ADMIN_INFO_ERROR_MA_NOI_DI_NOT_FOUND');
                 $errors->push((object)[
                     'error_code' => $errorCode,
@@ -816,8 +796,8 @@ class Qd130Xml1Checker
         $errors = collect();
 
         // Check ma_benh_chinh
-        if (!Icd10Category::where('icd_code', $data->ma_benh_chinh)->where('is_active', true)->exists()) {
-            $existIcdYhct = IcdYhctCategory::where('icd_code', $data->ma_benh_chinh)->where('is_active', true)->first();
+        if (!$this->commonValidationService->isIcd10CategoryValid($data->ma_benh_chinh)) {
+            $existIcdYhct = $this->commonValidationService->isIcdYhctCategoryValue($data->ma_benh_chinh);
             if($existIcdYhct) {
                 $errorCode = $this->generateErrorCode('DISEASE_ICD_CODE_ERROR_MA_BENH_CHINH_IN_YHCT');
                 $errors->push((object)[
@@ -841,8 +821,8 @@ class Qd130Xml1Checker
         if (!empty($data->ma_benh_kt)) {
             $ma_benh_kt_array = explode(';', $data->ma_benh_kt);
             foreach ($ma_benh_kt_array as $ma_benh_kt) {
-                if (!Icd10Category::where('icd_code', $ma_benh_kt)->where('is_active', true)->exists()) {
-                    $existIcdYhct = IcdYhctCategory::where('icd_code', $ma_benh_kt)->where('is_active', true)->first();
+                if (!$this->commonValidationService->isIcd10CategoryValid($ma_benh_kt)) {
+                    $existIcdYhct = $this->commonValidationService->isIcdYhctCategoryValue($ma_benh_kt);
                     if($existIcdYhct) {
                         $errorCode = $this->generateErrorCode('DISEASE_ICD_CODE_ERROR_MA_BENH_KT_IN_YHCT');
                         $errors->push((object)[
@@ -868,7 +848,7 @@ class Qd130Xml1Checker
         if (!empty($data->ma_benh_yhct)) {
             $ma_benh_yhct_array = explode(';', $data->ma_benh_yhct);
             foreach ($ma_benh_yhct_array as $ma_benh_yhct) {
-                if (!IcdYhctCategory::where('icd_code', $ma_benh_yhct)->where('is_active', true)->exists()) {
+                if (!$this->commonValidationService->isIcdYhctCategoryValid($ma_benh_yhct)) {
                     $errorCode = $this->generateErrorCode('DISEASE_ICD_CODE_ERROR_MA_BENH_YHCT');
                     $errors->push((object)[
                         'error_code' => $errorCode,
