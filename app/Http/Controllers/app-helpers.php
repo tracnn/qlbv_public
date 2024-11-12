@@ -200,11 +200,20 @@
     if (!function_exists('validateDataStructure')) {
         function validateDataStructure($data, $expectedStructure)
         {
+            $missingFields = [];
+
             foreach ($expectedStructure as $key) {
                 if (!property_exists($data, $key)) {
-                    return false;
+                    $missingFields[] = $key; // Thêm cột thiếu vào danh sách
                 }
             }
+
+            // Nếu có cột thiếu, ghi lỗi và trả về false kèm danh sách cột thiếu
+            if (!empty($missingFields)) {
+                \Log::error('Invalid data structure. Missing fields: ' . implode(', ', $missingFields));
+                return false;
+            }
+
             return true;
         }
     }

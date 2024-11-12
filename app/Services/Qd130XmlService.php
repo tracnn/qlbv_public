@@ -408,12 +408,84 @@ class Qd130XmlService
                 }
             }
         }
-
     }
 
     public function storeQd130Xml6($data, $xmlType)
     {
         $expectedStructure = XmlStructures::$expectedStructures130[$xmlType];
+
+        if (isset($data->DSACH_HO_SO_BENH_AN_CHAM_SOC_VA_DIEU_TRI_HIV_AIDS->HO_SO_BENH_AN_CHAM_SOC_VA_DIEU_TRI_HIV_AIDS) && 
+            is_iterable($data->DSACH_HO_SO_BENH_AN_CHAM_SOC_VA_DIEU_TRI_HIV_AIDS->HO_SO_BENH_AN_CHAM_SOC_VA_DIEU_TRI_HIV_AIDS)) {
+
+            foreach ($data->DSACH_HO_SO_BENH_AN_CHAM_SOC_VA_DIEU_TRI_HIV_AIDS->HO_SO_BENH_AN_CHAM_SOC_VA_DIEU_TRI_HIV_AIDS as $record) {
+
+                if (!validateDataStructure($record, $expectedStructure)) {
+                    \Log::error("Invalid data structure for XML6");
+                    continue;
+                }
+
+                try {
+                    $attributes = [
+                        'ma_lk' => $record->MA_LK,
+                    ];
+
+                    $values = [
+                        'ma_the_bhyt' => $record->MA_THE_BHYT ?: null,
+                        'so_cccd' => $record->SO_CCCD ?: null,
+                        'ngay_sinh' => $record->NGAY_SINH ?: null,
+                        'gioi_tinh' => $record->GIOI_TINH ?: null,
+                        'dia_chi' => $record->DIA_CHI ?: null,
+                        'matinh_cu_tru' => $record->MATINH_CU_TRU ?: null,
+                        'mahuyen_cu_tru' => $record->MAHUYEN_CU_TRU ?: null,
+                        'maxa_cu_tru' => $record->MAXA_CU_TRU ?: null,
+                        'ngaykd_hiv' => $record->NGAYKD_HIV ?: null,
+                        'noi_lay_mau_xn' => $record->NOI_LAY_MAU_XN ?: null,
+                        'noi_xn_kd' => $record->NOI_XN_KD ?: null,
+                        'noi_bddt_arv' => $record->NOI_BDDT_ARV ?: null,
+                        'bddt_arv' => $record->BDDT_ARV ?: null,
+                        'ma_phac_do_dieu_tri_bd' => $record->MA_PHAC_DO_DIEU_TRI_BD ?: null,
+                        'ma_bac_phac_do_bd' => $record->MA_BAC_PHAC_DO_BD ?: null,
+                        'ma_lydo_dtri' => $record->MA_LYDO_DTRI ?: null,
+                        'loai_dtri_lao' => $record->LOAI_DTRI_LAO ?: null,
+                        'sang_loc_lao' => $record->SANG_LOC_LAO ?: null,
+                        'phacdo_dtri_lao' => $record->PHACDO_DTRI_LAO ?: null,
+                        'ngaybd_dtri_lao' => $record->NGAYBD_DTRI_LAO ?: null,
+                        'ngaykt_dtri_lao' => $record->NGAYKT_DTRI_LAO ?: null,
+                        'kq_dtri_lao' => $record->KQ_DTRI_LAO ?: null,
+                        'ma_lydo_xntl_vr' => $record->MA_LYDO_XNTL_VR ?: null,
+                        'ngay_xn_tlvr' => $record->NGAY_XN_TLVR ?: null,
+                        'kq_xntl_vr' => $record->KQ_XNTL_VR ?: null,
+                        'ngay_kq_xn_tlvr' => $record->NGAY_KQ_XN_TLVR ?: null,
+                        'ma_loai_bn' => $record->MA_LOAI_BN ?: null,
+                        'giai_doan_lam_sang' => $record->GIAI_DOAN_LAM_SANG ?: null,
+                        'nhom_doi_tuong' => $record->NHOM_DOI_TUONG ?: null,
+                        'ma_tinh_trang_dk' => $record->MA_TINH_TRANG_DK ?: null,
+                        'lan_xn_pcr' => $record->LAN_XN_PCR ?: null,
+                        'ngay_xn_pcr' => $record->NGAY_XN_PCR ?: null,
+                        'ngay_kq_xn_pcr' => $record->NGAY_KQ_XN_PCR ?: null,
+                        'ma_kq_xn_pcr' => $record->MA_KQ_XN_PCR ?: null,
+                        'ngay_nhan_tt_mang_thai' => $record->NGAY_NHAN_TT_MANG_THAI ?: null,
+                        'ngay_bat_dau_dt_ctx' => $record->NGAY_BAT_DAU_DT_CTX ?: null,
+                        'ma_xu_tri' => $record->MA_XU_TRI ?: null,
+                        'ngay_bat_dau_xu_tri' => $record->NGAY_BAT_DAU_XU_TRI ?: null,
+                        'ngay_ket_thuc_xu_tri' => $record->NGAY_KET_THUC_XU_TRI ?: null,
+                        'ma_phac_do_dieu_tri' => $record->MA_PHAC_DO_DIEU_TRI ?: null,
+                        'ma_bac_phac_do' => $record->MA_BAC_PHAC_DO ?: null,
+                        'so_ngay_cap_thuoc_arv' => $record->SO_NGAY_CAP_THUOC_ARV ?: null,
+                        'ngay_chuyen_phac_do' => $record->NGAY_CHUYEN_PHAC_DO ?: null,
+                        'ly_do_chuyen_phac_do' => $record->LY_DO_CHUYEN_PHAC_DO ?: null,
+                        'ma_cskcb' => $record->MA_CSKCB ?: null,
+                        'du_phong' => $record->DU_PHONG ?: null,
+                    ];
+
+                    // Assuming there is a model Qd130Xml6 for XML6 data
+                    $xml6 = Qd130Xml6::updateOrCreate($attributes, $values);
+
+                } catch (\Exception $e) {
+                    \Log::error('Error in storeQd130Xml6: ' . $e->getMessage());
+                }
+            }
+        }
     }
 
     public function storeQd130Xml7($data, $xmlType)
@@ -829,6 +901,54 @@ class Qd130XmlService
     public function storeQd130Xml15($data, $xmlType)
     {
         $expectedStructure = XmlStructures::$expectedStructures130[$xmlType];
+
+        if (isset($data->DSACH_CHITIET_DIEUTRI_BENHLAO->CHITIET_DIEUTRI_BENHLAO) &&
+            is_iterable($data->DSACH_CHITIET_DIEUTRI_BENHLAO->CHITIET_DIEUTRI_BENHLAO)) {
+
+            foreach ($data->DSACH_CHITIET_DIEUTRI_BENHLAO->CHITIET_DIEUTRI_BENHLAO as $record) {
+                
+                // Kiểm tra cấu trúc dữ liệu của mỗi bản ghi
+                if (!validateDataStructure($record, $expectedStructure)) {
+                    \Log::error("Invalid data structure for XML15");
+                    continue;
+                }
+
+                try {
+                    $attributes = [
+                        'ma_lk' => $record->MA_LK,
+                        'stt' => $record->STT,
+                    ];
+
+                    $values = [
+                        'ma_bn' => $record->MA_BN ?: null,
+                        'ho_ten' => $record->HO_TEN ?: null,
+                        'so_cccd' => $record->SO_CCCD ?: null,
+                        'phanloai_lao_vitri' => $record->PHANLOAI_LAO_VITRI ?: null,
+                        'phanloai_lao_ts' => $record->PHANLOAI_LAO_TS ?: null,
+                        'phanloai_lao_hiv' => $record->PHANLOAI_LAO_HIV ?: null,
+                        'phanloai_lao_vk' => $record->PHANLOAI_LAO_VK ?: null,
+                        'phanloai_lao_kt' => $record->PHANLOAI_LAO_KT ?: null,
+                        'loai_dtri_lao' => $record->LOAI_DTRI_LAO ?: null,
+                        'ngaybd_dtri_lao' => $record->NGAYBD_DTRI_LAO ?: null,
+                        'phacdo_dtri_lao' => $record->PHACDO_DTRI_LAO ?: null,
+                        'ngaykt_dtri_lao' => $record->NGAYKT_DTRI_LAO ?: null,
+                        'ket_qua_dtri_lao' => $record->KET_QUA_DTRI_LAO ?: null,
+                        'ma_cskcb' => $record->MA_CSKCB ?: null,
+                        'ngaykd_hiv' => $record->NGAYKD_HIV ?: null,
+                        'bddt_arv' => $record->BDDT_ARV ?: null,
+                        'ngay_bat_dau_dt_ctx' => $record->NGAY_BAT_DAU_DT_CTX ?: null,
+                        'du_phong' => $record->DU_PHONG ?: null,
+                    ];
+
+                    $xml15 = Qd130Xml15::updateOrCreate($attributes, $values);
+
+                } catch (\Exception $e) {
+                    \Log::error('Error in storeQd130Xml15: ' . $e->getMessage());
+                }
+            }
+        } else {
+            \Log::error('Invalid data structure for XML15. Expected DSACH_CHITIET_DIEUTRI_BENHLAO.');
+        }
     }
 
     public function checkQd130XmlComplete($ma_lk)
@@ -1160,6 +1280,62 @@ class Qd130XmlService
                 }
                 break;
 
+            case 'XML6':
+                $xmlContent = new \SimpleXMLElement('<CHI_TIEU_HO_SO_BENH_AN_CHAM_SOC_VA_DIEU_TRI_HIV_AIDS></CHI_TIEU_HO_SO_BENH_AN_CHAM_SOC_VA_DIEU_TRI_HIV_AIDS>');
+                $dsachHoSo = $xmlContent->addChild('DSACH_HO_SO_BENH_AN_CHAM_SOC_VA_DIEU_TRI_HIV_AIDS');
+                
+                foreach ($records as $record) {
+                    $hoSo = $dsachHoSo->addChild('HO_SO_BENH_AN_CHAM_SOC_VA_DIEU_TRI_HIV_AIDS');
+                    $hoSo->addChild('MA_LK', $record->ma_lk);
+                    $hoSo->addChild('MA_THE_BHYT', $record->ma_the_bhyt);
+                    $hoSo->addChild('SO_CCCD', $record->so_cccd);
+                    $hoSo->addChild('NGAY_SINH', $record->ngay_sinh);
+                    $hoSo->addChild('GIOI_TINH', $record->gioi_tinh);
+                    $this->addChildWithCDATA($hoSo, 'DIA_CHI', $record->dia_chi);
+                    $hoSo->addChild('MATINH_CU_TRU', $record->matinh_cu_tru);
+                    $hoSo->addChild('MAHUYEN_CU_TRU', $record->mahuyen_cu_tru);
+                    $hoSo->addChild('MAXA_CU_TRU', $record->maxa_cu_tru);
+                    $hoSo->addChild('NGAYKD_HIV', $record->ngaykd_hiv);
+                    $this->addChildWithCDATA($hoSo, 'NOI_LAY_MAU_XN', $record->noi_lay_mau_xn);
+                    $hoSo->addChild('NOI_XN_KD', $record->noi_xn_kd);
+                    $this->addChildWithCDATA($hoSo, 'NOI_BDDT_ARV', $record->noi_bddt_arv);
+                    $hoSo->addChild('BDDT_ARV', $record->bddt_arv);
+                    $hoSo->addChild('MA_PHAC_DO_DIEU_TRI_BD', $record->ma_phac_do_dieu_tri_bd);
+                    $hoSo->addChild('MA_BAC_PHAC_DO_BD', $record->ma_bac_phac_do_bd);
+                    $hoSo->addChild('MA_LYDO_DTRI', $record->ma_lydo_dtri);
+                    $hoSo->addChild('LOAI_DTRI_LAO', $record->loai_dtri_lao);
+                    $hoSo->addChild('SANG_LOC_LAO', $record->sang_loc_lao);
+                    $hoSo->addChild('PHACDO_DTRI_LAO', $record->phacdo_dtri_lao);
+                    $hoSo->addChild('NGAYBD_DTRI_LAO', $record->ngaybd_dtri_lao);
+                    $hoSo->addChild('NGAYKT_DTRI_LAO', $record->ngaykt_dtri_lao);
+                    $hoSo->addChild('KQ_DTRI_LAO', $record->kq_dtri_lao);
+                    $hoSo->addChild('MA_LYDO_XNTL_VR', $record->ma_lydo_xntl_vr);
+                    $hoSo->addChild('NGAY_XN_TLVR', $record->ngay_xn_tlvr);
+                    $this->addChildWithCDATA($hoSo, 'KQ_XNTL_VR', $record->kq_xntl_vr);
+                    $hoSo->addChild('NGAY_KQ_XN_TLVR', $record->ngay_kq_xn_tlvr);
+                    $hoSo->addChild('MA_LOAI_BN', $record->ma_loai_bn);
+                    $hoSo->addChild('GIAI_DOAN_LAM_SANG', $record->giai_doan_lam_sang);
+                    $hoSo->addChild('NHOM_DOI_TUONG', $record->nhom_doi_tuong);
+                    $hoSo->addChild('MA_TINH_TRANG_DK', $record->ma_tinh_trang_dk);
+                    $hoSo->addChild('LAN_XN_PCR', $record->lan_xn_pcr);
+                    $hoSo->addChild('NGAY_XN_PCR', $record->ngay_xn_pcr);
+                    $hoSo->addChild('NGAY_KQ_XN_PCR', $record->ngay_kq_xn_pcr);
+                    $hoSo->addChild('MA_KQ_XN_PCR', $record->ma_kq_xn_pcr);
+                    $hoSo->addChild('NGAY_NHAN_TT_MANG_THAI', $record->ngay_nhan_tt_mang_thai);
+                    $hoSo->addChild('NGAY_BAT_DAU_DT_CTX', $record->ngay_bat_dau_dt_ctx);
+                    $hoSo->addChild('MA_XU_TRI', $record->ma_xu_tri);
+                    $hoSo->addChild('NGAY_BAT_DAU_XU_TRI', $record->ngay_bat_dau_xu_tri);
+                    $hoSo->addChild('NGAY_KET_THUC_XU_TRI', $record->ngay_ket_thuc_xu_tri);
+                    $hoSo->addChild('MA_PHAC_DO_DIEU_TRI', $record->ma_phac_do_dieu_tri);
+                    $hoSo->addChild('MA_BAC_PHAC_DO', $record->ma_bac_phac_do);
+                    $hoSo->addChild('SO_NGAY_CAP_THUOC_ARV', $record->so_ngay_cap_thuoc_arv);
+                    $hoSo->addChild('NGAY_CHUYEN_PHAC_DO', $record->ngay_chuyen_phac_do);
+                    $this->addChildWithCDATA($hoSo, 'LY_DO_CHUYEN_PHAC_DO', $record->ly_do_chuyen_phac_do);
+                    $hoSo->addChild('MA_CSKCB', $record->ma_cskcb);
+                    $this->addChildWithCDATA($hoSo, 'DU_PHONG', $record->du_phong);
+                }
+                break;
+
             case 'XML7':
                 $xmlContent = new \SimpleXMLElement('<CHI_TIEU_DU_LIEU_GIAY_RA_VIEN></CHI_TIEU_DU_LIEU_GIAY_RA_VIEN>');
                 foreach ($records as $record) {
@@ -1388,6 +1564,34 @@ class Qd130XmlService
                 }
                 break;
 
+            case 'XML15':
+                $xmlContent = new \SimpleXMLElement('<CHI_TIEU_DIEUTRI_BENHLAO></CHI_TIEU_DIEUTRI_BENHLAO>');
+                $dsachChiTietDieuTriLao = $xmlContent->addChild('DSACH_CHITIET_DIEUTRI_BENHLAO');
+                foreach ($records as $record) {
+                    $chiTietDieuTriLao = $dsachChiTietDieuTriLao->addChild('CHITIET_DIEUTRI_BENHLAO');
+                    $chiTietDieuTriLao->addChild('MA_LK', $record->ma_lk);
+                    $chiTietDieuTriLao->addChild('STT', $record->stt);
+                    $chiTietDieuTriLao->addChild('MA_BN', $record->ma_bn);
+                    $this->addChildWithCDATA($chiTietDieuTriLao, 'HO_TEN', $record->ho_ten);
+                    $chiTietDieuTriLao->addChild('SO_CCCD', $record->so_cccd);
+                    $chiTietDieuTriLao->addChild('PHANLOAI_LAO_VITRI', $record->phanloai_lao_vitri);
+                    $chiTietDieuTriLao->addChild('PHANLOAI_LAO_TS', $record->phanloai_lao_ts);
+                    $chiTietDieuTriLao->addChild('PHANLOAI_LAO_HIV', $record->phanloai_lao_hiv);
+                    $chiTietDieuTriLao->addChild('PHANLOAI_LAO_VK', $record->phanloai_lao_vk);
+                    $chiTietDieuTriLao->addChild('PHANLOAI_LAO_KT', $record->phanloai_lao_kt);
+                    $chiTietDieuTriLao->addChild('LOAI_DTRI_LAO', $record->loai_dtri_lao);
+                    $chiTietDieuTriLao->addChild('NGAYBD_DTRI_LAO', $record->ngaybd_dtri_lao);
+                    $chiTietDieuTriLao->addChild('PHACDO_DTRI_LAO', $record->phacdo_dtri_lao);
+                    $chiTietDieuTriLao->addChild('NGAYKT_DTRI_LAO', $record->ngaykt_dtri_lao);
+                    $chiTietDieuTriLao->addChild('KET_QUA_DTRI_LAO', $record->ket_qua_dtri_lao);
+                    $chiTietDieuTriLao->addChild('MA_CSKCB', $record->ma_cskcb);
+                    $chiTietDieuTriLao->addChild('NGAYKD_HIV', $record->ngaykd_hiv);
+                    $chiTietDieuTriLao->addChild('BDDT_ARV', $record->bddt_arv);
+                    $chiTietDieuTriLao->addChild('NGAY_BAT_DAU_DT_CTX', $record->ngay_bat_dau_dt_ctx);
+                    $this->addChildWithCDATA($chiTietDieuTriLao, 'DU_PHONG', $record->du_phong);
+                }
+                break;
+                
             default:
                 throw new \InvalidArgumentException("Unknown XML type: $type");
         }

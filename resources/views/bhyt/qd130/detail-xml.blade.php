@@ -216,6 +216,23 @@
         </a>
     </li>
     @endif
+    @if($xml1->Qd130Xml15->isNotEmpty())
+    <li>
+        <a data-toggle="tab" href="#menu15">XML15
+            @php
+                $errorCountXml = $xml1->Qd130Xml15->filter(function($item) {
+                    return $item->errorResult()
+                    ->where('xml', 'XML15')
+                    ->where('ma_lk', $item->ma_lk)
+                    ->exists();
+                })->count();
+            @endphp
+            @if($errorCountXml > 0)
+                <span class="badge badge-error">{{ $errorCountXml }}</span>
+            @endif
+        </a>
+    </li>
+    @endif
     <li class="{{ ($xml1->check_hein_card && (in_array($xml1->check_hein_card->ma_tracuu, config('qd130xml.hein_card_invalid.result_code')) || in_array($xml1->check_hein_card->ma_kiemtra, config('qd130xml.hein_card_invalid.check_code')))) ? 'highlight-red' : '' }}">
         <a data-toggle="tab" href="#menu-hein-card">Thẻ BHYT</a>
     </li>
@@ -250,6 +267,7 @@
     @include('bhyt.qd130.detail-xml-11')
     @include('bhyt.qd130.detail-xml-13')
     @include('bhyt.qd130.detail-xml-14')
+    @include('bhyt.qd130.detail-xml-15')
     @include('bhyt.qd130.detail-xml-hein-card')
     @include('bhyt.qd130.detail-xml-errors')
 
