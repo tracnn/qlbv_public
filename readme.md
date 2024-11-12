@@ -1,3 +1,6 @@
+# 12/11/2024
+- Bổ sung import/export XML6 (HIV), XML15 (Lao)
+
 # 05/11/2024
 - Bổ sung kiểm tra chỉ cho phép tối đa 1 công khám đối với điều trị nội trú
 
