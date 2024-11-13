@@ -71,6 +71,12 @@ class HISProKiemTraTheBHYT extends Command
             $maDKBD = $value->tdl_hein_medi_org_code;
             $gioiTinh = (int)$value->gender_code;
 
+            if ($gioiTinh === 1) {
+                $gioiTinh = 2;
+            } elseif ($gioiTinh === 2) {
+                $gioiTinh = 1;
+            }
+            
             $this->info($ma_lk);
 
             $params = [
