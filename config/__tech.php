@@ -911,6 +911,7 @@ $techAppConfig = [
         2 => 'Chuyển viện',
         3 => 'Trốn viện',
         4 => 'Xin ra viện',
+        5 => 'Chuyển viện theo YC',
     ],
 
     'tinh_trang_rv_nt' => [
