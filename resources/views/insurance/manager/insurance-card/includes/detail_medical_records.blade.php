@@ -30,8 +30,8 @@
                         <td>{{ $value['ngayVao'] }}</td>
                         <td>{{ $value['ngayRa'] }}</td>
                         <td>{{ $value['tenBenh'] }}</td>
-                        <td>{{ $value['tinhTrang'] ? $tinh_trang_rv[$value['tinhTrang']] : $value['tinhTrang'] }}</td>
-                        <td>{{ $value['kqDieuTri'] ? $ket_qua_dtri[$value['kqDieuTri']] : $value['kqDieuTri'] }}</td>
+                        <td>{{ $value['tinhTrang'] }}</td>
+                        <td>{{ $value['kqDieuTri'] }}</td>
                     </tr>
                     @endforeach
                 </tbody>              
