@@ -79,7 +79,7 @@ class Qd130Xml7Checker
                 'description' => 'Thủ trưởng đơn vị không được để trống'
             ]);
         } else {
-            if (!$this->commonValidationService->isMedicalStaffValid($data->ma_ttdv, 'ma_bhxh')) {
+            if (!$this->commonValidationService->isMedicalStaffValid($data->ma_ttdv)) {
                 $errorCode = $this->generateErrorCode('INFO_ERROR_MA_TTDV_NOT_FOUND');
                 $errors->push((object)[
                     'error_code' => $errorCode,
@@ -99,7 +99,7 @@ class Qd130Xml7Checker
                 'description' => 'Mã bác sĩ không được để trống'
             ]);
         } else {
-            if (!$this->commonValidationService->isMedicalStaffValid($data->ma_bs, 'ma_bhxh')) {
+            if (!$this->commonValidationService->isMedicalStaffValid($data->ma_bs)) {
                 $errorCode = $this->generateErrorCode('INFO_ERROR_MA_BS_NOT_FOUND');
                 $errors->push((object)[
                     'error_code' => $errorCode,

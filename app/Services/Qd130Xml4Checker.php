@@ -194,7 +194,7 @@ class Qd130Xml4Checker
                 'description' => 'Mã bác sĩ đọc kết quả không được để trống'
             ]);
         } else {
-            if (!$this->commonValidationService->isMedicalStaffValid($data->ma_bs_doc_kq, 'ma_bhxh')) {
+            if (!$this->commonValidationService->isMedicalStaffValid($data->ma_bs_doc_kq)) {
                 $errorCode = $this->generateErrorCode('INFO_ERROR_MA_BS_DOC_KQ_NOT_FOUND');
                 $errors->push((object)[
                     'error_code' => $errorCode,

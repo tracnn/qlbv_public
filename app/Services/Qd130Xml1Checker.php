@@ -543,7 +543,7 @@ class Qd130Xml1Checker
                 'description' => 'Thủ trưởng đơn vị không được để trống'
             ]);
         } else {
-            if (!$this->commonValidationService->isMedicalStaffValid($data->ma_ttdv, 'ma_bhxh')) {
+            if (!$this->commonValidationService->isMedicalStaffValid($data->ma_ttdv)) {
                 $errorCode = $this->generateErrorCode('INVALID_MEDICAL_STAFF_MA_TTDV');
                 $errors->push((object)[
                     'error_code' => $errorCode,

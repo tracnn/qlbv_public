@@ -11,9 +11,10 @@ use App\Models\BHYT\JobCategory;
 
 class CommonValidationService
 {
-    public function isMedicalStaffValid($value, $field = 'macchn')
+    public function isMedicalStaffValid($value)
     {
-        return MedicalStaff::where($field, $value)
+        return MedicalStaff::where('macchn', $value)
+        ->orWhere('ma_bhxh', $value)
         ->exists();
     }
 
