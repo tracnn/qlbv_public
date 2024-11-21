@@ -112,7 +112,7 @@ class Qd130Xml5Checker
                 'description' => 'Người thực hiện không được để trống'
             ]);
         } else {
-            if (!$this->commonValidationService->isMedicalStaffValid($data->nguoi_thuc_hien, 'ma_bhxh')) {
+            if (!$this->commonValidationService->isMedicalStaffValid($data->nguoi_thuc_hien)) {
                 $errorCode = $this->generateErrorCode('INFO_ERROR_NGUOI_THUC_HIEN_NOT_FOUND');
                 $errors->push((object)[
                     'error_code' => $errorCode,
