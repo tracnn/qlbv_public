@@ -1,9 +1,6 @@
 # Ignore .env file containing sensitive information
 .env
 
-# Ignore composer.lock file containing sensitive information
-composer.lock
-
 # Ignore the Laravel /vendor directory
 /vendor/
 
