@@ -21,15 +21,9 @@
                 {{ $value->tdl_service_name }}
               </td>
               <td align="center">
-                @if($value->tdl_intruction_time <= 20240511000000)
-                  <a href="http://benhviendakhoanongnghiep.vn:88/ris/viewer?name=clinician&study={{ $value->id }}" class="btn btn-info btn-sm" target="_blank">
-                    <i class="fa fa-film"></i> Xem
-                  </a>
-                @else
-                  <a href="http://benhviendakhoanongnghiep.vn:82/viewImgsH?ris_exam_id={{ $value->id }}&service_id={{ $value->id }}" class="btn btn-info btn-sm" target="_blank">
-                    <i class="fa fa-film"></i> Xem
-                  </a>
-                @endif
+                <a href="http://benhviendakhoanongnghiep.vn:82/viewImgsH?ris_exam_id={{ $value->id }}&service_id={{ $value->id }}" class="btn btn-info btn-sm" target="_blank">
+                  <i class="fa fa-film"></i> Xem
+                </a>
               </td>
             </tr>
             @endforeach
