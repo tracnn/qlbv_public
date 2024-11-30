@@ -493,7 +493,7 @@ class Qd130XmlService
         $expectedStructure = XmlStructures::$expectedStructures130[$xmlType];
 
          if (!validateDataStructure($data, $expectedStructure)) {
-            \Log::error('Invalid data structure for XML7');
+            \Log::error('Invalid data structure for XML7: ' . $data->MA_LK);
             return;
         }
 
