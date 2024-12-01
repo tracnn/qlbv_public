@@ -87,7 +87,7 @@ class Qd130XmlService
         $expectedStructure = XmlStructures::$expectedStructures130[$xmlType];
 
         if (!validateDataStructure($data, $expectedStructure)) {
-            \Log::error('Invalid data structure for XML1');
+            \Log::error('Invalid data structure for XML1: ' . $data->MA_LK);
             return;
         }
 
@@ -184,7 +184,7 @@ class Qd130XmlService
         if (isset($data->DSACH_CHI_TIET_THUOC->CHI_TIET_THUOC) && is_iterable($data->DSACH_CHI_TIET_THUOC->CHI_TIET_THUOC)) {
             foreach ($data->DSACH_CHI_TIET_THUOC->CHI_TIET_THUOC as $thuoc) {
                 if (!validateDataStructure($thuoc, $expectedStructure)) {
-                    \Log::error('Invalid data structure for XML2');
+                    \Log::error('Invalid data structure for XML2: ' . $thuoc->MA_LK);
                     continue;
                 }
 
@@ -256,7 +256,7 @@ class Qd130XmlService
         if (isset($data->DSACH_CHI_TIET_DVKT->CHI_TIET_DVKT) && is_iterable($data->DSACH_CHI_TIET_DVKT->CHI_TIET_DVKT)) {
             foreach ($data->DSACH_CHI_TIET_DVKT->CHI_TIET_DVKT as $dvkt) {
                 if (!validateDataStructure($dvkt, $expectedStructure)) {
-                    \Log::error('Invalid data structure for XML3');
+                    \Log::error('Invalid data structure for XML3: ' . $dvkt->MA_LK);
                     continue;
                 }
 
@@ -335,7 +335,7 @@ class Qd130XmlService
         if (isset($data->DSACH_CHI_TIET_CLS->CHI_TIET_CLS) && is_iterable($data->DSACH_CHI_TIET_CLS->CHI_TIET_CLS)) {
             foreach ($data->DSACH_CHI_TIET_CLS->CHI_TIET_CLS as $cls) {
                 if (!validateDataStructure($cls, $expectedStructure)) {
-                    \Log::error('Invalid data structure for XML4');
+                    \Log::error('Invalid data structure for XML4: ' . $cls->MA_LK);
                     continue;
                 }
 
@@ -378,7 +378,7 @@ class Qd130XmlService
             is_iterable($data->DSACH_CHI_TIET_DIEN_BIEN_BENH->CHI_TIET_DIEN_BIEN_BENH)){
             foreach ($data->DSACH_CHI_TIET_DIEN_BIEN_BENH->CHI_TIET_DIEN_BIEN_BENH as $dienbien) {
                 if (!validateDataStructure($dienbien, $expectedStructure)) {
-                    \Log::error('Invalid data structure for XML5');
+                    \Log::error('Invalid data structure for XML5: ' . $dienbien->MA_LK);
                     continue;
                 }
 
@@ -420,7 +420,7 @@ class Qd130XmlService
             foreach ($data->DSACH_HO_SO_BENH_AN_CHAM_SOC_VA_DIEU_TRI_HIV_AIDS->HO_SO_BENH_AN_CHAM_SOC_VA_DIEU_TRI_HIV_AIDS as $record) {
 
                 if (!validateDataStructure($record, $expectedStructure)) {
-                    \Log::error("Invalid data structure for XML6");
+                    \Log::error("Invalid data structure for XML6: " . $record->MA_LK);
                     continue;
                 }
 
@@ -545,7 +545,7 @@ class Qd130XmlService
         $expectedStructure = XmlStructures::$expectedStructures130[$xmlType];
 
         if (!validateDataStructure($data, $expectedStructure)) {
-            \Log::error('Invalid data structure for XML8');
+            \Log::error('Invalid data structure for XML8: ' . $data->MA_LK);
             return;
         }
 
@@ -597,7 +597,7 @@ class Qd130XmlService
             is_iterable($data->DSACH_GIAYCHUNGSINH->DU_LIEU_GIAY_CHUNG_SINH)){
             foreach ($data->DSACH_GIAYCHUNGSINH->DU_LIEU_GIAY_CHUNG_SINH as $chungSinh) {
                 if (!validateDataStructure($chungSinh, $expectedStructure)) {
-                    \Log::error('Invalid data structure for XML9');
+                    \Log::error('Invalid data structure for XML9: ' . $chungSinh->MA_LK);
                     continue;
                 }
 
@@ -661,7 +661,7 @@ class Qd130XmlService
         $expectedStructure = XmlStructures::$expectedStructures130[$xmlType];
 
         if (!validateDataStructure($data, $expectedStructure)) {
-            \Log::error('Invalid data structure for XML10');
+            \Log::error('Invalid data structure for XML10: ' . $data->MA_LK);
             return;
         }
 
@@ -703,7 +703,7 @@ class Qd130XmlService
         $expectedStructure = XmlStructures::$expectedStructures130[$xmlType];
 
         if (!validateDataStructure($data, $expectedStructure)) {
-            \Log::error('Invalid data structure for XML11');
+            \Log::error('Invalid data structure for XML11: ' . $data->MA_LK);
             return;
         }
 
@@ -752,7 +752,7 @@ class Qd130XmlService
         $expectedStructure = XmlStructures::$expectedStructures130[$xmlType];
 
         if (!validateDataStructure($data, $expectedStructure)) {
-            \Log::error('Invalid data structure for XML13');
+            \Log::error('Invalid data structure for XML13: ' . $data->MA_LK);
             return;
         }
 
@@ -817,7 +817,7 @@ class Qd130XmlService
         $expectedStructure = XmlStructures::$expectedStructures130[$xmlType];
 
         if (!validateDataStructure($data, $expectedStructure)) {
-            \Log::error('Invalid data structure for XML14');
+            \Log::error('Invalid data structure for XML14: ' . $data->MA_LK);
             return;
         }
 
@@ -909,7 +909,7 @@ class Qd130XmlService
                 
                 // Kiểm tra cấu trúc dữ liệu của mỗi bản ghi
                 if (!validateDataStructure($record, $expectedStructure)) {
-                    \Log::error("Invalid data structure for XML15");
+                    \Log::error("Invalid data structure for XML15: " . $record->MA_LK);
                     continue;
                 }
 
