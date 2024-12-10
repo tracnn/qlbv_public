@@ -11,7 +11,7 @@ php artisan down
 
 :: Cập nhật mã nguồn từ GitHub
 echo Pulling latest changes from GitHub...
-git checkout -- composer.lock
+git reset --hard
 git pull origin main
 
 :: Chạy các migration (nếu có)
