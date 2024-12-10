@@ -84,8 +84,8 @@ class CatalogImportService
     private function expectedServiceColumns()
     {
         return [
-            "STT", "MA_DICH_VU", "TEN_DICH_VU", "DON_GIA", "QUY_TRINH",
-            "CSKCB_CGKT", "CSKCB_CLS", "TUNGAY", "DENNGAY", "ID"
+            "STT", "MA_TUONG_DUONG", "TEN_DVKT_PHEDUYET", "TEN_DVKT_GIA", "PHAN_LOAI_PTTT", "DON_GIA", "GHI_CHU",
+            "QUYET_DINH", "TUNGAY", "DENNGAY"
         ];
     }
 
@@ -244,7 +244,7 @@ class CatalogImportService
             }
 
             // Kiểm tra các trường bắt buộc không được để trống
-            if (empty($row[1]) || empty($row[2]) || empty($row[3]) || empty($row[4]) || empty($row[7])) {
+            if (empty($row[1]) || empty($row[2]) || empty($row[5]) || empty($row[7]) || empty($row[8])) {
                 continue; // Bỏ qua hàng nếu thiếu dữ liệu bắt buộc
             }
 
@@ -254,14 +254,14 @@ class CatalogImportService
                     [
                         'ma_dich_vu' => $row[1],  // Mã dịch vụ
                         'ten_dich_vu' => $row[2], // Tên dịch vụ
-                        'don_gia' => $row[3],     // Đơn giá
-                        'quy_trinh' => $row[4],   // Quy trình
-                        'tu_ngay' => $row[7],     // Từ ngày
+                        'don_gia' => $row[5],     // Đơn giá
+                        'quy_trinh' => $row[7],   // Quy trình
+                        'tu_ngay' => $row[8],     // Từ ngày
                     ],
                     [
-                        'cskcb_cgkt' => $row[5],  // Cơ sở khám chữa bệnh có công nghệ kỹ thuật
-                        'cskcb_cls' => $row[6],   // Cơ sở khám chữa bệnh có cận lâm sàng
-                        'den_ngay' => $row[8],    // Đến ngày
+                        'cskcb_cgkt' => null,  // Cơ sở khám chữa bệnh có công nghệ kỹ thuật
+                        'cskcb_cls' => null,   // Cơ sở khám chữa bệnh có cận lâm sàng
+                        'den_ngay' => $row[9],    // Đến ngày
                     ]
                 );
             } catch (\Exception $e) {
