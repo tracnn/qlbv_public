@@ -84,7 +84,7 @@ class CatalogImportService
     private function expectedServiceColumns()
     {
         return [
-            "STT", "MA_TUONG_DUONG", "TEN_DVKT_PHEDUYET", "TEN_DVKT_GIA", "PHAN_LOAI_PTTT", "DON_GIA", "GHI_CHU",
+            "STT", "MA_TUONG_DUONG", "TEN_DVKT_PHEDUYET", "TEN_DVKT_GIA", "PHAN_LOAI_PTTT", "DON_GIA", "GHICHU",
             "QUYET_DINH", "TUNGAY", "DENNGAY"
         ];
     }
