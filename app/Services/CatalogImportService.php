@@ -244,7 +244,7 @@ class CatalogImportService
             }
 
             // Kiểm tra các trường bắt buộc không được để trống
-            if (empty($row[1]) || empty($row[2]) || empty($row[5]) || empty($row[7]) || empty($row[8])) {
+            if (empty($row[1]) || empty($row[2]) || empty($row[5]) || empty($row[8])) {
                 continue; // Bỏ qua hàng nếu thiếu dữ liệu bắt buộc
             }
 
