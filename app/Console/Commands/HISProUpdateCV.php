@@ -65,8 +65,8 @@ class HISProUpdateCV extends Command
                 }
                 $doctor_exclude = config('__tech.doctor');
 
-                $doctor = array('binhvt-kcccd');//array('anhvt-kkb','sangt m-kn','binhvt-kcccd', 'duongdh-kcccd', 'hinhlc-kcccd','dungvv-kkb'); //,'dungvv-kkb'
-                $creator = array('hni_nongnghiep');//array('thomtt-kcccd','hangtt-kkb','hunglm-cccd', 'binhvt-kcccd');
+                $doctor = array('anhvt-kkb', 'binhvt-kcccd', 'duongdh-kcccd','dungvv-kkb'); //,'dungvv-kkb'
+                $creator = array('hni_nongnghiep','thomtt-kcccd','hangtt-kkb','hunglm-cccd');
 
                 $doctor_cc = [];//array('hinhlc-kcccd','duongdh-kcccd');
                 $creator_cc = [];//array('thomtt-kcccd','hangtt-kkb','hunglm-cccd');
