@@ -348,7 +348,7 @@ class Qd130Xml3Checker
                 ]);
             } else {
                 $maMay = $data->ma_may;
-                if (!preg_match('/^[A-ZĐÁÀẠÂẦẬẨẤẪÃẢĂẰẶẲẮẴÈÉẸÊỀỆỂẾỄẺÍÌỊĨỈÒÓỌÔỒỘỔỐỖÕỎƠỜỢỞỚỠÙÚỤƯỪỰỬỨỮŨỦÝỲỴỶỸ]{2,3}\.\d\.\d{5}\.[\w\-;]+$/u', $maMay)) {
+                if (!preg_match('/^[A-ZĐÁÀẠÂẦẬẨẤẪÃẢĂẰẶẲẮẴÈÉẸÊỀỆỂẾỄẺÍÌỊĨỈÒÓỌÔỒỘỔỐỖÕỎƠỜỢỞỚỠÙÚỤƯỪỰỬỨỮŨỦÝỲỴỶỸ]{2,3}\.\d\.\d{5}\.[\w\- ;]+$/u', $maMay)) {
                     $errorCode = $this->generateErrorCode('INFO_ERROR_INVALID_MA_MAY_FORMAT');
                     $errors->push((object)[
                         'error_code' => $errorCode,
