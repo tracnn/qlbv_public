@@ -85,23 +85,23 @@ class HISProUpdateCV extends Command
                     ->whereIn('doctor_loginname', $doctor)
                     ->whereIn('creator', $creator)
                     ->whereNotIn('fee_lock_loginname', ['tracnn'])
-                    ->whereIn('fee_lock_department_id', [27,182])
-                    ->whereIn('fee_lock_room_id', [54,49,1248])
-                    ->update(['treatment_end_type_id' => 9]);
+                    //->whereIn('fee_lock_department_id', [27,182])
+                    ->whereIn('fee_lock_room_id', [1248,42])
+                    ->update(['treatment_end_type_id' => 4]);
 
-                    DB::connection('HISPro')
-                    ->table('his_treatment')
-                    ->where('create_time', '>=', $from_date)
-                    ->where('create_time', '<=', $to_date)
-                    ->whereNotNull('fee_lock_time')
-                    ->whereNotNull('is_lock_hein')
-                    ->where('treatment_end_type_id', config('__tech.treatment_end_type_cv'))
-                    ->where('tdl_treatment_type_id', config('__tech.treatment_type_kham'))
-                    ->whereIn('doctor_loginname', $doctor_cc)
-                    ->whereIn('creator', $creator_cc)
-                    ->whereNotIn('fee_lock_loginname', ['tracnn'])
-                    ->where('fee_lock_department_id', 41)
-                    ->update(['treatment_end_type_id' => 9]);
+                    // DB::connection('HISPro')
+                    // ->table('his_treatment')
+                    // ->where('create_time', '>=', $from_date)
+                    // ->where('create_time', '<=', $to_date)
+                    // ->whereNotNull('fee_lock_time')
+                    // ->whereNotNull('is_lock_hein')
+                    // ->where('treatment_end_type_id', config('__tech.treatment_end_type_cv'))
+                    // ->where('tdl_treatment_type_id', config('__tech.treatment_type_kham'))
+                    // ->whereIn('doctor_loginname', $doctor_cc)
+                    // ->whereIn('creator', $creator_cc)
+                    // ->whereNotIn('fee_lock_loginname', ['tracnn'])
+                    // ->where('fee_lock_department_id', 41)
+                    // ->update(['treatment_end_type_id' => 9]);
 
                     $treatments = DB::connection('HISPro')
                     ->table('his_treatment')
@@ -110,9 +110,12 @@ class HISProUpdateCV extends Command
                     ->where('create_time', '<=', $to_date)
                     ->whereNotNull('fee_lock_time')
                     ->whereNotNull('is_lock_hein')
+                    ->whereNotNull('medi_org_code')
+                    ->whereIn('doctor_loginname', $doctor)
+                    ->whereIn('creator', $creator)
                     ->whereNotIn('fee_lock_loginname', ['tracnn'])
-                    //->where('fee_lock_department_id', 27)
-                    ->where('treatment_end_type_id', 9)
+                    ->whereIn('fee_lock_room_id', [1248,42])
+                    ->where('treatment_end_type_id', 4)
                     ->get();
 
                     //dd(count($treatments));
@@ -175,7 +178,7 @@ class HISProUpdateCV extends Command
                         out_time = out_time - 00030000000000,
                         out_date = out_date - 00030000000000 where create_time >= ' .
                         $from_date .' and create_time <= ' . $to_date .
-                        ' and fee_lock_time <= out_time and treatment_end_type_id = 9' .
+                        ' and fee_lock_time <= out_time and treatment_end_type_id = 4' .
                         'and fee_lock_loginname in (\'anhvt-kkb\',\'hinhlc-kcccd\',\'duongdh-kcccd\',\'binhvt-kcccd\',\'dungvv-kkb\')'
                     );
                 }
@@ -187,7 +190,7 @@ class HISProUpdateCV extends Command
                         out_time = out_time + 00030000000000,
                         out_date = out_date + 00030000000000 where create_time >= ' .
                         $from_date .' and create_time <= ' . $to_date .
-                        ' and fee_lock_time > out_time and treatment_end_type_id = 9' .
+                        ' and fee_lock_time > out_time and treatment_end_type_id = 4' .
                         'and fee_lock_loginname in (\'anhvt-kkb\',\'hinhlc-kcccd\',\'duongdh-kcccd\',\'binhvt-kcccd\',\'dungvv-kkb\')'
                     );
                 }
@@ -211,7 +214,8 @@ class HISProUpdateCV extends Command
                     ->whereNotNull('fee_lock_time')
                     ->whereNotIn('fee_lock_loginname', ['tracnn'])
                     //->where('fee_lock_department_id', 27)
-                    ->where('treatment_end_type_id', 9)
+                    ->whereNotNull('medi_org_code')
+                    ->where('treatment_end_type_id', 4)
                     ->get();
                     
                     foreach (array_chunk($treatments->pluck('treatment_code')->toArray(), 1000) as $key => $value) {
@@ -236,7 +240,8 @@ class HISProUpdateCV extends Command
                     ->where('create_time', '>=', $from_date)
                     ->where('create_time', '<=', $to_date)
                     ->whereNotNull('fee_lock_time')
-                    ->where('treatment_end_type_id', 9)
+                    ->whereNotNull('medi_org_code')
+                    ->where('treatment_end_type_id', 4)
                     ->where('tdl_treatment_type_id', config('__tech.treatment_type_kham'))
                     ->whereIn('doctor_loginname', $doctor)
                     ->whereIn('creator', $creator)
