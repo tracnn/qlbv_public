@@ -65,6 +65,8 @@
                     d.date_from = startDate;
                     d.date_to = endDate;
                     d.date_type = $('#date_type').val();
+                    d.department_catalog = $('#department_catalog').val();
+                    d.patient_type = $('#patient_type').val();
                 },
                 beforeSend: function(xhr) {
                     currentAjaxRequest = xhr;
@@ -177,24 +179,32 @@
         table.ajax.reload();
     }
 
-    // $(document).ready(function() {
-    //     $('#export_xlsx').click(function() {
-    //         var dateRange = $('#date_range').data('daterangepicker');
+    $(document).ready(function() {
+        $('.select2').select2({
+            width: '100%' // Đặt chiều rộng của Select2 là 100%
+        });
 
-    //         var startDate = dateRange.startDate.format('YYYY-MM-DD HH:mm:ss');
-    //         var endDate = dateRange.endDate.format('YYYY-MM-DD HH:mm:ss');
-    //         var date_type = $('#date_type').val();
+        $('#export_xlsx').click(function() {
+            var dateRange = $('#date_range').data('daterangepicker');
+
+            var startDate = dateRange.startDate.format('YYYY-MM-DD HH:mm:ss');
+            var endDate = dateRange.endDate.format('YYYY-MM-DD HH:mm:ss');
+            var date_type = $('#date_type').val();
+            var department_catalog = $('#department_catalog').val();
+            var patient_type = $('#patient_type').val();
             
-    //         // Tạo URL với các tham số query
-    //         var href = '{{ route("reports-administrator.export-debt-data") }}?' + $.param({
-    //             'date_from': startDate,
-    //             'date_to': endDate,
-    //             'date_type': date_type
-    //         });
+            // Tạo URL với các tham số query
+            var href = '{{ route("reports-administrator.export-accountant-revenue-data") }}?' + $.param({
+                'date_from': startDate,
+                'date_to': endDate,
+                'date_type': date_type,
+                'department_catalog': department_catalog,
+                'patient_type': patient_type
+            });
             
-    //         // Chuyển hướng tới URL với các tham số
-    //         window.location.href = href;
-    //     });
-    // });
+            // Chuyển hướng tới URL với các tham số
+            window.location.href = href;
+        });
+    });
 </script>
 @endpush

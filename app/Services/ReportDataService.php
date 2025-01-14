@@ -392,6 +392,8 @@ class ReportDataService
         $dateFrom = $request->input('date_from');
         $dateTo = $request->input('date_to');
         $date_type = $request->input('date_type');
+        $department_catalog = $request->input('department_catalog');
+        $patient_type = $request->input('patient_type');
 
         // Convert the dates if they're in the expected 'Y-m-d' format
         if (strlen($dateFrom) == 10) {
@@ -434,6 +436,21 @@ class ReportDataService
         $bindings['formattedDateFrom'] = $formattedDateFrom;
         $bindings['formattedDateTo'] = $formattedDateTo;
 
+        // Add patient_type condition if not empty
+        if (!empty($patient_type)) {
+            $conditions[] = 'ss.patient_type_id = :patientType';
+            $bindings['patientType'] = $patient_type;
+        }
+
+        // Add department_catalog condition if not empty
+        if (!empty($department_catalog)) {
+            $conditions[] = 're_dept.id = :departmentCatalog';
+            $bindings['departmentCatalog'] = $department_catalog;
+        }
+
+        // Build the WHERE clause string
+        $whereClause = implode(' AND ', $conditions);
+
         // SQL Query
         $sql = "
             WITH all_services AS (
@@ -463,7 +480,7 @@ class ReportDataService
                 WHERE 
                     sr.is_delete = 0
                     AND ss.is_delete = 0
-                    AND $dateField BETWEEN :formattedDateFrom AND :formattedDateTo
+                    AND $whereClause
             )
             SELECT 
                 deptname AS deptname,
