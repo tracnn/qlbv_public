@@ -523,4 +523,65 @@ class ReportController extends Controller
         $fileName = 'debt_data_' . Carbon::now()->format('YmdHis') . '.xlsx';
         return Excel::download(new DebtDataExport($request), $fileName);
     }
+
+    public function accoutantRevenue()
+    {
+        return view('administrator.list-accountant-revenue');
+    }
+    public function fetchAccountantRevenue(Request $request)
+    {
+        list($sql, $bindings) = $this->reportDataService->buildSqlQueryAndBindingsAccountantRevenue($request);
+
+        // Execute the query and get the results
+        $results = DB::connection('HISPro')->select(DB::raw($sql), $bindings);
+
+        // Return the results as DataTables and use editColumn and addColumn
+        return DataTables::of($results)
+        ->editColumn('xn', function($result) {
+            return number_format($result->xn);
+        })
+        ->editColumn('ha', function($result) {
+            return number_format($result->ha);
+        })
+        ->editColumn('th', function($result) {
+            return number_format($result->th);
+        })
+        ->editColumn('ma', function($result) {
+            return number_format($result->ma);
+        })
+        ->editColumn('tt', function($result) {
+            return number_format($result->tt);
+        })
+        ->editColumn('vt', function($result) {
+            return number_format($result->vt);
+        })
+        ->editColumn('ns', function($result) {
+            return number_format($result->ns);
+        })
+        ->editColumn('cn', function($result) {
+            return number_format($result->cn);
+        })
+        ->editColumn('sa', function($result) {
+            return number_format($result->sa);
+        })
+        ->editColumn('pt', function($result) {
+            return number_format($result->pt);
+        })
+        ->editColumn('gb', function($result) {
+            return number_format($result->gb);
+        })
+        ->editColumn('an', function($result) {
+            return number_format($result->an);
+        })
+        ->editColumn('cl', function($result) {
+            return number_format($result->cl);
+        })
+        ->editColumn('kh', function($result) {
+            return number_format($result->kh);
+        })
+        ->editColumn('gi', function($result) {
+            return number_format($result->gi);
+        })
+        ->toJson();
+    }
 }

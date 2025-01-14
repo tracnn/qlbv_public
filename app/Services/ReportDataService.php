@@ -386,4 +386,109 @@ class ReportDataService
 
         return [$sql, $bindings];
     }
+
+    public function buildSqlQueryAndBindingsAccountantRevenue(Request $request)
+    {
+        $dateFrom = $request->input('date_from');
+        $dateTo = $request->input('date_to');
+        $date_type = $request->input('date_type');
+
+        // Convert the dates if they're in the expected 'Y-m-d' format
+        if (strlen($dateFrom) == 10) {
+            $dateFrom = Carbon::createFromFormat('Y-m-d', $dateFrom)->startOfDay()->format('Y-m-d H:i:s');
+        }
+
+        if (strlen($dateTo) == 10) {
+            $dateTo = Carbon::createFromFormat('Y-m-d', $dateTo)->endOfDay()->format('Y-m-d H:i:s');
+        }
+
+        // Convert the formatted dates to the required 'YmdHis' format
+        $formattedDateFrom = Carbon::createFromFormat('Y-m-d H:i:s', $dateFrom)->format('YmdHis');
+        $formattedDateTo = Carbon::createFromFormat('Y-m-d H:i:s', $dateTo)->format('YmdHis');
+
+        // Define the date field based on date_type
+        switch ($date_type) {
+            case 'date_in':
+                $dateField = 'tm.in_time';
+                break;
+            case 'date_out':
+                $dateField = 'tm.out_time';
+                break;
+            case 'date_payment':
+                $dateField = 'tm.fee_lock_time';
+                break;
+            case 'date_intruction':
+                $dateField = 'sr.intruction_time';
+                break;
+            default:
+                $dateField = 'sr.intruction_time';
+                break;
+        }
+
+        // Build the conditions for the WHERE clause and bindings
+        $conditions = [];
+        $bindings = [];
+
+        // Add the date condition using placeholders
+        $conditions[] = "$dateField BETWEEN :formattedDateFrom AND :formattedDateTo";
+        $bindings['formattedDateFrom'] = $formattedDateFrom;
+        $bindings['formattedDateTo'] = $formattedDateTo;
+
+        // SQL Query
+        $sql = "
+            WITH all_services AS (
+                SELECT 
+                    re_dept.department_name AS deptname,
+                    rr.reception_room_name || er.execute_room_name || br.bed_room_name AS roomname,
+                    st.service_type_code AS stc,
+                    ss.amount * ss.price AS q
+                FROM 
+                    his_sere_serv ss
+                LEFT JOIN
+                    his_reception_room rr ON rr.room_id = ss.tdl_request_room_id
+                LEFT JOIN
+                    his_execute_room er ON er.room_id = ss.tdl_request_room_id
+                LEFT JOIN
+                    his_bed_room br ON br.room_id = ss.tdl_request_room_id
+                JOIN 
+                    his_service_req sr ON sr.id = ss.service_req_id
+                JOIN 
+                    his_service_type st ON st.id = ss.tdl_service_type_id
+                JOIN 
+                    his_treatment tm ON tm.id = sr.treatment_id
+                JOIN 
+                    his_treatment_type tt ON tt.id = tm.tdl_treatment_type_id
+                LEFT JOIN 
+                    his_department re_dept ON re_dept.id = ss.tdl_request_department_id
+                WHERE 
+                    sr.is_delete = 0
+                    AND ss.is_delete = 0
+                    AND $dateField BETWEEN :formattedDateFrom AND :formattedDateTo
+            )
+            SELECT 
+                deptname AS deptname,
+                roomname AS roomname,
+                SUM(CASE WHEN stc = 'XN' THEN q ELSE 0 END) AS xn,
+                SUM(CASE WHEN stc = 'HA' THEN q ELSE 0 END) AS ha,
+                SUM(CASE WHEN stc = 'TH' THEN q ELSE 0 END) AS th,
+                SUM(CASE WHEN stc = 'MA' THEN q ELSE 0 END) AS ma,
+                SUM(CASE WHEN stc = 'TT' THEN q ELSE 0 END) AS tt,
+                SUM(CASE WHEN stc = 'VT' THEN q ELSE 0 END) AS vt,
+                SUM(CASE WHEN stc = 'NS' THEN q ELSE 0 END) AS ns,
+                SUM(CASE WHEN stc = 'CN' THEN q ELSE 0 END) AS cn,
+                SUM(CASE WHEN stc = 'SA' THEN q ELSE 0 END) AS sa,
+                SUM(CASE WHEN stc = 'PT' THEN q ELSE 0 END) AS pt,
+                SUM(CASE WHEN stc = 'GB' THEN q ELSE 0 END) AS gb,
+                SUM(CASE WHEN stc = 'AN' THEN q ELSE 0 END) AS an,
+                SUM(CASE WHEN stc = 'CL' THEN q ELSE 0 END) AS cl,
+                SUM(CASE WHEN stc = 'KH' THEN q ELSE 0 END) AS kh,
+                SUM(CASE WHEN stc = 'GI' THEN q ELSE 0 END) AS gi
+            FROM 
+                all_services
+            GROUP BY 
+                deptname, roomname
+        ";
+
+        return [$sql, $bindings];
+    }
 }

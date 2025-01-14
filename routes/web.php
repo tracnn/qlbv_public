@@ -462,6 +462,7 @@ Route::group(['middleware' => ['auth', 'check.first.login']], function () {
         Route::get('payment-report', 'AccountantController@paymentReport')->name('accountant.payment-report');
         Route::get('get-payment', 'AccountantController@getPayment')->name('accountant.get-payment');
         Route::get('export-payment', 'AccountantController@exportPaymentExcel')->name('accountant.export-payment');
+
     });
 
     /* Reports Dược*/
@@ -505,6 +506,10 @@ Route::group(['middleware' => ['auth', 'check.first.login']], function () {
         ->name('reports-administrator.fetch-accoutant-debt');
         Route::get('export-debt-data', 'ReportController@exportDebtData')
         ->name('reports-administrator.export-debt-data');
+        Route::get('accoutant-revenue-index', 'ReportController@accoutantRevenue')
+        ->name('reports-administrator.accoutant-revenue-index');
+        Route::get('fetch-accoutant-revenue', 'ReportController@fetchAccountantRevenue')
+        ->name('reports-administrator.fetch-accountant-revenue');
     });
 
     /* Reports Account Payment*/
