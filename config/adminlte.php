@@ -536,7 +536,7 @@ return [
                     'active'=> ['reports-administrator/accoutant-debt-index*'],
                 ],
                 [
-                    'text'  => 'Thống kê doanh thu',
+                    'text'  => 'Báo cáo doanh thu',
                     'icon'  => 'bar-chart',
                     'checkrole'   => 'thungan',
                     'route'   => 'reports-administrator.accoutant-revenue-index',
