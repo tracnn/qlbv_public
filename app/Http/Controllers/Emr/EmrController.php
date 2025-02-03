@@ -643,7 +643,7 @@ class EmrController extends Controller
                 ->where('emr_document.treatment_code', $request->get('treatment_code'))
                 ->orderBy('emr_version.id', 'desc')
                 ->first();
-dd($content); 
+dd($result); 
             if (!$result) {
                 throw new \Exception('Invalid request');
             }
