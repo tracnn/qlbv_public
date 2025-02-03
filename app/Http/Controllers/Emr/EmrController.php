@@ -639,11 +639,11 @@ class EmrController extends Controller
                 ->where('emr_version.is_delete', 0)
                 ->where('emr_version.is_active', 1)
                 ->where('emr_document.is_delete', 0)
-                ->where('emr_document.document_code', base64_decode($request->get('document_code')))
+                ->where('emr_document.document_code', ($request->get('document_code')))
                 ->where('emr_document.treatment_code', $request->get('treatment_code'))
                 ->orderBy('emr_version.id', 'desc')
                 ->first();
-dd(base64_decode($request->get('document_code'))); 
+dd(($request->get('document_code'))); 
             if (!$result) {
                 throw new \Exception('Invalid request');
             }

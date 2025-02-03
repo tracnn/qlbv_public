@@ -33,7 +33,7 @@
                               {{ $value->document_name }}
                           </td>
                           <td align="center">
-                              <a href="{{ route('view-doc', ['document_code'=>base64_encode($value->document_code), 'treatment_code' => $value->treatment_code]) }}" class="btn btn-sm btn-primary" target="_blank">
+                              <a href="{{ route('view-doc', ['document_code'=>($value->document_code), 'treatment_code' => $value->treatment_code]) }}" class="btn btn-sm btn-primary" target="_blank">
                                   <i class="glyphicon glyphicon-eye-open"></i> Xem
                               </a>
                           </td>
