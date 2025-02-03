@@ -629,9 +629,9 @@ class EmrController extends Controller
     public function viewPdf(Request $request)
     {
         try {
-            if (!session('_token')) {
-                throw new \Exception('Unauthorized access');
-            }
+            // if (!session('_token')) {
+            //     throw new \Exception('Unauthorized access');
+            // }
 
             $result = DB::connection('EMR_RS')
                 ->table('emr_version')
