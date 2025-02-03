@@ -649,7 +649,7 @@ class EmrController extends Controller
             }
 
             $content = Storage::disk('emr')->get($result->url);
-
+dd($content); 
             return response()->make($content, 200, [
                 'Content-Type' => 'application/pdf',
                 'Content-Disposition' => 'inline'
