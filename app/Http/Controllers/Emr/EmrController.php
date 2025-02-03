@@ -632,7 +632,7 @@ class EmrController extends Controller
             // if (!session('_token')) {
             //     throw new \Exception('Unauthorized access');
             // }
-dd($request->get('document_code')); 
+
             $result = DB::connection('EMR_RS')
                 ->table('emr_version')
                 ->join('emr_document', 'emr_document.id', '=', 'emr_version.document_id')
@@ -643,7 +643,7 @@ dd($request->get('document_code'));
                 ->where('emr_document.treatment_code', $request->get('treatment_code'))
                 ->orderBy('emr_version.id', 'desc')
                 ->first();
-
+dd($content); 
             if (!$result) {
                 throw new \Exception('Invalid request');
             }
