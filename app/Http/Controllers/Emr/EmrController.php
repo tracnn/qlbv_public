@@ -643,13 +643,13 @@ class EmrController extends Controller
                 ->where('emr_document.treatment_code', $request->get('treatment_code'))
                 ->orderBy('emr_version.id', 'desc')
                 ->first();
-dd(($request->get('document_code'))); 
+
             if (!$result) {
                 throw new \Exception('Invalid request');
             }
 
             $content = Storage::disk('emr')->get($result->url);
-
+dd($content);
             return response()->make($content, 200, [
                 'Content-Type' => 'application/pdf',
                 'Content-Disposition' => 'inline'
