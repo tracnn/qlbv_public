@@ -97,7 +97,7 @@
             	{{strtodate($value->create_date)}}
             </td>
             <td>
-                <a href="{{route('view-doc',['document_code' => base64_encode($value->document_code),
+                <a href="{{route('view-doc',['document_code' => ($value->document_code),
                     'treatment_code' => $value->treatment_code])}}" class="btn btn-sm btn-primary" target="_blank">
                                 <span class="glyphicon glyphicon-eye-open"></span> Xem</a>
                 <button class="share-modal btn btn-sm btn-info" data-id="{{($value->document_code)}}" data-title="{{($value->document_name)}}" data-content=""><span class="glyphicon glyphicon-qrcode"></span> Share</button>
