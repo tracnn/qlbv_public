@@ -158,6 +158,7 @@ class UpdateCV extends Command
                         'modifier' => $creator_des,
                         'doctor_loginname' => $doctor_des,
                         'end_loginname' => $doctor_des,
+                        'end_username' => $doctor_des_username,
 						'doctor_username' => $doctor_des_username
                     ]);
                     
