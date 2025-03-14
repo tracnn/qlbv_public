@@ -159,7 +159,8 @@ class UpdateCV extends Command
                         'doctor_loginname' => $doctor_des,
                         'end_loginname' => $doctor_des,
                         'end_username' => $doctor_des_username,
-						'doctor_username' => $doctor_des_username
+						'doctor_username' => $doctor_des_username,
+                        'create_time' => DB::raw('in_time')
                     ]);
                     
                     $treatments = DB::connection('HISPro')
