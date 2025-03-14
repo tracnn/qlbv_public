@@ -160,7 +160,8 @@ class UpdateCV extends Command
                         'end_loginname' => $doctor_des,
                         'end_username' => $doctor_des_username,
 						'doctor_username' => $doctor_des_username,
-                        'create_time' => DB::raw('in_time')
+                        'create_time' => DB::raw('in_time'),
+                        'modify_time' => DB::raw('in_time')
                     ]);
                     
                     $treatments = DB::connection('HISPro')
@@ -205,7 +206,9 @@ class UpdateCV extends Command
                         ->where('treatment_end_type_name', '<>', 'Cấp toa cho về')
                         ->update(['creator' => $creator_des,
                             'modifier' => $creator_des,
-                            'treatment_end_type_name' => 'Cấp toa cho về'
+                            'treatment_end_type_name' => 'Cấp toa cho về',
+                            'create_time' => DB::raw('in_time'),
+                            'modify_time' => DB::raw('in_time')
                         ]);
                     }
 
