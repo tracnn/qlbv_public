@@ -34,7 +34,7 @@
           <!-- small box -->
           <div class="small-box bg-green">
             <div class="inner">
-              <h3>{{ number_format($sum_treatment) }}</sup></h3>
+              <h3>{{ number_format($sum_treatment) }}</h3>
 
               <p>Số lượng hồ sơ</p>
             </div>
