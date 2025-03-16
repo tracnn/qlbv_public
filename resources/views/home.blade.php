@@ -15,7 +15,7 @@
 <div class="panel panel-default">
     <div class="panel-body">
 
-        <div class="col-lg-12 connectedSortable">
+        <div class="col-lg-6 connectedSortable">
             <!-- Custom tabs (Charts with tabs)-->
             <div class="nav-tabs-custom">
                 <!-- Tabs within a box -->
