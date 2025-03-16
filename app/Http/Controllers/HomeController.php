@@ -22,7 +22,36 @@ class HomeController extends Controller
     public function index()
     {
         //dd(config('qd130xml.export_to_directory_by_day'));
-        return view('home');
+
+        $current_date = date("Ymd", mktime(0, 0, 0, date("m"), date("d"), date("Y")));
+        $from_date = $current_date . '000000';
+        $to_date = $current_date . '235959';
+
+        $doanhthu = DB::connection('HISPro')
+        ->table('his_sere_serv')
+        ->join('his_service_type', 'his_sere_serv.tdl_service_type_id', '=', 'his_service_type.id')
+        ->selectRaw('sum(amount) as so_luong,sum(amount*price) as thanh_tien,tdl_service_type_id,service_type_name')
+        ->where('tdl_intruction_time', '>=', $from_date)
+        ->whereBetween('tdl_intruction_time', [$from_date, $to_date])
+        ->where('his_sere_serv.is_delete', 0)
+        ->groupBy('tdl_service_type_id','service_type_name')
+        ->orderBy('thanh_tien','desc')
+        ->get();
+        $sum_doanhthu = $doanhthu->sum('thanh_tien');
+
+        $treatment = DB::connection('HISPro')
+            ->table('his_treatment')
+            ->join('his_branch', 'his_branch.id', '=', 'his_treatment.branch_id')
+            ->join('his_patient', 'his_patient.id', '=', 'his_treatment.patient_id')
+            ->selectRaw('count(*) as so_luong,branch_name')
+            ->whereBetween('in_time', [$from_date, $to_date])
+            ->where('his_treatment.is_delete',0)
+            ->groupBy('branch_name')
+            ->get();
+        $sum_treatment = $treatment->sum('so_luong');
+
+        return view('home', 
+            compact('sum_doanhthu', 'sum_treatment'));
     }
 
     public function xml_chart(Request $request)

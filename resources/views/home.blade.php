@@ -16,12 +16,13 @@
     <div class="panel-body">
 
       <div class="row">
+
         <div class="col-lg-3 col-xs-6">
           <!-- small box -->
           <div class="small-box bg-aqua">
             <div class="inner">
-              <h3>150</h3>
-              <p>New Orders</p>
+              <h3>{{ number_format($sum_doanhthu) }}</h3>
+              <p>Doanh thu</p>
             </div>
             <div class="icon">
               <i class="ion ion-bag"></i>
@@ -33,9 +34,9 @@
           <!-- small box -->
           <div class="small-box bg-green">
             <div class="inner">
-              <h3>53<sup style="font-size: 20px">%</sup></h3>
+              <h3>{{ number_format($sum_treatment) }}</sup></h3>
 
-              <p>Bounce Rate</p>
+              <p>Số lượng hồ sơ</p>
             </div>
             <div class="icon">
               <i class="ion ion-stats-bars"></i>
@@ -70,6 +71,7 @@
             </div>
           </div>
         </div>
+
       </div>
 
       <div class="row">
