@@ -22,7 +22,7 @@
           <div class="small-box bg-aqua">
             <div class="inner">
               <h3>{{ number_format($sum_doanhthu) }}</h3>
-              <p>Doanh thu</p>
+              <p>Doanh thu - Viện phí</p>
             </div>
             <div class="icon">
               <i class="ion ion-bag"></i>
@@ -36,7 +36,7 @@
             <div class="inner">
               <h3>{{ number_format($sum_treatment) }}</h3>
 
-              <p>Số lượng hồ sơ</p>
+              <p>Số lượng hồ sơ điều trị</p>
             </div>
             <div class="icon">
               <i class="ion ion-stats-bars"></i>
@@ -48,9 +48,9 @@
           <!-- small box -->
           <div class="small-box bg-yellow">
             <div class="inner">
-              <h3>44</h3>
+              <h3>{{ number_format($sum_newpatient) }}</h3>
 
-              <p>User Registrations</p>
+              <p>Bệnh nhân mới</p>
             </div>
             <div class="icon">
               <i class="ion ion-person-add"></i>
@@ -62,9 +62,9 @@
           <!-- small box -->
           <div class="small-box bg-red">
             <div class="inner">
-              <h3>65</h3>
+              <h3>{{ number_format($sum_noitru) }}</h3>
 
-              <p>Unique Visitors</p>
+              <p>Số lượng vào điều trị nội trú</p>
             </div>
             <div class="icon">
               <i class="ion ion-pie-graph"></i>
