@@ -22,7 +22,7 @@
           <div class="small-box bg-aqua">
             <div class="inner">
               <h3 id="sum_doanhthu">0</h3>
-              <p>Accoutant</p>
+              <p>Accountant</p>
             </div>
             <div class="icon">
               <i class="ion ion-bag"></i>
