@@ -106,9 +106,9 @@
       <div class="row">
         <div class="col-lg-6 connectedSortable">
             <div class="nav-tabs-custom text-center"> <!-- Thêm 'text-center' để căn giữa -->
-                <div class="tab-content no-padding">
+                <div class="tab-content no-padding"><label id="label">Doanh thu</label>
                     <div class="chart tab-pane active" style="position: relative; width: 100%; height: 100%;">
-                        <canvas id="chart_doanhthu" style="max-height: 300px;"></canvas>
+                        <canvas id="chart_doanhthu"></canvas>
                     </div>
                 </div>
             </div>
