@@ -186,7 +186,7 @@ class HomeController extends Controller
         }
         $returnData[] = array(
             'type' => 'bar',
-            'title' => 'BN tại các buồng điều trị',
+            'title' => 'Buồng điều trị',
             'labels' => $labels,
             'datasets' => array(
                 array(
