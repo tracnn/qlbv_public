@@ -11,6 +11,7 @@ php artisan down
 
 :: Hủy các chỉnh sửa từ local
 echo Clearing changes from Local Git...
+git clean -df
 git reset --hard HEAD
 
 :: Cập nhật mã nguồn từ GitHub
