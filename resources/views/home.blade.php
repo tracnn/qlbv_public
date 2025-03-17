@@ -7,7 +7,11 @@
     Dashboard
     <small>Control panel</small>
 </h1>
+<!-- <button id="btn-refresh-dashboard" class="btn btn-primary btn-sm">
+    <i class="fa fa-refresh"></i>
+</button> -->
 {{ Breadcrumbs::render('dashboard') }}
+
 @stop
 
 @section('content')
