@@ -22,14 +22,7 @@ class HomeController extends Controller
      */
     public function index()
     {
-
-        $current_date = $this->currentDate();
-
-        $newpatient = $this->newpatient($current_date['from_date'], $current_date['to_date']);
-        $sum_newpatient = $newpatient->sum('so_luong');
-
-        return view('home', 
-            compact('sum_newpatient'));
+        return view('home');
     }
 
     private function currentDate()
