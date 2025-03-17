@@ -109,19 +109,15 @@
       <div class="row">
         <div class="col-lg-6 connectedSortable">
             <div class="nav-tabs-custom text-center"> <!-- Thêm 'text-center' để căn giữa -->
-                <div class="tab-content no-padding"><label id="label">Doanh thu</label>
-                    <div class="chart tab-pane active" style="position: relative; width: 100%; height: 100%;">
-                        <canvas id="chart_doanhthu"></canvas>
-                    </div>
+                <div class="tab-content no-padding">
+                    <div id="chart_doanhthu" style="width: 100%; height: 300px;"></div>
                 </div>
             </div>
         </div>
         <div class="col-lg-6 connectedSortable">
             <div class="nav-tabs-custom text-center"> <!-- Thêm 'text-center' để căn giữa -->
-                <div class="tab-content no-padding"><label id="label">Hồ sơ</label>
-                    <div class="chart tab-pane active" style="position: relative; width: 100%; height: 100%;">
-                        <canvas id="chart_treatment"></canvas>
-                    </div>
+                <div class="tab-content no-padding">
+                    <div id="chart_treatment" style="width: 100%; height: 300px;"></div>
                 </div>
             </div>
         </div>
@@ -139,79 +135,63 @@
 <script src="{{ asset('vendor/numeral/numeral.js') }}"></script>
 <script src="{{ asset('vendor/numeral/locales.js') }}"></script>
 
+<script src="https://code.highcharts.com/highcharts.js"></script>
+<script src="https://code.highcharts.com/highcharts-3d.js"></script>
+
 <script type="text/javascript">
     numeral.locale('vi');
 
-    $(document).ready(function() {
-        $.ajax({
-            url: "{{ route('fetch-treatment') }}",
-            type: "GET",
-            dataType: 'json',
-        })
-        .done(function(rtnData) {
+$(document).ready(function () {
+    $.ajax({
+        url: "{{ route('fetch-treatment') }}",
+        type: "GET",
+        dataType: 'json',
+    })
+    .done(function (rtnData) {
+        if (rtnData && rtnData.datasets && rtnData.datasets.length > 0) {
+            // Cập nhật tổng số hồ sơ vào HTML
+            $("#sum_treatment").text(numeral(rtnData.sum_sl).format('0,0'));
 
-            if (rtnData && rtnData.datasets && rtnData.datasets.length > 0) {
-                var ctx = document.getElementById("chart_treatment").getContext("2d");
-
-                // Hủy biểu đồ cũ nếu có
-                if (window.chartTreament instanceof Chart) {
-                    window.chartTreament.destroy();
-                }
-            
-                // Cập nhật tổng số lượng hồ sơ vào HTML
-                $("#sum_treatment").text(numeral(rtnData.sum_sl).format('0,0')); // Hiển thị có dấu phẩy phân cách
-
-                // Vẽ Pie Chart với labels hiển thị dưới biểu đồ
-                window.chartTreament = new Chart(ctx, {
-                    type: "pie",
-                    data: {
-                        labels: rtnData.labels, // Đảm bảo labels được truyền vào đây
-                        datasets: [{
-                            data: rtnData.datasets[0].data,
-                            backgroundColor: rtnData.datasets[0].backgroundColor
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false, // Không giữ tỷ lệ cố định
-                        animation: {
-                            animateRotate: true,
-                            animateScale: true
-                        },
-                        plugins: {
-                            legend: {
-                                display: true,
-                                position: 'bottom', // Chuyển labels xuống dưới biểu đồ
-                                labels: {
-                                    font: {
-                                        size: 12
-                                    },
-                                    padding: 10
-                                }
-                            },
-                            title: {
-                                display: true,
-                                text: rtnData.title, // Tiêu đề từ API
-                                font: {
-                                    size: 18,
-                                    weight: 'bold'
-                                },
-                                padding: {
-                                    top: 10,
-                                    bottom: 20
-                                }
-                            }
+            // Vẽ Pie Chart 3D bằng Highcharts
+            Highcharts.chart('chart_treatment', {
+                chart: {
+                    type: 'pie',
+                    options3d: {
+                        enabled: true,
+                        alpha: 45, // Góc nghiêng
+                        beta: 0
+                    }
+                },
+                title: {
+                    text: rtnData.title + ': ' + numeral(rtnData.sum_sl).format('0,0')
+                },
+                plotOptions: {
+                    pie: {
+                        innerSize: 0,
+                        depth: 45,
+                        dataLabels: {
+                            enabled: true,
+                            format: '{point.name}: {point.percentage:.1f}%'
                         }
                     }
-                });
-            } else {
-                console.log("Dữ liệu không hợp lệ hoặc không có dữ liệu!");
-            }
-        })
-        .fail(function(jqXHR, textStatus, errorThrown) {
-            console.log("Lỗi AJAX: " + textStatus + ': ' + errorThrown);
-        });
+                },
+                series: [{
+                    name: 'Hồ sơ',
+                    data: rtnData.labels.map((label, i) => ({
+                        name: label,
+                        y: rtnData.datasets[0].data[i],
+                        color: rtnData.datasets[0].backgroundColor[i]
+                    }))
+                }]
+            });
+        } else {
+            console.log("Dữ liệu không hợp lệ hoặc không có dữ liệu!");
+        }
+    })
+    .fail(function(jqXHR, textStatus, errorThrown) {
+        console.log("Lỗi AJAX: " + textStatus + ': ' + errorThrown);
     });
+});
 
     $(document).ready(function() {
         $.ajax({
@@ -238,79 +218,58 @@
         });
     });
     
-    $(document).ready(function() {
-        $.ajax({
-            url: "{{ route('fetch-doanh-thu') }}",
-            type: "GET",
-            dataType: 'json',
-        })
-        .done(function(rtnData) {
+$(document).ready(function () {
+    $.ajax({
+        url: "{{ route('fetch-doanh-thu') }}",
+        type: "GET",
+        dataType: 'json',
+    })
+    .done(function (rtnData) {
+        if (rtnData && rtnData.datasets && rtnData.datasets.length > 0) {
+            // Cập nhật tổng số doanh thu vào HTML
+            let roundedValue = Math.round(rtnData.sum_sl / 1000000);
+            $("#sum_doanhthu").text(numeral(roundedValue).format('0,0') + ' Tr');
 
-            if (rtnData && rtnData.datasets && rtnData.datasets.length > 0) {
-                var ctx = document.getElementById("chart_doanhthu").getContext("2d");
-
-                // Hủy biểu đồ cũ nếu có
-                if (window.chartDoanhThu instanceof Chart) {
-                    window.chartDoanhThu.destroy();
-                }
-
-                // Cập nhật tổng số lượng hồ sơ vào HTML
-                let roundedValue = Math.round(rtnData.sum_sl / 1000000);
-
-                // Hiển thị số đã làm tròn với dấu phẩy
-                $("#sum_doanhthu").text(numeral(roundedValue).format('0,0') + ' Tr');
-                
-                // Vẽ Pie Chart với labels hiển thị dưới biểu đồ
-                window.chartDoanhThu = new Chart(ctx, {
-                    type: "pie",
-                    data: {
-                        labels: rtnData.labels, // Đảm bảo labels được truyền vào đây
-                        datasets: [{
-                            data: rtnData.datasets[0].data,
-                            backgroundColor: rtnData.datasets[0].backgroundColor
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false, // Không giữ tỷ lệ cố định
-                        animation: {
-                            animateRotate: true,
-                            animateScale: true
-                        },
-                        plugins: {
-                            legend: {
-                                display: true,
-                                position: 'bottom', // Chuyển labels xuống dưới biểu đồ
-                                labels: {
-                                    font: {
-                                        size: 12
-                                    },
-                                    padding: 10
-                                }
-                            },
-                            title: {
-                                display: true,
-                                text: rtnData.title, // Tiêu đề từ API
-                                font: {
-                                    size: 18,
-                                    weight: 'bold'
-                                },
-                                padding: {
-                                    top: 10,
-                                    bottom: 20
-                                }
-                            }
+            // Vẽ biểu đồ Pie 3D bằng Highcharts
+            Highcharts.chart('chart_doanhthu', {
+                chart: {
+                    type: 'pie',
+                    options3d: {
+                        enabled: true,
+                        alpha: 45, // Góc nghiêng
+                        beta: 0
+                    }
+                },
+                title: {
+                    text: rtnData.title + ': ' + numeral(roundedValue).format('0,0') + ' Tr'
+                },
+                plotOptions: {
+                    pie: {
+                        innerSize: 0, // Nếu muốn Donut thì đổi > 0
+                        depth: 45, // Độ sâu 3D
+                        dataLabels: {
+                            enabled: true,
+                            format: '{point.name}: {point.percentage:.1f}%'
                         }
                     }
-                });
-            } else {
-                console.log("Dữ liệu không hợp lệ hoặc không có dữ liệu!");
-            }
-        })
-        .fail(function(jqXHR, textStatus, errorThrown) {
-            console.log("Lỗi AJAX: " + textStatus + ': ' + errorThrown);
-        });
+                },
+                series: [{
+                    name: 'Doanh thu',
+                    data: rtnData.labels.map((label, i) => ({
+                        name: label,
+                        y: rtnData.datasets[0].data[i],
+                        color: rtnData.datasets[0].backgroundColor[i] // Giữ nguyên màu sắc từ backend
+                    }))
+                }]
+            });
+        } else {
+            console.log("Dữ liệu không hợp lệ hoặc không có dữ liệu!");
+        }
+    })
+    .fail(function (jqXHR, textStatus, errorThrown) {
+        console.log("Lỗi AJAX: " + textStatus + ': ' + errorThrown);
     });
+});
 
     //Buồng bệnh
     $.ajax({
