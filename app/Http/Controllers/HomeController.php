@@ -54,6 +54,40 @@ class HomeController extends Controller
         ];
     }
 
+    public function fetchDoanhthu(Request $request)
+    {
+        $current_date = $this->currentDate();
+        $model = $this->doanhthu($current_date['from_date'], $current_date['to_date']);
+
+        $sum_sl = $model->sum('thanh_tien');
+
+        $labels = [];  
+        $data = [];
+        $backgroundColor = [];
+
+        foreach ($model as $value) {
+            $labels[] = $value->service_type_name;
+            $data[] = doubleval($value->thanh_tien);
+            $backgroundColor[] = "rgba(" . rand(0, 255) . ',' . rand(0, 255) . ',' . rand(0, 255) . ",0.7)";
+        }
+
+        $returnData = [
+            'type' => 'pie',  // Chuyển sang Pie Chart
+            'title' => 'Doanh thu',
+            'labels' => $labels,
+            'datasets' => [
+                [
+                    'data' => $data,
+                    'backgroundColor' => $backgroundColor,
+                    'label' => "Tổng cộng: " . number_format($sum_sl),
+                ],
+            ],
+        ];  
+
+        return json_encode($returnData);
+    }
+
+
     public function fetchNoitru(Request $request)
     {
         $current_date = $this->currentDate();
