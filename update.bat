@@ -9,6 +9,10 @@ set NSSM_PATH=%~dp0
 echo Putting the application into maintenance mode...
 php artisan down
 
+:: Hủy các chỉnh sửa từ local
+echo Clearing changes from Local Git...
+git reset --hard HEAD
+
 :: Cập nhật mã nguồn từ GitHub
 echo Pulling latest changes from GitHub...
 git checkout -- composer.lock
