@@ -113,7 +113,15 @@
                 </div>
             </div>
         </div>
-
+        <div class="col-lg-6 connectedSortable">
+            <div class="nav-tabs-custom text-center"> <!-- Thêm 'text-center' để căn giữa -->
+                <div class="tab-content no-padding"><label id="label">Hồ sơ</label>
+                    <div class="chart tab-pane active" style="position: relative; width: 100%; height: 100%;">
+                        <canvas id="chart_treatment"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
 
       </div>
 
@@ -129,6 +137,74 @@
 
 <script type="text/javascript">
     numeral.locale('vi');
+
+    $(document).ready(function() {
+        $.ajax({
+            url: "{{ route('fetch-treatment') }}",
+            type: "GET",
+            dataType: 'json',
+        })
+        .done(function(rtnData) {
+
+            if (rtnData && rtnData.datasets && rtnData.datasets.length > 0) {
+                var ctx = document.getElementById("chart_treatment").getContext("2d");
+
+                // Hủy biểu đồ cũ nếu có
+                if (window.chartTreament instanceof Chart) {
+                    window.chartTreament.destroy();
+                }
+
+                // Vẽ Pie Chart với labels hiển thị dưới biểu đồ
+                window.chartTreament = new Chart(ctx, {
+                    type: "pie",
+                    data: {
+                        labels: rtnData.labels, // Đảm bảo labels được truyền vào đây
+                        datasets: [{
+                            data: rtnData.datasets[0].data,
+                            backgroundColor: rtnData.datasets[0].backgroundColor
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false, // Không giữ tỷ lệ cố định
+                        animation: {
+                            animateRotate: true,
+                            animateScale: true
+                        },
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'bottom', // Chuyển labels xuống dưới biểu đồ
+                                labels: {
+                                    font: {
+                                        size: 12
+                                    },
+                                    padding: 10
+                                }
+                            },
+                            title: {
+                                display: true,
+                                text: rtnData.title, // Tiêu đề từ API
+                                font: {
+                                    size: 18,
+                                    weight: 'bold'
+                                },
+                                padding: {
+                                    top: 10,
+                                    bottom: 20
+                                }
+                            }
+                        }
+                    }
+                });
+            } else {
+                console.log("Dữ liệu không hợp lệ hoặc không có dữ liệu!");
+            }
+        })
+        .fail(function(jqXHR, textStatus, errorThrown) {
+            console.log("Lỗi AJAX: " + textStatus + ': ' + errorThrown);
+        });
+    });
     
     $(document).ready(function() {
         $.ajax({

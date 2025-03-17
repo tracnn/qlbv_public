@@ -54,6 +54,39 @@ class HomeController extends Controller
         ];
     }
 
+    public function fetchTreatment(Request $request)
+    {
+        $current_date = $this->currentDate();
+        $model = $this->treatment($current_date['from_date'], $current_date['to_date']);
+
+        $sum_sl = $model->sum('so_luong');
+
+        $labels = [];  
+        $data = [];
+        $backgroundColor = [];
+
+        foreach ($model as $value) {
+            $labels[] = $value->patient_type_name;
+            $data[] = doubleval($value->so_luong);
+            $backgroundColor[] = "rgba(" . rand(0, 255) . ',' . rand(0, 255) . ',' . rand(0, 255) . ",0.7)";
+        }
+
+        $returnData = [
+            'type' => 'pie',  // Chuyển sang Pie Chart
+            'title' => 'Hồ sơ',
+            'labels' => $labels,
+            'datasets' => [
+                [
+                    'data' => $data,
+                    'backgroundColor' => $backgroundColor,
+                    'label' => "Tổng cộng: " . number_format($sum_sl),
+                ],
+            ],
+        ];  
+
+        return json_encode($returnData);
+    }
+
     public function fetchDoanhthu(Request $request)
     {
         $current_date = $this->currentDate();
@@ -86,7 +119,6 @@ class HomeController extends Controller
 
         return json_encode($returnData);
     }
-
 
     public function fetchNoitru(Request $request)
     {
@@ -171,10 +203,11 @@ class HomeController extends Controller
         ->table('his_treatment')
         ->join('his_branch', 'his_branch.id', '=', 'his_treatment.branch_id')
         ->join('his_patient', 'his_patient.id', '=', 'his_treatment.patient_id')
-        ->selectRaw('count(*) as so_luong,branch_name')
+        ->join('his_patient_type', 'his_patient_type.id', '=', 'his_treatment.tdl_patient_type_id')
+        ->selectRaw('count(*) as so_luong,patient_type_name')
         ->whereBetween('in_time', [$from_date, $to_date])
         ->where('his_treatment.is_delete',0)
-        ->groupBy('branch_name')
+        ->groupBy('patient_type_name')
         ->get();
     }
 
