@@ -11,7 +11,7 @@
 @stop
 
 @section('content')
-
+@if(auth()->user()->hasRole('dashboard') || auth()->user()->hasRole('superadministrator'))
 <div class="panel panel-default">
     <div class="panel-body">
 
@@ -126,6 +126,7 @@
 
     </div>
 </div>
+@endif
 
 @stop
 

@@ -27,11 +27,6 @@ Route::get('khth/chart-xetnghiem', 'KHTH\KHTHController@chartXetnghiem')->name('
 Route::get('khth/chart-pttt', 'KHTH\KHTHController@chartPttt')->name('khth.chart_pttt');
 Route::get('khth/chart-cls', 'KHTH\KHTHController@chartCls')->name('khth.chart_cls');
 Route::get('dashboard', 'KHTH\KHTHController@dashboard')->name('khth.dashboard');
-
-Route::get('fetch-noi-tru', 'HomeController@fetchNoitru')->name('fetch-noi-tru');
-Route::get('fetch-doanh-thu', 'HomeController@fetchDoanhthu')->name('fetch-doanh-thu');
-Route::get('fetch-treatment', 'HomeController@fetchTreatment')->name('fetch-treatment');
-Route::get('fetch-new-patient', 'HomeController@fetchNewpatient')->name('fetch-new-patient');
 /* --Dashboard */
 
 Route::get('/view-emr', 'KHTH\KHTHController@viewEmr')->name('view-emr');
@@ -55,6 +50,21 @@ Route::group(['middleware' => ['auth', 'check.first.login']], function () {
 //    });
     //Please do not remove this if you want adminlte:route and adminlte:link commands to works correctly.
     #adminlte_routes
+
+    Route::group(['middleware' => ['checkrole:dashboard']], function () {
+        Route::get('fetch-noi-tru', 'HomeController@fetchNoitru')->name('fetch-noi-tru');
+        Route::get('fetch-doanh-thu', 'HomeController@fetchDoanhthu')->name('fetch-doanh-thu');
+        Route::get('fetch-treatment', 'HomeController@fetchTreatment')->name('fetch-treatment');
+        Route::get('fetch-new-patient', 'HomeController@fetchNewpatient')->name('fetch-new-patient');
+
+        Route::get('home/xml_chart', 'HomeController@xml_chart')->name('home.xml_chart');
+        Route::get('home/treatment_type_chart', 'HomeController@treatment_type_chart')->name('home.treatment_type_chart');
+        Route::get('home/treatment_number_chart', 'HomeController@treatment_number_chart')->name('home.treatment_number_chart');
+        Route::get('home/top_service_sl_chart', 'HomeController@top_service_sl_chart')->name('home.top_service_sl_chart');
+        Route::get('home/top_service_st_chart', 'HomeController@top_service_st_chart')->name('home.top_service_st_chart');
+        Route::get('home/noitru_by_department_chart', 'HomeController@noitru_by_department_chart')->name('home.noitru_by_department_chart');
+        Route::get('home/noitru_by_patient_type_chart', 'HomeController@noitru_by_patient_type_chart')->name('home.noitru_by_patient_type_chart');
+    });
     
     Route::get('/', 'HomeController@index')->name('home');
     Route::get('/home', 'HomeController@index')->name('home');
@@ -73,13 +83,6 @@ Route::group(['middleware' => ['auth', 'check.first.login']], function () {
     /* /Báo cáo dịch vụ kỹ thuật*/
 
     //Chart home page
-    Route::get('home/xml_chart', 'HomeController@xml_chart')->name('home.xml_chart');
-    Route::get('home/treatment_type_chart', 'HomeController@treatment_type_chart')->name('home.treatment_type_chart');
-    Route::get('home/treatment_number_chart', 'HomeController@treatment_number_chart')->name('home.treatment_number_chart');
-    Route::get('home/top_service_sl_chart', 'HomeController@top_service_sl_chart')->name('home.top_service_sl_chart');
-    Route::get('home/top_service_st_chart', 'HomeController@top_service_st_chart')->name('home.top_service_st_chart');
-    Route::get('home/noitru_by_department_chart', 'HomeController@noitru_by_department_chart')->name('home.noitru_by_department_chart');
-    Route::get('home/noitru_by_patient_type_chart', 'HomeController@noitru_by_patient_type_chart')->name('home.noitru_by_patient_type_chart');
 
 	//Profile User
 	Route::get('user/changepass','ChangePasswordController@index')->name('user.changepass');
