@@ -47,7 +47,7 @@
           <!-- small box -->
           <div class="small-box bg-yellow">
             <div class="inner">
-              <h3>{{ number_format($sum_newpatient) }}</h3>
+              <h3 id="sum_newpatient">{{ number_format($sum_newpatient) }}</h3>
 
               <p>BN mới</p>
             </div>
@@ -225,7 +225,10 @@
                 }
 
                 // Cập nhật tổng số lượng hồ sơ vào HTML
-                $("#sum_doanhthu").text(numeral(rtnData.sum_sl).format('0,0')); // Hiển thị có dấu phẩy phân cách
+                let roundedValue = Math.round(rtnData.sum_sl / 1000000);
+
+                // Hiển thị số đã làm tròn với dấu phẩy
+                $("#sum_doanhthu").text(numeral(roundedValue).format('0,0') + ' Tr');
                 
                 // Vẽ Pie Chart với labels hiển thị dưới biểu đồ
                 window.chartDoanhThu = new Chart(ctx, {
