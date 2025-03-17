@@ -22,7 +22,7 @@
           <div class="small-box bg-aqua">
             <div class="inner">
               <h3 id="sum_doanhthu">0</h3>
-              <p>Accountant</p>
+              <p>Doanh thu</p>
             </div>
             <div class="icon">
               <i class="ion ion-bag"></i>
@@ -35,7 +35,7 @@
           <div class="small-box bg-green">
             <div class="inner">
               <h3 id="sum_treatment">0</h3>
-              <p>Treatment</p>
+              <p>Hồ sơ</p>
             </div>
             <div class="icon">
               <i class="ion ion-stats-bars"></i>
@@ -49,7 +49,7 @@
             <div class="inner">
               <h3 id="sum_newpatient">0</h3>
 
-              <p>New patient</p>
+              <p>Hồ sơ mới</p>
             </div>
             <div class="icon">
               <i class="ion ion-person-add"></i>
@@ -63,7 +63,7 @@
             <div class="inner">
               <h3 id="sum_noitru">0</h3>
 
-              <p>Inpatient</p>
+              <p>Nội trú</p>
             </div>
             <div class="icon">
               <i class="ion ion-pie-graph"></i>
