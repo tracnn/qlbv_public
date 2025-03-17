@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\BHYTKiemTraHoSo;
 use App\HISProBaoCaoQuanTri;
 
+use Carbon\Carbon;
 use DB;
 
 use Illuminate\Support\Facades\Auth;
@@ -21,61 +22,126 @@ class HomeController extends Controller
      */
     public function index()
     {
-        //dd(config('qd130xml.export_to_directory_by_day'));
 
-        $current_date = date("Ymd", mktime(0, 0, 0, date("m"), date("d"), date("Y")));
+        $current_date = $this->currentDate();
+        
+        $doanhthu = $this->doanhthu($current_date['from_date'], $current_date['to_date']);
+        
+        $sum_doanhthu = $doanhthu->sum('thanh_tien');
+
+        $treatment = $this->treatment($current_date['from_date'], $current_date['to_date']);
+        $sum_treatment = $treatment->sum('so_luong');
+
+        $newpatient = $this->newpatient($current_date['from_date'], $current_date['to_date']);
+        $sum_newpatient = $newpatient->sum('so_luong');
+
+        $noitru = $this->noitru($current_date['from_date'], $current_date['to_date']);
+        $sum_noitru = $noitru->sum('so_luong');
+
+        return view('home', 
+            compact('sum_doanhthu', 'sum_treatment', 'sum_newpatient', 'sum_noitru'));
+    }
+
+    private function currentDate()
+    {
+        $current_date = Carbon::now()->format('Ymd');
         $from_date = $current_date . '000000';
         $to_date = $current_date . '235959';
 
-        $doanhthu = DB::connection('HISPro')
+        return [
+            'from_date' => $from_date,
+            'to_date' => $to_date
+        ];
+    }
+
+    public function fetchNoitru(Request $request)
+    {
+        $current_date = $this->currentDate();
+        $model = $this->noitru($current_date['from_date'], $current_date['to_date']);
+
+        $sum_sl = $model->sum('so_luong');
+
+        $labels[] = '';
+        $data[] = '';
+        $backgroundColor[] = '';
+        //$borderColor[] = '';
+        foreach ($model as $key => $value) {
+            $labels[$key] = $value->department_name;
+            $data[$key] = doubleval($value->so_luong);
+            $backgroundColor[$key] = "rgba(" .rand(0,255) .',' .rand(0,255) .',' .rand(0,255) .',0.7)';
+            //$borderColor[$key] = "rgba(" .rand(0,255) .',' .rand(0,255) .',' .rand(0,255) .')';
+        }
+
+        $returnData[] = array(
+            'type' => 'bar',
+            'title' => 'Điều trị nội trú',
+            'labels' => $labels,
+            'datasets' => array(
+                array(
+                    'data' => $data,
+                    //'borderColor' => $borderColor,//"rgb(255, 129, 232)",
+                    'backgroundColor' => $backgroundColor,//"rgb(93, 158, 178)",
+                    'label' => "Tổng cộng: " . number_format($sum_sl),
+                    'fill' => true
+                ),
+            )
+        );  
+
+        return json_encode($returnData);
+    }
+
+    private function noitru($from_date, $to_date)
+    {
+        return DB::connection('HISPro')
+        ->table('his_treatment')
+        ->join('his_department', 'his_treatment.last_department_id', '=', 'his_department.id')
+        ->selectRaw('count(*) as so_luong,last_department_id,department_name')
+        ->whereBetween('in_time', [$from_date, $to_date])
+        ->where('tdl_treatment_type_id', config('__tech.treatment_type_noitru'))
+        ->where('his_treatment.is_delete',0)
+        ->groupBy('last_department_id','department_name')
+        ->orderBy('so_luong','desc')
+        ->get();
+    }
+
+    private function newpatient($from_date, $to_date)
+    {
+        return DB::connection('HISPro')
+        ->table('his_treatment')
+        ->join('his_patient', 'his_patient.id', '=', 'his_treatment.patient_id')
+        ->join('his_branch', 'his_branch.id', '=', 'his_treatment.branch_id')
+        ->selectRaw('count(*) as so_luong,branch_name')
+        ->whereBetween('in_time', [$from_date, $to_date])
+        ->whereBetween('his_patient.create_time', [$from_date, $to_date])
+        ->where('his_patient.is_delete',0)
+        ->groupBy('branch_name')
+        ->get();
+    }
+
+    private function doanhthu($from_date, $to_date)
+    {
+        return DB::connection('HISPro')
         ->table('his_sere_serv')
         ->join('his_service_type', 'his_sere_serv.tdl_service_type_id', '=', 'his_service_type.id')
         ->selectRaw('sum(amount) as so_luong,sum(amount*price) as thanh_tien,tdl_service_type_id,service_type_name')
-        ->where('tdl_intruction_time', '>=', $from_date)
         ->whereBetween('tdl_intruction_time', [$from_date, $to_date])
         ->where('his_sere_serv.is_delete', 0)
         ->groupBy('tdl_service_type_id','service_type_name')
         ->orderBy('thanh_tien','desc')
         ->get();
-        $sum_doanhthu = $doanhthu->sum('thanh_tien');
+    }
 
-        $treatment = DB::connection('HISPro')
-            ->table('his_treatment')
-            ->join('his_branch', 'his_branch.id', '=', 'his_treatment.branch_id')
-            ->join('his_patient', 'his_patient.id', '=', 'his_treatment.patient_id')
-            ->selectRaw('count(*) as so_luong,branch_name')
-            ->whereBetween('in_time', [$from_date, $to_date])
-            ->where('his_treatment.is_delete',0)
-            ->groupBy('branch_name')
-            ->get();
-        $sum_treatment = $treatment->sum('so_luong');
-
-        $newpatient = DB::connection('HISPro')
-            ->table('his_treatment')
-            ->join('his_patient', 'his_patient.id', '=', 'his_treatment.patient_id')
-            ->join('his_branch', 'his_branch.id', '=', 'his_treatment.branch_id')
-            ->selectRaw('count(*) as so_luong,branch_name')
-            ->whereBetween('in_time', [$from_date, $to_date])
-            ->whereBetween('his_patient.create_time', [$from_date, $to_date])
-            ->where('his_patient.is_delete',0)
-            ->groupBy('branch_name')
-            ->get();
-        $sum_newpatient = $newpatient->sum('so_luong');
-
-        $count_noitru = DB::connection('HISPro')
-            ->table('his_treatment')
-            ->join('his_department', 'his_treatment.last_department_id', '=', 'his_department.id')
-            ->selectRaw('count(*) as so_luong,last_department_id,department_name')
-            ->whereBetween('in_time', [$from_date, $to_date])
-            ->where('tdl_treatment_type_id', config('__tech.treatment_type_noitru'))
-            ->where('his_treatment.is_delete',0)
-            ->groupBy('last_department_id','department_name')
-            ->orderBy('so_luong','desc')
-            ->get();
-        $sum_noitru = $count_noitru->sum('so_luong');
-
-        return view('home', 
-            compact('sum_doanhthu', 'sum_treatment', 'sum_newpatient', 'sum_noitru'));
+    private function treatment($from_date, $to_date)
+    {
+        return DB::connection('HISPro')
+        ->table('his_treatment')
+        ->join('his_branch', 'his_branch.id', '=', 'his_treatment.branch_id')
+        ->join('his_patient', 'his_patient.id', '=', 'his_treatment.patient_id')
+        ->selectRaw('count(*) as so_luong,branch_name')
+        ->whereBetween('in_time', [$from_date, $to_date])
+        ->where('his_treatment.is_delete',0)
+        ->groupBy('branch_name')
+        ->get();
     }
 
     public function xml_chart(Request $request)

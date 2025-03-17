@@ -27,6 +27,8 @@ Route::get('khth/chart-xetnghiem', 'KHTH\KHTHController@chartXetnghiem')->name('
 Route::get('khth/chart-pttt', 'KHTH\KHTHController@chartPttt')->name('khth.chart_pttt');
 Route::get('khth/chart-cls', 'KHTH\KHTHController@chartCls')->name('khth.chart_cls');
 Route::get('dashboard', 'KHTH\KHTHController@dashboard')->name('khth.dashboard');
+
+Route::get('fetch-noi-tru', 'HomeController@fetchNoitru')->name('fetch-noi-tru');
 /* --Dashboard */
 
 Route::get('/view-emr', 'KHTH\KHTHController@viewEmr')->name('view-emr');

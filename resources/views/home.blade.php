@@ -22,7 +22,7 @@
           <div class="small-box bg-aqua">
             <div class="inner">
               <h3>{{ number_format($sum_doanhthu) }}</h3>
-              <p>Doanh thu - Viện phí</p>
+              <p>Doanh thu</p>
             </div>
             <div class="icon">
               <i class="ion ion-bag"></i>
@@ -36,7 +36,7 @@
             <div class="inner">
               <h3>{{ number_format($sum_treatment) }}</h3>
 
-              <p>Số lượng hồ sơ điều trị</p>
+              <p>Hồ sơ</p>
             </div>
             <div class="icon">
               <i class="ion ion-stats-bars"></i>
@@ -50,7 +50,7 @@
             <div class="inner">
               <h3>{{ number_format($sum_newpatient) }}</h3>
 
-              <p>Bệnh nhân mới</p>
+              <p>BN mới</p>
             </div>
             <div class="icon">
               <i class="ion ion-person-add"></i>
@@ -64,7 +64,7 @@
             <div class="inner">
               <h3>{{ number_format($sum_noitru) }}</h3>
 
-              <p>Số lượng vào điều trị nội trú</p>
+              <p>Nội trú</p>
             </div>
             <div class="icon">
               <i class="ion ion-pie-graph"></i>
@@ -76,6 +76,7 @@
 
       <div class="row">
         <div class="col-lg-6 connectedSortable">
+
             <!-- Custom tabs (Charts with tabs)-->
             <div class="nav-tabs-custom">
                 <!-- Tabs within a box -->
@@ -83,6 +84,19 @@
                     <!-- Morris chart - Sales -->
                     <div class="chart tab-pane active" style="position: relative;">
                         <canvas id="chart_buongbenh"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6 connectedSortable">
+            <!-- Custom tabs (Charts with tabs)-->
+            <div class="nav-tabs-custom">
+                <!-- Tabs within a box -->
+                <div class="tab-content no-padding">
+                    <!-- Morris chart - Sales -->
+                    <div class="chart tab-pane active" style="position: relative;">
+                        <canvas id="chart_noitru"></canvas>
                     </div>
                 </div>
             </div>
@@ -108,6 +122,72 @@
     .done(function(rtnData) {
       $.each(rtnData, function(dataType, data) {
           var ctx = document.getElementById("chart_buongbenh").getContext("2d");
+          var config = {
+            type: data.type,
+            data: {
+              datasets: $.each(data.datasets, function(dataType, data){
+                return data
+              }),
+              labels: data.labels
+            },
+            options:  {
+              scaleShowValues: true,
+              responsive: true,
+              title: {
+                  display: true,
+                  text: data.title
+              },
+              scales: {
+                yAxes: [{
+                  ticks: {
+                    callback: function (value) {
+                        return numeral(value).format('0,0');
+                    }
+                  }
+                }]
+              },
+              scales: {
+                xAxes: [{
+                  ticks: {
+                    autoSkip: false,
+                    callback: function(value) {
+                        return value.substr(0, 10);//truncate
+                    },
+                  }
+                }],
+                yAxes: [{}]
+              },
+              tooltips:{
+                enabled: true,
+                mode: 'label',
+                callbacks:{
+                  title: function(tooltipItems, data) {
+                    var idx = tooltipItems[0].index;
+                    return data.labels[idx];//do something with title
+                  },
+                  label: function(value){
+                    return numeral(value.yLabel).format('0,0');
+                  }
+                }
+              }
+            }
+          };
+          var chart = new Chart(ctx, config);
+      });
+    }).fail(function(jqXHR, textStatus, errorThrown) {
+      // If fail
+      console.log(textStatus + ': ' + errorThrown);
+    });
+
+    //Nội trú
+    $.ajax({
+      url: "{{route('fetch-noi-tru')}}",
+      type: "GET",
+      dataType: 'json',
+    })
+    .done(function(rtnData) {
+      $.each(rtnData, function(dataType, data) {
+          var ctx = document.getElementById("chart_noitru").getContext("2d");
           var config = {
             type: data.type,
             data: {
