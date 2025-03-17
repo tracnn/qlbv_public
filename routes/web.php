@@ -31,6 +31,7 @@ Route::get('dashboard', 'KHTH\KHTHController@dashboard')->name('khth.dashboard')
 Route::get('fetch-noi-tru', 'HomeController@fetchNoitru')->name('fetch-noi-tru');
 Route::get('fetch-doanh-thu', 'HomeController@fetchDoanhthu')->name('fetch-doanh-thu');
 Route::get('fetch-treatment', 'HomeController@fetchTreatment')->name('fetch-treatment');
+Route::get('fetch-newpatient', 'HomeController@fetchNewpatient')->name('fetch-newpatient');
 /* --Dashboard */
 
 Route::get('/view-emr', 'KHTH\KHTHController@viewEmr')->name('view-emr');

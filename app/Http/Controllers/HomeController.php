@@ -24,22 +24,12 @@ class HomeController extends Controller
     {
 
         $current_date = $this->currentDate();
-        
-        $doanhthu = $this->doanhthu($current_date['from_date'], $current_date['to_date']);
-        
-        $sum_doanhthu = $doanhthu->sum('thanh_tien');
-
-        $treatment = $this->treatment($current_date['from_date'], $current_date['to_date']);
-        $sum_treatment = $treatment->sum('so_luong');
 
         $newpatient = $this->newpatient($current_date['from_date'], $current_date['to_date']);
         $sum_newpatient = $newpatient->sum('so_luong');
 
-        $noitru = $this->noitru($current_date['from_date'], $current_date['to_date']);
-        $sum_noitru = $noitru->sum('so_luong');
-
         return view('home', 
-            compact('sum_doanhthu', 'sum_treatment', 'sum_newpatient', 'sum_noitru'));
+            compact('sum_newpatient'));
     }
 
     private function currentDate()
@@ -52,6 +42,40 @@ class HomeController extends Controller
             'from_date' => $from_date,
             'to_date' => $to_date
         ];
+    }
+
+    public function fetchNewpatient(Request $request)
+    {
+        $current_date = $this->currentDate();
+        $model = $this->newpatient($current_date['from_date'], $current_date['to_date']);
+
+        $sum_sl = $model->sum('so_luong');
+
+        $labels = [];  
+        $data = [];
+        $backgroundColor = [];
+
+        foreach ($model as $value) {
+            $labels[] = $value->branch_name;
+            $data[] = doubleval($value->so_luong);
+            $backgroundColor[] = "rgba(" . rand(0, 255) . ',' . rand(0, 255) . ',' . rand(0, 255) . ",0.7)";
+        }
+
+        $returnData = [
+            'type' => 'pie',  // Chuyển sang Pie Chart
+            'title' => 'BN mới',
+            'labels' => $labels,
+            'datasets' => [
+                [
+                    'data' => $data,
+                    'backgroundColor' => $backgroundColor,
+                    'label' => "Tổng cộng: " . number_format($sum_sl),
+                ],
+            ],
+            'sum_sl' => $sum_sl // Gửi tổng số lượng để frontend hiển thị
+        ];  
+
+        return json_encode($returnData);
     }
 
     public function fetchTreatment(Request $request)
@@ -82,6 +106,7 @@ class HomeController extends Controller
                     'label' => "Tổng cộng: " . number_format($sum_sl),
                 ],
             ],
+            'sum_sl' => $sum_sl // Gửi tổng số lượng để frontend hiển thị
         ];  
 
         return json_encode($returnData);
@@ -115,6 +140,7 @@ class HomeController extends Controller
                     'label' => "Tổng cộng: " . number_format($sum_sl),
                 ],
             ],
+            'sum_sl' => $sum_sl // Gửi tổng số lượng để frontend hiển thị
         ];  
 
         return json_encode($returnData);
@@ -138,20 +164,21 @@ class HomeController extends Controller
             //$borderColor[$key] = "rgba(" .rand(0,255) .',' .rand(0,255) .',' .rand(0,255) .')';
         }
 
-        $returnData[] = array(
+        $returnData[] = [
             'type' => 'bar',
             'title' => 'Điều trị nội trú',
             'labels' => $labels,
-            'datasets' => array(
-                array(
+            'datasets' => [
+                [
                     'data' => $data,
                     //'borderColor' => $borderColor,//"rgb(255, 129, 232)",
                     'backgroundColor' => $backgroundColor,//"rgb(93, 158, 178)",
                     'label' => "Tổng cộng: " . number_format($sum_sl),
                     'fill' => true
-                ),
-            )
-        );  
+                ],
+            ],
+            'sum_sl' => $sum_sl // Gửi tổng số lượng để frontend hiển thị
+        ];  
 
         return json_encode($returnData);
     }

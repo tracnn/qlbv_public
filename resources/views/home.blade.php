@@ -21,7 +21,7 @@
           <!-- small box -->
           <div class="small-box bg-aqua">
             <div class="inner">
-              <h3>{{ number_format($sum_doanhthu) }}</h3>
+              <h3 id="sum_doanhthu">0</h3>
               <p>Doanh thu</p>
             </div>
             <div class="icon">
@@ -34,8 +34,7 @@
           <!-- small box -->
           <div class="small-box bg-green">
             <div class="inner">
-              <h3>{{ number_format($sum_treatment) }}</h3>
-
+              <h3 id="sum_treatment">0</h3>
               <p>Hồ sơ</p>
             </div>
             <div class="icon">
@@ -62,7 +61,7 @@
           <!-- small box -->
           <div class="small-box bg-red">
             <div class="inner">
-              <h3>{{ number_format($sum_noitru) }}</h3>
+              <h3 id="sum_noitru">0</h3>
 
               <p>Nội trú</p>
             </div>
@@ -153,6 +152,9 @@
                 if (window.chartTreament instanceof Chart) {
                     window.chartTreament.destroy();
                 }
+            
+                // Cập nhật tổng số lượng hồ sơ vào HTML
+                $("#sum_treatment").text(numeral(rtnData.sum_sl).format('0,0')); // Hiển thị có dấu phẩy phân cách
 
                 // Vẽ Pie Chart với labels hiển thị dưới biểu đồ
                 window.chartTreament = new Chart(ctx, {
@@ -222,6 +224,9 @@
                     window.chartDoanhThu.destroy();
                 }
 
+                // Cập nhật tổng số lượng hồ sơ vào HTML
+                $("#sum_doanhthu").text(numeral(rtnData.sum_sl).format('0,0')); // Hiển thị có dấu phẩy phân cách
+                
                 // Vẽ Pie Chart với labels hiển thị dưới biểu đồ
                 window.chartDoanhThu = new Chart(ctx, {
                     type: "pie",
@@ -348,6 +353,11 @@
     })
     .done(function(rtnData) {
       $.each(rtnData, function(dataType, data) {
+
+          let dataObj = Array.isArray(rtnData) ? rtnData[0] : rtnData;
+          // Cập nhật tổng số nội trú vào HTML
+          $("#sum_noitru").text(numeral(dataObj.sum_sl).format('0,0'));
+
           var ctx = document.getElementById("chart_noitru").getContext("2d");
           var config = {
             type: data.type,
