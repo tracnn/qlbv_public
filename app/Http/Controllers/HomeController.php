@@ -216,6 +216,52 @@ class HomeController extends Controller
         return json_encode($returnData);
     }
 
+    public function fetchServiceByType($id)
+    {
+        $current_date = $this->currentDate();
+
+        $model = $this->serviceByType(
+            $current_date['from_date'], 
+            $current_date['to_date'],
+            $id);
+
+        $sum_sl = $model->sum('so_luong');
+
+        // Nhóm dữ liệu theo `service_req_stt_id`
+        $statusData = [
+            1 => ['name' => 'Chưa thực hiện', 'y' => 0],
+            2 => ['name' => 'Đang thực hiện', 'y' => 0],
+            3 => ['name' => 'Đã thực hiện', 'y' => 0]
+        ];
+
+        foreach ($model as $item) {
+            if (isset($statusData[$item->service_req_stt_id])) {
+                $statusData[$item->service_req_stt_id]['y'] += $item->so_luong;
+            }
+        }
+
+        // Chuyển dữ liệu sang dạng JSON để frontend sử dụng
+        return response()->json([
+            'sum_sl' => $sum_sl,
+            'chartData' => array_values($statusData) // Chỉ lấy giá trị, bỏ key
+        ]);
+    }
+
+    private function serviceByType($from_date, $to_date, $serviceType = null)
+    {
+        return DB::connection('HISPro')
+        ->table('his_sere_serv')
+        ->join('his_service_req', 'his_service_req.id', '=', 'his_sere_serv.service_req_id')
+        ->join('his_execute_room', 'his_execute_room.room_id', '=', 'his_sere_serv.tdl_execute_room_id')
+        ->selectRaw('count(*) as so_luong, service_req_stt_id')
+        ->whereBetween('intruction_time', [$from_date, $to_date])
+        ->where('his_service_req.service_req_type_id', $serviceType)
+        ->where('his_service_req.is_active', 1)
+        ->where('his_service_req.is_delete', 0)
+        ->groupBy('service_req_stt_id')
+        ->get();
+    }
+
     private function treatmentsByTreatmentEndType($from_date, $to_date, $treatmentEndType = null)
     {
         return DB::connection('HISPro')
