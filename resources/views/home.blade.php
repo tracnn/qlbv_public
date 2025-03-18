@@ -51,7 +51,6 @@
           <div class="small-box bg-yellow">
             <div class="inner">
               <h3 id="sum_newpatient">0</h3>
-
               <p>Hồ sơ mới</p>
             </div>
             <div class="icon">
@@ -65,7 +64,6 @@
           <div class="small-box bg-red">
             <div class="inner">
               <h3 id="sum_noitru">0</h3>
-
               <p>Nội trú</p>
             </div>
             <div class="icon">
@@ -76,10 +74,9 @@
         <!-- ./col -->
         <div class="col-lg-2 col-xs-6">
           <!-- small box -->
-          <div class="small-box bg-gray">
+          <div class="small-box bg-aqua">
             <div class="inner">
               <h3 id="sum_chuyenvien">0</h3>
-
               <p>Chuyển viện</p>
             </div>
             <div class="icon">
@@ -137,9 +134,9 @@
 
       </div>
     
-    <!-- CLS -->
+    <!-- CLS 1 -->
       <div class="row">
-        <div class="col-lg-3 connectedSortable">
+        <div class="col-lg-4 connectedSortable">
             <div class="nav-tabs-custom text-center"> <!-- Thêm 'text-center' để căn giữa -->
                 <div class="tab-content no-padding">
                     <div id="chart_kham" style="width: 100%; height: 200px;"></div>
@@ -147,20 +144,25 @@
             </div>
         </div>
 
-        <div class="col-lg-3 connectedSortable">
+        <div class="col-lg-4 connectedSortable">
             <div class="nav-tabs-custom text-center"> <!-- Thêm 'text-center' để căn giữa -->
                 <div class="tab-content no-padding">
                     <div id="chart_xetnghiem" style="width: 100%; height: 200px;"></div>
                 </div>
             </div>
         </div>
-        <div class="col-lg-3 connectedSortable">
+        <div class="col-lg-4 connectedSortable">
             <div class="nav-tabs-custom text-center"> <!-- Thêm 'text-center' để căn giữa -->
                 <div class="tab-content no-padding">
                     <div id="chart_cdha" style="width: 100%; height: 200px;"></div>
                 </div>
             </div>
         </div>
+
+      </div>
+
+      <!-- CLS 2 -->
+      <div class="row">
         <div class="col-lg-3 connectedSortable">
             <div class="nav-tabs-custom text-center"> <!-- Thêm 'text-center' để căn giữa -->
                 <div class="tab-content no-padding">
@@ -168,8 +170,29 @@
                 </div>
             </div>
         </div>
+        <div class="col-lg-3 connectedSortable">
+            <div class="nav-tabs-custom text-center"> <!-- Thêm 'text-center' để căn giữa -->
+                <div class="tab-content no-padding">
+                    <div id="chart_gpb" style="width: 100%; height: 200px;"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 connectedSortable">
+            <div class="nav-tabs-custom text-center"> <!-- Thêm 'text-center' để căn giữa -->
+                <div class="tab-content no-padding">
+                    <div id="chart_ns" style="width: 100%; height: 200px;"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 connectedSortable">
+            <div class="nav-tabs-custom text-center"> <!-- Thêm 'text-center' để căn giữa -->
+                <div class="tab-content no-padding">
+                    <div id="chart_sa" style="width: 100%; height: 200px;"></div>
+                </div>
+            </div>
+        </div>
 
-      </div>
+      </div>      
     </div>
 </div>
 @endif
@@ -187,7 +210,7 @@
 <script src="https://code.highcharts.com/modules/accessibility.js"></script>
 
 <script type="text/javascript">
-    numeral.locale('vi');
+numeral.locale('vi');
 
 $(document).ready(function() {
     // Danh sách các biểu đồ cần vẽ
@@ -196,6 +219,9 @@ $(document).ready(function() {
         { id: 3, element: 'chart_cdha', title: 'CĐHA' },
         { id: 1, element: 'chart_kham', title: 'Khám' },
         { id: 2, element: 'chart_xetnghiem', title: 'Xét nghiệm' },
+        { id: 13, element: 'chart_gpb', title: 'GPB' },
+        { id: 8, element: 'chart_ns', title: 'Nội soi' },
+        { id: 9, element: 'chart_sa', title: 'Siêu âm' },
     ];
 
     // Hàm gọi AJAX và vẽ Pie Chart 3D cho từng biểu đồ
@@ -528,5 +554,6 @@ $.ajax({
 }).fail(function(jqXHR, textStatus, errorThrown) {
     console.log(textStatus + ': ' + errorThrown);
 });
+
 </script>
 @endpush
