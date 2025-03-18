@@ -142,7 +142,7 @@
         <div class="col-lg-3 connectedSortable">
             <div class="nav-tabs-custom text-center"> <!-- Thêm 'text-center' để căn giữa -->
                 <div class="tab-content no-padding">
-                    <div id="chart_kham" style="width: 100%; height: 300px;"></div>
+                    <div id="chart_kham" style="width: 100%; height: 200px;"></div>
                 </div>
             </div>
         </div>
@@ -150,21 +150,21 @@
         <div class="col-lg-3 connectedSortable">
             <div class="nav-tabs-custom text-center"> <!-- Thêm 'text-center' để căn giữa -->
                 <div class="tab-content no-padding">
-                    <div id="chart_xetnghiem" style="width: 100%; height: 300px;"></div>
+                    <div id="chart_xetnghiem" style="width: 100%; height: 200px;"></div>
                 </div>
             </div>
         </div>
         <div class="col-lg-3 connectedSortable">
             <div class="nav-tabs-custom text-center"> <!-- Thêm 'text-center' để căn giữa -->
                 <div class="tab-content no-padding">
-                    <div id="chart_cdha" style="width: 100%; height: 300px;"></div>
+                    <div id="chart_cdha" style="width: 100%; height: 200px;"></div>
                 </div>
             </div>
         </div>
         <div class="col-lg-3 connectedSortable">
             <div class="nav-tabs-custom text-center"> <!-- Thêm 'text-center' để căn giữa -->
                 <div class="tab-content no-padding">
-                    <div id="chart_tdcn" style="width: 100%; height: 300px;"></div>
+                    <div id="chart_tdcn" style="width: 100%; height: 200px;"></div>
                 </div>
             </div>
         </div>
@@ -190,206 +190,67 @@
     numeral.locale('vi');
 
 $(document).ready(function() {
-    $.ajax({
-        url: "{{ route('fetch-service-by-type', 5) }}", // Khám
-        type: "GET",
-        dataType: 'json',
-    })
-    .done(function(response) {
-        if (response && response.chartData.length > 0) {
+    // Danh sách các biểu đồ cần vẽ
+    const chartConfigs = [
+        { id: 5, element: 'chart_tdcn', title: 'TDCN' },
+        { id: 3, element: 'chart_cdha', title: 'CĐHA' },
+        { id: 1, element: 'chart_kham', title: 'Khám' },
+        { id: 2, element: 'chart_xetnghiem', title: 'Xét nghiệm' },
+    ];
 
-            // Vẽ Pie Chart 3D bằng Highcharts
-            Highcharts.chart('chart_tdcn', {
-                chart: {
-                    type: 'pie',
-                    options3d: {
-                        enabled: true, // Bật chế độ 3D
-                        alpha: 45, // Góc nghiêng
-                        beta: 0
-                    }
-                },
-                title: {
-                    text: 'TDCN: ' + numeral(response.sum_sl).format(0,0)
-                },
-                tooltip: {
-                    pointFormat: '<b>{point.y} ({point.percentage:.1f}%)</b>'
-                },
-                plotOptions: {
-                    pie: {
-                        allowPointSelect: true,
-                        cursor: 'pointer',
-                        depth: 35, // Độ sâu 3D
-                        dataLabels: {
+    // Hàm gọi AJAX và vẽ Pie Chart 3D cho từng biểu đồ
+    function fetchAndRenderChart(serviceId, elementId, title) {
+        $.ajax({
+            url: `{{ route('fetch-service-by-type', '') }}/${serviceId}`,
+            type: "GET",
+            dataType: 'json',
+        })
+        .done(function(response) {
+            if (response && response.chartData.length > 0) {
+                Highcharts.chart(elementId, {
+                    chart: {
+                        type: 'pie',
+                        options3d: {
                             enabled: true,
-                            format: '{point.name}: {point.y} ({point.percentage:.1f}%)'
+                            alpha: 45, // Góc nghiêng
+                            beta: 0
                         }
-                    }
-                },
-                series: [{
-                    name: 'Số lượng',
-                    colorByPoint: true,
-                    data: response.chartData
-                }]
-            });
-        } else {
-            console.log("Không có dữ liệu để vẽ biểu đồ.");
-        }
-    })
-    .fail(function(jqXHR, textStatus, errorThrown) {
-        console.log("Lỗi AJAX: " + textStatus + ': ' + errorThrown);
-    });
-});
-
-$(document).ready(function() {
-    $.ajax({
-        url: "{{ route('fetch-service-by-type', 3) }}", // Khám
-        type: "GET",
-        dataType: 'json',
-    })
-    .done(function(response) {
-        if (response && response.chartData.length > 0) {
-
-            // Vẽ Pie Chart 3D bằng Highcharts
-            Highcharts.chart('chart_cdha', {
-                chart: {
-                    type: 'pie',
-                    options3d: {
-                        enabled: true, // Bật chế độ 3D
-                        alpha: 45, // Góc nghiêng
-                        beta: 0
-                    }
-                },
-                title: {
-                    text: 'CĐHA: ' + numeral(response.sum_sl).format(0,0)
-                },
-                tooltip: {
-                    pointFormat: '<b>{point.y} ({point.percentage:.1f}%)</b>'
-                },
-                plotOptions: {
-                    pie: {
-                        allowPointSelect: true,
-                        cursor: 'pointer',
-                        depth: 35, // Độ sâu 3D
-                        dataLabels: {
-                            enabled: true,
-                            format: '{point.name}: {point.y} ({point.percentage:.1f}%)'
+                    },
+                    title: {
+                        text: `${title}: ${numeral(response.sum_sl).format('0,0')}`
+                    },
+                    tooltip: {
+                        pointFormat: '<b>{point.y} ({point.percentage:.1f}%)</b>'
+                    },
+                    plotOptions: {
+                        pie: {
+                            allowPointSelect: true,
+                            cursor: 'pointer',
+                            depth: 35, // Độ sâu 3D
+                            dataLabels: {
+                                enabled: true,
+                                format: '{point.name}: {point.y} ({point.percentage:.1f}%)'
+                            }
                         }
-                    }
-                },
-                series: [{
-                    name: 'Số lượng',
-                    colorByPoint: true,
-                    data: response.chartData
-                }]
-            });
-        } else {
-            console.log("Không có dữ liệu để vẽ biểu đồ.");
-        }
-    })
-    .fail(function(jqXHR, textStatus, errorThrown) {
-        console.log("Lỗi AJAX: " + textStatus + ': ' + errorThrown);
-    });
-});
+                    },
+                    series: [{
+                        name: 'Số lượng',
+                        colorByPoint: true,
+                        data: response.chartData
+                    }]
+                });
+            } else {
+                console.log(`Không có dữ liệu để vẽ biểu đồ ${title}.`);
+            }
+        })
+        .fail(function(jqXHR, textStatus, errorThrown) {
+            console.log(`Lỗi AJAX (${title}): ${textStatus}: ${errorThrown}`);
+        });
+    }
 
-$(document).ready(function() {
-    $.ajax({
-        url: "{{ route('fetch-service-by-type', 1) }}", // Khám
-        type: "GET",
-        dataType: 'json',
-    })
-    .done(function(response) {
-        if (response && response.chartData.length > 0) {
-
-            // Vẽ Pie Chart 3D bằng Highcharts
-            Highcharts.chart('chart_kham', {
-                chart: {
-                    type: 'pie',
-                    options3d: {
-                        enabled: true, // Bật chế độ 3D
-                        alpha: 45, // Góc nghiêng
-                        beta: 0
-                    }
-                },
-                title: {
-                    text: 'Khám: ' + numeral(response.sum_sl).format(0,0)
-                },
-                tooltip: {
-                    pointFormat: '<b>{point.y} ({point.percentage:.1f}%)</b>'
-                },
-                plotOptions: {
-                    pie: {
-                        allowPointSelect: true,
-                        cursor: 'pointer',
-                        depth: 35, // Độ sâu 3D
-                        dataLabels: {
-                            enabled: true,
-                            format: '{point.name}: {point.y} ({point.percentage:.1f}%)'
-                        }
-                    }
-                },
-                series: [{
-                    name: 'Số lượng',
-                    colorByPoint: true,
-                    data: response.chartData
-                }]
-            });
-        } else {
-            console.log("Không có dữ liệu để vẽ biểu đồ.");
-        }
-    })
-    .fail(function(jqXHR, textStatus, errorThrown) {
-        console.log("Lỗi AJAX: " + textStatus + ': ' + errorThrown);
-    });
-});
-
-$(document).ready(function() {
-    $.ajax({
-        url: "{{ route('fetch-service-by-type', 2) }}", // XN
-        type: "GET",
-        dataType: 'json',
-    })
-    .done(function(response) {
-        if (response && response.chartData.length > 0) {
-
-            // Vẽ Pie Chart 3D bằng Highcharts
-            Highcharts.chart('chart_xetnghiem', {
-                chart: {
-                    type: 'pie',
-                    options3d: {
-                        enabled: true, // Bật chế độ 3D
-                        alpha: 45, // Góc nghiêng
-                        beta: 0
-                    }
-                },
-                title: {
-                    text: 'Xét nghiệm: ' + numeral(response.sum_sl).format(0,0)
-                },
-                tooltip: {
-                    pointFormat: '<b>{point.y} ({point.percentage:.1f}%)</b>'
-                },
-                plotOptions: {
-                    pie: {
-                        allowPointSelect: true,
-                        cursor: 'pointer',
-                        depth: 35, // Độ sâu 3D
-                        dataLabels: {
-                            enabled: true,
-                            format: '{point.name}: {point.y} ({point.percentage:.1f}%)'
-                        }
-                    }
-                },
-                series: [{
-                    name: 'Số lượng',
-                    colorByPoint: true,
-                    data: response.chartData
-                }]
-            });
-        } else {
-            console.log("Không có dữ liệu để vẽ biểu đồ.");
-        }
-    })
-    .fail(function(jqXHR, textStatus, errorThrown) {
-        console.log("Lỗi AJAX: " + textStatus + ': ' + errorThrown);
+    // Lặp qua danh sách và vẽ từng biểu đồ
+    chartConfigs.forEach(config => {
+        fetchAndRenderChart(config.id, config.element, config.title);
     });
 });
 
