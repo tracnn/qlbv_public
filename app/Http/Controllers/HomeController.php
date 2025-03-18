@@ -159,7 +159,7 @@ class HomeController extends Controller
 
         $returnData[] = [
             'type' => 'bar',
-            'title' => 'Điều trị nội trú',
+            'title' => 'Điều trị nội trú: ' . number_format($sum_sl),
             'labels' => $labels,
             'datasets' => [
                 [
@@ -174,6 +174,20 @@ class HomeController extends Controller
         ];  
 
         return json_encode($returnData);
+    }
+
+    private function treatmentsByTreatmentEndType($from_date, $to_date, $treatmentEndType = null)
+    {
+        return DB::connection('HISPro')
+        ->table('his_treatment')
+        ->join('his_department', 'his_treatment.last_department_id', '=', 'his_department.id')
+        ->selectRaw('count(*) as so_luong, department_name')
+        ->whereBetween('in_time', [$from_date, $to_date])
+        ->where('treatment_end_type_id', $treatmentEndType)
+        ->where('his_treatment.is_delete',0)
+        ->groupBy('department_name')
+        ->orderBy('so_luong','desc')
+        ->get();
     }
 
     private function noitru($from_date, $to_date)
@@ -273,7 +287,7 @@ class HomeController extends Controller
         }
         $returnData[] = array(
             'type' => 'bar',
-            'title' => 'Buồng điều trị',
+            'title' => 'Buồng điều trị: ' . number_format($sum_sl),
             'labels' => $labels,
             'datasets' => array(
                 array(

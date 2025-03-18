@@ -18,7 +18,6 @@
 @if(auth()->user()->hasRole('dashboard') || auth()->user()->hasRole('superadministrator'))
 <div class="panel panel-default">
     <div class="panel-body">
-
       <div class="row">
 
         <div class="col-lg-3 col-xs-6">
@@ -86,7 +85,7 @@
                 <div class="tab-content no-padding">
                     <!-- Morris chart - Sales -->
                     <div class="chart tab-pane active" style="position: relative;">
-                        <canvas id="chart_buongbenh"></canvas>
+                        <div id="chart_buongbenh" style="width:100%; height:400px;"></div>
                     </div>
                 </div>
             </div>
@@ -99,7 +98,7 @@
                 <div class="tab-content no-padding">
                     <!-- Morris chart - Sales -->
                     <div class="chart tab-pane active" style="position: relative;">
-                        <canvas id="chart_noitru"></canvas>
+                        <div id="chart_noitru" style="width:100%; height:400px;"></div>
                     </div>
                 </div>
             </div>
@@ -131,13 +130,14 @@
 @stop
 
 @push('after-scripts')
-<script src="{{ asset('vendor/chart/js/Chart.min.js') }}"></script>
 <script src="{{ asset('vendor/numeral/numeral.js') }}"></script>
 <script src="{{ asset('vendor/numeral/locales.js') }}"></script>
 
 <script src="https://code.highcharts.com/highcharts.js"></script>
 <script src="https://code.highcharts.com/highcharts-3d.js"></script>
 <script src="https://code.highcharts.com/modules/exporting.js"></script>
+<script src="https://code.highcharts.com/modules/export-data.js"></script>
+<script src="https://code.highcharts.com/modules/accessibility.js"></script>
 
 <script type="text/javascript">
     numeral.locale('vi');
@@ -272,141 +272,132 @@ $(document).ready(function () {
     });
 });
 
-    //Buồng bệnh
-    $.ajax({
-      url: "{{route('home.xml_chart')}}",
-      type: "GET",
-      dataType: 'json',
-    })
-    .done(function(rtnData) {
-      $.each(rtnData, function(dataType, data) {
-          var ctx = document.getElementById("chart_buongbenh").getContext("2d");
-          var config = {
-            type: data.type,
-            data: {
-              datasets: $.each(data.datasets, function(dataType, data){
-                return data
-              }),
-              labels: data.labels
+//Buồng bệnh
+$.ajax({
+    url: "{{ route('home.xml_chart') }}",
+    type: "GET",
+    dataType: 'json',
+}).done(function(rtnData) {
+    $.each(rtnData, function(dataType, data) {
+        Highcharts.chart('chart_buongbenh', {
+            chart: {
+                type: data.type // 'bar'
             },
-            options:  {
-              scaleShowValues: true,
-              responsive: true,
-              title: {
-                  display: true,
-                  text: data.title
-              },
-              scales: {
-                yAxes: [{
-                  ticks: {
-                    callback: function (value) {
-                        return numeral(value).format('0,0');
-                    }
-                  }
-                }]
-              },
-              scales: {
-                xAxes: [{
-                  ticks: {
-                    autoSkip: false,
-                    callback: function(value) {
-                        return value.substr(0, 10);//truncate
-                    },
-                  }
-                }],
-                yAxes: [{}]
-              },
-              tooltips:{
-                enabled: true,
-                mode: 'label',
-                callbacks:{
-                  title: function(tooltipItems, data) {
-                    var idx = tooltipItems[0].index;
-                    return data.labels[idx];//do something with title
-                  },
-                  label: function(value){
-                    return numeral(value.yLabel).format('0,0');
-                  }
-                }
-              }
-            }
-          };
-          var chart = new Chart(ctx, config);
-      });
-    }).fail(function(jqXHR, textStatus, errorThrown) {
-      // If fail
-      console.log(textStatus + ': ' + errorThrown);
-    });
-
-    //Nội trú
-    $.ajax({
-      url: "{{route('fetch-noi-tru')}}",
-      type: "GET",
-      dataType: 'json',
-    })
-    .done(function(rtnData) {
-      $.each(rtnData, function(dataType, data) {
-
-          let dataObj = Array.isArray(rtnData) ? rtnData[0] : rtnData;
-          // Cập nhật tổng số nội trú vào HTML
-          $("#sum_noitru").text(numeral(dataObj.sum_sl).format('0,0'));
-
-          var ctx = document.getElementById("chart_noitru").getContext("2d");
-          var config = {
-            type: data.type,
-            data: {
-              datasets: $.each(data.datasets, function(dataType, data){
-                return data
-              }),
-              labels: data.labels
+            title: {
+                text: data.title
             },
-            options:  {
-              scaleShowValues: true,
-              responsive: true,
-              title: {
-                  display: true,
-                  text: data.title
-              },
-              scales: {
-                yAxes: [{
-                  ticks: {
-                    callback: function (value) {
-                        return numeral(value).format('0,0');
+            xAxis: {
+                categories: data.labels,
+                title: {
+                    text: 'Khoa điều trị'
+                },
+                labels: {
+                    rotation: -45, // Xoay nhãn trục X để dễ đọc hơn
+                    style: {
+                        fontSize: '13px',
+                        fontFamily: 'Verdana, sans-serif'
                     }
-                  }
-                }]
-              },
-              scales: {
-                xAxes: [{
-                  ticks: {
-                    autoSkip: false,
-                    callback: function(value) {
-                        return value.substr(0, 10);//truncate
-                    },
-                  }
-                }],
-                yAxes: [{}]
-              },
-              tooltips:{
-                enabled: true,
-                mode: 'label',
-                callbacks:{
-                  title: function(tooltipItems, data) {
-                    var idx = tooltipItems[0].index;
-                    return data.labels[idx];//do something with title
-                  },
-                  label: function(value){
-                    return numeral(value.yLabel).format('0,0');
-                  }
                 }
-              }
-            }
-          };
-          var chart = new Chart(ctx, config);
-      });
-    }).fail(function(jqXHR, textStatus, errorThrown) {
-      // If fail
-      console.log(textStatus + ': ' + errorThrown);
+            },
+            yAxis: {
+                min: 0,
+                title: {
+                    text: 'Số lượng bệnh nhân'
+                },
+                labels: {
+                    formatter: function() {
+                        return Highcharts.numberFormat(this.value, 0, ',', '.'); // Định dạng số
+                    }
+                }
+            },
+            tooltip: {
+                pointFormat: '{series.name}: <b>{point.y}</b>'
+            },
+            legend: {
+                enabled: false // Tắt legend nếu không cần thiết
+            },
+            series: [{
+                name: 'Số lượng',
+                data: data.datasets[0].data, // Dữ liệu số lượng
+                colorByPoint: true, // Tự động đổi màu
+                dataLabels: {
+                    enabled: true,
+                    format: '{point.y}', // Hiển thị số trên cột
+                    style: {
+                        fontSize: '13px',
+                        fontWeight: 'bold'
+                    }
+                }
+            }]
+        });
     });
+}).fail(function(jqXHR, textStatus, errorThrown) {
+    console.log(textStatus + ': ' + errorThrown);
+});
+
+$.ajax({
+    url: "{{route('fetch-noi-tru')}}",
+    type: "GET",
+    dataType: 'json',
+}).done(function(rtnData) {
+    let dataObj = Array.isArray(rtnData) ? rtnData[0] : rtnData;
+
+    // Cập nhật tổng số nội trú vào HTML
+    $("#sum_noitru").text(numeral(dataObj.sum_sl).format('0,0'));
+
+    Highcharts.chart('chart_noitru', {
+        chart: {
+            type: dataObj.type // 'bar' hoặc 'column'
+        },
+        title: {
+            text: dataObj.title
+        },
+        xAxis: {
+            categories: dataObj.labels,
+            title: {
+                text: 'Khoa điều trị'
+            },
+            labels: {
+                rotation: -45, // Xoay nhãn để dễ đọc
+                style: {
+                    fontSize: '13px',
+                    fontFamily: 'Verdana, sans-serif'
+                }
+            }
+        },
+        yAxis: {
+            min: 0,
+            title: {
+                text: 'Số lượng bệnh nhân'
+            },
+            labels: {
+                formatter: function() {
+                    return Highcharts.numberFormat(this.value, 0, ',', '.'); // Định dạng số
+                }
+            }
+        },
+        tooltip: {
+            pointFormat: '<b>{point.y}</b> bệnh nhân'
+        },
+        legend: {
+            enabled: false // Ẩn legend nếu không cần thiết
+        },
+        series: [{
+            name: 'Số lượng',
+            data: dataObj.datasets[0].data, // Dữ liệu số lượng nội trú
+            colorByPoint: true, // Tự động đổi màu
+            dataLabels: {
+                enabled: true,
+                format: '{point.y}', // Hiển thị số trên cột
+                style: {
+                    fontSize: '13px',
+                    fontWeight: 'bold'
+                }
+            }
+        }]
+    });
+}).fail(function(jqXHR, textStatus, errorThrown) {
+    console.log(textStatus + ': ' + errorThrown);
+});
 </script>
 @endpush
