@@ -270,7 +270,7 @@ function updateCountdown() {
 // Sự kiện thay đổi giá trị trong select box
 $("#refreshInterval").change(function () {
     refreshInterval = parseInt($(this).val()); // Cập nhật khoảng thời gian mới
-    startAutoRefresh(); // Restart countdown
+    startAutoRefresh(true); // Restart countdown
 });
 
 // Hàm để gọi AJAX và vẽ biểu đồ
