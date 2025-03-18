@@ -139,6 +139,46 @@ class HomeController extends Controller
         return json_encode($returnData);
     }
 
+    public function fetchChuyenvien(Request $request)
+    {
+        $current_date = $this->currentDate();
+        $model = $this->treatmentsByTreatmentEndType(
+            $current_date['from_date'], 
+            $current_date['to_date'],
+            config('__tech.treatment_end_type_cv'));
+
+        $sum_sl = $model->sum('so_luong');
+
+        $labels[] = '';
+        $data[] = '';
+        $backgroundColor[] = '';
+        //$borderColor[] = '';
+        foreach ($model as $key => $value) {
+            $labels[$key] = $value->department_name;
+            $data[$key] = doubleval($value->so_luong);
+            $backgroundColor[$key] = "rgba(" .rand(0,255) .',' .rand(0,255) .',' .rand(0,255) .',0.7)';
+            //$borderColor[$key] = "rgba(" .rand(0,255) .',' .rand(0,255) .',' .rand(0,255) .')';
+        }
+
+        $returnData = [
+            'type' => 'bar',
+            'title' => 'Chuyển viện: ' . number_format($sum_sl),
+            'labels' => $labels,
+            'datasets' => [
+                [
+                    'data' => $data,
+                    //'borderColor' => $borderColor,//"rgb(255, 129, 232)",
+                    'backgroundColor' => $backgroundColor,//"rgb(93, 158, 178)",
+                    'label' => "Tổng cộng: " . number_format($sum_sl),
+                    'fill' => true
+                ],
+            ],
+            'sum_sl' => $sum_sl // Gửi tổng số lượng để frontend hiển thị
+        ];  
+
+        return json_encode($returnData);
+    }
+
     public function fetchNoitru(Request $request)
     {
         $current_date = $this->currentDate();
@@ -182,7 +222,7 @@ class HomeController extends Controller
         ->table('his_treatment')
         ->join('his_department', 'his_treatment.last_department_id', '=', 'his_department.id')
         ->selectRaw('count(*) as so_luong, department_name')
-        ->whereBetween('in_time', [$from_date, $to_date])
+        ->whereBetween('out_time', [$from_date, $to_date])
         ->where('treatment_end_type_id', $treatmentEndType)
         ->where('his_treatment.is_delete',0)
         ->groupBy('department_name')

@@ -46,7 +46,7 @@
           </div>
         </div>
         <!-- ./col -->
-        <div class="col-lg-3 col-xs-6">
+        <div class="col-lg-2 col-xs-6">
           <!-- small box -->
           <div class="small-box bg-yellow">
             <div class="inner">
@@ -60,7 +60,7 @@
           </div>
         </div>
         <!-- ./col -->
-        <div class="col-lg-3 col-xs-6">
+        <div class="col-lg-2 col-xs-6">
           <!-- small box -->
           <div class="small-box bg-red">
             <div class="inner">
@@ -70,6 +70,20 @@
             </div>
             <div class="icon">
               <i class="ion ion-pie-graph"></i>
+            </div>
+          </div>
+        </div>
+        <!-- ./col -->
+        <div class="col-lg-2 col-xs-6">
+          <!-- small box -->
+          <div class="small-box bg-gray">
+            <div class="inner">
+              <h3 id="sum_chuyenvien">0</h3>
+
+              <p>Chuyển viện</p>
+            </div>
+            <div class="icon">
+              <i class="ion ion-card"></i>
             </div>
           </div>
         </div>
@@ -204,9 +218,6 @@ $(document).ready(function () {
 
             if (rtnData && rtnData.datasets && rtnData.datasets.length > 0) {
 
-                // Cập nhật tổng số lượng hồ sơ vào HTML
-                let roundedValue = Math.round(rtnData.sum_sl / 1000000);
-
                 // Hiển thị số đã làm tròn với dấu phẩy
                 $("#sum_newpatient").text(numeral(rtnData.sum_sl).format('0,0'));
                 
@@ -218,6 +229,26 @@ $(document).ready(function () {
             console.log("Lỗi AJAX: " + textStatus + ': ' + errorThrown);
         });
     });
+
+    $(document).ready(function() {
+        $.ajax({
+            url: "{{ route('fetch-chuyen-vien') }}",
+            type: "GET",
+            dataType: 'json',
+        })
+        .done(function(rtnData) {
+            if (rtnData && rtnData.datasets && rtnData.datasets.length > 0) {
+                // Hiển thị số đã làm tròn với dấu phẩy
+                $("#sum_chuyenvien").text(numeral(rtnData.sum_sl).format('0,0')); 
+            } else {
+                console.log("Dữ liệu không hợp lệ hoặc không có dữ liệu!");
+            }
+        })
+        .fail(function(jqXHR, textStatus, errorThrown) {
+            console.log("Lỗi AJAX: " + textStatus + ': ' + errorThrown);
+        });
+    });
+    
     
 $(document).ready(function () {
     $.ajax({

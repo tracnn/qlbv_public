@@ -56,6 +56,7 @@ Route::group(['middleware' => ['auth', 'check.first.login']], function () {
         Route::get('fetch-doanh-thu', 'HomeController@fetchDoanhthu')->name('fetch-doanh-thu');
         Route::get('fetch-treatment', 'HomeController@fetchTreatment')->name('fetch-treatment');
         Route::get('fetch-new-patient', 'HomeController@fetchNewpatient')->name('fetch-new-patient');
+        Route::get('fetch-chuyen-vien', 'HomeController@fetchChuyenvien')->name('fetch-chuyen-vien');
 
         Route::get('home/xml_chart', 'HomeController@xml_chart')->name('home.xml_chart');
         Route::get('home/treatment_type_chart', 'HomeController@treatment_type_chart')->name('home.treatment_type_chart');
