@@ -125,7 +125,7 @@
                 <div class="tab-content no-padding">
                     <!-- Morris chart - Sales -->
                     <div class="chart tab-pane active" style="position: relative;">
-                        <div id="chart_buongbenh" style="width:100%; height:400px;"></div>
+                        <div id="chart_buongbenh" style="width:100%; height:500px;"></div>
                     </div>
                 </div>
             </div>
@@ -138,7 +138,7 @@
                 <div class="tab-content no-padding">
                     <!-- Morris chart - Sales -->
                     <div class="chart tab-pane active" style="position: relative;">
-                        <div id="chart_noitru" style="width:100%; height:400px;"></div>
+                        <div id="chart_noitru" style="width:100%; height:500px;"></div>
                     </div>
                 </div>
             </div>
