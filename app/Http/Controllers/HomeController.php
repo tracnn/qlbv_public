@@ -268,7 +268,7 @@ class HomeController extends Controller
         ->table('his_treatment')
         ->join('his_department', 'his_treatment.last_department_id', '=', 'his_department.id')
         ->selectRaw('count(*) as so_luong, department_name')
-        ->whereBetween('out_time', [$from_date, $to_date])
+        ->whereBetween('in_time', [$from_date, $to_date])
         ->where('treatment_end_type_id', $treatmentEndType)
         ->where('his_treatment.is_delete',0)
         ->groupBy('department_name')
