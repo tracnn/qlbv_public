@@ -595,7 +595,7 @@ class ReportController extends Controller
 
     public function exportAccountantRevenueDetail(Request $request)
     {
-        $fileName = 'accountant_data_detail' . Carbon::now()->format('YmdHis') . '.xlsx';
+        $fileName = 'accountant_data_detail_' . Carbon::now()->format('YmdHis') . '.xlsx';
         return Excel::download(new AccountantRevenueDataExportDetail($request), $fileName);
     }
 
