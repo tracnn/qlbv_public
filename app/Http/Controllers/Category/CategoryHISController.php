@@ -53,6 +53,16 @@ class CategoryHISController extends Controller
         ->get();
     }
 
+    public function listTreatmentEndType()
+    {
+        return DB::connection('HISPro')
+        ->table('his_treatment_end_type')
+        ->where('his_treatment_end_type.is_active', 1)
+        ->where('his_treatment_end_type.is_delete', 0)
+        ->select('his_treatment_end_type.id', 'his_treatment_end_type.treatment_end_type_code', 'his_treatment_end_type.treatment_end_type_name')
+        ->get();
+    }
+
     public function fetchImportedBy()
     {
         $userIds = RoleUser::whereHas('role', function ($query) {

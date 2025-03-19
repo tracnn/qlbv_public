@@ -55,6 +55,7 @@ Route::group(['middleware' => ['auth', 'check.first.login']], function () {
         Route::get('fetch-noi-tru', 'HomeController@fetchNoitru')->name('fetch-noi-tru');
         Route::get('fetch-doanh-thu', 'HomeController@fetchDoanhthu')->name('fetch-doanh-thu');
         Route::get('fetch-treatment', 'HomeController@fetchTreatment')->name('fetch-treatment');
+
         Route::get('fetch-new-patient', 'HomeController@fetchNewpatient')->name('fetch-new-patient');
         Route::get('fetch-chuyen-vien', 'HomeController@fetchChuyenvien')->name('fetch-chuyen-vien');
         Route::get('fetch-service-by-type/{id}', 'HomeController@fetchServiceByType')->name('fetch-service-by-type');
@@ -214,6 +215,8 @@ Route::group(['middleware' => ['auth', 'check.first.login']], function () {
     ->name('category-his.fetch-patient-type');
     Route::get('index/category-treatment-type', 'Category\CategoryHISController@listTreatmentType')
     ->name('category-his.fetch-treatment-type');
+    Route::get('index/category-treatment-end-type', 'Category\CategoryHISController@listTreatmentEndType')
+    ->name('category-his.fetch-treatment-end-type');
 	/*
 		Category
 	*/

@@ -109,6 +109,7 @@
                     d.department_catalog = $('#department_catalog').val();
                     d.patient_type = $('#patient_type').val();
                     d.treatment_type = $('#treatment_type').val();
+                    d.treatment_end_type = $('#treatment_end_type').val();
                 },
                 beforeSend: function(xhr) {
                     currentAjaxRequest = xhr;

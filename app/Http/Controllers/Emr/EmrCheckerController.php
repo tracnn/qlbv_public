@@ -36,6 +36,7 @@ class EmrCheckerController extends Controller
         $department_catalog = $request->input('department_catalog');
         $patient_type = $request->input('patient_type');
         $treatment_type = $request->input('treatment_type');
+        $treatment_end_type = $request->input('treatment_end_type');
 
         $dateFrom = $request->input('date_from');
         $dateTo = $request->input('date_to');
@@ -92,7 +93,7 @@ class EmrCheckerController extends Controller
                     'tdl_patient_relative_phone', 'treatment_type_name',
                     'last_department.department_name as last_department',
                     'patient_type_name', 'tdl_patient_code', 'tdl_hein_card_number',
-                    'in_time', 'out_time', 'fee_lock_time')
+                    'in_time', 'out_time', 'fee_lock_time', 'treatment_end_type_id')
                 ->where('treatment_code', $treatment_code);
         } else {
             $result = DB::connection('HISPro')
@@ -105,7 +106,7 @@ class EmrCheckerController extends Controller
                     'tdl_patient_relative_phone', 'treatment_type_name',
                     'last_department.department_name as last_department',
                     'patient_type_name', 'tdl_patient_code', 'tdl_hein_card_number',
-                    'in_time', 'out_time', 'fee_lock_time')
+                    'in_time', 'out_time', 'fee_lock_time', 'treatment_end_type_id')
                 ->whereBetween($dateField, [$formattedDateFrom, $formattedDateTo]);
 
             // Add department_catalog condition if it's provided
@@ -113,15 +114,23 @@ class EmrCheckerController extends Controller
                 // Directly embedding the variable into the query string (make sure this is safe)
                 $result = $result->where('last_department_id', $department_catalog);
             }
+
             // Add patient_type condition if it's provided
             if (!empty($patient_type)) {
                 // Directly embedding the variable into the query string (make sure this is safe)
                 $result = $result->where('tdl_patient_type_id', $patient_type);
             }
+
             // Add treatment_type condition if it's provided
             if (!empty($treatment_type)) {
                 // Directly embedding the variable into the query string (make sure this is safe)
                 $result = $result->where('tdl_treatment_type_id', $treatment_type);
+            }
+
+            // Add treatment_type condition if it's provided
+            if (!empty($treatment_end_type)) {
+                // Directly embedding the variable into the query string (make sure this is safe)
+                $result = $result->where('treatment_end_type_id', $treatment_end_type);
             }
         }
 
