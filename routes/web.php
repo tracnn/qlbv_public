@@ -525,6 +525,8 @@ Route::group(['middleware' => ['auth', 'check.first.login']], function () {
         ->name('reports-administrator.fetch-accountant-revenue');
         Route::get('export-accountant-revenue-data', 'ReportController@exportAccountantRevenue')
         ->name('reports-administrator.export-accountant-revenue-data');
+        Route::get('export-accountant-revenue-data-detail', 'ReportController@exportAccountantRevenueDetail')
+        ->name('reports-administrator.export-accountant-revenue-data-detail');
     });
 
     /* Reports Account Payment*/

@@ -11,6 +11,7 @@ use App\Exports\DrugUseExport;
 use App\Exports\APDataExport;
 use App\Exports\DebtDataExport;
 use App\Exports\AccountantRevenueDataExport;
+use App\Exports\AccountantRevenueDataExportDetail;
 
 use DB;
 use Yajra\Datatables\Datatables;
@@ -591,4 +592,11 @@ class ReportController extends Controller
         $fileName = 'accountant_data_' . Carbon::now()->format('YmdHis') . '.xlsx';
         return Excel::download(new AccountantRevenueDataExport($request), $fileName);
     }
+
+    public function exportAccountantRevenueDetail(Request $request)
+    {
+        $fileName = 'accountant_data_detail' . Carbon::now()->format('YmdHis') . '.xlsx';
+        return Excel::download(new AccountantRevenueDataExportDetail($request), $fileName);
+    }
+
 }

@@ -12,6 +12,9 @@
 @section('content')
 
 @include('administrator.partials.search-accountant-revenue')
+<button id="bulk-action-btn" class="btn btn-primary">
+    <i class="fa fa-download" aria-hidden="true"></i> Tải chi tiết
+</button>
 
 <div class="panel panel-default">
     <div class="panel-body table-responsive">
@@ -183,6 +186,32 @@
         $('.select2').select2({
             width: '100%' // Đặt chiều rộng của Select2 là 100%
         });
+
+/*Đang sửa*/
+
+        $('#bulk-action-btn').on('click', function(){
+            var dateRange = $('#date_range').data('daterangepicker');
+
+            var startDate = dateRange.startDate.format('YYYY-MM-DD HH:mm:ss');
+            var endDate = dateRange.endDate.format('YYYY-MM-DD HH:mm:ss');
+            var date_type = $('#date_type').val();
+            var department_catalog = $('#department_catalog').val();
+            var patient_type = $('#patient_type').val();
+            
+            // Tạo URL với các tham số query
+            var href = '{{ route("reports-administrator.export-accountant-revenue-data-detail") }}?' + $.param({
+                'date_from': startDate,
+                'date_to': endDate,
+                'date_type': date_type,
+                'department_catalog': department_catalog,
+                'patient_type': patient_type
+            });
+            
+            // Chuyển hướng tới URL với các tham số
+            window.location.href = href;
+        });
+
+/*Đang sửa*/
 
         $('#export_xlsx').click(function() {
             var dateRange = $('#date_range').data('daterangepicker');
