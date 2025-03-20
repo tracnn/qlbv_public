@@ -67,7 +67,7 @@
                                     <i class="fa fa-fw fa-power-off"></i> {{ trans('adminlte::adminlte.log_out') }}
                                 </a>
                             @else
-                                <a data-toggle="dropdown" href="">{{Auth::user()->username}}<span class="caret"></span></a>
+                                <a data-toggle="dropdown" href="">{{Auth::user()->username ?: Auth::user()->name}}<span class="caret"></span></a>
                                 <ul class="dropdown-menu" role="menu">
                                     <li>
                                         <a href="{{route('user.changepass')}}" style="color:grey;">
