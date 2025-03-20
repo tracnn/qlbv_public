@@ -545,7 +545,7 @@ function chart_buongbenh() {
                         text: 'Khoa điều trị'
                     },
                     labels: {
-                        rotation: -45, // Xoay nhãn trục X để dễ đọc hơn
+                        rotation: 0, // Xoay nhãn trục X để dễ đọc hơn
                         style: {
                             fontSize: '13px',
                             fontFamily: 'Verdana, sans-serif'
@@ -613,7 +613,7 @@ function chart_noitru() {
                     text: 'Khoa điều trị'
                 },
                 labels: {
-                    rotation: -45, // Xoay nhãn để dễ đọc
+                    rotation: 0, // Xoay nhãn để dễ đọc
                     style: {
                         fontSize: '13px',
                         fontFamily: 'Verdana, sans-serif'
