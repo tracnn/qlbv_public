@@ -583,6 +583,7 @@ class ReportDataService
                     tm.tdl_patient_dob AS tdl_patient_dob,
                     tm.in_time AS in_time,
                     tm.out_time AS out_time,
+                    last_dept.department_name AS department_name,
                     st.service_type_code AS stc,
                     ss.amount * ss.price AS q
                 FROM 
@@ -603,6 +604,8 @@ class ReportDataService
                     his_treatment_type tt ON tt.id = tm.tdl_treatment_type_id
                 LEFT JOIN 
                     his_department re_dept ON re_dept.id = ss.tdl_request_department_id
+                JOIN 
+                    his_department last_dept ON last_dept.id = tm.last_department_id
                 WHERE 
                     sr.is_delete = 0
                     AND ss.is_delete = 0
@@ -615,6 +618,7 @@ class ReportDataService
                 tdl_patient_dob AS tdl_patient_dob,
                 in_time AS in_time,
                 out_time AS out_time,
+                department_name AS department_name,
                 SUM(CASE WHEN stc = 'XN' THEN q ELSE 0 END) AS xn,
                 SUM(CASE WHEN stc = 'HA' THEN q ELSE 0 END) AS ha,
                 SUM(CASE WHEN stc = 'TH' THEN q ELSE 0 END) AS th,
@@ -638,7 +642,8 @@ class ReportDataService
                 tdl_patient_name,
                 tdl_patient_dob,
                 in_time,
-                out_time
+                out_time,
+                department_name
         ";
 
         return [$sql, $bindings];

@@ -47,6 +47,7 @@ class AccountantRevenueDataExportDetail implements FromCollection, WithHeadings,
             'Ngày sinh',
             'Ngày vào',
             'Ngày ra',
+            'Khoa điều trị',
             'Xét nghiệm',
             'CĐHA',
             'Thuốc',
@@ -75,7 +76,7 @@ class AccountantRevenueDataExportDetail implements FromCollection, WithHeadings,
                 $sheet->getColumnDimension('D')->setWidth(15);
                 $sheet->getColumnDimension('E')->setWidth(18);
                 $sheet->getColumnDimension('F')->setWidth(18);
-                $sheet->getColumnDimension('G')->setWidth(12);
+                $sheet->getColumnDimension('G')->setWidth(25);
                 $sheet->getColumnDimension('H')->setWidth(12);
                 $sheet->getColumnDimension('I')->setWidth(12);
                 $sheet->getColumnDimension('J')->setWidth(12);
@@ -90,8 +91,9 @@ class AccountantRevenueDataExportDetail implements FromCollection, WithHeadings,
                 $sheet->getColumnDimension('T')->setWidth(12);
                 $sheet->getColumnDimension('U')->setWidth(12);
                 $sheet->getColumnDimension('V')->setWidth(12);
+                $sheet->getColumnDimension('W')->setWidth(12);
 
-                $sheet->getStyle('G:V')->getNumberFormat()
+                $sheet->getStyle('G:W')->getNumberFormat()
                 ->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER);
             },
         ];
@@ -121,6 +123,7 @@ class AccountantRevenueDataExportDetail implements FromCollection, WithHeadings,
             strtodate($row->tdl_patient_dob),
             strtodatetime($row->in_time),
             strtodatetime($row->out_time),
+            $row->department_name,
             $row->xn,
             $row->ha,
             $row->th,
