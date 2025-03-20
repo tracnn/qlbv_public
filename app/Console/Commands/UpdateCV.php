@@ -96,21 +96,24 @@ class UpdateCV extends Command
 
                     DB::connection('SDA_RS')
                     ->table('sda_event_log')
-                    ->whereBetween('create_time', [$from_date, $to_date])
+                    ->where('create_time', '>=', $from_date)
+                    ->where('create_time', '<=', $to_date)
                     ->where('description', 'LIKE', '%Người thực hiện: tracnn - Nguyễn Ngọc Trác%')
                     ->update([
                         'description' => DB::raw("REPLACE(description, 'Người thực hiện: tracnn - Nguyễn Ngọc Trác', '')")
                     ]);
                     DB::connection('SDA_RS')
                     ->table('sda_event_log')
-                    ->whereBetween('create_time', [$from_date, $to_date])
+                    ->where('create_time', '>=', $from_date)
+                    ->where('create_time', '<=', $to_date)
                     ->where('description', 'LIKE', '%Người tư vấn: tracnn - Nguyễn Ngọc Trác%')
                     ->update([
                         'description' => DB::raw("REPLACE(description, 'Người tư vấn: tracnn - Nguyễn Ngọc Trác', '')")
                     ]);
                     DB::connection('SDA_RS')
                     ->table('sda_event_log')
-                    ->whereBetween('create_time', [$from_date, $to_date])
+                    ->where('create_time', '>=', $from_date)
+                    ->where('create_time', '<=', $to_date)
                     ->where('description', 'LIKE', '%tracnn%')
                     ->update([
                         'description' => DB::raw("REPLACE(description, 'tracnn', '')")
