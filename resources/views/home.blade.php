@@ -146,6 +146,23 @@
       </div>
 
       <div class="row">
+        <div class="col-lg-12 connectedSortable">
+
+            <!-- Custom tabs (Charts with tabs)-->
+            <div class="nav-tabs-custom">
+                <!-- Tabs within a box -->
+                <div class="tab-content no-padding">
+                    <!-- Morris chart - Sales -->
+                    <div class="chart tab-pane active" style="position: relative;">
+                        <div id="chart_kham_by_room" style="width:100%; height:500px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+      </div>
+
+      <div class="row">
         <div class="col-lg-6 connectedSortable">
             <div class="nav-tabs-custom text-center"> <!-- Thêm 'text-center' để căn giữa -->
                 <div class="tab-content no-padding">
@@ -346,7 +363,8 @@ function refreshAllCharts() {
         sum_chuyenvien();
         sum_doanhthu();
         chart_buongbenh();
-        chart_noitru();        
+        chart_noitru();
+        chart_kham_by_room();  
     }
 }
 
@@ -587,6 +605,106 @@ function chart_buongbenh() {
     }).fail(function(jqXHR, textStatus, errorThrown) {
         console.log(textStatus + ': ' + errorThrown);
     });    
+}
+
+function chart_kham_by_room() {
+    $.ajax({
+        url: "{{ route('fetch-kham-by-room') }}",
+        type: "GET",
+        dataType: 'json',
+    }).done(function (rtnData) {
+        const chartData = rtnData.chartData || [];
+        const sum_sl = rtnData.sum_sl || 0;
+        const room_count = chartData.length;
+
+        const categories = chartData.map(item => item.room);
+        const statuses = ['Chưa thực hiện', 'Đang thực hiện', 'Đã thực hiện'];
+        const statusColors = {
+            'Chưa thực hiện': '#f45b5b',
+            'Đang thực hiện': '#f7a35c',
+            'Đã thực hiện': '#90ed7d'
+        };
+
+        const series = statuses.map(status => {
+            return {
+                name: status,
+                data: chartData.map(item => item[status] || 0),
+                color: statusColors[status] || undefined
+            };
+        });
+
+        Highcharts.chart('chart_kham_by_room', {
+            chart: {
+                type: 'column',
+                height: 'auto'
+            },
+            title: {
+                text: `
+                        <div style="text-align: center">
+                            <div><b>Tổng số lượt khám:</b> ${Highcharts.numberFormat(sum_sl, 0, ',', '.')}</div>
+                            <div><b>Tổng số phòng thực hiện:</b> ${room_count}</div>
+                        </div>
+                    `
+            },
+            xAxis: {
+                categories: categories,
+                title: {
+                    text: 'Phòng thực hiện'
+                },
+                labels: {
+                    rotation: -45,
+                    style: {
+                        fontSize: '13px',
+                        fontFamily: 'Verdana, sans-serif'
+                    }
+                }
+            },
+            yAxis: {
+                min: 0,
+                title: {
+                    text: 'Số lượng bệnh nhân'
+                },
+                stackLabels: {
+                    enabled: true,
+                    style: {
+                        fontWeight: 'bold',
+                        color: 'gray'
+                    }
+                },
+                labels: {
+                    formatter: function () {
+                        return Highcharts.numberFormat(this.value, 0, ',', '.');
+                    }
+                }
+            },
+            tooltip: {
+                shared: true,
+                pointFormat: '<span style="color:{series.color}">●</span> {series.name}: <b>{point.y}</b><br/>'
+            },
+            plotOptions: {
+                column: {
+                    stacking: 'normal',
+                    dataLabels: {
+                        enabled: true,
+                        formatter: function () {
+                            return this.y > 0 ? this.y : ''; // Chỉ hiển thị khi > 0
+                        },
+                        style: {
+                            fontSize: '11px',
+                            fontWeight: 'bold'
+                        }
+                    }
+                }
+            },
+            legend: {
+                enabled: true,
+                reversed: false
+            },
+            series: series
+        });
+    }).fail(function (jqXHR, textStatus, errorThrown) {
+        console.log(textStatus + ': ' + errorThrown);
+    });
 }
     
 function chart_noitru() {

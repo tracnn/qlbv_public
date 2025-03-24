@@ -60,6 +60,8 @@ Route::group(['middleware' => ['auth', 'check.first.login']], function () {
         Route::get('fetch-chuyen-vien', 'HomeController@fetchChuyenvien')->name('fetch-chuyen-vien');
         Route::get('fetch-service-by-type/{id}', 'HomeController@fetchServiceByType')->name('fetch-service-by-type');
 
+        Route::get('fetch-kham-by-room', 'HomeController@fetchKhamByRoom')->name('fetch-kham-by-room');
+
         Route::get('home/xml_chart', 'HomeController@xml_chart')->name('home.xml_chart');
         Route::get('home/treatment_type_chart', 'HomeController@treatment_type_chart')->name('home.treatment_type_chart');
         Route::get('home/treatment_number_chart', 'HomeController@treatment_number_chart')->name('home.treatment_number_chart');

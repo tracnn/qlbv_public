@@ -247,6 +247,62 @@ class HomeController extends Controller
         ]);
     }
 
+    public function fetchKhamByRoom()
+    {
+        $current_date = $this->currentDate();
+
+        $data = DB::connection('HISPro')
+            ->table('his_service_req')
+            ->join('his_execute_room', 'his_execute_room.room_id', '=', 'his_service_req.execute_room_id')
+            ->selectRaw('
+                his_execute_room.execute_room_name,
+                his_service_req.service_req_stt_id,
+                COUNT(*) as so_luong
+            ')
+            ->whereBetween('intruction_time', [$current_date['from_date'], $current_date['to_date']])
+            ->where('his_service_req.service_req_type_id', 1)
+            ->where('his_service_req.is_active', 1)
+            ->where('his_service_req.is_delete', 0)
+            ->groupBy('his_execute_room.execute_room_name', 'his_service_req.service_req_stt_id')
+            ->get();
+
+        $sum_sl = $data->sum('so_luong');
+
+        // Danh sách các trạng thái
+        $statusLabels = [
+            1 => 'Chưa thực hiện',
+            2 => 'Đang thực hiện',
+            3 => 'Đã thực hiện',
+        ];
+
+        // Biến tạm để gom dữ liệu
+        $roomData = [];
+
+        foreach ($data as $item) {
+            $room = $item->execute_room_name;
+            $status = $item->service_req_stt_id;
+
+            // Khởi tạo mảng nếu chưa có phòng
+            if (!isset($roomData[$room])) {
+                $roomData[$room] = [
+                    'room' => $room,
+                    'Chưa thực hiện' => 0,
+                    'Đang thực hiện' => 0,
+                    'Đã thực hiện' => 0,
+                ];
+            }
+
+            $label = $statusLabels[$status] ?? 'Khác';
+            $roomData[$room][$label] += $item->so_luong;
+        }
+
+        // Trả về dữ liệu cho biểu đồ
+        return response()->json([
+            'sum_sl' => $sum_sl,
+            'chartData' => array_values($roomData)
+        ]);
+    }
+
     private function serviceByType($from_date, $to_date, $serviceType = null)
     {
         return DB::connection('HISPro')
