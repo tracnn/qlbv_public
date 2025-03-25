@@ -44,7 +44,7 @@
 @endpush
 
 @section('content')
-@if(auth()->user()->hasRole('dashboard') || auth()->user()->hasRole('superadministrator'))
+@if(auth()->user()->hasRole('dashboard'))
 <div class="panel panel-default">
     <div class="panel-body">
       <div class="row">
@@ -268,8 +268,7 @@
 
 <script type="text/javascript">
 numeral.locale('vi');
-var canDashboard = @json(auth()->user()->hasRole('dashboard') || 
-    auth()->user()->hasRole('superadministrator'));
+var canDashboard = @json(auth()->user()->hasRole('dashboard'));
 
 let refreshInterval = parseInt($("#refreshInterval").val()); // Lấy giá trị mặc định
 let countdown = refreshInterval / 1000; // Chuyển đổi sang giây
