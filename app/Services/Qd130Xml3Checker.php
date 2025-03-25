@@ -823,9 +823,10 @@ class Qd130Xml3Checker
     {
         $errors = collect();
 
-        if (!in_array($data->ma_nhom, $this->materialGroupCodes) &&
+        if ( !in_array($data->ma_nhom, $this->materialGroupCodes) &&
             !in_array($data->ma_nhom, $this->bedGroupCodes) &&
-            !in_array($data->ma_nhom, $this->examinationGroupCodes)) {
+            !in_array($data->ma_nhom, $this->examinationGroupCodes) &&
+            !in_array($data->ma_nhom, $this->transportGroupCodes) ) {
 
             $serviceExists = ServiceCatalog::where('ma_dich_vu', $data->ma_dich_vu)->exists();
 
