@@ -75,6 +75,11 @@ class EmrCheckerController extends Controller
                 $formattedDateFrom = $formattedDateFromForFields;
                 $formattedDateTo = $formattedDateToForFields;
                 break;
+            case 'date_create':
+                $dateField = 'his_patient.create_time';
+                $formattedDateFrom = $formattedDateFromForFields;
+                $formattedDateTo = $formattedDateToForFields;
+                break;
             default:
                 $dateField = 'his_treatment.fee_lock_time';
                 $formattedDateFrom = $formattedDateFromForFields;
@@ -85,6 +90,7 @@ class EmrCheckerController extends Controller
         if ($treatment_code) {
             $result = DB::connection('HISPro')
                 ->table('his_treatment')
+                ->join('his_patient', 'his_patient.id', '=', 'his_treatment.patient_id')
                 ->join('his_treatment_type', 'his_treatment_type.id', '=', 'his_treatment.tdl_treatment_type_id')
                 ->join('his_department as last_department', 'last_department.id', '=', 'his_treatment.last_department_id')
                 ->join('his_patient_type', 'his_patient_type.id', '=', 'his_treatment.tdl_patient_type_id')
@@ -92,12 +98,13 @@ class EmrCheckerController extends Controller
                     'tdl_patient_mobile', 'tdl_patient_phone', 'tdl_patient_relative_mobile',
                     'tdl_patient_relative_phone', 'treatment_type_name',
                     'last_department.department_name as last_department',
-                    'patient_type_name', 'tdl_patient_code', 'tdl_hein_card_number',
+                    'patient_type_name', 'tdl_patient_code', 'his_treatment.tdl_hein_card_number',
                     'in_time', 'out_time', 'fee_lock_time', 'treatment_end_type_id')
                 ->where('treatment_code', $treatment_code);
         } else {
             $result = DB::connection('HISPro')
                 ->table('his_treatment')
+                ->join('his_patient', 'his_patient.id', '=', 'his_treatment.patient_id')
                 ->join('his_treatment_type', 'his_treatment_type.id', '=', 'his_treatment.tdl_treatment_type_id')
                 ->join('his_department as last_department', 'last_department.id', '=', 'his_treatment.last_department_id')
                 ->join('his_patient_type', 'his_patient_type.id', '=', 'his_treatment.tdl_patient_type_id')
@@ -105,7 +112,7 @@ class EmrCheckerController extends Controller
                     'tdl_patient_mobile', 'tdl_patient_phone', 'tdl_patient_relative_mobile',
                     'tdl_patient_relative_phone', 'treatment_type_name',
                     'last_department.department_name as last_department',
-                    'patient_type_name', 'tdl_patient_code', 'tdl_hein_card_number',
+                    'patient_type_name', 'tdl_patient_code', 'his_treatment.tdl_hein_card_number',
                     'in_time', 'out_time', 'fee_lock_time', 'treatment_end_type_id')
                 ->whereBetween($dateField, [$formattedDateFrom, $formattedDateTo]);
 
