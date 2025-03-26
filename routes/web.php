@@ -222,7 +222,7 @@ Route::group(['middleware' => ['auth', 'check.first.login']], function () {
 	/*
 		Category
 	*/
-    Route::group(['prefix' => 'category/', 'middleware' => ['checkrole:superadministrator']], function () { 	
+    Route::group(['prefix' => 'category/', 'middleware' => ['checkrole:category-manager']], function () { 	
     	Route::get('{category}', 'Category\Manager\CategoryController@index')->name('category.index');
     	Route::get('{category}/search', 'Category\Manager\CategoryController@search')->name('category.search');
 

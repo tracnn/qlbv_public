@@ -411,7 +411,7 @@ return [
         [
             'text'    => 'Quản lý danh mục',
             'icon'    => 'book',
-            'checkrole'   => 'superadministrator',
+            'checkrole'   => 'category-manager',
             'submenu' => [
                 [
                     'text'    => 'BHYT',
@@ -479,6 +479,12 @@ return [
                     'icon'  => 'book',
                     'route'   => 'danh-muc.dm-khoa-phong',
                     'active'=> ['danh-muc/dm-khoa-phong*'],
+                ],
+                [
+                    'text'  => 'Nhập khẩu danh mục',
+                    'icon'  => 'book',
+                    'route'   => 'category-bhyt.import-index',
+                    'active'=> ['category/bhyt/category-bhyt-import-index*'],
                 ],
             ],
         ],
@@ -549,12 +555,6 @@ return [
             'icon' => 'cog',
             'checkrole'   => 'administrator',
             'submenu' => [
-                [
-                    'text'  => 'Nhập khẩu danh mục',
-                    'icon'  => 'book',
-                    'route'   => 'category-bhyt.import-index',
-                    'active'=> ['category/bhyt/category-bhyt-import-index*'],
-                ],
                 [
                     'text'       => 'Kiểm tra chi tiết',
                     'icon'       => 'rebel',
