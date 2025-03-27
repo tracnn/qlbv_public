@@ -158,7 +158,12 @@ class EmrCheckerController extends Controller
             return $result->tdl_patient_mobile ?? $result->tdl_patient_phone ?? $result->tdl_patient_relative_mobile ?? $result->tdl_patient_relative_phone;
         })
         ->addColumn('action', function ($result) {
-            return '';
+            $buttons = '
+                <a href="' .route('treatment-result.search',['treatment_code'=>$result->treatment_code]) .'" class="btn btn-sm btn-primary" target="_blank">
+                    <span class="glyphicon glyphicon-eye-open"></span> Xem KQ</a>
+                ';
+
+            return $buttons;
         })
         ->toJson();
     }
