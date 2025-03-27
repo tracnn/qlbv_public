@@ -553,7 +553,7 @@ return [
         [
             'text'       => 'Thiết lập hệ thống',
             'icon' => 'cog',
-            'checkrole'   => 'administrator',
+            'checkrole'   => 'superadministrator',
             'submenu' => [
                 [
                     'text'       => 'Kiểm tra chi tiết',
@@ -571,7 +571,7 @@ return [
                 [
                     'text' => 'Quản trị hệ thống',
                     'icon' => 'lock',
-                    'checkrole' => 'administrator',
+                    'checkrole' => 'superadministrator',
                     'route'        => 'system.sys-man',
                     'active'    => ['system/sys-man*']
                 ],
