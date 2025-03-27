@@ -16,4 +16,5 @@ return [
         //https://egw.baohiemxahoi.gov.vn
     ],
     'base_url' => '',
+    'organization_name' => 'Bệnh viện Đa khoa',
 ];

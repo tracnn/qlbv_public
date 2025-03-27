@@ -54,7 +54,7 @@
         <span class="icon-bar"></span>
       </button>
       <a class="navbar-brand" href="#"><img src="{{asset('images/logo.png')}}" alt="Logo" title="Hospital Logi">
-        <span class="hospital-name">Bệnh Viện Đa Khoa Nông Nghiệp</span>
+        <span class="hospital-name">{{ config('organization.organization_name') }}</span>
       </a>
       
     </div>
