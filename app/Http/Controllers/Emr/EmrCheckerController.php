@@ -159,7 +159,7 @@ class EmrCheckerController extends Controller
         })
         ->addColumn('action', function ($result) {
             $buttons = '
-                <a href="' .route('treatment-result.search',['treatment_code'=>$result->treatment_code]) .'" class="btn btn-sm btn-primary" target="_blank">
+                <a href="' .route('treatment-result.search',['treatment_code'=>$result->treatment_code]) .'" class="btn btn-sm btn-primary">
                     <span class="glyphicon glyphicon-eye-open"></span> Xem KQ</a>
                 ';
 
