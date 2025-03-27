@@ -23,9 +23,9 @@ class CheckRole
         $user = Auth::user();
 
         // Cho phép truy cập nếu người dùng có role 'superadministrator'
-        if ($user->hasRole('superadministrator')) {
-            return $next($request);
-        }
+        // if ($user->hasRole('superadministrator')) {
+        //     return $next($request);
+        // }
 
         // Nếu không phải 'superadministrator', kiểm tra nếu người dùng có role hoặc permission thỏa mãn
         if ($user->hasRole($role) || $user->can($role)) {
