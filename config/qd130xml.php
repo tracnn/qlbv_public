@@ -1,9 +1,5 @@
 <?php
 
-/*
- *  Cấu hình cho Xml theo QD130/4750 
- */
-
 return [
     'export_to_directory_by_day' => false, //false: xuất xml ra thư mục chung, true: xuất thư mục theo từng ngày
     'type_xml11_doc' => ['CT07'], //Loại mẫu của xml11
@@ -48,15 +44,15 @@ return [
     ],
     'xml2' => [
         'tt_thau' => [ // Bổ sung quy tắc định dạng tt_thau
-            'goi_thau_pattern' => '/^G[1-5]$/', // 2 ký tự; ký tự đầu tiên là G, ký tự thứ 2 là số 1 đến 5
-            'nhom_thau_pattern' => '/^N[1-5]$/', // 2 ký tự; ký tự đầu tiên là N, ký tự thứ 2 là số từ 1 đến 5
+            'goi_thau_pattern' => '/^G\d{1,2}$/', // Gói thầu gồm G kèm theo 1 đến 2 chữ số (0 đến 99)
+            'nhom_thau_pattern' => '/^N\d{1,2}$/', // Nhóm thầu gôm N kèm theo 1 đến 2 chữ số (0 đến 99)
             'nam_thau_pattern' => '/^\d{4}$/',   // Định dạng năm 4 ký tự
         ],
     ],
     'xml3' => [
         'tt_thau' => [ // Bổ sung quy tắc định dạng tt_thau
-            'goi_thau_pattern' => '/^G[0-9]$/', // 2 ký tự; ký tự đầu tiên là G, ký tự thứ 2 là số 1 đến 9
-            'nhom_thau_pattern' => '/^N[0-6]$/', // 2 ký tự; ký tự đầu tiên là N, ký tự thứ 2 là số từ 0 đến 6
+            'goi_thau_pattern' => '/^G\d{1,2}$/', // Gói thầu gồm G kèm theo 1 đến 2 chữ số (0 đến 99)
+            'nhom_thau_pattern' => '/^N\d{1,2}$/', // Nhóm thầu gôm N kèm theo 1 đến 2 chữ số (0 đến 99)
             'nam_thau_pattern' => '/^\d{4}$/',   // Định dạng năm 4 ký tự
         ],
         'service_groups_requiring_machine' => [1,2,3],
