@@ -62,6 +62,10 @@ Route::group(['middleware' => ['auth', 'check.first.login']], function () {
 
         Route::get('fetch-kham-by-room', 'HomeController@fetchKhamByRoom')->name('fetch-kham-by-room');
 
+        Route::get('fetch-out-treatment-group-treatment-type', 
+            'HomeController@fetchOutTreatmentGroupTreatmentType')
+        ->name('fetch-out-treatment-group-treatment-type');
+
         Route::get('home/xml_chart', 'HomeController@xml_chart')->name('home.xml_chart');
         Route::get('home/treatment_type_chart', 'HomeController@treatment_type_chart')->name('home.treatment_type_chart');
         Route::get('home/treatment_number_chart', 'HomeController@treatment_number_chart')->name('home.treatment_number_chart');

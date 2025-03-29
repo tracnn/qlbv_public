@@ -67,7 +67,7 @@
           <div class="small-box bg-green">
             <div class="inner">
               <h3 id="sum_treatment">0</h3>
-              <p>Hồ sơ</p>
+              <p>Hồ sơ vào viện</p>
             </div>
             <div class="icon">
               <i class="ion ion-stats-bars"></i>
@@ -80,7 +80,7 @@
           <div class="small-box bg-yellow">
             <div class="inner">
               <h3 id="sum_newpatient">0</h3>
-              <p>Hồ sơ mới</p>
+              <p>VV: Hồ sơ mới</p>
             </div>
             <div class="icon">
               <i class="ion ion-person-add"></i>
@@ -93,7 +93,7 @@
           <div class="small-box bg-red">
             <div class="inner">
               <h3 id="sum_noitru">0</h3>
-              <p>Nội trú</p>
+              <p>VV: Nội trú</p>
             </div>
             <div class="icon">
               <i class="ion ion-pie-graph"></i>
@@ -115,6 +115,87 @@
         </div>
 
       </div>
+
+    <!-- Dòng thứ 2 -->
+    <div class="row">
+        <div class="col-lg-2 col-xs-6">
+          <!-- small box -->
+          <div class="small-box bg-aqua">
+            <div class="inner">
+              <h3 id="sum_ravien">0</h3>
+              <p>Hồ sơ ra viện</p>
+            </div>
+            <div class="icon">
+              <i class="ion ion-pie-graph"></i>
+            </div>
+          </div>
+        </div>
+      
+        <div class="col-lg-2 col-xs-6">
+          <!-- small box -->
+          <div class="small-box bg-green">
+            <div class="inner">
+              <h3 id="sum_ravien_noitru">0</h3>
+              <p>RV: nội trú</p>
+            </div>
+            <div class="icon">
+              <i class="ion ion-pie-graph"></i>
+            </div>
+          </div>
+        </div>
+        <!-- ./col -->
+        <div class="col-lg-2 col-xs-6">
+          <!-- small box -->
+          <div class="small-box bg-yellow">
+            <div class="inner">
+              <h3 id="sum_ravien_ngoaitru">0</h3>
+              <p>RV: ngoại trú</p>
+            </div>
+            <div class="icon">
+              <i class="ion ion-pie-graph"></i>
+            </div>
+          </div>
+        </div>
+        <!-- ./col -->
+        <div class="col-lg-2 col-xs-6">
+          <!-- small box -->
+          <div class="small-box bg-red">
+            <div class="inner">
+              <h3 id="sum_ravien_kham">0</h3>
+              <p>RV: khám</p>
+            </div>
+            <div class="icon">
+              <i class="ion ion-pie-graph"></i>
+            </div>
+          </div>
+        </div>
+        <!-- ./col -->
+        <div class="col-lg-2 col-xs-6">
+          <!-- small box -->
+          <div class="small-box bg-aqua">
+            <div class="inner">
+              <h3 id="sum_phauthuat">0</h3>
+              <p>Phẫu thuật</p>
+            </div>
+            <div class="icon">
+              <i class="ion ion-pie-graph"></i>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-2 col-xs-6">
+          <!-- small box -->
+          <div class="small-box bg-green">
+            <div class="inner">
+              <h3 id="sum_thuthuat">0</h3>
+              <p>Thủ thuật</p>
+            </div>
+            <div class="icon">
+              <i class="ion ion-pie-graph"></i>
+            </div>
+          </div>
+        </div>
+    </div>
+    <!-- Dòng thứ 2 -->
 
       <div class="row">
         <div class="col-lg-6 connectedSortable">
@@ -361,6 +442,9 @@ function refreshAllCharts() {
         sum_newpatient();
         sum_chuyenvien();
         sum_doanhthu();
+        sum_outtreatmentgrouptreatmenttype();
+        sum_phauthuat();
+        sum_thuthuat();
         chart_buongbenh();
         chart_noitru();
         chart_kham_by_room();  
@@ -486,6 +570,67 @@ function sum_chuyenvien() {
     .fail(function(jqXHR, textStatus, errorThrown) {
         console.log("Lỗi AJAX: " + textStatus + ': ' + errorThrown);
     });    
+}
+
+function sum_phauthuat() {
+    $.ajax({
+        url: `{{ route('fetch-service-by-type', '10') }}`,
+        type: "GET",
+        dataType: 'json',
+    })
+    .done(function(rtnData) {
+        if (rtnData && rtnData.sum_sl > 0) {
+            // Hiển thị số đã làm tròn với dấu phẩy
+            $("#sum_phauthuat").text(numeral(rtnData.sum_sl).format('0,0')); 
+        } else {
+            console.log("Dữ liệu không hợp lệ hoặc không có dữ liệu!");
+        }
+    })
+    .fail(function(jqXHR, textStatus, errorThrown) {
+        console.log(`Lỗi AJAX`);
+    });   
+}
+
+function sum_outtreatmentgrouptreatmenttype() {
+    $.ajax({
+        url: `{{ route('fetch-out-treatment-group-treatment-type') }}`,
+        type: "GET",
+        dataType: 'json',
+    })
+    .done(function(rtnData) {
+        if (rtnData && rtnData.total > 0) {
+            // Hiển thị số đã làm tròn với dấu phẩy
+            $("#sum_ravien").text(numeral(rtnData.total).format('0,0'));
+            $("#sum_ravien_noitru").text(numeral(rtnData.noitru).format('0,0'));
+            $("#sum_ravien_ngoaitru").text(numeral(rtnData.ngoaitru).format('0,0'));
+            $("#sum_ravien_kham").text(numeral(rtnData.kham).format('0,0'));
+        } else {
+            console.log("Dữ liệu không hợp lệ hoặc không có dữ liệu!");
+        }
+    })
+    .fail(function(jqXHR, textStatus, errorThrown) {
+        console.log(`Lỗi AJAX`);
+    });   
+}
+
+
+function sum_thuthuat() {
+    $.ajax({
+        url: `{{ route('fetch-service-by-type', '4') }}`,
+        type: "GET",
+        dataType: 'json',
+    })
+    .done(function(rtnData) {
+        if (rtnData && rtnData.sum_sl > 0) {
+            // Hiển thị số đã làm tròn với dấu phẩy
+            $("#sum_thuthuat").text(numeral(rtnData.sum_sl).format('0,0')); 
+        } else {
+            console.log("Dữ liệu không hợp lệ hoặc không có dữ liệu!");
+        }
+    })
+    .fail(function(jqXHR, textStatus, errorThrown) {
+        console.log(`Lỗi AJAX`);
+    });   
 }
 
 function sum_doanhthu() {

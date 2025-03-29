@@ -74,7 +74,7 @@ class HomeController extends Controller
     public function fetchTreatment(Request $request)
     {
         $current_date = $this->currentDate();
-        $model = $this->treatment($current_date['from_date'], $current_date['to_date']);
+        $model = $this->inTreatment($current_date['from_date'], $current_date['to_date']);
 
         $sum_sl = $model->sum('so_luong');
 
@@ -214,6 +214,22 @@ class HomeController extends Controller
         ];  
 
         return json_encode($returnData);
+    }
+
+    public function fetchOutTreatmentGroupTreatmentType(Request $request)
+    {
+        $current_date = $this->currentDate();
+        $data = $this->outTreatment($current_date['from_date'], $current_date['to_date']);
+
+        $countByTypeId = $data->groupBy('id')->map->count();
+        // Tổng số bệnh nhân ra viện
+        $total = $data->count();
+        return response()->json([
+            'total' => $total,
+            'noitru' => $countByTypeId[3] ?? 0,
+            'ngoaitru' => $countByTypeId[2] ?? 0,
+            'kham' => $countByTypeId[1] ?? 0,
+        ]);
     }
 
     public function fetchServiceByType($id)
@@ -373,7 +389,7 @@ class HomeController extends Controller
         ->get();
     }
 
-    private function treatment($from_date, $to_date)
+    private function inTreatment($from_date, $to_date)
     {
         return DB::connection('HISPro')
         ->table('his_treatment')
@@ -384,6 +400,25 @@ class HomeController extends Controller
         ->whereBetween('in_time', [$from_date, $to_date])
         ->where('his_treatment.is_delete',0)
         ->groupBy('patient_type_name')
+        ->get();
+    }
+
+    private function outTreatment($from_date, $to_date)
+    {
+        return DB::connection('HISPro')
+        ->table('his_treatment')
+        ->join('his_branch', 'his_branch.id', '=', 'his_treatment.branch_id')
+        ->join('his_patient_type', 'his_patient_type.id', '=', 'his_treatment.tdl_patient_type_id')
+        ->join('his_treatment_type', 'his_treatment_type.id', '=', 'his_treatment.tdl_treatment_type_id')
+        ->select('his_treatment.treatment_code',
+            'his_branch.id',
+            'his_branch.branch_name',
+            'his_patient_type.id',
+            'his_patient_type.patient_type_name',
+            'his_treatment_type.id',
+            'his_treatment_type.treatment_type_name')
+        ->whereBetween('out_time', [$from_date, $to_date])
+        ->where('his_treatment.is_delete',0)
         ->get();
     }
 
