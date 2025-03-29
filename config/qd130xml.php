@@ -44,15 +44,15 @@ return [
     ],
     'xml2' => [
         'tt_thau' => [ // Bổ sung quy tắc định dạng tt_thau
-            'goi_thau_pattern' => '/^G\d{1,2}$/', // Gói thầu gồm G kèm theo 1 đến 2 chữ số (0 đến 99)
-            'nhom_thau_pattern' => '/^N\d{1,2}$/', // Nhóm thầu gôm N kèm theo 1 đến 2 chữ số (0 đến 99)
+            'goi_thau_pattern' => '/^G([0-9]|[1-9][0-9])$/', // Gói thầu G0 đến G99
+            'nhom_thau_pattern' => '/^N([0-9]|[1-9][0-9])$/', // Nhóm thầu N0 đến N99
             'nam_thau_pattern' => '/^\d{4}$/',   // Định dạng năm 4 ký tự
         ],
     ],
     'xml3' => [
         'tt_thau' => [ // Bổ sung quy tắc định dạng tt_thau
-            'goi_thau_pattern' => '/^G\d{1,2}$/', // Gói thầu gồm G kèm theo 1 đến 2 chữ số (0 đến 99)
-            'nhom_thau_pattern' => '/^N\d{1,2}$/', // Nhóm thầu gôm N kèm theo 1 đến 2 chữ số (0 đến 99)
+            'goi_thau_pattern' => '/^G([0-9]|[1-9][0-9])$/', // Gói thầu G0 đến G99
+            'nhom_thau_pattern' => '/^N([0-9]|[1-9][0-9])$/', // Nhóm thầu N0 đến N99
             'nam_thau_pattern' => '/^\d{4}$/',   // Định dạng năm 4 ký tự
         ],
         'service_groups_requiring_machine' => [1,2,3],
