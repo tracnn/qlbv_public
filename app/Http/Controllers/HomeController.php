@@ -226,7 +226,7 @@ class HomeController extends Controller
         $total = $data->count();
         return response()->json([
             'total' => $total,
-            'noitru' => $countByTypeId[3] ?? 0,
+            'noitru'   => ($countByTypeId[3] ?? 0) + ($countByTypeId[4] ?? 0),
             'ngoaitru' => $countByTypeId[2] ?? 0,
             'kham' => $countByTypeId[1] ?? 0,
         ]);
