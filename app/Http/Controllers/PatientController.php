@@ -7,6 +7,7 @@ use DB;
 use Picqer\Barcode\BarcodeGeneratorPNG;
 use App\Patient;
 use App\Vaccination;
+use Datetime\Datetime;
 
 class PatientController extends Controller
 {
@@ -14,6 +15,8 @@ class PatientController extends Controller
     {
         $param_code = $request->get('code','');
         $param_phone = $request->get('phone', '');
+
+        $inTimeLimit = now()->subMonths(12)->format('YmdHis');
 
         $treatment_code = strlen($param_code) < 12 ? str_pad($param_code, 12, '0', STR_PAD_LEFT) : $param_code;
 
@@ -54,6 +57,7 @@ class PatientController extends Controller
                     ->orWhere('his_treatment.tdl_patient_relative_phone', $param_phone)
                     ->orWhere('his_treatment.tdl_patient_relative_mobile', $param_phone);;
                 })
+                ->where('his_treatment.in_time', '>=', $inTimeLimit)
                 ->orderBy('in_time','desc')
                 ->paginate(3);
             }
