@@ -378,7 +378,10 @@ class SystemController extends Controller
             ->where('tdl_treatment_type_id', config('__tech.treatment_type_kham'))
             //->whereIn('doctor_loginname', $doctor)
             //->whereIn('creator', $creator)
-            ->update(['treatment_end_type_id' => 4]);
+            ->update(['treatment_end_type_id' => 4,
+                'create_time' => DB::raw('in_time'),
+                'modify_time' => DB::raw('in_time')
+            ]);
 
             DB::connection('HISPro')
             ->table('his_treatment')
@@ -414,7 +417,9 @@ class SystemController extends Controller
             ->where('treatment_code', $request->treatment_code)
             ->where('treatment_end_type_name', '<>', 'Cấp toa cho về')
             ->update([
-                'treatment_end_type_name' => 'Cấp toa cho về'
+                'treatment_end_type_name' => 'Cấp toa cho về',
+                'create_time' => DB::raw('in_time'),
+                'modify_time' => DB::raw('in_time')
             ]);
 
             // DB::connection('HISPro')
