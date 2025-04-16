@@ -226,6 +226,16 @@
         </div>
       </div>
 
+    <div class="row">
+        <div class="col-lg-6 connectedSortable">
+            <div class="nav-tabs-custom text-center">
+                <div class="tab-content no-padding">
+                    <div id="chart_exam_paraclinical_time" style="width: 100%; height: 400px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
       <div class="row">
         <div class="col-lg-12 connectedSortable">
 
@@ -370,6 +380,52 @@ $("#refreshInterval").change(function () {
     startAutoRefresh(true); // Restart countdown
 });
 
+function fetchExamAndParraclinical() {
+    $.ajax({
+        url: "{{ route('fetch-exam-paraclinical') }}",
+        type: "GET",
+        dataType: 'json',
+    }).done(function (data) {
+        Highcharts.chart('chart_exam_paraclinical_time', {
+            chart: {
+                type: 'column'
+            },
+            title: {
+                text: 'Trung bình Thời gian chờ & Thực hiện theo Loại dịch vụ',
+                style: { fontSize: '18px', fontWeight: 'bold' }
+            },
+            xAxis: {
+                categories: data.categories,
+                title: { text: 'Loại dịch vụ', style: { fontSize: '14px' } },
+                labels: { style: { fontSize: '13px' } }
+            },
+            yAxis: {
+                min: 0,
+                title: { text: 'Thời gian trung bình (phút)', style: { fontSize: '14px' } },
+                labels: { style: { fontSize: '13px' } }
+            },
+            tooltip: {
+                shared: true,
+                valueSuffix: ' phút',
+                style: { fontSize: '13px' }
+            },
+            legend: {
+                itemStyle: { fontSize: '13px' }
+            },
+            plotOptions: {
+                column: {
+                    pointPadding: 0.1,
+                    groupPadding: 0.2,
+                    borderWidth: 0
+                }
+            },
+            series: data.series
+        });
+    }).fail(function (jqXHR, textStatus, errorThrown) {
+        console.error("Lỗi:", textStatus, errorThrown);
+    });
+}
+
 // Hàm để gọi AJAX và vẽ biểu đồ
 function fetchAndRenderChart(serviceId, elementId, title) {
     $.ajax({
@@ -447,7 +503,8 @@ function refreshAllCharts() {
         sum_thuthuat();
         chart_buongbenh();
         chart_noitru();
-        chart_kham_by_room();  
+        chart_kham_by_room();
+        fetchExamAndParraclinical();
     }
 }
 

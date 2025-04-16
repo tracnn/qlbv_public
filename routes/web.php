@@ -73,6 +73,9 @@ Route::group(['middleware' => ['auth', 'check.first.login']], function () {
         Route::get('home/top_service_st_chart', 'HomeController@top_service_st_chart')->name('home.top_service_st_chart');
         Route::get('home/noitru_by_department_chart', 'HomeController@noitru_by_department_chart')->name('home.noitru_by_department_chart');
         Route::get('home/noitru_by_patient_type_chart', 'HomeController@noitru_by_patient_type_chart')->name('home.noitru_by_patient_type_chart');
+
+        Route::get('fetch-exam-paraclinical', 'HomeController@fetchExamAndParraclinical')
+        ->name('fetch-exam-paraclinical');
     });
     
     Route::get('/', 'HomeController@index')->name('home');

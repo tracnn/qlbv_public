@@ -37,6 +37,7 @@ class HomeController extends Controller
         ];
     }
 
+
     public function fetchNewpatient(Request $request)
     {
         $current_date = $this->currentDate();
@@ -317,6 +318,107 @@ class HomeController extends Controller
             'sum_sl' => $sum_sl,
             'chartData' => array_values($roomData)
         ]);
+    }
+
+    public function fetchExamAndParraclinical()
+    {
+        $current_date = $this->currentDate();
+        $data = $this->getExamAndParraclinical($current_date['from_date'], $current_date['to_date']);
+
+        // Gom nhóm theo branch + loại dịch vụ
+        $grouped = $data->groupBy(function ($item) {
+            return $item->branch_name . '|' . $item->service_req_type_name;
+        });
+
+        $stats = [];
+
+        foreach ($grouped as $key => $items) {
+            [$branchName, $serviceReqTypeName] = explode('|', $key);
+            $totalWait = 0;
+            $totalExec = 0;
+            $count = count($items);
+
+            foreach ($items as $item) {
+                $start = \Carbon\Carbon::createFromFormat('YmdHis', $item->start_time);
+                $instr = \Carbon\Carbon::createFromFormat('YmdHis', $item->intruction_time);
+                $finish = \Carbon\Carbon::createFromFormat('YmdHis', $item->finish_time);
+
+                $totalWait += $instr->diffInSeconds($start);
+                $totalExec += $start->diffInSeconds($finish);
+            }
+
+            $stats[] = [
+                'branch' => $branchName,
+                'type' => $serviceReqTypeName,
+                'wait' => round($totalWait / $count / 60),
+                'exec' => round($totalExec / $count / 60),
+                'count' => $count
+            ];
+        }
+
+        $stats = collect($stats);
+
+        // Tập hợp danh sách loại dịch vụ có tổng số lượt
+        $serviceTypeSummary = $stats
+            ->groupBy('type')
+            ->map(function ($items) {
+                return number_format($items->sum('count'));
+            });
+
+        // Biến `categories` thành dạng: "Tên dịch vụ (số lượt)"
+        $serviceTypes = $serviceTypeSummary->keys()->map(function ($type) use ($serviceTypeSummary) {
+            return $type . ' (' . $serviceTypeSummary[$type] . ')';
+        })->values();
+
+        // Gộp series theo từng branch
+        $series = [];
+
+        foreach ($stats->groupBy('branch') as $branch => $items) {
+            $waitSeries = [
+                'name' => $branch . ' - Thời gian chờ',
+                'data' => $serviceTypeSummary->keys()->map(function ($type) use ($items) {
+                    $item = $items->firstWhere('type', $type);
+                    return $item ? $item['wait'] : 0;
+                })->toArray()
+            ];
+
+            $execSeries = [
+                'name' => $branch . ' - Thời gian thực hiện',
+                'data' => $serviceTypeSummary->keys()->map(function ($type) use ($items) {
+                    $item = $items->firstWhere('type', $type);
+                    return $item ? $item['exec'] : 0;
+                })->toArray()
+            ];
+
+            $series[] = $waitSeries;
+            $series[] = $execSeries;
+        }
+
+        return response()->json([
+            'categories' => $serviceTypes,
+            'series' => $series
+        ]);
+    }
+
+    private function getExamAndParraclinical($from_date, $to_date)
+    {
+        return DB::connection('HISPro')
+        ->table('his_sere_serv')
+        ->join('his_service_req', 'his_service_req.id', '=', 'his_sere_serv.service_req_id')
+        ->join('his_branch', 'his_branch.id', '=', 'his_sere_serv.tdl_execute_branch_id')
+        ->join('his_service_req_type', 'his_service_req_type.id', '=', 'his_service_req.service_req_type_id')
+        ->select('his_branch.branch_name',
+            'his_service_req_type.service_req_type_name',
+            'his_service_req.intruction_time',
+            'his_service_req.start_time',
+            'his_service_req.finish_time'
+        )
+        ->whereBetween('intruction_time', [$from_date, $to_date])
+        ->whereIn('his_service_req.service_req_type_id', [1,2,3,5,8,9,12,13])
+        ->where('his_service_req.is_active', 1)
+        ->where('his_service_req.is_delete', 0)
+        ->whereNotNull('finish_time')
+        ->get();
     }
 
     private function serviceByType($from_date, $to_date, $serviceType = null)
