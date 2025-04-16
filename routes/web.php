@@ -53,6 +53,7 @@ Route::group(['middleware' => ['auth', 'check.first.login']], function () {
 
     Route::group(['middleware' => ['checkrole:dashboard']], function () {
         Route::get('fetch-noi-tru', 'HomeController@fetchNoitru')->name('fetch-noi-tru');
+        Route::get('fetch-dieu-tri-ngoai-tru', 'HomeController@fetchDieutriNgoaitru')->name('fetch-dieu-tri-ngoai-tru');
         Route::get('fetch-doanh-thu', 'HomeController@fetchDoanhthu')->name('fetch-doanh-thu');
         Route::get('fetch-treatment', 'HomeController@fetchTreatment')->name('fetch-treatment');
 
@@ -67,6 +68,8 @@ Route::group(['middleware' => ['auth', 'check.first.login']], function () {
         ->name('fetch-out-treatment-group-treatment-type');
 
         Route::get('home/xml_chart', 'HomeController@xml_chart')->name('home.xml_chart');
+        Route::get('fetch-patient-in-room-ngoai-tru', 'HomeController@fetchPatientInRoomDieutriNgoaitru')
+        ->name('fetch-patient-in-room-ngoai-tru');
         Route::get('home/treatment_type_chart', 'HomeController@treatment_type_chart')->name('home.treatment_type_chart');
         Route::get('home/treatment_number_chart', 'HomeController@treatment_number_chart')->name('home.treatment_number_chart');
         Route::get('home/top_service_sl_chart', 'HomeController@top_service_sl_chart')->name('home.top_service_sl_chart');

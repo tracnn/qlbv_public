@@ -197,7 +197,7 @@
     </div>
     <!-- Dòng thứ 2 -->
 
-      <div class="row">
+    <div class="row">
         <div class="col-lg-6 connectedSortable">
 
             <!-- Custom tabs (Charts with tabs)-->
@@ -224,7 +224,38 @@
                 </div>
             </div>
         </div>
-      </div>
+    </div>
+
+    @if(config("organization.is_bieudo_dieutringoaitru"))
+    <div class="row">
+        <div class="col-lg-6 connectedSortable">
+
+            <!-- Custom tabs (Charts with tabs)-->
+            <div class="nav-tabs-custom">
+                <!-- Tabs within a box -->
+                <div class="tab-content no-padding">
+                    <!-- Morris chart - Sales -->
+                    <div class="chart tab-pane active" style="position: relative;">
+                        <div id="chart_buongbenh_dieutringoaitru" style="width:100%; height:500px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6 connectedSortable">
+            <!-- Custom tabs (Charts with tabs)-->
+            <div class="nav-tabs-custom">
+                <!-- Tabs within a box -->
+                <div class="tab-content no-padding">
+                    <!-- Morris chart - Sales -->
+                    <div class="chart tab-pane active" style="position: relative;">
+                        <div id="chart_vaovien_dieutringoaitru" style="width:100%; height:500px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
 
     <div class="row">
         <div class="col-lg-6 connectedSortable">
@@ -367,6 +398,7 @@
 <script type="text/javascript">
 numeral.locale('vi');
 var canDashboard = @json(auth()->user()->hasRole('dashboard'));
+const is_bieudo_dieutringoaitru = @json(config('organization.is_bieudo_dieutringoaitru'));
 
 let refreshInterval = parseInt($("#refreshInterval").val()); // Lấy giá trị mặc định
 let countdown = refreshInterval / 1000; // Chuyển đổi sang giây
@@ -573,6 +605,10 @@ function refreshAllCharts() {
         chart_kham_by_room();
         fetchExamAndParraclinical();
         fetchDiagnoticImaging();
+        if (is_bieudo_dieutringoaitru) {
+            chart_dieutringoaitru();
+            chart_patientInRoomNgoaitru();
+        }
     }
 }
 
@@ -988,6 +1024,134 @@ function chart_noitru() {
         $("#sum_noitru").text(numeral(dataObj.sum_sl).format('0,0'));
 
         Highcharts.chart('chart_noitru', {
+            chart: {
+                type: dataObj.type // 'bar' hoặc 'column'
+            },
+            title: {
+                text: dataObj.title
+            },
+            xAxis: {
+                categories: dataObj.labels,
+                title: {
+                    text: 'Khoa điều trị'
+                },
+                labels: {
+                    rotation: 0, // Xoay nhãn để dễ đọc
+                    style: {
+                        fontSize: '13px',
+                        fontFamily: 'Verdana, sans-serif'
+                    }
+                }
+            },
+            yAxis: {
+                min: 0,
+                title: {
+                    text: 'Số lượng bệnh nhân'
+                },
+                labels: {
+                    formatter: function() {
+                        return Highcharts.numberFormat(this.value, 0, ',', '.'); // Định dạng số
+                    }
+                }
+            },
+            tooltip: {
+                pointFormat: '<b>{point.y}</b> bệnh nhân'
+            },
+            legend: {
+                enabled: false // Ẩn legend nếu không cần thiết
+            },
+            series: [{
+                name: 'Số lượng',
+                data: dataObj.datasets[0].data, // Dữ liệu số lượng nội trú
+                colorByPoint: true, // Tự động đổi màu
+                dataLabels: {
+                    enabled: true,
+                    format: '{point.y}', // Hiển thị số trên cột
+                    style: {
+                        fontSize: '13px',
+                        fontWeight: 'bold'
+                    }
+                }
+            }]
+        });
+    }).fail(function(jqXHR, textStatus, errorThrown) {
+        console.log(textStatus + ': ' + errorThrown);
+    });
+}
+
+function chart_dieutringoaitru() {
+    $.ajax({
+        url: "{{route('fetch-dieu-tri-ngoai-tru')}}",
+        type: "GET",
+        dataType: 'json',
+    }).done(function(rtnData) {
+        let dataObj = Array.isArray(rtnData) ? rtnData[0] : rtnData;
+
+        Highcharts.chart('chart_vaovien_dieutringoaitru', {
+            chart: {
+                type: dataObj.type // 'bar' hoặc 'column'
+            },
+            title: {
+                text: dataObj.title
+            },
+            xAxis: {
+                categories: dataObj.labels,
+                title: {
+                    text: 'Khoa điều trị'
+                },
+                labels: {
+                    rotation: 0, // Xoay nhãn để dễ đọc
+                    style: {
+                        fontSize: '13px',
+                        fontFamily: 'Verdana, sans-serif'
+                    }
+                }
+            },
+            yAxis: {
+                min: 0,
+                title: {
+                    text: 'Số lượng bệnh nhân'
+                },
+                labels: {
+                    formatter: function() {
+                        return Highcharts.numberFormat(this.value, 0, ',', '.'); // Định dạng số
+                    }
+                }
+            },
+            tooltip: {
+                pointFormat: '<b>{point.y}</b> bệnh nhân'
+            },
+            legend: {
+                enabled: false // Ẩn legend nếu không cần thiết
+            },
+            series: [{
+                name: 'Số lượng',
+                data: dataObj.datasets[0].data, // Dữ liệu số lượng nội trú
+                colorByPoint: true, // Tự động đổi màu
+                dataLabels: {
+                    enabled: true,
+                    format: '{point.y}', // Hiển thị số trên cột
+                    style: {
+                        fontSize: '13px',
+                        fontWeight: 'bold'
+                    }
+                }
+            }]
+        });
+    }).fail(function(jqXHR, textStatus, errorThrown) {
+        console.log(textStatus + ': ' + errorThrown);
+    });
+}
+
+function chart_patientInRoomNgoaitru() {
+    $.ajax({
+        url: "{{route('fetch-patient-in-room-ngoai-tru')}}",
+        type: "GET",
+        dataType: 'json',
+    }).done(function(rtnData) {
+        let dataObj = Array.isArray(rtnData) ? rtnData[0] : rtnData;
+
+        Highcharts.chart('chart_buongbenh_dieutringoaitru', {
             chart: {
                 type: dataObj.type // 'bar' hoặc 'column'
             },

@@ -17,4 +17,5 @@ return [
     ],
     'base_url' => '',
     'organization_name' => 'Bệnh viện Đa khoa',
+    'is_bieudo_dieutringoaitru' => false,
 ];

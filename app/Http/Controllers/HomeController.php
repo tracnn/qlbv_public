@@ -183,7 +183,11 @@ class HomeController extends Controller
     public function fetchNoitru(Request $request)
     {
         $current_date = $this->currentDate();
-        $model = $this->noitru($current_date['from_date'], $current_date['to_date']);
+        $model = $this->getTreatmentByTreatmentType(
+            $current_date['from_date'], 
+            $current_date['to_date'],
+            [3,4]
+        );
 
         $sum_sl = $model->sum('so_luong');
 
@@ -200,7 +204,48 @@ class HomeController extends Controller
 
         $returnData[] = [
             'type' => 'bar',
-            'title' => 'Điều trị nội trú: ' . number_format($sum_sl),
+            'title' => 'VV Điều trị nội trú: ' . number_format($sum_sl),
+            'labels' => $labels,
+            'datasets' => [
+                [
+                    'data' => $data,
+                    //'borderColor' => $borderColor,//"rgb(255, 129, 232)",
+                    'backgroundColor' => $backgroundColor,//"rgb(93, 158, 178)",
+                    'label' => "Tổng cộng: " . number_format($sum_sl),
+                    'fill' => true
+                ],
+            ],
+            'sum_sl' => $sum_sl // Gửi tổng số lượng để frontend hiển thị
+        ];  
+
+        return json_encode($returnData);
+    }
+
+    public function fetchDieutriNgoaitru(Request $request)
+    {
+        $current_date = $this->currentDate();
+        $model = $this->getTreatmentByTreatmentType(
+            $current_date['from_date'], 
+            $current_date['to_date'],
+            [2]
+        );
+
+        $sum_sl = $model->sum('so_luong');
+
+        $labels[] = '';
+        $data[] = '';
+        $backgroundColor[] = '';
+        //$borderColor[] = '';
+        foreach ($model as $key => $value) {
+            $labels[$key] = $value->department_name;
+            $data[$key] = doubleval($value->so_luong);
+            $backgroundColor[$key] = "rgba(" .rand(0,255) .',' .rand(0,255) .',' .rand(0,255) .',0.7)';
+            //$borderColor[$key] = "rgba(" .rand(0,255) .',' .rand(0,255) .',' .rand(0,255) .')';
+        }
+
+        $returnData[] = [
+            'type' => 'bar',
+            'title' => 'VV Điều trị ngoại trú: ' . number_format($sum_sl),
             'labels' => $labels,
             'datasets' => [
                 [
@@ -583,14 +628,14 @@ class HomeController extends Controller
         ->get();
     }
 
-    private function noitru($from_date, $to_date)
+    private function getTreatmentByTreatmentType($from_date, $to_date, $treatmentTypes)
     {
         return DB::connection('HISPro')
         ->table('his_treatment')
         ->join('his_department', 'his_treatment.last_department_id', '=', 'his_department.id')
         ->selectRaw('count(*) as so_luong,last_department_id,department_name')
         ->whereBetween('in_time', [$from_date, $to_date])
-        ->where('tdl_treatment_type_id', config('__tech.treatment_type_noitru'))
+        ->whereIn('tdl_treatment_type_id', $treatmentTypes)
         ->where('his_treatment.is_delete',0)
         ->groupBy('last_department_id','department_name')
         ->orderBy('so_luong','desc')
@@ -663,27 +708,7 @@ class HomeController extends Controller
             return redirect()->route('home');
         }
 
-        $model = DB::connection('HISPro')
-        ->table('his_treatment_bed_room')
-        ->join('his_bed_room','his_treatment_bed_room.bed_room_id','=','his_bed_room.id')
-        ->join('his_room','his_bed_room.room_id','=','his_room.id')
-        ->join('his_department','his_room.department_id','=','his_department.id')
-        ->join('his_treatment','his_treatment_bed_room.treatment_id','=','his_treatment.id')
-        ->leftjoin('his_co_treatment','his_treatment_bed_room.co_treatment_id','=','his_co_treatment.id')
-        ->selectRaw('count(*) as so_luong,his_department.department_name')
-        ->whereNull('his_treatment_bed_room.remove_time')
-        ->whereNull('his_co_treatment.id')
-        ->where('his_bed_room.is_active',1)
-        ->where('his_room.is_active',1)
-        ->where('his_treatment.tdl_treatment_type_id', config('__tech.treatment_type_noitru'))
-        ->where('his_treatment_bed_room.is_delete',0)
-        ->where( function($q) {
-            $q->whereNull('out_time')
-            ->orWhere('out_time', '>', date_format(now(),'YmdHis'));
-        })
-        ->groupBy('his_department.department_name')
-        ->orderBy('so_luong','desc')
-        ->get();
+        $model = $this->getPatientInRoomByTreatmentType([3,4]);
 
         $sum_sl = $model->sum('so_luong');
 
@@ -699,7 +724,7 @@ class HomeController extends Controller
         }
         $returnData[] = array(
             'type' => 'bar',
-            'title' => 'Buồng điều trị: ' . number_format($sum_sl),
+            'title' => 'Buồng điều trị nội trú: ' . number_format($sum_sl),
             'labels' => $labels,
             'datasets' => array(
                 array(
@@ -714,7 +739,68 @@ class HomeController extends Controller
         return json_encode($returnData);
     }
 
-//
+    public function fetchPatientInRoomDieutriNgoaitru(Request $request)
+    {
+        // if (!$request->ajax()) {
+        //     return redirect()->route('home');
+        // }
+
+        $model = $this->getPatientInRoomByTreatmentType([2]);
+
+        $sum_sl = $model->sum('so_luong');
+
+        $labels[] = '';
+        $data[] = '';
+        $backgroundColor[] = '';
+        //$borderColor[] = '';
+        foreach ($model as $key => $value) {
+            $labels[$key] = $value->department_name;
+            $data[$key] = doubleval($value->so_luong);
+            $backgroundColor[$key] = "rgba(" .rand(0,255) .',' .rand(0,255) .',' .rand(0,255) .',0.7)';
+            //$borderColor[$key] = "rgba(" .rand(0,255) .',' .rand(0,255) .',' .rand(0,255) .')';
+        }
+        $returnData[] = array(
+            'type' => 'bar',
+            'title' => 'Buồng điều trị ngoại trú: ' . number_format($sum_sl),
+            'labels' => $labels,
+            'datasets' => array(
+                array(
+                    'data' => $data,
+                    //'borderColor' => $borderColor,//"rgb(255, 129, 232)",
+                    'backgroundColor' => $backgroundColor,//"rgb(93, 158, 178)",
+                    'label' => "Tổng cộng: " . number_format($sum_sl),
+                    'fill' => true
+                ),
+            )
+        );  
+        return json_encode($returnData);
+    }
+
+    private function getPatientInRoomByTreatmentType($treatmentTypes)
+    {
+        return DB::connection('HISPro')
+        ->table('his_treatment_bed_room')
+        ->join('his_bed_room','his_treatment_bed_room.bed_room_id','=','his_bed_room.id')
+        ->join('his_room','his_bed_room.room_id','=','his_room.id')
+        ->join('his_department','his_room.department_id','=','his_department.id')
+        ->join('his_treatment','his_treatment_bed_room.treatment_id','=','his_treatment.id')
+        ->leftjoin('his_co_treatment','his_treatment_bed_room.co_treatment_id','=','his_co_treatment.id')
+        ->selectRaw('count(*) as so_luong,his_department.department_name')
+        ->whereNull('his_treatment_bed_room.remove_time')
+        ->whereNull('his_co_treatment.id')
+        ->where('his_bed_room.is_active',1)
+        ->where('his_room.is_active',1)
+        ->whereIn('his_treatment.tdl_treatment_type_id', $treatmentTypes)
+        ->where('his_treatment_bed_room.is_delete',0)
+        ->where( function($q) {
+            $q->whereNull('out_time')
+            ->orWhere('out_time', '>', date_format(now(),'YmdHis'));
+        })
+        ->groupBy('his_department.department_name')
+        ->orderBy('so_luong','desc')
+        ->get();
+    }
+
     public function treatment_type_chart(Request $request)
     {
         if (!$request->ajax()) {
