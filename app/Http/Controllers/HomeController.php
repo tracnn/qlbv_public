@@ -339,9 +339,24 @@ class HomeController extends Controller
             $count = count($items);
 
             foreach ($items as $item) {
-                $start = \Carbon\Carbon::createFromFormat('YmdHis', $item->start_time);
-                $instr = \Carbon\Carbon::createFromFormat('YmdHis', $item->intruction_time);
-                $finish = \Carbon\Carbon::createFromFormat('YmdHis', $item->finish_time);
+                // Bỏ qua nếu thiếu dữ liệu
+                if (!$item->start_time || !$item->intruction_time || !$item->finish_time) {
+                    continue;
+                }
+
+                // Parse các mốc thời gian
+                try {
+                    $start = \Carbon\Carbon::createFromFormat('YmdHis', $item->start_time);
+                    $instr = \Carbon\Carbon::createFromFormat('YmdHis', $item->intruction_time);
+                    $finish = \Carbon\Carbon::createFromFormat('YmdHis', $item->finish_time);
+                } catch (\Exception $e) {
+                    continue; // Bỏ qua nếu format sai
+                }
+
+                // Kiểm tra logic thời gian
+                if ($start->lessThan($instr) || $start->greaterThan($finish)) {
+                    continue; // Bỏ qua nếu thời gian không hợp lý
+                }
 
                 $totalWait += $instr->diffInSeconds($start);
                 $totalExec += $start->diffInSeconds($finish);
@@ -440,9 +455,24 @@ class HomeController extends Controller
             $count = count($items);
 
             foreach ($items as $item) {
-                $start = \Carbon\Carbon::createFromFormat('YmdHis', $item->start_time);
-                $instr = \Carbon\Carbon::createFromFormat('YmdHis', $item->intruction_time);
-                $finish = \Carbon\Carbon::createFromFormat('YmdHis', $item->finish_time);
+                // Bỏ qua nếu thiếu dữ liệu
+                if (!$item->start_time || !$item->intruction_time || !$item->finish_time) {
+                    continue;
+                }
+
+                // Parse các mốc thời gian
+                try {
+                    $start = \Carbon\Carbon::createFromFormat('YmdHis', $item->start_time);
+                    $instr = \Carbon\Carbon::createFromFormat('YmdHis', $item->intruction_time);
+                    $finish = \Carbon\Carbon::createFromFormat('YmdHis', $item->finish_time);
+                } catch (\Exception $e) {
+                    continue; // Bỏ qua nếu format sai
+                }
+
+                // Kiểm tra logic thời gian
+                if ($start->lessThan($instr) || $start->greaterThan($finish)) {
+                    continue; // Bỏ qua nếu thời gian không hợp lý
+                }
 
                 $totalWait += $instr->diffInSeconds($start);
                 $totalExec += $start->diffInSeconds($finish);
