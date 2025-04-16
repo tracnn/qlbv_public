@@ -423,7 +423,14 @@ function fetchExamAndParraclinical() {
                 column: {
                     pointPadding: 0.1,
                     groupPadding: 0.2,
-                    borderWidth: 0
+                    borderWidth: 0,
+                    dataLabels: {
+                        enabled: true,
+                        style: {
+                            fontSize: '12px',
+                            fontWeight: 'bold'
+                        }
+                    }
                 }
             },
             series: data.series
@@ -469,7 +476,14 @@ function fetchDiagnoticImaging() {
                 column: {
                     pointPadding: 0.1,
                     groupPadding: 0.2,
-                    borderWidth: 0
+                    borderWidth: 0,
+                    dataLabels: {
+                        enabled: true,
+                        style: {
+                            fontSize: '12px',
+                            fontWeight: 'bold'
+                        }
+                    }
                 }
             },
             series: data.series
