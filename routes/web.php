@@ -76,6 +76,8 @@ Route::group(['middleware' => ['auth', 'check.first.login']], function () {
 
         Route::get('fetch-exam-paraclinical', 'HomeController@fetchExamAndParraclinical')
         ->name('fetch-exam-paraclinical');
+        Route::get('fetch-diagnotic-imaging', 'HomeController@fetchDiagnoticImaging')
+        ->name('fetch-diagnotic-imaging');
     });
     
     Route::get('/', 'HomeController@index')->name('home');
