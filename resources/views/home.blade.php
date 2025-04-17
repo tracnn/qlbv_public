@@ -80,7 +80,7 @@
           <div class="small-box bg-yellow">
             <div class="inner">
               <h3 id="sum_newpatient">0</h3>
-              <p>VV: Hồ sơ mới</p>
+              <p>VV: Bệnh nhân mới</p>
             </div>
             <div class="icon">
               <i class="ion ion-person-add"></i>
