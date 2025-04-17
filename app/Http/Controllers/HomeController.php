@@ -245,7 +245,7 @@ class HomeController extends Controller
 
         $returnData[] = [
             'type' => 'bar',
-            'title' => 'VV Điều trị ngoại trú(' .\Carbon\Carbon::now()->format('d/m/Y') .'): ' . number_format($sum_sl),
+            'title' => 'VV Điều trị ngoại trú (' .\Carbon\Carbon::now()->format('d/m/Y') .'): ' . number_format($sum_sl),
             'labels' => $labels,
             'datasets' => [
                 [
