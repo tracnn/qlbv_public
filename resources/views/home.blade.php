@@ -67,7 +67,7 @@
           <div class="small-box bg-green">
             <div class="inner">
               <h3 id="sum_treatment">0</h3>
-              <p>Hồ sơ vào viện</p>
+              <p>Số lượt đăng ký khám</p>
             </div>
             <div class="icon">
               <i class="ion ion-stats-bars"></i>
