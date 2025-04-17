@@ -558,7 +558,8 @@ function fetchAndRenderChart(serviceId, elementId, title) {
                         depth: 35,
                         dataLabels: {
                             enabled: true,
-                            format: '{point.name}: {point.y} ({point.percentage:.1f}%)'
+                            format: '{point.name}: {point.y} ({point.percentage:.1f}%)',
+                            style: { fontSize: '10px' }
                         }
                     }
                 },
@@ -673,7 +674,8 @@ function sum_treatment() {
                         depth: 45,
                         dataLabels: {
                             enabled: true,
-                            format: '{point.name}: {point.percentage:.1f}%'
+                            format: '{point.name}: {point.percentage:.1f}%',
+                            style: { fontSize: '12px' }
                         }
                     }
                 },
@@ -829,7 +831,8 @@ function sum_doanhthu() {
                         depth: 45, // Độ sâu 3D
                         dataLabels: {
                             enabled: true,
-                            format: '{point.name}: {point.percentage:.1f}%'
+                            format: '{point.name}: {point.percentage:.1f}%',
+                            style: { fontSize: '12px' }
                         }
                     }
                 },
@@ -838,7 +841,7 @@ function sum_doanhthu() {
                     data: rtnData.labels.map((label, i) => ({
                         name: label,
                         y: rtnData.datasets[0].data[i],
-                        color: rtnData.datasets[0].backgroundColor[i] // Giữ nguyên màu sắc từ backend
+                        color: rtnData.datasets[0].backgroundColor[i]
                     }))
                 }]
             });
