@@ -544,10 +544,12 @@ function fetchAndRenderChart(serviceId, elementId, title) {
                     }
                 },
                 title: {
-                    text: `${title}: ${numeral(response.sum_sl).format('0,0')}`
+                    text: `${title}: ${numeral(response.sum_sl).format('0,0')}`,
+                    style: { fontSize: '18px', fontWeight: 'bold' }
                 },
                 tooltip: {
-                    pointFormat: '<b>{point.y} ({point.percentage:.1f}%)</b>'
+                    pointFormat: '<b>{point.y} ({point.percentage:.1f}%)</b>',
+                    style: { fontSize: '13px', fontWeight: 'bold' }
                 },
                 plotOptions: {
                     pie: {
@@ -662,7 +664,8 @@ function sum_treatment() {
                     }
                 },
                 title: {
-                    text: rtnData.title + ': ' + numeral(rtnData.sum_sl).format('0,0')
+                    text: rtnData.title + ': ' + numeral(rtnData.sum_sl).format('0,0'),
+                    style: { fontSize: '18px', fontWeight: 'bold' }
                 },
                 plotOptions: {
                     pie: {
@@ -817,7 +820,8 @@ function sum_doanhthu() {
                     }
                 },
                 title: {
-                    text: rtnData.title + ': ' + numeral(roundedValue).format('0,0') + ' Tr'
+                    text: rtnData.title + ': ' + numeral(roundedValue).format('0,0') + ' Tr',
+                    style: { fontSize: '18px', fontWeight: 'bold' }
                 },
                 plotOptions: {
                     pie: {
@@ -860,12 +864,14 @@ function chart_buongbenh() {
                     type: data.type // 'bar'
                 },
                 title: {
-                    text: data.title
+                    text: data.title,   
+                    style: { fontSize: '18px', fontWeight: 'bold' }
                 },
                 xAxis: {
                     categories: data.labels,
                     title: {
-                        text: 'Khoa điều trị'
+                        text: 'Khoa điều trị',
+                        style: { fontSize: '13px', fontWeight: 'bold' }
                     },
                     labels: {
                         rotation: 0, // Xoay nhãn trục X để dễ đọc hơn
@@ -878,7 +884,8 @@ function chart_buongbenh() {
                 yAxis: {
                     min: 0,
                     title: {
-                        text: 'Số lượng bệnh nhân'
+                        text: 'Số lượng bệnh nhân',
+                        style: { fontSize: '13px', fontWeight: 'bold' }
                     },
                     labels: {
                         formatter: function() {
@@ -887,7 +894,8 @@ function chart_buongbenh() {
                     }
                 },
                 tooltip: {
-                    pointFormat: '{series.name}: <b>{point.y}</b>'
+                    pointFormat: '{series.name}: <b>{point.y}</b>',
+                    style: { fontSize: '13px', fontWeight: 'bold' }
                 },
                 legend: {
                     enabled: false // Tắt legend nếu không cần thiết
@@ -949,12 +957,14 @@ function chart_kham_by_room() {
                             <div><b>Tổng số lượt khám:</b> ${Highcharts.numberFormat(sum_sl, 0, ',', '.')}</div>
                             <div><b>Tổng số phòng thực hiện:</b> ${room_count}</div>
                         </div>
-                    `
+                    `,
+                style: { fontSize: '18px', fontWeight: 'bold' }
             },
             xAxis: {
                 categories: categories,
                 title: {
-                    text: 'Phòng thực hiện'
+                    text: 'Phòng thực hiện',
+                    style: { fontSize: '13px', fontWeight: 'bold' }
                 },
                 labels: {
                     rotation: -45,
@@ -967,7 +977,8 @@ function chart_kham_by_room() {
             yAxis: {
                 min: 0,
                 title: {
-                    text: 'Số lượng bệnh nhân'
+                    text: 'Số lượng bệnh nhân',
+                    style: { fontSize: '13px', fontWeight: 'bold' }
                 },
                 stackLabels: {
                     enabled: true,
@@ -984,7 +995,8 @@ function chart_kham_by_room() {
             },
             tooltip: {
                 shared: true,
-                pointFormat: '<span style="color:{series.color}">●</span> {series.name}: <b>{point.y}</b><br/>'
+                pointFormat: '<span style="color:{series.color}">●</span> {series.name}: <b>{point.y}</b><br/>',
+                style: { fontSize: '13px', fontWeight: 'bold' }
             },
             plotOptions: {
                 column: {
@@ -1003,7 +1015,11 @@ function chart_kham_by_room() {
             },
             legend: {
                 enabled: true,
-                reversed: false
+                reversed: false,    
+                itemStyle: {
+                    fontSize: '13px',
+                    fontWeight: 'bold'
+                }
             },
             series: series
         });
@@ -1028,12 +1044,14 @@ function chart_noitru() {
                 type: dataObj.type // 'bar' hoặc 'column'
             },
             title: {
-                text: dataObj.title
+                text: dataObj.title,
+                style: { fontSize: '18px', fontWeight: 'bold' }
             },
             xAxis: {
                 categories: dataObj.labels,
                 title: {
-                    text: 'Khoa điều trị'
+                    text: 'Khoa điều trị',
+                    style: { fontSize: '13px', fontWeight: 'bold' }
                 },
                 labels: {
                     rotation: 0, // Xoay nhãn để dễ đọc
@@ -1046,7 +1064,8 @@ function chart_noitru() {
             yAxis: {
                 min: 0,
                 title: {
-                    text: 'Số lượng bệnh nhân'
+                    text: 'Số lượng bệnh nhân',
+                    style: { fontSize: '13px', fontWeight: 'bold' }
                 },
                 labels: {
                     formatter: function() {
@@ -1055,7 +1074,8 @@ function chart_noitru() {
                 }
             },
             tooltip: {
-                pointFormat: '<b>{point.y}</b> bệnh nhân'
+                pointFormat: '<b>{point.y}</b> bệnh nhân',
+                style: { fontSize: '13px', fontWeight: 'bold' }
             },
             legend: {
                 enabled: false // Ẩn legend nếu không cần thiết
@@ -1092,12 +1112,14 @@ function chart_dieutringoaitru() {
                 type: dataObj.type // 'bar' hoặc 'column'
             },
             title: {
-                text: dataObj.title
+                text: dataObj.title,
+                style: { fontSize: '18px', fontWeight: 'bold' }
             },
             xAxis: {
                 categories: dataObj.labels,
                 title: {
-                    text: 'Khoa điều trị'
+                    text: 'Khoa điều trị',
+                    style: { fontSize: '13px', fontWeight: 'bold' }
                 },
                 labels: {
                     rotation: 0, // Xoay nhãn để dễ đọc
@@ -1110,7 +1132,8 @@ function chart_dieutringoaitru() {
             yAxis: {
                 min: 0,
                 title: {
-                    text: 'Số lượng bệnh nhân'
+                    text: 'Số lượng bệnh nhân',
+                    style: { fontSize: '13px', fontWeight: 'bold' }
                 },
                 labels: {
                     formatter: function() {
@@ -1119,7 +1142,8 @@ function chart_dieutringoaitru() {
                 }
             },
             tooltip: {
-                pointFormat: '<b>{point.y}</b> bệnh nhân'
+                pointFormat: '<b>{point.y}</b> bệnh nhân',
+                style: { fontSize: '13px', fontWeight: 'bold' }
             },
             legend: {
                 enabled: false // Ẩn legend nếu không cần thiết
@@ -1156,12 +1180,14 @@ function chart_patientInRoomNgoaitru() {
                 type: dataObj.type // 'bar' hoặc 'column'
             },
             title: {
-                text: dataObj.title
+                text: dataObj.title,
+                style: { fontSize: '18px', fontWeight: 'bold' }
             },
             xAxis: {
                 categories: dataObj.labels,
                 title: {
-                    text: 'Khoa điều trị'
+                    text: 'Khoa điều trị',
+                    style: { fontSize: '13px', fontWeight: 'bold' }
                 },
                 labels: {
                     rotation: 0, // Xoay nhãn để dễ đọc
@@ -1174,7 +1200,8 @@ function chart_patientInRoomNgoaitru() {
             yAxis: {
                 min: 0,
                 title: {
-                    text: 'Số lượng bệnh nhân'
+                    text: 'Số lượng bệnh nhân',
+                    style: { fontSize: '13px', fontWeight: 'bold' }
                 },
                 labels: {
                     formatter: function() {
@@ -1183,7 +1210,8 @@ function chart_patientInRoomNgoaitru() {
                 }
             },
             tooltip: {
-                pointFormat: '<b>{point.y}</b> bệnh nhân'
+                pointFormat: '<b>{point.y}</b> bệnh nhân',
+                style: { fontSize: '13px', fontWeight: 'bold' }
             },
             legend: {
                 enabled: false // Ẩn legend nếu không cần thiết
