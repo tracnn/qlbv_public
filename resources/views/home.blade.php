@@ -668,6 +668,10 @@ function sum_treatment() {
                     text: rtnData.title + ': ' + numeral(rtnData.sum_sl).format('0,0'),
                     style: { fontSize: '18px', fontWeight: 'bold' }
                 },
+                tooltip: {
+                    pointFormat: '<b>{point.y} ({point.percentage:.1f}%)</b>',
+                    style: { fontSize: '13px', fontWeight: 'bold' }
+                },
                 plotOptions: {
                     pie: {
                         innerSize: 0,
@@ -824,6 +828,10 @@ function sum_doanhthu() {
                 title: {
                     text: rtnData.title + ': ' + numeral(roundedValue).format('0,0') + ' Tr',
                     style: { fontSize: '18px', fontWeight: 'bold' }
+                },
+                tooltip: {
+                    pointFormat: '<b>{point.y} ({point.percentage:.1f}%)</b>',
+                    style: { fontSize: '13px', fontWeight: 'bold' }
                 },
                 plotOptions: {
                     pie: {
