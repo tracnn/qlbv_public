@@ -687,8 +687,7 @@ function sum_treatment() {
                     name: 'Hồ sơ',
                     data: rtnData.labels.map((label, i) => ({
                         name: label,
-                        y: rtnData.datasets[0].data[i],
-                        color: rtnData.datasets[0].backgroundColor[i]
+                        y: rtnData.datasets[0].data[i]
                     }))
                 }]
             });
@@ -848,8 +847,7 @@ function sum_doanhthu() {
                     name: 'Doanh thu',
                     data: rtnData.labels.map((label, i) => ({
                         name: label,
-                        y: rtnData.datasets[0].data[i],
-                        color: rtnData.datasets[0].backgroundColor[i]
+                        y: rtnData.datasets[0].data[i]
                     }))
                 }]
             });
