@@ -995,7 +995,7 @@ function chart_kham_by_room() {
                     enabled: true,
                     style: {
                         fontWeight: 'bold',
-                        color: 'gray'
+                        fontSize: '11px'
                     }
                 },
                 labels: {
