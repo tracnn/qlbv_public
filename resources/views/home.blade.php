@@ -700,19 +700,8 @@ function startAutoRefresh(firstRun = false) {
     clearInterval(refreshTimer); // Xóa bộ đếm cũ nếu có
     countdown = refreshInterval / 1000; // Reset lại thời gian
 
-    // Lấy giá trị từ input dateRangePicker
-    const range = $('#dateRangePicker').val();
-    let startDate = null;
-    let endDate = null;
-
-    if (range && range.includes(' - ')) {
-        const parts = range.split(' - ');
-        startDate = parts[0];
-        endDate = parts[1];
-    }
-
     if (firstRun) {
-        refreshAllCharts(startDate, endDate); // Chạy ngay lần đầu tiên
+        refreshAllCharts(); // Chạy ngay lần đầu tiên
     }
 
     updateCountdown(); // Hiển thị giá trị ban đầu
@@ -722,6 +711,17 @@ function startAutoRefresh(firstRun = false) {
         updateCountdown();
 
         if (countdown <= 0) {
+            // Lấy giá trị từ input dateRangePicker
+            const range = $('#dateRangePicker').val();
+            let startDate = null;
+            let endDate = null;
+
+            if (range && range.includes(' - ')) {
+                const parts = range.split(' - ');
+                startDate = parts[0];
+                endDate = parts[1];
+            }
+            
             refreshAllCharts(startDate, endDate); // Gọi lại các hàm update dữ liệu
             countdown = refreshInterval / 1000; // Reset lại bộ đếm
         }
