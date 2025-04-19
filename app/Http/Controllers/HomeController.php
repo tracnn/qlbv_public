@@ -209,7 +209,10 @@ class HomeController extends Controller
 
         $returnData[] = [
             'type' => 'bar',
-            'title' => 'VV Điều trị nội trú (' .\Carbon\Carbon::now()->format('d/m/Y') .'): ' . number_format($sum_sl),
+            'title' => 'VV Điều trị nội trú (' .
+                \Carbon\Carbon::parse($current_date['from_date'])->format('d/m/Y') . ' - ' .
+                \Carbon\Carbon::parse($current_date['to_date'])->format('d/m/Y') . '): ' .
+                number_format($sum_sl),
             'labels' => $labels,
             'datasets' => [
                 [
@@ -250,7 +253,10 @@ class HomeController extends Controller
 
         $returnData[] = [
             'type' => 'bar',
-            'title' => 'VV Điều trị ngoại trú (' .\Carbon\Carbon::now()->format('d/m/Y') .'): ' . number_format($sum_sl),
+            'title' => 'VV Điều trị ngoại trú (' .
+                \Carbon\Carbon::parse($current_date['from_date'])->format('d/m/Y') . ' - ' .
+                \Carbon\Carbon::parse($current_date['to_date'])->format('d/m/Y') . '): ' .
+                number_format($sum_sl),
             'labels' => $labels,
             'datasets' => [
                 [
