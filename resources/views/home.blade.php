@@ -384,6 +384,7 @@
 </div>
 
 <div id="refresh-after" class="refresh-after">
+    <i id="ajax-spinner" class="fa fa-spinner fa-spin" style="display:none; font-size:16px; color:#007bff;"></i>
     <span id="countdown-timer">00:00</span>
     <select id="refreshInterval" class="form-control">
         <option value="300000">5 min</option>
@@ -413,6 +414,16 @@
 <script type="text/javascript" src="{{ asset('js/daterangepicker.min.js') }}"></script>
 
 <script type="text/javascript">
+    $(document).ready(function () {
+        $(document).ajaxStart(function () {
+            $('#ajax-spinner').show();
+        });
+
+        $(document).ajaxStop(function () {
+            $('#ajax-spinner').hide();
+        });
+    });
+
     $(document).ready(function () {
         // Hàm khởi tạo ngày mặc định là hôm nay (0h đến 23h59)
         function setDefaultDates() {
@@ -445,7 +456,10 @@
     });
 
     $('#dateRangePicker').on('apply.daterangepicker', function(ev, picker) {
-        refreshAllCharts();
+        var startDate = picker.startDate.format('YYYY-MM-DD HH:mm:ss');
+        var endDate = picker.endDate.format('YYYY-MM-DD HH:mm:ss');
+
+        refreshAllCharts(startDate, endDate);
     });
 </script>
 
@@ -580,11 +594,15 @@ function fetchDiagnoticImaging() {
 }
 
 // Hàm để gọi AJAX và vẽ biểu đồ
-function fetchAndRenderChart(serviceId, elementId, title) {
+function fetchAndRenderChart(serviceId, elementId, title, startDate, endDate) {
     $.ajax({
         url: `{{ route('fetch-service-by-type', '') }}/${serviceId}`,
         type: "GET",
         dataType: 'json',
+        data: {
+            startDate: startDate,
+            endDate: endDate
+        }
     })
     .done(function(response) {
         if (response && response.chartData.length > 0) {
@@ -633,7 +651,15 @@ function fetchAndRenderChart(serviceId, elementId, title) {
 }
 
 // Hàm cập nhật tất cả các biểu đồ
-function refreshAllCharts() {
+function refreshAllCharts(startDate, endDate) {
+    if (!startDate || !endDate) {
+        const now = moment();
+        startDate = now.clone().startOf('day').format('YYYY-MM-DD HH:mm:ss');
+        endDate = now.clone().endOf('day').format('YYYY-MM-DD HH:mm:ss');
+    }
+
+    console.log(startDate, endDate);
+
     if (canDashboard) {
         const chartConfigs = [
             { id: 5, element: 'chart_tdcn', title: 'TDCN' },
@@ -646,25 +672,25 @@ function refreshAllCharts() {
         ];
 
         chartConfigs.forEach(config => {
-            fetchAndRenderChart(config.id, config.element, config.title);
+            fetchAndRenderChart(config.id, config.element, config.title, startDate, endDate);
         });
 
         // Gọi AJAX cập nhật số liệu cho các biểu đồ khác
-        sum_treatment();
-        sum_newpatient();
-        sum_chuyenvien();
-        sum_doanhthu();
-        sum_outtreatmentgrouptreatmenttype();
-        sum_phauthuat();
-        sum_thuthuat();
-        chart_buongbenh();
-        chart_noitru();
-        chart_kham_by_room();
-        fetchExamAndParraclinical();
-        fetchDiagnoticImaging();
+        sum_treatment(startDate, endDate);
+        sum_newpatient(startDate, endDate);
+        sum_chuyenvien(startDate, endDate);
+        sum_doanhthu(startDate, endDate);
+        sum_outtreatmentgrouptreatmenttype(startDate, endDate);
+        sum_phauthuat(startDate, endDate);
+        sum_thuthuat(startDate, endDate);
+        chart_buongbenh(startDate, endDate);
+        chart_noitru(startDate, endDate);
+        chart_kham_by_room(startDate, endDate);
+        fetchExamAndParraclinical(startDate, endDate);
+        fetchDiagnoticImaging(startDate, endDate);
         if (is_bieudo_dieutringoaitru) {
-            chart_dieutringoaitru();
-            chart_patientInRoomNgoaitru();
+            chart_dieutringoaitru(startDate, endDate);
+            chart_patientInRoomNgoaitru(startDate, endDate);
         }
     }
 }
@@ -674,8 +700,19 @@ function startAutoRefresh(firstRun = false) {
     clearInterval(refreshTimer); // Xóa bộ đếm cũ nếu có
     countdown = refreshInterval / 1000; // Reset lại thời gian
 
+    // Lấy giá trị từ input dateRangePicker
+    const range = $('#dateRangePicker').val();
+    let startDate = null;
+    let endDate = null;
+
+    if (range && range.includes(' - ')) {
+        const parts = range.split(' - ');
+        startDate = parts[0];
+        endDate = parts[1];
+    }
+
     if (firstRun) {
-        refreshAllCharts(); // Chạy ngay lần đầu tiên
+        refreshAllCharts(startDate, endDate); // Chạy ngay lần đầu tiên
     }
 
     updateCountdown(); // Hiển thị giá trị ban đầu
@@ -685,7 +722,7 @@ function startAutoRefresh(firstRun = false) {
         updateCountdown();
 
         if (countdown <= 0) {
-            refreshAllCharts(); // Gọi lại các hàm update dữ liệu
+            refreshAllCharts(startDate, endDate); // Gọi lại các hàm update dữ liệu
             countdown = refreshInterval / 1000; // Reset lại bộ đếm
         }
     }, 1000);
@@ -697,11 +734,15 @@ $(document).ready(function () {
 });
 
 //chart_treatment
-function sum_treatment() {
+function sum_treatment(startDate, endDate) {
     $.ajax({
         url: "{{ route('fetch-treatment') }}",
         type: "GET",
         dataType: 'json',
+        data: {
+            startDate: startDate,
+            endDate: endDate
+        }
     })
     .done(function (rtnData) {
         if (rtnData && rtnData.datasets && rtnData.datasets.length > 0) {
@@ -754,11 +795,15 @@ function sum_treatment() {
     });    
 }
 
-function sum_newpatient() {
+function sum_newpatient(startDate, endDate) {
     $.ajax({
         url: "{{ route('fetch-new-patient') }}",
         type: "GET",
         dataType: 'json',
+        data: {
+            startDate: startDate,
+            endDate: endDate
+        }
     })
     .done(function(rtnData) {
 
@@ -776,11 +821,15 @@ function sum_newpatient() {
     });    
 }
 
-function sum_chuyenvien() {
+function sum_chuyenvien(startDate, endDate) {
     $.ajax({
         url: "{{ route('fetch-chuyen-vien') }}",
         type: "GET",
         dataType: 'json',
+        data: {
+            startDate: startDate,
+            endDate: endDate
+        }
     })
     .done(function(rtnData) {
         if (rtnData && rtnData.datasets && rtnData.datasets.length > 0) {
@@ -795,11 +844,15 @@ function sum_chuyenvien() {
     });    
 }
 
-function sum_phauthuat() {
+function sum_phauthuat(startDate, endDate) {
     $.ajax({
         url: `{{ route('fetch-service-by-type', '10') }}`,
         type: "GET",
         dataType: 'json',
+        data: {
+            startDate: startDate,
+            endDate: endDate
+        }
     })
     .done(function(rtnData) {
         if (rtnData && rtnData.sum_sl > 0) {
@@ -814,11 +867,15 @@ function sum_phauthuat() {
     });   
 }
 
-function sum_outtreatmentgrouptreatmenttype() {
+function sum_outtreatmentgrouptreatmenttype(startDate, endDate) {
     $.ajax({
         url: `{{ route('fetch-out-treatment-group-treatment-type') }}`,
         type: "GET",
         dataType: 'json',
+        data: {
+            startDate: startDate,
+            endDate: endDate
+        }
     })
     .done(function(rtnData) {
         if (rtnData && rtnData.total > 0) {
@@ -837,11 +894,15 @@ function sum_outtreatmentgrouptreatmenttype() {
 }
 
 
-function sum_thuthuat() {
+function sum_thuthuat(startDate, endDate) {
     $.ajax({
         url: `{{ route('fetch-service-by-type', '4') }}`,
         type: "GET",
         dataType: 'json',
+        data: {
+            startDate: startDate,
+            endDate: endDate
+        }
     })
     .done(function(rtnData) {
         if (rtnData && rtnData.sum_sl > 0) {
@@ -856,11 +917,15 @@ function sum_thuthuat() {
     });   
 }
 
-function sum_doanhthu() {
+function sum_doanhthu(startDate, endDate) {
     $.ajax({
         url: "{{ route('fetch-doanh-thu') }}",
         type: "GET",
         dataType: 'json',
+        data: {
+            startDate: startDate,
+            endDate: endDate
+        }
     })
     .done(function (rtnData) {
         if (rtnData && rtnData.datasets && rtnData.datasets.length > 0) {
@@ -914,12 +979,16 @@ function sum_doanhthu() {
     });    
 }    
 
-function chart_buongbenh() {
+function chart_buongbenh(startDate, endDate) {
     //Buồng bệnh
     $.ajax({
         url: "{{ route('home.xml_chart') }}",
         type: "GET",
         dataType: 'json',
+        data: {
+            startDate: startDate,
+            endDate: endDate
+        }
     }).done(function(rtnData) {
         $.each(rtnData, function(dataType, data) {
             Highcharts.chart('chart_buongbenh', {
@@ -983,11 +1052,15 @@ function chart_buongbenh() {
     });    
 }
 
-function chart_kham_by_room() {
+function chart_kham_by_room(startDate, endDate) {
     $.ajax({
         url: "{{ route('fetch-kham-by-room') }}",
         type: "GET",
         dataType: 'json',
+        data: {
+            startDate: startDate,
+            endDate: endDate
+        }
     }).done(function (rtnData) {
         const chartData = rtnData.chartData || [];
         const sum_sl = rtnData.sum_sl || 0;
@@ -1091,11 +1164,15 @@ function chart_kham_by_room() {
     });
 }
     
-function chart_noitru() {
+function chart_noitru(startDate, endDate) {
     $.ajax({
         url: "{{route('fetch-noi-tru')}}",
         type: "GET",
         dataType: 'json',
+        data: {
+            startDate: startDate,
+            endDate: endDate
+        }
     }).done(function(rtnData) {
         let dataObj = Array.isArray(rtnData) ? rtnData[0] : rtnData;
 
@@ -1162,11 +1239,15 @@ function chart_noitru() {
     });
 }
 
-function chart_dieutringoaitru() {
+function chart_dieutringoaitru(startDate, endDate) {
     $.ajax({
         url: "{{route('fetch-dieu-tri-ngoai-tru')}}",
         type: "GET",
         dataType: 'json',
+        data: {
+            startDate: startDate,
+            endDate: endDate
+        }
     }).done(function(rtnData) {
         let dataObj = Array.isArray(rtnData) ? rtnData[0] : rtnData;
 
@@ -1230,11 +1311,15 @@ function chart_dieutringoaitru() {
     });
 }
 
-function chart_patientInRoomNgoaitru() {
+function chart_patientInRoomNgoaitru(startDate, endDate) {
     $.ajax({
         url: "{{route('fetch-patient-in-room-ngoai-tru')}}",
         type: "GET",
         dataType: 'json',
+        data: {
+            startDate: startDate,
+            endDate: endDate
+        }
     }).done(function(rtnData) {
         let dataObj = Array.isArray(rtnData) ? rtnData[0] : rtnData;
 

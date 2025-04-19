@@ -25,12 +25,17 @@ class HomeController extends Controller
         return view('home');
     }
 
-    private function currentDate()
+    private function currentDate($startDate = null, $endDate = null)
     {
-        $current_date = Carbon::now()->format('Ymd');
-        $from_date = $current_date . '000000';
-        $to_date = $current_date . '235959';
-
+        if ($startDate && $endDate) {
+            $from_date = Carbon::parse($startDate)->format('YmdHis');
+            $to_date = Carbon::parse($endDate)->format('YmdHis');
+        } else {
+            $now = Carbon::now();
+            $from_date = $now->copy()->startOfDay()->format('YmdHis');
+            $to_date = $now->copy()->endOfDay()->format('YmdHis');
+        }
+    
         return [
             'from_date' => $from_date,
             'to_date' => $to_date
@@ -40,7 +45,7 @@ class HomeController extends Controller
 
     public function fetchNewpatient(Request $request)
     {
-        $current_date = $this->currentDate();
+        $current_date = $this->currentDate($request->input('startDate'), $request->input('endDate'));
         $model = $this->newpatient($current_date['from_date'], $current_date['to_date']);
 
         $sum_sl = $model->sum('so_luong');
@@ -74,7 +79,7 @@ class HomeController extends Controller
 
     public function fetchTreatment(Request $request)
     {
-        $current_date = $this->currentDate();
+        $current_date = $this->currentDate($request->input('startDate'), $request->input('endDate'));
         $model = $this->inTreatment($current_date['from_date'], $current_date['to_date']);
 
         $sum_sl = $model->sum('so_luong');
@@ -108,7 +113,7 @@ class HomeController extends Controller
 
     public function fetchDoanhthu(Request $request)
     {
-        $current_date = $this->currentDate();
+        $current_date = $this->currentDate($request->input('startDate'), $request->input('endDate'));
         $model = $this->doanhthu($current_date['from_date'], $current_date['to_date']);
 
         $sum_sl = $model->sum('thanh_tien');
@@ -142,7 +147,7 @@ class HomeController extends Controller
 
     public function fetchChuyenvien(Request $request)
     {
-        $current_date = $this->currentDate();
+        $current_date = $this->currentDate($request->input('startDate'), $request->input('endDate'));
         $model = $this->treatmentsByTreatmentEndType(
             $current_date['from_date'], 
             $current_date['to_date'],
@@ -182,7 +187,7 @@ class HomeController extends Controller
 
     public function fetchNoitru(Request $request)
     {
-        $current_date = $this->currentDate();
+        $current_date = $this->currentDate($request->input('startDate'), $request->input('endDate'));
         $model = $this->getTreatmentByTreatmentType(
             $current_date['from_date'], 
             $current_date['to_date'],
@@ -223,7 +228,7 @@ class HomeController extends Controller
 
     public function fetchDieutriNgoaitru(Request $request)
     {
-        $current_date = $this->currentDate();
+        $current_date = $this->currentDate($request->input('startDate'), $request->input('endDate'));
         $model = $this->getTreatmentByTreatmentType(
             $current_date['from_date'], 
             $current_date['to_date'],
@@ -264,7 +269,7 @@ class HomeController extends Controller
 
     public function fetchOutTreatmentGroupTreatmentType(Request $request)
     {
-        $current_date = $this->currentDate();
+        $current_date = $this->currentDate($request->input('startDate'), $request->input('endDate'));
         $data = $this->outTreatment($current_date['from_date'], $current_date['to_date']);
 
         $countByTypeId = $data->groupBy('id')->map->count();
@@ -278,9 +283,9 @@ class HomeController extends Controller
         ]);
     }
 
-    public function fetchServiceByType($id)
+    public function fetchServiceByType(Request $request, $id)
     {
-        $current_date = $this->currentDate();
+        $current_date = $this->currentDate($request->input('startDate'), $request->input('endDate'));
 
         $model = $this->serviceByType(
             $current_date['from_date'], 
@@ -309,9 +314,9 @@ class HomeController extends Controller
         ]);
     }
 
-    public function fetchKhamByRoom()
+    public function fetchKhamByRoom(Request $request)
     {
-        $current_date = $this->currentDate();
+        $current_date = $this->currentDate($request->input('startDate'), $request->input('endDate'));
 
         $data = DB::connection('HISPro')
             ->table('his_service_req')
@@ -365,9 +370,9 @@ class HomeController extends Controller
         ]);
     }
 
-    public function fetchExamAndParraclinical()
+    public function fetchExamAndParraclinical(Request $request)
     {
-        $current_date = $this->currentDate();
+        $current_date = $this->currentDate($request->input('startDate'), $request->input('endDate'));
         $data = $this->getExamAndParraclinical($current_date['from_date'], $current_date['to_date']);
 
         // Gom nhóm theo branch + loại dịch vụ
@@ -481,9 +486,9 @@ class HomeController extends Controller
         ->get();
     }
 
-    public function fetchDiagnoticImaging()
+    public function fetchDiagnoticImaging(Request $request)
     {
-        $current_date = $this->currentDate();
+        $current_date = $this->currentDate($request->input('startDate'), $request->input('endDate'));
         $data = $this->getDiagnoticImaging($current_date['from_date'], $current_date['to_date']);
 
         // Gom nhóm theo branch + loại dịch vụ
