@@ -431,7 +431,6 @@
                     firstDay: 1,
                     applyLabel: 'Áp dụng',
                     cancelLabel: 'Hủy',
-                    customRangeLabel: 'Tùy chọn',
                 }
             }, function (start, end) {
                 // Set lại giá trị hiển thị trong ô input khi người dùng chọn
@@ -444,7 +443,7 @@
 
         setDefaultDates();
     });
-    
+
     $('#dateRangePicker').on('apply.daterangepicker', function(ev, picker) {
         refreshAllCharts();
     });
