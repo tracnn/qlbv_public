@@ -658,8 +658,6 @@ function refreshAllCharts(startDate, endDate) {
         endDate = now.clone().endOf('day').format('YYYY-MM-DD HH:mm:ss');
     }
 
-    console.log(startDate, endDate);
-
     if (canDashboard) {
         const chartConfigs = [
             { id: 5, element: 'chart_tdcn', title: 'TDCN' },
@@ -721,7 +719,7 @@ function startAutoRefresh(firstRun = false) {
                 startDate = parts[0];
                 endDate = parts[1];
             }
-            
+
             refreshAllCharts(startDate, endDate); // Gọi lại các hàm update dữ liệu
             countdown = refreshInterval / 1000; // Reset lại bộ đếm
         }
