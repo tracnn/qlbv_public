@@ -487,11 +487,15 @@ $("#refreshInterval").change(function () {
     startAutoRefresh(true); // Restart countdown
 });
 
-function fetchExamAndParraclinical() {
+function fetchExamAndParraclinical(startDate, endDate) {
     $.ajax({
         url: "{{ route('fetch-exam-paraclinical') }}",
         type: "GET",
         dataType: 'json',
+        data: {
+            startDate: startDate,
+            endDate: endDate
+        }
     }).done(function (data) {
         Highcharts.chart('chart_exam_paraclinical_time', {
             chart: {
@@ -540,11 +544,15 @@ function fetchExamAndParraclinical() {
     });
 }
 
-function fetchDiagnoticImaging() {
+function fetchDiagnoticImaging(startDate, endDate) {
     $.ajax({
         url: "{{ route('fetch-diagnotic-imaging') }}",
         type: "GET",
         dataType: 'json',
+        data: {
+            startDate: startDate,
+            endDate: endDate
+        }
     }).done(function (data) {
         Highcharts.chart('chart_diagnotic_imaging_time', {
             chart: {
