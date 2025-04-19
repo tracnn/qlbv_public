@@ -40,7 +40,19 @@
         font-size: 14px;
         color: #007bff;
     }
+
+    #refresh-after .form-control {
+        font-size: 12px;
+        height: 28px;
+        padding: 2px 5px;
+    }
+    #refresh-after #dateRangePicker {
+        min-width: 220px;
+        font-size: 12px;
+        padding: 2px 5px;
+    }
 </style>
+<link rel="stylesheet" type="text/css" href="{{ asset('css/daterangepicker.css') }}" />
 @endpush
 
 @section('content')
@@ -379,6 +391,7 @@
         <option value="900000">15 min</option>
         <option value="1800000">30 min</option>
     </select>
+    <input type="text" id="dateRangePicker" class="form-control" style="width: 180px;" />
 </div>
 
 @endif
@@ -394,6 +407,44 @@
 <script src="https://code.highcharts.com/modules/exporting.js"></script>
 <script src="https://code.highcharts.com/modules/export-data.js"></script>
 <script src="https://code.highcharts.com/modules/accessibility.js"></script>
+
+<script type="text/javascript" src="{{ asset('js/moment.min.js') }}"></script>
+<!-- Include daterangepicker JS from local -->
+<script type="text/javascript" src="{{ asset('js/daterangepicker.min.js') }}"></script>
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        // Hàm khởi tạo ngày mặc định là hôm nay (0h đến 23h59)
+        function setDefaultDates() {
+            const startDate = moment().startOf('day');
+            const endDate = moment().endOf('day');
+
+            $('#dateRangePicker').daterangepicker({
+                startDate: startDate,
+                endDate: endDate,
+                timePicker: true,
+                timePicker24Hour: true,
+                timePickerSeconds: true,
+                drops: 'up',
+                locale: {
+                    format: 'YYYY-MM-DD HH:mm:ss',
+                    firstDay: 1,
+                    applyLabel: 'Áp dụng',
+                    cancelLabel: 'Hủy',
+                    customRangeLabel: 'Tùy chọn',
+                }
+            }, function (start, end) {
+                // Set lại giá trị hiển thị trong ô input khi người dùng chọn
+                $('#dateRangePicker').val(start.format('YYYY-MM-DD HH:mm:ss') + ' - ' + end.format('YYYY-MM-DD HH:mm:ss'));
+            });
+
+            // Gán giá trị ban đầu hiển thị cho input
+            $('#dateRangePicker').val(startDate.format('YYYY-MM-DD HH:mm:ss') + ' - ' + endDate.format('YYYY-MM-DD HH:mm:ss'));
+        }
+
+        setDefaultDates();
+    });
+</script>
 
 <script type="text/javascript">
 numeral.locale('vi');
