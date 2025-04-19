@@ -444,6 +444,7 @@
 
         setDefaultDates();
     });
+    
     $('#dateRangePicker').on('apply.daterangepicker', function(ev, picker) {
         refreshAllCharts();
     });
