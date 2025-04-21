@@ -648,4 +648,37 @@ class ReportDataService
 
         return [$sql, $bindings];
     }
+    
+    public function getPatientCountByDepartment()
+    {
+        return \DB::connection('HISPro')
+        ->table('his_treatment_bed_room')
+        ->join('his_bed_room','his_treatment_bed_room.bed_room_id','=','his_bed_room.id')
+        ->join('his_room','his_bed_room.room_id','=','his_room.id')
+        ->join('his_department','his_room.department_id','=','his_department.id')
+        ->join('his_treatment','his_treatment_bed_room.treatment_id','=','his_treatment.id')
+        ->join('his_patient_type', 'his_patient_type.id', '=', 'his_treatment.tdl_patient_type_id')
+        ->leftjoin('his_co_treatment','his_treatment_bed_room.co_treatment_id','=','his_co_treatment.id')
+        ->selectRaw('
+            his_department.department_name,
+            his_department.reality_patient_count,
+            his_department.theory_patient_count,
+            SUM(CASE WHEN his_patient_type.id = 1 THEN 1 ELSE 0 END) as bhyt_count,
+            SUM(CASE WHEN his_patient_type.id <> 1 THEN 1 ELSE 0 END) as vien_phi_count,
+            COUNT(*) as total
+        ')
+        ->whereNull('his_treatment_bed_room.remove_time')
+        ->whereNull('his_co_treatment.id')
+        ->where('his_bed_room.is_active',1)
+        ->where('his_room.is_active',1)
+        ->whereIn('his_treatment.tdl_treatment_type_id', [3,4])
+        ->where('his_treatment_bed_room.is_delete',0)
+        ->where( function($q) {
+            $q->whereNull('out_time')
+            ->orWhere('out_time', '>', date_format(now(),'YmdHis'));
+        })
+        ->groupBy('his_department.department_name', 'his_department.reality_patient_count', 'his_department.theory_patient_count')
+        ->orderBy('total','desc')
+        ->get();
+    }
 }

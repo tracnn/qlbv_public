@@ -25,6 +25,17 @@ class ReportController extends Controller
     {
         $this->reportDataService = $reportDataService;
     }
+    
+    public function indexPatientCountByDepartment()
+    {
+        return view('administrator.index-patient-count-by-department');
+    }
+
+    public function fetchPatientCountByDepartment()
+    {
+        $results = $this->reportDataService->getPatientCountByDepartment();
+        return response()->json($results);
+    }
 
     public function indexDrug()
     {

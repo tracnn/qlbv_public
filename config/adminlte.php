@@ -548,6 +548,13 @@ return [
                     'route'   => 'reports-administrator.accoutant-revenue-index',
                     'active'=> ['reports-administrator/accoutant-revenue-index*'],
                 ],
+                [
+                    'text'  => 'Số lượng BN theo khoa',
+                    'icon'  => 'bar-chart',
+                    'checkrole'   => 'qlcl',
+                    'route'   => 'reports-administrator.index-patient-count-by-department',
+                    'active'=> ['reports-administrator/index-patient-count-by-department*'],
+                ],
             ],
         ],
         [

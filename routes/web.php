@@ -549,6 +549,11 @@ Route::group(['middleware' => ['auth', 'check.first.login']], function () {
         ->name('reports-administrator.list-patient-pt');
         Route::get('fetch-patient-pt', 'ReportController@fetchPatientPt')
         ->name('reports-administrator.fetch-patient-pt');
+
+        Route::get('index-patient-count-by-department', 'ReportController@indexPatientCountByDepartment')
+        ->name('reports-administrator.index-patient-count-by-department');
+        Route::get('fetch-patient-count-by-department', 'ReportController@fetchPatientCountByDepartment')
+        ->name('reports-administrator.fetch-patient-count-by-department');
     });
 
     /* Nurse Module*/
