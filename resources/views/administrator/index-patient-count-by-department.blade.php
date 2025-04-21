@@ -108,7 +108,7 @@
                     tbody += '<td class="text-center align-middle">' + numeral(row.total).format('0,0') + '</td>';
                     tbody += '<td class="text-center align-middle">' + numeral(row.bhyt_count).format('0,0') + '</td>';
                     tbody += '<td class="text-center align-middle">' + numeral(row.vien_phi_count).format('0,0') + '</td>';
-                    tbody += '<td class="text-center align-middle">' + (rate ? rate + '%' : '') + '</td>';
+                    tbody += '<td class="text-center align-middle">' + (row.rate ? numeral(row.rate).format('0.00') + '%' : '') + '</td>';
                     tbody += '</tr>';
 
                     // Calculate totals
