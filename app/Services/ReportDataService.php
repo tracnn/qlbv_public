@@ -666,7 +666,7 @@ class ReportDataService
             SUM(CASE WHEN his_patient_type.id = 1 THEN 1 ELSE 0 END) as bhyt_count,
             SUM(CASE WHEN his_patient_type.id <> 1 THEN 1 ELSE 0 END) as vien_phi_count,
             COUNT(*) as total,
-            ROUND(COUNT(*) * 100 / his_department.theory_patient_count, 2) as rate
+            ROUND(COUNT(*) * 100 / NULLIF(his_department.theory_patient_count, 0), 2) as rate
         ')
         ->whereNull('his_treatment_bed_room.remove_time')
         ->whereNull('his_co_treatment.id')
@@ -679,7 +679,7 @@ class ReportDataService
             ->orWhere('out_time', '>', date_format(now(),'YmdHis'));
         })
         ->groupBy('his_department.department_name', 'his_department.reality_patient_count', 'his_department.theory_patient_count')
-        ->orderBy('rate','desc')
+        ->orderByRaw('CASE WHEN rate IS NULL THEN 1 ELSE 0 END, rate DESC')
         ->get();
     }
 }
