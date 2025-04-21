@@ -46,20 +46,20 @@
 @section('content')
 <div class="panel panel-default">
     <div class="panel-body table-responsive">
-        <table id="index" class="table table-bordered display table-hover responsive nowrap datatable dtr-inline" width="100%">
+        <table id="index" class="table table-bordered display table-hover responsive nowrap datatable dtr-inline table-condensed" width="100%">
             <thead>
                 <tr>
-                    <th rowspan="2" class="text-center align-middle" style="vertical-align: middle">STT</th>
-                    <th rowspan="2" class="text-center align-middle" style="vertical-align: middle">TÊN KHOA</th>
-                    <th rowspan="2" class="text-center align-middle" style="vertical-align: middle">GIƯỜNG KH</th>
-                    <th rowspan="2" class="text-center align-middle" style="vertical-align: middle">GIƯỜNG TK</th>
-                    <th rowspan="2" class="text-center align-middle" style="vertical-align: middle">TỔNG SỐ BN</th>
-                    <th colspan="2" class="text-center align-middle" style="vertical-align: middle">TỔNG SỐ BN</th>
-                    <th rowspan="2" class="text-center align-middle" style="vertical-align: middle">TỶ LỆ</th>
+                    <th rowspan="2" class="text-center align-middle p-1" style="vertical-align: middle">STT</th>
+                    <th rowspan="2" class="text-center align-middle p-1" style="vertical-align: middle">TÊN KHOA</th>
+                    <th rowspan="2" class="text-center align-middle p-1" style="vertical-align: middle">GIƯỜNG KH</th>
+                    <th rowspan="2" class="text-center align-middle p-1" style="vertical-align: middle">GIƯỜNG TK</th>
+                    <th rowspan="2" class="text-center align-middle p-1" style="vertical-align: middle">TỔNG SỐ BN</th>
+                    <th colspan="2" class="text-center align-middle p-1" style="vertical-align: middle">TỔNG SỐ BN</th>
+                    <th rowspan="2" class="text-center align-middle p-1" style="vertical-align: middle">TỶ LỆ</th>
                 </tr>
                 <tr>
-                    <th class="text-center align-middle" style="vertical-align: middle">BHYT</th>
-                    <th class="text-center align-middle" style="vertical-align: middle">THU PHÍ</th>
+                    <th class="text-center align-middle p-1" style="vertical-align: middle">BHYT</th>
+                    <th class="text-center align-middle p-1" style="vertical-align: middle">THU PHÍ</th>
                 </tr>
             </thead>
             <tbody>
@@ -99,7 +99,6 @@
                 var totalVienPhi = 0;
 
                 response.forEach(function(row, index) {
-                    console.log(row);
                     tbody += '<tr>';
                     tbody += '<td class="text-center align-middle">' + (index + 1) + '</td>';
                     tbody += '<td>' + row.department_name + '</td>';
