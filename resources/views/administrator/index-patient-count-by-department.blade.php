@@ -108,8 +108,6 @@
                     tbody += '<td class="text-center align-middle">' + numeral(row.total).format('0,0') + '</td>';
                     tbody += '<td class="text-center align-middle">' + numeral(row.bhyt_count).format('0,0') + '</td>';
                     tbody += '<td class="text-center align-middle">' + numeral(row.vien_phi_count).format('0,0') + '</td>';
-                    var rate = row.theory_patient_count ? 
-                        ((row.total / row.theory_patient_count) * 100).toFixed(2) : '';
                     tbody += '<td class="text-center align-middle">' + (rate ? rate + '%' : '') + '</td>';
                     tbody += '</tr>';
 
