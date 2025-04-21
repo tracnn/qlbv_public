@@ -92,7 +92,7 @@
           <div class="small-box bg-yellow">
             <div class="inner">
               <h3 id="sum_newpatient">0</h3>
-              <p>Bệnh nhân khám lần đầu</p>
+              <p>BN khám lần đầu</p>
             </div>
             <div class="icon">
               <i class="ion ion-person-add"></i>
