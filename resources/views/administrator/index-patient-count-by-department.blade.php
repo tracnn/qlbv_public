@@ -54,7 +54,7 @@
                     <th rowspan="2" class="text-center align-middle p-1" style="vertical-align: middle">GIƯỜNG KH</th>
                     <th rowspan="2" class="text-center align-middle p-1" style="vertical-align: middle">GIƯỜNG TK</th>
                     <th rowspan="2" class="text-center align-middle p-1" style="vertical-align: middle">TỔNG SỐ BN</th>
-                    <th colspan="2" class="text-center align-middle p-1" style="vertical-align: middle">TỔNG SỐ BN</th>
+                    <th colspan="2" class="text-center align-middle p-1" style="vertical-align: middle">TRONG ĐÓ</th>
                     <th rowspan="2" class="text-center align-middle p-1" style="vertical-align: middle">TỶ LỆ</th>
                 </tr>
                 <tr>
