@@ -116,6 +116,7 @@
                     totalBHYT += parseInt(row.bhyt_count || 0);
                     totalVienPhi += parseInt(row.vien_phi_count || 0);
                 });
+                rateTotal = totalTheory > 0 ? ((totalBHYT + totalVienPhi) / totalTheory * 100) : 0;
                 // Add total row
                 tbody += '<tr style="font-weight: bold">';
                 tbody += '<td class="text-center align-middle" colspan="2">TỔNG CỘNG</td>';
@@ -124,7 +125,7 @@
                 tbody += '<td class="text-center align-middle">' + numeral(totalBHYT + totalVienPhi).format('0,0') + '</td>';
                 tbody += '<td class="text-center align-middle">' + numeral(totalBHYT).format('0,0') + '</td>';
                 tbody += '<td class="text-center align-middle">' + numeral(totalVienPhi).format('0,0') + '</td>';
-                tbody += '<td class="text-center align-middle"></td>';
+                tbody += '<td class="text-center align-middle">' + numeral(rateTotal).format('0.00') + '%' + '</td>';
                 tbody += '</tr>';
 
                 $('#index tbody').html(tbody);
