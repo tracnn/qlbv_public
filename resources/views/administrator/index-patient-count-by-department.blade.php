@@ -107,7 +107,7 @@
                     tbody += '<td class="text-center align-middle">' + numeral(row.total).format('0,0') + '</td>';
                     tbody += '<td class="text-center align-middle">' + numeral(row.bhyt_count).format('0,0') + '</td>';
                     tbody += '<td class="text-center align-middle">' + numeral(row.vien_phi_count).format('0,0') + '</td>';
-                    tbody += '<td class="text-center align-middle">' + (row.rate ? numeral(row.rate).format('0.00') + '%' : '') + '</td>';
+                    tbody += '<td class="text-center align-middle" style="color: ' + (row.rate >= 100 ? 'red' : 'green') + '">' + (row.rate ? numeral(row.rate).format('0.00') + '%' : '') + '</td>';
                     tbody += '</tr>';
 
                     // Calculate totals
@@ -125,7 +125,7 @@
                 tbody += '<td class="text-center align-middle">' + numeral(totalBHYT + totalVienPhi).format('0,0') + '</td>';
                 tbody += '<td class="text-center align-middle">' + numeral(totalBHYT).format('0,0') + '</td>';
                 tbody += '<td class="text-center align-middle">' + numeral(totalVienPhi).format('0,0') + '</td>';
-                tbody += '<td class="text-center align-middle">' + numeral(rateTotal).format('0.00') + '%' + '</td>';
+                tbody += '<td class="text-center align-middle" style="color: ' + (rateTotal >= 100 ? 'red' : 'green') + '">' + numeral(rateTotal).format('0.00') + '%' + '</td>';
                 tbody += '</tr>';
 
                 $('#index tbody').html(tbody);
