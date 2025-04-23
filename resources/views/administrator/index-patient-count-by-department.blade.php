@@ -5,7 +5,7 @@
 @section('content_header')
 <h1>
     Report
-    <small>SỐ LƯỢNG BỆNH NHÂN HIỆN DIỆN TẠI CÁC KHOA</small>
+    <small><strong>SỐ LƯỢNG BỆNH NHÂN HIỆN DIỆN TẠI CÁC KHOA NGÀY: {{ \Carbon\Carbon::now()->format('d/m/Y H:i:s') }}</strong></small>
 </h1>
 @stop
 
