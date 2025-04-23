@@ -85,10 +85,11 @@
 @push('after-scripts')
 <script src="{{ asset('vendor/numeral/numeral.js') }}"></script>
 <script src="{{ asset('vendor/numeral/locales.js') }}"></script>
+<script src="{{ asset('js/moment.min.js') }}"></script>
 
 <script type="text/javascript">
     function loadData() {
-        $('#time-now').text('{{ \Carbon\Carbon::now()->format('d/m/Y H:i:s') }}');
+        $('#time-now').text(moment().format('DD/MM/YYYY HH:mm:ss'));
         $.ajax({
             url: "{{ route('reports-administrator.fetch-patient-count-by-department') }}",
             method: 'GET',
