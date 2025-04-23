@@ -5,7 +5,7 @@
 @section('content_header')
 <h1>
     Report
-    <small><strong>SỐ LƯỢNG BỆNH NHÂN HIỆN DIỆN TẠI CÁC KHOA THỜI ĐIỂM: {{ \Carbon\Carbon::now()->format('d/m/Y H:i:s') }}</strong></small>
+    <small><strong>SỐ LƯỢNG BỆNH NHÂN HIỆN DIỆN TẠI CÁC KHOA THỜI ĐIỂM: <span class="text-danger" id="time-now"></span></strong></small>
 </h1>
 @stop
 
@@ -88,6 +88,7 @@
 
 <script type="text/javascript">
     function loadData() {
+        $('#time-now').text('{{ \Carbon\Carbon::now()->format('d/m/Y H:i:s') }}');
         $.ajax({
             url: "{{ route('reports-administrator.fetch-patient-count-by-department') }}",
             method: 'GET',
