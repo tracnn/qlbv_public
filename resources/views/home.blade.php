@@ -79,7 +79,7 @@
           <div class="small-box bg-green">
             <div class="inner">
               <h3 id="sum_treatment">0</h3>
-              <p>Số lượt đăng ký khám</p>
+              <p>BN đăng ký khám</p>
             </div>
             <div class="icon">
               <i class="ion ion-stats-bars"></i>
@@ -135,7 +135,7 @@
           <div class="small-box bg-aqua">
             <div class="inner">
               <h3 id="sum_ravien">0</h3>
-              <p>Hồ sơ ra viện</p>
+              <p>BN ra viện</p>
             </div>
             <div class="icon">
               <i class="ion ion-pie-graph"></i>
@@ -174,7 +174,7 @@
           <div class="small-box bg-red">
             <div class="inner">
               <h3 id="sum_ravien_kham">0</h3>
-              <p>RV: khám</p>
+              <p>Kết thúc khám</p>
             </div>
             <div class="icon">
               <i class="ion ion-pie-graph"></i>
