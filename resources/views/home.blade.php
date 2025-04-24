@@ -672,7 +672,7 @@ function refreshAllCharts(startDate, endDate) {
             { id: 3, element: 'chart_cdha', title: 'CĐHA' },
             { id: 1, element: 'chart_kham', title: 'Khám' },
             { id: 2, element: 'chart_xetnghiem', title: 'Xét nghiệm' },
-            { id: 13, element: 'chart_gpb', title: 'GPB' },
+            // { id: 13, element: 'chart_gpb', title: 'GPB' },
             { id: 8, element: 'chart_ns', title: 'Nội soi' },
             { id: 9, element: 'chart_sa', title: 'Siêu âm' }
         ];
