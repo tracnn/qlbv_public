@@ -924,6 +924,38 @@ function sum_thuthuat(startDate, endDate) {
 }
 
 function sum_doanhthu(startDate, endDate) {
+    const hasFinanceRole = @json(auth()->user()->hasRole('thungan-tckt'));
+    if (!hasFinanceRole) {
+        $("#sum_doanhthu").text("Không có quyền");
+        // Hiển thị thông báo không có quyền trong biểu đồ
+        Highcharts.chart('chart_doanhthu', {
+            chart: {
+                type: 'pie'
+            },
+            title: {
+                text: 'Doanh thu',
+                style: { fontSize: '18px', fontWeight: 'bold' }
+            },
+            series: [{
+                data: [{
+                    name: 'Không có quyền',
+                    y: 1,
+                    color: '#f5f5f5'
+                }]
+            }],
+            plotOptions: {
+                pie: {
+                    dataLabels: {
+                        enabled: true,
+                        format: 'Không có quyền xem doanh thu',
+                        style: { fontSize: '14px', fontWeight: 'bold' }
+                    }
+                }
+            }
+        });
+        return;
+    }
+    
     $.ajax({
         url: "{{ route('fetch-doanh-thu') }}",
         type: "GET",
