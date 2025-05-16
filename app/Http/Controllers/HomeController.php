@@ -145,6 +145,108 @@ class HomeController extends Controller
         return json_encode($returnData);
     }
 
+public function fetchTransaction(Request $request)
+{
+    $current_date = $this->currentDate($request->input('startDate'), $request->input('endDate'));
+
+    // Lấy tất cả dữ liệu trong khoảng thời gian xác định
+    $data = $this->getTransactionDetail($current_date['from_date'], $current_date['to_date']);
+
+    // Khởi tạo mảng để tổng hợp dữ liệu
+    $chartData = [
+        'cashiers' => [],
+        'transactionTypes' => [],
+        'payForms' => [],
+        'departments' => [],
+        'treatmentTypes' => [],
+    ];
+
+    // Phân loại và tổng hợp dữ liệu theo từng tiêu chí
+    foreach ($data as $item) {
+        // Tổng hợp theo cashier_username
+        if (isset($chartData['cashiers'][$item->cashier_username])) {
+            $chartData['cashiers'][$item->cashier_username] += $item->amount;
+        } else {
+            $chartData['cashiers'][$item->cashier_username] = $item->amount;
+        }
+
+        // Tổng hợp theo transaction_type_name
+        if (isset($chartData['transactionTypes'][$item->transaction_type_name])) {
+            $chartData['transactionTypes'][$item->transaction_type_name] += $item->amount;
+        } else {
+            $chartData['transactionTypes'][$item->transaction_type_name] = $item->amount;
+        }
+
+        // Tổng hợp theo pay_form_name
+        if (isset($chartData['payForms'][$item->pay_form_name])) {
+            $chartData['payForms'][$item->pay_form_name] += $item->amount;
+        } else {
+            $chartData['payForms'][$item->pay_form_name] = $item->amount;
+        }
+
+        // Tổng hợp theo department_name
+        if (isset($chartData['departments'][$item->department_name])) {
+            $chartData['departments'][$item->department_name] += $item->amount;
+        } else {
+            $chartData['departments'][$item->department_name] = $item->amount;
+        }
+
+        // Tổng hợp theo treatment_type_name
+        if (isset($chartData['treatmentTypes'][$item->treatment_type_name])) {
+            $chartData['treatmentTypes'][$item->treatment_type_name] += $item->amount;
+        } else {
+            $chartData['treatmentTypes'][$item->treatment_type_name] = $item->amount;
+        }
+    }
+
+    // Định dạng dữ liệu cho Highcharts.js
+    $formattedData = [
+        'cashiers' => [],
+        'transactionTypes' => [],
+        'payForms' => [],
+        'departments' => [],
+        'treatmentTypes' => [],
+    ];
+
+    // Định dạng lại dữ liệu cho Highcharts
+    foreach ($chartData['cashiers'] as $name => $total) {
+        $formattedData['cashiers'][] = [
+            'name' => $name,
+            'y' => (float) $total
+        ];
+    }
+
+    foreach ($chartData['transactionTypes'] as $name => $total) {
+        $formattedData['transactionTypes'][] = [
+            'name' => $name,
+            'y' => (float) $total
+        ];
+    }
+
+    foreach ($chartData['payForms'] as $name => $total) {
+        $formattedData['payForms'][] = [
+            'name' => $name,
+            'y' => (float) $total
+        ];
+    }
+
+    foreach ($chartData['departments'] as $name => $total) {
+        $formattedData['departments'][] = [
+            'name' => $name,
+            'y' => (float) $total
+        ];
+    }
+
+    foreach ($chartData['treatmentTypes'] as $name => $total) {
+        $formattedData['treatmentTypes'][] = [
+            'name' => $name,
+            'y' => (float) $total
+        ];
+    }
+
+    return response()->json($formattedData);
+}
+
     public function fetchChuyenvien(Request $request)
     {
         $current_date = $this->currentDate($request->input('startDate'), $request->input('endDate'));
@@ -636,6 +738,35 @@ class HomeController extends Controller
         ->where('his_treatment.is_delete',0)
         ->groupBy('department_name')
         ->orderBy('so_luong','desc')
+        ->get();
+    }
+
+    private function getTransactionDetail($from_date, $to_date)
+    {
+        return DB::connection("HISPro")
+        ->table('his_transaction')
+        ->join('his_transaction_type', 'his_transaction_type.id', '=', 'his_transaction.transaction_type_id')
+        ->join('his_pay_form', 'his_pay_form.id', '=', 'his_transaction.pay_form_id')
+        ->join('his_treatment', 'his_treatment.id', '=', 'his_transaction.treatment_id')
+        ->join('his_treatment_type', 'his_treatment_type.id', '=', 'his_transaction.treatment_type_id')
+        ->join('his_department', 'his_department.id', 'his_treatment.last_department_id')
+        ->select('his_transaction.tdl_treatment_code',
+            'his_transaction.tdl_patient_code',
+            'his_transaction.tdl_patient_name',
+            'his_transaction.tdl_patient_dob',
+            'his_transaction.transaction_code',
+            'his_transaction.transaction_time',
+            'his_transaction.tdl_patient_address',
+            'transaction_time',
+            'cashier_username',
+            'amount',
+            'transaction_type_name',
+            'pay_form_name',
+            'department_name',
+            'treatment_type_name')
+        ->whereBetween('his_transaction.transaction_time', [$from_date, $to_date])
+        ->where('his_transaction.is_delete', 0)
+        ->whereNull('his_transaction.is_cancel')
         ->get();
     }
 

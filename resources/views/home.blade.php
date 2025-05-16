@@ -303,6 +303,44 @@
 
       </div>
 
+    <div class="row">
+        <div class="col-lg-12 connectedSortable">
+          <div class="row">
+            <div class="col-lg-3 connectedSortable">
+                <div class="nav-tabs-custom text-center"> <!-- Thêm 'text-center' để căn giữa -->
+                    <div class="tab-content no-padding">
+                        <div id="chart_transaction_types" style="width: 100%; height: 400px;"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 connectedSortable">
+                <div class="nav-tabs-custom text-center"> <!-- Thêm 'text-center' để căn giữa -->
+                    <div class="tab-content no-padding">
+                        <div id="chart_pay_forms" style="width: 100%; height: 400px;"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 connectedSortable">
+                <div class="nav-tabs-custom text-center"> <!-- Thêm 'text-center' để căn giữa -->
+                    <div class="tab-content no-padding">
+                        <div id="chart_treatment_types" style="width: 100%; height: 400px;"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 connectedSortable">
+                <div class="nav-tabs-custom text-center"> <!-- Thêm 'text-center' để căn giữa -->
+                    <div class="tab-content no-padding">
+                        <div id="chart_cashiers" style="width: 100%; height: 400px;"></div>
+                    </div>
+                </div>
+            </div>
+
+          </div>  
+
+        </div>
+
+    </div>
+
       <div class="row">
         <div class="col-lg-6 connectedSortable">
             <div class="nav-tabs-custom text-center"> <!-- Thêm 'text-center' để căn giữa -->
@@ -486,6 +524,130 @@ $("#refreshInterval").change(function () {
     refreshInterval = parseInt($(this).val()); // Cập nhật khoảng thời gian mới
     startAutoRefresh(true); // Restart countdown
 });
+
+function fetchTransactionData(startDate, endDate) {
+    const hasFinanceRole = @json(auth()->user()->hasRole('thungan-tckt'));
+    // Kiểm tra quyền, nếu không có quyền thì hiển thị thông báo
+    if (!hasFinanceRole) {
+        $("#chart_transaction_types").text("Không có quyền");
+        $("#chart_pay_forms").text("Không có quyền");
+        $("#chart_cashiers").text("Không có quyền");
+        $("#chart_treatment_types").text("Không có quyền");
+
+        renderNoPermissionChart('chart_transaction_types', 'Loại giao dịch');
+        renderNoPermissionChart('chart_pay_forms', 'Hình thức thanh toán');
+        renderNoPermissionChart('chart_cashiers', 'Thu ngân');
+        renderNoPermissionChart('chart_treatment_types', 'Diện điều trị');
+        return;
+    }
+
+    $.ajax({
+        url: "{{ route('fetch-transaction') }}",
+        type: "GET",
+        dataType: 'json',
+        data: {
+            startDate: startDate,
+            endDate: endDate
+        }
+    }).done(function (data) {
+        // Vẽ từng biểu đồ Pie Chart riêng biệt
+        renderPieChart('chart_transaction_types', 'Loại giao dịch', data.transactionTypes);
+        renderPieChart('chart_pay_forms', 'Hình thức thanh toán', data.payForms);
+        renderPieChart('chart_cashiers', 'Thu ngân', data.cashiers);
+        renderPieChart('chart_treatment_types', 'Diện điều trị', data.treatmentTypes);
+    }).fail(function (jqXHR, textStatus, errorThrown) {
+        console.error("Lỗi:", textStatus, errorThrown);
+    });
+}
+
+// Hàm hiển thị biểu đồ "Không có quyền"
+function renderNoPermissionChart(containerId, title) {
+    Highcharts.chart(containerId, {
+        chart: {
+            type: 'pie'
+        },
+        title: {
+            text: `${title} - Không có quyền`,
+            style: { fontSize: '16px', fontWeight: 'bold' }
+        },
+        series: [{
+            name: 'Không có quyền',
+            colorByPoint: true,
+            data: [{
+                name: 'Không có quyền',
+                y: 1,
+                color: '#f5f5f5'
+            }]
+        }],
+        plotOptions: {
+            pie: {
+                dataLabels: {
+                    enabled: true,
+                    format: 'Không có quyền xem dữ liệu',
+                    style: { fontSize: '14px', fontWeight: 'bold' }
+                }
+            }
+        }
+    });
+}
+
+// Hàm vẽ biểu đồ Pie Chart cho từng category
+function renderPieChart(containerId, title, data) {
+    // Tính tổng tiền cho nhóm hiện tại
+    const totalAmount = data.reduce((total, item) => total + item.y, 0);
+    const formattedTotal = formatNumber(totalAmount); // Định dạng số tiền với dấu phẩy
+
+    Highcharts.chart(containerId, {
+        chart: {
+            type: 'pie'
+        },
+        title: {
+            text: `${title}: ${formattedTotal}`,
+            style: { fontSize: '16px', fontWeight: 'bold' }
+        },
+        tooltip: {
+            pointFormat: '{series.name}: <b>{point.y:,.0f} VND</b> ({point.percentage:.1f}%)',
+            style: { fontSize: '13px' }
+        },
+        plotOptions: {
+            pie: {
+                allowPointSelect: true,
+                cursor: 'pointer',
+                dataLabels: {
+                    enabled: true,
+                    formatter: function () {
+                        return `<b>${this.point.name}</b> ${formatNumber(this.point.y)}`;
+                    },
+                    style: {
+                        fontSize: '12px'
+                    }
+                },
+                showInLegend: true
+            }
+        },
+        legend: {
+            itemStyle: { fontSize: '13px' }
+        },
+        series: [{
+            name: title,
+            colorByPoint: true,
+            data: formatPieSeriesData(data)
+        }]
+    });
+}
+
+// Hàm định dạng dữ liệu cho biểu đồ Pie Chart
+function formatPieSeriesData(data) {
+    return data.map(item => ({
+        name: item.name,
+        y: item.y
+    }));
+}
+
+// Hàm định dạng số tiền với dấu phẩy phân cách hàng nghìn
+function formatNumber(number) {
+    return new Intl.NumberFormat('en-US').format(number);
+}
 
 function fetchExamAndParraclinical(startDate, endDate) {
     $.ajax({
@@ -694,6 +856,7 @@ function refreshAllCharts(startDate, endDate) {
         chart_kham_by_room(startDate, endDate);
         fetchExamAndParraclinical(startDate, endDate);
         fetchDiagnoticImaging(startDate, endDate);
+        fetchTransactionData(startDate, endDate);
         if (is_bieudo_dieutringoaitru) {
             chart_dieutringoaitru(startDate, endDate);
             chart_patientInRoomNgoaitru(startDate, endDate);
