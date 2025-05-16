@@ -618,6 +618,7 @@ function renderPieChart(containerId, title, data) {
             pie: {
                 allowPointSelect: true,
                 cursor: 'pointer',
+                depth: 35,
                 dataLabels: {
                     enabled: true,
                     formatter: function () {
