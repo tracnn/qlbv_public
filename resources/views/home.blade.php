@@ -599,14 +599,19 @@ function renderPieChart(containerId, title, data) {
 
     Highcharts.chart(containerId, {
         chart: {
-            type: 'pie'
+            type: 'pie',
+            options3d: {
+                enabled: true,
+                alpha: 45,
+                beta: 0
+            }
         },
         title: {
             text: `${title}: ${formattedTotal}`,
-            style: { fontSize: '16px', fontWeight: 'bold' }
+            style: { fontSize: '18px', fontWeight: 'bold' }
         },
         tooltip: {
-            pointFormat: '{series.name}: <b>{point.y:,.0f} VND</b> ({point.percentage:.1f}%)',
+            pointFormat: '{series.name}: <b>{point.y:,.0f}</b> ({point.percentage:.1f}%)',
             style: { fontSize: '13px' }
         },
         plotOptions: {
