@@ -303,6 +303,24 @@
 
       </div>
 
+      <div class="row">
+        <div class="col-lg-6 connectedSortable">
+            <div class="nav-tabs-custom text-center"> <!-- Thêm 'text-center' để căn giữa -->
+                <div class="tab-content no-padding">
+                    <div id="chart_doanhthu" style="width: 100%; height: 300px;"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6 connectedSortable">
+            <div class="nav-tabs-custom text-center"> <!-- Thêm 'text-center' để căn giữa -->
+                <div class="tab-content no-padding">
+                    <div id="chart_treatment" style="width: 100%; height: 300px;"></div>
+                </div>
+            </div>
+        </div>
+
+      </div>
+
     <div class="row">
         <div class="col-lg-12 connectedSortable">
           <div class="row">
@@ -334,30 +352,9 @@
                     </div>
                 </div>
             </div>
-
           </div>  
-
         </div>
-
     </div>
-
-      <div class="row">
-        <div class="col-lg-6 connectedSortable">
-            <div class="nav-tabs-custom text-center"> <!-- Thêm 'text-center' để căn giữa -->
-                <div class="tab-content no-padding">
-                    <div id="chart_doanhthu" style="width: 100%; height: 300px;"></div>
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-6 connectedSortable">
-            <div class="nav-tabs-custom text-center"> <!-- Thêm 'text-center' để căn giữa -->
-                <div class="tab-content no-padding">
-                    <div id="chart_treatment" style="width: 100%; height: 300px;"></div>
-                </div>
-            </div>
-        </div>
-
-      </div>
     
     <!-- CLS 1 -->
       <div class="row">
@@ -551,10 +548,10 @@ function fetchTransactionData(startDate, endDate) {
         }
     }).done(function (data) {
         // Vẽ từng biểu đồ Pie Chart riêng biệt
-        renderPieChart('chart_transaction_types', 'Loại giao dịch', data.transactionTypes);
-        renderPieChart('chart_pay_forms', 'Hình thức thanh toán', data.payForms);
-        renderPieChart('chart_cashiers', 'Thu ngân', data.cashiers);
-        renderPieChart('chart_treatment_types', 'Diện điều trị', data.treatmentTypes);
+        renderChart('chart_transaction_types', 'Loại giao dịch', data.transactionTypes);
+        renderChart('chart_pay_forms', 'Hình thức thanh toán', data.payForms);
+        renderChart('chart_cashiers', 'Thu ngân', data.cashiers);
+        renderChart('chart_treatment_types', 'Diện điều trị', data.treatmentTypes);
     }).fail(function (jqXHR, textStatus, errorThrown) {
         console.error("Lỗi:", textStatus, errorThrown);
     });
@@ -592,52 +589,61 @@ function renderNoPermissionChart(containerId, title) {
 }
 
 // Hàm vẽ biểu đồ Pie Chart cho từng category
-function renderPieChart(containerId, title, data) {
+function renderChart(containerId, title, data) {
     // Tính tổng tiền cho nhóm hiện tại
     const totalAmount = data.reduce((total, item) => total + item.y, 0);
     const formattedTotal = formatNumber(totalAmount); // Định dạng số tiền với dấu phẩy
 
     Highcharts.chart(containerId, {
         chart: {
-            type: 'pie',
-            options3d: {
-                enabled: true,
-                alpha: 45,
-                beta: 0
-            }
+            type: 'column', // bar dọc (column)
+            backgroundColor: '#fff'
         },
         title: {
             text: `${title}: ${formattedTotal}`,
             style: { fontSize: '18px', fontWeight: 'bold' }
         },
+        xAxis: {
+            type: 'category',
+            title: { text: null },
+            labels: { style: { fontSize: '13px' } }
+        },
+        yAxis: {
+            min: 0,
+            title: {
+                text: 'Số tiền',
+                style: { fontSize: '13px' }
+            },
+            labels: {
+                formatter: function() {
+                    return formatNumber(this.value);
+                },
+                style: { fontSize: '13px' }
+            }
+        },
         tooltip: {
-            pointFormat: '{series.name}: <b>{point.y:,.0f}</b> ({point.percentage:.1f}%)',
+            pointFormat: '<b>{point.y:,.0f}</b>',
             style: { fontSize: '13px' }
         },
+        legend: {
+            enabled: true // Nếu muốn legend thì bật lên
+        },
         plotOptions: {
-            pie: {
-                allowPointSelect: true,
-                cursor: 'pointer',
-                depth: 35,
+            column: {
                 dataLabels: {
                     enabled: true,
                     formatter: function () {
-                        return `<b>${this.point.name}</b> ${formatNumber(this.point.y)}`;
+                        return formatNumber(this.y);
                     },
-                    style: {
-                        fontSize: '12px'
-                    }
+                    style: { fontSize: '12px' }
                 },
-                showInLegend: true
+                colorByPoint: true,
             }
-        },
-        legend: {
-            itemStyle: { fontSize: '13px' }
         },
         series: [{
             name: title,
-            colorByPoint: true,
-            data: formatPieSeriesData(data)
+            data: data, // Không cần formatPieSeriesData nữa, truyền mảng data [{name, y}]
+            showInLegend: false
         }]
     });
 }
