@@ -523,7 +523,7 @@ $("#refreshInterval").change(function () {
 });
 
 function fetchTransactionData(startDate, endDate) {
-    const hasFinanceRole = @json(auth()->user()->hasRole('thungan-tckt'));
+    const hasFinanceRole = @json(auth()->user()->hasRole('thungan-tonghop'));
     // Kiểm tra quyền, nếu không có quyền thì hiển thị thông báo
     if (!hasFinanceRole) {
         $("#chart_transaction_types").text("Không có quyền");
@@ -1099,7 +1099,7 @@ function sum_thuthuat(startDate, endDate) {
 }
 
 function sum_doanhthu(startDate, endDate) {
-    const hasFinanceRole = @json(auth()->user()->hasRole('thungan-tckt'));
+    const hasFinanceRole = @json(auth()->user()->hasRole('thungan-tonghop'));
     if (!hasFinanceRole) {
         $("#sum_doanhthu").text("Không có quyền");
         // Hiển thị thông báo không có quyền trong biểu đồ
