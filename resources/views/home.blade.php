@@ -502,6 +502,7 @@
 numeral.locale('vi');
 var canDashboard = @json(auth()->user()->hasRole('dashboard'));
 const is_bieudo_dieutringoaitru = @json(config('organization.is_bieudo_dieutringoaitru'));
+const disableGpbChart = @json(config('organization.disable_gpb_chart'));
 
 let refreshInterval = parseInt($("#refreshInterval").val()); // Lấy giá trị mặc định
 let countdown = refreshInterval / 1000; // Chuyển đổi sang giây
@@ -846,10 +847,14 @@ function refreshAllCharts(startDate, endDate) {
             { id: 3, element: 'chart_cdha', title: 'CĐHA' },
             { id: 1, element: 'chart_kham', title: 'Khám' },
             { id: 2, element: 'chart_xetnghiem', title: 'Xét nghiệm' },
-            { id: 13, element: 'chart_gpb', title: 'GPB' },
+            //{ id: 13, element: 'chart_gpb', title: 'GPB' },
             { id: 8, element: 'chart_ns', title: 'Nội soi' },
             { id: 9, element: 'chart_sa', title: 'Siêu âm' }
         ];
+
+        if (!disableGpbChart) {
+            chartConfigs.splice(4, 0, { id: 13, element: 'chart_gpb', title: 'GPB' }); // Thêm GPB vào vị trí thứ 5
+        }
 
         chartConfigs.forEach(config => {
             fetchAndRenderChart(config.id, config.element, config.title, startDate, endDate);
