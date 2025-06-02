@@ -523,7 +523,7 @@ return [
                 [
                     'text'  => 'Báo cáo thu tiền (HIS)',
                     'icon'  => 'bar-chart',
-                    'checkrole'   => 'thungan-tckt',
+                    'checkrole'   => 'thungan-tonghop',
                     'route'   => 'reports-administrator.accoutant-payment-index',
                     'active'=> ['reports-administrator/accoutant-payment-index*'],
                 ],

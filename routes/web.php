@@ -523,7 +523,7 @@ Route::group(['middleware' => ['auth', 'check.first.login']], function () {
     });
 
     /* Reports Account Payment*/
-    Route::group(['prefix' => 'reports-administrator/', 'middleware' => ['checkrole:thungan-tckt']], function () {  
+    Route::group(['prefix' => 'reports-administrator/', 'middleware' => ['checkrole:thungan-tonghop']], function () {  
         Route::get('accoutant-payment-index', 'ReportController@paymentAccountant')
         ->name('reports-administrator.accoutant-payment-index');
         Route::get('fetch-accoutant-payment', 'ReportController@fetchPaymentAccountant')

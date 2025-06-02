@@ -517,11 +517,11 @@ class AccountantController extends Controller
         }
 
         // Kiểm tra vai trò của người dùng và tùy chỉnh truy vấn
-        if (\Auth::user()->hasRole(['superadministrator', 'thungan-tckt'])) {
+        if (\Auth::user()->hasRole(['superadministrator', 'thungan-tonghop'])) {
         } elseif (\Auth::user()->hasRole('thungan')) {
             $query->where('login_name', \Auth::user()->loginname);
         } 
-        elseif (!\Auth::user()->hasRole('superadministrator') && !\Auth::user()->hasRole('thungan-tckt')) {
+        elseif (!\Auth::user()->hasRole('superadministrator') && !\Auth::user()->hasRole('thungan-tonghop')) {
             // Nếu người dùng không có vai trò 'superadministrator' hoặc 'thungan-tonghop', không trả về dữ liệu nào
             $query->where('id', null); // Điều kiện không tồn tại để không trả về bản ghi nào
         }
