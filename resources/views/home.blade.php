@@ -118,7 +118,7 @@
           <div class="small-box bg-aqua">
             <div class="inner">
               <h3 id="sum_ravien_kham">0</h3>
-              <p>Kết thúc khám/p>
+              <p>Kết thúc khám</p>
             </div>
             <div class="icon">
               <i class="ion ion-pie-graph"></i>
