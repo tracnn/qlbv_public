@@ -42,6 +42,66 @@ class HomeController extends Controller
         ];
     }
 
+    public function fetchAverageDayInpatient(Request $request)
+    {
+        $current_date = $this->currentDate($request->input('startDate'), $request->input('endDate'));
+        $data = $this->getDetailDayCountInpatient($current_date['from_date'], $current_date['to_date']);
+
+        // Chuyển $data (Collection) sang mảng nếu cần
+        $dataArray = json_decode(json_encode($data), true);
+
+        // Tính số ngày trung bình (average day_count)
+        $total = 0;
+        $count = 0;
+        foreach ($dataArray as $row) {
+            if (isset($row['day_count'])) {
+                $total += $row['day_count'];
+                $count++;
+            }
+        }
+        $average = $count > 0 ? round($total / $count, 2) : 0;
+
+        // Trả về cả chi tiết và trung bình
+        $returnData = [
+            //'detail' => $dataArray,
+            'avg_day_count' => $average,
+            'total' => $count
+        ];
+
+        return response()->json($returnData);
+    }
+
+    private function getDetailDayCountInpatient($from_date, $to_date)
+    {
+        $data = DB::connection("HISPro")
+        ->table('his_treatment')
+        ->select([
+            DB::raw("
+                CASE
+                    WHEN ((TO_DATE(out_time, 'YYYYMMDDHH24MISS') - TO_DATE(clinical_in_time, 'YYYYMMDDHH24MISS')) * 24) < 4 THEN 0
+                    WHEN ((TO_DATE(out_time, 'YYYYMMDDHH24MISS') - TO_DATE(clinical_in_time, 'YYYYMMDDHH24MISS')) * 24) >= 4 
+                         AND ((TO_DATE(out_time, 'YYYYMMDDHH24MISS') - TO_DATE(clinical_in_time, 'YYYYMMDDHH24MISS')) * 24) < 24 THEN 1
+                    ELSE 
+                        CASE
+                            WHEN MOD((TO_DATE(out_time, 'YYYYMMDDHH24MISS') - TO_DATE(clinical_in_time, 'YYYYMMDDHH24MISS')) * 24, 24) >= 4 
+                                THEN FLOOR(TO_DATE(out_time, 'YYYYMMDDHH24MISS') - TO_DATE(clinical_in_time, 'YYYYMMDDHH24MISS')) + 1
+                            ELSE FLOOR(TO_DATE(out_time, 'YYYYMMDDHH24MISS') - TO_DATE(clinical_in_time, 'YYYYMMDDHH24MISS'))
+                        END
+                END AS day_count
+            "),
+            'treatment_day_count',
+            'in_time',
+            'clinical_in_time',
+            'out_time',
+            'treatment_code'
+        ])
+        ->whereBetween('out_time', [$from_date, $to_date])
+        ->where('tdl_treatment_type_id', 3)
+        ->get();
+
+        return $data;
+    }
+
 
     public function fetchNewpatient(Request $request)
     {

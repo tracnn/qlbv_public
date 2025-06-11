@@ -81,9 +81,12 @@ Route::group(['middleware' => ['auth', 'check.first.login']], function () {
         ->name('fetch-exam-paraclinical');
         Route::get('fetch-diagnotic-imaging', 'HomeController@fetchDiagnoticImaging')
         ->name('fetch-diagnotic-imaging');
-
+        
         Route::get('fetch-transaction', 'HomeController@fetchTransaction')
         ->name('fetch-transaction');
+
+        Route::get('fetch-average-day-inpatient', 'HomeController@fetchAverageDayInpatient')
+        ->name('fetch-average-day-inpatient');
 
     });
     

@@ -61,7 +61,7 @@
     <div class="panel-body">
       <div class="row">
 
-        <div class="col-lg-3 col-xs-6">
+        <div class="col-lg-2 col-xs-6">
           <!-- small box -->
           <div class="small-box bg-aqua">
             <div class="inner">
@@ -74,7 +74,7 @@
           </div>
         </div>
       
-        <div class="col-lg-3 col-xs-6">
+        <div class="col-lg-2 col-xs-6">
           <!-- small box -->
           <div class="small-box bg-green">
             <div class="inner">
@@ -116,6 +116,19 @@
         <div class="col-lg-2 col-xs-6">
           <!-- small box -->
           <div class="small-box bg-aqua">
+            <div class="inner">
+              <h3 id="sum_ravien_kham">0</h3>
+              <p>Kết thúc khám/p>
+            </div>
+            <div class="icon">
+              <i class="ion ion-pie-graph"></i>
+            </div>
+          </div>
+        </div>
+        <!-- ./col -->
+        <div class="col-lg-2 col-xs-6">
+          <!-- small box -->
+          <div class="small-box bg-green">
             <div class="inner">
               <h3 id="sum_chuyenvien">0</h3>
               <p>Chuyển viện</p>
@@ -160,8 +173,8 @@
           <!-- small box -->
           <div class="small-box bg-yellow">
             <div class="inner">
-              <h3 id="sum_ravien_ngoaitru">0</h3>
-              <p>RV: ngoại trú</p>
+              <h3 id="average_inpatient">0</h3>
+              <p>Ngày điều trị TB</p>
             </div>
             <div class="icon">
               <i class="ion ion-pie-graph"></i>
@@ -173,8 +186,8 @@
           <!-- small box -->
           <div class="small-box bg-red">
             <div class="inner">
-              <h3 id="sum_ravien_kham">0</h3>
-              <p>Kết thúc khám</p>
+              <h3 id="sum_ravien_ngoaitru">0</h3>
+              <p>RV: ngoại trú</p>
             </div>
             <div class="icon">
               <i class="ion ion-pie-graph"></i>
@@ -862,6 +875,7 @@ function refreshAllCharts(startDate, endDate) {
 
         // Gọi AJAX cập nhật số liệu cho các biểu đồ khác
         sum_treatment(startDate, endDate);
+        average_inpatient(startDate, endDate);
         sum_newpatient(startDate, endDate);
         sum_chuyenvien(startDate, endDate);
         sum_doanhthu(startDate, endDate);
@@ -918,6 +932,30 @@ function startAutoRefresh(firstRun = false) {
 $(document).ready(function () {
     startAutoRefresh(true);
 });
+
+//chart_treatment
+function average_inpatient(startDate, endDate) {
+    $.ajax({
+        url: "{{ route('fetch-average-day-inpatient') }}",
+        type: "GET",
+        dataType: 'json',
+        data: {
+            startDate: startDate,
+            endDate: endDate
+        }
+    })
+    .done(function (rtnData) {
+        if (rtnData && rtnData.avg_day_count !== 'undefined') {
+            // Cập nhật tổng số hồ sơ vào HTML
+            $("#average_inpatient").text(rtnData.avg_day_count);
+        } else {
+            console.log("Dữ liệu không hợp lệ hoặc không có dữ liệu!");
+        }
+    })
+    .fail(function(jqXHR, textStatus, errorThrown) {
+        console.log("Lỗi AJAX: " + textStatus + ': ' + errorThrown);
+    });    
+}
 
 //chart_treatment
 function sum_treatment(startDate, endDate) {
