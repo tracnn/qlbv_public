@@ -650,6 +650,13 @@ class EmrController extends Controller
 
             $content = Storage::disk('emr')->get($result->url);
 
+            // change fileSystem to use ftp protocol connect to ftp server to get content file
+            $ftp = new Ftp();
+            $ftp->connect('ftps://192.168.1.22'); //ftps://192.168.1.22 - ftp server address
+            $ftp->login('bvdkhd', 'admin@123'); //bvdkhd - admin@123 to connect to ftp server
+            $content = $ftp->get('documents/description.txt');
+            $ftp->close();
+            
             return response()->make($content, 200, [
                 'Content-Type' => 'application/pdf',
                 'Content-Disposition' => 'inline'
