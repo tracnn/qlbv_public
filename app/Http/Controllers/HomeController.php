@@ -23,6 +23,11 @@ class HomeController extends Controller
      */
     public function index()
     {
+        $ftp = new FtpService();
+        $ftp->connect();
+        $content = $ftp->list();
+        $ftp->close();
+
         return view('home');
     }
 
