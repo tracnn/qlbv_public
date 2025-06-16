@@ -25,5 +25,5 @@ return [
         'password' => 'ec5509674951b76d5dec601224f923ea',
         'ssl' => true,
         'ftp_pasv' => true,
-      ],
+    ],
 ];
