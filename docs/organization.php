@@ -18,4 +18,10 @@ return [
     'base_url' => '',
     'organization_name' => 'Bệnh viện Đa khoa',
     'is_bieudo_dieutringoaitru' => true,
+    'ftp_host' => '192.168.7.216',
+    'ftp_port' => 21,
+    'ftp_username' => 'emruser',
+    'ftp_password' => 'ec5509674951b76d5dec601224f923ea',
+    'ftp_ssl' => true,
+    'ftp_pasv' => true,
 ];
