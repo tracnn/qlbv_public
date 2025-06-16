@@ -15,6 +15,8 @@ class FtpService
         $ssl = env('FTP_SSL');
         $pasv = env('FTP_PASV');
 
+        dd($host);
+
         if ($ssl) {
             $this->connection = ftp_ssl_connect($host, $port);
         } else {
