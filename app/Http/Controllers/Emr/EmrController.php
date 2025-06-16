@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Emr;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Storage;
+use App\Services\FtpService;
 
 use DB;
 
@@ -629,9 +630,6 @@ class EmrController extends Controller
     public function viewPdf(Request $request)
     {
         try {
-            // if (!session('_token')) {
-            //     throw new \Exception('Unauthorized access');
-            // }
 
             $result = DB::connection('EMR_RS')
                 ->table('emr_version')
@@ -648,7 +646,13 @@ class EmrController extends Controller
                 throw new \Exception('Invalid request');
             }
 
-            $content = Storage::disk('emr')->get($result->url);
+            $resultUrl = env('FTP_BASE_PATH') . str_replace('\\', '/', $result->url);
+            $ftp = new FtpService();
+            $ftp->connect();
+            $content = $ftp->getContent($resultUrl);
+            $ftp->close();
+
+            //$content = Storage::disk('emr')->get($result->url);
 
             return response()->make($content, 200, [
                 'Content-Type' => 'application/pdf',
