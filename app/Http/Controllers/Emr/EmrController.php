@@ -646,13 +646,13 @@ class EmrController extends Controller
                 throw new \Exception('Invalid request');
             }
 
-            // $resultUrl = env('FTP_BASE_PATH') . str_replace('\\', '/', $result->url);
-            // $ftp = new FtpService();
-            // $ftp->connect();
-            // $content = $ftp->getContent($resultUrl);
-            // $ftp->close();
+            $resultUrl = str_replace('\\', '/', $result->url);
+            $ftp = new FtpService();
+            $ftp->connect();
+            $content = $ftp->getContent($resultUrl);
+            $ftp->close();
 
-            $content = Storage::disk('emr')->get($result->url);
+            //$content = Storage::disk('emr')->get($result->url);
 
             return response()->make($content, 200, [
                 'Content-Type' => 'application/pdf',
