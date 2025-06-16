@@ -21,7 +21,8 @@
                 {{ $value->tdl_service_name }}
               </td>
               <td align="center">
-                <a href="{{ config('organization.base_pacs_url') }}{{ $value->id }}" class="btn btn-info btn-sm" target="_blank">
+                <a href="{{ config('organization.base_pacs_url') }}{{ $value->id }}" 
+                class="btn btn-info btn-sm" target="_blank" rel="noopener noreferrer">
                   <i class="fa fa-film"></i> Xem
                 </a>
               </td>
