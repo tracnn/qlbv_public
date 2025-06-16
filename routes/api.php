@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Http\Request;
+use App\Http\Controllers\PacsController;
 
 /*
 |--------------------------------------------------------------------------
@@ -12,3 +13,4 @@ use Illuminate\Http\Request;
 | is assigned the "api" middleware group. Enjoy building your API!
 |
 */
+Route::get('/get-pacs-viewer-link', 'PacsController@getPacsViewerLink')->name('get-pacs-viewer-link');

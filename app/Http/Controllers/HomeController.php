@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 
 use App\BHYTKiemTraHoSo;
 use App\HISProBaoCaoQuanTri;
+use App\Services\FtpService;
 
 use Carbon\Carbon;
 use DB;

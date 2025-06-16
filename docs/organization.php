@@ -18,4 +18,12 @@ return [
     'base_url' => '',
     'organization_name' => 'Bệnh viện Đa khoa',
     'is_bieudo_dieutringoaitru' => true,
+    'ftp_emr_config' => [
+        'host' => '192.168.7.216',
+        'port' => 21,
+        'username' => 'emruser',
+        'password' => 'ec5509674951b76d5dec601224f923ea',
+        'ssl' => true,
+        'ftp_pasv' => true,
+    ],
 ];
