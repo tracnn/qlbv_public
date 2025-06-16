@@ -8,12 +8,13 @@ class FtpService
 
     public function connect()
     {
-        $host = config('organization.ftp_host');
-        $port = config('organization.ftp_port');
-        $username = config('organization.ftp_username');
-        $password = config('organization.ftp_password');
-        $ssl = config('organization.ftp_ssl');
-        $pasv = config('organization.ftp_pasv');
+        $ftp_config = config('organization.ftp_emr_config');
+        $host = $ftp_config['host'];
+        $port = $ftp_config['port'];
+        $username = $ftp_config['username'];
+        $password = $ftp_config['password'];
+        $ssl = $ftp_config['ssl'];
+        $pasv = $ftp_config['ftp_pasv'];
 
         if ($ssl) {
             $this->connection = ftp_ssl_connect($host, $port);
