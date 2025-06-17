@@ -176,13 +176,16 @@ class XML130Import extends Command
                     // Sau khi hoàn thành import hồ sơ thì mới check nghiệp vụ tổng thể liên quan tới hồ sơ đó
                     if ($ma_lk !== null && !empty($processedFileTypes)) {
                         $this->qd130XmlService->storeQd130XmlInfomation($ma_lk, $macskcb, 'import', $soluonghoso);
-                        $this->qd130XmlService->checkQd130XmlComplete($ma_lk);
-                        if (config('qd130xml.export_qd130_xml_enabled')) {
-                            //Kiểm tra nếu là XML thông tuyến và exportable_tt = false thì không thực hiện exportQd130Xml
-                            if (!($disk === 'xml130tt' && config('qd130xml.exportable_tt') == false)) {
-                                $this->qd130XmlService->exportQd130Xml($ma_lk);
-                            }                          
-                        } 
+                        if (!config('organization.xml_4750_not_check')) {
+                            $this->qd130XmlService->checkQd130XmlComplete($ma_lk);
+                           
+                            if (config('qd130xml.export_qd130_xml_enabled')) {
+                                //Kiểm tra nếu là XML thông tuyến và exportable_tt = false thì không thực hiện exportQd130Xml
+                                if (!($disk === 'xml130tt' && config('qd130xml.exportable_tt') == false)) {
+                                    $this->qd130XmlService->exportQd130Xml($ma_lk);
+                                }                          
+                            }
+                        }
                     }
 
                     // Delete file after import

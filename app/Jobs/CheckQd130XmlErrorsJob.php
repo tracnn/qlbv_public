@@ -89,6 +89,11 @@ class CheckQd130XmlErrorsJob implements ShouldQueue
                 throw new \Exception("Unknown XML type: " . $this->xmlType);
         }
 
+        if (config('organization.xml_4750_not_check')) {
+            return;
+        
+        }
+
         $checker->checkErrors($this->xmlData);
     }
 }
