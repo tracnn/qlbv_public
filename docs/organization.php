@@ -26,4 +26,5 @@ return [
         'ssl' => true,
         'ftp_pasv' => true,
     ],
+    'xml_4750_not_check' => false,
 ];
