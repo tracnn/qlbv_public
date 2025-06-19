@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Storage;
 use App\Services\FtpService;
+use Illuminate\Support\Facades\Crypt;
 
 use DB;
 
@@ -434,44 +435,16 @@ class EmrController extends Controller
     {
         try {
 
-            $pdfUrl = url('/api/view-pdf') . '?document_code=' . $request->get('document_code') . '&treatment_code=' . $request->get('treatment_code');
-            return redirect(url('/vendor/pdfjsv2/web/viewer.html?file=' . urlencode($pdfUrl)));
+            $documentCode = $request->get('document_code');
+            $treatmentCode = $request->get('treatment_code');
 
-            // $result = DB::connection('EMR_RS')
-            //     ->table('emr_version')
-            //     ->join('emr_document', 'emr_document.id', '=', 'emr_version.document_id')
-            //     ->where('emr_version.is_delete', 0)
-            //     ->where('emr_version.is_active', 1)
-            //     ->where('emr_document.is_delete', 0)
-            //     ->where('emr_document.document_code', base64_decode($request->get('document_code')))
-            //     ->where('emr_document.treatment_code', $request->get('treatment_code'))
-            //     ->orderBy('emr_version.id', 'desc')
-            //     ->first();
+            // Mã hóa thông tin
+            $token = Crypt::encryptString("{$documentCode}|{$treatmentCode}");
+            $securePdfUrl = url('/api/secure-view-pdf?token=' . urlencode($token));
 
-            // if(!$result)
-            // {
-            //     throw new \Exception('Invalid request');
-            // }
-
-            // $content = Storage::disk('emr')->get($result->url);
-            // $base64Pdf = base64_encode($content);
-            // //$type = Storage::disk('emr')->mimeType($filePath);
-
-            // if (Browser::isAndroid()) {
-            //     if (session('_token') && Storage::disk('public')->put('/upload/' .$request->get('treatment_code') .'.pdf', $content)) {
-            //         $url_pdf = url('storage') .'/upload/' .$request->get('treatment_code') .'.pdf';
-            //         return redirect(url('/' .'vendor/pdfjsv2/web/viewer.html?file=' .$url_pdf));
-            //      } else {
-            //         throw new \Exception('Invalid request');
-            //      }
-
-            //     // return response()->json(['base64Pdf' => $base64Pdf]);
-            // }
-
-            // return response()->make($content, 200, [
-            //     'Content-Type' => 'application/pdf',
-            //     'Content-Disposition' => 'inline; filename="' .$request->get('document_code') .'.pdf"'
-            // ]);            
+            //$pdfUrl = url('/api/view-pdf') . '?document_code=' . $request->get('document_code') . '&treatment_code=' . $request->get('treatment_code');
+            //return redirect(url('/vendor/pdfjsv2/web/viewer.html?file=' . urlencode($pdfUrl)));  
+            return redirect(url('/vendor/pdfjsv2/web/viewer.html?file=' . urlencode($securePdfUrl)));          
         } catch (\Exception $e) {
             return $e->getMessage();
         }
@@ -662,5 +635,51 @@ class EmrController extends Controller
             return response()->json(['error' => $e->getMessage()], 400);
         }
     }   
+
+    public function securePdfView(Request $request)
+    {
+        try {
+            $token = $request->get('token');
+
+            if (!$token) {
+                return response()->json(['error' => 'Thiếu token'], 400);
+            }
+
+            // Giải mã token để lấy document_code và treatment_code
+            $decrypted = Crypt::decryptString($token);
+            [$documentCode, $treatmentCode] = explode('|', $decrypted);
+
+            // Truy vấn lấy file PDF
+            $result = DB::connection('EMR_RS')
+                ->table('emr_version')
+                ->join('emr_document', 'emr_document.id', '=', 'emr_version.document_id')
+                ->where('emr_version.is_delete', 0)
+                ->where('emr_version.is_active', 1)
+                ->where('emr_document.is_delete', 0)
+                ->where('emr_document.document_code', $documentCode)
+                ->where('emr_document.treatment_code', $treatmentCode)
+                ->orderBy('emr_version.id', 'desc')
+                ->first();
+
+            if (!$result) {
+                throw new \Exception('Không tìm thấy kết quả');
+            }
+
+            $resultUrl = str_replace('\\', '/', $result->url);
+            $ftp = new FtpService();
+            $ftp->connect();
+            $content = $ftp->getContent($resultUrl);
+            $ftp->close();
+
+            return response()->make($content, 200, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'inline'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Link không hợp lệ hoặc đã hết hạn'], 403);
+        }
+    }
+
+
 
 }
