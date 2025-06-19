@@ -17,10 +17,6 @@ class PatientController extends Controller
         $param_code = '';
         $param_phone = '';
 
-        $inTimeLimit = now()->subMonths(12)->format('YmdHis');
-
-        $treatment_code = strlen($param_code) < 12 ? str_pad($param_code, 12, '0', STR_PAD_LEFT) : $param_code;
-
         $histories = collect();
         try {
 
@@ -34,6 +30,9 @@ class PatientController extends Controller
 
             $decrypted = Crypt::decryptString($token);
             [$param_code, $param_phone] = explode('|', $decrypted);
+
+            $treatment_code = strlen($param_code) < 12 ? str_pad($param_code, 12, '0', STR_PAD_LEFT) : $param_code;
+            $inTimeLimit = now()->subMonths(12)->format('YmdHis');
             
 
             if ($param_code && $param_phone) {
