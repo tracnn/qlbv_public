@@ -15,6 +15,10 @@
 @include('includes.message')
 @include('emr.treatment-result.search')
 
+@php
+    use Illuminate\Support\Facades\Crypt;
+@endphp
+
 @if(isset($patient_info) && $patient_info)
 <div class="panel panel-default">
     <div class="panel-heading">
@@ -51,8 +55,10 @@
                     <td>{{strtodatetime($value->in_time)}}</td>
                     <td>{{$value->out_time ? strtodatetime($value->out_time) : ''}}</td>
                     <td>{{$value->patient_type_name}}</td>
-                    <td><a href="{{route('view-guide-content',['treatment_code' => $value->treatment_code,
-                        'phone' => $value->mobile ? $value->mobile : $value->phone])}}" class="btn btn-sm btn-primary" target="_blank">
+                    @php
+                        $token = Crypt::encryptString($value->treatment_code . '|' . $value->mobile);
+                    @endphp
+                    <td><a href="{{route('view-guide-content',['token' => $token])}}" class="btn btn-sm btn-primary" target="_blank">
                                 <span class="glyphicon glyphicon-eye-open"></span> Hướng dẫn - Xem KQ</a>
                         <a href="{{route('view-mety',['treatment_id' => $value->id])}}" class="btn btn-sm btn-info" target="_blank">
                                 <span class="glyphicon glyphicon-eye-open"></span> Đơn thuốc</a>

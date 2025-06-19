@@ -25,30 +25,30 @@
               </thead>
               <tbody>
                   @foreach($emr_document->groupBy('document_type_name') as $key_emr => $value_emr)
-                  <tr class="active">
-                      <td colspan="3"><strong>{{$key_emr ? $key_emr : 'Khác'}}</strong></td>
-                  </tr>
-                  @foreach($value_emr as $key => $value)
-                      @php
-                          $token = Crypt::encryptString($value->document_code . '|' . $value->treatment_code);
-                      @endphp
-                      <tr>
-                          <td align="center">
-                              {{ $key + 1 }}
-                          </td>
-                          <td>
-                              {{ $value->document_name }}
-                          </td>
-                          <td align="center">
-                              <!-- <a href="{{ route('view-doc', ['document_code'=>($value->document_code), 'treatment_code' => $value->treatment_code]) }}" class="btn btn-sm btn-primary" target="_blank">
-                                  <i class="glyphicon glyphicon-eye-open"></i> Xem
-                              </a> -->
-                              <a href="{{ route('secure-view-doc', ['token' => $token]) }}" class="btn btn-sm btn-primary" target="_blank">
-                                  <i class="glyphicon glyphicon-eye-open"></i> Xem
-                              </a>
-                          </td>
-                      </tr>
-                  @endforeach
+                    <tr class="active">
+                        <td colspan="3"><strong>{{$key_emr ? $key_emr : 'Khác'}}</strong></td>
+                    </tr>
+                    @foreach($value_emr as $key => $value)
+                        @php
+                            $token = Crypt::encryptString($value->document_code . '|' . $value->treatment_code);
+                        @endphp
+                        <tr>
+                            <td align="center">
+                                {{ $key + 1 }}
+                            </td>
+                            <td>
+                                {{ $value->document_name }}
+                            </td>
+                            <td align="center">
+                                <!-- <a href="{{ route('view-doc', ['document_code'=>($value->document_code), 'treatment_code' => $value->treatment_code]) }}" class="btn btn-sm btn-primary" target="_blank">
+                                    <i class="glyphicon glyphicon-eye-open"></i> Xem
+                                </a> -->
+                                <a href="{{ route('secure-view-doc', ['token' => $token]) }}" class="btn btn-sm btn-primary" target="_blank">
+                                    <i class="glyphicon glyphicon-eye-open"></i> Xem
+                                </a>
+                            </td>
+                        </tr>
+                    @endforeach
                   @endforeach
               </tbody>
           </table>
