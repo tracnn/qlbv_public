@@ -25,12 +25,11 @@ class PatientController extends Controller
         try {
 
             $token = $request->get('token');
+
+
             if (!$token) {
-                return view('patient.view-guide', [
-                    'histories' => $histories,
-                    'param_code' => $param_code,
-                    'param_phone' => $param_phone
-                ]);
+                return view('patient.view-guide', 
+                compact('histories', 'param_phone', 'param_code'));
             }
 
             $decrypted = Crypt::decryptString($token);
@@ -79,8 +78,8 @@ class PatientController extends Controller
             return $e->getMessage();
         }
 
-        return view('patient.view-guide', ['histories' => $histories, 'param_phone' => $param_phone, 
-                'param_code' => $param_code]);
+        return view('patient.view-guide', 
+            compact('histories', 'param_phone', 'param_code'));
     }
 
     public function viewGuideContent(Request $request)
