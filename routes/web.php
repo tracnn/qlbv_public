@@ -577,3 +577,4 @@ Route::get('/api/view-pdf', 'Emr\EmrController@viewPdf')->name('api.view-pdf');
 Route::get('/api/secure-view-pdf', 'Emr\EmrController@securePdfView')->name('api.secure-view-pdf');
 Route::get('/secure-view-doc', 'Emr\EmrController@viewDocByToken')->name('secure-view-doc');
 Route::get('/encrypt-token', 'PatientController@encryptToken');
+Route::get('/encrypt-token-general', 'PatientController@encryptTokenGeneral');

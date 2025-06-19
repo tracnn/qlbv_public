@@ -21,19 +21,17 @@
         Xem thông tin khám chữa bệnh
       </div>
       <div class="panel-body">
-        <form id="searchForm" method="GET" action="">
+        <form id="searchForm" method="GET" action="#">
           <div class="form-group row">
             <label class="col-sm-3 col-form-label">Mã BN/Mã ĐT/CCCD</label>
             <div class="col-sm-9">
-              <input class="form-control" type="tel" id="code" name="code" placeholder="Mã ĐT/Mã BN/CCCD" maxlength="12"
-                value="{{ $param_code }}">
+              <input class="form-control" type="tel" id="code" name="code" placeholder="Mã ĐT/Mã BN/CCCD" maxlength="12" value="{{ $param_code }}">
             </div>
           </div>
           <div class="form-group row">
             <label class="col-sm-3 col-form-label">Số điện thoại</label>
             <div class="col-sm-9">
-              <input class="form-control" type="tel" id="phone" name="phone" placeholder="Số điện thoại" maxlength="11"
-                value="{{ $param_phone }}">
+              <input class="form-control" type="tel" id="phone" name="phone" placeholder="Số điện thoại" maxlength="11" value="{{ $param_phone }}">
             </div>
           </div>
           <div class="form-group row">
@@ -89,18 +87,27 @@
       return isNumberKey(evt);
     });
 
-    // Form submission handler
-    $('#searchForm').submit(function(event) {
-        var code = $('#code').val().trim();
-        var phone = $('#phone').val().trim();
+    $('#searchForm').submit(function (event) {
+      event.preventDefault(); // Chặn submit mặc định
 
-        // Check if both fields are not empty and meet the length requirements
-        if (!code || code.length < 10 || !phone || phone.length < 9) {
-            event.preventDefault(); // Prevent form submission
-            toastr.error('Phải nhập cả mã và số điện thoại.'); // Show an error message
-            return false; // Stop the form from submitting
-        }
-        // Optionally, you can do further checks here or adjust according to specific length rules
+      var code = $('#code').val().trim();
+      var phone = $('#phone').val().trim();
+
+      if (!code || code.length < 10 || !phone || phone.length < 9) {
+        toastr.error('Phải nhập cả mã và số điện thoại hợp lệ.');
+        return false;
+      }
+
+      fetch(`/encrypt-token-general?code=${encodeURIComponent(code)}&phone=${encodeURIComponent(phone)}`)
+        .then(response => response.json())
+        .then(data => {
+          if (data.token) {
+            window.location.href = `/view-guide?token=${encodeURIComponent(data.token)}`;
+          } else {
+            toastr.error('Không thể tạo token.');
+          }
+        })
+        .catch(() => toastr.error('Lỗi hệ thống khi tạo token.'));
     });
 
   });

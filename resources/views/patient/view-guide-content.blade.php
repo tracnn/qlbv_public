@@ -97,7 +97,7 @@
 
       const treatmentCode = document.getElementById('treatment_code').value;
       const phone = document.getElementById('phone').value;
-console.log(treatmentCode);
+
       // Gọi API để mã hóa dữ liệu rồi redirect
       fetch(`/encrypt-token?treatment_code=${encodeURIComponent(treatmentCode)}&phone=${encodeURIComponent(phone)}`)
         .then(response => response.json())

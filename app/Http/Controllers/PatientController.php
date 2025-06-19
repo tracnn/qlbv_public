@@ -14,8 +14,8 @@ class PatientController extends Controller
 {
     public function viewGuide(Request $request)
     {
-        $param_code = $request->get('code','');
-        $param_phone = $request->get('phone', '');
+        $param_code = '';
+        $param_phone = '';
 
         $inTimeLimit = now()->subMonths(12)->format('YmdHis');
 
@@ -23,6 +23,18 @@ class PatientController extends Controller
 
         $histories = collect();
         try {
+
+            $token = $request->get('token');
+            if (!$token) {
+                return view('patient.view-guide', [
+                    'histories' => $histories,
+                    'param_code' => $param_code,
+                    'param_phone' => $param_phone
+                ]);
+            }
+
+            $decrypted = Crypt::decryptString($token);
+            [$param_code, $param_phone] = explode('|', $decrypted);
             
 
             if ($param_code && $param_phone) {
@@ -73,36 +85,41 @@ class PatientController extends Controller
 
     public function viewGuideContent(Request $request)
     {
-        $treatment_code = '';
-        $phone = '';
+        $treatment_code = null;
+        $phone = null;
+        $treatment = null;
+        $service_req = null;
+        $emr_document = null;
+        $service_kham = null;
+        $sere_serv_cdha = null;
+        $service_req_notStarted = null;
+        $countServiceReqNotStartByRoom = null;
+        $sere_serv_chiphi = null;
+        $tracuuhoadon = null;
+        $barcode = null;
+        $sere_serv_total = null;
+        $transactions = null;
+        $patient = null;
+        $vaccinations = null;
 
         try {
 
             $token = $request->get('token');
             // Giải mã token
-            if ($token) {
-                $decrypted = \Crypt::decryptString($token);
-                [$treatment_code, $phone] = explode('|', $decrypted);
+            if (!$token) {
+                return view('patient.view-guide-content',
+                    compact('treatment_code','phone','treatment','service_req','emr_document','service_kham','sere_serv_cdha',
+                        'service_req_notStarted', 'countServiceReqNotStartByRoom','sere_serv_chiphi','tracuuhoadon','barcode',
+                        'sere_serv_total', 'transactions', 'vaccinations')
+                );                
             }
+
+            $decrypted = \Crypt::decryptString($token);
+            [$treatment_code, $phone] = explode('|', $decrypted);
 
             if (!$treatment_code || !$phone) {
                 return abort(403, 'Link không hợp lệ hoặc thiếu dữ liệu');
             }     
-                   
-            $treatment = null;
-            $service_req = null;
-            $emr_document = null;
-            $service_kham = null;
-            $sere_serv_cdha = null;
-            $service_req_notStarted = null;
-            $countServiceReqNotStartByRoom = null;
-            $sere_serv_chiphi = null;
-            $tracuuhoadon = null;
-            $barcode = null;
-			$sere_serv_total = null;
-			$transactions = null;
-            $patient = null;
-            $vaccinations = null;
 
             if ($treatment_code && $phone) {
                 $treatment = DB::connection('HISPro')
@@ -294,6 +311,20 @@ class PatientController extends Controller
         }
 
         $token = Crypt::encryptString("{$treatmentCode}|{$phone}");
+
+        return response()->json(['token' => $token]);
+    }
+
+    public function encryptTokenGeneral(Request $request)
+    {
+        $code  = $request->get('code');
+        $phone = $request->get('phone');
+
+        if (!$code  || !$phone) {
+            return response()->json(['error' => 'Thiếu thông tin'], 400);
+        }
+
+        $token = Crypt::encryptString("{$code}|{$phone}");
 
         return response()->json(['token' => $token]);
     }
