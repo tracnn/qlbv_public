@@ -450,6 +450,28 @@ class EmrController extends Controller
         }
     }
 
+    public function viewDocByToken(Request $request)
+    {
+        try {
+            $token = $request->get('token');
+
+            if (!$token) {
+                abort(400, 'Thiếu token');
+            }
+
+            $decrypted = Crypt::decryptString($token);
+            [$documentCode, $treatmentCode] = explode('|', $decrypted);
+
+            // Tạo link PDF đã mã hóa
+            $tokenEncrypted = Crypt::encryptString("{$documentCode}|{$treatmentCode}");
+            $pdfUrl = url('/api/secure-view-pdf?token=' . urlencode($tokenEncrypted));
+
+            return redirect('/vendor/pdfjsv2/web/viewer.html?file=' . urlencode($pdfUrl));
+        } catch (\Exception $e) {
+            abort(403, 'Token không hợp lệ');
+        }
+    }
+
     public function TreatmentResultQrCode(Request $request)
     {
         if (!$request->ajax()) {
