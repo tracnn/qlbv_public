@@ -92,6 +92,27 @@
   <script src="{{ asset('/js/customize.js')}}"></script>
 
   <script>
+    document.getElementById('searchForm').addEventListener('submit', function (e) {
+      e.preventDefault(); // chặn submit mặc định
+
+      const treatmentCode = document.getElementById('treatment_code').value;
+      const phone = document.getElementById('phone').value;
+console.log(treatmentCode);
+      // Gọi API để mã hóa dữ liệu rồi redirect
+      fetch(`/encrypt-token?treatment_code=${encodeURIComponent(treatmentCode)}&phone=${encodeURIComponent(phone)}`)
+        .then(response => response.json())
+        .then(data => {
+          if (data.token) {
+            window.location.href = `/view-guide-content?token=${encodeURIComponent(data.token)}`;
+          } else {
+            alert('Không thể tạo token');
+          }
+        })
+        .catch(() => alert('Có lỗi xảy ra khi tạo token'));
+    });
+  </script>
+
+  <script>
     $(document).ready(function() {
       $('#treatment_code').on('blur', function() {
         var code = $(this).val().trim(); // Loại bỏ khoảng trắng đầu và cuối của chuỗi nhập

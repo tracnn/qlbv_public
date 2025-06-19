@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use DB;
 use Picqer\Barcode\BarcodeGeneratorPNG;
+use Illuminate\Support\Facades\Crypt;
 use App\Patient;
 use App\Vaccination;
 use Datetime\Datetime;
@@ -72,11 +73,22 @@ class PatientController extends Controller
 
     public function viewGuideContent(Request $request)
     {
-        $treatment_code = $request->get('treatment_code', '');
-        $phone = $request->get('phone', '');
+        $treatment_code = '';
+        $phone = '';
 
         try {
 
+            $token = $request->get('token');
+            // Giải mã token
+            if ($token) {
+                $decrypted = \Crypt::decryptString($token);
+                [$treatment_code, $phone] = explode('|', $decrypted);
+            }
+
+            if (!$treatment_code || !$phone) {
+                return abort(403, 'Link không hợp lệ hoặc thiếu dữ liệu');
+            }     
+                   
             $treatment = null;
             $service_req = null;
             $emr_document = null;
@@ -270,6 +282,20 @@ class PatientController extends Controller
                 'service_req_notStarted', 'countServiceReqNotStartByRoom','sere_serv_chiphi','tracuuhoadon','barcode',
                 'sere_serv_total', 'transactions', 'vaccinations')
         );
+    }
+
+    public function encryptToken(Request $request)
+    {
+        $treatmentCode = $request->get('treatment_code');
+        $phone = $request->get('phone');
+
+        if (!$treatmentCode || !$phone) {
+            return response()->json(['error' => 'Thiếu thông tin'], 400);
+        }
+
+        $token = Crypt::encryptString("{$treatmentCode}|{$phone}");
+
+        return response()->json(['token' => $token]);
     }
 
 }
