@@ -1,4 +1,8 @@
 <!-- resources/views/partials/patient_history.blade.php -->
+@php
+    use Illuminate\Support\Facades\Crypt;
+@endphp
+
 @if($histories->isNotEmpty())
     <div class="container" id="historyContainer">
         <div class="panel panel-primary">
@@ -13,7 +17,15 @@
                         <p class="mb-1">Loại điều trị: {{ $history->treatment_type_name }}</p>
                         <p class="mb-1">Kết quả: {{ $history->treatment_result_name }}</p>
                         <p>Ngày khám: {{ strtodatetime($history->in_time) }}</p>
-                        <a href="{{route('view-guide-content',['treatment_code'=>$history->treatment_code, 'phone' => $param_phone])}}" 
+                        @php
+                            $raw = $history->treatment_code . '|' . $param_phone;
+                            try {
+                                $token = encrypt($raw);
+                            } catch (\Exception $e) {
+                                $token = null;
+                            }
+                        @endphp
+                        <a href="{{ route('view-guide-content',['token' => $token]) }}" 
                             class="btn btn-sm btn-primary" target="_blank">
                             <span class="glyphicon glyphicon-eye-open"></span> Chi tiết</a>
                     </div>
