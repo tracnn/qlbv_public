@@ -30,7 +30,7 @@ class PatientController extends Controller
 
             $decrypted = Crypt::decryptString($token);
             [$param_code, $param_phone, $createdAt, $expiresIn] = explode('|', $decrypted);
-var_dump($decrypted);
+
             $expiredAt = \Carbon\Carbon::createFromTimestamp($createdAt)->addSeconds($expiresIn);
 
             if (now()->greaterThan($expiredAt)) {
@@ -74,7 +74,7 @@ var_dump($decrypted);
                     ->orWhere('his_treatment.tdl_patient_relative_phone', $param_phone)
                     ->orWhere('his_treatment.tdl_patient_relative_mobile', $param_phone);;
                 })
-                ->where('his_treatment.in_time', '>=', $inTimeLimit)
+                //->where('his_treatment.in_time', '>=', $inTimeLimit)
                 ->orderBy('in_time','desc')
                 ->paginate(3);
             }
