@@ -465,8 +465,8 @@ class EmrController extends Controller
 
             $decrypted = Crypt::decryptString($token);
             [$documentCode, $treatmentCode, $createdAt, $expiresIn] = explode('|', $decrypted);
-
-            var_dump($decrypted);
+            
+            var_dump($createdAt);
 
             $expiredAt = \Carbon\Carbon::createFromTimestamp($createdAt)->addSeconds($expiresIn);
 
