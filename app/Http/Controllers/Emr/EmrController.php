@@ -673,7 +673,11 @@ class EmrController extends Controller
 
             // Giải mã token để lấy document_code và treatment_code
             $decrypted = Crypt::decryptString($token);
-            [$documentCode, $treatmentCode] = explode('|', $decrypted);
+            [$documentCode, $treatmentCode, $createdAt, $expiresIn] = explode('|', $decrypted);
+
+            if (strtotime(now()) - strtotime($createdAt) > $expiresIn) {
+                return response()->json(['error' => 'Token đã hết hạn'], 403);
+            }
 
             // Truy vấn lấy file PDF
             $result = DB::connection('EMR_RS')
