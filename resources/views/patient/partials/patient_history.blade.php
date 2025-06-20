@@ -29,7 +29,20 @@
                             <span class="glyphicon glyphicon-eye-open"></span> Chi tiết</a>
                     </div>
                 @endforeach
-                {{ $histories->appends(['code' => $param_code, 'phone' => $param_phone])->links() }}
+                @php
+                    try {
+                        $createdAt = now()->timestamp;
+                        $expiresIn = 7200;
+                        $paginationToken = Crypt::encryptString("{$param_code}|{$param_phone}|{$createdAt}|{$expiresIn}");
+                    } catch (\Exception $e) {
+                        $paginationToken = null;
+                    }
+                @endphp
+                @if ($paginationToken)
+                    {{ $histories->appends(['token' => $paginationToken])->links() }}
+                @else
+                    <p class="text-danger text-center">Không thể tạo token phân trang</p>
+                @endif
             </div>
           </div>         
         </div>
