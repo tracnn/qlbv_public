@@ -40,7 +40,6 @@
                 {{ number_format(floor($tracuuhoadon->sum('amount'))) }}₫
               </th>
               <th style="text-align:right; color:red;">
-                (Khác: {{ number_format(floor($sere_serv_chiphi->sum('thanh_tien') - $tracuuhoadon->sum('amount'))) }}₫)
               </th>
             </tr>
           </tfoot>
