@@ -681,9 +681,11 @@ class EmrController extends Controller
 
             [$documentCode, $treatmentCode, $createdAt, $expiresIn] = explode('|', $decrypted);
 
-            if (strtotime(now()) - strtotime($createdAt) > $expiresIn) {
-                return response()->json(['error' => 'Token đã hết hạn'], 403);
-            }
+            $expiredAt = \Carbon\Carbon::createFromTimestamp($createdAt)->addSeconds($expiresIn);
+
+            if (now()->greaterThan($expiredAt)) {
+                return abort(403, 'Đã hết thời hạn xem hồ sơ, đề nghị bạn vào trang tra cứu');
+            }  
 
             // Truy vấn lấy file PDF
             $result = DB::connection('EMR_RS')
