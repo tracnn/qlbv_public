@@ -464,7 +464,11 @@ class EmrController extends Controller
             }
 
             $decrypted = Crypt::decryptString($token);
-            [$documentCode, $treatmentCode] = explode('|', $decrypted);
+            [$documentCode, $treatmentCode, $createdAt, $expiresIn] = explode('|', $decrypted);
+
+            if (strtotime(now()) - strtotime($createdAt) > $expiresIn) {
+                abort(403, 'Token đã hết hạn');
+            }
 
             // Tạo link PDF đã mã hóa
             $tokenEncrypted = Crypt::encryptString("{$documentCode}|{$treatmentCode}");
