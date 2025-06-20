@@ -30,7 +30,7 @@ class PatientController extends Controller
 
             $decrypted = Crypt::decryptString($token);
             [$param_code, $param_phone, $createdAt, $expiresIn] = explode('|', $decrypted);
-var_dump($decrypted)
+var_dump($decrypted);
             $expiredAt = \Carbon\Carbon::createFromTimestamp($createdAt)->addSeconds($expiresIn);
 
             if (now()->greaterThan($expiredAt)) {
