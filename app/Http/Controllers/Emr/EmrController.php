@@ -246,12 +246,14 @@ class EmrController extends Controller
                     ?? $result->tdl_patient_relative_mobile 
                     ?? $result->tdl_patient_relative_phone 
                     ?? '';
+                
+                $token = Crypt::encryptString("{$result->treatment_code}|{$phone}");
+                    
                 $buttons = '<a href="' .route('emr.check-emr',['treatment_code'=>$result->treatment_code]) .'" class="btn btn-sm btn-danger" target="_blank">
                                 <span class="glyphicon glyphicon-check"></span> Kiểm tra</a>
                             <a href="' .route('treatment-result.search',['treatment_code'=>$result->treatment_code]) .'" class="btn btn-sm btn-primary" target="_blank">
                                 <span class="glyphicon glyphicon-eye-open"></span> Xem KQ</a>
-                            <a href="' .route('view-guide-content',['treatment_code='. 
-                            $result->treatment_code . '&phone=' . urlencode($phone)]) .
+                            <a href="' .route('view-guide-content',['token'=> $token]) .
                             '"class="btn btn-sm btn-primary" target="_blank">
                                 <span class="glyphicon glyphicon-eye-open"></span> Trả KQ</a>
                             <a href="' .route('system.user-function.search',['treatment_code'=>$result->treatment_code]) .'" class="btn btn-sm btn-warning" target="_blank">
