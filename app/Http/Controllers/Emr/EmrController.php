@@ -466,12 +466,14 @@ class EmrController extends Controller
             $decrypted = Crypt::decryptString($token);
             [$documentCode, $treatmentCode, $createdAt, $expiresIn] = explode('|', $decrypted);
 
-            if (strtotime(now()) - strtotime($createdAt) > $expiresIn) {
-                abort(403, 'Token đã hết hạn');
-            }
+            $expiredAt = \Carbon\Carbon::createFromTimestamp($createdAt)->addSeconds($expiresIn);
+
+            if (now()->greaterThan($expiredAt)) {
+                return abort(403, 'Đã hết thời hạn xem hồ sơ, đề nghị bạn vào trang tra cứu');
+            }  
 
             // Tạo link PDF đã mã hóa
-            $tokenEncrypted = Crypt::encryptString("{$documentCode}|{$treatmentCode}|{$createdAt}|{$expiresIn}");
+            $tokenEncrypted = Crypt::encryptString("{$documentCode}|{$treatmentCode}");
             $pdfUrl = url('/api/secure-view-pdf?token=' . urlencode($tokenEncrypted));
             return redirect('/vendor/pdfjsv2/web/viewer.html?file=' . urlencode($pdfUrl));
         } catch (\Exception $e) {
