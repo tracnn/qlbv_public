@@ -32,8 +32,7 @@
                         @php
                             $createdAt = now()->timestamp;
                             $expiresIn = 7200;
-                            $token = Crypt::encryptString($value->document_code . '|' . 
-                            $value->treatment_code . '|' . $createdAt . '|' . $expiresIn);
+                            $token = Crypt::encryptString($value->document_code . '|' . $value->treatment_code . '|' . $createdAt . '|' . $expiresIn);
                         @endphp
                         <tr>
                             <td align="center">

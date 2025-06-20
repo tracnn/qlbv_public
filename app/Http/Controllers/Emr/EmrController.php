@@ -673,6 +673,8 @@ class EmrController extends Controller
 
             // Giải mã token để lấy document_code và treatment_code
             $decrypted = Crypt::decryptString($token);
+            var_dump($decrypted);
+            
             [$documentCode, $treatmentCode, $createdAt, $expiresIn] = explode('|', $decrypted);
 
             if (strtotime(now()) - strtotime($createdAt) > $expiresIn) {
