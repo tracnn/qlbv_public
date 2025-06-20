@@ -29,15 +29,11 @@
                         <td colspan="3"><strong>{{$key_emr ? $key_emr : 'Khác'}}</strong></td>
                     </tr>
                     @foreach($value_emr as $key => $value)
-                    @php
-                        $payload = [
-                            'document_code' => $value->document_code,
-                            'treatment_code' => $value->treatment_code,
-                            'created_at' => now()->timestamp,
-                            'expires_in' => 7200
-                        ];
-                        $token = Crypt::encryptString(json_encode($payload));
-                    @endphp
+                        @php
+                            $createdAt = now()->timestamp;
+                            $expiresIn = 7200;
+                            $token = Crypt::encryptString($value->document_code . '|' . $value->treatment_code . '|' . $createdAt . '|' . $expiresIn);
+                        @endphp
                         <tr>
                             <td align="center">
                                 {{ $key + 1 }}
