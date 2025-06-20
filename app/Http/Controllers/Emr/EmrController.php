@@ -247,7 +247,9 @@ class EmrController extends Controller
                     ?? $result->tdl_patient_relative_phone 
                     ?? '';
                 
-                $token = Crypt::encryptString("{$result->treatment_code}|{$phone}");
+                $createdAt = now()->timestamp;
+                $expiresIn = 7200;
+                $token = Crypt::encryptString("{$result->treatment_code}|{$phone}|{$createdAt}|{$expiresIn}");
                     
                 $buttons = '<a href="' .route('emr.check-emr',['treatment_code'=>$result->treatment_code]) .'" class="btn btn-sm btn-danger" target="_blank">
                                 <span class="glyphicon glyphicon-check"></span> Kiểm tra</a>
