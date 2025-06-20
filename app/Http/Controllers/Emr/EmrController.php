@@ -465,8 +465,6 @@ class EmrController extends Controller
 
             $decrypted = Crypt::decryptString($token);
             [$documentCode, $treatmentCode, $createdAt, $expiresIn] = explode('|', $decrypted);
-            
-            dd($createdAt);
 
             $expiredAt = \Carbon\Carbon::createFromTimestamp($createdAt)->addSeconds($expiresIn);
 
@@ -475,7 +473,7 @@ class EmrController extends Controller
             }  
 
             // Tạo link PDF đã mã hóa
-            $tokenEncrypted = Crypt::encryptString("{$documentCode}|{$treatmentCode}");
+            $tokenEncrypted = Crypt::encryptString("{$documentCode}|{$treatmentCode}|{$createdAt}|{$expiresIn}");
             $pdfUrl = url('/api/secure-view-pdf?token=' . urlencode($tokenEncrypted));
             return redirect('/vendor/pdfjsv2/web/viewer.html?file=' . urlencode($pdfUrl));
         } catch (\Exception $e) {
