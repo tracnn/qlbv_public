@@ -56,7 +56,9 @@
                     <td>{{$value->out_time ? strtodatetime($value->out_time) : ''}}</td>
                     <td>{{$value->patient_type_name}}</td>
                     @php
-                        $token = Crypt::encryptString($value->treatment_code . '|' . $value->phone);
+                        $createdAt = now()->timestamp;
+                        $expiresIn = 7200;
+                        $token = Crypt::encryptString($value->treatment_code . '|' . $value->phone . '|' . $createdAt . '|' . $expiresIn);
                     @endphp
                     <td><a href="{{route('view-guide-content',['token' => $token])}}" class="btn btn-sm btn-primary" target="_blank">
                                 <span class="glyphicon glyphicon-eye-open"></span> Hướng dẫn - Xem KQ</a>
