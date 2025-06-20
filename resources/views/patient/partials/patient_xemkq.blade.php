@@ -33,6 +33,8 @@
                             $createdAt = now()->timestamp;
                             $expiresIn = 7200;
                             $token = Crypt::encryptString($value->document_code . '|' . $value->treatment_code . '|' . $createdAt . '|' . $expiresIn);
+
+                            var_dump($token);
                         @endphp
                         <tr>
                             <td align="center">
