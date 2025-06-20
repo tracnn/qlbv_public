@@ -29,7 +29,13 @@ class PatientController extends Controller
             }
 
             $decrypted = Crypt::decryptString($token);
-            [$param_code, $param_phone] = explode('|', $decrypted);
+            [$param_code, $param_phone, $createdAt, $expiresIn] = explode('|', $decrypted);
+
+            $expiredAt = \Carbon\Carbon::createFromTimestamp($createdAt)->addSeconds($expiresIn);
+
+            if (now()->greaterThan($expiredAt)) {
+                return abort(403, 'Đã hết thời hạn xem hồ sơ, đề nghị bạn vào trang tra cứu');
+            }
 
             $treatment_code = strlen($param_code) < 12 ? str_pad($param_code, 12, '0', STR_PAD_LEFT) : $param_code;
             $inTimeLimit = now()->subMonths(12)->format('YmdHis');
@@ -113,7 +119,13 @@ class PatientController extends Controller
             }
 
             $decrypted = \Crypt::decryptString($token);
-            [$treatment_code, $phone] = explode('|', $decrypted);
+            [$treatment_code, $phone, $createdAt, $expiresIn] = explode('|', $decrypted);
+
+            $expiredAt = \Carbon\Carbon::createFromTimestamp($createdAt)->addSeconds($expiresIn);
+
+            if (now()->greaterThan($expiredAt)) {
+                return abort(403, 'Đã hết thời hạn xem hồ sơ, đề nghị bạn vào trang tra cứu');
+            }            
 
             if (!$treatment_code || !$phone) {
                 return abort(403, 'Link không hợp lệ hoặc thiếu dữ liệu');
@@ -304,11 +316,15 @@ class PatientController extends Controller
         $treatmentCode = $request->get('treatment_code');
         $phone = $request->get('phone');
 
+
         if (!$treatmentCode || !$phone) {
             return response()->json(['error' => 'Thiếu thông tin'], 400);
         }
 
-        $token = Crypt::encryptString("{$treatmentCode}|{$phone}");
+        $createdAt = now()->timestamp; // Thời điểm tạo token
+        $expiresIn = 7200; // thời gian sống (giây) – ví dụ: 5 phút
+
+        $token = Crypt::encryptString("{$treatmentCode}|{$phone}|{$createdAt}|{$expiresIn}");
 
         return response()->json(['token' => $token]);
     }
@@ -322,7 +338,10 @@ class PatientController extends Controller
             return response()->json(['error' => 'Thiếu thông tin'], 400);
         }
 
-        $token = Crypt::encryptString("{$code}|{$phone}");
+        $createdAt = now()->timestamp; // Thời điểm tạo token
+        $expiresIn = 7200; // thời gian sống (giây) – ví dụ: 5 phút
+
+        $token = Crypt::encryptString("{$code}|{$phone}|{$createdAt}|{$expiresIn}");
 
         return response()->json(['token' => $token]);
     }

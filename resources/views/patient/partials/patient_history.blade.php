@@ -18,7 +18,11 @@
                         <p class="mb-1">Kết quả: {{ $history->treatment_result_name }}</p>
                         <p>Ngày khám: {{ strtodatetime($history->in_time) }}</p>
                         @php
-                            $token = Crypt::encryptString($history->treatment_code . '|' . $param_phone);
+                            $createdAt = now()->timestamp;
+                            $expiresIn = 7200;
+                            $token = Crypt::encryptString(
+                            $history->treatment_code . '|' . $param_phone . '|' .
+                            $createdAt .'|' . $expiresIn);
                         @endphp
                         <a href="{{ route('view-guide-content',['token' => $token]) }}" 
                             class="btn btn-sm btn-primary" target="_blank">
