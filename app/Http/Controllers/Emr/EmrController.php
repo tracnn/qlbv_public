@@ -473,7 +473,7 @@ class EmrController extends Controller
             // Tạo link PDF đã mã hóa
             $tokenEncrypted = Crypt::encryptString("{$documentCode}|{$treatmentCode}|{$createdAt}|{$expiresIn}");
             $pdfUrl = url('/api/secure-view-pdf?token=' . urlencode($tokenEncrypted));
-
+            var_dump($pdfUrl);
             return redirect('/vendor/pdfjsv2/web/viewer.html?file=' . urlencode($pdfUrl));
         } catch (\Exception $e) {
             abort(403, 'Token không hợp lệ');
