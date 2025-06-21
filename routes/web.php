@@ -578,3 +578,8 @@ Route::get('/api/secure-view-pdf', 'Emr\EmrController@securePdfView')->name('api
 Route::get('/secure-view-doc', 'Emr\EmrController@viewDocByToken')->name('secure-view-doc');
 Route::get('/encrypt-token', 'PatientController@encryptToken');
 Route::get('/encrypt-token-general', 'PatientController@encryptTokenGeneral');
+
+//qhis-plus
+Route::get('/tra-cuu-ls-kcb', 'QHisPlus@index');
+Route::post('/tra-cuu-ls-kcb', 'QHisPlus@traCuuLsKcb')->name('tra-cuu-ls-kcb');
+Route::get('/chi-tiet-ho-so/{id}', 'QHisPlus@chiTietHoSo')->name('chi-tiet-ho-so');
