@@ -16,6 +16,8 @@ return [
         //https://egw.baohiemxahoi.gov.vn
     ],
     'base_url' => '',
+    'base_pacs_url' => '',
+    'pacs_url_suffix' => '&service_id=',
     'organization_name' => 'Bệnh viện Đa khoa',
     'is_bieudo_dieutringoaitru' => true,
     'ftp_emr_config' => [
