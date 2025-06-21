@@ -1,8 +1,8 @@
-{{-- KẾT QUẢ CẬN LÂM SÀNG --}}
+{{-- THÔNG TIN DVKT --}}
 @if(isset($clsGrouped) && $clsGrouped->count())
   <h6 class="mt-4">
     <span class="toggle-cls-all text-primary" data-target="cls-wrapper" style="cursor:pointer">[+]</span>
-    Kết quả cận lâm sàng
+    Thông tin DVKT
   </h6>
   <div id="cls-wrapper" style="display: none; margin-left: 1rem;">
     @foreach($clsGrouped as $maNhom => $groupedByNhom)

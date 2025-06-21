@@ -11,7 +11,7 @@
     .toggle-btn { cursor: pointer; }
   </style>
 </head>
-<body class="bg-light">
+<body class="bg-white">
 
 <div class="container py-4">
   <h4 class="mb-4 text-center">Tra cứu hồ sơ khám chữa bệnh</h4>
