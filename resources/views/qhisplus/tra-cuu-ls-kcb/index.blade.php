@@ -23,7 +23,7 @@
       <div class="col-md-9 col-12">
         <input type="text" name="keyword" class="form-control"
                value="{{ old('keyword', isset($keyword) ? $keyword : '') }}"
-               placeholder="Nhập CCCD / Mã BHYT" required>
+               placeholder="Nhập CCCD / Mã BHYT" required autofocus>
       </div>
       <div class="col-md-3 col-12 d-grid">
         <button type="submit" class="btn btn-primary">Tìm kiếm</button>
