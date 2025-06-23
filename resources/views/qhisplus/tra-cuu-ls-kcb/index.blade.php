@@ -88,7 +88,7 @@
         </tbody>
       </table>
     </div>
-  @else
+  @elseif(isset($hosos) && count($hosos) == 0)
     <div class="mb-4">Không tìm thấy dữ liệu...</div>
   @endif
 
