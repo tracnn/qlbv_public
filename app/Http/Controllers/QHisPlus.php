@@ -27,7 +27,6 @@ class QHisPlus extends Controller
 
         $baseUrl = config('organization.q_his_plus_url');
         $endpoint = $baseUrl . '/qd3176/xml1s/' . urlencode($keyword);
-        dd($endpoint);
 
         try {
             $client = new Client();
@@ -82,8 +81,10 @@ class QHisPlus extends Controller
     public function chiTietHoSo($id)
     {
         try {
+            $baseUrl = config('organization.q_his_plus_url');
+            
             $client = new Client();
-            $baseUrl = env('Q_HIS_PLUS_URL') . ':' . env('Q_HIS_PLUS_PORT');
+            
             $response = $client->request('GET', "{$baseUrl}/qd3176/xml2s/{$id}");
 
             $data = json_decode($response->getBody(), true);
