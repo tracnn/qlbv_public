@@ -25,8 +25,7 @@ class QHisPlus extends Controller
                 ->withErrors(['keyword' => 'Vui lòng nhập CCCD gồm 12 chữ số hoặc mã BHYT gồm 2 chữ cái in hoa và 13 chữ số.']);
         }
 
-        $baseUrl = env('Q_HIS_PLUS_URL') . ? env('Q_HIS_PLUS_PORT'): ':' . env('Q_HIS_PLUS_PORT');
-        var_dump($baseUrl);
+        $baseUrl = env('Q_HIS_PLUS_URL') . ':' . env('Q_HIS_PLUS_PORT');
         $endpoint = $baseUrl . '/qd3176/xml1s/' . urlencode($keyword);
 
         try {
