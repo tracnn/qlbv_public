@@ -27,7 +27,7 @@ class QHisPlus extends Controller
 
         $baseUrl = env('Q_HIS_PLUS_URL') . ':' . env('Q_HIS_PLUS_PORT');
         $endpoint = $baseUrl . '/qd3176/xml1s/' . urlencode($keyword);
-var_dump($endpoint);
+dd($endpoint);
         try {
             $client = new Client();
             $response = $client->request('GET', $endpoint);
