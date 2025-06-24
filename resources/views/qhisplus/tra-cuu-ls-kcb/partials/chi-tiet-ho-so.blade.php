@@ -42,7 +42,7 @@
                   <td>
                     <span class="toggle-cls text-primary" data-dv="{{ $clsId }}" style="cursor:pointer">[+]</span>
                   </td>
-                  <td>{{ $dvkt['tenDichVu'] ?? '' }}</td>
+                  <td>{{ $dvkt['tenDichVu'] ?? $dvkt['tenVatTu'] }}</td>
                   <td>{{ $dvkt['donViTinh'] ?? '' }}</td>
                   <td>{{ $dvkt['maKhoa'] ?? '' }}</td>
                   <td>{{ isset($dvkt['ngayYl']) ? strtodatetime($dvkt['ngayYl']) : '' }}</td>
