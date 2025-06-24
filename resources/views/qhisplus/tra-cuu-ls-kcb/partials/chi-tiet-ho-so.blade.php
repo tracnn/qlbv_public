@@ -25,6 +25,7 @@
                 <th></th>
                 <th>Tên dịch vụ</th>
                 <th>Đơn vị tính</th>
+                <th>Số lượng</th>
                 <th>Khoa thực hiện</th>
                 <th>Ngày chỉ định</th>
                 <th>Kết quả (Giá trị/Kết luận)</th>
@@ -44,6 +45,7 @@
                   </td>
                   <td>{{ $dvkt['tenDichVu'] ?? $dvkt['tenVatTu'] }}</td>
                   <td>{{ $dvkt['donViTinh'] ?? '' }}</td>
+                  <td>{{ $dvkt['soLuong'] ?? 0 }}</td>
                   <td>{{ $dvkt['maKhoa'] ?? '' }}</td>
                   <td>{{ isset($dvkt['ngayYl']) ? strtodatetime($dvkt['ngayYl']) : '' }}</td>
                   <td>
