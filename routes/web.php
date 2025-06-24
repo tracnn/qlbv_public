@@ -50,6 +50,11 @@ Route::group(['middleware' => ['auth', 'check.first.login']], function () {
 //    });
     //Please do not remove this if you want adminlte:route and adminlte:link commands to works correctly.
     #adminlte_routes
+    
+    //qhis-plus
+    Route::get('/tra-cuu-ls-kcb', 'QHisPlus@index')->name('tra-cuu-ls-kcb-index');
+    Route::post('/tra-cuu-ls-kcb', 'QHisPlus@traCuuLsKcb')->name('tra-cuu-ls-kcb');
+    Route::get('/tra-cuu-ls-kcb/chi-tiet-ho-so/{id}', 'QHisPlus@chiTietHoSo')->name('chi-tiet-ho-so');
 
     Route::group(['middleware' => ['checkrole:dashboard']], function () {
         Route::get('fetch-noi-tru', 'HomeController@fetchNoitru')->name('fetch-noi-tru');
@@ -578,8 +583,3 @@ Route::get('/api/secure-view-pdf', 'Emr\EmrController@securePdfView')->name('api
 Route::get('/secure-view-doc', 'Emr\EmrController@viewDocByToken')->name('secure-view-doc');
 Route::get('/encrypt-token', 'PatientController@encryptToken');
 Route::get('/encrypt-token-general', 'PatientController@encryptTokenGeneral');
-
-//qhis-plus
-Route::get('/tra-cuu-ls-kcb', 'QHisPlus@index');
-Route::post('/tra-cuu-ls-kcb', 'QHisPlus@traCuuLsKcb')->name('tra-cuu-ls-kcb');
-Route::get('/chi-tiet-ho-so/{id}', 'QHisPlus@chiTietHoSo')->name('chi-tiet-ho-so');

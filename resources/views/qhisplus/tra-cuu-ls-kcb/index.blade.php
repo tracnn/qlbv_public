@@ -111,7 +111,7 @@ $(document).ready(function () {
 
       if (contentDiv.is(':empty')) {
         $.ajax({
-          url: '/chi-tiet-ho-so/' + id,
+          url: '{{ route("chi-tiet-ho-so", ["id" => ""]) }}/' + id, // Nối id vào cuối URL
           method: 'GET',
           success: function (html) {
             contentDiv.html(html);

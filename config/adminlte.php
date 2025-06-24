@@ -591,6 +591,12 @@ return [
                 ],
             ],
         ],
+        [
+            'text'       => 'Tra cứu LS KCB',
+            'icon'       => 'book',
+            'route'   => 'tra-cuu-ls-kcb-index',
+            'active'    => ['tra-cuu-ls-kcb*'],
+        ],
     ],
 
     /*
