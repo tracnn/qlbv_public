@@ -82,48 +82,65 @@ class QHisPlus extends Controller
     {
         try {
             $baseUrl = config('organization.q_his_plus_url');
-            
             $client = new Client();
-            
-            $response = $client->request('GET', "{$baseUrl}/qd3176/xml2s/{$id}");
 
+            // Thuốc
+            $response = $client->request('GET', "{$baseUrl}/qd3176/xml2s/{$id}");
             $data = json_decode($response->getBody(), true);
             $thuocs = $data['data'] ?? [];
 
+            // Dịch vụ kỹ thuật (XML3)
             $resDvkt = $client->request('GET', "{$baseUrl}/qd3176/xml3s/{$id}");
             $dvktRaw = json_decode($resDvkt->getBody(), true)['data'] ?? [];
 
-            $dvktInfoMap = collect($dvktRaw)->keyBy('maDichVu')->map(function ($item) {
-                return [
-                    'tenDichVu' => $item['tenDichVu'] ?? '(Không rõ)',
-                    'maNhom'    => $item['maNhom'] ?? null,
-                ];
-            });
-
+            // Cận lâm sàng (XML4)
             $resCls = $client->request('GET', "{$baseUrl}/qd3176/xml4s/{$id}");
             $clsRaw = json_decode($resCls->getBody(), true)['data'] ?? [];
 
-            $clsWithInfo = collect($clsRaw)->map(function ($item) use ($dvktInfoMap) {
-                $info = $dvktInfoMap->get($item['maDichVu'], [
-                    'tenDichVu' => '(Không rõ tên dịch vụ)',
-                    'maNhom' => null
-                ]);
+            // Gom CLS theo maDichVu
+            $clsGrouped = collect($clsRaw)
+                ->filter(function ($item) {
+                    return !empty($item['giaTri']) || !empty($item['ketLuan']);
+                })
+                ->map(function ($item) {
+                    return [
+                        'maChiSo' => $item['maChiSo'] ?? null,
+                        'tenChiSo' => $item['tenChiSo'] ?? null,
+                        'giaTri' => $item['giaTri'] ?? null,
+                        'ketLuan' => $item['ketLuan'] ?? null,
+                        'ngayKq' => $item['ngayKq'] ?? null,
+                    ];
+                })
+                ->groupBy(function ($item, $key) use ($clsRaw) {
+                    // Group theo maDichVu của bản gốc (chứ không phải của item đã map)
+                    return $clsRaw[$key]['maDichVu'] ?? null;
+                });
 
-                $item['tenDichVu'] = $info['tenDichVu'];
-                $item['maNhom'] = $info['maNhom'];
+            // Gắn dữ liệu CLS vào từng DVKT nếu có
+            $dvktWithCls = collect($dvktRaw)->map(function ($item) use ($clsGrouped) {
+                $maDichVu = $item['maDichVu'] ?? null;
+                // Nếu có CLS ứng với mã dịch vụ
+                if ($maDichVu && isset($clsGrouped[$maDichVu])) {
+                    // Có thể nhiều dòng CLS cùng mã, gắn thành mảng (hoặc gộp lại tùy ý)
+                    $item['canLamSang'] = $clsGrouped[$maDichVu]->values()->toArray();
+                } else {
+                    $item['canLamSang'] = [];
+                }
                 return $item;
             });
-            $clsGrouped = $clsWithInfo->groupBy('maNhom');
+
+            // Nhóm DVKT theo mã nhóm (maNhom)
+            $dvktGrouped = $dvktWithCls->groupBy('maNhom');
 
             // Render view partial
             $html = view('qhisplus.tra-cuu-ls-kcb.partials.chi-tiet-ho-so', [
                 'thuocs' => $thuocs,
-                'clsGrouped' => $clsGrouped,
+                'dvktGrouped' => $dvktGrouped,
             ])->render();
 
             return response($html);
         } catch (\Exception $e) {
-            return response('<div class="text-danger">Lỗi khi lấy chi tiết thuốc: ' . $e->getMessage() . '</div>', 500);
+            return response('<div class="text-danger">Lỗi khi lấy chi tiết hồ sơ: ' . $e->getMessage() . '</div>', 500);
         }
     }
 }
