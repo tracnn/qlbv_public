@@ -200,7 +200,7 @@
           <div class="small-box bg-aqua">
             <div class="inner">
               <h3 id="sum_phauthuat">0</h3>
-              <p>Phẫu thuật</p>
+              <p><a href="{{route('reports-administrator.list-patient-pt')}}">Phẫu thuật</a></p>
             </div>
             <div class="icon">
               <i class="ion ion-pie-graph"></i>
