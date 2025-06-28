@@ -581,6 +581,8 @@ Route::group(['middleware' => ['auth', 'check.first.login']], function () {
     /* Quản lý hồ sơ bệnh án */
     Route::group(['prefix' => 'bhxh/', 'middleware' => ['checkrole:bhxh']], function () {
         Route::get('index', 'BhxhController@index')->name('bhxh.index');
+        Route::get('emr-checker-list', 'BhxhController@listEmrChecker')
+        ->name('bhxh.emr-checker-list');
     });
 
 });

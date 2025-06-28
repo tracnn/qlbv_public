@@ -107,8 +107,6 @@
         if (currentAjaxRequest != null) {
             currentAjaxRequest.abort();
         }
-        
-        $('#select-all').prop('checked', false);
 
         table = $('#list').DataTable({
             "processing": true,
@@ -220,8 +218,6 @@
                 if (response.success) {
                     toastr.success(response.message);
                     $('#expireModal').modal('hide');
-                    $('#select-all').prop('checked', false);
-                    $('#list').DataTable().ajax.reload();
                 } else {
                     toastr.error(response.message);
                 }

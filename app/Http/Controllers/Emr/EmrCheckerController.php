@@ -10,6 +10,7 @@ use Carbon\Carbon;
 use Yajra\Datatables\Datatables;
 
 use App\Services\CheckEmrService;
+use App\Models\BhxhEmrPermission;
 
 class EmrCheckerController extends Controller
 {
@@ -266,14 +267,14 @@ class EmrCheckerController extends Controller
                 $insertData = [];
 
                 foreach ($batch as $code) {
-                    $existing = DB::table('bhxh_emr_permission')
+                    $existing = BhxhEmrPermission::where('treatment_code', $code)
                         ->where('treatment_code', $code)
                         ->first();
 
                     if ($existing) {
                         // Nếu đã tồn tại nhưng allow_view_at khác thì cập nhật
                         if ($existing->allow_view_at != $expireDate) {
-                            DB::table('bhxh_emr_permission')
+                            BhxhEmrPermission::where('id', $existing->id)
                                 ->where('id', $existing->id)
                                 ->update([
                                     'allow_view_at' => $expireDate,
@@ -293,7 +294,7 @@ class EmrCheckerController extends Controller
 
                 // Insert theo batch
                 if (!empty($insertData)) {
-                    DB::table('bhxh_emr_permission')->insert($insertData);
+                    BhxhEmrPermission::insert($insertData);
                 }
             }
 
