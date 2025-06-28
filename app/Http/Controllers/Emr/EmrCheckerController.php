@@ -441,4 +441,21 @@ class EmrCheckerController extends Controller
             })
             ->toJson();
     }
+
+    public function deleteMultiple(Request $request)
+    {
+        $ids = $request->input('ids');
+
+        if (empty($ids)) {
+            return response()->json(['message' => 'Không có bản ghi nào được chọn.'], 400);
+        }
+    
+        $ids = array_chunk($ids, 1000);
+
+        foreach ($ids as $id) {
+            BhxhEmrPermission::whereIn('treatment_code', $id)->delete();
+        }
+    
+        return response()->json(['message' => 'Xóa thành công.']);
+    }
 }

@@ -34,6 +34,7 @@
 @include('includes.message')
 <!-- /Messages -->
 @include('emr-checker.partials.search')
+<button id="delete-selected" class="btn-sm btn-danger" disabled>Xóa hồ sơ đã chọn</button>
 <div class="panel panel-default">
     <div class="panel-body table-responsive">
         <table id="list" class="table display table-hover responsive nowrap datatable dtr-inline" width="100%">
@@ -139,7 +140,44 @@
         $('.select-row').prop('checked', isChecked);
     });
 
+    $(document).on('change', '.select-row, #select-all', function () {
+        var anyChecked = $('.select-row:checked').length > 0;
+        $('#delete-selected').prop('disabled', !anyChecked);
+    });
 
+    $(document).on('click', '#delete-selected', function () {
+        var selectedIds = $('.select-row:checked').map(function () {
+            return $(this).val();
+        }).get();
+
+        if (selectedIds.length === 0) {
+            alert('Vui lòng chọn ít nhất một dòng để xóa.');
+            return;
+        }
+
+        if (!confirm('Bạn có chắc chắn muốn xóa các bản ghi đã chọn không?')) {
+            return;
+        }
+
+        $.ajax({
+            url: '{{ route('emr-checker.emr-checker-bhxh-delete-multiple') }}',
+            method: 'POST',
+            data: {
+                _token: '{{ csrf_token() }}',
+                ids: selectedIds
+            },
+            success: function (response) {
+                alert('Xóa thành công!');
+                table.ajax.reload();
+                $('#select-all').prop('checked', false);
+                $('#delete-selected').prop('disabled', true);
+            },
+            error: function (xhr) {
+                alert('Có lỗi xảy ra khi xóa.');
+            }
+        });
+    });    
+    
     $(document).ready(function() {
         $('.select2').select2({
             width: '100%' // Đặt chiều rộng của Select2 là 100%

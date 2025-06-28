@@ -151,6 +151,8 @@ Route::group(['middleware' => ['auth', 'check.first.login']], function () {
         ->name('emr-checker.emr-checker-bhxh-index');
         Route::get('emr-checker-bhxh-list', 'Emr\EmrCheckerController@listEmrCheckerBhxh')
         ->name('emr-checker.emr-checker-bhxh-list');
+        Route::post('emr-checker-bhxh-delete-multiple', 'Emr\EmrCheckerController@deleteMultiple')
+        ->name('emr-checker.emr-checker-bhxh-delete-multiple');
     });
 
     /*
