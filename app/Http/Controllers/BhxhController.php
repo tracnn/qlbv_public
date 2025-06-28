@@ -19,16 +19,13 @@ class BhxhController extends Controller
     {
         $data = BhxhEmrPermission::where('allow_view_at', '>=', now())->pluck('treatment_code');
     
-        if ($data->isEmpty()) {
-            return Datatables::of(collect())->make(true);
-        }
+        // Truncate data thành các batch 500
+        $chunks = $data->chunk(500);
     
-        $chunks = $data->chunk(1000);
-    
-        $firstQuery = null;
+        $results = collect(); // Dùng collection để merge an toàn
     
         foreach ($chunks as $chunk) {
-            $query = DB::connection('HISPro')
+            $result = DB::connection('HISPro')
                 ->table('his_treatment')
                 ->join('his_patient', 'his_patient.id', '=', 'his_treatment.patient_id')
                 ->join('his_treatment_type', 'his_treatment_type.id', '=', 'his_treatment.tdl_treatment_type_id')
@@ -53,32 +50,30 @@ class BhxhController extends Controller
                     'fee_lock_time',
                     'treatment_end_type_id'
                 )
-                ->whereIn('treatment_code', $chunk);
+                ->whereIn('treatment_code', $chunk)
+                ->get(); // Thực thi query
     
-            if (is_null($firstQuery)) {
-                $firstQuery = $query;
-            } else {
-                $firstQuery = $firstQuery->unionAll($query);
-            }
+            $results = $results->merge($result); // Merge collection
         }
     
-        return Datatables::of($firstQuery)
-            ->editColumn('tdl_patient_dob', function ($row) {
-                return dob($row->tdl_patient_dob);
-            })
-            ->editColumn('in_time', function ($row) {
-                return strtodatetime($row->in_time);
-            })
-            ->editColumn('out_time', function ($row) {
-                return strtodatetime($row->out_time);
-            })
-            ->editColumn('fee_lock_time', function ($row) {
-                return strtodatetime($row->fee_lock_time);
-            })
-            ->addColumn('action', function ($row) {
-                return '<a href="' . route('bhxh.emr-checker-detail', ['treatment_code' => $row->treatment_code]) . '" class="btn-sm btn-primary">Chi tiết EMR</a>';
-            })
-            ->make(true);
+        return Datatables::of($results)
+        ->editColumn('tdl_patient_dob', function ($row) {
+            return dob($row->tdl_patient_dob);
+        })
+        ->editColumn('in_time', function ($row) {
+            return strtodatetime($row->in_time);
+        })
+        ->editColumn('out_time', function ($row) {
+            return strtodatetime($row->out_time);
+        })
+        ->editColumn('fee_lock_time', function ($row) {
+            return strtodatetime($row->fee_lock_time);
+        })
+        ->addColumn('action', function ($row) {
+            return '<a href="'.route('bhxh.emr-checker-detail', 
+            ['treatment_code' => $row->treatment_code]).'" class="btn-sm btn-primary">Chi tiết EMR</a>';
+        })
+        ->make(true);
     }
 
     public function emrCheckerDetail(Request $request)
@@ -120,9 +115,7 @@ class BhxhController extends Controller
             $query->where('emr_document.document_type_id', $document_type_id);
         }
     
-        $data = $query->get();
-    
-        return Datatables::of($data)
+        return Datatables::of($query)
         ->editColumn('create_date', function ($row) {
             return strtodate($row->create_date);
         })

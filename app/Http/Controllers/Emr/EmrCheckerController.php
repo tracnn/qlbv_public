@@ -249,57 +249,35 @@ class EmrCheckerController extends Controller
     {
         $treatmentCodes = $request->input('treatment_codes', []);
         $expireDate = $request->input('expire_date');
-
+    
         if (empty($treatmentCodes) || !$expireDate) {
             return response()->json(['success' => false, 'message' => 'Dữ liệu không hợp lệ.']);
         }
-
-        $now = now();
+    
         if (now()->gt($expireDate)) {
             return response()->json(['success' => false, 'message' => 'Ngày hết hạn phải lớn hơn hiện tại.']);
         }
-
+    
         try {
             DB::beginTransaction();
-
-            // Chia mảng ra các batch 500 phần tử
+    
+            $now = now();
+    
             foreach (array_chunk($treatmentCodes, 500) as $batch) {
-                $insertData = [];
-
                 foreach ($batch as $code) {
-                    $existing = BhxhEmrPermission::where('treatment_code', $code)
-                        ->where('treatment_code', $code)
-                        ->first();
-
-                    if ($existing) {
-                        // Nếu đã tồn tại nhưng allow_view_at khác thì cập nhật
-                        if ($existing->allow_view_at != $expireDate) {
-                            BhxhEmrPermission::where('id', $existing->id)
-                                ->where('id', $existing->id)
-                                ->update([
-                                    'allow_view_at' => $expireDate,
-                                    'updated_at' => now()
-                                ]);
-                        }
-                    } else {
-                        // Nếu chưa tồn tại thì thêm mới
-                        $insertData[] = [
-                            'treatment_code' => $code,
+                    BhxhEmrPermission::updateOrInsert(
+                        ['treatment_code' => $code],
+                        [
                             'allow_view_at' => $expireDate,
-                            'created_at' => now(),
-                            'updated_at' => now()
-                        ];
-                    }
-                }
-
-                // Insert theo batch
-                if (!empty($insertData)) {
-                    BhxhEmrPermission::insert($insertData);
+                            'updated_at' => $now,
+                            'created_at' => $now // Nếu update thì cột này sẽ bị bỏ qua
+                        ]
+                    );
                 }
             }
-
+    
             DB::commit();
-
+    
             return response()->json(['success' => true, 'message' => 'Cập nhật thành công!']);
         } catch (\Exception $e) {
             DB::rollBack();
