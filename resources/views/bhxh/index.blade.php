@@ -99,16 +99,6 @@
             "scrollX": true, // Đảm bảo cuộn ngang khi bảng quá rộng
             "ajax": {
                 url: '{{ route('bhxh.emr-checker-list') }}',
-                data: function(d) {
-                    d.date_from = startDate;
-                    d.date_to = endDate;
-                    d.treatment_code = $('#treatment_code').val();
-                    d.date_type = $('#date_type').val();
-                    d.department_catalog = $('#department_catalog').val();
-                    d.patient_type = $('#patient_type').val();
-                    d.treatment_type = $('#treatment_type').val();
-                    d.treatment_end_type = $('#treatment_end_type').val();
-                },
                 beforeSend: function(xhr) {
                     currentAjaxRequest = xhr;
                 },
