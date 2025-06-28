@@ -260,13 +260,22 @@ class EmrCheckerController extends Controller
     
         $insertData = [];
         foreach ($treatmentCodes as $code) {
-            // Kiểm tra trùng treatment_code + allow_view_at
-            $exists = DB::table('bhxh_emr_permission')
+            $existing = DB::table('bhxh_emr_permission')
                 ->where('treatment_code', $code)
-                ->where('allow_view_at', $expireDate)
-                ->exists();
+                ->first();
     
-            if (!$exists) {
+            if ($existing) {
+                // Nếu đã tồn tại nhưng allow_view_at khác thì cập nhật
+                if ($existing->allow_view_at != $expireDate) {
+                    DB::table('bhxh_emr_permission')
+                        ->where('id', $existing->id)
+                        ->update([
+                            'allow_view_at' => $expireDate,
+                            'updated_at' => now()
+                        ]);
+                }
+            } else {
+                // Nếu chưa tồn tại thì thêm mới
                 $insertData[] = [
                     'treatment_code' => $code,
                     'allow_view_at' => $expireDate,
