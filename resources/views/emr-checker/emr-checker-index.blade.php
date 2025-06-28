@@ -205,6 +205,8 @@
             return;
         }
 
+        console.log(selectedRows);
+        
         $.ajax({
             url: '{{ route("emr-checker.set-permission") }}',
             type: 'POST',
