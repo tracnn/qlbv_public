@@ -90,16 +90,18 @@ class BhxhController extends Controller
         {
             $data = DB::connection('EMR_RS')
             ->table('emr_document')
+            ->join('emr_document_type', 'emr_document_type.id', '=', 'emr_document.document_type_id')
             ->where('treatment_code', $treatment_code)
             ->where('document_type_id', $document_type_id)
             ->get();
         } else {
             $data = DB::connection('EMR_RS')
             ->table('emr_document')
+            ->join('emr_document_type', 'emr_document_type.id', '=', 'emr_document.document_type_id')
             ->where('treatment_code', $treatment_code)
             ->get();
         }
-        
+
         return Datatables::of($data)->make(true);
     }
 }
