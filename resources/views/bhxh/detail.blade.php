@@ -93,7 +93,8 @@
                 }
             },
             "columns": [
-                { "data": "id" }, // STT (nếu muốn đánh số tự động thì cần xử lý lại)
+                { "data": null, "orderable": false, "searchable": false, "render": function (data, type, row) {
+                    return data.index + 1; }},
                 { "data": "document_name" }, // Tên văn bản
                 { "data": "document_type_name" }, // Loại văn bản
                 { "data": "create_date" }, // Ngày tạo
