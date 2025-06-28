@@ -218,6 +218,7 @@
                 if (response.success) {
                     toastr.success(response.message);
                     $('#expireModal').modal('hide');
+                    $('#select-all').prop('checked', false);
                     $('#list').DataTable().ajax.reload();
                 } else {
                     toastr.error(response.message);
