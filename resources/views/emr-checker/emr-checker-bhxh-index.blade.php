@@ -65,17 +65,12 @@
     var table = null;
 
     function fetchData(startDate, endDate) {
+        
         // Kiểm tra và hủy yêu cầu AJAX trước đó (nếu có)
         if (currentAjaxRequest != null) {
             currentAjaxRequest.abort();
         }
-
-        // Nếu bảng đã được khởi tạo → reload
-        if (table != null) {
-            table.ajax.reload();
-            return;
-        }
-
+        
         table = $('#list').DataTable({
             "processing": true,
             "serverSide": true,
