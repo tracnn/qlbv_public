@@ -56,8 +56,21 @@ class BhxhController extends Controller
         }
     
         return Datatables::of($results)
+        ->editColumn('tdl_patient_dob', function ($row) {
+            return dob($row->tdl_patient_dob);
+        })
+        ->editColumn('in_time', function ($row) {
+            return strtodatetine($row->in_time);
+        })
+        ->editColumn('out_time', function ($row) {
+            return strtidatetime($row->out_time);
+        })
+        ->editColumn('fee_lock_time', function ($row) {
+            return strtodatetime($row->fee_lock_time);
+        })
         ->addColumn('action', function ($row) {
-            return '<a href="'.route('bhxh.emr-checker-detail', ['treatment_code' => $row->treatment_code]).'" class="btn btn-primary">Xem</a>';
+            return '<a href="'.route('bhxh.emr-checker-detail', 
+            ['treatment_code' => $row->treatment_code]).'" class="btn btn-primary">Chi tiết EMR</a>';
         })
         ->make(true);
     }
