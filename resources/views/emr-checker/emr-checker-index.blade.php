@@ -209,16 +209,16 @@
             url: '{{ route("emr-checker.set-permission") }}',
             type: 'POST',
             contentType: 'application/json',
-            data: {
+            data: JSON.stringify({
                 _token: '{{ csrf_token() }}',
                 treatment_codes: selectedRows,
                 expire_date: expireDate
-            },
+            }),
             success: function (response) {
                 if (response.success) {
                     toastr.success(response.message);
                     $('#expireModal').modal('hide');
-                    $('#emr-index').DataTable().ajax.reload();
+                    $('#list').DataTable().ajax.reload();
                 } else {
                     toastr.error(response.message);
                 }
