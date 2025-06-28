@@ -13,4 +13,4 @@
 @stop
 
 @push('after-scripts')
-@stop
+@endpush
