@@ -31,4 +31,23 @@
 
 @section('content')
     @include('bhxh.partials.search-detail')
+
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            Chi tiết hồ sơ
+        </div>
+        <div class="panel-body table-responsive">
+            <table id="emr-detail" class="table display table-hover responsive nowrap datatable dtr-inline" width="100%">
+                <thead>
+                    <tr>
+                        <th>STT</th>
+                        <th>Tên văn bản</th>
+                        <th>Loại văn bản</th>
+                        <th>Ngày tạo</th>
+                        <th>Hành động</th>
+                    </tr>
+                </thead>
+            </table>
+        </div>
+    </div>
 @stop
