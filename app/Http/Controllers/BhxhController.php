@@ -60,7 +60,7 @@ class BhxhController extends Controller
             return dob($row->tdl_patient_dob);
         })
         ->editColumn('in_time', function ($row) {
-            return strtodatetine($row->in_time);
+            return strtodatetime($row->in_time);
         })
         ->editColumn('out_time', function ($row) {
             return strtodatetime($row->out_time);
