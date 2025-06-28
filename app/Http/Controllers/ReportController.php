@@ -476,7 +476,7 @@ class ReportController extends Controller
             return strtodatetime($result->intruction_time);
         })
         ->addColumn('action', function($result) {
-            return '<a href="' .route('treatment-result.search',['treatment_code'=>$result->treatment_code]) .'" 
+            return '<a href="' .route('treatment-result.search',['treatment_code'=>$result->tdl_treatment_code]) .'" 
                 class="btn btn-sm btn-primary" target="_blank">
                 <span class="glyphicon glyphicon-eye-open"></span> Chi tiết EMR</a>'
             ;
