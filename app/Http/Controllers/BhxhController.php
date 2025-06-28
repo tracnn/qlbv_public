@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Yajra\Datatables\Datatables;
 use App\Models\BhxhEmrPermission;
 use DB;
+use Illuminate\Support\Facades\Crypt;
 
 class BhxhController extends Controller
 {
