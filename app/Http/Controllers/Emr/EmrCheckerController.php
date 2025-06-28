@@ -343,8 +343,8 @@ class EmrCheckerController extends Controller
 
         $result = BhxhEmrPermission::select('treatment_code', 'patient_name', 'patient_dob', 'patient_address',
             'treatment_type_name', 'patient_type_name', 'hein_card_number', 'last_department_name',
-            'in_time', 'out_time', 'fee_lock_time', 'allow_view_at')
-            ->whereBetween('created_at', [$formattedDateFrom, $formattedDateTo]);
+            'in_time', 'out_time', 'fee_lock_time', 'allow_view_at');
+            //->whereBetween('created_at', [$formattedDateFrom, $formattedDateTo]);
 
         return Datatables::of($result)
             ->editColumn('patient_dob', function($result) {
