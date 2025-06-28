@@ -65,6 +65,6 @@ class BhxhController extends Controller
     public function emrCheckerDetail(Request $request)
     {
         $treatment_code = $request->input('treatment_code');
-        return view('bhxh.emr-checker-detail', compact('treatment_code'));
+        return view('bhxh.detail', compact('treatment_code'));
     }
 }
