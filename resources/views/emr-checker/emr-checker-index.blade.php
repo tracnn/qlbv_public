@@ -34,7 +34,7 @@
 @include('includes.message')
 <!-- /Messages -->
 @include('emr-checker.partials.search')
-<button id="openExpireModal" class="btn btn-primary" style="margin-bottom: 10px;">Chuyển BHXH</button>
+<button id="openExpireModal" class="btn-sm btn-primary">Chuyển BHXH</button>
 <div class="panel panel-default">
     <div class="panel-body table-responsive">
         <table id="list" class="table display table-hover responsive nowrap datatable dtr-inline" width="100%">
