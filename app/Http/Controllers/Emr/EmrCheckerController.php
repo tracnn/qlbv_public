@@ -316,8 +316,7 @@ class EmrCheckerController extends Controller
                             'out_time' => $treatment->out_time,
                             'fee_lock_time' => $treatment->fee_lock_time,
                             'treatment_end_type_id' => $treatment->treatment_end_type_id,
-                            'treatment_end_type_name' => $treatment->treatment_end_type_name,
-                            'updated_at' => $now
+                            'treatment_end_type_name' => $treatment->treatment_end_type_name
                         ]
                     );
                 }
