@@ -105,10 +105,17 @@
             	{{strtodate($value->create_date)}}
             </td>
             <td>
-                <a href="{{route('view-doc',['document_code' => ($value->document_code),
-                    'treatment_code' => $value->treatment_code])}}" class="btn btn-sm btn-primary" target="_blank">
-                                <span class="glyphicon glyphicon-eye-open"></span> Xem</a>
-                <button class="share-modal btn btn-sm btn-info" data-id="{{($value->document_code)}}" data-title="{{($value->document_name)}}" data-content=""><span class="glyphicon glyphicon-qrcode"></span> Share</button>
+                @php
+                    $createdAt = now()->timestamp;
+                    $expiresIn = 7200;
+                    $token = Crypt::encryptString($value->document_code . '|' . $value->treatment_code . '|' . $createdAt . '|' . $expiresIn);
+                @endphp
+                <a href="{{route('secure-view-doc',['token' => $token])}}" class="btn btn-sm btn-primary" target="_blank">
+                    <span class="glyphicon glyphicon-eye-open"></span> Xem</a>
+                <button class="share-modal btn btn-sm btn-info" data-id="{{($value->document_code)}}" 
+                    data-title="{{($value->document_name)}}" data-content="">
+                    <span class="glyphicon glyphicon-qrcode"></span> Share
+                </button>
             </td>
         </tr>
         @endforeach

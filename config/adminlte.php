@@ -555,6 +555,12 @@ return [
                     'route'   => 'reports-administrator.index-patient-count-by-department',
                     'active'=> ['reports-administrator/index-patient-count-by-department*'],
                 ],
+                [
+                    'text'       => 'Tra cứu LS KCB',
+                    'icon'       => 'line-chart',
+                    'route'   => 'tra-cuu-ls-kcb-index',
+                    'active'    => ['tra-cuu-ls-kcb*'],
+                ],
             ],
         ],
         [
@@ -590,12 +596,6 @@ return [
                     'active'    => ['users/index*']
                 ],
             ],
-        ],
-        [
-            'text'       => 'Tra cứu LS KCB',
-            'icon'       => 'book',
-            'route'   => 'tra-cuu-ls-kcb-index',
-            'active'    => ['tra-cuu-ls-kcb*'],
         ],
     ],
 
