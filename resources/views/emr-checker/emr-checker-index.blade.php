@@ -34,13 +34,14 @@
 @include('includes.message')
 <!-- /Messages -->
 @include('emr-checker.partials.search')
-
+<button id="openExpireModal" class="btn btn-primary" style="margin-bottom: 10px;">Chuyển BHXH</button>
 <div class="panel panel-default">
     <div class="panel-body table-responsive">
         <table id="list" class="table display table-hover responsive nowrap datatable dtr-inline" width="100%">
             <thead>
                 <tr>
                     <th>Mã ĐT</th>
+                    <th><input type="checkbox" id="select-all"></th>
                     <th>Mã BN</th>
                     <th>Họ tên</th>
                     <th>Ngày sinh</th>
@@ -56,6 +57,20 @@
                 </tr>
             </thead>
         </table>
+    </div>
+</div>
+
+<div class="modal fade" id="expireModal" tabindex="-1" role="dialog" aria-labelledby="expireModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <label class="modal-title">Chọn ngày hết hạn</label>
+                <button type="button" class="btn btn-primary" id="saveExpireBtn">Lưu</button>
+            </div>
+            <div class="modal-body">
+                <input type="datetime-local" id="expireDate" class="form-control">
+            </div>
+        </div>
     </div>
 </div>
 
@@ -130,6 +145,14 @@
             ],
             "columns": [
                 { "data": "treatment_code" },
+                {
+                    "data": null,
+                    "orderable": false,
+                    "searchable": false,
+                    "render": function (data, type, row) {
+                        return `<input type="checkbox" class="select-row" value="${row.treatment_code}">`;
+                    }
+                },
                 { "data": "tdl_patient_code" },
                 { "data": "tdl_patient_name" },
                 { "data": "tdl_patient_dob" },
@@ -147,6 +170,63 @@
 
         table.ajax.reload();
     }
+
+    $(document).on('change', '#select-all', function () {
+        var isChecked = $(this).is(':checked');
+        $('.select-row').prop('checked', isChecked);
+    });
+
+    $(document).on('click', '#openExpireModal', function () {
+        var selected = $('.select-row:checked');
+        if (selected.length === 0) {
+            toastr.warning('Vui lòng chọn ít nhất một hồ sơ.');
+            return;
+        }
+        $('#expireModal').modal('show');
+    });
+
+    $(document).on('click', '#saveExpireBtn', function () {
+        var selectedRows = [];
+        $('.select-row:checked').each(function () {
+            selectedRows.push($(this).val());
+        });
+
+        var expireDate = $('#expireDate').val();
+        if (!expireDate) {
+            toastr.warning('Vui lòng chọn ngày hết hạn.');
+            return;
+        }
+
+        var currentDateTime = new Date();
+        var selectedDateTime = new Date(expireDate);
+
+        if (selectedDateTime <= currentDateTime) {
+            toastr.error('Ngày hết hạn phải lớn hơn thời điểm hiện tại.');
+            return;
+        }
+
+        $.ajax({
+            url: '{{ route("emr-checker.set-permission") }}',
+            type: 'POST',
+            data: {
+                _token: '{{ csrf_token() }}',
+                treatment_codes: selectedRows,
+                expire_date: expireDate
+            },
+            success: function (response) {
+                if (response.success) {
+                    toastr.success(response.message);
+                    $('#expireModal').modal('hide');
+                    $('#emr-index').DataTable().ajax.reload();
+                } else {
+                    toastr.error(response.message);
+                }
+            },
+            error: function (xhr) {
+                toastr.error('Đã xảy ra lỗi khi lưu.');
+            }
+        });
+    });
 
     $(document).ready(function() {
         $('.select2').select2({

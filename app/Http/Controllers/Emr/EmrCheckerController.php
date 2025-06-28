@@ -243,4 +243,16 @@ class EmrCheckerController extends Controller
 
         return $html;
     }
+
+    public function setPermission(Request $request)
+    {
+        $treatment_codes = $request->input('treatment_codes');
+        $expire_date = $request->input('expire_date');
+
+        $treatment_codes = explode(',', $treatment_codes);
+dd($treatment_codes);
+        foreach ($treatment_codes as $treatment_code) {
+            //$this->checkEmrService->setPermission($treatment_code, $expire_date);
+        }
+    }
 }
