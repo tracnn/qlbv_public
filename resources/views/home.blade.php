@@ -570,10 +570,10 @@ function fetchTransactionData(startDate, endDate) {
         $("#chart_cashiers").text("Không có quyền");
         $("#chart_treatment_types").text("Không có quyền");
 
-        renderNoPermissionChart('chart_transaction_types', 'Loại giao dịch');
-        renderNoPermissionChart('chart_pay_forms', 'Hình thức thanh toán');
-        renderNoPermissionChart('chart_cashiers', 'Thu ngân');
-        renderNoPermissionChart('chart_treatment_types', 'Diện điều trị');
+        renderNoPermissionChart('chart_transaction_types', 'Thực thu: Loại giao dịch');
+        renderNoPermissionChart('chart_pay_forms', 'Thực thu: Hình thức thanh toán');
+        renderNoPermissionChart('chart_cashiers', 'Thực thu: Thu ngân');
+        renderNoPermissionChart('chart_treatment_types', 'Thực thu: Diện điều trị');
         return;
     }
 
