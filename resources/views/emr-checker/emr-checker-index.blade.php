@@ -208,6 +208,7 @@
         $.ajax({
             url: '{{ route("emr-checker.set-permission") }}',
             type: 'POST',
+            contentType: 'application/json',
             data: {
                 _token: '{{ csrf_token() }}',
                 treatment_codes: selectedRows,
