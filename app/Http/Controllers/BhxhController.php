@@ -80,4 +80,26 @@ class BhxhController extends Controller
         $treatment_code = $request->input('treatment_code');
         return view('bhxh.detail', compact('treatment_code'));
     }
+
+    public function emrCheckerDocumentList(Request $request)
+    {
+        $treatment_code = $request->input('treatment_code');
+        $document_type_id = $request->input('document_type');
+
+        if($document_type_id)
+        {
+            $data = DB::connection('EMR_RS')
+            ->table('emr_document')
+            ->where('treatment_code', $treatment_code)
+            ->where('document_type_id', $document_type_id)
+            ->get();
+        } else {
+            $data = DB::connection('EMR_RS')
+            ->table('emr_document')
+            ->where('treatment_code', $treatment_code)
+            ->get();
+        }
+        
+        return Datatables::of($data)->make(true);
+    }
 }

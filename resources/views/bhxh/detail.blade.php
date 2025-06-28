@@ -51,3 +51,53 @@
         </div>
     </div>
 @stop
+
+@push('after-scripts')
+<script type="text/javascript">
+    var currentAjaxRequest = null; // Biến để lưu trữ yêu cầu AJAX hiện tại
+    var table = null;
+
+    function fetchData() {
+        // Kiểm tra và hủy yêu cầu AJAX trước đó (nếu có)
+        if (currentAjaxRequest != null) {
+            currentAjaxRequest.abort();
+        }
+
+        table = $('#emr-detail').DataTable({
+            "processing": true,
+            "serverSide": true,
+            "destroy": true, // Destroy any existing DataTable before reinitializing
+            "responsive": true, // Giữ responsive
+            "scrollX": true, // Đảm bảo cuộn ngang khi bảng quá rộng
+            "ajax": {
+                url: '{{ route('bhxh.emr-checker-document-list') }}',
+                data: function(d) {
+                    d.document_type = $('#document_type').val();
+                    d.treatment_code = '{{ $treatment_code }}';
+                },
+                beforeSend: function(xhr) {
+                    currentAjaxRequest = xhr;
+                },
+                complete: function(xhr, status) {
+                    currentAjaxRequest = null;
+                    //populateErrorCodeDropdown(xhr.responseJSON.errorCodes);
+                },
+                error: function(xhr, error, code) {
+                    console.log('Error:', error);
+                    console.log('Code:', code);
+                    console.log('XHR:', xhr);
+                }
+            },
+            "columns": [
+                { "data": "id" },
+                { "data": "document_type_name" },
+                { "data": "document_type_name" },
+                { "data": "created_at" },
+                { "data": "action" },
+            ],
+        });
+
+        table.ajax.reload();
+    }
+</script>
+@endpush
