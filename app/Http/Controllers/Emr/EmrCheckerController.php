@@ -296,7 +296,7 @@ class EmrCheckerController extends Controller
                     ->get();
     
                 foreach ($treatmentData as $treatment) {
-                    BhxhEmrPermission::updateOrInsert(
+                    BhxhEmrPermission::updateOrCreate(
                         ['treatment_code' => $treatment->treatment_code],
                         [
                             'allow_view_at' => $expireDate,
