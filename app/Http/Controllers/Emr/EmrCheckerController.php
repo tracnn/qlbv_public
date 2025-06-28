@@ -263,14 +263,57 @@ class EmrCheckerController extends Controller
     
             $now = now();
     
-            foreach (array_chunk($treatmentCodes, 500) as $batch) {
-                foreach ($batch as $code) {
+            foreach (array_chunk($treatmentCodes, 1000) as $chunk) {
+                // Lấy dữ liệu chi tiết từ Oracle theo từng batch 1000
+                $treatmentData = DB::connection('HISPro')
+                    ->table('his_treatment')
+                    ->join('his_patient', 'his_patient.id', '=', 'his_treatment.patient_id')
+                    ->join('his_treatment_type', 'his_treatment_type.id', '=', 'his_treatment.tdl_treatment_type_id')
+                    ->join('his_department as last_department', 'last_department.id', '=', 'his_treatment.last_department_id')
+                    ->join('his_patient_type', 'his_patient_type.id', '=', 'his_treatment.tdl_patient_type_id')
+                    ->whereIn('his_treatment.treatment_code', $chunk)
+                    ->select(
+                        'his_treatment.treatment_code',
+                        'his_patient.id as patient_id',
+                        'his_treatment.tdl_patient_code as patient_code',
+                        'his_treatment.tdl_patient_name as patient_name',
+                        'his_treatment.tdl_patient_dob as patient_dob',
+                        'his_treatment.tdl_patient_address as patient_address',
+                        'his_treatment.tdl_treatment_type_id as treatment_type_id',
+                        'his_treatment_type.treatment_type_name',
+                        'his_treatment.tdl_patient_type_id as patient_type_id',
+                        'his_patient_type.patient_type_name',
+                        'his_treatment.tdl_hein_card_number as hein_card_number',
+                        'his_treatment.last_department_id',
+                        'last_department.department_name as last_department_name',
+                        'his_treatment.in_time',
+                        'his_treatment.out_time',
+                        'his_treatment.fee_lock_time'
+                    )
+                    ->get();
+    
+                foreach ($treatmentData as $treatment) {
                     BhxhEmrPermission::updateOrInsert(
-                        ['treatment_code' => $code],
+                        ['treatment_code' => $treatment->treatment_code],
                         [
                             'allow_view_at' => $expireDate,
+                            'patient_id' => $treatment->patient_id,
+                            'patient_code' => $treatment->patient_code,
+                            'patient_name' => $treatment->patient_name,
+                            'patient_dob' => $treatment->patient_dob,
+                            'patient_address' => $treatment->patient_address,
+                            'treatment_type_id' => $treatment->treatment_type_id,
+                            'treatment_type_name' => $treatment->treatment_type_name,
+                            'patient_type_id' => $treatment->patient_type_id,
+                            'patient_type_name' => $treatment->patient_type_name,
+                            'hein_card_number' => $treatment->hein_card_number,
+                            'last_department_id' => $treatment->last_department_id,
+                            'last_department_name' => $treatment->last_department_name,
+                            'in_time' => $treatment->in_time,
+                            'out_time' => $treatment->out_time,
+                            'fee_lock_time' => $treatment->fee_lock_time,
                             'updated_at' => $now,
-                            'created_at' => $now // Nếu update thì cột này sẽ bị bỏ qua
+                            'created_at' => $now
                         ]
                     );
                 }
