@@ -397,7 +397,7 @@ class EmrCheckerController extends Controller
         $result = BhxhEmrPermission::select('treatment_code', 'patient_name', 'patient_dob', 'patient_address',
             'treatment_type_name', 'patient_type_name', 'hein_card_number', 'last_department_name',
             'in_time', 'out_time', 'fee_lock_time', 'allow_view_at', 'patient_code', 'treatment_end_type_name',
-            'treatment_end_type_id')
+            'treatment_end_type_id', 'created_at', 'updated_at')
             ->whereBetween($dateField, [$formattedDateFrom, $formattedDateTo]);
 
         if ($treatment_code) {

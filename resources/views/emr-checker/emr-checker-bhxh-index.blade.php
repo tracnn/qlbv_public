@@ -50,6 +50,8 @@
                     <th>Ngày vào</th>
                     <th>Ngày ra</th>
                     <th>Ngày t.toán</th>
+                    <th>Ngày tạo</th>
+                    <th>Ngày cập nhật</th>
                     <th>Ngày hết hạn</th>
                     <th>Action</th>
                 </tr>
@@ -124,6 +126,8 @@
                 { "data": "in_time" },
                 { "data": "out_time" },
                 { "data": "fee_lock_time" },
+                { "data": "created_at" },
+                { "data": "updated_at" },
                 { "data": "allow_view_at" },
                 { "data": "action", "orderable": false, "searchable": false },
             ],
