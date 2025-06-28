@@ -46,6 +46,7 @@
                     <th>Đối tượng</th>
                     <th>Mã thẻ</th>
                     <th>Khoa ĐT</th>
+                    <th>Loại ra viện</th>
                     <th>Ngày vào</th>
                     <th>Ngày ra</th>
                     <th>Ngày t.toán</th>
@@ -129,6 +130,7 @@
                 { "data": "patient_type_name" },
                 { "data": "hein_card_number" },
                 { "data": "last_department_name" },
+                { "data": "treatment_end_type_name" },
                 { "data": "in_time" },
                 { "data": "out_time" },
                 { "data": "fee_lock_time" },
