@@ -96,7 +96,7 @@
                 { "data": "id" }, // STT (nếu muốn đánh số tự động thì cần xử lý lại)
                 { "data": "document_name" }, // Tên văn bản
                 { "data": "document_type_name" }, // Loại văn bản
-                { "data": "created_at" }, // Ngày tạo
+                { "data": "create_date" }, // Ngày tạo
                 { "data": "action" }, // Hành động
             ],
         });
