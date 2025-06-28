@@ -570,10 +570,10 @@ function fetchTransactionData(startDate, endDate) {
         $("#chart_cashiers").text("Không có quyền");
         $("#chart_treatment_types").text("Không có quyền");
 
-        renderNoPermissionChart('chart_transaction_types', 'Thực thu: Loại giao dịch');
-        renderNoPermissionChart('chart_pay_forms', 'Thực thu: Hình thức thanh toán');
-        renderNoPermissionChart('chart_cashiers', 'Thực thu: Thu ngân');
-        renderNoPermissionChart('chart_treatment_types', 'Thực thu: Diện điều trị');
+        renderNoPermissionChart('chart_transaction_types', 'Loại giao dịch');
+        renderNoPermissionChart('chart_pay_forms', 'Hình thức thanh toán');
+        renderNoPermissionChart('chart_cashiers', 'Thu ngân');
+        renderNoPermissionChart('chart_treatment_types', 'Diện điều trị');
         return;
     }
 
@@ -587,10 +587,10 @@ function fetchTransactionData(startDate, endDate) {
         }
     }).done(function (data) {
         // Vẽ từng biểu đồ Pie Chart riêng biệt
-        renderChart('chart_transaction_types', 'Thực thu: Loại giao dịch', data.transactionTypes);
-        renderChart('chart_pay_forms', 'Thực thu: Hình thức thanh toán', data.payForms);
-        renderChart('chart_cashiers', 'Thực thu: Thu ngân', data.cashiers);
-        renderChart('chart_treatment_types', 'Thực thu: Diện điều trị', data.treatmentTypes);
+        renderChart('chart_transaction_types', 'Loại giao dịch', data.transactionTypes);
+        renderChart('chart_pay_forms', 'Hình thức thanh toán', data.payForms);
+        renderChart('chart_cashiers', 'Thu ngân', data.cashiers);
+        renderChart('chart_treatment_types', 'Diện điều trị', data.treatmentTypes);
     }).fail(function (jqXHR, textStatus, errorThrown) {
         console.error("Lỗi:", textStatus, errorThrown);
     });
