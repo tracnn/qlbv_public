@@ -250,7 +250,7 @@ class EmrCheckerController extends Controller
         $expire_date = $request->input('expire_date');
 
         $treatment_codes = explode(',', $treatment_codes);
-dd($treatment_codes);
+        return response()->json(['success' => true, 'message' => 'Đã lưu thành công']);
         foreach ($treatment_codes as $treatment_code) {
             //$this->checkEmrService->setPermission($treatment_code, $expire_date);
         }
