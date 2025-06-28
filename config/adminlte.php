@@ -296,6 +296,13 @@ return [
                     'active'=> ['emr-checker/emr-checker-index*'],
                 ],
                 [
+                    'text'  => 'QL hồ sơ chuyển BHXH',
+                    'icon'  => 'file',
+                    'checkrole'   => 'emr-check',
+                    'route'   => 'emr-checker.emr-checker-bhxh-index',
+                    'active'=> ['emr-checker/emr-checker-bhxh-index*'],
+                ],
+                [
                     'text'  => 'Tra soát hồ sơ bệnh án',
                     'icon'  => 'check',
                     //'checkrole'   => 'check-hein-card',

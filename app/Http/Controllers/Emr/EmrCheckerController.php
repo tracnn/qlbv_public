@@ -327,4 +327,48 @@ class EmrCheckerController extends Controller
             return response()->json(['success' => false, 'message' => 'Đã xảy ra lỗi: ' . $e->getMessage()]);
         }
     }
+
+    public function indexEmrCheckerBhxh()
+    {
+        return view('emr-checker.emr-checker-bhxh-index');
+    }
+
+    public function listEmrCheckerBhxh(Request $request)
+    {
+        if (!$request->ajax()) {
+            return redirect()->route('home');
+        }
+
+        $dateFrom = $request->input('date_from');
+        $dateTo = $request->input('date_to');   
+
+        $formattedDateFrom = Carbon::createFromFormat('Y-m-d H:i:s', $dateFrom)->format('YmdHi');
+        $formattedDateTo = Carbon::createFromFormat('Y-m-d H:i:s', $dateTo)->format('YmdHi');
+
+        $result = BhxhEmrPermission::select('treatment_code', 'patient_name', 'patient_dob', 'patient_address',
+            'treatment_type_name', 'patient_type_name', 'hein_card_number', 'last_department_name',
+            'in_time', 'out_time', 'fee_lock_time', 'allow_view_at')
+            ->whereBetween('created_at', [$formattedDateFrom, $formattedDateTo]);
+
+        return Datatables::of($result)
+            ->editColumn('patient_dob', function($result) {
+                return dob($result->patient_dob);
+            })
+            ->editColumn('in_time', function($result) {
+                return strtodatetime($result->in_time);
+            })
+            ->editColumn('out_time', function($result) {
+                return strtodatetime($result->out_time);
+            })
+            ->editColumn('fee_lock_time', function($result) {
+                return strtodatetime($result->fee_lock_time);
+            })
+            ->addColumn('action', function ($result) {
+                $buttons = '
+                    <a href="' .route('treatment-result.search',['treatment_code'=>$result->treatment_code]) .'" class="btn btn-sm btn-primary">
+                        <span class="glyphicon glyphicon-eye-open"></span> Chi tiết EMR</a>
+                ';
+            })
+            ->toJson();
+    }
 }

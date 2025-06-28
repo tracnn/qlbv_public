@@ -147,6 +147,10 @@ Route::group(['middleware' => ['auth', 'check.first.login']], function () {
         ->name('emr-checker.emr-checker-list');
         Route::post('emr-checker-index/set-permission', 'Emr\EmrCheckerController@setPermission')
         ->name('emr-checker.set-permission');
+        Route::get('emr-checker-bhxh-index', 'Emr\EmrCheckerController@indexEmrCheckerBhxh')
+        ->name('emr-checker.emr-checker-bhxh-index');
+        Route::get('emr-checker-bhxh-list', 'Emr\EmrCheckerController@listEmrCheckerBhxh')
+        ->name('emr-checker.emr-checker-bhxh-list');
     });
 
     /*
