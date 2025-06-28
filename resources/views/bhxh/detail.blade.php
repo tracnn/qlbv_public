@@ -93,8 +93,14 @@
                 }
             },
             "columns": [
-                { "data": null, "orderable": false, "searchable": false, "render": function (data, type, row) {
-                    return data.index + 1; }},
+                { 
+                    "data": null, 
+                    "orderable": false, 
+                    "searchable": false, 
+                    "render": function (data, type, row, meta) {
+                        return meta.row + meta.settings._iDisplayStart + 1;
+                    }
+                },
                 { "data": "document_name" }, // Tên văn bản
                 { "data": "document_type_name" }, // Loại văn bản
                 { "data": "create_date" }, // Ngày tạo
