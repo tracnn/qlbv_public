@@ -107,6 +107,8 @@
         if (currentAjaxRequest != null) {
             currentAjaxRequest.abort();
         }
+        
+        $('#select-all').prop('checked', false);
 
         table = $('#list').DataTable({
             "processing": true,
