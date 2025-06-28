@@ -271,7 +271,7 @@ class EmrCheckerController extends Controller
                     ->join('his_treatment_type', 'his_treatment_type.id', '=', 'his_treatment.tdl_treatment_type_id')
                     ->join('his_department as last_department', 'last_department.id', '=', 'his_treatment.last_department_id')
                     ->join('his_patient_type', 'his_patient_type.id', '=', 'his_treatment.tdl_patient_type_id')
-                    ->join('his_treatment_end_type', 'his_treatment_end_type.id', '=', 'his_treatment.tdl_treatment_end_type_id')
+                    ->join('his_treatment_end_type', 'his_treatment_end_type.id', '=', 'his_treatment.treatment_end_type_id')
                     ->whereIn('his_treatment.treatment_code', $chunk)
                     ->select(
                         'his_treatment.treatment_code',
@@ -290,7 +290,7 @@ class EmrCheckerController extends Controller
                         'his_treatment.in_time',
                         'his_treatment.out_time',
                         'his_treatment.fee_lock_time',
-                        'his_treatment.tdl_treatment_end_type_id as treatment_end_type_id',
+                        'his_treatment.treatment_end_type_id as treatment_end_type_id',
                         'his_treatment_end_type.treatment_end_type_name'
                     )
                     ->get();
