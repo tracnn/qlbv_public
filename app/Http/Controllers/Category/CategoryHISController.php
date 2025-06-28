@@ -75,4 +75,14 @@ class CategoryHISController extends Controller
         ->select('id', 'loginname', 'username')
         ->get();
     }
+
+    public function listDocumentType()
+    {
+        return DB::connection('EMR_RS')
+        ->table('emr_document_type')
+        ->where('emr_document_type.is_active', 1)
+        ->where('emr_document_type.is_delete', 0)
+        ->select('emr_document_type.id', 'emr_document_type.document_type_code', 'emr_document_type.document_type_name')
+        ->get();
+    }
 }

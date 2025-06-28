@@ -30,5 +30,5 @@
 @endpush
 
 @section('content')
-
+    @include('bhxh.partials.search-detail')
 @stop

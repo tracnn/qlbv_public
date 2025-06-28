@@ -245,6 +245,8 @@ Route::group(['middleware' => ['auth', 'check.first.login']], function () {
     ->name('category-his.fetch-treatment-type');
     Route::get('index/category-treatment-end-type', 'Category\CategoryHISController@listTreatmentEndType')
     ->name('category-his.fetch-treatment-end-type');
+    Route::get('index/category-document-type', 'Category\CategoryHISController@listDocumentType')
+    ->name('category-his.fetch-document-type');
 	/*
 		Category
 	*/
@@ -299,7 +301,6 @@ Route::group(['middleware' => ['auth', 'check.first.login']], function () {
         ->name('category-bhyt.import-index');
         Route::post('bhyt/category-bhyt-import', 'Category\CategoryBHYTController@import')
         ->name('category-bhyt.import');
-
     });
 
 	/* Insurance , 'middleware' => ['checkrole:manager'] */
