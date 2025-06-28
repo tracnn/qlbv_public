@@ -335,10 +335,6 @@ class EmrCheckerController extends Controller
 
     public function listEmrCheckerBhxh(Request $request)
     {
-        if (!$request->ajax()) {
-            return redirect()->route('home');
-        }
-
         $dateFrom = $request->input('date_from');
         $dateTo = $request->input('date_to');   
 
