@@ -90,6 +90,8 @@ class BhxhController extends Controller
         {
             $data = DB::connection('EMR_RS')
             ->table('emr_document')
+            ->select('emr_document.id', 'emr_document.document_name', 'emr_document.document_code',
+            'emr_document_type.document_type_name', 'emr_document.create_date', 'emr_document.treatment_code')
             ->join('emr_document_type', 'emr_document_type.id', '=', 'emr_document.document_type_id')
             ->where('treatment_code', $treatment_code)
             ->where('document_type_id', $document_type_id)
@@ -97,11 +99,25 @@ class BhxhController extends Controller
         } else {
             $data = DB::connection('EMR_RS')
             ->table('emr_document')
+            ->select('emr_document.id', 'emr_document.document_name', 'emr_document.document_code',
+            'emr_document_type.document_type_name', 'emr_document.create_date', 'emr_document.treatment_code')
             ->join('emr_document_type', 'emr_document_type.id', '=', 'emr_document.document_type_id')
             ->where('treatment_code', $treatment_code)
             ->get();
         }
 
-        return Datatables::of($data)->make(true);
+        return Datatables::of($data)
+        ->editColumn('create_date', function ($row) {
+            return strtodate($row->create_date);
+        })
+        ->addColumn('action', function ($row) {
+            $createdAt = now()->timestamp;
+            $expiresIn = 7200;
+            $token = Crypt::encryptString($row->document_code . '|' . $row->treatment_code . '|' . $createdAt . '|' . $expiresIn);
+            return '<a href="'.route('secure-view-doc', ['token' => $token]).'" class="btn btn-sm btn-primary" target="_blank">
+                <i class="glyphicon glyphicon-eye-open"></i> Xem
+            </a>';
+        })
+        ->make(true);
     }
 }
