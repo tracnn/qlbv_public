@@ -42,7 +42,6 @@
                     <th>Mã BN</th>
                     <th>Họ tên</th>
                     <th>Ngày sinh</th>
-                    <th>Số ĐT</th>
                     <th>Diện</th>
                     <th>Đối tượng</th>
                     <th>Mã thẻ</th>
@@ -126,7 +125,6 @@
                 { "data": "tdl_patient_code" },
                 { "data": "tdl_patient_name" },
                 { "data": "tdl_patient_dob" },
-                { "data": "phone" },
                 { "data": "treatment_type_name", "name": "his_treatment_type.treatment_type_name" },
                 { "data": "patient_type_name", "name": "his_patient_type.patient_type_name" },
                 { "data": "tdl_hein_card_number" },
