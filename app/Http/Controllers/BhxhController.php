@@ -55,6 +55,16 @@ class BhxhController extends Controller
             $results = $results->merge($result); // Merge collection
         }
     
-        return Datatables::of($results)->make(true);
+        return Datatables::of($results)
+        ->addColumn('action', function ($row) {
+            return '<a href="'.route('bhxh.emr-checker-detail', ['treatment_code' => $row->treatment_code]).'" class="btn btn-primary">Xem</a>';
+        })
+        ->make(true);
+    }
+
+    public function emrCheckerDetail(Request $request)
+    {
+        $treatment_code = $request->input('treatment_code');
+        return view('bhxh.emr-checker-detail', compact('treatment_code'));
     }
 }

@@ -583,6 +583,8 @@ Route::group(['middleware' => ['auth', 'check.first.login']], function () {
         Route::get('index', 'BhxhController@index')->name('bhxh.index');
         Route::get('emr-checker-list', 'BhxhController@listEmrChecker')
         ->name('bhxh.emr-checker-list');
+        Route::get('emr-checker-detail', 'BhxhController@emrCheckerDetail')
+        ->name('bhxh.emr-checker-detail');
     });
 
 });
