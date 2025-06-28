@@ -125,7 +125,7 @@ class BhxhController extends Controller
             $createdAt = now()->timestamp;
             $expiresIn = 7200;
             $token = Crypt::encryptString($row->document_code . '|' . $row->treatment_code . '|' . $createdAt . '|' . $expiresIn);
-            return '<a href="' . route('secure-view-doc', ['token' => $token]) . '" class="btn btn-sm btn-primary" target="_blank">
+            return '<a href="' . route('secure-view-doc', ['token' => $token]) . '" class="btn-sm btn-primary" target="_blank">
             Xem PDF</a>';
         })
         ->make(true);
