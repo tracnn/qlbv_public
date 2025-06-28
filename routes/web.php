@@ -576,6 +576,11 @@ Route::group(['middleware' => ['auth', 'check.first.login']], function () {
         ->name('nurse.execute.medication.fetch.data');
     });
 
+    /* Quản lý hồ sơ bệnh án */
+    Route::group(['prefix' => 'bhxh/', 'middleware' => ['checkrole:bhxh']], function () {
+        Route::get('index', 'BhxhController@index')->name('bhxh.index');
+    });
+
 });
 
 Route::get('/api/view-pdf', 'Emr\EmrController@viewPdf')->name('api.view-pdf');

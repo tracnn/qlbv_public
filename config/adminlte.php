@@ -279,6 +279,7 @@ return [
         [
             'text'    => 'Bệnh án điện tử',
             'icon'    => 'film',
+            'checkrole'   => 'emr-check',
             'submenu' => [
                 [
                     'text'  => 'Kiểm tra hồ sơ chi tiết',
@@ -560,6 +561,20 @@ return [
                     'icon'       => 'line-chart',
                     'route'   => 'tra-cuu-ls-kcb-index',
                     'active'    => ['tra-cuu-ls-kcb*'],
+                ],
+            ],
+        ],
+        [
+            'text'       => 'Hồ sơ bệnh án',
+            'icon' => 'file',
+            'checkrole'   => 'bhxh',
+            'submenu' => [
+                [
+                    'text'       => 'Danh sách',
+                    'icon'       => 'file',
+                    'checkrole'   => 'bhxh',
+                    'route'   => 'bhxh.index',
+                    'active'    => ['bhxh/index*'],
                 ],
             ],
         ],
