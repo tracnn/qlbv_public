@@ -197,15 +197,17 @@
         <!-- ./col -->
         <div class="col-lg-2 col-xs-6">
           <!-- small box -->
+          <a href="{{route('reports-administrator.list-patient-pt')}}">
           <div class="small-box bg-aqua">
             <div class="inner">
               <h3 id="sum_phauthuat">0</h3>
-              <p><a href="{{route('reports-administrator.list-patient-pt')}}">Phẫu thuật</a></p>
+              <p>Phẫu thuật</p>
             </div>
             <div class="icon">
               <i class="ion ion-pie-graph"></i>
             </div>
           </div>
+          </a>
         </div>
         <div class="col-lg-2 col-xs-6">
           <!-- small box -->
