@@ -63,6 +63,11 @@
             currentAjaxRequest.abort();
         }
 
+        if (table != null) {
+            table.ajax.reload(); // Nếu đã khởi tạo thì chỉ cần reload
+            return;
+        }
+
         table = $('#emr-detail').DataTable({
             "processing": true,
             "serverSide": true,
@@ -80,7 +85,6 @@
                 },
                 complete: function(xhr, status) {
                     currentAjaxRequest = null;
-                    //populateErrorCodeDropdown(xhr.responseJSON.errorCodes);
                 },
                 error: function(xhr, error, code) {
                     console.log('Error:', error);
@@ -89,15 +93,23 @@
                 }
             },
             "columns": [
-                { "data": "id" },
-                { "data": "document_type_name" },
-                { "data": "document_type_name" },
-                { "data": "created_at" },
-                { "data": "action" },
+                { "data": "id" }, // STT (nếu muốn đánh số tự động thì cần xử lý lại)
+                { "data": "document_name" }, // Tên văn bản
+                { "data": "document_type_name" }, // Loại văn bản
+                { "data": "created_at" }, // Ngày tạo
+                { "data": "action" }, // Hành động
             ],
         });
-
-        table.ajax.reload();
     }
+
+    // Gọi khi trang load
+    $(document).ready(function () {
+        fetchData();
+
+        // Nếu có lọc document_type, bạn có thể thêm:
+        $('#document_type').on('change', function () {
+            fetchData();
+        });
+    });
 </script>
 @endpush
