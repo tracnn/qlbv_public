@@ -86,6 +86,17 @@ class BhxhController extends Controller
     {
         $treatment_code = $request->input('treatment_code');
         $document_type_id = $request->input('document_type');
+
+        if(empty($treatment_code))
+        {
+            return response()->json(['error' => 'Mã điều trị không tồn tại'], 400);
+        }
+
+        $checkPermission = BhxhEmrPermission::where('treatment_code', $treatment_code)->first();
+        if(empty($checkPermission))
+        {
+            return response()->json(['error' => 'Mã điều trị không tồn tại'], 400);
+        }
     
         $query = DB::connection('EMR_RS')
             ->table('emr_document')
@@ -107,17 +118,16 @@ class BhxhController extends Controller
         $data = $query->get();
     
         return Datatables::of($data)
-            ->editColumn('create_date', function ($row) {
-                return strtodate($row->create_date);
-            })
-            ->addColumn('action', function ($row) {
-                $createdAt = now()->timestamp;
-                $expiresIn = 7200;
-                $token = Crypt::encryptString($row->document_code . '|' . $row->treatment_code . '|' . $createdAt . '|' . $expiresIn);
-                return '<a href="' . route('secure-view-doc', ['token' => $token]) . '" class="btn btn-sm btn-primary" target="_blank">
-                    <i class="glyphicon glyphicon-eye-open"></i> Xem
-                </a>';
-            })
-            ->make(true);
+        ->editColumn('create_date', function ($row) {
+            return strtodate($row->create_date);
+        })
+        ->addColumn('action', function ($row) {
+            $createdAt = now()->timestamp;
+            $expiresIn = 7200;
+            $token = Crypt::encryptString($row->document_code . '|' . $row->treatment_code . '|' . $createdAt . '|' . $expiresIn);
+            return '<a href="' . route('secure-view-doc', ['token' => $token]) . '" class="btn btn-sm btn-primary" target="_blank">
+            Xem PDF</a>';
+        })
+        ->make(true);
     }
 }
