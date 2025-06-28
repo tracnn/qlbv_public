@@ -205,6 +205,7 @@
             return;
         }
         
+        $("#loading_center").show();
         $.ajax({
             url: '{{ route("emr-checker.set-permission") }}',
             type: 'POST',
@@ -224,6 +225,10 @@
             },
             error: function (xhr) {
                 toastr.error('Đã xảy ra lỗi khi lưu.');
+            },
+            complete: function() {
+                // Hide loading spinner
+                $("#loading_center").hide();
             }
         });
     });
