@@ -248,47 +248,61 @@ class EmrCheckerController extends Controller
     {
         $treatmentCodes = $request->input('treatment_codes', []);
         $expireDate = $request->input('expire_date');
-    
+
         if (empty($treatmentCodes) || !$expireDate) {
             return response()->json(['success' => false, 'message' => 'Dữ liệu không hợp lệ.']);
         }
-    
+
         $now = now();
         if (now()->gt($expireDate)) {
             return response()->json(['success' => false, 'message' => 'Ngày hết hạn phải lớn hơn hiện tại.']);
         }
-    
-        $insertData = [];
-        foreach ($treatmentCodes as $code) {
-            $existing = DB::table('bhxh_emr_permission')
-                ->where('treatment_code', $code)
-                ->first();
-    
-            if ($existing) {
-                // Nếu đã tồn tại nhưng allow_view_at khác thì cập nhật
-                if ($existing->allow_view_at != $expireDate) {
-                    DB::table('bhxh_emr_permission')
-                        ->where('id', $existing->id)
-                        ->update([
+
+        try {
+            DB::beginTransaction();
+
+            // Chia mảng ra các batch 500 phần tử
+            foreach (array_chunk($treatmentCodes, 500) as $batch) {
+                $insertData = [];
+
+                foreach ($batch as $code) {
+                    $existing = DB::table('bhxh_emr_permission')
+                        ->where('treatment_code', $code)
+                        ->first();
+
+                    if ($existing) {
+                        // Nếu đã tồn tại nhưng allow_view_at khác thì cập nhật
+                        if ($existing->allow_view_at != $expireDate) {
+                            DB::table('bhxh_emr_permission')
+                                ->where('id', $existing->id)
+                                ->update([
+                                    'allow_view_at' => $expireDate,
+                                    'updated_at' => now()
+                                ]);
+                        }
+                    } else {
+                        // Nếu chưa tồn tại thì thêm mới
+                        $insertData[] = [
+                            'treatment_code' => $code,
                             'allow_view_at' => $expireDate,
+                            'created_at' => now(),
                             'updated_at' => now()
-                        ]);
+                        ];
+                    }
                 }
-            } else {
-                // Nếu chưa tồn tại thì thêm mới
-                $insertData[] = [
-                    'treatment_code' => $code,
-                    'allow_view_at' => $expireDate,
-                    'created_at' => now(),
-                    'updated_at' => now()
-                ];
+
+                // Insert theo batch
+                if (!empty($insertData)) {
+                    DB::table('bhxh_emr_permission')->insert($insertData);
+                }
             }
+
+            DB::commit();
+
+            return response()->json(['success' => true, 'message' => 'Cập nhật thành công!']);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['success' => false, 'message' => 'Đã xảy ra lỗi: ' . $e->getMessage()]);
         }
-    
-        if (!empty($insertData)) {
-            DB::table('bhxh_emr_permission')->insert($insertData);
-        }
-    
-        return response()->json(['success' => true, 'message' => 'Cập nhật thành công!']);
     }
 }
