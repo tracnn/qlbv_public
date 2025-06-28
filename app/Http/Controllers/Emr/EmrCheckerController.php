@@ -271,6 +271,7 @@ class EmrCheckerController extends Controller
                     ->join('his_treatment_type', 'his_treatment_type.id', '=', 'his_treatment.tdl_treatment_type_id')
                     ->join('his_department as last_department', 'last_department.id', '=', 'his_treatment.last_department_id')
                     ->join('his_patient_type', 'his_patient_type.id', '=', 'his_treatment.tdl_patient_type_id')
+                    ->join('his_treatment_end_type', 'his_treatment_end_type.id', '=', 'his_treatment.tdl_treatment_end_type_id')
                     ->whereIn('his_treatment.treatment_code', $chunk)
                     ->select(
                         'his_treatment.treatment_code',
@@ -288,7 +289,9 @@ class EmrCheckerController extends Controller
                         'last_department.department_name as last_department_name',
                         'his_treatment.in_time',
                         'his_treatment.out_time',
-                        'his_treatment.fee_lock_time'
+                        'his_treatment.fee_lock_time',
+                        'his_treatment.tdl_treatment_end_type_id as treatment_end_type_id',
+                        'his_treatment_end_type.treatment_end_type_name'
                     )
                     ->get();
     
@@ -312,8 +315,9 @@ class EmrCheckerController extends Controller
                             'in_time' => $treatment->in_time,
                             'out_time' => $treatment->out_time,
                             'fee_lock_time' => $treatment->fee_lock_time,
-                            'updated_at' => $now,
-                            'created_at' => $now
+                            'treatment_end_type_id' => $treatment->treatment_end_type_id,
+                            'treatment_end_type_name' => $treatment->treatment_end_type_name,
+                            'updated_at' => $now
                         ]
                     );
                 }
@@ -335,8 +339,15 @@ class EmrCheckerController extends Controller
 
     public function listEmrCheckerBhxh(Request $request)
     {
+        $treatment_code = $request->input('treatment_code');
+        $date_type = $request->input('date_type');
+        $department_catalog = $request->input('department_catalog');
+        $patient_type = $request->input('patient_type');
+        $treatment_type = $request->input('treatment_type');
+        $treatment_end_type = $request->input('treatment_end_type');
+
         $dateFrom = $request->input('date_from');
-        $dateTo = $request->input('date_to');   
+        $dateTo = $request->input('date_to');
 
         $formattedDateFrom = Carbon::createFromFormat('Y-m-d H:i:s', $dateFrom)->format('YmdHi');
         $formattedDateTo = Carbon::createFromFormat('Y-m-d H:i:s', $dateTo)->format('YmdHi');
@@ -345,6 +356,26 @@ class EmrCheckerController extends Controller
             'treatment_type_name', 'patient_type_name', 'hein_card_number', 'last_department_name',
             'in_time', 'out_time', 'fee_lock_time', 'allow_view_at', 'patient_code');
             //->whereBetween('created_at', [$formattedDateFrom, $formattedDateTo]);
+
+        if ($treatment_code) {
+            $result = $result->where('treatment_code', $treatment_code);
+        }
+
+        if ($department_catalog) {
+            $result = $result->where('last_department_id', $department_catalog);
+        }
+
+        if ($patient_type) {
+            $result = $result->where('patient_type_id', $patient_type);
+        }
+
+        if ($treatment_type) {
+            $result = $result->where('treatment_type_id', $treatment_type);
+        }
+
+        if ($treatment_end_type) {
+            $result = $result->where('treatment_end_type_id', $treatment_end_type);
+        }
 
         return Datatables::of($result)
             ->editColumn('patient_dob', function($result) {
