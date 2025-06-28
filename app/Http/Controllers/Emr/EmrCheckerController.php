@@ -349,13 +349,57 @@ class EmrCheckerController extends Controller
         $dateFrom = $request->input('date_from');
         $dateTo = $request->input('date_to');
 
-        $formattedDateFrom = Carbon::createFromFormat('Y-m-d H:i:s', $dateFrom)->format('YmdHi');
-        $formattedDateTo = Carbon::createFromFormat('Y-m-d H:i:s', $dateTo)->format('YmdHi');
+        // Check and convert date format
+        if (strlen($dateFrom) == 10) { // Format YYYY-MM-DD
+            $dateFrom = Carbon::createFromFormat('Y-m-d', $dateFrom)->startOfDay()->format('Y-m-d H:i:s');
+        }
+
+        if (strlen($dateTo) == 10) { // Format YYYY-MM-DD
+            $dateTo = Carbon::createFromFormat('Y-m-d', $dateTo)->endOfDay()->format('Y-m-d H:i:s');
+        }
+
+        // Convert date format from 'YYYY-MM-DD HH:mm:ss' to 'YYYYMMDDHHI' for specific fields
+        $formattedDateFromForFields = Carbon::createFromFormat('Y-m-d H:i:s', $dateFrom)->format('YmdHis');
+        $formattedDateToForFields = Carbon::createFromFormat('Y-m-d H:i:s', $dateTo)->format('YmdHis');
+
+        // Convert date format to 'Y-m-d H:i:s' for created_at and updated_at
+        $formattedDateFromForTimestamp = Carbon::createFromFormat('Y-m-d H:i:s', $dateFrom)->format('Y-m-d H:i:s');
+        $formattedDateToForTimestamp = Carbon::createFromFormat('Y-m-d H:i:s', $dateTo)->format('Y-m-d H:i:s');
+
+        // Define the date field based on date_type
+        switch ($date_type) {
+            case 'date_in':
+                $dateField = 'in_time';
+                $formattedDateFrom = $formattedDateFromForFields;
+                $formattedDateTo = $formattedDateToForFields;
+                break;
+            case 'date_out':
+                $dateField = 'out_time';
+                $formattedDateFrom = $formattedDateFromForFields;
+                $formattedDateTo = $formattedDateToForFields;
+                break;
+            case 'date_payment':
+                $dateField = 'fee_lock_time';
+                $formattedDateFrom = $formattedDateFromForFields;
+                $formattedDateTo = $formattedDateToForFields;
+                break;
+            case 'date_create':
+                $dateField = 'created_at';
+                $formattedDateFrom = $formattedDateFromForTimestamp;
+                $formattedDateTo = $formattedDateToForTimestamp;
+                break;
+            default:
+                $dateField = 'fee_lock_time';
+                $formattedDateFrom = $formattedDateFromForFields;
+                $formattedDateTo = $formattedDateToForFields;
+                break;
+        }
 
         $result = BhxhEmrPermission::select('treatment_code', 'patient_name', 'patient_dob', 'patient_address',
             'treatment_type_name', 'patient_type_name', 'hein_card_number', 'last_department_name',
-            'in_time', 'out_time', 'fee_lock_time', 'allow_view_at', 'patient_code', 'treatment_end_type_name');
-            //->whereBetween('created_at', [$formattedDateFrom, $formattedDateTo]);
+            'in_time', 'out_time', 'fee_lock_time', 'allow_view_at', 'patient_code', 'treatment_end_type_name',
+            'treatment_end_type_id')
+            ->whereBetween($dateField, [$formattedDateFrom, $formattedDateTo]);
 
         if ($treatment_code) {
             $result = $result->where('treatment_code', $treatment_code);
