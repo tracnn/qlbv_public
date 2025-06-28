@@ -197,7 +197,7 @@
         <!-- ./col -->
         <div class="col-lg-2 col-xs-6">
           <!-- small box -->
-          <a href="{{route('reports-administrator.list-patient-pt')}}">
+          <a href="#" id="link-list-patient-pt">
           <div class="small-box bg-aqua">
             <div class="inner">
               <h3 id="sum_phauthuat">0</h3>
@@ -472,6 +472,29 @@
         $(document).ajaxStop(function () {
             $('#ajax-spinner').hide();
         });
+    });
+
+    $('#link-list-patient-pt').click(function(e) {
+        e.preventDefault();
+
+        var range = $('#dateRangePicker').val();
+        if (range && range.includes(' - ')) {
+            var parts = range.split(' - ');
+            var startDate = parts[0];
+            var endDate = parts[1];
+
+            // Mặc định nếu bạn dùng date_intruction, bạn có thể thêm chọn loại ngày nếu cần
+            var dateType = 'date_intruction';
+
+            var url = "{{ route('reports-administrator.list-patient-pt') }}" 
+                + '?date_from=' + encodeURIComponent(startDate) 
+                + '&date_to=' + encodeURIComponent(endDate) 
+                + '&date_type=' + encodeURIComponent(dateType);
+
+            window.open(url, '_blank'); // Mở tab mới với link có tham số
+        } else {
+            alert('Vui lòng chọn khoảng thời gian trước khi xem chi tiết!');
+        }
     });
 
     $(document).ready(function () {

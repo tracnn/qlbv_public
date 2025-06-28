@@ -44,6 +44,17 @@
 <script type="text/javascript">
     var currentAjaxRequest = null; // Biến để lưu trữ yêu cầu AJAX hiện tại
 
+    // Lấy dữ liệu từ server (PHP truyền vào)
+    var startDate = "{{ $date_from }}";
+    var endDate = "{{ $date_to }}";
+    var dateType = "{{ $date_type }}";
+
+    $(document).ready(function() {
+        if (startDate && endDate) {
+            fetchData(startDate, endDate);
+        }
+    });
+
     function fetchData(startDate, endDate) {
         // Kiểm tra và hủy yêu cầu AJAX trước đó (nếu có)
         if (currentAjaxRequest != null) {

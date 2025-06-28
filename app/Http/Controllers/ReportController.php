@@ -385,9 +385,12 @@ class ReportController extends Controller
         return Excel::download(new APDataExport($date_from, $date_to), $fileName);
     }
 
-    public function listPatientPt()
+    public function listPatientPt(Request $request)
     {
-        return view('administrator.list-patient-pt');
+        $date_from = $request->input('date_from') ?? null;
+        $date_to = $request->input('date_to') ?? null;
+        $date_type = $request->input('date_type') ?? null;
+        return view('administrator.list-patient-pt', compact('date_from', 'date_to', 'date_type'));
     }
 
     public function fetchPatientPt(Request $request)
