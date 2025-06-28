@@ -254,7 +254,7 @@ class EmrController extends Controller
                 $buttons = '<a href="' .route('emr.check-emr',['treatment_code'=>$result->treatment_code]) .'" class="btn btn-sm btn-danger" target="_blank">
                                 <span class="glyphicon glyphicon-check"></span> Kiểm tra</a>
                             <a href="' .route('treatment-result.search',['treatment_code'=>$result->treatment_code]) .'" class="btn btn-sm btn-primary" target="_blank">
-                                <span class="glyphicon glyphicon-eye-open"></span> Xem KQ</a>
+                                <span class="glyphicon glyphicon-eye-open"></span> Chi tiết EMR</a>
                             <a href="' .route('view-guide-content',['token'=> $token]) .
                             '"class="btn btn-sm btn-primary" target="_blank">
                                 <span class="glyphicon glyphicon-eye-open"></span> Trả KQ</a>
