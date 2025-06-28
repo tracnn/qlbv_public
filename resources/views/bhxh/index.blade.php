@@ -91,29 +91,34 @@
             currentAjaxRequest.abort();
         }
 
+        // Khởi tạo hoặc reload DataTable
+        if (table != null) {
+            table.ajax.reload(); // Nếu đã khởi tạo thì chỉ cần reload
+            return;
+        }
+
         table = $('#list').DataTable({
             "processing": true,
             "serverSide": true,
-            "destroy": true, // Destroy any existing DataTable before reinitializing
-            "responsive": true, // Giữ responsive
-            "scrollX": true, // Đảm bảo cuộn ngang khi bảng quá rộng
+            "destroy": true, // Xóa DataTable cũ nếu có
+            "responsive": true,
+            "scrollX": true,
             "ajax": {
                 url: '{{ route('bhxh.emr-checker-list') }}',
-                beforeSend: function(xhr) {
-                    currentAjaxRequest = xhr;
+                beforeSend: function (xhr) {
+                    currentAjaxRequest = xhr; // Gán request hiện tại
                 },
-                complete: function(xhr, status) {
-                    currentAjaxRequest = null;
-                    //populateErrorCodeDropdown(xhr.responseJSON.errorCodes);
+                complete: function () {
+                    currentAjaxRequest = null; // Reset biến sau khi hoàn tất
                 },
-                error: function(xhr, error, code) {
+                error: function (xhr, error, code) {
                     console.log('Error:', error);
                     console.log('Code:', code);
                     console.log('XHR:', xhr);
                 }
             },
             "lengthMenu": [
-                [10, 25, 50, 100, 200, 500, 1000, 2000], 
+                [10, 25, 50, 100, 200, 500, 1000, 2000],
                 [10, 25, 50, 100, 200, 500, 1000, 2000]
             ],
             "columns": [
@@ -121,18 +126,22 @@
                 { "data": "tdl_patient_code" },
                 { "data": "tdl_patient_name" },
                 { "data": "tdl_patient_dob" },
-                { "data": "phone"},
+                { "data": "phone" },
                 { "data": "treatment_type_name", "name": "his_treatment_type.treatment_type_name" },
                 { "data": "patient_type_name", "name": "his_patient_type.patient_type_name" },
                 { "data": "tdl_hein_card_number" },
-                { "data": "last_department", "name": "last_department.department_name"},
+                { "data": "last_department", "name": "last_department.department_name" },
                 { "data": "in_time" },
                 { "data": "out_time" },
                 { "data": "fee_lock_time" },
                 { "data": "action" },
             ],
         });
-        table.ajax.reload();
     }
+
+    // Tự động load dữ liệu khi trang load lần đầu
+    $(document).ready(function () {
+        fetchData(); // Có thể thêm tham số nếu muốn lọc theo ngày
+    });
 </script>
 @endpush
