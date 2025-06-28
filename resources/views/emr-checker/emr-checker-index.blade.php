@@ -204,8 +204,6 @@
             toastr.error('Ngày hết hạn phải lớn hơn thời điểm hiện tại.');
             return;
         }
-
-        console.log(selectedRows);
         
         $.ajax({
             url: '{{ route("emr-checker.set-permission") }}',

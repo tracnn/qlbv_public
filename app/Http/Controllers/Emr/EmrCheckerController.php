@@ -246,13 +246,40 @@ class EmrCheckerController extends Controller
 
     public function setPermission(Request $request)
     {
-        $treatment_codes = $request->input('treatment_codes');
-        $expire_date = $request->input('expire_date');
-
-        //$treatment_codes = explode(',', $treatment_codes);
-        return response()->json(['success' => true, 'message' => $treatment_codes]);
-        // foreach ($treatment_codes as $treatment_code) {
-        //     //$this->checkEmrService->setPermission($treatment_code, $expire_date);
-        // }
+        $treatmentCodes = $request->input('treatment_codes', []);
+        $expireDate = $request->input('expire_date');
+    
+        if (empty($treatmentCodes) || !$expireDate) {
+            return response()->json(['success' => false, 'message' => 'Dữ liệu không hợp lệ.']);
+        }
+    
+        $now = now();
+        if (now()->gt($expireDate)) {
+            return response()->json(['success' => false, 'message' => 'Ngày hết hạn phải lớn hơn hiện tại.']);
+        }
+    
+        $insertData = [];
+        foreach ($treatmentCodes as $code) {
+            // Kiểm tra trùng treatment_code + allow_view_at
+            $exists = DB::table('bhxh_emr_permission')
+                ->where('treatment_code', $code)
+                ->where('allow_view_at', $expireDate)
+                ->exists();
+    
+            if (!$exists) {
+                $insertData[] = [
+                    'treatment_code' => $code,
+                    'allow_view_at' => $expireDate,
+                    'created_at' => now(),
+                    'updated_at' => now()
+                ];
+            }
+        }
+    
+        if (!empty($insertData)) {
+            DB::table('bhxh_emr_permission')->insert($insertData);
+        }
+    
+        return response()->json(['success' => true, 'message' => 'Cập nhật thành công!']);
     }
 }
