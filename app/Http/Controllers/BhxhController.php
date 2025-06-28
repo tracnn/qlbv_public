@@ -63,7 +63,7 @@ class BhxhController extends Controller
             return strtodatetine($row->in_time);
         })
         ->editColumn('out_time', function ($row) {
-            return strtidatetime($row->out_time);
+            return strtodatetime($row->out_time);
         })
         ->editColumn('fee_lock_time', function ($row) {
             return strtodatetime($row->fee_lock_time);
