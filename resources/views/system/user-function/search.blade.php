@@ -1,14 +1,7 @@
-@push('after-styles')
-<link rel="stylesheet" type="text/css" href="{{asset('/vendor/datepicker/css/bootstrap-datepicker.min.css')}}">
-@endpush
 <div class="panel panel-default">
     <div class="panel-body">
-        <div class="form-group">
-            <b>Nhập mã điều trị</b>
-        </div>
-
         <form method="GET" action="{{route('system.user-function.search')}}">
-            <div class="col-sm-6">
+            <div class="col-sm-3">
                 <div class="form-group row">
                     <div class="col-sm-3">
                         <label for="treatment_code">Mã điều trị</label>
@@ -21,38 +14,38 @@
         </form>
         <div class="col-sm-6">
             <div class="form-group row">
-            <div class="col-sm-12">
-                @if(isset($result) && $result)
-                @if($result->treatment_end_type_id == 2 && ($result->is_lock_hein || $result->is_active == 0))
-                <button class="btn btn-danger" onclick="entry_remove($(treatment_code).val())">
-                <i class="glyphicon glyphicon-lock"></i>
-                    Khóa
-                </button>
-                @endif
-                @if($result->treatment_end_type_id == 4 && !empty($result->medi_org_code))
-                <button class="btn btn-primary" onclick="entry_update($(treatment_code).val())">
-                <i class="glyphicon glyphicon-ok"></i>
-                    Mở khóa
-                </button>
-                @else
-                    @if(($result->is_lock_hein || $result->is_active == 0) && $result->fee_lock_time)
-                    <button class="btn btn-warning" id="open">
-                    <i class="glyphicon glyphicon-credit-card"></i>
+                <div class="col-sm-12">
+                    @if(isset($result) && $result)
+                    @if($result->treatment_end_type_id == 2 && ($result->is_lock_hein || $result->is_active == 0))
+                    <button class="btn btn-danger" onclick="entry_remove($(treatment_code).val())">
+                    <i class="glyphicon glyphicon-lock"></i>
+                        Khóa
                     </button>
-                    @endif  
-                @endif
-				
-				@if($result->treatment_end_type_id == 2)
-				    <button class="btn btn-primary" id="minus">
-                        <i class="glyphicon glyphicon-minus"></i>
+                    @endif
+                    @if($result->treatment_end_type_id == 4 && !empty($result->medi_org_code))
+                    <button class="btn btn-primary" onclick="entry_update($(treatment_code).val())">
+                    <i class="glyphicon glyphicon-ok"></i>
+                        Mở khóa
                     </button>
-					<button class="btn btn-primary" id="plus">
-					    <i class="glyphicon glyphicon-plus"></i>
-					</button>													
-				@endif
-                    <a href="{{route('insurance.check-card.search',['card-number' => $result->tdl_hein_card_number, 'name' => $result->tdl_patient_name, 'birthday' => substr($result->tdl_patient_dob,0,4)])}}" class="btn btn-success" target="_blank"><span class="glyphicon glyphicon-check"></span> Tra thẻ</a><br>
-                @endif
-            </div>
+                    @else
+                        @if(($result->is_lock_hein || $result->is_active == 0) && $result->fee_lock_time)
+                        <button class="btn btn-warning" id="open">
+                        <i class="glyphicon glyphicon-credit-card"></i>
+                        </button>
+                        @endif  
+                    @endif
+                    
+                    @if($result->treatment_end_type_id == 2)
+                        <button class="btn btn-primary" id="minus">
+                            <i class="glyphicon glyphicon-minus"></i>
+                        </button>
+                        <button class="btn btn-primary" id="plus">
+                            <i class="glyphicon glyphicon-plus"></i>
+                        </button>													
+                    @endif
+                        <a href="{{route('insurance.check-card.search',['card-number' => $result->tdl_hein_card_number, 'name' => $result->tdl_patient_name, 'birthday' => substr($result->tdl_patient_dob,0,4)])}}" class="btn btn-success" target="_blank"><span class="glyphicon glyphicon-check"></span> Tra thẻ</a><br>
+                    @endif
+                </div>
             </div>            
         </div>
     </div>
