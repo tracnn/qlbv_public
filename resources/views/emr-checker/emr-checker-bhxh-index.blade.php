@@ -167,7 +167,7 @@
                 ids: selectedIds
             },
             success: function (response) {
-                alert('Xóa thành công!');
+                toastr.success('Xóa thành công!');
                 table.ajax.reload();
                 $('#select-all').prop('checked', false);
                 $('#delete-selected').prop('disabled', true);
