@@ -31,6 +31,7 @@
                     <th>Khoa chỉ định</th>
                     <th>Người nhà</th>
                     <th>Số người nhà</th>
+                    <th>Action</th>
                 </tr>
             </thead>
         </table>
@@ -88,6 +89,7 @@
                 { data: 'department_name', name: "re_dept.department_name" },
                 { data: 'relative_name', name: "pa.relative_name" },
                 { data: 'relative_mobile', name: "pa.relative_mobile" },
+                { data: 'action', name: "action" },
             ],
         });
 
