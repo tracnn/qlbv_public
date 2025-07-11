@@ -75,12 +75,12 @@ services:
       - qlbv_network
     command: redis-server /usr/local/etc/redis/redis.conf
 
-  # Queue Worker
-  queue:
+  # Queue Worker - JobQd130Xml
+  queue_qd130xml:
     build:
       context: .
       dockerfile: docker/php/Dockerfile
-    container_name: qlbv_queue
+    container_name: qlbv_queue_qd130xml
     restart: unless-stopped
     working_dir: /var/www
     volumes:
@@ -93,7 +93,67 @@ services:
     environment:
       - APP_ENV=local
       - APP_DEBUG=true
-    command: php artisan queue:work redis --sleep=3 --tries=3 --max-time=3600
+    command: php artisan queue:work --queue=JobQd130Xml --sleep=3 --tries=3 --max-time=3600
+
+  # Queue Worker - JobKtTheBHYT
+  queue_ktbhytthe:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    container_name: qlbv_queue_ktbhytthe
+    restart: unless-stopped
+    working_dir: /var/www
+    volumes:
+      - ./:/var/www
+    networks:
+      - qlbv_network
+    depends_on:
+      - mysql
+      - redis
+    environment:
+      - APP_ENV=local
+      - APP_DEBUG=true
+    command: php artisan queue:work --queue=JobKtTheBHYT --sleep=3 --tries=3 --max-time=3600
+
+  # Import Catalog Service
+  import_catalog:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    container_name: qlbv_import_catalog
+    restart: unless-stopped
+    working_dir: /var/www
+    volumes:
+      - ./:/var/www
+    networks:
+      - qlbv_network
+    depends_on:
+      - mysql
+      - redis
+    environment:
+      - APP_ENV=local
+      - APP_DEBUG=true
+    command: php artisan importCatalogBHXH:data
+
+  # XML Import Service
+  xml_import:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    container_name: qlbv_xml_import
+    restart: unless-stopped
+    working_dir: /var/www
+    volumes:
+      - ./:/var/www
+    networks:
+      - qlbv_network
+    depends_on:
+      - mysql
+      - redis
+    environment:
+      - APP_ENV=local
+      - APP_DEBUG=true
+    command: php artisan xml130import:day
 
   # Scheduler
   scheduler:

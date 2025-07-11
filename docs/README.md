@@ -2,240 +2,257 @@
 
 ## Tổng quan
 
-Thư mục này chứa tài liệu triển khai dự án QLBV (Quản lý Bảo hiểm Y tế) trên các môi trường khác nhau.
+Thư mục này chứa tài liệu triển khai dự án QLBV (Quản lý Bảo hiểm Y tế) sử dụng Docker để đảm bảo tính nhất quán giữa các môi trường development, staging và production.
 
 ## Cấu trúc tài liệu
 
-### 1. `deployment-ubuntu.md`
-Tài liệu chi tiết hướng dẫn triển khai dự án trên Ubuntu Server, bao gồm:
+### 1. `Docker-Deployment-Complete.md`
+Tài liệu chi tiết hướng dẫn triển khai dự án sử dụng Docker, bao gồm:
 
-- **Chuẩn bị hệ thống**: Cài đặt các package cần thiết
-- **Cài đặt môi trường**: PHP, MySQL, Redis, Nginx, Node.js
-- **Triển khai ứng dụng**: Clone code, cài đặt dependencies, cấu hình
-- **Cấu hình web server**: Nginx virtual host, SSL
-- **Cấu hình queue**: Supervisor, cron jobs
-- **Bảo mật**: Firewall, security headers
-- **Monitoring**: Log rotation, backup scripts
+- **Chuẩn bị môi trường**: Cài đặt Docker và Docker Compose
+- **Cấu hình Docker**: Dockerfiles, docker-compose.yml
+- **Triển khai ứng dụng**: Build và chạy containers
+- **Cấu hình services**: Nginx, PHP-FPM, MySQL, Redis
+- **Queue và Scheduler**: Workers và cron jobs
+- **Bảo mật**: SSL, security headers, secrets management
+- **Monitoring**: Logs, health checks, performance monitoring
+- **Backup và Recovery**: Automated backup scripts
 - **Troubleshooting**: Xử lý các lỗi thường gặp
-
-### 2. `deploy.sh`
-Script tự động hóa quá trình triển khai trên Ubuntu, bao gồm:
-
-- Tự động cài đặt tất cả dependencies
-- Cấu hình database và web server
-- Thiết lập queue workers và cron jobs
-- Tạo scripts backup và monitoring
-- Cấu hình bảo mật cơ bản
 
 ## Hướng dẫn sử dụng
 
-### Triển khai thủ công
+### Triển khai với Docker
 
-1. **Đọc tài liệu**: Xem file `deployment-ubuntu.md` để hiểu rõ quy trình
-2. **Chuẩn bị server**: Đảm bảo server đáp ứng yêu cầu hệ thống
-3. **Thực hiện từng bước**: Làm theo hướng dẫn trong tài liệu
-4. **Kiểm tra**: Verify các service hoạt động đúng
-
-### Triển khai tự động
-
-1. **Chuẩn bị thông tin**:
+1. **Chuẩn bị môi trường**:
    ```bash
-   DOMAIN="your-domain.com"
-   DB_PASSWORD="your_secure_password"
-   APP_KEY="base64:your_generated_key"
+   # Cài đặt Docker và Docker Compose
+   # Xem hướng dẫn trong Docker-Deployment-Complete.md
    ```
 
-2. **Chạy script**:
+2. **Clone và setup dự án**:
    ```bash
-   chmod +x docs/deploy.sh
-   ./docs/deploy.sh $DOMAIN $DB_PASSWORD $APP_KEY
+   git clone <repository_url> qlbv
+   cd qlbv
    ```
 
-3. **Kiểm tra kết quả**:
+3. **Chạy Docker deployment**:
    ```bash
-   /usr/local/bin/qlbv-monitor.sh
+   # Development
+   docker-compose up -d
+   
+   # Production
+   docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+   ```
+
+4. **Kiểm tra ứng dụng**:
+   ```bash
+   # Truy cập ứng dụng
+   http://localhost:8080 (development)
+   http://your-domain.com (production)
    ```
 
 ## Yêu cầu hệ thống
 
 ### Tối thiểu
-- **CPU**: 2 cores
+- **Docker**: 20.10+
+- **Docker Compose**: 2.0+
 - **RAM**: 4GB
 - **Storage**: 20GB
-- **OS**: Ubuntu 18.04 LTS trở lên
+- **OS**: Linux, macOS, Windows 10/11
 
 ### Khuyến nghị
-- **CPU**: 4 cores
+- **Docker**: 24.0+
+- **Docker Compose**: 2.20+
 - **RAM**: 8GB
 - **Storage**: 50GB SSD
-- **OS**: Ubuntu 20.04 LTS
+- **OS**: Ubuntu 22.04 LTS, macOS 12+, Windows 11
 
 ## Cấu hình môi trường
 
 ### Development
-- `APP_ENV=local`
-- `APP_DEBUG=true`
-- `CACHE_DRIVER=file`
-- `QUEUE_CONNECTION=sync`
-
-### Production
-- `APP_ENV=production`
-- `APP_DEBUG=false`
-- `CACHE_DRIVER=redis`
-- `QUEUE_CONNECTION=redis`
-
-## Database
-
-### MySQL (Mặc định)
 ```env
-DB_CONNECTION=mysql
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_DATABASE=qlbv
-DB_USERNAME=qlbv_user
-DB_PASSWORD=your_password
+APP_ENV=local
+APP_DEBUG=true
+CACHE_DRIVER=redis
+QUEUE_CONNECTION=redis
+DB_HOST=mysql
+REDIS_HOST=redis
 ```
 
-### Oracle (Tùy chọn)
+### Production
 ```env
-DB_CONNECTION=oracle
-DB_HOST=your_oracle_host
-DB_PORT=1521
-DB_DATABASE=your_service_name
-DB_USERNAME=your_username
-DB_PASSWORD=your_password
+APP_ENV=production
+APP_DEBUG=false
+CACHE_DRIVER=redis
+QUEUE_CONNECTION=redis
+DB_HOST=mysql
+REDIS_HOST=redis
 ```
 
 ## Services
 
 ### Web Server
 - **Nginx**: Port 80/443
-- **PHP-FPM**: Unix socket
+- **PHP-FPM**: Port 9000 (internal)
 
 ### Database
 - **MySQL**: Port 3306
 - **Redis**: Port 6379
 
-### Queue
-- **Supervisor**: Quản lý queue workers
-- **Cron**: Laravel scheduler
+### Queue và Scheduler
+- **Queue Workers**: Laravel queue workers
+- **Scheduler**: Laravel task scheduler
 
 ## Monitoring
 
-### Scripts có sẵn
-- `/usr/local/bin/qlbv-monitor.sh`: Kiểm tra trạng thái hệ thống
-- `/usr/local/bin/qlbv-backup.sh`: Backup tự động
+### Container Status
+```bash
+# Kiểm tra trạng thái containers
+docker-compose ps
 
-### Logs
-- **Application**: `/var/www/qlbv/storage/logs/`
-- **Nginx**: `/var/log/nginx/`
-- **PHP-FPM**: `/var/log/php7.4-fpm.log`
-- **Supervisor**: `/var/log/supervisor/`
+# Xem logs
+docker-compose logs -f app
+docker-compose logs -f nginx
+docker-compose logs -f mysql
+docker-compose logs -f redis
+```
+
+### Performance Monitoring
+```bash
+# Resource usage
+docker stats
+
+# Disk usage
+docker system df
+
+# Health checks
+docker-compose exec app php artisan queue:work --once
+```
 
 ## Bảo mật
 
-### Firewall
+### SSL/TLS
 ```bash
-sudo ufw allow OpenSSH
-sudo ufw allow 'Nginx Full'
-sudo ufw enable
+# Tạo SSL certificate
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+  -keyout ssl/nginx.key -out ssl/nginx.crt
 ```
 
-### SSL Certificate
+### Secrets Management
 ```bash
-sudo certbot --nginx -d your-domain.com
+# Tạo secrets
+echo "your_secret_password" | docker secret create db_password -
 ```
 
 ### Security Headers
-Đã được cấu hình trong Nginx virtual host
+Đã được cấu hình trong Nginx configuration
 
-## Backup
+## Backup và Recovery
 
-### Tự động
-- **Database**: Hàng ngày lúc 2:00 AM
-- **Files**: Backup toàn bộ application
-- **Retention**: 30 ngày
-
-### Thủ công
+### Automated Backup
 ```bash
-/usr/local/bin/qlbv-backup.sh
+# Tạo backup
+./scripts/docker-backup.sh
+
+# Restore từ backup
+docker-compose exec -T mysql mysql -u qlbv_user -p qlbv < backup.sql
 ```
+
+### Backup Schedule
+- **Database**: Hàng ngày
+- **Application files**: Hàng tuần
+- **Retention**: 30 ngày
 
 ## Troubleshooting
 
 ### Lỗi thường gặp
 
-1. **Permission denied**
+1. **Container không start**
    ```bash
-   sudo chown -R www-data:www-data /var/www/qlbv
-   sudo chmod -R 755 /var/www/qlbv
+   docker-compose logs container_name
+   docker-compose down
+   docker-compose up -d
    ```
 
 2. **Queue không hoạt động**
    ```bash
-   sudo supervisorctl restart qlbv-worker:*
-   sudo supervisorctl status
+   docker-compose restart queue
+   docker-compose logs queue
    ```
 
-3. **Database connection**
+3. **Database connection issues**
    ```bash
-   php artisan config:clear
-   php artisan cache:clear
+   docker-compose exec app php artisan config:clear
+   docker-compose exec app php artisan cache:clear
    ```
 
-### Kiểm tra logs
+### Performance Issues
 ```bash
-# Laravel logs
-tail -f /var/www/qlbv/storage/logs/laravel.log
+# Memory usage
+docker stats --format "table {{.Container}}\t{{.CPUPerc}}\t{{.MemUsage}}"
 
-# Nginx logs
-sudo tail -f /var/log/nginx/error.log
-
-# PHP-FPM logs
-sudo tail -f /var/log/php7.4-fpm.log
+# Clean up
+docker system prune -f
+docker volume prune -f
 ```
 
 ## Maintenance
 
 ### Cập nhật ứng dụng
 ```bash
-cd /var/www/qlbv
+# Pull latest code
 git pull origin main
-composer install --no-dev --optimize-autoloader
-npm install && npm run production
-php artisan migrate --force
-php artisan config:cache
-sudo systemctl restart php7.4-fpm
-sudo supervisorctl restart qlbv-worker:*
+
+# Rebuild containers
+docker-compose build --no-cache
+docker-compose up -d
+
+# Run migrations
+docker-compose exec app php artisan migrate --force
+
+# Clear cache
+docker-compose exec app php artisan config:cache
 ```
 
-### Kiểm tra performance
+### Scaling
 ```bash
-# Memory usage
-free -h
+# Scale queue workers
+docker-compose up -d --scale queue=3
 
-# Disk usage
-df -h
-
-# CPU usage
-top
-
-# Network connections
-netstat -tulpn
+# Scale web servers
+docker-compose up -d --scale nginx=2
 ```
+
+## Scripts tự động hóa
+
+### Docker Setup
+- **`scripts/docker-setup.sh`**: Setup môi trường Docker
+- **`scripts/docker-deploy.sh`**: Deploy to production
+- **`scripts/docker-backup.sh`**: Backup automation
+
+### Job Management
+- **`scripts/jobs-linux.sh`**: Quản lý service jobs trên Linux/Mac
+- **`scripts/jobs-windows.bat`**: Quản lý service jobs trên Windows
 
 ## Liên hệ
 
 Nếu gặp vấn đề trong quá trình triển khai, vui lòng:
 
-1. Kiểm tra logs để xác định nguyên nhân
-2. Tham khảo phần Troubleshooting
-3. Liên hệ team phát triển với thông tin chi tiết về lỗi
+1. Kiểm tra logs: `docker-compose logs -f`
+2. Xem container status: `docker-compose ps`
+3. Tham khảo phần Troubleshooting trong `Docker-Deployment-Complete.md`
+4. Liên hệ team phát triển với thông tin chi tiết về lỗi
 
 ## Changelog
 
+### Version 2.0.0
+- Chuyển sang Docker deployment
+- Loại bỏ Ubuntu deployment thủ công
+- Tối ưu hóa cấu trúc tài liệu
+- Thêm scripts tự động hóa
+
 ### Version 1.0.0
 - Tạo tài liệu triển khai cơ bản
-- Script tự động triển khai
+- Script tự động triển khai Ubuntu
 - Cấu hình monitoring và backup
 - Hướng dẫn troubleshooting 
