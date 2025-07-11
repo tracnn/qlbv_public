@@ -144,7 +144,11 @@
       });
     });
 
+    //Dữ liệu công khai
     $(document).ready(function() {
+      // Hiển thị spinner trước khi gửi request
+      $('#congkhai-content').html('<div class="text-center" style="padding: 10px;"><i class="fa fa-spinner fa-spin"></i> Đang tải danh sách...</div>');
+
       $.ajax({
         url: "{{ route('get-list-congkhai') }}",
         type: "GET",

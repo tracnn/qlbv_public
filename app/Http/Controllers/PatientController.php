@@ -316,6 +316,8 @@ class PatientController extends Controller
     {
         $treatment_id = $request->get('treatment_id');
 
+        $current_date = date('Ymd') . '235959';
+
         $list_congkhai = DB::connection('HISPro')
         ->table('his_service_req')
         ->join('his_service_req_type', 'his_service_req_type.id', '=', 'his_service_req.service_req_type_id')
@@ -329,6 +331,7 @@ class PatientController extends Controller
         ->where('his_service_req.is_delete', 0)
         ->whereIn('his_service_req.service_req_type_id', [14,15])
         ->where('his_service_req.service_req_stt_id', 3)
+        ->where('his_service_req.intruction_time', '<=', $current_date)
         ->orderBy('his_service_req.intruction_time', 'desc')
         ->get();
 
