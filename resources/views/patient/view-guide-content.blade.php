@@ -217,7 +217,7 @@
               var details = res.details;
               if (details && details.length > 0) {
                 var detailHtml = '<table class="table display table-hover dtr-inline" width="100%">';
-                detailHtml += '<thead><tr><th>Tên</th><th>Loại</th><th>Đơn vị tính</th><th>Hàm lượng</th><th>Số lượng</th></tr></thead><tbody>';
+                detailHtml += '<thead><tr><th>Tên</th><th>Loại</th><th>ĐVT</th><th>Hàm lượng</th><th>SL</th></tr></thead><tbody>';
                 details.forEach(function(d) {
                   detailHtml += '<tr>';
                   detailHtml += '<td>' + (d.tdl_service_name || '') + '</td>';
