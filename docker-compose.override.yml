@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  app:
+    environment:
+      - APP_ENV=local
+      - APP_DEBUG=true
+    volumes:
+      - ./:/var/www
+      - ./storage:/var/www/storage
+    command: php-fpm
+
+  nginx:
+    ports:
+      - "8080:80"
+    volumes:
+      - ./:/var/www
+      - ./storage/logs/nginx:/var/log/nginx
+
+  mysql:
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_DATABASE: qlbv
+      MYSQL_USER: qlbv_user
+      MYSQL_PASSWORD: qlbv_password
+      MYSQL_ROOT_PASSWORD: root_password
+
+  redis:
+    ports:
+      - "6379:6379"
+
+  queue:
+    environment:
+      - APP_ENV=local
+      - APP_DEBUG=true
+    command: php artisan queue:work redis --sleep=3 --tries=3 --max-time=3600
+
+  scheduler:
+    environment:
+      - APP_ENV=local
+      - APP_DEBUG=true
+    command: php artisan schedule:work 
