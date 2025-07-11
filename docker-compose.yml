@@ -12,6 +12,16 @@ services:
     volumes:
       - ./:/var/www
       - ./docker/php/php.ini:/usr/local/etc/php/conf.d/custom.ini
+      # Mount filesystem directories
+      - ./storage/app/public:/var/www/storage/app/public
+      - ./storage/app/emr:/var/www/storage/app/emr
+      - ./storage/app/xml4210:/var/www/storage/app/xml4210
+      - ./storage/app/xml4210tt:/var/www/storage/app/xml4210tt
+      - ./storage/app/CatalogBHXH:/var/www/storage/app/CatalogBHXH
+      - ./storage/app/xml130tt:/var/www/storage/app/xml130tt
+      - ./storage/app/xml130:/var/www/storage/app/xml130
+      - ./storage/app/xml130GoogleDrive:/var/www/storage/app/xml130GoogleDrive
+      - ./storage/app/exportXml130:/var/www/storage/app/exportXml130
     networks:
       - qlbv_network
     depends_on:
@@ -85,6 +95,16 @@ services:
     working_dir: /var/www
     volumes:
       - ./:/var/www
+      # Mount filesystem directories for queue workers
+      - ./storage/app/public:/var/www/storage/app/public
+      - ./storage/app/emr:/var/www/storage/app/emr
+      - ./storage/app/xml4210:/var/www/storage/app/xml4210
+      - ./storage/app/xml4210tt:/var/www/storage/app/xml4210tt
+      - ./storage/app/CatalogBHXH:/var/www/storage/app/CatalogBHXH
+      - ./storage/app/xml130tt:/var/www/storage/app/xml130tt
+      - ./storage/app/xml130:/var/www/storage/app/xml130
+      - ./storage/app/xml130GoogleDrive:/var/www/storage/app/xml130GoogleDrive
+      - ./storage/app/exportXml130:/var/www/storage/app/exportXml130
     networks:
       - qlbv_network
     depends_on:
@@ -105,6 +125,16 @@ services:
     working_dir: /var/www
     volumes:
       - ./:/var/www
+      # Mount filesystem directories for queue workers
+      - ./storage/app/public:/var/www/storage/app/public
+      - ./storage/app/emr:/var/www/storage/app/emr
+      - ./storage/app/xml4210:/var/www/storage/app/xml4210
+      - ./storage/app/xml4210tt:/var/www/storage/app/xml4210tt
+      - ./storage/app/CatalogBHXH:/var/www/storage/app/CatalogBHXH
+      - ./storage/app/xml130tt:/var/www/storage/app/xml130tt
+      - ./storage/app/xml130:/var/www/storage/app/xml130
+      - ./storage/app/xml130GoogleDrive:/var/www/storage/app/xml130GoogleDrive
+      - ./storage/app/exportXml130:/var/www/storage/app/exportXml130
     networks:
       - qlbv_network
     depends_on:
@@ -125,6 +155,16 @@ services:
     working_dir: /var/www
     volumes:
       - ./:/var/www
+      # Mount filesystem directories for import services
+      - ./storage/app/public:/var/www/storage/app/public
+      - ./storage/app/emr:/var/www/storage/app/emr
+      - ./storage/app/xml4210:/var/www/storage/app/xml4210
+      - ./storage/app/xml4210tt:/var/www/storage/app/xml4210tt
+      - ./storage/app/CatalogBHXH:/var/www/storage/app/CatalogBHXH
+      - ./storage/app/xml130tt:/var/www/storage/app/xml130tt
+      - ./storage/app/xml130:/var/www/storage/app/xml130
+      - ./storage/app/xml130GoogleDrive:/var/www/storage/app/xml130GoogleDrive
+      - ./storage/app/exportXml130:/var/www/storage/app/exportXml130
     networks:
       - qlbv_network
     depends_on:
@@ -145,6 +185,16 @@ services:
     working_dir: /var/www
     volumes:
       - ./:/var/www
+      # Mount filesystem directories for import services
+      - ./storage/app/public:/var/www/storage/app/public
+      - ./storage/app/emr:/var/www/storage/app/emr
+      - ./storage/app/xml4210:/var/www/storage/app/xml4210
+      - ./storage/app/xml4210tt:/var/www/storage/app/xml4210tt
+      - ./storage/app/CatalogBHXH:/var/www/storage/app/CatalogBHXH
+      - ./storage/app/xml130tt:/var/www/storage/app/xml130tt
+      - ./storage/app/xml130:/var/www/storage/app/xml130
+      - ./storage/app/xml130GoogleDrive:/var/www/storage/app/xml130GoogleDrive
+      - ./storage/app/exportXml130:/var/www/storage/app/exportXml130
     networks:
       - qlbv_network
     depends_on:
@@ -165,6 +215,16 @@ services:
     working_dir: /var/www
     volumes:
       - ./:/var/www
+      # Mount filesystem directories for scheduler
+      - ./storage/app/public:/var/www/storage/app/public
+      - ./storage/app/emr:/var/www/storage/app/emr
+      - ./storage/app/xml4210:/var/www/storage/app/xml4210
+      - ./storage/app/xml4210tt:/var/www/storage/app/xml4210tt
+      - ./storage/app/CatalogBHXH:/var/www/storage/app/CatalogBHXH
+      - ./storage/app/xml130tt:/var/www/storage/app/xml130tt
+      - ./storage/app/xml130:/var/www/storage/app/xml130
+      - ./storage/app/xml130GoogleDrive:/var/www/storage/app/xml130GoogleDrive
+      - ./storage/app/exportXml130:/var/www/storage/app/exportXml130
     networks:
       - qlbv_network
     depends_on:

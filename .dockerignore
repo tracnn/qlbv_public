@@ -1,0 +1,53 @@
+# Git
+.git
+.gitignore
+
+# Docker
+docker-compose.yml
+docker-compose.override.yml
+docker-compose.prod.yml
+Dockerfile
+.dockerignore
+
+# Node modules
+node_modules
+npm-debug.log
+yarn-error.log
+
+# Vendor
+vendor
+
+# Storage
+storage/app/public/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+storage/logs/*
+
+# Bootstrap cache
+bootstrap/cache/*
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Cache
+.cache
+
+# Temporary files
+*.tmp
+*.temp 
