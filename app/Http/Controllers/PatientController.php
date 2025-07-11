@@ -147,7 +147,8 @@ class PatientController extends Controller
                     'his_treatment_end_type.treatment_end_type_name',
                     'his_treatment.tdl_patient_cmnd_number','his_treatment.tdl_patient_cccd_number',
                     'his_treatment.tdl_patient_passport_number','his_treatment.tdl_hein_card_number',
-                    'his_treatment.icd_name', 'his_treatment.icd_text', 'his_treatment.tdl_patient_code'
+                    'his_treatment.icd_name', 'his_treatment.icd_text', 'his_treatment.tdl_patient_code',
+                    'his_treatment.tdl_treatment_type_id'
                 )
                 ->where('his_treatment.treatment_code', $treatment_code)
                 ->where(function($q) use ($phone){
@@ -309,6 +310,48 @@ class PatientController extends Controller
                 'service_req_notStarted', 'countServiceReqNotStartByRoom','sere_serv_chiphi','tracuuhoadon','barcode',
                 'sere_serv_total', 'transactions', 'vaccinations')
         );
+    }
+
+    public function getListCongKhai(Request $request)
+    {
+        $treatment_id = $request->get('treatment_id');
+
+        $list_congkhai = DB::connection('HISPro')
+        ->table('his_service_req')
+        ->join('his_service_req_type', 'his_service_req_type.id', '=', 'his_service_req.service_req_type_id')
+        ->join('his_service_req_stt', 'his_service_req_stt.id', '=', 'his_service_req.service_req_stt_id')
+        ->select('his_service_req.id', 'his_service_req.service_req_code', 
+        'his_service_req.intruction_time', 'his_service_req.request_username', 
+        'his_service_req_type.service_req_type_name', 'his_service_req.request_user_title',
+        'his_service_req_stt.service_req_stt_name')
+        ->where('treatment_id', $treatment_id)
+        ->where('his_service_req.is_active', 1)
+        ->where('his_service_req.is_delete', 0)
+        ->whereIn('his_service_req.service_req_type_id', [14,15])
+        ->where('his_service_req.service_req_stt_id', 3)
+        ->orderBy('his_service_req.intruction_time', 'desc')
+        ->get();
+
+        return response()->json(['list_congkhai' => $list_congkhai]);
+        
+    }
+
+    public function getListCongKhaiContent(Request $request)
+    {
+        $service_req_id = $request->get('id');
+
+        $details = DB::connection('HISPro')
+        ->table('his_sere_serv')
+        ->join('his_service_type', 'his_service_type.id', '=', 'his_sere_serv.tdl_service_type_id')
+        ->join('his_service_unit', 'his_service_unit.id', '=', 'his_sere_serv.tdl_service_unit_id')
+        ->select('his_sere_serv.id', 'his_sere_serv.tdl_service_name', 'his_sere_serv.amount',
+        'his_service_type.service_type_name', 'his_service_unit.service_unit_name',
+        'his_sere_serv.tdl_active_ingr_bhyt_name', 'his_sere_serv.tdl_medicine_concentra')
+        ->where('service_req_id', $service_req_id)
+        ->get();
+
+        return response()->json(['details' => $details]);
+        
     }
 
     public function encryptToken(Request $request)

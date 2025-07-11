@@ -58,6 +58,9 @@
       <li><a data-toggle="tab" href="#hdct"><span><strong>Chờ thực hiện</strong></span></a></li>
       <li><a data-toggle="tab" href="#hdct_done"><span><strong>Đã thực hiện</strong></span></a></li>
       @endif
+      @if($treatment->tdl_treatment_type_id == 3)
+      <li><a data-toggle="tab" href="#congkhai"><span><strong>Công khai</strong></span></a></li>
+      @endif
       @if($treatment->tdl_patient_type_id == 43 || $treatment->tdl_patient_type_id == 62)
       <li><a data-toggle="tab" href="#xemnhanh"><span><strong>Khám</strong></span></a></li>
       <li><a data-toggle="tab" href="#tuvan"><span style="color:orange;"><strong>BS Tư vấn</strong></span></a></li>
@@ -75,6 +78,7 @@
       @include('patient.partials.patient_tthc')
       @include('patient.partials.patient_chothuchien')
       @include('patient.partials.patient_dathuchien')
+      @include('patient.partials.patient_congkhai')
       @include('patient.partials.patient_xemkq')
       @include('patient.partials.patient_xemcdha')
       @include('patient.partials.patient_sotiemchung')
@@ -139,6 +143,115 @@
         return isNumberKey(evt);
       });
     });
+
+    $(document).ready(function() {
+      $.ajax({
+        url: "{{ route('get-list-congkhai') }}",
+        type: "GET",
+        data: {
+          treatment_id: "{{ $treatment->id }}"
+        },
+        success: function(response) {
+          var list_congkhai = response.list_congkhai;
+          if (list_congkhai && list_congkhai.length > 0) {
+            var html = '<table class="table display table-hover dtr-inline" width="100%">';
+            html += '<thead><tr>';
+            html += '<th></th>'; // Cột nút (+/-)
+            html += '<th>Mã y lệnh</th>';
+            html += '<th>Thời gian chỉ định</th>';
+            html += '<th>Loại đơn</th>';
+            html += '<th>Người chỉ định</th>';
+            html += '</tr></thead>';
+            html += '<tbody>';
+            list_congkhai.forEach(function(item) {
+              html += '<tr data-id="' + item.id + '" data-loaded="false">';
+              html += '<td><a href="#" class="toggle-detail" data-id="' + item.id + '"><i class="fa fa-plus-square"></i></a></td>';
+              html += '<td>' + (item.service_req_code || '') + '</td>';
+              html += '<td>' + (formatDateTime(item.intruction_time) || '') + '</td>';
+              html += '<td>' + (item.service_req_type_name || '') + '</td>';
+              html += '<td>' + (item.request_user_title || '') + ' ' + (item.request_username || '') + '</td>';
+              html += '</tr>';
+              html += '<tr class="detail-row" id="detail-row-' + item.id + '" style="display:none;"><td colspan="5"></td></tr>';
+            });
+            html += '</tbody></table>';
+            $('#congkhai-content').html(html);
+          } else {
+            $('#congkhai-content').html('<p>Không có dữ liệu công khai.</p>');
+          }
+        },
+        error: function() {
+          $('#congkhai-content').html('<p>Không thể tải dữ liệu công khai.</p>');
+        }
+      });
+    });
+
+    // Xử lý toggle hiển thị chi tiết
+    $(document).on('click', '.toggle-detail', function(e) {
+      e.preventDefault();
+      var $icon = $(this).find('i');
+      var id = $(this).data('id');
+      var $parentRow = $(this).closest('tr');
+      var $detailRow = $('#detail-row-' + id);
+
+      if ($detailRow.is(':visible')) {
+        $detailRow.hide();
+        $icon.removeClass('fa-minus-square').addClass('fa-plus-square');
+      } else {
+        if ($parentRow.attr('data-loaded') === 'true') {
+          $detailRow.show();
+          $icon.removeClass('fa-plus-square').addClass('fa-minus-square');
+        } else {
+          // 👉 Hiển thị spinner trong khi chờ load
+          $detailRow.find('td').html('<div class="text-center"><i class="fa fa-spinner fa-spin"></i> Đang tải...</div>');
+          $detailRow.show();
+
+          $.ajax({
+            url: "{{ route('get-list-congkhai-content') }}",
+            type: "GET",
+            data: { id: id },
+            success: function(res) {
+              var details = res.details;
+              if (details && details.length > 0) {
+                var detailHtml = '<table class="table display table-hover dtr-inline" width="100%">';
+                detailHtml += '<thead><tr><th>Tên</th><th>Loại</th><th>Đơn vị tính</th><th>Hàm lượng</th><th>Số lượng</th></tr></thead><tbody>';
+                details.forEach(function(d) {
+                  detailHtml += '<tr>';
+                  detailHtml += '<td>' + (d.tdl_service_name || '') + '</td>';
+                  detailHtml += '<td>' + (d.service_type_name || '') + '</td>';
+                  detailHtml += '<td>' + (d.service_unit_name || '') + '</td>';
+                  detailHtml += '<td>' + (d.tdl_medicine_concentra || '') + '</td>';
+                  detailHtml += '<td class="text-right">' + (d.amount || 0) + '</td>';
+                  detailHtml += '</tr>';
+                });
+                detailHtml += '</tbody></table>';
+                $detailRow.find('td').html(detailHtml);
+              } else {
+                $detailRow.find('td').html('<p>Không có chi tiết.</p>');
+              }
+              $detailRow.show();
+              $parentRow.attr('data-loaded', 'true');
+              $icon.removeClass('fa-plus-square').addClass('fa-minus-square');
+            },
+            error: function() {
+              $detailRow.find('td').html('<p>Không thể tải chi tiết.</p>');
+              $detailRow.show();
+              $parentRow.attr('data-loaded', 'true');
+              $icon.removeClass('fa-plus-square').addClass('fa-minus-square');
+            }
+          });
+        }
+      }
+    });
+
+    function formatDateTime(value) {
+      if (!value || value.length < 14) return value;
+      var year = value.substring(0, 4);
+      var month = value.substring(4, 6);
+      var day = value.substring(6, 8);
+      var hour = value.substring(8, 10);
+      var minute = value.substring(10, 12);
+      return `${day}/${month}/${year} ${hour}:${minute}`;
+    }
   </script>
 </body>
 </html>
