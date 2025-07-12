@@ -767,7 +767,7 @@ class EmrController extends Controller
             $filePaths = $this->get_file_paths($treatmentCode, null);
 
             if (empty($filePaths) || !$filePaths instanceof \Illuminate\Support\Collection || $filePaths->isEmpty()) {
-                return response()->json(['error' => 'Danh sách file không hợp lệ'], 400);
+                return abort(404, 'Không tìm thấy văn bản nào trong hồ sơ này');
             }
 
             $pdf = new \setasign\Fpdi\Fpdi();
