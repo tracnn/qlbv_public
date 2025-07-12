@@ -724,7 +724,9 @@ class EmrController extends Controller
         // Lấy danh sách file từ query string
         $treatmentCode = $request->get('treatment_code');
     
-        $filePaths = $this->get_file_paths($treatmentCode, null);
+        $filePaths = $this->get_file_paths($treatmentCode, null)->toArray();
+
+        dd($filePaths);
 
         if (empty($filePaths) || !is_array($filePaths)) {
             return response()->json(['error' => 'Danh sách file không hợp lệ'], 400);
@@ -773,7 +775,6 @@ class EmrController extends Controller
     {
         $result = DB::connection('EMR_RS')
             ->table('emr_document')
-            ->select('last_version_url')
             ->where('is_delete', 0)
             ->where('treatment_code', $treatmentCode)
             ->get();
