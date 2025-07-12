@@ -177,7 +177,7 @@
         url: "{{ route('get-list-congkhai') }}",
         type: "GET",
         data: {
-          treatment_id: "{{ $treatment->id }}"
+          treatment_id: "{{ isset($treatment) && $treatment ? $treatment->id : '' }}"
         },
         success: function(response) {
           var list_congkhai = response.list_congkhai;
