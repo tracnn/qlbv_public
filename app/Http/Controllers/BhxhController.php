@@ -33,9 +33,19 @@ class BhxhController extends Controller
                 return strtodatetime($row->fee_lock_time);
             })
             ->addColumn('action', function ($row) {
-                return '<a href="' . route('bhxh.emr-checker-detail', 
-                    ['treatment_code' => $row->treatment_code]) . '" class="btn-sm btn-primary">Chi tiết EMR</a>
-                    <a href="' . route('merge-pdf', ['treatment_code' => $row->treatment_code]) . '" class="btn-sm btn-primary">Gộp PDF</a>';
+                $createdAt = now()->timestamp;
+                $expiresIn = 7200;
+                $token = Crypt::encryptString($row->treatment_code . '|' . $createdAt . '|' . $expiresIn);
+    
+                $linkDetail = '<a href="' . route('bhxh.emr-checker-detail', [
+                    'treatment_code' => $row->treatment_code
+                ]) . '" class="btn-sm btn-primary">Chi tiết EMR</a> ';
+    
+                $linkMergePdf = '<a href="' . route('merge-pdf-secure', [
+                    'token' => $token
+                ]) . '" class="btn-sm btn-primary" target="_blank">Gộp PDF</a>';
+    
+                return $linkDetail . $linkMergePdf;
             })
             ->make(true);
     }

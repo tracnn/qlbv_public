@@ -719,66 +719,68 @@ class EmrController extends Controller
         }
     }
 
-    public function mergePdfFiles(Request $request)
+    public function mergePdfFilesSecure(Request $request)
     {
-        // Lấy danh sách file từ query string
-        $treatmentCode = $request->get('treatment_code');
-    
-        $filePaths = $this->get_file_paths($treatmentCode, null)->toArray();
+        try {
+            $token = $request->get('token');
 
-        if (empty($filePaths) || !is_array($filePaths)) {
-            return response()->json(['error' => 'Danh sách file không hợp lệ'], 400);
-        }
-    
-        $pdf = new Fpdi();
-    
-        // Đảm bảo thư mục temp tồn tại
-        $tempDir = storage_path('app/temp/');
-        if (!is_dir($tempDir)) {
-            mkdir($tempDir, 0755, true);
-        }
-        
-        foreach ($filePaths as $filePath) {
-            // Lấy đường dẫn file từ FTP
-            $resultUrl = str_replace('\\', '/', $filePath->last_version_url);
-            // Tải file từ FTP
-            $ftp = new FtpService();
-            $ftp->connect();
-            $localPath = storage_path('app/temp/') . basename($resultUrl);
-            $ftp->download($resultUrl, $localPath);
-            $ftp->close();
-    
-            // Gộp vào file chính
-            $pageCount = $pdf->setSourceFile($localPath);
-    
-            for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
-                $tplIdx = $pdf->importPage($pageNo);
-                $size = $pdf->getTemplateSize($tplIdx);
-    
-                $pdf->AddPage($size['orientation'], [$size['width'], $size['height']]);
-                $pdf->useTemplate($tplIdx);
+            if (!$token) {
+                return response()->json(['error' => 'Thiếu token'], 400);
             }
-    
-            // Xoá file tạm sau khi gộp
-            @unlink($localPath);
-        }
 
-        // 👉 Đảm bảo thư mục public/merged_pdf tồn tại
-        $mergedDir = public_path('merged_pdf/');
-        if (!is_dir($mergedDir)) {
-            mkdir($mergedDir, 0755, true);
+            $decrypted = Crypt::decryptString($token);
+            [$treatmentCode, $createdAt, $expiresIn] = explode('|', $decrypted);
+
+            $expiredAt = \Carbon\Carbon::createFromTimestamp($createdAt)->addSeconds($expiresIn);
+            if (now()->greaterThan($expiredAt)) {
+                return abort(403, 'Đã hết thời hạn xem hồ sơ, đề nghị bạn vào trang tra cứu');
+            }
+
+            // Lấy danh sách file PDF theo treatmentCode
+            $filePaths = $this->get_file_paths($treatmentCode, null);
+
+            if (empty($filePaths) || !$filePaths instanceof \Illuminate\Support\Collection || $filePaths->isEmpty()) {
+                return response()->json(['error' => 'Danh sách file không hợp lệ'], 400);
+            }
+
+            $pdf = new \setasign\Fpdi\Fpdi();
+
+            $tempDir = storage_path('app/temp/');
+            if (!is_dir($tempDir)) {
+                mkdir($tempDir, 0755, true);
+            }
+
+            foreach ($filePaths as $filePath) {
+                $resultUrl = str_replace('\\', '/', $filePath->last_version_url);
+
+                $ftp = new \App\Services\FtpService();
+                $ftp->connect();
+                $localPath = $tempDir . basename($resultUrl);
+                $ftp->download($resultUrl, $localPath);
+                $ftp->close();
+
+                $pageCount = $pdf->setSourceFile($localPath);
+                for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
+                    $tplIdx = $pdf->importPage($pageNo);
+                    $size = $pdf->getTemplateSize($tplIdx);
+                    $pdf->AddPage($size['orientation'], [$size['width'], $size['height']]);
+                    $pdf->useTemplate($tplIdx);
+                }
+
+                @unlink($localPath);
+            }
+
+            // 👉 Output PDF trực tiếp ra bộ nhớ (string)
+            $output = $pdf->Output('S'); // 'S' => return as string
+
+            return response()->make($output, 200, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'inline'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Link không hợp lệ hoặc đã hết hạn'], 403);
         }
-    
-        // Lưu file gộp vào thư mục public
-        $mergedFileName = 'merged_' . time() . '.pdf';
-        $mergedFilePath = public_path('merged_pdf/' . $mergedFileName);
-        $pdf->Output($mergedFilePath, 'F');
-    
-        // Tạo đường dẫn public
-        $pdfUrl = url('merged_pdf/' . $mergedFileName);
-    
-        // Mở bằng pdfjsv2
-        return redirect('/vendor/pdfjsv2/web/viewer.html?file=' . urlencode($pdfUrl));
     }
 
     private function get_file_paths($treatmentCode, $ParamDocumentType = null)
