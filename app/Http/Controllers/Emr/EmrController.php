@@ -760,7 +760,7 @@ class EmrController extends Controller
             }
     
             // Xoá file tạm sau khi gộp
-            @unlink($localPath);
+            //@unlink($localPath);
         }
     
         // Lưu file gộp vào thư mục public
