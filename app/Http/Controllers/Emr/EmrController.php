@@ -760,7 +760,13 @@ class EmrController extends Controller
             }
     
             // Xoá file tạm sau khi gộp
-            //@unlink($localPath);
+            @unlink($localPath);
+        }
+
+        // 👉 Đảm bảo thư mục public/merged_pdf tồn tại
+        $mergedDir = public_path('merged_pdf/');
+        if (!is_dir($mergedDir)) {
+            mkdir($mergedDir, 0755, true);
         }
     
         // Lưu file gộp vào thư mục public
