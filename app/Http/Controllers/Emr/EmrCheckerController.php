@@ -159,12 +159,19 @@ class EmrCheckerController extends Controller
             return $result->tdl_patient_mobile ?? $result->tdl_patient_phone ?? $result->tdl_patient_relative_mobile ?? $result->tdl_patient_relative_phone;
         })
         ->addColumn('action', function ($result) {
-            $buttons = '
-                <a href="' .route('treatment-result.search',['treatment_code'=>$result->treatment_code]) .'" class="btn btn-sm btn-primary">
-                    <span class="glyphicon glyphicon-eye-open"></span> Chi tiết EMR</a>
-                ';
-
-            return $buttons;
+            $createdAt = now()->timestamp;
+                $expiresIn = 7200;
+                $token = Crypt::encryptString($row->treatment_code . '|' . $createdAt . '|' . $expiresIn);
+    
+                $linkDetail = '<a href="' . route('treatment-result.search', [
+                    'treatment_code' => $result->treatment_code
+                ]) . '" class="btn-sm btn-primary">Chi tiết</a> ';
+    
+                $linkMergePdf = '<a href="' . route('view-merge-pdf', [
+                    'token' => $token
+                ]) . '" class="btn-sm btn-primary" target="_blank">Gộp PDF</a>';
+    
+                return $linkDetail . $linkMergePdf;
         })
         ->toJson();
     }

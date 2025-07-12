@@ -39,11 +39,11 @@ class BhxhController extends Controller
     
                 $linkDetail = '<a href="' . route('bhxh.emr-checker-detail', [
                     'treatment_code' => $row->treatment_code
-                ]) . '" class="btn-sm btn-primary">Chi tiết EMR</a> ';
+                ]) . '" class="btn-sm btn-primary">Chi tiết</a> ';
     
                 $linkMergePdf = '<a href="' . route('view-merge-pdf', [
                     'token' => $token
-                ]) . '" class="btn-sm btn-primary" target="_blank">Xem Gộp PDF</a>';
+                ]) . '" class="btn-sm btn-primary" target="_blank">Gộp PDF</a>';
     
                 return $linkDetail . $linkMergePdf;
             })
