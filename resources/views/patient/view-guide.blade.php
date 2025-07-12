@@ -104,29 +104,29 @@
 
       var code = $('#code').val().trim();
       var phone = $('#phone').val().trim();
-      // Nếu giá trị input vẫn đang ở dạng mask thì không cho submit
+      
       if (code.startsWith('*') || phone.startsWith('*')) {
-        toastr.error('Vui lòng sửa thông tin trước khi tìm kiếm.');
-        return false;
-      }
+          toastr.error('Vui lòng sửa thông tin trước khi tìm kiếm.');
+          return false;
+        }
 
-      if (!code || code.length < 10 || !phone || phone.length < 9) {
-        toastr.error('Phải nhập cả mã và số điện thoại hợp lệ.');
-        return false;
-      }
+        if (!code || code.length < 10 || !phone || phone.length < 9) {
+          toastr.error('Vui lòng nhập đầy đủ Mã BN/Mã ĐT/CCCD và Số điện thoại hợp lệ.');
+          return false;
+        }
 
-      fetch(`/encrypt-token-general?code=${encodeURIComponent(code)}&phone=${encodeURIComponent(phone)}`)
-        .then(response => response.json())
-        .then(data => {
-          if (data.token && data.isExist) {
-            window.location.href = `/view-guide?token=${encodeURIComponent(data.token)}`;
-          } else if (data.token && !data.isExist) {
-            toastr.error('Mã BN/Mã ĐT/CCCD hoặc Số điện thoại không tồn tại trong hệ thống.');
-          } else {
-            toastr.error('Không thể tạo token.');
-          }
-        })
-        .catch(() => toastr.error('Lỗi hệ thống khi tạo token.'));
+        fetch(`/encrypt-token-general?code=${encodeURIComponent(code)}&phone=${encodeURIComponent(phone)}`)
+          .then(response => response.json())
+          .then(data => {
+            if (data.token && data.isExist) {
+              window.location.href = `/view-guide?token=${encodeURIComponent(data.token)}`;
+            } else if (data.token && !data.isExist) {
+              toastr.error('Mã BN/Mã ĐT/CCCD hoặc Số điện thoại không tồn tại trong hệ thống.');
+            } else {
+              toastr.error('Không thể tạo token.');
+            }
+          })
+          .catch(() => toastr.error('Lỗi hệ thống khi tạo token.'));
     });
 
   });

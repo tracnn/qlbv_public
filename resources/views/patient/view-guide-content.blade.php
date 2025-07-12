@@ -101,25 +101,60 @@
 
   @include('patient.partials.footer')
 
-  <script src="{{ asset('vendor/adminlte/vendor/jquery/dist/jquery.min.js') }}"></script>
+<script src="{{ asset('vendor/adminlte/vendor/jquery/dist/jquery.min.js') }}"></script>
 <script src="{{ asset('vendor/adminlte/vendor/bootstrap/dist/js/bootstrap.min.js') }}"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/js/toastr.min.js"></script>
 <script src="//cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
 
 <script>
-$(document).ready(function() {
+  $(document).ready(function() {
+    // ... các đoạn code bạn có sẵn ở đây ...
 
+    // Nếu histories có dữ liệu rồi thì mask input
+    @if(isset($treatment) && $treatment)
+      var originalCode = $('#treatment_code').val();
+      var originalPhone = $('#phone').val();
+
+      if (originalCode.length > 3) {
+        $('#treatment_code').data('full', originalCode); // lưu giá trị đầy đủ vào data attribute
+        $('#treatment_code').val('*********' + originalCode.slice(-3));
+      }
+
+      if (originalPhone.length > 3) {
+        $('#phone').data('full', originalPhone);
+        $('#phone').val('*******' + originalPhone.slice(-3));
+      }
+
+      // Khi focus vào input thì trả lại giá trị đầy đủ để người dùng chỉnh sửa
+      $('#treatment_code').on('focus', function() {
+        if ($(this).data('full')) {
+          $(this).val($(this).data('full'));
+        }
+      });
+
+      $('#phone').on('focus', function() {
+        if ($(this).data('full')) {
+          $(this).val($(this).data('full'));
+        }
+      });
+    @endif
+  });
+</script>
+
+<script>
+$(document).ready(function() {
   // Search form
   $('#searchForm').submit(function(e) {
     e.preventDefault();
     let code = $('#treatment_code').val().trim();
     let phone = $('#phone').val().trim();
+    
     if (code.startsWith('*') || phone.startsWith('*')) {
-      toastr.error('Vui lòng sửa thông tin trước khi tra cứu!');
+      toastr.error('Vui lòng kiểm tra và sửa thông tin trước khi tra cứu!');
       return;
     }
     if (!code || code.length < 10 || !phone || phone.length < 9) {
-      toastr.error('Phải nhập đủ Mã điều trị và SĐT hợp lệ!');
+      toastr.error('Vui lòng nhập đầy đủ Mã điều trị và Số điện thoại hợp lệ!');
       return;
     }
     fetch(`/encrypt-token?treatment_code=${encodeURIComponent(code)}&phone=${encodeURIComponent(phone)}`)
@@ -128,12 +163,12 @@ $(document).ready(function() {
         if (d.token && d.isExist) {
           window.location.href = `/view-guide-content?token=${encodeURIComponent(d.token)}`;
         } else if (d.token && !d.isExist) {
-          toastr.error('Mã điều trị hoặc SĐT không tồn tại!');
+          toastr.error('Mã điều trị hoặc Số điện thoại không tồn tại trong hệ thống!');
         } else {
-          toastr.error('Không thể tạo token');
+          toastr.error('Không thể tạo token, vui lòng thử lại!');
         }
       })
-      .catch(() => toastr.error('Có lỗi khi tạo token'));
+      .catch(() => toastr.error('Đã xảy ra lỗi khi tạo token!'));
   });
 
   // Format input treatment_code
