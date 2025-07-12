@@ -43,7 +43,7 @@ class BhxhController extends Controller
     
                 $linkMergePdf = '<a href="' . route('view-merge-pdf', [
                     'token' => $token
-                ]) . '" class="btn-sm btn-primary" target="_blank">Gộp PDF</a>';
+                ]) . '" class="btn-sm btn-primary" target="_blank">Xem Gộp PDF</a>';
     
                 return $linkDetail . $linkMergePdf;
             })
