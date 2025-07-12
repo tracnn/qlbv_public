@@ -812,15 +812,21 @@ class EmrController extends Controller
 
     private function get_file_paths($treatmentCode, $ParamDocumentType = null)
     {
-        $result = DB::connection('EMR_RS')
+        $query = DB::connection('EMR_RS')
             ->table('emr_document')
             ->join('emr_document_type', 'emr_document_type.id', '=', 'emr_document.document_type_id')
-            ->where('is_delete', 0)
-            ->where('treatment_code', $treatmentCode)
-            ->orderBy('emr_document_type.num_order', 'asc')
-            ->orderBy('emr_document.document_time', 'asc')
+            ->where('emr_document.is_delete', 0)
+            ->where('emr_document.treatment_code', $treatmentCode);
+    
+        if (!empty($ParamDocumentType)) {
+            $query->whereIn('emr_document.document_type_id', (array) $ParamDocumentType);
+        }
+    
+        $result = $query
+            ->orderBy('emr_document_type.num_order', 'ASC')
+            ->orderBy('emr_document.document_time', 'ASC')
             ->get();
-
+    
         return $result;
     }
 
