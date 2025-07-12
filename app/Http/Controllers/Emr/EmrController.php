@@ -777,14 +777,16 @@ class EmrController extends Controller
                 mkdir($tempDir, 0755, true);
             }
 
+            $ftp = new \App\Services\FtpService();
+            $ftp->connect();
+
             foreach ($filePaths as $filePath) {
                 $resultUrl = str_replace('\\', '/', $filePath->last_version_url);
 
-                $ftp = new \App\Services\FtpService();
-                $ftp->connect();
+                
                 $localPath = $tempDir . basename($resultUrl);
                 $ftp->download($resultUrl, $localPath);
-                $ftp->close();
+                
 
                 $pageCount = $pdf->setSourceFile($localPath);
                 for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
@@ -796,6 +798,8 @@ class EmrController extends Controller
 
                 @unlink($localPath);
             }
+
+            $ftp->close();
 
             // 👉 Output PDF trực tiếp ra bộ nhớ (string)
             $output = $pdf->Output('S'); // 'S' => return as string
@@ -829,5 +833,4 @@ class EmrController extends Controller
     
         return $result;
     }
-
 }
