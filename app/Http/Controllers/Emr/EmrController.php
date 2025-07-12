@@ -814,8 +814,11 @@ class EmrController extends Controller
     {
         $result = DB::connection('EMR_RS')
             ->table('emr_document')
+            ->join('emr_document_type', 'emr_document_type.id', '=', 'emr_document.document_type_id')
             ->where('is_delete', 0)
             ->where('treatment_code', $treatmentCode)
+            ->orderBy('emr_document_type.num_order', 'asc')
+            ->orderBy('emr_document.document_time', 'asc')
             ->get();
 
         return $result;
