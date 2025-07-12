@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Storage;
 use App\Services\FtpService;
 use Illuminate\Support\Facades\Crypt;
+use setasign\Fpdi\Fpdi;
 
 use DB;
 
@@ -718,6 +719,66 @@ class EmrController extends Controller
         }
     }
 
+    public function mergePdfFiles(Request $request)
+    {
+        // Lấy danh sách file từ query string
+        $treatmentCode = $request->get('treatment_code');
+    
+        $filePaths = $this->get_file_paths($treatmentCode, null);
 
+        if (empty($filePaths) || !is_array($filePaths)) {
+            return response()->json(['error' => 'Danh sách file không hợp lệ'], 400);
+        }
+    
+        $pdf = new Fpdi();
+    
+        foreach ($filePaths as $filePath) {
+            // Lấy đường dẫn file từ FTP
+            $resultUrl = str_replace('\\', '/', $filePath->last_version_url);
+            // Tải file từ FTP
+            $ftp = new FtpService();
+            $ftp->connect();
+            $localPath = storage_path('app/temp/') . basename($resultUrl);
+            $ftp->download($resultUrl, $localPath);
+            $ftp->close();
+    
+            // Gộp vào file chính
+            $pageCount = $pdf->setSourceFile($localPath);
+    
+            for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
+                $tplIdx = $pdf->importPage($pageNo);
+                $size = $pdf->getTemplateSize($tplIdx);
+    
+                $pdf->AddPage($size['orientation'], [$size['width'], $size['height']]);
+                $pdf->useTemplate($tplIdx);
+            }
+    
+            // Xoá file tạm sau khi gộp
+            @unlink($localPath);
+        }
+    
+        // Lưu file gộp vào thư mục public
+        $mergedFileName = 'merged_' . time() . '.pdf';
+        $mergedFilePath = public_path('merged_pdf/' . $mergedFileName);
+        $pdf->Output($mergedFilePath, 'F');
+    
+        // Tạo đường dẫn public
+        $pdfUrl = url('merged_pdf/' . $mergedFileName);
+    
+        // Mở bằng pdfjsv2
+        return redirect('/vendor/pdfjsv2/web/viewer.html?file=' . urlencode($pdfUrl));
+    }
+
+    private function get_file_paths($treatmentCode, $ParamDocumentType = null)
+    {
+        $result = DB::connection('EMR_RS')
+            ->table('emr_document')
+            ->select('last_version_url')
+            ->where('is_delete', 0)
+            ->where('treatment_code', $treatmentCode)
+            ->get();
+
+        return $result;
+    }
 
 }

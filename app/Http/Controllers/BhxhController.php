@@ -34,7 +34,8 @@ class BhxhController extends Controller
             })
             ->addColumn('action', function ($row) {
                 return '<a href="' . route('bhxh.emr-checker-detail', 
-                ['treatment_code' => $row->treatment_code]) . '" class="btn-sm btn-primary">Chi tiết EMR</a>';
+                    ['treatment_code' => $row->treatment_code]) . '" class="btn-sm btn-primary">Chi tiết EMR</a>
+                    <a href="' . route('merge-pdf', ['treatment_code' => $row->treatment_code]) . '" class="btn-sm btn-primary">Gộp PDF</a>';
             })
             ->make(true);
     }
