@@ -3,7 +3,7 @@
     <div class="row">
       <!-- Social Networks Links -->
       <div class="col-md-12">
-        <p>Kết nối với bệnh viện qua mạng xã hội:</p>
+        <p>Kết nối với CSKCB qua mạng xã hội:</p>
         <a href="" class="btn btn-social-icon btn-facebook">
           <i class="fa fa-facebook"></i>
         </a>

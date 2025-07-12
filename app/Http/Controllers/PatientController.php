@@ -312,49 +312,90 @@ class PatientController extends Controller
         );
     }
 
-    public function getListCongKhai(Request $request)
+    /**
+     * API: Lấy danh sách ngày có y lệnh (group by ngày)
+     */
+    public function getListCongkhaiDays(Request $request)
     {
-        $treatment_id = $request->get('treatment_id');
+        $treatmentId = $request->query('treatment_id');
+        $currentDate = date('Ymd') . '235959';
 
-        $current_date = date('Ymd') . '235959';
-
-        $list_congkhai = DB::connection('HISPro')
+        $dates = DB::connection('HISPro')
         ->table('his_service_req')
-        ->join('his_service_req_type', 'his_service_req_type.id', '=', 'his_service_req.service_req_type_id')
-        ->join('his_service_req_stt', 'his_service_req_stt.id', '=', 'his_service_req.service_req_stt_id')
-        ->select('his_service_req.id', 'his_service_req.service_req_code', 
-        'his_service_req.intruction_time', 'his_service_req.request_username', 
-        'his_service_req_type.service_req_type_name', 'his_service_req.request_user_title',
-        'his_service_req_stt.service_req_stt_name')
-        ->where('treatment_id', $treatment_id)
-        ->where('his_service_req.is_active', 1)
-        ->where('his_service_req.is_delete', 0)
-        ->whereIn('his_service_req.service_req_type_id', [14,15])
-        ->where('his_service_req.service_req_stt_id', 3)
-        ->where('his_service_req.intruction_time', '<=', $current_date)
-        ->orderBy('his_service_req.intruction_time', 'desc')
-        ->get();
+        ->where('treatment_id', $treatmentId)
+        ->where("intruction_date", "<=", $currentDate)
+        ->select('intruction_date as day')
+        ->groupBy('intruction_date')
+        ->orderBy('intruction_date', 'desc')
+        ->pluck('day');
 
-        return response()->json(['list_congkhai' => $list_congkhai]);
-        
+        return response()->json(['days' => $dates]);
     }
 
-    public function getListCongKhaiContent(Request $request)
+    /**
+     * API: Lấy chi tiết DVKT & VTYT theo ngày
+     */
+    public function getListCongkhaiDvkt(Request $request)
     {
-        $service_req_id = $request->get('id');
+        $treatmentId = $request->query('treatment_id');
+        $day = $request->query('day');
+
+        $currentDate = date('Ymd') . '235959';
 
         $details = DB::connection('HISPro')
-        ->table('his_sere_serv')
-        ->join('his_service_type', 'his_service_type.id', '=', 'his_sere_serv.tdl_service_type_id')
-        ->join('his_service_unit', 'his_service_unit.id', '=', 'his_sere_serv.tdl_service_unit_id')
-        ->select('his_sere_serv.id', 'his_sere_serv.tdl_service_name', 'his_sere_serv.amount',
-        'his_service_type.service_type_name', 'his_service_unit.service_unit_name',
-        'his_sere_serv.tdl_active_ingr_bhyt_name', 'his_sere_serv.tdl_medicine_concentra')
-        ->where('service_req_id', $service_req_id)
+        ->table('his_service_req as sr')
+        ->join('his_sere_serv as s', 'sr.id', '=', 's.service_req_id')
+        ->join('his_service_unit as su', 'su.id', '=', 's.tdl_service_unit_id')
+        ->join('his_service_type as st', 'st.id', '=', 's.tdl_service_type_id')
+        ->where('sr.treatment_id', $treatmentId)
+        ->whereNotIn('s.tdl_service_type_id', [6]) // 6: Thuốc
+        ->where('sr.intruction_date', $day)
+        ->where('sr.intruction_date', '<=', $currentDate)
+        ->select([
+            'st.service_type_name as type',
+            's.tdl_service_name as name',
+            'su.service_unit_name as unit',
+            's.amount as amount',
+            's.price as price'
+        ])
         ->get();
 
         return response()->json(['details' => $details]);
-        
+    }
+
+    /**
+     * API: Lấy chi tiết Thuốc theo ngày
+     */
+    public function getListCongkhaiThuoc(Request $request)
+    {
+        $treatmentId = $request->query('treatment_id');
+        $day = $request->query('day');
+        $currentDate = date('Ymd') . '235959';
+
+        $details = DB::connection('HISPro')
+        ->table('his_service_req as sr')
+        ->join('his_sere_serv as s', 's.service_req_id', '=', 'sr.id')
+        ->join('his_service_unit as su', 'su.id', '=', 's.tdl_service_unit_id')
+        ->leftJoin('his_exp_mest_medicine as t', 't.id', '=', 's.exp_mest_medicine_id')
+        ->where('sr.treatment_id', $treatmentId)
+        ->whereIn('s.tdl_service_type_id', [6]) // 3: Thuốc
+        ->where('sr.intruction_date', $day)
+        ->where('sr.intruction_date', '<=', $currentDate)
+        ->where('s.is_delete', 0)
+        ->where('sr.is_delete', 0)
+        ->whereNull('s.is_no_execute')
+        ->select([
+            's.tdl_service_name as name',
+            'su.service_unit_name as unit',
+            's.amount as amount',
+            's.price as price',
+            's.tdl_medicine_concentra as concentration',
+            's.tdl_active_ingr_bhyt_name as form',
+            't.tutorial'
+        ])
+        ->get();
+
+        return response()->json(['details' => $details]);
     }
 
     public function encryptToken(Request $request)

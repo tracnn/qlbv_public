@@ -44,8 +44,9 @@ Route::get('/view-document', 'Emr\EmrController@viewDocument')->name('view-docum
 Route::get('index/view-doc', 'Emr\EmrController@viewDocByAdmin')->name('view-doc');
 //->middleware('throttle:60,1');//Test
 
-Route::get('/get-list-congkhai', 'PatientController@getListCongKhai')->name('get-list-congkhai');
-Route::get('/get-list-congkhai-content', 'PatientController@getListCongKhaiContent')->name('get-list-congkhai-content');
+Route::get('/get-list-congkhai-days', 'PatientController@getListCongkhaiDays')->name('get-list-congkhai-days');
+Route::get('/get-list-congkhai-dvkt', 'PatientController@getListCongkhaiDvkt')->name('get-list-congkhai-dvkt');
+Route::get('/get-list-congkhai-thuoc', 'PatientController@getListCongkhaiThuoc')->name('get-list-congkhai-thuoc');
 
 Route::group(['middleware' => ['auth', 'check.first.login']], function () {
     //    Route::get('/link1', function ()    {
