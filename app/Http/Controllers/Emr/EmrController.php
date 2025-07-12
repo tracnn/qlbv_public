@@ -732,6 +732,12 @@ class EmrController extends Controller
     
         $pdf = new Fpdi();
     
+        // Đảm bảo thư mục temp tồn tại
+        $tempDir = storage_path('app/temp/');
+        if (!is_dir($tempDir)) {
+            mkdir($tempDir, 0755, true);
+        }
+        
         foreach ($filePaths as $filePath) {
             // Lấy đường dẫn file từ FTP
             $resultUrl = str_replace('\\', '/', $filePath->last_version_url);
