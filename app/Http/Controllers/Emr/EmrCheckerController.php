@@ -162,7 +162,7 @@ class EmrCheckerController extends Controller
         ->addColumn('action', function ($result) {
             $createdAt = now()->timestamp;
                 $expiresIn = 7200;
-                $token = Crypt::encryptString($row->treatment_code . '|' . $createdAt . '|' . $expiresIn);
+                $token = Crypt::encryptString($result->treatment_code . '|' . $createdAt . '|' . $expiresIn);
     
                 $linkDetail = '<a href="' . route('treatment-result.search', [
                     'treatment_code' => $result->treatment_code
