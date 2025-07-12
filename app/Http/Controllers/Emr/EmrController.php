@@ -719,6 +719,33 @@ class EmrController extends Controller
         }
     }
 
+    public function viewMergePdfByToken(Request $request)
+    {
+        try {
+            $token = $request->get('token');
+
+            if (!$token) {
+                abort(400, 'Thiếu token');
+            }
+
+            $decrypted = Crypt::decryptString($token);
+            [$treatmentCode, $createdAt, $expiresIn] = explode('|', $decrypted);
+
+            $expiredAt = \Carbon\Carbon::createFromTimestamp($createdAt)->addSeconds($expiresIn);
+
+            if (now()->greaterThan($expiredAt)) {
+                return abort(403, 'Đã hết thời hạn xem hồ sơ, đề nghị bạn vào trang tra cứu');
+            }  
+
+            // Tạo link PDF đã mã hóa
+            $tokenEncrypted = Crypt::encryptString("{$treatmentCode}|{$createdAt}|{$expiresIn}");
+            $pdfUrl = url('/api/merge-pdf-secure?token=' . urlencode($tokenEncrypted));
+            return redirect('/vendor/pdfjsv2/web/viewer.html?file=' . urlencode($pdfUrl));
+        } catch (\Exception $e) {
+            abort(403, 'Token không hợp lệ');
+        }
+    }
+
     public function mergePdfFilesSecure(Request $request)
     {
         try {

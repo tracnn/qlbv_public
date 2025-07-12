@@ -41,7 +41,7 @@ class BhxhController extends Controller
                     'treatment_code' => $row->treatment_code
                 ]) . '" class="btn-sm btn-primary">Chi tiết EMR</a> ';
     
-                $linkMergePdf = '<a href="' . route('merge-pdf-secure', [
+                $linkMergePdf = '<a href="' . route('view-merge-pdf', [
                     'token' => $token
                 ]) . '" class="btn-sm btn-primary" target="_blank">Gộp PDF</a>';
     

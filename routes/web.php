@@ -607,4 +607,5 @@ Route::get('/api/secure-view-pdf', 'Emr\EmrController@securePdfView')->name('api
 Route::get('/secure-view-doc', 'Emr\EmrController@viewDocByToken')->name('secure-view-doc');
 Route::get('/encrypt-token', 'PatientController@encryptToken');
 Route::get('/encrypt-token-general', 'PatientController@encryptTokenGeneral');
-Route::get('/merge-pdf-secure', 'Emr\EmrController@mergePdfFilesSecure')->name('merge-pdf-secure');
+Route::get('/api/merge-pdf-secure', 'Emr\EmrController@mergePdfFilesSecure')->name('merge-pdf-secure');
+Route::get('/api/view-merge-pdf', 'Emr\EmrController@viewMergePdfByToken')->name('view-merge-pdf');
