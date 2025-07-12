@@ -726,8 +726,6 @@ class EmrController extends Controller
     
         $filePaths = $this->get_file_paths($treatmentCode, null)->toArray();
 
-        dd($filePaths);
-
         if (empty($filePaths) || !is_array($filePaths)) {
             return response()->json(['error' => 'Danh sách file không hợp lệ'], 400);
         }
