@@ -213,9 +213,13 @@ class PatientController extends Controller
                 ->where('emr_document.is_delete', 0)
                 ->where('emr_document.treatment_code', $treatment->treatment_code)
                 ->where( function ($q) {
-                    $q->whereIn('emr_document.document_type_id', [6,22,160,3,28,4,14,18,19,25,26,27,121,261,262,263])
+                    $q->whereIn('emr_document.document_type_id', [6,22,160,3,28,4,14,25,26,27])
                     ->orWhereNull('emr_document.document_type_id');
-                })            
+                })
+                ->where( function ($q) {
+                    $q->whereNotIn('emr_document.document_group_id', [28])
+                    ->orWhereNull('emr_document.document_group_id');
+                })          
                 ->get();
                      
                 $service_kham = DB::connection('HISPro')

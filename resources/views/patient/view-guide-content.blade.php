@@ -70,7 +70,7 @@
       <li><a data-toggle="tab" href="#hdct_done"><span><strong>Đã thực hiện</strong></span></a></li>
       @endif
       @if($treatment->tdl_treatment_type_id == 3)
-      <li><a data-toggle="tab" href="#congkhai"><span><strong>Công khai</strong></span></a></li>
+      <li><a data-toggle="tab" href="#congkhai"><span><strong>Công khai DV KCB</strong></span></a></li>
       @endif
       @if($treatment->tdl_patient_type_id == 43 || $treatment->tdl_patient_type_id == 62)
       <li><a data-toggle="tab" href="#xemnhanh"><span><strong>Khám</strong></span></a></li>
