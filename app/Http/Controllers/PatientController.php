@@ -370,9 +370,23 @@ class PatientController extends Controller
         $createdAt = now()->timestamp; // Thời điểm tạo token
         $expiresIn = 7200; // thời gian sống (giây) – ví dụ: 5 phút
 
+        $isExist = DB::connection('HISPro')
+        ->table('his_treatment')
+        ->join('his_patient', 'his_treatment.patient_id', '=' ,'his_patient.id')
+        ->where('his_treatment.treatment_code', $treatmentCode)
+        ->where(function($q) use ($phone){
+            $q->where('his_patient.phone', $phone)
+            ->orWhere('his_patient.mobile', $phone)
+            ->orWhere('his_patient.relative_mobile', $phone)
+            ->orWhere('his_patient.relative_phone', $phone)
+            ->orWhere('his_treatment.tdl_patient_phone', $phone)
+            ->orWhere('his_treatment.tdl_patient_mobile', $phone);
+        })
+        ->exists();
+
         $token = Crypt::encryptString("{$treatmentCode}|{$phone}|{$createdAt}|{$expiresIn}");
 
-        return response()->json(['token' => $token]);
+        return response()->json(['token' => $token, 'isExist' => $isExist]);
     }
 
     public function encryptTokenGeneral(Request $request)
@@ -384,12 +398,32 @@ class PatientController extends Controller
             return response()->json(['error' => 'Thiếu thông tin'], 400);
         }
 
+        $isExist = DB::connection('HISPro')
+        ->table('his_treatment')
+        ->join('his_patient', 'his_treatment.patient_id', '=' ,'his_patient.id')
+        ->where(function($q) use ($code, $phone){
+            $q->where('his_treatment.treatment_code', $code)
+            ->orWhere('his_treatment.tdl_patient_code', $code)
+            ->orWhere('his_treatment.tdl_patient_cmnd_number', $code)
+            ->orWhere('his_treatment.tdl_patient_cccd_number', $code)
+            ->orWhere('his_treatment.tdl_patient_passport_number', $code);
+        })
+        ->where(function($q) use ($phone){
+            $q->where('his_patient.phone', $phone)
+            ->orWhere('his_patient.mobile', $phone)
+            ->orWhere('his_treatment.tdl_patient_phone', $phone)
+            ->orWhere('his_treatment.tdl_patient_mobile', $phone)
+            ->orWhere('his_treatment.tdl_patient_relative_phone', $phone)
+            ->orWhere('his_treatment.tdl_patient_relative_mobile', $phone);;
+        })
+        ->exists();
+
         $createdAt = now()->timestamp; // Thời điểm tạo token
         $expiresIn = 7200; // thời gian sống (giây) – ví dụ: 5 phút
 
         $token = Crypt::encryptString("{$code}|{$phone}|{$createdAt}|{$expiresIn}");
 
-        return response()->json(['token' => $token]);
+        return response()->json(['token' => $token, 'isExist' => $isExist]);
     }
 
 }

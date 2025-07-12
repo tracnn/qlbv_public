@@ -19,29 +19,34 @@
     <div class="panel panel-primary">
       <div class="panel-heading">
         Xem thông tin khám chữa bệnh
+        <button class="btn btn-xs btn-default" type="button" data-toggle="collapse" data-target="#searchFormCollapse" aria-expanded="{{ isset($patientHistory) && count($patientHistory) > 0 ? 'false' : 'true' }}" aria-controls="searchFormCollapse">
+          <i class="fa fa-chevron-down"></i>
+        </button>
       </div>
-      <div class="panel-body">
-        <form id="searchForm" method="GET" action="#">
-          <div class="form-group row">
-            <label class="col-sm-3 col-form-label">Mã BN/Mã ĐT/CCCD</label>
-            <div class="col-sm-9">
-              <input class="form-control" type="tel" id="code" name="code" placeholder="Mã ĐT/Mã BN/CCCD" maxlength="12" value="{{ $param_code }}">
+      <div id="searchFormCollapse" class="panel-collapse collapse {{ (!isset($histories) || $histories->isEmpty()) ? 'in' : '' }}">
+        <div class="panel-body">
+          <form id="searchForm" method="GET" action="#">
+            <div class="form-group row">
+              <label class="col-sm-3 col-form-label">Mã BN/Mã ĐT/CCCD</label>
+              <div class="col-sm-9">
+                <input class="form-control" type="tel" id="code" name="code" placeholder="Mã ĐT/Mã BN/CCCD" maxlength="12" value="{{ $param_code }}">
+              </div>
             </div>
-          </div>
-          <div class="form-group row">
-            <label class="col-sm-3 col-form-label">Số điện thoại</label>
-            <div class="col-sm-9">
-              <input class="form-control" type="tel" id="phone" name="phone" placeholder="Số điện thoại" maxlength="11" value="{{ $param_phone }}">
+            <div class="form-group row">
+              <label class="col-sm-3 col-form-label">Số điện thoại</label>
+              <div class="col-sm-9">
+                <input class="form-control" type="tel" id="phone" name="phone" placeholder="Số điện thoại" maxlength="11" value="{{ $param_phone }}">
+              </div>
             </div>
-          </div>
-          <div class="form-group row">
-            <div class="col-sm-12">
-              <button class="btn btn-info float-right">
-                <i class="fa fa-search"></i> Xem lịch sử
-              </button>
+            <div class="form-group row">
+              <div class="col-sm-12">
+                <button class="btn btn-info float-right">
+                  <i class="fa fa-search"></i> Xem lịch sử
+                </button>
+              </div>
             </div>
-          </div>
-        </form>
+          </form>
+        </div>
       </div>
     </div>
   </div>
@@ -56,6 +61,13 @@
   <script src="{{ asset('/js/customize.js')}}"></script>
 
   <script>
+    $('#searchFormCollapse').on('shown.bs.collapse', function () {
+      $(this).prev('.panel-heading').find('i').removeClass('fa-chevron-down').addClass('fa-chevron-up');
+    });
+
+    $('#searchFormCollapse').on('hidden.bs.collapse', function () {
+      $(this).prev('.panel-heading').find('i').removeClass('fa-chevron-up').addClass('fa-chevron-down');
+    });
   $(document).ready(function() {
     $('#code').on('blur', function() {
         var code = $(this).val().trim(); // Remove whitespace from both ends of the input
@@ -92,6 +104,11 @@
 
       var code = $('#code').val().trim();
       var phone = $('#phone').val().trim();
+      // Nếu giá trị input vẫn đang ở dạng mask thì không cho submit
+      if (code.startsWith('*') || phone.startsWith('*')) {
+        toastr.error('Vui lòng sửa thông tin trước khi tìm kiếm.');
+        return false;
+      }
 
       if (!code || code.length < 10 || !phone || phone.length < 9) {
         toastr.error('Phải nhập cả mã và số điện thoại hợp lệ.');
@@ -101,8 +118,10 @@
       fetch(`/encrypt-token-general?code=${encodeURIComponent(code)}&phone=${encodeURIComponent(phone)}`)
         .then(response => response.json())
         .then(data => {
-          if (data.token) {
+          if (data.token && data.isExist) {
             window.location.href = `/view-guide?token=${encodeURIComponent(data.token)}`;
+          } else if (data.token && !data.isExist) {
+            toastr.error('Mã BN/Mã ĐT/CCCD hoặc Số điện thoại không tồn tại trong hệ thống.');
           } else {
             toastr.error('Không thể tạo token.');
           }
@@ -112,5 +131,39 @@
 
   });
   </script>
+<script>
+$(document).ready(function() {
+  // ... các đoạn code bạn có sẵn ở đây ...
+
+  // Nếu histories có dữ liệu rồi thì mask input
+  @if(isset($histories) && $histories->isNotEmpty())
+    var originalCode = $('#code').val();
+    var originalPhone = $('#phone').val();
+
+    if (originalCode.length > 3) {
+      $('#code').data('full', originalCode); // lưu giá trị đầy đủ vào data attribute
+      $('#code').val('*********' + originalCode.slice(-3));
+    }
+
+    if (originalPhone.length > 3) {
+      $('#phone').data('full', originalPhone);
+      $('#phone').val('*******' + originalPhone.slice(-3));
+    }
+
+    // Khi focus vào input thì trả lại giá trị đầy đủ để người dùng chỉnh sửa
+    $('#code').on('focus', function() {
+      if ($(this).data('full')) {
+        $(this).val($(this).data('full'));
+      }
+    });
+
+    $('#phone').on('focus', function() {
+      if ($(this).data('full')) {
+        $(this).val($(this).data('full'));
+      }
+    });
+  @endif
+});
+</script>
 </body>
 </html>

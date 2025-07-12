@@ -19,31 +19,36 @@
     <div class="panel panel-primary">
       <div class="panel-heading">
         Xem thông tin khám chữa bệnh
+        <button class="btn btn-xs btn-default" type="button" data-toggle="collapse" data-target="#searchFormCollapse" aria-expanded="{{ isset($treatment) && $treatment ? 'false' : 'true' }}" aria-controls="searchFormCollapse">
+          <i class="fa fa-chevron-down"></i>
+        </button>
       </div>
-      <div class="panel-body">
-        <form id="searchForm" method="GET" action="">
-          <div class="form-group row">
-            <label class="col-sm-3 col-form-label">Mã điều trị</label>
-            <div class="col-sm-9">
-              <input class="form-control" type="tel" id="treatment_code" name="treatment_code" placeholder="Mã điều trị" 
-              maxlength="12" value="{{ $treatment_code }}">
+      <div id="searchFormCollapse" class="panel-collapse collapse {{ (!isset($treatment) || !$treatment) ? 'in' : '' }}">
+        <div class="panel-body">
+          <form id="searchForm" method="GET" action="">
+            <div class="form-group row">
+              <label class="col-sm-3 col-form-label">Mã điều trị</label>
+              <div class="col-sm-9">
+                <input class="form-control" type="tel" id="treatment_code" name="treatment_code" placeholder="Mã điều trị" 
+                maxlength="12" value="{{ $treatment_code }}">
+              </div>
             </div>
-          </div>
-          <div class="form-group row">
-            <label class="col-sm-3 col-form-label">Số điện thoại</label>
-            <div class="col-sm-9">
-              <input class="form-control" type="tel" id="phone" name="phone" placeholder="Số điện thoại" maxlength="11" 
-              value="{{ $phone }}">
+            <div class="form-group row">
+              <label class="col-sm-3 col-form-label">Số điện thoại</label>
+              <div class="col-sm-9">
+                <input class="form-control" type="tel" id="phone" name="phone" placeholder="Số điện thoại" maxlength="11" 
+                value="{{ $phone }}">
+              </div>
             </div>
-          </div>
-          <div class="form-group row">
-            <div class="col-sm-12">
-              <button class="btn btn-info float-right">
-                <i class="fa fa-search"></i> Xem kết quả
-              </button>
+            <div class="form-group row">
+              <div class="col-sm-12">
+                <button class="btn btn-info float-right">
+                  <i class="fa fa-search"></i> Xem kết quả
+                </button>
+              </div>
             </div>
-          </div>
-        </form>
+          </form>
+        </div>
       </div>
     </div>
   </div>
@@ -99,20 +104,39 @@
     document.getElementById('searchForm').addEventListener('submit', function (e) {
       e.preventDefault(); // chặn submit mặc định
 
-      const treatmentCode = document.getElementById('treatment_code').value;
-      const phone = document.getElementById('phone').value;
+      var treatmentCode = $('#treatment_code').val().trim();
+      var phone = $('#phone').val().trim();
+      // Nếu input đang ở dạng mask thì không cho submit
+      if (treatmentCode.startsWith('*') || phone.startsWith('*')) {
+        toastr.error('Vui lòng bấm vào các trường để sửa thông tin trước khi tra cứu!');
+        return false;
+      }
 
+      if (!treatmentCode || treatmentCode.length < 10 || !phone || phone.length < 9) {
+        toastr.error('Phải nhập cả Mã điều trị và Số điện thoại hợp lệ.');
+        return false;
+      }
       // Gọi API để mã hóa dữ liệu rồi redirect
       fetch(`/encrypt-token?treatment_code=${encodeURIComponent(treatmentCode)}&phone=${encodeURIComponent(phone)}`)
         .then(response => response.json())
         .then(data => {
-          if (data.token) {
+          if (data.token && data.isExist) {
             window.location.href = `/view-guide-content?token=${encodeURIComponent(data.token)}`;
+          } else if (data.token && !data.isExist) {
+            toastr.error('Mã điều trị hoặc Số điện thoại không tồn tại trong hệ thống.');
           } else {
-            alert('Không thể tạo token');
+            toastr.error('Không thể tạo token');
           }
         })
-        .catch(() => alert('Có lỗi xảy ra khi tạo token'));
+        .catch(() => toastr.error('Có lỗi xảy ra khi tạo token'));
+    });
+
+    $('#searchFormCollapse').on('shown.bs.collapse', function () {
+      $(this).prev('.panel-heading').find('i').removeClass('fa-chevron-down').addClass('fa-chevron-up');
+    });
+
+    $('#searchFormCollapse').on('hidden.bs.collapse', function () {
+      $(this).prev('.panel-heading').find('i').removeClass('fa-chevron-up').addClass('fa-chevron-down');
     });
   </script>
 
@@ -257,5 +281,38 @@
       return `${day}/${month}/${year} ${hour}:${minute}`;
     }
   </script>
+
+<script>
+  $(document).ready(function() {
+    @if(isset($treatment) && $treatment)
+      var originalTreatmentCode = $('#treatment_code').val();
+      var originalPhone = $('#phone').val();
+
+      if (originalTreatmentCode.length > 3) {
+        $('#treatment_code').data('full', originalTreatmentCode);
+        $('#treatment_code').val('*********' + originalTreatmentCode.slice(-3));
+      }
+
+      if (originalPhone.length > 3) {
+        $('#phone').data('full', originalPhone);
+        $('#phone').val('*******' + originalPhone.slice(-3));
+      }
+
+      $('#treatment_code').on('focus', function() {
+        var full = $(this).data('full');
+        if (full) {
+          $(this).val(full);
+        }
+      });
+
+      $('#phone').on('focus', function() {
+        var full = $(this).data('full');
+        if (full) {
+          $(this).val(full);
+        }
+      });
+    @endif
+  });
+</script>
 </body>
 </html>
