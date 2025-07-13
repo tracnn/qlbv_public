@@ -1,7 +1,6 @@
 version: '3.8'
 
 services:
-  # PHP Application
   app:
     build:
       context: .
@@ -12,31 +11,14 @@ services:
     volumes:
       - ./:/var/www
       - ./docker/php/php.ini:/usr/local/etc/php/conf.d/custom.ini
-      # Mount filesystem directories
-      - ./storage/app/public:/var/www/storage/app/public
-      - ./storage/app/emr:/var/www/storage/app/emr
-      - ./storage/app/xml4210:/var/www/storage/app/xml4210
-      - ./storage/app/xml4210tt:/var/www/storage/app/xml4210tt
-      - ./storage/app/CatalogBHXH:/var/www/storage/app/CatalogBHXH
-      - ./storage/app/xml130tt:/var/www/storage/app/xml130tt
-      - ./storage/app/xml130:/var/www/storage/app/xml130
-      - ./storage/app/xml130GoogleDrive:/var/www/storage/app/xml130GoogleDrive
-      - ./storage/app/exportXml130:/var/www/storage/app/exportXml130
     networks:
       - qlbv_network
     depends_on:
-      - mysql
+      - db
       - redis
-    environment:
-      - APP_ENV=local
-      - APP_DEBUG=true
-    command: php-fpm
 
-  # Nginx Web Server
   nginx:
-    build:
-      context: .
-      dockerfile: docker/nginx/Dockerfile
+    image: nginx:alpine
     container_name: qlbv_nginx
     restart: unless-stopped
     ports:
@@ -45,19 +27,15 @@ services:
     volumes:
       - ./:/var/www
       - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf
-      - ./storage/logs/nginx:/var/log/nginx
-    networks:
-      - qlbv_network
     depends_on:
       - app
+    networks:
+      - qlbv_network
 
-  # MySQL Database
-  mysql:
+  db:
     image: mysql:8.0
     container_name: qlbv_mysql
     restart: unless-stopped
-    ports:
-      - "3306:3306"
     environment:
       MYSQL_DATABASE: qlbv
       MYSQL_USER: qlbv_user
@@ -66,180 +44,27 @@ services:
     volumes:
       - mysql_data:/var/lib/mysql
       - ./docker/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
-      - ./storage/mysql/logs:/var/log/mysql
+    ports:
+      - "3306:3306"
     networks:
       - qlbv_network
-    command: --default-authentication-plugin=mysql_native_password
 
-  # Redis Cache
   redis:
-    image: redis:7-alpine
+    image: redis:6-alpine
     container_name: qlbv_redis
     restart: unless-stopped
-    ports:
-      - "6379:6379"
     volumes:
       - redis_data:/data
       - ./docker/redis/redis.conf:/usr/local/etc/redis/redis.conf
-    networks:
-      - qlbv_network
     command: redis-server /usr/local/etc/redis/redis.conf
-
-  # Queue Worker - JobQd130Xml
-  queue_qd130xml:
-    build:
-      context: .
-      dockerfile: docker/php/Dockerfile
-    container_name: qlbv_queue_qd130xml
-    restart: unless-stopped
-    working_dir: /var/www
-    volumes:
-      - ./:/var/www
-      # Mount filesystem directories for queue workers
-      - ./storage/app/public:/var/www/storage/app/public
-      - ./storage/app/emr:/var/www/storage/app/emr
-      - ./storage/app/xml4210:/var/www/storage/app/xml4210
-      - ./storage/app/xml4210tt:/var/www/storage/app/xml4210tt
-      - ./storage/app/CatalogBHXH:/var/www/storage/app/CatalogBHXH
-      - ./storage/app/xml130tt:/var/www/storage/app/xml130tt
-      - ./storage/app/xml130:/var/www/storage/app/xml130
-      - ./storage/app/xml130GoogleDrive:/var/www/storage/app/xml130GoogleDrive
-      - ./storage/app/exportXml130:/var/www/storage/app/exportXml130
+    ports:
+      - "6379:6379"
     networks:
       - qlbv_network
-    depends_on:
-      - mysql
-      - redis
-    environment:
-      - APP_ENV=local
-      - APP_DEBUG=true
-    command: php artisan queue:work --queue=JobQd130Xml --sleep=3 --tries=3 --max-time=3600
-
-  # Queue Worker - JobKtTheBHYT
-  queue_ktbhytthe:
-    build:
-      context: .
-      dockerfile: docker/php/Dockerfile
-    container_name: qlbv_queue_ktbhytthe
-    restart: unless-stopped
-    working_dir: /var/www
-    volumes:
-      - ./:/var/www
-      # Mount filesystem directories for queue workers
-      - ./storage/app/public:/var/www/storage/app/public
-      - ./storage/app/emr:/var/www/storage/app/emr
-      - ./storage/app/xml4210:/var/www/storage/app/xml4210
-      - ./storage/app/xml4210tt:/var/www/storage/app/xml4210tt
-      - ./storage/app/CatalogBHXH:/var/www/storage/app/CatalogBHXH
-      - ./storage/app/xml130tt:/var/www/storage/app/xml130tt
-      - ./storage/app/xml130:/var/www/storage/app/xml130
-      - ./storage/app/xml130GoogleDrive:/var/www/storage/app/xml130GoogleDrive
-      - ./storage/app/exportXml130:/var/www/storage/app/exportXml130
-    networks:
-      - qlbv_network
-    depends_on:
-      - mysql
-      - redis
-    environment:
-      - APP_ENV=local
-      - APP_DEBUG=true
-    command: php artisan queue:work --queue=JobKtTheBHYT --sleep=3 --tries=3 --max-time=3600
-
-  # Import Catalog Service
-  import_catalog:
-    build:
-      context: .
-      dockerfile: docker/php/Dockerfile
-    container_name: qlbv_import_catalog
-    restart: unless-stopped
-    working_dir: /var/www
-    volumes:
-      - ./:/var/www
-      # Mount filesystem directories for import services
-      - ./storage/app/public:/var/www/storage/app/public
-      - ./storage/app/emr:/var/www/storage/app/emr
-      - ./storage/app/xml4210:/var/www/storage/app/xml4210
-      - ./storage/app/xml4210tt:/var/www/storage/app/xml4210tt
-      - ./storage/app/CatalogBHXH:/var/www/storage/app/CatalogBHXH
-      - ./storage/app/xml130tt:/var/www/storage/app/xml130tt
-      - ./storage/app/xml130:/var/www/storage/app/xml130
-      - ./storage/app/xml130GoogleDrive:/var/www/storage/app/xml130GoogleDrive
-      - ./storage/app/exportXml130:/var/www/storage/app/exportXml130
-    networks:
-      - qlbv_network
-    depends_on:
-      - mysql
-      - redis
-    environment:
-      - APP_ENV=local
-      - APP_DEBUG=true
-    command: php artisan importCatalogBHXH:data
-
-  # XML Import Service
-  xml_import:
-    build:
-      context: .
-      dockerfile: docker/php/Dockerfile
-    container_name: qlbv_xml_import
-    restart: unless-stopped
-    working_dir: /var/www
-    volumes:
-      - ./:/var/www
-      # Mount filesystem directories for import services
-      - ./storage/app/public:/var/www/storage/app/public
-      - ./storage/app/emr:/var/www/storage/app/emr
-      - ./storage/app/xml4210:/var/www/storage/app/xml4210
-      - ./storage/app/xml4210tt:/var/www/storage/app/xml4210tt
-      - ./storage/app/CatalogBHXH:/var/www/storage/app/CatalogBHXH
-      - ./storage/app/xml130tt:/var/www/storage/app/xml130tt
-      - ./storage/app/xml130:/var/www/storage/app/xml130
-      - ./storage/app/xml130GoogleDrive:/var/www/storage/app/xml130GoogleDrive
-      - ./storage/app/exportXml130:/var/www/storage/app/exportXml130
-    networks:
-      - qlbv_network
-    depends_on:
-      - mysql
-      - redis
-    environment:
-      - APP_ENV=local
-      - APP_DEBUG=true
-    command: php artisan xml130import:day
-
-  # Scheduler
-  scheduler:
-    build:
-      context: .
-      dockerfile: docker/php/Dockerfile
-    container_name: qlbv_scheduler
-    restart: unless-stopped
-    working_dir: /var/www
-    volumes:
-      - ./:/var/www
-      # Mount filesystem directories for scheduler
-      - ./storage/app/public:/var/www/storage/app/public
-      - ./storage/app/emr:/var/www/storage/app/emr
-      - ./storage/app/xml4210:/var/www/storage/app/xml4210
-      - ./storage/app/xml4210tt:/var/www/storage/app/xml4210tt
-      - ./storage/app/CatalogBHXH:/var/www/storage/app/CatalogBHXH
-      - ./storage/app/xml130tt:/var/www/storage/app/xml130tt
-      - ./storage/app/xml130:/var/www/storage/app/xml130
-      - ./storage/app/xml130GoogleDrive:/var/www/storage/app/xml130GoogleDrive
-      - ./storage/app/exportXml130:/var/www/storage/app/exportXml130
-    networks:
-      - qlbv_network
-    depends_on:
-      - mysql
-      - redis
-    environment:
-      - APP_ENV=local
-      - APP_DEBUG=true
-    command: php artisan schedule:work
 
 volumes:
   mysql_data:
-    driver: local
   redis_data:
-    driver: local
 
 networks:
   qlbv_network:
