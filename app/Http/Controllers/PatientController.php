@@ -326,11 +326,14 @@ class PatientController extends Controller
 
         $dates = DB::connection('HISPro')
         ->table('his_service_req')
-        ->where('treatment_id', $treatmentId)
-        ->where("intruction_date", "<=", $currentDate)
-        ->select('intruction_date as day')
-        ->groupBy('intruction_date')
-        ->orderBy('intruction_date', 'desc')
+        ->join('his_sere_serv', 'his_sere_serv.service_req_id', '=', 'his_service_req.id')
+        ->where('his_service_req.treatment_id', $treatmentId)
+        ->where('his_service_req.intruction_date', '<=', $currentDate)
+        ->where('his_sere_serv.amount', '>', 0)
+        ->where('his_service_req.is_delete', 0)
+        ->select('his_service_req.intruction_date as day')
+        ->groupBy('his_service_req.intruction_date')
+        ->orderBy('his_service_req.intruction_date', 'desc')
         ->pluck('day');
 
         return response()->json(['days' => $dates]);
@@ -355,6 +358,9 @@ class PatientController extends Controller
         ->whereNotIn('s.tdl_service_type_id', [6]) // 6: Thuốc
         ->where('sr.intruction_date', $day)
         ->where('sr.intruction_date', '<=', $currentDate)
+        ->where('s.amount', '>', 0)
+        ->where('s.is_delete', 0)
+        ->where('sr.is_delete', 0)
         ->select([
             'st.service_type_name as type',
             's.tdl_service_name as name',
@@ -385,6 +391,7 @@ class PatientController extends Controller
         ->whereIn('s.tdl_service_type_id', [6]) // 3: Thuốc
         ->where('sr.intruction_date', $day)
         ->where('sr.intruction_date', '<=', $currentDate)
+        ->where('s.amount', '>', 0)
         ->where('s.is_delete', 0)
         ->where('sr.is_delete', 0)
         ->whereNull('s.is_no_execute')
