@@ -827,7 +827,7 @@ class EmrController extends Controller
         }
     
         $result = $query
-            ->orderBy('emr_document_type.num_order', 'ASC')
+            ->orderBy('emr_document_type.num_order', 'DESC')
             ->orderBy('emr_document.document_time', 'ASC')
             ->get();
     
