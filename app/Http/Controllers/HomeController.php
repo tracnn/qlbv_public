@@ -1254,4 +1254,64 @@ public function fetchTransaction(Request $request)
         return json_encode($returnData);
     }
 
+    public function treatmentDetail(Request $request)
+    {
+        return view('dashboard.treatment-detail');
+    }
+
+    public function doanhthuDetail(Request $request)
+    {
+        return view('dashboard.doanhthu-detail');
+    }
+
+    public function newpatientDetail(Request $request)
+    {
+        return view('dashboard.newpatient-detail');
+    }
+
+    public function noitruDetail(Request $request)
+    {
+        return view('dashboard.noitru-detail');
+    }
+
+    public function ravienKhamDetail(Request $request)
+    {
+        return view('dashboard.ravien-kham-detail');
+    }
+
+    public function chuyenvienDetail(Request $request)
+    {
+        return view('dashboard.chuyenvien-detail');
+    }
+
+    public function ravienDetail(Request $request)
+    {
+        return view('dashboard.ravien-detail');
+    }
+
+    public function ravienNoitruDetail(Request $request)
+    {
+        return view('dashboard.ravien-noitru-detail');
+    }
+
+    public function averageInpatientDetail(Request $request)
+    {
+        return view('dashboard.average-inpatient-detail');
+    }
+
+    public function ravienNgoaitruDetail(Request $request)
+    {
+        return view('dashboard.ravien-ngoaitru-detail');
+    }
+
+    public function phauthuatDetail(Request $request)
+    {
+        return view('dashboard.phauthuat-detail');
+    }
+
+    public function thuthuatDetail(Request $request)
+    {
+        return view('dashboard.thuthuat-detail');
+    }
+
 }

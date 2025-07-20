@@ -29,6 +29,7 @@ Route::get('khth/chart-cls', 'KHTH\KHTHController@chartCls')->name('khth.chart_c
 Route::get('dashboard', 'KHTH\KHTHController@dashboard')->name('khth.dashboard');
 /* --Dashboard */
 
+
 Route::get('/view-emr', 'KHTH\KHTHController@viewEmr')->name('view-emr');
 //->middleware('throttle:60,1');
 
@@ -54,6 +55,21 @@ Route::group(['middleware' => ['auth', 'check.first.login']], function () {
 //    });
     //Please do not remove this if you want adminlte:route and adminlte:link commands to works correctly.
     #adminlte_routes
+
+    /* Dashboard detail */
+    Route::get('dashboard/treatment-detail', 'HomeController@treatmentDetail')->name('dashboard.treatment-detail');
+    Route::get('dashboard/doanhthu-detail', 'HomeController@doanhthuDetail')->name('dashboard.doanhthu-detail');
+    Route::get('dashboard/newpatient-detail', 'HomeController@newpatientDetail')->name('dashboard.newpatient-detail');
+    Route::get('dashboard/noitru-detail', 'HomeController@noitruDetail')->name('dashboard.noitru-detail');
+    Route::get('dashboard/ravien-kham-detail', 'HomeController@ravienKhamDetail')->name('dashboard.ravien-kham-detail');
+    Route::get('dashboard/chuyenvien-detail', 'HomeController@chuyenvienDetail')->name('dashboard.chuyenvien-detail');
+    Route::get('dashboard/ravien-detail', 'HomeController@ravienDetail')->name('dashboard.ravien-detail');
+    Route::get('dashboard/ravien-noitru-detail', 'HomeController@ravienNoitruDetail')->name('dashboard.ravien-noitru-detail');
+    Route::get('dashboard/average-inpatient-detail', 'HomeController@averageInpatientDetail')->name('dashboard.average-inpatient-detail');
+    Route::get('dashboard/ravien-ngoaitru-detail', 'HomeController@ravienNgoaitruDetail')->name('dashboard.ravien-ngoaitru-detail');
+    Route::get('dashboard/phauthuat-detail', 'HomeController@phauthuatDetail')->name('dashboard.phauthuat-detail');
+    Route::get('dashboard/thuthuat-detail', 'HomeController@thuthuatDetail')->name('dashboard.thuthuat-detail');
+    /* --Dashboard */
     
     //qhis-plus
     Route::get('/tra-cuu-ls-kcb', 'QHisPlus@index')->name('tra-cuu-ls-kcb-index');

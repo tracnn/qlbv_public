@@ -51,6 +51,17 @@
         font-size: 12px;
         padding: 2px 5px;
     }
+
+    .small-box-clickable {
+        cursor: pointer;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .small-box-clickable:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        opacity: 0.9;
+    }
 </style>
 <link rel="stylesheet" type="text/css" href="{{ asset('css/daterangepicker.css') }}" />
 @endpush
@@ -63,7 +74,10 @@
 
         <div class="col-lg-2 col-xs-6">
           <!-- small box -->
-          <div class="small-box bg-aqua">
+          <div class="small-box bg-aqua small-box-clickable"
+            data-type="doanhthu"
+            data-route="{{ route('dashboard.doanhthu-detail') }}">
+
             <div class="inner">
               <h3 id="sum_doanhthu">0</h3>
               <p>Doanh thu</p>
@@ -76,7 +90,10 @@
       
         <div class="col-lg-2 col-xs-6">
           <!-- small box -->
-          <div class="small-box bg-green">
+          <div class="small-box bg-green small-box-clickable"
+            data-type="treatment"
+            data-route="{{ route('dashboard.treatment-detail') }}">
+
             <div class="inner">
               <h3 id="sum_treatment">0</h3>
               <p>BN đăng ký khám</p>
@@ -89,7 +106,10 @@
         <!-- ./col -->
         <div class="col-lg-2 col-xs-6">
           <!-- small box -->
-          <div class="small-box bg-yellow">
+          <div class="small-box bg-yellow small-box-clickable"
+            data-type="newpatient"
+            data-route="{{ route('dashboard.newpatient-detail') }}">
+
             <div class="inner">
               <h3 id="sum_newpatient">0</h3>
               <p>BN khám lần đầu</p>
@@ -102,7 +122,10 @@
         <!-- ./col -->
         <div class="col-lg-2 col-xs-6">
           <!-- small box -->
-          <div class="small-box bg-red">
+          <div class="small-box bg-red small-box-clickable"
+            data-type="noitru"
+            data-route="{{ route('dashboard.noitru-detail') }}">
+            
             <div class="inner">
               <h3 id="sum_noitru">0</h3>
               <p>VV: Nội trú</p>
@@ -115,7 +138,10 @@
         <!-- ./col -->
         <div class="col-lg-2 col-xs-6">
           <!-- small box -->
-          <div class="small-box bg-aqua">
+          <div class="small-box bg-aqua small-box-clickable"
+            data-type="ravien"
+            data-route="{{ route('dashboard.ravien-kham-detail') }}">
+            
             <div class="inner">
               <h3 id="sum_ravien_kham">0</h3>
               <p>Kết thúc khám</p>
@@ -128,7 +154,10 @@
         <!-- ./col -->
         <div class="col-lg-2 col-xs-6">
           <!-- small box -->
-          <div class="small-box bg-green">
+          <div class="small-box bg-green small-box-clickable"
+            data-type="chuyenvien"
+            data-route="{{ route('dashboard.chuyenvien-detail') }}">
+
             <div class="inner">
               <h3 id="sum_chuyenvien">0</h3>
               <p>Chuyển viện</p>
@@ -145,7 +174,10 @@
     <div class="row">
         <div class="col-lg-2 col-xs-6">
           <!-- small box -->
-          <div class="small-box bg-aqua">
+          <div class="small-box bg-aqua small-box-clickable"
+            data-type="ravien"
+            data-route="{{ route('dashboard.ravien-detail') }}">
+            
             <div class="inner">
               <h3 id="sum_ravien">0</h3>
               <p>BN ra viện</p>
@@ -158,7 +190,10 @@
       
         <div class="col-lg-2 col-xs-6">
           <!-- small box -->
-          <div class="small-box bg-green">
+          <div class="small-box bg-green small-box-clickable"
+            data-type="ravien"
+            data-route="{{ route('dashboard.ravien-noitru-detail') }}">
+            
             <div class="inner">
               <h3 id="sum_ravien_noitru">0</h3>
               <p>RV: nội trú</p>
@@ -171,7 +206,10 @@
         <!-- ./col -->
         <div class="col-lg-2 col-xs-6">
           <!-- small box -->
-          <div class="small-box bg-yellow">
+          <div class="small-box bg-yellow small-box-clickable"
+            data-type="average-inpatient"
+            data-route="{{ route('dashboard.average-inpatient-detail') }}">
+            
             <div class="inner">
               <h3 id="average_inpatient">0</h3>
               <p>Ngày điều trị TB</p>
@@ -184,7 +222,10 @@
         <!-- ./col -->
         <div class="col-lg-2 col-xs-6">
           <!-- small box -->
-          <div class="small-box bg-red">
+          <div class="small-box bg-red small-box-clickable"
+            data-type="ravien"
+            data-route="{{ route('dashboard.ravien-ngoaitru-detail') }}">
+
             <div class="inner">
               <h3 id="sum_ravien_ngoaitru">0</h3>
               <p>RV: ngoại trú</p>
@@ -197,8 +238,10 @@
         <!-- ./col -->
         <div class="col-lg-2 col-xs-6">
           <!-- small box -->
-          <a href="#" id="link-list-patient-pt">
-          <div class="small-box bg-aqua">
+          <div class="small-box bg-aqua small-box-clickable"
+            data-type="phauthuat"
+            data-route="{{ route('dashboard.phauthuat-detail') }}">
+            
             <div class="inner">
               <h3 id="sum_phauthuat">0</h3>
               <p>Phẫu thuật</p>
@@ -207,11 +250,14 @@
               <i class="ion ion-pie-graph"></i>
             </div>
           </div>
-          </a>
         </div>
+
         <div class="col-lg-2 col-xs-6">
           <!-- small box -->
-          <div class="small-box bg-green">
+          <div class="small-box bg-green small-box-clickable"
+            data-type="thuthuat"
+            data-route="{{ route('dashboard.thuthuat-detail') }}">
+            
             <div class="inner">
               <h3 id="sum_thuthuat">0</h3>
               <p>Thủ thuật</p>
@@ -462,6 +508,33 @@
 <script type="text/javascript" src="{{ asset('js/moment.min.js') }}"></script>
 <!-- Include daterangepicker JS from local -->
 <script type="text/javascript" src="{{ asset('js/daterangepicker.min.js') }}"></script>
+
+<script type="text/javascript">
+$(document).on('click', '.small-box-clickable', function() {
+    const route = $(this).data('route');
+    const type = $(this).data('type');
+    const range = $('#dateRangePicker').val();
+
+    if (!route || !type) {
+        alert('Chưa cấu hình đầy đủ!');
+        return;
+    }
+
+    let startDate = null;
+    let endDate = null;
+    if (range && range.includes(' - ')) {
+        const parts = range.split(' - ');
+        startDate = parts[0];
+        endDate = parts[1];
+    } else {
+        alert('Vui lòng chọn khoảng thời gian trước khi xem chi tiết!');
+        return;
+    }
+
+    const url = `${route}?date_from=${encodeURIComponent(startDate)}&date_to=${encodeURIComponent(endDate)}&date_type=${type}`;
+    window.open(url, '_blank');
+});
+</script>
 
 <script type="text/javascript">
     $(document).ready(function () {
