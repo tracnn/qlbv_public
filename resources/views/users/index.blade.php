@@ -82,23 +82,23 @@
 	$(document).ready( function () {
 
 		$('#users-index').DataTable({
-	        "processing": true,
-	        "serverSide": true,
-	        "responsive": true, // Giữ responsive
-          "scrollX": true, // Đảm bảo cuộn ngang khi bảng quá rộng
-	        "ajax": {
-	            url: "{{ route('users.get-users') }}",
-	        },
-	        "columns": [
-	        	{ "data": "id", "name": "id" },
-	            { "data": "loginname", "name": "loginname" },
-	            { "data": "username", "name": "username"},
-	            { "data": "email", "name": "email"},
-	            { "data": "mobile", "name": "mobile"},
-	            { "data": "is_active", "name": "is_active"},
-	            { "data": "action", "name": "action"},
-	        ],
-	    });
+      "processing": true,
+      "serverSide": true,
+      "responsive": true, // Giữ responsive
+      "scrollX": true, // Đảm bảo cuộn ngang khi bảng quá rộng
+      "ajax": {
+          url: "{{ route('users.get-users') }}",
+      },
+      "columns": [
+      	{ "data": "id", "name": "id" },
+        { "data": "loginname", "name": "loginname" },
+        { "data": "username", "name": "username"},
+        { "data": "email", "name": "email"},
+        { "data": "mobile", "name": "mobile"},
+        { "data": "is_active", "name": "is_active"},
+        { "data": "action", "name": "action"},
+      ],
+    });
 
 		$(document).on('click', '.edit-permissions', function() {
 			var updateUrl = $(this).data('update-permission-url'); // Lấy URL cập nhật quyền
