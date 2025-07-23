@@ -29,4 +29,7 @@ return [
     ],
     'xml_4750_not_check' => false,
     'q_his_plus_url' => '',
+    'patient' => [
+        'emr_document_type_result_ids' => [6, 22, 160, 3, 28, 4, 14, 25, 26, 27],
+    ],
 ];

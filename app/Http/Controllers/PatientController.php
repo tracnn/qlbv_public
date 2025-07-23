@@ -213,7 +213,7 @@ class PatientController extends Controller
                 ->where('emr_document.is_delete', 0)
                 ->where('emr_document.treatment_code', $treatment->treatment_code)
                 ->where( function ($q) {
-                    $q->whereIn('emr_document.document_type_id', [6,22,160,3,28,4,14,25,26,27])
+                    $q->whereIn('emr_document.document_type_id', config('organization.patient.emr_document_type_result_ids'))
                     ->orWhereNull('emr_document.document_type_id');
                 })
                 ->where( function ($q) {
