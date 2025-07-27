@@ -1121,6 +1121,7 @@ $techAppConfig = [
     ],
 
     'treatment_type_kham' => 1,
+    'treatment_type_ngoaitru' => 2,
     'treatment_type_noitru' => 3,
     'treatment_end_type_cv' => 2,
     'treatment_end_type_ctcv' => 4,
@@ -1129,6 +1130,8 @@ $techAppConfig = [
     'service_req_type_xn' => 2,
     'service_req_type_cdha' => 3,
     'service_req_type_sa' => 10,
+    'service_req_type_phauthuat' => 10,
+    'service_req_type_thuthuat' => 4,
     'number_in_chart' => 30,
     'tdl_service_req_type_id_dvkt_ko_kham' => '13,2,3,4,5,9,10',
     'number_top_request_dvkt' => 10,

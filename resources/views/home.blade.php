@@ -108,7 +108,7 @@
           <!-- small box -->
           <div class="small-box bg-yellow small-box-clickable"
             data-type="newpatient"
-            data-route="{{ route('dashboard.newpatient-detail') }}">
+            data-route="{{ route('dashboard.treatment-detail') }}">
 
             <div class="inner">
               <h3 id="sum_newpatient">0</h3>
@@ -124,7 +124,7 @@
           <!-- small box -->
           <div class="small-box bg-red small-box-clickable"
             data-type="noitru"
-            data-route="{{ route('dashboard.noitru-detail') }}">
+            data-route="{{ route('dashboard.treatment-detail') }}">
             
             <div class="inner">
               <h3 id="sum_noitru">0</h3>
@@ -139,8 +139,8 @@
         <div class="col-lg-2 col-xs-6">
           <!-- small box -->
           <div class="small-box bg-aqua small-box-clickable"
-            data-type="ravien"
-            data-route="{{ route('dashboard.ravien-kham-detail') }}">
+            data-type="ravien-kham"
+            data-route="{{ route('dashboard.treatment-detail') }}">
             
             <div class="inner">
               <h3 id="sum_ravien_kham">0</h3>
@@ -156,7 +156,7 @@
           <!-- small box -->
           <div class="small-box bg-green small-box-clickable"
             data-type="chuyenvien"
-            data-route="{{ route('dashboard.chuyenvien-detail') }}">
+            data-route="{{ route('dashboard.treatment-detail') }}">
 
             <div class="inner">
               <h3 id="sum_chuyenvien">0</h3>
@@ -176,7 +176,7 @@
           <!-- small box -->
           <div class="small-box bg-aqua small-box-clickable"
             data-type="ravien"
-            data-route="{{ route('dashboard.ravien-detail') }}">
+            data-route="{{ route('dashboard.treatment-detail') }}">
             
             <div class="inner">
               <h3 id="sum_ravien">0</h3>
@@ -191,8 +191,8 @@
         <div class="col-lg-2 col-xs-6">
           <!-- small box -->
           <div class="small-box bg-green small-box-clickable"
-            data-type="ravien"
-            data-route="{{ route('dashboard.ravien-noitru-detail') }}">
+            data-type="ravien-noitru"
+            data-route="{{ route('dashboard.treatment-detail') }}">
             
             <div class="inner">
               <h3 id="sum_ravien_noitru">0</h3>
@@ -223,8 +223,8 @@
         <div class="col-lg-2 col-xs-6">
           <!-- small box -->
           <div class="small-box bg-red small-box-clickable"
-            data-type="ravien"
-            data-route="{{ route('dashboard.ravien-ngoaitru-detail') }}">
+            data-type="ravien-ngoaitru"
+            data-route="{{ route('dashboard.treatment-detail') }}">
 
             <div class="inner">
               <h3 id="sum_ravien_ngoaitru">0</h3>
@@ -240,7 +240,7 @@
           <!-- small box -->
           <div class="small-box bg-aqua small-box-clickable"
             data-type="phauthuat"
-            data-route="{{ route('dashboard.phauthuat-detail') }}">
+            data-route="{{ route('dashboard.service-detail') }}">
             
             <div class="inner">
               <h3 id="sum_phauthuat">0</h3>
@@ -256,7 +256,7 @@
           <!-- small box -->
           <div class="small-box bg-green small-box-clickable"
             data-type="thuthuat"
-            data-route="{{ route('dashboard.thuthuat-detail') }}">
+            data-route="{{ route('dashboard.service-detail') }}">
             
             <div class="inner">
               <h3 id="sum_thuthuat">0</h3>
@@ -531,7 +531,7 @@ $(document).on('click', '.small-box-clickable', function() {
         return;
     }
 
-    const url = `${route}?date_from=${encodeURIComponent(startDate)}&date_to=${encodeURIComponent(endDate)}&date_type=${type}`;
+    const url = `${route}?from_date=${encodeURIComponent(startDate)}&to_date=${encodeURIComponent(endDate)}&data_type=${type}`;
     window.open(url, '_blank');
 });
 </script>

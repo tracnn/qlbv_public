@@ -55,21 +55,6 @@ Route::group(['middleware' => ['auth', 'check.first.login']], function () {
 //    });
     //Please do not remove this if you want adminlte:route and adminlte:link commands to works correctly.
     #adminlte_routes
-
-    /* Dashboard detail */
-    Route::get('dashboard/treatment-detail', 'HomeController@treatmentDetail')->name('dashboard.treatment-detail');
-    Route::get('dashboard/doanhthu-detail', 'HomeController@doanhthuDetail')->name('dashboard.doanhthu-detail');
-    Route::get('dashboard/newpatient-detail', 'HomeController@newpatientDetail')->name('dashboard.newpatient-detail');
-    Route::get('dashboard/noitru-detail', 'HomeController@noitruDetail')->name('dashboard.noitru-detail');
-    Route::get('dashboard/ravien-kham-detail', 'HomeController@ravienKhamDetail')->name('dashboard.ravien-kham-detail');
-    Route::get('dashboard/chuyenvien-detail', 'HomeController@chuyenvienDetail')->name('dashboard.chuyenvien-detail');
-    Route::get('dashboard/ravien-detail', 'HomeController@ravienDetail')->name('dashboard.ravien-detail');
-    Route::get('dashboard/ravien-noitru-detail', 'HomeController@ravienNoitruDetail')->name('dashboard.ravien-noitru-detail');
-    Route::get('dashboard/average-inpatient-detail', 'HomeController@averageInpatientDetail')->name('dashboard.average-inpatient-detail');
-    Route::get('dashboard/ravien-ngoaitru-detail', 'HomeController@ravienNgoaitruDetail')->name('dashboard.ravien-ngoaitru-detail');
-    Route::get('dashboard/phauthuat-detail', 'HomeController@phauthuatDetail')->name('dashboard.phauthuat-detail');
-    Route::get('dashboard/thuthuat-detail', 'HomeController@thuthuatDetail')->name('dashboard.thuthuat-detail');
-    /* --Dashboard */
     
     //qhis-plus
     Route::get('/tra-cuu-ls-kcb', 'QHisPlus@index')->name('tra-cuu-ls-kcb-index');
@@ -112,6 +97,18 @@ Route::group(['middleware' => ['auth', 'check.first.login']], function () {
 
         Route::get('fetch-average-day-inpatient', 'HomeController@fetchAverageDayInpatient')
         ->name('fetch-average-day-inpatient');
+
+        /* Dashboard detail */
+        Route::get('dashboard/treatment-detail', 'DashboardController@treatmentDetail')->name('dashboard.treatment-detail');
+        Route::get('dashboard/doanhthu-detail', 'DashboardController@doanhthuDetail')->name('dashboard.doanhthu-detail');
+        Route::get('dashboard/average-inpatient-detail', 'DashboardController@averageInpatientDetail')->name('dashboard.average-inpatient-detail');
+        Route::get('dashboard/service-detail', 'DashboardController@serviceDetail')->name('dashboard.service-detail');
+
+        //fetch data
+        Route::get('dashboard/fetch-treatment-detail', 'DashboardController@fetchTreatmentDetail')->name('dashboard.fetch-treatment-detail');
+        Route::get('dashboard/fetch-newpatient-detail', 'DashboardController@fetchNewpatientDetail')->name('dashboard.fetch-newpatient-detail');
+        Route::get('dashboard/fetch-service-detail', 'DashboardController@fetchServiceDetail')->name('dashboard.fetch-service-detail');
+        /* --Dashboard */
 
     });
     

@@ -1,11 +1,11 @@
 @extends('adminlte::page')
 
-@section('title', 'Thống kê điều trị')
+@section('title', 'Thống kê BN phẫu thuật')
 
 @section('content_header')
   <h1>
     KHTH
-    <small>Thống kê điều trị</small>
+    <small>Thống kê BN phẫu thuật</small>
   </h1>
 
 @stop
@@ -17,7 +17,7 @@
 
 <div class="panel panel-default">
     <div class="panel-body">
-        <table id="treatment-detail-table" class="table table-bordered table-striped">
+        <table id="service-detail-table" class="table table-bordered table-striped">
             <thead>
                 <tr>
                     <th>Mã điều trị</th>
@@ -25,8 +25,9 @@
                     <th>Tên bệnh nhân</th>
                     <th>Ngày vào</th>
                     <th>Ngày ra</th>
-                    <th>Mã bệnh</th>
-                    <th>Tên bệnh</th>
+                    <th>Tên dịch vụ</th>
+                    <th>Ngày y lệnh</th>
+                    <th>Tên bác sĩ</th>
                 </tr>
             </thead>
             <tbody>
@@ -57,11 +58,11 @@ function getQueryParams() {
 $(document).ready(function() {
   const query = getQueryParams();
 
-  var table = $('#treatment-detail-table').DataTable({
+  var table = $('#service-detail-table').DataTable({
     processing: true,
     serverSide: true,
     ajax: {
-      url: "{{ route('dashboard.fetch-treatment-detail') }}",
+      url: "{{ route('dashboard.fetch-service-detail') }}",
       type: "GET",
       data: function(d) {
         d.data_type = query.data_type;
@@ -70,13 +71,14 @@ $(document).ready(function() {
       }
     },
     columns: [
-      {data: 'treatment_code', name: 'treatment_code'},
+      {data: 'tdl_treatment_code', name: 'tdl_treatment_code'},
       {data: 'tdl_patient_code', name: 'tdl_patient_code'},
       {data: 'tdl_patient_name', name: 'tdl_patient_name'},
       {data: 'in_time', name: 'in_time'},
       {data: 'out_time', name: 'out_time'},
-      {data: 'icd_code', name: 'icd_code'},
-      {data: 'icd_name', name: 'icd_name'},
+      {data: 'tdl_service_name', name: 'tdl_service_name'},
+      {data: 'intruction_time', name: 'intruction_time'},
+      {data: 'request_username', name: 'request_username'},
     ]
   });
 });

@@ -206,107 +206,107 @@ class HomeController extends Controller
         return json_encode($returnData);
     }
 
-public function fetchTransaction(Request $request)
-{
-    $current_date = $this->currentDate($request->input('startDate'), $request->input('endDate'));
+    public function fetchTransaction(Request $request)
+    {
+        $current_date = $this->currentDate($request->input('startDate'), $request->input('endDate'));
 
-    // Lấy tất cả dữ liệu trong khoảng thời gian xác định
-    $data = $this->getTransactionDetail($current_date['from_date'], $current_date['to_date']);
+        // Lấy tất cả dữ liệu trong khoảng thời gian xác định
+        $data = $this->getTransactionDetail($current_date['from_date'], $current_date['to_date']);
 
-    // Khởi tạo mảng để tổng hợp dữ liệu
-    $chartData = [
-        'cashiers' => [],
-        'transactionTypes' => [],
-        'payForms' => [],
-        'departments' => [],
-        'treatmentTypes' => [],
-    ];
+        // Khởi tạo mảng để tổng hợp dữ liệu
+        $chartData = [
+            'cashiers' => [],
+            'transactionTypes' => [],
+            'payForms' => [],
+            'departments' => [],
+            'treatmentTypes' => [],
+        ];
 
-    // Phân loại và tổng hợp dữ liệu theo từng tiêu chí
-    foreach ($data as $item) {
-        // Tổng hợp theo cashier_username
-        if (isset($chartData['cashiers'][$item->cashier_username])) {
-            $chartData['cashiers'][$item->cashier_username] += $item->amount;
-        } else {
-            $chartData['cashiers'][$item->cashier_username] = $item->amount;
+        // Phân loại và tổng hợp dữ liệu theo từng tiêu chí
+        foreach ($data as $item) {
+            // Tổng hợp theo cashier_username
+            if (isset($chartData['cashiers'][$item->cashier_username])) {
+                $chartData['cashiers'][$item->cashier_username] += $item->amount;
+            } else {
+                $chartData['cashiers'][$item->cashier_username] = $item->amount;
+            }
+
+            // Tổng hợp theo transaction_type_name
+            if (isset($chartData['transactionTypes'][$item->transaction_type_name])) {
+                $chartData['transactionTypes'][$item->transaction_type_name] += $item->amount;
+            } else {
+                $chartData['transactionTypes'][$item->transaction_type_name] = $item->amount;
+            }
+
+            // Tổng hợp theo pay_form_name
+            if (isset($chartData['payForms'][$item->pay_form_name])) {
+                $chartData['payForms'][$item->pay_form_name] += $item->amount;
+            } else {
+                $chartData['payForms'][$item->pay_form_name] = $item->amount;
+            }
+
+            // Tổng hợp theo department_name
+            if (isset($chartData['departments'][$item->department_name])) {
+                $chartData['departments'][$item->department_name] += $item->amount;
+            } else {
+                $chartData['departments'][$item->department_name] = $item->amount;
+            }
+
+            // Tổng hợp theo treatment_type_name
+            if (isset($chartData['treatmentTypes'][$item->treatment_type_name])) {
+                $chartData['treatmentTypes'][$item->treatment_type_name] += $item->amount;
+            } else {
+                $chartData['treatmentTypes'][$item->treatment_type_name] = $item->amount;
+            }
         }
 
-        // Tổng hợp theo transaction_type_name
-        if (isset($chartData['transactionTypes'][$item->transaction_type_name])) {
-            $chartData['transactionTypes'][$item->transaction_type_name] += $item->amount;
-        } else {
-            $chartData['transactionTypes'][$item->transaction_type_name] = $item->amount;
+        // Định dạng dữ liệu cho Highcharts.js
+        $formattedData = [
+            'cashiers' => [],
+            'transactionTypes' => [],
+            'payForms' => [],
+            'departments' => [],
+            'treatmentTypes' => [],
+        ];
+
+        // Định dạng lại dữ liệu cho Highcharts
+        foreach ($chartData['cashiers'] as $name => $total) {
+            $formattedData['cashiers'][] = [
+                'name' => $name,
+                'y' => (float) $total
+            ];
         }
 
-        // Tổng hợp theo pay_form_name
-        if (isset($chartData['payForms'][$item->pay_form_name])) {
-            $chartData['payForms'][$item->pay_form_name] += $item->amount;
-        } else {
-            $chartData['payForms'][$item->pay_form_name] = $item->amount;
+        foreach ($chartData['transactionTypes'] as $name => $total) {
+            $formattedData['transactionTypes'][] = [
+                'name' => $name,
+                'y' => (float) $total
+            ];
         }
 
-        // Tổng hợp theo department_name
-        if (isset($chartData['departments'][$item->department_name])) {
-            $chartData['departments'][$item->department_name] += $item->amount;
-        } else {
-            $chartData['departments'][$item->department_name] = $item->amount;
+        foreach ($chartData['payForms'] as $name => $total) {
+            $formattedData['payForms'][] = [
+                'name' => $name,
+                'y' => (float) $total
+            ];
         }
 
-        // Tổng hợp theo treatment_type_name
-        if (isset($chartData['treatmentTypes'][$item->treatment_type_name])) {
-            $chartData['treatmentTypes'][$item->treatment_type_name] += $item->amount;
-        } else {
-            $chartData['treatmentTypes'][$item->treatment_type_name] = $item->amount;
+        foreach ($chartData['departments'] as $name => $total) {
+            $formattedData['departments'][] = [
+                'name' => $name,
+                'y' => (float) $total
+            ];
         }
+
+        foreach ($chartData['treatmentTypes'] as $name => $total) {
+            $formattedData['treatmentTypes'][] = [
+                'name' => $name,
+                'y' => (float) $total
+            ];
+        }
+
+        return response()->json($formattedData);
     }
-
-    // Định dạng dữ liệu cho Highcharts.js
-    $formattedData = [
-        'cashiers' => [],
-        'transactionTypes' => [],
-        'payForms' => [],
-        'departments' => [],
-        'treatmentTypes' => [],
-    ];
-
-    // Định dạng lại dữ liệu cho Highcharts
-    foreach ($chartData['cashiers'] as $name => $total) {
-        $formattedData['cashiers'][] = [
-            'name' => $name,
-            'y' => (float) $total
-        ];
-    }
-
-    foreach ($chartData['transactionTypes'] as $name => $total) {
-        $formattedData['transactionTypes'][] = [
-            'name' => $name,
-            'y' => (float) $total
-        ];
-    }
-
-    foreach ($chartData['payForms'] as $name => $total) {
-        $formattedData['payForms'][] = [
-            'name' => $name,
-            'y' => (float) $total
-        ];
-    }
-
-    foreach ($chartData['departments'] as $name => $total) {
-        $formattedData['departments'][] = [
-            'name' => $name,
-            'y' => (float) $total
-        ];
-    }
-
-    foreach ($chartData['treatmentTypes'] as $name => $total) {
-        $formattedData['treatmentTypes'][] = [
-            'name' => $name,
-            'y' => (float) $total
-        ];
-    }
-
-    return response()->json($formattedData);
-}
 
     public function fetchChuyenvien(Request $request)
     {
@@ -1253,65 +1253,4 @@ public function fetchTransaction(Request $request)
         );  
         return json_encode($returnData);
     }
-
-    public function treatmentDetail(Request $request)
-    {
-        return view('dashboard.treatment-detail');
-    }
-
-    public function doanhthuDetail(Request $request)
-    {
-        return view('dashboard.doanhthu-detail');
-    }
-
-    public function newpatientDetail(Request $request)
-    {
-        return view('dashboard.newpatient-detail');
-    }
-
-    public function noitruDetail(Request $request)
-    {
-        return view('dashboard.noitru-detail');
-    }
-
-    public function ravienKhamDetail(Request $request)
-    {
-        return view('dashboard.ravien-kham-detail');
-    }
-
-    public function chuyenvienDetail(Request $request)
-    {
-        return view('dashboard.chuyenvien-detail');
-    }
-
-    public function ravienDetail(Request $request)
-    {
-        return view('dashboard.ravien-detail');
-    }
-
-    public function ravienNoitruDetail(Request $request)
-    {
-        return view('dashboard.ravien-noitru-detail');
-    }
-
-    public function averageInpatientDetail(Request $request)
-    {
-        return view('dashboard.average-inpatient-detail');
-    }
-
-    public function ravienNgoaitruDetail(Request $request)
-    {
-        return view('dashboard.ravien-ngoaitru-detail');
-    }
-
-    public function phauthuatDetail(Request $request)
-    {
-        return view('dashboard.phauthuat-detail');
-    }
-
-    public function thuthuatDetail(Request $request)
-    {
-        return view('dashboard.thuthuat-detail');
-    }
-
 }
