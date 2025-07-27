@@ -16,8 +16,8 @@
 <!-- /Messages -->
 
 <div class="panel panel-default">
-    <div class="panel-body">
-        <table id="service-detail-table" class="table table-bordered table-striped">
+    <div class="panel-body table-responsive">
+        <table id="service-detail-table" class="table display table-hover responsive wrap datatable dtr-inline">
             <thead>
                 <tr>
                     <th>Mã điều trị</th>
