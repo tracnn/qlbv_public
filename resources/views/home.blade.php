@@ -532,7 +532,7 @@ $(document).on('click', '.small-box-clickable', function() {
     }
 
     const url = `${route}?from_date=${encodeURIComponent(startDate)}&to_date=${encodeURIComponent(endDate)}&data_type=${type}`;
-    window.open(url, '_blank');
+    window.open(url, '_self');
 });
 </script>
 
