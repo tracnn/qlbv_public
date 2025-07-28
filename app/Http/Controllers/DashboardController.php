@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Carbon\Carbon;
 use DB;
+use Illuminate\Support\Facades\Crypt;
 
 use DataTables;
 
@@ -112,7 +113,22 @@ class DashboardController extends Controller
         ->editColumn('out_time', function ($row) {
             return strtodatetime($row->out_time);
         })
-        ->make(true);
+        ->addColumn('action', function ($result) {
+            $createdAt = now()->timestamp;
+            $expiresIn = 7200;
+            $token = Crypt::encryptString($result->treatment_code . '|' . $createdAt . '|' . $expiresIn);
+
+            $linkDetail = '<a href="' . route('treatment-result.search', [
+                'treatment_code' => $result->treatment_code
+            ]) . '" class="btn-sm btn-primary">Chi tiết</a> ';
+
+            $linkMergePdf = '<a href="' . route('view-merge-pdf', [
+                'token' => $token
+            ]) . '" class="btn-sm btn-primary" target="_blank">Gộp PDF</a>';
+
+            return $linkDetail . $linkMergePdf;
+        })
+        ->toJson();
     }
 
     public function fetchServiceDetail(Request $request)

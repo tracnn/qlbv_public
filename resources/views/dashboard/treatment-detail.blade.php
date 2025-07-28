@@ -27,6 +27,7 @@
                     <th>Ngày ra</th>
                     <th>Mã bệnh</th>
                     <th>Tên bệnh</th>
+                    <th>Action</th>
                 </tr>
             </thead>
             <tbody>
@@ -77,6 +78,7 @@ $(document).ready(function() {
       {data: 'out_time', name: 'out_time'},
       {data: 'icd_code', name: 'icd_code'},
       {data: 'icd_name', name: 'icd_name'},
+      {data: 'action', name: 'action'},
     ]
   });
 });
