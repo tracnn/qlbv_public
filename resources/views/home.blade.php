@@ -12,8 +12,6 @@
 </button> -->
 {{ Breadcrumbs::render('dashboard') }}
 
-@stop
-
 @push('after-styles')
 <style>
     .refresh-after {
@@ -65,6 +63,8 @@
 </style>
 <link rel="stylesheet" type="text/css" href="{{ asset('css/daterangepicker.css') }}" />
 @endpush
+
+@stop
 
 @section('content')
 @if(auth()->user()->hasRole('dashboard'))
@@ -418,64 +418,80 @@
     </div>
     
     <!-- CLS 1 -->
-      <div class="row">
-        <div class="col-lg-4 connectedSortable">
-            <div class="nav-tabs-custom text-center"> <!-- Thêm 'text-center' để căn giữa -->
-                <div class="tab-content no-padding">
-                    <div id="chart_kham" style="width: 100%; height: 200px;"></div>
+        <div class="row">
+            <div class="col-lg-4 connectedSortable">
+                <div class="nav-tabs-custom text-center"> <!-- Thêm 'text-center' để căn giữa -->
+                    <div class="tab-content no-padding">
+                        <div id="chart_kham" style="width: 100%; height: 200px;"></div>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <div class="col-lg-4 connectedSortable">
-            <div class="nav-tabs-custom text-center"> <!-- Thêm 'text-center' để căn giữa -->
-                <div class="tab-content no-padding">
-                    <div id="chart_xetnghiem" style="width: 100%; height: 200px;"></div>
+            <div class="col-lg-4 connectedSortable">
+                <div class="nav-tabs-custom text-center"> <!-- Thêm 'text-center' để căn giữa -->
+                    <div class="tab-content no-padding">
+                        <div id="chart_xetnghiem" style="width: 100%; height: 200px;"></div>
+                    </div>
                 </div>
             </div>
-        </div>
-        <div class="col-lg-4 connectedSortable">
-            <div class="nav-tabs-custom text-center"> <!-- Thêm 'text-center' để căn giữa -->
-                <div class="tab-content no-padding">
-                    <div id="chart_cdha" style="width: 100%; height: 200px;"></div>
+            <div class="col-lg-4 connectedSortable">
+                <div class="nav-tabs-custom text-center"> <!-- Thêm 'text-center' để căn giữa -->
+                    <div class="tab-content no-padding">
+                        <div id="chart_cdha" style="width: 100%; height: 200px;"></div>
+                    </div>
                 </div>
             </div>
-        </div>
 
-      </div>
+          </div>
 
-      <!-- CLS 2 -->
-      <div class="row">
-        <div class="col-lg-3 connectedSortable">
-            <div class="nav-tabs-custom text-center"> <!-- Thêm 'text-center' để căn giữa -->
-                <div class="tab-content no-padding">
-                    <div id="chart_tdcn" style="width: 100%; height: 200px;"></div>
+          <!-- CLS 2 -->
+          <div class="row">
+            <div class="col-lg-4 connectedSortable">
+                <div class="nav-tabs-custom text-center"> <!-- Thêm 'text-center' để căn giữa -->
+                    <div class="tab-content no-padding">
+                        <div id="chart_tdcn" style="width: 100%; height: 200px;"></div>
+                    </div>
                 </div>
             </div>
-        </div>
-        <div class="col-lg-3 connectedSortable">
-            <div class="nav-tabs-custom text-center"> <!-- Thêm 'text-center' để căn giữa -->
-                <div class="tab-content no-padding">
-                    <div id="chart_gpb" style="width: 100%; height: 200px;"></div>
+            <div class="col-lg-4 connectedSortable">
+                <div class="nav-tabs-custom text-center"> <!-- Thêm 'text-center' để căn giữa -->
+                    <div class="tab-content no-padding">
+                        <div id="chart_gpb" style="width: 100%; height: 200px;"></div>
+                    </div>
                 </div>
             </div>
-        </div>
-        <div class="col-lg-3 connectedSortable">
-            <div class="nav-tabs-custom text-center"> <!-- Thêm 'text-center' để căn giữa -->
-                <div class="tab-content no-padding">
-                    <div id="chart_ns" style="width: 100%; height: 200px;"></div>
+            <div class="col-lg-4 connectedSortable">
+                <div class="nav-tabs-custom text-center"> <!-- Thêm 'text-center' để căn giữa -->
+                    <div class="tab-content no-padding">
+                        <div id="chart_ns" style="width: 100%; height: 200px;"></div>
+                    </div>
                 </div>
             </div>
-        </div>
-        <div class="col-lg-3 connectedSortable">
-            <div class="nav-tabs-custom text-center"> <!-- Thêm 'text-center' để căn giữa -->
-                <div class="tab-content no-padding">
-                    <div id="chart_sa" style="width: 100%; height: 200px;"></div>
-                </div>
-            </div>
-        </div>
+          </div>      
 
-      </div>      
+          <div>
+            <div class="col-lg-4 connectedSortable">
+                <div class="nav-tabs-custom text-center"> <!-- Thêm 'text-center' để căn giữa -->
+                    <div class="tab-content no-padding">
+                        <div id="chart_sa" style="width: 100%; height: 200px;"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 connectedSortable">
+                <div class="nav-tabs-custom text-center"> <!-- Thêm 'text-center' để căn giữa -->
+                    <div class="tab-content no-padding">
+                        <div id="chart_tt" style="width: 100%; height: 200px;"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 connectedSortable">
+                <div class="nav-tabs-custom text-center"> <!-- Thêm 'text-center' để căn giữa -->
+                    <div class="tab-content no-padding">
+                        <div id="chart_pt" style="width: 100%; height: 200px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -960,7 +976,9 @@ function refreshAllCharts(startDate, endDate) {
             { id: 2, element: 'chart_xetnghiem', title: 'Xét nghiệm' },
             //{ id: 13, element: 'chart_gpb', title: 'GPB' },
             { id: 8, element: 'chart_ns', title: 'Nội soi' },
-            { id: 9, element: 'chart_sa', title: 'Siêu âm' }
+            { id: 9, element: 'chart_sa', title: 'Siêu âm' },
+            { id: 4, element: 'chart_tt', title: 'Thủ thuật' },
+            { id: 10, element: 'chart_pt', title: 'Phẫu thuật' },
         ];
 
         if (!disableGpbChart) {
