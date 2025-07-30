@@ -31,13 +31,29 @@
 
 @section('content')
     @include('bhxh.partials.search-detail')
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            CĐHA
+        </div>
+        <div class="panel-body table-responsive">
+            <table id="service-cdha" class="table display table-hover responsive wrap datatable dtr-inline" width="100%">
+                <thead>
+                    <tr>
+                        <th>STT</th>
+                        <th>Tên dịch vụ</th>
+                        <th>Tác vụ</th>
+                    </tr>
+                </thead>
+            </table>
+        </div>
+    </div>
 
     <div class="panel panel-default">
         <div class="panel-heading">
             Chi tiết hồ sơ
         </div>
         <div class="panel-body table-responsive">
-            <table id="emr-detail" class="table display table-hover responsive nowrap datatable dtr-inline" width="100%">
+            <table id="emr-detail" class="table display table-hover responsive wrap datatable dtr-inline" width="100%">
                 <thead>
                     <tr>
                         <th>STT</th>
@@ -116,6 +132,43 @@
         // Nếu có lọc document_type, bạn có thể thêm:
         $('#document_type').on('change', function () {
             fetchData();
+        });
+
+        table = $('#service-cdha').DataTable({
+            "processing": true,
+            "serverSide": true,
+            "destroy": true, // Destroy any existing DataTable before reinitializing
+            "responsive": true, // Giữ responsive
+            "scrollX": true, // Đảm bảo cuộn ngang khi bảng quá rộng
+            "ajax": {
+                url: '{{ route('bhxh.service-cdha-list') }}',
+                data: function(d) {
+                    d.treatment_code = '{{ $treatment_code }}';
+                },
+                beforeSend: function(xhr) {
+                    currentAjaxRequest = xhr;
+                },
+                complete: function(xhr, status) {
+                    currentAjaxRequest = null;
+                },
+                error: function(xhr, error, code) {
+                    console.log('Error:', error);
+                    console.log('Code:', code);
+                    console.log('XHR:', xhr);
+                }
+            },
+            "columns": [
+                { 
+                    "data": null, 
+                    "orderable": false, 
+                    "searchable": false, 
+                    "render": function (data, type, row, meta) {
+                        return meta.row + meta.settings._iDisplayStart + 1;
+                    }
+                },
+                { "data": "tdl_service_name" },
+                { "data": "action" }, // Hành động
+            ],
         });
     });
 </script>

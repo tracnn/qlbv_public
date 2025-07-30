@@ -102,4 +102,47 @@ class BhxhController extends Controller
         })
         ->make(true);
     }
+
+    public function serviceCdhaList(Request $request)
+    {
+        $treatment_code = $request->input('treatment_code');
+
+        if(empty($treatment_code))
+        {
+            return response()->json(['error' => 'Mã điều trị không tồn tại'], 400);
+        }
+
+        $checkPermission = BhxhEmrPermission::where('treatment_code', $treatment_code)->first();
+        if(empty($checkPermission))
+        {
+            return response()->json(['error' => 'Mã điều trị không tồn tại'], 400);
+        }
+    
+        $query = DB::connection('HISPro')  
+        ->table('his_sere_serv')
+        ->join('his_service_req', 'his_service_req.id', '=', 'his_sere_serv.service_req_id')
+        ->select('his_sere_serv.id', 
+            'his_sere_serv.tdl_service_name', 
+            'his_sere_serv.tdl_intruction_time', 
+            'his_service_req.tdl_patient_code'
+        )
+        ->where('his_sere_serv.is_delete', 0)
+        ->where('his_sere_serv.tdl_service_type_id', 3)
+        ->where('his_sere_serv.tdl_treatment_code', $treatment_code);
+    
+        return Datatables::of($query)
+        ->addColumn('action', function ($value) {
+            $url = config('organization.base_pacs_url') . $value->id;
+            if (config('organization.pacs_url_suffix')) {
+                $url .= config('organization.pacs_url_suffix') . $value->id;
+            }
+
+            $result = '<a href="' . $url . '" 
+                class="btn btn-info btn-sm" target="_blank" rel="noopener noreferrer">
+                  <i class="fa fa-film"></i> Xem
+                </a>';
+            return $result;
+        })
+        ->make(true);
+    }
 }

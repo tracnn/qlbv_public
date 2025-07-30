@@ -611,6 +611,8 @@ Route::group(['middleware' => ['auth', 'check.first.login']], function () {
         ->name('bhxh.emr-checker-detail');
         Route::get('index/emr-checker-document-list', 'BhxhController@emrCheckerDocumentList')
         ->name('bhxh.emr-checker-document-list');
+        Route::get('index/service-cdha-list', 'BhxhController@serviceCdhaList')
+        ->name('bhxh.service-cdha-list');
     });
 
 });
