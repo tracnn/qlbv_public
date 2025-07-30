@@ -25,7 +25,7 @@
         Thông tin hành chính
     </div>
     <div class="panel-body table-responsive">
-        <table id="emr-treatment" class="table display table-hover responsive nowrap datatable dtr-inline" width="100%">
+        <table id="emr-treatment" class="table display table-hover responsive wrap datatable dtr-inline" width="100%">
             <thead>
                 <tr>
                     <th>Mã ĐT</th>
@@ -73,6 +73,42 @@
 </div>
 @endif
 
+@if(isset($sere_serv_cdha) && count($sere_serv_cdha))
+<div class="panel panel-default">
+    <div class="panel-heading">
+        CĐHA
+    </div>
+    <div class="panel-body table-responsive">
+        <table id="service_cdha" class="table display table-hover responsive wrap datatable dtr-inline" width="100%">
+          <thead>
+            <tr>
+              <th>STT</th>
+              <th>Tên dịch vụ</th>
+              <th>Tác vụ</th>
+            </tr>
+          </thead>
+          <tbody>
+            @foreach($sere_serv_cdha as $key => $value)
+            <tr>
+              <td align="center">
+                {{ $key + 1 }}
+              </td>
+              <td>
+                {{ $value->tdl_service_name }}
+              </td>
+              <td align="center">
+                <a href="{{ config('organization.base_pacs_url') }}{{ $value->id }}{{ config('organization.pacs_url_suffix') ? config('organization.pacs_url_suffix') . $value->id : '' }}" 
+                class="btn btn-info btn-sm" target="_blank" rel="noopener noreferrer">
+                  <i class="fa fa-film"></i> Xem
+                </a>
+              </td>
+            </tr>
+            @endforeach
+          </tbody>
+        </table>
+    </div>
+</div>
+@endif
 <div class="panel panel-default">
 	<div class="panel-heading">
         Phiếu trả kết quả
@@ -86,7 +122,7 @@
                 <th>Tên văn bản</th>
                 <th>Loại văn bản</th>
                 <th>Ngày tạo</th>
-                <th>Hành động</th>
+                <th>Tác vụ</th>
             </tr>
         </thead>
         <tbody>
@@ -196,6 +232,8 @@ $(document).ready(function() {
     $('#emr-treatment').DataTable({
     });
     $('#emr-document').DataTable({
+    });
+    $('#service_cdha').DataTable({
     });
 });
 

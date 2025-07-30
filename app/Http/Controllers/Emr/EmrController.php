@@ -383,9 +383,29 @@ class EmrController extends Controller
         $emr_document = $this->get_documents($params['treatment_code'],$ParamDocumentType);
         $patient_info = $this->get_patient_info($params['treatment_code']);
 
+        $sere_serv_cdha = $this->sere_serv_cdha($params['treatment_code']);
+
         return view('emr.treatment-result.index',
-            compact('params','emr_treatment','emr_document','document_type','ParamDocumentType', 'patient_info')
+            compact('params','emr_treatment','emr_document','document_type','ParamDocumentType', 'patient_info', 
+                'sere_serv_cdha')
         );
+    }
+
+
+    private function sere_serv_cdha($treatment_code)
+    {
+        return DB::connection('HISPro')  
+        ->table('his_sere_serv')
+        ->join('his_service_req', 'his_service_req.id', '=', 'his_sere_serv.service_req_id')
+        ->select('his_sere_serv.id', 
+            'his_sere_serv.tdl_service_name', 
+            'his_sere_serv.tdl_intruction_time', 
+            'his_service_req.tdl_patient_code'
+        )
+        ->where('his_sere_serv.is_delete', 0)
+        ->where('his_sere_serv.tdl_service_type_id', 3)
+        ->where('his_sere_serv.tdl_treatment_code', $treatment_code)
+        ->get();
     }
 
     public function viewDocument(Request $request)
