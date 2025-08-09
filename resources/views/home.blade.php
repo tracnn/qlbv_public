@@ -331,13 +331,16 @@
     @endif
 
     <div class="row">
-        <div class="col-lg-6 connectedSortable">
+        <div class="col-lg-12 connectedSortable">
             <div class="nav-tabs-custom text-center">
                 <div class="tab-content no-padding">
                     <div id="chart_exam_paraclinical_time" style="width: 100%; height: 400px;"></div>
                 </div>
             </div>
         </div>
+    </div>
+
+    <div class="row">
         <div class="col-lg-6 connectedSortable">
             <div class="nav-tabs-custom text-center">
                 <div class="tab-content no-padding">
@@ -345,11 +348,24 @@
                 </div>
             </div>
         </div>
+        <div class="col-lg-3 connectedSortable">
+            <div class="nav-tabs-custom text-center">
+                <div class="tab-content no-padding">
+                    <div id="chart_fee_time" style="width: 100%; height: 400px;"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 connectedSortable">
+            <div class="nav-tabs-custom text-center">
+                <div class="tab-content no-padding">
+                    <div id="chart_prescription_time" style="width: 100%; height: 400px;"></div>
+                </div>
+            </div>
+        </div>
     </div>
 
       <div class="row">
         <div class="col-lg-12 connectedSortable">
-
             <!-- Custom tabs (Charts with tabs)-->
             <div class="nav-tabs-custom">
                 <!-- Tabs within a box -->
@@ -789,6 +805,120 @@ function formatNumber(number) {
     return new Intl.NumberFormat('en-US').format(number);
 }
 
+function fetchPrescription(startDate, endDate) {
+    $.ajax({
+        url: "{{ route('fetch-prescription') }}",
+        type: "GET",
+        dataType: 'json',
+        data: {
+            startDate: startDate,
+            endDate: endDate
+        }
+    }).done(function (data) {
+        Highcharts.chart('chart_prescription_time', {
+            chart: {
+                type: 'column'
+            },
+            title: {
+                text: 'Trung bình Thời gian chờ (kết thúc điều trị -> khóa viện phí) & Thực hiện lĩnh thuốc phòng khám (khóa viện phí -> thực xuất)',
+                style: { fontSize: '18px', fontWeight: 'bold' }
+            },
+            xAxis: {
+                categories: data.categories,
+                title: { text: 'Đơn thuốc phòng khám', style: { fontSize: '14px' } },
+                labels: { style: { fontSize: '13px' } }
+            },
+            yAxis: {
+                min: 0,
+                title: { text: 'Thời gian trung bình (phút)', style: { fontSize: '14px' } },
+                labels: { style: { fontSize: '13px' } }
+            },
+            tooltip: {
+                shared: true,
+                valueSuffix: ' phút',
+                style: { fontSize: '13px' }
+            },
+            legend: {
+                itemStyle: { fontSize: '13px' }
+            },
+            plotOptions: {
+                column: {
+                    pointPadding: 0.1,
+                    groupPadding: 0.2,
+                    borderWidth: 0,
+                    dataLabels: {
+                        enabled: true,
+                        style: {
+                            fontSize: '12px',
+                            fontWeight: 'bold'
+                        }
+                    }
+                }
+            },
+            series: data.series
+        });
+    }).fail(function (jqXHR, textStatus, errorThrown) {
+        console.error("Lỗi:", textStatus, errorThrown);
+    });
+}
+
+function fetchFee(startDate, endDate) {
+    $.ajax({
+        url: "{{ route('fetch-fee') }}",
+        type: "GET",
+        dataType: 'json',
+        data: {
+            startDate: startDate,
+            endDate: endDate
+        }
+    }).done(function (data) {
+        Highcharts.chart('chart_fee_time', {
+            chart: {
+                type: 'column'
+            },
+            title: {
+                text: 'Trung bình Thời gian chờ thanh toán viện phí diện khám',
+                style: { fontSize: '18px', fontWeight: 'bold' }
+            },
+            xAxis: {
+                categories: data.categories,
+                title: { text: 'Thanh toán viện phí diện khám', style: { fontSize: '14px' } },
+                labels: { style: { fontSize: '13px' } }
+            },
+            yAxis: {
+                min: 0,
+                title: { text: 'Thời gian trung bình (phút)', style: { fontSize: '14px' } },
+                labels: { style: { fontSize: '13px' } }
+            },
+            tooltip: {
+                shared: true,
+                valueSuffix: ' phút',
+                style: { fontSize: '13px' }
+            },
+            legend: {
+                itemStyle: { fontSize: '13px' }
+            },
+            plotOptions: {
+                column: {
+                    pointPadding: 0.1,
+                    groupPadding: 0.2,
+                    borderWidth: 0,
+                    dataLabels: {
+                        enabled: true,
+                        style: {
+                            fontSize: '12px',
+                            fontWeight: 'bold'
+                        }
+                    }
+                }
+            },
+            series: data.series
+        });
+    }).fail(function (jqXHR, textStatus, errorThrown) {
+        console.error("Lỗi:", textStatus, errorThrown);
+    });
+}
+
 function fetchExamAndParraclinical(startDate, endDate) {
     $.ajax({
         url: "{{ route('fetch-exam-paraclinical') }}",
@@ -1003,6 +1133,8 @@ function refreshAllCharts(startDate, endDate) {
         chart_kham_by_room(startDate, endDate);
         fetchExamAndParraclinical(startDate, endDate);
         fetchDiagnoticImaging(startDate, endDate);
+        fetchPrescription(startDate, endDate);
+        fetchFee(startDate, endDate);
         fetchTransactionData(startDate, endDate);
         if (is_bieudo_dieutringoaitru) {
             chart_dieutringoaitru(startDate, endDate);
