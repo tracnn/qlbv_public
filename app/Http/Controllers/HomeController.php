@@ -773,6 +773,229 @@ class HomeController extends Controller
         ->get();
     }
 
+    public function fetchPrescription(Request $request)
+    {
+        $current_date = $this->currentDate($request->input('startDate'), $request->input('endDate'));
+        $data = $this->getPrescription($current_date['from_date'], $current_date['to_date']);
+
+        // Gom nhóm theo branch + loại dịch vụ
+        $grouped = $data->groupBy(function ($item) {
+            return $item->branch_name;
+        });
+
+        $stats = [];
+
+        foreach ($grouped as $key => $items) {
+            $branchName = $key;
+            $totalWait = 0;
+            $totalExec = 0;
+            $count = count($items);
+
+            foreach ($items as $item) {
+                // Bỏ qua nếu thiếu dữ liệu
+                if (!$item->start_time || !$item->intruction_time || !$item->finish_time) {
+                    continue;
+                }
+
+                // Parse các mốc thời gian
+                try {
+                    $start = \Carbon\Carbon::createFromFormat('YmdHis', $item->start_time);
+                    $instr = \Carbon\Carbon::createFromFormat('YmdHis', $item->intruction_time);
+                    $finish = \Carbon\Carbon::createFromFormat('YmdHis', $item->finish_time);
+                } catch (\Exception $e) {
+                    continue; // Bỏ qua nếu format sai
+                }
+
+                // Kiểm tra logic thời gian
+                if ($start->lessThan($instr) || $start->greaterThan($finish)) {
+                    continue; // Bỏ qua nếu thời gian không hợp lý
+                }
+
+                $totalWait += $instr->diffInSeconds($start);
+                $totalExec += $start->diffInSeconds($finish);
+            }
+
+            $stats[] = [
+                'branch' => $branchName,
+                'wait' => round($totalWait / $count / 60),
+                'exec' => round($totalExec / $count / 60),
+                'count' => $count
+            ];
+        }
+
+        $stats = collect($stats);
+
+        // Tập hợp danh sách loại dịch vụ có tổng số lượt
+        $branchSummary = $stats
+            ->groupBy('branch')
+            ->map(function ($items) {
+                return number_format($items->sum('count'));
+            });
+
+        // Biến `categories` thành dạng: "Tên dịch vụ (số lượt)"
+        $branches = $branchSummary->keys()->map(function ($branch) use ($branchSummary) {
+            return $branch . ' (' . $branchSummary[$branch] . ')';
+        })->values();
+
+        // Gộp series theo từng branch
+        $series = [];
+
+        foreach ($stats->groupBy('branch') as $branch => $items) {
+            $waitSeries = [
+                'name' => $branch . ' - Thời gian chờ',
+                'data' => $branchSummary->keys()->map(function ($branch) use ($items) {
+                    $item = $items->firstWhere('branch', $branch);
+                    return $item ? $item['wait'] : 0;
+                })->toArray()
+            ];
+
+            $execSeries = [
+                'name' => $branch . ' - Thời gian thực hiện',
+                'data' => $branchSummary->keys()->map(function ($branch) use ($items) {
+                    $item = $items->firstWhere('branch', $branch);
+                    return $item ? $item['exec'] : 0;
+                })->toArray()
+            ];
+
+            $series[] = $waitSeries;
+            $series[] = $execSeries;
+        }
+
+        return response()->json([
+            'categories' => $branches,
+            'series' => $series
+        ]);
+    }
+
+    private function getPrescription($from_date, $to_date)
+    {
+        return DB::connection('HISPro')
+        ->table('his_service_req')
+        ->join('his_treatment', 'his_treatment.id', '=', 'his_service_req.treatment_id')
+        ->join('his_branch', 'his_branch.id', '=', 'his_treatment.branch_id')
+        ->select('his_branch.branch_name',
+            'his_treatment.out_time as intruction_time',
+            'his_treatment.fee_lock_time as start_time',
+            'his_service_req.finish_time as finish_time'
+        )
+        ->whereBetween('his_treatment.out_time', [$from_date, $to_date])
+        ->whereIn('his_service_req.service_req_type_id', [6])
+        ->where('his_service_req.is_active', 1)
+        ->where('his_service_req.is_delete', 0)
+        ->whereNotNull('his_treatment.fee_lock_time')
+        ->get();
+    }
+
+    public function fetchFee(Request $request)
+    {
+        $current_date = $this->currentDate($request->input('startDate'), $request->input('endDate'));
+        $data = $this->getFee($current_date['from_date'], $current_date['to_date']);
+
+        // Gom nhóm theo branch + loại dịch vụ
+        $grouped = $data->groupBy(function ($item) {
+            return $item->branch_name;
+        });
+
+        $stats = [];
+
+        foreach ($grouped as $key => $items) {
+            $branchName = $key;
+            $totalWait = 0;
+            $totalExec = 0;
+            $count = count($items);
+
+            foreach ($items as $item) {
+                // Bỏ qua nếu thiếu dữ liệu
+                if (!$item->start_time || !$item->intruction_time || !$item->finish_time) {
+                    continue;
+                }
+
+                // Parse các mốc thời gian
+                try {
+                    $start = \Carbon\Carbon::createFromFormat('YmdHis', $item->start_time);
+                    $instr = \Carbon\Carbon::createFromFormat('YmdHis', $item->intruction_time);
+                    $finish = \Carbon\Carbon::createFromFormat('YmdHis', $item->finish_time);
+                } catch (\Exception $e) {
+                    continue; // Bỏ qua nếu format sai
+                }
+
+                // Kiểm tra logic thời gian
+                if ($start->lessThan($instr) || $start->greaterThan($finish)) {
+                    continue; // Bỏ qua nếu thời gian không hợp lý
+                }
+
+                $totalWait += $instr->diffInSeconds($start);
+                $totalExec += $start->diffInSeconds($finish);
+            }
+
+            $stats[] = [
+                'branch' => $branchName,
+                'wait' => round($totalWait / $count / 60),
+                'exec' => round($totalExec / $count / 60),
+                'count' => $count
+            ];
+        }
+
+        $stats = collect($stats);
+
+        // Tập hợp danh sách loại dịch vụ có tổng số lượt
+        $branchSummary = $stats
+            ->groupBy('branch')
+            ->map(function ($items) {
+                return number_format($items->sum('count'));
+            });
+
+        // Biến `categories` thành dạng: "Tên dịch vụ (số lượt)"
+        $branches = $branchSummary->keys()->map(function ($branch) use ($branchSummary) {
+            return $branch . ' (' . $branchSummary[$branch] . ')';
+        })->values();
+
+        // Gộp series theo từng branch
+        $series = [];
+
+        foreach ($stats->groupBy('branch') as $branch => $items) {
+            $waitSeries = [
+                'name' => $branch . ' - Thời gian chờ',
+                'data' => $branchSummary->keys()->map(function ($branch) use ($items) {
+                    $item = $items->firstWhere('branch', $branch);
+                    return $item ? $item['wait'] : 0;
+                })->toArray()
+            ];
+
+            $execSeries = [
+                'name' => $branch . ' - Thời gian thực hiện',
+                'data' => $branchSummary->keys()->map(function ($branch) use ($items) {
+                    $item = $items->firstWhere('branch', $branch);
+                    return $item ? $item['exec'] : 0;
+                })->toArray()
+            ];
+
+            $series[] = $waitSeries;
+            $series[] = $execSeries;
+        }
+
+        return response()->json([
+            'categories' => $branches,
+            'series' => $series
+        ]);
+    }
+
+    private function getFee($from_date, $to_date)
+    {
+        return DB::connection('HISPro')
+        ->table('his_treatment')
+        ->join('his_branch', 'his_branch.id', '=', 'his_treatment.branch_id')
+        ->select('his_branch.branch_name',
+            'his_treatment.out_time as intruction_time',
+            'his_treatment.fee_lock_time as start_time',
+            'his_treatment.fee_lock_time as finish_time'
+        )
+        ->whereBetween('his_treatment.out_time', [$from_date, $to_date])
+        ->where('his_treatment.tdl_treatment_type_id', 1)
+        ->whereNotNull('his_treatment.fee_lock_time')
+        ->get();
+    }
+
     private function serviceByType($from_date, $to_date, $serviceType = null)
     {
         return DB::connection('HISPro')

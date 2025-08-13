@@ -98,6 +98,12 @@ Route::group(['middleware' => ['auth', 'check.first.login']], function () {
         Route::get('fetch-average-day-inpatient', 'HomeController@fetchAverageDayInpatient')
         ->name('fetch-average-day-inpatient');
 
+        Route::get('fetch-prescription', 'HomeController@fetchPrescription')
+        ->name('fetch-prescription');
+
+        Route::get('fetch-fee', 'HomeController@fetchFee')
+        ->name('fetch-fee');
+
         /* Dashboard detail */
         Route::get('dashboard/treatment-detail', 'DashboardController@treatmentDetail')->name('dashboard.treatment-detail');
         Route::get('dashboard/doanhthu-detail', 'DashboardController@doanhthuDetail')->name('dashboard.doanhthu-detail');
