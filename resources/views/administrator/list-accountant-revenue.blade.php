@@ -187,8 +187,6 @@
             width: '100%' // Đặt chiều rộng của Select2 là 100%
         });
 
-/*Đang sửa*/
-
         $('#bulk-action-btn').on('click', function(){
             var dateRange = $('#date_range').data('daterangepicker');
 

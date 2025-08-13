@@ -50,6 +50,10 @@
     var dateType = "{{ $date_type }}";
 
     $(document).ready(function() {
+        $('.select2').select2({
+            width: '100%' // Đặt chiều rộng của Select2 là 100%
+        });
+
         if (startDate && endDate) {
             fetchData(startDate, endDate);
         }
