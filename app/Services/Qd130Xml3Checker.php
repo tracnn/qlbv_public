@@ -336,72 +336,81 @@ class Qd130Xml3Checker
             }
         }
 
-        // Check ma_may
-        if (!empty($data->ma_may)) {
-            if (strlen($data->ma_may) > 1024) {
-                $errorCode = $this->generateErrorCode('INFO_ERROR_MA_MAY_TOO_LONG');
-                $errors->push((object)[
-                    'error_code' => $errorCode,
-                    'error_name' => 'Mã máy quá dài',
-                    'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
-                    'description' => 'Mã máy vượt quá 1024 kí tự: ' . $data->ma_may
-                ]);
-            } else {
-                $maMay = $data->ma_may;
-                if (!preg_match('/^[A-ZĐÁÀẠÂẦẬẨẤẪÃẢĂẰẶẲẮẴÈÉẸÊỀỆỂẾỄẺÍÌỊĨỈÒÓỌÔỒỘỔỐỖÕỎƠỜỢỞỚỠÙÚỤƯỪỰỬỨỮŨỦÝỲỴỶỸ]{2,3}\.\d\.\d{5}\.[\w\- ;]+$/u', $maMay)) {
-                    $errorCode = $this->generateErrorCode('INFO_ERROR_INVALID_MA_MAY_FORMAT');
+// Check ma_may
+if (!empty($data->ma_may)) {
+    if (strlen($data->ma_may) > 1024) {
+        $errorCode = $this->generateErrorCode('INFO_ERROR_MA_MAY_TOO_LONG');
+        $errors->push((object)[
+            'error_code' => $errorCode,
+            'error_name' => 'Mã máy quá dài',
+            'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+            'description' => 'Mã máy vượt quá 1024 kí tự: ' . $data->ma_may
+        ]);
+    } else {
+        $maMay = trim($data->ma_may);
+
+        // Regex 2 nhánh:
+        // - Nhánh 1: PREFIX.[12].YYYYY.Z
+        // - Nhánh 2: PREFIX.3[...].Z    (bỏ qua kiểm tra YYYYY)
+        $prefixCharset = 'A-ZĐÁÀẠÂẦẬẨẤẪÃẢĂẰẶẲẮẴÈÉẸÊỀỆỂẾỄẺÍÌỊĨỈÒÓỌÔỒỘỔỐỖÕỎƠỜỢỞỚỠÙÚỤƯỪỰỬỨỮŨỦÝỲỴỶỸ';
+        $pattern = '/^(?:'
+                 . '(?P<prefix12>['.$prefixCharset.']{2,3})\.(?P<n12>[12])\.(?P<facility>\d{5})\.(?P<z>.+)'
+                 . '|'
+                 . '(?P<prefix3>['.$prefixCharset.']{2,3})\.(?P<n3>3[^\.\r\n]*)\.(?P<z3>.+)'
+                 . ')$/u';
+
+        if (!preg_match($pattern, $maMay, $m)) {
+            $errorCode = $this->generateErrorCode('INFO_ERROR_INVALID_MA_MAY_FORMAT');
+            $errors->push((object)[
+                'error_code' => $errorCode,
+                'error_name' => 'Mã máy không đúng định dạng',
+                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+                'description' => 'Mã máy không đúng định dạng: ' . $maMay
+            ]);
+        } else {
+            // Xác định n + facility (nếu có)
+            $n = isset($m['n12']) ? $m['n12'] : (isset($m['n3']) ? $m['n3'] : null);
+            $facility = isset($m['facility']) ? $m['facility'] : null;
+
+            // Chỉ kiểm tra facility khi n = 1|2
+            if ($n === '1' || $n === '2') {
+                // Đảm bảo đúng 5 số (regex đã bắt buộc), kiểm tra thêm theo config
+                if (!ctype_digit($facility) || strlen($facility) !== 5) {
+                    $errorCode = $this->generateErrorCode('INFO_ERROR_INVALID_YYYYY');
                     $errors->push((object)[
                         'error_code' => $errorCode,
-                        'error_name' => 'Mã máy không đúng định dạng',
+                        'error_name' => 'Mã cơ sở KBCB trong MA_MAY không hợp lệ',
                         'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
-                        'description' => 'Mã máy không đúng định dạng: ' . $maMay
+                        'description' => 'Mã cơ sở KBCB trong MA_MAY không hợp lệ: ' . $facility
                     ]);
                 } else {
-                    list($xx, $n, $yyyyy, $z) = explode('.', $maMay);
-                    // Validate n
-                    if (!in_array($n, ['1', '2', '3'])) {
-                        $errorCode = $this->generateErrorCode('INFO_ERROR_INVALID_N');
+                    $validFacilities = (array) config('organization.correct_facility_code', []);
+                    if (!in_array($facility, $validFacilities, true)) {
+                        $errorCode = $this->generateErrorCode('INFO_ERROR_INVALID_YYYYY_NOT_FOUND');
                         $errors->push((object)[
                             'error_code' => $errorCode,
-                            'error_name' => 'Ký hiệu nguồn kinh phí không hợp lệ',
+                            'error_name' => 'Mã cơ sở KBCB trong MA_MAY không đúng',
                             'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
-                            'description' => 'Ký hiệu nguồn kinh phí không hợp lệ: ' . $n
-                        ]);
-                    }
-                    // Validate YYYYY
-                    if (strlen($yyyyy) !== 5 || !ctype_digit($yyyyy)) {
-                        $errorCode = $this->generateErrorCode('INFO_ERROR_INVALID_YYYYY');
-                        $errors->push((object)[
-                            'error_code' => $errorCode,
-                            'error_name' => 'Mã cơ sở KBCB trong MA_MAY không hợp lệ',
-                            'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
-                            'description' => 'Mã cơ sở KBCB trong MA_MAY không hợp lệ: ' . $yyyyy
-                        ]);
-                    } else {
-                        if (!in_array($yyyyy, config('organization.correct_facility_code'))) {
-                            $errorCode = $this->generateErrorCode('INFO_ERROR_INVALID_YYYYY_NOT_FOUND');
-                            $errors->push((object)[
-                                'error_code' => $errorCode,
-                                'error_name' => 'Mã cơ sở KBCB trong MA_MAY không đúng',
-                                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
-                                'description' => 'Mã cơ sở KBCB trong MA_MAY: ' . $yyyyy . ' không thuộc: ' . implode(',', config('organization.correct_facility_code'))
-                            ]);
-                        }
-                    }
-                    // Validate in EquipmentCatalog
-                    $existEquipment = EquipmentCatalog::where('ma_may', $maMay)->exists();
-                    if (!$existEquipment) {
-                        $errorCode = $this->generateErrorCode('INFO_ERROR_MA_MAY_NOT_FOUND');
-                        $errors->push((object)[
-                            'error_code' => $errorCode,
-                            'error_name' => 'Mã máy không tồn tại trong danh mục trang thiết bị',
-                            'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
-                            'description' => 'Mã máy không tồn tại: ' . $maMay
+                            'description' => 'Mã cơ sở KBCB trong MA_MAY: ' . $facility . ' không thuộc: ' . implode(',', $validFacilities)
                         ]);
                     }
                 }
             }
+
+            // Kiểm tra tồn tại trong danh mục trang thiết bị theo MA_MAY đầy đủ
+            $existEquipment = EquipmentCatalog::where('ma_may', $maMay)->exists();
+            if (!$existEquipment) {
+                $errorCode = $this->generateErrorCode('INFO_ERROR_MA_MAY_NOT_FOUND');
+                $errors->push((object)[
+                    'error_code' => $errorCode,
+                    'error_name' => 'Mã máy không tồn tại trong danh mục trang thiết bị',
+                    'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+                    'description' => 'Mã máy không tồn tại: ' . $maMay
+                ]);
+            }
         }
+    }
+}
 
         // Check tyle_tt_bh value
         if (isset($data->tyle_tt_bh) && ($data->tyle_tt_bh < 0 || $data->tyle_tt_bh > 100)) {
