@@ -495,59 +495,69 @@ class Qd130Xml3Checker
         $errors = collect();
 
         if (in_array($data->ma_nhom, $this->bedGroupCodes)) {
-            // Kiểm tra định dạng của ma_giuong
-            if (!preg_match($this->bedCodePattern, $data->ma_giuong)) {
+            // Kiểm tra định dạng ma_giuong (null-safe)
+            $maGiuong = (string) ($data->ma_giuong ?? '');
+            if (!preg_match($this->bedCodePattern, $maGiuong)) {
                 $errorCode = $this->generateErrorCode('INVALID_BED_CODE_FORMAT');
                 $errors->push((object)[
                     'error_code' => $errorCode,
                     'error_name' => 'Mã giường không đúng định dạng',
                     'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
-                    'description' => 'Mã giường: ' . $data->ma_giuong . ' không đúng định dạng (ký tự đầu phải là H, T, C, K và 3 ký tự sau là số từ 0 đến 9)'
+                    'description' => 'Mã giường: ' . $maGiuong . ' không đúng định dạng (ký tự đầu phải là H, T, C, K và 3 ký tự sau là số từ 0 đến 9)'
                 ]);
             }
 
-            // Thêm kiểm tra trùng giường
-            $overlappingRecords = Qd130Xml3::where('ma_khoa', $data->ma_khoa)
-            ->where('ma_giuong', $data->ma_giuong)
-            ->where('id', '!=', $data->id) // Loại trừ chính bản ghi hiện tại
-            ->where(function ($query) use ($data) {
-                $query->where(function ($q) use ($data) {
-                        $q->where('ngay_th_yl', '<', $data->ngay_kq)  // ngay_th_yl phải nhỏ hơn ngay_kq hiện tại
-                          ->where('ngay_kq', '>', $data->ngay_th_yl); // ngay_kq phải lớn hơn ngay_th_yl hiện tại
-                    });
-            })
-            ->get();
+            // Chỉ kiểm tra trùng giường khi có đủ khoảng thời gian
+            if (!empty($data->ngay_th_yl) && !empty($data->ngay_kq)) {
+                $overlappingRecords = Qd130Xml3::where('ma_khoa', $data->ma_khoa)
+                    ->where('ma_giuong', $maGiuong)
+                    ->where('id', '!=', $data->id)
+                    ->where(function ($query) use ($data) {
+                        $query->where(function ($q) use ($data) {
+                            $q->where('ngay_th_yl', '<', $data->ngay_kq)
+                              ->where('ngay_kq', '>', $data->ngay_th_yl);
+                        });
+                    })
+                    ->get();
 
-            if ($overlappingRecords->isNotEmpty()) {
-                foreach ($overlappingRecords as $overlappingRecord) {
-                    $errorCode = $this->generateErrorCode('OVERLAPPING_BED_USAGE');
-                    $errors->push((object)[
-                        'error_code' => $errorCode,
-                        'error_name' => 'Giường sử dụng trùng lặp',
-                        'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
-                        'description' => 'Giường ' . $data->ma_giuong . ' tại khoa ' . $data->ma_khoa . 
-                                         ' sử dụng trùng lặp trong khoảng thời gian từ ' . 
-                                         strtodatetime($data->ngay_th_yl) . ' đến ' . strtodatetime($data->ngay_kq) . 
-                                         '. Trùng lặp với hồ sơ có mã: ' . $overlappingRecord->ma_lk . 
-                                         ' (NGAY_TH_YL: ' . strtodatetime($overlappingRecord->ngay_th_yl) . 
-                                         ', NGAY_KQ: ' . strtodatetime($overlappingRecord->ngay_kq) . ')'
-                    ]);
+                if ($overlappingRecords->isNotEmpty()) {
+                    foreach ($overlappingRecords as $overlappingRecord) {
+                        $errorCode = $this->generateErrorCode('OVERLAPPING_BED_USAGE');
+                        $errors->push((object)[
+                            'error_code' => $errorCode,
+                            'error_name' => 'Giường sử dụng trùng lặp',
+                            'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+                            'description' => 'Giường ' . $maGiuong . ' tại khoa ' . $data->ma_khoa .
+                                ' sử dụng trùng lặp trong khoảng thời gian từ ' .
+                                strtodatetime($data->ngay_th_yl) . ' đến ' . strtodatetime($data->ngay_kq) .
+                                '. Trùng lặp với hồ sơ có mã: ' . $overlappingRecord->ma_lk .
+                                ' (NGAY_TH_YL: ' . strtodatetime($overlappingRecord->ngay_th_yl) .
+                                ', NGAY_KQ: ' . strtodatetime($overlappingRecord->ngay_kq) . ')'
+                        ]);
+                    }
                 }
             }
 
-            // Kiểm tra nếu MA_KHOA thuộc danh sách những khoa không kiểm tra giường
-            if (in_array($data->ma_khoa, $this->excludedBedDepartments)) {
+            // Bỏ kiểm tra nếu khoa thuộc danh sách loại trừ
+            if (in_array($data->ma_khoa, $this->excludedBedDepartments, true)) {
                 return $errors;
             }
-            $firstComponent = explode('.', $data->ma_dich_vu)[0];
-            if (strpos($data->ma_khoa, $firstComponent) !== 0) {
-                $errorCode = $this->generateErrorCode('INVALID_DEPARTMENT_CODE');
-                $errors->push((object)[
-                    'error_code' => $errorCode,
-                    'error_name' => 'Khoa chỉ định giường không đúng quy định',
-                    'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
-                    'description' => 'Khoa chỉ định: ' . $data->ma_khoa . '; Mã giường: ' . $data->ma_dich_vu
-                ]);
+
+            // Chỉ kiểm tra tiền tố khoa khi MA_DICH_VU hợp lệ và có first component khác rỗng
+            $maDichVu = (string) ($data->ma_dich_vu ?? '');
+            if ($maDichVu !== '') {
+                $parts = explode('.', $maDichVu, 2);
+                $firstComponent = trim($parts[0] ?? '');
+
+                if ($firstComponent !== '' && strpos($data->ma_khoa, $firstComponent) !== 0) {
+                    $errorCode = $this->generateErrorCode('INVALID_DEPARTMENT_CODE');
+                    $errors->push((object)[
+                        'error_code' => $errorCode,
+                        'error_name' => 'Khoa chỉ định giường không đúng quy định',
+                        'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+                        'description' => 'Khoa chỉ định: ' . $data->ma_khoa . '; Mã giường: ' . $maDichVu
+                    ]);
+                }
             }
         }
 
