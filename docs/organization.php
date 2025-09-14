@@ -32,4 +32,13 @@ return [
     'patient' => [
         'emr_document_type_result_ids' => [6, 22, 160, 3, 28, 4, 14, 25, 26, 27],
     ],
+    'api' => [
+        'access_token' => '8f14e45fceea167a5a36dedd4bea2543',
+        'token_name' => 'HIS-API-Token',
+        'description' => 'Token for Ministry of Health API access',
+        'created_at' => '2024-01-15',
+        'expires_at' => null,
+        'permissions' => ['read:all'],
+        'rate_limit' => 60
+    ],
 ];
