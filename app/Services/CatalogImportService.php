@@ -199,13 +199,13 @@ class CatalogImportService
                 MedicalSupplyCatalog::updateOrCreate(
                     [
                         'ma_vat_tu' => $row[1],  // Mã vật tư
+                        'ten_vat_tu' => $row[3],  // Tên vật tư
                         'tt_thau' => $row[15],   // Thông tin thầu
                         'don_gia_bh' => $row[10],// Đơn giá BHYT
                         'tu_ngay' => $row[16],   // Từ ngày
                     ],
                     [
                         'nhom_vat_tu' => $row[2],    // Nhóm vật tư
-                        'ten_vat_tu' => $row[3],     // Tên vật tư
                         'ma_hieu' => $row[4],        // Mã hiệu
                         'quy_cach' => $row[5],       // Quy cách
                         'hang_sx' => $row[6],        // Hãng sản xuất
