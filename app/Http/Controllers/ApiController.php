@@ -76,7 +76,8 @@ class ApiController extends Controller
             'success' => $success,
             'meta' => [
                 'timestamp' => \Carbon\Carbon::now()->format('YmdHis'),
-                'request_id' => uniqid('req_')
+                'request_id' => uniqid('req_'),
+                'organization' => config('organization.api.organization')
             ]
         ];
 

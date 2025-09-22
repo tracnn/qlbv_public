@@ -39,6 +39,7 @@ return [
         'created_at' => '2024-01-15',
         'expires_at' => null,
         'permissions' => ['read:all'],
-        'rate_limit' => 60
+        'rate_limit' => 60,
+        'organization' => '01013'
     ],
 ];
