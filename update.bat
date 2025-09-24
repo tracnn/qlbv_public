@@ -17,7 +17,7 @@ git reset --hard HEAD
 :: Cập nhật mã nguồn từ GitHub
 echo Pulling latest changes from GitHub...
 git checkout -- composer.lock
-git pull origin main
+git pull public main
 
 :: Chạy các migration (nếu có)
 echo Running migrations...
