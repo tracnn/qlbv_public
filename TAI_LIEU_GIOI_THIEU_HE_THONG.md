@@ -1,8 +1,8 @@
-# Tài liệu giới thiệu hệ thống QLBV (Quản lý Bảo hiểm Y tế)
+# Tài liệu giới thiệu hệ thống Hỗ trợ điều hành
 
 ## 📋 Tổng quan hệ thống
 
-**Hệ thống QLBV** là một hệ thống quản lý bảo hiểm y tế toàn diện được xây dựng trên nền tảng Laravel 5.5, tích hợp với hệ thống HIS (Hospital Information System) để quản lý và xử lý các hoạt động liên quan đến bảo hiểm y tế trong bệnh viện.
+**Hệ thống Hỗ trợ điều hành** là một hệ thống quản lý bảo hiểm y tế toàn diện được xây dựng trên nền tảng Laravel 5.5, tích hợp với hệ thống HIS (Hospital Information System) để quản lý và xử lý các hoạt động liên quan đến bảo hiểm y tế trong bệnh viện.
 
 ### 🎯 Mục tiêu chính
 - Quản lý và kiểm soát các hoạt động khám chữa bệnh có BHYT
@@ -10,6 +10,9 @@
 - Cung cấp các báo cáo thống kê chi tiết
 - Hỗ trợ quản lý hồ sơ XML theo quy định của BHYT
 - Kiểm tra và xác thực thông tin thẻ BHYT
+- Dashboard tổng quan hoạt động của Cơ sở khám chữa bệnh
+- Tra cứu và kiểm soát hồ sơ bệnh án điện tử
+- Tra cứu kết quả cho người bệnh
 
 ---
 
@@ -33,9 +36,12 @@
 - **Xét nghiệm - Chẩn đoán**: Quản lý và theo dõi kết quả xét nghiệm, chẩn đoán hình ảnh
 
 #### 📈 Dashboard
-- Giao diện tổng quan với các chỉ số quan trọng
-- Biểu đồ trực quan hóa dữ liệu
-- Cập nhật thời gian thực
+- **Dashboard tổng quan**: Giao diện tổng quan với các chỉ số quan trọng
+- **Biểu đồ trực quan**: Biểu đồ trực quan hóa dữ liệu theo thời gian thực
+- **Thống kê chi tiết**: Các chỉ số về số lượt khám, bệnh nhân mới, ra viện, chuyển viện
+- **Phân tích dịch vụ**: Thống kê theo loại dịch vụ (khám, xét nghiệm, chẩn đoán hình ảnh, thủ thuật, phẫu thuật)
+- **Báo cáo doanh thu**: Theo dõi doanh thu theo các nguồn và thời gian
+- **Cập nhật thời gian thực**: Dữ liệu được cập nhật liên tục
 
 ### 2. **Cập nhật dữ liệu**
 
@@ -45,9 +51,11 @@
 - Báo cáo tình trạng sức khỏe
 
 #### 📋 Quản lý xếp hàng
-- Quản lý số thứ tự khám bệnh
-- Phân bổ bệnh nhân theo phòng khám
-- Theo dõi thời gian chờ đợi
+- **Đăng ký số thứ tự**: Bệnh nhân đăng ký số thứ tự khám bệnh qua điện thoại
+- **Quản lý hàng đợi**: Phân bổ bệnh nhân theo phòng khám và khoa
+- **Thông báo SMS**: Gửi thông báo số thứ tự qua SMS cho bệnh nhân
+- **Theo dõi thời gian chờ**: Quản lý và theo dõi thời gian chờ đợi của bệnh nhân
+- **In vé số**: Hỗ trợ in vé số thứ tự cho bệnh nhân
 
 ### 3. **Tiêm chủng**
 
@@ -73,8 +81,12 @@
 - Đề xuất sửa chữa
 
 #### 📄 Trả kết quả
-- **Trả kết quả cho bệnh nhân**: Cung cấp kết quả khám chữa bệnh
+- **Trả kết quả cho bệnh nhân**: Cung cấp kết quả khám chữa bệnh qua web
 - **QRCode thanh toán**: Tạo mã QR để thanh toán viện phí
+- **Tra cứu lịch sử khám bệnh**: Bệnh nhân tra cứu lịch sử khám chữa bệnh
+- **Xem chi tiết hồ sơ**: Hiển thị chi tiết hồ sơ bệnh án điện tử
+- **Gộp PDF**: Tự động gộp các tài liệu PDF thành một file
+- **Bảo mật thông tin**: Mã hóa token và giới hạn thời gian truy cập
 
 #### 📊 Báo cáo thống kê
 - **Báo cáo nộp tiền**: Thống kê tình hình thu tiền viện phí
@@ -153,8 +165,39 @@
 
 #### ⚙️ Cấu hình
 - **Kiểm tra chi tiết**: Kiểm tra và cấu hình các thông số hệ thống
-- Quản lý người dùng và phân quyền
-- Cấu hình kết nối với các hệ thống khác
+- **Quản lý người dùng**: Quản lý người dùng và phân quyền chi tiết
+- **Cấu hình kết nối**: Cấu hình kết nối với các hệ thống khác
+- **Nhắc việc tự động**: Hệ thống tự động nhắc nhở các công việc cần thực hiện
+- **Kiểm tra lỗi hệ thống**: Theo dõi và báo cáo lỗi hệ thống
+- **Quản lý hàng đợi**: Kiểm tra và quản lý các job trong hàng đợi
+- **Upload XML**: Tải lên và xử lý các file XML
+- **Tham số hệ thống**: Cấu hình các tham số vận hành hệ thống
+
+### 12. **Thu ngân**
+
+#### 💰 Quản lý thanh toán
+- **Thanh toán viện phí**: Xử lý thanh toán cho bệnh nhân
+- **Tạm ứng/Hoàn ứng**: Quản lý tạm ứng và hoàn ứng tiền
+- **Báo cáo thu tiền**: Thống kê tình hình thu tiền viện phí
+- **QR Code thanh toán**: Tạo mã QR để thanh toán
+- **Broadcast thông báo**: Gửi thông báo thanh toán thời gian thực
+- **Export báo cáo**: Xuất báo cáo thanh toán ra Excel
+
+### 13. **Điều dưỡng**
+
+#### 👩‍⚕️ Thực hiện y lệnh
+- **Ghi nhận y lệnh**: Ghi nhận việc thực hiện y lệnh của điều dưỡng
+- **Theo dõi tình trạng**: Theo dõi tình trạng thực hiện y lệnh
+- **Báo cáo kết quả**: Báo cáo kết quả thực hiện y lệnh
+- **Quản lý thuốc**: Theo dõi việc thực hiện y lệnh thuốc
+
+### 14. **Tra cứu lịch sử khám chữa bệnh**
+
+#### 🔍 QHisPlus
+- **Tra cứu lịch sử**: Tra cứu lịch sử khám chữa bệnh của bệnh nhân
+- **Chi tiết hồ sơ**: Xem chi tiết từng lần khám chữa bệnh
+- **Tìm kiếm đa tiêu chí**: Tìm kiếm theo mã BN, mã ĐT, CCCD, số điện thoại
+- **Hiển thị thông tin**: Hiển thị đầy đủ thông tin bệnh nhân và quá trình điều trị
 
 ---
 
@@ -166,20 +209,32 @@
 - Mã hóa dữ liệu nhạy cảm
 
 ### 📊 API Dashboard
-- 15 API endpoints cung cấp dữ liệu thống kê
-- Rate limiting 60 requests/phút
-- Hỗ trợ phân trang và sắp xếp
-- Định dạng JSON chuẩn
+- **15 API endpoints** cung cấp dữ liệu thống kê
+- **Rate limiting** 60 requests/phút
+- **Hỗ trợ phân trang** và sắp xếp
+- **Định dạng JSON** chuẩn
+- **API thống kê điều trị**: Số lượt khám, bệnh nhân mới, ra viện
+- **API thống kê doanh thu**: Doanh thu theo thời gian và nguồn
+- **API dịch vụ kỹ thuật**: Thống kê theo loại dịch vụ
+- **API nội trú/ngoại trú**: Phân tích hoạt động điều trị
 
 ### 🔄 Tích hợp
-- Kết nối với hệ thống HIS
-- Đồng bộ dữ liệu thời gian thực
-- Tích hợp với hệ thống BHYT quốc gia
+- **Kết nối HIS**: Kết nối với hệ thống HIS để đồng bộ dữ liệu
+- **Đồng bộ thời gian thực**: Dữ liệu được cập nhật liên tục
+- **Tích hợp BHYT**: Kết nối với hệ thống BHYT quốc gia
+- **Pusher realtime**: Thông báo thời gian thực qua Pusher
+- **SMS Integration**: Tích hợp gửi SMS thông báo
+- **Email Reports**: Gửi báo cáo tự động qua email
+- **PACS Integration**: Kết nối với hệ thống PACS để xem hình ảnh
 
 ### 📱 Giao diện
-- Responsive design
-- Dashboard trực quan
-- Hỗ trợ đa ngôn ngữ (Tiếng Việt)
+- **Responsive design**: Tương thích với mọi thiết bị
+- **Dashboard trực quan**: Giao diện thân thiện với người dùng
+- **Đa ngôn ngữ**: Hỗ trợ tiếng Việt
+- **QR Code**: Tích hợp tạo và hiển thị mã QR
+- **PDF Viewer**: Xem tài liệu PDF trực tiếp trên web
+- **DataTables**: Bảng dữ liệu với tìm kiếm và phân trang
+- **Real-time updates**: Cập nhật dữ liệu thời gian thực
 
 ---
 
@@ -230,7 +285,7 @@
 
 Để được hỗ trợ sử dụng hệ thống, vui lòng liên hệ:
 
-- **Email**: support@qlbv.com
+- **Email**: support@hothotro.com
 - **Hotline**: 1900-xxxx
 - **Tài liệu**: Xem các file API_README.md, API_USER_GUIDE.md, API_QUICK_START_GUIDE.md
 
