@@ -1,7 +1,5 @@
 <?php
 
-use Illuminate\Support\Facades\Crypt;
-
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -639,26 +637,8 @@ Route::get('/pdf/flip', 'PdfFlipController@show')->name('pdf.flip.show');
 Route::get('/pdf/merged/{mergeId}', 'PdfFlipController@file')->name('pdf.flip.file');
 
 // Giữ lại routes cũ để tương thích ngược (redirect đến flip)
-Route::get('/api/view-merge-pdf', function(\Illuminate\Http\Request $request) {
-    $token = $request->get('token');
-    if ($token) {
-        return redirect()->route('pdf.flip.show', ['token' => $token]);
-    }
-    abort(400, 'Thiếu token');
-})->name('view-merge-pdf');
+Route::get('/api/view-merge-pdf', 'PdfLegacyRedirectController@viewMergePdf')
+    ->name('view-merge-pdf');
 
-Route::get('/api/merge-pdf-secure', function(\Illuminate\Http\Request $request) {
-    $token = $request->get('token');
-    if ($token) {
-        // Tạo mergeId từ token
-        $decrypted = \Illuminate\Support\Facades\Crypt::decryptString($token);
-        [$treatmentCode, $createdAt, $expiresIn] = explode('|', $decrypted);
-        $mergeId = md5($treatmentCode . $createdAt . $expiresIn);
-        
-        return redirect()->route('pdf.flip.file', [
-            'mergeId' => $mergeId, 
-            'token' => $token
-        ]);
-    }
-    return response()->json(['error' => 'Thiếu token'], 400);
-})->name('merge-pdf-secure');
+Route::get('/api/merge-pdf-secure', 'PdfLegacyRedirectController@mergePdfSecure')
+    ->name('merge-pdf-secure');
