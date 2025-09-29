@@ -132,8 +132,7 @@
             height: 100%;
             object-fit: contain;
             display: block;
-            image-rendering: optimizeSpeed; /* Tối ưu tốc độ render */
-            image-rendering: -webkit-optimize-contrast; /* Tối ưu cho WebKit */
+            image-rendering: auto; /* Giữ chất lượng hình ảnh cao */
         }
         
         /* Đảm bảo PDF không bị cắt */
@@ -164,8 +163,7 @@
             width: 100%;
             height: 100%;
             object-fit: contain;
-            image-rendering: optimizeSpeed; /* Tối ưu tốc độ render */
-            image-rendering: -webkit-optimize-contrast; /* Tối ưu cho WebKit */
+            image-rendering: auto; /* Giữ chất lượng hình ảnh cao */
         }
         
         /* Loading animation for Turn.js */
@@ -486,24 +484,24 @@
           }
         });
         
-        // Render PDF pages với tối ưu tốc độ
+        // Render PDF pages với chất lượng cao
         var renderPromises = [];
         for (var i = 1; i <= total; i++) {
           (function(pageNum) {
             var renderPromise = pdf.getPage(pageNum).then(function(page) {
-              var viewport = page.getViewport({ scale: 1.2 }); // Giảm scale từ 1.5 xuống 1.2
+              var viewport = page.getViewport({ scale: 1.5 }); // Giữ scale cao cho chất lượng
               var canvas = document.createElement("canvas");
               var ctx = canvas.getContext("2d");
               canvas.width = viewport.width;
               canvas.height = viewport.height;
               
-              // Tối ưu chất lượng render
+              // Giữ chất lượng render cao
               ctx.imageSmoothingEnabled = true;
-              ctx.imageSmoothingQuality = 'medium';
+              ctx.imageSmoothingQuality = 'high';
               
               return page.render({ canvasContext: ctx, viewport }).promise.then(function() {
                 var pageDiv = $('<div class="page"></div>');
-                var img = $('<img>').attr('src', canvas.toDataURL('image/jpeg', 0.8)); // Giảm chất lượng từ 0.9 xuống 0.8
+                var img = $('<img>').attr('src', canvas.toDataURL('image/jpeg', 0.9)); // Giữ chất lượng cao
                 pageDiv.append(img);
                 $('#magazine').turn('addPage', pageDiv, pageNum);
                 return pageNum;
@@ -570,11 +568,11 @@
           var images = [];
           var renderPromises = [];
           
-          // Render từng trang PDF với tối ưu tốc độ
+          // Render từng trang PDF với chất lượng cao
           for (var i = 1; i <= total; i++) {
             var renderPromise = pdf.getPage(i).then(function(page) {
-              // Giảm scale để tăng tốc độ render (từ 2.0 xuống 1.3)
-              var viewport = page.getViewport({ scale: 1.3 });
+              // Giữ scale cao để có chất lượng tốt
+              var viewport = page.getViewport({ scale: 2.0 });
               var canvas = document.createElement("canvas");
               var ctx = canvas.getContext("2d");
               
@@ -582,16 +580,16 @@
               canvas.width = viewport.width;
               canvas.height = viewport.height;
               
-              // Tối ưu chất lượng render cho tốc độ
+              // Giữ chất lượng render cao
               ctx.imageSmoothingEnabled = true;
-              ctx.imageSmoothingQuality = 'medium'; // Giảm từ 'high' xuống 'medium'
+              ctx.imageSmoothingQuality = 'high';
               
               return page.render({ 
                 canvasContext: ctx, 
                 viewport: viewport 
               }).promise.then(function() {
-                // Giảm chất lượng JPEG để tăng tốc độ (từ 0.95 xuống 0.8)
-                return canvas.toDataURL("image/jpeg", 0.8);
+                // Giữ chất lượng JPEG cao
+                return canvas.toDataURL("image/jpeg", 0.95);
               });
             });
             renderPromises.push(renderPromise);
@@ -770,16 +768,16 @@
         if (!pdfDoc) return;
         
         pdfDoc.getPage(pageNum).then(function(page) {
-          // Tối ưu scale cho tốc độ (từ 2.0 xuống 1.3)
-          var viewport = page.getViewport({ scale: 1.3 });
+          // Giữ scale cao để có chất lượng tốt
+          var viewport = page.getViewport({ scale: 2.0 });
           
           // Đặt kích thước canvas
           canvas.height = viewport.height;
           canvas.width = viewport.width;
           
-          // Tối ưu chất lượng render cho tốc độ
+          // Giữ chất lượng render cao
           ctx.imageSmoothingEnabled = true;
-          ctx.imageSmoothingQuality = 'medium'; // Giảm từ 'high' xuống 'medium'
+          ctx.imageSmoothingQuality = 'high';
           
           return page.render({
             canvasContext: ctx,
