@@ -89,6 +89,60 @@
             color: #764ba2;
         }
         
+        /* Progress Bar Styles */
+        .progress-container {
+            margin-top: 8px;
+            width: 100%;
+        }
+        
+        .progress-bar-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .progress-bar {
+            flex: 1;
+            height: 6px;
+            background: rgba(102, 126, 234, 0.2);
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border-radius: 10px;
+            width: 0%;
+            transition: width 0.3s ease;
+            position: relative;
+        }
+        
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            animation: shimmer 1.5s infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        
+        .progress-text {
+            font-size: 11px;
+            font-weight: 600;
+            color: #667eea;
+            min-width: 35px;
+            text-align: right;
+        }
+        
         .flipbook-container {
             background: #f8f9fa;
             border-radius: 15px;
@@ -229,6 +283,19 @@
                 padding: 4px 8px;
                 font-size: 11px;
             }
+            
+            .progress-container {
+                margin-top: 5px;
+            }
+            
+            .progress-text {
+                font-size: 10px;
+                min-width: 30px;
+            }
+            
+            .progress-bar {
+                height: 4px;
+            }
         }
     </style>
 </head>
@@ -256,6 +323,14 @@
                                 <i class="fas fa-chevron-right ml-1"></i>
                             </button>
                             <span id="status" class="status-text">Đang tải...</span>
+                            <div id="progress-container" class="progress-container" style="display: none;">
+                                <div class="progress-bar-wrapper">
+                                    <div class="progress-bar">
+                                        <div id="progress-fill" class="progress-fill"></div>
+                                    </div>
+                                    <span id="progress-text" class="progress-text">0%</span>
+                                </div>
+                            </div>
                         </div>
                         <div class="col-md-4 text-right">
                             <a href="{{ $pdfUrl }}" target="_blank" class="link-custom">
@@ -352,6 +427,25 @@
       setTimeout(initFlipbook, 500);
     });
 
+    // Progress bar management functions
+    function showProgress() {
+      $('#progress-container').show();
+      $('#status').hide();
+    }
+    
+    function hideProgress() {
+      $('#progress-container').hide();
+      $('#status').show();
+    }
+    
+    function updateProgress(percent, message) {
+      $('#progress-fill').css('width', percent + '%');
+      $('#progress-text').text(percent + '%');
+      if (message) {
+        $('#status').text(message).show();
+      }
+    }
+
     function initFlipbook() {
       var pdfUrl = "{{ $pdfUrl }}";
       var $flipContainer = $("#flipbook");
@@ -442,6 +536,8 @@
       loadingTask.promise.then(function(pdf) {
         var total = pdf.numPages;
         $statusEl.text('Đang render ' + total + ' trang với Turn.js...');
+        showProgress();
+        updateProgress(0, 'Bắt đầu render PDF với Turn.js...');
         
         // Tạo container cho Turn.js
         $flipContainer.html('<div id="magazine" class="turn-loading"></div>');
@@ -484,8 +580,9 @@
           }
         });
         
-        // Render PDF pages với chất lượng cao
+        // Render PDF pages với chất lượng cao và hiển thị tiến trình
         var renderPromises = [];
+        var completedPages = 0;
         for (var i = 1; i <= total; i++) {
           (function(pageNum) {
             var renderPromise = pdf.getPage(pageNum).then(function(page) {
@@ -504,6 +601,12 @@
                 var img = $('<img>').attr('src', canvas.toDataURL('image/jpeg', 0.9)); // Giữ chất lượng cao
                 pageDiv.append(img);
                 $('#magazine').turn('addPage', pageDiv, pageNum);
+                
+                // Cập nhật tiến trình
+                completedPages++;
+                var percent = Math.round((completedPages / total) * 100);
+                updateProgress(percent, 'Đang render trang ' + completedPages + '/' + total + ' (Turn.js)');
+                
                 return pageNum;
               });
             });
@@ -512,7 +615,10 @@
         }
         
         Promise.all(renderPromises).then(function() {
-          $statusEl.text('Hoàn tất (' + total + ' trang) - Turn.js flipbook');
+          updateProgress(100, 'Hoàn tất (' + total + ' trang) - Turn.js flipbook');
+          setTimeout(function() {
+            hideProgress();
+          }, 1000);
           console.log('Turn.js flipbook initialized successfully');
         });
         
@@ -547,6 +653,8 @@
         loadingTask.promise.then(function(pdf) {
           var total = pdf.numPages;
           $statusEl.text('Đang render ' + total + ' trang...');
+          showProgress();
+          updateProgress(0, 'Bắt đầu render PDF...');
           
           // Khởi tạo StPageFlip với cấu hình tối ưu cho tốc độ
           var flip = new St.PageFlip($flipContainer[0], {
@@ -568,31 +676,41 @@
           var images = [];
           var renderPromises = [];
           
-          // Render từng trang PDF với chất lượng cao
+          // Render từng trang PDF với chất lượng cao và hiển thị tiến trình
+          var completedPages = 0;
           for (var i = 1; i <= total; i++) {
-            var renderPromise = pdf.getPage(i).then(function(page) {
-              // Giữ scale cao để có chất lượng tốt
-              var viewport = page.getViewport({ scale: 2.0 });
-              var canvas = document.createElement("canvas");
-              var ctx = canvas.getContext("2d");
-              
-              // Đặt kích thước canvas
-              canvas.width = viewport.width;
-              canvas.height = viewport.height;
-              
-              // Giữ chất lượng render cao
-              ctx.imageSmoothingEnabled = true;
-              ctx.imageSmoothingQuality = 'high';
-              
-              return page.render({ 
-                canvasContext: ctx, 
-                viewport: viewport 
-              }).promise.then(function() {
-                // Giữ chất lượng JPEG cao
-                return canvas.toDataURL("image/jpeg", 0.95);
+            (function(pageNum) {
+              var renderPromise = pdf.getPage(pageNum).then(function(page) {
+                // Giữ scale cao để có chất lượng tốt
+                var viewport = page.getViewport({ scale: 2.0 });
+                var canvas = document.createElement("canvas");
+                var ctx = canvas.getContext("2d");
+                
+                // Đặt kích thước canvas
+                canvas.width = viewport.width;
+                canvas.height = viewport.height;
+                
+                // Giữ chất lượng render cao
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = 'high';
+                
+                return page.render({ 
+                  canvasContext: ctx, 
+                  viewport: viewport 
+                }).promise.then(function() {
+                  // Giữ chất lượng JPEG cao
+                  var imageData = canvas.toDataURL("image/jpeg", 0.95);
+                  
+                  // Cập nhật tiến trình
+                  completedPages++;
+                  var percent = Math.round((completedPages / total) * 100);
+                  updateProgress(percent, 'Đang render trang ' + completedPages + '/' + total);
+                  
+                  return imageData;
+                });
               });
-            });
-            renderPromises.push(renderPromise);
+              renderPromises.push(renderPromise);
+            })(i);
           }
           
           // Đợi tất cả trang được render
@@ -700,7 +818,10 @@
               }
             }, 1000);
             
-            $statusEl.text('Hoàn tất (' + total + ' trang) - Có thể lật trang');
+            updateProgress(100, 'Hoàn tất (' + total + ' trang) - Có thể lật trang');
+            setTimeout(function() {
+              hideProgress();
+            }, 1000);
             console.log('StPageFlip initialized successfully with', total, 'pages');
             
             deferred.resolve();
@@ -809,7 +930,11 @@
         totalPages = pdf.numPages;
         
         $("#total-pages").text(totalPages);
-        $statusEl.text('Đã tải PDF (' + totalPages + ' trang) - Chế độ đơn giản');
+        showProgress();
+        updateProgress(100, 'Đã tải PDF (' + totalPages + ' trang) - Chế độ đơn giản');
+        setTimeout(function() {
+          hideProgress();
+        }, 1000);
         
         // Hiển thị trang đầu tiên
         renderPage(1);
