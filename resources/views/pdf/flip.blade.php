@@ -145,13 +145,12 @@
         
         .flipbook-container {
             background: #f8f9fa;
-            border-radius: 15px;
-            padding: 10px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-            backdrop-filter: blur(10px);
+            padding: 20px;
             display: flex;
             justify-content: center;
+            align-items: center;
             height: calc(100vh - 120px);
+            position: relative;
         }
         
         #flipbook {
@@ -159,26 +158,28 @@
             max-width: 1000px;
             height: 100%;
             margin: 0 auto;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-            border-radius: 10px;
             overflow: visible;
             background: #fff;
+            position: relative;
+            z-index: 1;
         }
         
-        /* StPageFlip custom styling với tối ưu hiệu suất */
+        /* StPageFlip custom styling với viền đơn giản như tài liệu y tế */
         .page-flip {
             width: 100% !important;
             height: 100% !important;
             will-change: transform; /* Tối ưu cho animation */
             transform: translateZ(0); /* Kích hoạt hardware acceleration */
+            border: 1px solid #000; /* Viền đen mỏng như tài liệu y tế */
+            background: #fff;
         }
         
         .page-flip .page {
             background: #fff;
-            border: 1px solid #ddd;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border: 1px solid #000; /* Viền đen mỏng cho từng trang */
             will-change: transform; /* Tối ưu cho animation */
             transform: translateZ(0); /* Kích hoạt hardware acceleration */
+            position: relative;
         }
         
         .page-flip .page img {
@@ -187,6 +188,7 @@
             object-fit: contain;
             display: block;
             image-rendering: auto; /* Giữ chất lượng hình ảnh cao */
+            border: 1px solid #000; /* Viền đen mỏng cho từng ảnh PDF */
         }
         
         /* Đảm bảo PDF không bị cắt */
@@ -196,21 +198,23 @@
             overflow: visible;
         }
         
-        /* Turn.js styling với tối ưu hiệu suất */
+        /* Turn.js styling với viền đơn giản như tài liệu y tế */
         #magazine {
             width: 950px;
             height: 700px;
             margin: 0 auto;
             will-change: transform; /* Tối ưu cho animation */
             transform: translateZ(0); /* Kích hoạt hardware acceleration */
+            border: 1px solid #000; /* Viền đen mỏng như tài liệu y tế */
+            background: #fff;
         }
         
         #magazine .page {
             background: white;
-            border: 1px solid #ccc;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border: 1px solid #000; /* Viền đen mỏng cho từng trang */
             will-change: transform; /* Tối ưu cho animation */
             transform: translateZ(0); /* Kích hoạt hardware acceleration */
+            position: relative;
         }
         
         #magazine .page img {
@@ -218,6 +222,7 @@
             height: 100%;
             object-fit: contain;
             image-rendering: auto; /* Giữ chất lượng hình ảnh cao */
+            border: 1px solid #000; /* Viền đen mỏng cho từng ảnh PDF */
         }
         
         /* Loading animation for Turn.js */
@@ -249,6 +254,12 @@
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
+        }
+        
+        /* Viền cho canvas trong chế độ đơn giản */
+        #pdf-canvas {
+            border: 1px solid #000 !important;
+            display: block;
         }
         
         @media (max-width: 768px) {
@@ -598,7 +609,7 @@
               
               return page.render({ canvasContext: ctx, viewport }).promise.then(function() {
                 var pageDiv = $('<div class="page"></div>');
-                var img = $('<img>').attr('src', canvas.toDataURL('image/jpeg', 0.9)); // Giữ chất lượng cao
+                var img = $('<img>').attr('src', canvas.toDataURL('image/jpeg', 0.9)).css('border', '1px solid #000'); // Giữ chất lượng cao và thêm viền
                 pageDiv.append(img);
                 $('#magazine').turn('addPage', pageDiv, pageNum);
                 
@@ -735,7 +746,8 @@
                   var img = $('<img>').attr('src', images[i]).css({
                     'width': '100%',
                     'height': '100%',
-                    'object-fit': 'contain'
+                    'object-fit': 'contain',
+                    'border': '1px solid #000' // Thêm viền cho từng ảnh
                   });
                   pageDiv.append(img);
                   $flipContainer.append(pageDiv);
@@ -855,12 +867,12 @@
       var totalPages = 0;
       var pdfDoc = null;
       
-      // Tạo container đơn giản
+      // Tạo container đơn giản với viền như tài liệu y tế
       $flipContainer.html(
-        '<div style="display: flex; justify-content: center; align-items: center; height: 100%; background: #f5f5f5; border: 1px solid #ddd; border-radius: 10px;">' +
-          '<div id="pdf-page-container" style="text-align: center;">' +
-            '<canvas id="pdf-canvas" style="max-width: 100%; max-height: 100%; border: 1px solid #ccc; border-radius: 5px;"></canvas>' +
-            '<div style="margin-top: 10px; font-size: 14px; color: #666;">' +
+        '<div style="display: flex; justify-content: center; align-items: center; height: 100%; background: #f8f9fa; padding: 20px;">' +
+          '<div id="pdf-page-container" style="text-align: center; background: #fff; padding: 20px; border: 1px solid #000;">' +
+            '<canvas id="pdf-canvas" style="max-width: 100%; max-height: 100%; border: 1px solid #000; display: block;"></canvas>' +
+            '<div style="margin-top: 15px; font-size: 14px; color: #333; font-weight: 600;">' +
               'Trang <span id="current-page">1</span> / <span id="total-pages">0</span>' +
             '</div>' +
           '</div>' +
