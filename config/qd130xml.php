@@ -41,6 +41,7 @@ return [
     'xml1' => [
         'ma_doituong_kcb_trai_tuyen' => ['3'],
         'the_bhyt_cbcs_pattern' => ['CA', 'QN', 'CY'],
+        'ma_loai_kcb_khong_tinh_ngay_dieu_tri' => ['01', '07', '09'],
     ],
     'xml2' => [
         'tt_thau' => [ // Bổ sung quy tắc định dạng tt_thau

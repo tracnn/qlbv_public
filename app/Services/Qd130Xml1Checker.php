@@ -66,6 +66,7 @@ class Qd130Xml1Checker
         //$errors = $errors->merge($this->checkInvalidBedDays($data));
         $errors = $errors->merge($this->checkSpecialInpatientConditions($data));
         $errors = $errors->merge($this->checkDiseaseIcdCodes($data));
+        $errors = $errors->merge($this->checkMaLoaiKcbKhongTinhNgayDieuTri($data));
 
         // Save errors to xml_error_checks table
         $this->xmlErrorService->saveErrors($this->xmlType, $data->ma_lk, $data->stt, $errors);
@@ -858,6 +859,24 @@ class Qd130Xml1Checker
                     ]);
                 }
             }
+        }
+
+        return $errors;
+    }
+
+    private function checkMaLoaiKcbKhongTinhNgayDieuTri(Qd130Xml1 $data): Collection
+    {
+        $errors = collect();
+        
+        if (in_array($data->ma_loai_kcb, config('qd130xml.xml1.ma_loai_kcb_khong_tinh_ngay_dieu_tri'))
+        && ($data->so_ngay_dtri > 0)) {
+            $errorCode = $this->generateErrorCode('MA_LOAI_KCB_KHONG_TINH_NGAY_DIEU_TRI');
+            $errors->push((object)[
+                'error_code' => $errorCode,
+                'error_name' => 'Mã loại KCB không tính ngày điều trị',
+                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+                'description' => 'Mã loại KCB không tính ngày điều trị: ' . $data->ma_loai_kcb . ' và số ngày điều trị: ' . $data->so_ngay_dtri
+            ]);
         }
 
         return $errors;
