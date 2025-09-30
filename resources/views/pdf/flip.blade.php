@@ -482,11 +482,20 @@
         $('#status').text(message).show();
       }
     }
+    
+    // Function to completely remove loading elements
+    function removeLoadingElements() {
+      $('#flipbook').removeClass('loading').find('.loading').remove();
+      $('.loading').remove(); // Remove any remaining loading elements
+    }
 
     function initFlipbook() {
       var pdfUrl = "{{ $pdfUrl }}";
       var $flipContainer = $("#flipbook");
       var $statusEl = $("#status");
+      
+      // Xóa loading element ngay từ đầu
+      removeLoadingElements();
       
       // Kiểm tra xem StPageFlip đã được tải chưa
       if (typeof St === 'undefined' || typeof St.PageFlip === 'undefined') {
@@ -576,7 +585,8 @@
         showProgress();
         updateProgress(0, 'Bắt đầu render PDF với Turn.js...');
         
-        // Tạo container cho Turn.js
+        // Xóa loading element và tạo container cho Turn.js
+        removeLoadingElements();
         $flipContainer.html('<div id="magazine" class="turn-loading"></div>');
         
         // Khởi tạo Turn.js với cấu hình tối ưu tốc độ
@@ -695,6 +705,9 @@
           showProgress();
           updateProgress(0, 'Bắt đầu render PDF...');
           
+          // Xóa loading element trước khi khởi tạo flipbook
+          removeLoadingElements();
+          
           // Khởi tạo StPageFlip với cấu hình tối ưu cho tốc độ
           var flip = new St.PageFlip($flipContainer[0], {
             width: 550,
@@ -767,6 +780,7 @@
               
               try {
                 // Cách 2: Tạo HTML pages và sử dụng loadFromHtml
+                removeLoadingElements();
                 $flipContainer.empty();
                 
                 for (var i = 0; i < images.length; i++) {
@@ -897,7 +911,8 @@
       var totalPages = 0;
       var pdfDoc = null;
       
-      // Tạo container đơn giản với giao diện StPageFlip
+      // Xóa loading element và tạo container đơn giản với viền như tài liệu y tế
+      removeLoadingElements();
       $flipContainer.html(
         '<div style="display: flex; justify-content: center; align-items: center; height: 100%; background: #ffffff; padding: 0 20px;">' +
           '<div id="pdf-page-container" style="text-align: center; background: #fff; padding: 20px; border: 1px solid #000; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1); border-radius: 8px;">' +
