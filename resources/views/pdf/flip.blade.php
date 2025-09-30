@@ -285,6 +285,20 @@
         #pdf-canvas {
             border: 1px solid #000 !important;
             display: block;
+            image-rendering: -webkit-optimize-contrast; /* Tối ưu hiển thị văn bản */
+            image-rendering: crisp-edges; /* Làm sắc nét văn bản */
+            image-rendering: pixelated; /* Giữ độ sắc nét pixel */
+        }
+        
+        /* Tối ưu hiển thị văn bản cho tất cả hình ảnh PDF */
+        .page-flip .page img,
+        #magazine .page img,
+        #pdf-canvas {
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: crisp-edges;
+            image-rendering: pixelated;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
         
         @media (max-width: 768px) {
@@ -401,11 +415,12 @@
     pdfjsLib.GlobalWorkerOptions.workerSrc =
         "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.14.305/pdf.worker.min.js";
     
-    // Tối ưu cấu hình PDF.js cho hiệu suất
+    // Tối ưu cấu hình PDF.js cho chất lượng văn bản cao
     pdfjsLib.GlobalWorkerOptions.workerPort = null;
-    pdfjsLib.GlobalWorkerOptions.maxImageSize = 2048 * 2048; // Giới hạn kích thước hình ảnh
-    pdfjsLib.GlobalWorkerOptions.disableAutoFetch = true; // Tắt auto fetch để tăng tốc độ
-    pdfjsLib.GlobalWorkerOptions.disableStream = true; // Tắt stream để tăng tốc độ
+    pdfjsLib.GlobalWorkerOptions.maxImageSize = 4096 * 4096; // Tăng kích thước hình ảnh để giữ chất lượng văn bản
+    pdfjsLib.GlobalWorkerOptions.disableAutoFetch = false; // Bật auto fetch để tải đầy đủ dữ liệu
+    pdfjsLib.GlobalWorkerOptions.disableStream = false; // Bật stream để tải dữ liệu đầy đủ
+    pdfjsLib.GlobalWorkerOptions.verbosity = 0; // Giảm log để tăng hiệu suất
 </script>
 
     <!-- StPageFlip - Correct CDN Sources -->
@@ -569,14 +584,16 @@
       
       $statusEl.text('Đang tải PDF với Turn.js...');
       
-      // Tối ưu cấu hình tải PDF cho Turn.js
+      // Tối ưu cấu hình tải PDF cho Turn.js với chất lượng văn bản cao
       var loadingTask = pdfjsLib.getDocument({
         url: pdfUrl,
-        disableAutoFetch: true,
-        disableStream: true,
-        maxImageSize: 1024 * 1024,
+        disableAutoFetch: false, // Bật auto fetch để tải đầy đủ dữ liệu
+        disableStream: false, // Bật stream để tải dữ liệu đầy đủ
+        maxImageSize: 4096 * 4096, // Tăng kích thước để giữ chất lượng văn bản
         cMapUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.14.305/cmaps/',
-        cMapPacked: true
+        cMapPacked: true,
+        useSystemFonts: true, // Sử dụng font hệ thống để render văn bản tốt hơn
+        standardFontDataUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.14.305/standard_fonts/'
       });
       
       loadingTask.promise.then(function(pdf) {
@@ -633,19 +650,21 @@
         for (var i = 1; i <= total; i++) {
           (function(pageNum) {
             var renderPromise = pdf.getPage(pageNum).then(function(page) {
-              var viewport = page.getViewport({ scale: 1.5 }); // Giữ scale cao cho chất lượng
+              var viewport = page.getViewport({ scale: 2.5 }); // Tăng scale để giữ chất lượng văn bản cao
               var canvas = document.createElement("canvas");
               var ctx = canvas.getContext("2d");
               canvas.width = viewport.width;
               canvas.height = viewport.height;
               
-              // Giữ chất lượng render cao
+              // Tối ưu chất lượng render cho văn bản
               ctx.imageSmoothingEnabled = true;
               ctx.imageSmoothingQuality = 'high';
+              ctx.textRenderingOptimization = 'optimizeQuality'; // Tối ưu render văn bản
+              ctx.textBaseline = 'alphabetic';
               
               return page.render({ canvasContext: ctx, viewport }).promise.then(function() {
                 var pageDiv = $('<div class="page"></div>');
-                var img = $('<img>').attr('src', canvas.toDataURL('image/jpeg', 1)).css('border', '1px solid #000'); // Giữ chất lượng cao và thêm viền
+                var img = $('<img>').attr('src', canvas.toDataURL('image/png', 1)).css('border', '1px solid #000'); // Sử dụng PNG để giữ chất lượng văn bản cao
                 pageDiv.append(img);
                 $('#magazine').turn('addPage', pageDiv, pageNum);
                 
@@ -689,14 +708,16 @@
         
         $statusEl.text('Đang tải PDF...');
         
-        // Tối ưu cấu hình tải PDF
+        // Tối ưu cấu hình tải PDF với chất lượng văn bản cao
         var loadingTask = pdfjsLib.getDocument({
           url: pdfUrl,
-          disableAutoFetch: true,
-          disableStream: true,
-          maxImageSize: 1024 * 1024,
+          disableAutoFetch: false, // Bật auto fetch để tải đầy đủ dữ liệu
+          disableStream: false, // Bật stream để tải dữ liệu đầy đủ
+          maxImageSize: 4096 * 4096, // Tăng kích thước để giữ chất lượng văn bản
           cMapUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.14.305/cmaps/',
-          cMapPacked: true
+          cMapPacked: true,
+          useSystemFonts: true, // Sử dụng font hệ thống để render văn bản tốt hơn
+          standardFontDataUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.14.305/standard_fonts/'
         });
         
         loadingTask.promise.then(function(pdf) {
@@ -733,8 +754,8 @@
           for (var i = 1; i <= total; i++) {
             (function(pageNum) {
               var renderPromise = pdf.getPage(pageNum).then(function(page) {
-                // Giữ scale cao để có chất lượng tốt
-                var viewport = page.getViewport({ scale: 2.0 });
+                // Tăng scale cao để giữ chất lượng văn bản tốt nhất
+                var viewport = page.getViewport({ scale: 3.0 });
                 var canvas = document.createElement("canvas");
                 var ctx = canvas.getContext("2d");
                 
@@ -742,16 +763,18 @@
                 canvas.width = viewport.width;
                 canvas.height = viewport.height;
                 
-                // Giữ chất lượng render cao
+                // Tối ưu chất lượng render cho văn bản
                 ctx.imageSmoothingEnabled = true;
                 ctx.imageSmoothingQuality = 'high';
+                ctx.textRenderingOptimization = 'optimizeQuality'; // Tối ưu render văn bản
+                ctx.textBaseline = 'alphabetic';
                 
                 return page.render({ 
                   canvasContext: ctx, 
                   viewport: viewport 
                 }).promise.then(function() {
-                  // Giữ chất lượng JPEG cao
-                  var imageData = canvas.toDataURL("image/jpeg", 1);
+                  // Giữ chất lượng PNG cao để bảo toàn văn bản
+                  var imageData = canvas.toDataURL("image/png", 1);
                   
                   // Cập nhật tiến trình
                   completedPages++;
@@ -946,16 +969,18 @@
         if (!pdfDoc) return;
         
         pdfDoc.getPage(pageNum).then(function(page) {
-          // Giữ scale cao để có chất lượng tốt
-          var viewport = page.getViewport({ scale: 2.0 });
+          // Tăng scale cao để giữ chất lượng văn bản tốt nhất
+          var viewport = page.getViewport({ scale: 3.0 });
           
           // Đặt kích thước canvas
           canvas.height = viewport.height;
           canvas.width = viewport.width;
           
-          // Giữ chất lượng render cao
+          // Tối ưu chất lượng render cho văn bản
           ctx.imageSmoothingEnabled = true;
           ctx.imageSmoothingQuality = 'high';
+          ctx.textRenderingOptimization = 'optimizeQuality'; // Tối ưu render văn bản
+          ctx.textBaseline = 'alphabetic';
           
           return page.render({
             canvasContext: ctx,
@@ -970,16 +995,18 @@
         });
       }
       
-      // Tải PDF với cấu hình tối ưu
+      // Tải PDF với cấu hình tối ưu cho chất lượng văn bản cao
       $statusEl.text('Đang tải PDF...');
       
       var loadingTask = pdfjsLib.getDocument({
         url: pdfUrl,
-        disableAutoFetch: true,
-        disableStream: true,
-        maxImageSize: 1024 * 1024,
+        disableAutoFetch: false, // Bật auto fetch để tải đầy đủ dữ liệu
+        disableStream: false, // Bật stream để tải dữ liệu đầy đủ
+        maxImageSize: 4096 * 4096, // Tăng kích thước để giữ chất lượng văn bản
         cMapUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.14.305/cmaps/',
-        cMapPacked: true
+        cMapPacked: true,
+        useSystemFonts: true, // Sử dụng font hệ thống để render văn bản tốt hơn
+        standardFontDataUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.14.305/standard_fonts/'
       });
       
       loadingTask.promise.then(function(pdf) {
