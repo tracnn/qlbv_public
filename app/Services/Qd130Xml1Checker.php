@@ -873,7 +873,7 @@ class Qd130Xml1Checker
             $errorCode = $this->generateErrorCode('MA_LOAI_KCB_KHONG_TINH_NGAY_DIEU_TRI');
             $errors->push((object)[
                 'error_code' => $errorCode,
-                'error_name' => 'Mã loại KCB không tính ngày điều trị',
+                'error_name' => 'Loại KCB không tính ngày điều trị',
                 'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
                 'description' => 'Mã loại KCB không tính ngày điều trị: ' . $data->ma_loai_kcb . ' và số ngày điều trị: ' . $data->so_ngay_dtri
             ]);
