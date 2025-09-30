@@ -16,13 +16,25 @@
     
     <style>
         body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
+            background: #f5f5f5;
+            margin: 0;
+            padding: 0;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow-x: hidden;
+            height: 100vh;
+        }
+        
+        html {
+            height: 100%;
+            overflow: hidden;
         }
         
         .main-container {
             padding: 20px 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
         }
         
         .controls-section {
@@ -30,7 +42,7 @@
             border-radius: 10px;
             padding: 8px 15px;
             margin-bottom: 10px;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             backdrop-filter: blur(10px);
         }
         
@@ -144,13 +156,14 @@
         }
         
         .flipbook-container {
-            background: #f8f9fa;
-            padding: 20px;
+            background: #ffffff;
+            padding: 0 20px;
             display: flex;
             justify-content: center;
             align-items: center;
-            height: calc(100vh - 120px);
+            flex: 1;
             position: relative;
+            overflow: hidden;
         }
         
         #flipbook {
@@ -159,9 +172,11 @@
             height: 100%;
             margin: 0 auto;
             overflow: visible;
-            background: #fff;
+            background: transparent;
             position: relative;
             z-index: 1;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
         }
         
         /* StPageFlip custom styling với viền đơn giản như tài liệu y tế */
@@ -231,6 +246,11 @@
             background-size: 40px 40px;
         }
         
+        /* Ẩn spinner sau khi load xong */
+        .turn-loading.loaded {
+            background: none !important;
+        }
+        
         .loading {
             display: flex;
             justify-content: center;
@@ -238,6 +258,11 @@
             height: 100%;
             font-size: 18px;
             color: #666;
+        }
+        
+        /* Ẩn loading sau khi load xong */
+        .loading.loaded {
+            display: none !important;
         }
         
         .loading::after {
@@ -270,6 +295,7 @@
             
             .main-container {
                 padding: 10px;
+                height: 100vh;
             }
             
             .controls-section {
@@ -279,7 +305,7 @@
             
             .flipbook-container {
                 padding: 8px;
-                height: calc(100vh - 100px);
+                flex: 1;
             }
             
             .title {
@@ -377,7 +403,7 @@
     
     // Tối ưu cấu hình PDF.js cho hiệu suất
     pdfjsLib.GlobalWorkerOptions.workerPort = null;
-    pdfjsLib.GlobalWorkerOptions.maxImageSize = 1024 * 1024; // Giới hạn kích thước hình ảnh
+    pdfjsLib.GlobalWorkerOptions.maxImageSize = 2048 * 2048; // Giới hạn kích thước hình ảnh
     pdfjsLib.GlobalWorkerOptions.disableAutoFetch = true; // Tắt auto fetch để tăng tốc độ
     pdfjsLib.GlobalWorkerOptions.disableStream = true; // Tắt stream để tăng tốc độ
 </script>
@@ -609,7 +635,7 @@
               
               return page.render({ canvasContext: ctx, viewport }).promise.then(function() {
                 var pageDiv = $('<div class="page"></div>');
-                var img = $('<img>').attr('src', canvas.toDataURL('image/jpeg', 0.9)).css('border', '1px solid #000'); // Giữ chất lượng cao và thêm viền
+                var img = $('<img>').attr('src', canvas.toDataURL('image/jpeg', 1)).css('border', '1px solid #000'); // Giữ chất lượng cao và thêm viền
                 pageDiv.append(img);
                 $('#magazine').turn('addPage', pageDiv, pageNum);
                 
@@ -629,6 +655,8 @@
           updateProgress(100, 'Hoàn tất (' + total + ' trang) - Turn.js flipbook');
           setTimeout(function() {
             hideProgress();
+            // Thêm class loaded để ẩn spinner sau khi load xong
+            $('#magazine').addClass('loaded');
           }, 1000);
           console.log('Turn.js flipbook initialized successfully');
         });
@@ -710,7 +738,7 @@
                   viewport: viewport 
                 }).promise.then(function() {
                   // Giữ chất lượng JPEG cao
-                  var imageData = canvas.toDataURL("image/jpeg", 0.95);
+                  var imageData = canvas.toDataURL("image/jpeg", 1);
                   
                   // Cập nhật tiến trình
                   completedPages++;
@@ -833,6 +861,8 @@
             updateProgress(100, 'Hoàn tất (' + total + ' trang) - Có thể lật trang');
             setTimeout(function() {
               hideProgress();
+              // Thêm class loaded để ẩn loading sau khi load xong
+              $flipContainer.find('.loading').addClass('loaded');
             }, 1000);
             console.log('StPageFlip initialized successfully with', total, 'pages');
             
@@ -867,10 +897,10 @@
       var totalPages = 0;
       var pdfDoc = null;
       
-      // Tạo container đơn giản với viền như tài liệu y tế
+      // Tạo container đơn giản với giao diện StPageFlip
       $flipContainer.html(
-        '<div style="display: flex; justify-content: center; align-items: center; height: 100%; background: #f8f9fa; padding: 20px;">' +
-          '<div id="pdf-page-container" style="text-align: center; background: #fff; padding: 20px; border: 1px solid #000;">' +
+        '<div style="display: flex; justify-content: center; align-items: center; height: 100%; background: #ffffff; padding: 0 20px;">' +
+          '<div id="pdf-page-container" style="text-align: center; background: #fff; padding: 20px; border: 1px solid #000; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1); border-radius: 8px;">' +
             '<canvas id="pdf-canvas" style="max-width: 100%; max-height: 100%; border: 1px solid #000; display: block;"></canvas>' +
             '<div style="margin-top: 15px; font-size: 14px; color: #333; font-weight: 600;">' +
               'Trang <span id="current-page">1</span> / <span id="total-pages">0</span>' +
@@ -946,6 +976,8 @@
         updateProgress(100, 'Đã tải PDF (' + totalPages + ' trang) - Chế độ đơn giản');
         setTimeout(function() {
           hideProgress();
+          // Thêm class loaded để ẩn loading sau khi load xong
+          $flipContainer.find('.loading').addClass('loaded');
         }, 1000);
         
         // Hiển thị trang đầu tiên
