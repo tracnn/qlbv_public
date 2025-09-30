@@ -44,8 +44,8 @@ return [
     ],
     'xml2' => [
         'tt_thau' => [ // Bổ sung quy tắc định dạng tt_thau
-            'goi_thau_pattern' => '/^G([0-9]|[1-9][0-9])$/', // Gói thầu G0 đến G99
-            'nhom_thau_pattern' => '/^N([0-9]|[1-9][0-9])$/', // Nhóm thầu N0 đến N99
+            'goi_thau_pattern' => '/^G([1-9]|[1-9][0-9])$/', // Gói thầu G0 đến G99
+            'nhom_thau_pattern' => '/^N([1-9]|[1-9][0-9])$/', // Nhóm thầu N0 đến N99
             'nam_thau_pattern' => '/^\d{4}$/',   // Định dạng năm 4 ký tự
         ],
     ],
