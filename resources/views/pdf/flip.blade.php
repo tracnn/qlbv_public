@@ -22,6 +22,11 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             overflow-x: hidden;
             height: 100vh;
+            /* Bảo mật: Tắt text selection */
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
         }
         
         html {
@@ -204,6 +209,13 @@
             display: block;
             image-rendering: auto; /* Giữ chất lượng hình ảnh cao */
             border: 1px solid #000; /* Viền đen mỏng cho từng ảnh PDF */
+            /* Bảo mật: Ngăn chặn drag & save image */
+            pointer-events: none;
+            -webkit-user-drag: none;
+            -khtml-user-drag: none;
+            -moz-user-drag: none;
+            -o-user-drag: none;
+            user-drag: none;
         }
         
         /* Đảm bảo PDF không bị cắt */
@@ -238,6 +250,13 @@
             object-fit: contain;
             image-rendering: auto; /* Giữ chất lượng hình ảnh cao */
             border: 1px solid #000; /* Viền đen mỏng cho từng ảnh PDF */
+            /* Bảo mật: Ngăn chặn drag & save image */
+            pointer-events: none;
+            -webkit-user-drag: none;
+            -khtml-user-drag: none;
+            -moz-user-drag: none;
+            -o-user-drag: none;
+            user-drag: none;
         }
         
         /* Loading animation for Turn.js */
@@ -288,15 +307,16 @@
             image-rendering: -webkit-optimize-contrast; /* Tối ưu hiển thị văn bản */
             image-rendering: crisp-edges; /* Làm sắc nét văn bản */
             image-rendering: pixelated; /* Giữ độ sắc nét pixel */
+            /* Bảo mật: Ngăn chặn context menu và drag */
+            pointer-events: auto; /* Cần auto để vẫn scroll được */
         }
         
-        /* Tối ưu hiển thị văn bản cho tất cả hình ảnh PDF */
+        /* Tối ưu: Hiển thị mượt mà cho hình ảnh PDF */
         .page-flip .page img,
         #magazine .page img,
         #pdf-canvas {
             image-rendering: -webkit-optimize-contrast;
-            image-rendering: crisp-edges;
-            image-rendering: pixelated;
+            image-rendering: auto;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
         }
@@ -348,9 +368,38 @@
                 height: 4px;
             }
         }
+        
+        /* Bảo mật: Watermark cho tài liệu */
+        .security-watermark {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-45deg);
+            font-size: 80px;
+            color: rgba(0, 0, 0, 0.05);
+            font-weight: bold;
+            pointer-events: none;
+            z-index: 9999;
+            white-space: nowrap;
+            user-select: none;
+        }
+        
+        /* Bảo mật: Ngăn chặn inspect element overlay */
+        .security-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            pointer-events: none;
+        }
     </style>
 </head>
 <body>
+    <!-- Bảo mật: Watermark -->
+    <div class="security-watermark">TÀI LIỆU NỘI BỘ</div>
+    
     <div class="container-fluid main-container">
         <!-- Controls Section with Title -->
         <div class="controls-section">
@@ -384,10 +433,15 @@
                             </div>
                         </div>
                         <div class="col-md-4 text-right">
-                            <a href="{{ $pdfUrl }}" target="_blank" class="link-custom">
+                            <!-- Bảo mật: Đã ẩn link download PDF -->
+                            <!-- <a href="{{ $pdfUrl }}" target="_blank" class="link-custom">
                                 <i class="fas fa-external-link-alt mr-1"></i>
                                 Mở viewer thường
-                            </a>
+                            </a> -->
+                            <span class="text-muted" style="font-size: 11px;">
+                                <i class="fas fa-lock mr-1"></i>
+                                Chế độ bảo mật
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -415,65 +469,137 @@
     pdfjsLib.GlobalWorkerOptions.workerSrc =
         "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.14.305/pdf.worker.min.js";
     
-    // Tối ưu cấu hình PDF.js cho chất lượng văn bản cao
+    // Tối ưu: Cấu hình PDF.js cho hiệu năng cao
     pdfjsLib.GlobalWorkerOptions.workerPort = null;
-    pdfjsLib.GlobalWorkerOptions.maxImageSize = 4096 * 4096; // Tăng kích thước hình ảnh để giữ chất lượng văn bản
-    pdfjsLib.GlobalWorkerOptions.disableAutoFetch = false; // Bật auto fetch để tải đầy đủ dữ liệu
-    pdfjsLib.GlobalWorkerOptions.disableStream = false; // Bật stream để tải dữ liệu đầy đủ
-    pdfjsLib.GlobalWorkerOptions.verbosity = 0; // Giảm log để tăng hiệu suất
+    pdfjsLib.GlobalWorkerOptions.maxImageSize = 2048 * 2048; // Giảm xuống để tiết kiệm memory
+    pdfjsLib.GlobalWorkerOptions.disableAutoFetch = false;
+    pdfjsLib.GlobalWorkerOptions.disableStream = false;
+    pdfjsLib.GlobalWorkerOptions.verbosity = 0; // Tắt logs
+    
+    // Tối ưu: Giới hạn số trang được cache trong memory
+    pdfjsLib.GlobalWorkerOptions.isEvalSupported = false;
+    pdfjsLib.GlobalWorkerOptions.cMapPacked = true;
 </script>
 
     <!-- StPageFlip - Correct CDN Sources -->
     <script>
-      // Function to load StPageFlip from correct CDN sources
-      function loadStPageFlip() {
-        var cdnSources = [
-          'https://unpkg.com/page-flip/dist/js/page-flip.browser.js',
-          'https://cdn.jsdelivr.net/npm/page-flip@1.5.2/dist/js/page-flip.browser.js',
-          'https://cdn.skypack.dev/page-flip@1.5.2/dist/js/page-flip.browser.js',
-          'https://cdnjs.cloudflare.com/ajax/libs/page-flip/1.5.2/page-flip.browser.js'
-        ];
-        
-        var currentIndex = 0;
-        
-        function tryLoadFromCDN(index) {
-          if (index >= cdnSources.length) {
-            console.error('All StPageFlip CDN sources failed');
-            return;
-          }
-          
-          console.log('Trying to load StPageFlip from:', cdnSources[index]);
-          
-          var script = document.createElement('script');
-          script.src = cdnSources[index];
-          script.onload = function() {
-            console.log('StPageFlip script loaded from:', cdnSources[index]);
-            // Check if St namespace is available
-            setTimeout(function() {
-              if (typeof St !== 'undefined' && typeof St.PageFlip !== 'undefined') {
-                console.log('StPageFlip is now available:', St.PageFlip);
-              } else {
-                console.log('StPageFlip loaded but St.PageFlip is still undefined, trying next CDN...');
-                tryLoadFromCDN(index + 1);
-              }
-            }, 500);
-          };
-          script.onerror = function() {
-            console.error('Failed to load from:', cdnSources[index]);
-            tryLoadFromCDN(index + 1);
-          };
-          document.head.appendChild(script);
-        }
-        
-        // Start loading from first CDN
-        tryLoadFromCDN(0);
-      }
-      
-      // Load StPageFlip immediately
-      loadStPageFlip();
+      // Tối ưu: Chỉ load một CDN duy nhất, nhanh nhất
+      (function() {
+        var script = document.createElement('script');
+        script.src = 'https://unpkg.com/page-flip/dist/js/page-flip.browser.js';
+        script.async = true;
+        script.onerror = function() {
+          console.error('StPageFlip CDN failed, fallback to Turn.js');
+        };
+        document.head.appendChild(script);
+      })();
     </script>
 
 <script>
+    // =====================================================
+    // BIỆN PHÁP BẢO MẬT - Ngăn chặn download và copy
+    // =====================================================
+    
+    // 1. Ngăn chặn context menu (chuột phải)
+    document.addEventListener('contextmenu', function(e) {
+      e.preventDefault();
+      return false;
+    }, false);
+    
+    // 2. Ngăn chặn keyboard shortcuts nguy hiểm (nhưng cho phép navigation arrows)
+    document.addEventListener('keydown', function(e) {
+      // Cho phép Left/Right arrow keys (37, 39) để navigation flipbook
+      var allowedKeys = [37, 39]; // Left, Right arrows
+      
+      if (allowedKeys.indexOf(e.keyCode) !== -1) {
+        return true; // Cho phép arrow keys
+      }
+      
+      // Ctrl+S (Save)
+      if (e.ctrlKey && e.keyCode === 83) {
+        e.preventDefault();
+        return false;
+      }
+      // Ctrl+P (Print)
+      if (e.ctrlKey && e.keyCode === 80) {
+        e.preventDefault();
+        return false;
+      }
+      // Ctrl+U (View Source)
+      if (e.ctrlKey && e.keyCode === 85) {
+        e.preventDefault();
+        return false;
+      }
+      // Ctrl+Shift+I (DevTools)
+      if (e.ctrlKey && e.shiftKey && e.keyCode === 73) {
+        e.preventDefault();
+        return false;
+      }
+      // Ctrl+Shift+J (Console)
+      if (e.ctrlKey && e.shiftKey && e.keyCode === 74) {
+        e.preventDefault();
+        return false;
+      }
+      // Ctrl+Shift+C (Inspect)
+      if (e.ctrlKey && e.shiftKey && e.keyCode === 67) {
+        e.preventDefault();
+        return false;
+      }
+      // F12 (DevTools)
+      if (e.keyCode === 123) {
+        e.preventDefault();
+        return false;
+      }
+      // Ctrl+Shift+K (Firefox Console)
+      if (e.ctrlKey && e.shiftKey && e.keyCode === 75) {
+        e.preventDefault();
+        return false;
+      }
+    }, false);
+    
+    // 3. Ngăn chặn drag and drop
+    document.addEventListener('dragstart', function(e) {
+      e.preventDefault();
+      return false;
+    }, false);
+    
+    // 4. Ngăn chặn select text
+    document.addEventListener('selectstart', function(e) {
+      if (e.target.tagName === 'IMG' || e.target.tagName === 'CANVAS') {
+        e.preventDefault();
+        return false;
+      }
+    }, false);
+    
+    // 5. Detect DevTools (optional - cảnh báo nếu mở DevTools)
+    var devtoolsOpen = false;
+    var threshold = 160;
+    
+    setInterval(function() {
+      if (window.outerWidth - window.innerWidth > threshold || 
+          window.outerHeight - window.innerHeight > threshold) {
+        if (!devtoolsOpen) {
+          devtoolsOpen = true;
+          console.clear();
+          console.log('%c⚠️ CẢNH BÁO BẢO MẬT', 'color: red; font-size: 30px; font-weight: bold;');
+          console.log('%cTài liệu này được bảo vệ. Mọi hành vi sao chép, tải xuống trái phép sẽ bị ghi nhận.', 'color: red; font-size: 16px;');
+        }
+      } else {
+        devtoolsOpen = false;
+      }
+    }, 1000);
+    
+    // 6. Disable print
+    window.addEventListener('beforeprint', function(e) {
+      e.preventDefault();
+      alert('Chức năng in đã bị vô hiệu hóa vì lý do bảo mật.');
+      return false;
+    });
+    
+    // =====================================================
+    // END BIỆN PHÁP BẢO MẬT
+    // =====================================================
+
     // jQuery document ready (Laravel 5.5 compatible)
     $(document).ready(function() {
       setTimeout(initFlipbook, 500);
@@ -584,16 +710,16 @@
       
       $statusEl.text('Đang tải PDF với Turn.js...');
       
-      // Tối ưu cấu hình tải PDF cho Turn.js với chất lượng văn bản cao
+      // Tối ưu: Cấu hình tải PDF cho Turn.js với hiệu năng cao
       var loadingTask = pdfjsLib.getDocument({
         url: pdfUrl,
-        disableAutoFetch: false, // Bật auto fetch để tải đầy đủ dữ liệu
-        disableStream: false, // Bật stream để tải dữ liệu đầy đủ
-        maxImageSize: 4096 * 4096, // Tăng kích thước để giữ chất lượng văn bản
+        disableAutoFetch: false,
+        disableStream: false,
+        maxImageSize: 2048 * 2048, // Giảm để tiết kiệm memory
         cMapUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.14.305/cmaps/',
         cMapPacked: true,
-        useSystemFonts: true, // Sử dụng font hệ thống để render văn bản tốt hơn
-        standardFontDataUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.14.305/standard_fonts/'
+        useSystemFonts: false, // Tắt để tăng tốc độ
+        isEvalSupported: false
       });
       
       loadingTask.promise.then(function(pdf) {
@@ -644,29 +770,37 @@
           }
         });
         
-        // Render PDF pages với chất lượng cao và hiển thị tiến trình
+        // Tối ưu: Render PDF pages với JPEG compression
         var renderPromises = [];
         var completedPages = 0;
         for (var i = 1; i <= total; i++) {
           (function(pageNum) {
             var renderPromise = pdf.getPage(pageNum).then(function(page) {
-              var viewport = page.getViewport({ scale: 2.5 }); // Tăng scale để giữ chất lượng văn bản cao
+              var viewport = page.getViewport({ scale: 2.0 }); // Giảm scale để tăng hiệu năng
               var canvas = document.createElement("canvas");
-              var ctx = canvas.getContext("2d");
+              var ctx = canvas.getContext("2d", { alpha: false });
               canvas.width = viewport.width;
               canvas.height = viewport.height;
               
-              // Tối ưu chất lượng render cho văn bản
               ctx.imageSmoothingEnabled = true;
               ctx.imageSmoothingQuality = 'high';
-              ctx.textRenderingOptimization = 'optimizeQuality'; // Tối ưu render văn bản
-              ctx.textBaseline = 'alphabetic';
               
-              return page.render({ canvasContext: ctx, viewport }).promise.then(function() {
+              return page.render({ 
+                canvasContext: ctx, 
+                viewport: viewport,
+                intent: 'display'
+              }).promise.then(function() {
                 var pageDiv = $('<div class="page"></div>');
-                var img = $('<img>').attr('src', canvas.toDataURL('image/png', 1)).css('border', '1px solid #000'); // Sử dụng PNG để giữ chất lượng văn bản cao
+                // Tối ưu: Sử dụng JPEG thay vì PNG
+                var img = $('<img>').attr('src', canvas.toDataURL('image/jpeg', 0.92)).css('border', '1px solid #000');
                 pageDiv.append(img);
                 $('#magazine').turn('addPage', pageDiv, pageNum);
+                
+                // Cleanup
+                canvas.width = 0;
+                canvas.height = 0;
+                canvas = null;
+                ctx = null;
                 
                 // Cập nhật tiến trình
                 completedPages++;
@@ -708,16 +842,16 @@
         
         $statusEl.text('Đang tải PDF...');
         
-        // Tối ưu cấu hình tải PDF với chất lượng văn bản cao
+        // Tối ưu: Cấu hình tải PDF với hiệu năng cao
         var loadingTask = pdfjsLib.getDocument({
           url: pdfUrl,
-          disableAutoFetch: false, // Bật auto fetch để tải đầy đủ dữ liệu
-          disableStream: false, // Bật stream để tải dữ liệu đầy đủ
-          maxImageSize: 4096 * 4096, // Tăng kích thước để giữ chất lượng văn bản
+          disableAutoFetch: false,
+          disableStream: false,
+          maxImageSize: 2048 * 2048, // Giảm để tiết kiệm memory
           cMapUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.14.305/cmaps/',
           cMapPacked: true,
-          useSystemFonts: true, // Sử dụng font hệ thống để render văn bản tốt hơn
-          standardFontDataUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.14.305/standard_fonts/'
+          useSystemFonts: false, // Tắt để tăng tốc độ
+          isEvalSupported: false
         });
         
         loadingTask.promise.then(function(pdf) {
@@ -729,52 +863,57 @@
           // Xóa loading element trước khi khởi tạo flipbook
           removeLoadingElements();
           
-          // Khởi tạo StPageFlip với cấu hình tối ưu cho tốc độ
+          // Tối ưu: Khởi tạo StPageFlip với cấu hình tối ưu hiệu năng
           var flip = new St.PageFlip($flipContainer[0], {
             width: 550,
             height: 750,
             size: "stretch",
             showCover: true,
-            drawShadow: false, // Tắt shadow để tăng tốc độ
-            flippingTime: 300, // Giảm thời gian animation từ 1000ms xuống 300ms
+            drawShadow: false, // Tắt shadow để tăng tốc độ đáng kể
+            flippingTime: 400, // Animation mượt mà nhưng nhanh
             usePortrait: false,
             autoSize: true,
-            maxShadowOpacity: 0.3, // Giảm opacity shadow
+            maxShadowOpacity: 0, // Tắt hoàn toàn shadow
             mobileScrollSupport: true,
-            swipeDistance: 30, // Giảm khoảng cách swipe
-            clickEventForward: true, // Cho phép click để chuyển trang
-            disableFlipByClick: false // Cho phép click để lật trang
+            swipeDistance: 30,
+            clickEventForward: true,
+            disableFlipByClick: false,
+            useMouseEvents: true // Tối ưu cho desktop
           });
           
           var images = [];
           var renderPromises = [];
           
-          // Render từng trang PDF với chất lượng cao và hiển thị tiến trình
+          // Tối ưu: Render từng trang với scale hợp lý và JPEG compression
           var completedPages = 0;
           for (var i = 1; i <= total; i++) {
             (function(pageNum) {
               var renderPromise = pdf.getPage(pageNum).then(function(page) {
-                // Tăng scale cao để giữ chất lượng văn bản tốt nhất
-                var viewport = page.getViewport({ scale: 3.0 });
+                // Tối ưu: Giảm scale xuống 2.0 để cân bằng chất lượng và hiệu năng
+                var viewport = page.getViewport({ scale: 2.0 });
                 var canvas = document.createElement("canvas");
-                var ctx = canvas.getContext("2d");
+                var ctx = canvas.getContext("2d", { alpha: false }); // Tắt alpha channel
                 
-                // Đặt kích thước canvas
                 canvas.width = viewport.width;
                 canvas.height = viewport.height;
                 
-                // Tối ưu chất lượng render cho văn bản
+                // Tối ưu rendering
                 ctx.imageSmoothingEnabled = true;
                 ctx.imageSmoothingQuality = 'high';
-                ctx.textRenderingOptimization = 'optimizeQuality'; // Tối ưu render văn bản
-                ctx.textBaseline = 'alphabetic';
                 
                 return page.render({ 
                   canvasContext: ctx, 
-                  viewport: viewport 
+                  viewport: viewport,
+                  intent: 'display' // Tối ưu cho hiển thị
                 }).promise.then(function() {
-                  // Giữ chất lượng PNG cao để bảo toàn văn bản
-                  var imageData = canvas.toDataURL("image/png", 1);
+                  // Tối ưu: Sử dụng JPEG với quality 0.92 (giảm 60-70% file size, chất lượng vẫn tốt)
+                  var imageData = canvas.toDataURL("image/jpeg", 0.92);
+                  
+                  // Cleanup canvas để giải phóng memory
+                  canvas.width = 0;
+                  canvas.height = 0;
+                  canvas = null;
+                  ctx = null;
                   
                   // Cập nhật tiến trình
                   completedPages++;
@@ -853,27 +992,32 @@
               }
             }
             
-            // Điều khiển nút với jQuery - sử dụng methods đúng theo tài liệu
-            $("#btnPrev").off('click').on('click', function() {
-              console.log('Previous button clicked');
+            // Tối ưu: Debounce function để tránh spam clicks
+            var debounceTimer;
+            function debounce(func, delay) {
+              return function() {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(func, delay);
+              };
+            }
+            
+            // Điều khiển nút với debouncing
+            $("#btnPrev").off('click').on('click', debounce(function() {
               flip.flipPrev('bottom');
-            });
+            }, 100));
             
-            $("#btnNext").off('click').on('click', function() {
-              console.log('Next button clicked');
+            $("#btnNext").off('click').on('click', debounce(function() {
               flip.flipNext('bottom');
-            });
+            }, 100));
             
-            // Keyboard navigation với jQuery
-            $(document).off('keydown.flipbook').on('keydown.flipbook', function(e) {
-              if (e.keyCode === 37) { // Left arrow
-                console.log('Left arrow pressed');
+            // Keyboard navigation với debouncing
+            $(document).off('keydown.flipbook').on('keydown.flipbook', debounce(function(e) {
+              if (e.keyCode === 37) {
                 flip.flipPrev('bottom');
-              } else if (e.keyCode === 39) { // Right arrow
-                console.log('Right arrow pressed');
+              } else if (e.keyCode === 39) {
                 flip.flipNext('bottom');
               }
-            });
+            }, 100));
             
             // Event listeners
             flip.on('flip', function(e) {
@@ -969,22 +1113,20 @@
         if (!pdfDoc) return;
         
         pdfDoc.getPage(pageNum).then(function(page) {
-          // Tăng scale cao để giữ chất lượng văn bản tốt nhất
-          var viewport = page.getViewport({ scale: 3.0 });
+          // Tối ưu: Giảm scale xuống 2.0 cho hiệu năng tốt hơn
+          var viewport = page.getViewport({ scale: 2.0 });
           
-          // Đặt kích thước canvas
           canvas.height = viewport.height;
           canvas.width = viewport.width;
           
-          // Tối ưu chất lượng render cho văn bản
+          // Tối ưu rendering
           ctx.imageSmoothingEnabled = true;
           ctx.imageSmoothingQuality = 'high';
-          ctx.textRenderingOptimization = 'optimizeQuality'; // Tối ưu render văn bản
-          ctx.textBaseline = 'alphabetic';
           
           return page.render({
             canvasContext: ctx,
-            viewport: viewport
+            viewport: viewport,
+            intent: 'display'
           }).promise;
         }).then(function() {
           $("#current-page").text(pageNum);
@@ -995,18 +1137,18 @@
         });
       }
       
-      // Tải PDF với cấu hình tối ưu cho chất lượng văn bản cao
+      // Tối ưu: Tải PDF với cấu hình hiệu năng cao
       $statusEl.text('Đang tải PDF...');
       
       var loadingTask = pdfjsLib.getDocument({
         url: pdfUrl,
-        disableAutoFetch: false, // Bật auto fetch để tải đầy đủ dữ liệu
-        disableStream: false, // Bật stream để tải dữ liệu đầy đủ
-        maxImageSize: 4096 * 4096, // Tăng kích thước để giữ chất lượng văn bản
+        disableAutoFetch: false,
+        disableStream: false,
+        maxImageSize: 2048 * 2048, // Giảm để tiết kiệm memory
         cMapUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.14.305/cmaps/',
         cMapPacked: true,
-        useSystemFonts: true, // Sử dụng font hệ thống để render văn bản tốt hơn
-        standardFontDataUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.14.305/standard_fonts/'
+        useSystemFonts: false, // Tắt để tăng tốc độ
+        isEvalSupported: false
       });
       
       loadingTask.promise.then(function(pdf) {
