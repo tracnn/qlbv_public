@@ -629,16 +629,16 @@ Route::get('/secure-view-doc', 'Emr\EmrController@viewDocByToken')->name('secure
 Route::get('/encrypt-token', 'PatientController@encryptToken');
 Route::get('/encrypt-token-general', 'PatientController@encryptTokenGeneral');
 
-//Route::get('/api/merge-pdf-secure', 'Emr\EmrController@mergePdfFilesSecure')->name('merge-pdf-secure');
-//Route::get('/api/view-merge-pdf', 'Emr\EmrController@viewMergePdfByToken')->name('view-merge-pdf');
+Route::get('/api/merge-pdf-secure', 'Emr\EmrController@mergePdfFilesSecure')->name('merge-pdf-secure');
+Route::get('/api/view-merge-pdf', 'Emr\EmrController@viewMergePdfByToken')->name('view-merge-pdf');
 
 // Routes mới cho PDF flip
 Route::get('/pdf/flip', 'PdfFlipController@show')->name('pdf.flip.show');
 Route::get('/pdf/merged/{mergeId}', 'PdfFlipController@file')->name('pdf.flip.file');
 
 // Giữ lại routes cũ để tương thích ngược (redirect đến flip)
-Route::get('/api/view-merge-pdf', 'PdfLegacyRedirectController@viewMergePdf')
-    ->name('view-merge-pdf');
+Route::get('/api/view-merge-pdf-flip', 'PdfLegacyRedirectController@viewMergePdf')
+    ->name('view-merge-pdf-flip');
 
-Route::get('/api/merge-pdf-secure', 'PdfLegacyRedirectController@mergePdfSecure')
-    ->name('merge-pdf-secure');
+Route::get('/api/merge-pdf-secure-flip', 'PdfLegacyRedirectController@mergePdfSecure')
+    ->name('merge-pdf-secure-flip');
