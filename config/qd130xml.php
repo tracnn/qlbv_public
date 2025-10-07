@@ -34,19 +34,19 @@ return [
     ],
     'prefix_hein_card_exclude_t_bhtt_gdv' => ['CA', 'CY', 'QN'], //Bổ sung không check completeXml đối với những thẻ này
     'xml4' => [
-        'xml3_ma_nhom_require_ket_luan' => [2],
+        'xml3_ma_nhom_require_ket_luan' => [2], //Bổ sung mã nhóm bắt buộc phải có kết luận
     ],
     'exportable_tt' => true, //Sau khi import từ thư mục xml thông tuyến thì có xuất Xml hay không (true: có xuất; false: không xuất)
     /* Bổ sung key 2024.08.23 */
     'xml1' => [
-        'ma_doituong_kcb_trai_tuyen' => ['3'],
-        'the_bhyt_cbcs_pattern' => ['CA', 'QN', 'CY'],
-        'ma_loai_kcb_khong_tinh_ngay_dieu_tri' => ['01', '07', '09'],
+        'ma_doituong_kcb_trai_tuyen' => ['3'], //Bổ sung mã đối tượng khám bệnh chỉ định trái tuyến
+        'the_bhyt_cbcs_pattern' => ['CA', 'QN', 'CY'], //Bổ sung mã thẻ BHYT CBCS
+        'ma_loai_kcb_khong_tinh_ngay_dieu_tri' => ['01', '07', '09'], //Bổ sung mã loại khám bệnh không tính ngày điều trị
     ],
     'xml2' => [
         'tt_thau' => [ // Bổ sung quy tắc định dạng tt_thau
-            'goi_thau_pattern' => '/^G([1-9]|[1-9][0-9])$/', // Gói thầu G0 đến G99
-            'nhom_thau_pattern' => '/^N([1-9]|[1-9][0-9])$/', // Nhóm thầu N0 đến N99
+            'goi_thau_pattern' => '/^G([1-9]|[1-9][0-9])$/', // Gói thầu G1 đến G99
+            'nhom_thau_pattern' => '/^N([1-9]|[1-9][0-9])$/', // Nhóm thầu N1 đến N99
             'nam_thau_pattern' => '/^\d{4}$/',   // Định dạng năm 4 ký tự
         ],
     ],
@@ -56,10 +56,11 @@ return [
             'nhom_thau_pattern' => '/^N([0-9]|[1-9][0-9])$/', // Nhóm thầu N0 đến N99
             'nam_thau_pattern' => '/^\d{4}$/',   // Định dạng năm 4 ký tự
         ],
-        'service_groups_requiring_machine' => [1,2,3],
+        'service_groups_requiring_machine' => [1,2,3], //Bổ sung mã nhóm bắt buộc phải có máy
+        'service_groups_pttt' => [8,18], //Bổ sung mã nhóm là pttt
     ],
     'general' => [
         'check_valid_department_req' => true, //Kiểm tra tính hợp lệ của khoa chỉ định; Tuyến TW/Tỉnh => true
-        'ma_khoa_kkb' => ['K01'],
+        'ma_khoa_kkb' => ['K01'], //Bổ sung mã khoa khám bệnh
     ],
 ];

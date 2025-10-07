@@ -937,5 +937,29 @@ class Qd130Xml3Checker
         return $errors;
     }
 
-    // Thêm các phương thức kiểm tra khác ở đây
+    //Bổ sung kiểm tra mã nhóm là pttt mà trùng ma_bac_si + ngay_yl đã có trong cơ sở dữ liệu thì cảnh báo
+    private function checkServiceGroupPttt(Qd130Xml3 $data): Collection
+    {
+        $errors = collect();
+
+        if (in_array($data->ma_nhom, config('qd130xml.xml3.service_groups_pttt'))) {
+            $serviceExists = Qd130Xml3::where('ma_lk', '!=', $data->ma_lk)
+            ->where('ma_bac_si', $data->ma_bac_si)
+            ->where('ngay_yl', $data->ngay_yl)
+            ->where('ma_nhom', $data->ma_nhom)
+            ->first();
+
+            if ($serviceExists) {
+                $errorCode = $this->generateErrorCode('SERVICE_GROUP_PTTT_DUPLICATE');
+                $errors->push((object)[
+                    'error_code' => $errorCode,
+                    'error_name' => 'Mã nhóm là pttt trùng y lệnh',
+                    'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+                    'description' => 'Mã nhóm là pttt trùng: ' . $serviceExists->ma_nhom . '; Mã bác sĩ: ' . $serviceExists->ma_bac_si . '; Ngày y lệnh: ' . $serviceExists->ngay_yl . '; Ma_lk: ' . $serviceExists->ma_lk
+                ]);
+            }
+        }
+
+        return $errors;
+    }
 }
