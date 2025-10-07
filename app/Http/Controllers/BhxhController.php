@@ -44,8 +44,12 @@ class BhxhController extends Controller
                 $linkMergePdf = '<a href="' . route('view-merge-pdf', [
                     'token' => $token
                 ]) . '" class="btn-sm btn-primary" target="_blank">Gộp PDF</a>';
+
+                $linkMergePdfFlip = '<a href="' . route('view-merge-pdf-flip', [
+                    'token' => $token
+                ]) . '" class="btn-sm btn-primary" target="_blank">PDF Flip</a>';
     
-                return $linkDetail . $linkMergePdf;
+                return $linkDetail . $linkMergePdf . $linkMergePdfFlip;
             })
             ->make(true);
     }
@@ -100,6 +104,7 @@ class BhxhController extends Controller
             return '<a href="' . route('secure-view-doc', ['token' => $token]) . '" class="btn-sm btn-primary" target="_blank">
             Xem PDF</a>';
         })
+        
         ->make(true);
     }
 
