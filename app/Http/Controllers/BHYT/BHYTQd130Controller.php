@@ -45,9 +45,9 @@ class BHYTQd130Controller extends Controller
 
     public function fetchData(Request $request)
     {
-        // if (!$request->ajax()) {
-        //     return redirect()->route('home');
-        // }
+        if (!$request->ajax()) {
+            return redirect()->route('home');
+        }
         
         $treatment_code = $request->input('treatment_code');
         $patient_code = $request->input('patient_code');
@@ -263,12 +263,12 @@ class BHYTQd130Controller extends Controller
                     });
                 } else {
                     // Kiểm tra role của user
-                    if (!\Auth::user()->hasRole(['superadministrator', 'administrator'])) {
-                        // Nếu không có vai trò superadministrator hoặc administrator thì lọc theo người import
-                        $result = $result->whereHas('Qd130XmlInformation', function($query) {
-                            $query->where('imported_by', \Auth::user()->loginname); // Lọc theo loginname của user hiện tại
-                        });
-                    }
+                    // if (!\Auth::user()->hasRole(['superadministrator', 'administrator'])) {
+                    //     // Nếu không có vai trò superadministrator hoặc administrator thì lọc theo người import
+                    //     $result = $result->whereHas('Qd130XmlInformation', function($query) {
+                    //         $query->where('imported_by', \Auth::user()->loginname); // Lọc theo loginname của user hiện tại
+                    //     });
+                    // }
                 }
             }
         }
