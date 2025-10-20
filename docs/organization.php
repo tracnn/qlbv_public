@@ -42,5 +42,5 @@ return [
         'rate_limit' => 60,
         'organization' => '01013'
     ],
-    'export_xml_not_check' => true, //Không kiểm tra lỗi trước khi xuất xml
+    'export_xml_not_check' => false, //Không kiểm tra lỗi trước khi xuất xml
 ];
