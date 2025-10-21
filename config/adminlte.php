@@ -617,6 +617,13 @@ return [
                     'route'        => 'users.index',
                     'active'    => ['users/index*']
                 ],
+                [
+                    'text' => 'Email nhận báo cáo',
+                    'icon' => 'envelope',
+                    'checkrole' => 'superadministrator',
+                    'route'        => 'email-receive-reports.index',
+                    'active'    => ['email-receive-reports*']
+                ],
             ],
         ],
     ],

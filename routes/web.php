@@ -621,6 +621,19 @@ Route::group(['middleware' => ['auth', 'check.first.login']], function () {
         ->name('bhxh.service-cdha-list');
     });
 
+    /* Quản lý Email Nhận Báo Cáo */
+    Route::group(['prefix' => 'email-receive-reports/', 'middleware' => ['checkrole:superadministrator']], function () {
+        Route::get('/', 'EmailReceiveReportController@index')->name('email-receive-reports.index');
+        Route::get('/get-data', 'EmailReceiveReportController@getData')->name('email-receive-reports.get-data');
+        Route::get('/create', 'EmailReceiveReportController@create')->name('email-receive-reports.create');
+        Route::post('/', 'EmailReceiveReportController@store')->name('email-receive-reports.store');
+        Route::get('/{id}/edit', 'EmailReceiveReportController@edit')->name('email-receive-reports.edit');
+        Route::put('/{id}/edit', 'EmailReceiveReportController@update')->name('email-receive-reports.update');
+        Route::delete('/{id}', 'EmailReceiveReportController@destroy')->name('email-receive-reports.destroy');
+        Route::get('/{id}/toggle-status', 'EmailReceiveReportController@toggleStatus')->name('email-receive-reports.toggle-status');
+        Route::get('/api/get-emails-by-report-type', 'EmailReceiveReportController@getEmailsByReportType')->name('email-receive-reports.get-emails-by-report-type');
+    });
+
 });
 
 Route::get('/api/view-pdf', 'Emr\EmrController@viewPdf')->name('api.view-pdf');
