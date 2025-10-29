@@ -1,3 +1,6 @@
+# 20/10/2025
+- Nâng cấp ký số XML sử dụng HSM của VietSens
+
 # 12/11/2024
 - Bổ sung import/export XML6 (HIV), XML15 (Lao)
 
