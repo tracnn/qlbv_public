@@ -19,6 +19,7 @@ use App\Models\BHYT\Qd130Xml15;
 use App\Models\BHYT\Qd130XmlInformation;
 use App\Models\BHYT\Qd130XmlErrorResult;
 use App\Services\XmlStructures;
+use App\Services\XMLSignService;
 
 use App\Jobs\CheckQd130XmlErrorsJob;
 use App\Jobs\CheckCompleteQd130RecordJob;
@@ -31,10 +32,11 @@ use Illuminate\Support\Facades\Storage;
 class Qd130XmlService
 {
     protected $queueName;
-
+    protected $xmlSignService;
     public function __construct()
     {
         $this->queueName = config('qd130xml.queue_name');
+        $this->xmlSignService = new XMLSignService();
     }
 
     public function deleteQd130XmlAndError($ma_lk)
@@ -1618,6 +1620,13 @@ class Qd130XmlService
             return false;
         }
 
+        // Ký số XML
+        $xmlDataSigned = $this->xmlSignService->signXml($xmlData);
+        
+        if ($xmlDataSigned) {
+            $xmlData = $xmlDataSigned;
+        }
+        
         // Extract MACSKCB from the XML data (assuming getDataForXmlExport returns it)
         $xmlInformation = $this->getXmlInformation($ma_lk);
         $macskcb = $xmlInformation->macskcb;
