@@ -141,7 +141,7 @@
             <div class="pull-right hidden-xs">
                 <b>Version</b> 3.0.1
             </div>
-            {!! config('adminlte.footer', 'Copyright &#9400; by <b> <a href="https://vietsens.vn/" target="_blank">VSS</a></b>') !!}
+            {!! config('adminlte.footer', 'Copyright &#9400; by <b> <a href="https://ytethongminh.vn/" target="_blank">YTTM</a></b>') !!}
         </footer>
 
     </div>
