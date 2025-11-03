@@ -74,7 +74,7 @@ class BHYTQd130Controller extends Controller
                 }, 'Qd130XmlErrorResult' => function($query) {
                     $query->select('ma_lk', 'error_code', 'ngay_yl', 'description');
                 }, 'Qd130XmlInformation' => function($query) {
-                    $query->select('ma_lk', 'exported_at', 'imported_by');
+                    $query->select('ma_lk', 'exported_at', 'imported_by', 'is_signed');
                 }]);
 
                 // Kiểm tra role của user
@@ -94,7 +94,7 @@ class BHYTQd130Controller extends Controller
                     }, 'Qd130XmlErrorResult' => function($query) {
                         $query->select('ma_lk', 'error_code', 'ngay_yl', 'description');
                     }, 'Qd130XmlInformation' => function($query) {
-                        $query->select('ma_lk', 'exported_at', 'imported_by');
+                        $query->select('ma_lk', 'exported_at', 'imported_by', 'is_signed');
                     }]);
                     // Kiểm tra role của user
                     if (!\Auth::user()->hasRole(['superadministrator', 'administrator'])) {
@@ -166,7 +166,7 @@ class BHYTQd130Controller extends Controller
 
                 // Apply relationships: Qd130XmlInformation
                 $result = $result->with(['Qd130XmlInformation' => function($query) {
-                    $query->select('ma_lk', 'exported_at', 'export_error', 'imported_by');
+                    $query->select('ma_lk', 'exported_at', 'export_error', 'imported_by', 'is_signed');
                 }]);
 
                 if ($qd130_xml_error_catalog_id) {
@@ -299,6 +299,9 @@ class BHYTQd130Controller extends Controller
                     : '<i class="fa fa-file-code-o text-secondary" title="'.$tooltip.'"></i>');
             return $icon;
         })
+        ->addColumn('is_signed', function ($result) {
+            return $result->Qd130XmlInformation->is_signed ? '<i class="fa fa-check-circle text-success" title="Ký số"></i>' : '<i class="fa fa-times-circle text-danger" title="Không ký số"></i>';
+        })
         // Thêm cột 'imported_by'
         ->addColumn('imported_by', function ($result) {
             return $result->Qd130XmlInformation->imported_by ?? null;
@@ -322,7 +325,7 @@ class BHYTQd130Controller extends Controller
             }
             return $highlight ? 'highlight-red' : '';
         })
-        ->rawColumns(['exported_at', 'action'])
+        ->rawColumns(['exported_at', 'is_signed', 'action'])
         ->toJson();
     }
 

@@ -863,7 +863,7 @@ class Qd130XmlService
         }
     }
 
-    public function storeQd130XmlInfomation($ma_lk, $macskcb, $operationType, $soluonghoso = 1, $error = null)
+    public function storeQd130XmlInfomation($ma_lk, $macskcb, $operationType, $soluonghoso = 1, $error = null, $isSigned = false)
     {
         $loginname = null;
 
@@ -891,6 +891,8 @@ class Qd130XmlService
                 $values['exported_at'] = Carbon::now();
                 $values['export_error'] = $error;
                 $values['exported_by'] = $loginname;
+            } elseif ($operationType === 'sign') {
+                $values['is_signed'] = $isSigned;
             }
 
             Qd130XmlInformation::updateOrCreate($attributes, $values);
@@ -1622,14 +1624,18 @@ class Qd130XmlService
 
         // Ký số XML
         $xmlDataSigned = $this->xmlSignService->signXml($xmlData);
-        
+
+        $isSigned = $xmlDataSigned['isSigned'];
+
         if ($xmlDataSigned) {
-            $xmlData = $xmlDataSigned;
+            $xmlData = $xmlDataSigned['data'];
         }
         
         // Extract MACSKCB from the XML data (assuming getDataForXmlExport returns it)
         $xmlInformation = $this->getXmlInformation($ma_lk);
         $macskcb = $xmlInformation->macskcb;
+
+        $this->storeQd130XmlInfomation($ma_lk, $macskcb, 'sign', 1, null, $isSigned);
 
         // Định dạng thời gian hiện tại để đặt tên file
         $formattedDateTime = date('Y.m.d_H.i.s');

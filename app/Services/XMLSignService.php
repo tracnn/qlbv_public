@@ -28,7 +28,7 @@ class XMLSignService
 
         if (!$this->config['enabled']) {
             Log::info('XML signing is disabled');
-            return $xmlContent;
+            return ['isSigned' => false, 'data' => $xmlContent];
         }
 
         $xmlBase64 = base64_encode($xmlContent);
@@ -69,14 +69,14 @@ class XMLSignService
                     $errorMessage .= ': ' . implode(', ', $result['Param']['Messages']);
                 }
                 Log::error('XML signing failed: ' . $errorMessage);
-                return $xmlBase64;
+                return ['isSigned' => false, 'data' => $xmlBase64];
             }
 
-            return base64_decode($result['Data']);
+            return ['isSigned' => true, 'data' => base64_decode($result['Data'])];
 
         } catch (GuzzleException $e) {
             Log::error('XML Sign API Error: ' . $e->getMessage());
-            return $xmlBase64;
+            return ['isSigned' => false, 'data' => $xmlBase64];
         }
     }
 

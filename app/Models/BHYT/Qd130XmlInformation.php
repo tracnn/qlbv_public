@@ -16,5 +16,6 @@ class Qd130XmlInformation extends Model
         'export_error',
         'imported_by',
         'exported_by',
+        'is_signed',
     ];
 }

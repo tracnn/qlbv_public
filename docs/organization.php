@@ -51,7 +51,6 @@ return [
     ],
     'xml_sign' => [
         'endpoint' => 'http://192.168.7.239:1415/api/EmrSign/SignXmlBhyt',
-        'token_code' => '76486e395ef78c90eb96c340c24d2d2d277a09ec6018316eed6983270a1a115e',
         'application_code' => 'EMR',
         'hsm_type' => '2',
         'hsm_user_code' => '35c891bdb41d4745b1e4b62a3af33ecf',
