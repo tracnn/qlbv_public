@@ -107,11 +107,11 @@
                 { "data": "id", "name": "id" },
                 { "data": "name", "name": "name" },
                 { "data": "email", "name": "email" },
-                { "data": "active", "name": "active" },
-                { "data": "period", "name": "period" },
-                { "data": "report_types", "name": "report_types" },
+                { "data": "active", "name": "active", orderable: false, searchable: false },
+                { "data": "period", "name": "period", orderable: false, searchable: false },
+                { "data": "report_types", "name": "report_types", orderable: false, searchable: false },
                 { "data": "created_at", "name": "created_at" },
-                { "data": "action", "name": "action" },
+                { "data": "action", "name": "action", orderable: false, searchable: false },
             ],
         });
 
