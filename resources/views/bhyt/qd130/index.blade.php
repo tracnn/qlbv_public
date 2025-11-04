@@ -106,8 +106,8 @@
                     <th>Ngày t.toán</th>
                     <th>Ngày gửi</th>
                     <th>Ngày sửa</th>
-                    <th>Người nhập</th>
                     <th>Ký XML</th>
+                    <th>Người nhập</th>
                     <th>Action</th>
                 </tr>
             </thead>
@@ -216,8 +216,8 @@
                 { "data": "ngay_ttoan" },
                 { "data": "created_at" },
                 { "data": "updated_at" },
-                { "data": "imported_by", "orderable": false, "searchable": false },
                 { "data": "is_signed", "orderable": false, "searchable": false },
+                { "data": "imported_by", "orderable": false, "searchable": false },
                 { "data": "action" },
             ],
         });
