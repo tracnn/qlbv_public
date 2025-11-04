@@ -96,8 +96,7 @@
                 <tr>
                     <th>Mã điều trị</th>
                     <th><input type="checkbox" id="select-all"></th>
-                    <th>Exp</th>
-                    <th>Ký số</th>
+                    <th>Export</th>
                     <th>Mã BN</th>
                     <th>Họ tên</th>
                     <th>Mã thẻ</th>
@@ -108,6 +107,7 @@
                     <th>Ngày gửi</th>
                     <th>Ngày sửa</th>
                     <th>Người nhập</th>
+                    <th>Ký XML</th>
                     <th>Action</th>
                 </tr>
             </thead>
@@ -207,7 +207,6 @@
                     "searchable": false 
                 },
                 { "data": "exported_at", "orderable": false, "searchable": false },
-                { "data": "is_signed", "orderable": false, "searchable": false },
                 { "data": "ma_bn" },
                 { "data": "ho_ten" },
                 { "data": "ma_the_bhyt" },
@@ -218,6 +217,7 @@
                 { "data": "created_at" },
                 { "data": "updated_at" },
                 { "data": "imported_by", "orderable": false, "searchable": false },
+                { "data": "is_signed", "orderable": false, "searchable": false },
                 { "data": "action" },
             ],
         });
