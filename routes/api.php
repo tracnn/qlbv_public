@@ -38,4 +38,16 @@ Route::middleware(['throttle:60,1', 'api.auth'])->group(function () {
     Route::get('/examinations/prescription', 'ApiController@getPrescription');
     Route::get('/examinations/fee', 'ApiController@getFee');
     Route::get('/examinations/by-room', 'ApiController@getExaminationsByRoom');
+
+
+    Route::get('/medical-center-dashboard', 'MedicalCenterDashboardController@index')->name('medical-center-dashboard.index');
+    Route::get('/medical-center-dashboard/data', 'MedicalCenterDashboardController@getDashboardData')->name('medical-center-dashboard.data');
+    Route::get('/medical-center-dashboard/kham-benh', 'MedicalCenterDashboardController@getKhamBenh')->name('medical-center-dashboard.kham-benh');
+    Route::get('/medical-center-dashboard/noi-tru', 'MedicalCenterDashboardController@getNoiTru')->name('medical-center-dashboard.noi-tru');
+    Route::get('/medical-center-dashboard/ngoai-tru', 'MedicalCenterDashboardController@getNgoaiTru')->name('medical-center-dashboard.ngoai-tru');
+    Route::get('/medical-center-dashboard/can-lam-sang', 'MedicalCenterDashboardController@getCanLamSang')->name('medical-center-dashboard.can-lam-sang');
+    Route::get('/medical-center-dashboard/phau-thuat-thu-thuat', 'MedicalCenterDashboardController@getPhauThuatThuThuat')->name('medical-center-dashboard.phau-thuat-thu-thuat');
+    Route::get('/medical-center-dashboard/thoi-gian-cho-kham', 'MedicalCenterDashboardController@getThoiGianChoKham')->name('medical-center-dashboard.thoi-gian-cho-kham');
+    Route::get('/medical-center-dashboard/thoi-gian-kham-trung-binh', 'MedicalCenterDashboardController@getThoiGianKhamTrungBinh')->name('medical-center-dashboard.thoi-gian-kham-trung-binh');
+    Route::get('/medical-center-dashboard/thoi-gian-cho-khac', 'MedicalCenterDashboardController@getThoiGianChoKhac')->name('medical-center-dashboard.thoi-gian-cho-khac');
 });
