@@ -110,20 +110,6 @@ return [
     'menu' => [
         'CÁC CHỨC NĂNG CHÍNH',
         [
-            'text'    => 'Dashboard',
-            'icon'    => 'tachometer',
-            //'checkrole'   => 'administrator',
-            'submenu' => [
-                [
-                    'text'  => 'Dashboard',
-                    'icon'  => 'tachometer',
-                    //'checkrole'   => 'administrator',
-                    'route'   => 'medical-center-dashboard.index',
-                    'active'=> ['medical-center-dashboard*'],
-                ],
-            ],
-        ],
-        [
             'text'    => 'Kế hoạch tổng hợp',
             'icon'    => 'id-card',
             'checkrole'   => 'administrator',
