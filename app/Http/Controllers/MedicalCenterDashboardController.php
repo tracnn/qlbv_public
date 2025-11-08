@@ -6,6 +6,8 @@ use Carbon\Carbon;
 use DB;
 use Illuminate\Http\Request;
 
+use App\Http\Controllers\HomeController;
+
 class MedicalCenterDashboardController extends Controller
 {
     /**
@@ -133,6 +135,261 @@ class MedicalCenterDashboardController extends Controller
         $to_date = Carbon::parse($date)->endOfDay()->format('YmdHis');
 
         return response()->json($this->getThoiGianChoKhacData($from_date, $to_date));
+    }
+
+    /**
+     * API tính trung bình thời gian chờ và thực hiện theo từng loại dịch vụ
+     * Dữ liệu trả về phù hợp với Grafana
+     * 
+     * Query params:
+     * - date: Ngày cần lấy (format: Y-m-d), mặc định là hôm nay
+     * - startDate: Ngày bắt đầu (format: YmdHis), nếu có sẽ override date
+     * - endDate: Ngày kết thúc (format: YmdHis), nếu có sẽ override date
+     * - group_by: Nhóm theo 'day' hoặc 'service' (mặc định: 'service')
+     * - format: 'grafana' hoặc 'simple' (mặc định: 'grafana')
+     */
+    public function getServiceWaitAndExecutionTime(Request $request)
+    {
+        // Xử lý tham số ngày tháng
+        if ($request->has('startDate') && $request->has('endDate')) {
+            $from_date = $request->input('startDate');
+            $to_date = $request->input('endDate');
+        } else {
+            $date = $request->input('date', Carbon::now()->format('Y-m-d'));
+            $from_date = Carbon::parse($date)->startOfDay()->format('YmdHis');
+            $to_date = Carbon::parse($date)->endOfDay()->format('YmdHis');
+        }
+
+        $groupBy = $request->input('group_by', 'service'); // 'day' hoặc 'service'
+        $format = $request->input('format', 'grafana'); // 'grafana' hoặc 'simple'
+
+        // Lấy dữ liệu từ database
+        $data = $this->getExamAndParraclinicalData($from_date, $to_date);
+
+        if ($groupBy === 'day') {
+            // Nhóm theo ngày và loại dịch vụ
+            $result = $this->calculateServiceTimeByDay($data, $format);
+        } else {
+            // Nhóm theo loại dịch vụ
+            $result = $this->calculateServiceTimeByService($data, $format);
+        }
+
+        return response()->json($result);
+    }
+
+    /**
+     * Lấy dữ liệu từ database (tương tự getExamAndParraclinical)
+     */
+    private function getExamAndParraclinicalData($from_date, $to_date)
+    {
+        return DB::connection('HISPro')
+            ->table('his_sere_serv')
+            ->join('his_service_req', 'his_service_req.id', '=', 'his_sere_serv.service_req_id')
+            ->join('his_branch', 'his_branch.id', '=', 'his_sere_serv.tdl_execute_branch_id')
+            ->join('his_service_req_type', 'his_service_req_type.id', '=', 'his_service_req.service_req_type_id')
+            ->select(
+                'his_branch.branch_name',
+                'his_service_req_type.service_req_type_name',
+                'his_service_req_type.id as service_req_type_id',
+                'his_service_req.intruction_time',
+                'his_service_req.start_time',
+                'his_service_req.finish_time'
+            )
+            ->whereBetween('intruction_time', [$from_date, $to_date])
+            ->whereIn('his_service_req.service_req_type_id', [1, 2, 3, 5, 8, 9, 12, 13])
+            ->where('his_service_req.is_active', 1)
+            ->where('his_service_req.is_delete', 0)
+            ->whereNotNull('finish_time')
+            ->whereNotNull('start_time')
+            ->whereNotNull('intruction_time')
+            ->get();
+    }
+
+    /**
+     * Tính toán thời gian theo loại dịch vụ
+     */
+    private function calculateServiceTimeByService($data, $format = 'grafana')
+    {
+        // Nhóm theo loại dịch vụ
+        $grouped = $data->groupBy('service_req_type_name');
+
+        $stats = [];
+
+        foreach ($grouped as $serviceTypeName => $items) {
+            $totalWait = 0;
+            $totalExec = 0;
+            $validCount = 0;
+            $minWait = null;
+            $maxWait = null;
+            $minExec = null;
+            $maxExec = null;
+
+            foreach ($items as $item) {
+                // Parse các mốc thời gian
+                try {
+                    $start = Carbon::createFromFormat('YmdHis', $item->start_time);
+                    $instr = Carbon::createFromFormat('YmdHis', $item->intruction_time);
+                    $finish = Carbon::createFromFormat('YmdHis', $item->finish_time);
+                } catch (\Exception $e) {
+                    continue; // Bỏ qua nếu format sai
+                }
+
+                // Kiểm tra logic thời gian: intruction_time <= start_time <= finish_time
+                if ($start->lessThan($instr) || $start->greaterThan($finish)) {
+                    continue; // Bỏ qua nếu thời gian không hợp lý
+                }
+
+                // Tính thời gian chờ (từ khi chỉ định đến khi bắt đầu thực hiện) - đơn vị: phút
+                $waitMinutes = $instr->diffInMinutes($start);
+                // Tính thời gian thực hiện (từ khi bắt đầu đến khi kết thúc) - đơn vị: phút
+                $execMinutes = $start->diffInMinutes($finish);
+
+                $totalWait += $waitMinutes;
+                $totalExec += $execMinutes;
+                $validCount++;
+
+                // Tìm min/max
+                if ($minWait === null || $waitMinutes < $minWait) {
+                    $minWait = $waitMinutes;
+                }
+                if ($maxWait === null || $waitMinutes > $maxWait) {
+                    $maxWait = $waitMinutes;
+                }
+                if ($minExec === null || $execMinutes < $minExec) {
+                    $minExec = $execMinutes;
+                }
+                if ($maxExec === null || $execMinutes > $maxExec) {
+                    $maxExec = $execMinutes;
+                }
+            }
+
+            if ($validCount > 0) {
+                $avgWait = round($totalWait / $validCount, 2);
+                $avgExec = round($totalExec / $validCount, 2);
+
+                if ($format === 'grafana') {
+                    // Format cho Grafana - time series format
+                    $stats[] = [
+                        'service_type' => $serviceTypeName,
+                        'service_type_id' => $items->first()->service_req_type_id,
+                        'avg_wait_time_minutes' => $avgWait,
+                        'avg_exec_time_minutes' => $avgExec,
+                        'total_count' => $validCount,
+                        'min_wait_time_minutes' => round($minWait, 2),
+                        'max_wait_time_minutes' => round($maxWait, 2),
+                        'min_exec_time_minutes' => round($minExec, 2),
+                        'max_exec_time_minutes' => round($maxExec, 2),
+                    ];
+                } else {
+                    // Format đơn giản
+                    $stats[] = [
+                        'service_type' => $serviceTypeName,
+                        'avg_wait' => $avgWait,
+                        'avg_exec' => $avgExec,
+                        'count' => $validCount,
+                    ];
+                }
+            }
+        }
+
+        return [
+            'data' => $stats,
+            'summary' => [
+                'total_services' => count($stats),
+                'total_records' => $data->count(),
+            ],
+        ];
+    }
+
+    /**
+     * Tính toán thời gian theo ngày và loại dịch vụ (time series)
+     */
+    private function calculateServiceTimeByDay($data, $format = 'grafana')
+    {
+        // Nhóm theo ngày và loại dịch vụ
+        $grouped = $data->groupBy(function ($item) {
+            // Lấy ngày từ intruction_time
+            try {
+                $date = Carbon::createFromFormat('YmdHis', $item->intruction_time);
+                return $date->format('Y-m-d') . '|' . $item->service_req_type_name;
+            } catch (\Exception $e) {
+                return 'unknown|' . $item->service_req_type_name;
+            }
+        });
+
+        $stats = [];
+
+        foreach ($grouped as $key => $items) {
+            [$date, $serviceTypeName] = explode('|', $key);
+            
+            $totalWait = 0;
+            $totalExec = 0;
+            $validCount = 0;
+
+            foreach ($items as $item) {
+                try {
+                    $start = Carbon::createFromFormat('YmdHis', $item->start_time);
+                    $instr = Carbon::createFromFormat('YmdHis', $item->intruction_time);
+                    $finish = Carbon::createFromFormat('YmdHis', $item->finish_time);
+                } catch (\Exception $e) {
+                    continue;
+                }
+
+                if ($start->lessThan($instr) || $start->greaterThan($finish)) {
+                    continue;
+                }
+
+                $waitMinutes = $instr->diffInMinutes($start);
+                $execMinutes = $start->diffInMinutes($finish);
+
+                $totalWait += $waitMinutes;
+                $totalExec += $execMinutes;
+                $validCount++;
+            }
+
+            if ($validCount > 0) {
+                $avgWait = round($totalWait / $validCount, 2);
+                $avgExec = round($totalExec / $validCount, 2);
+
+                if ($format === 'grafana') {
+                    // Format cho Grafana time series
+                    $timestamp = Carbon::parse($date)->timestamp * 1000; // milliseconds
+                    
+                    $stats[] = [
+                        'time' => $timestamp,
+                        'date' => $date,
+                        'service_type' => $serviceTypeName,
+                        'avg_wait_time_minutes' => $avgWait,
+                        'avg_exec_time_minutes' => $avgExec,
+                        'count' => $validCount,
+                    ];
+                } else {
+                    $stats[] = [
+                        'date' => $date,
+                        'service_type' => $serviceTypeName,
+                        'avg_wait' => $avgWait,
+                        'avg_exec' => $avgExec,
+                        'count' => $validCount,
+                    ];
+                }
+            }
+        }
+
+        // Sắp xếp theo thời gian
+        usort($stats, function ($a, $b) {
+            return strcmp($a['date'] ?? $a['time'], $b['date'] ?? $b['time']);
+        });
+
+        return [
+            'data' => $stats,
+            'summary' => [
+                'total_records' => $data->count(),
+                'date_range' => [
+                    'from' => collect($stats)->min('date'),
+                    'to' => collect($stats)->max('date'),
+                ],
+            ],
+        ];
     }
 
     /**

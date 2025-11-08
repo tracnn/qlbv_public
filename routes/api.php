@@ -50,4 +50,5 @@ Route::middleware(['throttle:60,1', 'api.auth'])->group(function () {
     Route::get('/medical-center-dashboard/thoi-gian-cho-kham', 'MedicalCenterDashboardController@getThoiGianChoKham')->name('medical-center-dashboard.thoi-gian-cho-kham');
     Route::get('/medical-center-dashboard/thoi-gian-kham-trung-binh', 'MedicalCenterDashboardController@getThoiGianKhamTrungBinh')->name('medical-center-dashboard.thoi-gian-kham-trung-binh');
     Route::get('/medical-center-dashboard/thoi-gian-cho-khac', 'MedicalCenterDashboardController@getThoiGianChoKhac')->name('medical-center-dashboard.thoi-gian-cho-khac');
+    Route::get('/medical-center-dashboard/service-wait-execution-time', 'MedicalCenterDashboardController@getServiceWaitAndExecutionTime')->name('medical-center-dashboard.service-wait-execution-time');
 });
