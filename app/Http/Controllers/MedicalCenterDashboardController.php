@@ -138,6 +138,18 @@ class MedicalCenterDashboardController extends Controller
     }
 
     /**
+     * Lấy dữ liệu thời gian chờ và thực hiện CĐHA (endpoint riêng)
+     */
+    public function getThoiGianChoCdha(Request $request)
+    {
+        $date = $request->input('date', Carbon::now()->format('Y-m-d'));
+        $from_date = Carbon::parse($date)->startOfDay()->format('YmdHis');
+        $to_date = Carbon::parse($date)->endOfDay()->format('YmdHis');
+
+        return response()->json($this->getThoiGianChoCdhaData($from_date, $to_date));
+    }
+
+    /**
      * API tính trung bình thời gian chờ và thực hiện theo từng loại dịch vụ
      * Dữ liệu trả về phù hợp với Grafana
      * 
@@ -264,8 +276,8 @@ class MedicalCenterDashboardController extends Controller
             }
 
             if ($validCount > 0) {
-                $avgWait = round($totalWait / $validCount, 2);
-                $avgExec = round($totalExec / $validCount, 2);
+                $avgWait = round($totalWait / $validCount);
+                $avgExec = round($totalExec / $validCount);
 
                 if ($format === 'grafana') {
                     // Format cho Grafana - time series format
@@ -275,10 +287,10 @@ class MedicalCenterDashboardController extends Controller
                         'avg_wait_time_minutes' => $avgWait,
                         'avg_exec_time_minutes' => $avgExec,
                         'total_count' => $validCount,
-                        'min_wait_time_minutes' => round($minWait, 2),
-                        'max_wait_time_minutes' => round($maxWait, 2),
-                        'min_exec_time_minutes' => round($minExec, 2),
-                        'max_exec_time_minutes' => round($maxExec, 2),
+                        'min_wait_time_minutes' => round($minWait),
+                        'max_wait_time_minutes' => round($maxWait),
+                        'min_exec_time_minutes' => round($minExec),
+                        'max_exec_time_minutes' => round($maxExec),
                     ];
                 } else {
                     // Format đơn giản
@@ -348,8 +360,8 @@ class MedicalCenterDashboardController extends Controller
             }
 
             if ($validCount > 0) {
-                $avgWait = round($totalWait / $validCount, 2);
-                $avgExec = round($totalExec / $validCount, 2);
+                $avgWait = round($totalWait / $validCount);
+                $avgExec = round($totalExec / $validCount);
 
                 if ($format === 'grafana') {
                     // Format cho Grafana time series
@@ -990,6 +1002,112 @@ class MedicalCenterDashboardController extends Controller
             'cdha' => round($cdha->trung_binh ?? 0),
             'lay_thuoc' => round($lay_thuoc->trung_binh ?? 0),
         ];
+    }
+
+    /**
+     * Lấy dữ liệu thời gian chờ và thực hiện CĐHA theo từng loại (X-quang, CT, MRI...)
+     */
+    private function getThoiGianChoCdhaData($from_date, $to_date)
+    {
+        // Lấy dữ liệu từ database (tương tự getDiagnoticImaging)
+        $data = DB::connection('HISPro')
+            ->table('his_sere_serv')
+            ->join('his_service_req', 'his_service_req.id', '=', 'his_sere_serv.service_req_id')
+            ->join('his_service_req_type', 'his_service_req_type.id', '=', 'his_service_req.service_req_type_id')
+            ->join('his_service', 'his_service.id', '=', 'his_sere_serv.service_id')
+            ->leftjoin('his_diim_type', 'his_diim_type.id', '=', 'his_service.diim_type_id')
+            ->select(
+                'his_diim_type.diim_type_name',
+                'his_service_req.intruction_time',
+                'his_service_req.start_time',
+                'his_service_req.finish_time'
+            )
+            ->whereBetween('his_service_req.intruction_time', [$from_date, $to_date])
+            ->where('his_service_req.service_req_type_id', config('__tech.service_req_type_cdha', 3))
+            ->where('his_service_req.is_active', 1)
+            ->where('his_service_req.is_delete', 0)
+            ->whereNotNull('his_service_req.finish_time')
+            ->whereNotNull('his_service_req.start_time')
+            ->whereNotNull('his_service_req.intruction_time')
+            ->get();
+
+        // Nhóm theo loại CĐHA (diim_type_name)
+        $grouped = $data->groupBy(function ($item) {
+            return $item->diim_type_name ?? 'Khác';
+        });
+
+        $stats = [];
+
+        foreach ($grouped as $diimTypeName => $items) {
+            $totalWait = 0;
+            $totalExec = 0;
+            $validCount = 0;
+            $minWait = null;
+            $maxWait = null;
+            $minExec = null;
+            $maxExec = null;
+
+            foreach ($items as $item) {
+                // Parse các mốc thời gian
+                try {
+                    $start = Carbon::createFromFormat('YmdHis', $item->start_time);
+                    $instr = Carbon::createFromFormat('YmdHis', $item->intruction_time);
+                    $finish = Carbon::createFromFormat('YmdHis', $item->finish_time);
+                } catch (\Exception $e) {
+                    continue; // Bỏ qua nếu format sai
+                }
+
+                // Kiểm tra logic thời gian: intruction_time <= start_time <= finish_time
+                if ($start->lessThan($instr) || $start->greaterThan($finish)) {
+                    continue; // Bỏ qua nếu thời gian không hợp lý
+                }
+
+                // Tính thời gian chờ (từ khi chỉ định đến khi bắt đầu thực hiện) - đơn vị: phút
+                $waitMinutes = $instr->diffInMinutes($start);
+                // Tính thời gian thực hiện (từ khi bắt đầu đến khi kết thúc) - đơn vị: phút
+                $execMinutes = $start->diffInMinutes($finish);
+
+                $totalWait += $waitMinutes;
+                $totalExec += $execMinutes;
+                $validCount++;
+
+                // Tìm min/max
+                if ($minWait === null || $waitMinutes < $minWait) {
+                    $minWait = $waitMinutes;
+                }
+                if ($maxWait === null || $waitMinutes > $maxWait) {
+                    $maxWait = $waitMinutes;
+                }
+                if ($minExec === null || $execMinutes < $minExec) {
+                    $minExec = $execMinutes;
+                }
+                if ($maxExec === null || $execMinutes > $maxExec) {
+                    $maxExec = $execMinutes;
+                }
+            }
+
+            if ($validCount > 0) {
+                $avgWait = round($totalWait / $validCount);
+                $avgExec = round($totalExec / $validCount);
+
+                $stats[] = [
+                    'loai_cdha' => $diimTypeName,
+                    'thoi_gian_cho' => [
+                        'trung_binh' => $avgWait,
+                        'lau_nhat' => round($maxWait),
+                        'nhanh_nhat' => round($minWait),
+                    ],
+                    'thoi_gian_thuc_hien' => [
+                        'trung_binh' => $avgExec,
+                        'lau_nhat' => round($maxExec),
+                        'nhanh_nhat' => round($minExec),
+                    ],
+                    'so_luong' => $validCount,
+                ];
+            }
+        }
+
+        return $stats;
     }
 }
 
