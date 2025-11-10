@@ -160,25 +160,27 @@ class MedicalCenterDashboardController extends Controller
 
         $model = $this->getServiceByTypeData($from_date, $to_date, $id);
 
-        $sum_sl = $model->sum('so_luong');
+        $total = $model->sum('so_luong');
 
         // Nhóm dữ liệu theo `service_req_stt_id`
         $statusData = [
-            1 => ['name' => 'Chưa thực hiện', 'y' => 0],
-            2 => ['name' => 'Đang thực hiện', 'y' => 0],
-            3 => ['name' => 'Đã thực hiện', 'y' => 0]
+            1 => ['status' => 'Chưa thực hiện', 'count' => 0],
+            2 => ['status' => 'Đang thực hiện', 'count' => 0],
+            3 => ['status' => 'Đã thực hiện', 'count' => 0]
         ];
 
         foreach ($model as $item) {
             if (isset($statusData[$item->service_req_stt_id])) {
-                $statusData[$item->service_req_stt_id]['y'] += $item->so_luong;
+                $statusData[$item->service_req_stt_id]['count'] += $item->so_luong;
             }
         }
 
         // Chuyển dữ liệu sang dạng JSON để frontend sử dụng
         return response()->json([
-            'sum_sl' => $sum_sl,
-            'chartData' => array_values($statusData) // Chỉ lấy giá trị, bỏ key
+            'summary' => [
+                'total' => $total
+            ],
+            'data' => array_values($statusData) // Chỉ lấy giá trị, bỏ key
         ]);
     }
 
