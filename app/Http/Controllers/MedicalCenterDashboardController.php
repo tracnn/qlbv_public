@@ -163,43 +163,24 @@ class MedicalCenterDashboardController extends Controller
         $total = $model->sum('so_luong');
 
         // Nhóm dữ liệu theo `service_req_stt_id`
-        $statusCounts = [
-            1 => 0, // Chưa thực hiện
-            2 => 0, // Đang thực hiện
-            3 => 0  // Đã thực hiện
+        $statusData = [
+            1 => ['status' => 'Chưa thực hiện', 'count' => 0],
+            2 => ['status' => 'Đang thực hiện', 'count' => 0],
+            3 => ['status' => 'Đã thực hiện', 'count' => 0]
         ];
 
         foreach ($model as $item) {
-            if (isset($statusCounts[$item->service_req_stt_id])) {
-                $statusCounts[$item->service_req_stt_id] += $item->so_luong;
+            if (isset($statusData[$item->service_req_stt_id])) {
+                $statusData[$item->service_req_stt_id]['count'] += $item->so_luong;
             }
         }
-
-        // Tạo mảng data với format mới - luôn có 3 phần tử cho 3 trạng thái
-        $data = [
-            [
-                'Chưa thực hiện' => $statusCounts[1],
-                'Đang thực hiện' => 0,
-                'Đã thực hiện' => 0
-            ],
-            [
-                'Chưa thực hiện' => 0,
-                'Đang thực hiện' => $statusCounts[2],
-                'Đã thực hiện' => 0
-            ],
-            [
-                'Chưa thực hiện' => 0,
-                'Đang thực hiện' => 0,
-                'Đã thực hiện' => $statusCounts[3]
-            ]
-        ];
 
         // Chuyển dữ liệu sang dạng JSON để frontend sử dụng
         return response()->json([
             'summary' => [
                 'total' => $total
             ],
-            'data' => $data
+            'data' => array_values($statusData) // Chỉ lấy giá trị, bỏ key
         ]);
     }
 
