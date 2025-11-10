@@ -47,9 +47,7 @@ Route::middleware(['throttle:60,1', 'api.auth'])->group(function () {
     Route::get('/medical-center-dashboard/ngoai-tru', 'MedicalCenterDashboardController@getNgoaiTru')->name('medical-center-dashboard.ngoai-tru');
     Route::get('/medical-center-dashboard/can-lam-sang', 'MedicalCenterDashboardController@getCanLamSang')->name('medical-center-dashboard.can-lam-sang');
     Route::get('/medical-center-dashboard/phau-thuat-thu-thuat', 'MedicalCenterDashboardController@getPhauThuatThuThuat')->name('medical-center-dashboard.phau-thuat-thu-thuat');
-    //Route::get('/medical-center-dashboard/thoi-gian-cho-kham', 'MedicalCenterDashboardController@getThoiGianChoKham')->name('medical-center-dashboard.thoi-gian-cho-kham');
-    //Route::get('/medical-center-dashboard/thoi-gian-kham-trung-binh', 'MedicalCenterDashboardController@getThoiGianKhamTrungBinh')->name('medical-center-dashboard.thoi-gian-kham-trung-binh');
-    //Route::get('/medical-center-dashboard/thoi-gian-cho-khac', 'MedicalCenterDashboardController@getThoiGianChoKhac')->name('medical-center-dashboard.thoi-gian-cho-khac');
     Route::get('/medical-center-dashboard/service-wait-execution-time', 'MedicalCenterDashboardController@getServiceWaitAndExecutionTime')->name('medical-center-dashboard.service-wait-execution-time');
     Route::get('/medical-center-dashboard/thoi-gian-cho-cdha', 'MedicalCenterDashboardController@getThoiGianChoCdha')->name('medical-center-dashboard.thoi-gian-cho-cdha');
+    Route::get('/medical-center-dashboard/service-by-type/{id}', 'MedicalCenterDashboardController@getServiceByType')->name('medical-center-dashboard.service-by-type');
 });
