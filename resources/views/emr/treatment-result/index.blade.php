@@ -258,10 +258,12 @@ $(document).ready(function() {
 $(document).on('change', '#groupByDocumentType', function() {
     var isGrouped = $(this).is(':checked');
     var tbody = $('#emr-document tbody');
+    var table = $('#emr-document');
     
     // Phá hủy DataTable hiện tại
     if (emrDocumentTable) {
         emrDocumentTable.destroy();
+        emrDocumentTable = null;
     }
     
     // Xóa nội dung tbody
@@ -282,7 +284,7 @@ $(document).on('change', '#groupByDocumentType', function() {
         
         // Hiển thị dữ liệu đã nhóm
         Object.keys(groupedData).sort().forEach(function(documentType) {
-            // Thêm header cho nhóm
+            // Thêm header cho nhóm với đủ 5 cột
             var groupRow = $('<tr class="group-header" style="background-color: #f5f5f5; font-weight: bold;">');
             groupRow.append('<td colspan="5" style="padding: 10px 15px;">');
             groupRow.find('td').html('<span class="glyphicon glyphicon-folder-open" style="margin-right: 5px;"></span>' + 
@@ -297,6 +299,10 @@ $(document).on('change', '#groupByDocumentType', function() {
                 stt++;
             });
         });
+        
+        // Không khởi tạo DataTable khi ở chế độ nhóm (vì có colspan)
+        // Chỉ áp dụng style cho bảng
+        table.addClass('table-hover');
     } else {
         // Hiển thị dữ liệu gốc
         originalDocumentData.forEach(function(row, index) {
@@ -304,12 +310,12 @@ $(document).on('change', '#groupByDocumentType', function() {
             newRow.find('td:first').text(index + 1);
             tbody.append(newRow);
         });
+        
+        // Khởi tạo lại DataTable khi không nhóm
+        emrDocumentTable = $('#emr-document').DataTable({
+            "order": []
+        });
     }
-    
-    // Khởi tạo lại DataTable
-    emrDocumentTable = $('#emr-document').DataTable({
-        "order": []
-    });
 });
 
 $(document).on('click', '.share-modal', function() {
