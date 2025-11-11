@@ -26,6 +26,15 @@
     .highlight-row {
         background-color: #f0f8ff !important; /* Light blue background for highlighted row */
     }
+    .group-header {
+        transition: background-color 0.2s ease;
+    }
+    .group-header:hover {
+        background-color: #e0e0e0 !important;
+    }
+    .group-toggle {
+        transition: transform 0.2s ease;
+    }
 </style>
 @endpush
 
@@ -195,18 +204,24 @@
                 // Xóa tbody và hiển thị dữ liệu đã nhóm
                 tbody.empty();
                 var stt = 1;
+                var groupIndex = 0;
                 
                 Object.keys(groupedData).sort().forEach(function(documentType) {
-                    // Thêm header cho nhóm
-                    var groupRow = $('<tr class="group-header" style="background-color: #f5f5f5; font-weight: bold;">');
+                    var groupId = 'group-' + groupIndex;
+                    
+                    // Thêm header cho nhóm với khả năng click để collapse/expand
+                    var groupRow = $('<tr class="group-header" style="background-color: #f5f5f5; font-weight: bold; cursor: pointer;" data-group-id="' + groupId + '">');
                     groupRow.append('<td colspan="5" style="padding: 10px 15px;">');
-                    groupRow.find('td').html('<span class="glyphicon glyphicon-folder-open" style="margin-right: 5px;"></span>' + 
-                        documentType + ' <span class="badge">' + groupedData[documentType].length + '</span>');
+                    groupRow.find('td').html(
+                        '<span class="group-toggle glyphicon glyphicon-chevron-down" style="margin-right: 5px; color: #337ab7;"></span>' +
+                        '<span class="glyphicon glyphicon-folder-open" style="margin-right: 5px;"></span>' + 
+                        documentType + ' <span class="badge">' + groupedData[documentType].length + '</span>'
+                    );
                     tbody.append(groupRow);
                     
-                    // Thêm các row trong nhóm
+                    // Thêm các row trong nhóm với class để có thể ẩn/hiện
                     groupedData[documentType].forEach(function(row) {
-                        var newRow = $('<tr>');
+                        var newRow = $('<tr class="group-row" data-group-id="' + groupId + '">');
                         newRow.append('<td>' + stt + '</td>');
                         newRow.append('<td>' + (row.document_name || '') + '</td>');
                         newRow.append('<td>' + (row.document_type_name || '') + '</td>');
@@ -215,7 +230,22 @@
                         tbody.append(newRow);
                         stt++;
                     });
+                    
+                    groupIndex++;
                 });
+                
+                // Thêm nút Expand All / Collapse All nếu có nhiều nhóm
+                if (groupIndex > 1) {
+                    var controlRow = $('<tr class="group-control" style="background-color: #e8e8e8;">');
+                    controlRow.append('<td colspan="5" style="padding: 8px 15px; text-align: right;">');
+                    controlRow.find('td').html(
+                        '<button type="button" class="btn btn-xs btn-default expand-all-groups" style="margin-right: 5px;">' +
+                        '<span class="glyphicon glyphicon-resize-full"></span> Mở tất cả</button>' +
+                        '<button type="button" class="btn btn-xs btn-default collapse-all-groups">' +
+                        '<span class="glyphicon glyphicon-resize-small"></span> Đóng tất cả</button>'
+                    );
+                    tbody.prepend(controlRow);
+                }
                 
                 $('#emr-detail').addClass('table-hover');
             },
@@ -239,6 +269,40 @@
             // Khởi tạo lại DataTable bình thường
             fetchData();
         }
+    });
+
+    // Xử lý click vào group header để collapse/expand
+    $(document).on('click', '.group-header', function(e) {
+        e.preventDefault();
+        var groupId = $(this).data('group-id');
+        var toggleIcon = $(this).find('.group-toggle');
+        var groupRows = $('.group-row[data-group-id="' + groupId + '"]');
+        
+        if (groupRows.is(':visible')) {
+            // Collapse: ẩn các row trong nhóm
+            groupRows.hide();
+            toggleIcon.removeClass('glyphicon-chevron-down').addClass('glyphicon-chevron-right');
+        } else {
+            // Expand: hiển thị các row trong nhóm
+            groupRows.show();
+            toggleIcon.removeClass('glyphicon-chevron-right').addClass('glyphicon-chevron-down');
+        }
+    });
+
+    // Xử lý nút Expand All
+    $(document).on('click', '.expand-all-groups', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        $('.group-row').show();
+        $('.group-toggle').removeClass('glyphicon-chevron-right').addClass('glyphicon-chevron-down');
+    });
+
+    // Xử lý nút Collapse All
+    $(document).on('click', '.collapse-all-groups', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        $('.group-row').hide();
+        $('.group-toggle').removeClass('glyphicon-chevron-down').addClass('glyphicon-chevron-right');
     });
 
     // Gọi khi trang load
