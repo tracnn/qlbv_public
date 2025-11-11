@@ -112,6 +112,12 @@
 <div class="panel panel-default">
 	<div class="panel-heading">
         Phiếu trả kết quả
+        <div class="pull-right">
+            <label style="font-weight: normal; margin-bottom: 0;">
+                <input type="checkbox" id="groupByDocumentType" style="margin-right: 5px;">
+                Nhóm theo Loại văn bản
+            </label>
+        </div>
     </div>
 <div class="panel-body table-responsive">
 @if(isset($emr_document) && $emr_document)
@@ -127,7 +133,7 @@
         </thead>
         <tbody>
         @foreach($emr_document as $key => $value)
-        <tr>
+        <tr data-document-type="{{$value->document_type_name}}">
             <td>
                 {{$key + 1}}
             </td>
@@ -228,12 +234,81 @@
 
 @push('after-scripts')
 <script>
+var emrDocumentTable;
+var originalDocumentData = [];
+
 $(document).ready(function() {
     $('#emr-treatment').DataTable({
     });
-    $('#emr-document').DataTable({
+    
+    // Lưu dữ liệu gốc từ các row trước khi khởi tạo DataTable
+    $('#emr-document tbody tr').each(function() {
+        originalDocumentData.push($(this).clone(true, true));
     });
+    
+    // Khởi tạo DataTable
+    emrDocumentTable = $('#emr-document').DataTable({
+    });
+    
     $('#service_cdha').DataTable({
+    });
+});
+
+// Xử lý nhóm theo Loại văn bản
+$(document).on('change', '#groupByDocumentType', function() {
+    var isGrouped = $(this).is(':checked');
+    var tbody = $('#emr-document tbody');
+    
+    // Phá hủy DataTable hiện tại
+    if (emrDocumentTable) {
+        emrDocumentTable.destroy();
+    }
+    
+    // Xóa nội dung tbody
+    tbody.empty();
+    
+    if (isGrouped) {
+        // Nhóm dữ liệu theo Loại văn bản
+        var groupedData = {};
+        var stt = 1;
+        
+        originalDocumentData.forEach(function(row) {
+            var documentType = row.attr('data-document-type');
+            if (!groupedData[documentType]) {
+                groupedData[documentType] = [];
+            }
+            groupedData[documentType].push(row);
+        });
+        
+        // Hiển thị dữ liệu đã nhóm
+        Object.keys(groupedData).sort().forEach(function(documentType) {
+            // Thêm header cho nhóm
+            var groupRow = $('<tr class="group-header" style="background-color: #f5f5f5; font-weight: bold;">');
+            groupRow.append('<td colspan="5" style="padding: 10px 15px;">');
+            groupRow.find('td').html('<span class="glyphicon glyphicon-folder-open" style="margin-right: 5px;"></span>' + 
+                documentType + ' <span class="badge">' + groupedData[documentType].length + '</span>');
+            tbody.append(groupRow);
+            
+            // Thêm các row trong nhóm
+            groupedData[documentType].forEach(function(row) {
+                var newRow = row.clone(true);
+                newRow.find('td:first').text(stt);
+                tbody.append(newRow);
+                stt++;
+            });
+        });
+    } else {
+        // Hiển thị dữ liệu gốc
+        originalDocumentData.forEach(function(row, index) {
+            var newRow = row.clone(true);
+            newRow.find('td:first').text(index + 1);
+            tbody.append(newRow);
+        });
+    }
+    
+    // Khởi tạo lại DataTable
+    emrDocumentTable = $('#emr-document').DataTable({
+        "order": []
     });
 });
 
