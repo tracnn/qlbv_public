@@ -51,6 +51,12 @@
     <div class="panel panel-default">
         <div class="panel-heading">
             Chi tiết hồ sơ
+            <div class="pull-right">
+                <label style="font-weight: normal; margin-bottom: 0;">
+                    <input type="checkbox" id="groupByDocumentType" style="margin-right: 5px;">
+                    Nhóm theo Loại văn bản
+                </label>
+            </div>
         </div>
         <div class="panel-body table-responsive">
             <table id="emr-detail" class="table display table-hover responsive wrap datatable dtr-inline" width="100%">
@@ -72,6 +78,8 @@
 <script type="text/javascript">
     var currentAjaxRequest = null; // Biến để lưu trữ yêu cầu AJAX hiện tại
     var table = null;
+    var allDocumentData = []; // Lưu tất cả dữ liệu để nhóm
+    var isGrouped = false;
 
     function fetchData() {
         // Kiểm tra và hủy yêu cầu AJAX trước đó (nếu có)
@@ -79,7 +87,7 @@
             currentAjaxRequest.abort();
         }
 
-        if (table != null) {
+        if (table != null && !isGrouped) {
             table.ajax.reload(); // Nếu đã khởi tạo thì chỉ cần reload
             return;
         }
@@ -95,6 +103,10 @@
                 data: function(d) {
                     d.document_type = $('#document_type').val();
                     d.treatment_code = '{{ $treatment_code }}';
+                    // Nếu cần lấy tất cả dữ liệu để nhóm
+                    if (isGrouped) {
+                        d.length = -1; // Lấy tất cả records
+                    }
                 },
                 beforeSend: function(xhr) {
                     currentAjaxRequest = xhr;
@@ -122,8 +134,112 @@
                 { "data": "create_date" }, // Ngày tạo
                 { "data": "action" }, // Hành động
             ],
+            "drawCallback": function(settings) {
+                // Lưu dữ liệu khi DataTable được vẽ
+                if (!isGrouped) {
+                    var api = this.api();
+                    allDocumentData = api.rows({page: 'all'}).data().toArray();
+                }
+            }
         });
     }
+
+    // Hàm để fetch tất cả dữ liệu và nhóm
+    function fetchAllDataAndGroup() {
+        var tbody = $('#emr-detail tbody');
+        
+        // Phá hủy DataTable
+        if (table) {
+            table.destroy();
+            table = null;
+        }
+        
+        // Hiển thị loading
+        tbody.html('<tr><td colspan="5" class="text-center">Đang tải dữ liệu...</td></tr>');
+        
+        // Fetch tất cả dữ liệu với format DataTables server-side
+        $.ajax({
+            url: '{{ route('bhxh.emr-checker-document-list') }}',
+            type: 'GET',
+            data: {
+                document_type: $('#document_type').val(),
+                treatment_code: '{{ $treatment_code }}',
+                length: 10000, // Lấy nhiều records (hoặc có thể dùng -1 nếu server hỗ trợ)
+                start: 0,
+                draw: 1
+            },
+            success: function(response) {
+                // Xử lý cả format DataTables và format thông thường
+                var data = [];
+                if (response.data && Array.isArray(response.data)) {
+                    data = response.data;
+                } else if (Array.isArray(response)) {
+                    data = response;
+                }
+                
+                if (data.length === 0) {
+                    tbody.html('<tr><td colspan="5" class="text-center">Không có dữ liệu</td></tr>');
+                    return;
+                }
+                
+                // Nhóm dữ liệu theo document_type_name
+                var groupedData = {};
+                data.forEach(function(row) {
+                    var documentType = row.document_type_name || 'Không xác định';
+                    if (!groupedData[documentType]) {
+                        groupedData[documentType] = [];
+                    }
+                    groupedData[documentType].push(row);
+                });
+                
+                // Xóa tbody và hiển thị dữ liệu đã nhóm
+                tbody.empty();
+                var stt = 1;
+                
+                Object.keys(groupedData).sort().forEach(function(documentType) {
+                    // Thêm header cho nhóm
+                    var groupRow = $('<tr class="group-header" style="background-color: #f5f5f5; font-weight: bold;">');
+                    groupRow.append('<td colspan="5" style="padding: 10px 15px;">');
+                    groupRow.find('td').html('<span class="glyphicon glyphicon-folder-open" style="margin-right: 5px;"></span>' + 
+                        documentType + ' <span class="badge">' + groupedData[documentType].length + '</span>');
+                    tbody.append(groupRow);
+                    
+                    // Thêm các row trong nhóm
+                    groupedData[documentType].forEach(function(row) {
+                        var newRow = $('<tr>');
+                        newRow.append('<td>' + stt + '</td>');
+                        newRow.append('<td>' + (row.document_name || '') + '</td>');
+                        newRow.append('<td>' + (row.document_type_name || '') + '</td>');
+                        newRow.append('<td>' + (row.create_date || '') + '</td>');
+                        newRow.append('<td>' + (row.action || '') + '</td>');
+                        tbody.append(newRow);
+                        stt++;
+                    });
+                });
+                
+                $('#emr-detail').addClass('table-hover');
+            },
+            error: function(xhr, error, code) {
+                console.log('Error fetching data:', error);
+                tbody.html('<tr><td colspan="5" class="text-center text-danger">Có lỗi xảy ra khi tải dữ liệu</td></tr>');
+                // Nếu lỗi, có thể khởi tạo lại DataTable bình thường
+                // isGrouped = false;
+                // fetchData();
+            }
+        });
+    }
+
+    // Xử lý checkbox nhóm
+    $(document).on('change', '#groupByDocumentType', function() {
+        isGrouped = $(this).is(':checked');
+        
+        if (isGrouped) {
+            fetchAllDataAndGroup();
+        } else {
+            // Khởi tạo lại DataTable bình thường
+            fetchData();
+        }
+    });
 
     // Gọi khi trang load
     $(document).ready(function () {
@@ -131,7 +247,12 @@
 
         // Nếu có lọc document_type, bạn có thể thêm:
         $('#document_type').on('change', function () {
-            fetchData();
+            if (!isGrouped) {
+                fetchData();
+            } else {
+                // Nếu đang ở chế độ nhóm, fetch lại và nhóm lại
+                fetchAllDataAndGroup();
+            }
         });
 
         table = $('#service-cdha').DataTable({
