@@ -391,7 +391,6 @@ class EmrController extends Controller
         );
     }
 
-
     private function sere_serv_cdha($treatment_code)
     {
         return DB::connection('HISPro')  
