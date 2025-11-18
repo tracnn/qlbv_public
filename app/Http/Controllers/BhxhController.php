@@ -92,6 +92,9 @@ class BhxhController extends Controller
         if (!empty($document_type_id)) {
             $query->where('emr_document.document_type_id', $document_type_id);
         }
+
+        $query->orderBy('emr_document_type.num_order', 'ASC');
+        $query->orderBy('emr_document.create_time', 'ASC');
     
         return Datatables::of($query)
         ->editColumn('create_date', function ($row) {
