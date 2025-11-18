@@ -170,7 +170,7 @@ $(document).ready( function () {
                     // Xác định số điện thoại dựa trên ưu tiên
                     var phoneNumber = row.tdl_patient_mobile || row.tdl_patient_phone || row.tdl_patient_relative_mobile || row.tdl_patient_relative_phone || '';
                     // Tạo URL cho mã QR, thêm số điện thoại (nếu có)
-                    var qrCodeUrl = `http://benhviendakhoanongnghiep.vn:6868/view-guide-content?treatment_code=${row.treatment_code}&phone=${encodeURIComponent(phoneNumber)}`;
+                    var qrCodeUrl = `{{config('organization.base_url')}}/view-guide-content?treatment_code=${row.treatment_code}&phone=${encodeURIComponent(phoneNumber)}`;
                     var id = row.treatment_code;
 
                     // Trả về HTML cho nút hiển thị mã QR với URL đã được tạo
