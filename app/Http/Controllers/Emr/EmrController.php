@@ -241,6 +241,21 @@ class EmrController extends Controller
                 // Check if out_time is not null AND is_pause is null, return a tick mark or empty string
                 return !is_null($result->out_time) && is_null($result->is_pause) ? '&#10004;' : ''; // Using HTML entity for tick mark
             })
+            ->addColumn('qr_token', function($result) {
+                // Xác định số điện thoại dựa trên ưu tiên
+                $phoneNumber = $result->tdl_patient_mobile 
+                    ?? $result->tdl_patient_phone 
+                    ?? $result->tdl_patient_relative_mobile 
+                    ?? $result->tdl_patient_relative_phone 
+                    ?? '';
+                
+                // Tạo token tương tự như trong treatment-result/index.blade.php
+                $createdAt = now()->timestamp;
+                $expiresIn = 7200;
+                $token = Crypt::encryptString($result->treatment_code . '|' . $phoneNumber . '|' . $createdAt . '|' . $expiresIn);
+                
+                return $token;
+            })
             ->addColumn('action', function ($result) {
                 $phone = $result->tdl_patient_mobile 
                     ?? $result->tdl_patient_phone 

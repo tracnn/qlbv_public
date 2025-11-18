@@ -167,10 +167,14 @@ $(document).ready( function () {
                 "searchable": false, // Vô hiệu hóa tìm kiếm cho cột này
                 "orderable": false, // Đặt là false nếu bạn cũng muốn vô hiệu hóa chức năng sắp xếp cho cột này
                 "render": function(data, type, row) {
-                    // Xác định số điện thoại dựa trên ưu tiên
-                    var phoneNumber = row.tdl_patient_mobile || row.tdl_patient_phone || row.tdl_patient_relative_mobile || row.tdl_patient_relative_phone || '';
-                    // Tạo URL cho mã QR, thêm số điện thoại (nếu có)
-                    var qrCodeUrl = `{{config('organization.base_url')}}/view-guide-content?treatment_code=${row.treatment_code}&phone=${encodeURIComponent(phoneNumber)}`;
+                    // Sử dụng token từ server thay vì tạo URL với query parameters
+                    // Tương tự như trong treatment-result/index.blade.php (dòng 149-161)
+                    var token = row.qr_token || '';
+                    var qrCodeUrl = '';
+                    if (token) {
+                        var baseUrl = "{{ route('view-guide-content', ['token' => '']) }}";
+                        qrCodeUrl = baseUrl.replace('token=', 'token=' + encodeURIComponent(token));
+                    }
                     var id = row.treatment_code;
 
                     // Trả về HTML cho nút hiển thị mã QR với URL đã được tạo
