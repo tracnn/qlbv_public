@@ -24,7 +24,7 @@ I. Những phần mềm cần thiết
 			database.php (Cấu hình database)
 			filesystems.php (Cấu hình file local)
 			vào thư mục qlbv_public/config (Và chỉnh sửa giá trị cấu hình phù hợp)
-		+ composer update
+		+ composer install
 		+ php artisan migrate --force
 		+ php artisan storage:link
 		+ php artisan key:generate
