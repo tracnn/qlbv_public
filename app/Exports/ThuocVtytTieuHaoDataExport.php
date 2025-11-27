@@ -93,7 +93,6 @@ class ThuocVtytTieuHaoDataExport implements FromCollection, WithHeadings, Should
                 DB::raw('NVL(emm.is_export, emt.is_export) as is_export'),
                 DB::raw('SUM(ss.amount) as total_sere_serv_amount'),
                 DB::raw('NVL(SUM(emm.amount), SUM(emt.amount)) as total_export_amount'),
-                DB::raw('NVL(SUM(emm.pres_amount), SUM(emt.pres_amount)) as total_pres_amount'),
                 DB::raw('NVL(SUM(emm.th_amount), SUM(emt.th_amount)) as total_th_amount'),
             ])
             ->where('ss.is_expend', 1)
@@ -130,11 +129,10 @@ class ThuocVtytTieuHaoDataExport implements FromCollection, WithHeadings, Should
             'Loại dịch vụ',
             'Tên dịch vụ',
             'Đơn vị tính',
-            'Trạng thái xuất',
-            'Số lượng xuất',
-            'Số lượng y lệnh',
-            'Số lượng kê đơn',
-            'Số lượng tiêu hao'
+            'Trạng thái',
+            'SL đề nghị',
+            'SL xuất',
+            'SL thu hồi'
         ];
     }
 
@@ -153,10 +151,9 @@ class ThuocVtytTieuHaoDataExport implements FromCollection, WithHeadings, Should
                 $sheet->getColumnDimension('H')->setWidth(15);
                 $sheet->getColumnDimension('I')->setWidth(15);
                 $sheet->getColumnDimension('J')->setWidth(15);
-                $sheet->getColumnDimension('K')->setWidth(15);
 
                 // Format số cho các cột số lượng
-                $sheet->getStyle('H:K')->getNumberFormat()
+                $sheet->getStyle('H:J')->getNumberFormat()
                     ->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1);
             },
         ];
@@ -191,7 +188,6 @@ class ThuocVtytTieuHaoDataExport implements FromCollection, WithHeadings, Should
             $row->is_export == 1 ? 'Đã xuất' : 'Chưa xuất',
             number_format($row->total_export_amount, 2),
             number_format($row->total_sere_serv_amount, 2),
-            number_format($row->total_pres_amount, 2),
             number_format($row->total_th_amount, 2),
         ];
     }

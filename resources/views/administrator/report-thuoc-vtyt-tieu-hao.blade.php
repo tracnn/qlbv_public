@@ -23,7 +23,7 @@
                     <th>Loại</th>
                     <th>Tên</th>
                     <th>ĐVT</th>
-                    <th>Đã Xuất</th>
+                    <th>Trạng thái</th>
                     <th>SL Đề Nghị</th>
                     <th>SL Xuất</th>
                     <th>SL Thu Hổi</th>
