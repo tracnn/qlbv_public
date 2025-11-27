@@ -560,6 +560,15 @@ Route::group(['middleware' => ['auth', 'check.first.login']], function () {
 
         Route::get('export-ndp-data', 'ReportController@exportNDPData')
         ->name('reports-administrator.export-ndp-data');
+
+        Route::get('index-thuoc-vtyt-tieu-hao', 'ReportController@indexThuocVtytTieuHao')
+        ->name('reports-administrator.index-thuoc-vtyt-tieu-hao');
+    
+        Route::get('fetch-thuoc-vtyt-tieu-hao', 'ReportController@fetchThuocVtytTieuHao')
+        ->name('reports-administrator.fetch-thuoc-vtyt-tieu-hao');
+
+        Route::get('export-thuoc-vtyt-tieu-hao-data', 'ReportController@exportThuocVtytTieuHaoData')
+        ->name('reports-administrator.export-thuoc-vtyt-tieu-hao-data');
     });
 
     /* Reports Account Payment*/

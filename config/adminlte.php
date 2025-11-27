@@ -569,6 +569,13 @@ return [
                     'route'   => 'tra-cuu-ls-kcb-index',
                     'active'    => ['tra-cuu-ls-kcb*'],
                 ],
+                [
+                    'text'  => 'Báo cáo thuốc, vtyt tiêu hao',
+                    'icon'  => 'bar-chart',
+                    'checkrole'   => 'administrator',
+                    'route'   => 'reports-administrator.index-thuoc-vtyt-tieu-hao',
+                    'active'=> ['reports-administrator/index-thuoc-vtyt-tieu-hao*'],
+                ],
             ],
         ],
         [

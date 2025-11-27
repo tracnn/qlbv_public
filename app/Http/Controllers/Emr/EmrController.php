@@ -784,6 +784,32 @@ class EmrController extends Controller
 
     public function mergePdfFilesSecure(Request $request)
     {
+        // Cấu hình timeout và memory limit cho xử lý PDF lớn
+        $maxExecutionTime = 1800; // 30 phút
+        $memoryLimit = '4096M'; // 4GB
+        
+        // Lưu giá trị hiện tại để có thể khôi phục nếu cần
+        $originalTimeLimit = ini_get('max_execution_time');
+        $originalMemoryLimit = ini_get('memory_limit');
+        
+        // Chỉ tăng nếu giá trị hiện tại nhỏ hơn giá trị mới
+        if ($originalTimeLimit < $maxExecutionTime || $originalTimeLimit == 0) {
+            set_time_limit($maxExecutionTime);
+        }
+        
+        // Chuyển đổi memory limit sang bytes để so sánh
+        $currentMemoryBytes = $this->convertToBytes($originalMemoryLimit);
+        $newMemoryBytes = $this->convertToBytes($memoryLimit);
+        
+        if ($currentMemoryBytes < $newMemoryBytes) {
+            ini_set('memory_limit', $memoryLimit);
+        }
+        
+        // Log thông tin cấu hình (chỉ trong môi trường development hoặc khi cần debug)
+        if (config('app.debug')) {
+            \Log::info('PDF Merge: Time limit set to ' . ini_get('max_execution_time') . 's, Memory limit: ' . ini_get('memory_limit'));
+        }
+
         try {
             $token = $request->get('token');
 
@@ -846,8 +872,36 @@ class EmrController extends Controller
             ]);
 
         } catch (\Exception $e) {
+            \Log::error('PDF Merge Error: ' . $e->getMessage(), [
+                'treatment_code' => $treatmentCode ?? null,
+                'trace' => $e->getTraceAsString()
+            ]);
             return response()->json(['error' => 'Link không hợp lệ hoặc đã hết hạn'], 403);
         }
+    }
+
+    /**
+     * Chuyển đổi memory limit string (ví dụ: "512M", "2G") sang bytes
+     * 
+     * @param string $value
+     * @return int
+     */
+    private function convertToBytes($value)
+    {
+        $value = trim($value);
+        $last = strtolower($value[strlen($value) - 1]);
+        $value = (int) $value;
+        
+        switch ($last) {
+            case 'g':
+                $value *= 1024;
+            case 'm':
+                $value *= 1024;
+            case 'k':
+                $value *= 1024;
+        }
+        
+        return $value;
     }
 
     private function get_file_paths($treatmentCode, $ParamDocumentType = null)

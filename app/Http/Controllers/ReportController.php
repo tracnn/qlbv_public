@@ -12,6 +12,7 @@ use App\Exports\APDataExport;
 use App\Exports\DebtDataExport;
 use App\Exports\AccountantRevenueDataExport;
 use App\Exports\AccountantRevenueDataExportDetail;
+use App\Exports\ThuocVtytTieuHaoDataExport;
 
 use DB;
 use Yajra\Datatables\Datatables;
@@ -619,4 +620,119 @@ class ReportController extends Controller
         return Excel::download(new AccountantRevenueDataExportDetail($request), $fileName);
     }
 
+    public function indexThuocVtytTieuHao()
+    {
+        return view('administrator.report-thuoc-vtyt-tieu-hao');
+    }
+
+    public function fetchThuocVtytTieuHao(Request $request)
+    {
+        $dateFrom  = $request->input('date_from');
+        $dateTo    = $request->input('date_to');
+        $date_type = $request->input('date_type', 'date_intruction');
+        $department_catalog = $request->input('department_catalog');
+        $patient_type = $request->input('patient_type');
+    
+        // Chuẩn hóa date_from, date_to như hàm anh đang dùng
+        if (strlen($dateFrom) == 10) { // YYYY-MM-DD
+            $dateFrom = Carbon::createFromFormat('Y-m-d', $dateFrom)
+                ->startOfDay()
+                ->format('Y-m-d H:i:s');
+        }
+    
+        if (strlen($dateTo) == 10) { // YYYY-MM-DD
+            $dateTo = Carbon::createFromFormat('Y-m-d', $dateTo)
+                ->endOfDay()
+                ->format('Y-m-d H:i:s');
+        }
+    
+        // Đổi sang dạng YmdHis để so sánh với intruction_time
+        $formattedDateFrom = Carbon::createFromFormat('Y-m-d H:i:s', $dateFrom)->format('YmdHis');
+        $formattedDateTo   = Carbon::createFromFormat('Y-m-d H:i:s', $dateTo)->format('YmdHis');
+    
+        // Chọn field ngày (cho linh hoạt như hàm cũ, nhưng mặc định vẫn là intruction_time)
+        switch ($date_type) {
+            case 'date_in':
+                $dateField = 'tm.in_time';
+                break;
+            case 'date_out':
+                $dateField = 'tm.out_time';
+                break;
+            case 'date_payment':
+                $dateField = 'tm.fee_lock_time';
+                break;
+            case 'date_intruction':
+            default:
+                $dateField = 'sr.intruction_time';
+                break;
+        }
+    
+        $query = DB::connection('HISPro')
+            ->table('his_service_req as sr')
+            ->join('his_department as d', 'd.id', '=', 'sr.request_department_id')
+            ->join('his_sere_serv as ss', 'ss.service_req_id', '=', 'sr.id')
+            ->join('his_patient_type as pt', 'pt.id', '=', 'ss.patient_type_id')
+            ->join('his_service as s', 's.id', '=', 'ss.service_id')
+            ->join('his_service_type as st', 'st.id', '=', 's.service_type_id')
+            ->join('his_service_unit as su', 'su.id', '=', 's.service_unit_id')
+            ->leftJoin('his_exp_mest_medicine as emm', 'emm.id', '=', 'ss.exp_mest_medicine_id')
+            ->leftJoin('his_exp_mest_material as emt', 'emt.id', '=', 'ss.exp_mest_material_id')
+            // Nếu anh muốn dùng in_time/out_time/fee_lock_time thì join thêm treatment
+            ->leftJoin('his_treatment as tm', 'tm.id', '=', 'sr.treatment_id')
+            ->select([
+                'd.department_name',
+                'pt.patient_type_name',
+                's.service_name',
+                'st.service_type_name',
+                'su.service_unit_name',
+                DB::raw('NVL(emm.is_export, emt.is_export) as is_export'),
+                DB::raw('SUM(ss.amount) as total_sere_serv_amount'),
+                DB::raw('NVL(SUM(emm.amount), SUM(emt.amount)) as total_export_amount'),
+                DB::raw('NVL(SUM(emm.pres_amount), SUM(emt.pres_amount)) as total_pres_amount'),
+                DB::raw('NVL(SUM(emm.th_amount), SUM(emt.th_amount)) as total_th_amount'),
+            ])
+            ->where('ss.is_expend', 1)
+            ->whereIn('s.service_type_id', [6, 7])
+            ->whereBetween($dateField, [$formattedDateFrom, $formattedDateTo]);
+
+        if (!empty($department_catalog)) {
+            $query->where('d.id', $department_catalog);
+        }
+        if (!empty($patient_type)) {
+            $query->where('pt.id', $patient_type);
+        }
+
+        $query->groupBy(
+                'd.department_name',
+                'pt.patient_type_name',
+                's.service_name',
+                'st.service_type_name',
+                'su.service_unit_name',
+                DB::raw('NVL(emm.is_export, emt.is_export)')
+            );
+    
+        return DataTables::of($query)
+        ->editColumn('total_sere_serv_amount', function($result) {
+            return number_format($result->total_sere_serv_amount, 2);
+        })
+        ->editColumn('total_export_amount', function($result) {
+            return number_format($result->total_export_amount, 2);
+        })
+        ->editColumn('total_pres_amount', function($result) {
+            return number_format($result->total_pres_amount, 2);
+        })
+        ->editColumn('total_th_amount', function($result) {
+            return number_format($result->total_th_amount, 2);
+        })
+        ->editColumn('is_export', function($result) {
+            return $result->is_export == 1 ? 'Đã xuất' : 'Chưa xuất';
+        })
+        ->toJson();
+    }
+
+    public function exportThuocVtytTieuHaoData(Request $request)
+    {
+        $fileName = 'thuoc_vtyt_tieu_hao_data_' . Carbon::now()->format('YmdHis') . '.xlsx';
+        return Excel::download(new ThuocVtytTieuHaoDataExport($request), $fileName);
+    }
 }
