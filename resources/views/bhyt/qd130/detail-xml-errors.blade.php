@@ -56,7 +56,7 @@
                             <td>{{ $error->stt }}</td>
                             <td>{{ strtodatetime($error->ngay_yl) }}</td>
                             <td>{{ strtodatetime($error->ngay_kq) }}</td>
-                            <td>{{ $error->description }}</td>
+                            <td>{!! nl2br(e($error->description)) !!}</td>
                             <td>
                                 @php
                                     $placeholders = [

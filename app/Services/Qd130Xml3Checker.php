@@ -86,6 +86,7 @@ class Qd130Xml3Checker
         $errors = $errors->merge($this->checkBedDayQuantity($data)); // Thêm kiểm tra số lượng ngày giường
         $errors = $errors->merge($this->checkMedicalSupplyCatalog($data)); // Thêm kiểm tra VTYT
         $errors = $errors->merge($this->checkMedicalService($data)); // Kiểm tra dịch vụ kỹ thuật
+        $errors = $errors->merge($this->checkServiceGroupPtttDuplicate($data)); // Kiểm tra dịch vụ kỹ thuật
 
         if (config('qd130xml.general.check_valid_department_req')) {
             $errors = $errors->merge($this->checkValidMakhoaReq($data)); // Kiểm tra tính hợp lệ của khoa chỉ định
@@ -938,28 +939,42 @@ class Qd130Xml3Checker
     }
 
     //Bổ sung kiểm tra mã nhóm là pttt mà trùng ma_bac_si + ngay_yl đã có trong cơ sở dữ liệu thì cảnh báo
-    private function checkServiceGroupPttt(Qd130Xml3 $data): Collection
+    private function checkServiceGroupPtttDuplicate(Qd130Xml3 $data): Collection
     {
         $errors = collect();
 
         if (in_array($data->ma_nhom, config('qd130xml.xml3.service_groups_pttt'))) {
-            $serviceExists = Qd130Xml3::where('ma_lk', '!=', $data->ma_lk)
-            ->where('ma_bac_si', $data->ma_bac_si)
+            $serviceExists = Qd130Xml3::where('ma_bac_si', $data->ma_bac_si)
+            ->where(function ($q) use ($data) {
+                $q->where('ma_lk', '!=', $data->ma_lk)
+                  ->orWhere(function ($q2) use ($data) {
+                      $q2->where('ma_lk', $data->ma_lk)
+                         ->where('stt', '!=', $data->stt);
+                  });
+            })
             ->where('ngay_yl', $data->ngay_yl)
-            ->where('ma_nhom', $data->ma_nhom)
-            ->first();
+            ->where('ngay_th_yl', $data->ngay_th_yl)
+            ->where('ngay_kq', $data->ngay_kq)
+            ->get();
 
-            if ($serviceExists) {
+            if ($serviceExists->isNotEmpty()) {
+                $details = $serviceExists->map(function ($item) {
+                    $ngayYl = strtodatetime($item->ngay_yl);
+                    $ngayThYl = strtodatetime($item->ngay_th_yl);
+                    $ngayKq = strtodatetime($item->ngay_kq);
+                    
+                    return "- Mã điều trị={$item->ma_lk}; stt={$item->stt}; Bác sĩ={$item->ma_bac_si}; Ngày yl={$ngayYl}; Ngày th={$ngayThYl}; Ngày kq={$ngayKq}";
+                })->implode("\n");
+
                 $errorCode = $this->generateErrorCode('SERVICE_GROUP_PTTT_DUPLICATE');
                 $errors->push((object)[
                     'error_code' => $errorCode,
                     'error_name' => 'Mã nhóm là pttt trùng y lệnh',
                     'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
-                    'description' => 'Mã nhóm là pttt trùng: ' . $serviceExists->ma_nhom . '; Mã bác sĩ: ' . $serviceExists->ma_bac_si . '; Ngày y lệnh: ' . $serviceExists->ngay_yl . '; Ma_lk: ' . $serviceExists->ma_lk
+                    'description' => $details
                 ]);
             }
         }
-
         return $errors;
     }
 }
