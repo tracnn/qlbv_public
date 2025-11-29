@@ -955,6 +955,7 @@ class Qd130Xml3Checker
             ->where('ngay_yl', $data->ngay_yl)
             ->where('ngay_th_yl', $data->ngay_th_yl)
             ->where('ngay_kq', $data->ngay_kq)
+            ->whereIn('ma_nhom', config('qd130xml.xml3.service_groups_pttt'))
             ->get();
 
             if ($serviceExists->isNotEmpty()) {
