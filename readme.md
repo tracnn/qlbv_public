@@ -1,5 +1,6 @@
 # 29/11/2025
 - Sửa chức năng import danh mục do danh mục excel thay đổi cấu trúc cột
+- Bổ sung quy tắc bắt lỗi trùng khít ngày y lệnh, ngày thực hiện, ngày kq của XML3 loại PTTT
 - Bổ sung báo cáo thống kê danh sách NVYT có chỉ định y lệnh teo thời gian
 
 # 27/11/2025
