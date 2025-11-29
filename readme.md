@@ -1,3 +1,10 @@
+# 29/11/2025
+- Sửa chức năng import danh mục do danh mục excel thay đổi cấu trúc cột
+- Bổ sung báo cáo thống kê danh sách NVYT có chỉ định y lệnh teo thời gian
+
+# 27/11/2025
+- Bổ sung báo cáo thống kê Thuốc/VTYT tiêu hao
+
 # 20/10/2025
 - Nâng cấp ký số XML sử dụng HSM của VietSens
 

@@ -80,7 +80,7 @@
 
             <div class="inner">
               <h3 id="sum_doanhthu">0</h3>
-              <p>Doanh thu</p>
+              <p>Tổng thu</p>
             </div>
             <div class="icon">
               <i class="ion ion-bag"></i>
