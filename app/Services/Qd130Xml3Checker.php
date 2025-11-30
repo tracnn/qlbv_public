@@ -970,7 +970,7 @@ class Qd130Xml3Checker
                 $errorCode = $this->generateErrorCode('SERVICE_GROUP_PTTT_DUPLICATE');
                 $errors->push((object)[
                     'error_code' => $errorCode,
-                    'error_name' => 'Mã nhóm là pttt trùng y lệnh',
+                    'error_name' => 'PTTT trùng y lệnh',
                     'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
                     'description' => $details
                 ]);
