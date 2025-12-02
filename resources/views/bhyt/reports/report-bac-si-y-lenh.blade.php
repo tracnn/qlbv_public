@@ -90,6 +90,24 @@
         $fromDate = $('#date_range').data('daterangepicker').startDate.format('YYYY-MM-DD');
         $toDate = $('#date_range').data('daterangepicker').endDate.format('YYYY-MM-DD');
         fetchData($fromDate, $toDate);
+
+        $('#export_xlsx').click(function() {
+            var dateRange = $('#date_range').data('daterangepicker');
+
+            var startDate = dateRange.startDate.format('YYYY-MM-DD HH:mm:ss');
+            var endDate = dateRange.endDate.format('YYYY-MM-DD HH:mm:ss');
+            var date_type = $('#date_type').val();
+            
+            // Tạo URL với các tham số query
+            var href = '{{ route("bhyt.export-bac-si-y-lenh-data") }}?' + $.param({
+                'date_from': startDate,
+                'date_to': endDate,
+                'date_type': date_type
+            });
+            
+            // Chuyển hướng tới URL với các tham số
+            window.location.href = href;
+        });
     });
 </script>
 @endpush

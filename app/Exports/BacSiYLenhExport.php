@@ -1,36 +1,41 @@
 <?php
 
-namespace App\Http\Controllers\BHYT;
+namespace App\Exports;
 
 use Illuminate\Http\Request;
-use App\Http\Controllers\Controller;
-
-use Yajra\Datatables\Datatables;
-use App\Models\BHYT\Qd130Xml1;
-use App\Models\BHYT\Qd130Xml2;
-use App\Models\BHYT\Qd130Xml3;
-
+use Maatwebsite\Excel\Concerns\FromCollection;
+use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Concerns\ShouldAutoSize;
+use Maatwebsite\Excel\Concerns\WithStyles;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
+use Maatwebsite\Excel\Events\AfterSheet;
+use Maatwebsite\Excel\Concerns\WithEvents;
+use Maatwebsite\Excel\Concerns\WithMapping;
+use Illuminate\Support\Collection;
+use DB;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
-use Maatwebsite\Excel\Facades\Excel;
-use App\Exports\BacSiYLenhExport;
 
-class ReportBHYTController extends Controller
+class BacSiYLenhExport implements FromCollection, WithHeadings, ShouldAutoSize, WithStyles, WithEvents, WithMapping
 {
-    public function indexBacSiYLenh()
-    {   
-        return view('bhyt.reports.report-bac-si-y-lenh');
+    protected $request;
+    protected $rowNumber = 0;
+
+    public function __construct($request)
+    {
+        $this->request = $request;
     }
 
-    public function fetchDataBacSiYLenh(Request $request)
+    /**
+     * @return \Illuminate\Support\Collection
+     */
+    public function collection()
     {
-        if (!$request->ajax()) {
-            return redirect()->route('home');
-        }
+        set_time_limit(1800); // Tăng thời gian thực thi lên 1800 giây (30 phút)
+        ini_set('memory_limit', '4096M'); // Tăng giới hạn bộ nhớ nếu cần thiết
 
-        $date_type = $request->input('date_type', 'date_yl');
-        $dateFrom  = $request->input('date_from');
-        $dateTo    = $request->input('date_to');
+        $date_type = $this->request->input('date_type', 'date_yl');
+        $dateFrom  = $this->request->input('date_from');
+        $dateTo    = $this->request->input('date_to');
 
         // Nếu ngày ở dạng YYYY-MM-DD thì chuẩn hoá về Y-m-d H:i:s
         if (strlen($dateFrom) == 10) { // Format YYYY-MM-DD
@@ -128,27 +133,69 @@ class ReportBHYTController extends Controller
                 't.ho_ten'
             );
 
-        return Datatables::of($query)
-            ->filter(function ($instance) use ($request) {
-                $search = $request->input('search.value'); // ô search mặc định của DataTables
+        $results = $query->get();
 
-                if (!empty($search)) {
-                    $instance->where(function ($q) use ($search) {
-                        $q->where('t.ma_khoa', 'like', "%{$search}%")
-                        ->orWhere('t.ten_khoa', 'like', "%{$search}%")
-                        ->orWhere('t.ma_bac_si', 'like', "%{$search}%")
-                        ->orWhere('t.ho_ten', 'like', "%{$search}%");
-                        // Nếu muốn search cả số lượng:
-                        //->orWhere(DB::raw('COUNT(*)'), 'like', "%{$search}%"); // thường không cần
-                    });
-                }
-            }, true) // true = báo cho Yajra là mình đã xử lý global search rồi
-            ->make(true);
+        return new Collection($results);
     }
 
-    public function exportBacSiYLenhData(Request $request)
+    public function headings(): array
     {
-        $fileName = 'bac_si_y_lenh_' . Carbon::now()->format('YmdHis') . '.xlsx';
-        return Excel::download(new BacSiYLenhExport($request), $fileName);
+        return [
+            'STT',
+            'Mã Khoa',
+            'Tên Khoa',
+            'Mã Bác sĩ',
+            'Tên Bác sĩ',
+            'Số lượng',
+        ];
+    }
+
+    public function registerEvents(): array
+    {
+        return [
+            AfterSheet::class => function(AfterSheet $event) {
+                $sheet = $event->sheet->getDelegate();
+                $sheet->getColumnDimension('A')->setWidth(8);
+                $sheet->getColumnDimension('B')->setWidth(15);
+                $sheet->getColumnDimension('C')->setWidth(30);
+                $sheet->getColumnDimension('D')->setWidth(15);
+                $sheet->getColumnDimension('E')->setWidth(30);
+                $sheet->getColumnDimension('F')->setWidth(12);
+
+                // Format số cho cột số lượng
+                $sheet->getStyle('F:F')->getNumberFormat()
+                    ->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER);
+            },
+        ];
+    }
+
+    public function styles(Worksheet $sheet)
+    {
+        $sheet->getStyle('A:Z')->getAlignment()->setWrapText(true);
+        return [
+            1 => [
+                'alignment' => [
+                    'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER
+                ],
+                'font' => [
+                    'bold' => true,
+                ],
+            ],
+        ];
+    }
+
+    public function map($row): array
+    {
+        $this->rowNumber++;
+
+        return [
+            $this->rowNumber,
+            $row->ma_khoa,
+            $row->ten_khoa,
+            $row->ma_bac_si,
+            $row->ho_ten,
+            $row->tong_so,
+        ];
     }
 }
+

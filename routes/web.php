@@ -445,6 +445,8 @@ Route::group(['middleware' => ['auth', 'check.first.login']], function () {
         ->name('bhyt.reports.bac-si-y-lenh');
         Route::get('reports/fetch-bac-si-y-lenh', 'BHYT\ReportBHYTController@fetchDataBacSiYLenh')
         ->name('bhyt.fetch-bac-si-y-lenh');
+        Route::get('reports/export-bac-si-y-lenh-data', 'BHYT\ReportBHYTController@exportBacSiYLenhData')
+        ->name('bhyt.export-bac-si-y-lenh-data');
     });
 
     /*
