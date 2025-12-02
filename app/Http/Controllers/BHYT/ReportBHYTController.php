@@ -93,7 +93,7 @@ class ReportBHYTController extends Controller
             ->leftJoin('medical_staffs as ms', 'ms.macchn', '=', 'q.ma_bac_si')
             ->whereBetween("q.$dateField", [$formattedDateFrom, $formattedDateTo])
             ->select([
-                'q.ma_khoa',
+                DB::raw("COALESCE(ms.ma_khoa, '') as ma_khoa"),
                 DB::raw("COALESCE(ms.ten_khoa, '') as ten_khoa"),
                 'q.ma_bac_si',
                 DB::raw("COALESCE(ms.ho_ten, '') as ho_ten"),
@@ -104,7 +104,7 @@ class ReportBHYTController extends Controller
             ->leftJoin('medical_staffs as ms', 'ms.macchn', '=', 'q.ma_bac_si')
             ->whereBetween("q.$dateField", [$formattedDateFrom, $formattedDateTo])
             ->select([
-                'q.ma_khoa',
+                DB::raw("COALESCE(ms.ma_khoa, '') as ma_khoa"),
                 DB::raw("COALESCE(ms.ten_khoa, '') as ten_khoa"),
                 'q.ma_bac_si',
                 DB::raw("COALESCE(ms.ho_ten, '') as ho_ten"),
