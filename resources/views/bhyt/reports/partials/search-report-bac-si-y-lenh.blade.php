@@ -1,6 +1,6 @@
 <div class="panel panel-default">
     <div class="panel-body">
-        @include('partials.date_range', ['showDateType' => true])
+        @include('partials.date_range', ['showDateType' => false])
         @include('partials.load_data_button')
     </div>
 </div>

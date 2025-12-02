@@ -22,11 +22,11 @@ class ReportBHYTController extends Controller
 
     public function fetchDataBacSiYLenh(Request $request)
     {
-        if (!$request->ajax()) {
-            return redirect()->route('home');
-        }
+        // if (!$request->ajax()) {
+        //     return redirect()->route('home');
+        // }
 
-        $date_type = $request->input('date_type', 'date_payment');
+        $date_type = $request->input('date_type', 'date_yl');
         $dateFrom  = $request->input('date_from');
         $dateTo    = $request->input('date_to');
 
@@ -52,9 +52,9 @@ class ReportBHYTController extends Controller
         $formattedDateFromForFields = Carbon::createFromFormat('Y-m-d H:i:s', $dateFrom)->format('YmdHi');
         $formattedDateToForFields   = Carbon::createFromFormat('Y-m-d H:i:s', $dateTo)->format('YmdHi');
 
-        // Convert date format to 'Y-m-d H:i:s' cho created_at, updated_at (timestamp)
-        $formattedDateFromForTimestamp = $dateFrom; // đã là Y-m-d H:i:s
-        $formattedDateToForTimestamp   = $dateTo;   // đã là Y-m-d H:i:s
+        // Timestamp giữ nguyên dạng Y-m-d H:i:s
+        $formattedDateFromForTimestamp = $dateFrom;
+        $formattedDateToForTimestamp   = $dateTo;
 
         // Chọn field ngày và format tương ứng theo date_type
         switch ($date_type) {
@@ -84,73 +84,54 @@ class ReportBHYTController extends Controller
                 $formattedDateTo   = $formattedDateToForTimestamp;
                 break;
             default:
-                // mặc định lọc theo ngày thanh toán (hoặc đổi thành ngay_yl nếu anh muốn)
+                // mặc định lọc theo ngày y lệnh
                 $dateField         = 'ngay_yl';
                 $formattedDateFrom = $formattedDateFromForFields;
                 $formattedDateTo   = $formattedDateToForFields;
                 break;
         }
 
-        /**
-         * 1) Lấy dữ liệu từ XML2 bằng Eloquent
-         */
-        $xml2Rows = Qd130Xml2::select(
-                'qd130_xml2s.ma_khoa',
-                'medical_staffs.ten_khoa',
-                'qd130_xml2s.ma_bac_si',
-                'medical_staffs.ho_ten'
-            )
-            ->leftJoin('medical_staffs', 'medical_staffs.macchn', '=', 'qd130_xml2s.ma_bac_si')
-            ->whereBetween("qd130_xml2s.$dateField", [$formattedDateFrom, $formattedDateTo])
-            ->get();
+        // ---------- SUBQUERY 1: XML2 ----------
+        $subQueryXml2 = DB::table('qd130_xml2s as q')
+            ->leftJoin('medical_staffs as ms', 'ms.macchn', '=', 'q.ma_bac_si')
+            ->whereBetween("q.$dateField", [$formattedDateFrom, $formattedDateTo])
+            ->select([
+                'q.ma_khoa',
+                DB::raw("COALESCE(ms.ten_khoa, '') as ten_khoa"),
+                'q.ma_bac_si',
+                DB::raw("COALESCE(ms.ho_ten, '') as ho_ten"),
+            ]);
 
-        /**
-         * 2) Lấy dữ liệu từ XML3 bằng Eloquent
-         */
-        $xml3Rows = Qd130Xml3::select(
-                'qd130_xml3s.ma_khoa',
-                'medical_staffs.ten_khoa',
-                'qd130_xml3s.ma_bac_si',
-                'medical_staffs.ho_ten'
-            )
-            ->leftJoin('medical_staffs', 'medical_staffs.macchn', '=', 'qd130_xml3s.ma_bac_si')
-            ->whereBetween("qd130_xml3s.$dateField", [$formattedDateFrom, $formattedDateTo])
-            ->get();
+        // ---------- SUBQUERY 2: XML3 + UNION ALL ----------
+        $subQueryUnion = DB::table('qd130_xml3s as q')
+            ->leftJoin('medical_staffs as ms', 'ms.macchn', '=', 'q.ma_bac_si')
+            ->whereBetween("q.$dateField", [$formattedDateFrom, $formattedDateTo])
+            ->select([
+                'q.ma_khoa',
+                DB::raw("COALESCE(ms.ten_khoa, '') as ten_khoa"),
+                'q.ma_bac_si',
+                DB::raw("COALESCE(ms.ho_ten, '') as ho_ten"),
+            ])
+            ->unionAll($subQueryXml2);
 
-        /**
-         * 3) Gộp 2 collection lại (tương đương UNION ALL)
-         */
-        $merged = $xml2Rows->merge($xml3Rows);
+        // ---------- WRAP SUBQUERY LẠI RỒI GROUP BY ----------
+        $query = DB::table(DB::raw("({$subQueryUnion->toSql()}) as t"))
+            ->mergeBindings($subQueryUnion)
+            ->select([
+                't.ma_khoa',
+                't.ten_khoa',
+                't.ma_bac_si',
+                't.ho_ten',
+                DB::raw('COUNT(*) as tong_so'),
+            ])
+            ->groupBy(
+                't.ma_khoa',
+                't.ten_khoa',
+                't.ma_bac_si',
+                't.ho_ten'
+            );
 
-        /**
-         * 4) Group theo ma_khoa, ten_khoa, ma_bac_si, ho_ten và đếm số dòng (COUNT(*))
-         */
-        $grouped = $merged
-            ->groupBy(function ($row) {
-                return implode('|', [
-                    $row->ma_khoa,
-                    $row->ten_khoa,
-                    $row->ma_bac_si,
-                    $row->ho_ten,
-                ]);
-            })
-            ->map(function ($group) {
-                $first = $group->first();
-
-                return [
-                    'ma_khoa'  => $first->ma_khoa,
-                    'ten_khoa' => $first->ten_khoa,
-                    'ma_bac_si'=> $first->ma_bac_si,
-                    'ho_ten'   => $first->ho_ten,
-                    'tong_so'  => $group->count(), // COUNT(*)
-                ];
-            })
-            ->values(); // reset index 0,1,2,...
-
-        /**
-         * 5) Trả về cho DataTables từ Collection
-         */
-        return Datatables::of($grouped)->make(true);
+        return Datatables::of($query)->make(true);
     }
           
 }

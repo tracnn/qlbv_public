@@ -74,8 +74,8 @@
                 { "data": "ma_khoa" },
                 { "data": "ten_khoa" },
                 { "data": "ma_bac_si" },
-                { "data": "ten_bac_si" },
-                { "data": "so_luong" },
+                { "data": "ho_ten" },
+                { "data": "tong_so" },
             ],
         });
 
