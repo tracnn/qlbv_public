@@ -440,6 +440,11 @@ Route::group(['middleware' => ['auth', 'check.first.login']], function () {
         ->name('bhyt.qd130.jobs.status');
         Route::get('qd130/export-7980a-data', 'BHYT\BHYTQd130Controller@export7980aData')
         ->name('bhyt.qd130.export-7980a-data');
+
+        Route::get('reports/bac-si-y-lenh', 'BHYT\ReportBHYTController@indexBacSiYLenh')
+        ->name('bhyt.reports.bac-si-y-lenh');
+        Route::get('reports/fetch-bac-si-y-lenh', 'BHYT\ReportBHYTController@fetchDataBacSiYLenh')
+        ->name('bhyt.fetch-bac-si-y-lenh');
     });
 
     /*

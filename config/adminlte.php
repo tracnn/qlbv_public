@@ -400,6 +400,19 @@ return [
                         ],
                     ],
                 ],
+                [
+                    'text'    => 'Báo cáo',
+                    'icon'    => 'archive',
+                    'checkrole'   => 'xml-man',
+                    'submenu' => [
+                        [
+                            'text'  => 'NVYT - Y lệnh',
+                            'icon'  => 'file',
+                            'route'   => 'bhyt.reports.bac-si-y-lenh',
+                            'active'=> ['bhyt/reports/bac-si-y-lenh*'],
+                        ],
+                    ],
+                ],
             ],
         ],
         [

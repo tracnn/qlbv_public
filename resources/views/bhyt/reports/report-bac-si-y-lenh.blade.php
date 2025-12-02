@@ -18,7 +18,7 @@
 
 <div class="panel panel-default">
     <div class="panel-body table-responsive">
-        <table id="report-bac-si-y-lenh-list" class="table display table-hover responsive nowrap datatable dtr-inline" width="100%">
+        <table id="bac-si-y-lenh-list" class="table display table-hover responsive nowrap datatable dtr-inline" width="100%">
             <thead>
                 <tr>
                     <th>Mã Khoa</th>
@@ -45,14 +45,14 @@
             currentAjaxRequest.abort();
         }
 
-        table = $('#report-bac-si-y-lenh-list').DataTable({
+        table = $('#bac-si-y-lenh-list').DataTable({
             "processing": true,
             "serverSide": true,
             "destroy": true, // Destroy any existing DataTable before reinitializing
             "responsive": true, // Giữ responsive
             "scrollX": true, // Đảm bảo cuộn ngang khi bảng quá rộng
             "ajax": {
-                url: "{{ route('bhyt.get-report-bac-si-y-lenh') }}",
+                url: "{{ route('bhyt.fetch-bac-si-y-lenh') }}",
                 data: function(d) {
                     d.date_from = startDate;
                     d.date_to = endDate;
