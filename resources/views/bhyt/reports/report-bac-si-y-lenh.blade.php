@@ -75,7 +75,7 @@
                 { "data": "ten_khoa" },
                 { "data": "ma_bac_si" },
                 { "data": "ho_ten" },
-                { "data": "tong_so" },
+                { "data": "tong_so", "searchable": false },
             ],
         });
 
@@ -87,7 +87,9 @@
         $('.select2').select2({
             width: '100%' // Đặt chiều rộng của Select2 là 100%
         });
-        fetchData();
+        $fromDate = $('#date_range').data('daterangepicker').startDate.format('YYYY-MM-DD');
+        $toDate = $('#date_range').data('daterangepicker').endDate.format('YYYY-MM-DD');
+        fetchData($fromDate, $toDate);
     });
 </script>
 @endpush

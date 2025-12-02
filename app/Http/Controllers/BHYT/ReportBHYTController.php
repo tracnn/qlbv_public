@@ -30,11 +30,6 @@ class ReportBHYTController extends Controller
         $dateFrom  = $request->input('date_from');
         $dateTo    = $request->input('date_to');
 
-        // Nếu thiếu khoảng thời gian thì trả về rỗng cho an toàn
-        if (empty($dateFrom) || empty($dateTo)) {
-            return Datatables::of(collect())->make(true);
-        }
-
         // Nếu ngày ở dạng YYYY-MM-DD thì chuẩn hoá về Y-m-d H:i:s
         if (strlen($dateFrom) == 10) { // Format YYYY-MM-DD
             $dateFrom = Carbon::createFromFormat('Y-m-d', $dateFrom)
@@ -131,7 +126,21 @@ class ReportBHYTController extends Controller
                 't.ho_ten'
             );
 
-        return Datatables::of($query)->make(true);
-    }
-          
+        return Datatables::of($query)
+            ->filter(function ($instance) use ($request) {
+                $search = $request->input('search.value'); // ô search mặc định của DataTables
+
+                if (!empty($search)) {
+                    $instance->where(function ($q) use ($search) {
+                        $q->where('t.ma_khoa', 'like', "%{$search}%")
+                        ->orWhere('t.ten_khoa', 'like', "%{$search}%")
+                        ->orWhere('t.ma_bac_si', 'like', "%{$search}%")
+                        ->orWhere('t.ho_ten', 'like', "%{$search}%");
+                        // Nếu muốn search cả số lượng:
+                        //->orWhere(DB::raw('COUNT(*)'), 'like', "%{$search}%"); // thường không cần
+                    });
+                }
+            }, true) // true = báo cho Yajra là mình đã xử lý global search rồi
+            ->make(true);
+    } 
 }
