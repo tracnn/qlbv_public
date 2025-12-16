@@ -60,6 +60,7 @@ class BHYTQd130Controller extends Controller
         $payment_date_filter = $request->input('payment_date_filter');
         $treatment_type_fillter = $request->input('treatment_type_fillter');
         $xml_export_status = $request->input('xml_export_status');
+        $xml_submit_status = $request->input('xml_submit_status');
         $imported_by = $request->input('imported_by');
 
         $dateFrom = $request->input('date_from');
@@ -74,7 +75,7 @@ class BHYTQd130Controller extends Controller
                 }, 'Qd130XmlErrorResult' => function($query) {
                     $query->select('ma_lk', 'error_code', 'ngay_yl', 'description');
                 }, 'Qd130XmlInformation' => function($query) {
-                    $query->select('ma_lk', 'exported_at', 'imported_by', 'is_signed');
+                    $query->select('ma_lk', 'exported_at', 'imported_by', 'is_signed', 'submitted_at');
                 }]);
 
                 // Kiểm tra role của user
@@ -94,7 +95,7 @@ class BHYTQd130Controller extends Controller
                     }, 'Qd130XmlErrorResult' => function($query) {
                         $query->select('ma_lk', 'error_code', 'ngay_yl', 'description');
                     }, 'Qd130XmlInformation' => function($query) {
-                        $query->select('ma_lk', 'exported_at', 'imported_by', 'is_signed');
+                        $query->select('ma_lk', 'exported_at', 'imported_by', 'is_signed', 'submitted_at');
                     }]);
                     // Kiểm tra role của user
                     if (!\Auth::user()->hasRole(['superadministrator', 'administrator'])) {
@@ -166,7 +167,7 @@ class BHYTQd130Controller extends Controller
 
                 // Apply relationships: Qd130XmlInformation
                 $result = $result->with(['Qd130XmlInformation' => function($query) {
-                    $query->select('ma_lk', 'exported_at', 'export_error', 'imported_by', 'is_signed');
+                    $query->select('ma_lk', 'exported_at', 'export_error', 'imported_by', 'is_signed', 'submitted_at');
                 }]);
 
                 if ($qd130_xml_error_catalog_id) {
@@ -256,6 +257,17 @@ class BHYTQd130Controller extends Controller
                     });
                 }
 
+                //Apply filter based on xml_export_status
+                if ($xml_submit_status === 'has_submit') {
+                    $result = $result->whereHas('Qd130XmlInformation', function ($query) {
+                        $query->whereNotNull('submitted_at');
+                    });
+                } elseif ($xml_submit_status === 'not_submit') {
+                    $result = $result->whereHas('Qd130XmlInformation', function ($query) {
+                        $query->whereNull('submitted_at');
+                    });
+                }
+
                 // Apply filter based on imported_by
                 if (!empty($imported_by)) {
                     $result = $result->whereHas('Qd130XmlInformation', function ($query) use ($imported_by) {
@@ -299,6 +311,19 @@ class BHYTQd130Controller extends Controller
                     : '<i class="fa fa-file-code-o text-secondary" title="'.$tooltip.'"></i>');
             return $icon;
         })
+        ->addColumn('submitted_at', function ($result) {
+            $tooltip = $result->Qd130XmlInformation && $result->Qd130XmlInformation->submitted_at 
+                ? $result->Qd130XmlInformation->submitted_at
+                : ($result->Qd130XmlInformation && $result->Qd130XmlInformation->submit_error
+                    ? $result->Qd130XmlInformation->submit_error
+                    : 'Not submitted');
+            $icon = $result->Qd130XmlInformation && $result->Qd130XmlInformation->submit_error
+                ? '<i class="fa fa-times-circle" text-warning" title="'.$tooltip.'"></i>'
+                : ($result->Qd130XmlInformation && $result->Qd130XmlInformation->submitted_at
+                    ? '<i class="fa fa-check-circle text-success" title="'.$tooltip.'"></i>'
+                    : '<i class="fa fa-file-code-o text-secondary" title="'.$tooltip.'"></i>');
+            return $icon;
+        })
         ->addColumn('is_signed', function ($result) {
             return $result->Qd130XmlInformation->is_signed ? '<i class="fa fa-check-circle text-success" title="Ký số"></i>' : '<i class="fa fa-times-circle text-danger" title="Không ký số"></i>';
         })
@@ -325,7 +350,7 @@ class BHYTQd130Controller extends Controller
             }
             return $highlight ? 'highlight-red' : '';
         })
-        ->rawColumns(['exported_at', 'is_signed', 'action'])
+        ->rawColumns(['exported_at', 'is_signed', 'action', 'submitted_at'])
         ->toJson();
     }
 
@@ -568,10 +593,11 @@ class BHYTQd130Controller extends Controller
         $qd130_xml_error_catalog_id = $request->input('qd130_xml_error_catalog');
         $payment_date_filter = $request->input('payment_date_filter');
         $imported_by = $request->input('imported_by');
-
+        $xml_submit_status = $request->input('xml_submit_status');
+        
         $fileName = 'qd130_error_data_' . Carbon::now()->format('YmdHis') . '.xlsx';
         return Excel::download(new Qd130ErrorMultiSheetExport($date_from, $date_to, $xml_filter_status, 
-            $date_type, $qd130_xml_error_catalog_id, $payment_date_filter, $imported_by), $fileName);
+            $date_type, $qd130_xml_error_catalog_id, $payment_date_filter, $imported_by, $xml_submit_status), $fileName);
     }
 
     public function export7980aData(Request $request)

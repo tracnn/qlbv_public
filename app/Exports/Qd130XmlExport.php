@@ -26,9 +26,10 @@ class Qd130XmlExport implements FromQuery, WithHeadings, ShouldAutoSize, WithSty
     protected $payment_date_filter;
     protected $rowNumber = 0;
     protected $imported_by;
+    protected $xml_submit_status;
 
     public function __construct($fromDate = null, $toDate = null, $xml_filter_status = null, 
-        $date_type, $qd130_xml_error_catalog_id = null, $xml_export_status = null, $payment_date_filter = null, $imported_by = null)
+        $date_type, $qd130_xml_error_catalog_id = null, $xml_export_status = null, $payment_date_filter = null, $imported_by = null, $xml_submit_status = null)
     {
         $this->fromDate = $fromDate;
         $this->toDate = $toDate;
@@ -38,6 +39,7 @@ class Qd130XmlExport implements FromQuery, WithHeadings, ShouldAutoSize, WithSty
         $this->xml_export_status = $xml_export_status;
         $this->payment_date_filter = $payment_date_filter;
         $this->imported_by = $imported_by;
+        $this->xml_submit_status = $xml_submit_status;
     }
 
     /**
@@ -56,7 +58,7 @@ class Qd130XmlExport implements FromQuery, WithHeadings, ShouldAutoSize, WithSty
         $xml_export_status = $this->xml_export_status;
         $payment_date_filter = $this->payment_date_filter;
         $imported_by = $this->imported_by;
-
+        $xml_submit_status = $this->xml_submit_status;
         // Convert date format from 'YYYY-MM-DD HH:mm:ss' to 'YYYYMMDDHHI' for specific fields
         $formattedDateFromForFields = Carbon::createFromFormat('Y-m-d H:i:s', $dateFrom)->format('YmdHi');
         $formattedDateToForFields = Carbon::createFromFormat('Y-m-d H:i:s', $dateTo)->format('YmdHi');
@@ -108,6 +110,13 @@ class Qd130XmlExport implements FromQuery, WithHeadings, ShouldAutoSize, WithSty
             $query->whereNotNull('qd130_xml_informations.exported_at');
         } elseif ($xml_export_status === 'no_export') {
             $query->whereNull('qd130_xml_informations.exported_at');
+        }
+
+        // Apply filter based on xml_submit_status
+        if ($xml_submit_status === 'has_submit') {
+            $query->whereNotNull('qd130_xml_informations.submitted_at');
+        } elseif ($xml_submit_status === 'not_submit') {
+            $query->whereNull('qd130_xml_informations.submitted_at');
         }
 
         if ($payment_date_filter === 'has_payment_date') {

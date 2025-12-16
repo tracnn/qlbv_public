@@ -13,8 +13,9 @@ class Qd130ErrorMultiSheetExport implements WithMultipleSheets
     protected $qd130_xml_error_catalog_id;
     protected $payment_date_filter;
     protected $imported_by;
-
-    public function __construct($fromDate, $toDate, $xml_filter_status, $date_type, $qd130_xml_error_catalog_id, $payment_date_filter, $imported_by)
+    protected $xml_submit_status;
+    
+    public function __construct($fromDate, $toDate, $xml_filter_status, $date_type, $qd130_xml_error_catalog_id, $payment_date_filter, $imported_by, $xml_submit_status)
     {
         $this->fromDate = $fromDate;
         $this->toDate = $toDate;
@@ -23,12 +24,13 @@ class Qd130ErrorMultiSheetExport implements WithMultipleSheets
         $this->qd130_xml_error_catalog_id = $qd130_xml_error_catalog_id;
         $this->payment_date_filter = $payment_date_filter;
         $this->imported_by = $imported_by;
+        $this->xml_submit_status = $xml_submit_status;
     }
 
     public function sheets(): array
     {
         return [
-            new Qd130ErrorExport($this->fromDate, $this->toDate, $this->xml_filter_status, $this->date_type, $this->qd130_xml_error_catalog_id, $this->payment_date_filter, $this->imported_by),
+            new Qd130ErrorExport($this->fromDate, $this->toDate, $this->xml_filter_status, $this->date_type, $this->qd130_xml_error_catalog_id, $this->payment_date_filter, $this->imported_by, $this->xml_submit_status),
             new HeinCardErrorExport($this->fromDate, $this->toDate),
         ];
     }

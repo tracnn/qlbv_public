@@ -20,10 +20,12 @@ class Qd130Xml7980aExport implements FromQuery, WithHeadings, ShouldAutoSize, Wi
 {
     protected $request;
     protected $rowNumber = 0;
-
+    protected $xml_submit_status;
+    
     public function __construct(Request $request)
     {
         $this->request = $request;
+        $this->xml_submit_status = $xml_submit_status;
     }
 
     public function query()
@@ -39,6 +41,7 @@ class Qd130Xml7980aExport implements FromQuery, WithHeadings, ShouldAutoSize, Wi
         $qd130_xml_error_catalog_id = $this->request->input('qd130_xml_error_catalog');
         $payment_date_filter = $this->request->input('payment_date_filter');
         $xml_export_status = $this->request->input('xml_export_status');
+        $xml_submit_status = $this->request->input('xml_submit_status');
         $treatmentCode = $this->request->input('treatment_code');
 
         // Nếu có truyền treatment_code, chỉ lấy hồ sơ có ma_lk bằng treatmentCode và bỏ qua tất cả các điều kiện khác
@@ -263,6 +266,13 @@ class Qd130Xml7980aExport implements FromQuery, WithHeadings, ShouldAutoSize, Wi
             $query->whereNotNull('qd130_xml1s.exported_at');
         } elseif ($xml_export_status === 'no_export') {
             $query->whereNull('qd130_xml1s.exported_at');
+        }
+
+        // Apply filter based on xml_submit_status
+        if ($xml_submit_status === 'has_submit') {
+            $query->whereNotNull('qd130_xml1s.submitted_at');
+        } elseif ($xml_submit_status === 'not_submit') {
+            $query->whereNull('qd130_xml1s.submitted_at');
         }
 
         // Điều kiện lọc theo trạng thái thanh toán
