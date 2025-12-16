@@ -1,3 +1,7 @@
+# 16/12/2025
+- Bổ sung chức năng gửi hồ sơ XML từ phần mềm tiền giám định
+- Quản lý trạng thái hồ sơ đã gửi dựa vào kết quả trả về từ Cổng BHXH
+
 # 29/11/2025
 - Sửa chức năng import danh mục do danh mục excel thay đổi cấu trúc cột
 - Bổ sung quy tắc bắt lỗi trùng khít ngày y lệnh, ngày thực hiện, ngày kq của XML3 loại PTTT
