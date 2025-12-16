@@ -875,9 +875,7 @@ class Qd130XmlService
             $loginname = \Auth::user()->loginname;
         }
 
-        \Log::info('storeQd130XmlInfomation: ' . $operationType . ' - ' . $ma_lk . ' - ' . $macskcb . ' - ' . $loginname . ' - ' . $error . ' - ' . $isSigned);
-
-         try {
+        try {
             $attributes = [
                 'ma_lk' => $ma_lk,
             ];
