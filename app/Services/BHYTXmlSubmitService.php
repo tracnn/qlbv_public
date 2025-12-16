@@ -78,25 +78,12 @@ class BHYTXmlSubmitService
         ];
 
         try {
-            Log::info('BHYT XML Submit: Sending request', [
-                'url' => $submitUrl,
-                'maTinh' => $maTinh,
-                'maCSKCB' => $maCSKCB,
-                'loaiHoSo' => $loaiHoSo,
-                'xml_size' => strlen($xmlContent),
-            ]);
-
             $response = $this->httpClient->post($submitUrl, [
                 'headers' => $headers,
                 'form_params' => $body,
             ]);
 
             $result = json_decode($response->getBody()->getContents(), true);
-
-            Log::info('BHYT XML Submit: Response received', [
-                'maKetQua' => $result['maKetQua'] ?? 'unknown',
-                'maGiaoDich' => $result['maGiaoDich'] ?? null,
-            ]);
 
             return $result;
         } catch (GuzzleException $e) {

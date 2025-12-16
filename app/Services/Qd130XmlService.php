@@ -1714,11 +1714,6 @@ class Qd130XmlService
                     'thongDiep' => $thongDiep,
                     'maGiaoDich' => $maGiaoDich,
                 ]);
-            } else {
-                \Log::info('BHYT XML Submit successful for ma_lk: ' . $ma_lk, [
-                    'maGiaoDich' => $maGiaoDich,
-                    'thoiGianTiepNhan' => $thoiGianTiepNhan,
-                ]);
             }
 
             // Cập nhật thông tin gửi XML
