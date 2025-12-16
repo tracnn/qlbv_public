@@ -14,9 +14,9 @@ class AddSubmitColumns extends Migration
     public function up()
     {
         Schema::table('qd130_xml_informations', function (Blueprint $table) {
-            $table->timestamp('submitted_at')->nullable()->after('exported_at');
+            $table->timestamp('submitted_at')->nullable()->after('exported_at')->index();
             $table->string('submitted_by')->nullable()->after('submitted_at');
-            $table->string('submit_error')->nullable()->after('submitted_by');
+            $table->string('submit_error')->nullable()->after('submitted_by')->index();
         });
     }
 
