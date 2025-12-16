@@ -7,37 +7,23 @@ use App\Http\Controllers\Controller;
 
 use App\Http\Requests\InsuranceRequest;
 use App\BHYT;
+use App\Services\BHYTLoginService;
 
 class InsuranceController extends Controller
 {
-	protected $username;
-	protected $password;
-	protected $login_url;
-	protected $check_card_url;
-
-	protected $access_token;
-	protected $id_token;
-	protected $token_type;	
-	protected $expires_in;
-	protected $logined;
-
 	protected $searchParams;
+	protected $loginService;
 
 	public function __construct()
 	{
-		$this->logined = false;
-
-        $this->username = config('organization.BHYT.username');
-        $this->password = config('organization.BHYT.password');
-        $this->login_url = config('organization.BHYT.login_url');
-        $this->check_card_url = config('organization.BHYT.check_card_url');
-
         $this->searchParams = [
             'card-number' => null,
             'name' => null,
             'birthday' => null,
             'qrcode' => null,
-        ];		
+        ];
+        
+        $this->loginService = new BHYTLoginService();
 	}
 
     public function checkCard(Request $request)
@@ -62,15 +48,17 @@ class InsuranceController extends Controller
 
         $params = $this->__getSearchParam($request);
 
-        $login_result = BHYT::loginBHYT();
-
-        if($login_result['maKetQua'] != '200') {
-            flash(config('__tech.login_error_BHYT')[$login_result['maKetQua']])->error();
-            return view('insurance.manager.check-card.index', compact('params','result_insurance','ket_qua_dtri','tinh_trang_rv'));
+        // Sử dụng BHYTLoginService để lấy token (tự động đăng nhập lại nếu hết hạn)
+        try {
+            $accessToken = $this->loginService->getAccessToken();
+            $idToken = $this->loginService->getIdToken();
+        } catch (\Exception $e) {
+            flash('Lỗi đăng nhập cổng BHXH: ' . $e->getMessage())->error();
+            return view('insurance.manager.check-card.index', compact('params'));
         }
 
         $result_insurance = BHYT::checkInsuranceCard($params['card-number'],$params['name'],$params['birthday'],
-            $login_result['APIKey']['access_token'],$login_result['APIKey']['id_token']);
+            $accessToken, $idToken);
 
         if ($result_insurance['maKetQua'] == '000') {
            $params = $this->__setSearchParam($result_insurance['maThe'], 

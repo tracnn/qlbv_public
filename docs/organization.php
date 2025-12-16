@@ -13,6 +13,9 @@ return [
         'hoTenCb' => '',
         'cccdCb' => '', 
         'check_by_user' => true,
+        'submit_xml_url' => 'https://egw.baohiemxahoi.gov.vn/api/qd130/guiHoSoXmlQD4750',
+        'ma_tinh' => '01', // Mã tỉnh (2 ký tự đầu của mã CSKCB)
+        'ma_cskcb' => '01013', // Mã cơ sở khám chữa bệnh (có thể lấy từ correct_facility_code)
     ],
     'base_url' => '',
     'base_pacs_url' => '',

@@ -9,9 +9,9 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use App\Models\CheckBHYT\check_hein_card;
+use App\Services\BHYTLoginService;
 
 class jobKtTheBHYT implements ShouldQueue
 {
@@ -21,8 +21,7 @@ class jobKtTheBHYT implements ShouldQueue
     protected $username;
     protected $password;
     protected $check_card_url;
-    protected $login_url;
-
+    protected $loginService;
     protected $checkOldValue;
 
     public function __construct($params, $checkOldValue = true)
@@ -34,7 +33,6 @@ class jobKtTheBHYT implements ShouldQueue
         $this->username = config('organization.BHYT.username');
         $this->password = config('organization.BHYT.password');
         $this->check_card_url = config('organization.BHYT.check_card_url_2024');
-        $this->login_url = config('organization.BHYT.login_url');
     }
 
     public function handle()
@@ -62,42 +60,18 @@ class jobKtTheBHYT implements ShouldQueue
 
         $client = new Client();
 
-        // Kiểm tra token trong cache
-        $tokens = Cache::get('bhyt_tokens');
-
-        if (!$tokens || strtotime($tokens['expires_in']) < time()) {
-            // Đăng nhập để lấy token mới
-            try {
-                $loginResponse = $client->post($this->login_url, [
-                    'form_params' => [
-                        'username' => $this->username,
-                        'password' => $this->password,
-                    ]
-                ]);
-
-                $loginData = json_decode($loginResponse->getBody(), true);
-
-                if (!isset($loginData['APIKey'])) {
-                    Log::error('Login failed: APIKey not found in response');
-                    return;
-                }
-
-                $tokens = [
-                    'access_token' => $loginData['APIKey']['access_token'],
-                    'id_token' => $loginData['APIKey']['id_token'],
-                    'expires_in' => strtotime($loginData['APIKey']['expires_in']),
-                ];
-
-                // Lưu token vào cache
-                Cache::put('bhyt_tokens', $tokens, now()->addSeconds($tokens['expires_in'] - time()));
-            } catch (\Exception $e) {
-                Log::error('Error in jobKtTheBHYT: ' . $e->getMessage());
-                return;
-            }
+        // Sử dụng BHYTLoginService để lấy token (tự động đăng nhập lại nếu hết hạn)
+        try {
+            $this->loginService = new BHYTLoginService();
+            $accessToken = $this->loginService->getAccessToken();
+            $idToken = $this->loginService->getIdToken();
+        } catch (\Exception $e) {
+            Log::error('Error in jobKtTheBHYT: Failed to get tokens - ' . $e->getMessage());
+            return;
         }
 
         // Thực hiện kiểm tra thẻ bảo hiểm y tế
-        $this->checkInsuranceCard($client, $tokens['access_token'], $tokens['id_token'], $this->params);
+        $this->checkInsuranceCard($client, $accessToken, $idToken, $this->params);
     }
 
     private function startsWithPatternCbcs($maThe)
