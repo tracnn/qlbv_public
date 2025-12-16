@@ -5,6 +5,7 @@
             <option value="">Tất cả</option>
             <option value="has_submit">Đã gửi</option>
             <option value="not_submit">Chưa gửi</option>
+            <option value="has_submit_error">Gửi lỗi</option>
         </select>
     </div> 
 </div>

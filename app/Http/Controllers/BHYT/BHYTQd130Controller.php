@@ -266,6 +266,10 @@ class BHYTQd130Controller extends Controller
                     $result = $result->whereHas('Qd130XmlInformation', function ($query) {
                         $query->whereNull('submitted_at');
                     });
+                } elseif ($xml_submit_status === 'has_submit_error') {
+                    $result = $result->whereHas('Qd130XmlInformation', function ($query) {
+                        $query->whereNotNull('submit_error');
+                    });
                 }
 
                 // Apply filter based on imported_by
