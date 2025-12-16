@@ -898,8 +898,11 @@ class Qd130XmlService
             } elseif ($operationType === 'sign') {
                 $values['is_signed'] = $isSigned;
             } elseif ($operationType === 'submit') {
-                $values['submitted_at'] = Carbon::now();
-                $values['submit_error'] = $error;
+                if ($error) {
+                    $values['submit_error'] = $error;
+                } else {
+                    $values['submitted_at'] = Carbon::now();
+                }
                 $values['submitted_by'] = $loginname;
             }
 
