@@ -900,7 +900,9 @@ class Qd130XmlService
             } elseif ($operationType === 'submit') {
                 if ($error) {
                     $values['submit_error'] = $error;
+                    $values['submitted_at'] = null;
                 } else {
+                    $values['submit_error'] = null;
                     $values['submitted_at'] = Carbon::now();
                 }
                 $values['submitted_by'] = $loginname;
