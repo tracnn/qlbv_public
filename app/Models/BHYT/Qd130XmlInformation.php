@@ -20,5 +20,6 @@ class Qd130XmlInformation extends Model
         'submitted_by',
         'submit_error',
         'is_signed',
+        'signed_error',
     ];
 }

@@ -867,7 +867,7 @@ class Qd130XmlService
         }
     }
 
-    public function storeQd130XmlInfomation($ma_lk, $macskcb, $operationType, $soluonghoso = 1, $error = null, $isSigned = false)
+    public function storeQd130XmlInfomation($ma_lk, $macskcb, $operationType, $soluonghoso = 1, $error = null, $isSigned = false, $signedError = null)
     {
         $loginname = null;
 
@@ -897,6 +897,11 @@ class Qd130XmlService
                 $values['exported_by'] = $loginname;
             } elseif ($operationType === 'sign') {
                 $values['is_signed'] = $isSigned;
+                if ($isSigned) {
+                    $values['signed_error'] = null;
+                } else {
+                    $values['signed_error'] = $signedError;
+                }
             } elseif ($operationType === 'submit') {
                 if ($error) {
                     $values['submit_error'] = $error;
@@ -1647,8 +1652,9 @@ class Qd130XmlService
         // Extract MACSKCB from the XML data (assuming getDataForXmlExport returns it)
         $xmlInformation = $this->getXmlInformation($ma_lk);
         $macskcb = $xmlInformation->macskcb;
+        $signedError = $xmlDataSigned['error'] ?? null;
 
-        $this->storeQd130XmlInfomation($ma_lk, $macskcb, 'sign', 1, null, $isSigned);
+        $this->storeQd130XmlInfomation($ma_lk, $macskcb, 'sign', 1, null, $isSigned, $signedError);
 
         // Định dạng thời gian hiện tại để đặt tên file
         $formattedDateTime = date('Y.m.d_H.i.s');

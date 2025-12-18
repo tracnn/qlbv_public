@@ -75,7 +75,7 @@ class BHYTQd130Controller extends Controller
                 }, 'Qd130XmlErrorResult' => function($query) {
                     $query->select('ma_lk', 'error_code', 'ngay_yl', 'description');
                 }, 'Qd130XmlInformation' => function($query) {
-                    $query->select('ma_lk', 'exported_at', 'imported_by', 'is_signed', 'submitted_at', 'submit_error');
+                    $query->select('ma_lk', 'exported_at', 'imported_by', 'is_signed', 'submitted_at', 'submit_error', 'signed_error');
                 }]);
 
                 // Kiểm tra role của user
@@ -95,7 +95,7 @@ class BHYTQd130Controller extends Controller
                     }, 'Qd130XmlErrorResult' => function($query) {
                         $query->select('ma_lk', 'error_code', 'ngay_yl', 'description');
                     }, 'Qd130XmlInformation' => function($query) {
-                        $query->select('ma_lk', 'exported_at', 'imported_by', 'is_signed', 'submitted_at', 'submit_error');
+                        $query->select('ma_lk', 'exported_at', 'imported_by', 'is_signed', 'submitted_at', 'submit_error', 'signed_error');
                     }]);
                     // Kiểm tra role của user
                     if (!\Auth::user()->hasRole(['superadministrator', 'administrator'])) {
@@ -167,7 +167,7 @@ class BHYTQd130Controller extends Controller
 
                 // Apply relationships: Qd130XmlInformation
                 $result = $result->with(['Qd130XmlInformation' => function($query) {
-                    $query->select('ma_lk', 'exported_at', 'export_error', 'imported_by', 'is_signed', 'submitted_at', 'submit_error');
+                    $query->select('ma_lk', 'exported_at', 'export_error', 'imported_by', 'is_signed', 'submitted_at', 'submit_error', 'signed_error');
                 }]);
 
                 if ($qd130_xml_error_catalog_id) {
@@ -329,7 +329,9 @@ class BHYTQd130Controller extends Controller
             return $icon;
         })
         ->addColumn('is_signed', function ($result) {
-            return $result->Qd130XmlInformation->is_signed ? '<i class="fa fa-check-circle text-success" title="Ký số"></i>' : '<i class="fa fa-times-circle text-danger" title="Không ký số"></i>';
+            return $result->Qd130XmlInformation->is_signed ? 
+            '<i class="fa fa-check-circle text-success" title="Ký số"></i>' : 
+            ($result->Qd130XmlInformation->signed_error ? '<i class="fa fa-times-circle text-danger" title="'.$result->Qd130XmlInformation->signed_error.'"></i>' : '<i class="fa fa-times-circle text-danger" title="Không ký số"></i>');
         })
         // Thêm cột 'imported_by'
         ->addColumn('imported_by', function ($result) {

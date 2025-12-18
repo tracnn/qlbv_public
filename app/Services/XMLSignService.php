@@ -69,14 +69,14 @@ class XMLSignService
                     $errorMessage .= ': ' . implode(', ', $result['Param']['Messages']);
                 }
                 Log::error('XML signing failed: ' . $errorMessage);
-                return ['isSigned' => false, 'data' => $xmlContent];
+                return ['isSigned' => false, 'data' => $xmlContent, 'error' => $errorMessage];
             }
 
             return ['isSigned' => true, 'data' => base64_decode($result['Data'])];
 
         } catch (GuzzleException $e) {
             Log::error('XML Sign API Error: ' . $e->getMessage());
-            return ['isSigned' => false, 'data' => $xmlContent];
+            return ['isSigned' => false, 'data' => $xmlContent, 'error' => $e->getMessage()];
         }
     }
 
