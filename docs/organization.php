@@ -65,4 +65,12 @@ return [
         'tag_store_signature_value' => 'CHUKYDONVI',
         'enabled' => false,
     ],
+    'e_invoice' => [
+        'bkav' => [
+            'enabled' => false,
+            'api_url' => '', // URL API BKAV (ví dụ: https://api.bkav.com.vn)
+            'partner_guid' => '', // Partner GUID từ BKAV
+            'partner_token' => '', // Partner Token format: Base64(Key):Base64(IV)
+        ],
+    ],
 ];
