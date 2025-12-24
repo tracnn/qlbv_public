@@ -508,7 +508,8 @@
     // Xử lý copy tooltip khi click vào icon copy
     $(document).on('click', '.copy-tooltip-btn', function(e) {
         e.stopPropagation();
-        var textToCopy = $(this).data('copy-text');
+        // Dùng attr để lấy giá trị trực tiếp từ data attribute
+        var textToCopy = $(this).attr('data-copy-text');
         if (textToCopy) {
             // Tạo một textarea tạm để copy
             var $temp = $('<textarea>');

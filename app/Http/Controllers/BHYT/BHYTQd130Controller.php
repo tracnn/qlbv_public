@@ -351,12 +351,12 @@ class BHYTQd130Controller extends Controller
                     ? '<i class="fa fa-check-circle text-success" title="'.$tooltip.'"></i>'
                     : '<i class="fa fa-file-code-o text-secondary" title="'.$tooltip.'"></i>');
             
-            // Chỉ hiển thị icon copy khi có submitted_message
-            $submittedMessage = $result->Qd130XmlInformation && $result->Qd130XmlInformation->submitted_message 
-                ? $result->Qd130XmlInformation->submitted_message 
+            // Chỉ hiển thị icon copy khi có submitted_message và giá trị không rỗng
+            $submittedMessage = $result->Qd130XmlInformation && !empty($result->Qd130XmlInformation->submitted_message)
+                ? trim($result->Qd130XmlInformation->submitted_message)
                 : null;
             $copyIcon = $submittedMessage 
-                ? '<i class="fa fa-copy copy-tooltip-btn" style="margin-left: 5px; cursor: pointer; font-size: 12px;" data-copy-text="'.htmlspecialchars($submittedMessage, ENT_QUOTES, 'UTF-8').'" title="Click để copy submitted_message"></i>'
+                ? '<i class="fa fa-copy copy-tooltip-btn" style="margin-left: 5px; cursor: pointer; font-size: 12px;" data-copy-text="'.htmlspecialchars($submittedMessage, ENT_QUOTES, 'UTF-8').'" title="Click để copy"></i>'
                 : '';
             
             return '<span style="white-space: nowrap;">' . $icon . $copyIcon . '</span>';
