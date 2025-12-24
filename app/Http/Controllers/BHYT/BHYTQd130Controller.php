@@ -339,7 +339,7 @@ class BHYTQd130Controller extends Controller
         })
         ->addColumn('submitted_at', function ($result) {
             $tooltip = $result->Qd130XmlInformation && $result->Qd130XmlInformation->submitted_at 
-                ? $result->Qd130XmlInformation->submitted_at
+                ? $result->Qd130XmlInformation->submitted_message
                 : ($result->Qd130XmlInformation && $result->Qd130XmlInformation->submit_error
                     ? $result->Qd130XmlInformation->submit_error
                     : ($result->Qd130XmlInformation && $result->Qd130XmlInformation->submitted_message
