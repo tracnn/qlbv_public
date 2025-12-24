@@ -75,7 +75,14 @@ class BHYTQd130Controller extends Controller
                 }, 'Qd130XmlErrorResult' => function($query) {
                     $query->select('ma_lk', 'error_code', 'ngay_yl', 'description');
                 }, 'Qd130XmlInformation' => function($query) {
-                    $query->select('ma_lk', 'exported_at', 'imported_by', 'is_signed', 'submitted_at', 'submit_error', 'signed_error');
+                    $query->select('ma_lk', 
+                    'exported_at', 
+                    'imported_by', 
+                    'is_signed', 
+                    'submitted_at', 
+                    'submit_error', 
+                    'signed_error', 
+                    'submitted_message');
                 }]);
 
                 // Kiểm tra role của user
@@ -95,7 +102,14 @@ class BHYTQd130Controller extends Controller
                     }, 'Qd130XmlErrorResult' => function($query) {
                         $query->select('ma_lk', 'error_code', 'ngay_yl', 'description');
                     }, 'Qd130XmlInformation' => function($query) {
-                        $query->select('ma_lk', 'exported_at', 'imported_by', 'is_signed', 'submitted_at', 'submit_error', 'signed_error');
+                        $query->select('ma_lk', 
+                        'exported_at', 
+                        'imported_by', 
+                        'is_signed', 
+                        'submitted_at', 
+                        'submit_error', 
+                        'signed_error', 
+                        'submitted_message');
                     }]);
                     // Kiểm tra role của user
                     if (!\Auth::user()->hasRole(['superadministrator', 'administrator'])) {
@@ -167,7 +181,15 @@ class BHYTQd130Controller extends Controller
 
                 // Apply relationships: Qd130XmlInformation
                 $result = $result->with(['Qd130XmlInformation' => function($query) {
-                    $query->select('ma_lk', 'exported_at', 'export_error', 'imported_by', 'is_signed', 'submitted_at', 'submit_error', 'signed_error');
+                    $query->select('ma_lk', 
+                    'exported_at', 
+                    'export_error', 
+                    'imported_by', 
+                    'is_signed', 
+                    'submitted_at', 
+                    'submit_error', 
+                    'signed_error', 
+                    'submitted_message');
                 }]);
 
                 if ($qd130_xml_error_catalog_id) {
@@ -320,7 +342,9 @@ class BHYTQd130Controller extends Controller
                 ? $result->Qd130XmlInformation->submitted_at
                 : ($result->Qd130XmlInformation && $result->Qd130XmlInformation->submit_error
                     ? $result->Qd130XmlInformation->submit_error
-                    : 'Not submitted');
+                    : ($result->Qd130XmlInformation && $result->Qd130XmlInformation->submitted_message
+                        ? $result->Qd130XmlInformation->submitted_message . ' - ' . $result->Qd130XmlInformation->submitted_at
+                        : 'Not submitted'));
             $icon = $result->Qd130XmlInformation && $result->Qd130XmlInformation->submit_error
                 ? '<i class="fa fa-times-circle" text-warning" title="'.$tooltip.'"></i>'
                 : ($result->Qd130XmlInformation && $result->Qd130XmlInformation->submitted_at

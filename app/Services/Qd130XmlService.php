@@ -867,7 +867,14 @@ class Qd130XmlService
         }
     }
 
-    public function storeQd130XmlInfomation($ma_lk, $macskcb, $operationType, $soluonghoso = 1, $error = null, $isSigned = false, $signedError = null)
+    public function storeQd130XmlInfomation(
+        $ma_lk, $macskcb, 
+        $operationType, 
+        $soluonghoso = 1, 
+        $error = null, 
+        $isSigned = false, 
+        $signedError = null, 
+        $submittedMessage = null)
     {
         $loginname = null;
 
@@ -911,6 +918,7 @@ class Qd130XmlService
                     $values['submitted_at'] = Carbon::now();
                 }
                 $values['submitted_by'] = $loginname;
+                $values['submitted_message'] = $submittedMessage;
             }
 
             Qd130XmlInformation::updateOrCreate($attributes, $values);
@@ -1726,7 +1734,8 @@ class Qd130XmlService
             }
 
             // Cập nhật thông tin gửi XML
-            $this->storeQd130XmlInfomation($ma_lk, $macskcb, 'submit', 1, $error);
+            // 23-12-2025: Thêm thông tin gửi XML vào database -> submitted_message = maGiaoDich + thongDiep
+            $this->storeQd130XmlInfomation($ma_lk, $macskcb, 'submit', 1, $error, null, null, $maGiaoDich . ' - ' . $thongDiep);
 
             return ($maKetQua === '200' || $maKetQua === 200);
         } catch (\Exception $e) {
@@ -1737,7 +1746,8 @@ class Qd130XmlService
             ]);
 
             // Cập nhật thông tin lỗi
-            $this->storeQd130XmlInfomation($ma_lk, $macskcb, 'submit', 1, $error);
+            // 23-12-2025: Thêm thông tin gửi XML vào database -> submitted_message = maGiaoDich + thongDiep
+            $this->storeQd130XmlInfomation($ma_lk, $macskcb, 'submit', 1, $error, null, null, $maGiaoDich . ' - ' . $thongDiep);
 
             return false;
         }
