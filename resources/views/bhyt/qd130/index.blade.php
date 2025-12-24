@@ -504,5 +504,27 @@
             }
         });
     }
+
+    // Xử lý copy tooltip khi click vào icon copy
+    $(document).on('click', '.copy-tooltip-btn', function(e) {
+        e.stopPropagation();
+        var textToCopy = $(this).data('copy-text');
+        if (textToCopy) {
+            // Tạo một textarea tạm để copy
+            var $temp = $('<textarea>');
+            $('body').append($temp);
+            $temp.val(textToCopy).select();
+            document.execCommand('copy');
+            $temp.remove();
+            
+            // Hiển thị thông báo
+            var $icon = $(this);
+            var originalClass = $icon.attr('class');
+            $icon.removeClass('fa-copy').addClass('fa-check text-success');
+            setTimeout(function() {
+                $icon.attr('class', originalClass);
+            }, 1000);
+        }
+    });
 </script>
 @endpush

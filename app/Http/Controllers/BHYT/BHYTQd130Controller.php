@@ -346,11 +346,12 @@ class BHYTQd130Controller extends Controller
                         ? $result->Qd130XmlInformation->submitted_message . ' - ' . $result->Qd130XmlInformation->submitted_at
                         : 'Not submitted'));
             $icon = $result->Qd130XmlInformation && $result->Qd130XmlInformation->submit_error
-                ? '<i class="fa fa-times-circle" text-warning" title="'.$tooltip.'"></i>'
+                ? '<i class="fa fa-times-circle text-warning" title="'.$tooltip.'"></i>'
                 : ($result->Qd130XmlInformation && $result->Qd130XmlInformation->submitted_at
                     ? '<i class="fa fa-check-circle text-success" title="'.$tooltip.'"></i>'
                     : '<i class="fa fa-file-code-o text-secondary" title="'.$tooltip.'"></i>');
-            return $icon;
+            $copyIcon = '<i class="fa fa-copy copy-tooltip-btn" style="margin-left: 5px; cursor: pointer; font-size: 12px;" data-copy-text="'.htmlspecialchars($tooltip, ENT_QUOTES, 'UTF-8').'" title="Click để copy"></i>';
+            return '<span style="white-space: nowrap;">' . $icon . $copyIcon . '</span>';
         })
         ->addColumn('is_signed', function ($result) {
             return $result->Qd130XmlInformation->is_signed ? 
