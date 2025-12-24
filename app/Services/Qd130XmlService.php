@@ -1735,7 +1735,7 @@ class Qd130XmlService
 
             // Cập nhật thông tin gửi XML
             // 23-12-2025: Thêm thông tin gửi XML vào database -> submitted_message = maGiaoDich + thongDiep
-            $this->storeQd130XmlInfomation($ma_lk, $macskcb, 'submit', 1, $error, null, null, $maGiaoDich . ' - ' . $thongDiep);
+            $this->storeQd130XmlInfomation($ma_lk, $macskcb, 'submit', 1, $error, null, null, $maGiaoDich);
 
             return ($maKetQua === '200' || $maKetQua === 200);
         } catch (\Exception $e) {
