@@ -74,9 +74,9 @@ return [
         ],
     ],
     'truc_du_lieu_y_te' => [
-        'username' => 'usersync.01816', // Tài khoản được Trục dữ liệu Y Tế cấp
-        'password' => 'hUWEpy2ZeJ', // Mật khẩu tương ứng
-        'code' => '01816', // Mã đơn vị (maCSKCB)
+        'username' => '', // Tài khoản được Trục dữ liệu Y Tế cấp
+        'password' => '', // Mật khẩu tương ứng
+        'code' => '', // Mã đơn vị (maCSKCB)
         'loai_ho_so' => '130', // Loại hồ sơ
         'ma_tinh' => 'HN', // Mã tỉnh
         'environment' => 'production', // sandbox hoặc production/poc
