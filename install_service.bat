@@ -19,10 +19,6 @@ set LARAVEL_PATH=%~dp0
 %NSSM_PATH%\nssm install "QLBV JobKtTheBHYT" %PHP_PATH% "%LARAVEL_PATH%artisan queue:work --queue=JobKtTheBHYT"
 %NSSM_PATH%\nssm set "QLBV JobKtTheBHYT" AppDirectory %LARAVEL_PATH%
 
-:: Tạo dịch vụ cho truc-du-lieu-y-te
-%NSSM_PATH%\nssm install "QLBV TrucDuLieuYTe" %PHP_PATH% "%LARAVEL_PATH%artisan queue:work --queue=truc-du-lieu-y-te"
-%NSSM_PATH%\nssm set "QLBV TrucDuLieuYTe" AppDirectory %LARAVEL_PATH%
-
 :: Tạo dịch vụ cho importCatalogBHXH:data
 %NSSM_PATH%\nssm install "QLBV ImportCatalog" %PHP_PATH% "%LARAVEL_PATH%artisan importCatalogBHXH:data"
 %NSSM_PATH%\nssm set "QLBV ImportCatalog" AppDirectory %LARAVEL_PATH%
