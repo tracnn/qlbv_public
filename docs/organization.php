@@ -74,9 +74,12 @@ return [
         ],
     ],
     'truc_du_lieu_y_te' => [
-        'username' => '', // Tài khoản được Trục dữ liệu Y Tế cấp
-        'password' => '', // Mật khẩu tương ứng
-        'environment' => 'sandbox', // sandbox hoặc production/poc
+        'username' => 'usersync.01816', // Tài khoản được Trục dữ liệu Y Tế cấp
+        'password' => 'hUWEpy2ZeJ', // Mật khẩu tương ứng
+        'code' => '01816', // Mã đơn vị (maCSKCB)
+        'loai_ho_so' => '130', // Loại hồ sơ
+        'ma_tinh' => 'HN', // Mã tỉnh
+        'environment' => 'production', // sandbox hoặc production/poc
         // Môi trường thử nghiệm (Sandbox)
         'login_url_sandbox' => 'https://sbauth-soyt.hanoi.gov.vn/api/auth/token/take',
         'submit_xml_url_sandbox' => 'https://sbaxis-soyt.hanoi.gov.vn/api/kcb/xml/qd3176/guiHoSoXml',
@@ -87,6 +90,6 @@ return [
         'check_status_url_production' => 'https://axis-soyt.hanoi.gov.vn/api/kcb/tra-cuu-trang-thai',
         'enabled' => true, // Bật/tắt chức năng gửi dữ liệu lên Trục
         'disk' => 'trucDuLieuYTe', // Tên disk trong filesystems config
-        'scan_sleep_interval' => 150, // Thời gian sleep giữa các lần quét (giây)
+        'scan_sleep_interval' => 300, // Thời gian sleep giữa các lần quét (giây)
     ],
 ];
