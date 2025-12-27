@@ -102,5 +102,10 @@ return [
             'driver' => 'local',
             'root' => 'D:\XML\ExportXml4750',
         ],
+
+        'trucDuLieuYTe' => [
+            'driver' => 'local',
+            'root' => 'D:\XML\TrucDuLieuYTe',
+        ],
     ],
 ];
