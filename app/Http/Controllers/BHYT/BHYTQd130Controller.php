@@ -75,7 +75,14 @@ class BHYTQd130Controller extends Controller
                 }, 'Qd130XmlErrorResult' => function($query) {
                     $query->select('ma_lk', 'error_code', 'ngay_yl', 'description');
                 }, 'Qd130XmlInformation' => function($query) {
-                    $query->select('ma_lk', 'exported_at', 'imported_by', 'is_signed', 'submitted_at', 'submit_error', 'signed_error');
+                    $query->select('ma_lk', 
+                    'exported_at', 
+                    'imported_by', 
+                    'is_signed', 
+                    'submitted_at', 
+                    'submit_error', 
+                    'signed_error', 
+                    'submitted_message');
                 }]);
 
                 // Kiểm tra role của user
@@ -95,7 +102,14 @@ class BHYTQd130Controller extends Controller
                     }, 'Qd130XmlErrorResult' => function($query) {
                         $query->select('ma_lk', 'error_code', 'ngay_yl', 'description');
                     }, 'Qd130XmlInformation' => function($query) {
-                        $query->select('ma_lk', 'exported_at', 'imported_by', 'is_signed', 'submitted_at', 'submit_error', 'signed_error');
+                        $query->select('ma_lk', 
+                        'exported_at', 
+                        'imported_by', 
+                        'is_signed', 
+                        'submitted_at', 
+                        'submit_error', 
+                        'signed_error', 
+                        'submitted_message');
                     }]);
                     // Kiểm tra role của user
                     if (!\Auth::user()->hasRole(['superadministrator', 'administrator'])) {
@@ -167,7 +181,15 @@ class BHYTQd130Controller extends Controller
 
                 // Apply relationships: Qd130XmlInformation
                 $result = $result->with(['Qd130XmlInformation' => function($query) {
-                    $query->select('ma_lk', 'exported_at', 'export_error', 'imported_by', 'is_signed', 'submitted_at', 'submit_error', 'signed_error');
+                    $query->select('ma_lk', 
+                    'exported_at', 
+                    'export_error', 
+                    'imported_by', 
+                    'is_signed', 
+                    'submitted_at', 
+                    'submit_error', 
+                    'signed_error', 
+                    'submitted_message');
                 }]);
 
                 if ($qd130_xml_error_catalog_id) {
@@ -317,16 +339,27 @@ class BHYTQd130Controller extends Controller
         })
         ->addColumn('submitted_at', function ($result) {
             $tooltip = $result->Qd130XmlInformation && $result->Qd130XmlInformation->submitted_at 
-                ? $result->Qd130XmlInformation->submitted_at
+                ? $result->Qd130XmlInformation->submitted_message
                 : ($result->Qd130XmlInformation && $result->Qd130XmlInformation->submit_error
                     ? $result->Qd130XmlInformation->submit_error
-                    : 'Not submitted');
+                    : ($result->Qd130XmlInformation && $result->Qd130XmlInformation->submitted_message
+                        ? $result->Qd130XmlInformation->submitted_message . ' - ' . $result->Qd130XmlInformation->submitted_at
+                        : 'Not submitted'));
             $icon = $result->Qd130XmlInformation && $result->Qd130XmlInformation->submit_error
-                ? '<i class="fa fa-times-circle" text-warning" title="'.$tooltip.'"></i>'
+                ? '<i class="fa fa-times-circle text-warning" title="'.$tooltip.'"></i>'
                 : ($result->Qd130XmlInformation && $result->Qd130XmlInformation->submitted_at
                     ? '<i class="fa fa-check-circle text-success" title="'.$tooltip.'"></i>'
                     : '<i class="fa fa-file-code-o text-secondary" title="'.$tooltip.'"></i>');
-            return $icon;
+            
+            // Chỉ hiển thị icon copy khi có submitted_message và giá trị không rỗng
+            $submittedMessage = $result->Qd130XmlInformation && !empty($result->Qd130XmlInformation->submitted_message)
+                ? trim($result->Qd130XmlInformation->submitted_message)
+                : null;
+            $copyIcon = $submittedMessage 
+                ? '<i class="fa fa-copy copy-tooltip-btn" style="margin-left: 5px; cursor: pointer; font-size: 12px;" data-copy-text="'.htmlspecialchars($submittedMessage, ENT_QUOTES, 'UTF-8').'" title="Click để copy"></i>'
+                : '';
+            
+            return '<span style="white-space: nowrap;">' . $icon . $copyIcon . '</span>';
         })
         ->addColumn('is_signed', function ($result) {
             return $result->Qd130XmlInformation->is_signed ? 

@@ -504,5 +504,71 @@
             }
         });
     }
+
+    // Xử lý copy tooltip khi click vào icon copy
+    $(document).on('click', '.copy-tooltip-btn', function(e) {
+        e.stopPropagation();
+        e.preventDefault();
+        
+        var $icon = $(this);
+        // Dùng attr để lấy giá trị trực tiếp từ data attribute
+        var textToCopy = $icon.attr('data-copy-text');
+        
+        if (!textToCopy) {
+            return;
+        }
+        
+        // Hàm hiển thị thông báo thành công
+        function showSuccess() {
+            var originalClass = $icon.attr('class');
+            $icon.removeClass('fa-copy').addClass('fa-check text-success');
+            setTimeout(function() {
+                $icon.attr('class', originalClass);
+            }, 1000);
+        }
+        
+        // Thử dùng Clipboard API (hiện đại hơn)
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(textToCopy).then(function() {
+                showSuccess();
+            }).catch(function(err) {
+                console.error('Failed to copy:', err);
+                // Fallback về phương pháp cũ
+                fallbackCopy(textToCopy, showSuccess);
+            });
+        } else {
+            // Fallback cho trình duyệt không hỗ trợ Clipboard API
+            fallbackCopy(textToCopy, showSuccess);
+        }
+    });
+    
+    // Hàm fallback copy sử dụng textarea
+    function fallbackCopy(text, successCallback) {
+        var $temp = $('<textarea>');
+        $temp.css({
+            position: 'fixed',
+            left: '-9999px',
+            top: '-9999px',
+            opacity: '0'
+        });
+        $temp.val(text);
+        $('body').append($temp);
+        
+        // Focus và select
+        $temp[0].focus();
+        $temp[0].select();
+        $temp[0].setSelectionRange(0, 99999); // Đảm bảo select toàn bộ text
+        
+        try {
+            var successful = document.execCommand('copy');
+            if (successful && successCallback) {
+                successCallback();
+            }
+        } catch (err) {
+            console.error('Fallback copy failed:', err);
+        }
+        
+        $temp.remove();
+    }
 </script>
 @endpush
