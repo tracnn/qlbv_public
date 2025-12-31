@@ -77,7 +77,7 @@ return [
         'username' => '', // Tài khoản được Trục dữ liệu Y Tế cấp
         'password' => '', // Mật khẩu tương ứng
         'code' => '', // Mã đơn vị (maCSKCB)
-        'loai_ho_so' => '130', // Loại hồ sơ
+        'loai_ho_so' => '3176', // Loại hồ sơ
         'ma_tinh' => 'HN', // Mã tỉnh
         'environment' => 'production', // sandbox hoặc production/poc
         // Môi trường thử nghiệm (Sandbox)
