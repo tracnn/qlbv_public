@@ -2,11 +2,11 @@
 
 namespace App\Services;
 
-use App\Models\BHYT\Xml3176XmlErrorResult;
-use App\Models\BHYT\Xml3176XmlErrorCatalog;
+use App\Models\BHYT\Xml3176ErrorResult;
+use App\Models\BHYT\Xml3176ErrorCatalog;
 use Illuminate\Support\Collection;
 
-class Xml3176XmlErrorService
+class Xml3176ErrorService
 {
     /**
     * Xóa các lỗi cũ và lưu các lỗi mới
@@ -20,14 +20,14 @@ class Xml3176XmlErrorService
     public function deleteErrors(string $ma_lk): void
     {
         // Delete old errors
-        Xml3176XmlErrorResult::where('ma_lk', $ma_lk)
+        Xml3176ErrorResult::where('ma_lk', $ma_lk)
         ->delete();
     }
 
     public function getCriticalErrorStatus($errorCode)
     {
-        // Tìm bản ghi trong Xml3176XmlErrorCatalog theo error_code
-        $errorCatalog = Xml3176XmlErrorCatalog::where('error_code', $errorCode)->first();
+        // Tìm bản ghi trong Xml3176ErrorCatalog theo error_code
+        $errorCatalog = Xml3176ErrorCatalog::where('error_code', $errorCode)->first();
 
         // Trả về critical_error nếu có, nếu không thì trả về true
         return $errorCatalog ? $errorCatalog->critical_error : true;
@@ -38,7 +38,7 @@ class Xml3176XmlErrorService
         // Save errors to xml_error_checks table
         foreach ($errors as $error) {
             // Xem lỗi này có được đánh dấu kiểm tra không
-            $skipCheck = Xml3176XmlErrorCatalog::where('error_code', $error->error_code)
+            $skipCheck = Xml3176ErrorCatalog::where('error_code', $error->error_code)
                 ->where('is_check', false)
                 ->exists();
 
@@ -61,10 +61,10 @@ class Xml3176XmlErrorService
                 $data = array_merge($data, $additionalData);
             }
             
-            Xml3176XmlErrorResult::create($data);
+            Xml3176ErrorResult::create($data);
 
-            // Create or update in Xml3176XmlErrorCatalog
-            Xml3176XmlErrorCatalog::createOrUpdate($xmlType, $error->error_code, $error->error_name ?? null, $error->critical_error ?? false);
+            // Create or update in Xml3176ErrorCatalog
+            Xml3176ErrorCatalog::createOrUpdate($xmlType, $error->error_code, $error->error_name ?? null, $error->critical_error ?? false);
         }
     }
 }

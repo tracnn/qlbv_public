@@ -161,18 +161,18 @@ class CategoryBHYTController extends Controller
         return response()->json(['success' => false], 404);
     }
 
-    public function fetchXml3176XmlErrorCatalog()
+    public function fetchXml3176ErrorCatalog()
     {
-        $xml3176XmlErrorCatalogs = Xml3176ErrorCatalog::orderBy('xml')->get();
-        return response()->json($xml3176XmlErrorCatalogs);
+        $xml3176ErrorCatalogs = Xml3176ErrorCatalog::orderBy('xml')->get();
+        return response()->json($xml3176ErrorCatalogs);
     }
 
-    public function indexXml3176XmlErrorCatalog()
+    public function indexXml3176ErrorCatalog()
     {
-        return view('category.bhyt.xml3176_xml_error_catalog');
+        return view('category.bhyt.xml3176_error_catalog');
     }
 
-    public function fetchXml3176XmlErrorCatalogDatatable()
+    public function fetchXml3176ErrorCatalogDatatable()
     {
         $result = Xml3176ErrorCatalog::query();
 
@@ -190,7 +190,7 @@ class CategoryBHYTController extends Controller
         ->toJson();
     }
 
-    public function updateXml3176XmlErrorCatalog(Request $request)
+    public function updateXml3176ErrorCatalog(Request $request)
     {
         $id = $request->input('id');
 

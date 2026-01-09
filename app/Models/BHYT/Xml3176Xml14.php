@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Xml3176Xml14 extends Model
 {
+    protected $table = 'xml3176_xml14s';
+
     protected $fillable = [
         'ma_lk',
         'so_giayhen_kl',
@@ -33,7 +35,7 @@ class Xml3176Xml14 extends Model
 
     public function errorResult()
     {
-        return $this->hasMany('App\Models\BHYT\Xml3176XmlErrorResult', 'ma_lk', 'ma_lk')
+        return $this->hasMany('App\Models\BHYT\Xml3176ErrorResult', 'ma_lk', 'ma_lk')
                     ->where('xml', 'XML14');
     }
 }

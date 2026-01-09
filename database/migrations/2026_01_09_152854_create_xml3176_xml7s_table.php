@@ -40,6 +40,7 @@ class CreateXml3176Xml7sTable extends Migration
             $table->unsignedTinyInteger('so_ngay_nghi')->nullable();
             $table->string('ngoaitru_tungay', 8)->nullable();
             $table->string('ngoaitru_denngay', 8)->nullable();
+            $table->text('du_phong')->nullable();
             $table->timestamps();
         });
     }

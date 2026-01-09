@@ -37,6 +37,7 @@ class CreateXml3176Xml11sTable extends Migration
             $table->string('ngay_ct')->nullable();
             $table->string('ma_the_tam')->nullable();
             $table->string('mau_so')->nullable();
+            $table->text('du_phong')->nullable();
             $table->timestamps();
         });
     }

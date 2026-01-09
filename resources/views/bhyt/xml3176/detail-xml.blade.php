@@ -7,7 +7,7 @@
 </label>
 <!-- @php
     $errorDescriptions = $xml1
-    ->Xml3176XmlErrorResult()
+    ->Xml3176ErrorResult()
     ->where('xml', 'XML1')
     ->pluck('description')
     ->implode('; ');
@@ -17,7 +17,7 @@
     <li class="active">
         <a data-toggle="tab" href="#menu1">XML1
             @php
-                $errorCountXml = $xml1->Xml3176XmlErrorResult()
+                $errorCountXml = $xml1->Xml3176ErrorResult()
                     ->where('xml', 'XML1')
                     ->count();
             @endphp
@@ -236,13 +236,13 @@
     <li class="{{ ($xml1->check_hein_card && (in_array($xml1->check_hein_card->ma_tracuu, config('xml3176.hein_card_invalid.result_code')) || in_array($xml1->check_hein_card->ma_kiemtra, config('xml3176.hein_card_invalid.check_code')))) ? 'highlight-red' : '' }}">
         <a data-toggle="tab" href="#menu-hein-card">Thẻ BHYT</a>
     </li>
-    @if($xml1->Xml3176XmlErrorResult->isNotEmpty())
+    @if($xml1->Xml3176ErrorResult->isNotEmpty())
         @php
-            $hasCriticalError = $xml1->Xml3176XmlErrorResult->contains(function ($error) {
+            $hasCriticalError = $xml1->Xml3176ErrorResult->contains(function ($error) {
                 return $error->critical_error;
             });
         @endphp
-        <li class="{{ $xml1->Xml3176XmlErrorResult->isNotEmpty() ? 'highlight-red' : '' }}">
+        <li class="{{ $xml1->Xml3176ErrorResult->isNotEmpty() ? 'highlight-red' : '' }}">
             <a data-toggle="tab" href="#menu-xml-errors">
                 Lỗi XML
                 @if($hasCriticalError)

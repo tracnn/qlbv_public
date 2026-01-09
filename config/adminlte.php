@@ -363,6 +363,25 @@ return [
             'checkrole'   => 'xml-man',
             'submenu' => [
                 [
+                    'text'    => 'Xml 3176',
+                    'icon'    => 'archive',
+                    'checkrole'   => 'xml-man',
+                    'submenu' => [
+                        [
+                            'text'  => 'Danh sách hồ sơ',
+                            'icon'  => 'file',
+                            'route'   => 'bhyt.xml3176.index',
+                            'active'=> ['bhyt/xml3176/index*'],
+                        ],
+                        [
+                            'text'       => 'Nhập khẩu hồ sơ',
+                            'icon'       => 'plus',
+                            'route'        => 'bhyt.xml3176.import.index',
+                            'active'    => ['bhyt/xml3176/import/index*']
+                        ],
+                    ],
+                ],
+                [
                     'text'    => 'Xml 4750',
                     'icon'    => 'archive',
                     'checkrole'   => 'xml-man',

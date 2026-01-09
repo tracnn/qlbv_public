@@ -25,7 +25,7 @@ class Xml3176Xml2Checker
     protected $drugGroupNotCheck;
     protected $drugCodeNotCheck;
 
-    public function __construct(Xml3176XmlErrorService $xmlErrorService, CommonValidationService $commonValidationService)
+    public function __construct(Xml3176ErrorService $xmlErrorService, CommonValidationService $commonValidationService)
     {
         $this->xmlErrorService = $xmlErrorService;
         $this->commonValidationService = $commonValidationService;

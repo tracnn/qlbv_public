@@ -20,7 +20,7 @@ class Xml3176Xml1Checker
     protected $bedGroupCodes;
     protected $treatmentTypeInpatient;
 
-    public function __construct(Xml3176XmlErrorService $xmlErrorService, CommonValidationService $commonValidationService)
+    public function __construct(Xml3176ErrorService $xmlErrorService, CommonValidationService $commonValidationService)
     {
         $this->xmlErrorService = $xmlErrorService;
         $this->commonValidationService = $commonValidationService;
@@ -189,40 +189,6 @@ class Xml3176Xml1Checker
             }
         }
 
-        if (empty($data->mahuyen_cu_tru)) {
-            $errorCode = $this->generateErrorCode('ADMIN_INFO_ERROR_MAHUYEN_CU_TRU');
-            $errors->push((object)[
-                'error_code' => $errorCode,
-                'error_name' => 'Thiếu mã quận huyện',
-                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
-                'description' => 'Mã quận huyện không được để trống'
-            ]);
-        } else {
-            $districtExists = $this->commonValidationService->isAdministrativeUnitDistrictValid($data->mahuyen_cu_tru);
-            if (!$districtExists) {
-                $errorCode = $this->generateErrorCode('ADMIN_INFO_ERROR_MAHUYEN_CU_TRU_NOT_FOUND');
-                $errors->push((object)[
-                    'error_code' => $errorCode,
-                    'error_name' => 'Mã quận huyện không tồn tại',
-                    'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
-                    'description' => 'Mã quận huyện không tồn tại trong danh mục: ' . $data->mahuyen_cu_tru
-                ]);
-            } else {
-                $districtInProvinceExists = $this->commonValidationService
-                ->isAdministrativeUnitDistrictInProvinceValid($data->matinh_cu_tru, $data->mahuyen_cu_tru);
-
-                if (!$districtInProvinceExists) {
-                    $errorCode = $this->generateErrorCode('ADMIN_INFO_ERROR_MAHUYEN_CU_TRU_NOT_FOUND_IN_MATINH_CU_TRU');
-                    $errors->push((object)[
-                        'error_code' => $errorCode,
-                        'error_name' => 'Mã quận huyện không thuộc mã tỉnh',
-                        'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
-                        'description' => 'Mã quận huyện không thuộc mã tỉnh: ' . $data->mahuyen_cu_tru . '/' . $data->matinh_cu_tru
-                    ]);
-                }
-            }
-        }
-
         if (empty($data->maxa_cu_tru)) {
             $errorCode = $this->generateErrorCode('ADMIN_INFO_ERROR_MAXA_CU_TRU');
             $errors->push((object)[
@@ -241,19 +207,6 @@ class Xml3176Xml1Checker
                     'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
                     'description' => 'Mã phường xã không tồn tại trong danh mục: ' . $data->maxa_cu_tru
                 ]);
-            } else {
-                $wardExistsInDistrict = $this->commonValidationService
-                ->isAdministrativeUnitWardInDistrictValid($data->mahuyen_cu_tru, $data->maxa_cu_tru);
-
-                if (!$wardExistsInDistrict) {
-                    $errorCode = $this->generateErrorCode('ADMIN_INFO_ERROR_MAXA_CU_TRU_NOT_FOUND_IN_MAHUYEN_CU_TRU');
-                    $errors->push((object)[
-                        'error_code' => $errorCode,
-                        'error_name' => 'Mã phường xã không thuộc mã quận huyện',
-                        'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
-                        'description' => 'Mã phường xã không thuộc mã quận huyện: ' . $data->maxa_cu_tru . '/' . $data->mahuyen_cu_tru
-                    ]);
-                }
             }
         }
         

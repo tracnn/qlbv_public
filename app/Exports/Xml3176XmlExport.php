@@ -2,8 +2,8 @@
 
 namespace App\Exports;
 
-use App\Models\BHYT\Xml3176XmlErrorResult;
-use App\Models\BHYT\Xml3176XmlErrorCatalog;
+use App\Models\BHYT\Xml3176ErrorResult;
+use App\Models\BHYT\Xml3176ErrorCatalog;
 use App\Models\BHYT\Xml3176Xml1;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithHeadings;
@@ -102,21 +102,21 @@ class Xml3176XmlExport implements FromQuery, WithHeadings, ShouldAutoSize, WithS
         }
 
         $query = Xml3176Xml1::whereBetween($dateField, [$formattedDateFrom, $formattedDateTo])
-            ->leftJoin('xml3176_xml_informations', 'xml3176_xml_informations.ma_lk', '=', 'xml3176_xml1s.ma_lk')
+            ->leftJoin('xml3176_informations', 'xml3176_informations.ma_lk', '=', 'xml3176_xml1s.ma_lk')
             ->select('xml3176_xml1s.*')
             ->orderBy('xml3176_xml1s.ma_lk');
 
         if ($xml_export_status === 'has_export') {
-            $query->whereNotNull('xml3176_xml_informations.exported_at');
+            $query->whereNotNull('xml3176_informations.exported_at');
         } elseif ($xml_export_status === 'no_export') {
-            $query->whereNull('xml3176_xml_informations.exported_at');
+            $query->whereNull('xml3176_informations.exported_at');
         }
 
         // Apply filter based on xml_submit_status
         if ($xml_submit_status === 'has_submit') {
-            $query->whereNotNull('xml3176_xml_informations.submitted_at');
+            $query->whereNotNull('xml3176_informations.submitted_at');
         } elseif ($xml_submit_status === 'not_submit') {
-            $query->whereNull('xml3176_xml_informations.submitted_at');
+            $query->whereNull('xml3176_informations.submitted_at');
         }
 
         if ($payment_date_filter === 'has_payment_date') {
@@ -127,14 +127,14 @@ class Xml3176XmlExport implements FromQuery, WithHeadings, ShouldAutoSize, WithS
 
         // Apply filter based on imported_by
         if (!empty($imported_by)) {
-            $query = $query->whereHas('Xml3176XmlInformation', function ($query) use ($imported_by) {
+            $query = $query->whereHas('Xml3176Information', function ($query) use ($imported_by) {
                 $query->where('imported_by', $imported_by);
             });
         } else {
             // Kiểm tra role của user
             if (!\Auth::user()->hasRole(['superadministrator', 'administrator'])) {
                 // Nếu không có vai trò superadministrator hoặc administrator thì lọc theo người import
-                $query = $query->whereHas('Xml3176XmlInformation', function($query) {
+                $query = $query->whereHas('Xml3176Information', function($query) {
                     $query->where('imported_by', \Auth::user()->loginname); // Lọc theo loginname của user hiện tại
                 });
             }

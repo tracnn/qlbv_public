@@ -1,5 +1,5 @@
 @php
-    $groupedErrors = $xml1->Xml3176XmlErrorResult->sortBy('xml')->groupBy('xml');
+    $groupedErrors = $xml1->Xml3176ErrorResult->sortBy('xml')->groupBy('xml');
 @endphp
 
 <div id="menu-xml-errors" class="tab-pane fade">
@@ -44,7 +44,7 @@
                     <tbody>
                         @foreach($errors as $error)
                         <tr>
-                            <td>{{ $error->Xml3176XmlErrorCatalog->error_name }}</td>
+                            <td>{{ $error->Xml3176ErrorCatalog->error_name }}</td>
                             <td>
                                 @if($error->critical_error)
                                 <i class="fa fa-exclamation-triangle text-danger" aria-hidden="true" title="Critical Error"></i>

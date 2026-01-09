@@ -1,7 +1,7 @@
 <div id="menu1" class="tab-pane fade in active">
 <!--     @php
         $errorDescriptions = $xml1
-        ->Xml3176XmlErrorResult()
+        ->Xml3176ErrorResult()
         ->where('xml', 'XML1')
         ->pluck('description')
         ->implode('; ');

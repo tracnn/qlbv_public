@@ -13,7 +13,7 @@ class Xml3176Xml13Checker
 
     protected $xmlType;
 
-    public function __construct(Xml3176XmlErrorService $xmlErrorService, CommonValidationService $commonValidationService)
+    public function __construct(Xml3176ErrorService $xmlErrorService, CommonValidationService $commonValidationService)
     {
         $this->xmlErrorService = $xmlErrorService;
         $this->commonValidationService = $commonValidationService;

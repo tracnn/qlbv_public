@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Xml3176Xml6 extends Model
 {
+    protected $table = 'xml3176_xml6s';
+
     protected $fillable = [
         'ma_lk',
         'ma_the_bhyt',

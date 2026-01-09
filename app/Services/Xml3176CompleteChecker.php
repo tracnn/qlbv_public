@@ -18,7 +18,7 @@ use Illuminate\Support\Collection;
 
 use DateTime;
 
-class Xml3176XmlCompleteChecker
+class Xml3176CompleteChecker
 {
     protected $xmlErrorService;
     protected $prefix;
@@ -33,7 +33,7 @@ class Xml3176XmlCompleteChecker
     protected $materialGroupCodes;
     protected $examinationGroupCodes;
 
-    public function __construct(Xml3176XmlErrorService $xmlErrorService)
+    public function __construct(Xml3176ErrorService $xmlErrorService)
     {
         $this->xmlErrorService = $xmlErrorService;
         $this->setConditions();

@@ -16,8 +16,8 @@ use App\Models\BHYT\Xml3176Xml11;
 use App\Models\BHYT\Xml3176Xml13;
 use App\Models\BHYT\Xml3176Xml14;
 use App\Models\BHYT\Xml3176Xml15;
-use App\Models\BHYT\Xml3176XmlInformation;
-use App\Models\BHYT\Xml3176XmlErrorResult;
+use App\Models\BHYT\Xml3176Information;
+use App\Models\BHYT\Xml3176ErrorResult;
 use App\Services\XmlStructures;
 use App\Services\XMLSignService;
 use App\Services\BHYTXmlSubmitService;
@@ -61,8 +61,8 @@ class Xml3176Service
             Xml3176Xml13::where('ma_lk', $ma_lk)->delete();
             Xml3176Xml14::where('ma_lk', $ma_lk)->delete();
             Xml3176Xml15::where('ma_lk', $ma_lk)->delete();
-            Xml3176XmlErrorResult::where('ma_lk', $ma_lk)->delete();
-            Xml3176XmlInformation::where('ma_lk', $ma_lk)->delete(); 
+            Xml3176ErrorResult::where('ma_lk', $ma_lk)->delete();
+            Xml3176Information::where('ma_lk', $ma_lk)->delete(); 
         } catch (Exception $e) {
             return false;
         }
@@ -867,7 +867,7 @@ class Xml3176Service
         }
     }
 
-    public function storeXml3176XmlInfomation(
+    public function storeXml3176Information(
         $ma_lk, $macskcb, 
         $operationType, 
         $soluonghoso = 1, 
@@ -921,10 +921,10 @@ class Xml3176Service
                 $values['submitted_message'] = $submittedMessage;
             }
 
-            Xml3176XmlInformation::updateOrCreate($attributes, $values);
+            Xml3176Information::updateOrCreate($attributes, $values);
 
         } catch (\Exception $e) {
-            \Log::error('Error in Xml3176XmlInformation: ' . $e->getMessage());
+            \Log::error('Error in Xml3176Information: ' . $e->getMessage());
         }
     }
 
@@ -1051,14 +1051,14 @@ class Xml3176Service
         $dom = dom_import_simplexml($xmlData)->ownerDocument;
         $dom->formatOutput = true;
 
-        $this->storeXml3176XmlInfomation($selectedRecord, $xmlInformation->macskcb, 'export');
+        $this->storeXml3176Information($selectedRecord, $xmlInformation->macskcb, 'export');
 
         return $dom->saveXML();
     }
 
     private function getXmlInformation($ma_lk)
     {
-        return Xml3176XmlInformation::where('ma_lk', $ma_lk)->first();
+        return Xml3176Information::where('ma_lk', $ma_lk)->first();
     }
 
     private function getContentsForRecord($ma_lk)
@@ -1662,7 +1662,7 @@ class Xml3176Service
         $macskcb = $xmlInformation->macskcb;
         $signedError = $xmlDataSigned['error'] ?? null;
 
-        $this->storeXml3176XmlInfomation($ma_lk, $macskcb, 'sign', 1, null, $isSigned, $signedError);
+        $this->storeXml3176Information($ma_lk, $macskcb, 'sign', 1, null, $isSigned, $signedError);
 
         // Định dạng thời gian hiện tại để đặt tên file
         $formattedDateTime = date('Y.m.d_H.i.s');
@@ -1735,7 +1735,7 @@ class Xml3176Service
 
             // Cập nhật thông tin gửi XML
             // 23-12-2025: Thêm thông tin gửi XML vào database -> submitted_message = maGiaoDich + thongDiep
-            $this->storeXml3176XmlInfomation($ma_lk, $macskcb, 'submit', 1, $error, null, null, $maGiaoDich);
+            $this->storeXml3176Information($ma_lk, $macskcb, 'submit', 1, $error, null, null, $maGiaoDich);
 
             return ($maKetQua === '200' || $maKetQua === 200);
         } catch (\Exception $e) {
@@ -1747,7 +1747,7 @@ class Xml3176Service
 
             // Cập nhật thông tin lỗi
             // 23-12-2025: Thêm thông tin gửi XML vào database -> submitted_message = maGiaoDich + thongDiep
-            $this->storeXml3176XmlInfomation($ma_lk, $macskcb, 'submit', 1, $error, null, null, $maGiaoDich . ' - ' . $thongDiep);
+            $this->storeXml3176Information($ma_lk, $macskcb, 'submit', 1, $error, null, null, $maGiaoDich . ' - ' . $thongDiep);
 
             return false;
         }

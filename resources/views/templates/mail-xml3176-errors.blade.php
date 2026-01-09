@@ -106,7 +106,7 @@
         @foreach($errorsXml->sortBy('xml')->groupBy('xml') as $xml => $errorsByXml)
           <h4>Lỗi: {{ $xml }}</h4>
           @foreach($errorsByXml->sortBy('error_code')->groupBy('error_code') as $errorCode => $errorsByErrorCode)
-            <h4>{{ $loop->iteration }} - {{ $errorsByErrorCode->first()->Xml3176XmlErrorCatalog->error_name }}</h4>
+            <h4>{{ $loop->iteration }} - {{ $errorsByErrorCode->first()->Xml3176ErrorCatalog->error_name }}</h4>
             <table>
               <thead>
                 <tr>

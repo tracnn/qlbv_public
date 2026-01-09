@@ -20,7 +20,7 @@ class CreateXml3176ErrorCatalogsTable extends Migration
             $table->string('error_name')->nullable();
             $table->text('description')->nullable();
             $table->boolean('critical_error')->default(false);
-            $table->boolean('is_check')->default(false);
+            $table->boolean('is_check')->default(true);
             $table->timestamps();
 
             $table->unique(['xml', 'error_code']);

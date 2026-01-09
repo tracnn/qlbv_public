@@ -29,7 +29,7 @@ class Xml3176Xml3Checker
     protected $serviceGroupsRequiringAnesthesia;
     protected $serviceDisplay;
 
-    public function __construct(Xml3176XmlErrorService $xmlErrorService, CommonValidationService $commonValidationService)
+    public function __construct(Xml3176ErrorService $xmlErrorService, CommonValidationService $commonValidationService)
     {
         $this->xmlErrorService = $xmlErrorService;
         $this->commonValidationService = $commonValidationService;

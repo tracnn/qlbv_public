@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class CreateXml23176sTable extends Migration
+class CreateXml3176Xml2sTable extends Migration
 {
     /**
      * Run the migrations.
@@ -56,8 +56,8 @@ class CreateXml23176sTable extends Migration
             $table->text('du_phong')->nullable();
             $table->timestamps();
 
-            //Adding index
-            $table->unique(['ma_lk', 'stt'], 'unique_ma_lk_stt_3176_xml2');
+            // Adding index
+            $table->unique(['ma_lk', 'stt'], 'xml3176_xml2s_ma_lk_stt_unique');
             $table->index('ma_lk');
             $table->index('ma_thuoc');
             $table->index('ma_nhom');

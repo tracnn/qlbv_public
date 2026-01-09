@@ -42,8 +42,7 @@ class CreateXml3176Xml13sTable extends Migration
             $table->string('ma_benh_chinh')->nullable();
             $table->string('ma_benh_kt')->nullable();
             $table->string('ma_benh_yhct')->nullable();
-            $table->string('ten_dich_vu', 1024)->nullable();
-            $table->string('ten_thuoc', 1024)->nullable();
+            $table->text('tinh_trang_ct')->nullable();
             $table->unsignedTinyInteger('ma_loai_rv')->nullable();
             $table->unsignedTinyInteger('ma_lydo_ct')->nullable();
             $table->text('huong_dieu_tri')->nullable();

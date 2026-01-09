@@ -9,6 +9,10 @@ set NSSM_PATH=%~dp0
 %NSSM_PATH%\nssm stop "QLBV JobQd130Xml"
 %NSSM_PATH%\nssm remove "QLBV JobQd130Xml" confirm
 
+:: Xóa dịch vụ cho JobXml3176
+%NSSM_PATH%\nssm stop "QLBV JobXml3176"
+%NSSM_PATH%\nssm remove "QLBV JobXml3176" confirm
+
 :: Xóa dịch vụ cho JobKtTheBHYT
 %NSSM_PATH%\nssm stop "QLBV JobKtTheBHYT"
 %NSSM_PATH%\nssm remove "QLBV JobKtTheBHYT" confirm
