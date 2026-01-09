@@ -325,6 +325,15 @@ Route::group(['middleware' => ['auth', 'check.first.login']], function () {
         ->name('category-bhyt.fetch-qd130-xml-error-catalog-datatable');
         Route::post('/category-bhyt/update-qd130-xml-error-catalog', 'Category\CategoryBHYTController@updateQd130XmlErrorCatalog')
         ->name('category-bhyt.update-qd130-xml-error-catalog');
+        
+        Route::get('bhyt/category-bhyt-fetch-xml3176-xml-error-catalog', 'Category\CategoryBHYTController@fetchXml3176XmlErrorCatalog')
+        ->name('category-bhyt.fetch-xml3176-xml-error-catalog');
+        Route::get('bhyt/xml3176-xml-error-catalog', 'Category\CategoryBHYTController@indexXml3176XmlErrorCatalog')
+        ->name('category-bhyt.xml3176-xml-error-catalog');
+        Route::get('bhyt/category-bhyt-fetch-xml3176-xml-error-catalog-datatable', 'Category\CategoryBHYTController@fetchXml3176XmlErrorCatalogDatatable')
+        ->name('category-bhyt.fetch-xml3176-xml-error-catalog-datatable');
+        Route::post('/category-bhyt/update-xml3176-xml-error-catalog', 'Category\CategoryBHYTController@updateXml3176XmlErrorCatalog')
+        ->name('category-bhyt.update-xml3176-xml-error-catalog');
 
         Route::get('bhyt/category-bhyt-import-index', 'Category\CategoryBHYTController@importIndex')
         ->name('category-bhyt.import-index');

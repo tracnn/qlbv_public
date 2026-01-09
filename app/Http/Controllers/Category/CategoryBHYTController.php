@@ -15,6 +15,7 @@ use App\Models\BHYT\DepartmentBedCatalog;
 use App\Models\BHYT\EquipmentCatalog;
 use App\Models\BHYT\XmlErrorCatalog;
 use App\Models\BHYT\Qd130XmlErrorCatalog;
+use App\Models\BHYT\Xml3176ErrorCatalog;
 use App\Services\CatalogImportService;
 
 class CategoryBHYTController extends Controller
@@ -144,6 +145,56 @@ class CategoryBHYTController extends Controller
 
         // Tìm và cập nhật giá trị is_not_check (chuyển đổi giữa is_check và is_not_check)
         $catalog = Qd130XmlErrorCatalog::find($id);
+
+        if ($catalog) {
+            if ($request->has('is_check')) {
+                $catalog->is_check = $request->is_check;
+            }
+            if ($request->has('critical_error')) {
+                $catalog->critical_error = $request->critical_error;
+            }
+            $catalog->save();
+            
+            return response()->json(['success' => true]);
+        }
+
+        return response()->json(['success' => false], 404);
+    }
+
+    public function fetchXml3176XmlErrorCatalog()
+    {
+        $xml3176XmlErrorCatalogs = Xml3176ErrorCatalog::orderBy('xml')->get();
+        return response()->json($xml3176XmlErrorCatalogs);
+    }
+
+    public function indexXml3176XmlErrorCatalog()
+    {
+        return view('category.bhyt.xml3176_xml_error_catalog');
+    }
+
+    public function fetchXml3176XmlErrorCatalogDatatable()
+    {
+        $result = Xml3176ErrorCatalog::query();
+
+        return Datatables::of($result)
+        ->editColumn('critical_error', function ($row) {
+            return '<input type="checkbox" ' . ($row->critical_error ? 'checked' : '') . ' disabled>';
+        })
+        ->editColumn('critical_error', function ($row) {
+            return '<input type="checkbox" class="critical-error-toggle" data-id="' . $row->id . '" ' . ($row->critical_error ? 'checked' : '') . '>';
+        })
+        ->editColumn('is_check', function ($row) {
+            return '<input type="checkbox" class="is-check-toggle" data-id="' . $row->id . '" ' . ($row->is_check ? 'checked' : '') . '>';
+        })
+        ->rawColumns(['critical_error', 'is_check'])
+        ->toJson();
+    }
+
+    public function updateXml3176XmlErrorCatalog(Request $request)
+    {
+        $id = $request->input('id');
+
+        $catalog = Xml3176ErrorCatalog::find($id);
 
         if ($catalog) {
             if ($request->has('is_check')) {

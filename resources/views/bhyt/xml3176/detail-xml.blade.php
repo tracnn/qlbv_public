@@ -233,7 +233,7 @@
         </a>
     </li>
     @endif
-    <li class="{{ ($xml1->check_hein_card && (in_array($xml1->check_hein_card->ma_tracuu, config('xml3176xml.hein_card_invalid.result_code')) || in_array($xml1->check_hein_card->ma_kiemtra, config('xml3176xml.hein_card_invalid.check_code')))) ? 'highlight-red' : '' }}">
+    <li class="{{ ($xml1->check_hein_card && (in_array($xml1->check_hein_card->ma_tracuu, config('xml3176.hein_card_invalid.result_code')) || in_array($xml1->check_hein_card->ma_kiemtra, config('xml3176.hein_card_invalid.check_code')))) ? 'highlight-red' : '' }}">
         <a data-toggle="tab" href="#menu-hein-card">Thẻ BHYT</a>
     </li>
     @if($xml1->Xml3176XmlErrorResult->isNotEmpty())
