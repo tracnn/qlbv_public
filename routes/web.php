@@ -441,6 +441,24 @@ Route::group(['middleware' => ['auth', 'check.first.login']], function () {
         Route::get('qd130/export-7980a-data', 'BHYT\BHYTQd130Controller@export7980aData')
         ->name('bhyt.qd130.export-7980a-data');
 
+        Route::get('xml3176/index', 'BHYT\BHYTXml3176Controller@index')->name('bhyt.xml3176.index');
+        Route::get('xml3176/index/fetch-data', 'BHYT\BHYTXml3176Controller@fetchData')->name('bhyt.xml3176.fetch-data');
+        Route::get('xml3176/import/index', 'BHYT\BHYTXml3176Controller@importIndex')->name('bhyt.xml3176.import.index');
+        Route::post('xml3176/index/upload-data', 'BHYT\BHYTXml3176Controller@uploadData')->name('bhyt.xml3176.upload-data');
+        Route::get('xml3176/index/detail-xml/{ma_lk}', 'BHYT\BHYTXml3176Controller@detailXml')->name('bhyt.xml3176.detail-xml');
+        Route::post('xml3176/export-xml', 'BHYT\BHYTXml3176Controller@exportXml')
+        ->name('bhyt.xml3176.export-xml')
+        ->middleware('checkrole:superadministrator');
+        Route::get('xml3176/export-xml3176-xml-errors', 'BHYT\BHYTXml3176Controller@exportXml3176XmlErrors')
+        ->name('bhyt.xml3176.export-xml3176-xml-errors');
+        Route::delete('xml3176/delete-xml/{ma_lk}', 'BHYT\BHYTXml3176Controller@deleteXml')->name('bhyt.xml3176.delete-xml');
+        Route::get('xml3176/export-xml3176-xml-xlsx', 'BHYT\BHYTXml3176Controller@exportXml3176XmlXlsx')
+        ->name('bhyt.xml3176.export-xml3176-xml-xlsx');
+        Route::get('xml3176/job-status', 'BHYT\BHYTXml3176Controller@checkJobStatus')
+        ->name('bhyt.xml3176.jobs.status');
+        Route::get('xml3176/export-7980a-data', 'BHYT\BHYTXml3176Controller@export7980aData')
+        ->name('bhyt.xml3176.export-7980a-data');
+
         Route::get('reports/bac-si-y-lenh', 'BHYT\ReportBHYTController@indexBacSiYLenh')
         ->name('bhyt.reports.bac-si-y-lenh');
         Route::get('reports/fetch-bac-si-y-lenh', 'BHYT\ReportBHYTController@fetchDataBacSiYLenh')
