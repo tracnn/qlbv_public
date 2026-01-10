@@ -14,6 +14,7 @@ use App\Models\BHYT\DepartmentBedCatalog;
 use App\Models\BHYT\EquipmentCatalog;
 use App\Models\BHYT\AdministrativeUnit;
 use App\Models\BHYT\MedicalOrganization;
+use App\Models\BHYT\JobCategory;
 
 class CatalogImportService
 {
@@ -70,6 +71,7 @@ class CatalogImportService
             'equipment' => 'importEquipment',
             'administrative_unit' => 'importAdministrativeUnit',
             'medical_organization' => 'importMedicalOrganization',
+            'job_categories' => 'importJobCategories',
         ];
 
         $methodName = $methodMap[$catalogType] ?? null;
@@ -484,6 +486,45 @@ class CatalogImportService
                     'row' => $row
                 ]);
                 continue;
+            }
+        }
+    }
+
+    private function importJobCategories($data, array $fieldMapping, array $config)
+    {
+        $data = $data->slice(1);
+        
+        foreach ($data as $row) {
+            if (!$this->hasRequiredFields($row, $config['required_fields'], $fieldMapping)) {
+                continue;
+            }
+
+            try {
+                $uniqueKeys = [];
+                $updateData = [];
+                
+                foreach ($config['unique_keys'] as $key) {
+                    $value = $this->getRowValue($row, $key, $fieldMapping);
+                    if ($value !== null) {
+                        $uniqueKeys[$key] = $value;
+                    }
+                }
+
+                foreach ($config['mapping'] as $field => $possibleNames) {
+                    if (!in_array($field, $config['unique_keys'])) {
+                        $value = $this->getRowValue($row, $field, $fieldMapping);
+                        if ($value !== null) {
+                            $updateData[$field] = $value;
+                        }
+                    }
+                }
+
+                JobCategory::updateOrCreate($uniqueKeys, $updateData);
+            } catch (\Exception $e) {
+                Log::error('Error updating or creating JobCategory record', [
+                    'error' => $e->getMessage(),
+                    'row' => $row
+                ]);
             }
         }
     }

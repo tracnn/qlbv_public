@@ -172,5 +172,15 @@ return [
         'required_fields' => ['ma_cskcb', 'ten_cskcb', 'tuyen_cmkt', 'hang_benh_vien', 'dia_chi_cskcb'],
         'unique_keys' => ['ma_cskcb'],
     ],
+
+    'job_categories' => [
+        'detect_keys' => ['MA_NGHE_NGHIEP', 'TEN_NGHE_NGHIEP'],
+        'mapping' => [
+            'job_code' => ['MA_NGHE_NGHIEP', 'Mã nghề nghiệp', 'MA NGHE NGHIEP'],
+            'job_name' => ['TEN_NGHE_NGHIEP', 'Tên nghề nghiệp', 'TEN NGHE NGHIEP'],
+        ],
+        'required_fields' => ['job_code', 'job_name'],
+        'unique_keys' => ['job_code'],
+    ],
 ];
 
