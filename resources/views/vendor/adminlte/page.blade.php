@@ -139,7 +139,7 @@
 
         <footer class="main-footer">
             <div class="pull-right hidden-xs">
-                <b>Version</b> 3.0.1
+                <b>Version</b> 2026.01.20.1
             </div>
             {!! config('adminlte.footer', 'Copyright &#9400; by <b> <a href="https://ytethongminh.vn/" target="_blank">YTTM</a></b>') !!}
         </footer>
