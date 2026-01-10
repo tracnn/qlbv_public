@@ -426,7 +426,7 @@ class BHYTXml3176Controller extends Controller
 
             switch ($fileType) {
                 case 'XML1':
-                    $expectedStructure = XmlStructures::$expectedStructures130[$fileType] ?? [];
+                    $expectedStructure = XmlStructures::$expectedStructures3176[$fileType] ?? [];
                     if (!empty($expectedStructure) && !validateDataStructure($data, $expectedStructure)) {
                         \Log::error('Invalid data structure for ' . $fileType);
                         return false;

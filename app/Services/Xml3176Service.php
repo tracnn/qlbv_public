@@ -90,7 +90,7 @@ class Xml3176Service
 
     public function storeXml3176Xml1($data, $xmlType)
     {
-        $expectedStructure = XmlStructures::$expectedStructures130[$xmlType] ?? [];
+        $expectedStructure = XmlStructures::$expectedStructures3176[$xmlType] ?? [];
 
         if (!validateDataStructure($data, $expectedStructure)) {
             \Log::error('Invalid data structure for XML1: ' . $data->MA_LK);
@@ -185,7 +185,7 @@ class Xml3176Service
 
     public function storeXml3176Xml2($data, $xmlType)
     {
-        $expectedStructure = XmlStructures::$expectedStructures130[$xmlType] ?? [];
+        $expectedStructure = XmlStructures::$expectedStructures3176[$xmlType] ?? [];
 
         if (isset($data->DSACH_CHI_TIET_THUOC->CHI_TIET_THUOC) && is_iterable($data->DSACH_CHI_TIET_THUOC->CHI_TIET_THUOC)) {
             foreach ($data->DSACH_CHI_TIET_THUOC->CHI_TIET_THUOC as $thuoc) {
@@ -257,7 +257,7 @@ class Xml3176Service
 
     public function storeXml3176Xml3($data, $xmlType)
     {
-        $expectedStructure = XmlStructures::$expectedStructures130[$xmlType] ?? [];
+        $expectedStructure = XmlStructures::$expectedStructures3176[$xmlType] ?? [];
 
         if (isset($data->DSACH_CHI_TIET_DVKT->CHI_TIET_DVKT) && is_iterable($data->DSACH_CHI_TIET_DVKT->CHI_TIET_DVKT)) {
             foreach ($data->DSACH_CHI_TIET_DVKT->CHI_TIET_DVKT as $dvkt) {
@@ -336,7 +336,7 @@ class Xml3176Service
 
     public function storeXml3176Xml4($data, $xmlType)
     {
-        $expectedStructure = XmlStructures::$expectedStructures130[$xmlType] ?? [];
+        $expectedStructure = XmlStructures::$expectedStructures3176[$xmlType] ?? [];
 
         if (isset($data->DSACH_CHI_TIET_CLS->CHI_TIET_CLS) && is_iterable($data->DSACH_CHI_TIET_CLS->CHI_TIET_CLS)) {
             foreach ($data->DSACH_CHI_TIET_CLS->CHI_TIET_CLS as $cls) {
@@ -378,7 +378,7 @@ class Xml3176Service
 
     public function storeXml3176Xml5($data, $xmlType)
     {
-        $expectedStructure = XmlStructures::$expectedStructures130[$xmlType] ?? [];
+        $expectedStructure = XmlStructures::$expectedStructures3176[$xmlType] ?? [];
 
         if (isset($data->DSACH_CHI_TIET_DIEN_BIEN_BENH->CHI_TIET_DIEN_BIEN_BENH) && 
             is_iterable($data->DSACH_CHI_TIET_DIEN_BIEN_BENH->CHI_TIET_DIEN_BIEN_BENH)){
@@ -418,7 +418,7 @@ class Xml3176Service
 
     public function storeXml3176Xml6($data, $xmlType)
     {
-        $expectedStructure = XmlStructures::$expectedStructures130[$xmlType] ?? [];
+        $expectedStructure = XmlStructures::$expectedStructures3176[$xmlType] ?? [];
 
         if (isset($data->DSACH_HO_SO_BENH_AN_CHAM_SOC_VA_DIEU_TRI_HIV_AIDS->HO_SO_BENH_AN_CHAM_SOC_VA_DIEU_TRI_HIV_AIDS) && 
             is_iterable($data->DSACH_HO_SO_BENH_AN_CHAM_SOC_VA_DIEU_TRI_HIV_AIDS->HO_SO_BENH_AN_CHAM_SOC_VA_DIEU_TRI_HIV_AIDS)) {
@@ -496,11 +496,10 @@ class Xml3176Service
 
     public function storeXml3176Xml7($data, $xmlType)
     {
-        $expectedStructure = XmlStructures::$expectedStructures130[$xmlType] ?? [];
+        $expectedStructure = XmlStructures::$expectedStructures3176[$xmlType] ?? [];
 
          if (!validateDataStructure($data, $expectedStructure)) {
             \Log::error('Invalid data structure for XML7: ' . $data->MA_LK);
-            return;
         }
 
         try {
@@ -548,11 +547,10 @@ class Xml3176Service
 
     public function storeXml3176Xml8($data, $xmlType)
     {
-        $expectedStructure = XmlStructures::$expectedStructures130[$xmlType] ?? [];
+        $expectedStructure = XmlStructures::$expectedStructures3176[$xmlType] ?? [];
 
         if (!validateDataStructure($data, $expectedStructure)) {
             \Log::error('Invalid data structure for XML8: ' . $data->MA_LK);
-            return;
         }
 
         try {
@@ -597,7 +595,7 @@ class Xml3176Service
 
     public function storeXml3176Xml9($data, $xmlType)
     {
-        $expectedStructure = XmlStructures::$expectedStructures130[$xmlType] ?? [];
+        $expectedStructure = XmlStructures::$expectedStructures3176[$xmlType] ?? [];
 
         if (isset($data->DSACH_GIAYCHUNGSINH->DU_LIEU_GIAY_CHUNG_SINH) && 
             is_iterable($data->DSACH_GIAYCHUNGSINH->DU_LIEU_GIAY_CHUNG_SINH)){
@@ -664,11 +662,10 @@ class Xml3176Service
     public function storeXml3176Xml10($data, $xmlType)
     {
         // Xác định cấu trúc cho XML10
-        $expectedStructure = XmlStructures::$expectedStructures130[$xmlType] ?? [];
+        $expectedStructure = XmlStructures::$expectedStructures3176[$xmlType] ?? [];
 
         if (!validateDataStructure($data, $expectedStructure)) {
             \Log::error('Invalid data structure for XML10: ' . $data->MA_LK);
-            return;
         }
 
         try {
@@ -706,11 +703,10 @@ class Xml3176Service
 
     public function storeXml3176Xml11($data, $xmlType)
     {
-        $expectedStructure = XmlStructures::$expectedStructures130[$xmlType] ?? [];
+        $expectedStructure = XmlStructures::$expectedStructures3176[$xmlType] ?? [];
 
         if (!validateDataStructure($data, $expectedStructure)) {
             \Log::error('Invalid data structure for XML11: ' . $data->MA_LK);
-            return;
         }
 
         try {
@@ -755,11 +751,10 @@ class Xml3176Service
 
     public function storeXml3176Xml13($data, $xmlType)
     {
-        $expectedStructure = XmlStructures::$expectedStructures130[$xmlType] ?? [];
+        $expectedStructure = XmlStructures::$expectedStructures3176[$xmlType] ?? [];
 
         if (!validateDataStructure($data, $expectedStructure)) {
             \Log::error('Invalid data structure for XML13: ' . $data->MA_LK);
-            return;
         }
 
         try {
@@ -771,8 +766,8 @@ class Xml3176Service
                 'so_chuyentuyen' => $data->SO_CHUYENTUYEN ?: null,
                 'giay_chuyen_tuyen' => $data->GIAY_CHUYEN_TUYEN ?: null,
                 'ma_cskcb' => $data->MA_CSKCB ?: null,
-                'ma_noi_di' => $data->MA_NOI_DI ?: null,
-                'ma_noi_den' => $data->MA_NOI_DEN ?: null,
+                'ma_cskcb_di' => $data->MA_CSKCB_DI ?: null,
+                'ma_cskcb_den' => $data->MA_CSKCB_DEN ?: null,
                 'ho_ten' => $data->HO_TEN ?: null,
                 'ngay_sinh' => $data->NGAY_SINH ?: null,
                 'gioi_tinh' => intval($data->GIOI_TINH) ?: null,
@@ -793,9 +788,7 @@ class Xml3176Service
                 'ma_benh_chinh' => $data->MA_BENH_CHINH ?: null,
                 'ma_benh_kt' => $data->MA_BENH_KT ?: null,
                 'ma_benh_yhct' => $data->MA_BENH_YHCT ?: null,
-                'ten_dich_vu' => $data->TEN_DICH_VU ?: null,
-                'ten_thuoc' => $data->TEN_THUOC ?: null,
-                'pp_dieu_tri' => $data->PP_DIEU_TRI ?: null,
+                'tinh_trang_ct' => $data->TINH_TRANG_CT ?: null,
                 'ma_loai_rv' => intval($data->MA_LOAI_RV) ?: null,
                 'ma_lydo_ct' => intval($data->MA_LYDO_CT) ?: null,
                 'huong_dieu_tri' => $data->HUONG_DIEU_TRI ?: null,
@@ -820,11 +813,10 @@ class Xml3176Service
 
     public function storeXml3176Xml14($data, $xmlType)
     {
-        $expectedStructure = XmlStructures::$expectedStructures130[$xmlType] ?? [];
+        $expectedStructure = XmlStructures::$expectedStructures3176[$xmlType] ?? [];
 
         if (!validateDataStructure($data, $expectedStructure)) {
             \Log::error('Invalid data structure for XML14: ' . $data->MA_LK);
-            return;
         }
 
          try {
@@ -930,7 +922,7 @@ class Xml3176Service
 
     public function storeXml3176Xml15($data, $xmlType)
     {
-        $expectedStructure = XmlStructures::$expectedStructures130[$xmlType] ?? [];
+        $expectedStructure = XmlStructures::$expectedStructures3176[$xmlType] ?? [];
 
         if (isset($data->DSACH_CHITIET_DIEUTRI_BENHLAO->CHITIET_DIEUTRI_BENHLAO) &&
             is_iterable($data->DSACH_CHITIET_DIEUTRI_BENHLAO->CHITIET_DIEUTRI_BENHLAO)) {

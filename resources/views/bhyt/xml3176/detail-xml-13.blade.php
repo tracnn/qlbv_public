@@ -35,12 +35,12 @@
                                     <td>{{ $xml13->ma_cskcb }}</td>
                                 </tr>
                                 <tr>
-                                    <th>Mã nơi đi</th>
-                                    <td>{{ $xml13->ma_noi_di }}</td>
+                                    <th>Mã CSKCB đi</th>
+                                    <td>{{ $xml13->ma_cskcb_di }}</td>
                                 </tr>
                                 <tr>
-                                    <th>Mã nơi đến</th>
-                                    <td>{{ $xml13->ma_noi_den }}</td>
+                                    <th>Mã CSKCB đến</th>
+                                    <td>{{ $xml13->ma_cskcb_den }}</td>
                                 </tr>
                             </table>
                         </div>
@@ -149,6 +149,10 @@
                                     <td>{{ $xml13->huong_dieu_tri }}</td>
                                 </tr>
                                 <tr>
+                                    <th>Tình trạng chuyển tuyến</th>
+                                    <td>{{ $xml13->tinh_trang_ct }}</td>
+                                </tr>
+                                <tr>
                                     <th>Ngày chứng từ</th>
                                     <td>{{ strtodate($xml13->ngay_ct) }}</td>
                                 </tr>
@@ -167,14 +171,6 @@
                         <div class="col-md-6">
                             <table class="table table-hover">
                                 <tr>
-                                    <th>Tên dịch vụ</th>
-                                    <td>{{ $xml13->ten_dich_vu }}</td>
-                                </tr>
-                                <tr>
-                                    <th>Tên thuốc</th>
-                                    <td>{{ $xml13->ten_thuoc }}</td>
-                                </tr>
-                                <tr>
                                     <th>Mã loại ra viện</th>
                                     <td>{{ $xml13->ma_loai_rv }}</td>
                                 </tr>
@@ -182,10 +178,6 @@
                                     <th>Mã lý do chuyển tuyến</th>
                                     <td>{{ $xml13->ma_lydo_ct }}</td>
                                 </tr>
-                            </table>
-                        </div>
-                        <div class="col-md-6">
-                            <table class="table table-hover">
                                 <tr>
                                     <th>Phương tiện vận chuyển</th>
                                     <td>{{ $xml13->phuongtien_vc }}</td>
@@ -194,6 +186,10 @@
                                     <th>Họ tên người hỗ trợ</th>
                                     <td>{{ $xml13->hoten_nguoi_ht }}</td>
                                 </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-hover">
                                 <tr>
                                     <th>Chức danh người hỗ trợ</th>
                                     <td>{{ $xml13->chucdanh_nguoi_ht }}</td>

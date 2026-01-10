@@ -158,25 +158,25 @@ class Xml3176Xml13Checker
             }
         }
 
-        if (empty($data->ma_noi_den)) {
-            $errorCode = $this->generateErrorCode('INFO_ERROR_MA_NOI_DEN');
+        if (empty($data->ma_cskcb_den)) {
+            $errorCode = $this->generateErrorCode('INFO_ERROR_MA_CSKCB_DEN');
             $errors->push((object)[
                 'error_code' => $errorCode,
-                'error_name' => 'Thiếu mã nơi đến',
+                'error_name' => 'Thiếu mã CSKCB đến',
                 'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
-                'description' => 'Mã nơi đến không được để trống'
+                'description' => 'Mã CSKCB đến không được để trống'
             ]);
         } else {
             // Kiểm tra nếu ma_noi_den không có trong MedicalOrganization
-            $organizationExists = $this->commonValidationService->isMedicalOrganizationValid($data->ma_noi_den);
+            $organizationExists = $this->commonValidationService->isMedicalOrganizationValid($data->ma_cskcb_den);
 
             if (!$organizationExists) {
-                $errorCode = $this->generateErrorCode('INFO_ERROR_MA_NOI_DEN_NOT_FOUND');
+                $errorCode = $this->generateErrorCode('INFO_ERROR_MA_CSKCB_DEN_NOT_FOUND');
                 $errors->push((object)[
                     'error_code' => $errorCode,
-                    'error_name' => 'Mã nơi đến không có trong danh mục',
+                    'error_name' => 'Mã CSKCB đến không có trong danh mục',
                     'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
-                    'description' => 'Mã cơ sở KCB: ' . $data->ma_noi_den . ' không có trong danh mục CSKCB'
+                    'description' => 'Mã CSKCB đến: ' . $data->ma_cskcb_den . ' không có trong danh mục CSKCB'
                 ]);
             }
         }
@@ -281,31 +281,13 @@ class Xml3176Xml13Checker
             }
         }
 
-        if (empty($data->ten_dich_vu)) {
-            $errorCode = $this->generateErrorCode('INFO_ERROR_TEN_DICH_VU');
+        if (empty($data->tinh_trang_ct)) {
+            $errorCode = $this->generateErrorCode('INFO_ERROR_TINH_TRANG_CT');
             $errors->push((object)[
                 'error_code' => $errorCode,
-                'error_name' => 'Thiếu dịch vụ',
+                'error_name' => 'Thiếu tình trạng chuyển tuyến',
                 'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
-                'description' => 'Dịch vụ không được để trống'
-            ]);
-        } elseif (mb_strlen($data->ten_dich_vu) > 1024) {
-            $errorCode = $this->generateErrorCode('INFO_ERROR_TEN_DICH_VU_LENGTH');
-            $errors->push((object)[
-                'error_code' => $errorCode,
-                'error_name' => 'Tên dịch vụ vượt quá 1024 ký tự',
-                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
-                'description' => 'Tên dịch vụ không được vượt quá 1024 ký tự'
-            ]);
-        }
-
-        if (!empty($data->ten_thuoc) && mb_strlen($data->ten_thuoc) > 1024) {
-            $errorCode = $this->generateErrorCode('INFO_ERROR_TEN_THUOC_LENGTH');
-            $errors->push((object)[
-                'error_code' => $errorCode,
-                'error_name' => 'Tên thuốc vượt quá 1024 ký tự',
-                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
-                'description' => 'Tên thuốc không được vượt quá 1024 ký tự'
+                'description' => 'Tình trạng chuyển tuyến không được để trống'
             ]);
         }
 

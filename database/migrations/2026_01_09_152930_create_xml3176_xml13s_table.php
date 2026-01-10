@@ -20,8 +20,8 @@ class CreateXml3176Xml13sTable extends Migration
             $table->string('so_chuyentuyen')->nullable();
             $table->string('giay_chuyen_tuyen')->nullable();
             $table->string('ma_cskcb')->nullable();
-            $table->string('ma_noi_di')->nullable();
-            $table->string('ma_noi_den')->nullable();
+            $table->string('ma_cskcb_di')->nullable();
+            $table->string('ma_cskcb_den')->nullable();
             $table->string('ho_ten')->nullable();
             $table->string('ngay_sinh')->nullable();
             $table->unsignedTinyInteger('gioi_tinh')->nullable();
