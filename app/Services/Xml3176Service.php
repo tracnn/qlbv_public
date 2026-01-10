@@ -1520,8 +1520,8 @@ class Xml3176Service
                     $xmlContent->addChild('SO_CHUYENTUYEN', $record->so_chuyentuyen);
                     $xmlContent->addChild('GIAY_CHUYEN_TUYEN', $record->giay_chuyen_tuyen);
                     $xmlContent->addChild('MA_CSKCB', $record->ma_cskcb);
-                    $xmlContent->addChild('MA_NOI_DI', $record->ma_noi_di);
-                    $xmlContent->addChild('MA_NOI_DEN', $record->ma_noi_den);
+                    $xmlContent->addChild('MA_CSKCB_DI', $record->ma_cskcb_di);
+                    $xmlContent->addChild('MA_CSKCB_DEN', $record->ma_cskcb_den);
                     $this->addChildWithCDATA($xmlContent, 'HO_TEN', $record->ho_ten);
                     $xmlContent->addChild('NGAY_SINH', $record->ngay_sinh);
                     $xmlContent->addChild('GIOI_TINH', $record->gioi_tinh);
@@ -1542,9 +1542,7 @@ class Xml3176Service
                     $xmlContent->addChild('MA_BENH_CHINH', $record->ma_benh_chinh);
                     $xmlContent->addChild('MA_BENH_KT', $record->ma_benh_kt);
                     $xmlContent->addChild('MA_BENH_YHCT', $record->ma_benh_yhct);
-                    $this->addChildWithCDATA($xmlContent, 'TEN_DICH_VU', $record->ten_dich_vu);
-                    $this->addChildWithCDATA($xmlContent, 'TEN_THUOC', $record->ten_thuoc);
-                    $this->addChildWithCDATA($xmlContent, 'PP_DIEU_TRI', $record->pp_dieu_tri);
+                    $this->addChildWithCDATA($xmlContent, 'TINH_TRANG_CT', $record->tinh_trang_ct);
                     $xmlContent->addChild('MA_LOAI_RV', $record->ma_loai_rv);
                     $xmlContent->addChild('MA_LYDO_CT', $record->ma_lydo_ct);
                     $this->addChildWithCDATA($xmlContent, 'HUONG_DIEU_TRI', $record->huong_dieu_tri);

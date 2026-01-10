@@ -4,7 +4,7 @@ namespace App\Exports;
 
 use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 
-class Qd130ErrorMultiSheetExport implements WithMultipleSheets
+class Xml3176ErrorMultiSheetExport implements WithMultipleSheets
 {
     protected $fromDate;
     protected $toDate;
@@ -30,7 +30,7 @@ class Qd130ErrorMultiSheetExport implements WithMultipleSheets
     public function sheets(): array
     {
         return [
-            new Qd130ErrorExport($this->fromDate, $this->toDate, $this->xml_filter_status, $this->date_type, $this->xml3176_xml_error_catalog_id, $this->payment_date_filter, $this->imported_by, $this->xml_submit_status),
+            new Xml3176ErrorExport($this->fromDate, $this->toDate, $this->xml_filter_status, $this->date_type, $this->xml3176_xml_error_catalog_id, $this->payment_date_filter, $this->imported_by, $this->xml_submit_status),
             new HeinCardErrorExport($this->fromDate, $this->toDate),
         ];
     }

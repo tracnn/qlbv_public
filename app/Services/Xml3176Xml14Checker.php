@@ -109,7 +109,8 @@ class Xml3176Xml14Checker
                 'description' => 'Ngày hẹn khám lại không được để trống'
             ]);
         } else {
-            if (!empty($data->ngay_ra) && ($data->ngay_hen_kl <= $data->ngay_ra)) {
+            $ngay_hen_kl = $data->ngay_hen_kl . '0000';
+            if (!empty($data->ngay_ra) && ($ngay_hen_kl <= $data->ngay_ra)) {
                 $errorCode = $this->generateErrorCode('INFO_ERROR_NGAY_HEN_KL_SMALLER_NGAY_RA');
                 $errors->push((object)[
                     'error_code' => $errorCode,

@@ -88,7 +88,7 @@ return [
         'login_url_production' => 'https://auth-soyt.hanoi.gov.vn/api/auth/token/take',
         'submit_xml_url_production' => 'https://axis-soyt.hanoi.gov.vn/api/kcb/xml/qd3176/guiHoSoXml',
         'check_status_url_production' => 'https://axis-soyt.hanoi.gov.vn/api/kcb/tra-cuu-trang-thai',
-        'enabled' => true, // Bật/tắt chức năng gửi dữ liệu lên Trục
+        'enabled' => false, // Bật/tắt chức năng gửi dữ liệu lên Trục
         'disk' => 'trucDuLieuYTe', // Tên disk trong filesystems config
         'scan_sleep_interval' => 300, // Thời gian sleep giữa các lần quét (giây)
     ],
