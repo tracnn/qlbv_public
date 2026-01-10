@@ -92,4 +92,13 @@ return [
         'disk' => 'trucDuLieuYTe', // Tên disk trong filesystems config
         'scan_sleep_interval' => 300, // Thời gian sleep giữa các lần quét (giây)
     ],
+    'cong_du_lieu_y_te_dien_bien' => [
+        'username' => '', // Tài khoản được Sở Y tế tỉnh Điện Biên cung cấp
+        'password' => '', // Mật khẩu (sẽ được hash MD5 khi gửi)
+        'login_url' => 'http://api.congdulieuytedienbien.vn/api/token',
+        'submit_xml_url' => 'http://api.congdulieuytedienbien.vn/api/Cong130/CheckIn',
+        'enabled' => false, // Bật/tắt chức năng gửi dữ liệu lên Cổng dữ liệu Y tế tỉnh Điện Biên
+        'disk' => 'congDuLieuYTeDienBien', // Tên disk trong filesystems config
+        'scan_sleep_interval' => 300, // Thời gian sleep giữa các lần quét (giây)
+    ],
 ];
