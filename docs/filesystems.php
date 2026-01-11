@@ -103,6 +103,26 @@ return [
             'root' => 'D:\XML\ExportXml4750',
         ],
 
+        'xml3176' => [
+            'driver' => 'local',
+            'root' => 'D:\XML\3176',
+        ],
+
+        'xml3176tt' => [
+            'driver' => 'local',
+            'root' => 'D:\XML\3176TT',
+        ],
+
+        'xml3176GoogleDrive' => [
+            'driver' => 'local',
+            'root' => 'D:\XML\ImportXml3176',
+        ],
+
+        'exportXml3176' => [
+            'driver' => 'local',
+            'root' => 'D:\XML\ExportXml3176',
+        ],
+
         'trucDuLieuYTe' => [
             'driver' => 'local',
             'root' => 'D:\XML\TrucDuLieuYTe',

@@ -43,9 +43,6 @@ class XML3176Import extends Command
                 $this->info('Processing xml3176 disk');
                 $this->importFilesFromDisk('xml3176');
 
-                $this->info('Processing xml3176 google drive disk');
-                $this->importFilesFromDisk('xml3176GoogleDrive');
-
                 $this->info($this->description);
 
                 sleep(3);

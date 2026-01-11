@@ -8,12 +8,12 @@ return [
         'password' => '',
         'login_url' => 'https://egw.baohiemxahoi.gov.vn/api/token/take',
         'check_card_url' => 'https://egw.baohiemxahoi.gov.vn/api/egw/NhanLichSuKCB2018', 
-        'enableCheck' => false,
+        'enableCheck' => false, //Bật/tắt kiểm tra thẻ BHXH bởi cổng BHXH
         'check_card_url_2024' => 'https://egw.baohiemxahoi.gov.vn/api/egw/KQNhanLichSuKCB2024',
         'hoTenCb' => '',
         'cccdCb' => '', 
-        'check_by_user' => true,
-        'submit_xml_enabled' => true,
+        'check_by_user' => true, //Bật/tắt kiểm tra thẻ BHXH bởi user
+        'submit_xml_enabled' => false, //Bật/tắt chức năng gửi XML lên cổng BHXH
         'submit_xml_url' => 'https://egw.baohiemxahoi.gov.vn/api/qd130/guiHoSoXmlQD4750',
         'ma_tinh' => '01', // Mã tỉnh (2 ký tự đầu của mã CSKCB)
         'ma_cskcb' => '01013', // Mã cơ sở khám chữa bệnh (có thể lấy từ correct_facility_code)
@@ -31,7 +31,8 @@ return [
         'ssl' => true,
         'ftp_pasv' => true,
     ],
-    'xml_4750_not_check' => false,
+    'xml_4750_not_check' => false, //Không kiểm tra lỗi trước khi xuất xml
+    'xml_3176_not_check' => false, //Không kiểm tra lỗi trước khi xuất xml
     'q_his_plus_url' => '',
     'patient' => [
         'emr_document_type_result_ids' => [6, 22, 160, 3, 28, 4, 14, 25, 26, 27],
