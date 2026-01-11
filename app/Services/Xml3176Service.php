@@ -648,6 +648,7 @@ class Xml3176Service
                     ];
 
                     $xml9 = Xml3176Xml9::updateOrCreate($attributes, $values);
+                    
                     // Đẩy công việc kiểm tra vào hàng đợi
                     CheckXml3176ErrorsJob::dispatch($xml9, $xmlType)
                     ->onQueue($this->queueName);

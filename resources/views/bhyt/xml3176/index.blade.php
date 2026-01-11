@@ -47,7 +47,7 @@
 @include('bhyt.xml3176.partials.search')
 
 <button id="bulk-action-btn" class="btn btn-primary" disabled>
-    <i class="fa fa-download" aria-hidden="true"></i> Xuất XML4750
+    <i class="fa fa-download" aria-hidden="true"></i> Xuất XML3176
 </button>
 <!-- Button to trigger the modal -->
 <button id="openDownloadModalBtn" class="btn btn-primary">
