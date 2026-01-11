@@ -1,5 +1,5 @@
 # 20/01/2026
-- Update bổ sung XML3176 - Tương đương với các chức năng của XML4750 hiện có
+- Cập nhật bổ sung XML3176 - Tương đương với các chức năng của XML4750 hiện có
 
 # 16/12/2025
 - Bổ sung chức năng gửi hồ sơ XML từ phần mềm tiền giám định
