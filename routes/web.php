@@ -329,11 +329,11 @@ Route::group(['middleware' => ['auth', 'check.first.login']], function () {
         Route::get('bhyt/category-bhyt-fetch-xml3176-error-catalog', 'Category\CategoryBHYTController@fetchXml3176ErrorCatalog')
         ->name('category-bhyt.fetch-xml3176-error-catalog');
         Route::get('bhyt/xml3176-error-catalog', 'Category\CategoryBHYTController@indexXml3176ErrorCatalog')
-        ->name('category-bhyt.xml3176-xml-error-catalog');
+        ->name('category-bhyt.xml3176-error-catalog');
         Route::get('bhyt/category-bhyt-fetch-xml3176-error-catalog-datatable', 'Category\CategoryBHYTController@fetchXml3176ErrorCatalogDatatable')
         ->name('category-bhyt.fetch-xml3176-error-catalog-datatable');
         Route::post('/category-bhyt/update-xml3176-error-catalog', 'Category\CategoryBHYTController@updateXml3176ErrorCatalog')
-        ->name('category-bhyt.update-xml3176-xml-error-catalog');
+        ->name('category-bhyt.update-xml3176-error-catalog');
 
         Route::get('bhyt/category-bhyt-import-index', 'Category\CategoryBHYTController@importIndex')
         ->name('category-bhyt.import-index');

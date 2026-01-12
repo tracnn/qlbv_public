@@ -16,7 +16,7 @@
 
 <div class="panel panel-default">
     <div class="panel-body table-responsive">
-        <table id="xml3176-xml-error-catalog-list" class="table display table-hover responsive nowrap datatable dtr-inline" width="100%">
+        <table id="xml3176-error-catalog-list" class="table display table-hover responsive nowrap datatable dtr-inline" width="100%">
             <thead>
                 <tr>
                     <th>XML</th>
@@ -35,22 +35,23 @@
 
 @push('after-scripts')
 <script type="text/javascript">
-    var currentAjaxRequest = null;
+    var currentAjaxRequest = null; // Biến để lưu trữ yêu cầu AJAX hiện tại
     var table = null;
 
     function fetchData() {
+        // Kiểm tra và hủy yêu cầu AJAX trước đó (nếu có)
         if (currentAjaxRequest != null) {
             currentAjaxRequest.abort();
         }
 
-        table = $('#xml3176-xml-error-catalog-list').DataTable({
+        table = $('#xml3176-error-catalog-list').DataTable({
             "processing": true,
             "serverSide": true,
-            "destroy": true,
-            "responsive": true,
-            "scrollX": true,
+            "destroy": true, // Destroy any existing DataTable before reinitializing
+            "responsive": true, // Giữ responsive
+            "scrollX": true, // Đảm bảo cuộn ngang khi bảng quá rộng
             "ajax": {
-                url: "{{ route('category-bhyt.fetch-xml3176-xml-error-catalog-datatable') }}",
+                url: "{{ route('category-bhyt.fetch-xml3176-error-catalog-datatable') }}",
                 beforeSend: function(xhr) {
                     currentAjaxRequest = xhr;
                 },
@@ -68,8 +69,11 @@
                 { "data": "error_code" },
                 { "data": "error_name" },
                 { "data": "description" },
-                { "data": "critical_error" },
-                { "data": "is_check" },
+                { "data": "critical_error"
+                },
+                { 
+                    "data": "is_check"
+                },
             ],
         });
 
@@ -79,19 +83,22 @@
     $(document).ready(function() {
         fetchData();
 
-        $('#xml3176-xml-error-catalog-list').on('change', '.is-check-toggle', function() {
+        // Sự kiện thay đổi checkbox cho is_check
+        $('#xml3176-error-catalog-list').on('change', '.is-check-toggle', function() {
             var isChecked = $(this).is(':checked');
             var catalogId = $(this).data('id');
             var self = $(this);
 
+            // Hỏi người dùng xem có chắc chắn muốn thay đổi không
             Swal.fire({
                 title: 'Bạn có chắc chắn?',
                 icon: 'warning',
                 showCancelButton: true,
             }).then((result) => {
                 if (result.isConfirmed) {
+                    // Gửi yêu cầu AJAX để cập nhật giá trị is_check
                     $.ajax({
-                        url: "{{ route('category-bhyt.update-xml3176-xml-error-catalog') }}",
+                        url: "{{ route('category-bhyt.update-xml3176-error-catalog') }}",
                         method: "POST",
                         data: {
                             _token: "{{ csrf_token() }}",
@@ -111,24 +118,28 @@
                         }
                     });
                 } else {
+                    // Nếu người dùng chọn hủy, không thay đổi trạng thái checkbox
                     self.prop('checked', !isChecked);
                 }
             });
         });
 
-        $('#xml3176-xml-error-catalog-list').on('change', '.critical-error-toggle', function() {
+        // Sự kiện thay đổi checkbox cho critical_error
+        $('#xml3176-error-catalog-list').on('change', '.critical-error-toggle', function() {
             var isChecked = $(this).is(':checked');
             var catalogId = $(this).data('id');
             var self = $(this);
 
+            // Hỏi người dùng xem có chắc chắn muốn thay đổi không
             Swal.fire({
                 title: 'Bạn có chắc chắn?',
                 icon: 'warning',
                 showCancelButton: true,
             }).then((result) => {
                 if (result.isConfirmed) {
+                    // Gửi yêu cầu AJAX để cập nhật giá trị critical_error
                     $.ajax({
-                        url: "{{ route('category-bhyt.update-xml3176-xml-error-catalog') }}",
+                        url: "{{ route('category-bhyt.update-xml3176-error-catalog') }}",
                         method: "POST",
                         data: {
                             _token: "{{ csrf_token() }}",
@@ -148,6 +159,7 @@
                         }
                     });
                 } else {
+                    // Nếu người dùng chọn hủy, không thay đổi trạng thái checkbox
                     self.prop('checked', !isChecked);
                 }
             });

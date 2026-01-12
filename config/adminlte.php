@@ -499,6 +499,12 @@ return [
                             'route'   => 'category-bhyt.qd130-xml-error-catalog',
                             'active'=> ['category/bhyt/qd130-xml-error-catalog*'],
                         ],
+                        [
+                            'text'  => 'DM lỗi Xml 3176',
+                            'icon'  => 'book',
+                            'route'   => 'category-bhyt.xml3176-error-catalog',
+                            'active'=> ['category/bhyt/xml3176-error-catalog*'],
+                        ],
                     ],
                 ],
                 
