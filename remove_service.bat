@@ -25,4 +25,12 @@ set NSSM_PATH=%~dp0
 %NSSM_PATH%\nssm stop "QLBV XMLImport"
 %NSSM_PATH%\nssm remove "QLBV XMLImport" confirm
 
+:: Xóa dịch vụ cho XMLImport3176
+%NSSM_PATH%\nssm stop "QLBV XMLImport3176"
+%NSSM_PATH%\nssm remove "QLBV XMLImport3176" confirm
+
+:: Xóa dịch vụ cho TrucDuLieuYTeXmlScan
+%NSSM_PATH%\nssm stop "QLBV TrucDuLieuYTeXmlScan"
+%NSSM_PATH%\nssm remove "QLBV TrucDuLieuYTeXmlScan" confirm
+
 echo Services uninstall completed successfully.
