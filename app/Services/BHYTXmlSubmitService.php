@@ -33,11 +33,11 @@ class BHYTXmlSubmitService
      */
     public function submitXml(
         string $xmlContent,
+        string $submitUrl,
+        string $loaiHoSo,
         ?string $maTinh = null,
         ?string $maCSKCB = null,
-        string $loaiHoSo = '130'
     ): array {
-        $submitUrl = $this->config['submit_xml_url'] ?? '';
         if (empty($submitUrl)) {
             Log::error('BHYT XML Submit: submit_xml_url is not configured');
             throw new \Exception('BHYT XML submit URL is not configured');

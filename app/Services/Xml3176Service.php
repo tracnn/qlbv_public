@@ -1697,7 +1697,7 @@ class Xml3176Service
     private function submitXmlToBHYT($ma_lk, $xmlData, $macskcb)
     {
         // Kiểm tra xem có bật tính năng gửi XML không
-        $submitEnabled = config('organization.BHYT.submit_xml_enabled', false);
+        $submitEnabled = config('organization.BHYT.submit_xml_3176_enabled', false);
         if (!$submitEnabled) {
             \Log::info('BHYT XML Submit is disabled for ma_lk: ' . $ma_lk);
             return false;
@@ -1705,7 +1705,12 @@ class Xml3176Service
 
         try {
             // Gửi XML lên cổng BHXH
-            $result = $this->xmlSubmitService->submitXml($xmlData);
+            $result = $this->xmlSubmitService->submitXml($xmlData,
+                config('organization.BHYT.submit_xml_3176_url'),
+                config('organization.BHYT.loai_ho_so_3176'),
+                config('organization.BHYT.ma_tinh'),
+                $macskcb
+            );
 
             // Kiểm tra kết quả
             $maKetQua = $result['maKetQua'] ?? null;

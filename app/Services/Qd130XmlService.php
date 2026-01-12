@@ -1714,7 +1714,12 @@ class Qd130XmlService
 
         try {
             // Gửi XML lên cổng BHXH
-            $result = $this->xmlSubmitService->submitXml($xmlData);
+            $result = $this->xmlSubmitService->submitXml($xmlData,
+                config('organization.BHYT.submit_xml_url'),
+                config('organization.BHYT.loai_ho_so_4750'),
+                config('organization.BHYT.ma_tinh'),
+                $macskcb
+            );
 
             // Kiểm tra kết quả
             $maKetQua = $result['maKetQua'] ?? null;

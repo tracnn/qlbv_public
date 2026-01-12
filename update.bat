@@ -25,9 +25,13 @@ php artisan migrate --force
 
 :: Stop từng dịch vụ
 %NSSM_PATH%\nssm stop "QLBV JobQd130Xml"
+%NSSM_PATH%\nssm stop "QLBV JobXml3176"
+%NSSM_PATH%\nssm stop "QLBV JobTrucDuLieuYTe"
 %NSSM_PATH%\nssm stop "QLBV JobKtTheBHYT"
 %NSSM_PATH%\nssm stop "QLBV ImportCatalog"
 %NSSM_PATH%\nssm stop "QLBV XMLImport"
+%NSSM_PATH%\nssm stop "QLBV XMLImport3176"
+%NSSM_PATH%\nssm stop "QLBV TrucDuLieuYTeXmlScan"
 
 :: Dọn dẹp cache
 echo Clearing cache...
@@ -51,8 +55,10 @@ php artisan route:cache
 
 :: Restart các dịch vụ đã cài đặt
 echo Restarting services...
-
-:: Restart từng dịch vụ
+%NSSM_PATH%\nssm start "QLBV JobXml3176"
+%NSSM_PATH%\nssm start "QLBV JobTrucDuLieuYTe"
+%NSSM_PATH%\nssm start "QLBV XMLImport3176"
+%NSSM_PATH%\nssm start "QLBV TrucDuLieuYTeXmlScan"
 %NSSM_PATH%\nssm start "QLBV JobQd130Xml"
 %NSSM_PATH%\nssm start "QLBV JobKtTheBHYT"
 %NSSM_PATH%\nssm start "QLBV ImportCatalog"

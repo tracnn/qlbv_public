@@ -103,6 +103,11 @@ return [
             'root' => 'D:\XML\ExportXml4750',
         ],
 
+        'trucDuLieuYTe' => [
+            'driver' => 'local',
+            'root' => 'D:\XML\TrucDuLieuYTe',
+        ],
+
         'xml3176' => [
             'driver' => 'local',
             'root' => 'D:\XML\3176',
@@ -121,11 +126,6 @@ return [
         'exportXml3176' => [
             'driver' => 'local',
             'root' => 'D:\XML\ExportXml3176',
-        ],
-
-        'trucDuLieuYTe' => [
-            'driver' => 'local',
-            'root' => 'D:\XML\TrucDuLieuYTe',
         ],
     ],
 ];

@@ -15,8 +15,12 @@ return [
         'check_by_user' => true, //Bật/tắt kiểm tra thẻ BHXH bởi user
         'submit_xml_enabled' => false, //Bật/tắt chức năng gửi XML lên cổng BHXH
         'submit_xml_url' => 'https://egw.baohiemxahoi.gov.vn/api/qd130/guiHoSoXmlQD4750',
+        'loai_ho_so_4750' => '4750',
         'ma_tinh' => '01', // Mã tỉnh (2 ký tự đầu của mã CSKCB)
         'ma_cskcb' => '01013', // Mã cơ sở khám chữa bệnh (có thể lấy từ correct_facility_code)
+        'submit_xml_3176_enabled' => false, //Bật/tắt chức năng gửi XML lên cổng BHXH
+        'submit_xml_3176_url' => 'https://egw.baohiemxahoi.gov.vn/api/qd3176/guiHoSoXmlQD3176',
+        'loai_ho_so_3176' => '3176',
     ],
     'base_url' => '',
     'base_pacs_url' => '',
@@ -32,7 +36,6 @@ return [
         'ftp_pasv' => true,
     ],
     'xml_4750_not_check' => false, //Không kiểm tra lỗi trước khi xuất xml
-    'xml_3176_not_check' => false, //Không kiểm tra lỗi trước khi xuất xml
     'q_his_plus_url' => '',
     'patient' => [
         'emr_document_type_result_ids' => [6, 22, 160, 3, 28, 4, 14, 25, 26, 27],
@@ -74,6 +77,8 @@ return [
             'partner_token' => '', // Partner Token format: Base64(Key):Base64(IV)
         ],
     ],
+    // Phien ban cap nhat 20260120.1
+    'xml_3176_not_check' => false, //Không kiểm tra lỗi trước khi xuất xml
     'truc_du_lieu_y_te' => [
         'username' => '', // Tài khoản được Trục dữ liệu Y Tế cấp
         'password' => '', // Mật khẩu tương ứng
