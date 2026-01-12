@@ -26,7 +26,6 @@ php artisan migrate --force
 :: Stop từng dịch vụ
 %NSSM_PATH%\nssm stop "QLBV JobQd130Xml"
 %NSSM_PATH%\nssm stop "QLBV JobXml3176"
-%NSSM_PATH%\nssm stop "QLBV JobTrucDuLieuYTe"
 %NSSM_PATH%\nssm stop "QLBV JobKtTheBHYT"
 %NSSM_PATH%\nssm stop "QLBV ImportCatalog"
 %NSSM_PATH%\nssm stop "QLBV XMLImport"
@@ -55,14 +54,13 @@ php artisan route:cache
 
 :: Restart các dịch vụ đã cài đặt
 echo Restarting services...
-%NSSM_PATH%\nssm start "QLBV JobXml3176"
-%NSSM_PATH%\nssm start "QLBV JobTrucDuLieuYTe"
-%NSSM_PATH%\nssm start "QLBV XMLImport3176"
-%NSSM_PATH%\nssm start "QLBV TrucDuLieuYTeXmlScan"
 %NSSM_PATH%\nssm start "QLBV JobQd130Xml"
 %NSSM_PATH%\nssm start "QLBV JobKtTheBHYT"
 %NSSM_PATH%\nssm start "QLBV ImportCatalog"
 %NSSM_PATH%\nssm start "QLBV XMLImport"
+%NSSM_PATH%\nssm start "QLBV JobXml3176"
+%NSSM_PATH%\nssm start "QLBV XMLImport3176"
+%NSSM_PATH%\nssm start "QLBV TrucDuLieuYTeXmlScan"
 
 :: Đưa ứng dụng ra khỏi chế độ bảo trì
 echo Bringing the application out of maintenance mode...
