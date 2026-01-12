@@ -36,7 +36,7 @@ class BHYTXmlSubmitService
         string $submitUrl,
         string $loaiHoSo,
         ?string $maTinh = null,
-        ?string $maCSKCB = null,
+        ?string $maCSKCB = null
     ): array {
         if (empty($submitUrl)) {
             Log::error('BHYT XML Submit: submit_xml_url is not configured');
