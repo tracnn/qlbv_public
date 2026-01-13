@@ -522,7 +522,9 @@ class SystemController extends Controller
 
             DB::connection('EMR_RS')->statement('
                 UPDATE emr_treatment
-                SET create_time = TO_CHAR(ADD_MONTHS(TO_DATE(create_time, \'YYYYMMDDHH24MISS\'), 36), \'YYYYMMDDHH24MISS\')
+                SET create_time = TO_CHAR(ADD_MONTHS(TO_DATE(create_time, \'YYYYMMDDHH24MISS\'), 36), \'YYYYMMDDHH24MISS\'),
+                in_time = TO_CHAR(ADD_MONTHS(TO_DATE(in_time, \'YYYYMMDDHH24MISS\'), 36), \'YYYYMMDDHH24MISS\'),
+                out_time = TO_CHAR(ADD_MONTHS(TO_DATE(out_time, \'YYYYMMDDHH24MISS\'), 36), \'YYYYMMDDHH24MISS\'),
                 WHERE treatment_code = :treatment_code
             ', ['treatment_code' => $treatment_code]);
                      
@@ -554,6 +556,8 @@ class SystemController extends Controller
             DB::connection('EMR_RS')->statement('
                 UPDATE emr_treatment
                 SET create_time = TO_CHAR(ADD_MONTHS(TO_DATE(create_time, \'YYYYMMDDHH24MISS\'), -36), \'YYYYMMDDHH24MISS\')
+                in_time = TO_CHAR(ADD_MONTHS(TO_DATE(in_time, \'YYYYMMDDHH24MISS\'), -36), \'YYYYMMDDHH24MISS\'),
+                out_time = TO_CHAR(ADD_MONTHS(TO_DATE(out_time, \'YYYYMMDDHH24MISS\'), -36), \'YYYYMMDDHH24MISS\')
                 WHERE treatment_code = :treatment_code
             ', ['treatment_code' => $treatment_code]);
              
