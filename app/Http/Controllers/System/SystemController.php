@@ -519,6 +519,12 @@ class SystemController extends Controller
                   AND out_time < fee_lock_time
                   AND treatment_code = :treatment_code
             ', ['treatment_code' => $treatment_code]);
+
+            DB::connection('EMR_RS')->statement('
+                UPDATE emr_treatment
+                SET create_time = TO_CHAR(ADD_MONTHS(TO_DATE(create_time, \'YYYYMMDDHH24MISS\'), 36), \'YYYYMMDDHH24MISS\')
+                WHERE treatment_code = :treatment_code
+            ', ['treatment_code' => $treatment_code]);
                      
         } catch (\Exception $e) {
             return $e;
@@ -543,6 +549,12 @@ class SystemController extends Controller
                   AND tdl_treatment_type_id = 1
                   AND out_time >= fee_lock_time
                   AND treatment_code = :treatment_code
+            ', ['treatment_code' => $treatment_code]);
+
+            DB::connection('EMR_RS')->statement('
+                UPDATE emr_treatment
+                SET create_time = TO_CHAR(ADD_MONTHS(TO_DATE(create_time, \'YYYYMMDDHH24MISS\'), -36), \'YYYYMMDDHH24MISS\')
+                WHERE treatment_code = :treatment_code
             ', ['treatment_code' => $treatment_code]);
              
         } catch (\Exception $e) {
