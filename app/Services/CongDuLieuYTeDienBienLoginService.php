@@ -29,7 +29,7 @@ class CongDuLieuYTeDienBienLoginService
     {
         $username = $this->config['username'] ?? '';
         $password = $this->config['password'] ?? '';
-        $loginUrl = $this->config['login_url'] ?? 'http://api.congdulieuytedienbien.vn/api/token';
+        $loginUrl = $this->config['login_url'] ?? 'https://api.congdulieuytedienbien.vn/api/token';
 
         if (empty($username) || empty($password) || empty($loginUrl)) {
             Log::error('Cong Du Lieu Y Te Dien Bien Login: Missing configuration', []);
@@ -37,7 +37,7 @@ class CongDuLieuYTeDienBienLoginService
         }
 
         // Mật khẩu phải được hash MD5
-        $passwordMd5 = md5($password);
+        $passwordMd5 = $password; //lừa nhau
 
         try {
             // Sử dụng multipart/form-data
@@ -89,10 +89,12 @@ class CongDuLieuYTeDienBienLoginService
                 'access_token' => $result['access_token'],
                 'token_type' => $result['token_type'] ?? 'Bearer',
                 'username' => $result['username'] ?? $username,
+                'expiresTime' => $result['expiresTime'] ?? null,
             ];
 
-            // Lưu token vào cache (mặc định 1 giờ, vì API không trả về expires_in)
-            Cache::put($this->getCacheKey(), $tokens, 3600);
+            // Tính toán thời gian cache dựa trên expiresTime
+            $cacheSeconds = $this->calculateCacheSeconds($result['expiresTime'] ?? null);
+            Cache::put($this->getCacheKey(), $tokens, $cacheSeconds);
 
             Log::info('Cong Du Lieu Y Te Dien Bien Login successful', [
                 'username' => $tokens['username'],
@@ -164,6 +166,39 @@ class CongDuLieuYTeDienBienLoginService
     private function getCacheKey(): string
     {
         return $this->cacheKey;
+    }
+
+    /**
+     * Tính toán thời gian cache (giây) dựa trên expiresTime
+     */
+    private function calculateCacheSeconds(?string $expiresTime): int
+    {
+        if (empty($expiresTime)) {
+            // Nếu không có expiresTime, mặc định 1 giờ
+            return 3600;
+        }
+
+        try {
+            // Parse expiresTime (format: "2026-01-17T10:34:09.9434625+07:00")
+            $expiresDateTime = new \DateTime($expiresTime);
+            $now = new \DateTime();
+            $diff = $expiresDateTime->getTimestamp() - $now->getTimestamp();
+
+            // Nếu thời gian hết hạn đã qua, trả về 0 (cache ngay lập tức hết hạn)
+            if ($diff <= 0) {
+                return 0;
+            }
+
+            // Trừ đi 5 phút để đảm bảo token không hết hạn trước khi cache expire
+            return max(0, $diff - 300);
+        } catch (\Exception $e) {
+            Log::warning('Cong Du Lieu Y Te Dien Bien: Failed to parse expiresTime', [
+                'expiresTime' => $expiresTime,
+                'error' => $e->getMessage(),
+            ]);
+            // Nếu parse lỗi, mặc định 1 giờ
+            return 3600;
+        }
     }
 }
 
