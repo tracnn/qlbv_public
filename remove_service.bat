@@ -33,4 +33,8 @@ set NSSM_PATH=%~dp0
 %NSSM_PATH%\nssm stop "QLBV TrucDuLieuYTeXmlScan"
 %NSSM_PATH%\nssm remove "QLBV TrucDuLieuYTeXmlScan" confirm
 
+:: Xóa dịch vụ cho CongDuLieuYTeDienBienXmlScan
+%NSSM_PATH%\nssm stop "QLBV CongDuLieuYTeDienBienXmlScan"
+%NSSM_PATH%\nssm remove "QLBV CongDuLieuYTeDienBienXmlScan" confirm
+
 echo Services uninstall completed successfully.

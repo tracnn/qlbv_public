@@ -30,7 +30,7 @@ class CongDuLieuYTeDienBienXmlSubmitService
      */
     public function submitXml(string $xmlContent): array
     {
-        $submitUrl = $this->config['submit_xml_url'] ?? 'http://api.congdulieuytedienbien.vn/api/Cong130/CheckIn';
+        $submitUrl = $this->config['submit_xml_url'] ?? 'https://api.congdulieuytedienbien.vn/api/Cong130/CheckIn';
         
         if (empty($submitUrl)) {
             Log::error('Cong Du Lieu Y Te Dien Bien XML Submit: submit_url is not configured', []);
@@ -147,7 +147,7 @@ class CongDuLieuYTeDienBienXmlSubmitService
      */
     private function getSubmitUrl(): string
     {
-        return $this->config['submit_xml_url'] ?? 'http://api.congdulieuytedienbien.vn/api/Cong130/CheckIn';
+        return $this->config['submit_xml_url'] ?? 'https://api.congdulieuytedienbien.vn/api/Cong130/CheckIn';
     }
 }
 

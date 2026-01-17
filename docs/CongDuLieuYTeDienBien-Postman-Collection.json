@@ -1,0 +1,141 @@
+{
+	"info": {
+		"_postman_id": "cong-du-lieu-y-te-dien-bien",
+		"name": "Cổng dữ liệu Y tế tỉnh Điện Biên",
+		"description": "Collection để test API Cổng dữ liệu Y tế tỉnh Điện Biên",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "1. Login - Lấy Access Token",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"if (pm.response.code === 200) {",
+							"    var jsonData = pm.response.json();",
+							"    if (jsonData.access_token) {",
+							"        pm.environment.set(\"access_token\", jsonData.access_token);",
+							"        pm.environment.set(\"token_type\", jsonData.token_type || \"Bearer\");",
+							"        pm.environment.set(\"username\", jsonData.username);",
+							"        pm.environment.set(\"expiresTime\", jsonData.expiresTime);",
+							"        console.log(\"Token saved to environment\");",
+							"    }",
+							"}"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "username",
+							"value": "11001_bv",
+							"type": "text",
+							"description": "Tài khoản được Sở Y tế tỉnh Điện Biên cung cấp"
+						},
+						{
+							"key": "password",
+							"value": "123456@a",
+							"type": "text",
+							"description": "Mật khẩu (không cần hash MD5, API sẽ tự xử lý)"
+						}
+					]
+				},
+				"url": {
+					"raw": "https://api.congdulieuytedienbien.vn/api/token",
+					"protocol": "https",
+					"host": [
+						"api",
+						"congdulieuytedienbien",
+						"vn"
+					],
+					"path": [
+						"api",
+						"token"
+					]
+				},
+				"description": "Đăng nhập và lấy access token. Token sẽ được tự động lưu vào environment variable."
+			},
+			"response": []
+		},
+		{
+			"name": "2. Submit XML - Gửi hồ sơ XML 130",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"// Kiểm tra access_token",
+							"if (!pm.environment.get(\"access_token\")) {",
+							"    console.log(\"Warning: access_token not found. Please run Login request first.\");",
+							"}"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}",
+						"type": "text",
+						"description": "Bearer token từ Login request"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "files",
+							"type": "file",
+							"src": [],
+							"description": "File XML hồ sơ 130 cần gửi (tên file: hoso.xml)"
+						}
+					]
+				},
+				"url": {
+					"raw": "https://api.congdulieuytedienbien.vn/api/Cong130/CheckIn",
+					"protocol": "https",
+					"host": [
+						"api",
+						"congdulieuytedienbien",
+						"vn"
+					],
+					"path": [
+						"api",
+						"Cong130",
+						"CheckIn"
+					]
+				},
+				"description": "Gửi hồ sơ XML 130 lên Cổng dữ liệu Y tế tỉnh Điện Biên.\n\n**Lưu ý:**\n- Phải chạy request Login trước để lấy access_token\n- Chọn file XML trong tab Body > form-data > files\n- Response status codes:\n  - 200: Hồ sơ đúng (trangThai = 1)\n  - 201: Hồ sơ lỗi (trangThai = 2)\n  - 400, 401, 500: Lỗi hệ thống"
+			},
+			"response": []
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "https://api.congdulieuytedienbien.vn",
+			"type": "string"
+		},
+		{
+			"key": "access_token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "token_type",
+			"value": "Bearer",
+			"type": "string"
+		}
+	]
+}

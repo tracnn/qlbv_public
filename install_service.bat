@@ -39,6 +39,10 @@ set LARAVEL_PATH=%~dp0
 %NSSM_PATH%\nssm install "QLBV TrucDuLieuYTeXmlScan" %PHP_PATH% "%LARAVEL_PATH%artisan truc-du-lieu-y-te:scan"
 %NSSM_PATH%\nssm set "QLBV TrucDuLieuYTeXmlScan" AppDirectory %LARAVEL_PATH%
 
+:: Tạo dịch vụ cho CongDuLieuYTeDienBienXmlScan
+%NSSM_PATH%\nssm install "QLBV CongDuLieuYTeDienBienXmlScan" %PHP_PATH% "%LARAVEL_PATH%artisan cong-du-lieu-y-te-dien-bien:scan"
+%NSSM_PATH%\nssm set "QLBV CongDuLieuYTeDienBienXmlScan" AppDirectory %LARAVEL_PATH%
+
 :: Khởi động tất cả các dịch vụ
 %NSSM_PATH%\nssm start "QLBV JobQd130Xml"
 %NSSM_PATH%\nssm start "QLBV JobXml3176"
@@ -47,5 +51,6 @@ set LARAVEL_PATH=%~dp0
 %NSSM_PATH%\nssm start "QLBV XMLImport"
 %NSSM_PATH%\nssm start "QLBV XMLImport3176"
 %NSSM_PATH%\nssm start "QLBV TrucDuLieuYTeXmlScan"
+%NSSM_PATH%\nssm start "QLBV CongDuLieuYTeDienBienXmlScan"
 
 echo Service install completed successfully.
