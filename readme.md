@@ -1,6 +1,9 @@
 # 20/01/2026
 - Cập nhật bổ sung XML3176 - Tương đương với các chức năng của XML4750 hiện có
 
+# 17/01/2026
+- Cập nhật, bổ sung chức năng gửi XML4750 lên cổng dữ liệu tỉnh Điện Biên
+
 # 16/12/2025
 - Bổ sung chức năng gửi hồ sơ XML từ phần mềm tiền giám định
 - Quản lý trạng thái hồ sơ đã gửi dựa vào kết quả trả về từ Cổng BHXH
