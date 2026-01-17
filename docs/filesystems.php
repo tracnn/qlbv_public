@@ -127,5 +127,10 @@ return [
             'driver' => 'local',
             'root' => 'D:\XML\ExportXml3176',
         ],
+
+        'congDuLieuYTeDienBien' => [
+            'driver' => 'local',
+            'root' => 'D:\XML\CongDuLieuYTeDienBien',
+        ],
     ],
 ];
