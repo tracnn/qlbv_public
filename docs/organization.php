@@ -107,4 +107,7 @@ return [
         'disk' => 'congDuLieuYTeDienBien', // Tên disk trong filesystems config
         'scan_sleep_interval' => 300, // Thời gian sleep giữa các lần quét (giây)
     ],
+    'fss_config' => [
+        'baseUrl' => 'http://14.160.70.2:1435',
+    ],
 ];

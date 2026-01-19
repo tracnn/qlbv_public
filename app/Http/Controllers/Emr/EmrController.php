@@ -17,6 +17,8 @@ use DataTables;
 
 use hisorange\BrowserDetect\Parser as Browser;
 
+use App\Services\PdfFetchService;
+
 class EmrController extends Controller
 {
     protected $ParamDepartment;
@@ -29,10 +31,13 @@ class EmrController extends Controller
     protected $PatientType;
 
     protected $ParamDocumentType;
-    protected $DocumentType;   
+    protected $DocumentType;
 
-    public function __construct()
+    protected $pdfFetchService;
+
+    public function __construct(PdfFetchService $pdfFetchService)
     {
+        $this->pdfFetchService = $pdfFetchService;
 
         $this->searchParams = [
             'date' => [
@@ -688,10 +693,14 @@ class EmrController extends Controller
             }
 
             $resultUrl = str_replace('\\', '/', $result->url);
-            $ftp = new FtpService();
-            $ftp->connect();
-            $content = $ftp->getContent($resultUrl);
-            $ftp->close();
+            // $ftp = new FtpService();
+            // $ftp->connect();
+            // $content = $ftp->getContent($resultUrl);
+            // $ftp->close();
+            $baseUrl = config('organization.fss_config.baseUrl');
+            $url = $baseUrl . $resultUrl;
+            $pdfData = $this->pdfFetchService->getPdfAsBase64($url);
+            $content = base64_decode($pdfData['base64']);
 
             //$content = Storage::disk('emr')->get($result->url);
             
@@ -741,11 +750,17 @@ class EmrController extends Controller
             }
 
             $resultUrl = str_replace('\\', '/', $result->url);
-            $ftp = new FtpService();
-            $ftp->connect();
-            $content = $ftp->getContent($resultUrl);
-            $ftp->close();
-
+            // $ftp = new FtpService();
+            // $ftp->connect();
+            // $content = $ftp->getContent($resultUrl);
+            // $ftp->close();
+            $baseUrl = config('organization.fss_config.baseUrl');
+            $url = $baseUrl . $resultUrl;
+            $pdfData = $this->pdfFetchService->getPdfAsBase64($url);
+            
+            // Decode base64 về binary PDF
+            $content = base64_decode($pdfData['base64']);
+            
             return response()->make($content, 200, [
                 'Content-Type' => 'application/pdf',
                 'Content-Disposition' => 'inline'
@@ -839,16 +854,20 @@ class EmrController extends Controller
                 mkdir($tempDir, 0755, true);
             }
 
-            $ftp = new \App\Services\FtpService();
-            $ftp->connect();
+            // $ftp = new \App\Services\FtpService();
+            // $ftp->connect();
 
             foreach ($filePaths as $filePath) {
                 $resultUrl = str_replace('\\', '/', $filePath->last_version_url);
 
                 
                 $localPath = $tempDir . basename($resultUrl);
-                $ftp->download($resultUrl, $localPath);
-                
+                //$ftp->download($resultUrl, $localPath);
+                $baseUrl = config('organization.fss_config.baseUrl');
+                $url = $baseUrl . $resultUrl;
+                $pdfData = $this->pdfFetchService->getPdfAsBase64($url);
+                //$localPath = $tempDir . basename($pdfData['url']);
+                file_put_contents($localPath, base64_decode($pdfData['base64']));
 
                 $pageCount = $pdf->setSourceFile($localPath);
                 for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
@@ -861,7 +880,7 @@ class EmrController extends Controller
                 @unlink($localPath);
             }
 
-            $ftp->close();
+            //$ftp->close();
 
             // 👉 Output PDF trực tiếp ra bộ nhớ (string)
             $output = $pdf->Output('S'); // 'S' => return as string
