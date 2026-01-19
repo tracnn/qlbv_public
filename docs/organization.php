@@ -108,6 +108,6 @@ return [
         'scan_sleep_interval' => 300, // Thời gian sleep giữa các lần quét (giây)
     ],
     'fss_config' => [
-        'baseUrl' => 'http://14.160.70.2:1435',
+        'baseUrl' => 'http://10.0.0.27:1435',
     ],
 ];
