@@ -68,7 +68,7 @@ class HISProKetThucDieuTri extends Command
         ->where('in_time', '<=', $to_date)
         ->whereNull('his_treatment.is_pause')
         ->where('his_treatment.tdl_treatment_type_id', 1)
-        ->whereIn('his_treatment.tdl_patient_type_id',[43,62,142,102])
+        //->whereIn('his_treatment.tdl_patient_type_id',[43,62,142,102])
         ->groupBy('his_treatment.treatment_code')
         ->get();
 
