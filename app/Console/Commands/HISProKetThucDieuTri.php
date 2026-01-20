@@ -13,7 +13,7 @@ class HISProKetThucDieuTri extends Command
      *
      * @var string
      */
-    protected $signature = 'ketthucdieutri:day {date_from?} {date_to?} {{--yesterday}}';
+    protected $signature = 'ketthucdieutri:day {date_from?} {date_to?} {--yesterday} {--force}';
 
     /**
      * The console command description.
@@ -76,20 +76,26 @@ class HISProKetThucDieuTri extends Command
         $bar->start();
 
         foreach ($DanhSachHoSo as $key => $value) {
-            $test_bn = DB::connection('HISPro')
-            ->table('his_service_req')
-            ->where('his_service_req.is_delete', 0)
-            ->where('his_service_req.service_req_stt_id', '!=', 3)
-            ->whereNotIn('his_service_req.service_req_type_id', [6,11])
-            ->where('his_service_req.tdl_treatment_code', $value->treatment_code);
+            $shouldUpdate = false;
             
-
-            // $this->info($value->treatment_code);
-            // DB::connection('HISPro')
-            //     ->table('his_service_req')
-            //     ->where('tdl_treatment_code', $value->treatment_code)
-            //     ->update(['service_req_stt_id' => 3]);
-            if (!$test_bn->count()) {
+            if ($this->option('force')) {
+                // Nếu có option --force, bỏ qua kiểm tra y lệnh
+                $shouldUpdate = true;
+            } else {
+                // Kiểm tra y lệnh như bình thường
+                $test_bn = DB::connection('HISPro')
+                ->table('his_service_req')
+                ->where('his_service_req.is_delete', 0)
+                ->where('his_service_req.service_req_stt_id', '!=', 3)
+                ->whereNotIn('his_service_req.service_req_type_id', [6,11])
+                ->where('his_service_req.tdl_treatment_code', $value->treatment_code);
+                
+                if (!$test_bn->count()) {
+                    $shouldUpdate = true;
+                }
+            }
+            
+            if ($shouldUpdate) {
                 $this->info($value->treatment_code);
                 $result = DB::connection('HISPro')
                 ->table('his_treatment')
