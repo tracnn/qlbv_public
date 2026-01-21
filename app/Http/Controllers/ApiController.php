@@ -10,6 +10,111 @@ use Illuminate\Support\Facades\Auth;
 class ApiController extends Controller
 {
     /**
+     * GET /api/dashboard/disease-by-ward
+     * Input:
+     * - maBenh: mã ICD cần lọc (ví dụ: I10, E11, J44...)
+     * - startDate, endDate: YYYYMMDDHHmmss
+     *
+     * Output: dữ liệu pie chart (name/y/count) nhóm theo phường/xã.
+     *
+     * Query tương đương:
+     * select TDL_PATIENT_COMMUNE_NAME, count(*)
+     * from his_treatment
+     * where in_time between :start and :end
+     *   and (icd_code like '%E11%' or icd_sub_code like '%E11%')
+     * group by TDL_PATIENT_COMMUNE_NAME;
+     */
+    public function getDiseaseByWardStats(Request $request)
+    {
+        try {
+            $request->validate([
+                'maBenh' => 'required|string|max:20',
+                'startDate' => 'required|string|regex:/^\d{8}$/',
+                'endDate' => 'required|string|regex:/^\d{8}$/',
+            ]);
+
+            $maTinh = config('organization.BHYT.ma_tinh');
+            if ($maTinh === '') {
+                throw new \InvalidArgumentException('maTinh không được rỗng');
+            }
+
+            $startDate = $request->input('startDate') . '000000';
+            $endDate = $request->input('endDate') . '235959';
+
+            if ($endDate < $startDate) {
+                throw new \InvalidArgumentException('endDate phải >= startDate');
+            }
+
+            $maBenh = trim((string) $request->input('maBenh'));
+            if ($maBenh === '') {
+                throw new \InvalidArgumentException('maBenh không được rỗng');
+            }
+
+            $current_date = $this->currentDate($startDate, $endDate);
+
+            $unknown = 'Không xác định';
+            $needle = '%' . mb_strtoupper($maBenh, 'UTF-8') . '%';
+
+            $rows = DB::connection('HISPro')
+                ->table('his_treatment as tm')
+                ->selectRaw('tm.tdl_patient_commune_name as commune_name, count(*) as so_luong')
+                ->where('tm.tdl_patient_province_code', $maTinh)
+                ->whereBetween('tm.in_time', [$current_date['from_date'], $current_date['to_date']])
+                ->where('tm.is_delete', 0)
+                ->where(function ($q) use ($needle) {
+                    $q->whereRaw('UPPER(tm.icd_code) LIKE ?', [$needle])
+                        ->orWhereRaw('UPPER(tm.icd_sub_code) LIKE ?', [$needle]);
+                })
+                ->groupBy('tm.tdl_patient_commune_name')
+                ->get();
+
+            $counts = [];
+            $unknown = 'Không xác định';
+
+            foreach ($rows as $row) {
+                $name = trim((string) ($row->commune_name ?? ''));
+                $name = $name !== '' ? $name : $unknown;
+                $counts[$name] = (int) ($row->so_luong ?? 0);
+            }
+
+            arsort($counts);
+            $total = array_sum($counts);
+
+            $items = [];
+            foreach ($counts as $wardName => $count) {
+                $items[] = [
+                    'label' => $wardName,
+                    'value' => (int) $count,
+                ];
+            }
+
+            return response()->json([
+                'success' => true,
+                'meta' => [
+                    'timestamp' => \Carbon\Carbon::now()->format('YmdHis'),
+                    'request_id' => uniqid('req_'),
+                    'organization' => config('organization.api.organization'),
+                ],
+                'summary' => [
+                    'ma_benh' => $maBenh,
+                    'total' => (int) $total,
+                    'period' => [
+                        'start_date' => $startDate,
+                        'end_date' => $endDate,
+                    ],
+                ],
+                'items' => $items,
+            ]);
+        } catch (\Exception $e) {
+            return $this->apiResponse(null, false, [
+                'code' => 'BAD_REQUEST',
+                'message' => 'Có lỗi xảy ra khi lấy dữ liệu thống kê bệnh theo phường/xã',
+                'details' => $e->getMessage(),
+            ], 400);
+        }
+    }
+
+    /**
      * Helper method để convert date format
      * Bắt buộc format: YYYYMMDDHHmmss
      */
