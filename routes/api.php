@@ -26,7 +26,7 @@ Route::middleware(['throttle:60,1', 'api.auth'])->group(function () {
     Route::get('/dashboard/inpatient-stats', 'ApiController@getInpatientStats');
     Route::get('/dashboard/outpatient-stats', 'ApiController@getOutpatientStats');
     Route::get('/dashboard/average-inpatient-days', 'ApiController@getAverageInpatientDays');
-    Route::post('/dashboard/disease-by-ward', 'ApiController@getDiseaseByWardStats');
+    Route::get('/dashboard/disease-by-ward', 'ApiController@getDiseaseByWardStats');
     
     // Detail Data APIs
     Route::get('/treatments', 'ApiController@getTreatments');
