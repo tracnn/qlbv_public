@@ -29,8 +29,8 @@ class ApiController extends Controller
         try {
             $request->validate([
                 'maBenh' => 'required|string|max:20',
-                'startDate' => 'required|string|regex:/^\d{8}$/',
-                'endDate' => 'required|string|regex:/^\d{8}$/',
+                'from' => 'required|string',
+                'to' => 'required|string',
             ]);
 
             $maTinh = config('organization.BHYT.ma_tinh');
@@ -38,12 +38,22 @@ class ApiController extends Controller
                 throw new \InvalidArgumentException('maTinh không được rỗng');
             }
 
-            $startDate = $request->input('startDate') . '000000';
-            $endDate = $request->input('endDate') . '235959';
-
-            if ($endDate < $startDate) {
-                throw new \InvalidArgumentException('endDate phải >= startDate');
+            //from and to co dang unix timestamp (milliseconds)
+            $from = $request->input('from');
+            $to = $request->input('to');
+            if ($from === '' || $to === '') {
+                throw new \InvalidArgumentException('from và to không được rỗng');
             }
+            if ($from < 0 || $to < 0) {
+                throw new \InvalidArgumentException('from và to phải là số dương');
+            }
+
+            // Chuyển từ milliseconds sang seconds
+            $fromSeconds = (int) ($from / 1000);
+            $toSeconds = (int) ($to / 1000);
+            
+            $startDate = date('YmdHis', $fromSeconds);
+            $endDate = date('YmdHis', $toSeconds);
 
             $maBenh = trim((string) $request->input('maBenh'));
             if ($maBenh === '') {
