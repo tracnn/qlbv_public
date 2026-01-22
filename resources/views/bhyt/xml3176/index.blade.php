@@ -170,7 +170,7 @@
                     d.date_type = $('#date_type').val();
                     d.treatment_code = $('#treatment_code').val();
                     d.xml_filter_status = $('#xml_filter_status').val();
-                    d.xml3176_xml_error_catalog = $('#xml3176_xml_error_catalog').val();
+                    d.xml3176_error_catalog = $('#xml3176_error_catalog').val();
                     d.hein_card_filter = $('#hein_card_filter').val();
                     d.payment_date_filter = $('#payment_date_filter').val();
                     d.treatment_type_fillter = $('#treatment_type_fillter').val();
