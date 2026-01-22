@@ -22,20 +22,20 @@ class Xml3176ErrorExport implements FromQuery, WithHeadings, ShouldAutoSize, Wit
     protected $toDate;
     protected $xml_filter_status;
     protected $date_type;
-    protected $xml3176_xml_error_catalog_id;
+    protected $xml3176_error_catalog_id;
     protected $payment_date_filter;
     protected $rowNumber = 0;
     protected $imported_by;
     protected $xml_submit_status;
 
     public function __construct($fromDate = null, $toDate = null, $xml_filter_status = null, 
-        $date_type, $xml3176_xml_error_catalog_id = null, $payment_date_filter = null, $imported_by = null, $xml_submit_status = null)
+        $date_type, $xml3176_error_catalog_id = null, $payment_date_filter = null, $imported_by = null, $xml_submit_status = null)
     {
         $this->fromDate = $fromDate;
         $this->toDate = $toDate;
         $this->xml_filter_status = $xml_filter_status;
         $this->date_type = $date_type;
-        $this->xml3176_xml_error_catalog_id = $xml3176_xml_error_catalog_id;
+        $this->xml3176_error_catalog_id = $xml3176_error_catalog_id;
         $this->payment_date_filter = $payment_date_filter;
         $this->imported_by = $imported_by;
         $this->xml_submit_status = $xml_submit_status;
@@ -53,7 +53,7 @@ class Xml3176ErrorExport implements FromQuery, WithHeadings, ShouldAutoSize, Wit
         $dateTo = $this->toDate;
         $xml_filter_status = $this->xml_filter_status;
         $date_type = $this->date_type;
-        $xml3176_xml_error_catalog_id = $this->xml3176_xml_error_catalog_id;
+        $xml3176_error_catalog_id = $this->xml3176_error_catalog_id;
         $payment_date_filter = $this->payment_date_filter;
         $imported_by = $this->imported_by;
         $xml_submit_status = $this->xml_submit_status;
@@ -125,8 +125,8 @@ class Xml3176ErrorExport implements FromQuery, WithHeadings, ShouldAutoSize, Wit
             $query->whereNull('xml3176_informations.submitted_at');
         }
 
-        if (!empty($xml3176_xml_error_catalog_id)) {
-            $query->where('xml3176_xml_error_catalogs.id', $xml3176_xml_error_catalog_id);
+        if (!empty($xml3176_error_catalog_id)) {
+            $query->where('xml3176_error_catalogs.id', $xml3176_error_catalog_id);
         }
 
         if ($payment_date_filter === 'has_payment_date') {

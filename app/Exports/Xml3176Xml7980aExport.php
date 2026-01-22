@@ -38,7 +38,7 @@ class Xml3176Xml7980aExport implements FromQuery, WithHeadings, ShouldAutoSize, 
 
         $xml_filter_status = $this->request->input('xml_filter_status');
         $date_type = $this->request->input('date_type');
-        $xml3176_xml_error_catalog_id = $this->request->input('xml3176_xml_error_catalog');
+        $xml3176_error_catalog_id = $this->request->input('xml3176_error_catalog');
         $payment_date_filter = $this->request->input('payment_date_filter');
         $xml_export_status = $this->request->input('xml_export_status');
         $xml_submit_status = $this->request->input('xml_submit_status');
@@ -282,9 +282,9 @@ class Xml3176Xml7980aExport implements FromQuery, WithHeadings, ShouldAutoSize, 
             $query->where('xml3176_xml1s.ngay_ttoan', '=', '');
         }
 
-        // Điều kiện lọc theo xml3176_xml_error_catalog_id
-        if ($xml3176_xml_error_catalog_id) {
-            $query->where('xml3176_xml1s.xml3176_xml_error_catalog_id', '=', $xml3176_xml_error_catalog_id);
+        // Điều kiện lọc theo xml3176_error_catalog_id
+        if ($xml3176_error_catalog_id) {
+            $query->where('xml3176_xml1s.xml3176_error_catalog_id', '=', $xml3176_error_catalog_id);
         }
 
         return $query;

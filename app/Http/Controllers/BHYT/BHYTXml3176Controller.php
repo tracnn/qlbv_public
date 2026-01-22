@@ -555,14 +555,14 @@ class BHYTXml3176Controller extends Controller
         $date_to = $request->input('date_to');
         $xml_filter_status = $request->input('xml_filter_status');
         $date_type = $request->input('date_type');
-        $xml3176_xml_error_catalog_id = $request->input('xml3176_xml_error_catalog');
+        $xml3176_error_catalog_id = $request->input('xml3176_error_catalog');
         $payment_date_filter = $request->input('payment_date_filter');
         $imported_by = $request->input('imported_by');
         $xml_submit_status = $request->input('xml_submit_status');
         
         $fileName = 'xml3176_error_data_' . Carbon::now()->format('YmdHis') . '.xlsx';
         return Excel::download(new Xml3176ErrorMultiSheetExport($date_from, $date_to, $xml_filter_status, 
-            $date_type, $xml3176_xml_error_catalog_id, $payment_date_filter, $imported_by, $xml_submit_status), $fileName);
+            $date_type, $xml3176_error_catalog_id, $payment_date_filter, $imported_by, $xml_submit_status), $fileName);
     }
 
     public function export7980aData(Request $request)
@@ -577,14 +577,14 @@ class BHYTXml3176Controller extends Controller
         $date_to = $request->input('date_to');
         $xml_filter_status = $request->input('xml_filter_status');
         $date_type = $request->input('date_type');
-        $xml3176_xml_error_catalog_id = $request->input('xml3176_xml_error_catalog');
+        $xml3176_error_catalog_id = $request->input('xml3176_error_catalog');
         $xml_export_status = $request->input('xml_export_status');
         $payment_date_filter = $request->input('payment_date_filter');
         $imported_by = $request->input('imported_by');
 
         $fileName = 'xml3176_xml_data_' . Carbon::now()->format('YmdHis') . '.xlsx';
         return Excel::download(new Xml3176XmlExport($date_from, $date_to, $xml_filter_status, 
-            $date_type, $xml3176_xml_error_catalog_id, $xml_export_status, $payment_date_filter, $imported_by), $fileName);
+            $date_type, $xml3176_error_catalog_id, $xml_export_status, $payment_date_filter, $imported_by), $fileName);
     }
 
     public function deleteXml($ma_lk)

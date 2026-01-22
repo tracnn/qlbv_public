@@ -338,7 +338,7 @@
             var endDate = dateRange.endDate.format('YYYY-MM-DD HH:mm:ss');
             var xml_filter_status = $('#xml_filter_status').val();
             var date_type = $('#date_type').val();
-            var xml3176_xml_error_catalog = $('#xml3176_xml_error_catalog').val();
+            var xml3176_error_catalog = $('#xml3176_error_catalog').val();
             var payment_date_filter = $('#payment_date_filter').val();
             var treatment_code = $('#treatment_code').val();
             var imported_by = $('#imported_by').val();
@@ -349,7 +349,7 @@
                 'date_to': endDate,
                 'xml_filter_status': xml_filter_status,
                 'date_type': date_type,
-                'xml3176_xml_error_catalog': xml3176_xml_error_catalog,
+                'xml3176_error_catalog': xml3176_error_catalog,
                 'payment_date_filter': payment_date_filter,
                 'treatment_code': treatment_code,
                 'imported_by': imported_by,
@@ -367,7 +367,7 @@
             var endDate = dateRange.endDate.format('YYYY-MM-DD HH:mm:ss');
             var xml_filter_status = $('#xml_filter_status').val();
             var date_type = $('#date_type').val();
-            var xml3176_xml_error_catalog = $('#xml3176_xml_error_catalog').val();
+            var xml3176_error_catalog = $('#xml3176_error_catalog').val();
             var payment_date_filter = $('#payment_date_filter').val();
             var imported_by = $('#imported_by').val();
             var xml_submit_status = $('#xml_submit_status').val();
@@ -378,7 +378,7 @@
                 'date_to': endDate,
                 'xml_filter_status': xml_filter_status,
                 'date_type': date_type,
-                'xml3176_xml_error_catalog': xml3176_xml_error_catalog,
+                'xml3176_error_catalog': xml3176_error_catalog,
                 'payment_date_filter': payment_date_filter,
                 'imported_by': imported_by,
                 'xml_submit_status': xml_submit_status
@@ -395,7 +395,7 @@
             var endDate = dateRange.endDate.format('YYYY-MM-DD HH:mm:ss');
             var xml_filter_status = $('#xml_filter_status').val();
             var date_type = $('#date_type').val();
-            var xml3176_xml_error_catalog = $('#xml3176_xml_error_catalog').val();
+            var xml3176_error_catalog = $('#xml3176_error_catalog').val();
             var xml_export_status = $('#xml_export_status').val();
             var payment_date_filter = $('#payment_date_filter').val();
             var imported_by = $('#imported_by').val();
@@ -406,7 +406,7 @@
                 'date_to': endDate,
                 'xml_filter_status': xml_filter_status,
                 'date_type': date_type,
-                'xml3176_xml_error_catalog': xml3176_xml_error_catalog,
+                'xml3176_error_catalog': xml3176_error_catalog,
                 'xml_export_status': xml_export_status,
                 'payment_date_filter': payment_date_filter,
                 'imported_by': imported_by,

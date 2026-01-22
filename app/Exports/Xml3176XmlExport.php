@@ -21,7 +21,7 @@ class Xml3176XmlExport implements FromQuery, WithHeadings, ShouldAutoSize, WithS
     protected $toDate;
     protected $xml_filter_status;
     protected $date_type;
-    protected $xml3176_xml_error_catalog_id;
+    protected $xml3176_error_catalog_id;
     protected $xml_export_status;
     protected $payment_date_filter;
     protected $rowNumber = 0;
@@ -29,13 +29,13 @@ class Xml3176XmlExport implements FromQuery, WithHeadings, ShouldAutoSize, WithS
     protected $xml_submit_status;
 
     public function __construct($fromDate = null, $toDate = null, $xml_filter_status = null, 
-        $date_type, $xml3176_xml_error_catalog_id = null, $xml_export_status = null, $payment_date_filter = null, $imported_by = null, $xml_submit_status = null)
+        $date_type, $xml3176_error_catalog_id = null, $xml_export_status = null, $payment_date_filter = null, $imported_by = null, $xml_submit_status = null)
     {
         $this->fromDate = $fromDate;
         $this->toDate = $toDate;
         $this->xml_filter_status = $xml_filter_status;
         $this->date_type = $date_type;
-        $this->xml3176_xml_error_catalog_id = $xml3176_xml_error_catalog_id;
+        $this->xml3176_error_catalog_id = $xml3176_error_catalog_id;
         $this->xml_export_status = $xml_export_status;
         $this->payment_date_filter = $payment_date_filter;
         $this->imported_by = $imported_by;
@@ -54,7 +54,7 @@ class Xml3176XmlExport implements FromQuery, WithHeadings, ShouldAutoSize, WithS
         $dateTo = $this->toDate;
         $xml_filter_status = $this->xml_filter_status;
         $date_type = $this->date_type;
-        $xml3176_xml_error_catalog_id = $this->xml3176_xml_error_catalog_id;
+        $xml3176_error_catalog_id = $this->xml3176_error_catalog_id;
         $xml_export_status = $this->xml_export_status;
         $payment_date_filter = $this->payment_date_filter;
         $imported_by = $this->imported_by;
