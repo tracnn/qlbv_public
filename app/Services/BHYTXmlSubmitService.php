@@ -17,7 +17,10 @@ class BHYTXmlSubmitService
 
     public function __construct(?BHYTLoginService $loginService = null)
     {
-        $this->httpClient = new Client();
+        $this->httpClient = new Client([
+            'timeout' => 30,         // 30 giây cho request timeout
+            'connect_timeout' => 5,  // 5 giây cho connection timeout
+        ]);
         $this->config = Config::get('organization.BHYT', []);
         $this->loginService = $loginService ?? new BHYTLoginService();
     }

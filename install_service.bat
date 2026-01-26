@@ -43,6 +43,14 @@ set LARAVEL_PATH=%~dp0
 %NSSM_PATH%\nssm install "QLBV CongDuLieuYTeDienBienXmlScan" %PHP_PATH% "%LARAVEL_PATH%artisan cong-du-lieu-y-te-dien-bien:scan"
 %NSSM_PATH%\nssm set "QLBV CongDuLieuYTeDienBienXmlScan" AppDirectory %LARAVEL_PATH%
 
+:: Tạo dịch vụ cho JobSubmitQd130Xml
+%NSSM_PATH%\nssm install "QLBV JobSubmitQd130Xml" %PHP_PATH% "%LARAVEL_PATH%artisan queue:work --queue=JobSubmitQd130Xml"
+%NSSM_PATH%\nssm set "QLBV JobSubmitQd130Xml" AppDirectory %LARAVEL_PATH%
+
+:: Tạo dịch vụ cho JobSubmitXml3176
+%NSSM_PATH%\nssm install "QLBV JobSubmitXml3176" %PHP_PATH% "%LARAVEL_PATH%artisan queue:work --queue=JobSubmitXml3176"
+%NSSM_PATH%\nssm set "QLBV JobSubmitXml3176" AppDirectory %LARAVEL_PATH%
+
 :: Khởi động tất cả các dịch vụ
 %NSSM_PATH%\nssm start "QLBV JobQd130Xml"
 %NSSM_PATH%\nssm start "QLBV JobXml3176"
@@ -52,5 +60,7 @@ set LARAVEL_PATH=%~dp0
 %NSSM_PATH%\nssm start "QLBV XMLImport3176"
 %NSSM_PATH%\nssm start "QLBV TrucDuLieuYTeXmlScan"
 %NSSM_PATH%\nssm start "QLBV CongDuLieuYTeDienBienXmlScan"
+%NSSM_PATH%\nssm start "QLBV JobSubmitQd130Xml"
+%NSSM_PATH%\nssm start "QLBV JobSubmitXml3176"
 
 echo Service install completed successfully.

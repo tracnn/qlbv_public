@@ -32,6 +32,8 @@ php artisan migrate --force
 %NSSM_PATH%\nssm stop "QLBV XMLImport3176"
 %NSSM_PATH%\nssm stop "QLBV TrucDuLieuYTeXmlScan"
 %NSSM_PATH%\nssm stop "QLBV CongDuLieuYTeDienBienXmlScan"
+%NSSM_PATH%\nssm stop "QLBV JobSubmitQd130Xml"
+%NSSM_PATH%\nssm stop "QLBV JobSubmitXml3176"
 
 :: Dọn dẹp cache
 echo Clearing cache...
@@ -63,6 +65,8 @@ echo Restarting services...
 %NSSM_PATH%\nssm start "QLBV XMLImport3176"
 %NSSM_PATH%\nssm start "QLBV TrucDuLieuYTeXmlScan"
 %NSSM_PATH%\nssm start "QLBV CongDuLieuYTeDienBienXmlScan"
+%NSSM_PATH%\nssm start "QLBV JobSubmitQd130Xml"
+%NSSM_PATH%\nssm start "QLBV JobSubmitXml3176"
 
 :: Đưa ứng dụng ra khỏi chế độ bảo trì
 echo Bringing the application out of maintenance mode...

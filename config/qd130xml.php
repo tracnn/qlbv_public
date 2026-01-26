@@ -25,6 +25,7 @@ return [
     'hein_card_temp_prefix_pattern' => '^TE1', //Khai báo phần đầu mã thẻ tạm
     'hein_card_temp_num_pattern' => '\d{10}$', //Khai báo phần mã BHXH của mã thẻ tạm
     'queue_name' => 'JobQd130Xml', //Job name sử dụng cho Qd130/4750 Xml
+    'submit_queue_name' => 'JobSubmitQd130Xml', //Job name riêng cho việc submit XML lên cổng BHXH (tránh blocking các job khác)
     'export_qd130_xml_enabled' => true, //Có xuất Xml theo Qd130 tự động không (Chỉ những hồ sơ không có lỗi critical mới xuất)
     'treatment_end_type_absconding' => [3], //Bổ sung loại ra viện là trốn viện để không kiểm tra giấy ra viện
     'hein_card_invalid' => [ //Bổ sung mã kiểm tra thẻ được coi là lỗi

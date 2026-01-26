@@ -26,6 +26,7 @@ use App\Jobs\CheckXml3176ErrorsJob;
 use App\Jobs\CheckCompleteXml3176RecordJob;
 use App\Jobs\jobKtTheBHYT;
 use App\Jobs\ExportXml3176Job;
+use App\Jobs\SubmitXml3176Job;
 
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage;
@@ -1682,13 +1683,15 @@ class Xml3176Service
             return false;
         }
 
-        // Gửi hồ sơ XML lên cổng BHXH
-        $this->submitXmlToBHYT($ma_lk, $xmlData, $macskcb);
+        // Gửi hồ sơ XML lên cổng BHXH (async qua queue riêng để không blocking)
+        SubmitXml3176Job::dispatch($ma_lk, $xmlData, $macskcb)
+            ->onQueue(config('xml3176.submit_queue_name', 'JobSubmitXml3176'));
     }
 
     /**
      * Gửi hồ sơ XML lên cổng BHXH
      *
+     * @deprecated Hàm này không còn được sử dụng. Submit XML giờ được xử lý qua SubmitXml3176Job
      * @param string $ma_lk Mã liên kết
      * @param string $xmlData Nội dung XML đã ký số
      * @param string $macskcb Mã cơ sở khám chữa bệnh

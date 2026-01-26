@@ -26,6 +26,7 @@ use App\Jobs\CheckQd130XmlErrorsJob;
 use App\Jobs\CheckCompleteQd130RecordJob;
 use App\Jobs\jobKtTheBHYT;
 use App\Jobs\ExportQd130XmlJob;
+use App\Jobs\SubmitQd130XmlJob;
 
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage;
@@ -1691,13 +1692,15 @@ class Qd130XmlService
             return false;
         }
 
-        // Gửi hồ sơ XML lên cổng BHXH
-        $this->submitXmlToBHYT($ma_lk, $xmlData, $macskcb);
+        // Gửi hồ sơ XML lên cổng BHXH (async qua queue riêng để không blocking)
+        SubmitQd130XmlJob::dispatch($ma_lk, $xmlData, $macskcb)
+            ->onQueue(config('qd130xml.submit_queue_name', 'JobSubmitQd130Xml'));
     }
 
     /**
      * Gửi hồ sơ XML lên cổng BHXH
      *
+     * @deprecated Hàm này không còn được sử dụng. Submit XML giờ được xử lý qua SubmitQd130XmlJob
      * @param string $ma_lk Mã liên kết
      * @param string $xmlData Nội dung XML đã ký số
      * @param string $macskcb Mã cơ sở khám chữa bệnh
