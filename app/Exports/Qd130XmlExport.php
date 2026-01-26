@@ -60,8 +60,6 @@ class Qd130XmlExport implements FromQuery, WithHeadings, ShouldAutoSize, WithSty
         $imported_by = $this->imported_by;
         $xml_submit_status = $this->xml_submit_status;
 
-        \Log::info('xml_submit_status: ' . $xml_submit_status);
-        
         // Convert date format from 'YYYY-MM-DD HH:mm:ss' to 'YYYYMMDDHHI' for specific fields
         $formattedDateFromForFields = Carbon::createFromFormat('Y-m-d H:i:s', $dateFrom)->format('YmdHi');
         $formattedDateToForFields = Carbon::createFromFormat('Y-m-d H:i:s', $dateTo)->format('YmdHi');
