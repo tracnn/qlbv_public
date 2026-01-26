@@ -123,6 +123,8 @@ class Xml3176ErrorExport implements FromQuery, WithHeadings, ShouldAutoSize, Wit
             $query->whereNotNull('xml3176_informations.submitted_at');
         } elseif ($xml_submit_status === 'not_submit') {
             $query->whereNull('xml3176_informations.submitted_at');
+        } elseif ($xml_submit_status === 'has_submit_error') {
+            $query->whereNotNull('xml3176_informations.submit_error');
         }
 
         if (!empty($xml3176_error_catalog_id)) {

@@ -117,6 +117,8 @@ class Xml3176XmlExport implements FromQuery, WithHeadings, ShouldAutoSize, WithS
             $query->whereNotNull('xml3176_informations.submitted_at');
         } elseif ($xml_submit_status === 'not_submit') {
             $query->whereNull('xml3176_informations.submitted_at');
+        } elseif ($xml_submit_status === 'has_submit_error') {
+            $query->whereNotNull('xml3176_informations.submit_error');
         }
 
         if ($payment_date_filter === 'has_payment_date') {

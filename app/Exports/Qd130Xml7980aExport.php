@@ -273,6 +273,8 @@ class Qd130Xml7980aExport implements FromQuery, WithHeadings, ShouldAutoSize, Wi
             $query->whereNotNull('qd130_xml1s.submitted_at');
         } elseif ($xml_submit_status === 'not_submit') {
             $query->whereNull('qd130_xml1s.submitted_at');
+        } elseif ($xml_submit_status === 'has_submit_error') {
+            $query->whereNotNull('qd130_xml1s.submit_error');
         }
 
         // Điều kiện lọc theo trạng thái thanh toán
