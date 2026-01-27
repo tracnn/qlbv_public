@@ -37,4 +37,21 @@ set NSSM_PATH=%~dp0
 %NSSM_PATH%\nssm stop "QLBV CongDuLieuYTeDienBienXmlScan"
 %NSSM_PATH%\nssm remove "QLBV CongDuLieuYTeDienBienXmlScan" confirm
 
+:: Xóa dịch vụ cho JobSubmitQd130Xml
+%NSSM_PATH%\nssm stop "QLBV JobSubmitQd130Xml"
+%NSSM_PATH%\nssm remove "QLBV JobSubmitQd130Xml" confirm
+
+:: Xóa dịch vụ cho JobSubmitXml3176
+%NSSM_PATH%\nssm stop "QLBV JobSubmitXml3176"
+%NSSM_PATH%\nssm remove "QLBV JobSubmitXml3176" confirm
+
+:: Xóa dịch vụ cho JobExportQd130Xml
+%NSSM_PATH%\nssm stop "QLBV JobExportQd130Xml"
+%NSSM_PATH%\nssm remove "QLBV JobExportQd130Xml" confirm
+
+:: Xóa dịch vụ cho JobExportXml3176
+%NSSM_PATH%\nssm stop "QLBV JobExportXml3176"
+%NSSM_PATH%\nssm remove "QLBV JobExportXml3176" confirm
+
+
 echo Services uninstall completed successfully.

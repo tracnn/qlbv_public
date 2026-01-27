@@ -24,7 +24,8 @@ return [
     'hein_card_temp_pattern' => '/^TE1xx\d{10}$/', //Mẫu mã thẻ tạm "xx" được thay bằng mã tỉnh cư trú trong hàm check
     'hein_card_temp_prefix_pattern' => '^TE1', //Khai báo phần đầu mã thẻ tạm
     'hein_card_temp_num_pattern' => '\d{10}$', //Khai báo phần mã BHXH của mã thẻ tạm
-    'queue_name' => 'JobXml3176', //Job name sử dụng cho Xml3176
+    'queue_name' => 'JobXml3176', //Job name chung cho các job 3176 (check lỗi, complete, v.v.)
+    'export_queue_name' => 'JobExportXml3176', //Job name riêng cho việc export XML 3176
     'submit_queue_name' => 'JobSubmitXml3176', //Job name riêng cho việc submit XML 3176 lên cổng BHXH (tránh blocking các job khác)
     'export_xml3176_enabled' => true, //Có xuất Xml theo 3176 tự động không (Chỉ những hồ sơ không có lỗi critical mới xuất)
     'treatment_end_type_absconding' => [3], //Bổ sung loại ra viện là trốn viện để không kiểm tra giấy ra viện

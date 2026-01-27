@@ -1627,7 +1627,7 @@ class Xml3176Service
     public function exportXml3176($ma_lk)
     {
         ExportXml3176Job::dispatch($ma_lk)
-        ->onQueue($this->queueName);
+            ->onQueue(config('xml3176.export_queue_name', $this->queueName));
     }
 
     public function processExportXml($ma_lk)

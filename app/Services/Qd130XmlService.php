@@ -1636,7 +1636,7 @@ class Qd130XmlService
     public function exportQd130Xml($ma_lk)
     {
         ExportQd130XmlJob::dispatch($ma_lk)
-        ->onQueue($this->queueName);
+            ->onQueue(config('qd130xml.export_queue_name', $this->queueName));
     }
 
     public function processExportXml($ma_lk)
