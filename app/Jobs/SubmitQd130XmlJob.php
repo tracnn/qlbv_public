@@ -8,6 +8,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 use App\Services\BHYTXmlSubmitService;
 use App\Services\Qd130XmlService;
@@ -17,7 +18,7 @@ class SubmitQd130XmlJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     protected $ma_lk;
-    protected $xmlData;
+    protected $xmlFilePath;
     protected $macskcb;
 
     /**
@@ -38,14 +39,14 @@ class SubmitQd130XmlJob implements ShouldQueue
      * Create a new job instance.
      *
      * @param string $ma_lk Mã liên kết
-     * @param string $xmlData Nội dung XML đã ký số
+     * @param string $xmlFilePath Đường dẫn file XML đã ký số trên disk exportXml130
      * @param string $macskcb Mã cơ sở khám chữa bệnh
      * @return void
      */
-    public function __construct($ma_lk, $xmlData, $macskcb)
+    public function __construct($ma_lk, $xmlFilePath, $macskcb)
     {
         $this->ma_lk = $ma_lk;
-        $this->xmlData = $xmlData;
+        $this->xmlFilePath = $xmlFilePath;
         $this->macskcb = $macskcb;
     }
 
@@ -64,9 +65,12 @@ class SubmitQd130XmlJob implements ShouldQueue
         }
 
         try {
+            // Đọc nội dung XML từ file đã được lưu trước đó
+            $xmlData = Storage::disk('exportXml130')->get($this->xmlFilePath);
+
             // Gửi XML lên cổng BHXH
             $result = $xmlSubmitService->submitXml(
-                $this->xmlData,
+                $xmlData,
                 config('organization.BHYT.submit_xml_url'),
                 config('organization.BHYT.loai_ho_so_4750'),
                 config('organization.BHYT.ma_tinh'),

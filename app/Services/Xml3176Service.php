@@ -1684,7 +1684,8 @@ class Xml3176Service
         }
 
         // Gửi hồ sơ XML lên cổng BHXH (async qua queue riêng để không blocking)
-        SubmitXml3176Job::dispatch($ma_lk, $xmlData, $macskcb)
+        // Chỉ truyền đường dẫn file để tránh payload job quá lớn
+        SubmitXml3176Job::dispatch($ma_lk, $filePath, $macskcb)
             ->onQueue(config('xml3176.submit_queue_name', 'JobSubmitXml3176'));
     }
 

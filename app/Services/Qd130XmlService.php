@@ -1693,7 +1693,8 @@ class Qd130XmlService
         }
 
         // Gửi hồ sơ XML lên cổng BHXH (async qua queue riêng để không blocking)
-        SubmitQd130XmlJob::dispatch($ma_lk, $xmlData, $macskcb)
+        // Chỉ truyền đường dẫn file để tránh payload job quá lớn gây lỗi MySQL (max_allowed_packet)
+        SubmitQd130XmlJob::dispatch($ma_lk, $filePath, $macskcb)
             ->onQueue(config('qd130xml.submit_queue_name', 'JobSubmitQd130Xml'));
     }
 
