@@ -1,8 +1,13 @@
+# 30/01/2026
+- Update tối ưu tốc độ xử lý export XML, submit XML lên BHXH, ký số HSM
+- Update tự động đẩy hồ sơ XML3176 từ hệ thống export tiền giám định sang module gửi lên cổng dữ liệu Sở y tế Hà Nội
+
 # 20/01/2026
 - Cập nhật bổ sung XML3176 - Tương đương với các chức năng của XML4750 hiện có
 
 # 17/01/2026
 - Cập nhật, bổ sung chức năng gửi XML4750 lên cổng dữ liệu tỉnh Điện Biên
+- Cập nhật bổ sung chức năng gửi XML3176 lên cổng dữ liệu Sở y tế HN
 
 # 16/12/2025
 - Bổ sung chức năng gửi hồ sơ XML từ phần mềm tiền giám định

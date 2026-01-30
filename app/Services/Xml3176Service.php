@@ -21,6 +21,7 @@ use App\Models\BHYT\Xml3176ErrorResult;
 use App\Services\XmlStructures;
 use App\Services\XMLSignService;
 use App\Services\BHYTXmlSubmitService;
+use App\Services\FileCopyService;
 
 use App\Jobs\CheckXml3176ErrorsJob;
 use App\Jobs\CheckCompleteXml3176RecordJob;
@@ -1682,6 +1683,9 @@ class Xml3176Service
             \Log::error('Failed to write XML file: ' . $filePath);
             return false;
         }
+
+        // Copy file sang disk Trục dữ liệu Y Tế (nếu bật) để TrucDuLieuYTeXmlScan quét
+        app(FileCopyService::class)->copyExportXml3176ToTrucDuLieuYTe($filePath);
 
         // Gửi hồ sơ XML lên cổng BHXH (async qua queue riêng để không blocking)
         // Chỉ truyền đường dẫn file để tránh payload job quá lớn
