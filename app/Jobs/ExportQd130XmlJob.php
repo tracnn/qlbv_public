@@ -50,7 +50,7 @@ class ExportQd130XmlJob implements ShouldQueue
             return;
         }
 
-        if (config('organization.xml_4750_not_check')) {
+        if (config('organization.export_xml_not_check')) {
             $xmlService->processExportXml($this->ma_lk);
         } else {
             if (!$hasCriticalError) {
