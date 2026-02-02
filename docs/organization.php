@@ -50,6 +50,7 @@ return [
         'rate_limit' => 60,
         'organization' => '01013'
     ],
+    'export_xml_not_check' => true,
     'login_acs' => [
         'username' => 'tracnn',
         'password' => 'tracnn',
@@ -76,7 +77,6 @@ return [
             'partner_token' => '', // Partner Token format: Base64(Key):Base64(IV)
         ],
     ],
-    'export_xml_not_check' => true,
     // Phien ban cap nhat 20260120.1
     'xml_3176_not_check' => true, //Không kiểm tra lỗi trước khi xuất xml
     'truc_du_lieu_y_te' => [
