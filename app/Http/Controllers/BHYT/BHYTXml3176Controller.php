@@ -259,6 +259,10 @@ class BHYTXml3176Controller extends Controller
                     $result = $result->whereHas('Xml3176Information', function ($query) {
                         $query->whereNull('submitted_at');
                     });
+                }  elseif ($xml_submit_status === 'has_submit_error') {
+                    $result = $result->whereHas('Xml3176Information', function ($query) {
+                        $query->whereNotNull('submit_error');
+                    });
                 }
 
                 // Apply filter based on imported_by
