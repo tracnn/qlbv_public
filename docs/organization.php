@@ -78,7 +78,7 @@ return [
         ],
     ],
     // Phien ban cap nhat 20260120.1
-    'xml_3176_not_check' => true, //Không kiểm tra lỗi trước khi xuất xml
+    'xml_3176_not_check' => false, //Không kiểm tra lỗi trước khi xuất xml
     'truc_du_lieu_y_te' => [
         'username' => '', // Tài khoản được Trục dữ liệu Y Tế cấp
         'password' => '', // Mật khẩu tương ứng
