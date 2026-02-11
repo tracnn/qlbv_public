@@ -773,7 +773,7 @@
                             <td style="overflow-wrap:break-word;word-break:break-word;padding:10px 10px 10px;font-family:'Cabin',sans-serif;" align="left">
 
                               <div style="color: #eff5e5; line-height: 100%; text-align: center; word-wrap: break-word;">
-                                <p style="line-height: 100%; font-size: 14px; text-align: left;"><span style="font-size: 18px; line-height: 18px; color: #3598db;"><strong>II. Thông tin xét nghiệm</strong></span></p>
+                                <p style="line-height: 100%; font-size: 14px; text-align: left;"><span style="font-size: 18px; line-height: 18px; color: #3598db;"><strong>II. Thông tin xét nghiệm: {{number_format($sum_xetnghiem)}}</strong></span></p>
                               </div>
                             </td>
                           </tr>
