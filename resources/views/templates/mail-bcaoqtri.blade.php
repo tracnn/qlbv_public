@@ -112,100 +112,6 @@
         <td style="word-break: break-word;border-collapse: collapse !important;vertical-align: top">
           <!--[if (mso)|(IE)]><table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td align="center" style="background-color: #f9f9f9;"><![endif]-->
 
-
-          <div class="u-row-container" style="padding: 0px;background-color: transparent">
-            <div class="u-row" style="Margin: 0 auto;min-width: 320px;max-width: 600px;overflow-wrap: break-word;word-wrap: break-word;word-break: break-word;background-color: #ffffff;">
-              <div style="border-collapse: collapse;display: table;width: 100%;background-color: transparent;">
-                <!--[if (mso)|(IE)]><table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding: 0px;background-color: transparent;" align="center"><table cellpadding="0" cellspacing="0" border="0" style="width:600px;"><tr style="background-color: #ffffff;"><![endif]-->
-
-                <!--[if (mso)|(IE)]><td align="center" width="179" style="width: 179px;padding: 0px;border-top: 0px solid transparent;border-left: 0px solid transparent;border-right: 0px solid transparent;border-bottom: 0px solid transparent;" valign="top"><![endif]-->
-                <div class="u-col u-col-29p83" style="max-width: 600px;min-width: 179px;display: table-cell;vertical-align: top;">
-                  <div style="width: 100% !important;">
-                    <!--[if (!mso)&(!IE)]><!-->
-                    <div style="padding: 0px;border-top: 0px solid transparent;border-left: 0px solid transparent;border-right: 0px solid transparent;border-bottom: 0px solid transparent;">
-                      <!--<![endif]-->
-
-                      <table style="font-family:'Cabin',sans-serif;" role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0">
-                        <tbody>
-                          <tr>
-                            <td style="overflow-wrap:break-word;word-break:break-word;padding:10px;font-family:'Cabin',sans-serif;" align="left">
-
-                              <table width="100%" cellpadding="0" cellspacing="0" border="0">
-                                <tr>
-                                  <td style="padding-right: 0px;padding-left: 0px;" align="center">
-
-                                    <img align="center" border="0" src="https://s3.amazonaws.com/unroll-images-production/projects%2F30799%2F1628122853203-logo.png" alt="Image" title="Image" style="outline: none;text-decoration: none;-ms-interpolation-mode: bicubic;clear: both;display: inline-block !important;border: none;height: auto;float: none;width: 100%;max-width: 159px;"
-                                      width="159" />
-
-                                  </td>
-                                </tr>
-                              </table>
-
-                            </td>
-                          </tr>
-                        </tbody>
-                      </table>
-
-                      <!--[if (!mso)&(!IE)]><!-->
-                    </div>
-                    <!--<![endif]-->
-                  </div>
-                </div>
-                <!--[if (mso)|(IE)]></td><![endif]-->
-                <!--[if (mso)|(IE)]><td align="center" width="421" style="width: 421px;padding: 0px;border-top: 0px solid transparent;border-left: 0px solid transparent;border-right: 0px solid transparent;border-bottom: 0px solid transparent;" valign="top"><![endif]-->
-                <div class="u-col u-col-70p17" style="max-width: 600px;min-width: 421px;display: table-cell;vertical-align: top;">
-                  <div style="width: 100% !important;">
-                    <!--[if (!mso)&(!IE)]><!-->
-                    <div style="padding: 0px;border-top: 0px solid transparent;border-left: 0px solid transparent;border-right: 0px solid transparent;border-bottom: 0px solid transparent;">
-                      <!--<![endif]-->
-
-                      <table style="font-family:'Cabin',sans-serif;" role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0">
-                        <tbody>
-                          <tr>
-                            <td style="overflow-wrap:break-word;word-break:break-word;padding:10px;font-family:'Cabin',sans-serif;" align="left">
-
-                              <div style="line-height: 140%; text-align: left; word-wrap: break-word;">
-                                <p style="font-size: 14px; line-height: 140%; text-align: center;"><span style="font-size: 20px; line-height: 28px; color: #236fa1;"><strong><span style="line-height: 28px; font-size: 20px;">Bộ N&ocirc;ng nghiệp &amp; Ph&aacute;t triển N&ocirc;ng th&ocirc;n</span></strong>
-                                  </span>
-                                </p>
-                                <p style="font-size: 14px; line-height: 140%; text-align: center;"><span style="font-size: 20px; line-height: 28px; color: #236fa1;"><strong><span style="line-height: 28px; font-size: 20px;">Bệnh viện Đa khoa N&ocirc;ng nghiệp</span></strong>
-                                  </span>
-                                </p>
-                                <p style="font-size: 14px; line-height: 140%; text-align: center;"><span style="color: #236fa1; font-size: 14px; line-height: 19.6px;"><strong><span style="font-size: 18px; line-height: 25.2px;">--------------------------</span></strong>
-                                  </span>
-                                </p>
-                                <p style="font-size: 14px; line-height: 140%; text-align: center;"><span style="text-decoration: underline; font-size: 14px; line-height: 19.6px; color: #236fa1;"><span style="font-size: 14px; line-height: 19.6px;"><em><span style="line-height: 19.6px; font-size: 14px;">Cơ sở I: Km13 + 500 Quốc lộ 1A - Ngọc Hồi - Thanh Trì - Hà Nội</span></em>
-                                  </span>
-                                  </span>
-                                </p>
-                                <p style="font-size: 14px; line-height: 140%; text-align: center;"><span style="text-decoration: underline; font-size: 14px; line-height: 19.6px; color: #236fa1;"><span style="font-size: 14px; line-height: 19.6px;"><em><span style="line-height: 19.6px; font-size: 14px;">Cơ sở II: 183 Đặng Tiến Đông (Ngõ 178 Thái Hà) - Đống Đa - Hà Nội</span></em>
-                                  </span>
-                                  </span>
-                                </p>
-                                <p style="font-size: 14px; line-height: 140%; text-align: center;"><span style="text-decoration: underline; font-size: 14px; line-height: 19.6px;"><span style="line-height: 19.6px; font-size: 14px;"><strong><span style="color: #e03e2d; line-height: 19.6px; text-decoration: underline; font-size: 14px;">Hotline: 096.778.1616</span></strong>
-                                  </span>
-                                  </span>
-                                </p>
-                              </div>
-
-                            </td>
-                          </tr>
-                        </tbody>
-                      </table>
-
-                      <!--[if (!mso)&(!IE)]><!-->
-                    </div>
-                    <!--<![endif]-->
-                  </div>
-                </div>
-                <!--[if (mso)|(IE)]></td><![endif]-->
-                <!--[if (mso)|(IE)]></tr></table></td></tr></table><![endif]-->
-              </div>
-            </div>
-          </div>
-
-
-          
           <div class="u-row-container" style="padding: 0px;background-color: transparent">
             <div class="u-row" style="Margin: 0 auto;min-width: 320px;max-width: 600px;overflow-wrap: break-word;word-wrap: break-word;word-break: break-word;background-color: #236fa1;;">
               <div style="border-collapse: collapse;display: table;width: 100%;background-color: transparent;">
@@ -224,7 +130,7 @@
                             <td style="overflow-wrap:break-word;word-break:break-word;padding:10px 10px 10px;font-family:'Cabin',sans-serif;" align="left">
 
                               <div style="color: #e5eaf5; line-height: 100%; text-align: center; word-wrap: break-word;">
-                                <p style="font-size: 14px; line-height: 100%;"><strong><span style="font-size: 20px; line-height: 20px;">Xin ch&agrave;o {{$nsd->name}}!!!</span></strong></p>
+                                <p style="font-size: 14px; line-height: 100%;"><strong><span style="font-size: 20px; line-height: 20px;">Xin ch&agrave;o {{$nsd->name}}</span></strong></p>
                                 <p style="font-size: 14px; line-height: 100%;"><span style="text-decoration: underline; font-size: 14px; line-height: 14px;"><span style="line-height: 16px; font-size: 16px;color: #00d0ff;">Báo cáo quản trị {{$title}}</span></span>
                                 </p>
                               </div>
@@ -255,7 +161,7 @@
                             <td style="overflow-wrap:break-word;word-break:break-word;padding:10px 10px 10px;font-family:'Cabin',sans-serif;" align="left">
 
                               <div style="color: #eff5e5; line-height: 100%; text-align: center; word-wrap: break-word;">
-                                <p style="line-height: 100%; font-size: 14px; text-align: left;"><span style="font-size: 18px; line-height: 18px; color: #3598db;"><strong>I. Doanh thu theo ngày: {{number_format($sum_sere_serv_doanhthu)}}</strong></span></p>
+                                <p style="line-height: 100%; font-size: 14px; text-align: left;"><span style="font-size: 18px; line-height: 18px; color: #3598db;"><strong>I. Tổng thu theo ngày: {{number_format($sum_sere_serv_doanhthu)}}</strong></span></p>
                               </div>
                             </td>
                           </tr>
@@ -282,48 +188,14 @@
                           @endif
                         </tbody>
                       </table>
-					  
-					  @if($sere_serv_doanhthu_kbyc)
+
                       <table style="font-family:'Cabin',sans-serif;" role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0">
                         <tbody>
                           <tr>
                             <td style="overflow-wrap:break-word;word-break:break-word;padding:10px 10px 10px;font-family:'Cabin',sans-serif;" align="left">
 
                               <div style="color: #eff5e5; line-height: 100%; text-align: center; word-wrap: break-word;">
-                                <p style="line-height: 100%; font-size: 14px; text-align: left;"><span style="font-size: 14px; line-height: 14px; color: #ff0000;"><strong>Trong đó: Trung tâm Khám bệnh theo yêu cầu: {{number_format($sere_serv_doanhthu_kbyc->sum('thanh_tien'))}}; Chiếm {{$sum_sere_serv_doanhthu ? number_format(($sere_serv_doanhthu_kbyc->sum('thanh_tien')/$sum_sere_serv_doanhthu)*100,2):'0'}}%</strong></span></p>
-                              </div>
-                            </td>
-                          </tr>
-                        </tbody>
-                      </table>
-					  
-                      <table style="font-family:'Cabin',sans-serif;background-color: #ffffff;" role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0">
-                        <tbody>
-                          <tr>
-                            <td align="center" style="white-space: nowrap;"><b>STT</b></td> 
-                            <td align="center" style="overflow-wrap:break-word;word-break:break-word;"><b>Nội dung</b></td>
-                            <td align="center"><b>Số tiền</b></td>
-                            <td align="center"><b>Tỷ lệ</b></td>
-                          </tr>
-                          @foreach($sere_serv_doanhthu_kbyc as $key => $value)
-                          <tr>
-                            <td align="center">{{$key+1}}</td>
-                            <td>{{$value->service_type_name}}</td>
-                            <td align="right" style="white-space: nowrap;padding: 5px">{{number_format($value->thanh_tien)}}</td>
-                            <td align="right" style="white-space: nowrap;padding: 5px">{{$sere_serv_doanhthu_kbyc->sum('thanh_tien') ? number_format(($value->thanh_tien/$sere_serv_doanhthu_kbyc->sum('thanh_tien'))*100,2):'0'}}%</td>
-                          </tr>
-                          @endforeach 
-                        </tbody>
-                      </table>
-					  @endif
-					  
-                      <table style="font-family:'Cabin',sans-serif;" role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0">
-                        <tbody>
-                          <tr>
-                            <td style="overflow-wrap:break-word;word-break:break-word;padding:10px 10px 10px;font-family:'Cabin',sans-serif;" align="left">
-
-                              <div style="color: #eff5e5; line-height: 100%; text-align: center; word-wrap: break-word;">
-                                <p style="line-height: 100%; font-size: 14px; text-align: left;"><span style="font-size: 16px; line-height: 16px; color: #c2e0f4;"><strong>I.1. Doanh thu kh&aacute;m theo đối tượng: {{number_format($sum_sere_serv_doanhthu_kham)}}</strong></span></p>
+                                <p style="line-height: 100%; font-size: 14px; text-align: left;"><span style="font-size: 16px; line-height: 16px; color: #c2e0f4;"><strong>I.1. Tổng thu kh&aacute;m theo đối tượng: {{number_format($sum_sere_serv_doanhthu_kham)}}</strong></span></p>
                               </div>
 
                             </td>
@@ -430,7 +302,7 @@
                             <td style="overflow-wrap:break-word;word-break:break-word;padding:10px 10px 10px;font-family:'Cabin',sans-serif;" align="left">
 
                               <div style="color: #eff5e5; line-height: 100%; text-align: center; word-wrap: break-word;">
-                                <p style="line-height: 100%; font-size: 14px; text-align: left;"><span style="font-size: 16px; line-height: 16px; color: #c2e0f4;"><strong>I.1. Thống kê bệnh truyền nhiễm: {{number_format($a91_thuongtin + $a91_thanhtri + $a91_khac + $b08_thuongtin + $b08_thanhtri + $b08_khac)}}</strong></span></p>
+                                <p style="line-height: 100%; font-size: 14px; text-align: left;"><span style="font-size: 16px; line-height: 16px; color: #c2e0f4;"><strong>I.1. Thống kê bệnh truyền nhiễm: {{number_format($a91 + $b08 + $covid)}}</strong></span></p>
                               </div>
 
                             </td>
@@ -438,32 +310,40 @@
                         </tbody>
                       </table>
 
-                      @if($a91_thuongtin || $a91_thanhtri || $a91_khac || $b08_thuongtin || $b08_thanhtri || $b08_khac)
+                      @if($a91 || $b08 || $covid || $b05)
                       <table style="font-family:'Cabin',sans-serif;background-color: #ffffff;" role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0">
                         <tbody>
                           <tr>
                             <td align="center"><b>Nội dung</b></td>
-                            <td align="center"><b>Thường Tín</b></td>
-                            <td align="center"><b>Thanh Trì</b></td>
-                            <td align="center"><b>Nơi khác</b></td>
                             <td align="center"><b>Tổng</b></td>
+                            <td align="center"><b>Tỷ lệ</b></td>
                           </tr>
-                          @if($a91_thuongtin || $a91_thanhtri || $a91_khac)
+                          @if($a91)
                           <tr>
                             <td>Sốt xuất huyết</td>
-                            <td align="right" style="white-space: nowrap;padding: 5px">{{$a91_thuongtin ? number_format($a91_thuongtin) : ''}}</td>
-                            <td align="right" style="white-space: nowrap;padding: 5px">{{$a91_thanhtri ? number_format($a91_thanhtri) : ''}}</td>
-                            <td align="right" style="white-space: nowrap;padding: 5px">{{$a91_khac ? number_format($a91_khac) : ''}}</td>
-                            <td align="right" style="white-space: nowrap;padding: 5px">{{number_format($a91_thuongtin + $a91_thanhtri + $a91_khac)}}</td>
+                            <td align="right" style="white-space: nowrap;padding: 5px">{{$a91 ? number_format($a91) : ''}}</td>
+                            <td align="right" style="white-space: nowrap;padding: 5px">{{$a91 ? number_format(($a91 / ($a91 + $b08 + $covid + $b05)) * 100, 2) : ''}}%</td>
                           </tr>
                           @endif
-                          @if($b08_thuongtin || $b08_thanhtri || $b08_khac)
+                          @if($b08)
                           <tr>
                             <td>Chân tay miệng</td>
-                            <td align="right" style="white-space: nowrap;padding: 5px">{{$b08_thuongtin ? number_format($b08_thuongtin) : ''}}</td>
-                            <td align="right" style="white-space: nowrap;padding: 5px">{{$b08_thanhtri ? number_format($b08_thanhtri) : ''}}</td>
-                            <td align="right" style="white-space: nowrap;padding: 5px">{{$b08_khac ? number_format($b08_khac) : ''}}</td>
-                            <td align="right" style="white-space: nowrap;padding: 5px">{{number_format($b08_thuongtin + $b08_thanhtri + $b08_khac)}}</td>
+                            <td align="right" style="white-space: nowrap;padding: 5px">{{$b08 ? number_format($b08) : ''}}</td>
+                            <td align="right" style="white-space: nowrap;padding: 5px">{{$b08 ? number_format(($b08 / ($a91 + $b08 + $covid + $b05)) * 100, 2) : ''}}%</td>
+                          </tr>
+                          @endif
+                          @if($covid)
+                          <tr>
+                            <td>Covid-19</td>
+                            <td align="right" style="white-space: nowrap;padding: 5px">{{$covid ? number_format($covid) : ''}}</td>
+                            <td align="right" style="white-space: nowrap;padding: 5px">{{$covid ? number_format(($covid / ($a91 + $b08 + $covid + $b05)) * 100, 2) : ''}}%</td>
+                          </tr>
+                          @endif
+                          @if($b05)
+                          <tr>
+                            <td>Bệnh sởi</td>
+                            <td align="right" style="white-space: nowrap;padding: 5px">{{$b05 ? number_format($b05) : ''}}</td>
+                            <td align="right" style="white-space: nowrap;padding: 5px">{{$b05 ? number_format(($b05 / ($a91 + $b08 + $covid + $b05)) * 100, 2) : ''}}%</td>
                           </tr>
                           @endif
                         </tbody>
@@ -472,13 +352,43 @@
                       <p><i>Không có thống kê...</i></p>
                       @endif
 
+                      @if(isset($emergency) && count($emergency))
+                      @php
+                        $emergency_total = count($emergency);
+                        $emergency_by_treatment_type = [];
+                        $emergency_by_pause = ['discharged' => 0, 'in_treatment' => 0];
+                        $emergency_by_result = [];
+                        $emergency_by_end_type = [];
+
+                        foreach ($emergency as $row) {
+                          $typeName = $row->treatment_type_name ?: 'Không xác định';
+                          $emergency_by_treatment_type[$typeName] = ($emergency_by_treatment_type[$typeName] ?? 0) + 1;
+
+                          if ($row->is_pause == 1) {
+                            $emergency_by_pause['discharged']++;
+                          } else {
+                            $emergency_by_pause['in_treatment']++;
+                          }
+
+                          $resultName = $row->treatment_result_name ?: 'Đang điều trị';
+                          $emergency_by_result[$resultName] = ($emergency_by_result[$resultName] ?? 0) + 1;
+
+                          $endTypeName = $row->treatment_end_type_name ?: 'Đang điều trị';
+                          $emergency_by_end_type[$endTypeName] = ($emergency_by_end_type[$endTypeName] ?? 0) + 1;
+                        }
+                      @endphp
+
                       <table style="font-family:'Cabin',sans-serif;" role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0">
                         <tbody>
                           <tr>
                             <td style="overflow-wrap:break-word;word-break:break-word;padding:10px 10px 10px;font-family:'Cabin',sans-serif;" align="left">
 
                               <div style="color: #eff5e5; line-height: 100%; text-align: center; word-wrap: break-word;">
-                                <p style="line-height: 100%; font-size: 14px; text-align: left;"><span style="font-size: 16px; line-height: 16px; color: #c2e0f4;"><strong>I.2. Thống kê tái khám theo phòng: {{number_format($sum_sere_serv_tai_kham)}}</strong></span></p>
+                                <p style="line-height: 100%; font-size: 14px; text-align: left;">
+                                  <span style="font-size: 16px; line-height: 16px; color: #c2e0f4;">
+                                    <strong>I.2. Thống kê bệnh nhân cấp cứu: {{number_format($emergency_total)}}</strong>
+                                  </span>
+                                </p>
                               </div>
 
                             </td>
@@ -486,27 +396,104 @@
                         </tbody>
                       </table>
 
-                      @if($sum_sere_serv_tai_kham)
+                      {{-- Theo diện điều trị --}}
                       <table style="font-family:'Cabin',sans-serif;background-color: #ffffff;" role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0">
                         <tbody>
                           <tr>
-                            <td align="center" style="white-space: nowrap;"><b>STT</b></td> 
-                            <td align="center"><b>Nội dung</b></td>
+                            <td colspan="4" style="padding:5px 5px 5px 5px;"><b>Theo diện điều trị</b></td>
+                          </tr>
+                          <tr>
+                            <td align="center" style="white-space: nowrap;"><b>STT</b></td>
+                            <td align="center"><b>Diện điều trị</b></td>
                             <td align="center"><b>Số lượng</b></td>
                             <td align="center"><b>Tỷ lệ</b></td>
                           </tr>
-                          @foreach($count_sere_serv_tai_kham as $key => $value)
+                          @php $i = 1; @endphp
+                          @foreach($emergency_by_treatment_type as $name => $count)
                           <tr>
-                            <td align="center">{{$key+1}}</td>
-                            <td>{{$value->execute_room_name}}</td>
-                            <td align="right" style="white-space: nowrap;padding: 5px">{{number_format($value->so_luong)}}</td>
-                            <td align="right" style="white-space: nowrap;padding: 5px">{{$sum_sere_serv_tai_kham ? number_format(($value->so_luong/$sum_sere_serv_tai_kham)*100,2):'0'}}%</td>
+                            <td align="center">{{$i++}}</td>
+                            <td>{{$name}}</td>
+                            <td align="right" style="white-space: nowrap;padding: 5px">{{number_format($count)}}</td>
+                            <td align="right" style="white-space: nowrap;padding: 5px">{{$emergency_total ? number_format(($count / $emergency_total) * 100, 2) : '0'}}%</td>
                           </tr>
-                          @endforeach 
+                          @endforeach
                         </tbody>
-                      </table>                      
-                      @else
-                      <p><i>Không có thống kê...</i></p>
+                      </table>
+
+                      {{-- Đã ra viện / Đang điều trị --}}
+                      <table style="font-family:'Cabin',sans-serif;background-color: #ffffff;margin-top:5px;" role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0">
+                        <tbody>
+                          <tr>
+                            <td colspan="4" style="padding:5px 5px 5px 5px;"><b>Tình trạng điều trị</b></td>
+                          </tr>
+                          <tr>
+                            <td align="center" style="white-space: nowrap;"><b>STT</b></td>
+                            <td align="center"><b>Trạng thái</b></td>
+                            <td align="center"><b>Số lượng</b></td>
+                            <td align="center"><b>Tỷ lệ</b></td>
+                          </tr>
+                          <tr>
+                            <td align="center">1</td>
+                            <td>Đã ra viện</td>
+                            <td align="right" style="white-space: nowrap;padding: 5px">{{number_format($emergency_by_pause['discharged'])}}</td>
+                            <td align="right" style="white-space: nowrap;padding: 5px">{{$emergency_total ? number_format(($emergency_by_pause['discharged'] / $emergency_total) * 100, 2) : '0'}}%</td>
+                          </tr>
+                          <tr>
+                            <td align="center">2</td>
+                            <td>Đang điều trị</td>
+                            <td align="right" style="white-space: nowrap;padding: 5px">{{number_format($emergency_by_pause['in_treatment'])}}</td>
+                            <td align="right" style="white-space: nowrap;padding: 5px">{{$emergency_total ? number_format(($emergency_by_pause['in_treatment'] / $emergency_total) * 100, 2) : '0'}}%</td>
+                          </tr>
+                        </tbody>
+                      </table>
+
+                      {{-- Theo kết quả điều trị --}}
+                      <table style="font-family:'Cabin',sans-serif;background-color: #ffffff;margin-top:5px;" role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0">
+                        <tbody>
+                          <tr>
+                            <td colspan="4" style="padding:5px 5px 5px 5px;"><b>Theo kết quả điều trị</b></td>
+                          </tr>
+                          <tr>
+                            <td align="center" style="white-space: nowrap;"><b>STT</b></td>
+                            <td align="center"><b>Kết quả điều trị</b></td>
+                            <td align="center"><b>Số lượng</b></td>
+                            <td align="center"><b>Tỷ lệ</b></td>
+                          </tr>
+                          @php $i = 1; @endphp
+                          @foreach($emergency_by_result as $name => $count)
+                          <tr>
+                            <td align="center">{{$i++}}</td>
+                            <td>{{$name}}</td>
+                            <td align="right" style="white-space: nowrap;padding: 5px">{{number_format($count)}}</td>
+                            <td align="right" style="white-space: nowrap;padding: 5px">{{$emergency_total ? number_format(($count / $emergency_total) * 100, 2) : '0'}}%</td>
+                          </tr>
+                          @endforeach
+                        </tbody>
+                      </table>
+
+                      {{-- Theo hình thức ra viện --}}
+                      <table style="font-family:'Cabin',sans-serif;background-color: #ffffff;margin-top:5px;" role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0">
+                        <tbody>
+                          <tr>
+                            <td colspan="4" style="padding:5px 5px 5px 5px;"><b>Theo hình thức ra viện</b></td>
+                          </tr>
+                          <tr>
+                            <td align="center" style="white-space: nowrap;"><b>STT</b></td>
+                            <td align="center"><b>Hình thức</b></td>
+                            <td align="center"><b>Số lượng</b></td>
+                            <td align="center"><b>Tỷ lệ</b></td>
+                          </tr>
+                          @php $i = 1; @endphp
+                          @foreach($emergency_by_end_type as $name => $count)
+                          <tr>
+                            <td align="center">{{$i++}}</td>
+                            <td>{{$name}}</td>
+                            <td align="right" style="white-space: nowrap;padding: 5px">{{number_format($count)}}</td>
+                            <td align="right" style="white-space: nowrap;padding: 5px">{{$emergency_total ? number_format(($count / $emergency_total) * 100, 2) : '0'}}%</td>
+                          </tr>
+                          @endforeach
+                        </tbody>
+                      </table>
                       @endif
 
                       <table style="font-family:'Cabin',sans-serif;" role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0">
@@ -792,19 +779,6 @@
                           </tr>
                         </tbody>
                       </table>
-                      <table style="font-family:'Cabin',sans-serif;" role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0">
-                        <tbody>
-                          <tr>
-                            <td style="overflow-wrap:break-word;word-break:break-word;padding:10px 10px 10px;font-family:'Cabin',sans-serif;" align="left">
-
-                              <div style="color: #eff5e5; line-height: 100%; text-align: center; word-wrap: break-word;">
-                                <p style="line-height: 100%; font-size: 14px; text-align: left;"><span style="font-size: 16px; line-height: 16px; color: #c2e0f4;"><strong>II.1. Xét nghiệm theo phòng: {{number_format($sum_xetnghiem)}}</strong></span></p>
-                              </div>
-
-                            </td>
-                          </tr>
-                        </tbody>
-                      </table>
                       <table style="font-family:'Cabin',sans-serif;background-color: #ffffff;" role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0">
                         <tbody>
                           <tr>
@@ -822,202 +796,7 @@
                           </tr>
                           @endforeach
                         </tbody>
-                      </table>        
-
-                      <table style="font-family:'Cabin',sans-serif;" role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0">
-                        <tbody>
-                          <tr>
-                            <td style="overflow-wrap:break-word;word-break:break-word;padding:10px 10px 10px;font-family:'Cabin',sans-serif;" align="left">
-
-                              <div style="color: #eff5e5; line-height: 100%; text-align: center; word-wrap: break-word;">
-                                <p style="line-height: 100%; font-size: 14px; text-align: left;"><span style="font-size: 16px; line-height: 16px; color: #c2e0f4;"><strong>II.2. Xét nghiệm sinh hóa: {{number_format($sum_xetnghiem_sh)}}</strong></span></p>
-                              </div>
-
-                            </td>
-                          </tr>
-                        </tbody>
-                      </table>
-                      <table style="font-family:'Cabin',sans-serif;background-color: #ffffff;" role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0">
-                        <tbody>
-                          <tr>
-                            <td align="center" style="white-space: nowrap;"><b>STT</b></td> 
-                            <td align="center"><b>Phòng thực hiện</b></td>
-                            <td align="center"><b>Số lượng</b></td>
-                            <td align="center"><b>Tỷ lệ</b></td>
-                          </tr>
-                          @foreach($count_xetnghiem_sh as $key => $value)
-                          <tr>
-                            <td align="center">{{$key+1}}</td>
-                            <td>{{$value->execute_room_name}}</td>
-                            <td align="right" style="white-space: nowrap;padding: 5px">{{number_format($value->so_luong)}}</td>
-                            <td align="right" style="white-space: nowrap;padding: 5px">{{$sum_xetnghiem_sh ? number_format(($value->so_luong/$sum_xetnghiem_sh)*100,2):'0'}}%</td>
-                          </tr>
-                          @endforeach
-                        </tbody>
-                      </table>    
-
-                      <table style="font-family:'Cabin',sans-serif;" role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0">
-                        <tbody>
-                          <tr>
-                            <td style="overflow-wrap:break-word;word-break:break-word;padding:10px 10px 10px;font-family:'Cabin',sans-serif;" align="left">
-
-                              <div style="color: #eff5e5; line-height: 100%; text-align: center; word-wrap: break-word;">
-                                <p style="line-height: 100%; font-size: 14px; text-align: left;"><span style="font-size: 16px; line-height: 16px; color: #c2e0f4;"><strong>II.3. Xét nghiệm huyết học: {{number_format($sum_xetnghiem_hh)}}</strong></span></p>
-                              </div>
-
-                            </td>
-                          </tr>
-                        </tbody>
-                      </table>
-                      <table style="font-family:'Cabin',sans-serif;background-color: #ffffff;" role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0">
-                        <tbody>
-                          <tr>
-                            <td align="center" style="white-space: nowrap;"><b>STT</b></td> 
-                            <td align="center"><b>Phòng thực hiện</b></td>
-                            <td align="center"><b>Số lượng</b></td>
-                            <td align="center"><b>Tỷ lệ</b></td>
-                          </tr>
-                          @foreach($count_xetnghiem_hh as $key => $value)
-                          <tr>
-                            <td align="center">{{$key+1}}</td>
-                            <td>{{$value->execute_room_name}}</td>
-                            <td align="right" style="white-space: nowrap;padding: 5px">{{number_format($value->so_luong)}}</td>
-                            <td align="right" style="white-space: nowrap;padding: 5px">{{$sum_xetnghiem_hh ? number_format(($value->so_luong/$sum_xetnghiem_hh)*100,2):'0'}}%</td>
-                          </tr>
-                          @endforeach
-                        </tbody>
-                      </table>   
-
-                      <table style="font-family:'Cabin',sans-serif;" role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0">
-                        <tbody>
-                          <tr>
-                            <td style="overflow-wrap:break-word;word-break:break-word;padding:10px 10px 10px;font-family:'Cabin',sans-serif;" align="left">
-
-                              <div style="color: #eff5e5; line-height: 100%; text-align: center; word-wrap: break-word;">
-                                <p style="line-height: 100%; font-size: 14px; text-align: left;"><span style="font-size: 16px; line-height: 16px; color: #c2e0f4;"><strong>II.4. Xét nghiệm yêu cầu: {{number_format($sum_xetnghiem_yc)}}</strong></span></p>
-                              </div>
-
-                            </td>
-                          </tr>
-                        </tbody>
-                      </table>
-                      <table style="font-family:'Cabin',sans-serif;background-color: #ffffff;" role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0">
-                        <tbody>
-                          <tr>
-                            <td align="center" style="white-space: nowrap;"><b>STT</b></td> 
-                            <td align="center"><b>Phòng thực hiện</b></td>
-                            <td align="center"><b>Số lượng</b></td>
-                            <td align="center"><b>Tỷ lệ</b></td>
-                          </tr>
-                          @foreach($count_xetnghiem_yc as $key => $value)
-                          <tr>
-                            <td align="center">{{$key+1}}</td>
-                            <td>{{$value->execute_room_name}}</td>
-                            <td align="right" style="white-space: nowrap;padding: 5px">{{number_format($value->so_luong)}}</td>
-                            <td align="right" style="white-space: nowrap;padding: 5px">{{$sum_xetnghiem_yc ? number_format(($value->so_luong/$sum_xetnghiem_yc)*100,2):'0'}}%</td>
-                          </tr>
-                          @endforeach
-                        </tbody>
-                      </table>   
-
-                      <table style="font-family:'Cabin',sans-serif;" role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0">
-                        <tbody>
-                          <tr>
-                            <td style="overflow-wrap:break-word;word-break:break-word;padding:10px 10px 10px;font-family:'Cabin',sans-serif;" align="left">
-
-                              <div style="color: #eff5e5; line-height: 100%; text-align: center; word-wrap: break-word;">
-                                <p style="line-height: 100%; font-size: 14px; text-align: left;"><span style="font-size: 16px; line-height: 16px; color: #c2e0f4;"><strong>II.5. Xét nghiệm khác: {{number_format($sum_xetnghiem_khac)}}</strong></span></p>
-                              </div>
-
-                            </td>
-                          </tr>
-                        </tbody>
-                      </table>
-                      <table style="font-family:'Cabin',sans-serif;background-color: #ffffff;" role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0">
-                        <tbody>
-                          <tr>
-                            <td align="center" style="white-space: nowrap;"><b>STT</b></td> 
-                            <td align="center"><b>Phòng thực hiện</b></td>
-                            <td align="center"><b>Số lượng</b></td>
-                            <td align="center"><b>Tỷ lệ</b></td>
-                          </tr>
-                          @foreach($count_xetnghiem_khac as $key => $value)
-                          <tr>
-                            <td align="center">{{$key+1}}</td>
-                            <td>{{$value->execute_room_name}}</td>
-                            <td align="right" style="white-space: nowrap;padding: 5px">{{number_format($value->so_luong)}}</td>
-                            <td align="right" style="white-space: nowrap;padding: 5px">{{$sum_xetnghiem_khac ? number_format(($value->so_luong/$sum_xetnghiem_khac)*100,2):'0'}}%</td>
-                          </tr>
-                          @endforeach
-                        </tbody>
-                      </table>   
-
-                      <table style="font-family:'Cabin',sans-serif;" role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0">
-                        <tbody>
-                          <tr>
-                            <td style="overflow-wrap:break-word;word-break:break-word;padding:10px 10px 10px;font-family:'Cabin',sans-serif;" align="left">
-
-                              <div style="color: #eff5e5; line-height: 100%; text-align: center; word-wrap: break-word;">
-                                <p style="line-height: 100%; font-size: 14px; text-align: left;"><span style="font-size: 16px; line-height: 16px; color: #c2e0f4;"><strong>II.6. Xét nghiệm Covid - 19 Ag Rapid Test: {{number_format($sum_xetnghiem_covid)}}</strong></span></p>
-                              </div>
-
-                            </td>
-                          </tr>
-                        </tbody>
-                      </table>
-                      <table style="font-family:'Cabin',sans-serif;background-color: #ffffff;" role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0">
-                        <tbody>
-                          <tr>
-                            <td align="center" style="white-space: nowrap;"><b>STT</b></td> 
-                            <td align="center"><b>Phòng thực hiện</b></td>
-                            <td align="center"><b>Số lượng</b></td>
-                            <td align="center"><b>Tỷ lệ</b></td>
-                          </tr>
-                          @foreach($count_xetnghiem_covid as $key => $value)
-                          <tr>
-                            <td align="center">{{$key+1}}</td>
-                            <td>{{$value->execute_room_name}}</td>
-                            <td align="right" style="white-space: nowrap;padding: 5px">{{number_format($value->so_luong)}}</td>
-                            <td align="right" style="white-space: nowrap;padding: 5px">{{$sum_xetnghiem_covid ? number_format(($value->so_luong/$sum_xetnghiem_covid)*100,2):'0'}}%</td>
-                          </tr>
-                          @endforeach
-                        </tbody>
-                      </table>   
-
-
-                      @if(isset($count_xetnghiem_adeno) && $count_xetnghiem_adeno->count())
-                      <table style="font-family:'Cabin',sans-serif;" role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0">
-                        <tbody>
-                          <tr>
-                            <td style="overflow-wrap:break-word;word-break:break-word;padding:10px 10px 10px;font-family:'Cabin',sans-serif;" align="left">
-
-                              <div style="color: #eff5e5; line-height: 100%; text-align: center; word-wrap: break-word;">
-                                <p style="line-height: 100%; font-size: 14px; text-align: left;"><span style="font-size: 16px; line-height: 16px; color: #c2e0f4;"><strong>II.7. Xét nghiệm Adeno Virus: {{isset($count_xetnghiem_adeno) ? number_format($count_xetnghiem_adeno->sum('so_luong')) : ''}}</strong>🚩🚩🚩</span></p>
-                              </div>
-
-                            </td>
-                          </tr>
-                        </tbody>
-                      </table>
-                      <table style="font-family:'Cabin',sans-serif;background-color: #ffffff;" role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0">
-                        <tbody>
-                          <tr>
-                            <td align="center" style="white-space: nowrap;"><b>STT</b></td> 
-                            <td align="center"><b>Phòng thực hiện</b></td>
-                            <td align="center"><b>Số lượng</b></td>
-                            <td align="center"><b>Tỷ lệ</b></td>
-                          </tr>
-                          @foreach($count_xetnghiem_adeno as $key => $value)
-                          <tr>
-                            <td align="center">{{$key+1}}</td>
-                            <td>{{$value->execute_room_name}}</td>
-                            <td align="right" style="white-space: nowrap;padding: 5px">{{number_format($value->so_luong)}}</td>
-                            <td align="right" style="white-space: nowrap;padding: 5px">{{count($count_xetnghiem_adeno) ? number_format(($value->so_luong/$count_xetnghiem_adeno->sum('so_luong')) * 100, 2):'0'}}%</td>
-                          </tr>
-                          @endforeach
-                        </tbody>
-                      </table>   
-                      @endif
+                      </table>             
 
                       <table style="font-family:'Cabin',sans-serif;" role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0">
                         <tbody>

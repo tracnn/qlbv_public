@@ -127,18 +127,6 @@ class HISProBaoCaoQuanTri extends Command
         ->get();
         $sum_sere_serv_doanhthu = $count_sere_serv_doanhthu->sum('thanh_tien');
 
-        $sere_serv_doanhthu_kbyc = DB::connection('HISPro')
-        ->table('his_sere_serv')
-        ->join('his_service_type', 'his_sere_serv.tdl_service_type_id', '=', 'his_service_type.id')
-        ->selectRaw('sum(amount) as so_luong,sum(amount*price) as thanh_tien,tdl_service_type_id,service_type_name')
-        ->where('tdl_intruction_time', '>=', $from_date)
-        ->where('tdl_intruction_time', '<=', $to_date)
-        ->where('his_sere_serv.is_delete', 0)
-		->where('his_sere_serv.tdl_request_department_id', 65)
-        ->groupBy('tdl_service_type_id','service_type_name')
-        ->orderBy('thanh_tien','desc')
-        ->get();
-
         $this->info('Doanh thu khám...');
         $count_sere_serv_doanhthu_kham = DB::connection('HISPro')
         ->table('his_sere_serv')
@@ -156,25 +144,9 @@ class HISProBaoCaoQuanTri extends Command
         ->get();
         $sum_sere_serv_doanhthu_kham = $count_sere_serv_doanhthu_kham->sum('thanh_tien');
 
-        $this->info('Dịch vụ tái khám...');
-        $count_sere_serv_tai_kham = DB::connection('HISPro')
-        ->table('his_sere_serv')
-        ->join('his_execute_room', 'his_sere_serv.tdl_execute_room_id', '=', 'his_execute_room.room_id')
-        ->selectRaw('sum(his_sere_serv.amount) as so_luong,sum(his_sere_serv.amount * his_sere_serv.price) as thanh_tien,his_execute_room.execute_room_name')
-        ->where('tdl_intruction_time', '>=', $from_date)
-        ->where('tdl_intruction_time', '<=', $to_date)
-        ->where('his_sere_serv.is_delete',0)
-        ->whereNull('his_sere_serv.is_no_execute')
-        ->where('tdl_service_req_type_id', config('__tech.service_req_type_kham'))
-        ->whereIn('his_sere_serv.tdl_execute_room_id', explode(',', config('__tech.phong_tai_kham')))
-        ->groupBy('his_execute_room.execute_room_name')
-        ->orderBy('so_luong','desc')
-        ->get();
-        $sum_sere_serv_tai_kham = $count_sere_serv_tai_kham->sum('so_luong');
-
         $this->info('Thống kê dịch bệnh...');
         /* Thống kê dịch bệnh */
-        $a91_thuongtin = DB::connection('HISPro')
+        $a91 = DB::connection('HISPro')
             ->table('his_treatment')
             ->where('in_time', '>=', $from_date)
             ->where('in_time', '<=', $to_date)
@@ -183,58 +155,25 @@ class HISProBaoCaoQuanTri extends Command
                 $q->where('his_treatment.icd_code', 'like', '%A91%')
                 ->orWhere('his_treatment.icd_code', 'like', '%A97%');
             })
-            ->where('his_treatment.tdl_patient_address', 'like', '%Thường Tín%')
             ->count();  
-        $a91_thanhtri = DB::connection('HISPro')
-            ->table('his_treatment')
-            ->where('in_time', '>=', $from_date)
-            ->where('in_time', '<=', $to_date)
-            ->where('his_treatment.is_delete', 0)
-            ->where( function ($q) {
-                $q->where('his_treatment.icd_code', 'like', '%A91%')
-                ->orWhere('his_treatment.icd_code', 'like', '%A97%');
-            })
-            ->where('his_treatment.tdl_patient_address', 'like', '%Thanh Trì%')
-            ->count();  
-        $a91_khac = DB::connection('HISPro')
-            ->table('his_treatment')
-            ->where('in_time', '>=', $from_date)
-            ->where('in_time', '<=', $to_date)
-            ->where('his_treatment.is_delete', 0)
-            ->where( function ($q) {
-                $q->where('his_treatment.icd_code', 'like', '%A91%')
-                ->orWhere('his_treatment.icd_code', 'like', '%A97%');
-            })
-            ->where('his_treatment.tdl_patient_address', 'not like', '%Thanh Trì%')
-            ->where('his_treatment.tdl_patient_address', 'not like', '%Thường Tín%')
-            ->count();
-        $b08_thuongtin = DB::connection('HISPro')
+
+        $b08 = DB::connection('HISPro')
             ->table('his_treatment')
             ->where('in_time', '>=', $from_date)
             ->where('in_time', '<=', $to_date)
             ->where('his_treatment.is_delete', 0)
             ->where('his_treatment.icd_code', 'like', '%B08%')
-            ->where('his_treatment.tdl_patient_address', 'like', '%Thường Tín%')
             ->count();     
-        $b08_thanhtri = DB::connection('HISPro')
+
+        $b05 = DB::connection('HISPro')
             ->table('his_treatment')
             ->where('in_time', '>=', $from_date)
             ->where('in_time', '<=', $to_date)
             ->where('his_treatment.is_delete', 0)
-            ->where('his_treatment.icd_code', 'like', '%B08%')
-            ->where('his_treatment.tdl_patient_address', 'like', '%Thanh Trì%')
-            ->count(); 
-        $b08_khac = DB::connection('HISPro')
-            ->table('his_treatment')
-            ->where('in_time', '>=', $from_date)
-            ->where('in_time', '<=', $to_date)
-            ->where('his_treatment.is_delete', 0)
-            ->where('his_treatment.icd_code', 'like', '%B08%')
-            ->where('his_treatment.tdl_patient_address', 'not like', '%Thường Tín%')
-            ->where('his_treatment.tdl_patient_address', 'not like', '%Thanh Trì%')
-            ->count();
+            ->where('his_treatment.icd_code', 'like', '%B05%')
+            ->count();  
 
-        $covid_thuongtin = DB::connection('HISPro')
+        $covid = DB::connection('HISPro')
         ->table('his_treatment')
         ->where('in_time', '>=', $from_date)
         ->where('in_time', '<=', $to_date)
@@ -255,60 +194,30 @@ class HISProBaoCaoQuanTri extends Command
             ->orWhere('his_treatment.icd_sub_code', 'like', '%U11.9%')
             ->orWhere('his_treatment.icd_sub_code', 'like', '%U12.9%');
         })
-        ->where('his_treatment.tdl_patient_address', 'like', '%Thường Tín%')
-        ->count();
-
-        $covid_thanhtri = DB::connection('HISPro')
-        ->table('his_treatment')
-        ->where('in_time', '>=', $from_date)
-        ->where('in_time', '<=', $to_date)
-        ->where('his_treatment.is_delete', 0)
-        ->where( function ($q) {
-            $q->where('his_treatment.icd_code', 'like', '%U07.1%')
-            ->orWhere('his_treatment.icd_code', 'like', '%U07.2%')
-            ->orWhere('his_treatment.icd_code', 'like', '%U08.9%')
-            ->orWhere('his_treatment.icd_code', 'like', '%U09.9%')
-            ->orWhere('his_treatment.icd_code', 'like', '%U10.9%')
-            ->orWhere('his_treatment.icd_code', 'like', '%U11.9%')
-            ->orWhere('his_treatment.icd_code', 'like', '%U12.9%')
-            ->orWhere('his_treatment.icd_sub_code', 'like', '%U07.1%')
-            ->orWhere('his_treatment.icd_sub_code', 'like', '%U07.2%')
-            ->orWhere('his_treatment.icd_sub_code', 'like', '%U08.9%')
-            ->orWhere('his_treatment.icd_sub_code', 'like', '%U09.9%')
-            ->orWhere('his_treatment.icd_sub_code', 'like', '%U10.9%')
-            ->orWhere('his_treatment.icd_sub_code', 'like', '%U11.9%')
-            ->orWhere('his_treatment.icd_sub_code', 'like', '%U12.9%');
-        })
-        ->where('his_treatment.tdl_patient_address', 'like', '%Thanh Trì%')
-        ->count();
-
-        $covid_khac = DB::connection('HISPro')
-        ->table('his_treatment')
-        ->where('in_time', '>=', $from_date)
-        ->where('in_time', '<=', $to_date)
-        ->where('his_treatment.is_delete', 0)
-        ->where( function ($q) {
-            $q->where('his_treatment.icd_code', 'like', '%U07.1%')
-            ->orWhere('his_treatment.icd_code', 'like', '%U07.2%')
-            ->orWhere('his_treatment.icd_code', 'like', '%U08.9%')
-            ->orWhere('his_treatment.icd_code', 'like', '%U09.9%')
-            ->orWhere('his_treatment.icd_code', 'like', '%U10.9%')
-            ->orWhere('his_treatment.icd_code', 'like', '%U11.9%')
-            ->orWhere('his_treatment.icd_code', 'like', '%U12.9%')
-            ->orWhere('his_treatment.icd_sub_code', 'like', '%U07.1%')
-            ->orWhere('his_treatment.icd_sub_code', 'like', '%U07.2%')
-            ->orWhere('his_treatment.icd_sub_code', 'like', '%U08.9%')
-            ->orWhere('his_treatment.icd_sub_code', 'like', '%U09.9%')
-            ->orWhere('his_treatment.icd_sub_code', 'like', '%U10.9%')
-            ->orWhere('his_treatment.icd_sub_code', 'like', '%U11.9%')
-            ->orWhere('his_treatment.icd_sub_code', 'like', '%U12.9%');
-        })
-        ->where('his_treatment.tdl_patient_address', 'not like', '%Thường Tín%')
-        ->where('his_treatment.tdl_patient_address', 'not like', '%Thanh Trì%')
         ->count();
 
         //dd($covid_khac);
         /* End Thống kê dịch bệnh*/
+
+        $this->info('Thống kê bệnh nhân cấp cứu...');
+        // Thống kê bệnh nhân cấp cứu
+        $emergency = DB::connection('HISPro')
+            ->table('his_treatment')
+            ->join('his_treatment_type', 'his_treatment_type.id', '=', 'his_treatment.tdl_treatment_type_id')
+            ->leftJoin('his_treatment_result', 'his_treatment_result.id', '=', 'his_treatment.treatment_result_id')
+            ->leftJoin('his_treatment_end_type', 'his_treatment_end_type.id', '=', 'his_treatment.treatment_end_type_id')
+            ->select(
+                'his_treatment.is_pause',
+                'his_treatment_type.treatment_type_name',
+                'his_treatment_result.treatment_result_name',
+                'his_treatment_end_type.treatment_end_type_name'
+            )
+            ->where('his_treatment.in_time', '>=', $from_date)
+            ->where('his_treatment.in_time', '<=', $to_date)
+            ->where('his_treatment.is_emergency', 1)
+            ->where('his_treatment.is_delete', 0)
+            ->get();
+        // End Thống kê bệnh nhân cấp cứu
 
         $this->info('Thống kê hồ sơ điều trị...');
         $treatment_countbydate = DB::connection('HISPro')
@@ -504,93 +413,6 @@ class HISProBaoCaoQuanTri extends Command
             ->get();
         $sum_xetnghiem = $count_xetnghiem->sum('so_luong');
 
-        $count_xetnghiem_sh = DB::connection('HISPro')
-            ->table('his_sere_serv')
-            ->join('his_execute_room', 'his_sere_serv.tdl_execute_room_id', '=', 'his_execute_room.room_id')
-            ->selectRaw('sum(amount) as so_luong,his_execute_room.execute_room_name')
-            ->where('tdl_intruction_time', '>=', $from_date)
-            ->where('tdl_intruction_time', '<=', $to_date)
-            ->where('his_sere_serv.is_delete',0)
-            ->whereNull('his_sere_serv.is_no_execute')
-            ->whereIn('tdl_service_code', explode(',', getParam('service_req_type_xnsh')->param_value))
-            ->groupBy('his_execute_room.execute_room_name')
-            ->orderBy('so_luong','desc')
-            ->get();
-        $sum_xetnghiem_sh = $count_xetnghiem_sh->sum('so_luong');
-
-        $count_xetnghiem_hh = DB::connection('HISPro')
-            ->table('his_sere_serv')
-            ->join('his_execute_room', 'his_sere_serv.tdl_execute_room_id', '=', 'his_execute_room.room_id')
-            ->selectRaw('sum(amount) as so_luong,his_execute_room.execute_room_name')
-            ->where('tdl_intruction_time', '>=', $from_date)
-            ->where('tdl_intruction_time', '<=', $to_date)
-            ->where('his_sere_serv.is_delete',0)
-            ->whereNull('his_sere_serv.is_no_execute')
-            ->whereIn('tdl_service_code', explode(',', getParam('service_req_type_xnhh')->param_value))
-            ->groupBy('his_execute_room.execute_room_name')
-            ->orderBy('so_luong','desc')
-            ->get();
-        $sum_xetnghiem_hh = $count_xetnghiem_hh->sum('so_luong');
-
-        $count_xetnghiem_yc = DB::connection('HISPro')
-            ->table('his_sere_serv')
-            ->join('his_execute_room', 'his_sere_serv.tdl_execute_room_id', '=', 'his_execute_room.room_id')
-            ->selectRaw('sum(amount) as so_luong,his_execute_room.execute_room_name')
-            ->where('tdl_intruction_time', '>=', $from_date)
-            ->where('tdl_intruction_time', '<=', $to_date)
-            ->where('his_sere_serv.is_delete',0)
-            ->whereNull('his_sere_serv.is_no_execute')
-            ->whereIn('tdl_service_code', explode(',', getParam('service_req_type_xnyc')->param_value))
-            ->groupBy('his_execute_room.execute_room_name')
-            ->orderBy('so_luong','desc')
-            ->get();
-        $sum_xetnghiem_yc = $count_xetnghiem_yc->sum('so_luong');
-
-        $count_xetnghiem_khac = DB::connection('HISPro')
-            ->table('his_sere_serv')
-            ->join('his_execute_room', 'his_sere_serv.tdl_execute_room_id', '=', 'his_execute_room.room_id')
-            ->selectRaw('sum(amount) as so_luong,his_execute_room.execute_room_name')
-            ->where('tdl_intruction_time', '>=', $from_date)
-            ->where('tdl_intruction_time', '<=', $to_date)
-            ->where('his_sere_serv.is_delete',0)
-            ->whereNull('his_sere_serv.is_no_execute')
-            ->whereIn('tdl_service_code', explode(',', getParam('service_req_type_xnkhac')->param_value))
-            ->groupBy('his_execute_room.execute_room_name')
-            ->orderBy('so_luong','desc')
-            ->get();
-        $sum_xetnghiem_khac = $count_xetnghiem_khac->sum('so_luong');
-
-        $this->info('Thống kê dịch vụ xét nghiệm SAR-CoV-2...');
-
-        $count_xetnghiem_covid = DB::connection('HISPro')
-            ->table('his_sere_serv')
-            ->join('his_execute_room', 'his_sere_serv.tdl_execute_room_id', '=', 'his_execute_room.room_id')
-            ->selectRaw('sum(amount) as so_luong,his_execute_room.execute_room_name')
-            ->where('tdl_intruction_time', '>=', $from_date)
-            ->where('tdl_intruction_time', '<=', $to_date)
-            ->where('his_sere_serv.is_delete',0)
-            ->whereNull('his_sere_serv.is_no_execute')
-            ->whereIn('tdl_service_code', explode(',', getParam('service_req_type_covid')->param_value))
-            ->groupBy('his_execute_room.execute_room_name')
-            ->orderBy('so_luong','desc')
-            ->get();
-        $sum_xetnghiem_covid = $count_xetnghiem_covid->sum('so_luong');
-
-        $this->info('Thống kê dịch vụ Adeno...');
-
-        $count_xetnghiem_adeno = DB::connection('HISPro')
-            ->table('his_sere_serv')
-            ->join('his_execute_room', 'his_sere_serv.tdl_execute_room_id', '=', 'his_execute_room.room_id')
-            ->selectRaw('sum(amount) as so_luong,his_execute_room.execute_room_name')
-            ->where('tdl_intruction_time', '>=', $from_date)
-            ->where('tdl_intruction_time', '<=', $to_date)
-            ->where('his_sere_serv.is_delete',0)
-            ->whereNull('his_sere_serv.is_no_execute')
-            ->whereIn('tdl_service_code', ['VS035'])
-            ->groupBy('his_execute_room.execute_room_name')
-            ->orderBy('so_luong','desc')
-            ->get();
-
         $this->info('Thống kê dịch vụ CĐHA...');
 
         $count_cdha = DB::connection('HISPro')
@@ -680,12 +502,9 @@ class HISProBaoCaoQuanTri extends Command
                         'nsd' => $value,
                         'count_vaccin' => $count_vaccin,
                         'count_sere_serv_doanhthu' => $count_sere_serv_doanhthu,
-						'sere_serv_doanhthu_kbyc' => $sere_serv_doanhthu_kbyc,
                         'sum_sere_serv_doanhthu' => $sum_sere_serv_doanhthu,
                         'count_sere_serv_doanhthu_kham' => $count_sere_serv_doanhthu_kham,
                         'sum_sere_serv_doanhthu_kham' => $sum_sere_serv_doanhthu_kham,
-                        'count_sere_serv_tai_kham' => $count_sere_serv_tai_kham,
-                        'sum_sere_serv_tai_kham' => $sum_sere_serv_tai_kham,
                         'treatment_countbydate' => $treatment_countbydate,
                         'sum_treatment_countbydate' => $sum_treatment_countbydate,
                         'newpatient_countbydate' => $newpatient_countbydate,
@@ -693,12 +512,11 @@ class HISProBaoCaoQuanTri extends Command
                         'count_treatmentendtype' => $count_treatmentendtype,
                         'count_patienttype' => $count_patienttype,
                         'count_treatment_type' => $count_treatment_type,
-                        'a91_thuongtin' => $a91_thuongtin,
-                        'a91_thanhtri' => $a91_thanhtri,
-                        'a91_khac' => $a91_khac,
-                        'b08_thuongtin' => $b08_thuongtin,
-                        'b08_thanhtri' => $b08_thanhtri,
-                        'b08_khac' => $b08_khac,
+                        'a91' => $a91,
+                        'b08' => $b08,
+                        'b05' => $b05,
+                        'covid' => $covid,
+                        'emergency' => $emergency,
                         'count_noitru_department' => $count_noitru_department,
                         'sum_noitru' => $sum_noitru,
                         'count_noitru_bed_room' => $count_noitru_bed_room,
@@ -713,16 +531,6 @@ class HISProBaoCaoQuanTri extends Command
                         'sum_kham' => $sum_kham,
                         'count_kham_kotien' => $count_kham_kotien,
                         'sum_kham_kotien' => $sum_kham_kotien,
-                        'count_xetnghiem_sh' => $count_xetnghiem_sh,
-                        'sum_xetnghiem_sh' => $sum_xetnghiem_sh,
-                        'count_xetnghiem_hh' => $count_xetnghiem_hh,
-                        'sum_xetnghiem_hh' => $sum_xetnghiem_hh,
-                        'count_xetnghiem_yc' => $count_xetnghiem_yc,
-                        'sum_xetnghiem_yc' => $sum_xetnghiem_yc,
-                        'count_xetnghiem_khac' => $count_xetnghiem_khac,
-                        'sum_xetnghiem_khac' => $sum_xetnghiem_khac,
-                        'count_xetnghiem_covid' => $count_xetnghiem_covid,
-                        'sum_xetnghiem_covid' => $sum_xetnghiem_covid,
                         'count_xetnghiem' => $count_xetnghiem,
                         'sum_xetnghiem' => $sum_xetnghiem,
                         'count_cdha' => $count_cdha,
@@ -731,8 +539,7 @@ class HISProBaoCaoQuanTri extends Command
                         'sum_sa' => $sum_sa,
                         'count_ns' => $count_ns,
                         'count_dvkt_kotien' => $count_dvkt_kotien,
-                        'sum_dvkt_kotien' => $sum_dvkt_kotien,
-                        'count_xetnghiem_adeno' => $count_xetnghiem_adeno),
+                        'sum_dvkt_kotien' => $sum_dvkt_kotien),
                     function ($message) use ($title, $value) {        
                         $message->to($value->email);
                         $message->subject('Báo cáo quản trị: ' . $title . '; Ngày gửi: ' . date('d/m/Y H:i'));
