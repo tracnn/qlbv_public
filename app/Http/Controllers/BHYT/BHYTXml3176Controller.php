@@ -202,22 +202,47 @@ class BHYTXml3176Controller extends Controller
                         $query->select('ma_lk', 'error_code', 'ngay_yl', 'description');
                     }]);
                 }
+
                 
                 // Apply filter based on xml_filter_status
                 if ($xml_filter_status === 'has_error') {
                     $result = $result->where(function ($query) {
                         $query->whereHas('Xml3176ErrorResult')
-                              ->orWhereHas('check_hein_card', function ($subQuery) {
-                                  $subQuery->whereIn('ma_kiemtra', config('xml3176.hein_card_invalid.check_code', []))
-                                           ->orWhereIn('ma_tracuu', config('xml3176.hein_card_invalid.result_code', []));
-                              });
+                        ->orWhereHas('check_hein_card', function ($subQuery) {
+                            $subQuery->whereIn('ma_kiemtra', config('xml3176.hein_card_invalid.check_code', []))
+                                    ->orWhereIn('ma_tracuu', config('xml3176.hein_card_invalid.result_code', []));
+                        });
                     });
                 } elseif ($xml_filter_status === 'no_error') {
                     $result = $result->whereDoesntHave('Xml3176ErrorResult')
-                                     ->whereDoesntHave('check_hein_card', function ($subQuery) {
-                                         $subQuery->whereIn('ma_kiemtra', config('xml3176.hein_card_invalid.check_code', []))
-                                                  ->orWhereIn('ma_tracuu', config('xml3176.hein_card_invalid.result_code', []));
-                                     });
+                    ->whereDoesntHave('check_hein_card', function ($subQuery) {
+                        $subQuery->whereIn('ma_kiemtra', config('xml3176.hein_card_invalid.check_code', []))
+                                ->orWhereIn('ma_tracuu', config('xml3176.hein_card_invalid.result_code', []));
+                    });
+                } elseif ($xml_filter_status === 'has_error_critical') {
+                    $result = $result->whereHas('Xml3176ErrorResult', function ($query) {
+                        $query->where('critical_error', true);
+                    });
+                } elseif ($xml_filter_status === 'has_error_warning') {
+                    $result = $result->whereHas('Xml3176ErrorResult', function ($query) {
+                        $query->where('critical_error', false);
+                    })->whereDoesntHave('Xml3176ErrorResult', function ($query) {
+                        $query->where('critical_error', true);
+                    });
+                } elseif ($xml_filter_status === 'has_error_hein_card') {
+                    $result = $result->whereHas('check_hein_card', function ($query) {
+                        $query->whereIn('ma_kiemtra', config('xml3176.hein_card_invalid.check_code'))
+                              ->orWhereIn('ma_tracuu', config('xml3176.hein_card_invalid.result_code'));
+                    });
+                } elseif ($xml_filter_status === 'has_error_hein_card_without_xml') {
+                    $result = $result->whereHas('check_hein_card', function ($query) {
+                        $query->whereIn('ma_kiemtra', config('xml3176.hein_card_invalid.check_code'))
+                              ->orWhereIn('ma_tracuu', config('xml3176.hein_card_invalid.result_code'));
+                    })->whereDoesntHave('Xml3176ErrorResult');
+                } elseif ($xml_filter_status === 'no_error_critical') {
+                    $result = $result->whereDoesntHave('Xml3176ErrorResult', function ($query) {
+                        $query->where('critical_error', true);
+                    });
                 }
 
                 // Apply filter based on has_hein_card
