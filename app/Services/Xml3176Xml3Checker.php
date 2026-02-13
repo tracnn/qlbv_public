@@ -349,66 +349,16 @@ class Xml3176Xml3Checker
                 ]);
             } else {
                 $maMay = trim($data->ma_may);
-
-                // Regex 2 nhánh:
-                // - Nhánh 1: PREFIX.[12].YYYYY.Z
-                // - Nhánh 2: PREFIX.3[...].Z    (bỏ qua kiểm tra YYYYY)
-                $prefixCharset = 'A-ZĐÁÀẠÂẦẬẨẤẪÃẢĂẰẶẲẮẴÈÉẸÊỀỆỂẾỄẺÍÌỊĨỈÒÓỌÔỒỘỔỐỖÕỎƠỜỢỞỚỠÙÚỤƯỪỰỬỨỮŨỦÝỲỴỶỸ';
-                $pattern = '/^(?:'
-                         . '(?P<prefix12>['.$prefixCharset.']{2,3})\.(?P<n12>[12])\.(?P<facility>\d{5})\.(?P<z>.+)'
-                         . '|'
-                         . '(?P<prefix3>['.$prefixCharset.']{2,3})\.(?P<n3>3[^\.\r\n]*)\.(?P<z3>.+)'
-                         . ')$/u';
-
-                if (!preg_match($pattern, $maMay, $m)) {
-                    $errorCode = $this->generateErrorCode('INFO_ERROR_INVALID_MA_MAY_FORMAT');
+                // Kiểm tra tồn tại trong danh mục trang thiết bị theo MA_MAY đầy đủ
+                $existEquipment = EquipmentCatalog::where('ma_may', $maMay)->exists();
+                if (!$existEquipment) {
+                    $errorCode = $this->generateErrorCode('INFO_ERROR_MA_MAY_NOT_FOUND');
                     $errors->push((object)[
                         'error_code' => $errorCode,
-                        'error_name' => 'Mã máy không đúng định dạng',
+                        'error_name' => 'Mã máy không tồn tại trong danh mục trang thiết bị',
                         'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
-                        'description' => 'Mã máy không đúng định dạng: ' . $maMay
+                        'description' => 'Mã máy không tồn tại: ' . $maMay
                     ]);
-                } else {
-                    // Xác định n + facility (nếu có)
-                    $n = isset($m['n12']) ? $m['n12'] : (isset($m['n3']) ? $m['n3'] : null);
-                    $facility = isset($m['facility']) ? $m['facility'] : null;
-
-                    // Chỉ kiểm tra facility khi n = 1|2
-                    if ($n === '1' || $n === '2') {
-                        // Đảm bảo đúng 5 số (regex đã bắt buộc), kiểm tra thêm theo config
-                        if (!ctype_digit($facility) || strlen($facility) !== 5) {
-                            $errorCode = $this->generateErrorCode('INFO_ERROR_INVALID_YYYYY');
-                            $errors->push((object)[
-                                'error_code' => $errorCode,
-                                'error_name' => 'Mã cơ sở KBCB trong MA_MAY không hợp lệ',
-                                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
-                                'description' => 'Mã cơ sở KBCB trong MA_MAY không hợp lệ: ' . $facility
-                            ]);
-                        } else {
-                            $validFacilities = (array) config('organization.correct_facility_code', []);
-                            if (!in_array($facility, $validFacilities, true)) {
-                                $errorCode = $this->generateErrorCode('INFO_ERROR_INVALID_YYYYY_NOT_FOUND');
-                                $errors->push((object)[
-                                    'error_code' => $errorCode,
-                                    'error_name' => 'Mã cơ sở KBCB trong MA_MAY không đúng',
-                                    'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
-                                    'description' => 'Mã cơ sở KBCB trong MA_MAY: ' . $facility . ' không thuộc: ' . implode(',', $validFacilities)
-                                ]);
-                            }
-                        }
-                    }
-
-                    // Kiểm tra tồn tại trong danh mục trang thiết bị theo MA_MAY đầy đủ
-                    $existEquipment = EquipmentCatalog::where('ma_may', $maMay)->exists();
-                    if (!$existEquipment) {
-                        $errorCode = $this->generateErrorCode('INFO_ERROR_MA_MAY_NOT_FOUND');
-                        $errors->push((object)[
-                            'error_code' => $errorCode,
-                            'error_name' => 'Mã máy không tồn tại trong danh mục trang thiết bị',
-                            'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
-                            'description' => 'Mã máy không tồn tại: ' . $maMay
-                        ]);
-                    }
                 }
             }
         }
