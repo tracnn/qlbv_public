@@ -178,6 +178,7 @@
                     d.patient_code = $('#patient_code').val();
                     d.imported_by = $('#imported_by').val();
                     d.xml_submit_status = $('#xml_submit_status').val();
+                    d.xml_sign_status = $('#xml_sign_status').val();
                 },
                 beforeSend: function(xhr) {
                     currentAjaxRequest = xhr;
@@ -343,6 +344,8 @@
             var treatment_code = $('#treatment_code').val();
             var imported_by = $('#imported_by').val();
             var xml_submit_status = $('#xml_submit_status').val();
+            var xml_sign_status = $('#xml_sign_status').val();
+            
             // Tạo URL với các tham số query
             var href = '{{ route("bhyt.xml3176.export-7980a-data") }}?' + $.param({
                 'date_from': startDate,
@@ -353,7 +356,8 @@
                 'payment_date_filter': payment_date_filter,
                 'treatment_code': treatment_code,
                 'imported_by': imported_by,
-                'xml_submit_status': xml_submit_status
+                'xml_submit_status': xml_submit_status,
+                'xml_sign_status': xml_sign_status
             });
 
             // Chuyển hướng tới URL với các tham số
@@ -371,7 +375,7 @@
             var payment_date_filter = $('#payment_date_filter').val();
             var imported_by = $('#imported_by').val();
             var xml_submit_status = $('#xml_submit_status').val();
-            
+            var xml_sign_status = $('#xml_sign_status').val();
             // Tạo URL với các tham số query
             var href = '{{ route("bhyt.xml3176.export-xml3176-xml-errors") }}?' + $.param({
                 'date_from': startDate,
@@ -381,7 +385,8 @@
                 'xml3176_error_catalog': xml3176_error_catalog,
                 'payment_date_filter': payment_date_filter,
                 'imported_by': imported_by,
-                'xml_submit_status': xml_submit_status
+                'xml_submit_status': xml_submit_status,
+                'xml_sign_status': xml_sign_status
             });
 
             // Chuyển hướng tới URL với các tham số
@@ -400,6 +405,7 @@
             var payment_date_filter = $('#payment_date_filter').val();
             var imported_by = $('#imported_by').val();
             var xml_submit_status = $('#xml_submit_status').val();
+            var xml_sign_status = $('#xml_sign_status').val();
             // Tạo URL với các tham số query
             var href = '{{ route("bhyt.xml3176.export-xml3176-xml-xlsx") }}?' + $.param({
                 'date_from': startDate,
@@ -410,7 +416,8 @@
                 'xml_export_status': xml_export_status,
                 'payment_date_filter': payment_date_filter,
                 'imported_by': imported_by,
-                'xml_submit_status': xml_submit_status
+                'xml_submit_status': xml_submit_status,
+                'xml_sign_status': xml_sign_status
             });
 
             // Chuyển hướng tới URL với các tham số

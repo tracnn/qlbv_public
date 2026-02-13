@@ -27,9 +27,16 @@ class Xml3176XmlExport implements FromQuery, WithHeadings, ShouldAutoSize, WithS
     protected $rowNumber = 0;
     protected $imported_by;
     protected $xml_submit_status;
-
+    protected $xml_sign_status;
+    
     public function __construct($fromDate = null, $toDate = null, $xml_filter_status = null, 
-        $date_type, $xml3176_error_catalog_id = null, $xml_export_status = null, $payment_date_filter = null, $imported_by = null, $xml_submit_status = null)
+        $date_type, 
+        $xml3176_error_catalog_id = null, 
+        $xml_export_status = null, 
+        $payment_date_filter = null, 
+        $imported_by = null, 
+        $xml_submit_status = null, 
+        $xml_sign_status = null)
     {
         $this->fromDate = $fromDate;
         $this->toDate = $toDate;
@@ -40,6 +47,7 @@ class Xml3176XmlExport implements FromQuery, WithHeadings, ShouldAutoSize, WithS
         $this->payment_date_filter = $payment_date_filter;
         $this->imported_by = $imported_by;
         $this->xml_submit_status = $xml_submit_status;
+        $this->xml_sign_status = $xml_sign_status;
     }
 
     /**
@@ -59,6 +67,7 @@ class Xml3176XmlExport implements FromQuery, WithHeadings, ShouldAutoSize, WithS
         $payment_date_filter = $this->payment_date_filter;
         $imported_by = $this->imported_by;
         $xml_submit_status = $this->xml_submit_status;
+        $xml_sign_status = $this->xml_sign_status;
         // Convert date format from 'YYYY-MM-DD HH:mm:ss' to 'YYYYMMDDHHI' for specific fields
         $formattedDateFromForFields = Carbon::createFromFormat('Y-m-d H:i:s', $dateFrom)->format('YmdHi');
         $formattedDateToForFields = Carbon::createFromFormat('Y-m-d H:i:s', $dateTo)->format('YmdHi');
@@ -125,6 +134,15 @@ class Xml3176XmlExport implements FromQuery, WithHeadings, ShouldAutoSize, WithS
             $query->where('xml3176_xml1s.ngay_ttoan', '!=', '');
         } elseif ($payment_date_filter === 'no_payment_date') {
             $query->where('xml3176_xml1s.ngay_ttoan', '=', '');
+        }
+
+        // Apply filter based on xml_sign_status
+        if ($xml_sign_status === 'has_sign') {
+            $query->where('xml3176_informations.is_signed', true);
+        } elseif ($xml_sign_status === 'not_sign') {
+            $query->where('xml3176_informations.is_signed', false);
+        } elseif ($xml_sign_status === 'has_sign_error') {
+            $query->whereNotNull('xml3176_informations.signed_error');
         }
 
         // Apply filter based on imported_by

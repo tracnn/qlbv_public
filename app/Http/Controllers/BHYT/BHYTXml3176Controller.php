@@ -45,9 +45,9 @@ class BHYTXml3176Controller extends Controller
 
     public function fetchData(Request $request)
     {
-        if (!$request->ajax()) {
-            return redirect()->route('home');
-        }
+        // if (!$request->ajax()) {
+        //     return redirect()->route('home');
+        // }
         
         $treatment_code = $request->input('treatment_code');
         $patient_code = $request->input('patient_code');
@@ -61,6 +61,7 @@ class BHYTXml3176Controller extends Controller
         $treatment_type_fillter = $request->input('treatment_type_fillter');
         $xml_export_status = $request->input('xml_export_status');
         $xml_submit_status = $request->input('xml_submit_status');
+        $xml_sign_status = $request->input('xml_sign_status');
         $imported_by = $request->input('imported_by');
 
         $dateFrom = $request->input('date_from');
@@ -262,6 +263,21 @@ class BHYTXml3176Controller extends Controller
                 }  elseif ($xml_submit_status === 'has_submit_error') {
                     $result = $result->whereHas('Xml3176Information', function ($query) {
                         $query->whereNotNull('submit_error');
+                    });
+                }
+
+                //Apply filter based on xml_sign_status
+                if ($xml_sign_status === 'has_sign') {
+                    $result = $result->whereHas('Xml3176Information', function ($query) {
+                        $query->where('is_signed', true);
+                    });
+                } elseif ($xml_sign_status === 'not_sign') {
+                    $result = $result->whereHas('Xml3176Information', function ($query) {
+                        $query->where('is_signed', false);
+                    });
+                } elseif ($xml_sign_status === 'has_sign_error') {
+                    $result = $result->whereHas('Xml3176Information', function ($query) {
+                        $query->whereNotNull('signed_error');
                     });
                 }
 
@@ -563,10 +579,16 @@ class BHYTXml3176Controller extends Controller
         $payment_date_filter = $request->input('payment_date_filter');
         $imported_by = $request->input('imported_by');
         $xml_submit_status = $request->input('xml_submit_status');
-        
+        $xml_sign_status = $request->input('xml_sign_status');
+
         $fileName = 'xml3176_error_data_' . Carbon::now()->format('YmdHis') . '.xlsx';
         return Excel::download(new Xml3176ErrorMultiSheetExport($date_from, $date_to, $xml_filter_status, 
-            $date_type, $xml3176_error_catalog_id, $payment_date_filter, $imported_by, $xml_submit_status), $fileName);
+            $date_type, 
+            $xml3176_error_catalog_id, 
+            $payment_date_filter, 
+            $imported_by, 
+            $xml_submit_status, 
+            $xml_sign_status), $fileName);
     }
 
     public function export7980aData(Request $request)
@@ -586,10 +608,17 @@ class BHYTXml3176Controller extends Controller
         $payment_date_filter = $request->input('payment_date_filter');
         $imported_by = $request->input('imported_by');
         $xml_submit_status = $request->input('xml_submit_status');
+        $xml_sign_status = $request->input('xml_sign_status');
 
         $fileName = 'xml3176_xml_data_' . Carbon::now()->format('YmdHis') . '.xlsx';
         return Excel::download(new Xml3176XmlExport($date_from, $date_to, $xml_filter_status, 
-            $date_type, $xml3176_error_catalog_id, $xml_export_status, $payment_date_filter, $imported_by, $xml_submit_status), $fileName);
+            $date_type, 
+            $xml3176_error_catalog_id, 
+            $xml_export_status, 
+            $payment_date_filter, 
+            $imported_by, 
+            $xml_submit_status, 
+            $xml_sign_status), $fileName);
     }
 
     public function deleteXml($ma_lk)

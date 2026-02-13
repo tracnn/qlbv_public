@@ -7,6 +7,7 @@
                 @include('partials.patient_code')
                 @include('partials.imported_by')
                 @include('partials.xml_submit_status')
+                @include('partials.xml_sign_status')
                 @include('partials.export_xml3176_xml_error')
             </div>
         </div>

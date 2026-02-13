@@ -14,8 +14,18 @@ class Xml3176ErrorMultiSheetExport implements WithMultipleSheets
     protected $payment_date_filter;
     protected $imported_by;
     protected $xml_submit_status;
-    
-    public function __construct($fromDate, $toDate, $xml_filter_status, $date_type, $xml3176_error_catalog_id, $payment_date_filter, $imported_by, $xml_submit_status)
+    protected $xml_sign_status;
+
+    public function __construct(
+        $fromDate, 
+        $toDate, 
+        $xml_filter_status, 
+        $date_type, 
+        $xml3176_error_catalog_id, 
+        $payment_date_filter, 
+        $imported_by, 
+        $xml_submit_status, 
+        $xml_sign_status)
     {
         $this->fromDate = $fromDate;
         $this->toDate = $toDate;
@@ -25,12 +35,22 @@ class Xml3176ErrorMultiSheetExport implements WithMultipleSheets
         $this->payment_date_filter = $payment_date_filter;
         $this->imported_by = $imported_by;
         $this->xml_submit_status = $xml_submit_status;
+        $this->xml_sign_status = $xml_sign_status;
     }
 
     public function sheets(): array
     {
         return [
-            new Xml3176ErrorExport($this->fromDate, $this->toDate, $this->xml_filter_status, $this->date_type, $this->xml3176_error_catalog_id, $this->payment_date_filter, $this->imported_by, $this->xml_submit_status),
+            new Xml3176ErrorExport(
+                $this->fromDate, 
+                $this->toDate, 
+                $this->xml_filter_status, 
+                $this->date_type, 
+                $this->xml3176_error_catalog_id, 
+                $this->payment_date_filter, 
+                $this->imported_by, 
+                $this->xml_submit_status, 
+                $this->xml_sign_status),
             new HeinCardErrorExport($this->fromDate, $this->toDate),
         ];
     }
