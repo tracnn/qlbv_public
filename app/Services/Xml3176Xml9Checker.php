@@ -254,26 +254,6 @@ class Xml3176Xml9Checker
             }
         }
 
-        if (empty($data->mahuyen_cu_tru)) {
-            $errorCode = $this->generateErrorCode('INFO_ERROR_MAHUYEN_CU_TRU');
-            $errors->push((object)[
-                'error_code' => $errorCode,
-                'error_name' => 'Thiếu mã huyện cư trú',
-                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
-                'description' => 'Mã huyện cư trú không được để trống'
-            ]);
-        } else {
-            if (!preg_match('/^\d{3}$/', $data->mahuyen_cu_tru)) {
-                $errorCode = $this->generateErrorCode('INFO_ERROR_INVALID_MAHUYEN_CU_TRU');
-                $errors->push((object)[
-                    'error_code' => $errorCode,
-                    'error_name' => 'Định dạng mã huyện cư trú không hợp lệ',
-                    'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
-                    'description' => 'Mã huyện cư trú phải là 3 ký tự số: ' . $data->mahuyen_cu_tru
-                ]);
-            }
-        }
-
         if (empty($data->maxa_cu_tru)) {
             $errorCode = $this->generateErrorCode('INFO_ERROR_MAXA_CU_TRU');
             $errors->push((object)[
