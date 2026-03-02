@@ -349,6 +349,8 @@ class Xml3176Xml3Checker
                 ]);
             } else {
                 $maMay = trim($data->ma_may);
+                // Loại bỏ chuỗi ký tự dạng [...] nếu có
+                $maMay = trim(preg_replace('/\[.*?\]/', '', $maMay));
                 // Kiểm tra tồn tại trong danh mục trang thiết bị theo MA_MAY đầy đủ
                 $existEquipment = EquipmentCatalog::where('ma_may', $maMay)->exists();
                 if (!$existEquipment) {
