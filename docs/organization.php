@@ -39,6 +39,7 @@ return [
     'q_his_plus_url' => '',
     'patient' => [
         'emr_document_type_result_ids' => [6, 22, 160, 3, 28, 4, 14, 25, 26, 27],
+        'emr_document_group_ids' => [1, 2, 3, 4, 5, 6, 7, 8, 9, 21, 22, 61],
     ],
     'api' => [
         'access_token' => '8f14e45fceea167a5a36dedd4bea2543',
