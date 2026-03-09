@@ -532,11 +532,11 @@
   <script src="{{ asset('vendor/numeral/numeral.js') }}"></script>
   <script src="{{ asset('vendor/numeral/locales.js') }}"></script>
 
-  <script src="https://code.highcharts.com/highcharts.js"></script>
-  <script src="https://code.highcharts.com/highcharts-3d.js"></script>
-  <script src="https://code.highcharts.com/modules/exporting.js"></script>
-  <script src="https://code.highcharts.com/modules/export-data.js"></script>
-  <script src="https://code.highcharts.com/modules/accessibility.js"></script>
+  <script src="{{ asset('vendor/highcharts/highcharts.js') }}"></script>
+  <script src="{{ asset('vendor/highcharts/highcharts-3d.js') }}"></script>
+  <script src="{{ asset('vendor/highcharts/modules/exporting.js') }}"></script>
+  <script src="{{ asset('vendor/highcharts/modules/export-data.js') }}"></script>
+  <script src="{{ asset('vendor/highcharts/modules/accessibility.js') }}"></script>
 
   <script src="{{ asset('js/moment.min.js') }}"></script>
   <script src="{{ asset('js/daterangepicker.min.js') }}"></script>
