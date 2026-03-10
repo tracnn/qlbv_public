@@ -89,7 +89,7 @@
       <!-- @include('patient.partials.patient_tthc') -->
       <!-- @include('patient.partials.patient_chothuchien') -->
       <!-- @include('patient.partials.patient_dathuchien') -->
-      @include('patient.partials.patient_congkhai')
+      <!-- @include('patient.partials.patient_congkhai') -->
       <!-- @include('patient.partials.patient_xemkq') -->
       <!-- @include('patient.partials.patient_xemcdha') -->
       <!-- @include('patient.partials.patient_sotiemchung') -->
