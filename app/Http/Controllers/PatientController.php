@@ -306,6 +306,7 @@ class PatientController extends Controller
 
             }            
         } catch (\Exception $e) {
+            \Log::error('Error in viewGuideContent: ' . $e->getMessage());
             return $e->getMessage();
         }
 
