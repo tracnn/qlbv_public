@@ -59,7 +59,7 @@
     </div>
   </div>
   <div class="container">
-    @include('patient.partials.patient_barcode')
+    <!-- @include('patient.partials.patient_barcode') -->
   </div>
   <div class="container">
     <ul class="nav nav-tabs">
