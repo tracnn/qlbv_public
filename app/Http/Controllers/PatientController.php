@@ -92,19 +92,19 @@ class PatientController extends Controller
         $treatment_code = null;
         $phone = null;
         $treatment = null;
-        $service_req = null;
-        $emr_document = null;
+        $service_req = collect();
+        $emr_document = collect();
         $service_kham = null;
-        $sere_serv_cdha = null;
-        $service_req_notStarted = null;
+        $sere_serv_cdha = collect();
+        $service_req_notStarted = collect();
         $countServiceReqNotStartByRoom = null;
-        $sere_serv_chiphi = null;
-        $tracuuhoadon = null;
+        $sere_serv_chiphi = collect();
+        $tracuuhoadon = collect();
         $barcode = null;
         $sere_serv_total = null;
         $transactions = null;
         $patient = null;
-        $vaccinations = null;
+        $vaccinations = collect();
 
         try {
 
