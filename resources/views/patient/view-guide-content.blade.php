@@ -59,7 +59,7 @@
     </div>
   </div>
   <div class="container">
-    <!-- @include('patient.partials.patient_barcode') -->
+    @include('patient.partials.patient_barcode')
   </div>
   <div class="container">
     <ul class="nav nav-tabs">
@@ -86,16 +86,16 @@
     </ul>
 
     <div class="tab-content">
-      <!-- @include('patient.partials.patient_tthc') -->
-      <!-- @include('patient.partials.patient_chothuchien') -->
-      <!-- @include('patient.partials.patient_dathuchien') -->
-      <!-- @include('patient.partials.patient_congkhai') -->
-      <!-- @include('patient.partials.patient_xemkq') -->
-      <!-- @include('patient.partials.patient_xemcdha') -->
-      <!-- @include('patient.partials.patient_sotiemchung') -->
-      <!-- @include('patient.partials.patient_xemnhanh') -->
-      <!-- @include('patient.partials.patient_tuvan') -->
-      <!-- @include('patient.partials.patient_xemchiphi') -->
+      @include('patient.partials.patient_tthc')
+      @include('patient.partials.patient_chothuchien')
+      @include('patient.partials.patient_dathuchien')
+      @include('patient.partials.patient_congkhai')
+      @include('patient.partials.patient_xemkq')
+      @include('patient.partials.patient_xemcdha')
+      @include('patient.partials.patient_sotiemchung')
+      @include('patient.partials.patient_xemnhanh')
+      @include('patient.partials.patient_tuvan')
+      @include('patient.partials.patient_xemchiphi')
     </div>
   </div>
 
