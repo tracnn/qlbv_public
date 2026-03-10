@@ -92,19 +92,19 @@ class PatientController extends Controller
         $treatment_code = null;
         $phone = null;
         $treatment = null;
-        $service_req = collect();
-        $emr_document = collect();
+        $service_req = null;
+        $emr_document = null;
         $service_kham = null;
-        $sere_serv_cdha = collect();
-        $service_req_notStarted = collect();
+        $sere_serv_cdha = null;
+        $service_req_notStarted = null;
         $countServiceReqNotStartByRoom = null;
-        $sere_serv_chiphi = collect();
-        $tracuuhoadon = collect();
+        $sere_serv_chiphi = null;
+        $tracuuhoadon = null;
         $barcode = null;
         $sere_serv_total = null;
         $transactions = null;
         $patient = null;
-        $vaccinations = collect();
+        $vaccinations = null;
 
         try {
 
@@ -205,6 +205,8 @@ class PatientController extends Controller
                 ->orderBy('his_service_req.service_req_code')
                 ->get();
 
+                $groupIds = config('organization.patient.emr_document_group_ids');
+
                 $emr_document = DB::connection('EMR_RS')
                 ->table('emr_document')
                 ->leftJoin('emr_document_type', 'emr_document_type.id', '=', 'emr_document.document_type_id')
@@ -212,9 +214,12 @@ class PatientController extends Controller
                     'emr_document_type.document_type_name','emr_document.his_code', 'emr_document.treatment_code')
                 ->where('emr_document.is_delete', 0)
                 ->where('emr_document.treatment_code', $treatment->treatment_code)
-                ->where( function ($q) {
-                    $q->whereIn('emr_document.document_type_id', config('organization.patient.emr_document_type_result_ids'))
-                    ->orWhereIn('emr_document.document_group_id', config('organization.patient.emr_document_group_ids'));
+                ->where( function ($q) use ($groupIds) {
+                    $q->whereIn('emr_document.document_type_id', config('organization.patient.emr_document_type_result_ids'));
+
+                    if (!empty($groupIds)) {
+                        $q->orWhereIn('emr_document.document_group_id', $groupIds);
+                    }
                 })
                 ->where( function ($q) {
                     $q->whereNotIn('emr_document.document_group_id', [28])
