@@ -14,7 +14,7 @@
 
 <div class="panel panel-default">
     <div class="panel-body table-responsive">
-        <table id="his-service-price-list" class="table display table-hover responsive nowrap datatable dtr-inline" width="100%">
+        <table id="his-service-price-list" class="table display table-hover responsive datatable dtr-inline" width="100%">
             <thead>
                 <tr>
                     <th>Mã dịch vụ</th>
@@ -23,6 +23,7 @@
                     <th>Tên loại DV</th>
                     <th>Mã ĐVT</th>
                     <th>Tên ĐVT</th>
+                    <th>Ngày hiệu lực</th>
                     @foreach($patientTypes as $pt)
                         <th>Giá {{ $pt->patient_type_name }}</th>
                     @endforeach
@@ -56,6 +57,7 @@
             { data: 'service_type_name', name: 'service_type_name' },
             { data: 'service_unit_code', name: 'service_unit_code' },
             { data: 'service_unit_name', name: 'service_unit_name' },
+            { data: 'from_time', name: 'from_time' },
         ];
 
         table = $('#his-service-price-list').DataTable({

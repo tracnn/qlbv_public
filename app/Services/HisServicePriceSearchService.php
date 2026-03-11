@@ -59,6 +59,7 @@ class HisServicePriceSearchService
                 st.service_type_name AS service_type_name,
                 su.service_unit_code AS service_unit_code,
                 su.service_unit_name AS service_unit_name,
+                sp.from_time AS from_time,
                 {$priceCols}
             ")
             ->groupBy(
@@ -67,7 +68,8 @@ class HisServicePriceSearchService
                 'st.service_type_code',
                 'st.service_type_name',
                 'su.service_unit_code',
-                'su.service_unit_name'
+                'su.service_unit_name',
+                'sp.from_time'
             );
 
         return DB::connection('HISPro')

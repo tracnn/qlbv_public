@@ -142,6 +142,10 @@ class CategoryHISController extends Controller
             });
         }
 
-        return $dt->make(true);
+        return $dt
+        ->editColumn('from_time', function ($row) {
+            return $row->from_time ? strtodatetime($row->from_time) : '';
+        })
+        ->make(true);
     }
 }
