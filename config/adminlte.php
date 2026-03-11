@@ -454,6 +454,18 @@ return [
             'checkrole'   => 'category-manager',
             'submenu' => [
                 [
+                    'text'    => 'HIS',
+                    'icon'    => 'book',
+                    'submenu' => [
+                        [
+                            'text'  => 'Tra cứu giá dịch vụ',
+                            'icon'  => 'usd',
+                            'route' => 'category-his.service-price',
+                            'active'=> ['category/his/service-price*'],
+                        ],
+                    ],
+                ],
+                [
                     'text'    => 'BHYT',
                     'icon'    => 'book',
                     'submenu' => [

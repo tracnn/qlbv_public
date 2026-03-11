@@ -276,6 +276,10 @@ Route::group(['middleware' => ['auth', 'check.first.login']], function () {
     ->name('category-his.fetch-treatment-end-type');
     Route::get('index/category-document-type', 'Category\CategoryHISController@listDocumentType')
     ->name('category-his.fetch-document-type');
+    Route::get('category/his/service-price', 'Category\CategoryHISController@indexServicePrice')
+    ->name('category-his.service-price');
+    Route::get('category/his/service-price/get-data', 'Category\CategoryHISController@fetchServicePrice')
+    ->name('category-his.fetch-service-price');
 	/*
 		Category
 	*/
