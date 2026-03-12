@@ -5,13 +5,25 @@ namespace App\Http\Controllers\Category;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\DB;
+use DataTables;
 
 use App\RoleUser;
 use App\CustomUser;
 use App\Role;
+use App\Services\HisServicePriceSearchService;
 
 class CategoryHISController extends Controller
 {
+    /**
+     * @var HisServicePriceSearchService
+     */
+    protected $servicePriceService;
+
+    public function __construct(HisServicePriceSearchService $servicePriceService)
+    {
+        $this->servicePriceService = $servicePriceService;
+    }
+
     public function listKskContract()
     {
         return DB::connection('HISPro')
@@ -84,5 +96,56 @@ class CategoryHISController extends Controller
         ->where('emr_document_type.is_delete', 0)
         ->select('emr_document_type.id', 'emr_document_type.document_type_code', 'emr_document_type.document_type_name')
         ->get();
+    }
+
+    /**
+     * View tra cứu giá dịch vụ từ HIS (HISPro) dùng Datatables.
+     */
+    public function indexServicePrice()
+    {
+        $patientTypes = $this->servicePriceService->getPatientTypes();
+
+        return view('category.his.service_price', compact('patientTypes'));
+    }
+
+    /**
+     * Dữ liệu Datatables server-side cho tra cứu giá dịch vụ.
+     */
+    public function fetchServicePrice(Request $request)
+    {
+        $patientTypes = $this->servicePriceService->getPatientTypes();
+        $query = $this->servicePriceService->buildServicePriceQuery($patientTypes);
+
+        $dt = DataTables::of($query)
+            ->filter(function ($query) use ($request) {
+                $search = $request->input('search.value');
+
+                if ($search) {
+                    $search = mb_strtoupper($search, 'UTF-8');
+
+                    $query->where(function ($q) use ($search) {
+                        $q->whereRaw('UPPER("SERVICE_CODE") LIKE ?', ["%{$search}%"])
+                            ->orWhereRaw('UPPER("SERVICE_NAME") LIKE ?', ["%{$search}%"])
+                            ->orWhereRaw('UPPER("SERVICE_TYPE_CODE") LIKE ?', ["%{$search}%"])
+                            ->orWhereRaw('UPPER("SERVICE_TYPE_NAME") LIKE ?', ["%{$search}%"])
+                            ->orWhereRaw('UPPER("SERVICE_UNIT_CODE") LIKE ?', ["%{$search}%"])
+                            ->orWhereRaw('UPPER("SERVICE_UNIT_NAME") LIKE ?', ["%{$search}%"]);
+                    });
+                }
+            }, true);
+
+        foreach ($patientTypes as $pt) {
+            $colName = 'price_' . $pt->id;
+            $dt->editColumn($colName, function ($row) use ($colName) {
+                $val = $row->$colName ?? $row->{strtoupper($colName)} ?? null;
+                return $val ? number_format($val, 0, ',', '.') : '';
+            });
+        }
+
+        return $dt
+        ->editColumn('from_time', function ($row) {
+            return $row->from_time ? strtodate($row->from_time) : '';
+        })
+        ->make(true);
     }
 }
