@@ -44,7 +44,7 @@ class HisServicePriceSearchService
             ->join('his_service_unit as su', 'su.id', '=', 's.service_unit_id')
             ->join('his_service_paty as sp', 'sp.service_id', '=', 's.id')
             ->join('his_patient_type as pt', 'pt.id', '=', 'sp.patient_type_id')
-            ->whereIn('s.service_type_id', [15, 1, 2, 3, 4, 5, 9, 10, 11, 13])
+            ->whereIn('s.service_type_id', [15, 1, 2, 3, 4, 5, 8, 9, 10, 11, 13])
             ->where('s.is_active', 1)
             ->where('s.is_delete', 0)
             ->where('sp.is_active', 1)
