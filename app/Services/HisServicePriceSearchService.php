@@ -35,7 +35,7 @@ class HisServicePriceSearchService
     {
         $priceCols = $patientTypes->map(function ($pt) {
             $id = (int) $pt->id;
-            return "SUM(CASE WHEN pt.id = {$id} THEN sp.price END) AS price_{$id}";
+            return "MAX(CASE WHEN pt.id = {$id} THEN sp.price END) AS price_{$id}";
         })->implode(",\n                ");
 
         $subQuery = DB::connection('HISPro')
