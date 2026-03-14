@@ -138,7 +138,7 @@ class CategoryHISController extends Controller
             $colName = 'price_' . $pt->id;
             $dt->editColumn($colName, function ($row) use ($colName) {
                 $val = $row->$colName ?? $row->{strtoupper($colName)} ?? null;
-                return $val ? number_format($val, 0, ',', '.') : '';
+                return $val ? number_format($val) : '';
             });
         }
 
