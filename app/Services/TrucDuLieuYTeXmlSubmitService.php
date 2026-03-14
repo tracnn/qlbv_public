@@ -98,6 +98,10 @@ class TrucDuLieuYTeXmlSubmitService
                 ];
             }
 
+            \Log::info('Truc Du Lieu Y Te XML Submit response', [
+                'result' => $result,
+            ]);
+
             // Lấy maGiaoDich từ fileResults nếu có
             $maGiaoDich = null;
             if (isset($result['fileResults']) && !empty($result['fileResults'])) {
