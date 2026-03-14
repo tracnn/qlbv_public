@@ -77,7 +77,7 @@ class TrucDuLieuYTeXmlSubmitService
             'loaiHoSo' => $loaiHoSo,
             'maTinh' => $maTinh,
             'maCSKCB' => $maCSKCB,
-            'files' => [$xmlBase64],
+            'files' => $xmlBase64,
         ];
 
         try {
