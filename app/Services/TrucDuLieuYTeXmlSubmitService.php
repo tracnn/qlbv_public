@@ -77,7 +77,7 @@ class TrucDuLieuYTeXmlSubmitService
             'loaiHoSo' => $loaiHoSo,
             'maTinh' => $maTinh,
             'maCSKCB' => $maCSKCB,
-            'files' => $xmlBase64,
+            'files' => [$xmlBase64],
         ];
 
         try {
@@ -97,10 +97,6 @@ class TrucDuLieuYTeXmlSubmitService
                     'body' => $responseBody,
                 ];
             }
-
-            \Log::info('Truc Du Lieu Y Te XML Submit response', [
-                'result' => $result,
-            ]);
 
             // Lấy maGiaoDich từ fileResults nếu có
             $maGiaoDich = null;
