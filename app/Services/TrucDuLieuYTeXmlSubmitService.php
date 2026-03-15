@@ -63,10 +63,13 @@ class TrucDuLieuYTeXmlSubmitService
         // Lấy access token
         $accessToken = $this->loginService->getAccessToken();
 
+        // Loại bỏ UTF-8 BOM nếu có (tránh ký tự lạ / 77u khi bên nhận decode base64)
+        $xmlContent = $this->stripUtf8Bom($xmlContent);
+
         // Encode nội dung XML sang base64
         $xmlBase64 = base64_encode($xmlContent);
 
-        // \Log::info('Truc Du Lieu Y Te XML Submit: xmlBase64', ['xmlBase64' => $xmlBase64]);
+        \Log::info('Truc Du Lieu Y Te XML Submit: xmlBase64', ['xmlBase64' => $xmlBase64]);
 
         // Chuẩn bị headers
         $headers = [
@@ -235,6 +238,19 @@ class TrucDuLieuYTeXmlSubmitService
 
             throw new \Exception($errorMessage);
         }
+    }
+
+    /**
+     * Loại bỏ UTF-8 BOM (Byte Order Mark) ở đầu chuỗi.
+     * BOM khi encode base64 thành "77u/..." và khi decode hiển thị thành ký tự lạ ().
+     */
+    private function stripUtf8Bom(string $content): string
+    {
+        $bom = "\xEF\xBB\xBF";
+        if (str_starts_with($content, $bom)) {
+            return substr($content, 3);
+        }
+        return $content;
     }
 
     /**
