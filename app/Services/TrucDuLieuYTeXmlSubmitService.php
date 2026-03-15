@@ -69,7 +69,7 @@ class TrucDuLieuYTeXmlSubmitService
         // Encode nội dung XML sang base64
         $xmlBase64 = base64_encode($xmlContent);
 
-        \Log::info('Truc Du Lieu Y Te XML Submit: xmlBase64', ['xmlBase64' => $xmlBase64]);
+        //\Log::info('Truc Du Lieu Y Te XML Submit: xmlBase64', ['xmlBase64' => $xmlBase64]);
 
         // Chuẩn bị headers
         $headers = [
