@@ -1,3 +1,5 @@
+# 20/03/2026
+- Update bổ sung tính năng auto update
 # 30/01/2026
 - Update tối ưu tốc độ xử lý export XML, submit XML lên BHXH, ký số HSM
 - Update tự động đẩy hồ sơ XML3176 từ hệ thống export tiền giám định sang module gửi lên cổng dữ liệu Sở y tế Hà Nội
