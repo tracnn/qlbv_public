@@ -30,3 +30,13 @@
 # Ignore system files
 .DS_Store
 Thumbs.db
+
+# C# build artifacts
+UsbTokenSigningService/bin/
+UsbTokenSigningService/obj/
+UsbTokenSigningService.Tests/bin/
+UsbTokenSigningService.Tests/obj/
+*.user
+.vs/
+# appsettings.Development.json chứa plain PIN - không commit
+UsbTokenSigningService/appsettings.Development.json
