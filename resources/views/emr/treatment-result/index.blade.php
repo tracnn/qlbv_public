@@ -96,11 +96,16 @@
               <td>
                 {{ $value->tdl_service_name }}
               </td>
+              
               <td align="center">
-                <a href="{{ config('organization.base_pacs_url') }}{{ $value->id }}{{ config('organization.pacs_url_suffix') ? config('organization.pacs_url_suffix') . $value->id : '' }}" 
+                @if(!empty($value->json_form_id) || !empty(config('organization.base_pacs_url')))
+                <a href="{{ !empty($value->json_form_id) ? $value->json_form_id : (config('organization.base_pacs_url') . $value->id . (config('organization.pacs_url_suffix') ? config('organization.pacs_url_suffix') . $value->id : '')) }}" 
                 class="btn btn-info btn-sm" target="_blank" rel="noopener noreferrer">
                   <i class="fa fa-film"></i> Xem
                 </a>
+                @else
+                <span class="text-danger">Chưa cấu hình</span>
+                @endif
               </td>
             </tr>
             @endforeach

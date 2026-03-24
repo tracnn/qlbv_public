@@ -416,10 +416,12 @@ class EmrController extends Controller
         return DB::connection('HISPro')  
         ->table('his_sere_serv')
         ->join('his_service_req', 'his_service_req.id', '=', 'his_sere_serv.service_req_id')
+        ->leftJoin('his_sere_serv_ext', 'his_sere_serv_ext.sere_serv_id', '=', 'his_sere_serv.id')
         ->select('his_sere_serv.id', 
             'his_sere_serv.tdl_service_name', 
             'his_sere_serv.tdl_intruction_time', 
-            'his_service_req.tdl_patient_code'
+            'his_service_req.tdl_patient_code',
+            'his_sere_serv_ext.json_form_id'
         )
         ->where('his_sere_serv.is_delete', 0)
         ->where('his_sere_serv.tdl_service_type_id', 3)
