@@ -70,6 +70,13 @@ return [
         'tag_store_signature_value' => 'CHUKYDONVI',
         'enabled' => false,
     ],
+    'usb_token_sign' => [
+        'endpoint'                  => env('USB_TOKEN_ENDPOINT', 'http://127.0.0.1:18081/api/EmrSign/SignXmlBhyt'),
+        'enabled'                   => env('USB_TOKEN_SIGN_ENABLED', false),
+        'service_token'             => env('USB_TOKEN_SERVICE_TOKEN', ''),
+        'tag_store_signature_value' => 'CHUKYDONVI',
+        'timeout'                   => 30,
+    ],
     'e_invoice' => [
         'bkav' => [
             'enabled' => false,
