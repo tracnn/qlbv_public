@@ -23,6 +23,9 @@
 /config/filesystems.php
 /config/organization.php
 
+# Git worktrees
+.worktrees/
+
 # Ignore IDE files
 .idea/
 /.vscode/
