@@ -44,10 +44,16 @@ class ExportXml3176Job implements ShouldQueue
         // Lấy hồ sơ XML theo ma_lk
         $xmlRecord = Xml3176Xml1::where('ma_lk', $this->ma_lk)->first();
 
-        // Kiểm tra nếu hồ sơ tồn tại và ngay_ra lớn hơn thời điểm hiện tại
-        if ($xmlRecord && Carbon::createFromFormat('YmdHi', $xmlRecord->ngay_ra)->gt(Carbon::now())) {
-            // Nếu ngay_ra lớn hơn thời điểm hiện tại, không xuất hồ sơ XML
-            return;
+        // Kiểm tra nếu hồ sơ tồn tại và ngay_ra hợp lệ (đúng độ dài format YmdHi)
+        if ($xmlRecord && $xmlRecord->ngay_ra && strlen($xmlRecord->ngay_ra) == 12) {
+            try {
+                if (Carbon::createFromFormat('YmdHi', $xmlRecord->ngay_ra)->gt(Carbon::now())) {
+                    // Nếu ngay_ra lớn hơn thời điểm hiện tại, không xuất hồ sơ XML
+                    return;
+                }
+            } catch (\Exception $e) {
+                \Log::warning('Invalid date format for ngay_ra: ' . $xmlRecord->ngay_ra);
+            }
         }
 
         if (config('organization.export_xml_not_check')) {

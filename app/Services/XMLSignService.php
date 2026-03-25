@@ -28,6 +28,7 @@ class XMLSignService
         // USB Token mode takes priority over HSM
         $usbConfig = Config::get('organization.usb_token_sign', []);
         if (!empty($usbConfig['enabled'])) {
+            Log::info('USB Token signing is enabled');
             return $this->signWithUsbToken($xmlContent, $usbConfig);
         }
 

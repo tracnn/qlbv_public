@@ -175,13 +175,13 @@ class XML3176Import extends Command
                         $this->xml3176Service->storeXml3176Information($ma_lk, $macskcb, 'import', $soluonghoso);
                         if (!config('organization.xml_3176_not_check')) {
                             $this->xml3176Service->checkXml3176Complete($ma_lk);
-                           
-                            if (config('xml3176.export_xml3176_enabled')) {
-                                //Kiểm tra nếu là XML thông tuyến và exportable_tt = false thì không thực hiện exportXml3176
-                                if (!($disk === 'xml3176tt' && config('xml3176.exportable_tt') == false)) {
-                                    $this->xml3176Service->exportXml3176($ma_lk);
-                                }                          
-                            }
+                        }
+
+                        if (config('xml3176.export_xml3176_enabled')) {
+                            //Kiểm tra nếu là XML thông tuyến và exportable_tt = false thì không thực hiện exportXml3176
+                            if (!($disk === 'xml3176tt' && config('xml3176.exportable_tt') == false)) {
+                                $this->xml3176Service->exportXml3176($ma_lk);
+                            }                          
                         }
                     }
 

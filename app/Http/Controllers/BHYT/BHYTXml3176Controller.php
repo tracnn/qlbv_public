@@ -534,10 +534,10 @@ class BHYTXml3176Controller extends Controller
             $this->xml3176Service->storeXml3176Information($ma_lk, $macskcb, 'import', $soluonghoso);
             if (!config('organization.xml_3176_not_check', false)) {
                 $this->xml3176Service->checkXml3176Complete($ma_lk);
+            }
                 
-                if (config('xml3176.export_xml3176_enabled')) {
-                    $this->xml3176Service->exportXml3176($ma_lk);
-                }
+            if (config('xml3176.export_xml3176_enabled')) {
+                $this->xml3176Service->exportXml3176($ma_lk);
             }
         }
 
