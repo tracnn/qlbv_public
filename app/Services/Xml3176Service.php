@@ -1641,8 +1641,6 @@ class Xml3176Service
             return false;
         }
 
-        \Log::info('XML data for ma_lk: ' . $ma_lk . ' - ' . $xmlData);
-
         // Ký số XML
         $xmlDataSigned = $this->xmlSignService->signXml($xmlData);
 

@@ -101,6 +101,9 @@ class XMLSignService
      */
     private function signWithUsbToken(string $xmlContent, array $usbConfig): array
     {
+        //Encode XML content to base64
+        $xmlBase64 = base64_encode($xmlContent);
+
         try {
             $response = $this->httpClient->post($usbConfig['endpoint'], [
                 'headers' => [
@@ -124,6 +127,8 @@ class XMLSignService
                 Log::error('USB Token signing failed: ' . $error);
                 return ['isSigned' => false, 'data' => $xmlContent, 'error' => $error];
             }
+
+            \Log::info('USB Token signing success: ' . $result['Data']);
 
             return ['isSigned' => true, 'data' => base64_decode($result['Data'])];
 
