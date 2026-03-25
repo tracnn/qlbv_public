@@ -117,7 +117,7 @@ class XMLSignService
                         'ConfigData'             => new \stdClass(),
                     ],
                 ],
-                'timeout' => $usbConfig['timeout'] ?? 30,
+                'timeout' => $usbConfig['timeout'] ?? 30000,
             ]);
 
             $result = json_decode($response->getBody()->getContents(), true);
