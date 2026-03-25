@@ -1,3 +1,7 @@
+# 26/03/2026
+
+- Update tích hợp ký số XML3176 bằng USB Token, bổ sung thêm 1 service ký số trên Windows
+
 # 25/03/2026
 
 - Update bổ sung báo cáo doanh thu dịch vụ y tế
