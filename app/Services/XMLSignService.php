@@ -114,7 +114,7 @@ class XMLSignService
                         'ConfigData'             => new \stdClass(),
                     ],
                 ],
-                'timeout' => $usbConfig['timeout'] ?? 30000,
+                'timeout' => $usbConfig['timeout'] ?? 30,
             ]);
 
             $result = json_decode($response->getBody()->getContents(), true);
@@ -124,8 +124,6 @@ class XMLSignService
                 Log::error('USB Token signing failed: ' . $error);
                 return ['isSigned' => false, 'data' => $xmlContent, 'error' => $error];
             }
-
-            \Log::info('USB Token signing success: ' . $result['Data']);
 
             return ['isSigned' => true, 'data' => base64_decode($result['Data'])];
 
