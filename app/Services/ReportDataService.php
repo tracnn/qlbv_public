@@ -712,7 +712,7 @@ class ReportDataService
             ->get();
     }
 
-    public function buildSereServRevenuePivotQuery($patientTypes, $treatmentTypes, $dateFrom, $dateTo, $departmentId = null, $patientTypeId = null, $treatmentTypeId = null)
+    public function buildSereServRevenuePivotQuery($patientTypes, $treatmentTypes, $dateFrom, $dateTo, $departmentId = null)
     {
         $formattedDateFrom = Carbon::createFromFormat('Y-m-d H:i:s', $dateFrom)->format('YmdHis');
         $formattedDateTo = Carbon::createFromFormat('Y-m-d H:i:s', $dateTo)->format('YmdHis');
@@ -757,12 +757,6 @@ class ReportDataService
         
         if (!empty($departmentId)) {
             $sql .= " AND hd.id = " . (int)$departmentId;
-        }
-        if (!empty($patientTypeId)) {
-            $sql .= " AND hpt.id = " . (int)$patientTypeId;
-        }
-        if (!empty($treatmentTypeId)) {
-            $sql .= " AND htt.id = " . (int)$treatmentTypeId;
         }
 
         $sql .= "

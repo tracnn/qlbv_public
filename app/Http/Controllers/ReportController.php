@@ -748,8 +748,6 @@ class ReportController extends Controller
         $dateFrom = $request->input('date_from');
         $dateTo = $request->input('date_to');
         $departmentId = $request->input('department_id');
-        $patientTypeId = $request->input('patient_type_id');
-        $treatmentTypeId = $request->input('treatment_type_id');
 
         if (strlen($dateFrom) == 10) {
             $dateFrom = Carbon::createFromFormat('Y-m-d', $dateFrom)->startOfDay()->format('Y-m-d H:i:s');
@@ -761,10 +759,12 @@ class ReportController extends Controller
         $patientTypes = $this->reportDataService->getPatientTypes();
         $treatmentTypes = $this->reportDataService->getTreatmentTypes();
 
-        $sql = $this->reportDataService->buildSereServRevenuePivotQuery($patientTypes, $treatmentTypes, $dateFrom, $dateTo, $departmentId, $patientTypeId, $treatmentTypeId);
+        $sql = $this->reportDataService->buildSereServRevenuePivotQuery($patientTypes, $treatmentTypes, $dateFrom, $dateTo, $departmentId);
         $results = DB::connection('HISPro')->select($sql);
 
         $dt = Datatables::of(collect($results));
+
+        \Log::info($sql);
         
         foreach ($patientTypes as $pt) {
             foreach ($treatmentTypes as $tt) {
