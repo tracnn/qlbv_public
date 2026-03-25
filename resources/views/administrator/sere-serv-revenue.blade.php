@@ -58,8 +58,6 @@
         }
 
         var departmentId = $('#department_catalog').val();
-        var patientTypeId = $('#patient_type').val();
-        var treatmentTypeId = $('#treatment_type').val();
 
         var table = $('#sere-serv-revenue-table').DataTable({
             "processing": true,
@@ -81,12 +79,12 @@
                 }
             },
             "columns": [
-                { data: 'department_name', visible: false },
-                { data: 'service_type_name' },
+                { data: 'department_name', visible: false, searchable: false, orderable: false },
+                { data: 'service_type_name', searchable: false, orderable: false },
                 @foreach($patientTypes as $pt)
                     @foreach($treatmentTypes as $tt)
-                        { data: 'sl_{{ $pt->id }}_{{ $tt->id }}', className: 'text-right' },
-                        { data: 'tt_{{ $pt->id }}_{{ $tt->id }}', className: 'text-right' },
+                        { data: 'sl_{{ $pt->id }}_{{ $tt->id }}', className: 'text-right', searchable: false, orderable: false },
+                        { data: 'tt_{{ $pt->id }}_{{ $tt->id }}', className: 'text-right', searchable: false, orderable: false },
                     @endforeach
                 @endforeach
             ],
