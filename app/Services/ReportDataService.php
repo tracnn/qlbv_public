@@ -737,8 +737,6 @@ class ReportDataService
             FROM 
                 his_service_req hsr
             JOIN
-                his_treatment ht ON ht.id = hsr.treatment_id
-            JOIN
                 his_sere_serv hss ON hss.service_req_id = hsr.id
             JOIN
                 his_department hd ON hd.id = hsr.request_department_id
@@ -747,7 +745,7 @@ class ReportDataService
             JOIN
                 his_service_type hst ON hst.id = hs.service_type_id
             JOIN
-                his_patient_type hpt ON hpt.id = ht.tdl_patient_type_id
+                his_patient_type hpt ON hpt.id = hss.patient_type_id
             JOIN
                 his_treatment_type htt ON htt.id = hsr.treatment_type_id
             WHERE
