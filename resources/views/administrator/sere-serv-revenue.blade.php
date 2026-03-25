@@ -67,12 +67,14 @@
             "destroy": true,
             "ajax": {
                 url: "{{ route('reports-administrator.fetch-sere-serv-revenue') }}",
+                type: "POST",
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
                 data: function(d) {
                     d.date_from = startDate;
                     d.date_to = endDate;
-                    d.department_id = departmentId;
-                    d.patient_type_id = patientTypeId;
-                    d.treatment_type_id = treatmentTypeId;
+                    d.department_id = $('#department_catalog').val();
                 },
                 beforeSend: function(xhr) {
                     currentAjaxRequest = xhr;
