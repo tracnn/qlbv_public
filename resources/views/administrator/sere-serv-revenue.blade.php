@@ -70,6 +70,11 @@
                     d.date_from = startDate;
                     d.date_to = endDate;
                     d.department_id = $('#department_catalog').val();
+
+                    // Loại bỏ thông tin metadata của cột để rút ngắn URL (fix lỗi 414 trên Production)
+                    delete d.columns;
+                    delete d.search;
+                    delete d.order;
                 },
                 beforeSend: function(xhr) {
                     currentAjaxRequest = xhr;
