@@ -1,3 +1,7 @@
+# 25/03/2026
+
+- Update bổ sung báo cáo doanh thu dịch vụ y tế
+
 # 24/03/2026
 
 - Update bổ sung chức năng xem kết quả CĐHA PACS VNPT
