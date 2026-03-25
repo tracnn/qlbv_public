@@ -763,8 +763,6 @@ class ReportController extends Controller
         $results = DB::connection('HISPro')->select($sql);
 
         $dt = Datatables::of(collect($results));
-
-        \Log::info($sql);
         
         foreach ($patientTypes as $pt) {
             foreach ($treatmentTypes as $tt) {
