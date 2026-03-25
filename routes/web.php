@@ -607,6 +607,11 @@ Route::group(['middleware' => ['auth', 'check.first.login']], function () {
 
         Route::get('export-thuoc-vtyt-tieu-hao-data', 'ReportController@exportThuocVtytTieuHaoData')
         ->name('reports-administrator.export-thuoc-vtyt-tieu-hao-data');
+
+        Route::get('sere-serv-revenue-index', 'ReportController@indexSereServRevenue')
+        ->name('reports-administrator.sere-serv-revenue-index');
+        Route::get('fetch-sere-serv-revenue', 'ReportController@fetchSereServRevenue')
+        ->name('reports-administrator.fetch-sere-serv-revenue');
     });
 
     /* Reports Account Payment*/

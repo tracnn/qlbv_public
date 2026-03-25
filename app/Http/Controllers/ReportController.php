@@ -735,4 +735,54 @@ class ReportController extends Controller
         $fileName = 'thuoc_vtyt_tieu_hao_data_' . Carbon::now()->format('YmdHis') . '.xlsx';
         return Excel::download(new ThuocVtytTieuHaoDataExport($request), $fileName);
     }
+
+    public function indexSereServRevenue()
+    {
+        $patientTypes = $this->reportDataService->getPatientTypes();
+        $treatmentTypes = $this->reportDataService->getTreatmentTypes();
+        return view('administrator.sere-serv-revenue', compact('patientTypes', 'treatmentTypes'));
+    }
+
+    public function fetchSereServRevenue(Request $request)
+    {
+        $dateFrom = $request->input('date_from');
+        $dateTo = $request->input('date_to');
+        $departmentId = $request->input('department_id');
+        $patientTypeId = $request->input('patient_type_id');
+        $treatmentTypeId = $request->input('treatment_type_id');
+
+        if (strlen($dateFrom) == 10) {
+            $dateFrom = Carbon::createFromFormat('Y-m-d', $dateFrom)->startOfDay()->format('Y-m-d H:i:s');
+        }
+        if (strlen($dateTo) == 10) {
+            $dateTo = Carbon::createFromFormat('Y-m-d', $dateTo)->endOfDay()->format('Y-m-d H:i:s');
+        }
+
+        $patientTypes = $this->reportDataService->getPatientTypes();
+        $treatmentTypes = $this->reportDataService->getTreatmentTypes();
+
+        $sql = $this->reportDataService->buildSereServRevenuePivotQuery($patientTypes, $treatmentTypes, $dateFrom, $dateTo, $departmentId, $patientTypeId, $treatmentTypeId);
+        $results = DB::connection('HISPro')->select($sql);
+
+        $dt = Datatables::of(collect($results));
+        
+        foreach ($patientTypes as $pt) {
+            foreach ($treatmentTypes as $tt) {
+                $suffix = "_{$pt->id}_{$tt->id}";
+                $slKey = "sl{$suffix}";
+                $ttKey = "tt{$suffix}";
+                
+                $dt->editColumn($slKey, function($row) use ($slKey) {
+                    $val = $row->{$slKey};
+                    return $val == 0 ? '' : number_format($val, 2);
+                });
+                $dt->editColumn($ttKey, function($row) use ($ttKey) {
+                    $val = $row->{$ttKey};
+                    return $val == 0 ? '' : number_format($val);
+                });
+            }
+        }
+
+        return $dt->make(true);
+    }
 }

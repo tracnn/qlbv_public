@@ -682,4 +682,98 @@ class ReportDataService
         ->orderByRaw('CASE WHEN rate IS NULL THEN 1 ELSE 0 END, rate DESC')
         ->get();
     }
+
+    public function getPatientTypes()
+    {
+        $patientTypeCodes = config('organization.patient_type_code_evenue');
+
+        $query = \DB::connection('HISPro')
+            ->table('his_patient_type')
+            ->where('is_active', 1)
+            ->where('is_delete', 0);
+
+        if (!empty($patientTypeCodes) && is_array($patientTypeCodes)) {
+            $query->whereIn('patient_type_code', $patientTypeCodes);
+        }
+
+        return $query->select('id', 'patient_type_code', 'patient_type_name')
+            ->orderBy('id')
+            ->get();
+    }
+
+    public function getTreatmentTypes()
+    {
+        return \DB::connection('HISPro')
+            ->table('his_treatment_type')
+            ->where('is_active', 1)
+            ->where('is_delete', 0)
+            ->select('id', 'treatment_type_code', 'treatment_type_name')
+            ->orderBy('id')
+            ->get();
+    }
+
+    public function buildSereServRevenuePivotQuery($patientTypes, $treatmentTypes, $dateFrom, $dateTo, $departmentId = null, $patientTypeId = null, $treatmentTypeId = null)
+    {
+        $formattedDateFrom = Carbon::createFromFormat('Y-m-d H:i:s', $dateFrom)->format('YmdHis');
+        $formattedDateTo = Carbon::createFromFormat('Y-m-d H:i:s', $dateTo)->format('YmdHis');
+
+        $pivotCols = [];
+        foreach ($patientTypes as $pt) {
+            foreach ($treatmentTypes as $tt) {
+                $ptId = (int) $pt->id;
+                $ttId = (int) $tt->id;
+                $suffix = "_{$ptId}_{$ttId}";
+                $pivotCols[] = "SUM(CASE WHEN hpt.id = {$ptId} AND htt.id = {$ttId} THEN hss.amount ELSE 0 END) AS sl{$suffix}";
+                $pivotCols[] = "SUM(CASE WHEN hpt.id = {$ptId} AND htt.id = {$ttId} THEN hss.amount * hss.price ELSE 0 END) AS tt{$suffix}";
+            }
+        }
+        $pivotColsStr = implode(",\n                ", $pivotCols);
+
+        $sql = "
+            SELECT 
+                hd.department_name,
+                hst.service_type_name,
+                {$pivotColsStr}
+            FROM 
+                his_service_req hsr
+            JOIN
+                his_sere_serv hss ON hss.service_req_id = hsr.id
+            JOIN
+                his_department hd ON hd.id = hsr.request_department_id
+            JOIN
+                his_service hs ON hs.id = hss.service_id
+            JOIN
+                his_service_type hst ON hst.id = hs.service_type_id
+            JOIN
+                his_patient_type hpt ON hpt.id = hss.patient_type_id
+            JOIN
+                his_treatment_type htt ON htt.id = hsr.treatment_type_id
+            WHERE
+                hsr.is_delete = 0
+                AND hss.is_delete = 0
+                AND hss.is_no_execute IS NULL
+                AND hss.is_expend IS NULL
+                AND hsr.intruction_time BETWEEN '{$formattedDateFrom}' AND '{$formattedDateTo}'";
+        
+        if (!empty($departmentId)) {
+            $sql .= " AND hd.id = " . (int)$departmentId;
+        }
+        if (!empty($patientTypeId)) {
+            $sql .= " AND hpt.id = " . (int)$patientTypeId;
+        }
+        if (!empty($treatmentTypeId)) {
+            $sql .= " AND htt.id = " . (int)$treatmentTypeId;
+        }
+
+        $sql .= "
+            GROUP BY
+                hd.department_name,
+                hst.service_type_name
+            ORDER BY
+                hd.department_name,
+                hst.service_type_name
+        ";
+
+        return $sql;
+    }
 }

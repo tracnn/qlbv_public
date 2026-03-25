@@ -626,6 +626,13 @@ return [
                     'route'   => 'reports-administrator.index-thuoc-vtyt-tieu-hao',
                     'active'=> ['reports-administrator/index-thuoc-vtyt-tieu-hao*'],
                 ],
+                [
+                    'text'  => 'Doanh thu dịch vụ chi tiết',
+                    'icon'  => 'bar-chart',
+                    'checkrole'   => 'administrator',
+                    'route'   => 'reports-administrator.sere-serv-revenue-index',
+                    'active'=> ['reports-administrator/sere-serv-revenue-index*'],
+                ],
             ],
         ],
         [

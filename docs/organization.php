@@ -118,4 +118,7 @@ return [
     'fss_config' => [
         'baseUrl' => 'http://10.0.0.27:1435',
     ],
+    'patient_type_code_evenue' => [
+        '01', '02'
+    ]
 ];
