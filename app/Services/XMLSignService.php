@@ -32,11 +32,21 @@ class XMLSignService
             return $this->signWithUsbToken($xmlContent, $usbConfig);
         }
 
-        if (!$this->config['enabled']) {
-            Log::info('XML signing is disabled');
-            return ['isSigned' => false, 'data' => $xmlContent];
+        // HSM mode
+        if (!empty($this->config['enabled'])) {
+            Log::info('HSM signing is enabled');
+            return $this->signWithHsm($xmlContent);
         }
 
+        Log::info('XML signing is disabled');
+        return ['isSigned' => false, 'data' => $xmlContent];
+    }
+
+    /**
+     * Ký số XML bằng HSM
+     */
+    private function signWithHsm(string $xmlContent): array
+    {
         $xmlBase64 = base64_encode($xmlContent);
 
         $data = [
@@ -70,18 +80,18 @@ class XMLSignService
             $result = json_decode($response->getBody()->getContents(), true);
 
             if (!$result['Success']) {
-                $errorMessage = 'XML signing failed';
+                $errorMessage = 'HSM XML signing failed';
                 if (!empty($result['Param']['Messages'])) {
                     $errorMessage .= ': ' . implode(', ', $result['Param']['Messages']);
                 }
-                Log::error('XML signing failed: ' . $errorMessage);
+                Log::error($errorMessage);
                 return ['isSigned' => false, 'data' => $xmlContent, 'error' => $errorMessage];
             }
 
             return ['isSigned' => true, 'data' => base64_decode($result['Data'])];
 
         } catch (GuzzleException $e) {
-            Log::error('XML Sign API Error: ' . $e->getMessage());
+            Log::error('HSM Sign API Error: ' . $e->getMessage());
             return ['isSigned' => false, 'data' => $xmlContent, 'error' => $e->getMessage()];
         }
     }
