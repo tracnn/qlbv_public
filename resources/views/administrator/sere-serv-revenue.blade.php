@@ -67,10 +67,7 @@
             "destroy": true,
             "ajax": {
                 url: "{{ route('reports-administrator.fetch-sere-serv-revenue') }}",
-                type: "POST",
-                headers: {
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                },
+                type: "GET",
                 data: function(d) {
                     d.date_from = startDate;
                     d.date_to = endDate;

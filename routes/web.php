@@ -610,7 +610,7 @@ Route::group(['middleware' => ['auth', 'check.first.login']], function () {
 
         Route::get('sere-serv-revenue-index', 'ReportController@indexSereServRevenue')
         ->name('reports-administrator.sere-serv-revenue-index');
-        Route::post('fetch-sere-serv-revenue', 'ReportController@fetchSereServRevenue')
+        Route::get('fetch-sere-serv-revenue', 'ReportController@fetchSereServRevenue')
         ->name('reports-administrator.fetch-sere-serv-revenue');
     });
 
