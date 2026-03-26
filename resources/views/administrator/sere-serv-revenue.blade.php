@@ -133,5 +133,22 @@
         });
     }
 
+    $(document).ready(function() {
+        $('#export_xlsx').on('click', function(){
+            var dateRange = $('#date_range').data('daterangepicker');
+            var startDate = dateRange.startDate.format('YYYY-MM-DD HH:mm:ss');
+            var endDate = dateRange.endDate.format('YYYY-MM-DD HH:mm:ss');
+            var department_id = $('#department_catalog').val();
+
+            var href = '{{ route("reports-administrator.export-sere-serv-revenue") }}?' + $.param({
+                'date_from': startDate,
+                'date_to': endDate,
+                'department_id': department_id
+            });
+
+            window.location.href = href;
+        });
+    });
+
 </script>
 @endpush

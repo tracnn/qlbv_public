@@ -612,6 +612,8 @@ Route::group(['middleware' => ['auth', 'check.first.login']], function () {
         ->name('reports-administrator.sere-serv-revenue-index');
         Route::get('fetch-sere-serv-revenue', 'ReportController@fetchSereServRevenue')
         ->name('reports-administrator.fetch-sere-serv-revenue');
+        Route::get('export-sere-serv-revenue', 'ReportController@exportSereServRevenue')
+        ->name('reports-administrator.export-sere-serv-revenue');
     });
 
     /* Reports Account Payment*/

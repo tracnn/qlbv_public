@@ -13,6 +13,7 @@ use App\Exports\DebtDataExport;
 use App\Exports\AccountantRevenueDataExport;
 use App\Exports\AccountantRevenueDataExportDetail;
 use App\Exports\ThuocVtytTieuHaoDataExport;
+use App\Exports\SereServRevenueExport;
 
 use DB;
 use Yajra\Datatables\Datatables;
@@ -782,5 +783,11 @@ class ReportController extends Controller
         }
 
         return $dt->make(true);
+    }
+
+    public function exportSereServRevenue(Request $request)
+    {
+        $fileName = 'sere_serv_revenue_' . Carbon::now()->format('YmdHis') . '.xlsx';
+        return Excel::download(new SereServRevenueExport($request), $fileName);
     }
 }
