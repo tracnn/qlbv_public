@@ -13,6 +13,12 @@ use DB;
 
 use Illuminate\Support\Facades\Auth;
 
+/**
+ * Bệnh nhân cũ đến hôm nay,
+ * Tái khám ghi chú đủ đầy thông tin.
+ * Dữ liệu rạng rỡ niềm tin,
+ * Quản lý chính xác giữ gìn ngày đêm.
+ */
 class HomeController extends Controller
 {
 
@@ -133,6 +139,40 @@ class HomeController extends Controller
                 ],
             ],
             'sum_sl' => $sum_sl // Gửi tổng số lượng để frontend hiển thị
+        ];  
+
+        return json_encode($returnData);
+    }
+
+    public function fetchReExamination(Request $request)
+    {
+        $current_date = $this->currentDate($request->input('startDate'), $request->input('endDate'));
+        $model = $this->reExamination($current_date['from_date'], $current_date['to_date']);
+
+        $sum_sl = $model->sum('so_luong');
+
+        $labels = [];  
+        $data = [];
+        $backgroundColor = [];
+
+        foreach ($model as $value) {
+            $labels[] = $value->branch_name;
+            $data[] = doubleval($value->so_luong);
+            $backgroundColor[] = "rgba(" . rand(0, 255) . ',' . rand(0, 255) . ',' . rand(0, 255) . ",0.7)";
+        }
+
+        $returnData = [
+            'type' => 'pie',
+            'title' => 'BN tái khám',
+            'labels' => $labels,
+            'datasets' => [
+                [
+                    'data' => $data,
+                    'backgroundColor' => $backgroundColor,
+                    'label' => "Tổng cộng: " . number_format($sum_sl),
+                ],
+            ],
+            'sum_sl' => $sum_sl
         ];  
 
         return json_encode($returnData);
@@ -1106,6 +1146,20 @@ class HomeController extends Controller
         ->whereBetween('in_time', [$from_date, $to_date])
         ->where('his_treatment.is_delete',0)
         ->groupBy('patient_type_name')
+        ->get();
+    }
+
+    private function reExamination($from_date, $to_date)
+    {
+        return DB::connection('HISPro')
+        ->table('his_treatment')
+        ->join('his_patient', 'his_patient.id', '=', 'his_treatment.patient_id')
+        ->join('his_branch', 'his_branch.id', '=', 'his_treatment.branch_id')
+        ->selectRaw('count(*) as so_luong,branch_name')
+        ->whereBetween('in_time', [$from_date, $to_date])
+        ->where('his_patient.create_time', '<', $from_date)
+        ->where('his_treatment.is_delete',0)
+        ->groupBy('branch_name')
         ->get();
     }
 

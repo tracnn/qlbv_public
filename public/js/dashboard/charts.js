@@ -46,6 +46,12 @@
       });
     }
   
+    function renderReExamination(start, end) {
+      return API.reExamination(start, end).done(function (r) {
+        if (r && r.datasets && r.datasets.length) $('#sum_reexamination').text(numeral(r.sum_sl).format('0,0'));
+      });
+    }
+  
     function renderChuyenVien(start, end) {
       return API.chuyenVien(start, end).done(function (r) {
         if (r && r.datasets && r.datasets.length) $('#sum_chuyenvien').text(numeral(r.sum_sl).format('0,0'));
@@ -237,6 +243,7 @@
           renderAverageInpatient(start, end),
           renderTreatment(start, end),
           renderNewPatient(start, end),
+          renderReExamination(start, end),
           renderChuyenVien(start, end),
           renderThuThuatPhauThuat(start, end),
           renderOutTreatmentGroupType(start, end),

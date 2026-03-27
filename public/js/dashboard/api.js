@@ -16,6 +16,7 @@
       averageDayInpatient: function (start, end) { return get(R.fetchAverageDayInpatient, { startDate: start, endDate: end }); },
       treatment: function (start, end) { return get(R.fetchTreatment, { startDate: start, endDate: end }); },
       newPatient: function (start, end) { return get(R.fetchNewPatient, { startDate: start, endDate: end }); },
+      reExamination: function (start, end) { return get(R.fetchReExamination, { startDate: start, endDate: end }); },
       chuyenVien: function (start, end) { return get(R.fetchChuyenVien, { startDate: start, endDate: end }); },
       outTreatmentGroupType: function (start, end) { return get(R.fetchOutTreatmentGroupType, { startDate: start, endDate: end }); },
       doanhThu: function (start, end) { return get(R.fetchDoanhThu, { startDate: start, endDate: end }); },

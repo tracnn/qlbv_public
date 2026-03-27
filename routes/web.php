@@ -68,6 +68,7 @@ Route::group(['middleware' => ['auth', 'check.first.login']], function () {
         Route::get('fetch-treatment', 'HomeController@fetchTreatment')->name('fetch-treatment');
 
         Route::get('fetch-new-patient', 'HomeController@fetchNewpatient')->name('fetch-new-patient');
+        Route::get('fetch-re-examination', 'HomeController@fetchReExamination')->name('fetch-re-examination');
         Route::get('fetch-chuyen-vien', 'HomeController@fetchChuyenvien')->name('fetch-chuyen-vien');
         Route::get('fetch-service-by-type/{id}', 'HomeController@fetchServiceByType')->name('fetch-service-by-type');
 
