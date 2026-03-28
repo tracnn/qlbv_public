@@ -45,6 +45,12 @@ class Xml3176Service
         $this->xmlSubmitService = new BHYTXmlSubmitService();
     }
 
+    /**
+     * Dữ liệu cũ đã qua rồi
+     * Xóa đi cho sạch đứng ngồi thảnh thơi
+     * Sai sót lỗi lầm mù khơi
+     * Dọn đường thông suốt cho đời bớt lo
+     */
     public function deleteXml3176XmlAndError($ma_lk)
     {
         try {
@@ -71,6 +77,12 @@ class Xml3176Service
         return true;
     }
 
+    /**
+     * XML bản cũ xa xăm
+     * Xóa đi cho gọn quanh năm thuận hòa
+     * Dữ liệu mới lại tuôn ra
+     * Sạch trong ngăn nắp thật là đẹp thay
+     */
     public function deleteExistingXml3176($ma_lk)
     {
         //Khong xoa Xml3176Xml1 - Khong xoa Xml3176Xml12 vi no ko co lien ket
@@ -90,6 +102,12 @@ class Xml3176Service
 
     }
 
+    /**
+     * XML một đã về đây
+     * Lưu vào hệ thống đong đầy chỉ tiêu
+     * Kiểm tra kỹ lưỡng sớm chiều
+     * Đẩy vào hàng đợi thật nhiều niềm vui
+     */
     public function storeXml3176Xml1($data, $xmlType)
     {
         $expectedStructure = XmlStructures::$expectedStructures3176[$xmlType] ?? [];
@@ -185,6 +203,12 @@ class Xml3176Service
         }
     }
 
+    /**
+     * XML hai thuốc gởi trao
+     * Danh sách chi tiết tự hào lưu tên
+     * Cẩn thận kiểm soát vững bền
+     * Đúng sai phân định cho nền vững hơn
+     */
     public function storeXml3176Xml2($data, $xmlType)
     {
         $expectedStructure = XmlStructures::$expectedStructures3176[$xmlType] ?? [];
@@ -257,6 +281,12 @@ class Xml3176Service
         
     }
 
+    /**
+     * XML ba dịch vụ nhanh
+     * Kỹ thuật vật tư rành rành lưu kho
+     * Hồ sơ đầy đủ chẳng lo
+     * Tiến trình kiểm soát ấm no mọi bề
+     */
     public function storeXml3176Xml3($data, $xmlType)
     {
         $expectedStructure = XmlStructures::$expectedStructures3176[$xmlType] ?? [];
@@ -336,6 +366,12 @@ class Xml3176Service
         
     }
 
+    /**
+     * XML bốn cận lâm sàng
+     * Chỉ số kết luận rõ ràng từng ly
+     * Lưu vào hệ thống thực thi
+     * Kiểm tra sai sót quản chi nhọc nhằn
+     */
     public function storeXml3176Xml4($data, $xmlType)
     {
         $expectedStructure = XmlStructures::$expectedStructures3176[$xmlType] ?? [];
@@ -378,6 +414,12 @@ class Xml3176Service
         }
     }
 
+    /**
+     * XML năm diễn biến tươi
+     * Lâm sàng ghi chép cho người an tâm
+     * Từng thời điểm một âm thầm
+     * Lưu vào hệ thống lỗi lầm tránh xa
+     */
     public function storeXml3176Xml5($data, $xmlType)
     {
         $expectedStructure = XmlStructures::$expectedStructures3176[$xmlType] ?? [];
@@ -418,6 +460,12 @@ class Xml3176Service
         }
     }
 
+    /**
+     * XML sáu bệnh nhân yêu
+     * HIV điều trị sớm chiều quan tâm
+     * Phác đồ thực hiện âm thầm
+     * Hồ sơ lưu giữ lỗi lầm gạt đi
+     */
     public function storeXml3176Xml6($data, $xmlType)
     {
         $expectedStructure = XmlStructures::$expectedStructures3176[$xmlType] ?? [];
@@ -496,6 +544,12 @@ class Xml3176Service
         }
     }
 
+    /**
+     * XML bảy viện chia tay
+     * Giấy ra viện đó ngày ngày theo sau
+     * Bác sĩ ký kết thật mau
+     * Thông tin đầy đủ trước sau vẹn toàn
+     */
     public function storeXml3176Xml7($data, $xmlType)
     {
         $expectedStructure = XmlStructures::$expectedStructures3176[$xmlType] ?? [];
@@ -547,6 +601,12 @@ class Xml3176Service
         }
     }
 
+    /**
+     * XML tám tóm tắt nhanh
+     * Bệnh án hồ sơ rành rành lưu tên
+     * Chữa trị kết quả vững bền
+     * Ghi vào sổ sách cho nền sáng trong
+     */
     public function storeXml3176Xml8($data, $xmlType)
     {
         $expectedStructure = XmlStructures::$expectedStructures3176[$xmlType] ?? [];
@@ -595,6 +655,12 @@ class Xml3176Service
 
     }
 
+    /**
+     * XML chín chứng sinh ra
+     * Đứa trẻ chào đời thật là vui lây
+     * Thông tin cha mẹ đủ đầy
+     * Lưu vào hệ thống sum vầy yên vui
+     */
     public function storeXml3176Xml9($data, $xmlType)
     {
         $expectedStructure = XmlStructures::$expectedStructures3176[$xmlType] ?? [];
@@ -662,6 +728,12 @@ class Xml3176Service
         }
     }
 
+    /**
+     * XML mười nghỉ thai nhi
+     * Dưỡng thai giấy chứng quản chi nhọc nhằn
+     * Bác sĩ ký kết chuyên cần
+     * An tâm nghỉ ngơi tinh thần thảnh thơi
+     */
     public function storeXml3176Xml10($data, $xmlType)
     {
         // Xác định cấu trúc cho XML10
@@ -704,6 +776,12 @@ class Xml3176Service
         }
     }
 
+    /**
+     * Mười một nghỉ việc hưởng lương
+     * Bảo hiểm xã hội tình thương đong đầy
+     * Giấy chứng nhận gửi về đây
+     * Hồ sơ lưu trữ sum vầy ấm êm
+     */
     public function storeXml3176Xml11($data, $xmlType)
     {
         $expectedStructure = XmlStructures::$expectedStructures3176[$xmlType] ?? [];
@@ -752,6 +830,12 @@ class Xml3176Service
         }
     }
 
+    /**
+     * Mười ba chuyển tuyến phương trời
+     * Giấy tờ đầy đủ cho đời bớt lo
+     * Bệnh tình tóm tắt làm kho
+     * Chuyển đi thông suốt chẳng lo ngại ngần
+     */
     public function storeXml3176Xml13($data, $xmlType)
     {
         $expectedStructure = XmlStructures::$expectedStructures3176[$xmlType] ?? [];
@@ -814,6 +898,12 @@ class Xml3176Service
         }
     }
 
+    /**
+     * Mười bốn hẹn gặp lại nhau
+     * Giấy hẹn tái khám thật mau lưu về
+     * Bác sĩ dặn dò mọi bề
+     * Bệnh nhân yên dạ chẳng hề lo chi
+     */
     public function storeXml3176Xml14($data, $xmlType)
     {
         $expectedStructure = XmlStructures::$expectedStructures3176[$xmlType] ?? [];
@@ -862,6 +952,12 @@ class Xml3176Service
         }
     }
 
+    /**
+     * Thông tin lưu giữ vẹn toàn
+     * Ký xong ghi lại rõ ràng phương tâm
+     * HSM hay USB âm thầm
+     * Hệ thống ghi nhận hết phần lo âu
+     */
     public function storeXml3176Information(
         $ma_lk, $macskcb, 
         $operationType, 
@@ -869,7 +965,8 @@ class Xml3176Service
         $error = null, 
         $isSigned = false, 
         $signedError = null, 
-        $submittedMessage = null)
+        $submittedMessage = null,
+        $signMethod = null)
     {
         $loginname = null;
 
@@ -899,6 +996,7 @@ class Xml3176Service
                 $values['exported_by'] = $loginname;
             } elseif ($operationType === 'sign') {
                 $values['is_signed'] = $isSigned;
+                $values['sign_method'] = $signMethod;
                 if ($isSigned) {
                     $values['signed_error'] = null;
                 } else {
@@ -923,6 +1021,12 @@ class Xml3176Service
         }
     }
 
+    /**
+     * Mười lăm bệnh lao hiểm nghèo
+     * Phác đồ điều trị dõi theo từng ngày
+     * Kết quả lưu giữ tại đây
+     * Hy vọng sống khỏe đong đầy niềm tin
+     */
     public function storeXml3176Xml15($data, $xmlType)
     {
         $expectedStructure = XmlStructures::$expectedStructures3176[$xmlType] ?? [];
@@ -976,12 +1080,24 @@ class Xml3176Service
         }
     }
 
+    /**
+     * Kiểm tra hoàn tất hồ sơ
+     * Đẩy vào hàng đợi chẳng chờ đợi lâu
+     * Quy trình tự động đi đầu
+     * Rà soát kỹ lưỡng từ câu tới dòng
+     */
     public function checkXml3176Complete($ma_lk)
     {
         CheckCompleteXml3176RecordJob::dispatch($ma_lk)
         ->onQueue($this->queueName);
     }
 
+    /**
+     * BHYT kiểm tra nhanh
+     * Thông tin thẻ đó rành rành gởi đi
+     * Họ tên ngày sinh quản chi
+     * Kiểm tra hợp lệ thực thi tức thời
+     */
     private function processXml3176Xml1CheckBHYT($data): void
     {
         $ngaySinh = (string)$data->ngay_sinh;
@@ -1013,6 +1129,12 @@ class Xml3176Service
         
     }
 
+    /**
+     * Dữ liệu xuất khẩu sẵn sàng
+     * XML cấu trúc rõ ràng trước sau
+     * Cơ sở khám bệnh thật mau
+     * Thông tin đầy đủ cùng nhau gởi về
+     */
     public function getDataForXmlExport($selectedRecord)
     {
         $xmlInformation = $this->getXmlInformation($selectedRecord);
@@ -1625,12 +1747,24 @@ class Xml3176Service
         return $dom->saveXML();
     }
 
+    /**
+     * Hồ sơ xuất khẩu sẵn sàng
+     * Lệnh truyền hàng đợi nhẹ nhàng đẩy đi
+     * Chờ ngày gửi cổng nhanh chi
+     * Quy trình tự động thực thi đúng giờ
+     */
     public function exportXml3176($ma_lk)
     {
         ExportXml3176Job::dispatch($ma_lk)
             ->onQueue(config('xml3176.export_queue_name', $this->queueName));
     }
 
+    /**
+     * Quy trình xử lý hồ sơ
+     * Ký tên đóng dấu đợi chờ thông tin
+     * Xuất ra tệp gởi niềm tin
+     * Hoàn thành nhiệm vụ ghi hình rõ ra
+     */
     public function processExportXml($ma_lk)
     {
         $xmlData = $this->getDataForXmlExport($ma_lk);
@@ -1645,6 +1779,7 @@ class Xml3176Service
         $xmlDataSigned = $this->xmlSignService->signXml($xmlData);
 
         $isSigned = $xmlDataSigned['isSigned'];
+        $signMethod = $xmlDataSigned['method'] ?? null;
 
         if ($xmlDataSigned) {
             $xmlData = $xmlDataSigned['data'];
@@ -1655,7 +1790,7 @@ class Xml3176Service
         $macskcb = $xmlInformation->macskcb;
         $signedError = $xmlDataSigned['error'] ?? null;
 
-        $this->storeXml3176Information($ma_lk, $macskcb, 'sign', 1, null, $isSigned, $signedError);
+        $this->storeXml3176Information($ma_lk, $macskcb, 'sign', 1, null, $isSigned, $signedError, null, $signMethod);
 
         // Định dạng thời gian hiện tại để đặt tên file
         $formattedDateTime = date('Y.m.d_H.i.s');
@@ -1701,6 +1836,12 @@ class Xml3176Service
      * @param string $xmlData Nội dung XML đã ký số
      * @param string $macskcb Mã cơ sở khám chữa bệnh
      * @return bool True nếu gửi thành công, false nếu thất bại
+     */
+    /**
+     * Gửi lên bảo hiểm xã hội
+     * Cổng trời tiếp nhận chẳng hề lỗi sai
+     * Kết quả trả về tương lai
+     * Thành công hồ sơ gởi dài niềm tin
      */
     private function submitXmlToBHYT($ma_lk, $xmlData, $macskcb)
     {

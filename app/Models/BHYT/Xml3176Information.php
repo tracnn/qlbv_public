@@ -22,6 +22,7 @@ class Xml3176Information extends Model
         'submitted_by',
         'submit_error',
         'is_signed',
+        'sign_method',
         'signed_error',
         'submitted_message',
     ];

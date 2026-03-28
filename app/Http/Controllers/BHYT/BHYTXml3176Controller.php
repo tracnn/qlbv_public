@@ -80,6 +80,7 @@ class BHYTXml3176Controller extends Controller
                     'exported_at', 
                     'imported_by', 
                     'is_signed', 
+                    'sign_method',
                     'submitted_at', 
                     'submit_error', 
                     'signed_error', 
@@ -106,6 +107,7 @@ class BHYTXml3176Controller extends Controller
                         'exported_at', 
                         'imported_by', 
                         'is_signed', 
+                        'sign_method',
                         'submitted_at', 
                         'submit_error', 
                         'signed_error', 
@@ -184,6 +186,7 @@ class BHYTXml3176Controller extends Controller
                     'export_error', 
                     'imported_by', 
                     'is_signed', 
+                    'sign_method',
                     'submitted_at', 
                     'submit_error', 
                     'signed_error', 
@@ -363,9 +366,12 @@ class BHYTXml3176Controller extends Controller
             return '<span style="white-space: nowrap;">' . $icon . $copyIcon . '</span>';
         })
         ->addColumn('is_signed', function ($result) {
+            $signMethod = $result->Xml3176Information && $result->Xml3176Information->sign_method 
+                ? ' (' . $result->Xml3176Information->sign_method . ')' 
+                : '';
             return $result->Xml3176Information && $result->Xml3176Information->is_signed ? 
-            '<i class="fa fa-check-circle text-success" title="Ký số"></i>' : 
-            ($result->Xml3176Information && $result->Xml3176Information->signed_error ? '<i class="fa fa-times-circle text-danger" title="'.$result->Xml3176Information->signed_error.'"></i>' : '<i class="fa fa-times-circle text-danger" title="Không ký số"></i>');
+            '<i class="fa fa-check-circle text-success" title="Đã ký số' . $signMethod . '"></i>' : 
+            ($result->Xml3176Information && $result->Xml3176Information->signed_error ? '<i class="fa fa-times-circle text-danger" title="'.$result->Xml3176Information->signed_error.'"></i>' : '<i class="fa fa-times-circle text-danger" title="Chưa ký số"></i>');
         })
         ->addColumn('imported_by', function ($result) {
             return $result->Xml3176Information->imported_by ?? null;

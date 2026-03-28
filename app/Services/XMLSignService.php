@@ -21,7 +21,10 @@ class XMLSignService
     }
 
     /**
-     * Ký số XML
+     * Ký số XML hồ sơ thật mau
+     * Công nghệ hiện đại trước sau rõ ràng
+     * USB hay HSM sẵn sàng
+     * Ghi lại phương thức hoàn toàn tự tin
      */
     public function signXml($xmlContent)
     {
@@ -39,7 +42,7 @@ class XMLSignService
         }
 
         Log::info('XML signing is disabled');
-        return ['isSigned' => false, 'data' => $xmlContent];
+        return ['isSigned' => false, 'data' => $xmlContent, 'method' => null];
     }
 
     /**
@@ -85,14 +88,14 @@ class XMLSignService
                     $errorMessage .= ': ' . implode(', ', $result['Param']['Messages']);
                 }
                 Log::error($errorMessage);
-                return ['isSigned' => false, 'data' => $xmlContent, 'error' => $errorMessage];
+                return ['isSigned' => false, 'data' => $xmlContent, 'error' => $errorMessage, 'method' => 'HSM'];
             }
 
-            return ['isSigned' => true, 'data' => base64_decode($result['Data'])];
+            return ['isSigned' => true, 'data' => base64_decode($result['Data']), 'method' => 'HSM'];
 
         } catch (GuzzleException $e) {
             Log::error('HSM Sign API Error: ' . $e->getMessage());
-            return ['isSigned' => false, 'data' => $xmlContent, 'error' => $e->getMessage()];
+            return ['isSigned' => false, 'data' => $xmlContent, 'error' => $e->getMessage(), 'method' => 'HSM'];
         }
     }
 
@@ -132,14 +135,14 @@ class XMLSignService
             if (!$result['Success']) {
                 $error = implode(', ', $result['Param']['Messages'] ?? ['Unknown error']);
                 Log::error('USB Token signing failed: ' . $error);
-                return ['isSigned' => false, 'data' => $xmlContent, 'error' => $error];
+                return ['isSigned' => false, 'data' => $xmlContent, 'error' => $error, 'method' => 'USB Token'];
             }
 
-            return ['isSigned' => true, 'data' => base64_decode($result['Data'])];
+            return ['isSigned' => true, 'data' => base64_decode($result['Data']), 'method' => 'USB Token'];
 
         } catch (\GuzzleHttp\Exception\GuzzleException $e) {
             Log::error('USB Token Sign Service Error: ' . $e->getMessage());
-            return ['isSigned' => false, 'data' => $xmlContent, 'error' => $e->getMessage()];
+            return ['isSigned' => false, 'data' => $xmlContent, 'error' => $e->getMessage(), 'method' => 'USB Token'];
         }
     }
 }
