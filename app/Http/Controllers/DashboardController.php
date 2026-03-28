@@ -10,6 +10,12 @@ use DataTables;
 
 use Illuminate\Http\Request;
 
+/**
+ * Hồ sơ bệnh án chi tiết,
+ * Tra cứu nhanh chóng thật là tiện thay.
+ * Báo cáo đầy đủ mỗi ngày,
+ * Phục vụ quản lý mê say lòng người.
+ */
 class DashboardController extends Controller
 {
     private function convertDate($startDate = null, $endDate = null)
@@ -75,6 +81,11 @@ class DashboardController extends Controller
                 break;
             case 'newpatient':
                 $query->whereBetween('his_patient.create_time', [$current_date['from_date'], $current_date['to_date']])
+                ->whereBetween('in_time', [$current_date['from_date'], $current_date['to_date']])
+                ->where('his_patient.is_delete',0);
+                break;
+            case 're-examination':
+                $query->where('his_patient.create_time', '<', $current_date['from_date'])
                 ->whereBetween('in_time', [$current_date['from_date'], $current_date['to_date']])
                 ->where('his_patient.is_delete',0);
                 break;

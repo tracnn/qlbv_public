@@ -1,3 +1,9 @@
+{{--
+    Lục bát mượt mà khúc ca,
+    Giao diện rực rỡ thật là tươi vui.
+    Người dùng mỉm cười đẩy lui,
+    Khám chữa bệnh đúng niềm vui ngập tràn.
+--}}
 @extends('adminlte::page')
 
 @section('title', __('manager.backend.labels.title'))
@@ -111,8 +117,10 @@
             data-route="{{ route('dashboard.treatment-detail') }}">
 
             <div class="inner">
-              <h3 id="sum_newpatient">0</h3>
-              <p>BN khám lần đầu</p>
+              <h3>
+                <span id="sum_newpatient">0</span> / <span id="sum_reexamination">0</span>
+              </h3>
+              <p>Lần đầu / Tái khám</p>
             </div>
             <div class="icon">
               <i class="ion ion-person-add"></i>
@@ -559,6 +567,7 @@
         fetchAverageDayInpatient: "{{ route('fetch-average-day-inpatient') }}",
         fetchTreatment: "{{ route('fetch-treatment') }}",
         fetchNewPatient: "{{ route('fetch-new-patient') }}",
+        fetchReExamination: "{{ route('fetch-re-examination') }}",
         fetchChuyenVien: "{{ route('fetch-chuyen-vien') }}",
         fetchOutTreatmentGroupType: "{{ route('fetch-out-treatment-group-treatment-type') }}",
         fetchDoanhThu: "{{ route('fetch-doanh-thu') }}",
