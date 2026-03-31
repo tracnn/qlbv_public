@@ -1,3 +1,8 @@
+# 31/03/2026
+
+- Update bổ sung báo cáo doanh thu dịch vụ y tế
+- Update bổ sung biểu đồ phân tích dữ liệu cho lãnh đạo CSKCB
+
 # 26/03/2026
 
 - Update tích hợp ký số XML3176 bằng USB Token, bổ sung thêm 1 service ký số trên Windows
