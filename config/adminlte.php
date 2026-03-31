@@ -219,6 +219,27 @@ return [
                     'route'   => 'khth.dashboard',
                     'active'=> ['khth/dashboard*'],
                 ],
+                [
+                    'text'  => 'Thống kê theo bác sĩ',
+                    'icon'  => 'user-md',
+                    'checkrole'   => 'dashboard',
+                    'route'   => 'dashboard.doctor-stats',
+                    'active'=> ['dashboard/doctor-stats*'],
+                ],
+                [
+                    'text'  => 'Xu hướng & Vận hành',
+                    'icon'  => 'line-chart',
+                    'checkrole'   => 'dashboard',
+                    'route'   => 'dashboard.trends',
+                    'active'=> ['dashboard/trends*'],
+                ],
+                [
+                    'text'  => 'Công suất phòng mổ',
+                    'icon'  => 'hospital-o',
+                    'checkrole'   => 'dashboard',
+                    'route'   => 'dashboard.operating-room',
+                    'active'=> ['dashboard/operating-room*'],
+                ],
             ],
         ],
         [

@@ -117,6 +117,34 @@ Route::group(['middleware' => ['auth', 'check.first.login']], function () {
         Route::get('dashboard/fetch-service-detail', 'DashboardController@fetchServiceDetail')->name('dashboard.fetch-service-detail');
         /* --Dashboard */
 
+        // ── Doctor Stats ──────────────────────────────────────────────────────
+        Route::get('dashboard/doctor-stats', 'Dashboard\DoctorStatsController@index')
+             ->name('dashboard.doctor-stats');
+        Route::get('dashboard/doctor-stats/examinations', 'Dashboard\DoctorStatsController@examinations')
+             ->name('dashboard.doctor-stats.examinations');
+        Route::get('dashboard/doctor-stats/revenue', 'Dashboard\DoctorStatsController@revenue')
+             ->name('dashboard.doctor-stats.revenue');
+        Route::get('dashboard/doctor-stats/surgeries', 'Dashboard\DoctorStatsController@surgeries')
+             ->name('dashboard.doctor-stats.surgeries');
+
+        // ── Trend Analysis ────────────────────────────────────────────────────
+        Route::get('dashboard/trends', 'Dashboard\TrendAnalysisController@index')
+             ->name('dashboard.trends');
+        Route::get('dashboard/trends/chart', 'Dashboard\TrendAnalysisController@trendChart')
+             ->name('dashboard.trends.chart');
+        Route::get('dashboard/trends/patients-per-hour', 'Dashboard\TrendAnalysisController@patientsPerHour')
+             ->name('dashboard.trends.patients-per-hour');
+        Route::get('dashboard/trends/overload-alert', 'Dashboard\TrendAnalysisController@overloadAlert')
+             ->name('dashboard.trends.overload-alert');
+
+        // ── Operating Room ────────────────────────────────────────────────────
+        Route::get('dashboard/operating-room', 'Dashboard\OperatingRoomController@index')
+             ->name('dashboard.operating-room');
+        Route::get('dashboard/operating-room/cases-per-room', 'Dashboard\OperatingRoomController@casesPerRoom')
+             ->name('dashboard.operating-room.cases-per-room');
+        Route::get('dashboard/operating-room/utilization', 'Dashboard\OperatingRoomController@utilization')
+             ->name('dashboard.operating-room.utilization');
+
     });
     
     Route::get('/', 'HomeController@index')->name('home');
