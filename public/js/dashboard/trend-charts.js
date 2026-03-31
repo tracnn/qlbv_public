@@ -1,6 +1,8 @@
 (function (win, $) {
     'use strict';
 
+    Highcharts.setOptions({ accessibility: { enabled: false } });
+
     var R = (win.TREND_CFG || {}).routes || {};
 
     function getParams() {

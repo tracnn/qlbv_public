@@ -1,6 +1,8 @@
 (function (win, $) {
     'use strict';
 
+    Highcharts.setOptions({ accessibility: { enabled: false } });
+
     var R = (win.DOCTOR_STATS_CFG || {}).routes || {};
     var dtExam, dtRevenue, dtSurgery;
 
