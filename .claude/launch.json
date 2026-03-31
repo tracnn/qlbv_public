@@ -1,0 +1,29 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "docker",
+      "runtimeExecutable": "docker",
+      "runtimeArgs": ["compose", "up"],
+      "port": 80
+    },
+    {
+      "name": "artisan-serve",
+      "runtimeExecutable": "php",
+      "runtimeArgs": ["artisan", "serve"],
+      "port": 8000
+    },
+    {
+      "name": "mix-watch",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "watch"],
+      "port": 3000
+    },
+    {
+      "name": "mix-hot",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "hot"],
+      "port": 8080
+    }
+  ]
+}

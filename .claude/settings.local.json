@@ -6,7 +6,11 @@
       "Write(*)",
       "Bash(powershell.exe:*)",
       "Bash(cd:*)",
-      "Bash(cmd.exe:*)"
+      "Bash(cmd.exe:*)",
+      "mcp__sqlcl__list-connections",
+      "mcp__sqlcl__connect",
+      "mcp__sqlcl__run-sql",
+      "mcp__Claude_Preview__preview_start"
     ]
   }
 }
