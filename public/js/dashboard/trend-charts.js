@@ -38,9 +38,10 @@
         var p = getParams();
         $.ajax({ url: R.trendChart, data: p, dataType: 'json' })
             .done(function (res) {
-                var labels   = res.labels || [];
-                var current  = res.current || [];
-                var previous = res.previous || [];
+                var labels        = res.labels          || [];
+                var current       = res.current         || [];
+                var previous      = res.previous        || [];
+                var prevLabels    = res.previous_labels || [];
 
                 var metricLabel = p.metric === 'revenue' ? 'Doanh thu (đ)' : 'Lượt khám';
 
@@ -49,6 +50,23 @@
                     title: { text: 'Xu hướng ' + metricLabel },
                     xAxis: { categories: labels },
                     yAxis: { title: { text: metricLabel }, allowDecimals: false },
+                    tooltip: {
+                        shared: true,
+                        formatter: function () {
+                            var idx  = this.points[0].point.index;
+                            var html = '<b>' + this.x + '</b><br/>';
+                            this.points.forEach(function (pt) {
+                                var dateNote = '';
+                                if (pt.series.name === 'Kỳ trước' && prevLabels[idx]) {
+                                    dateNote = ' <span style="color:#999;font-size:11px">(' + prevLabels[idx] + ')</span>';
+                                }
+                                html += '<span style="color:' + pt.color + '">●</span> '
+                                      + pt.series.name + dateNote
+                                      + ': <b>' + (pt.y !== null ? pt.y.toLocaleString('vi-VN') : '–') + '</b><br/>';
+                            });
+                            return html;
+                        }
+                    },
                     series: [
                         { name: 'Kỳ hiện tại', data: current, dashStyle: 'Solid' },
                         { name: 'Kỳ trước',    data: previous, dashStyle: 'Dash', color: '#aaa' }

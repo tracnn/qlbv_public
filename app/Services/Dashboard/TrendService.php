@@ -83,9 +83,10 @@ class TrendService
         $previousRows = $this->formatTrendRows($this->queryTrendData($prevFrom, $prevTo, $mode, $metric), $mode);
 
         return [
-            'labels'   => array_map(function ($r) { return $r['label']; }, $currentRows),
-            'current'  => array_map(function ($r) { return $r['value']; }, $currentRows),
-            'previous' => array_map(function ($r) { return $r['value']; }, $previousRows),
+            'labels'          => array_map(function ($r) { return $r['label']; }, $currentRows),
+            'current'         => array_map(function ($r) { return $r['value']; }, $currentRows),
+            'previous'        => array_map(function ($r) { return $r['value']; }, $previousRows),
+            'previous_labels' => array_map(function ($r) { return $r['label']; }, $previousRows),
         ];
     }
 
