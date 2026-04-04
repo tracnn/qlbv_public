@@ -753,7 +753,7 @@ class ReportDataService
                 hsr.is_delete = 0
                 AND hss.is_delete = 0
                 AND hss.is_no_execute IS NULL
-                AND hss.is_expend IS NULL
+                AND (hss.is_expend IS NULL OR hss.tdl_service_type_id IN (6, 7))
                 AND hsr.intruction_time BETWEEN '{$formattedDateFrom}' AND '{$formattedDateTo}'";
         
         if (!empty($departmentId)) {
