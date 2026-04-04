@@ -264,14 +264,17 @@ class HomeController extends Controller
 
         // Phân loại và tổng hợp dữ liệu theo từng tiêu chí
         foreach ($data as $item) {
+            // Hoàn ứng (transaction_type_id = 2) thì trừ, còn lại thì cộng
+            $amount = $item->transaction_type_id == 2 ? -$item->amount : $item->amount;
+
             // Tổng hợp theo cashier_username
             if (isset($chartData['cashiers'][$item->cashier_username])) {
-                $chartData['cashiers'][$item->cashier_username] += $item->amount;
+                $chartData['cashiers'][$item->cashier_username] += $amount;
             } else {
-                $chartData['cashiers'][$item->cashier_username] = $item->amount;
+                $chartData['cashiers'][$item->cashier_username] = $amount;
             }
 
-            // Tổng hợp theo transaction_type_name
+            // Tổng hợp theo transaction_type_name (giữ giá trị dương để hiển thị trên biểu đồ)
             if (isset($chartData['transactionTypes'][$item->transaction_type_name])) {
                 $chartData['transactionTypes'][$item->transaction_type_name] += $item->amount;
             } else {
@@ -280,23 +283,23 @@ class HomeController extends Controller
 
             // Tổng hợp theo pay_form_name
             if (isset($chartData['payForms'][$item->pay_form_name])) {
-                $chartData['payForms'][$item->pay_form_name] += $item->amount;
+                $chartData['payForms'][$item->pay_form_name] += $amount;
             } else {
-                $chartData['payForms'][$item->pay_form_name] = $item->amount;
+                $chartData['payForms'][$item->pay_form_name] = $amount;
             }
 
             // Tổng hợp theo department_name
             if (isset($chartData['departments'][$item->department_name])) {
-                $chartData['departments'][$item->department_name] += $item->amount;
+                $chartData['departments'][$item->department_name] += $amount;
             } else {
-                $chartData['departments'][$item->department_name] = $item->amount;
+                $chartData['departments'][$item->department_name] = $amount;
             }
 
             // Tổng hợp theo treatment_type_name
             if (isset($chartData['treatmentTypes'][$item->treatment_type_name])) {
-                $chartData['treatmentTypes'][$item->treatment_type_name] += $item->amount;
+                $chartData['treatmentTypes'][$item->treatment_type_name] += $amount;
             } else {
-                $chartData['treatmentTypes'][$item->treatment_type_name] = $item->amount;
+                $chartData['treatmentTypes'][$item->treatment_type_name] = $amount;
             }
         }
 
@@ -318,10 +321,14 @@ class HomeController extends Controller
         }
 
         foreach ($chartData['transactionTypes'] as $name => $total) {
-            $formattedData['transactionTypes'][] = [
+            $item = [
                 'name' => $name,
                 'y' => (float) $total
             ];
+            if ($name === 'Hoàn ứng') {
+                $item['isRefund'] = true;
+            }
+            $formattedData['transactionTypes'][] = $item;
         }
 
         foreach ($chartData['payForms'] as $name => $total) {
@@ -344,6 +351,18 @@ class HomeController extends Controller
                 'y' => (float) $total
             ];
         }
+
+        // Tổng giao dịch = Thanh toán + Tạm ứng - Hoàn ứng
+        // transactionTypes giữ giá trị dương, nên cần tính lại tổng đúng
+        $transactionTotal = 0;
+        foreach ($chartData['transactionTypes'] as $name => $total) {
+            $transactionTotal += $total;
+        }
+        // Trừ 2 lần Hoàn ứng vì ở trên đã cộng dương, cần trừ thành âm
+        if (isset($chartData['transactionTypes']['Hoàn ứng'])) {
+            $transactionTotal -= 2 * $chartData['transactionTypes']['Hoàn ứng'];
+        }
+        $formattedData['transactionTotal'] = $transactionTotal;
 
         return response()->json($formattedData);
     }
@@ -1084,6 +1103,7 @@ class HomeController extends Controller
             'transaction_time',
             'cashier_username',
             'amount',
+            'his_transaction.transaction_type_id',
             'transaction_type_name',
             'pay_form_name',
             'department_name',

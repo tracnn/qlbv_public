@@ -44,8 +44,8 @@
           series: [{ name: seriesName, data: points }]
         });
       },
-      renderColumnMoney: function (containerId, title, data, yTitle) {
-        var total = (data || []).reduce(function (t, i) { return t + (i.y || 0); }, 0);
+      renderColumnMoney: function (containerId, title, data, yTitle, totalOverride) {
+        var total = totalOverride != null ? totalOverride : (data || []).reduce(function (t, i) { return t + (i.y || 0); }, 0);
         Highcharts.chart(containerId, {
           chart: { type: 'column', backgroundColor: '#fff' },
           title: { text: title + ': ' + Utils.formatNumber(total), style: { fontSize: '18px', fontWeight: 'bold' } },
@@ -59,7 +59,18 @@
           plotOptions: {
             column: {
               colorByPoint: true,
-              dataLabels: { enabled: true, formatter: function () { return Utils.formatNumber(this.y); }, style: { fontSize: '12px' } }
+              dataLabels: {
+                enabled: true,
+                useHTML: true,
+                formatter: function () {
+                  var val = Utils.formatNumber(this.y);
+                  if (this.point.isRefund) {
+                    return '<span style="color:red;font-weight:bold">-' + val + '</span>';
+                  }
+                  return val;
+                },
+                style: { fontSize: '12px' }
+              }
             }
           },
           legend: { enabled: false },

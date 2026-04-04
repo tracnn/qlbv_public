@@ -11,7 +11,7 @@
         return $.Deferred().resolve().promise();
       }
       return API.txSummary(start, end).done(function (data) {
-        U.renderColumnMoney('chart_transaction_types', 'Loại giao dịch', data.transactionTypes, 'Số tiền');
+        U.renderColumnMoney('chart_transaction_types', 'Loại giao dịch', data.transactionTypes, 'Số tiền', data.transactionTotal);
         U.renderColumnMoney('chart_pay_forms', 'Hình thức thanh toán', data.payForms, 'Số tiền');
         U.renderColumnMoney('chart_cashiers', 'Thu ngân', data.cashiers, 'Số tiền');
         U.renderColumnMoney('chart_treatment_types', 'Diện điều trị', data.treatmentTypes, 'Số tiền');
