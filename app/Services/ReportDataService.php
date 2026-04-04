@@ -725,6 +725,7 @@ class ReportDataService
                 $suffix = "_{$ptId}_{$ttId}";
                 $pivotCols[] = "SUM(CASE WHEN hpt.id = {$ptId} AND htt.id = {$ttId} THEN hss.amount ELSE 0 END) AS sl{$suffix}";
                 $pivotCols[] = "SUM(CASE WHEN hpt.id = {$ptId} AND htt.id = {$ttId} THEN hss.amount * hss.price ELSE 0 END) AS tt{$suffix}";
+                $pivotCols[] = "SUM(CASE WHEN hpt.id = {$ptId} AND htt.id = {$ttId} THEN NVL(hss.vir_total_patient_price_no_dc,0) - NVL(hss.vir_total_patient_price,0) ELSE 0 END) AS mg{$suffix}";
             }
         }
         $pivotColsStr = implode(",\n                ", $pivotCols);

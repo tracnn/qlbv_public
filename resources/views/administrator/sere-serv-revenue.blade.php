@@ -21,13 +21,13 @@
                     <th rowspan="3" style="vertical-align: middle;">Khoa chỉ định</th>
                     <th rowspan="3" style="vertical-align: middle;">Loại dịch vụ</th>
                     @foreach($patientTypes as $pt)
-                        <th colspan="{{ $treatmentTypes->count() * 2 }}" class="text-center" style="background-color: #f3f3f3;">{{ $pt->patient_type_name }}</th>
+                        <th colspan="{{ $treatmentTypes->count() * 3 }}" class="text-center" style="background-color: #f3f3f3;">{{ $pt->patient_type_name }}</th>
                     @endforeach
                 </tr>
                 <tr>
                     @foreach($patientTypes as $pt)
                         @foreach($treatmentTypes as $tt)
-                            <th colspan="2" class="text-center" style="background-color: #f9f9f9; font-size: 0.9em;">{{ $tt->treatment_type_name }}</th>
+                            <th colspan="3" class="text-center" style="background-color: #f9f9f9; font-size: 0.9em;">{{ $tt->treatment_type_name }}</th>
                         @endforeach
                     @endforeach
                 </tr>
@@ -36,6 +36,7 @@
                         @foreach($treatmentTypes as $tt)
                             <th class="text-center">SL</th>
                             <th class="text-center">Thành tiền</th>
+                            <th class="text-center">Miễn giảm</th>
                         @endforeach
                     @endforeach
                 </tr>
@@ -90,6 +91,7 @@
                     @foreach($treatmentTypes as $tt)
                         { data: 'sl_{{ $pt->id }}_{{ $tt->id }}', className: 'text-right', searchable: false, orderable: false },
                         { data: 'tt_{{ $pt->id }}_{{ $tt->id }}', className: 'text-right', searchable: false, orderable: false },
+                        { data: 'mg_{{ $pt->id }}_{{ $tt->id }}', className: 'text-right', searchable: false, orderable: false },
                     @endforeach
                 @endforeach
             ],
@@ -122,6 +124,7 @@
 
                             tr.append('<td style="background-color: #d1ecf1; border-top: 2px solid #bee5eb;"></td>');
                             tr.append('<td class="text-right" style="background-color: #d1ecf1; color: #0c5460; font-weight: bold; border-top: 2px solid #bee5eb; font-size: 1.1em;">' + ttDisplay + '</td>');
+                            tr.append('<td style="background-color: #d1ecf1; border-top: 2px solid #bee5eb;"></td>');
                         @endforeach
                     @endforeach
                     

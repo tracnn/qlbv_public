@@ -779,6 +779,11 @@ class ReportController extends Controller
                     $val = $row->{$ttKey};
                     return $val == 0 ? '' : number_format($val);
                 });
+                $mgKey = "mg{$suffix}";
+                $dt->editColumn($mgKey, function($row) use ($mgKey) {
+                    $val = $row->{$mgKey};
+                    return $val == 0 ? '' : number_format($val);
+                });
             }
         }
 

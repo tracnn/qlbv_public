@@ -63,6 +63,7 @@ class SereServRevenueExport implements FromCollection, WithHeadings, ShouldAutoS
             foreach ($this->treatmentTypes as $tt) {
                 $headings[] = 'SL';
                 $headings[] = 'Thành tiền';
+                $headings[] = 'Miễn giảm';
             }
         }
         return $headings;
@@ -76,8 +77,10 @@ class SereServRevenueExport implements FromCollection, WithHeadings, ShouldAutoS
                 $suffix = "_{$pt->id}_{$tt->id}";
                 $slKey = "sl{$suffix}";
                 $ttKey = "tt{$suffix}";
+                $mgKey = "mg{$suffix}";
                 $data[] = $row->{$slKey} == 0 ? '' : $row->{$slKey};
                 $data[] = $row->{$ttKey} == 0 ? '' : $row->{$ttKey};
+                $data[] = $row->{$mgKey} == 0 ? '' : $row->{$mgKey};
             }
         }
         return $data;
@@ -106,7 +109,7 @@ class SereServRevenueExport implements FromCollection, WithHeadings, ShouldAutoS
                 $colIndex = 3; // Start from column C
                 foreach ($patientTypes as $pt) {
                     $sheet->setCellValueByColumnAndRow($colIndex, 1, $pt->patient_type_name);
-                    $endColIndex = $colIndex + ($ttCount * 2) - 1;
+                    $endColIndex = $colIndex + ($ttCount * 3) - 1;
                     $sheet->mergeCellsByColumnAndRow($colIndex, 1, $endColIndex, 1);
                     $colIndex = $endColIndex + 1;
                 }
@@ -116,8 +119,8 @@ class SereServRevenueExport implements FromCollection, WithHeadings, ShouldAutoS
                 foreach ($patientTypes as $pt) {
                     foreach ($treatmentTypes as $tt) {
                         $sheet->setCellValueByColumnAndRow($colIndex, 2, $tt->treatment_type_name);
-                        $sheet->mergeCellsByColumnAndRow($colIndex, 2, $colIndex + 1, 2);
-                        $colIndex += 2;
+                        $sheet->mergeCellsByColumnAndRow($colIndex, 2, $colIndex + 2, 2);
+                        $colIndex += 3;
                     }
                 }
                 
@@ -137,14 +140,16 @@ class SereServRevenueExport implements FromCollection, WithHeadings, ShouldAutoS
                 $highestRow = $sheet->getHighestRow();
                 
                 // Set column width and formatting for data columns
+                // Mỗi nhóm 3 cột: SL (offset 0), Thành tiền (offset 1), Miễn giảm (offset 2)
                 for ($col = 3; $col < $colIndex; $col++) {
                     $columnLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col);
-                    $sheet->getColumnDimension($columnLetter)->setWidth(12);
+                    $sheet->getColumnDimension($columnLetter)->setWidth(14);
                     $sheet->getStyle($columnLetter . '4:' . $columnLetter . $highestRow)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
-                    if ($col % 2 != 0) { // SL (Columns C, E, G... which are 3, 5, 7...)
+                    $offset = ($col - 3) % 3;
+                    if ($offset == 0) { // SL
                         $sheet->getStyle($columnLetter . '4:' . $columnLetter . $highestRow)->getNumberFormat()
                             ->setFormatCode('#,##0.00');
-                    } else { // Thành tiền (Columns D, F, H... which are 4, 6, 8...)
+                    } else { // Thành tiền (offset 1) hoặc Miễn giảm (offset 2)
                         $sheet->getStyle($columnLetter . '4:' . $columnLetter . $highestRow)->getNumberFormat()
                             ->setFormatCode('#,##0');
                     }
