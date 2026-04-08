@@ -635,6 +635,13 @@ return [
                     'active'=> ['reports-administrator/index-patient-count-by-department*'],
                 ],
                 [
+                    'text'  => 'Khảo sát TG khám bệnh',
+                    'icon'  => 'clock-o',
+                    'checkrole'   => 'qlcl',
+                    'route'   => 'reports-administrator.khaosat-index',
+                    'active'=> ['reports-administrator/khaosat-index*'],
+                ],
+                [
                     'text'       => 'Tra cứu LS KCB',
                     'icon'       => 'line-chart',
                     'route'   => 'tra-cuu-ls-kcb-index',

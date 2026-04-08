@@ -771,4 +771,158 @@ class ReportDataService
 
         return $sql;
     }
+
+    public function buildSqlQueryAndBindingsKhaoSat(Request $request)
+    {
+        $dateFrom = $request->input('date_from');
+        $dateTo = $request->input('date_to');
+        $execute_room_id = $request->input('execute_room_id');
+
+        if (strlen($dateFrom) == 10) {
+            $dateFrom = Carbon::createFromFormat('Y-m-d', $dateFrom)->startOfDay()->format('Y-m-d H:i:s');
+        }
+
+        if (strlen($dateTo) == 10) {
+            $dateTo = Carbon::createFromFormat('Y-m-d', $dateTo)->endOfDay()->format('Y-m-d H:i:s');
+        }
+
+        $formattedDateFrom = Carbon::createFromFormat('Y-m-d H:i:s', $dateFrom)->format('YmdHis');
+        $formattedDateTo = Carbon::createFromFormat('Y-m-d H:i:s', $dateTo)->format('YmdHis');
+
+        $conditions = [];
+        $bindings = [];
+
+        $conditions[] = "sr_exam.intruction_time BETWEEN :formattedDateFrom AND :formattedDateTo";
+        $bindings['formattedDateFrom'] = $formattedDateFrom;
+        $bindings['formattedDateTo'] = $formattedDateTo;
+
+        if (!empty($execute_room_id)) {
+            $conditions[] = "sr_exam.execute_room_id = :executeRoomId";
+            $bindings['executeRoomId'] = $execute_room_id;
+        }
+
+        $whereClause = implode(' AND ', $conditions);
+
+        $sql = "
+            WITH exam_data AS (
+                SELECT
+                    sr_exam.treatment_id,
+                    sr_exam.tdl_patient_name,
+                    sr_exam.tdl_patient_dob,
+                    sr_exam.tdl_patient_gender_name,
+                    tm.in_time AS tiep_don_time,
+                    sr_exam.start_time AS kham_time,
+                    sr_exam.start_time AS start_time,
+                    sr_exam.finish_time AS finish_time,
+                    ex.execute_room_name AS phong_kham,
+                    sr_exam.execute_username AS bac_sy,
+                    sr_exam.icd_code AS ma_benh,
+                    sr_exam.icd_name AS chan_doan,
+                    sr_exam.tdl_treatment_code
+                FROM
+                    his_service_req sr_exam
+                JOIN
+                    his_treatment tm ON tm.id = sr_exam.treatment_id
+                LEFT JOIN
+                    his_execute_room ex ON ex.room_id = sr_exam.execute_room_id
+                WHERE
+                    sr_exam.is_delete = 0
+                    AND sr_exam.service_req_type_id = 1
+                    AND tm.tdl_treatment_type_id = 1
+                    AND $whereClause
+            ),
+            cls_detail AS (
+                SELECT
+                    sr.treatment_id,
+                    -- XN chi tiet (test_type_id)
+                    MIN(CASE WHEN sr.service_req_type_id = 2 AND sv.test_type_id = 1 THEN sr.intruction_time END) AS xn_hh_cd,
+                    MAX(CASE WHEN sr.service_req_type_id = 2 AND sv.test_type_id = 1 THEN sr.finish_time END) AS xn_hh_kq,
+                    MIN(CASE WHEN sr.service_req_type_id = 2 AND sv.test_type_id = 2 THEN sr.intruction_time END) AS xn_vs_cd,
+                    MAX(CASE WHEN sr.service_req_type_id = 2 AND sv.test_type_id = 2 THEN sr.finish_time END) AS xn_vs_kq,
+                    MIN(CASE WHEN sr.service_req_type_id = 2 AND sv.test_type_id = 3 THEN sr.intruction_time END) AS xn_sh_cd,
+                    MAX(CASE WHEN sr.service_req_type_id = 2 AND sv.test_type_id = 3 THEN sr.finish_time END) AS xn_sh_kq,
+                    MIN(CASE WHEN sr.service_req_type_id = 2 AND sv.test_type_id = 4 THEN sr.intruction_time END) AS xn_md_cd,
+                    MAX(CASE WHEN sr.service_req_type_id = 2 AND sv.test_type_id = 4 THEN sr.finish_time END) AS xn_md_kq,
+                    MIN(CASE WHEN sr.service_req_type_id = 2 AND sv.test_type_id = 7 THEN sr.intruction_time END) AS xn_nt_cd,
+                    MAX(CASE WHEN sr.service_req_type_id = 2 AND sv.test_type_id = 7 THEN sr.finish_time END) AS xn_nt_kq,
+                    MIN(CASE WHEN sr.service_req_type_id = 2 AND sv.test_type_id NOT IN (1,2,3,4,7) OR (sr.service_req_type_id = 2 AND sv.test_type_id IS NULL) THEN sr.intruction_time END) AS xn_khac_cd,
+                    MAX(CASE WHEN sr.service_req_type_id = 2 AND sv.test_type_id NOT IN (1,2,3,4,7) OR (sr.service_req_type_id = 2 AND sv.test_type_id IS NULL) THEN sr.finish_time END) AS xn_khac_kq,
+                    -- CDHA chi tiet (diim_type_id)
+                    MIN(CASE WHEN sr.service_req_type_id = 3 AND sv.diim_type_id = 1 THEN sr.intruction_time END) AS cdha_xq_cd,
+                    MAX(CASE WHEN sr.service_req_type_id = 3 AND sv.diim_type_id = 1 THEN sr.finish_time END) AS cdha_xq_kq,
+                    MIN(CASE WHEN sr.service_req_type_id = 3 AND sv.diim_type_id = 2 THEN sr.intruction_time END) AS cdha_ct_cd,
+                    MAX(CASE WHEN sr.service_req_type_id = 3 AND sv.diim_type_id = 2 THEN sr.finish_time END) AS cdha_ct_kq,
+                    MIN(CASE WHEN sr.service_req_type_id = 3 AND sv.diim_type_id = 3 THEN sr.intruction_time END) AS cdha_mri_cd,
+                    MAX(CASE WHEN sr.service_req_type_id = 3 AND sv.diim_type_id = 3 THEN sr.finish_time END) AS cdha_mri_kq,
+                    MIN(CASE WHEN sr.service_req_type_id = 3 AND sv.diim_type_id NOT IN (1,2,3) OR (sr.service_req_type_id = 3 AND sv.diim_type_id IS NULL) THEN sr.intruction_time END) AS cdha_khac_cd,
+                    MAX(CASE WHEN sr.service_req_type_id = 3 AND sv.diim_type_id NOT IN (1,2,3) OR (sr.service_req_type_id = 3 AND sv.diim_type_id IS NULL) THEN sr.finish_time END) AS cdha_khac_kq,
+                    -- Sieu am (service_req_type_id = 9)
+                    MIN(CASE WHEN sr.service_req_type_id = 9 THEN sr.intruction_time END) AS sa_cd,
+                    MAX(CASE WHEN sr.service_req_type_id = 9 THEN sr.finish_time END) AS sa_kq,
+                    -- Noi soi (service_req_type_id = 8)
+                    MIN(CASE WHEN sr.service_req_type_id = 8 THEN sr.intruction_time END) AS ns_cd,
+                    MAX(CASE WHEN sr.service_req_type_id = 8 THEN sr.finish_time END) AS ns_kq,
+                    -- Tham do chuc nang (service_req_type_id = 5)
+                    MIN(CASE WHEN sr.service_req_type_id = 5 THEN sr.intruction_time END) AS tdcn_cd,
+                    MAX(CASE WHEN sr.service_req_type_id = 5 THEN sr.finish_time END) AS tdcn_kq,
+                    -- Giai phau benh (service_req_type_id = 13)
+                    MIN(CASE WHEN sr.service_req_type_id = 13 THEN sr.intruction_time END) AS gpb_cd,
+                    MAX(CASE WHEN sr.service_req_type_id = 13 THEN sr.finish_time END) AS gpb_kq
+                FROM
+                    his_service_req sr
+                JOIN
+                    his_sere_serv ss ON ss.service_req_id = sr.id
+                JOIN
+                    his_service sv ON sv.id = ss.service_id
+                LEFT JOIN
+                    his_diim_type dt ON dt.id = sv.diim_type_id
+                LEFT JOIN
+                    his_test_type tt ON tt.id = sv.test_type_id
+                WHERE
+                    sr.is_delete = 0
+                    AND ss.is_delete = 0
+                    AND sr.service_req_type_id IN (2, 3, 5, 8, 9, 13)
+                    AND sr.treatment_id IN (SELECT treatment_id FROM exam_data)
+                GROUP BY
+                    sr.treatment_id
+            )
+            SELECT
+                e.tdl_patient_name,
+                e.tdl_patient_dob,
+                e.tdl_patient_gender_name,
+                e.tiep_don_time,
+                e.kham_time,
+                e.phong_kham,
+                e.bac_sy,
+                e.start_time,
+                e.finish_time,
+                'x' AS co_cls,
+                e.tiep_don_time AS thoi_gian_cho,
+                e.ma_benh,
+                e.chan_doan,
+                e.tdl_treatment_code,
+                c.xn_hh_cd, c.xn_hh_kq,
+                c.xn_vs_cd, c.xn_vs_kq,
+                c.xn_sh_cd, c.xn_sh_kq,
+                c.xn_md_cd, c.xn_md_kq,
+                c.xn_nt_cd, c.xn_nt_kq,
+                c.xn_khac_cd, c.xn_khac_kq,
+                c.cdha_xq_cd, c.cdha_xq_kq,
+                c.cdha_ct_cd, c.cdha_ct_kq,
+                c.cdha_mri_cd, c.cdha_mri_kq,
+                c.cdha_khac_cd, c.cdha_khac_kq,
+                c.sa_cd, c.sa_kq,
+                c.ns_cd, c.ns_kq,
+                c.tdcn_cd, c.tdcn_kq,
+                c.gpb_cd, c.gpb_kq
+            FROM
+                exam_data e
+            JOIN
+                cls_detail c ON c.treatment_id = e.treatment_id
+            ORDER BY
+                e.kham_time
+        ";
+
+        return [$sql, $bindings];
+    }
 }

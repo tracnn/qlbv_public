@@ -671,7 +671,7 @@ Route::group(['middleware' => ['auth', 'check.first.login']], function () {
     });
 
     /* Reports Account Payment*/
-    Route::group(['prefix' => 'reports-administrator/', 'middleware' => ['checkrole:qlcl']], function () {  
+    Route::group(['prefix' => 'reports-administrator/', 'middleware' => ['checkrole:qlcl']], function () {
         Route::get('list-patient-pt', 'ReportController@listPatientPt')
         ->name('reports-administrator.list-patient-pt');
         Route::get('fetch-patient-pt', 'ReportController@fetchPatientPt')
@@ -681,6 +681,15 @@ Route::group(['middleware' => ['auth', 'check.first.login']], function () {
         ->name('reports-administrator.index-patient-count-by-department');
         Route::get('fetch-patient-count-by-department', 'ReportController@fetchPatientCountByDepartment')
         ->name('reports-administrator.fetch-patient-count-by-department');
+
+        Route::get('khaosat-index', 'ReportController@indexKhaoSat')
+        ->name('reports-administrator.khaosat-index');
+        Route::get('fetch-khaosat', 'ReportController@fetchKhaoSat')
+        ->name('reports-administrator.fetch-khaosat');
+        Route::get('export-khaosat', 'ReportController@exportKhaoSat')
+        ->name('reports-administrator.export-khaosat');
+        Route::get('fetch-execute-rooms', 'ReportController@fetchExecuteRooms')
+        ->name('reports-administrator.fetch-execute-rooms');
     });
 
     /* Nurse Module*/

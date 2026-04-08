@@ -14,6 +14,7 @@ use App\Exports\AccountantRevenueDataExport;
 use App\Exports\AccountantRevenueDataExportDetail;
 use App\Exports\ThuocVtytTieuHaoDataExport;
 use App\Exports\SereServRevenueExport;
+use App\Exports\KhaoSatExport;
 
 use DB;
 use Yajra\Datatables\Datatables;
@@ -794,5 +795,96 @@ class ReportController extends Controller
     {
         $fileName = 'sere_serv_revenue_' . Carbon::now()->format('YmdHis') . '.xlsx';
         return Excel::download(new SereServRevenueExport($request), $fileName);
+    }
+
+    public function fetchExecuteRooms()
+    {
+        $rooms = DB::connection('HISPro')
+            ->table('his_execute_room')
+            ->where('is_exam', 1)
+            ->where('is_active', 1)
+            ->select('room_id', 'execute_room_name')
+            ->orderBy('execute_room_name')
+            ->get();
+
+        return response()->json($rooms);
+    }
+
+    public function indexKhaoSat()
+    {
+        return view('administrator.khaosat-report');
+    }
+
+    public function fetchKhaoSat(Request $request)
+    {
+        list($sql, $bindings) = $this->reportDataService->buildSqlQueryAndBindingsKhaoSat($request);
+
+        $results = DB::connection('HISPro')->select(DB::raw($sql), $bindings);
+
+        return DataTables::of($results)
+        ->editColumn('tdl_patient_dob', function($result) {
+            return dob($result->tdl_patient_dob);
+        })
+        ->editColumn('tiep_don_time', function($result) {
+            return strtodatetime($result->tiep_don_time);
+        })
+        ->editColumn('kham_time', function($result) {
+            return strtodatetime($result->kham_time);
+        })
+        ->addColumn('thoi_gian_kham', function($result) {
+            if ($result->start_time && $result->finish_time) {
+                $start = Carbon::createFromFormat('YmdHis', $result->start_time);
+                $finish = Carbon::createFromFormat('YmdHis', $result->finish_time);
+                return $start->diffInMinutes($finish) . ' phút';
+            }
+            return '';
+        })
+        ->addColumn('thoi_gian_cho', function($result) {
+            if ($result->tiep_don_time && $result->start_time) {
+                $tiepdon = Carbon::createFromFormat('YmdHis', $result->tiep_don_time);
+                $start = Carbon::createFromFormat('YmdHis', $result->start_time);
+                return $tiepdon->diffInMinutes($start) . ' phút';
+            }
+            return '';
+        })
+        ->editColumn('xn_hh_cd', function($r) { return strtodatetime($r->xn_hh_cd); })
+        ->editColumn('xn_hh_kq', function($r) { return strtodatetime($r->xn_hh_kq); })
+        ->editColumn('xn_vs_cd', function($r) { return strtodatetime($r->xn_vs_cd); })
+        ->editColumn('xn_vs_kq', function($r) { return strtodatetime($r->xn_vs_kq); })
+        ->editColumn('xn_sh_cd', function($r) { return strtodatetime($r->xn_sh_cd); })
+        ->editColumn('xn_sh_kq', function($r) { return strtodatetime($r->xn_sh_kq); })
+        ->editColumn('xn_md_cd', function($r) { return strtodatetime($r->xn_md_cd); })
+        ->editColumn('xn_md_kq', function($r) { return strtodatetime($r->xn_md_kq); })
+        ->editColumn('xn_nt_cd', function($r) { return strtodatetime($r->xn_nt_cd); })
+        ->editColumn('xn_nt_kq', function($r) { return strtodatetime($r->xn_nt_kq); })
+        ->editColumn('xn_khac_cd', function($r) { return strtodatetime($r->xn_khac_cd); })
+        ->editColumn('xn_khac_kq', function($r) { return strtodatetime($r->xn_khac_kq); })
+        ->editColumn('cdha_xq_cd', function($r) { return strtodatetime($r->cdha_xq_cd); })
+        ->editColumn('cdha_xq_kq', function($r) { return strtodatetime($r->cdha_xq_kq); })
+        ->editColumn('cdha_ct_cd', function($r) { return strtodatetime($r->cdha_ct_cd); })
+        ->editColumn('cdha_ct_kq', function($r) { return strtodatetime($r->cdha_ct_kq); })
+        ->editColumn('cdha_mri_cd', function($r) { return strtodatetime($r->cdha_mri_cd); })
+        ->editColumn('cdha_mri_kq', function($r) { return strtodatetime($r->cdha_mri_kq); })
+        ->editColumn('cdha_khac_cd', function($r) { return strtodatetime($r->cdha_khac_cd); })
+        ->editColumn('cdha_khac_kq', function($r) { return strtodatetime($r->cdha_khac_kq); })
+        ->editColumn('sa_cd', function($r) { return strtodatetime($r->sa_cd); })
+        ->editColumn('sa_kq', function($r) { return strtodatetime($r->sa_kq); })
+        ->editColumn('ns_cd', function($r) { return strtodatetime($r->ns_cd); })
+        ->editColumn('ns_kq', function($r) { return strtodatetime($r->ns_kq); })
+        ->editColumn('tdcn_cd', function($r) { return strtodatetime($r->tdcn_cd); })
+        ->editColumn('tdcn_kq', function($r) { return strtodatetime($r->tdcn_kq); })
+        ->editColumn('gpb_cd', function($r) { return strtodatetime($r->gpb_cd); })
+        ->editColumn('gpb_kq', function($r) { return strtodatetime($r->gpb_kq); })
+        ->make(true);
+    }
+
+    public function exportKhaoSat(Request $request)
+    {
+        $date_from = $request->input('date_from');
+        $date_to = $request->input('date_to');
+        $execute_room_id = $request->input('execute_room_id');
+
+        $fileName = 'khaosat_data_' . Carbon::now()->format('YmdHis') . '.xlsx';
+        return Excel::download(new KhaoSatExport($date_from, $date_to, $execute_room_id), $fileName);
     }
 }
