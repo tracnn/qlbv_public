@@ -684,7 +684,7 @@ Route::group(['middleware' => ['auth', 'check.first.login']], function () {
 
         Route::get('khaosat-index', 'ReportController@indexKhaoSat')
         ->name('reports-administrator.khaosat-index');
-        Route::get('fetch-khaosat', 'ReportController@fetchKhaoSat')
+        Route::post('fetch-khaosat', 'ReportController@fetchKhaoSat')
         ->name('reports-administrator.fetch-khaosat');
         Route::get('export-khaosat', 'ReportController@exportKhaoSat')
         ->name('reports-administrator.export-khaosat');

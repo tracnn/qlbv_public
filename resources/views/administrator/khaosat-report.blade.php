@@ -85,7 +85,9 @@
             "scrollX": true,
             "ajax": {
                 url: "{{ route('reports-administrator.fetch-khaosat') }}",
+                type: "POST",
                 data: function(d) {
+                    d._token = '{{ csrf_token() }}';
                     d.date_from = startDate;
                     d.date_to = endDate;
                     d.execute_room_id = $('#execute_room_id').val();
