@@ -260,10 +260,16 @@ class CatalogImportService
     {
         $data = $data->slice(1);
 
+        // Xác định unique keys: dùng ma_bhxh nếu có trong file, ngược lại dùng so_dinh_danh
+        $activeUniqueKeys = $config['unique_keys']; // ['ma_bhxh']
+        if (!isset($fieldMapping['ma_bhxh']) && isset($fieldMapping['so_dinh_danh'])) {
+            $activeUniqueKeys = $config['unique_keys_alt'] ?? ['so_dinh_danh'];
+        }
+
         foreach ($data as $row) {
             if (!$this->hasRequiredFields($row, $config['required_fields'], $fieldMapping)) {
                 Log::error('Error importing medical staff', [
-                    'error' => 'Thiếu dữ liệu bắt buộc', 
+                    'error' => 'Thiếu dữ liệu bắt buộc',
                     'row' => $row
                 ]);
                 continue;
@@ -287,8 +293,8 @@ class CatalogImportService
             try {
                 $uniqueKeys = [];
                 $updateData = [];
-                
-                foreach ($config['unique_keys'] as $key) {
+
+                foreach ($activeUniqueKeys as $key) {
                     $value = $this->getRowValue($row, $key, $fieldMapping);
                     if ($value !== null) {
                         $uniqueKeys[$key] = $value;
@@ -296,7 +302,7 @@ class CatalogImportService
                 }
 
                 foreach ($config['mapping'] as $field => $possibleNames) {
-                    if (!in_array($field, $config['unique_keys'])) {
+                    if (!in_array($field, $activeUniqueKeys)) {
                         $value = $this->getRowValue($row, $field, $fieldMapping);
                         if ($value !== null) {
                             $updateData[$field] = $value;
@@ -312,7 +318,7 @@ class CatalogImportService
                 MedicalStaff::updateOrCreate($uniqueKeys, $updateData);
             } catch (\Exception $e) {
                 Log::error('Error importing medical staff', [
-                    'error' => $e->getMessage(), 
+                    'error' => $e->getMessage(),
                     'row' => $row
                 ]);
                 continue;

@@ -62,21 +62,22 @@ return [
     ],
 
     'service' => [
-        'detect_keys' => ['MA_TUONG_DUONG', 'TEN_DVKT_PHEDUYET', 'TEN_DVKT_GIA'],
+        'detect_keys' => ['MA_DICH_VU', 'MA_TUONG_DUONG', 'TEN_DICH_VU', 'TEN_DVKT_PHEDUYET', 'TEN_DVKT_GIA'],
         'mapping' => [
-            'ma_dich_vu' => ['MA_TUONG_DUONG', 'Mã tương đương', 'MA TUONG DUONG'],
-            'ten_dich_vu' => ['TEN_DVKT_PHEDUYET', 'Tên DVKT phê duyệt', 'TEN DVKT PHEDUYET', 'TEN_DVKT_GIA', 'Tên DVKT giá'],
+            'ma_dich_vu' => ['MA_DICH_VU', 'MA_TUONG_DUONG', 'Mã dịch vụ', 'Mã tương đương', 'MA TUONG DUONG'],
+            'ten_dich_vu' => ['TEN_DICH_VU', 'TEN_DVKT_PHEDUYET', 'Tên dịch vụ', 'Tên DVKT phê duyệt', 'TEN DVKT PHEDUYET', 'TEN_DVKT_GIA', 'Tên DVKT giá'],
             'don_gia' => ['DON_GIA', 'Đơn giá', 'DON GIA'],
-            'quy_trinh' => ['QUYET_DINH', 'Quyết định', 'QUYET DINH'],
-            'tu_ngay' => ['TUNGAY', 'Từ ngày', 'TU NGAY'],
-            'den_ngay' => ['DENNGAY', 'Đến ngày', 'DEN NGAY'],
+            'quy_trinh' => ['QUY_TRINH', 'QUYET_DINH', 'Quy trình', 'Quyết định', 'QUYET DINH'],
+            'tu_ngay' => ['TU_NGAY', 'TUNGAY', 'Từ ngày', 'TU NGAY'],
+            'den_ngay' => ['DEN_NGAY', 'DENNGAY', 'Đến ngày', 'DEN NGAY'],
+            'ma_cskcb' => ['MA_CSKCB', 'Mã CSKCB', 'MA CSKCB'],
         ],
         'required_fields' => ['ma_dich_vu', 'ten_dich_vu', 'don_gia', 'tu_ngay'],
         'unique_keys' => ['ma_dich_vu', 'ten_dich_vu', 'don_gia', 'quy_trinh', 'tu_ngay'],
     ],
 
     'medical_staff' => [
-        'detect_keys' => ['MA_BHXH', 'HO_TEN', 'MA_KHOA'],
+        'detect_keys' => ['MA_BHXH', 'SO_DINH_DANH', 'HO_TEN', 'MA_KHOA', 'MACCHN'],
         'mapping' => [
             'ma_loai_kcb' => ['MA_LOAI_KCB', 'Mã loại KCB', 'MA LOAI KCB'],
             'ma_khoa' => ['MA_KHOA', 'Mã khoa', 'MA KHOA'],
@@ -84,6 +85,7 @@ return [
             'ma_bhxh' => ['MA_BHXH', 'Mã BHXH', 'MA BHXH'],
             'ho_ten' => ['HO_TEN', 'Họ tên', 'HO TEN'],
             'gioi_tinh' => ['GIOI_TINH', 'Giới tính', 'GIOI TINH'],
+            'so_dinh_danh' => ['SO_DINH_DANH', 'Số định danh', 'SO DINH DANH'],
             'chucdanh_nn' => ['CHUCDANH_NN', 'Chức danh NN', 'CHUCDANH NN'],
             'vi_tri' => ['VI_TRI', 'Vị trí', 'VI TRI'],
             'macchn' => ['MACCHN', 'Mã CCHN', 'MA CCHN'],
@@ -101,9 +103,11 @@ return [
             'qd_cgkt' => ['QD_CGKT', 'QD CGKT', 'QD CGKT'],
             'tu_ngay' => ['TU_NGAY', 'Từ ngày', 'TU NGAY'],
             'den_ngay' => ['DEN_NGAY', 'Đến ngày', 'DEN NGAY'],
+            'ma_cskcb' => ['MA_CSKCB', 'Mã CSKCB', 'MA CSKCB'],
         ],
-        'required_fields' => ['ma_khoa', 'ten_khoa', 'ma_bhxh', 'ho_ten', 'chucdanh_nn', 'macchn', 'ngaycap_cchn', 'noicap_cchn', 'thoigian_dk', 'tu_ngay'],
+        'required_fields' => ['ma_khoa', 'ten_khoa', 'ho_ten', 'chucdanh_nn', 'macchn', 'ngaycap_cchn', 'noicap_cchn', 'thoigian_dk', 'tu_ngay'],
         'unique_keys' => ['ma_bhxh'],
+        'unique_keys_alt' => ['so_dinh_danh'], // Dùng khi mẫu mới không có MA_BHXH
     ],
 
     'department_bed' => [

@@ -13,6 +13,7 @@ class MedicalStaff extends Model
         'ma_bhxh',
         'ho_ten',
         'gioi_tinh',
+        'so_dinh_danh',
         'chucdanh_nn',
         'vi_tri',
         'macchn',

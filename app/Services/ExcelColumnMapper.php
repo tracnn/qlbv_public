@@ -103,9 +103,13 @@ class ExcelColumnMapper
             return true;
         }
 
-        // Kiểm tra nếu một chuỗi chứa chuỗi kia (với độ dài tối thiểu)
-        $minLength = min(mb_strlen($name1), mb_strlen($name2));
-        if ($minLength >= 3) {
+        // Kiểm tra nếu một chuỗi chứa chuỗi kia (với tỷ lệ độ dài tối thiểu 70%)
+        // Tránh false positive: VD MA_THUOC match nhầm THUOCPX_MA_THUOC
+        $len1 = mb_strlen($name1);
+        $len2 = mb_strlen($name2);
+        $minLength = min($len1, $len2);
+        $maxLength = max($len1, $len2);
+        if ($minLength >= 3 && ($minLength / $maxLength) >= 0.7) {
             if (mb_strpos($name1, $name2) !== false || mb_strpos($name2, $name1) !== false) {
                 return true;
             }
