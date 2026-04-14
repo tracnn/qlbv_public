@@ -18,7 +18,7 @@
         <table id="sere-serv-revenue-table" class="table table-hover table-bordered datatable" width="100%">
             <thead>
                 <tr>
-                    <th rowspan="3" style="vertical-align: middle;">Khoa chỉ định</th>
+                    <th rowspan="3" style="vertical-align: middle;">Khoa</th>
                     <th rowspan="3" style="vertical-align: middle;">Loại dịch vụ</th>
                     @foreach($patientTypes as $pt)
                         <th colspan="{{ $treatmentTypes->count() * 3 }}" class="text-center" style="background-color: #f3f3f3;">{{ $pt->patient_type_name }}</th>

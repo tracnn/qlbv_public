@@ -730,21 +730,26 @@ class ReportDataService
         }
         $pivotColsStr = implode(",\n                ", $pivotCols);
 
+        $serviceTypeKham = (int) config('__tech.service_req_type_kham', 1);
+
         $sql = "
-            SELECT 
+            SELECT
                 hd.department_name,
                 hst.service_type_name,
                 {$pivotColsStr}
-            FROM 
+            FROM
                 his_service_req hsr
             JOIN
                 his_sere_serv hss ON hss.service_req_id = hsr.id
             JOIN
-                his_department hd ON hd.id = hsr.request_department_id
-            JOIN
                 his_service hs ON hs.id = hss.service_id
             JOIN
                 his_service_type hst ON hst.id = hs.service_type_id
+            JOIN
+                his_department hd ON hd.id = CASE
+                    WHEN hs.service_type_id = {$serviceTypeKham} THEN hsr.execute_department_id
+                    ELSE hsr.request_department_id
+                END
             JOIN
                 his_patient_type hpt ON hpt.id = hss.patient_type_id
             JOIN
@@ -755,7 +760,7 @@ class ReportDataService
                 AND hss.is_no_execute IS NULL
                 AND (hss.is_expend IS NULL OR hss.tdl_service_type_id IN (6, 7))
                 AND hsr.intruction_time BETWEEN '{$formattedDateFrom}' AND '{$formattedDateTo}'";
-        
+
         if (!empty($departmentId)) {
             $sql .= " AND hd.id = " . (int)$departmentId;
         }

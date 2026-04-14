@@ -58,7 +58,7 @@ class SereServRevenueExport implements FromCollection, WithHeadings, ShouldAutoS
     public function headings(): array
     {
         // Heading row 3 (lowest level)
-        $headings = ['Khoa chỉ định', 'Loại dịch vụ'];
+        $headings = ['Khoa', 'Loại dịch vụ'];
         foreach ($this->patientTypes as $pt) {
             foreach ($this->treatmentTypes as $tt) {
                 $headings[] = 'SL';
@@ -124,9 +124,9 @@ class SereServRevenueExport implements FromCollection, WithHeadings, ShouldAutoS
                     }
                 }
                 
-                // Merge 'Khoa chỉ định' and 'Loại dịch vụ' across 3 rows
+                // Merge 'Khoa' and 'Loại dịch vụ' across 3 rows
                 $sheet->mergeCells('A1:A3');
-                $sheet->setCellValue('A1', 'Khoa chỉ định');
+                $sheet->setCellValue('A1', 'Khoa');
                 $sheet->mergeCells('B1:B3');
                 $sheet->setCellValue('B1', 'Loại dịch vụ');
 
