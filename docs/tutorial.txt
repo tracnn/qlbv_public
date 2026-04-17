@@ -35,4 +35,6 @@ I. Những phần mềm cần thiết
 			Mở cmd với quyền Administrator, vào thư mục của phần mềm chạy remove_service.bat
 		- Update phần mềm
 			Mở cmd với quyền Administrator, vào thư mục của phần mềm chạy update.bat
+		- Cài đặt auto update
+			Mở cmd với quyền Administrator, vào thư mục của phần mềm chạy register-auto-update-task
 3. Truy cập github tại địa chỉ: https://github.com/tracnn/qlbv_public để xem nội dung các bản cập nhật (theo tuần)
