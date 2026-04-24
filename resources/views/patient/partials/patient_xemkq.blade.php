@@ -13,7 +13,16 @@
 <div id="xemkq" class="tab-pane fade">
   <div class="panel panel-primary">
     <div class="panel-body">
-    @if(isset($emr_document) && count($emr_document))
+    @php
+        $is_noitru = isset($treatment) && $treatment->tdl_treatment_type_id == config('__tech.treatment_type_noitru');
+        $da_ra_vien = isset($treatment) && !empty($treatment->out_time);
+    @endphp
+    @if($is_noitru && !$da_ra_vien)
+    <div class="alert alert-info text-center">
+        <i class="glyphicon glyphicon-info-sign"></i>
+        <strong>Kết quả sẽ được cung cấp sau khi bệnh nhân ra viện.</strong>
+    </div>
+    @elseif(isset($emr_document) && count($emr_document))
       <div class="table">
           <table id="service_req" class="table table-striped table-bordered table-hover" width="100%">
               <thead>

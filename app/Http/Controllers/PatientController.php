@@ -251,10 +251,10 @@ class PatientController extends Controller
                 ->where('his_sere_serv.tdl_treatment_id', $treatment->id)
                 ->get();
 
-                $sere_serv_chiphi = DB::connection('HISPro')  
+                $sere_serv_chiphi = DB::connection('HISPro')
                 ->table('his_sere_serv')
                 ->join('his_service_type', 'his_service_type.id', '=', 'his_sere_serv.tdl_service_type_id')
-                ->selectRaw('sum(amount*price) as thanh_tien, sum(amount) as so_luong, service_type_name')
+                ->selectRaw('sum(vir_total_price) as thanh_tien, sum(amount) as so_luong, service_type_name')
                 ->where('his_sere_serv.is_delete', 0)
                 ->whereNull('his_sere_serv.is_expend')
                 ->whereNull('his_sere_serv.is_no_pay')
