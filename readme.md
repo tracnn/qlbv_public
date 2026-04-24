@@ -1,3 +1,8 @@
+# 24/04/2026
+
+- Update giao diện hiển thị kết quả CĐHA từ PACS VNPT
+- Bổ sung thông tin thời gian ra viện cho bệnh nhân nội trú
+
 # 08/04/2026
 
 - Bổ sung báo cáo khảo sát TG khám bệnh
