@@ -288,7 +288,7 @@
                                 return context.dataset.data[context.dataIndex] > 0;
                             },
                             color: '#fff',
-                            font: { weight: 'bold', size: 11 },
+                            font: { weight: 'bold', size: 14 },
                             formatter: function(value) { return value; }
                         }
                     },
