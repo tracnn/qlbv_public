@@ -60,6 +60,26 @@
         .stat-chua .stat-value { color: rgb(255, 99, 132); }
         .stat-dang .stat-value { color: rgb(255, 159, 64); }
         .stat-da   .stat-value { color: rgb(75, 192, 100); }
+        .stat-countdown {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.95rem;
+            color: #666;
+            flex-shrink: 0;
+        }
+        .stat-countdown .countdown-value {
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: #1a3c5e;
+            font-variant-numeric: tabular-nums;
+            min-width: 38px;
+            display: inline-block;
+            text-align: center;
+        }
+        .stat-countdown.warning .countdown-value { color: rgb(255, 159, 64); }
+        .stat-countdown.urgent  .countdown-value { color: rgb(255, 99, 132); }
         .stats-bar .separator {
             color: #ccc;
             font-size: 1.4rem;
@@ -124,6 +144,10 @@
         <div class="stat-item">
             Số phòng:
             <span class="stat-value" id="tong-so-phong">—</span>
+        </div>
+        <div class="stat-countdown" id="countdown-wrap">
+            &#x1F504; Cập nhật sau:
+            <span class="countdown-value" id="countdown">5:00</span>
         </div>
     </div>
 
@@ -289,10 +313,34 @@
         });
     }
 
+    /* ── Đếm ngược tới lần refresh tiếp theo ── */
+    var REFRESH_SECONDS = 300;
+    var countdownLeft   = REFRESH_SECONDS;
+
+    function updateCountdown() {
+        countdownLeft--;
+        if (countdownLeft < 0) {
+            countdownLeft = REFRESH_SECONDS;
+        }
+        var m = Math.floor(countdownLeft / 60);
+        var s = countdownLeft % 60;
+        document.getElementById('countdown').textContent =
+            m + ':' + (s < 10 ? '0' : '') + s;
+
+        var wrap = document.getElementById('countdown-wrap');
+        wrap.className = 'stat-countdown';
+        if (countdownLeft <= 10)      wrap.className += ' urgent';
+        else if (countdownLeft <= 30) wrap.className += ' warning';
+    }
+
     /* ── Tải lần đầu + auto-refresh mỗi 5 phút ── */
     $(document).ready(function() {
         loadChart();
-        setInterval(loadChart, 300000);
+        setInterval(function() {
+            countdownLeft = REFRESH_SECONDS;
+            loadChart();
+        }, 300000);
+        setInterval(updateCountdown, 1000);
     });
     </script>
 
