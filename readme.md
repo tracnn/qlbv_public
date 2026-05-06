@@ -1,3 +1,7 @@
+# 06/05/2026
+
+- Update giao diện màn hình hiển thị thông tin chờ khám của bệnh nhân - Dashboard sử dụng cho màn hình lớn
+
 # 24/04/2026
 
 - Update giao diện hiển thị kết quả CĐHA từ PACS VNPT

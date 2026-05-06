@@ -909,6 +909,83 @@ class KHTHController extends Controller
         return view('khth.dashboard');
     }
 
+    public function phongKhamTv(Request $request)
+    {
+        $organizationName = config('organization.organization_name', 'Bệnh viện');
+        return view('phong-kham-tv', compact('organizationName'));
+    }
+
+    public function chartPhongKham(Request $request)
+    {
+        try {
+            $todayStart = date("Ymd") . '000000';
+            $todayEnd   = date("Ymd") . '235959';
+
+            $rows = DB::connection('HISPro')
+                ->table('his_service_req')
+                ->join('his_execute_room', 'his_execute_room.room_id', '=', 'his_service_req.execute_room_id')
+                ->selectRaw('his_execute_room.execute_room_name, his_service_req.service_req_stt_id, COUNT(*) as so_luong')
+                ->where('his_service_req.intruction_time', '>=', $todayStart)
+                ->where('his_service_req.intruction_time', '<=', $todayEnd)
+                ->where('his_service_req.service_req_type_id', 1)
+                ->whereIn('his_service_req.service_req_stt_id', [1, 2, 3])
+                ->where('his_service_req.is_active', 1)
+                ->where('his_service_req.is_delete', 0)
+                ->groupBy('his_execute_room.execute_room_name', 'his_service_req.service_req_stt_id')
+                ->orderBy('his_execute_room.execute_room_name')
+                ->get();
+
+            // Pivot: build aligned arrays indexed by room name
+            $roomData = [];
+            foreach ($rows as $row) {
+                $name = $row->execute_room_name;
+                if (!isset($roomData[$name])) {
+                    $roomData[$name] = [1 => 0, 2 => 0, 3 => 0];
+                }
+                $roomData[$name][(int) $row->service_req_stt_id] = (int) $row->so_luong;
+            }
+
+            // Sort alphabetically
+            ksort($roomData);
+
+            // Build aligned output arrays (exclude rooms with total = 0)
+            $labels         = [];
+            $chua_thuc_hien = [];
+            $dang_thuc_hien = [];
+            $da_thuc_hien   = [];
+
+            foreach ($roomData as $roomName => $statuses) {
+                $total = $statuses[1] + $statuses[2] + $statuses[3];
+                if ($total === 0) {
+                    continue;
+                }
+                $labels[]         = $roomName;
+                $chua_thuc_hien[] = $statuses[1];
+                $dang_thuc_hien[] = $statuses[2];
+                $da_thuc_hien[]   = $statuses[3];
+            }
+
+            $tong_chua = array_sum($chua_thuc_hien);
+            $tong_dang = array_sum($dang_thuc_hien);
+            $tong_da   = array_sum($da_thuc_hien);
+
+            return response()->json([
+                'labels'              => $labels,
+                'chua_thuc_hien'      => $chua_thuc_hien,
+                'dang_thuc_hien'      => $dang_thuc_hien,
+                'da_thuc_hien'        => $da_thuc_hien,
+                'tong_luot_kham'      => $tong_chua + $tong_dang + $tong_da,
+                'tong_chua_thuc_hien' => $tong_chua,
+                'tong_dang_thuc_hien' => $tong_dang,
+                'tong_da_thuc_hien'   => $tong_da,
+                'tong_so_phong'       => count($labels),
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
     public function stickyNote(Request $request)
     {
         $note = sticky_note::where('note_name', 'khth')

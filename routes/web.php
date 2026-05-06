@@ -27,6 +27,12 @@ Route::get('khth/chart-xetnghiem', 'KHTH\KHTHController@chartXetnghiem')->name('
 Route::get('khth/chart-pttt', 'KHTH\KHTHController@chartPttt')->name('khth.chart_pttt');
 Route::get('khth/chart-cls', 'KHTH\KHTHController@chartCls')->name('khth.chart_cls');
 Route::get('dashboard', 'KHTH\KHTHController@dashboard')->name('khth.dashboard');
+/* Dashboard TV */
+Route::get('phong-kham-tv', 'KHTH\KHTHController@phongKhamTv')->name('khth.phong-kham-tv');
+Route::get('khth/chart-phong-kham', 'KHTH\KHTHController@chartPhongKham')
+    ->name('khth.chart-phong-kham')
+    ->middleware('throttle:60,1');
+/* --Dashboard TV */
 /* --Dashboard */
 
 

@@ -220,6 +220,13 @@ return [
                     'active'=> ['khth/dashboard*'],
                 ],
                 [
+                    'text'  => 'Dashboard TV - Phòng Khám',
+                    'icon'  => 'tv',
+                    'checkrole'   => 'administrator',
+                    'route'   => 'khth.phong-kham-tv',
+                    'active'=> ['phong-kham-tv*'],
+                ],
+                [
                     'text'  => 'Thống kê theo bác sĩ',
                     'icon'  => 'user-md',
                     'checkrole'   => 'dashboard',

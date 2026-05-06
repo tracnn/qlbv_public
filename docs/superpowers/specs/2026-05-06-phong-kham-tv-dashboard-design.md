@@ -61,9 +61,31 @@ GROUP BY execute_room_name, service_req_stt_id
 ORDER BY execute_room_name
 ```
 
+**Bộ lọc ngày hôm nay** (khớp pattern sẵn có trong codebase):
+```php
+$today_start = date("Ymd") . '000000';  // VD: 20260506000000
+$today_end   = date("Ymd") . '235959';  // VD: 20260506235959
+```
+
 ### Pivot trong PHP
 
-Thu thập danh sách tất cả phòng duy nhất → với mỗi phòng, gán count cho từng status (mặc định 0 nếu không có dữ liệu) → đảm bảo 3 mảng data căn chỉnh theo cùng thứ tự labels.
+Thu thập danh sách tất cả phòng duy nhất (chỉ giữ phòng có tổng > 0) → sắp xếp alphabetically → với mỗi phòng, gán count cho từng stt_id (mặc định 0 nếu không có dữ liệu) → đảm bảo 3 mảng data căn chỉnh theo cùng thứ tự labels.
+
+**Cấu trúc aligned arrays** — index của labels[i] tương ứng với index của 3 mảng data[i]:
+```
+labels            = ["PK A", "PK B", "PK C"]
+chua_thuc_hien    = [  33,      9,      0  ]   // stt_id=1
+dang_thuc_hien    = [   0,      1,      2  ]   // stt_id=2
+da_thuc_hien      = [  33,     71,     15  ]   // stt_id=3
+```
+labels[0]="PK A" → chua[0]=33, dang[0]=0, da[0]=33.
+
+**Mapping status ID:**
+- `service_req_stt_id = 1` → Chưa thực hiện
+- `service_req_stt_id = 2` → Đang thực hiện
+- `service_req_stt_id = 3` → Đã thực hiện
+
+**Lưu ý CSRF:** Route GET không cần CSRF token trong Laravel — AJAX GET call từ view là an toàn.
 
 ### Response JSON
 
@@ -157,7 +179,19 @@ Thu thập danh sách tất cả phòng duy nhất → với mỗi phòng, gán 
 ### Auto-refresh
 
 ```javascript
-function loadChart() { /* gọi AJAX /khth/chart-phong-kham, destroy chart cũ, tạo chart mới */ }
+function loadChart() {
+    $.ajax({
+        url: '/khth/chart-phong-kham',
+        type: 'GET',
+        dataType: 'json'
+    }).done(function(data) {
+        if (chartInstance) chartInstance.destroy();
+        // tạo chart mới với data trả về
+    }).fail(function() {
+        console.error('Không thể tải dữ liệu biểu đồ');
+        // giữ nguyên chart cũ, không làm gì thêm
+    });
+}
 $(document).ready(function() {
     loadChart();
     setInterval(loadChart, 300000); // 5 phút
@@ -166,11 +200,17 @@ $(document).ready(function() {
 
 ### Đồng hồ thực
 
+Dùng `toLocaleString('vi-VN')` để hiển thị đúng múi giờ và định dạng tiếng Việt:
+
 ```javascript
 function updateClock() {
     var now = new Date();
-    // Format: "Thứ Tư, 07/05/2026  08:42:15"
-    document.getElementById('clock').textContent = formatDateTime(now);
+    var options = {
+        weekday: 'long', year: 'numeric', month: '2-digit',
+        day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit',
+        hour12: false, timeZone: 'Asia/Ho_Chi_Minh'
+    };
+    document.getElementById('clock').textContent = now.toLocaleString('vi-VN', options);
 }
 setInterval(updateClock, 1000);
 updateClock();
@@ -207,9 +247,21 @@ public function phongKhamTv(Request $request)
 
 ---
 
+## Rate Limiting
+
+Thêm throttle vào route API để tránh lạm dụng:
+
+```php
+Route::get('khth/chart-phong-kham', 'KHTH\KHTHController@chartPhongKham')
+    ->name('khth.chart-phong-kham')
+    ->middleware('throttle:60,1'); // 60 request/phút
+```
+
+---
+
 ## Không trong scope
 
 - Bộ lọc ngày (chỉ hiển thị hôm nay)
-- Phân quyền / token bảo vệ
+- Phân quyền / token bảo vệ nâng cao
 - Lưu lịch sử / log truy cập
 - Responsive mobile (chỉ cần TV landscape)
