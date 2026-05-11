@@ -388,6 +388,16 @@
 
       </div>
 
+    <div class="row">
+        <div class="col-lg-12 connectedSortable">
+            <div class="nav-tabs-custom">
+                <div class="tab-content no-padding" style="padding: 10px;">
+                    <div id="chart_doanhthu_overview" style="width: 100%; height: 520px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
       <div class="row">
         <div class="col-lg-6 connectedSortable">
             <div class="nav-tabs-custom text-center"> <!-- Thêm 'text-center' để căn giữa -->
@@ -571,6 +581,7 @@
         fetchChuyenVien: "{{ route('fetch-chuyen-vien') }}",
         fetchOutTreatmentGroupType: "{{ route('fetch-out-treatment-group-treatment-type') }}",
         fetchDoanhThu: "{{ route('fetch-doanh-thu') }}",
+        fetchDoanhThuOverview: "{{ route('fetch-doanh-thu-overview') }}",
         chartBuongBenh: "{{ route('home.xml_chart') }}",
         fetchKhamByRoom: "{{ route('fetch-kham-by-room') }}",
         fetchNoiTru: "{{ route('fetch-noi-tru') }}",

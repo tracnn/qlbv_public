@@ -1,3 +1,7 @@
+# 11/05/2026
+
+- Bổ sung hiển thị Doanh thu / Số lương theo đối tượng
+
 # 06/05/2026
 
 - Update giao diện màn hình hiển thị thông tin chờ khám của bệnh nhân - Dashboard sử dụng cho màn hình lớn

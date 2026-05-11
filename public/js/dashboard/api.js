@@ -20,6 +20,7 @@
       chuyenVien: function (start, end) { return get(R.fetchChuyenVien, { startDate: start, endDate: end }); },
       outTreatmentGroupType: function (start, end) { return get(R.fetchOutTreatmentGroupType, { startDate: start, endDate: end }); },
       doanhThu: function (start, end) { return get(R.fetchDoanhThu, { startDate: start, endDate: end }); },
+      doanhThuOverview: function (start, end) { return get(R.fetchDoanhThuOverview, { startDate: start, endDate: end }); },
       buongBenh: function (start, end) { return get(R.chartBuongBenh, { startDate: start, endDate: end }); },
       khamByRoom: function (start, end) { return get(R.fetchKhamByRoom, { startDate: start, endDate: end }); },
       noiTru: function (start, end) { return get(R.fetchNoiTru, { startDate: start, endDate: end }); },

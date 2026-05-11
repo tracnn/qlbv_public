@@ -93,6 +93,148 @@
       });
     }
   
+    // ===== Doanh thu Overview =====
+    // Mỗi patient_type = 1 cặp series cùng màu, share legend (linkedTo):
+    //   - column stacked trên Y trái (Số lượng)
+    //   - spline trên Y phải (Doanh thu, dashed)
+    // Click legend -> ẩn/hiện cả cặp. Subtitle update tổng SL + DT theo series đang hiển thị.
+    function sumArr(arr) {
+      return (arr || []).reduce(function (a, b) { return a + (Number(b) || 0); }, 0);
+    }
+
+    function buildOverviewSubtitle(chart) {
+      var totalSl = 0, totalDt = 0;
+      chart.series.forEach(function (s) {
+        if (!s.visible) return;
+        var sum = sumArr(s.options.data);
+        if (s.type === 'column') totalSl += sum;
+        else if (s.type === 'spline') totalDt += sum;
+      });
+      var roundedTr = Math.round(totalDt / 1e6);
+      return 'Số lượng: <b>' + numeral(totalSl).format('0,0') + '</b>' +
+             ' &nbsp;|&nbsp; Doanh thu: <b>' + numeral(roundedTr).format('0,0') + ' Tr</b>' +
+             ' <span style="color:#888">(click vào đối tượng ở chú thích để ẩn/hiện)</span>';
+    }
+
+    function renderDoanhThuOverview(start, end) {
+      if (!CFG.hasFinanceRole) {
+        U.showNoPermissionPie('chart_doanhthu_overview', 'Doanh thu');
+        return $.Deferred().resolve().promise();
+      }
+      return API.doanhThuOverview(start, end).done(function (d) {
+        if (!d || !d.categories || !d.categories.length) {
+          $('#chart_doanhthu_overview').html('<div style="text-align:center;padding:40px;color:#999;">Không có dữ liệu</div>');
+          return;
+        }
+
+        var palette = Highcharts.getOptions().colors;
+        var series = [];
+        (d.patient_types || []).forEach(function (pt, idx) {
+          var color = palette[idx % palette.length];
+          var pack = d.by_patient_type[pt.id] || { so_luong: [], thanh_tien: [] };
+          var ptDt = sumArr(pack.thanh_tien);
+          var ptSl = sumArr(pack.so_luong);
+          series.push({
+            name: pt.name,
+            type: 'column',
+            yAxis: 0,
+            color: color,
+            data: pack.so_luong,
+            stack: 'sl',
+            ptDt: ptDt, // dùng cho labelFormatter của legend
+            ptSl: ptSl,
+            tooltip: {
+              pointFormatter: function () {
+                return '<span style="color:' + this.color + '">●</span> ' + this.series.name +
+                       ' — SL: <b>' + numeral(this.y).format('0,0') + '</b><br/>';
+              }
+            }
+          });
+          series.push({
+            name: pt.name + ' (DT)',
+            linkedTo: ':previous',
+            type: 'spline',
+            yAxis: 1,
+            color: color,
+            dashStyle: 'ShortDot',
+            marker: { symbol: 'circle' },
+            data: pack.thanh_tien,
+            tooltip: {
+              pointFormatter: function () {
+                return '<span style="color:' + this.color + '">●</span> ' + this.series.options.name +
+                       ' — DT: <b>' + numeral(this.y).format('0,0') + ' đ</b><br/>';
+              }
+            }
+          });
+        });
+
+        Highcharts.chart('chart_doanhthu_overview', {
+          chart: {
+            zoomType: 'xy',
+            events: {
+              load: function () { this.setSubtitle({ text: buildOverviewSubtitle(this) }); },
+              redraw: function () { this.setSubtitle({ text: buildOverviewSubtitle(this) }); }
+            }
+          },
+          title: { text: 'Doanh thu & Số lượng theo loại dịch vụ', style: { fontSize: '18px', fontWeight: 'bold' } },
+          subtitle: { text: '', useHTML: true, style: { fontSize: '13px' } },
+          xAxis: [{
+            categories: d.categories,
+            crosshair: true,
+            title: { text: 'Loại dịch vụ', style: { fontSize: '13px', fontWeight: 'bold' } },
+            labels: { style: { fontSize: '12px' } }
+          }],
+          yAxis: [
+            {
+              min: 0,
+              title: { text: 'Số lượng', style: { color: '#666' } },
+              labels: { formatter: function () { return numeral(this.value).format('0,0'); }, style: { fontSize: '12px' } },
+              stackLabels: { enabled: true, style: { fontWeight: 'bold', fontSize: '11px' }, formatter: function () { return numeral(this.total).format('0,0'); } }
+            },
+            {
+              min: 0,
+              title: { text: 'Doanh thu (đ)', style: { color: '#666' } },
+              labels: { formatter: function () { return numeral(this.value).format('0,0'); }, style: { fontSize: '12px' } },
+              opposite: true
+            }
+          ],
+          tooltip: { shared: true, useHTML: true },
+          legend: {
+            layout: 'horizontal', align: 'center', verticalAlign: 'bottom',
+            useHTML: true,
+            itemStyle: { fontSize: '13px', fontWeight: 'bold' },
+            labelFormatter: function () {
+              var dt = this.userOptions && this.userOptions.ptDt;
+              if (typeof dt === 'undefined') return this.name;
+              var tr = Math.round(dt / 1e6);
+              return this.name +
+                     ' <span style="color:#888;font-weight:normal">— ' +
+                     numeral(tr).format('0,0') + ' Tr</span>';
+            }
+          },
+          plotOptions: {
+            column: {
+              stacking: 'normal',
+              borderWidth: 0,
+              dataLabels: {
+                enabled: true,
+                formatter: function () { return this.y > 0 ? numeral(this.y).format('0,0') : ''; },
+                style: { fontSize: '10px', fontWeight: 'bold', textOutline: '1px contrast' }
+              }
+            },
+            spline: {
+              lineWidth: 2,
+              dataLabels: {
+                enabled: false
+              }
+            },
+            series: { events: { legendItemClick: function () { /* allow default toggle; redraw event will refresh subtitle */ } } }
+          },
+          series: series
+        });
+      });
+    }
+
     function renderBuongBenh(start, end) {
       return API.buongBenh(start, end).done(function (r) {
         $.each(r, function (k, data) {
@@ -248,6 +390,7 @@
           renderThuThuatPhauThuat(start, end),
           renderOutTreatmentGroupType(start, end),
           renderDoanhThu(start, end),
+          renderDoanhThuOverview(start, end),
           renderBuongBenh(start, end),
           renderNoiTru(start, end),
           renderKhamByRoom(start, end),

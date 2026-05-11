@@ -246,6 +246,103 @@ class HomeController extends Controller
         return json_encode($returnData);
     }
 
+    public function fetchDoanhthuOverview(Request $request)
+    {
+        $current_date = $this->currentDate($request->input('startDate'), $request->input('endDate'));
+        $rows = $this->doanhthuOverview($current_date['from_date'], $current_date['to_date']);
+
+        // Sắp xếp service_req_type theo tổng doanh thu (đảm bảo thứ tự ổn định cho mọi filter)
+        $srTotals = [];
+        $ptList = [];
+        foreach ($rows as $r) {
+            $srId = (int) $r->service_req_type_id;
+            $ptId = (int) $r->patient_type_id;
+            if (!isset($srTotals[$srId])) {
+                $srTotals[$srId] = ['name' => $r->service_req_type_name, 'total' => 0];
+            }
+            $srTotals[$srId]['total'] += (float) $r->thanh_tien;
+            if (!isset($ptList[$ptId])) {
+                $ptList[$ptId] = $r->patient_type_name;
+            }
+        }
+        uasort($srTotals, function ($a, $b) { return $b['total'] <=> $a['total']; });
+
+        $srIds = array_keys($srTotals);
+        $categories = array_map(function ($id) use ($srTotals) { return $srTotals[$id]['name']; }, $srIds);
+        $srIndex = array_flip($srIds); // service_req_type_id -> index trong categories
+
+        // Khởi tạo mảng dữ liệu
+        $n = count($srIds);
+        $emptyArr = array_fill(0, $n, 0);
+
+        $allSl = $emptyArr;
+        $allDt = $emptyArr;
+        $byPt = []; // pt_id => [so_luong=>[], thanh_tien=>[]]
+        foreach ($ptList as $ptId => $ptName) {
+            $byPt[$ptId] = ['so_luong' => $emptyArr, 'thanh_tien' => $emptyArr];
+        }
+
+        foreach ($rows as $r) {
+            $srId = (int) $r->service_req_type_id;
+            $ptId = (int) $r->patient_type_id;
+            $idx = $srIndex[$srId];
+            $sl = (float) $r->so_luong;
+            $dt = (float) $r->thanh_tien;
+            $allSl[$idx] += $sl;
+            $allDt[$idx] += $dt;
+            $byPt[$ptId]['so_luong'][$idx] += $sl;
+            $byPt[$ptId]['thanh_tien'][$idx] += $dt;
+        }
+
+        // Sắp xếp danh sách đối tượng theo tổng doanh thu giảm dần
+        $ptSorted = [];
+        foreach ($ptList as $ptId => $ptName) {
+            $ptSorted[] = [
+                'id' => $ptId,
+                'name' => $ptName,
+                'total' => array_sum($byPt[$ptId]['thanh_tien']),
+            ];
+        }
+        usort($ptSorted, function ($a, $b) { return $b['total'] <=> $a['total']; });
+
+        $patient_types = array_map(function ($p) {
+            return ['id' => $p['id'], 'name' => $p['name']];
+        }, $ptSorted);
+
+        return response()->json([
+            'categories' => $categories,
+            'patient_types' => $patient_types,
+            'all' => ['so_luong' => $allSl, 'thanh_tien' => $allDt],
+            'by_patient_type' => $byPt,
+        ]);
+    }
+
+    private function doanhthuOverview($from_date, $to_date)
+    {
+        return DB::connection('HISPro')
+        ->table('his_sere_serv')
+        ->join('his_service_req', 'his_service_req.id', '=', 'his_sere_serv.service_req_id')
+        ->join('his_service_req_type', 'his_service_req_type.id', '=', 'his_service_req.service_req_type_id')
+        ->join('his_patient_type', 'his_patient_type.id', '=', 'his_sere_serv.patient_type_id')
+        ->selectRaw('his_service_req.service_req_type_id,
+                     his_service_req_type.service_req_type_name,
+                     his_sere_serv.patient_type_id,
+                     his_patient_type.patient_type_name,
+                     sum(his_sere_serv.amount) as so_luong,
+                     sum(his_sere_serv.amount * his_sere_serv.price) as thanh_tien')
+        ->whereBetween('his_service_req.intruction_time', [$from_date, $to_date])
+        ->where('his_service_req.is_active', 1)
+        ->where('his_service_req.is_delete', 0)
+        ->where('his_sere_serv.is_delete', 0)
+        ->groupBy(
+            'his_service_req.service_req_type_id',
+            'his_service_req_type.service_req_type_name',
+            'his_sere_serv.patient_type_id',
+            'his_patient_type.patient_type_name'
+        )
+        ->get();
+    }
+
     public function fetchTransaction(Request $request)
     {
         $current_date = $this->currentDate($request->input('startDate'), $request->input('endDate'));
@@ -1146,12 +1243,18 @@ class HomeController extends Controller
     {
         return DB::connection('HISPro')
         ->table('his_sere_serv')
+        ->join('his_service_req', 'his_service_req.id', '=', 'his_sere_serv.service_req_id')
         ->join('his_service_type', 'his_sere_serv.tdl_service_type_id', '=', 'his_service_type.id')
-        ->selectRaw('sum(amount) as so_luong,sum(amount*price) as thanh_tien,tdl_service_type_id,service_type_name')
-        ->whereBetween('tdl_intruction_time', [$from_date, $to_date])
+        ->selectRaw('sum(his_sere_serv.amount) as so_luong,
+                     sum(his_sere_serv.amount*his_sere_serv.price) as thanh_tien,
+                     his_sere_serv.tdl_service_type_id,
+                     his_service_type.service_type_name')
+        ->whereBetween('his_service_req.intruction_time', [$from_date, $to_date])
+        ->where('his_service_req.is_active', 1)
+        ->where('his_service_req.is_delete', 0)
         ->where('his_sere_serv.is_delete', 0)
-        ->groupBy('tdl_service_type_id','service_type_name')
-        ->orderBy('thanh_tien','desc')
+        ->groupBy('his_sere_serv.tdl_service_type_id', 'his_service_type.service_type_name')
+        ->orderBy('thanh_tien', 'desc')
         ->get();
     }
 
