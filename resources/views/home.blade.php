@@ -402,6 +402,7 @@
         <div class="col-lg-6 connectedSortable">
             <div class="nav-tabs-custom text-center"> <!-- Thêm 'text-center' để căn giữa -->
                 <div class="tab-content no-padding">
+                    <div id="legend_doanhthu" style="text-align:center; padding: 6px 4px 0; font-size: 12px;"></div>
                     <div id="chart_doanhthu" style="width: 100%; height: 300px;"></div>
                 </div>
             </div>
@@ -409,6 +410,7 @@
         <div class="col-lg-6 connectedSortable">
             <div class="nav-tabs-custom text-center"> <!-- Thêm 'text-center' để căn giữa -->
                 <div class="tab-content no-padding">
+                    <div id="legend_treatment" style="text-align:center; padding: 6px 4px 0; font-size: 12px;"></div>
                     <div id="chart_treatment" style="width: 100%; height: 300px;"></div>
                 </div>
             </div>

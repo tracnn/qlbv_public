@@ -31,12 +31,95 @@
       });
     }
   
+    // ===== Hồ sơ pie với legend đối tượng tùy biến (mỗi PT = 1 slice) =====
+    var HoSoPie = {
+      data: null,
+      activePtIds: null,
+      bound: false,
+
+      drawChart: function () {
+        var d = this.data;
+        var active = this.activePtIds;
+        var palette = Highcharts.getOptions().colors;
+        var ptIndex = {};
+        (d.patient_types || []).forEach(function (pt, i) { ptIndex[pt.id] = i; });
+
+        var points = (d.patient_types || [])
+          .filter(function (pt) { return active[pt.id] && pt.total > 0; })
+          .map(function (pt) {
+            return { name: pt.name, y: pt.total, color: palette[ptIndex[pt.id] % palette.length] };
+          });
+
+        var total = points.reduce(function (a, b) { return a + b.y; }, 0);
+        $('#sum_treatment').text(numeral(total).format('0,0'));
+
+        Highcharts.chart('chart_treatment', {
+          chart: { type: 'pie', options3d: { enabled: true, alpha: 45, beta: 0 } },
+          title: { text: 'Hồ sơ: ' + numeral(total).format('0,0'), style: { fontSize: '18px', fontWeight: 'bold' } },
+          tooltip: { pointFormatter: function () { return '<b>' + numeral(this.y).format('0,0') + ' (' + (this.percentage || 0).toFixed(1) + '%)</b>'; }, style: { fontSize: '13px', fontWeight: 'bold' } },
+          plotOptions: {
+            pie: {
+              innerSize: 0, depth: 45,
+              dataLabels: { enabled: true, format: '{point.name}: {point.percentage:.1f}%', style: { fontSize: '12px' } }
+            }
+          },
+          series: [{ name: 'Hồ sơ', data: points }]
+        });
+      },
+
+      buildLegend: function () {
+        var d = this.data;
+        var active = this.activePtIds;
+        var palette = Highcharts.getOptions().colors;
+        var html = (d.patient_types || []).map(function (pt, idx) {
+          var color = palette[idx % palette.length];
+          var isOn = !!active[pt.id];
+          return '<span class="treatment-pt-legend-item" data-pt="' + pt.id + '" style="' +
+                 'display:inline-block; margin: 0 8px; cursor:pointer; ' +
+                 'opacity:' + (isOn ? '1' : '0.35') + '; user-select:none;">' +
+                   '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:' + color + ';margin-right:4px;vertical-align:middle;"></span>' +
+                   '<b>' + pt.name + '</b> <span style="color:#888;font-weight:normal">— ' + numeral(pt.total).format('0,0') + '</span>' +
+                 '</span>';
+        }).join('');
+        $('#legend_treatment').html(html + ' <span style="color:#888">(click để ẩn/hiện)</span>');
+      },
+
+      bindEvents: function () {
+        if (this.bound) return;
+        var self = this;
+        $(document).on('click', '#legend_treatment .treatment-pt-legend-item', function () {
+          var ptId = $(this).data('pt');
+          var activeCount = Object.keys(self.activePtIds).filter(function (k) { return self.activePtIds[k]; }).length;
+          if (self.activePtIds[ptId] && activeCount <= 1) return;
+          self.activePtIds[ptId] = !self.activePtIds[ptId];
+          self.buildLegend();
+          self.drawChart();
+        });
+        this.bound = true;
+      }
+    };
+
     function renderTreatment(start, end) {
       return API.treatment(start, end).done(function (r) {
-        if (!r || !r.datasets || !r.datasets.length) return;
-        $('#sum_treatment').text(numeral(r.sum_sl).format('0,0'));
-        var points = r.labels.map(function (label, i) { return { name: label, y: r.datasets[0].data[i] }; });
-        U.renderPie3D('chart_treatment', r.title + ': ' + numeral(r.sum_sl).format('0,0'), 'Hồ sơ', points);
+        if (!r || !r.patient_types || !r.patient_types.length) {
+          $('#sum_treatment').text('0');
+          $('#legend_treatment').empty();
+          $('#chart_treatment').html('<div style="text-align:center;padding:40px;color:#999;">Không có dữ liệu</div>');
+          return;
+        }
+        HoSoPie.data = r;
+        var prev = HoSoPie.activePtIds || {};
+        var next = {};
+        r.patient_types.forEach(function (pt) {
+          next[pt.id] = (typeof prev[pt.id] === 'boolean') ? prev[pt.id] : true;
+        });
+        if (!Object.keys(next).some(function (k) { return next[k]; })) {
+          Object.keys(next).forEach(function (k) { next[k] = true; });
+        }
+        HoSoPie.activePtIds = next;
+        HoSoPie.buildLegend();
+        HoSoPie.bindEvents();
+        HoSoPie.drawChart();
       });
     }
   
@@ -78,6 +161,85 @@
       });
     }
   
+    // ===== Doanh thu pie với legend đối tượng tùy biến =====
+    var DoanhThuPie = {
+      data: null,
+      activePtIds: null,
+      bound: false,
+
+      sumByService: function () {
+        var d = this.data;
+        var n = d.categories.length;
+        var totals = new Array(n).fill(0);
+        var active = this.activePtIds;
+        Object.keys(d.by_patient_type).forEach(function (ptId) {
+          if (!active[ptId]) return;
+          var arr = d.by_patient_type[ptId];
+          for (var i = 0; i < n; i++) totals[i] += (arr[i] || 0);
+        });
+        return totals;
+      },
+
+      drawChart: function () {
+        var d = this.data;
+        var totals = this.sumByService();
+        var points = d.categories.map(function (name, i) { return { name: name, y: totals[i] }; })
+                                 .filter(function (p) { return p.y > 0; });
+        var totalDt = totals.reduce(function (a, b) { return a + b; }, 0);
+        var roundedTr = Math.round(totalDt / 1e6);
+        $('#sum_doanhthu').text(numeral(roundedTr).format('0,0') + ' Tr');
+
+        Highcharts.chart('chart_doanhthu', {
+          chart: { type: 'pie', options3d: { enabled: true, alpha: 45, beta: 0 } },
+          title: { text: 'Doanh thu: ' + numeral(roundedTr).format('0,0') + ' Tr', style: { fontSize: '18px', fontWeight: 'bold' } },
+          tooltip: { pointFormatter: function () { return '<b>' + numeral(this.y).format('0,0') + ' (' + (this.percentage || 0).toFixed(1) + '%)</b>'; }, style: { fontSize: '13px', fontWeight: 'bold' } },
+          plotOptions: {
+            pie: {
+              innerSize: 0,
+              depth: 45,
+              dataLabels: { enabled: true, format: '{point.name}: {point.percentage:.1f}%', style: { fontSize: '12px' } }
+            }
+          },
+          series: [{ name: 'Doanh thu', data: points }]
+        });
+      },
+
+      buildLegend: function () {
+        var d = this.data;
+        var active = this.activePtIds;
+        var palette = Highcharts.getOptions().colors;
+        var html = (d.patient_types || []).map(function (pt, idx) {
+          var color = palette[idx % palette.length];
+          var isOn = !!active[pt.id];
+          var tr = Math.round((pt.total || 0) / 1e6);
+          return '<span class="pt-legend-item" data-pt="' + pt.id + '" style="' +
+                 'display:inline-block; margin: 0 8px; cursor:pointer; ' +
+                 'opacity:' + (isOn ? '1' : '0.35') + '; user-select:none;">' +
+                   '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:' + color + ';margin-right:4px;vertical-align:middle;"></span>' +
+                   '<b>' + pt.name + '</b> <span style="color:#888;font-weight:normal">— ' + numeral(tr).format('0,0') + ' Tr</span>' +
+                 '</span>';
+        }).join('');
+        $('#legend_doanhthu').html(
+          html + ' <span style="color:#888">(click để ẩn/hiện)</span>'
+        );
+      },
+
+      bindEvents: function () {
+        if (this.bound) return;
+        var self = this;
+        $(document).on('click', '#legend_doanhthu .pt-legend-item', function () {
+          var ptId = $(this).data('pt');
+          // Không cho tắt hết (giữ ít nhất 1)
+          var activeCount = Object.keys(self.activePtIds).filter(function (k) { return self.activePtIds[k]; }).length;
+          if (self.activePtIds[ptId] && activeCount <= 1) return;
+          self.activePtIds[ptId] = !self.activePtIds[ptId];
+          self.buildLegend();
+          self.drawChart();
+        });
+        this.bound = true;
+      }
+    };
+
     function renderDoanhThu(start, end) {
       if (!CFG.hasFinanceRole) {
         $('#sum_doanhthu').text('Không có quyền');
@@ -85,11 +247,27 @@
         return $.Deferred().resolve().promise();
       }
       return API.doanhThu(start, end).done(function (r) {
-        if (!r || !r.datasets || !r.datasets.length) return;
-        var roundedTr = Math.round((r.sum_sl || 0) / 1e6);
-        $('#sum_doanhthu').text(numeral(roundedTr).format('0,0') + ' Tr');
-        var points = r.labels.map(function (label, i) { return { name: label, y: r.datasets[0].data[i] }; });
-        U.renderPie3D('chart_doanhthu', r.title + ': ' + numeral(roundedTr).format('0,0') + ' Tr', 'Doanh thu', points);
+        if (!r || !r.categories || !r.categories.length) {
+          $('#sum_doanhthu').text('0 Tr');
+          $('#legend_doanhthu').empty();
+          $('#chart_doanhthu').html('<div style="text-align:center;padding:40px;color:#999;">Không có dữ liệu</div>');
+          return;
+        }
+        DoanhThuPie.data = r;
+        // Khởi tạo trạng thái active: mặc định bật tất cả (giữ lựa chọn cũ nếu có)
+        var prev = DoanhThuPie.activePtIds || {};
+        var next = {};
+        (r.patient_types || []).forEach(function (pt) {
+          next[pt.id] = (typeof prev[pt.id] === 'boolean') ? prev[pt.id] : true;
+        });
+        // Nếu sau merge không còn cái nào bật thì bật lại tất cả
+        var anyOn = Object.keys(next).some(function (k) { return next[k]; });
+        if (!anyOn) { Object.keys(next).forEach(function (k) { next[k] = true; }); }
+        DoanhThuPie.activePtIds = next;
+
+        DoanhThuPie.buildLegend();
+        DoanhThuPie.bindEvents();
+        DoanhThuPie.drawChart();
       });
     }
   

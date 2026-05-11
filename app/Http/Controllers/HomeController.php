@@ -183,67 +183,78 @@ class HomeController extends Controller
         $current_date = $this->currentDate($request->input('startDate'), $request->input('endDate'));
         $model = $this->inTreatment($current_date['from_date'], $current_date['to_date']);
 
-        $sum_sl = $model->sum('so_luong');
-
-        $labels = [];  
-        $data = [];
-        $backgroundColor = [];
-
-        foreach ($model as $value) {
-            $labels[] = $value->patient_type_name;
-            $data[] = doubleval($value->so_luong);
-            $backgroundColor[] = "rgba(" . rand(0, 255) . ',' . rand(0, 255) . ',' . rand(0, 255) . ",0.7)";
+        $patient_types = [];
+        foreach ($model as $row) {
+            $patient_types[] = [
+                'id' => (int) $row->patient_type_id,
+                'name' => $row->patient_type_name,
+                'total' => (int) $row->so_luong,
+            ];
         }
+        usort($patient_types, function ($a, $b) { return $b['total'] <=> $a['total']; });
 
-        $returnData = [
-            'type' => 'pie',  // Chuyển sang Pie Chart
+        return response()->json([
             'title' => 'Hồ sơ',
-            'labels' => $labels,
-            'datasets' => [
-                [
-                    'data' => $data,
-                    'backgroundColor' => $backgroundColor,
-                    'label' => "Tổng cộng: " . number_format($sum_sl),
-                ],
-            ],
-            'sum_sl' => $sum_sl // Gửi tổng số lượng để frontend hiển thị
-        ];  
-
-        return json_encode($returnData);
+            'patient_types' => $patient_types,
+        ]);
     }
 
     public function fetchDoanhthu(Request $request)
     {
         $current_date = $this->currentDate($request->input('startDate'), $request->input('endDate'));
-        $model = $this->doanhthu($current_date['from_date'], $current_date['to_date']);
+        $rows = $this->doanhthu($current_date['from_date'], $current_date['to_date']);
 
-        $sum_sl = $model->sum('thanh_tien');
+        // Tổng theo service_type để cố định thứ tự category (desc theo DT tổng)
+        $stTotals = [];
+        $ptList = [];
+        foreach ($rows as $r) {
+            $stId = (int) $r->tdl_service_type_id;
+            $ptId = (int) $r->patient_type_id;
+            if (!isset($stTotals[$stId])) {
+                $stTotals[$stId] = ['name' => $r->service_type_name, 'total' => 0];
+            }
+            $stTotals[$stId]['total'] += (float) $r->thanh_tien;
+            if (!isset($ptList[$ptId])) {
+                $ptList[$ptId] = $r->patient_type_name;
+            }
+        }
+        uasort($stTotals, function ($a, $b) { return $b['total'] <=> $a['total']; });
 
-        $labels = [];  
-        $data = [];
-        $backgroundColor = [];
+        $stIds = array_keys($stTotals);
+        $categories = array_map(function ($id) use ($stTotals) { return $stTotals[$id]['name']; }, $stIds);
+        $stIndex = array_flip($stIds);
 
-        foreach ($model as $value) {
-            $labels[] = $value->service_type_name;
-            $data[] = doubleval($value->thanh_tien);
-            $backgroundColor[] = "rgba(" . rand(0, 255) . ',' . rand(0, 255) . ',' . rand(0, 255) . ",0.7)";
+        $n = count($stIds);
+        $emptyArr = array_fill(0, $n, 0);
+
+        $byPt = [];
+        foreach ($ptList as $ptId => $ptName) {
+            $byPt[$ptId] = $emptyArr;
+        }
+        foreach ($rows as $r) {
+            $stId = (int) $r->tdl_service_type_id;
+            $ptId = (int) $r->patient_type_id;
+            $idx = $stIndex[$stId];
+            $byPt[$ptId][$idx] += (float) $r->thanh_tien;
         }
 
-        $returnData = [
-            'type' => 'pie',  // Chuyển sang Pie Chart
-            'title' => 'Doanh thu',
-            'labels' => $labels,
-            'datasets' => [
-                [
-                    'data' => $data,
-                    'backgroundColor' => $backgroundColor,
-                    'label' => "Tổng cộng: " . number_format($sum_sl),
-                ],
-            ],
-            'sum_sl' => $sum_sl // Gửi tổng số lượng để frontend hiển thị
-        ];  
+        // Sắp danh sách đối tượng theo tổng DT giảm dần
+        $ptSorted = [];
+        foreach ($ptList as $ptId => $ptName) {
+            $ptSorted[] = [
+                'id' => $ptId,
+                'name' => $ptName,
+                'total' => array_sum($byPt[$ptId]),
+            ];
+        }
+        usort($ptSorted, function ($a, $b) { return $b['total'] <=> $a['total']; });
 
-        return json_encode($returnData);
+        return response()->json([
+            'title' => 'Doanh thu',
+            'categories' => $categories,
+            'patient_types' => $ptSorted,
+            'by_patient_type' => $byPt,
+        ]);
     }
 
     public function fetchDoanhthuOverview(Request $request)
@@ -1245,16 +1256,22 @@ class HomeController extends Controller
         ->table('his_sere_serv')
         ->join('his_service_req', 'his_service_req.id', '=', 'his_sere_serv.service_req_id')
         ->join('his_service_type', 'his_sere_serv.tdl_service_type_id', '=', 'his_service_type.id')
-        ->selectRaw('sum(his_sere_serv.amount) as so_luong,
-                     sum(his_sere_serv.amount*his_sere_serv.price) as thanh_tien,
+        ->join('his_patient_type', 'his_patient_type.id', '=', 'his_sere_serv.patient_type_id')
+        ->selectRaw('sum(his_sere_serv.amount*his_sere_serv.price) as thanh_tien,
                      his_sere_serv.tdl_service_type_id,
-                     his_service_type.service_type_name')
+                     his_service_type.service_type_name,
+                     his_sere_serv.patient_type_id,
+                     his_patient_type.patient_type_name')
         ->whereBetween('his_service_req.intruction_time', [$from_date, $to_date])
         ->where('his_service_req.is_active', 1)
         ->where('his_service_req.is_delete', 0)
         ->where('his_sere_serv.is_delete', 0)
-        ->groupBy('his_sere_serv.tdl_service_type_id', 'his_service_type.service_type_name')
-        ->orderBy('thanh_tien', 'desc')
+        ->groupBy(
+            'his_sere_serv.tdl_service_type_id',
+            'his_service_type.service_type_name',
+            'his_sere_serv.patient_type_id',
+            'his_patient_type.patient_type_name'
+        )
         ->get();
     }
 
@@ -1262,13 +1279,13 @@ class HomeController extends Controller
     {
         return DB::connection('HISPro')
         ->table('his_treatment')
-        ->join('his_branch', 'his_branch.id', '=', 'his_treatment.branch_id')
-        ->join('his_patient', 'his_patient.id', '=', 'his_treatment.patient_id')
         ->join('his_patient_type', 'his_patient_type.id', '=', 'his_treatment.tdl_patient_type_id')
-        ->selectRaw('count(*) as so_luong,patient_type_name')
+        ->selectRaw('count(*) as so_luong,
+                     his_treatment.tdl_patient_type_id as patient_type_id,
+                     his_patient_type.patient_type_name')
         ->whereBetween('in_time', [$from_date, $to_date])
-        ->where('his_treatment.is_delete',0)
-        ->groupBy('patient_type_name')
+        ->where('his_treatment.is_delete', 0)
+        ->groupBy('his_treatment.tdl_patient_type_id', 'his_patient_type.patient_type_name')
         ->get();
     }
 
