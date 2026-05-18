@@ -38,8 +38,9 @@ Trong `doanhthuOverview()`, đổi biểu thức select của `so_luong`:
 
 Các phần khác của query giữ nguyên:
 - JOIN `his_service_req`, `his_service_req_type`, `his_patient_type`.
-- Điều kiện `whereBetween intruction_time`, `is_active = 1`, `is_delete = 0`
-  (cho cả `his_service_req` và `his_sere_serv`).
+- Điều kiện `whereBetween his_service_req.intruction_time`,
+  `his_service_req.is_active = 1`, `his_service_req.is_delete = 0`,
+  `his_sere_serv.is_delete = 0`.
 - `groupBy` theo `service_req_type_id`, `service_req_type_name`,
   `patient_type_id`, `patient_type_name`.
 
