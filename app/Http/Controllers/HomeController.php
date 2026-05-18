@@ -339,7 +339,7 @@ class HomeController extends Controller
                      his_service_req_type.service_req_type_name,
                      his_sere_serv.patient_type_id,
                      his_patient_type.patient_type_name,
-                     sum(his_sere_serv.amount) as so_luong,
+                     count(distinct his_service_req.id) as so_luong,
                      sum(his_sere_serv.amount * his_sere_serv.price) as thanh_tien')
         ->whereBetween('his_service_req.intruction_time', [$from_date, $to_date])
         ->where('his_service_req.is_active', 1)
