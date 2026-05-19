@@ -1,3 +1,7 @@
+# 20/05/2026
+
+- Bổ sung thiết lập Logo theo từng đơn vị trên giao diện trả kết quả KCB
+
 # 11/05/2026
 
 - Bổ sung hiển thị Doanh thu / Số lương theo đối tượng
