@@ -7,11 +7,11 @@ return [
         'username' => '',
         'password' => '',
         'login_url' => 'https://egw.baohiemxahoi.gov.vn/api/token/take',
-        'check_card_url' => 'https://egw.baohiemxahoi.gov.vn/api/egw/NhanLichSuKCB2018', 
+        'check_card_url' => 'https://egw.baohiemxahoi.gov.vn/api/egw/NhanLichSuKCB2018',
         'enableCheck' => false, //Bật/tắt kiểm tra thẻ BHXH bởi cổng BHXH
         'check_card_url_2024' => 'https://egw.baohiemxahoi.gov.vn/api/egw/KQNhanLichSuKCB2024',
         'hoTenCb' => '',
-        'cccdCb' => '', 
+        'cccdCb' => '',
         'check_by_user' => true, //Bật/tắt kiểm tra thẻ BHXH bởi user
         'submit_xml_enabled' => false, //Bật/tắt chức năng gửi XML lên cổng BHXH
         'submit_xml_url' => 'https://egw.baohiemxahoi.gov.vn/api/qd130/guiHoSoXmlQD4750',
@@ -26,6 +26,7 @@ return [
     'base_pacs_url' => '',
     'pacs_url_suffix' => '', //''&service_id=',
     'organization_name' => 'Bệnh viện Đa khoa',
+    'organization_logo' => env('ORGANIZATION_LOGO', ''), // URL/đường dẫn logo riêng của đơn vị; trống thì dùng images/logo.png
     'is_bieudo_dieutringoaitru' => true,
     'ftp_emr_config' => [
         'host' => '192.168.7.216',
@@ -71,11 +72,11 @@ return [
         'enabled' => false,
     ],
     'usb_token_sign' => [
-        'endpoint'                  => env('USB_TOKEN_ENDPOINT', 'http://127.0.0.1:18081/api/EmrSign/SignXmlBhyt'),
-        'enabled'                   => env('USB_TOKEN_SIGN_ENABLED', false),
-        'service_token'             => env('USB_TOKEN_SERVICE_TOKEN', ''),
+        'endpoint' => env('USB_TOKEN_ENDPOINT', 'http://127.0.0.1:18081/api/EmrSign/SignXmlBhyt'),
+        'enabled' => env('USB_TOKEN_SIGN_ENABLED', false),
+        'service_token' => env('USB_TOKEN_SERVICE_TOKEN', ''),
         'tag_store_signature_value' => 'CHUKYDONVI',
-        'timeout'                   => 30,
+        'timeout' => 30,
     ],
     'e_invoice' => [
         'bkav' => [
@@ -119,6 +120,7 @@ return [
         'baseUrl' => 'http://10.0.0.27:1435',
     ],
     'patient_type_code_evenue' => [
-        '01', '02'
+        '01',
+        '02'
     ]
 ];

@@ -6,11 +6,12 @@
     "type": "project",
     "require": {
         "php": ">=7.0.0",
+        "box/spout": "^3.3",
         "diglactic/laravel-breadcrumbs": "^4.2",
-        "dompdf/dompdf": "^2.0",
+        "dompdf/dompdf": "~0.7",
         "egulias/email-validator": "^3.1",
         "fideloper/proxy": "~3.3",
-        "guzzlehttp/guzzle": "^6.5",
+        "guzzlehttp/guzzle": "6.5",
         "hisorange/browser-detect": "^4.5",
         "jeroennoten/laravel-adminlte": "^1.22",
         "laracasts/flash": "^3.0",
@@ -36,8 +37,8 @@
     },
     "require-dev": {
         "composer/composer": "^2.2",
-        "fakerphp/faker": "^1.9",
         "filp/whoops": "~2.0",
+        "fzaninotto/faker": "~1.4",
         "mockery/mockery": "0.9.*",
         "phpunit/phpunit": "~6.0"
     },
@@ -79,9 +80,6 @@
         "optimize-autoloader": true,
         "allow-plugins": {
             "kylekatarnls/update-helper": true
-        },
-        "audit": {
-            "block-insecure": false
         }
     }
 }

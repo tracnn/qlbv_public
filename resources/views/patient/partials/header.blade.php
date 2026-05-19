@@ -1,3 +1,10 @@
+@php
+    $defaultLogo = asset('images/logo.png');
+    $orgLogo = config('organization.organization_logo');
+    $logoUrl = $orgLogo
+        ? (preg_match('#^https?://#i', $orgLogo) ? $orgLogo : asset(ltrim($orgLogo, '/')))
+        : $defaultLogo;
+@endphp
 <style>
 .navbar-header {
     height: 50px; /* Đặt chiều cao cụ thể cho navbar-header nếu cần */
@@ -53,7 +60,7 @@
         <span class="icon-bar"></span>
         <span class="icon-bar"></span>
       </button>
-      <a class="navbar-brand" href="#"><img src="{{asset('images/logo.png')}}" alt="Logo" title="Hospital Logi">
+      <a class="navbar-brand" href="#"><img src="{{ $logoUrl }}" alt="Logo" title="Hospital Logo" onerror="this.onerror=null;this.src='{{ $defaultLogo }}';">
         <span class="hospital-name">{{ config('organization.organization_name') }}</span>
       </a>
       
@@ -103,6 +110,10 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script>
+// Logo của đơn vị triển khai (rỗng nếu chưa cấu hình) và logo mặc định
+var orgLogo = '{{ $logoUrl }}';
+var defaultLogo = '{{ $defaultLogo }}';
+
 // Hàm để lấy URI đầy đủ bao gồm cả query string
 function getFullURI() {
     return window.location.href;
@@ -128,19 +139,31 @@ function generateQRCode(text, logoURI) {
     // Vẽ QRCode lên canvas
     qr.renderTo2dContext(ctx, qrSize / qr.getModuleCount());
 
+    // Hiển thị QRCode (có thể kèm logo hoặc không)
+    function renderQRCode() {
+        document.getElementById('qrcodeImage').src = canvas.toDataURL();
+        document.getElementById('qrcodeImage').style.display = 'block';
+    }
+
     // Thêm logo vào QRCode
     if (logoURI) {
         var img = new Image();
-        img.src = logoURI;
         img.onload = function() {
             var logoSize = qrSize / 5;
             var logoX = (qrSize - logoSize) / 2;
             var logoY = (qrSize - logoSize) / 2;
             ctx.drawImage(img, logoX, logoY, logoSize, logoSize);
-            // Hiển thị QRCode
-            document.getElementById('qrcodeImage').src = canvas.toDataURL();
-            document.getElementById('qrcodeImage').style.display = 'block';
+            renderQRCode();
         };
+        // Nếu logo đơn vị không tải được thì fallback sang logo mặc định
+        img.onerror = function() {
+            if (logoURI !== defaultLogo) {
+                generateQRCode(text, defaultLogo);
+            } else {
+                renderQRCode();
+            }
+        };
+        img.src = logoURI;
     } else {
         // Hiển thị QRCode không có logo
         document.getElementById('qrcodeImage').src = canvas.toDataURL();
@@ -162,8 +185,8 @@ document.getElementById('qrcodeForm').addEventListener('submit', function(e) {
         };
         reader.readAsDataURL(logoFile);
     } else {
-        // Nếu không có logo mới, sử dụng logo mặc định
-        generateQRCode(text, '/images/logo.png');
+        // Nếu không có logo mới, sử dụng logo của đơn vị (tự fallback về mặc định nếu lỗi)
+        generateQRCode(text, orgLogo);
     }
 });
 
@@ -173,7 +196,7 @@ window.addEventListener('DOMContentLoaded', function () {
     
     document.getElementById('qrcodeText').value = fullURI;
 
-    generateQRCode(fullURI, '/images/logo.png');
+    generateQRCode(fullURI, orgLogo);
 });
 
 // Xóa các giá trị cũ khi modal bị đóng
