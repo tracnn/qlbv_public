@@ -110,10 +110,6 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script>
-// Logo của đơn vị triển khai (rỗng nếu chưa cấu hình) và logo mặc định
-var orgLogo = '{{ $logoUrl }}';
-var defaultLogo = '{{ $defaultLogo }}';
-
 // Hàm để lấy URI đầy đủ bao gồm cả query string
 function getFullURI() {
     return window.location.href;
@@ -139,31 +135,19 @@ function generateQRCode(text, logoURI) {
     // Vẽ QRCode lên canvas
     qr.renderTo2dContext(ctx, qrSize / qr.getModuleCount());
 
-    // Hiển thị QRCode (có thể kèm logo hoặc không)
-    function renderQRCode() {
-        document.getElementById('qrcodeImage').src = canvas.toDataURL();
-        document.getElementById('qrcodeImage').style.display = 'block';
-    }
-
     // Thêm logo vào QRCode
     if (logoURI) {
         var img = new Image();
+        img.src = logoURI;
         img.onload = function() {
             var logoSize = qrSize / 5;
             var logoX = (qrSize - logoSize) / 2;
             var logoY = (qrSize - logoSize) / 2;
             ctx.drawImage(img, logoX, logoY, logoSize, logoSize);
-            renderQRCode();
+            // Hiển thị QRCode
+            document.getElementById('qrcodeImage').src = canvas.toDataURL();
+            document.getElementById('qrcodeImage').style.display = 'block';
         };
-        // Nếu logo đơn vị không tải được thì fallback sang logo mặc định
-        img.onerror = function() {
-            if (logoURI !== defaultLogo) {
-                generateQRCode(text, defaultLogo);
-            } else {
-                renderQRCode();
-            }
-        };
-        img.src = logoURI;
     } else {
         // Hiển thị QRCode không có logo
         document.getElementById('qrcodeImage').src = canvas.toDataURL();
@@ -185,8 +169,8 @@ document.getElementById('qrcodeForm').addEventListener('submit', function(e) {
         };
         reader.readAsDataURL(logoFile);
     } else {
-        // Nếu không có logo mới, sử dụng logo của đơn vị (tự fallback về mặc định nếu lỗi)
-        generateQRCode(text, orgLogo);
+        // Nếu không có logo mới, sử dụng logo mặc định
+        generateQRCode(text, '/images/logo.png');
     }
 });
 
@@ -196,7 +180,7 @@ window.addEventListener('DOMContentLoaded', function () {
     
     document.getElementById('qrcodeText').value = fullURI;
 
-    generateQRCode(fullURI, orgLogo);
+    generateQRCode(fullURI, '/images/logo.png');
 });
 
 // Xóa các giá trị cũ khi modal bị đóng
