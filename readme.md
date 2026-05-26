@@ -1,3 +1,7 @@
+# 26/05/2026
+
+- Bổ sung kiểm tra mã bệnh thuộc nhóm cảnh báo không được thanh toán BHYT
+
 # 20/05/2026
 
 - Bổ sung thiết lập Logo theo từng đơn vị trên giao diện trả kết quả KCB
