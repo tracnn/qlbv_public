@@ -44,6 +44,7 @@ return [
         'ma_doituong_kcb_trai_tuyen' => ['3'], //Bổ sung mã đối tượng khám bệnh chỉ định trái tuyến
         'the_bhyt_cbcs_pattern' => ['CA', 'QN', 'CY'], //Bổ sung mã thẻ BHYT CBCS
         'ma_loai_kcb_khong_tinh_ngay_dieu_tri' => ['01', '07', '09'], //Bổ sung mã loại khám bệnh không tính ngày điều trị
+        'ma_benh_canh_bao' => ['Z00', 'R53'], //Danh sách mã ICD cần cảnh báo khi xuất hiện ở ma_benh_chinh hoặc ma_benh_kt
     ],
     'xml2' => [
         'tt_thau' => [ // Bổ sung quy tắc định dạng tt_thau

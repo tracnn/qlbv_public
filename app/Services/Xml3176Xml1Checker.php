@@ -66,6 +66,7 @@ class Xml3176Xml1Checker
         //$errors = $errors->merge($this->checkInvalidBedDays($data));
         $errors = $errors->merge($this->checkSpecialInpatientConditions($data));
         $errors = $errors->merge($this->checkDiseaseIcdCodes($data));
+        $errors = $errors->merge($this->checkWarningDiseaseCodes($data));
         $errors = $errors->merge($this->checkMaLoaiKcbKhongTinhNgayDieuTri($data));
 
         // Save errors to xml_error_checks table
@@ -811,6 +812,65 @@ class Xml3176Xml1Checker
                         'description' => 'Mã bệnh YHCT không tồn tại trong danh mục ICD YHCT: ' . $ma_benh_yhct
                     ]);
                 }
+            }
+        }
+
+        return $errors;
+    }
+
+    /**
+     * Cảnh báo khi ma_benh_chinh hoặc ma_benh_kt thuộc danh sách mã bệnh cảnh báo (config xml3176.xml1.ma_benh_canh_bao)
+     *
+     * @param Xml3176Xml1 $data
+     * @return Collection
+     */
+    private function checkWarningDiseaseCodes(Xml3176Xml1 $data): Collection
+    {
+        $errors = collect();
+
+        $warningCodes = config('xml3176.xml1.ma_benh_canh_bao', []);
+        if (empty($warningCodes)) {
+            return $errors;
+        }
+
+        // Chuẩn hoá danh sách cảnh báo về 3 ký tự đầu, viết hoa
+        $warningPrefixes = array_unique(array_filter(array_map(function ($code) {
+            return strtoupper(substr(trim($code), 0, 3));
+        }, $warningCodes)));
+
+        // Check ma_benh_chinh - so khớp 3 ký tự đầu
+        if (!empty($data->ma_benh_chinh)) {
+            $prefix = strtoupper(substr(trim($data->ma_benh_chinh), 0, 3));
+            if (in_array($prefix, $warningPrefixes, true)) {
+                $errorCode = $this->generateErrorCode('WARNING_MA_BENH_CHINH');
+                $errors->push((object)[
+                    'error_code' => $errorCode,
+                    'error_name' => 'Mã bệnh chính thuộc nhóm bệnh cảnh báo',
+                    'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+                    'description' => 'Mã bệnh chính: ' . $data->ma_benh_chinh . ' thuộc nhóm cảnh báo (' . $prefix . ')'
+                ]);
+            }
+        }
+
+        // Check ma_benh_kt - gộp tất cả mã cảnh báo vào 1 error record
+        if (!empty($data->ma_benh_kt)) {
+            $ma_benh_kt_array = array_filter(array_map('trim', preg_split('/[;,|\s]+/', $data->ma_benh_kt)));
+            $matched = [];
+            foreach ($ma_benh_kt_array as $code) {
+                $prefix = strtoupper(substr($code, 0, 3));
+                if (in_array($prefix, $warningPrefixes, true)) {
+                    $matched[] = $code . ' (' . $prefix . ')';
+                }
+            }
+
+            if (!empty($matched)) {
+                $errorCode = $this->generateErrorCode('WARNING_MA_BENH_KT');
+                $errors->push((object)[
+                    'error_code' => $errorCode,
+                    'error_name' => 'Mã bệnh kèm theo thuộc nhóm bệnh cảnh báo',
+                    'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+                    'description' => 'Mã bệnh kèm theo thuộc nhóm cảnh báo: ' . implode(', ', $matched)
+                ]);
             }
         }
 
