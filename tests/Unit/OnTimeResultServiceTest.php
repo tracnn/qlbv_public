@@ -41,4 +41,38 @@ class OnTimeResultServiceTest extends TestCase
         $row = (object)['finish_time' => 20260601090000, 'actual_minutes' => 124, 'estimate_duration' => 89];
         $this->assertEquals('tre_hen', $this->service->classify($row));
     }
+
+    /** @test */
+    public function summarize_computes_kpi_totals_and_percentages()
+    {
+        $rows = [
+            (object)['finish_time'=>1,'actual_minutes'=>50,'estimate_duration'=>60,'service_type_id'=>2,'service_type_name'=>'XN','execute_room_id'=>10,'execute_room_name'=>'P.XN','service_id'=>100,'service_name'=>'SH','day_val'=>20260601],
+            (object)['finish_time'=>1,'actual_minutes'=>90,'estimate_duration'=>60,'service_type_id'=>2,'service_type_name'=>'XN','execute_room_id'=>10,'execute_room_name'=>'P.XN','service_id'=>100,'service_name'=>'SH','day_val'=>20260601],
+            (object)['finish_time'=>1,'actual_minutes'=>120,'estimate_duration'=>60,'service_type_id'=>2,'service_type_name'=>'XN','execute_room_id'=>10,'execute_room_name'=>'P.XN','service_id'=>100,'service_name'=>'SH','day_val'=>20260601],
+            (object)['finish_time'=>null,'actual_minutes'=>null,'estimate_duration'=>60,'service_type_id'=>2,'service_type_name'=>'XN','execute_room_id'=>10,'execute_room_name'=>'P.XN','service_id'=>100,'service_name'=>'SH','day_val'=>20260601],
+            (object)['finish_time'=>1,'actual_minutes'=>-3,'estimate_duration'=>60,'service_type_id'=>2,'service_type_name'=>'XN','execute_room_id'=>10,'execute_room_name'=>'P.XN','service_id'=>100,'service_name'=>'SH','day_val'=>20260601],
+        ];
+        $kpi = $this->service->summarize($rows)['kpi'];
+        $this->assertEquals(5, $kpi['tong_co_hen']);
+        $this->assertEquals(3, $kpi['da_tra_hop_le']);
+        $this->assertEquals(1, $kpi['dung_hen']);
+        $this->assertEquals(2, $kpi['tre_hen']);
+        $this->assertEquals(1, $kpi['chua_tra']);
+        $this->assertEquals(1, $kpi['bat_thuong']);
+        $this->assertEquals(33.3, $kpi['pct_dung_hen']);
+        $this->assertEquals(66.7, $kpi['pct_tre_hen']);
+        $this->assertEquals(87, $kpi['tg_tra_tb']);
+    }
+
+    /** @test */
+    public function summarize_handles_empty_denominator_without_division_error()
+    {
+        $rows = [
+            (object)['finish_time'=>null,'actual_minutes'=>null,'estimate_duration'=>60,'service_type_id'=>2,'service_type_name'=>'XN','execute_room_id'=>10,'execute_room_name'=>'P.XN','service_id'=>100,'service_name'=>'SH','day_val'=>20260601],
+        ];
+        $kpi = $this->service->summarize($rows)['kpi'];
+        $this->assertEquals(0, $kpi['pct_dung_hen']);
+        $this->assertEquals(0, $kpi['pct_tre_hen']);
+        $this->assertEquals(0, $kpi['tg_tra_tb']);
+    }
 }
