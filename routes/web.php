@@ -576,6 +576,13 @@ Route::group(['middleware' => ['auth', 'check.first.login']], function () {
         Route::get('revenue-processing','KHTH\KHTHController@getrevenue')->name('khth.revenue-processing')
         ->middleware('checkrole:superadministrator');
 
+        /* Tỷ lệ trả KQ đúng hẹn (on-time result) */
+        Route::get('on-time-result-index', 'KHTH\OnTimeResultController@index')->name('khth.on-time-result-index');
+        Route::get('on-time-result-index/summary', 'KHTH\OnTimeResultController@getSummary')->name('khth.on-time-result-summary');
+        Route::get('on-time-result-index/fetch', 'KHTH\OnTimeResultController@fetch')->name('khth.on-time-result-fetch');
+        Route::get('on-time-result-index/export', 'KHTH\OnTimeResultController@export')->name('khth.on-time-result-export');
+        Route::get('on-time-result-index/rooms', 'KHTH\OnTimeResultController@rooms')->name('khth.on-time-result-rooms');
+
     });
 
     Route::group(['prefix' => 'queue'], function () { 
