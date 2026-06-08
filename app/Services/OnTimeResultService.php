@@ -19,7 +19,7 @@ class OnTimeResultService
      *
      * - khong_hen : dịch vụ không khai báo thời gian hẹn (estimate_duration NULL/0) → không đánh giá được.
      * - chua_tra  : đã có hẹn nhưng chưa trả kết quả (finish_time rỗng).
-     * - bat_thuong: thời gian thực tế âm (finish_time < intruction_time) → dữ liệu bất thường.
+     * - bat_thuong: thời gian xử lý âm (finish_time < start_time) → dữ liệu bất thường.
      * - dung_hen / tre_hen: so sánh thời gian thực tế với estimate_duration.
      */
     public function classify($row)
@@ -212,9 +212,11 @@ class OnTimeResultService
                 TO_NUMBER(SUBSTR(sr.intruction_time,1,8)) AS day_val,
                 s.estimate_duration               AS estimate_duration,
                 sr.intruction_time                AS intruction_time,
+                sr.start_time                     AS start_time,
                 sr.finish_time                    AS finish_time,
-                CASE WHEN sr.finish_time IS NULL THEN NULL
-                     ELSE (TO_DATE(sr.finish_time,'YYYYMMDDHH24MISS') - TO_DATE(sr.intruction_time,'YYYYMMDDHH24MISS')) * 24 * 60
+                -- Thời gian xử lý = kết thúc - bắt đầu thực hiện (KHÔNG tính thời gian chờ từ lúc chỉ định)
+                CASE WHEN sr.finish_time IS NULL OR sr.start_time IS NULL THEN NULL
+                     ELSE (TO_DATE(sr.finish_time,'YYYYMMDDHH24MISS') - TO_DATE(sr.start_time,'YYYYMMDDHH24MISS')) * 24 * 60
                 END                               AS actual_minutes
             FROM his_sere_serv ss
             JOIN his_service_req sr ON sr.id = ss.service_req_id
@@ -232,7 +234,8 @@ class OnTimeResultService
         list($conds, $binds) = $this->commonConditions($request);
         $where = implode(' AND ', $conds);
 
-        $actualExpr = "(TO_DATE(sr.finish_time,'YYYYMMDDHH24MISS') - TO_DATE(sr.intruction_time,'YYYYMMDDHH24MISS')) * 24 * 60";
+        // Thời gian xử lý = kết thúc - bắt đầu thực hiện (KHÔNG tính thời gian chờ từ lúc chỉ định)
+        $actualExpr = "(TO_DATE(sr.finish_time,'YYYYMMDDHH24MISS') - TO_DATE(sr.start_time,'YYYYMMDDHH24MISS')) * 24 * 60";
 
         // Inner query: chỉ lọc theo ngày + nhóm (sargable, dùng index) -> nhanh.
         $inner = "
@@ -242,10 +245,10 @@ class OnTimeResultService
                 er.execute_room_name    AS execute_room_name,
                 st.service_type_name    AS service_type_name,
                 ss.tdl_service_name     AS service_name,
-                sr.intruction_time      AS intruction_time,
+                sr.start_time           AS start_time,
                 sr.finish_time          AS finish_time,
                 s.estimate_duration     AS estimate_duration,
-                CASE WHEN sr.finish_time IS NULL THEN NULL ELSE $actualExpr END AS actual_minutes
+                CASE WHEN sr.finish_time IS NULL OR sr.start_time IS NULL THEN NULL ELSE $actualExpr END AS actual_minutes
             FROM his_sere_serv ss
             JOIN his_service_req sr ON sr.id = ss.service_req_id
             JOIN his_service s      ON s.id  = ss.service_id

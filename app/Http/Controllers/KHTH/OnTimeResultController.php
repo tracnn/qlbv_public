@@ -52,7 +52,7 @@ class OnTimeResultController extends Controller
 
         $service = $this->service;
         return Datatables::of($results)
-            ->editColumn('intruction_time', function ($r) { return strtodatetime($r->intruction_time); })
+            ->editColumn('start_time', function ($r) { return $r->start_time ? strtodatetime($r->start_time) : ''; })
             ->editColumn('finish_time', function ($r) { return $r->finish_time ? strtodatetime($r->finish_time) : ''; })
             ->addColumn('actual_minutes_fmt', function ($r) { return is_null($r->actual_minutes) ? '' : round($r->actual_minutes) . ' phút'; })
             ->addColumn('chenh_lech', function ($r) { return (is_null($r->actual_minutes) || empty($r->estimate_duration)) ? '' : round($r->actual_minutes - $r->estimate_duration) . ' phút'; })

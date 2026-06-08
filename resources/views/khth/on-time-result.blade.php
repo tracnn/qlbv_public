@@ -15,7 +15,7 @@
   <div class="col-md-3"><div class="info-box"><span class="info-box-icon bg-yellow"><i class="fa fa-clock-o"></i></span><div class="info-box-content"><span class="info-box-text">Chưa trả KQ</span><span class="info-box-number" id="kpi-chua">0</span></div></div></div>
   <div class="col-md-3"><div class="info-box"><span class="info-box-icon bg-gray"><i class="fa fa-exclamation"></i></span><div class="info-box-content"><span class="info-box-text">Bất thường</span><span class="info-box-number" id="kpi-bat">0</span></div></div></div>
   <div class="col-md-3"><div class="info-box"><span class="info-box-icon bg-info"><i class="fa fa-ban"></i></span><div class="info-box-content"><span class="info-box-text">Không có hẹn</span><span class="info-box-number" id="kpi-khong-hen">0</span></div></div></div>
-  <div class="col-md-3"><div class="info-box"><span class="info-box-icon bg-purple"><i class="fa fa-hourglass-half"></i></span><div class="info-box-content"><span class="info-box-text">TG trả KQ TB</span><span class="info-box-number" id="kpi-tgtb">0</span></div></div></div>
+  <div class="col-md-3"><div class="info-box"><span class="info-box-icon bg-purple"><i class="fa fa-hourglass-half"></i></span><div class="info-box-content"><span class="info-box-text">TG xử lý TB</span><span class="info-box-number" id="kpi-tgtb">0</span></div></div></div>
 </div>
 
 {{-- Tong hop --}}
@@ -35,7 +35,7 @@
     <table id="detail-table" class="table table-hover" width="100%">
       <thead><tr>
         <th>Mã ĐT</th><th>Họ tên BN</th><th>Khoa/Phòng TH</th><th>Loại DV</th><th>Tên DV</th>
-        <th>Giờ chỉ định</th><th>Giờ trả KQ</th><th>TG thực tế</th><th>TG hẹn</th><th>Chênh lệch</th><th>Trạng thái</th>
+        <th>Giờ bắt đầu</th><th>Giờ trả KQ</th><th>TG xử lý</th><th>TG hẹn</th><th>Chênh lệch</th><th>Trạng thái</th>
       </tr></thead>
     </table>
   </div>
@@ -123,7 +123,7 @@ function loadDetail(){
     language:DT_VI,
     columns:[
       {data:'tdl_treatment_code'},{data:'tdl_patient_name'},{data:'execute_room_name'},{data:'service_type_name'},{data:'service_name'},
-      {data:'intruction_time'},{data:'finish_time'},{data:'actual_minutes_fmt'},{data:'estimate_duration'},{data:'chenh_lech'},{data:'trang_thai'}
+      {data:'start_time'},{data:'finish_time'},{data:'actual_minutes_fmt'},{data:'estimate_duration'},{data:'chenh_lech'},{data:'trang_thai'}
     ],
     columnDefs:[ { targets:[5,6,7,8,9,10], className:'text-center' } ]
   });

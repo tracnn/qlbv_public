@@ -3,6 +3,8 @@
 **Date:** 2026-06-08
 **Status:** Approved (chờ user review spec)
 
+> **Cập nhật 10/06/2026 (đổi định nghĩa thời gian):** "Thời gian xử lý" đổi từ `finish_time − intruction_time` (tổng turnaround gồm cả chờ) sang **`finish_time − start_time`** (chỉ thời gian thực hiện) — so sánh với `estimate_duration` (thời gian thực hiện dự kiến) cho đúng bản chất. Kiểm chứng dữ liệu: mọi dòng có `finish_time` đều có `start_time` (0 dòng thiếu), 0 dòng finish<start → không phát sinh edge case. Tác động (tuần test): % đúng hẹn 32.5% → 58.3%, TB 152→91 phút. Bảng chi tiết hiển thị "Giờ bắt đầu" (start_time) thay cho "Giờ chỉ định"; nhãn đổi "TG thực tế"→"TG xử lý". Filter và "ngày" (trend) vẫn theo `intruction_time`.
+>
 > **Cập nhật 09/06/2026 (sau triển khai — lý do hiệu năng):** Cột `his_service.estimate_duration` KHÔNG có index nên điều kiện `estimate_duration IS NOT NULL AND <> 0` làm query chậm. Đã đổi sang **lọc theo nhóm dịch vụ** `his_sere_serv.tdl_service_type_id IN (2,3,5,10)` (XN/CĐHA/TDCN/Siêu âm — cột CÓ index). Hệ quả: trong các nhóm này có một số dòng dịch vụ chưa khai báo `estimate_duration` (≈364 dòng/tuần). Các dòng đó được phân loại thành trạng thái mới **`khong_hen`** (ưu tiên đầu trong `classify()`), **loại khỏi mẫu số %**, đếm và hiển thị riêng 1 card KPI "Không có hẹn" — nhất quán với cách xử lý "Chưa trả"/"Bất thường". Kiểm chứng: các con số có hẹn (đúng 8205 / trễ 17052 / chưa trả 98 / bất thường 1) KHÔNG đổi so với cách lọc cũ → tỷ lệ % giữ nguyên. Mục 2.1, 2.3 và 10 dưới đây đọc theo ghi chú này.
 
 ---

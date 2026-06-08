@@ -32,14 +32,14 @@ class OnTimeResultExport implements FromCollection, WithHeadings, WithMapping
 
     public function headings(): array
     {
-        return ['STT','Mã ĐT','Họ tên BN','Khoa/Phòng TH','Loại DV','Tên DV','Giờ chỉ định','Giờ trả KQ','TG thực tế (phút)','TG hẹn (phút)','Chênh lệch (phút)','Trạng thái'];
+        return ['STT','Mã ĐT','Họ tên BN','Khoa/Phòng TH','Loại DV','Tên DV','Giờ bắt đầu','Giờ trả KQ','TG xử lý (phút)','TG hẹn (phút)','Chênh lệch (phút)','Trạng thái'];
     }
 
     public function map($r): array
     {
         $this->rowNumber++;
         $statusLabel = [
-            'dung_hen'=>'Đúng hẹn','tre_hen'=>'Trễ hẹn','chua_tra'=>'Chưa trả KQ','bat_thuong'=>'Bất thường',
+            'dung_hen'=>'Đúng hẹn','tre_hen'=>'Trễ hẹn','chua_tra'=>'Chưa trả KQ','bat_thuong'=>'Bất thường','khong_hen'=>'Không có hẹn',
         ];
         $cls = $this->service->classify($r);
         return [
@@ -49,11 +49,11 @@ class OnTimeResultExport implements FromCollection, WithHeadings, WithMapping
             $r->execute_room_name,
             $r->service_type_name,
             $r->service_name,
-            strtodatetime($r->intruction_time),
+            $r->start_time ? strtodatetime($r->start_time) : '',
             $r->finish_time ? strtodatetime($r->finish_time) : '',
             is_null($r->actual_minutes) ? '' : round($r->actual_minutes),
             $r->estimate_duration,
-            is_null($r->actual_minutes) ? '' : round($r->actual_minutes - $r->estimate_duration),
+            (is_null($r->actual_minutes) || empty($r->estimate_duration)) ? '' : round($r->actual_minutes - $r->estimate_duration),
             $statusLabel[$cls] ?? '',
         ];
     }
