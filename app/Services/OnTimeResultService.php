@@ -117,4 +117,152 @@ class OnTimeResultService
         });
         return $result;
     }
+
+    /** Chuẩn hóa from/to (Y-m-d hoặc Y-m-d H:i:s) -> YmdHis */
+    protected function normalizeRange(Request $request)
+    {
+        $from = $request->input('date_from');
+        $to   = $request->input('date_to');
+        if (strlen($from) == 10) $from = Carbon::createFromFormat('Y-m-d', $from)->startOfDay()->format('Y-m-d H:i:s');
+        if (strlen($to)   == 10) $to   = Carbon::createFromFormat('Y-m-d', $to)->endOfDay()->format('Y-m-d H:i:s');
+        return [
+            Carbon::createFromFormat('Y-m-d H:i:s', $from)->format('YmdHis'),
+            Carbon::createFromFormat('Y-m-d H:i:s', $to)->format('YmdHis'),
+        ];
+    }
+
+    /** WHERE + bindings dùng chung cho summary & detail */
+    protected function commonConditions(Request $request)
+    {
+        list($from, $to) = $this->normalizeRange($request);
+        $conds = [
+            "s.estimate_duration IS NOT NULL", "s.estimate_duration <> 0",
+            "ss.is_delete = 0", "ss.is_no_execute IS NULL",
+            "sr.is_active = 1", "sr.is_delete = 0",
+            "sr.intruction_time BETWEEN :from AND :to",
+        ];
+        $binds = ['from' => $from, 'to' => $to];
+
+        if ($request->filled('execute_room_id')) {
+            $conds[] = "ss.tdl_execute_room_id = :room_id";
+            $binds['room_id'] = $request->input('execute_room_id');
+        }
+        if ($request->filled('service_type_id')) {
+            $conds[] = "ss.tdl_service_type_id = :service_type_id";
+            $binds['service_type_id'] = $request->input('service_type_id');
+        }
+        if ($request->filled('service_id')) {
+            $conds[] = "ss.service_id = :service_id";
+            $binds['service_id'] = $request->input('service_id');
+        }
+        return [$conds, $binds];
+    }
+
+    /**
+     * Oracle (connection HISPro) trả tên cột VIẾT HOA → chuẩn hóa về lowercase
+     * để mọi truy cập $row->field (và DataTables data:'field') đọc đúng.
+     * Bắt buộc áp dụng cho MỌI kết quả DB::select trước khi dùng (theo pattern DoctorService).
+     */
+    public function normalizeRows($rawRows)
+    {
+        return array_map(function ($row) {
+            return (object) array_change_key_case((array) $row, CASE_LOWER);
+        }, $rawRows);
+    }
+
+    /** SQL trả base rows (1 dòng / sere_serv) cho summarize() */
+    public function buildBaseSqlAndBindings(Request $request)
+    {
+        list($conds, $binds) = $this->commonConditions($request);
+        $where = implode(' AND ', $conds);
+
+        $sql = "
+            SELECT
+                ss.tdl_service_type_id            AS service_type_id,
+                st.service_type_name              AS service_type_name,
+                ss.tdl_execute_room_id            AS execute_room_id,
+                er.execute_room_name              AS execute_room_name,
+                ss.service_id                     AS service_id,
+                s.service_name                    AS service_name,
+                TO_NUMBER(SUBSTR(sr.intruction_time,1,8)) AS day_val,
+                s.estimate_duration               AS estimate_duration,
+                sr.intruction_time                AS intruction_time,
+                sr.finish_time                    AS finish_time,
+                CASE WHEN sr.finish_time IS NULL THEN NULL
+                     ELSE (TO_DATE(sr.finish_time,'YYYYMMDDHH24MISS') - TO_DATE(sr.intruction_time,'YYYYMMDDHH24MISS')) * 24 * 60
+                END                               AS actual_minutes
+            FROM his_sere_serv ss
+            JOIN his_service_req sr ON sr.id = ss.service_req_id
+            JOIN his_service s      ON s.id  = ss.service_id
+            JOIN his_service_type st ON st.id = ss.tdl_service_type_id
+            LEFT JOIN his_execute_room er ON er.room_id = ss.tdl_execute_room_id
+            WHERE $where
+        ";
+        return [$sql, $binds];
+    }
+
+    /** SQL chi tiết từng dòng cho DataTables & Export; hỗ trợ drill-down status */
+    public function buildDetailSqlAndBindings(Request $request)
+    {
+        list($conds, $binds) = $this->commonConditions($request);
+
+        // predicate cho drill-down trang thai
+        $actualExpr = "(TO_DATE(sr.finish_time,'YYYYMMDDHH24MISS') - TO_DATE(sr.intruction_time,'YYYYMMDDHH24MISS')) * 24 * 60";
+        switch ($request->input('status')) {
+            case 'chua_tra':
+                $conds[] = "sr.finish_time IS NULL"; break;
+            case 'bat_thuong':
+                $conds[] = "sr.finish_time IS NOT NULL AND $actualExpr < 0"; break;
+            case 'dung_hen':
+                $conds[] = "sr.finish_time IS NOT NULL AND $actualExpr >= 0 AND $actualExpr <= s.estimate_duration"; break;
+            case 'tre_hen':
+                $conds[] = "sr.finish_time IS NOT NULL AND $actualExpr > s.estimate_duration"; break;
+        }
+        $where = implode(' AND ', $conds);
+
+        $sql = "
+            SELECT
+                ss.tdl_treatment_code   AS tdl_treatment_code,
+                ss.tdl_patient_name     AS tdl_patient_name,
+                er.execute_room_name    AS execute_room_name,
+                st.service_type_name    AS service_type_name,
+                ss.tdl_service_name     AS service_name,
+                sr.intruction_time      AS intruction_time,
+                sr.finish_time          AS finish_time,
+                s.estimate_duration     AS estimate_duration,
+                CASE WHEN sr.finish_time IS NULL THEN NULL ELSE $actualExpr END AS actual_minutes
+            FROM his_sere_serv ss
+            JOIN his_service_req sr ON sr.id = ss.service_req_id
+            JOIN his_service s      ON s.id  = ss.service_id
+            JOIN his_service_type st ON st.id = ss.tdl_service_type_id
+            LEFT JOIN his_execute_room er ON er.room_id = ss.tdl_execute_room_id
+            WHERE $where
+        ";
+        return [$sql, $binds];
+    }
+
+    /** Danh sách phòng thực hiện có dịch vụ thuộc mẫu (distinct) */
+    public function buildRoomsSqlAndBindings(Request $request)
+    {
+        list($conds, $binds) = $this->commonConditions($request);
+        $where = implode(' AND ', $conds);
+        $sql = "
+            SELECT DISTINCT ss.tdl_execute_room_id AS room_id, er.execute_room_name AS execute_room_name
+            FROM his_sere_serv ss
+            JOIN his_service_req sr ON sr.id = ss.service_req_id
+            JOIN his_service s      ON s.id  = ss.service_id
+            LEFT JOIN his_execute_room er ON er.room_id = ss.tdl_execute_room_id
+            WHERE $where AND er.execute_room_name IS NOT NULL
+            ORDER BY er.execute_room_name
+        ";
+        return [$sql, $binds];
+    }
+
+    /** Lấy base rows từ DB rồi tổng hợp. */
+    public function getSummaryData(Request $request)
+    {
+        list($sql, $binds) = $this->buildBaseSqlAndBindings($request);
+        $rows = \DB::connection('HISPro')->select(\DB::raw($sql), $binds);
+        return $this->summarize($this->normalizeRows($rows));
+    }
 }
