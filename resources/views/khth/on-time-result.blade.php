@@ -64,20 +64,32 @@ function loadSummary(){
     var k=res.kpi;
     $('#kpi-tong').text(k.tong_co_hen); $('#kpi-pct-dung').text(k.pct_dung_hen+'%'); $('#kpi-pct-tre').text(k.pct_tre_hen+'%');
     $('#kpi-chua').text(k.chua_tra); $('#kpi-bat').text(k.bat_thuong); $('#kpi-khong-hen').text(k.khong_hen); $('#kpi-tgtb').text(k.tg_tra_tb+' phút');
-    renderBreakdownTable('#tbl-loai-dv', res.breakdown_loai_dich_vu, 'service_type_id');
-    renderBreakdownTable('#tbl-phong', res.breakdown_phong, 'execute_room_id');
-    renderBreakdownTable('#tbl-dich-vu', res.breakdown_dich_vu, 'service_id');
+    renderBreakdownTable('#tbl-loai-dv', res.breakdown_loai_dich_vu, 'service_type_id', false);
+    renderBreakdownTable('#tbl-phong', res.breakdown_phong, 'execute_room_id', true);
+    renderBreakdownTable('#tbl-dich-vu', res.breakdown_dich_vu, 'service_id', true);
     renderLoaiChart(res.breakdown_loai_dich_vu);
     renderTrendChart(res.trend_theo_ngay);
   });
 }
 
-function renderBreakdownTable(sel, rows, drillField){
+var DT_VI = {
+  search:'Tìm:', lengthMenu:'Hiện _MENU_ dòng', info:'Hiển thị _START_-_END_ / _TOTAL_',
+  infoEmpty:'Không có dữ liệu', zeroRecords:'Không tìm thấy', emptyTable:'Không có dữ liệu',
+  paginate:{ first:'Đầu', last:'Cuối', next:'Sau', previous:'Trước' }
+};
+
+function renderBreakdownTable(sel, rows, drillField, paginate){
+  // Hủy DataTable cũ (nếu có) trước khi thay nội dung
+  if (paginate && $.fn.DataTable.isDataTable(sel)) { $(sel).DataTable().destroy(); }
   var html='<thead><tr><th>Nhóm</th><th>Tổng</th><th>Đúng</th><th>Trễ</th><th>% Trễ</th></tr></thead><tbody>';
   rows.forEach(function(g){
     html+='<tr class="drill" style="cursor:pointer" data-field="'+drillField+'" data-id="'+g.id+'"><td>'+(g.name||'(trống)')+'</td><td>'+g.tong+'</td><td>'+g.dung_hen+'</td><td>'+g.tre_hen+'</td><td>'+g.pct_tre_hen+'%</td></tr>';
   });
   $(sel).html(html+'</tbody>');
+  if (paginate) {
+    // Phân trang 10 dòng + ô tìm kiếm; giữ thứ tự xếp % trễ từ backend (ordering:false)
+    $(sel).DataTable({ pageLength:10, lengthChange:false, ordering:false, autoWidth:false, language:DT_VI });
+  }
 }
 
 function renderLoaiChart(rows){
