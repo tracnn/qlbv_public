@@ -25,13 +25,20 @@ class OnTimeResultController extends Controller
         return view('khth.on-time-result');
     }
 
+    private function validateDates(Request $request)
+    {
+        $request->validate(['date_from' => 'required|date', 'date_to' => 'required|date']);
+    }
+
     public function getSummary(Request $request)
     {
+        $this->validateDates($request);
         return response()->json($this->service->getSummaryData($request));
     }
 
     public function rooms(Request $request)
     {
+        $this->validateDates($request);
         list($sql, $binds) = $this->service->buildRoomsSqlAndBindings($request);
         $rows = $this->service->normalizeRows(DB::connection('HISPro')->select(DB::raw($sql), $binds));
         return response()->json($rows); // lowercase keys: room_id, execute_room_name
@@ -39,6 +46,7 @@ class OnTimeResultController extends Controller
 
     public function fetch(Request $request)
     {
+        $this->validateDates($request);
         list($sql, $binds) = $this->service->buildDetailSqlAndBindings($request);
         $results = $this->service->normalizeRows(DB::connection('HISPro')->select(DB::raw($sql), $binds));
 
@@ -63,6 +71,7 @@ class OnTimeResultController extends Controller
 
     public function export(Request $request)
     {
+        $this->validateDates($request);
         $fileName = 'tra_kq_dung_hen_' . Carbon::now()->format('YmdHis') . '.xlsx';
         return Excel::download(new OnTimeResultExport($request->all()), $fileName);
     }

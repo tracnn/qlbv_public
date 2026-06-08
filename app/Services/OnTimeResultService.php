@@ -113,6 +113,9 @@ class OnTimeResultService
             $result[] = $g;
         }
         usort($result, function($a, $b) {
+            if ($b['pct_tre_hen'] === $a['pct_tre_hen']) {
+                return $b['tong'] <=> $a['tong'];
+            }
             return $b['pct_tre_hen'] <=> $a['pct_tre_hen'];
         });
         return $result;
