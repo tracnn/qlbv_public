@@ -7,10 +7,26 @@ use Carbon\Carbon;
 class OnTimeResultService
 {
     /**
-     * Phân loại 1 dòng kết quả: chua_tra | bat_thuong | dung_hen | tre_hen
+     * Các nhóm dịch vụ cận lâm sàng có khai báo thời gian hẹn (his_service_type.id).
+     * 2 = Xét nghiệm, 3 = Chẩn đoán hình ảnh, 5 = Thăm dò chức năng, 10 = Siêu âm.
+     * Đã xác minh thực tế bằng dữ liệu. Lọc theo nhóm (có index) thay cho điều kiện
+     * estimate_duration (không index) để tối ưu tốc độ truy vấn.
+     */
+    const SERVICE_TYPE_IDS = [2, 3, 5, 10];
+
+    /**
+     * Phân loại 1 dòng kết quả: khong_hen | chua_tra | bat_thuong | dung_hen | tre_hen
+     *
+     * - khong_hen : dịch vụ không khai báo thời gian hẹn (estimate_duration NULL/0) → không đánh giá được.
+     * - chua_tra  : đã có hẹn nhưng chưa trả kết quả (finish_time rỗng).
+     * - bat_thuong: thời gian thực tế âm (finish_time < intruction_time) → dữ liệu bất thường.
+     * - dung_hen / tre_hen: so sánh thời gian thực tế với estimate_duration.
      */
     public function classify($row)
     {
+        if (empty($row->estimate_duration)) {
+            return 'khong_hen';
+        }
         if (empty($row->finish_time)) {
             return 'chua_tra';
         }
@@ -26,7 +42,8 @@ class OnTimeResultService
      * @param  array|\Traversable $rows  Danh sách dòng dữ liệu (stdClass hoặc tương đương)
      * @return array{
      *   kpi: array{
-     *     tong_co_hen: int,
+     *     tong_co_hen: int,   // số dòng CÓ hẹn (loại trừ khong_hen) = dung+tre+chua+bat
+     *     khong_hen: int,     // số dòng không có thời gian hẹn (không vào mẫu số)
      *     da_tra_hop_le: int,
      *     dung_hen: int,
      *     tre_hen: int,
@@ -44,7 +61,7 @@ class OnTimeResultService
      */
     public function summarize($rows)
     {
-        $dung = $tre = $chua = $bat = 0;
+        $dung = $tre = $chua = $bat = $khong = 0;
         $sumActual = 0;
         foreach ($rows as $r) {
             switch ($this->classify($r)) {
@@ -52,11 +69,13 @@ class OnTimeResultService
                 case 'tre_hen':  $tre++;  $sumActual += $r->actual_minutes; break;
                 case 'chua_tra': $chua++; break;
                 case 'bat_thuong': $bat++; break;
+                case 'khong_hen': $khong++; break;
             }
         }
         $hopLe = $dung + $tre;
         $kpi = [
-            'tong_co_hen'   => count($rows),
+            'tong_co_hen'   => $dung + $tre + $chua + $bat,
+            'khong_hen'     => $khong,
             'da_tra_hop_le' => $hopLe,
             'dung_hen'      => $dung,
             'tre_hen'       => $tre,
@@ -82,7 +101,7 @@ class OnTimeResultService
      * @param  string             $idField    Tên trường dùng làm khóa nhóm (vd: 'service_type_id')
      * @param  string             $nameField  Tên trường hiển thị tên nhóm (vd: 'service_type_name')
      * @return array  Mảng các nhóm, mỗi nhóm gồm:
-     *                id, name, tong, dung_hen, tre_hen, chua_tra, bat_thuong,
+     *                id, name, tong, dung_hen, tre_hen, chua_tra, bat_thuong, khong_hen,
      *                pct_dung_hen, pct_tre_hen, tg_tra_tb.
      *                Sắp xếp giảm dần theo pct_tre_hen.
      */
@@ -92,7 +111,7 @@ class OnTimeResultService
         foreach ($rows as $r) {
             $key = $r->$idField;
             if (!isset($groups[$key])) {
-                $groups[$key] = ['id'=>$r->$idField,'name'=>$r->$nameField,'tong'=>0,'dung_hen'=>0,'tre_hen'=>0,'chua_tra'=>0,'bat_thuong'=>0,'_sumActual'=>0];
+                $groups[$key] = ['id'=>$r->$idField,'name'=>$r->$nameField,'tong'=>0,'dung_hen'=>0,'tre_hen'=>0,'chua_tra'=>0,'bat_thuong'=>0,'khong_hen'=>0,'_sumActual'=>0];
             }
             $g =& $groups[$key];
             $g['tong']++;
@@ -138,8 +157,11 @@ class OnTimeResultService
     protected function commonConditions(Request $request)
     {
         list($from, $to) = $this->normalizeRange($request);
+        // Lọc theo nhóm dịch vụ (tdl_service_type_id CÓ index) thay cho điều kiện
+        // estimate_duration (KHÔNG index) để truy vấn nhanh. Dòng không có hẹn trong
+        // các nhóm này được tách thành trạng thái 'khong_hen' ở tầng phân loại.
         $conds = [
-            "s.estimate_duration IS NOT NULL", "s.estimate_duration <> 0",
+            "ss.tdl_service_type_id IN (" . implode(',', self::SERVICE_TYPE_IDS) . ")",
             "ss.is_delete = 0", "ss.is_no_execute IS NULL",
             "sr.is_active = 1", "sr.is_delete = 0",
             "sr.intruction_time BETWEEN :from AND :to",
@@ -209,17 +231,20 @@ class OnTimeResultService
     {
         list($conds, $binds) = $this->commonConditions($request);
 
-        // predicate cho drill-down trang thai
+        // predicate cho drill-down trang thai (đồng bộ thứ tự ưu tiên với classify())
+        $hasHen = "s.estimate_duration IS NOT NULL AND s.estimate_duration <> 0";
         $actualExpr = "(TO_DATE(sr.finish_time,'YYYYMMDDHH24MISS') - TO_DATE(sr.intruction_time,'YYYYMMDDHH24MISS')) * 24 * 60";
         switch ($request->input('status')) {
+            case 'khong_hen':
+                $conds[] = "(s.estimate_duration IS NULL OR s.estimate_duration = 0)"; break;
             case 'chua_tra':
-                $conds[] = "sr.finish_time IS NULL"; break;
+                $conds[] = "$hasHen AND sr.finish_time IS NULL"; break;
             case 'bat_thuong':
-                $conds[] = "sr.finish_time IS NOT NULL AND $actualExpr < 0"; break;
+                $conds[] = "$hasHen AND sr.finish_time IS NOT NULL AND $actualExpr < 0"; break;
             case 'dung_hen':
-                $conds[] = "sr.finish_time IS NOT NULL AND $actualExpr >= 0 AND $actualExpr <= s.estimate_duration"; break;
+                $conds[] = "$hasHen AND sr.finish_time IS NOT NULL AND $actualExpr >= 0 AND $actualExpr <= s.estimate_duration"; break;
             case 'tre_hen':
-                $conds[] = "sr.finish_time IS NOT NULL AND $actualExpr > s.estimate_duration"; break;
+                $conds[] = "$hasHen AND sr.finish_time IS NOT NULL AND $actualExpr > s.estimate_duration"; break;
         }
         $where = implode(' AND ', $conds);
 

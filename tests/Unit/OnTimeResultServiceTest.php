@@ -43,6 +43,20 @@ class OnTimeResultServiceTest extends TestCase
     }
 
     /** @test */
+    public function classify_returns_khong_hen_when_estimate_null_or_zero()
+    {
+        $rowNull = (object)['finish_time' => 20260601070000, 'actual_minutes' => 30, 'estimate_duration' => null];
+        $this->assertEquals('khong_hen', $this->service->classify($rowNull));
+
+        $rowZero = (object)['finish_time' => 20260601070000, 'actual_minutes' => 30, 'estimate_duration' => 0];
+        $this->assertEquals('khong_hen', $this->service->classify($rowZero));
+
+        // khong_hen ưu tiên trước cả chua_tra
+        $rowNoFinish = (object)['finish_time' => null, 'actual_minutes' => null, 'estimate_duration' => 0];
+        $this->assertEquals('khong_hen', $this->service->classify($rowNoFinish));
+    }
+
+    /** @test */
     public function summarize_computes_kpi_totals_and_percentages()
     {
         $rows = [
@@ -62,9 +76,28 @@ class OnTimeResultServiceTest extends TestCase
         $this->assertEquals(2, $kpi['tre_hen']);
         $this->assertEquals(1, $kpi['chua_tra']);
         $this->assertEquals(1, $kpi['bat_thuong']);
+        $this->assertEquals(0, $kpi['khong_hen']);
         $this->assertEquals(33.3, $kpi['pct_dung_hen']);
         $this->assertEquals(66.7, $kpi['pct_tre_hen']);
         $this->assertEquals(87, $kpi['tg_tra_tb']);
+    }
+
+    /** @test */
+    public function summarize_excludes_khong_hen_rows_from_denominator()
+    {
+        $rows = [
+            // 1 đúng hẹn
+            (object)['finish_time'=>1,'actual_minutes'=>50,'estimate_duration'=>60,'service_type_id'=>2,'service_type_name'=>'XN','execute_room_id'=>10,'execute_room_name'=>'P.XN','service_id'=>100,'service_name'=>'SH','day_val'=>20260601],
+            // 2 dòng không có hẹn (estimate null/0) - phải bị loại khỏi mẫu số % và đếm riêng
+            (object)['finish_time'=>1,'actual_minutes'=>30,'estimate_duration'=>null,'service_type_id'=>2,'service_type_name'=>'XN','execute_room_id'=>10,'execute_room_name'=>'P.XN','service_id'=>101,'service_name'=>'X1','day_val'=>20260601],
+            (object)['finish_time'=>1,'actual_minutes'=>30,'estimate_duration'=>0,'service_type_id'=>2,'service_type_name'=>'XN','execute_room_id'=>10,'execute_room_name'=>'P.XN','service_id'=>102,'service_name'=>'X2','day_val'=>20260601],
+        ];
+        $kpi = $this->service->summarize($rows)['kpi'];
+        $this->assertEquals(1, $kpi['tong_co_hen']);   // chỉ 1 dòng có hẹn
+        $this->assertEquals(2, $kpi['khong_hen']);
+        $this->assertEquals(1, $kpi['dung_hen']);
+        $this->assertEquals(0, $kpi['tre_hen']);
+        $this->assertEquals(100.0, $kpi['pct_dung_hen']); // 1/1, không bị 2 dòng khong_hen làm loãng
     }
 
     /** @test */

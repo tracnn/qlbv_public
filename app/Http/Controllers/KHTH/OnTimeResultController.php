@@ -55,13 +55,14 @@ class OnTimeResultController extends Controller
             ->editColumn('intruction_time', function ($r) { return strtodatetime($r->intruction_time); })
             ->editColumn('finish_time', function ($r) { return $r->finish_time ? strtodatetime($r->finish_time) : ''; })
             ->addColumn('actual_minutes_fmt', function ($r) { return is_null($r->actual_minutes) ? '' : round($r->actual_minutes) . ' phút'; })
-            ->addColumn('chenh_lech', function ($r) { return is_null($r->actual_minutes) ? '' : round($r->actual_minutes - $r->estimate_duration) . ' phút'; })
+            ->addColumn('chenh_lech', function ($r) { return (is_null($r->actual_minutes) || empty($r->estimate_duration)) ? '' : round($r->actual_minutes - $r->estimate_duration) . ' phút'; })
             ->addColumn('trang_thai', function ($r) use ($service) {
                 $map = [
                     'dung_hen'  => '<span class="label label-success">Đúng hẹn</span>',
                     'tre_hen'   => '<span class="label label-danger">Trễ hẹn</span>',
                     'chua_tra'  => '<span class="label label-warning">Chưa trả KQ</span>',
                     'bat_thuong'=> '<span class="label label-default">Bất thường</span>',
+                    'khong_hen' => '<span class="label label-info">Không có hẹn</span>',
                 ];
                 return $map[$service->classify($r)] ?? '';
             })

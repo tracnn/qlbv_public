@@ -11,6 +11,7 @@
   <div class="col-md-2"><div class="info-box"><span class="info-box-icon bg-red"><i class="fa fa-times"></i></span><div class="info-box-content"><span class="info-box-text">% Trễ hẹn</span><span class="info-box-number" id="kpi-pct-tre">0%</span></div></div></div>
   <div class="col-md-2"><div class="info-box"><span class="info-box-icon bg-yellow"><i class="fa fa-clock-o"></i></span><div class="info-box-content"><span class="info-box-text">Chưa trả KQ</span><span class="info-box-number" id="kpi-chua">0</span></div></div></div>
   <div class="col-md-2"><div class="info-box"><span class="info-box-icon bg-gray"><i class="fa fa-exclamation"></i></span><div class="info-box-content"><span class="info-box-text">Bất thường</span><span class="info-box-number" id="kpi-bat">0</span></div></div></div>
+  <div class="col-md-2"><div class="info-box"><span class="info-box-icon bg-info"><i class="fa fa-ban"></i></span><div class="info-box-content"><span class="info-box-text">Không có hẹn</span><span class="info-box-number" id="kpi-khong-hen">0</span></div></div></div>
   <div class="col-md-2"><div class="info-box"><span class="info-box-icon bg-purple"><i class="fa fa-hourglass-half"></i></span><div class="info-box-content"><span class="info-box-text">TG trả KQ TB</span><span class="info-box-number" id="kpi-tgtb">0</span></div></div></div>
 </div>
 
@@ -62,7 +63,7 @@ function loadSummary(){
   $.getJSON("{{ route('khth.on-time-result-summary') }}", baseFilters(), function(res){
     var k=res.kpi;
     $('#kpi-tong').text(k.tong_co_hen); $('#kpi-pct-dung').text(k.pct_dung_hen+'%'); $('#kpi-pct-tre').text(k.pct_tre_hen+'%');
-    $('#kpi-chua').text(k.chua_tra); $('#kpi-bat').text(k.bat_thuong); $('#kpi-tgtb').text(k.tg_tra_tb+' phút');
+    $('#kpi-chua').text(k.chua_tra); $('#kpi-bat').text(k.bat_thuong); $('#kpi-khong-hen').text(k.khong_hen); $('#kpi-tgtb').text(k.tg_tra_tb+' phút');
     renderBreakdownTable('#tbl-loai-dv', res.breakdown_loai_dich_vu, 'service_type_id');
     renderBreakdownTable('#tbl-phong', res.breakdown_phong, 'execute_room_id');
     renderBreakdownTable('#tbl-dich-vu', res.breakdown_dich_vu, 'service_id');
