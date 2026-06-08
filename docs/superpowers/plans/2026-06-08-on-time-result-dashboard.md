@@ -903,7 +903,7 @@ git commit -m "feat: OnTimeResultExport xuat Excel bang chi tiet"
 @push('after-scripts')
 @stack('after-scripts-date-range')
 @stack('after-scripts-load-data-button')
-<script src="{{ asset('vendor/adminlte/bower_components/Chart.js/Chart.min.js') }}"></script>
+<script src="{{ asset('vendor/chart/js/Chart.min.js') }}"></script>
 <script>
 let chartLoai=null, chartTrend=null, detailTable=null;
 
