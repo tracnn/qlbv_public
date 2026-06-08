@@ -20,6 +20,28 @@ class OnTimeResultService
         return ($row->actual_minutes <= $row->estimate_duration) ? 'dung_hen' : 'tre_hen';
     }
 
+    /**
+     * Tổng hợp KPI và breakdown cho danh sách rows kết quả.
+     *
+     * @param  array|\Traversable $rows  Danh sách dòng dữ liệu (stdClass hoặc tương đương)
+     * @return array{
+     *   kpi: array{
+     *     tong_co_hen: int,
+     *     da_tra_hop_le: int,
+     *     dung_hen: int,
+     *     tre_hen: int,
+     *     chua_tra: int,
+     *     bat_thuong: int,
+     *     pct_dung_hen: float,
+     *     pct_tre_hen: float,
+     *     tg_tra_tb: int
+     *   },
+     *   breakdown_loai_dich_vu: array,
+     *   breakdown_phong: array,
+     *   breakdown_dich_vu: array,
+     *   trend_theo_ngay: array
+     * }
+     */
     public function summarize($rows)
     {
         $dung = $tre = $chua = $bat = 0;
@@ -46,14 +68,25 @@ class OnTimeResultService
         ];
         return [
             'kpi' => $kpi,
-            'breakdown_loai_dich_vu' => $this->groupBy($rows, 'service_type_id', 'service_type_name'),
-            'breakdown_phong'        => $this->groupBy($rows, 'execute_room_id', 'execute_room_name'),
-            'breakdown_dich_vu'      => $this->groupBy($rows, 'service_id', 'service_name'),
-            'trend_theo_ngay'        => $this->groupBy($rows, 'day_val', 'day_val'),
+            'breakdown_loai_dich_vu' => $this->buildBreakdown($rows, 'service_type_id', 'service_type_name'),
+            'breakdown_phong'        => $this->buildBreakdown($rows, 'execute_room_id', 'execute_room_name'),
+            'breakdown_dich_vu'      => $this->buildBreakdown($rows, 'service_id', 'service_name'),
+            'trend_theo_ngay'        => $this->buildBreakdown($rows, 'day_val', 'day_val'),
         ];
     }
 
-    public function groupBy($rows, $idField, $nameField)
+    /**
+     * Nhóm các rows theo một trường định danh và tổng hợp số liệu cho từng nhóm.
+     *
+     * @param  array|\Traversable $rows       Danh sách dòng dữ liệu
+     * @param  string             $idField    Tên trường dùng làm khóa nhóm (vd: 'service_type_id')
+     * @param  string             $nameField  Tên trường hiển thị tên nhóm (vd: 'service_type_name')
+     * @return array  Mảng các nhóm, mỗi nhóm gồm:
+     *                id, name, tong, dung_hen, tre_hen, chua_tra, bat_thuong,
+     *                pct_dung_hen, pct_tre_hen, tg_tra_tb.
+     *                Sắp xếp giảm dần theo pct_tre_hen.
+     */
+    public function buildBreakdown($rows, $idField, $nameField)
     {
         $groups = [];
         foreach ($rows as $r) {
@@ -68,7 +101,7 @@ class OnTimeResultService
             if ($cls === 'dung_hen' || $cls === 'tre_hen') {
                 $g['_sumActual'] += $r->actual_minutes;
             }
-            unset($g);
+            unset($g); // break the reference so the next iteration doesn't overwrite the last group
         }
         $result = [];
         foreach ($groups as $g) {

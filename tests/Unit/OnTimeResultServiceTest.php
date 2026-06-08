@@ -52,7 +52,10 @@ class OnTimeResultServiceTest extends TestCase
             (object)['finish_time'=>null,'actual_minutes'=>null,'estimate_duration'=>60,'service_type_id'=>2,'service_type_name'=>'XN','execute_room_id'=>10,'execute_room_name'=>'P.XN','service_id'=>100,'service_name'=>'SH','day_val'=>20260601],
             (object)['finish_time'=>1,'actual_minutes'=>-3,'estimate_duration'=>60,'service_type_id'=>2,'service_type_name'=>'XN','execute_room_id'=>10,'execute_room_name'=>'P.XN','service_id'=>100,'service_name'=>'SH','day_val'=>20260601],
         ];
-        $kpi = $this->service->summarize($rows)['kpi'];
+        $result = $this->service->summarize($rows);
+        $kpi = $result['kpi'];
+        $this->assertArrayHasKey('breakdown_loai_dich_vu', $result);
+        $this->assertInternalType('array', $result['breakdown_loai_dich_vu']);
         $this->assertEquals(5, $kpi['tong_co_hen']);
         $this->assertEquals(3, $kpi['da_tra_hop_le']);
         $this->assertEquals(1, $kpi['dung_hen']);
@@ -77,20 +80,22 @@ class OnTimeResultServiceTest extends TestCase
     }
 
     /** @test */
-    public function groupby_aggregates_each_group_with_counts_and_percentages()
+    public function build_breakdown_aggregates_each_group_with_counts_and_percentages()
     {
         $rows = [
             (object)['finish_time'=>1,'actual_minutes'=>50,'estimate_duration'=>60,'service_type_id'=>2,'service_type_name'=>'XN','execute_room_id'=>10,'execute_room_name'=>'P.XN','service_id'=>100,'service_name'=>'SH','day_val'=>20260601],
             (object)['finish_time'=>1,'actual_minutes'=>90,'estimate_duration'=>60,'service_type_id'=>2,'service_type_name'=>'XN','execute_room_id'=>10,'execute_room_name'=>'P.XN','service_id'=>100,'service_name'=>'SH','day_val'=>20260601],
             (object)['finish_time'=>1,'actual_minutes'=>10,'estimate_duration'=>60,'service_type_id'=>3,'service_type_name'=>'CDHA','execute_room_id'=>20,'execute_room_name'=>'P.CT','service_id'=>200,'service_name'=>'CT','day_val'=>20260602],
         ];
-        $bk = $this->service->groupBy($rows, 'service_type_id', 'service_type_name');
+        $bk = $this->service->buildBreakdown($rows, 'service_type_id', 'service_type_name');
         $this->assertCount(2, $bk);
         $this->assertEquals('XN', $bk[0]['name']);
         $this->assertEquals(2, $bk[0]['tong']);
         $this->assertEquals(1, $bk[0]['dung_hen']);
         $this->assertEquals(1, $bk[0]['tre_hen']);
         $this->assertEquals(50.0, $bk[0]['pct_tre_hen']);
+        $this->assertEquals(50.0, $bk[0]['pct_dung_hen']);
+        $this->assertEquals(70, $bk[0]['tg_tra_tb']);
         $this->assertEquals('CDHA', $bk[1]['name']);
     }
 }
