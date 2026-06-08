@@ -182,6 +182,13 @@ return [
                             'route'   => 'khth.gia-tang-chi-phi-index',
                             'active'=> ['khth/gia-tang-chi-phi-index*'],
                         ],
+                        [
+                            'text'      => 'Tỷ lệ trả KQ đúng hẹn',
+                            'icon'      => 'clock-o',
+                            'checkrole' => 'administrator',
+                            'route'     => 'khth.on-time-result-index',
+                            'active'    => ['khth/on-time-result-index*'],
+                        ],
                     ],
                 ],
                 [
