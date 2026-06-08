@@ -21,7 +21,7 @@ Mỗi dòng `his_sere_serv` của dịch vụ **có hẹn**, tức `his_service.
 
 - Khảo sát thực tế: chỉ ~271 dịch vụ có `estimate_duration`, thuộc nhóm: Xét nghiệm (121), Chẩn đoán hình ảnh (108), Siêu âm (28), Thăm dò chức năng (14).
 - Dịch vụ KHÔNG có `estimate_duration` (thuốc, vật tư, giường, khám, phẫu thuật, thủ thuật…) được **loại khỏi mẫu** vì không có ngưỡng hẹn để so sánh.
-- Điều kiện sạch dữ liệu: `his_sere_serv.is_delete = 0`, `his_service_req.is_active = 1`, `his_service_req.is_delete = 0`.
+- Điều kiện sạch dữ liệu: `his_sere_serv.is_delete = 0`, `his_sere_serv.is_no_execute IS NULL` (loại các dòng được đánh dấu "không thực hiện" — cột chỉ có giá trị `NULL` hoặc `1`), `his_service_req.is_active = 1`, `his_service_req.is_delete = 0`.
 
 ### 2.2. Công thức (đơn vị: phút)
 
