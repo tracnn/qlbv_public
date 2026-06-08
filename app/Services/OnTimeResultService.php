@@ -230,25 +230,12 @@ class OnTimeResultService
     public function buildDetailSqlAndBindings(Request $request)
     {
         list($conds, $binds) = $this->commonConditions($request);
-
-        // predicate cho drill-down trang thai (đồng bộ thứ tự ưu tiên với classify())
-        $hasHen = "s.estimate_duration IS NOT NULL AND s.estimate_duration <> 0";
-        $actualExpr = "(TO_DATE(sr.finish_time,'YYYYMMDDHH24MISS') - TO_DATE(sr.intruction_time,'YYYYMMDDHH24MISS')) * 24 * 60";
-        switch ($request->input('status')) {
-            case 'khong_hen':
-                $conds[] = "(s.estimate_duration IS NULL OR s.estimate_duration = 0)"; break;
-            case 'chua_tra':
-                $conds[] = "$hasHen AND sr.finish_time IS NULL"; break;
-            case 'bat_thuong':
-                $conds[] = "$hasHen AND sr.finish_time IS NOT NULL AND $actualExpr < 0"; break;
-            case 'dung_hen':
-                $conds[] = "$hasHen AND sr.finish_time IS NOT NULL AND $actualExpr >= 0 AND $actualExpr <= s.estimate_duration"; break;
-            case 'tre_hen':
-                $conds[] = "$hasHen AND sr.finish_time IS NOT NULL AND $actualExpr > s.estimate_duration"; break;
-        }
         $where = implode(' AND ', $conds);
 
-        $sql = "
+        $actualExpr = "(TO_DATE(sr.finish_time,'YYYYMMDDHH24MISS') - TO_DATE(sr.intruction_time,'YYYYMMDDHH24MISS')) * 24 * 60";
+
+        // Inner query: chỉ lọc theo ngày + nhóm (sargable, dùng index) -> nhanh.
+        $inner = "
             SELECT
                 ss.tdl_treatment_code   AS tdl_treatment_code,
                 sr.tdl_patient_name     AS tdl_patient_name,
@@ -266,6 +253,25 @@ class OnTimeResultService
             LEFT JOIN his_execute_room er ON er.room_id = ss.tdl_execute_room_id
             WHERE $where
         ";
+
+        // Drill-down status: lọc ở NGOÀI trên cột đã tính (actual_minutes/estimate_duration)
+        // để tránh đặt biểu thức TO_DATE trong WHERE inner (gây execution plan tệ, rất chậm).
+        // Đồng bộ thứ tự ưu tiên với classify().
+        $statusWhere = null;
+        switch ($request->input('status')) {
+            case 'khong_hen':
+                $statusWhere = "estimate_duration IS NULL OR estimate_duration = 0"; break;
+            case 'chua_tra':
+                $statusWhere = "estimate_duration > 0 AND finish_time IS NULL"; break;
+            case 'bat_thuong':
+                $statusWhere = "estimate_duration > 0 AND actual_minutes < 0"; break;
+            case 'dung_hen':
+                $statusWhere = "estimate_duration > 0 AND actual_minutes >= 0 AND actual_minutes <= estimate_duration"; break;
+            case 'tre_hen':
+                $statusWhere = "estimate_duration > 0 AND actual_minutes > estimate_duration"; break;
+        }
+
+        $sql = $statusWhere ? "SELECT * FROM ($inner) WHERE $statusWhere" : $inner;
         return [$sql, $binds];
     }
 
