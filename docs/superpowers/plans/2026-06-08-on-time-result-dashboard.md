@@ -659,7 +659,8 @@ class OnTimeResultController extends Controller
     public function rooms(Request $request)
     {
         list($sql, $binds) = $this->service->buildRoomsSqlAndBindings($request);
-        return response()->json(DB::connection('HISPro')->select(DB::raw($sql), $binds));
+        $rows = $this->service->normalizeRows(DB::connection('HISPro')->select(DB::raw($sql), $binds));
+        return response()->json($rows); // lowercase keys: room_id, execute_room_name
     }
 
     public function fetch(Request $request)
