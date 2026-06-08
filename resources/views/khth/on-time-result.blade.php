@@ -4,15 +4,17 @@
 @section('content')
 @include('khth.partials.search-on-time-result')
 
-{{-- Card KPI --}}
+{{-- Card KPI: 3 chỉ số chính (hàng trên) + 4 chỉ số phụ (hàng dưới) --}}
 <div class="row" id="kpi-cards">
-  <div class="col-md-2"><div class="info-box"><span class="info-box-icon bg-aqua"><i class="fa fa-list"></i></span><div class="info-box-content"><span class="info-box-text">Tổng có hẹn</span><span class="info-box-number" id="kpi-tong">0</span></div></div></div>
-  <div class="col-md-2"><div class="info-box"><span class="info-box-icon bg-green"><i class="fa fa-check"></i></span><div class="info-box-content"><span class="info-box-text">% Đúng hẹn</span><span class="info-box-number" id="kpi-pct-dung">0%</span></div></div></div>
-  <div class="col-md-2"><div class="info-box"><span class="info-box-icon bg-red"><i class="fa fa-times"></i></span><div class="info-box-content"><span class="info-box-text">% Trễ hẹn</span><span class="info-box-number" id="kpi-pct-tre">0%</span></div></div></div>
-  <div class="col-md-2"><div class="info-box"><span class="info-box-icon bg-yellow"><i class="fa fa-clock-o"></i></span><div class="info-box-content"><span class="info-box-text">Chưa trả KQ</span><span class="info-box-number" id="kpi-chua">0</span></div></div></div>
-  <div class="col-md-2"><div class="info-box"><span class="info-box-icon bg-gray"><i class="fa fa-exclamation"></i></span><div class="info-box-content"><span class="info-box-text">Bất thường</span><span class="info-box-number" id="kpi-bat">0</span></div></div></div>
-  <div class="col-md-2"><div class="info-box"><span class="info-box-icon bg-info"><i class="fa fa-ban"></i></span><div class="info-box-content"><span class="info-box-text">Không có hẹn</span><span class="info-box-number" id="kpi-khong-hen">0</span></div></div></div>
-  <div class="col-md-2"><div class="info-box"><span class="info-box-icon bg-purple"><i class="fa fa-hourglass-half"></i></span><div class="info-box-content"><span class="info-box-text">TG trả KQ TB</span><span class="info-box-number" id="kpi-tgtb">0</span></div></div></div>
+  <div class="col-md-4"><div class="info-box"><span class="info-box-icon bg-aqua"><i class="fa fa-list"></i></span><div class="info-box-content"><span class="info-box-text">Tổng có hẹn</span><span class="info-box-number" id="kpi-tong">0</span></div></div></div>
+  <div class="col-md-4"><div class="info-box"><span class="info-box-icon bg-green"><i class="fa fa-check"></i></span><div class="info-box-content"><span class="info-box-text">% Đúng hẹn</span><span class="info-box-number" id="kpi-pct-dung">0%</span></div></div></div>
+  <div class="col-md-4"><div class="info-box"><span class="info-box-icon bg-red"><i class="fa fa-times"></i></span><div class="info-box-content"><span class="info-box-text">% Trễ hẹn</span><span class="info-box-number" id="kpi-pct-tre">0%</span></div></div></div>
+</div>
+<div class="row">
+  <div class="col-md-3"><div class="info-box"><span class="info-box-icon bg-yellow"><i class="fa fa-clock-o"></i></span><div class="info-box-content"><span class="info-box-text">Chưa trả KQ</span><span class="info-box-number" id="kpi-chua">0</span></div></div></div>
+  <div class="col-md-3"><div class="info-box"><span class="info-box-icon bg-gray"><i class="fa fa-exclamation"></i></span><div class="info-box-content"><span class="info-box-text">Bất thường</span><span class="info-box-number" id="kpi-bat">0</span></div></div></div>
+  <div class="col-md-3"><div class="info-box"><span class="info-box-icon bg-info"><i class="fa fa-ban"></i></span><div class="info-box-content"><span class="info-box-text">Không có hẹn</span><span class="info-box-number" id="kpi-khong-hen">0</span></div></div></div>
+  <div class="col-md-3"><div class="info-box"><span class="info-box-icon bg-purple"><i class="fa fa-hourglass-half"></i></span><div class="info-box-content"><span class="info-box-text">TG trả KQ TB</span><span class="info-box-number" id="kpi-tgtb">0</span></div></div></div>
 </div>
 
 {{-- Tong hop --}}
@@ -27,7 +29,7 @@
 
 {{-- Chi tiet --}}
 <div class="box">
-  <div class="box-header"><h3 class="box-title">Chi tiết</h3><button id="export_xlsx" class="btn btn-success btn-sm pull-right"><i class="fa fa-file-excel-o"></i> Xuất Excel</button></div>
+  <div class="box-header"><h3 class="box-title">Chi tiết</h3></div>
   <div class="box-body table-responsive">
     <table id="detail-table" class="table table-hover" width="100%">
       <thead><tr>
@@ -136,11 +138,6 @@ $(function(){
     if(field==='execute_room_id') $('#execute_room_id').val(id).trigger('change');
     if(field==='service_id') $('#drill_service_id').val(id);
     reloadAll();
-  });
-
-  // export theo filter hien hanh
-  $('#export_xlsx').click(function(){
-    window.location.href="{{ route('khth.on-time-result-export') }}?"+$.param(baseFilters());
   });
 });
 </script>
