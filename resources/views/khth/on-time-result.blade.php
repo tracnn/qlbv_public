@@ -2,20 +2,6 @@
 @section('title', 'Tỷ lệ trả KQ đúng hẹn')
 @section('content_header')<h1>Tỷ lệ trả kết quả đúng hẹn</h1>@stop
 
-@push('after-styles')
-<style>
-  /* Ẩn nút Export... + nhãn XLS mặc định của partial date_range (dashboard này không dùng) */
-  #export_xlsx, label[for="export_xlsx"] { display:none !important; }
-  /* 2 box trong cùng hàng cao bằng nhau (căn đáy đều nhau) */
-  .otr-eq-row { display:flex; flex-wrap:wrap; }
-  .otr-eq-row > [class*="col-"] { display:flex; }
-  .otr-eq-row > [class*="col-"] > .box { width:100%; }
-  /* Bảng tổng hợp: cột số căn giữa, cố định bề rộng để 2 bảng đồng nhất */
-  .otr-bk td, .otr-bk th { vertical-align:middle; }
-  .otr-bk td.text-center, .otr-bk th.text-center { text-align:center; }
-</style>
-@endpush
-
 @section('content')
 @include('khth.partials.search-on-time-result')
 

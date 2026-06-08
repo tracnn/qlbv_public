@@ -1,3 +1,7 @@
+# 10/06/2026
+
+- Bổ sung dashboard Tỷ lệ trả kết quả đúng hẹn (KHTH): tính % trả KQ đúng hẹn/trễ hẹn theo thời gian hẹn (ESTIMATE_DURATION) của dịch vụ cận lâm sàng; có tổng hợp theo loại DV/khoa-phòng/dịch vụ/ngày, xem chi tiết, drill-down và export Excel
+
 # 09/06/2026
 
 - Bổ sung dashboard Tỷ lệ trả kết quả đúng hẹn (KHTH): tính % trả KQ đúng hẹn/trễ hẹn theo thời gian hẹn (ESTIMATE_DURATION) của dịch vụ cận lâm sàng; có tổng hợp theo loại DV/khoa-phòng/dịch vụ/ngày, xem chi tiết, drill-down và export Excel

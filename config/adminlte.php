@@ -182,13 +182,6 @@ return [
                             'route'   => 'khth.gia-tang-chi-phi-index',
                             'active'=> ['khth/gia-tang-chi-phi-index*'],
                         ],
-                        [
-                            'text'      => 'Tỷ lệ trả KQ đúng hẹn',
-                            'icon'      => 'clock-o',
-                            'checkrole' => 'administrator',
-                            'route'     => 'khth.on-time-result-index',
-                            'active'    => ['khth/on-time-result-index*'],
-                        ],
                     ],
                 ],
                 [
@@ -253,6 +246,13 @@ return [
                     'checkrole'   => 'dashboard',
                     'route'   => 'dashboard.operating-room',
                     'active'=> ['dashboard/operating-room*'],
+                ],
+                [
+                    'text'      => 'Tỷ lệ trả KQ đúng hẹn',
+                    'icon'      => 'clock-o',
+                    'checkrole' => 'administrator',
+                    'route'     => 'khth.on-time-result-index',
+                    'active'    => ['khth/on-time-result-index*'],
                 ],
             ],
         ],
