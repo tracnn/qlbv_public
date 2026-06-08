@@ -164,9 +164,9 @@ class OnTimeResultService
             "ss.tdl_service_type_id IN (" . implode(',', self::SERVICE_TYPE_IDS) . ")",
             "ss.is_delete = 0", "ss.is_no_execute IS NULL",
             "sr.is_active = 1", "sr.is_delete = 0",
-            "sr.intruction_time BETWEEN :from AND :to",
+            "sr.intruction_time BETWEEN :from_time AND :to_time",
         ];
-        $binds = ['from' => $from, 'to' => $to];
+        $binds = ['from_time' => $from, 'to_time' => $to];
 
         if ($request->filled('execute_room_id')) {
             $conds[] = "ss.tdl_execute_room_id = :room_id";
@@ -251,7 +251,7 @@ class OnTimeResultService
         $sql = "
             SELECT
                 ss.tdl_treatment_code   AS tdl_treatment_code,
-                ss.tdl_patient_name     AS tdl_patient_name,
+                sr.tdl_patient_name     AS tdl_patient_name,
                 er.execute_room_name    AS execute_room_name,
                 st.service_type_name    AS service_type_name,
                 ss.tdl_service_name     AS service_name,
