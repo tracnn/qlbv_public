@@ -14,7 +14,7 @@ class OnTimeResultControllerTest extends TestCase
         // Mock thẳng getSummaryData để KHÔNG chạm DB.
         $mock = Mockery::mock(OnTimeResultService::class);
         $mock->shouldReceive('getSummaryData')->once()->andReturn([
-            'kpi' => ['tong_co_hen'=>0,'da_tra_hop_le'=>0,'dung_hen'=>0,'tre_hen'=>0,'chua_tra'=>0,'bat_thuong'=>0,'pct_dung_hen'=>0,'pct_tre_hen'=>0,'tg_tra_tb'=>0],
+            'kpi' => ['tong_co_hen'=>0,'khong_hen'=>0,'da_tra_hop_le'=>0,'dung_hen'=>0,'tre_hen'=>0,'chua_tra'=>0,'bat_thuong'=>0,'pct_dung_hen'=>0,'pct_tre_hen'=>0,'tg_tra_tb'=>0],
             'breakdown_loai_dich_vu' => [], 'breakdown_phong' => [], 'breakdown_dich_vu' => [], 'trend_theo_ngay' => [],
         ]);
         $this->app->instance(OnTimeResultService::class, $mock);
@@ -23,7 +23,7 @@ class OnTimeResultControllerTest extends TestCase
                          ->getJson(route('khth.on-time-result-summary', ['date_from'=>'2026-06-01','date_to'=>'2026-06-07']));
 
         $response->assertStatus(200)
-                 ->assertJsonStructure(['kpi'=>['tong_co_hen','pct_dung_hen','pct_tre_hen'],'breakdown_loai_dich_vu','breakdown_phong','breakdown_dich_vu','trend_theo_ngay']);
+                 ->assertJsonStructure(['kpi'=>['tong_co_hen','khong_hen','pct_dung_hen','pct_tre_hen'],'breakdown_loai_dich_vu','breakdown_phong','breakdown_dich_vu','trend_theo_ngay']);
     }
 
     /** @test */
