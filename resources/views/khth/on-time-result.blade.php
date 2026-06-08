@@ -1,6 +1,21 @@
 @extends('adminlte::page')
 @section('title', 'Tỷ lệ trả KQ đúng hẹn')
 @section('content_header')<h1>Tỷ lệ trả kết quả đúng hẹn</h1>@stop
+
+@push('after-styles')
+<style>
+  /* Ẩn nút Export... + nhãn XLS mặc định của partial date_range (dashboard này không dùng) */
+  #export_xlsx, label[for="export_xlsx"] { display:none !important; }
+  /* 2 box trong cùng hàng cao bằng nhau (căn đáy đều nhau) */
+  .otr-eq-row { display:flex; flex-wrap:wrap; }
+  .otr-eq-row > [class*="col-"] { display:flex; }
+  .otr-eq-row > [class*="col-"] > .box { width:100%; }
+  /* Bảng tổng hợp: cột số căn giữa, cố định bề rộng để 2 bảng đồng nhất */
+  .otr-bk td, .otr-bk th { vertical-align:middle; }
+  .otr-bk td.text-center, .otr-bk th.text-center { text-align:center; }
+</style>
+@endpush
+
 @section('content')
 @include('khth.partials.search-on-time-result')
 
@@ -22,9 +37,9 @@
   <div class="col-md-6"><div class="box"><div class="box-header"><h3 class="box-title">Theo loại dịch vụ</h3></div><div class="box-body"><canvas id="chart-loai-dv" height="120"></canvas><table class="table table-bordered" id="tbl-loai-dv"></table></div></div></div>
   <div class="col-md-6"><div class="box"><div class="box-header"><h3 class="box-title">Xu hướng % đúng hẹn theo ngày</h3></div><div class="box-body"><canvas id="chart-trend" height="120"></canvas></div></div></div>
 </div>
-<div class="row">
-  <div class="col-md-6"><div class="box"><div class="box-header"><h3 class="box-title">Theo khoa/phòng thực hiện (xếp % trễ)</h3></div><div class="box-body table-responsive"><table class="table table-bordered" id="tbl-phong"></table></div></div></div>
-  <div class="col-md-6"><div class="box"><div class="box-header"><h3 class="box-title">Top dịch vụ trễ hẹn</h3></div><div class="box-body table-responsive"><table class="table table-bordered" id="tbl-dich-vu"></table></div></div></div>
+<div class="row otr-eq-row">
+  <div class="col-md-6"><div class="box"><div class="box-header"><h3 class="box-title">Theo khoa/phòng thực hiện (xếp % trễ)</h3></div><div class="box-body table-responsive"><table class="table table-bordered otr-bk" id="tbl-phong" width="100%"></table></div></div></div>
+  <div class="col-md-6"><div class="box"><div class="box-header"><h3 class="box-title">Top dịch vụ trễ hẹn</h3></div><div class="box-body table-responsive"><table class="table table-bordered otr-bk" id="tbl-dich-vu" width="100%"></table></div></div></div>
 </div>
 
 {{-- Chi tiet --}}
@@ -90,7 +105,14 @@ function renderBreakdownTable(sel, rows, drillField, paginate){
   $(sel).html(html+'</tbody>');
   if (paginate) {
     // Phân trang 10 dòng + ô tìm kiếm; giữ thứ tự xếp % trễ từ backend (ordering:false)
-    $(sel).DataTable({ pageLength:10, lengthChange:false, ordering:false, autoWidth:false, language:DT_VI });
+    // Cột số căn giữa + cố định bề rộng để 2 bảng trái/phải đồng nhất, dễ so sánh.
+    $(sel).DataTable({
+      pageLength:10, lengthChange:false, ordering:false, autoWidth:false, language:DT_VI,
+      columnDefs:[
+        { targets:0, className:'text-left' },
+        { targets:[1,2,3,4], className:'text-center', width:'11%' }
+      ]
+    });
   }
 }
 
@@ -112,10 +134,12 @@ function loadDetail(){
   detailTable=$('#detail-table').DataTable({
     processing:true, serverSide:true, destroy:true, scrollX:true,
     ajax:{ url:"{{ route('khth.on-time-result-fetch') }}", data:function(d){ Object.assign(d, baseFilters()); } },
+    language:DT_VI,
     columns:[
       {data:'tdl_treatment_code'},{data:'tdl_patient_name'},{data:'execute_room_name'},{data:'service_type_name'},{data:'service_name'},
       {data:'intruction_time'},{data:'finish_time'},{data:'actual_minutes_fmt'},{data:'estimate_duration'},{data:'chenh_lech'},{data:'trang_thai'}
-    ]
+    ],
+    columnDefs:[ { targets:[5,6,7,8,9,10], className:'text-center' } ]
   });
 }
 
