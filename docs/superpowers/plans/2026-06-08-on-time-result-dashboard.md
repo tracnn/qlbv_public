@@ -424,6 +424,18 @@ git commit -m "feat: OnTimeResultService groupBy() breakdown theo chieu"
         }
         return [$conds, $binds];
     }
+
+    /**
+     * Oracle (connection HISPro) trả tên cột VIẾT HOA → chuẩn hóa về lowercase
+     * để mọi truy cập $row->field (và DataTables data:'field') đọc đúng.
+     * Bắt buộc áp dụng cho MỌI kết quả DB::select trước khi dùng (theo pattern DoctorService).
+     */
+    public function normalizeRows($rawRows)
+    {
+        return array_map(function ($row) {
+            return (object) array_change_key_case((array) $row, CASE_LOWER);
+        }, $rawRows);
+    }
 ```
 
 - [ ] **Step 2: Thêm `buildBaseSqlAndBindings()` (cho summary)**
@@ -558,9 +570,9 @@ class OnTimeResultControllerTest extends TestCase
     /** @test */
     public function summary_endpoint_returns_json_structure()
     {
-        $mock = Mockery::mock(OnTimeResultService::class)->makePartial();
-        $mock->shouldReceive('buildBaseSqlAndBindings')->andReturn(['SELECT 1 FROM dual', []]);
-        $mock->shouldReceive('summarize')->once()->andReturn([
+        // Mock thẳng getSummaryData để KHÔNG chạm DB.
+        $mock = Mockery::mock(OnTimeResultService::class);
+        $mock->shouldReceive('getSummaryData')->once()->andReturn([
             'kpi' => ['tong_co_hen'=>0,'da_tra_hop_le'=>0,'dung_hen'=>0,'tre_hen'=>0,'chua_tra'=>0,'bat_thuong'=>0,'pct_dung_hen'=>0,'pct_tre_hen'=>0,'tg_tra_tb'=>0],
             'breakdown_loai_dich_vu' => [], 'breakdown_phong' => [], 'breakdown_dich_vu' => [], 'trend_theo_ngay' => [],
         ]);
@@ -586,7 +598,7 @@ class OnTimeResultControllerTest extends TestCase
 }
 ```
 
-> Mock `summarize` để feature test KHÔNG chạm DB. `buildBaseSqlAndBindings` trả `SELECT 1 FROM dual` (hợp lệ Oracle) — nhưng vì controller vẫn `DB::select`, để chắc chắn không phụ thuộc DB, controller sẽ gọi service `getSummaryData()` (bọc cả select + summarize) và ta mock thẳng method đó. Xem Step 3.
+> Mock `Mockery::mock(OnTimeResultService::class)` (KHÔNG `makePartial`) + chỉ `shouldReceive('getSummaryData')` → controller không bao giờ chạm DB. `index_renders_view` cần view tồn tại → tạo view stub ở Step 3 trước khi chạy test.
 
 - [ ] **Step 2: Chạy test, xác nhận FAIL**
 
@@ -603,12 +615,11 @@ Thêm vào `OnTimeResultService` (bọc select + summarize để controller mỏ
     {
         list($sql, $binds) = $this->buildBaseSqlAndBindings($request);
         $rows = \DB::connection('HISPro')->select(\DB::raw($sql), $binds);
-        return $this->summarize($rows);
+        return $this->summarize($this->normalizeRows($rows));
     }
 ```
 
-Sửa feature test Step 1: đổi mock 2 method thành 1:
-`$mock->shouldReceive('getSummaryData')->once()->andReturn([... cấu trúc như trên ...]);` (bỏ mock buildBaseSqlAndBindings & summarize).
+> **Hiệu năng:** `getSummaryData` kéo toàn bộ base rows về PHP để gom nhóm (giống pattern `MedicalCenterDashboard`). Tuần ~25k dòng là chấp nhận được; khoảng ngày rất rộng (vài tháng) có thể nặng RAM/transfer — nếu cần, sau này tối ưu bằng GROUP BY trong SQL. Ghi nhận, KHÔNG tối ưu sớm (YAGNI).
 
 Controller:
 
@@ -654,7 +665,7 @@ class OnTimeResultController extends Controller
     public function fetch(Request $request)
     {
         list($sql, $binds) = $this->service->buildDetailSqlAndBindings($request);
-        $results = DB::connection('HISPro')->select(DB::raw($sql), $binds);
+        $results = $this->service->normalizeRows(DB::connection('HISPro')->select(DB::raw($sql), $binds));
 
         $service = $this->service;
         return DataTables::of($results)
@@ -693,7 +704,15 @@ Route::get('on-time-result-index/export', 'KHTH\OnTimeResultController@export')-
 Route::get('on-time-result-index/rooms', 'KHTH\OnTimeResultController@rooms')->name('khth.on-time-result-rooms');
 ```
 
-> View `khth.on-time-result` tạo ở Task 7. Để `index_renders_view` pass trước, có thể tạo view tối thiểu `@extends('adminlte::page') @section('content') @stop` rồi hoàn thiện ở Task 7.
+**Tạo view stub** (bắt buộc để `index_renders_view` pass; Task 7 sẽ thay bằng bản đầy đủ):
+
+```blade
+{{-- resources/views/khth/on-time-result.blade.php (STUB - hoàn thiện ở Task 7) --}}
+@extends('adminlte::page')
+@section('title', 'Tỷ lệ trả KQ đúng hẹn')
+@section('content')
+@stop
+```
 
 - [ ] **Step 4: Chạy test, xác nhận PASS**
 
@@ -743,7 +762,8 @@ class OnTimeResultExport implements FromCollection, WithHeadings, WithMapping
     {
         $request = new Request($this->filters);
         list($sql, $binds) = $this->service->buildDetailSqlAndBindings($request);
-        return new Collection(DB::connection('HISPro')->select(DB::raw($sql), $binds));
+        $rows = $this->service->normalizeRows(DB::connection('HISPro')->select(DB::raw($sql), $binds));
+        return new Collection($rows);
     }
 
     public function headings(): array
