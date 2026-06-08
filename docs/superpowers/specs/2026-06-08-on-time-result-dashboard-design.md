@@ -3,6 +3,8 @@
 **Date:** 2026-06-08
 **Status:** Approved (chờ user review spec)
 
+> **Cập nhật 09/06/2026 (sau triển khai — lý do hiệu năng):** Cột `his_service.estimate_duration` KHÔNG có index nên điều kiện `estimate_duration IS NOT NULL AND <> 0` làm query chậm. Đã đổi sang **lọc theo nhóm dịch vụ** `his_sere_serv.tdl_service_type_id IN (2,3,5,10)` (XN/CĐHA/TDCN/Siêu âm — cột CÓ index). Hệ quả: trong các nhóm này có một số dòng dịch vụ chưa khai báo `estimate_duration` (≈364 dòng/tuần). Các dòng đó được phân loại thành trạng thái mới **`khong_hen`** (ưu tiên đầu trong `classify()`), **loại khỏi mẫu số %**, đếm và hiển thị riêng 1 card KPI "Không có hẹn" — nhất quán với cách xử lý "Chưa trả"/"Bất thường". Kiểm chứng: các con số có hẹn (đúng 8205 / trễ 17052 / chưa trả 98 / bất thường 1) KHÔNG đổi so với cách lọc cũ → tỷ lệ % giữ nguyên. Mục 2.1, 2.3 và 10 dưới đây đọc theo ghi chú này.
+
 ---
 
 ## 1. Mục tiêu
