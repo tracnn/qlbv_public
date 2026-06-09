@@ -99,11 +99,18 @@ class HomeController extends Controller
 
         $current_date = $this->currentDate($request->input('startDate'), $request->input('endDate'));
 
+        // Lọc thêm theo tdl_intruction_date (cột dẫn đầu index HIS_SERE_SERV_INDEX16, dạng YYYYMMDD000000)
+        // để Oracle quét theo NGÀY bằng index thay vì quét toàn bộ his_sere_serv_ext (~5,7tr dòng).
+        // tdl_intruction_time giữ nguyên để lọc chính xác theo giờ; kết quả không đổi.
+        $from_date_day = substr($current_date['from_date'], 0, 8) . '000000';
+        $to_date_day   = substr($current_date['to_date'], 0, 8) . '000000';
+
         $rows = DB::connection('HISPro')
             ->table('his_sere_serv')
             ->join('his_sere_serv_ext', 'his_sere_serv_ext.sere_serv_id', '=', 'his_sere_serv.id')
             ->join('his_machine', 'his_machine.id', '=', 'his_sere_serv_ext.machine_id')
             ->selectRaw('his_machine.machine_name as machine_name, his_machine.machine_group_code as machine_group_code, SUM(his_sere_serv.amount) as so_luong')
+            ->whereBetween('his_sere_serv.tdl_intruction_date', [$from_date_day, $to_date_day])
             ->whereBetween('his_sere_serv.tdl_intruction_time', [$current_date['from_date'], $current_date['to_date']])
             ->where('his_sere_serv.is_delete', 0)
             ->whereNull('his_sere_serv.is_no_execute')
