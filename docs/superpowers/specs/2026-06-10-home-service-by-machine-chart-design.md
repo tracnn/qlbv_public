@@ -128,7 +128,7 @@ Cấu trúc thực tế: `api.js` export `win.DAPI`; `charts.js` export `win.DCh
 
 ## 8. Edge cases & lưu ý
 
-- **Không có dữ liệu trong khoảng ngày** → labels/data rỗng → biểu đồ rỗng (Highcharts hiển thị "No data" hoặc cột trống); không lỗi.
+- **Không có dữ liệu trong khoảng ngày** → labels/data rỗng → hiển thị empty-state theo pattern code hiện có (chèn `<div>Không có dữ liệu</div>` vào container, như `renderDoanhThu`/`renderTreatment`) thay vì dựa vào "No data" mặc định của Highcharts (plugin no-data có thể chưa load).
 - **machine_group_code NULL/rỗng** → gộp vào nhãn "(trống)".
 - **Tên máy trùng** (vd nhiều "Máy chạy thận nhân tạo.xx") → đã là tên riêng từng máy nên không gộp nhầm; nếu gộp theo `machine_name` mà trùng tên thì gộp đúng theo tên.
 - **Hiệu năng:** dữ liệu nhỏ (≤ ~1k–vài k dòng/khoảng ngày, ≤58 máy) → nhẹ. Lọc theo `tdl_intruction_time` (đã có index theo pattern các chart khác).
