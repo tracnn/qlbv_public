@@ -25,7 +25,8 @@
       khamByRoom: function (start, end) { return get(R.fetchKhamByRoom, { startDate: start, endDate: end }); },
       noiTru: function (start, end) { return get(R.fetchNoiTru, { startDate: start, endDate: end }); },
       dieuTriNgoaiTru: function (start, end) { return get(R.fetchDieuTriNgoaiTru, { startDate: start, endDate: end }); },
-      patientInRoomNgoaiTru: function (start, end) { return get(R.fetchPatientInRoomNgoaiTru, { startDate: start, endDate: end }); }
+      patientInRoomNgoaiTru: function (start, end) { return get(R.fetchPatientInRoomNgoaiTru, { startDate: start, endDate: end }); },
+      serviceByMachine: function (start, end) { return get(R.fetchServiceByMachine, { startDate: start, endDate: end }); }
     };
   
     win.DAPI = API;

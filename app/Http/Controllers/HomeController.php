@@ -49,6 +49,70 @@ class HomeController extends Controller
         ];
     }
 
+    /**
+     * Tổng hợp dữ liệu biểu đồ "số lượng dịch vụ theo máy thực hiện".
+     * @param  iterable $rows  Mỗi phần tử là 1 máy (đã GROUP BY): ->machine_name, ->machine_group_code, ->so_luong
+     * @return array{by_group: array, by_machine: array}
+     *   by_machine: ['labels'=>[], 'data'=>[], 'groups'=>[], 'total'=>int]  (sắp xếp số lượng giảm dần)
+     *   by_group:   ['labels'=>[], 'data'=>[], 'total'=>int]                (gộp theo nhóm, giảm dần)
+     */
+    public static function buildServiceByMachineSeries($rows)
+    {
+        $machines = [];   // [ ['name'=>, 'group'=>, 'sl'=>], ... ]
+        $groupMap = [];   // group => tổng số lượng
+        $total = 0;
+
+        foreach ($rows as $r) {
+            $name  = $r->machine_name;
+            $group = ($r->machine_group_code === null || $r->machine_group_code === '') ? '(trống)' : $r->machine_group_code;
+            $sl    = (float) $r->so_luong;
+
+            $machines[] = ['name' => $name, 'group' => $group, 'sl' => $sl];
+            $groupMap[$group] = (isset($groupMap[$group]) ? $groupMap[$group] : 0) + $sl;
+            $total += $sl;
+        }
+
+        // by_machine: sắp xếp số lượng giảm dần
+        usort($machines, function ($a, $b) { return $b['sl'] <=> $a['sl']; });
+        $byMachine = ['labels' => [], 'data' => [], 'groups' => [], 'total' => $total];
+        foreach ($machines as $m) {
+            $byMachine['labels'][] = $m['name'];
+            $byMachine['data'][]   = $m['sl'];
+            $byMachine['groups'][] = $m['group'];
+        }
+
+        // by_group: sắp xếp số lượng giảm dần
+        arsort($groupMap);
+        $byGroup = ['labels' => array_keys($groupMap), 'data' => array_values($groupMap), 'total' => $total];
+
+        return ['by_group' => $byGroup, 'by_machine' => $byMachine];
+    }
+
+    /**
+     * API biểu đồ Home: số lượng dịch vụ theo máy thực hiện (his_sere_serv_ext -> his_machine).
+     */
+    public function fetchServiceByMachine(Request $request)
+    {
+        if (!$request->ajax()) {
+            return redirect()->route('home');
+        }
+
+        $current_date = $this->currentDate($request->input('startDate'), $request->input('endDate'));
+
+        $rows = DB::connection('HISPro')
+            ->table('his_sere_serv')
+            ->join('his_sere_serv_ext', 'his_sere_serv_ext.sere_serv_id', '=', 'his_sere_serv.id')
+            ->join('his_machine', 'his_machine.id', '=', 'his_sere_serv_ext.machine_id')
+            ->selectRaw('his_machine.machine_name as machine_name, his_machine.machine_group_code as machine_group_code, SUM(his_sere_serv.amount) as so_luong')
+            ->whereBetween('his_sere_serv.tdl_intruction_time', [$current_date['from_date'], $current_date['to_date']])
+            ->where('his_sere_serv.is_delete', 0)
+            ->whereNull('his_sere_serv.is_no_execute')
+            ->groupBy('his_machine.machine_name', 'his_machine.machine_group_code')
+            ->get();
+
+        return response()->json(self::buildServiceByMachineSeries($rows));
+    }
+
     public function fetchAverageDayInpatient(Request $request)
     {
         $current_date = $this->currentDate($request->input('startDate'), $request->input('endDate'));

@@ -46,6 +46,14 @@
         var url = R.listPatientPT + '?date_from=' + encodeURIComponent(p[0]) + '&date_to=' + encodeURIComponent(p[1]) + '&date_type=' + encodeURIComponent('date_intruction');
         window.open(url, '_blank');
       });
+
+      // Toggle biểu đồ số lượng dịch vụ theo máy: nhóm máy / từng máy
+      $(document).on('click', '#btn-machine-by-group, #btn-machine-by-item', function () {
+        var mode = (this.id === 'btn-machine-by-item') ? 'machine' : 'group';
+        $('#btn-machine-by-group, #btn-machine-by-item').removeClass('active');
+        $(this).addClass('active');
+        if (win.DCharts && DCharts.setServiceByMachineMode) DCharts.setServiceByMachineMode(mode);
+      });
     }
   
     $(function () {

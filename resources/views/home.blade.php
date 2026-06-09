@@ -372,6 +372,25 @@
         </div>
     </div>
 
+    <div class="row">
+        <div class="col-lg-12 connectedSortable">
+            <div class="box box-primary">
+                <div class="box-header with-border">
+                    <h3 class="box-title">Số lượng dịch vụ theo máy thực hiện</h3>
+                    <div class="box-tools pull-right">
+                        <div class="btn-group" data-toggle="btn-toggle">
+                            <button type="button" id="btn-machine-by-group" class="btn btn-default btn-sm active">Theo nhóm máy</button>
+                            <button type="button" id="btn-machine-by-item" class="btn btn-default btn-sm">Theo từng máy</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="box-body">
+                    <div id="chart_service_by_machine" style="width:100%; height:420px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
       <div class="row">
         <div class="col-lg-12 connectedSortable">
             <!-- Custom tabs (Charts with tabs)-->
@@ -589,6 +608,7 @@
         fetchNoiTru: "{{ route('fetch-noi-tru') }}",
         fetchDieuTriNgoaiTru: "{{ route('fetch-dieu-tri-ngoai-tru') }}",
         fetchPatientInRoomNgoaiTru: "{{ route('fetch-patient-in-room-ngoai-tru') }}",
+        fetchServiceByMachine: "{{ route('fetch-service-by-machine') }}",
         listPatientPT: "{{ route('reports-administrator.list-patient-pt') }}",
       }
     };

@@ -534,6 +534,71 @@
       });
     }
   
+    // ----- Số lượng dịch vụ theo máy thực hiện -----
+    var sbmLastData = null;   // payload {by_group, by_machine} fetch gần nhất
+    var sbmMode = 'group';    // 'group' | 'machine' (mặc định nhóm)
+    var SBM_PALETTE = (window.Highcharts && Highcharts.getOptions && Highcharts.getOptions().colors)
+      ? Highcharts.getOptions().colors
+      : ['#7cb5ec','#434348','#90ed7d','#f7a35c','#8085e9','#f15c80','#e4d354','#2b908f','#f45b5b','#91e8e1'];
+
+    function drawServiceByMachine() {
+      var el = 'chart_service_by_machine';
+      if (!sbmLastData) return;
+      var src = (sbmMode === 'machine') ? sbmLastData.by_machine : sbmLastData.by_group;
+      var labels = (src && src.labels) || [];
+      var data = (src && src.data) || [];
+      var groups = (src && src.groups) || [];
+
+      if (!labels.length) {
+        $('#' + el).html('<div style="text-align:center;padding:40px;color:#999;">Không có dữ liệu</div>');
+        return;
+      }
+
+      var isMachine = (sbmMode === 'machine');
+
+      // Tô màu: chế độ "nhóm máy" -> mỗi nhóm 1 màu; chế độ "từng máy" -> tô theo nhóm
+      // (các máy cùng nhóm cùng màu, để nhìn thấy cụm thiết bị).
+      var groupColor = {}, gi = 0, points;
+      if (isMachine) {
+        points = labels.map(function (lab, i) {
+          var g = groups[i] || '(trống)';
+          if (!(g in groupColor)) { groupColor[g] = SBM_PALETTE[gi++ % SBM_PALETTE.length]; }
+          return { y: data[i], color: groupColor[g] };
+        });
+      } else {
+        points = data.map(function (y, i) { return { y: y, color: SBM_PALETTE[i % SBM_PALETTE.length] }; });
+      }
+
+      Highcharts.chart(el, {
+        chart: { type: 'column' },
+        title: {
+          text: isMachine ? 'Số lượng dịch vụ theo từng máy' : 'Số lượng dịch vụ theo nhóm máy',
+          style: { fontSize: '16px', fontWeight: 'bold' }
+        },
+        subtitle: { text: 'Tổng: ' + (src.total || 0) + (isMachine ? ' · màu theo nhóm máy' : '') },
+        xAxis: { categories: labels, labels: { rotation: -45, style: { fontSize: '12px' } } },
+        yAxis: { min: 0, title: { text: 'Số lượng' } },
+        legend: { enabled: false },
+        tooltip: {
+          formatter: function () {
+            var name = (this.key !== undefined && this.key !== null) ? this.key : this.x;
+            var s = '<b>' + name + '</b><br/>Số lượng: ' + Highcharts.numberFormat(this.y, 0);
+            if (isMachine && groups[this.point.index]) s += '<br/>Nhóm: ' + groups[this.point.index];
+            return s;
+          }
+        },
+        plotOptions: { column: { borderWidth: 0, dataLabels: { enabled: false } } },
+        series: [{ name: 'Số lượng', data: points }]
+      });
+    }
+
+    function renderServiceByMachine(start, end) {
+      return API.serviceByMachine(start, end).done(function (d) {
+        sbmLastData = d;
+        drawServiceByMachine();
+      });
+    }
+
     // Public API
     var DCH = {
       renderAll: function (start, end) {
@@ -574,13 +639,18 @@
           renderKhamByRoom(start, end),
           renderExamParaclinical(start, end),
           renderDiagImaging(start, end),
+          renderServiceByMachine(start, end),
           renderPrescription(start, end),
           renderFee(start, end),
           renderTransaction(start, end),
           CFG.isBieuDoDieuTriNgoaiTru ? renderNgoaiTruBlocks(start, end) : $.Deferred().resolve()
         ].concat(pies));
+      },
+      setServiceByMachineMode: function (mode) {
+        sbmMode = (mode === 'machine') ? 'machine' : 'group';
+        if (sbmLastData) drawServiceByMachine();
       }
     };
-  
+
     win.DCharts = DCH;
   })(window, jQuery);
