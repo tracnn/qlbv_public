@@ -613,7 +613,7 @@
             return s;
           }
         },
-        plotOptions: { column: { borderWidth: 0, dataLabels: { enabled: false } } },
+        plotOptions: { column: { borderWidth: 0, dataLabels: { enabled: true, formatter: function () { return Highcharts.numberFormat(this.y, 0); }, style: { fontSize: '11px', fontWeight: 'bold' } } } },
         series: [{ name: 'Số lượng', data: points }]
       });
     }
