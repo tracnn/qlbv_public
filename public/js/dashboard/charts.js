@@ -535,11 +535,25 @@
     }
   
     // ----- Số lượng dịch vụ theo máy thực hiện -----
-    var sbmLastData = null;   // payload {by_group, by_machine} fetch gần nhất
-    var sbmMode = 'group';    // 'group' | 'machine' (mặc định nhóm)
+    var sbmLastData = null;       // payload {by_group, by_machine} fetch gần nhất
+    var sbmMode = 'group';        // 'group' | 'machine' (mặc định nhóm)
+    var sbmGroupFilter = '';      // '' = tất cả nhóm; khác rỗng = chỉ hiện nhóm này
     var SBM_PALETTE = (window.Highcharts && Highcharts.getOptions && Highcharts.getOptions().colors)
       ? Highcharts.getOptions().colors
       : ['#7cb5ec','#434348','#90ed7d','#f7a35c','#8085e9','#f15c80','#e4d354','#2b908f','#f45b5b','#91e8e1'];
+
+    // Nạp danh sách nhóm vào dropdown từ dữ liệu đã fetch; giữ nguyên lựa chọn nếu nhóm còn tồn tại
+    function populateSbmGroupFilter() {
+      var $sel = $('#sbm-group-filter');
+      if (!$sel.length || !sbmLastData) return;
+      var groups = (sbmLastData.by_group && sbmLastData.by_group.labels) || [];
+      if (sbmGroupFilter && groups.indexOf(sbmGroupFilter) === -1) sbmGroupFilter = '';
+      var html = '<option value="">Tất cả nhóm</option>';
+      groups.forEach(function (g) {
+        html += '<option value="' + g + '"' + (g === sbmGroupFilter ? ' selected' : '') + '>' + g + '</option>';
+      });
+      $sel.html(html);
+    }
 
     function drawServiceByMachine() {
       var el = 'chart_service_by_machine';
@@ -549,12 +563,24 @@
       var data = (src && src.data) || [];
       var groups = (src && src.groups) || [];
 
+      var isMachine = (sbmMode === 'machine');
+
+      // Lọc theo nhóm máy được chọn (client-side, không gọi lại server).
+      // Chế độ "nhóm máy": nhãn cột chính là tên nhóm; chế độ "từng máy": dùng groups[i].
+      if (sbmGroupFilter) {
+        var fl = [], fd = [], fg = [];
+        labels.forEach(function (lab, i) {
+          var g = isMachine ? (groups[i] || '(trống)') : lab;
+          if (g === sbmGroupFilter) { fl.push(lab); fd.push(data[i]); fg.push(isMachine ? groups[i] : lab); }
+        });
+        labels = fl; data = fd; groups = fg;
+      }
+      var total = data.reduce(function (a, b) { return a + b; }, 0);
+
       if (!labels.length) {
         $('#' + el).html('<div style="text-align:center;padding:40px;color:#999;">Không có dữ liệu</div>');
         return;
       }
-
-      var isMachine = (sbmMode === 'machine');
 
       // Tô màu: chế độ "nhóm máy" -> mỗi nhóm 1 màu; chế độ "từng máy" -> tô theo nhóm
       // (các máy cùng nhóm cùng màu, để nhìn thấy cụm thiết bị).
@@ -575,7 +601,7 @@
           text: isMachine ? 'Số lượng dịch vụ theo từng máy' : 'Số lượng dịch vụ theo nhóm máy',
           style: { fontSize: '16px', fontWeight: 'bold' }
         },
-        subtitle: { text: 'Tổng: ' + (src.total || 0) + (isMachine ? ' · màu theo nhóm máy' : '') },
+        subtitle: { text: 'Tổng: ' + total + (sbmGroupFilter ? ' · nhóm ' + sbmGroupFilter : '') + (isMachine ? ' · màu theo nhóm máy' : '') },
         xAxis: { categories: labels, labels: { rotation: -45, style: { fontSize: '12px' } } },
         yAxis: { min: 0, title: { text: 'Số lượng' } },
         legend: { enabled: false },
@@ -595,6 +621,7 @@
     function renderServiceByMachine(start, end) {
       return API.serviceByMachine(start, end).done(function (d) {
         sbmLastData = d;
+        populateSbmGroupFilter();
         drawServiceByMachine();
       });
     }
@@ -648,6 +675,10 @@
       },
       setServiceByMachineMode: function (mode) {
         sbmMode = (mode === 'machine') ? 'machine' : 'group';
+        if (sbmLastData) drawServiceByMachine();
+      },
+      setServiceByMachineGroup: function (group) {
+        sbmGroupFilter = group || '';
         if (sbmLastData) drawServiceByMachine();
       }
     };

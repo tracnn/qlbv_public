@@ -378,6 +378,9 @@
                 <div class="box-header with-border">
                     <h3 class="box-title">Số lượng dịch vụ theo máy thực hiện</h3>
                     <div class="box-tools pull-right">
+                        <select id="sbm-group-filter" class="form-control input-sm" style="display:inline-block;width:auto;margin-right:6px;vertical-align:middle;">
+                            <option value="">Tất cả nhóm</option>
+                        </select>
                         <div class="btn-group" data-toggle="btn-toggle">
                             <button type="button" id="btn-machine-by-group" class="btn btn-default btn-sm active">Theo nhóm máy</button>
                             <button type="button" id="btn-machine-by-item" class="btn btn-default btn-sm">Theo từng máy</button>

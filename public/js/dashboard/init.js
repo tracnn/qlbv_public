@@ -54,6 +54,11 @@
         $(this).addClass('active');
         if (win.DCharts && DCharts.setServiceByMachineMode) DCharts.setServiceByMachineMode(mode);
       });
+
+      // Lọc biểu đồ số lượng dịch vụ theo máy theo nhóm máy được chọn
+      $(document).on('change', '#sbm-group-filter', function () {
+        if (win.DCharts && DCharts.setServiceByMachineGroup) DCharts.setServiceByMachineGroup($(this).val());
+      });
     }
   
     $(function () {
