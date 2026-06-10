@@ -72,8 +72,7 @@ class HomeController extends Controller
             $total += $sl;
         }
 
-        // by_machine: sắp xếp số lượng giảm dần
-        usort($machines, function ($a, $b) { return $b['sl'] <=> $a['sl']; });
+        // by_machine: giữ thứ tự tự nhiên từ query (không sắp xếp)
         $byMachine = ['labels' => [], 'data' => [], 'groups' => [], 'total' => $total];
         foreach ($machines as $m) {
             $byMachine['labels'][] = $m['name'];
@@ -81,8 +80,7 @@ class HomeController extends Controller
             $byMachine['groups'][] = $m['group'];
         }
 
-        // by_group: sắp xếp số lượng giảm dần
-        arsort($groupMap);
+        // by_group: giữ thứ tự xuất hiện đầu tiên (không sắp xếp)
         $byGroup = ['labels' => array_keys($groupMap), 'data' => array_values($groupMap), 'total' => $total];
 
         return ['by_group' => $byGroup, 'by_machine' => $byMachine];

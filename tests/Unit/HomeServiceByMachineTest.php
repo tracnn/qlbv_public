@@ -8,7 +8,7 @@ use App\Http\Controllers\HomeController;
 class HomeServiceByMachineTest extends TestCase
 {
     /** @test */
-    public function it_builds_by_group_and_by_machine_sorted_desc()
+    public function it_builds_by_group_and_by_machine_in_natural_order()
     {
         // Mỗi $row = 1 máy (đã GROUP BY ở SQL): machine_name, machine_group_code, so_luong
         $rows = [
@@ -20,15 +20,15 @@ class HomeServiceByMachineTest extends TestCase
 
         $res = HomeController::buildServiceByMachineSeries($rows);
 
-        // by_machine: sắp xếp giảm dần theo số lượng
-        $this->assertEquals(['CT-01','SA-01','TNT-04','TNT-11'], $res['by_machine']['labels']);
-        $this->assertEquals([254, 37, 18, 17], $res['by_machine']['data']);
-        $this->assertEquals(['CL','SA','TNT','TNT'], $res['by_machine']['groups']);
+        // by_machine: giữ nguyên thứ tự đầu vào (không sắp xếp)
+        $this->assertEquals(['CT-01','TNT-04','TNT-11','SA-01'], $res['by_machine']['labels']);
+        $this->assertEquals([254, 18, 17, 37], $res['by_machine']['data']);
+        $this->assertEquals(['CL','TNT','TNT','SA'], $res['by_machine']['groups']);
         $this->assertEquals(326, $res['by_machine']['total']);
 
-        // by_group: gộp theo nhóm (TNT = 18+17 = 35), sắp xếp giảm dần
-        $this->assertEquals(['CL','SA','TNT'], $res['by_group']['labels']);
-        $this->assertEquals([254, 37, 35], $res['by_group']['data']);
+        // by_group: gộp theo nhóm (TNT = 18+17 = 35), giữ thứ tự xuất hiện đầu tiên
+        $this->assertEquals(['CL','TNT','SA'], $res['by_group']['labels']);
+        $this->assertEquals([254, 35, 37], $res['by_group']['data']);
         $this->assertEquals(326, $res['by_group']['total']);
     }
 
