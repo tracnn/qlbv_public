@@ -270,7 +270,45 @@
         DoanhThuPie.drawChart();
       });
     }
-  
+
+    // ----- Doanh thu theo khoa thực hiện -----
+    var DTKHOA_PALETTE = (window.Highcharts && Highcharts.getOptions && Highcharts.getOptions().colors)
+      ? Highcharts.getOptions().colors
+      : ['#7cb5ec','#434348','#90ed7d','#f7a35c','#8085e9','#f15c80','#e4d354','#2b908f','#f45b5b','#91e8e1'];
+
+    function renderDoanhThuByDepartment(start, end) {
+      var el = 'chart_doanhthu_by_department';
+      if (!CFG.hasFinanceRole) {
+        U.showNoPermissionPie(el, 'Doanh thu theo khoa');
+        return $.Deferred().resolve().promise();
+      }
+      return API.doanhThuByDepartment(start, end).done(function (r) {
+        if (!r || !r.categories || !r.categories.length) {
+          $('#' + el).html('<div style="text-align:center;padding:40px;color:#999;">Không có dữ liệu</div>');
+          return;
+        }
+        // Mỗi khoa một màu (tô theo từng điểm)
+        var points = r.data.map(function (y, i) { return { y: y, color: DTKHOA_PALETTE[i % DTKHOA_PALETTE.length] }; });
+        var totalTr = Math.round((r.total || 0) / 1e6);
+
+        Highcharts.chart(el, {
+          chart: { type: 'column' },
+          title: { text: 'Doanh thu theo khoa thực hiện: ' + numeral(totalTr).format('0,0') + ' Tr', style: { fontSize: '16px', fontWeight: 'bold' } },
+          xAxis: { categories: r.categories, labels: { rotation: -45, style: { fontSize: '12px' } } },
+          yAxis: { min: 0, title: { text: 'Doanh thu (triệu)' }, labels: { formatter: function () { return numeral(Math.round(this.value / 1e6)).format('0,0'); } } },
+          legend: { enabled: false },
+          tooltip: {
+            formatter: function () {
+              return '<b>' + this.x + '</b><br/>Doanh thu: ' + numeral(this.y).format('0,0') +
+                     ' (' + numeral(Math.round(this.y / 1e6)).format('0,0') + ' Tr)';
+            }
+          },
+          plotOptions: { column: { borderWidth: 0, dataLabels: { enabled: true, formatter: function () { return numeral(Math.round(this.y / 1e6)).format('0,0'); }, style: { fontSize: '11px', fontWeight: 'bold' } } } },
+          series: [{ name: 'Doanh thu', data: points }]
+        });
+      });
+    }
+
     // ===== Doanh thu Overview =====
     // Mỗi patient_type = 1 cặp series cùng màu, share legend (linkedTo):
     //   - column stacked trên Y trái (Số lượng)
@@ -660,6 +698,7 @@
           renderThuThuatPhauThuat(start, end),
           renderOutTreatmentGroupType(start, end),
           renderDoanhThu(start, end),
+          renderDoanhThuByDepartment(start, end),
           renderDoanhThuOverview(start, end),
           renderBuongBenh(start, end),
           renderNoiTru(start, end),

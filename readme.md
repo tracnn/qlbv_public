@@ -1,5 +1,6 @@
 # 10/06/2026
 
+- Bổ sung biểu đồ "Doanh thu theo khoa thực hiện" trên Home dashboard: biểu đồ cột doanh thu theo khoa (his_department), mỗi khoa một màu, đơn vị triệu (Tr), loại bỏ khoa không có doanh thu, lọc theo khoảng ngày của dashboard
 - Bổ sung biểu đồ "Số lượng dịch vụ theo máy thực hiện" trên Home dashboard: thống kê số lượng dịch vụ theo máy (his_machine), có nút chuyển xem theo nhóm máy / từng máy, lọc theo khoảng ngày của dashboard
 
 # 09/06/2026

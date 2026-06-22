@@ -268,6 +268,60 @@ class HomeController extends Controller
         ]);
     }
 
+    /**
+     * Tổng hợp dữ liệu biểu đồ "doanh thu theo khoa thực hiện".
+     * @param  iterable $rows  Mỗi phần tử là 1 khoa (đã GROUP BY): ->department_name, ->thanh_tien
+     * @return array{categories: array, data: array, total: float}
+     *   Giữ thứ tự tự nhiên từ rows (không sắp xếp).
+     */
+    public static function buildDoanhthuByDepartmentSeries($rows)
+    {
+        $categories = [];
+        $data = [];
+        $total = 0;
+
+        foreach ($rows as $r) {
+            $dt = (float) $r->thanh_tien;
+            $categories[] = $r->department_name;
+            $data[]       = $dt;
+            $total       += $dt;
+        }
+
+        return ['categories' => $categories, 'data' => $data, 'total' => $total];
+    }
+
+    /**
+     * API biểu đồ Home: doanh thu theo khoa thực hiện (tdl_execute_department_id -> his_department).
+     */
+    public function fetchDoanhthuByDepartment(Request $request)
+    {
+        if (!$request->ajax()) {
+            return redirect()->route('home');
+        }
+
+        $current_date = $this->currentDate($request->input('startDate'), $request->input('endDate'));
+        $rows = $this->doanhthuByDepartment($current_date['from_date'], $current_date['to_date']);
+
+        return response()->json(self::buildDoanhthuByDepartmentSeries($rows));
+    }
+
+    private function doanhthuByDepartment($from_date, $to_date)
+    {
+        return DB::connection('HISPro')
+            ->table('his_sere_serv')
+            ->join('his_service_req', 'his_service_req.id', '=', 'his_sere_serv.service_req_id')
+            ->join('his_department', 'his_department.id', '=', 'his_sere_serv.tdl_execute_department_id')
+            ->selectRaw('his_department.department_name,
+                         sum(his_sere_serv.amount * his_sere_serv.price) as thanh_tien')
+            ->whereBetween('his_service_req.intruction_time', [$from_date, $to_date])
+            ->where('his_service_req.is_active', 1)
+            ->where('his_service_req.is_delete', 0)
+            ->where('his_sere_serv.is_delete', 0)
+            ->groupBy('his_sere_serv.tdl_execute_department_id', 'his_department.department_name')
+            ->havingRaw('sum(his_sere_serv.amount * his_sere_serv.price) > 0') // loại khoa không có doanh thu
+            ->get();
+    }
+
     public function fetchDoanhthu(Request $request)
     {
         $current_date = $this->currentDate($request->input('startDate'), $request->input('endDate'));
