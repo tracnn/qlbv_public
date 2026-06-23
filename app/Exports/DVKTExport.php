@@ -54,7 +54,7 @@ class DVKTExport implements FromQuery, WithHeadings, ShouldAutoSize
                 'his_service_req.execute_username',
                 'his_execute_room.execute_room_name',
                 'his_sere_serv.amount',
-                'his_sere_serv.price'
+                'his_sere_serv.vir_price as price'
             )
             ->where('tdl_intruction_time', '>=', $this->from_date)
             ->where('tdl_intruction_time', '<=', $this->to_date)

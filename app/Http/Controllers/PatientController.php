@@ -374,7 +374,7 @@ class PatientController extends Controller
             's.tdl_service_name as name',
             'su.service_unit_name as unit',
             's.amount as amount',
-            's.price as price'
+            's.vir_price as price'
         ])
         ->get();
 
@@ -407,7 +407,7 @@ class PatientController extends Controller
             's.tdl_service_name as name',
             'su.service_unit_name as unit',
             's.amount as amount',
-            's.price as price',
+            's.vir_price as price',
             's.tdl_medicine_concentra as concentration',
             's.tdl_active_ingr_bhyt_name as form',
             't.tutorial'
