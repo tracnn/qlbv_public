@@ -312,13 +312,13 @@ class HomeController extends Controller
             ->join('his_service_req', 'his_service_req.id', '=', 'his_sere_serv.service_req_id')
             ->join('his_department', 'his_department.id', '=', 'his_sere_serv.tdl_execute_department_id')
             ->selectRaw('his_department.department_name,
-                         sum(his_sere_serv.amount * his_sere_serv.price) as thanh_tien')
+                         sum(his_sere_serv.amount * his_sere_serv.vir_price) as thanh_tien')
             ->whereBetween('his_service_req.intruction_time', [$from_date, $to_date])
             ->where('his_service_req.is_active', 1)
             ->where('his_service_req.is_delete', 0)
             ->where('his_sere_serv.is_delete', 0)
             ->groupBy('his_sere_serv.tdl_execute_department_id', 'his_department.department_name')
-            ->havingRaw('sum(his_sere_serv.amount * his_sere_serv.price) > 0') // loại khoa không có doanh thu
+            ->havingRaw('sum(his_sere_serv.amount * his_sere_serv.vir_price) > 0') // loại khoa không có doanh thu
             ->get();
     }
 
@@ -556,7 +556,7 @@ class HomeController extends Controller
                      his_sere_serv.patient_type_id,
                      his_patient_type.patient_type_name,
                      count(distinct his_service_req.id) as so_luong,
-                     sum(his_sere_serv.amount * his_sere_serv.price) as thanh_tien')
+                     sum(his_sere_serv.amount * his_sere_serv.vir_price) as thanh_tien')
         ->whereBetween('his_service_req.intruction_time', [$from_date, $to_date])
         ->where('his_service_req.is_active', 1)
         ->where('his_service_req.is_delete', 0)
@@ -1473,7 +1473,7 @@ class HomeController extends Controller
         ->join('his_service_req', 'his_service_req.id', '=', 'his_sere_serv.service_req_id')
         ->join('his_service_type', 'his_sere_serv.tdl_service_type_id', '=', 'his_service_type.id')
         ->join('his_patient_type', 'his_patient_type.id', '=', 'his_sere_serv.patient_type_id')
-        ->selectRaw('sum(his_sere_serv.amount*his_sere_serv.price) as thanh_tien,
+        ->selectRaw('sum(his_sere_serv.amount*his_sere_serv.vir_price) as thanh_tien,
                      his_sere_serv.tdl_service_type_id,
                      his_service_type.service_type_name,
                      his_sere_serv.patient_type_id,
@@ -1768,7 +1768,7 @@ class HomeController extends Controller
 
         $model = DB::connection('HISPro')
             ->table('his_sere_serv')
-            ->selectRaw('sum(amount*price) as so_luong,tdl_request_username')
+            ->selectRaw('sum(amount*vir_price) as so_luong,tdl_request_username')
             ->where('tdl_intruction_time', '>=', date("Ymd", mktime(0, 0, 0, date("m"), date("d"), date("Y"))) . '000000')
             ->where('tdl_intruction_time', '<=', date("Ymd", mktime(0, 0, 0, date("m"), date("d"), date("Y"))) . '235959')
             ->whereIn('tdl_service_req_type_id', explode(',', config('__tech.tdl_service_req_type_id_dvkt_ko_kham')))
