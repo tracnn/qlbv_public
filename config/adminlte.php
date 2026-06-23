@@ -254,6 +254,13 @@ return [
                     'route'     => 'khth.on-time-result-index',
                     'active'    => ['khth/on-time-result-index*'],
                 ],
+                [
+                    'text'      => 'Doanh thu theo khoa/phòng',
+                    'icon'      => 'money',
+                    'checkrole' => 'administrator',
+                    'route'     => 'khth.revenue-dept-room-index',
+                    'active'    => ['khth/revenue-dept-room-index*'],
+                ],
             ],
         ],
         [

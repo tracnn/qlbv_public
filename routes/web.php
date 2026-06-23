@@ -586,6 +586,14 @@ Route::group(['middleware' => ['auth', 'check.first.login']], function () {
         Route::get('on-time-result-index/export', 'KHTH\OnTimeResultController@export')->name('khth.on-time-result-export');
         Route::get('on-time-result-index/rooms', 'KHTH\OnTimeResultController@rooms')->name('khth.on-time-result-rooms');
 
+        Route::get('revenue-dept-room-index', 'KHTH\RevenueDeptRoomController@index')->name('khth.revenue-dept-room-index');
+        Route::get('revenue-dept-room-index/summary', 'KHTH\RevenueDeptRoomController@getSummary')->name('khth.revenue-dept-room-summary');
+        Route::get('revenue-dept-room-index/fetch', 'KHTH\RevenueDeptRoomController@fetch')->name('khth.revenue-dept-room-fetch');
+        Route::get('revenue-dept-room-index/export', 'KHTH\RevenueDeptRoomController@export')->name('khth.revenue-dept-room-export');
+        Route::get('revenue-dept-room-index/departments', 'KHTH\RevenueDeptRoomController@departments')->name('khth.revenue-dept-room-departments');
+        Route::get('revenue-dept-room-index/rooms', 'KHTH\RevenueDeptRoomController@rooms')->name('khth.revenue-dept-room-rooms');
+        Route::get('revenue-dept-room-index/room-types', 'KHTH\RevenueDeptRoomController@roomTypes')->name('khth.revenue-dept-room-room-types');
+
     });
 
     Route::group(['prefix' => 'queue'], function () { 

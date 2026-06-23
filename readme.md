@@ -1,5 +1,6 @@
 # 23/06/2026
 
+- Bổ sung báo cáo KHTH "Doanh thu theo khoa/phòng thực hiện": lọc theo giai đoạn/khoa/phòng, biểu đồ + bảng doanh thu theo khoa, chi tiết theo phòng (DataTables) + xuất Excel; doanh thu tính theo vir_price (amount × vir_price)
 - Bổ sung biểu đồ "Tình trạng giường theo khoa" trên Home dashboard: cột nhóm giường đã sử dụng / còn trống + công suất % theo từng khoa (his_bed, his_treatment_bed_room), trạng thái hiện tại (real-time, không lọc ngày)
 
 # 22/06/2026
