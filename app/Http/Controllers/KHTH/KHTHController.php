@@ -317,7 +317,7 @@ class KHTHController extends Controller
             ->table('his_sere_serv')
             ->join('his_service_type', 'his_sere_serv.tdl_service_type_id', '=', 'his_service_type.id')
             ->join('his_service_req', 'his_service_req.id', '=', 'his_sere_serv.service_req_id')
-            ->selectRaw('sum(amount*price) as thanh_tien,service_type_name')
+            ->selectRaw('sum(amount*vir_price) as thanh_tien,service_type_name')
             ->where('tdl_intruction_time', '>=', $from_date)
             ->where('tdl_intruction_time', '<=', $to_date)
             ->where('his_sere_serv.is_delete', 0)
@@ -752,7 +752,7 @@ class KHTHController extends Controller
 			->leftJoin('his_execute_room', 'his_execute_room.room_id', '=', 'his_sere_serv.tdl_execute_room_id')
 			->select('his_sere_serv.tdl_treatment_code', 'his_service_req.tdl_patient_name', 'his_service_req.tdl_patient_dob',
 				'his_sere_serv.tdl_service_name', 'his_sere_serv.tdl_intruction_time', 'his_sere_serv.hein_card_number', 
-				'his_sere_serv.tdl_request_username', 'his_sere_serv.amount', 'his_sere_serv.price', 
+				'his_sere_serv.tdl_request_username', 'his_sere_serv.amount', 'his_sere_serv.vir_price as price',
 				'his_execute_room.execute_room_name')
 			->whereBetween('tdl_intruction_date', [$date_from, $date_to])
 			->where([
@@ -822,11 +822,11 @@ class KHTHController extends Controller
                 case '1':
                     $query = $query->selectRaw('his_sere_serv.tdl_service_name as DVKT,
                         sum(his_sere_serv.amount) as So_luong,
-                        sum(his_sere_serv.amount * his_sere_serv.price) as So_tien');
+                        sum(his_sere_serv.amount * his_sere_serv.vir_price) as So_tien');
                     break;
                 case '2':
                     $query = $query->selectRaw('his_sere_serv.tdl_treatment_code as MA_LK,
-                        sum(his_sere_serv.amount * his_sere_serv.price) as So_tien');
+                        sum(his_sere_serv.amount * his_sere_serv.vir_price) as So_tien');
                     break;
                 default:
                     $query = $query->select('his_sere_serv.tdl_treatment_code as Ma_dieu_tri',
@@ -845,7 +845,7 @@ class KHTHController extends Controller
                         'his_execute_room.execute_room_name as Phong_thuc_hien',
                         'his_service_req.execute_username as BS_thuc_hien',
                         'his_sere_serv.amount as So_luong',
-                        'his_sere_serv.price as Don_gia');
+                        'his_sere_serv.vir_price as Don_gia');
                     break;
             }
 
@@ -1193,7 +1193,7 @@ class KHTHController extends Controller
                 $sere_serv_chiphi = DB::connection('HISPro')  
                 ->table('his_sere_serv')
                 ->join('his_service_type', 'his_service_type.id', '=', 'his_sere_serv.tdl_service_type_id')
-                ->selectRaw('sum(amount*price) as thanh_tien, sum(amount) as so_luong, service_type_name')
+                ->selectRaw('sum(amount*vir_price) as thanh_tien, sum(amount) as so_luong, service_type_name')
                 ->where('his_sere_serv.is_delete', 0)
                 ->whereNull('his_sere_serv.is_expend')
                 ->whereNull('his_sere_serv.is_no_pay')
@@ -1889,7 +1889,7 @@ class KHTHController extends Controller
             SELECT 
                 re_dept.department_name AS deptname,
                 st.hein_service_type_code AS stc,
-                ss.amount * ss.price AS q
+                ss.amount * ss.vir_price AS q
             FROM 
                 his_sere_serv ss
             JOIN 
@@ -1934,7 +1934,7 @@ class KHTHController extends Controller
             SELECT 
                 re_dept.department_name AS deptname,
                 st.hein_service_type_code AS stc,
-                ss.amount * ss.price AS q
+                ss.amount * ss.vir_price AS q
             FROM 
                 his_sere_serv ss
             JOIN 
