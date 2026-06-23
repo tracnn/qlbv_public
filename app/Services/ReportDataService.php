@@ -458,7 +458,7 @@ class ReportDataService
                     re_dept.department_name AS deptname,
                     rr.reception_room_name || er.execute_room_name || br.bed_room_name AS roomname,
                     st.service_type_code AS stc,
-                    ss.amount * ss.price AS q
+                    ss.amount * ss.vir_price AS q
                 FROM 
                     his_sere_serv ss
                 LEFT JOIN
@@ -585,7 +585,7 @@ class ReportDataService
                     tm.out_time AS out_time,
                     last_dept.department_name AS department_name,
                     st.service_type_code AS stc,
-                    ss.amount * ss.price AS q
+                    ss.amount * ss.vir_price AS q
                 FROM 
                     his_sere_serv ss
                 LEFT JOIN
@@ -724,7 +724,7 @@ class ReportDataService
                 $ttId = (int) $tt->id;
                 $suffix = "_{$ptId}_{$ttId}";
                 $pivotCols[] = "SUM(CASE WHEN hpt.id = {$ptId} AND htt.id = {$ttId} THEN hss.amount ELSE 0 END) AS sl{$suffix}";
-                $pivotCols[] = "SUM(CASE WHEN hpt.id = {$ptId} AND htt.id = {$ttId} THEN hss.amount * hss.price ELSE 0 END) AS tt{$suffix}";
+                $pivotCols[] = "SUM(CASE WHEN hpt.id = {$ptId} AND htt.id = {$ttId} THEN hss.amount * hss.vir_price ELSE 0 END) AS tt{$suffix}";
                 $pivotCols[] = "SUM(CASE WHEN hpt.id = {$ptId} AND htt.id = {$ttId} THEN NVL(hss.vir_total_patient_price_no_dc,0) - NVL(hss.vir_total_patient_price,0) ELSE 0 END) AS mg{$suffix}";
             }
         }
