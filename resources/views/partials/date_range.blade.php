@@ -85,7 +85,7 @@
         }
 
         // Set default dates when the page loads
-        setDefaultDates('day');
+        setDefaultDates('day_today');
 
         // Update default dates and save to localStorage when the user changes the selection
         $('#default_range').change(function() {
