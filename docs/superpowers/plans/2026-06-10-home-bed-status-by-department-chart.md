@@ -371,7 +371,41 @@ git add public/js/dashboard/charts.js
 git commit -m "feat: renderBedStatusByDepartment + dang ky renderAll"
 ```
 
-### Task 6: Kiểm chứng thật (tinker + HTTP)
+### Task 6: Cập nhật `readme.md`
+
+**Files:**
+- Modify: `readme.md`
+
+- [ ] **Step 1: Thêm mục changelog** vào đầu phần `# 10/06/2026` (ngay sau dòng tiêu đề ngày, trước dòng "Doanh thu theo khoa..."):
+
+```markdown
+- Bổ sung biểu đồ "Tình trạng giường theo khoa" trên Home dashboard: cột nhóm giường đã sử dụng / còn trống + công suất % theo từng khoa (his_bed, his_treatment_bed_room), trạng thái hiện tại (real-time, không lọc ngày)
+```
+
+Cụ thể, đổi:
+```markdown
+# 10/06/2026
+
+- Bổ sung biểu đồ "Doanh thu theo khoa thực hiện" trên Home dashboard: ...
+```
+thành:
+```markdown
+# 10/06/2026
+
+- Bổ sung biểu đồ "Tình trạng giường theo khoa" trên Home dashboard: cột nhóm giường đã sử dụng / còn trống + công suất % theo từng khoa (his_bed, his_treatment_bed_room), trạng thái hiện tại (real-time, không lọc ngày)
+- Bổ sung biểu đồ "Doanh thu theo khoa thực hiện" trên Home dashboard: ...
+```
+
+> Nếu lúc triển khai phần `# 10/06/2026` không còn ở đầu file (đã sang ngày khác), tạo mục ngày mới ở đầu file rồi thêm dòng trên.
+
+- [ ] **Step 2: Commit**
+
+```bash
+git add readme.md
+git commit -m "docs: readme cap nhat bieu do tinh trang giuong theo khoa"
+```
+
+### Task 7: Kiểm chứng thật (tinker + HTTP)
 
 **Files:** (không sửa code trừ khi phát hiện lệch)
 
@@ -402,5 +436,5 @@ git add -A && git commit -m "fix: kiem chung bieu do tinh trang giuong theo khoa
 ## Hoàn tất
 
 - [ ] **Chạy test:** `php vendor/bin/phpunit tests/Unit/HomeBedStatusByDepartmentTest.php` → PASS.
-- [ ] **Cập nhật `readme.md`** mục ngày mới: "Bổ sung biểu đồ Tình trạng giường theo khoa (đã dùng/còn trống/công suất %) trên Home dashboard".
+- [ ] **readme.md** đã cập nhật ở Task 6.
 - [ ] **Verify** bằng @superpowers:verification-before-completion trước khi tuyên bố hoàn thành.
