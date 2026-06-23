@@ -1,5 +1,6 @@
 # 10/06/2026
 
+- Bổ sung biểu đồ "Tình trạng giường theo khoa" trên Home dashboard: cột nhóm giường đã sử dụng / còn trống + công suất % theo từng khoa (his_bed, his_treatment_bed_room), trạng thái hiện tại (real-time, không lọc ngày)
 - Bổ sung biểu đồ "Doanh thu theo khoa thực hiện" trên Home dashboard: biểu đồ cột doanh thu theo khoa (his_department), mỗi khoa một màu, đơn vị triệu (Tr), loại bỏ khoa không có doanh thu, lọc theo khoảng ngày của dashboard
 - Bổ sung biểu đồ "Số lượng dịch vụ theo máy thực hiện" trên Home dashboard: thống kê số lượng dịch vụ theo máy (his_machine), có nút chuyển xem theo nhóm máy / từng máy, lọc theo khoảng ngày của dashboard
 

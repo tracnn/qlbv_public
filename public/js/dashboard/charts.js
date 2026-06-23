@@ -309,6 +309,45 @@
       });
     }
 
+    // ----- Tình trạng giường theo khoa (snapshot hiện tại) -----
+    function renderBedStatusByDepartment(start, end) {
+      var el = 'chart_bed_status_by_department';
+      return API.bedStatusByDepartment(start, end).done(function (r) {
+        if (!r || !r.categories || !r.categories.length) {
+          $('#' + el).html('<div style="text-align:center;padding:40px;color:#999;">Không có dữ liệu</div>');
+          return;
+        }
+        var t = r.total || { tong: 0, dang_dung: 0, cong_suat: 0 };
+
+        Highcharts.chart(el, {
+          chart: { type: 'column' },
+          title: {
+            text: 'Tình trạng giường theo khoa: ' + t.tong + ' giường · ' + t.dang_dung + ' đã dùng · ' + t.cong_suat + '%',
+            style: { fontSize: '16px', fontWeight: 'bold' }
+          },
+          xAxis: { categories: r.categories, labels: { rotation: -45, style: { fontSize: '12px' } } },
+          yAxis: { min: 0, title: { text: 'Số giường' } },
+          legend: { enabled: true },
+          tooltip: {
+            shared: true,
+            formatter: function () {
+              var i = (this.points && this.points.length) ? this.points[0].point.index : this.point.index;
+              var used = r.used[i], free = r.free[i], util = r.utilization[i];
+              return '<b>' + r.categories[i] + '</b><br/>Đã sử dụng: ' + used +
+                     '<br/>Còn trống: ' + free +
+                     '<br/>Tổng: ' + (used + free) +
+                     '<br/>Công suất: ' + util + '%';
+            }
+          },
+          plotOptions: { column: { borderWidth: 0, dataLabels: { enabled: true, style: { fontSize: '11px', fontWeight: 'bold' } } } },
+          series: [
+            { name: 'Đã sử dụng', data: r.used, color: '#dd4b39' },
+            { name: 'Còn trống', data: r.free, color: '#00a65a' }
+          ]
+        });
+      });
+    }
+
     // ===== Doanh thu Overview =====
     // Mỗi patient_type = 1 cặp series cùng màu, share legend (linkedTo):
     //   - column stacked trên Y trái (Số lượng)
@@ -702,6 +741,7 @@
           renderDoanhThuOverview(start, end),
           renderBuongBenh(start, end),
           renderNoiTru(start, end),
+          renderBedStatusByDepartment(start, end),
           renderKhamByRoom(start, end),
           renderExamParaclinical(start, end),
           renderDiagImaging(start, end),

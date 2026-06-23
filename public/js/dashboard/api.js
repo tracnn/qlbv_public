@@ -27,7 +27,8 @@
       dieuTriNgoaiTru: function (start, end) { return get(R.fetchDieuTriNgoaiTru, { startDate: start, endDate: end }); },
       patientInRoomNgoaiTru: function (start, end) { return get(R.fetchPatientInRoomNgoaiTru, { startDate: start, endDate: end }); },
       serviceByMachine: function (start, end) { return get(R.fetchServiceByMachine, { startDate: start, endDate: end }); },
-      doanhThuByDepartment: function (start, end) { return get(R.fetchDoanhthuByDepartment, { startDate: start, endDate: end }); }
+      doanhThuByDepartment: function (start, end) { return get(R.fetchDoanhthuByDepartment, { startDate: start, endDate: end }); },
+      bedStatusByDepartment: function (start, end) { return get(R.fetchBedStatusByDepartment, { startDate: start, endDate: end }); }
     };
   
     win.DAPI = API;

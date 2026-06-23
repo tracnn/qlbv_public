@@ -72,6 +72,7 @@ Route::group(['middleware' => ['auth', 'check.first.login']], function () {
         Route::get('fetch-dieu-tri-ngoai-tru', 'HomeController@fetchDieutriNgoaitru')->name('fetch-dieu-tri-ngoai-tru');
         Route::get('fetch-doanh-thu', 'HomeController@fetchDoanhthu')->name('fetch-doanh-thu');
         Route::get('fetch-doanhthu-by-department', 'HomeController@fetchDoanhthuByDepartment')->name('fetch-doanhthu-by-department');
+        Route::get('fetch-bed-status-by-department', 'HomeController@fetchBedStatusByDepartment')->name('fetch-bed-status-by-department');
         Route::get('fetch-doanh-thu-overview', 'HomeController@fetchDoanhthuOverview')->name('fetch-doanh-thu-overview');
         Route::get('fetch-treatment', 'HomeController@fetchTreatment')->name('fetch-treatment');
 

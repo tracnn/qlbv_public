@@ -307,6 +307,16 @@
         </div>
     </div>
 
+    <div class="row">
+        <div class="col-lg-12 connectedSortable">
+            <div class="nav-tabs-custom text-center">
+                <div class="tab-content no-padding" style="padding:10px;">
+                    <div id="chart_bed_status_by_department" style="width:100%; height:420px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     @if(config("organization.is_bieudo_dieutringoaitru"))
     <div class="row">
         <div class="col-lg-6 connectedSortable">
@@ -616,6 +626,7 @@
         fetchOutTreatmentGroupType: "{{ route('fetch-out-treatment-group-treatment-type') }}",
         fetchDoanhThu: "{{ route('fetch-doanh-thu') }}",
         fetchDoanhthuByDepartment: "{{ route('fetch-doanhthu-by-department') }}",
+        fetchBedStatusByDepartment: "{{ route('fetch-bed-status-by-department') }}",
         fetchDoanhThuOverview: "{{ route('fetch-doanh-thu-overview') }}",
         chartBuongBenh: "{{ route('home.xml_chart') }}",
         fetchKhamByRoom: "{{ route('fetch-kham-by-room') }}",

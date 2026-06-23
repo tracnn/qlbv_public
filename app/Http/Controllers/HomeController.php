@@ -322,6 +322,99 @@ class HomeController extends Controller
             ->get();
     }
 
+    /**
+     * Tổng hợp dữ liệu biểu đồ "tình trạng giường theo khoa" (snapshot hiện tại).
+     * @param  iterable $rows  Mỗi phần tử là 1 khoa: ->department_name, ->tong_giuong, ->dang_dung
+     * @return array{categories: array, used: array, free: array, utilization: array, total: array}
+     *   Giữ thứ tự tự nhiên từ rows (không sắp xếp). free = max(0, tong - dang).
+     */
+    public static function buildBedStatusByDepartmentSeries($rows)
+    {
+        $categories = [];
+        $used = [];
+        $free = [];
+        $utilization = [];
+        $sumTong = 0;
+        $sumDang = 0;
+        $sumFree = 0;
+
+        foreach ($rows as $r) {
+            $tong = (int) $r->tong_giuong;
+            $dang = (int) $r->dang_dung;
+            $tr   = max(0, $tong - $dang);
+            $util = $tong > 0 ? (int) round($dang / $tong * 100) : 0;
+
+            $categories[]  = $r->department_name;
+            $used[]        = $dang;
+            $free[]        = $tr;
+            $utilization[] = $util;
+
+            $sumTong += $tong;
+            $sumDang += $dang;
+            $sumFree += $tr;
+        }
+
+        return [
+            'categories'  => $categories,
+            'used'        => $used,
+            'free'        => $free,
+            'utilization' => $utilization,
+            'total'       => [
+                'tong'      => $sumTong,
+                'dang_dung' => $sumDang,
+                'con_trong' => $sumFree,
+                'cong_suat' => $sumTong > 0 ? (int) round($sumDang / $sumTong * 100) : 0,
+            ],
+        ];
+    }
+
+    /**
+     * API biểu đồ Home: tình trạng giường theo khoa (snapshot hiện tại, không lọc ngày).
+     */
+    public function fetchBedStatusByDepartment(Request $request)
+    {
+        if (!$request->ajax()) {
+            return redirect()->route('home');
+        }
+
+        $rows = $this->bedStatusByDepartment();
+
+        return response()->json(self::buildBedStatusByDepartmentSeries($rows));
+    }
+
+    private function bedStatusByDepartment()
+    {
+        $sql = "
+            WITH tong AS (
+                SELECT r.department_id, COUNT(*) tong_giuong
+                FROM his_bed b
+                JOIN his_bed_room br ON br.id = b.bed_room_id
+                JOIN his_room r ON r.id = br.room_id
+                WHERE b.is_active=1 AND b.is_delete=0 AND br.is_active=1 AND br.is_delete=0 AND r.is_active=1
+                GROUP BY r.department_id
+            ),
+            dang AS (
+                SELECT r.department_id, COUNT(*) dang_dung
+                FROM his_treatment_bed_room tbr
+                JOIN his_bed_room br ON br.id = tbr.bed_room_id
+                JOIN his_room r ON r.id = br.room_id
+                JOIN his_treatment t ON t.id = tbr.treatment_id
+                LEFT JOIN his_co_treatment ct ON ct.id = tbr.co_treatment_id
+                WHERE tbr.remove_time IS NULL AND tbr.is_delete=0 AND ct.id IS NULL
+                  AND t.tdl_treatment_type_id IN (3,4) AND t.out_time IS NULL
+                GROUP BY r.department_id
+            )
+            SELECT d.department_name,
+                   tong.tong_giuong AS tong_giuong,
+                   NVL(dang.dang_dung, 0) AS dang_dung
+            FROM tong
+            JOIN his_department d ON d.id = tong.department_id
+            LEFT JOIN dang ON dang.department_id = tong.department_id
+        ";
+
+        return DB::connection('HISPro')->select(DB::raw($sql));
+    }
+
     public function fetchDoanhthu(Request $request)
     {
         $current_date = $this->currentDate($request->input('startDate'), $request->input('endDate'));
