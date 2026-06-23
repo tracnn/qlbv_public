@@ -79,7 +79,7 @@ class HISProBaoCaoCacKhoa extends Command
         /* 1. Phòng khám phụ khoa */
         $sere_serv_pk_phu_khoa = DB::connection('HISPro')
             ->table('his_sere_serv')
-            ->selectRaw('sum(amount) as so_luong,sum(amount*price) as thanh_tien,tdl_service_name')
+            ->selectRaw('sum(amount) as so_luong,sum(amount*vir_price) as thanh_tien,tdl_service_name')
             ->where('tdl_intruction_time', '>=', $from_date)
             ->where('tdl_intruction_time', '<=', $to_date)
             ->where('his_sere_serv.is_delete', 0)
@@ -96,7 +96,7 @@ class HISProBaoCaoCacKhoa extends Command
         /* II. Báo cáo khoa Mắt */
         $sere_serv_mat = DB::connection('HISPro')
             ->table('his_sere_serv')
-            ->selectRaw('sum(amount) as so_luong,sum(amount*price) as thanh_tien,tdl_service_name,tdl_service_code')
+            ->selectRaw('sum(amount) as so_luong,sum(amount*vir_price) as thanh_tien,tdl_service_name,tdl_service_code')
             ->where('tdl_intruction_time', '>=', $from_date)
             ->where('tdl_intruction_time', '<=', $to_date)
             ->where('his_sere_serv.is_delete', 0)
