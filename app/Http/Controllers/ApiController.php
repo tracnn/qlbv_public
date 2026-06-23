@@ -502,7 +502,7 @@ class ApiController extends Controller
         return DB::connection('HISPro')
         ->table('his_sere_serv')
         ->join('his_service_type', 'his_sere_serv.tdl_service_type_id', '=', 'his_service_type.id')
-        ->selectRaw('sum(amount) as so_luong,sum(amount*price) as thanh_tien,tdl_service_type_id,service_type_name')
+        ->selectRaw('sum(amount) as so_luong,sum(amount*vir_price) as thanh_tien,tdl_service_type_id,service_type_name')
         ->whereBetween('tdl_intruction_time', [$from_date, $to_date])
         ->where('his_sere_serv.is_delete', 0)
         ->groupBy('tdl_service_type_id','service_type_name')
