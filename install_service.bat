@@ -59,6 +59,10 @@ set LARAVEL_PATH=%~dp0
 %NSSM_PATH%\nssm install "QLBV JobExportXml3176" %PHP_PATH% "%LARAVEL_PATH%artisan queue:work --queue=JobExportXml3176"
 %NSSM_PATH%\nssm set "QLBV JobExportXml3176" AppDirectory %LARAVEL_PATH%
 
+:: Tạo dịch vụ cho kiemtraylenh:scan (Kiểm tra sai sót y lệnh - quét HIS định kỳ)
+%NSSM_PATH%\nssm install "QLBV KiemTraYLenh" %PHP_PATH% "%LARAVEL_PATH%artisan kiemtraylenh:scan"
+%NSSM_PATH%\nssm set "QLBV KiemTraYLenh" AppDirectory %LARAVEL_PATH%
+
 :: Khởi động tất cả các dịch vụ
 %NSSM_PATH%\nssm start "QLBV JobQd130Xml"
 %NSSM_PATH%\nssm start "QLBV JobXml3176"
@@ -72,5 +76,6 @@ set LARAVEL_PATH=%~dp0
 %NSSM_PATH%\nssm start "QLBV JobSubmitXml3176"
 %NSSM_PATH%\nssm start "QLBV JobExportQd130Xml"
 %NSSM_PATH%\nssm start "QLBV JobExportXml3176"
+%NSSM_PATH%\nssm start "QLBV KiemTraYLenh"
 
 echo Service install completed successfully.

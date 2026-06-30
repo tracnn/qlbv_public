@@ -1,3 +1,7 @@
+# 30/06/2026
+
+- Bổ sung module Kiểm tra sai sót y lệnh (giai đoạn 1): quét incremental phiếu chỉ định từ HIS (HIS_SERVICE_REQ) theo watermark, chạy 4 quy tắc hợp lệ cấu trúc/thời gian & hành nghề (ngày ra<vào, giờ y lệnh ngoài đợt, giờ thực hiện trước y lệnh, BS thiếu chứng chỉ), lưu vi phạm vào order_check_violations. Chạy bằng `php artisan kiemtraylenh:scan` (lập lịch mỗi 1–5 phút qua Windows Task/nssm).
+
 # 23/06/2026
 
 - Bổ sung báo cáo KHTH "Doanh thu theo khoa/phòng thực hiện": lọc theo giai đoạn/khoa/phòng, biểu đồ + bảng doanh thu theo khoa, chi tiết theo phòng (DataTables) + xuất Excel; doanh thu tính theo vir_price (amount × vir_price)
