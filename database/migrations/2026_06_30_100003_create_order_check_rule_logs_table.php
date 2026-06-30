@@ -15,7 +15,7 @@ class CreateOrderCheckRuleLogsTable extends Migration
             $table->dateTime('finished_at')->nullable();
             $table->unsignedInteger('scanned_count')->default(0);
             $table->unsignedInteger('violation_count')->default(0);
-            $table->string('status', 20)->default('running');
+            $table->string('status', 20)->default('running'); // running|success|error
             $table->text('error')->nullable();
             $table->timestamps();
         });
