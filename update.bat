@@ -5,6 +5,10 @@ cd /d "%~dp0"
 :: Đường dẫn đến nssm.exe (giả sử nằm trong thư mục gốc của dự án)
 set NSSM_PATH=%~dp0
 
+:: Đường dẫn PHP và thư mục Laravel (dùng khi tự cài service mới)
+set PHP_PATH=php.exe
+set LARAVEL_PATH=%~dp0
+
 :: Đưa ứng dụng vào chế độ bảo trì
 echo Putting the application into maintenance mode...
 php artisan down
@@ -23,6 +27,15 @@ git pull origin main
 echo Running migrations...
 php artisan migrate --force
 
+:: Tự cài các service mới (idempotent - chỉ cài nếu chưa tồn tại)
+echo Ensuring services are installed...
+%NSSM_PATH%\nssm status "QLBV KiemTraYLenh" >nul 2>&1
+if errorlevel 1 (
+    echo Installing service QLBV KiemTraYLenh...
+    %NSSM_PATH%\nssm install "QLBV KiemTraYLenh" %PHP_PATH% "%LARAVEL_PATH%artisan kiemtraylenh:scan"
+    %NSSM_PATH%\nssm set "QLBV KiemTraYLenh" AppDirectory %LARAVEL_PATH%
+)
+
 :: Stop từng dịch vụ
 %NSSM_PATH%\nssm stop "QLBV JobQd130Xml"
 %NSSM_PATH%\nssm stop "QLBV JobXml3176"
@@ -36,6 +49,7 @@ php artisan migrate --force
 %NSSM_PATH%\nssm stop "QLBV JobSubmitXml3176"
 %NSSM_PATH%\nssm stop "QLBV JobExportQd130Xml"
 %NSSM_PATH%\nssm stop "QLBV JobExportXml3176"
+%NSSM_PATH%\nssm stop "QLBV KiemTraYLenh"
 
 :: Dọn dẹp cache
 echo Clearing cache...
@@ -71,6 +85,7 @@ echo Restarting services...
 %NSSM_PATH%\nssm start "QLBV JobSubmitXml3176"
 %NSSM_PATH%\nssm start "QLBV JobExportQd130Xml"
 %NSSM_PATH%\nssm start "QLBV JobExportXml3176"
+%NSSM_PATH%\nssm start "QLBV KiemTraYLenh"
 
 :: Đưa ứng dụng ra khỏi chế độ bảo trì
 echo Bringing the application out of maintenance mode...
