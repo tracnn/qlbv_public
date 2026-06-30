@@ -1,3 +1,7 @@
+# 30/06/2026 (cập nhật)
+
+- Module Kiểm tra sai sót y lệnh (giai đoạn 2): tổng quát hóa engine đa-nguồn (multi-scanner); bổ sung luật A1 nạp cảnh báo tương tác thuốc do HIS phát hiện (HIS_MEDICINE_INTERACTIVE) và A4 phát hiện phiếu chỉ định thiếu chẩn đoán ICD. Các luật bật/tắt trong order_check_rules.
+
 # 30/06/2026
 
 - Bổ sung module Kiểm tra sai sót y lệnh (giai đoạn 1): quét incremental phiếu chỉ định từ HIS (HIS_SERVICE_REQ) theo watermark, chạy 4 quy tắc hợp lệ cấu trúc/thời gian & hành nghề (ngày ra<vào, giờ y lệnh ngoài đợt, giờ thực hiện trước y lệnh, BS thiếu chứng chỉ), lưu vi phạm vào order_check_violations. Chạy bằng `php artisan kiemtraylenh:scan` (lập lịch mỗi 1–5 phút qua Windows Task/nssm).

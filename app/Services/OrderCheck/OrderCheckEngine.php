@@ -6,97 +6,97 @@ use App\Models\OrderCheck\OrderCheckWatermark;
 use App\Models\OrderCheck\OrderCheckRule;
 use App\Models\OrderCheck\OrderCheckViolation;
 use App\Models\OrderCheck\OrderCheckRuleLog;
-use App\Services\OrderCheck\RuleHandlers\StructuralRuleRegistry;
-use App\Services\OrderCheck\Support\OrderContext;
+use App\Services\OrderCheck\Scanners\ScannerRegistry;
 use App\Services\OrderCheck\Support\Violation;
+use App\Services\OrderCheck\Support\ViolationContext;
 
 class OrderCheckEngine
 {
-    const SOURCE_KEY = 'his_service_req';
-
     protected $source;
+    protected $rulesByCode; // cache trong 1 lần run()
 
     public function __construct(HisOrderSource $source)
     {
         $this->source = $source;
     }
 
+    public function source()
+    {
+        return $this->source;
+    }
+
+    /** Chạy tất cả scanner đã đăng ký. Trả tổng hợp. */
     public function run($limit = null)
     {
         $limit = $limit ?: (int) config('order_check.batch_size');
+        $this->rulesByCode = OrderCheckRule::where('is_active', true)->get()->keyBy('code');
 
-        $log = OrderCheckRuleLog::create([
-            'source_key' => self::SOURCE_KEY,
-            'started_at' => now(),
-            'status' => 'running',
-        ]);
+        $totalScanned = 0;
+        $totalViolations = 0;
 
-        try {
-            $wm = OrderCheckWatermark::firstOrCreate(
-                ['source_key' => self::SOURCE_KEY],
-                ['last_create_time' => 0, 'last_modify_time' => 0, 'last_id' => 0]
-            );
-
-            $rulesByCode = OrderCheckRule::where('is_active', true)->get()->keyBy('code');
-            $handlers = StructuralRuleRegistry::handlers();
-
-            $rows = $this->source->fetchServiceRequests($wm->last_create_time, $wm->last_id, $limit);
-            $scanned = $rows->count();
-            $violationCount = 0;
-
-            if ($scanned > 0) {
-                $reqIds = $rows->pluck('id')->map(function ($v) { return (int) $v; })->all();
-                $servicesMap = $this->source->fetchServicesByReqIds($reqIds);
-
-                $maxCreate = $wm->last_create_time;
-                $maxId = $wm->last_id;
-
-                foreach ($rows as $row) {
-                    $ctx = $this->source->buildContext($row, isset($servicesMap[(int) $row->id]) ? $servicesMap[(int) $row->id] : []);
-
-                    foreach ($handlers as $handler) {
-                        if (!isset($rulesByCode[$handler->code()])) {
-                            continue;
-                        }
-                        $rule = $rulesByCode[$handler->code()];
-                        foreach ($handler->check($ctx) as $vio) {
-                            if ($this->persist($vio, $ctx, $rule)) {
-                                $violationCount++;
-                            }
-                        }
-                    }
-
-                    if ((int) $row->create_time > $maxCreate || ((int) $row->create_time == $maxCreate && (int) $row->id > $maxId)) {
-                        $maxCreate = (int) $row->create_time;
-                        $maxId = (int) $row->id;
-                    }
-                }
-
-                $wm->last_create_time = $maxCreate;
-                $wm->last_id = $maxId;
-                $wm->last_run_at = now();
-                $wm->save();
+        foreach (ScannerRegistry::all($this->source) as $scanner) {
+            $log = OrderCheckRuleLog::create([
+                'source_key' => $scanner->sourceKey(),
+                'started_at' => now(),
+                'status' => 'running',
+            ]);
+            try {
+                $res = $scanner->scan($this, $limit);
+                $log->update([
+                    'finished_at' => now(),
+                    'scanned_count' => $res['scanned'],
+                    'violation_count' => $res['violations'],
+                    'status' => 'success',
+                ]);
+                $totalScanned += $res['scanned'];
+                $totalViolations += $res['violations'];
+            } catch (\Exception $e) {
+                $log->update([
+                    'finished_at' => now(),
+                    'status' => 'error',
+                    'error' => $e->getMessage(),
+                ]);
+                throw $e;
             }
-
-            $log->update([
-                'finished_at' => now(),
-                'scanned_count' => $scanned,
-                'violation_count' => $violationCount,
-                'status' => 'success',
-            ]);
-
-            return ['scanned' => $scanned, 'violations' => $violationCount];
-        } catch (\Exception $e) {
-            $log->update([
-                'finished_at' => now(),
-                'status' => 'error',
-                'error' => $e->getMessage(),
-            ]);
-            throw $e;
         }
+
+        return ['scanned' => $totalScanned, 'violations' => $totalViolations];
     }
 
-    protected function persist(Violation $vio, OrderContext $ctx, OrderCheckRule $rule)
+    /** Rule active theo code (đã cache trong run()). */
+    public function activeRules()
+    {
+        if ($this->rulesByCode === null) {
+            $this->rulesByCode = OrderCheckRule::where('is_active', true)->get()->keyBy('code');
+        }
+        return $this->rulesByCode;
+    }
+
+    public function getWatermark($sourceKey)
+    {
+        return OrderCheckWatermark::firstOrCreate(
+            ['source_key' => $sourceKey],
+            ['last_create_time' => 0, 'last_modify_time' => 0, 'last_id' => 0]
+        );
+    }
+
+    public function saveWatermark($sourceKey, $lastCreateTime, $lastId)
+    {
+        $wm = $this->getWatermark($sourceKey);
+        $wm->last_create_time = $lastCreateTime;
+        $wm->last_id = $lastId;
+        $wm->last_run_at = now();
+        $wm->save();
+        return $wm;
+    }
+
+    /**
+     * Ghi 1 violation idempotent theo dedup_key. Trả true nếu tạo mới.
+     * @param Violation $vio
+     * @param ViolationContext $ctx
+     * @param OrderCheckRule $rule
+     */
+    public function persist(Violation $vio, ViolationContext $ctx, OrderCheckRule $rule)
     {
         $dedup = $vio->dedupKey();
         $row = OrderCheckViolation::where('dedup_key', $dedup)->first();

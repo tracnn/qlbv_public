@@ -74,6 +74,31 @@ class HisOrderSource
         return $map;
     }
 
+    /**
+     * Lấy lô tương tác thuốc HIS đã phát hiện, theo watermark (create_time, id).
+     * Mỗi dòng đã gắn treatment_id, bác sĩ, ICD, cặp thuốc, mức độ.
+     */
+    public function fetchInteractions($lastCreateTime, $lastId, $limit)
+    {
+        return DB::connection($this->conn)
+            ->table('his_medicine_interactive')
+            ->where('is_delete', 0)
+            ->where(function ($w) use ($lastCreateTime, $lastId) {
+                $w->where('create_time', '>', $lastCreateTime)
+                  ->orWhere(function ($w2) use ($lastCreateTime, $lastId) {
+                      $w2->where('create_time', '=', $lastCreateTime)
+                         ->where('id', '>', $lastId);
+                  });
+            })
+            ->orderBy('create_time')
+            ->orderBy('id')
+            ->limit($limit)
+            ->selectRaw('id, create_time, treatment_id, request_loginname,
+                request_department_id, icd_code, icd_name,
+                medicine_type_id1, medicine_type_id2, interactive_grade_id')
+            ->get();
+    }
+
     public function buildContext($row, array $services = [])
     {
         $c = new OrderContext();
