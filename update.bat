@@ -27,8 +27,93 @@ git pull origin main
 echo Running migrations...
 php artisan migrate --force
 
-:: Tự cài các service mới (idempotent - chỉ cài nếu chưa tồn tại)
+:: Tự cài các service (idempotent - chỉ cài nếu chưa tồn tại)
 echo Ensuring services are installed...
+
+%NSSM_PATH%\nssm status "QLBV JobQd130Xml" >nul 2>&1
+if errorlevel 1 (
+    echo Installing service QLBV JobQd130Xml...
+    %NSSM_PATH%\nssm install "QLBV JobQd130Xml" %PHP_PATH% "%LARAVEL_PATH%artisan queue:work --queue=JobQd130Xml"
+    %NSSM_PATH%\nssm set "QLBV JobQd130Xml" AppDirectory %LARAVEL_PATH%
+)
+
+%NSSM_PATH%\nssm status "QLBV JobXml3176" >nul 2>&1
+if errorlevel 1 (
+    echo Installing service QLBV JobXml3176...
+    %NSSM_PATH%\nssm install "QLBV JobXml3176" %PHP_PATH% "%LARAVEL_PATH%artisan queue:work --queue=JobXml3176"
+    %NSSM_PATH%\nssm set "QLBV JobXml3176" AppDirectory %LARAVEL_PATH%
+)
+
+%NSSM_PATH%\nssm status "QLBV JobKtTheBHYT" >nul 2>&1
+if errorlevel 1 (
+    echo Installing service QLBV JobKtTheBHYT...
+    %NSSM_PATH%\nssm install "QLBV JobKtTheBHYT" %PHP_PATH% "%LARAVEL_PATH%artisan queue:work --queue=JobKtTheBHYT"
+    %NSSM_PATH%\nssm set "QLBV JobKtTheBHYT" AppDirectory %LARAVEL_PATH%
+)
+
+%NSSM_PATH%\nssm status "QLBV ImportCatalog" >nul 2>&1
+if errorlevel 1 (
+    echo Installing service QLBV ImportCatalog...
+    %NSSM_PATH%\nssm install "QLBV ImportCatalog" %PHP_PATH% "%LARAVEL_PATH%artisan importCatalogBHXH:data"
+    %NSSM_PATH%\nssm set "QLBV ImportCatalog" AppDirectory %LARAVEL_PATH%
+)
+
+%NSSM_PATH%\nssm status "QLBV XMLImport" >nul 2>&1
+if errorlevel 1 (
+    echo Installing service QLBV XMLImport...
+    %NSSM_PATH%\nssm install "QLBV XMLImport" %PHP_PATH% "%LARAVEL_PATH%artisan xml130import:day"
+    %NSSM_PATH%\nssm set "QLBV XMLImport" AppDirectory %LARAVEL_PATH%
+)
+
+%NSSM_PATH%\nssm status "QLBV XMLImport3176" >nul 2>&1
+if errorlevel 1 (
+    echo Installing service QLBV XMLImport3176...
+    %NSSM_PATH%\nssm install "QLBV XMLImport3176" %PHP_PATH% "%LARAVEL_PATH%artisan xml3176import:day"
+    %NSSM_PATH%\nssm set "QLBV XMLImport3176" AppDirectory %LARAVEL_PATH%
+)
+
+%NSSM_PATH%\nssm status "QLBV TrucDuLieuYTeXmlScan" >nul 2>&1
+if errorlevel 1 (
+    echo Installing service QLBV TrucDuLieuYTeXmlScan...
+    %NSSM_PATH%\nssm install "QLBV TrucDuLieuYTeXmlScan" %PHP_PATH% "%LARAVEL_PATH%artisan truc-du-lieu-y-te:scan"
+    %NSSM_PATH%\nssm set "QLBV TrucDuLieuYTeXmlScan" AppDirectory %LARAVEL_PATH%
+)
+
+%NSSM_PATH%\nssm status "QLBV CongDuLieuYTeDienBienXmlScan" >nul 2>&1
+if errorlevel 1 (
+    echo Installing service QLBV CongDuLieuYTeDienBienXmlScan...
+    %NSSM_PATH%\nssm install "QLBV CongDuLieuYTeDienBienXmlScan" %PHP_PATH% "%LARAVEL_PATH%artisan cong-du-lieu-y-te-dien-bien:scan"
+    %NSSM_PATH%\nssm set "QLBV CongDuLieuYTeDienBienXmlScan" AppDirectory %LARAVEL_PATH%
+)
+
+%NSSM_PATH%\nssm status "QLBV JobSubmitQd130Xml" >nul 2>&1
+if errorlevel 1 (
+    echo Installing service QLBV JobSubmitQd130Xml...
+    %NSSM_PATH%\nssm install "QLBV JobSubmitQd130Xml" %PHP_PATH% "%LARAVEL_PATH%artisan queue:work --queue=JobSubmitQd130Xml"
+    %NSSM_PATH%\nssm set "QLBV JobSubmitQd130Xml" AppDirectory %LARAVEL_PATH%
+)
+
+%NSSM_PATH%\nssm status "QLBV JobSubmitXml3176" >nul 2>&1
+if errorlevel 1 (
+    echo Installing service QLBV JobSubmitXml3176...
+    %NSSM_PATH%\nssm install "QLBV JobSubmitXml3176" %PHP_PATH% "%LARAVEL_PATH%artisan queue:work --queue=JobSubmitXml3176"
+    %NSSM_PATH%\nssm set "QLBV JobSubmitXml3176" AppDirectory %LARAVEL_PATH%
+)
+
+%NSSM_PATH%\nssm status "QLBV JobExportQd130Xml" >nul 2>&1
+if errorlevel 1 (
+    echo Installing service QLBV JobExportQd130Xml...
+    %NSSM_PATH%\nssm install "QLBV JobExportQd130Xml" %PHP_PATH% "%LARAVEL_PATH%artisan queue:work --queue=JobExportQd130Xml"
+    %NSSM_PATH%\nssm set "QLBV JobExportQd130Xml" AppDirectory %LARAVEL_PATH%
+)
+
+%NSSM_PATH%\nssm status "QLBV JobExportXml3176" >nul 2>&1
+if errorlevel 1 (
+    echo Installing service QLBV JobExportXml3176...
+    %NSSM_PATH%\nssm install "QLBV JobExportXml3176" %PHP_PATH% "%LARAVEL_PATH%artisan queue:work --queue=JobExportXml3176"
+    %NSSM_PATH%\nssm set "QLBV JobExportXml3176" AppDirectory %LARAVEL_PATH%
+)
+
 %NSSM_PATH%\nssm status "QLBV KiemTraYLenh" >nul 2>&1
 if errorlevel 1 (
     echo Installing service QLBV KiemTraYLenh...
