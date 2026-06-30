@@ -13,6 +13,10 @@ return [
     // Bỏ qua các loại điều trị không áp dụng (vd loại test), CSV id; rỗng = không loại
     'exclude_treatment_type_ids' => env('ORDER_CHECK_EXCLUDE_TREATMENT_TYPES', ''),
 
+    // Loại phiếu chỉ định KHÔNG áp luật A_MISSING_DIAGNOSIS (vd Khám=1: chẩn đoán có SAU khám).
+    // CSV id loại phiếu (HIS_SERVICE_REQ_TYPE). Rỗng = áp cho mọi loại.
+    'missing_diagnosis_exclude_type_ids' => env('ORDER_CHECK_MISSING_DIAG_EXCLUDE_TYPES', '1'),
+
     // ===== Thông báo email digest =====
     // Bật/tắt gửi email (mặc định TẮT cho an toàn, bật khi đã cấu hình người nhận)
     'notify_enabled' => (bool) env('ORDER_CHECK_NOTIFY_ENABLED', false),
