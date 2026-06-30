@@ -594,6 +594,13 @@ Route::group(['middleware' => ['auth', 'check.first.login']], function () {
         Route::get('revenue-dept-room-index/rooms', 'KHTH\RevenueDeptRoomController@rooms')->name('khth.revenue-dept-room-rooms');
         Route::get('revenue-dept-room-index/room-types', 'KHTH\RevenueDeptRoomController@roomTypes')->name('khth.revenue-dept-room-room-types');
 
+        /* Kiểm tra sai sót y lệnh */
+        Route::get('order-check-index', 'KHTH\OrderCheckController@index')->name('khth.order-check-index');
+        Route::get('order-check-index/summary', 'KHTH\OrderCheckController@summary')->name('khth.order-check-summary');
+        Route::get('order-check-index/fetch', 'KHTH\OrderCheckController@fetch')->name('khth.order-check-fetch');
+        Route::post('order-check-index/update-status', 'KHTH\OrderCheckController@updateStatus')->name('khth.order-check-update-status');
+        Route::get('order-check-index/export', 'KHTH\OrderCheckController@export')->name('khth.order-check-export');
+
     });
 
     Route::group(['prefix' => 'queue'], function () { 

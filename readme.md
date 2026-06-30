@@ -1,3 +1,7 @@
+# 30/06/2026 (cập nhật 2)
+
+- Module Kiểm tra sai sót y lệnh (giai đoạn 3): dashboard KHTH "Kiểm tra sai sót y lệnh" (lọc theo ngày/khoa/mức độ/loại luật/trạng thái + KPI + DataTables), quy trình xử lý (đã xử lý/bỏ qua + ghi chú + người xử lý), xuất Excel, và API JSON tra cứu vi phạm theo đợt điều trị.
+
 # 30/06/2026 (cập nhật)
 
 - Module Kiểm tra sai sót y lệnh (giai đoạn 2): tổng quát hóa engine đa-nguồn (multi-scanner); bổ sung luật A1 nạp cảnh báo tương tác thuốc do HIS phát hiện (HIS_MEDICINE_INTERACTIVE) và A4 phát hiện phiếu chỉ định thiếu chẩn đoán ICD. Các luật bật/tắt trong order_check_rules.

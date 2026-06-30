@@ -261,6 +261,13 @@ return [
                     'route'     => 'khth.revenue-dept-room-index',
                     'active'    => ['khth/revenue-dept-room-index*'],
                 ],
+                [
+                    'text'      => 'Kiểm tra sai sót y lệnh',
+                    'icon'      => 'stethoscope',
+                    'checkrole' => 'administrator',
+                    'route'     => 'khth.order-check-index',
+                    'active'    => ['khth/order-check-index*'],
+                ],
             ],
         ],
         [
