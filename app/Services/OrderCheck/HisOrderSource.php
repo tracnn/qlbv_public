@@ -85,29 +85,6 @@ class HisOrderSource
             ->get();
     }
 
-    /** Lô dòng dịch vụ mới (his_sere_serv) theo watermark — để biết đợt nào vừa phát sinh. */
-    public function fetchSereServBatch($lastCreateTime, $lastId, $limit)
-    {
-        return DB::connection($this->conn)
-            ->table('his_sere_serv')
-            ->where('is_delete', 0)
-            ->where('id', '>', $lastId)
-            ->orderBy('id')->limit($limit)
-            ->selectRaw('id, create_time, tdl_treatment_id')
-            ->get();
-    }
-
-    /** Toàn bộ dịch vụ đang hoạt động của 1 đợt điều trị. */
-    public function fetchTreatmentServices($treatmentId)
-    {
-        return DB::connection($this->conn)
-            ->table('his_sere_serv')
-            ->where('is_delete', 0)
-            ->where('tdl_treatment_id', $treatmentId)
-            ->selectRaw('id, service_id, tdl_service_code, tdl_service_name')
-            ->get();
-    }
-
     /** Lô dòng thuốc mới (his_exp_mest_medicine) theo watermark. */
     public function fetchExpMestBatch($lastCreateTime, $lastId, $limit)
     {
@@ -118,19 +95,6 @@ class HisOrderSource
             ->orderBy('id')->limit($limit)
             ->selectRaw('id, create_time, tdl_treatment_id, medicine_id, tdl_medicine_type_id,
                 amount, day_count, morning, noon, afternoon, evening')
-            ->get();
-    }
-
-    /** Toàn bộ thuốc đang hoạt động của 1 đợt, kèm hoạt chất từ his_medicine. */
-    public function fetchTreatmentMedicines($treatmentId)
-    {
-        return DB::connection($this->conn)
-            ->table('his_exp_mest_medicine as em')
-            ->leftJoin('his_medicine as m', 'em.medicine_id', '=', 'm.id')
-            ->where('em.is_delete', 0)
-            ->where('em.tdl_treatment_id', $treatmentId)
-            ->selectRaw('em.id, em.medicine_id, em.tdl_medicine_type_id,
-                m.active_ingr_bhyt_code as active_ingr_code, m.active_ingr_bhyt_name as active_ingr_name')
             ->get();
     }
 

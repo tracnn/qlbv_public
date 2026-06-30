@@ -21,7 +21,6 @@ class ResetOrderCheckWatermarksToMaxId extends Migration
         $map = [
             'his_service_req' => 'his_service_req',
             'his_medicine_interactive' => 'his_medicine_interactive',
-            'his_sere_serv' => 'his_sere_serv',
             'his_sere_serv_restriction' => 'his_sere_serv',
             'his_exp_mest_medicine' => 'his_exp_mest_medicine',
         ];

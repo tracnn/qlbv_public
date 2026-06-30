@@ -8,9 +8,8 @@ class SeedOrderCheckRulesA2A3A5 extends Migration
     public function up()
     {
         $now = date('Y-m-d H:i:s');
+        // A2 (trùng hoạt chất) & A3 (trùng dịch vụ) đã loại khỏi đợt này, sẽ nghiên cứu sau.
         $rules = [
-            ['code' => 'A_DUPLICATE_SERVICE', 'rule_type' => 'DuplicateServiceScanner', 'name' => 'Trùng dịch vụ trong đợt điều trị', 'severity' => 'warning'],
-            ['code' => 'A_DUPLICATE_ACTIVE_INGREDIENT', 'rule_type' => 'MedicineScanner', 'name' => 'Trùng hoạt chất trong đợt điều trị', 'severity' => 'warning'],
             ['code' => 'A_DOSE_MISMATCH', 'rule_type' => 'DoseSanityRule', 'name' => 'Liều × ngày không khớp số lượng cấp', 'severity' => 'info'],
         ];
         foreach ($rules as $r) {
@@ -27,6 +26,6 @@ class SeedOrderCheckRulesA2A3A5 extends Migration
 
     public function down()
     {
-        DB::table('order_check_rules')->whereIn('code', ['A_DUPLICATE_SERVICE', 'A_DUPLICATE_ACTIVE_INGREDIENT', 'A_DOSE_MISMATCH'])->delete();
+        DB::table('order_check_rules')->whereIn('code', ['A_DOSE_MISMATCH'])->delete();
     }
 }

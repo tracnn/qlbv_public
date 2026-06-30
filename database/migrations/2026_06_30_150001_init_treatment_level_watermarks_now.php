@@ -9,7 +9,7 @@ class InitTreatmentLevelWatermarksNow extends Migration
     {
         $nowNum = (int) date('YmdHis');
         $nowDt = date('Y-m-d H:i:s');
-        foreach (['his_sere_serv', 'his_exp_mest_medicine'] as $key) {
+        foreach (['his_exp_mest_medicine'] as $key) {
             DB::table('order_check_watermarks')->updateOrInsert(
                 ['source_key' => $key],
                 [
@@ -22,6 +22,6 @@ class InitTreatmentLevelWatermarksNow extends Migration
 
     public function down()
     {
-        DB::table('order_check_watermarks')->whereIn('source_key', ['his_sere_serv', 'his_exp_mest_medicine'])->delete();
+        DB::table('order_check_watermarks')->whereIn('source_key', ['his_exp_mest_medicine'])->delete();
     }
 }

@@ -15,7 +15,6 @@ class ScannerRegistry
         return [
             new ServiceReqScanner(),
             new InteractionLogScanner(),
-            new DuplicateServiceScanner(),
             new MedicineScanner(),
             new ServiceRestrictionScanner(),
         ];
