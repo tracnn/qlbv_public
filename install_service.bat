@@ -63,6 +63,10 @@ set LARAVEL_PATH=%~dp0
 %NSSM_PATH%\nssm install "QLBV KiemTraYLenh" %PHP_PATH% "%LARAVEL_PATH%artisan kiemtraylenh:scan"
 %NSSM_PATH%\nssm set "QLBV KiemTraYLenh" AppDirectory %LARAVEL_PATH%
 
+:: Tạo dịch vụ cho kiemtraylenh:notify (Gửi email digest sai sót y lệnh)
+%NSSM_PATH%\nssm install "QLBV KiemTraYLenhNotify" %PHP_PATH% "%LARAVEL_PATH%artisan kiemtraylenh:notify"
+%NSSM_PATH%\nssm set "QLBV KiemTraYLenhNotify" AppDirectory %LARAVEL_PATH%
+
 :: Khởi động tất cả các dịch vụ
 %NSSM_PATH%\nssm start "QLBV JobQd130Xml"
 %NSSM_PATH%\nssm start "QLBV JobXml3176"
@@ -77,5 +81,6 @@ set LARAVEL_PATH=%~dp0
 %NSSM_PATH%\nssm start "QLBV JobExportQd130Xml"
 %NSSM_PATH%\nssm start "QLBV JobExportXml3176"
 %NSSM_PATH%\nssm start "QLBV KiemTraYLenh"
+%NSSM_PATH%\nssm start "QLBV KiemTraYLenhNotify"
 
 echo Service install completed successfully.

@@ -121,6 +121,13 @@ if errorlevel 1 (
     %NSSM_PATH%\nssm set "QLBV KiemTraYLenh" AppDirectory %LARAVEL_PATH%
 )
 
+%NSSM_PATH%\nssm status "QLBV KiemTraYLenhNotify" >nul 2>&1
+if errorlevel 1 (
+    echo Installing service QLBV KiemTraYLenhNotify...
+    %NSSM_PATH%\nssm install "QLBV KiemTraYLenhNotify" %PHP_PATH% "%LARAVEL_PATH%artisan kiemtraylenh:notify"
+    %NSSM_PATH%\nssm set "QLBV KiemTraYLenhNotify" AppDirectory %LARAVEL_PATH%
+)
+
 :: Stop từng dịch vụ
 %NSSM_PATH%\nssm stop "QLBV JobQd130Xml"
 %NSSM_PATH%\nssm stop "QLBV JobXml3176"
@@ -135,6 +142,7 @@ if errorlevel 1 (
 %NSSM_PATH%\nssm stop "QLBV JobExportQd130Xml"
 %NSSM_PATH%\nssm stop "QLBV JobExportXml3176"
 %NSSM_PATH%\nssm stop "QLBV KiemTraYLenh"
+%NSSM_PATH%\nssm stop "QLBV KiemTraYLenhNotify"
 
 :: Dọn dẹp cache
 echo Clearing cache...
@@ -171,6 +179,7 @@ echo Restarting services...
 %NSSM_PATH%\nssm start "QLBV JobExportQd130Xml"
 %NSSM_PATH%\nssm start "QLBV JobExportXml3176"
 %NSSM_PATH%\nssm start "QLBV KiemTraYLenh"
+%NSSM_PATH%\nssm start "QLBV KiemTraYLenhNotify"
 
 :: Đưa ứng dụng ra khỏi chế độ bảo trì
 echo Bringing the application out of maintenance mode...

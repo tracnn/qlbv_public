@@ -1,3 +1,7 @@
+# 30/06/2026 (cập nhật 3)
+
+- Module Kiểm tra sai sót y lệnh (giai đoạn 4): gửi email digest định kỳ các vi phạm mới tới danh sách người nhận (email_receive_report), theo ngưỡng mức độ cấu hình; chạy bằng service `kiemtraylenh:notify`. Mặc định TẮT (bật qua ORDER_CHECK_NOTIFY_ENABLED).
+
 # 30/06/2026 (cập nhật 2)
 
 - Module Kiểm tra sai sót y lệnh (giai đoạn 3): dashboard KHTH "Kiểm tra sai sót y lệnh" (lọc theo ngày/khoa/mức độ/loại luật/trạng thái + KPI + DataTables), quy trình xử lý (đã xử lý/bỏ qua + ghi chú + người xử lý), xuất Excel, và API JSON tra cứu vi phạm theo đợt điều trị.
