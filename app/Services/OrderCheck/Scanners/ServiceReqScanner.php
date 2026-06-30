@@ -26,8 +26,10 @@ class ServiceReqScanner implements Scanner
             ClinicalServiceReqRuleRegistry::handlers()
         );
 
+        // Quét theo MODIFY_TIME (HIS_SERVICE_REQ.modify_time có index) để bắt cả phiếu
+        // bị SỬA sau khi tạo — vd người thực hiện (execute_loginname) được gán lúc thực hiện.
         $wm = $engine->getWatermark(self::SOURCE_KEY);
-        $rows = $source->fetchServiceRequests($wm->last_create_time, $wm->last_id, $limit);
+        $rows = $source->fetchServiceRequests($wm->last_modify_time, $wm->last_id, $limit);
         $scanned = $rows->count();
         $violations = 0;
 
@@ -35,7 +37,7 @@ class ServiceReqScanner implements Scanner
             $reqIds = $rows->pluck('id')->map(function ($v) { return (int) $v; })->all();
             $servicesMap = $source->fetchServicesByReqIds($reqIds);
 
-            $maxCreate = $wm->last_create_time;
+            $maxModify = $wm->last_modify_time;
             $maxId = $wm->last_id;
 
             foreach ($rows as $row) {
@@ -54,13 +56,15 @@ class ServiceReqScanner implements Scanner
                     }
                 }
 
-                if ((int) $row->create_time > $maxCreate || ((int) $row->create_time == $maxCreate && (int) $row->id > $maxId)) {
-                    $maxCreate = (int) $row->create_time;
-                    $maxId = (int) $row->id;
+                $mt = (int) $row->modify_time;
+                $rid = (int) $row->id;
+                if ($mt > $maxModify || ($mt == $maxModify && $rid > $maxId)) {
+                    $maxModify = $mt;
+                    $maxId = $rid;
                 }
             }
 
-            $engine->saveWatermark(self::SOURCE_KEY, $maxCreate, $maxId);
+            $engine->saveWatermarkModify(self::SOURCE_KEY, $maxModify, $maxId);
         }
 
         return ['scanned' => $scanned, 'violations' => $violations];

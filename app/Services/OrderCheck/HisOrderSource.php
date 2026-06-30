@@ -18,19 +18,21 @@ class HisOrderSource
         $this->excludeTreatmentTypeIds = $ex === '' ? [] : explode(',', $ex);
     }
 
-    public function fetchServiceRequests($lastCreateTime, $lastId, $limit)
+    public function fetchServiceRequests($lastModifyTime, $lastId, $limit)
     {
         $q = DB::connection($this->conn)
             ->table('his_service_req as sr')
             ->leftJoin('his_treatment as t', 'sr.treatment_id', '=', 't.id')
             ->leftJoin('his_employee as e', 'sr.execute_loginname', '=', 'e.loginname')
             ->where('sr.is_delete', 0)
-            ->where('sr.id', '>', $lastId)
+            ->where('sr.modify_time', '>', $lastModifyTime)
+            ->orderBy('sr.modify_time')
             ->orderBy('sr.id')
             ->limit($limit)
-            ->selectRaw('sr.id, sr.service_req_code, sr.treatment_id, sr.intruction_time,
+            ->selectRaw('/*+ INDEX(sr (MODIFY_TIME)) */
+                sr.id, sr.service_req_code, sr.treatment_id, sr.intruction_time,
                 sr.request_department_id, sr.request_loginname, sr.request_username,
-                sr.icd_code, sr.icd_name, sr.create_time,
+                sr.icd_code, sr.icd_name, sr.create_time, sr.modify_time,
                 sr.tdl_treatment_code, sr.tdl_patient_code, sr.tdl_patient_name,
                 t.in_time as in_time, t.out_time as out_time,
                 sr.execute_loginname, sr.execute_username, e.diploma as execute_diploma');

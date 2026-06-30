@@ -90,6 +90,17 @@ class OrderCheckEngine
         return $wm;
     }
 
+    /** Lưu watermark khi quét theo modify_time (vd HIS_SERVICE_REQ có index modify_time). */
+    public function saveWatermarkModify($sourceKey, $lastModifyTime, $lastId)
+    {
+        $wm = $this->getWatermark($sourceKey);
+        $wm->last_modify_time = $lastModifyTime;
+        $wm->last_id = $lastId;
+        $wm->last_run_at = now();
+        $wm->save();
+        return $wm;
+    }
+
     /**
      * Ghi 1 violation idempotent theo dedup_key. Trả true nếu tạo mới.
      * @param Violation $vio
