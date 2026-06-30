@@ -31,7 +31,9 @@
           @foreach($serviceReqTypes as $t)<option value="{{ $t->service_req_type_id }}">{{ $t->service_req_type_name }}</option>@endforeach
         </select>
       </div>
-      <div class="col-md-3"><label>Khoa thực hiện</label><input type="text" id="department_keyword" class="form-control" placeholder="mã/tên khoa..."></div>
+      <div class="col-md-3"><label>Khoa thực hiện</label>
+        <select id="department_id" class="form-control select2"><option value="">Tất cả</option></select>
+      </div>
     </div>
     <div class="row" style="margin-top:10px"><div class="col-md-12">
       <button id="btn-load" class="btn btn-primary"><i class="fa fa-search"></i> Tải dữ liệu</button>
@@ -78,7 +80,7 @@ var DT_VI = { search:'Tìm:', lengthMenu:'Hiện _MENU_ dòng', info:'Hiển th�
 var ocTable = null;
 
 function filters(){
-  return { date_from:$('#date_from').val(), date_to:$('#date_to').val(), severity:$('#severity').val(), status:$('#status').val(), rule_code:$('#rule_code').val(), service_req_type_id:$('#service_req_type_id').val(), department_keyword:$('#department_keyword').val(), keyword:$('#keyword').val() };
+  return { date_from:$('#date_from').val(), date_to:$('#date_to').val(), severity:$('#severity').val(), status:$('#status').val(), rule_code:$('#rule_code').val(), service_req_type_id:$('#service_req_type_id').val(), department_id:$('#department_id').val(), keyword:$('#keyword').val() };
 }
 
 function loadSummary(){
@@ -128,6 +130,12 @@ function reload(){
 $(function(){
   $('.select2').select2({width:'100%'});
   $('#btn-load').on('click', reload);
+
+  // Nạp danh mục Khoa/Phòng/TT cho filter "Khoa thực hiện"
+  $.getJSON('{{ route("category-his.fetch-department-catalog") }}', function(data){
+    var sel = $('#department_id');
+    $.each(data, function(i, c){ sel.append('<option value="'+c.id+'">'+c.department_name+'</option>'); });
+  });
 
   $('#btn-export').on('click', function(){
     var q = $.param(filters());
