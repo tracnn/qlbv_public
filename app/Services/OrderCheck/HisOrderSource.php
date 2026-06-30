@@ -40,7 +40,7 @@ class HisOrderSource
                 sr.icd_code, sr.icd_name, sr.create_time,
                 sr.tdl_treatment_code, sr.tdl_patient_code, sr.tdl_patient_name,
                 t.in_time as in_time, t.out_time as out_time,
-                e.practice_scope_decision as practice_scope_decision');
+                e.diploma as diploma');
 
         if (!empty($this->excludeTreatmentTypeIds)) {
             $q->whereNotIn('t.tdl_treatment_type_id', $this->excludeTreatmentTypeIds);
@@ -86,7 +86,7 @@ class HisOrderSource
         $c->departmentId = $row->request_department_id !== null ? (int) $row->request_department_id : null;
         $c->doctorLoginname = $row->request_loginname;
         $c->doctorUsername = $row->request_username;
-        $c->doctorPracticeScope = $row->practice_scope_decision;
+        $c->doctorDiploma = $row->diploma;
         $c->intructionTime = (int) $row->intruction_time;
         $c->inTime = (int) $row->in_time;
         $c->outTime = (int) $row->out_time;

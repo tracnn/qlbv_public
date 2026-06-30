@@ -23,7 +23,7 @@ Module có **2 họ luật** với cách quản lý khác nhau:
 
 ### Phạm vi loại sai sót — Họ B (hợp lệ cấu trúc/thời gian & hành nghề, hardcode)
 5. **Tính hợp lệ thời gian**: ngày ra viện < ngày vào viện; giờ y lệnh trước ngày vào hoặc sau ngày ra; giờ thực hiện trước giờ y lệnh; các mốc thời gian phi logic khác.
-6. **Điều kiện hành nghề**: bác sĩ ra y lệnh không có/không hợp lệ chứng chỉ – phạm vi hành nghề (`HIS_EMPLOYEE.PRACTICE_SCOPE_DECISION`).
+6. **Điều kiện hành nghề**: bác sĩ ra y lệnh không có/không hợp lệ chứng chỉ hành nghề (`HIS_EMPLOYEE.DIPLOMA` — số CCHN/GPHN; ~85% BS có nhập). *Lưu ý: KHÔNG dùng `PRACTICE_SCOPE_DECISION` vì cột này trống 100% trong HIS.*
 
 > Họ B dùng chung pipeline (engine → violation → dashboard/notify/workflow/API) với họ A, nhưng **logic nằm trong code** và được quản lý ở một thư mục/registry riêng (xem §6.1).
 
@@ -52,7 +52,7 @@ Tất cả bảng dưới đều có `ID` (NUMBER), `CREATE_TIME`/`MODIFY_TIME` 
 | `HIS_MEDICINE_INTERACTIVE` | Tham chiếu tương tác thuốc (`MEDICINE_TYPE_ID1/ID2`, `INTERACTIVE_GRADE_ID`, điều kiện ICD) |
 | `HIS_TREATMENT`, `HIS_PATIENT` | Đợt điều trị / nhân khẩu BN (tuổi, giới tính); mốc thời gian `IN_TIME`, `OUT_TIME` cho luật họ B |
 | `HIS_MEDICINE_TYPE` (+ nhóm/hoạt chất) | Danh mục thuốc, hoạt chất phục vụ phát hiện trùng |
-| `HIS_EMPLOYEE` | Thông tin BS ra y lệnh; `PRACTICE_SCOPE_DECISION` (chứng chỉ/phạm vi hành nghề) cho luật họ B |
+| `HIS_EMPLOYEE` | Thông tin BS ra y lệnh; `DIPLOMA` (số chứng chỉ/giấy phép hành nghề) cho luật họ B |
 
 **Cột thời gian phục vụ luật họ B** (đều NUMBER `YYYYMMDDHH24MISS`): `HIS_TREATMENT.IN_TIME`/`OUT_TIME`, `HIS_SERVICE_REQ.INTRUCTION_TIME`, `HIS_SERE_SERV.EXECUTE_TIME`/`TDL_INTRUCTION_TIME`.
 

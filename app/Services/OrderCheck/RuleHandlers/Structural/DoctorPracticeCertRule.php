@@ -16,7 +16,7 @@ class DoctorPracticeCertRule implements RuleHandler
     public function check(OrderContext $c)
     {
         $hasDoctor = !empty(trim((string) $c->doctorLoginname));
-        $noCert = empty(trim((string) $c->doctorPracticeScope));
+        $noCert = empty(trim((string) $c->doctorDiploma));
         if ($hasDoctor && $noCert) {
             return [new Violation(
                 $this->code(), 'service_req', $c->serviceReqId,

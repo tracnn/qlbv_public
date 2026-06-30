@@ -13,7 +13,7 @@ class OrderContext
     /** @var int|null */ public $departmentId;
     /** @var string|null */ public $doctorLoginname;
     /** @var string|null */ public $doctorUsername;
-    /** @var string|null */ public $doctorPracticeScope;
+    /** @var string|null */ public $doctorDiploma;
     /** @var int */ public $intructionTime = 0;
     /** @var int */ public $inTime = 0;
     /** @var int */ public $outTime = 0;
