@@ -601,6 +601,13 @@ Route::group(['middleware' => ['auth', 'check.first.login']], function () {
         Route::post('order-check-index/update-status', 'KHTH\OrderCheckController@updateStatus')->name('khth.order-check-update-status');
         Route::get('order-check-index/export', 'KHTH\OrderCheckController@export')->name('khth.order-check-export');
 
+        /* Danh muc gioi han DV (gioi tinh/tuoi) */
+        Route::get('order-check-ref-index', 'KHTH\OrderCheckRefController@index')->name('khth.order-check-ref-index');
+        Route::get('order-check-ref-index/fetch', 'KHTH\OrderCheckRefController@fetch')->name('khth.order-check-ref-fetch');
+        Route::post('order-check-ref-index', 'KHTH\OrderCheckRefController@store')->name('khth.order-check-ref-store');
+        Route::post('order-check-ref-index/{id}', 'KHTH\OrderCheckRefController@update')->name('khth.order-check-ref-update');
+        Route::delete('order-check-ref-index/{id}', 'KHTH\OrderCheckRefController@destroy')->name('khth.order-check-ref-destroy');
+
     });
 
     Route::group(['prefix' => 'queue'], function () { 

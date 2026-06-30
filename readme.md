@@ -1,3 +1,7 @@
+# 30/06/2026 (cập nhật 5)
+
+- Module Kiểm tra sai sót y lệnh (giai đoạn 6): thêm danh mục tự quản "Giới hạn dịch vụ" (giới tính/tuổi) + màn nhập (KHTH) + 2 luật A_GENDER_MISMATCH, A_AGE_OUT_OF_RANGE đối chiếu chỉ định với giới tính/tuổi bệnh nhân. Luật chỉ phát hiện khi danh mục đã được nhập (HIS không có sẵn dữ liệu giới hạn).
+
 # 30/06/2026 (cập nhật 4)
 
 - Module Kiểm tra sai sót y lệnh (giai đoạn 5): bổ sung luật cấp đợt điều trị — A3 trùng dịch vụ, A2 trùng hoạt chất (HIS_EXP_MEST_MEDICINE + HIS_MEDICINE), A5 liều×ngày không khớp số lượng cấp. Quét incremental theo hoạt động mới rồi re-evaluate cả đợt; bật/tắt trong order_check_rules.

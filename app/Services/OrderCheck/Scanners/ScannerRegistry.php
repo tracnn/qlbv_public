@@ -17,6 +17,7 @@ class ScannerRegistry
             new InteractionLogScanner(),
             new DuplicateServiceScanner(),
             new MedicineScanner(),
+            new ServiceRestrictionScanner(),
         ];
     }
 }

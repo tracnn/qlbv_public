@@ -177,6 +177,28 @@ class HisOrderSource
         return $map;
     }
 
+    /**
+     * Lô dòng dịch vụ mới kèm mã DV + giới tính/ngày sinh BN (join treatment) — cho luật giới tính/tuổi.
+     */
+    public function fetchSereServWithPatient($lastCreateTime, $lastId, $limit)
+    {
+        return DB::connection($this->conn)
+            ->table('his_sere_serv as ss')
+            ->leftJoin('his_treatment as t', 'ss.tdl_treatment_id', '=', 't.id')
+            ->where('ss.is_delete', 0)
+            ->where(function ($w) use ($lastCreateTime, $lastId) {
+                $w->where('ss.create_time', '>', $lastCreateTime)
+                  ->orWhere(function ($w2) use ($lastCreateTime, $lastId) {
+                      $w2->where('ss.create_time', '=', $lastCreateTime)->where('ss.id', '>', $lastId);
+                  });
+            })
+            ->orderBy('ss.create_time')->orderBy('ss.id')->limit($limit)
+            ->selectRaw('ss.id, ss.create_time, ss.tdl_treatment_id, ss.tdl_service_code, ss.tdl_service_name,
+                t.treatment_code, t.tdl_patient_code, t.tdl_patient_name, t.last_department_id,
+                t.tdl_patient_gender_id, t.tdl_patient_dob')
+            ->get();
+    }
+
     public function buildContext($row, array $services = [])
     {
         $c = new OrderContext();

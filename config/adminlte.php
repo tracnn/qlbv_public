@@ -268,6 +268,13 @@ return [
                     'route'     => 'khth.order-check-index',
                     'active'    => ['khth/order-check-index*'],
                 ],
+                [
+                    'text'      => 'Danh mục giới hạn DV',
+                    'icon'      => 'venus-mars',
+                    'checkrole' => 'administrator',
+                    'route'     => 'khth.order-check-ref-index',
+                    'active'    => ['khth/order-check-ref-index*'],
+                ],
             ],
         ],
         [
