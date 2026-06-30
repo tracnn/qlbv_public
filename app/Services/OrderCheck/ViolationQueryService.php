@@ -41,12 +41,25 @@ class ViolationQueryService
         if ($request->filled('department_id')) {
             $q->where('department_id', $request->input('department_id'));
         }
+        if ($request->filled('service_req_type_id')) {
+            $q->where('service_req_type_id', $request->input('service_req_type_id'));
+        }
+        if ($request->filled('department_keyword')) {
+            $dk = trim($request->input('department_keyword'));
+            $q->where(function ($w) use ($dk) {
+                $w->where('department_code', 'like', "%{$dk}%")
+                  ->orWhere('department_name', 'like', "%{$dk}%");
+            });
+        }
         if ($request->filled('keyword')) {
             $kw = trim($request->input('keyword'));
             $q->where(function ($w) use ($kw) {
                 $w->where('patient_code', 'like', "%{$kw}%")
                   ->orWhere('patient_name', 'like', "%{$kw}%")
                   ->orWhere('treatment_code', 'like', "%{$kw}%")
+                  ->orWhere('service_req_code', 'like', "%{$kw}%")
+                  ->orWhere('service_code', 'like', "%{$kw}%")
+                  ->orWhere('service_name', 'like', "%{$kw}%")
                   ->orWhere('doctor_loginname', 'like', "%{$kw}%")
                   ->orWhere('doctor_username', 'like', "%{$kw}%");
             });

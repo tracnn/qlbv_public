@@ -15,6 +15,10 @@ class ViolationContext
     public $doctorLoginname;
     public $doctorUsername;
     public $departmentId;
+    public $serviceReqCode;
+    public $serviceReqTypeId;
+    public $serviceCode;
+    public $serviceName;
 
     public static function make(array $a)
     {
@@ -26,6 +30,10 @@ class ViolationContext
         $c->doctorLoginname = isset($a['doctor_loginname']) ? $a['doctor_loginname'] : null;
         $c->doctorUsername = isset($a['doctor_username']) ? $a['doctor_username'] : null;
         $c->departmentId = isset($a['department_id']) ? $a['department_id'] : null;
+        $c->serviceReqCode = isset($a['service_req_code']) ? $a['service_req_code'] : null;
+        $c->serviceReqTypeId = isset($a['service_req_type_id']) ? $a['service_req_type_id'] : null;
+        $c->serviceCode = isset($a['service_code']) ? $a['service_code'] : null;
+        $c->serviceName = isset($a['service_name']) ? $a['service_name'] : null;
         return $c;
     }
 
@@ -39,6 +47,8 @@ class ViolationContext
             'doctor_loginname' => $o->doctorLoginname,
             'doctor_username' => $o->doctorUsername,
             'department_id' => $o->departmentId,
+            'service_req_code' => $o->serviceReqCode,
+            'service_req_type_id' => $o->serviceReqTypeId,
         ]);
     }
 }

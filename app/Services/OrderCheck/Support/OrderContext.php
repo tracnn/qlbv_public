@@ -6,6 +6,7 @@ class OrderContext
 {
     /** @var int */ public $serviceReqId;
     /** @var string */ public $serviceReqCode;
+    /** @var int|null */ public $serviceReqTypeId;
     /** @var int */ public $treatmentId;
     /** @var string */ public $treatmentCode;
     /** @var string */ public $patientCode;

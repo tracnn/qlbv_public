@@ -24,7 +24,10 @@ class OrderCheckController extends Controller
     public function index()
     {
         $rules = OrderCheckRule::orderBy('code')->get(['code', 'name']);
-        return view('khth.order-check', compact('rules'));
+        $serviceReqTypes = OrderCheckViolation::whereNotNull('service_req_type_id')
+            ->select('service_req_type_id', 'service_req_type_name')
+            ->distinct()->orderBy('service_req_type_name')->get();
+        return view('khth.order-check', compact('rules', 'serviceReqTypes'));
     }
 
     public function summary(Request $request)
@@ -72,6 +75,12 @@ class OrderCheckController extends Controller
             })
             ->addColumn('doctor', function ($v) {
                 return $v->doctor_username ?: $v->doctor_loginname;
+            })
+            ->addColumn('department_label', function ($v) {
+                if (!$v->department_name && !$v->department_code) {
+                    return $v->department_id;
+                }
+                return trim(($v->department_code ? '[' . $v->department_code . '] ' : '') . $v->department_name);
             })
             ->addColumn('actions', function ($v) {
                 return '<div class="btn-group">'

@@ -133,6 +133,14 @@ class OrderCheckEngine
         $row->doctor_loginname = $ctx->doctorLoginname;
         $row->doctor_username = $ctx->doctorUsername;
         $row->department_id = $ctx->departmentId;
+        list($deptCode, $deptName) = $this->source->departmentInfo($ctx->departmentId);
+        $row->department_code = $deptCode;
+        $row->department_name = $deptName;
+        $row->service_req_code = $ctx->serviceReqCode;
+        $row->service_req_type_id = $ctx->serviceReqTypeId;
+        $row->service_req_type_name = $this->source->serviceReqTypeName($ctx->serviceReqTypeId);
+        $row->service_code = $ctx->serviceCode;
+        $row->service_name = $ctx->serviceName;
         $row->order_ref_type = $vio->orderRefType;
         $row->order_ref_id = $vio->orderRefId;
         $row->severity = $rule->severity;

@@ -10,6 +10,8 @@ class HisOrderSource
 {
     protected $conn;
     protected $excludeTreatmentTypeIds;
+    protected $deptMap;
+    protected $typeMap;
 
     public function __construct()
     {
@@ -30,8 +32,8 @@ class HisOrderSource
             ->orderBy('sr.id')
             ->limit($limit)
             ->selectRaw('/*+ INDEX(sr (MODIFY_TIME)) */
-                sr.id, sr.service_req_code, sr.treatment_id, sr.intruction_time,
-                sr.request_department_id, sr.request_loginname, sr.request_username,
+                sr.id, sr.service_req_code, sr.service_req_type_id, sr.treatment_id, sr.intruction_time,
+                sr.request_department_id, sr.execute_department_id, sr.request_loginname, sr.request_username,
                 sr.icd_code, sr.icd_name, sr.create_time, sr.modify_time,
                 sr.tdl_treatment_code, sr.tdl_patient_code, sr.tdl_patient_name,
                 t.in_time as in_time, t.out_time as out_time,
@@ -130,10 +132,59 @@ class HisOrderSource
             ->where('ss.is_delete', 0)
             ->where('ss.id', '>', $lastId)
             ->orderBy('ss.id')->limit($limit)
-            ->selectRaw('ss.id, ss.create_time, ss.tdl_treatment_id, ss.tdl_service_code, ss.tdl_service_name,
-                t.treatment_code, t.tdl_patient_code, t.tdl_patient_name, t.last_department_id,
+            ->selectRaw('ss.id, ss.create_time, ss.service_req_id, ss.tdl_treatment_id, ss.tdl_service_code, ss.tdl_service_name,
+                t.treatment_code, t.tdl_patient_code, t.tdl_patient_name,
                 t.tdl_patient_gender_id, t.tdl_patient_dob')
             ->get();
+    }
+
+    /** Map service_req_id => thông tin phiếu (code, loại, khoa thực hiện) — tra batched theo IN. */
+    public function fetchServiceReqInfoByIds(array $reqIds)
+    {
+        if (empty($reqIds)) {
+            return [];
+        }
+        $rows = DB::connection($this->conn)
+            ->table('his_service_req')
+            ->whereIn('id', $reqIds)
+            ->selectRaw('id, service_req_code, service_req_type_id, execute_department_id')
+            ->get();
+
+        $map = [];
+        foreach ($rows as $r) {
+            $map[(int) $r->id] = $r;
+        }
+        return $map;
+    }
+
+    /** [code, name] của khoa theo id (cache 1 lần/run); [null, null] nếu không có. */
+    public function departmentInfo($id)
+    {
+        if ($id === null) {
+            return [null, null];
+        }
+        if ($this->deptMap === null) {
+            $this->deptMap = [];
+            foreach (DB::connection($this->conn)->table('his_department')->selectRaw('id, department_code, department_name')->get() as $d) {
+                $this->deptMap[(int) $d->id] = [$d->department_code, $d->department_name];
+            }
+        }
+        return isset($this->deptMap[(int) $id]) ? $this->deptMap[(int) $id] : [null, null];
+    }
+
+    /** Tên loại phiếu chỉ định theo id (cache 1 lần/run). */
+    public function serviceReqTypeName($id)
+    {
+        if ($id === null) {
+            return null;
+        }
+        if ($this->typeMap === null) {
+            $this->typeMap = [];
+            foreach (DB::connection($this->conn)->table('his_service_req_type')->selectRaw('id, service_req_type_name')->get() as $t) {
+                $this->typeMap[(int) $t->id] = $t->service_req_type_name;
+            }
+        }
+        return isset($this->typeMap[(int) $id]) ? $this->typeMap[(int) $id] : null;
     }
 
     public function buildContext($row, array $services = [])
@@ -141,11 +192,13 @@ class HisOrderSource
         $c = new OrderContext();
         $c->serviceReqId = (int) $row->id;
         $c->serviceReqCode = $row->service_req_code;
+        $c->serviceReqTypeId = $row->service_req_type_id !== null ? (int) $row->service_req_type_id : null;
         $c->treatmentId = (int) $row->treatment_id;
         $c->treatmentCode = $row->tdl_treatment_code;
         $c->patientCode = $row->tdl_patient_code;
         $c->patientName = $row->tdl_patient_name;
-        $c->departmentId = $row->request_department_id !== null ? (int) $row->request_department_id : null;
+        // Khoa thực hiện (execute_department_id), không phải khoa chỉ định
+        $c->departmentId = $row->execute_department_id !== null ? (int) $row->execute_department_id : null;
         $c->doctorLoginname = $row->request_loginname;
         $c->doctorUsername = $row->request_username;
         $c->executeLoginname = $row->execute_loginname;

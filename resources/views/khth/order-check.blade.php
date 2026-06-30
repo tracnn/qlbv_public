@@ -23,7 +23,15 @@
           @foreach($rules as $r)<option value="{{ $r->code }}">{{ $r->name }}</option>@endforeach
         </select>
       </div>
-      <div class="col-md-2"><label>Tìm BN/BS/ĐT</label><input type="text" id="keyword" class="form-control" placeholder="mã/tên..."></div>
+      <div class="col-md-2"><label>Tìm BN/BS/ĐT/DV</label><input type="text" id="keyword" class="form-control" placeholder="mã/tên..."></div>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <div class="col-md-3"><label>Loại dịch vụ</label>
+        <select id="service_req_type_id" class="form-control select2"><option value="">Tất cả</option>
+          @foreach($serviceReqTypes as $t)<option value="{{ $t->service_req_type_id }}">{{ $t->service_req_type_name }}</option>@endforeach
+        </select>
+      </div>
+      <div class="col-md-3"><label>Khoa thực hiện</label><input type="text" id="department_keyword" class="form-control" placeholder="mã/tên khoa..."></div>
     </div>
     <div class="row" style="margin-top:10px"><div class="col-md-12">
       <button id="btn-load" class="btn btn-primary"><i class="fa fa-search"></i> Tải dữ liệu</button>
@@ -44,7 +52,7 @@
   <div class="box-body table-responsive">
     <table id="oc-table" class="table table-hover table-bordered" width="100%">
       <thead><tr>
-        <th>Thời điểm</th><th>Mức độ</th><th>Luật</th><th>Mã ĐT</th><th>Tên BN</th><th>Bác sĩ</th><th>Khoa</th><th>Nội dung</th><th>Trạng thái</th><th>Thao tác</th>
+        <th>Thời điểm</th><th>Mức độ</th><th>Luật</th><th>Loại DV</th><th>Phiếu</th><th>Mã ĐT</th><th>Tên BN</th><th>Bác sĩ</th><th>Khoa TH</th><th>Mã DV</th><th>Nội dung</th><th>Trạng thái</th><th>Thao tác</th>
       </tr></thead>
     </table>
   </div>
@@ -57,7 +65,7 @@ var DT_VI = { search:'Tìm:', lengthMenu:'Hiện _MENU_ dòng', info:'Hiển th�
 var ocTable = null;
 
 function filters(){
-  return { date_from:$('#date_from').val(), date_to:$('#date_to').val(), severity:$('#severity').val(), status:$('#status').val(), rule_code:$('#rule_code').val(), keyword:$('#keyword').val() };
+  return { date_from:$('#date_from').val(), date_to:$('#date_to').val(), severity:$('#severity').val(), status:$('#status').val(), rule_code:$('#rule_code').val(), service_req_type_id:$('#service_req_type_id').val(), department_keyword:$('#department_keyword').val(), keyword:$('#keyword').val() };
 }
 
 function loadSummary(){
@@ -74,8 +82,9 @@ function reload(){
     ajax:{ url:"{{ route('khth.order-check-fetch') }}", data:function(d){ Object.assign(d, filters()); } },
     language:DT_VI,
     columns:[
-      {data:'detected_at'},{data:'severity_badge'},{data:'rule_code'},{data:'treatment_code'},
-      {data:'patient_name'},{data:'doctor'},{data:'department_id'},{data:'message'},
+      {data:'detected_at'},{data:'severity_badge'},{data:'rule_code'},{data:'service_req_type_name'},
+      {data:'service_req_code'},{data:'treatment_code'},{data:'patient_name'},{data:'doctor'},
+      {data:'department_label'},{data:'service_code'},{data:'message'},
       {data:'status_badge'},{data:'actions',orderable:false,searchable:false}
     ]
   });

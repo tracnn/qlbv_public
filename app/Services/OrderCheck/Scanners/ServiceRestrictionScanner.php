@@ -37,6 +37,10 @@ class ServiceRestrictionScanner implements Scanner
             // Nạp danh mục giới hạn 1 lần, key theo service_code.
             $catalog = OrderCheckRefServiceRestriction::where('is_active', true)->get()->keyBy('service_code');
 
+            // Tra thông tin phiếu (mã/loại/khoa thực hiện) theo batch để tránh join chậm.
+            $reqIds = $rows->pluck('service_req_id')->filter()->map(function ($v) { return (int) $v; })->unique()->all();
+            $reqMap = $source->fetchServiceReqInfoByIds($reqIds);
+
             $maxCreate = $wm->last_create_time;
             $maxId = $wm->last_id;
 
@@ -47,7 +51,8 @@ class ServiceRestrictionScanner implements Scanner
             foreach ($rows as $row) {
                 if (($genderActive || $ageActive) && isset($catalog[$row->tdl_service_code])) {
                     $ref = $catalog[$row->tdl_service_code];
-                    $vctx = $this->context($row);
+                    $sr = isset($reqMap[(int) $row->service_req_id]) ? $reqMap[(int) $row->service_req_id] : null;
+                    $vctx = $this->context($row, $sr);
 
                     if ($genderActive && $genderRule->mismatch($row->tdl_patient_gender_id, $ref->required_gender_id)) {
                         $vio = new Violation(
@@ -85,14 +90,18 @@ class ServiceRestrictionScanner implements Scanner
         return ['scanned' => $scanned, 'violations' => $violations];
     }
 
-    private function context($row)
+    private function context($row, $sr)
     {
         return ViolationContext::make([
             'treatment_id' => (int) $row->tdl_treatment_id,
             'treatment_code' => $row->treatment_code,
             'patient_code' => $row->tdl_patient_code,
             'patient_name' => $row->tdl_patient_name,
-            'department_id' => $row->last_department_id !== null ? (int) $row->last_department_id : null,
+            'department_id' => ($sr && $sr->execute_department_id !== null) ? (int) $sr->execute_department_id : null,
+            'service_req_code' => $sr ? $sr->service_req_code : null,
+            'service_req_type_id' => ($sr && $sr->service_req_type_id !== null) ? (int) $sr->service_req_type_id : null,
+            'service_code' => $row->tdl_service_code,
+            'service_name' => $row->tdl_service_name,
         ]);
     }
 }
