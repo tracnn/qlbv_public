@@ -25,14 +25,7 @@ class HisOrderSource
             ->leftJoin('his_treatment as t', 'sr.treatment_id', '=', 't.id')
             ->leftJoin('his_employee as e', 'sr.request_loginname', '=', 'e.loginname')
             ->where('sr.is_delete', 0)
-            ->where(function ($w) use ($lastCreateTime, $lastId) {
-                $w->where('sr.create_time', '>', $lastCreateTime)
-                  ->orWhere(function ($w2) use ($lastCreateTime, $lastId) {
-                      $w2->where('sr.create_time', '=', $lastCreateTime)
-                         ->where('sr.id', '>', $lastId);
-                  });
-            })
-            ->orderBy('sr.create_time')
+            ->where('sr.id', '>', $lastId)
             ->orderBy('sr.id')
             ->limit($limit)
             ->selectRaw('sr.id, sr.service_req_code, sr.treatment_id, sr.intruction_time,
@@ -83,14 +76,7 @@ class HisOrderSource
         return DB::connection($this->conn)
             ->table('his_medicine_interactive')
             ->where('is_delete', 0)
-            ->where(function ($w) use ($lastCreateTime, $lastId) {
-                $w->where('create_time', '>', $lastCreateTime)
-                  ->orWhere(function ($w2) use ($lastCreateTime, $lastId) {
-                      $w2->where('create_time', '=', $lastCreateTime)
-                         ->where('id', '>', $lastId);
-                  });
-            })
-            ->orderBy('create_time')
+            ->where('id', '>', $lastId)
             ->orderBy('id')
             ->limit($limit)
             ->selectRaw('id, create_time, treatment_id, request_loginname,
@@ -105,13 +91,8 @@ class HisOrderSource
         return DB::connection($this->conn)
             ->table('his_sere_serv')
             ->where('is_delete', 0)
-            ->where(function ($w) use ($lastCreateTime, $lastId) {
-                $w->where('create_time', '>', $lastCreateTime)
-                  ->orWhere(function ($w2) use ($lastCreateTime, $lastId) {
-                      $w2->where('create_time', '=', $lastCreateTime)->where('id', '>', $lastId);
-                  });
-            })
-            ->orderBy('create_time')->orderBy('id')->limit($limit)
+            ->where('id', '>', $lastId)
+            ->orderBy('id')->limit($limit)
             ->selectRaw('id, create_time, tdl_treatment_id')
             ->get();
     }
@@ -133,13 +114,8 @@ class HisOrderSource
         return DB::connection($this->conn)
             ->table('his_exp_mest_medicine')
             ->where('is_delete', 0)
-            ->where(function ($w) use ($lastCreateTime, $lastId) {
-                $w->where('create_time', '>', $lastCreateTime)
-                  ->orWhere(function ($w2) use ($lastCreateTime, $lastId) {
-                      $w2->where('create_time', '=', $lastCreateTime)->where('id', '>', $lastId);
-                  });
-            })
-            ->orderBy('create_time')->orderBy('id')->limit($limit)
+            ->where('id', '>', $lastId)
+            ->orderBy('id')->limit($limit)
             ->selectRaw('id, create_time, tdl_treatment_id, medicine_id, tdl_medicine_type_id,
                 amount, day_count, morning, noon, afternoon, evening')
             ->get();
@@ -186,13 +162,8 @@ class HisOrderSource
             ->table('his_sere_serv as ss')
             ->leftJoin('his_treatment as t', 'ss.tdl_treatment_id', '=', 't.id')
             ->where('ss.is_delete', 0)
-            ->where(function ($w) use ($lastCreateTime, $lastId) {
-                $w->where('ss.create_time', '>', $lastCreateTime)
-                  ->orWhere(function ($w2) use ($lastCreateTime, $lastId) {
-                      $w2->where('ss.create_time', '=', $lastCreateTime)->where('ss.id', '>', $lastId);
-                  });
-            })
-            ->orderBy('ss.create_time')->orderBy('ss.id')->limit($limit)
+            ->where('ss.id', '>', $lastId)
+            ->orderBy('ss.id')->limit($limit)
             ->selectRaw('ss.id, ss.create_time, ss.tdl_treatment_id, ss.tdl_service_code, ss.tdl_service_name,
                 t.treatment_code, t.tdl_patient_code, t.tdl_patient_name, t.last_department_id,
                 t.tdl_patient_gender_id, t.tdl_patient_dob')
