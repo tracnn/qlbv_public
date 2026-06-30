@@ -99,6 +99,84 @@ class HisOrderSource
             ->get();
     }
 
+    /** Lô dòng dịch vụ mới (his_sere_serv) theo watermark — để biết đợt nào vừa phát sinh. */
+    public function fetchSereServBatch($lastCreateTime, $lastId, $limit)
+    {
+        return DB::connection($this->conn)
+            ->table('his_sere_serv')
+            ->where('is_delete', 0)
+            ->where(function ($w) use ($lastCreateTime, $lastId) {
+                $w->where('create_time', '>', $lastCreateTime)
+                  ->orWhere(function ($w2) use ($lastCreateTime, $lastId) {
+                      $w2->where('create_time', '=', $lastCreateTime)->where('id', '>', $lastId);
+                  });
+            })
+            ->orderBy('create_time')->orderBy('id')->limit($limit)
+            ->selectRaw('id, create_time, tdl_treatment_id')
+            ->get();
+    }
+
+    /** Toàn bộ dịch vụ đang hoạt động của 1 đợt điều trị. */
+    public function fetchTreatmentServices($treatmentId)
+    {
+        return DB::connection($this->conn)
+            ->table('his_sere_serv')
+            ->where('is_delete', 0)
+            ->where('tdl_treatment_id', $treatmentId)
+            ->selectRaw('id, service_id, tdl_service_code, tdl_service_name')
+            ->get();
+    }
+
+    /** Lô dòng thuốc mới (his_exp_mest_medicine) theo watermark. */
+    public function fetchExpMestBatch($lastCreateTime, $lastId, $limit)
+    {
+        return DB::connection($this->conn)
+            ->table('his_exp_mest_medicine')
+            ->where('is_delete', 0)
+            ->where(function ($w) use ($lastCreateTime, $lastId) {
+                $w->where('create_time', '>', $lastCreateTime)
+                  ->orWhere(function ($w2) use ($lastCreateTime, $lastId) {
+                      $w2->where('create_time', '=', $lastCreateTime)->where('id', '>', $lastId);
+                  });
+            })
+            ->orderBy('create_time')->orderBy('id')->limit($limit)
+            ->selectRaw('id, create_time, tdl_treatment_id, medicine_id, tdl_medicine_type_id,
+                amount, day_count, morning, noon, afternoon, evening')
+            ->get();
+    }
+
+    /** Toàn bộ thuốc đang hoạt động của 1 đợt, kèm hoạt chất từ his_medicine. */
+    public function fetchTreatmentMedicines($treatmentId)
+    {
+        return DB::connection($this->conn)
+            ->table('his_exp_mest_medicine as em')
+            ->leftJoin('his_medicine as m', 'em.medicine_id', '=', 'm.id')
+            ->where('em.is_delete', 0)
+            ->where('em.tdl_treatment_id', $treatmentId)
+            ->selectRaw('em.id, em.medicine_id, em.tdl_medicine_type_id,
+                m.active_ingr_bhyt_code as active_ingr_code, m.active_ingr_bhyt_name as active_ingr_name')
+            ->get();
+    }
+
+    /** Map id => thông tin đợt (treatment_code, bệnh nhân, khoa) cho ngữ cảnh vi phạm. */
+    public function fetchTreatmentInfo(array $treatmentIds)
+    {
+        if (empty($treatmentIds)) {
+            return [];
+        }
+        $rows = DB::connection($this->conn)
+            ->table('his_treatment')
+            ->whereIn('id', $treatmentIds)
+            ->selectRaw('id, treatment_code, tdl_patient_code, tdl_patient_name, last_department_id')
+            ->get();
+
+        $map = [];
+        foreach ($rows as $r) {
+            $map[(int) $r->id] = $r;
+        }
+        return $map;
+    }
+
     public function buildContext($row, array $services = [])
     {
         $c = new OrderContext();

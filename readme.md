@@ -1,3 +1,7 @@
+# 30/06/2026 (cập nhật 4)
+
+- Module Kiểm tra sai sót y lệnh (giai đoạn 5): bổ sung luật cấp đợt điều trị — A3 trùng dịch vụ, A2 trùng hoạt chất (HIS_EXP_MEST_MEDICINE + HIS_MEDICINE), A5 liều×ngày không khớp số lượng cấp. Quét incremental theo hoạt động mới rồi re-evaluate cả đợt; bật/tắt trong order_check_rules.
+
 # 30/06/2026 (cập nhật 3)
 
 - Module Kiểm tra sai sót y lệnh (giai đoạn 4): gửi email digest định kỳ các vi phạm mới tới danh sách người nhận (email_receive_report), theo ngưỡng mức độ cấu hình; chạy bằng service `kiemtraylenh:notify`. Mặc định TẮT (bật qua ORDER_CHECK_NOTIFY_ENABLED).
