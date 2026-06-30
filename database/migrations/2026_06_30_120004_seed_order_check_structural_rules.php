@@ -12,7 +12,7 @@ class SeedOrderCheckStructuralRules extends Migration
             ['code' => 'B_DISCHARGE_BEFORE_ADMISSION', 'rule_type' => 'DischargeBeforeAdmissionRule', 'name' => 'Ngày ra viện trước ngày vào viện', 'severity' => 'critical'],
             ['code' => 'B_ORDER_TIME_OUT_OF_STAY',     'rule_type' => 'OrderTimeOutOfStayRule',     'name' => 'Giờ y lệnh ngoài khoảng đợt điều trị', 'severity' => 'warning'],
             ['code' => 'B_EXECUTE_BEFORE_ORDER',       'rule_type' => 'ExecuteBeforeOrderRule',     'name' => 'Giờ thực hiện trước giờ y lệnh', 'severity' => 'warning'],
-            ['code' => 'B_DOCTOR_NO_PRACTICE_CERT',    'rule_type' => 'DoctorPracticeCertRule',     'name' => 'Bác sĩ thiếu chứng chỉ hành nghề', 'severity' => 'critical'],
+            ['code' => 'B_DOCTOR_NO_PRACTICE_CERT',    'rule_type' => 'DoctorPracticeCertRule',     'name' => 'Người thực hiện thiếu chứng chỉ hành nghề', 'severity' => 'critical'],
         ];
 
         foreach ($rules as $r) {

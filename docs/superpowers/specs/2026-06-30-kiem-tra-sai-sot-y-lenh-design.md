@@ -23,7 +23,7 @@ Module có **2 họ luật** với cách quản lý khác nhau:
 
 ### Phạm vi loại sai sót — Họ B (hợp lệ cấu trúc/thời gian & hành nghề, hardcode)
 5. **Tính hợp lệ thời gian**: ngày ra viện < ngày vào viện; giờ y lệnh trước ngày vào hoặc sau ngày ra; giờ thực hiện trước giờ y lệnh; các mốc thời gian phi logic khác.
-6. **Điều kiện hành nghề**: bác sĩ ra y lệnh không có/không hợp lệ chứng chỉ hành nghề (`HIS_EMPLOYEE.DIPLOMA` — số CCHN/GPHN; ~85% BS có nhập). *Lưu ý: KHÔNG dùng `PRACTICE_SCOPE_DECISION` vì cột này trống 100% trong HIS.*
+6. **Điều kiện hành nghề**: **người thực hiện** (`HIS_SERVICE_REQ.EXECUTE_LOGINNAME`, KHÔNG phải người chỉ định) không có/không hợp lệ chứng chỉ hành nghề (`HIS_EMPLOYEE.DIPLOMA` — số CCHN/GPHN). *Lưu ý: KHÔNG dùng `PRACTICE_SCOPE_DECISION` vì cột này trống 100% trong HIS.*
 
 > Họ B dùng chung pipeline (engine → violation → dashboard/notify/workflow/API) với họ A, nhưng **logic nằm trong code** và được quản lý ở một thư mục/registry riêng (xem §6.1).
 

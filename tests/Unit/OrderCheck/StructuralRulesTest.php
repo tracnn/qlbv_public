@@ -21,7 +21,8 @@ class StructuralRulesTest extends TestCase
         $c->inTime = 20260101070000;
         $c->outTime = 0;
         $c->doctorLoginname = 'bs01';
-        $c->doctorDiploma = 'CCHN-123';
+        $c->executeLoginname = 'th01';
+        $c->executeDiploma = 'CCHN-123';
         $c->services = [];
         foreach ($over as $k => $v) { $c->$k = $v; }
         return $c;
@@ -119,26 +120,26 @@ class StructuralRulesTest extends TestCase
     }
 
     // ===== B4 DoctorPracticeCertRule =====
-    public function test_bs_thieu_chung_chi_phat_hien_loi()
+    public function test_nguoi_thuc_hien_thieu_chung_chi_phat_hien_loi()
     {
         $rule = new DoctorPracticeCertRule();
-        $c = $this->ctx(['doctorLoginname' => 'bs09', 'doctorDiploma' => '']);
+        $c = $this->ctx(['executeLoginname' => 'th09', 'executeDiploma' => '']);
         $vios = $rule->check($c);
         $this->assertCount(1, $vios);
         $this->assertSame('service_req', $vios[0]->orderRefType);
     }
 
-    public function test_bs_co_chung_chi_khong_loi()
+    public function test_nguoi_thuc_hien_co_chung_chi_khong_loi()
     {
         $rule = new DoctorPracticeCertRule();
-        $c = $this->ctx(['doctorLoginname' => 'bs09', 'doctorDiploma' => 'QD-555']);
+        $c = $this->ctx(['executeLoginname' => 'th09', 'executeDiploma' => 'QD-555']);
         $this->assertCount(0, $rule->check($c));
     }
 
-    public function test_khong_co_loginname_thi_bo_qua()
+    public function test_chua_co_nguoi_thuc_hien_thi_bo_qua()
     {
         $rule = new DoctorPracticeCertRule();
-        $c = $this->ctx(['doctorLoginname' => null, 'doctorDiploma' => null]);
+        $c = $this->ctx(['executeLoginname' => null, 'executeDiploma' => null]);
         $this->assertCount(0, $rule->check($c));
     }
 }

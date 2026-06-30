@@ -23,7 +23,7 @@ class HisOrderSource
         $q = DB::connection($this->conn)
             ->table('his_service_req as sr')
             ->leftJoin('his_treatment as t', 'sr.treatment_id', '=', 't.id')
-            ->leftJoin('his_employee as e', 'sr.request_loginname', '=', 'e.loginname')
+            ->leftJoin('his_employee as e', 'sr.execute_loginname', '=', 'e.loginname')
             ->where('sr.is_delete', 0)
             ->where('sr.id', '>', $lastId)
             ->orderBy('sr.id')
@@ -33,7 +33,7 @@ class HisOrderSource
                 sr.icd_code, sr.icd_name, sr.create_time,
                 sr.tdl_treatment_code, sr.tdl_patient_code, sr.tdl_patient_name,
                 t.in_time as in_time, t.out_time as out_time,
-                e.diploma as diploma');
+                sr.execute_loginname, sr.execute_username, e.diploma as execute_diploma');
 
         if (!empty($this->excludeTreatmentTypeIds)) {
             $q->whereNotIn('t.tdl_treatment_type_id', $this->excludeTreatmentTypeIds);
@@ -146,7 +146,9 @@ class HisOrderSource
         $c->departmentId = $row->request_department_id !== null ? (int) $row->request_department_id : null;
         $c->doctorLoginname = $row->request_loginname;
         $c->doctorUsername = $row->request_username;
-        $c->doctorDiploma = $row->diploma;
+        $c->executeLoginname = $row->execute_loginname;
+        $c->executeUsername = $row->execute_username;
+        $c->executeDiploma = $row->execute_diploma;
         $c->intructionTime = (int) $row->intruction_time;
         $c->inTime = (int) $row->in_time;
         $c->outTime = (int) $row->out_time;

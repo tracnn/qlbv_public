@@ -15,13 +15,13 @@ class DoctorPracticeCertRule implements RuleHandler
 
     public function check(OrderContext $c)
     {
-        $hasDoctor = !empty(trim((string) $c->doctorLoginname));
-        $noCert = empty(trim((string) $c->doctorDiploma));
-        if ($hasDoctor && $noCert) {
+        $hasExecutor = !empty(trim((string) $c->executeLoginname));
+        $noCert = empty(trim((string) $c->executeDiploma));
+        if ($hasExecutor && $noCert) {
             return [new Violation(
                 $this->code(), 'service_req', $c->serviceReqId,
-                'Bác sĩ ra y lệnh (' . $c->doctorLoginname . ') chưa có/không hợp lệ chứng chỉ hành nghề',
-                ['doctor_loginname' => $c->doctorLoginname]
+                'Người thực hiện (' . $c->executeLoginname . ') chưa có/không hợp lệ chứng chỉ hành nghề',
+                ['execute_loginname' => $c->executeLoginname]
             )];
         }
         return [];
