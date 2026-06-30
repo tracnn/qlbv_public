@@ -49,12 +49,12 @@
 
 <div class="box box-info collapsed-box">
   <div class="box-header with-border">
-    <h3 class="box-title"><i class="fa fa-database"></i> Thống kê quét — tổng đã quét: <b id="scan-total">0</b> (lượt chạy: <span id="scan-runs">0</span>)</h3>
+    <h3 class="box-title"><i class="fa fa-database"></i> Thống kê quét — tổng đã quét: <b id="scan-total">0</b> | lượt chạy: <span id="scan-runs">0</span> | tổng TG: <b id="scan-total-time">0s</b> | TB: <b id="scan-avg-time">0s</b>/lượt</h3>
     <div class="box-tools pull-right"><button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-plus"></i></button></div>
   </div>
   <div class="box-body table-responsive">
     <table class="table table-bordered table-condensed" id="scan-stats-table">
-      <thead><tr><th>Nguồn quét</th><th>source_key</th><th class="text-right">Đã quét</th><th class="text-right">Vi phạm</th><th class="text-right">Lượt chạy</th><th class="text-right">Lỗi</th><th>Chạy gần nhất</th></tr></thead>
+      <thead><tr><th>Nguồn quét</th><th>source_key</th><th class="text-right">Đã quét</th><th class="text-right">Vi phạm</th><th class="text-right">Lượt chạy</th><th class="text-right">Lỗi</th><th class="text-right">Tổng TG</th><th class="text-right">TG TB</th><th>Chạy gần nhất</th></tr></thead>
       <tbody></tbody>
     </table>
   </div>
@@ -87,15 +87,24 @@ function loadSummary(){
   });
 }
 
+function fmtSecs(s){
+  s = Number(s) || 0;
+  if (s < 60) return s + 's';
+  var m = Math.floor(s/60), r = Math.round(s%60);
+  if (m < 60) return m + 'm ' + r + 's';
+  var h = Math.floor(m/60); m = m%60;
+  return h + 'h ' + m + 'm';
+}
 function loadScanStats(){
   $.getJSON("{{ route('khth.order-check-scan-stats') }}", filters(), function(r){
     $('#scan-total').text(r.total_scanned); $('#scan-runs').text(r.total_runs);
+    $('#scan-total-time').text(fmtSecs(r.total_secs)); $('#scan-avg-time').text(fmtSecs(r.avg_secs));
     var html='';
     r.sources.forEach(function(s){
       var err = s.errors > 0 ? '<span class="label label-danger">'+s.errors+'</span>' : '0';
-      html += '<tr><td>'+s.label+'</td><td><code>'+s.source_key+'</code></td><td class="text-right">'+s.scanned+'</td><td class="text-right">'+s.violations+'</td><td class="text-right">'+s.runs+'</td><td class="text-right">'+err+'</td><td>'+s.last_run+'</td></tr>';
+      html += '<tr><td>'+s.label+'</td><td><code>'+s.source_key+'</code></td><td class="text-right">'+s.scanned+'</td><td class="text-right">'+s.violations+'</td><td class="text-right">'+s.runs+'</td><td class="text-right">'+err+'</td><td class="text-right">'+fmtSecs(s.total_secs)+'</td><td class="text-right">'+fmtSecs(s.avg_secs)+'</td><td>'+s.last_run+'</td></tr>';
     });
-    $('#scan-stats-table tbody').html(html || '<tr><td colspan="7" class="text-center">Không có dữ liệu</td></tr>');
+    $('#scan-stats-table tbody').html(html || '<tr><td colspan="9" class="text-center">Không có dữ liệu</td></tr>');
   });
 }
 

@@ -73,6 +73,8 @@ class OrderCheckController extends Controller
                 SUM(violation_count) as violations,
                 COUNT(*) as runs,
                 SUM(CASE WHEN status = 'error' THEN 1 ELSE 0 END) as errors,
+                SUM(TIMESTAMPDIFF(SECOND, started_at, finished_at)) as total_secs,
+                SUM(CASE WHEN finished_at IS NOT NULL THEN 1 ELSE 0 END) as finished_runs,
                 MAX(finished_at) as last_run")
             ->groupBy('source_key')
             ->get();
@@ -80,9 +82,15 @@ class OrderCheckController extends Controller
         $sources = [];
         $totalScanned = 0;
         $totalViolations = 0;
+        $totalSecs = 0;
+        $finishedRuns = 0;
         foreach ($rows as $r) {
             $totalScanned += (int) $r->scanned;
             $totalViolations += (int) $r->violations;
+            $secs = (int) $r->total_secs;
+            $fin = (int) $r->finished_runs;
+            $totalSecs += $secs;
+            $finishedRuns += $fin;
             $sources[] = [
                 'source_key' => $r->source_key,
                 'label' => $labels[$r->source_key] ?? $r->source_key,
@@ -90,6 +98,8 @@ class OrderCheckController extends Controller
                 'violations' => (int) $r->violations,
                 'runs' => (int) $r->runs,
                 'errors' => (int) $r->errors,
+                'total_secs' => $secs,
+                'avg_secs' => $fin > 0 ? round($secs / $fin, 1) : 0,
                 'last_run' => $r->last_run ? Carbon::parse($r->last_run)->format('d/m/Y H:i') : '',
             ];
         }
@@ -98,6 +108,8 @@ class OrderCheckController extends Controller
             'total_scanned' => $totalScanned,
             'total_violations' => $totalViolations,
             'total_runs' => (int) (clone $q)->count(),
+            'total_secs' => $totalSecs,
+            'avg_secs' => $finishedRuns > 0 ? round($totalSecs / $finishedRuns, 1) : 0,
             'sources' => $sources,
         ]);
     }
