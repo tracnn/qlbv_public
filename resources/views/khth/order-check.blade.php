@@ -47,6 +47,19 @@
   <div class="col-md-3"><div class="info-box"><span class="info-box-icon bg-gray"><i class="fa fa-inbox"></i></span><div class="info-box-content"><span class="info-box-text">Chưa xử lý</span><span class="info-box-number" id="kpi-new">0</span></div></div></div>
 </div>
 
+<div class="box box-info collapsed-box">
+  <div class="box-header with-border">
+    <h3 class="box-title"><i class="fa fa-database"></i> Thống kê quét — tổng đã quét: <b id="scan-total">0</b> (lượt chạy: <span id="scan-runs">0</span>)</h3>
+    <div class="box-tools pull-right"><button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-plus"></i></button></div>
+  </div>
+  <div class="box-body table-responsive">
+    <table class="table table-bordered table-condensed" id="scan-stats-table">
+      <thead><tr><th>Nguồn quét</th><th>source_key</th><th class="text-right">Đã quét</th><th class="text-right">Vi phạm</th><th class="text-right">Lượt chạy</th><th class="text-right">Lỗi</th><th>Chạy gần nhất</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+
 <div class="box">
   <div class="box-header"><h3 class="box-title">Danh sách vi phạm</h3></div>
   <div class="box-body table-responsive">
@@ -74,8 +87,21 @@ function loadSummary(){
   });
 }
 
+function loadScanStats(){
+  $.getJSON("{{ route('khth.order-check-scan-stats') }}", filters(), function(r){
+    $('#scan-total').text(r.total_scanned); $('#scan-runs').text(r.total_runs);
+    var html='';
+    r.sources.forEach(function(s){
+      var err = s.errors > 0 ? '<span class="label label-danger">'+s.errors+'</span>' : '0';
+      html += '<tr><td>'+s.label+'</td><td><code>'+s.source_key+'</code></td><td class="text-right">'+s.scanned+'</td><td class="text-right">'+s.violations+'</td><td class="text-right">'+s.runs+'</td><td class="text-right">'+err+'</td><td>'+s.last_run+'</td></tr>';
+    });
+    $('#scan-stats-table tbody').html(html || '<tr><td colspan="7" class="text-center">Không có dữ liệu</td></tr>');
+  });
+}
+
 function reload(){
   loadSummary();
+  loadScanStats();
   if(ocTable){ ocTable.ajax.reload(); return; }
   ocTable = $('#oc-table').DataTable({
     processing:true, serverSide:true, destroy:true, scrollX:true, order:[[0,'desc']],

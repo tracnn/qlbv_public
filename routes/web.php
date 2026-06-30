@@ -597,6 +597,7 @@ Route::group(['middleware' => ['auth', 'check.first.login']], function () {
         /* Kiểm tra sai sót y lệnh */
         Route::get('order-check-index', 'KHTH\OrderCheckController@index')->name('khth.order-check-index');
         Route::get('order-check-index/summary', 'KHTH\OrderCheckController@summary')->name('khth.order-check-summary');
+        Route::get('order-check-index/scan-stats', 'KHTH\OrderCheckController@scanStats')->name('khth.order-check-scan-stats');
         Route::get('order-check-index/fetch', 'KHTH\OrderCheckController@fetch')->name('khth.order-check-fetch');
         Route::post('order-check-index/update-status', 'KHTH\OrderCheckController@updateStatus')->name('khth.order-check-update-status');
         Route::get('order-check-index/export', 'KHTH\OrderCheckController@export')->name('khth.order-check-export');

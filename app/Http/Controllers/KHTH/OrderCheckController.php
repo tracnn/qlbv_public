@@ -5,6 +5,7 @@ namespace App\Http\Controllers\KHTH;
 use App\Http\Controllers\Controller;
 use App\Models\OrderCheck\OrderCheckViolation;
 use App\Models\OrderCheck\OrderCheckRule;
+use App\Models\OrderCheck\OrderCheckRuleLog;
 use App\Services\OrderCheck\ViolationQueryService;
 use App\Exports\OrderCheckViolationExport;
 use Illuminate\Http\Request;
@@ -45,6 +46,59 @@ class OrderCheckController extends Controller
             'new' => (int) ($byStatus['new'] ?? 0),
             'processed' => (int) ($byStatus['processed'] ?? 0),
             'false_positive' => (int) ($byStatus['false_positive'] ?? 0),
+        ]);
+    }
+
+    /** Thống kê quét: tổng đã quét + theo từng source_key (từ order_check_rule_logs). */
+    public function scanStats(Request $request)
+    {
+        $labels = [
+            'his_service_req' => 'Phiếu chỉ định (thời gian/CCHN/thiếu CĐ)',
+            'his_medicine_interactive' => 'Tương tác thuốc',
+            'his_exp_mest_medicine' => 'Thuốc (liều)',
+            'his_sere_serv_restriction' => 'Dịch vụ (giới tính/tuổi)',
+        ];
+
+        $q = OrderCheckRuleLog::query();
+        if ($request->filled('date_from')) {
+            $q->where('started_at', '>=', $request->input('date_from') . ' 00:00:00');
+        }
+        if ($request->filled('date_to')) {
+            $q->where('started_at', '<=', $request->input('date_to') . ' 23:59:59');
+        }
+
+        $rows = (clone $q)
+            ->selectRaw("source_key,
+                SUM(scanned_count) as scanned,
+                SUM(violation_count) as violations,
+                COUNT(*) as runs,
+                SUM(CASE WHEN status = 'error' THEN 1 ELSE 0 END) as errors,
+                MAX(finished_at) as last_run")
+            ->groupBy('source_key')
+            ->get();
+
+        $sources = [];
+        $totalScanned = 0;
+        $totalViolations = 0;
+        foreach ($rows as $r) {
+            $totalScanned += (int) $r->scanned;
+            $totalViolations += (int) $r->violations;
+            $sources[] = [
+                'source_key' => $r->source_key,
+                'label' => $labels[$r->source_key] ?? $r->source_key,
+                'scanned' => (int) $r->scanned,
+                'violations' => (int) $r->violations,
+                'runs' => (int) $r->runs,
+                'errors' => (int) $r->errors,
+                'last_run' => $r->last_run ? Carbon::parse($r->last_run)->format('d/m/Y H:i') : '',
+            ];
+        }
+
+        return response()->json([
+            'total_scanned' => $totalScanned,
+            'total_violations' => $totalViolations,
+            'total_runs' => (int) (clone $q)->count(),
+            'sources' => $sources,
         ]);
     }
 
