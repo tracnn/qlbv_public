@@ -8,11 +8,24 @@
 
 Tự động phát hiện sai sót trong y lệnh do bác sĩ ra trên hệ thống HIS (database `hispro_bvnn`), **không yêu cầu hãng HIS cung cấp API và không can thiệp vào schema HIS**. Hệ thống định kỳ quét dữ liệu y lệnh mới/đổi trong HIS, chạy bộ quy tắc bắt lỗi, lưu vi phạm và đưa ra cảnh báo (dashboard, thông báo, workflow xử lý, API cho tương lai).
 
-### Phạm vi loại sai sót (giai đoạn mục tiêu)
+### Hai họ luật
+
+Module có **2 họ luật** với cách quản lý khác nhau:
+
+- **Họ A — Luật lâm sàng (data-driven):** logic phức tạp + thay đổi thường xuyên, cấu hình trong DB.
+- **Họ B — Luật hợp lệ cấu trúc/thời gian & hành nghề (hardcode):** logic cố định, deterministic, suy ra trực tiếp từ HIS; **chấp nhận hardcode**, có chỗ cập nhật riêng tách khỏi họ A.
+
+### Phạm vi loại sai sót — Họ A (lâm sàng, data-driven)
 1. **Tương tác / trùng thuốc**: tương tác thuốc–thuốc, kê trùng hoạt chất, trùng dịch vụ/chỉ định trong cùng đợt.
 2. **Liều / đường dùng / tuổi**: liều bất thường, sai đường dùng, chống chỉ định theo tuổi/cân nặng, thuốc cho trẻ em/phụ nữ có thai.
 3. **Logic chỉ định & chẩn đoán**: chỉ định không phù hợp ICD, lệch giới tính, thiếu chẩn đoán, chỉ định bị cấm theo phân tuyến.
 4. **Quy tắc BHYT / thanh toán**: DV/thuốc không được BHYT chi trả, vượt định mức, sai điều kiện thanh toán, mã bệnh nhóm cảnh báo (kế thừa logic CheckBHYT hiện có).
+
+### Phạm vi loại sai sót — Họ B (hợp lệ cấu trúc/thời gian & hành nghề, hardcode)
+5. **Tính hợp lệ thời gian**: ngày ra viện < ngày vào viện; giờ y lệnh trước ngày vào hoặc sau ngày ra; giờ thực hiện trước giờ y lệnh; các mốc thời gian phi logic khác.
+6. **Điều kiện hành nghề**: bác sĩ ra y lệnh không có/không hợp lệ chứng chỉ – phạm vi hành nghề (`HIS_EMPLOYEE.PRACTICE_SCOPE_DECISION`).
+
+> Họ B dùng chung pipeline (engine → violation → dashboard/notify/workflow/API) với họ A, nhưng **logic nằm trong code** và được quản lý ở một thư mục/registry riêng (xem §6.1).
 
 ## 2. Quyết định kiến trúc (đã chốt với người dùng)
 
@@ -37,8 +50,11 @@ Tất cả bảng dưới đều có `ID` (NUMBER), `CREATE_TIME`/`MODIFY_TIME` 
 | `HIS_SERE_SERV` | Chi tiết dịch vụ/CLS trong phiếu |
 | `HIS_MEDICINE` | Chi tiết thuốc kê |
 | `HIS_MEDICINE_INTERACTIVE` | Tham chiếu tương tác thuốc (`MEDICINE_TYPE_ID1/ID2`, `INTERACTIVE_GRADE_ID`, điều kiện ICD) |
-| `HIS_TREATMENT`, `HIS_PATIENT` | Thông tin đợt điều trị / nhân khẩu bệnh nhân (tuổi, giới tính) |
+| `HIS_TREATMENT`, `HIS_PATIENT` | Đợt điều trị / nhân khẩu BN (tuổi, giới tính); mốc thời gian `IN_TIME`, `OUT_TIME` cho luật họ B |
 | `HIS_MEDICINE_TYPE` (+ nhóm/hoạt chất) | Danh mục thuốc, hoạt chất phục vụ phát hiện trùng |
+| `HIS_EMPLOYEE` | Thông tin BS ra y lệnh; `PRACTICE_SCOPE_DECISION` (chứng chỉ/phạm vi hành nghề) cho luật họ B |
+
+**Cột thời gian phục vụ luật họ B** (đều NUMBER `YYYYMMDDHH24MISS`): `HIS_TREATMENT.IN_TIME`/`OUT_TIME`, `HIS_SERVICE_REQ.INTRUCTION_TIME`, `HIS_SERE_SERV.EXECUTE_TIME`/`TDL_INTRUCTION_TIME`.
 
 > Lưu ý: quyền của `HIS_RS` chỉ dùng để **SELECT**. Module không tạo/sửa bất kỳ object nào trong HIS.
 
@@ -87,9 +103,11 @@ Các bước mỗi lần quét:
 
 - **`HisOrderSource`** (Service): đọc HIS theo watermark, trả `OrderContext` đã chuẩn hóa (không để logic HIS rò rỉ vào handler).
 - **`RuleEngine`**: nạp luật active khớp scope → gọi handler → gom `Violation[]` → ghi DB chống trùng → ghi log.
-- **`RuleHandler`** (interface): mỗi *loại luật* là một class đọc `params` từ rule row. Trả về danh sách `Violation` (hoặc rỗng).
+- **`RuleHandler`** (interface chung cho cả 2 họ): nhận `OrderContext`, trả về `Violation[]` (hoặc rỗng). Engine không phân biệt họ A/B khi điều phối — chỉ khác cách định nghĩa.
 
-Danh sách handler (đánh số = ưu tiên đề xuất cho giai đoạn 1):
+### 6.1 Họ A — Handler lâm sàng (data-driven)
+
+Mỗi *loại luật* là một class đọc `params`/`scope`/`severity` từ bản ghi `order_check_rules`. Danh sách (đánh số = ưu tiên giai đoạn 1):
 1. `DrugInteractionRule` — dùng `HIS_MEDICINE_INTERACTIVE`.
 2. `DuplicateDrugRule` — trùng hoạt chất/biệt dược cùng đợt.
 3. `DuplicateServiceRule` — trùng DV/CLS cùng đợt/ngày.
@@ -100,7 +118,19 @@ Danh sách handler (đánh số = ưu tiên đề xuất cho giai đoạn 1):
 8. `DoseRouteRule` — liều/đường dùng bất thường theo ngưỡng cấu hình.
 9. `IcdServiceConsistencyRule` — DV không phù hợp ICD.
 
-> "Data-driven" ở đây nghĩa là: admin bật/tắt, đặt `severity`, ngưỡng (`params`), phạm vi áp dụng (`scope`) cho từng luật trong DB qua UI; logic phức tạp nằm trong handler tái sử dụng. Thêm một biến thể luật mới (vd thêm một cặp tương tác, một ngưỡng liều) = thêm một bản ghi `order_check_rules`, không cần deploy.
+> "Data-driven": admin bật/tắt, đặt `severity`, ngưỡng (`params`), phạm vi (`scope`) cho từng luật trong DB qua UI. Thêm biến thể luật (cặp tương tác, ngưỡng liều...) = thêm bản ghi `order_check_rules`, không cần deploy.
+
+### 6.2 Họ B — Handler hợp lệ cấu trúc/thời gian & hành nghề (hardcode)
+
+- **Chỗ cập nhật riêng:** tất cả luật họ B đặt trong một thư mục/namespace riêng, ví dụ `app/Services/OrderCheck/RuleHandlers/Structural/`, kèm một **registry** (mảng khai báo) liệt kê các check đang bật. Thêm/sửa một luật họ B = thêm một class + một dòng trong registry (chấp nhận hardcode), **không lẫn** với cấu hình data-driven của họ A.
+- Mỗi luật họ B vẫn có một bản ghi tối thiểu trong `order_check_rules` (`rule_type` = tên class, `severity`, `is_active`) để dùng chung dashboard/notify/workflow và cho phép bật/tắt — nhưng **toàn bộ logic nằm trong code**, không phụ thuộc `params`.
+
+Danh sách check họ B (giai đoạn 1):
+- `DischargeBeforeAdmissionRule` — `OUT_TIME` < `IN_TIME`.
+- `OrderTimeOutOfStayRule` — `INTRUCTION_TIME` trước `IN_TIME` hoặc sau `OUT_TIME`.
+- `ExecuteBeforeOrderRule` — `EXECUTE_TIME` (hoặc `TDL_INTRUCTION_TIME`) trước `INTRUCTION_TIME`.
+- `DoctorPracticeCertRule` — BS ra y lệnh thiếu/không hợp lệ `PRACTICE_SCOPE_DECISION`.
+- (mở rộng dễ dàng: các mốc thời gian phi logic khác chỉ cần thêm class + 1 dòng registry.)
 
 ## 7. Đầu ra
 
