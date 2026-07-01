@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 
+use App\Http\Controllers\Concerns\ExcludesDashboardPatientTypes;
 use App\BHYTKiemTraHoSo;
 use App\HISProBaoCaoQuanTri;
 use App\Services\FtpService;
@@ -21,6 +22,7 @@ use Illuminate\Support\Facades\Auth;
  */
 class HomeController extends Controller
 {
+    use ExcludesDashboardPatientTypes;
 
     /**
      * Show the application dashboard.
@@ -113,6 +115,9 @@ class HomeController extends Controller
             ->where('his_sere_serv.is_delete', 0)
             ->whereNull('his_sere_serv.is_no_execute')
             ->groupBy('his_machine.machine_name', 'his_machine.machine_group_code')
+            ->when($this->excludedPatientTypeIds(), function ($q, $ids) {
+                $q->whereNotIn('his_sere_serv.patient_type_id', $ids);
+            })
             ->get();
 
         return response()->json(self::buildServiceByMachineSeries($rows));
@@ -319,6 +324,9 @@ class HomeController extends Controller
             ->where('his_sere_serv.is_delete', 0)
             ->groupBy('his_sere_serv.tdl_execute_department_id', 'his_department.department_name')
             ->havingRaw('sum(his_sere_serv.amount * his_sere_serv.vir_price) > 0') // loại khoa không có doanh thu
+            ->when($this->excludedPatientTypeIds(), function ($q, $ids) {
+                $q->whereNotIn('his_sere_serv.patient_type_id', $ids);
+            })
             ->get();
     }
 
@@ -568,6 +576,9 @@ class HomeController extends Controller
             'his_sere_serv.patient_type_id',
             'his_patient_type.patient_type_name'
         )
+        ->when($this->excludedPatientTypeIds(), function ($q, $ids) {
+            $q->whereNotIn('his_sere_serv.patient_type_id', $ids);
+        })
         ->get();
     }
 
@@ -1036,6 +1047,9 @@ class HomeController extends Controller
         ->where('his_service_req.is_active', 1)
         ->where('his_service_req.is_delete', 0)
         ->whereNotNull('finish_time')
+        ->when($this->excludedPatientTypeIds(), function ($q, $ids) {
+            $q->whereNotIn('his_sere_serv.patient_type_id', $ids);
+        })
         ->get();
     }
 
@@ -1154,6 +1168,9 @@ class HomeController extends Controller
         ->where('his_service_req.is_active', 1)
         ->where('his_service_req.is_delete', 0)
         ->whereNotNull('finish_time')
+        ->when($this->excludedPatientTypeIds(), function ($q, $ids) {
+            $q->whereNotIn('his_sere_serv.patient_type_id', $ids);
+        })
         ->get();
     }
 
@@ -1392,6 +1409,9 @@ class HomeController extends Controller
         ->where('his_service_req.is_active', 1)
         ->where('his_service_req.is_delete', 0)
         ->groupBy('service_req_stt_id')
+        ->when($this->excludedPatientTypeIds(), function ($q, $ids) {
+            $q->whereNotIn('his_sere_serv.patient_type_id', $ids);
+        })
         ->get();
     }
 
@@ -1489,6 +1509,9 @@ class HomeController extends Controller
             'his_sere_serv.patient_type_id',
             'his_patient_type.patient_type_name'
         )
+        ->when($this->excludedPatientTypeIds(), function ($q, $ids) {
+            $q->whereNotIn('his_sere_serv.patient_type_id', $ids);
+        })
         ->get();
     }
 
@@ -1734,6 +1757,9 @@ class HomeController extends Controller
             ->groupBy('tdl_request_username')
             ->orderBy('so_luong','desc')
             ->take(config('__tech.number_top_request_dvkt'))
+            ->when($this->excludedPatientTypeIds(), function ($q, $ids) {
+                $q->whereNotIn('his_sere_serv.patient_type_id', $ids);
+            })
             ->get();
         $sum_sl = $model->sum('so_luong');
 
@@ -1776,6 +1802,9 @@ class HomeController extends Controller
             ->groupBy('tdl_request_username')
             ->orderBy('so_luong','desc')
             ->take(config('__tech.number_top_request_dvkt'))
+            ->when($this->excludedPatientTypeIds(), function ($q, $ids) {
+                $q->whereNotIn('his_sere_serv.patient_type_id', $ids);
+            })
             ->get();
         $sum_sl = $model->sum('so_luong');
 
