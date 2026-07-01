@@ -12,25 +12,34 @@ class ExcludesDashboardPatientTypesTest extends TestCase
     {
         return new class {
             use ExcludesDashboardPatientTypes;
+            public function codes(): array { return $this->excludedPatientTypeCodes(); }
             public function ids(): array { return $this->excludedPatientTypeIds(); }
         };
     }
 
-    public function test_reads_config_and_casts_to_int()
+    public function test_reads_codes_from_config_as_strings()
     {
-        config(['organization.dashboard.exclude_patient_type_ids' => ['43', 102]]);
-        $this->assertSame([43, 102], $this->subject()->ids());
+        config(['organization.dashboard.exclude_patient_type_codes' => ['03', 97]]);
+        // Ép về string, reindex; KHÔNG resolve id (không chạm DB).
+        $this->assertSame(['03', '97'], $this->subject()->codes());
     }
 
-    public function test_returns_empty_when_not_configured()
+    public function test_codes_empty_when_not_configured()
     {
-        config(['organization.dashboard.exclude_patient_type_ids' => []]);
-        $this->assertSame([], $this->subject()->ids());
+        config(['organization.dashboard.exclude_patient_type_codes' => []]);
+        $this->assertSame([], $this->subject()->codes());
     }
 
-    public function test_returns_empty_when_key_missing()
+    public function test_codes_empty_when_key_missing()
     {
         config(['organization' => ['foo' => 'bar']]);
+        $this->assertSame([], $this->subject()->codes());
+    }
+
+    public function test_ids_empty_without_db_when_no_codes()
+    {
+        // Không có code cấu hình => trả [] theo đường tắt, KHÔNG query his_patient_type.
+        config(['organization.dashboard.exclude_patient_type_codes' => []]);
         $this->assertSame([], $this->subject()->ids());
     }
 }
