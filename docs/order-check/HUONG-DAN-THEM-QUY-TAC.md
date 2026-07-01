@@ -29,8 +29,8 @@ Command: php artisan kiemtraylenh:scan   (loop + sleep, chạy bằng nssm servi
 | Danh sách Scanner | `app/Services/OrderCheck/Scanners/ScannerRegistry.php` |
 | Các Scanner | `app/Services/OrderCheck/Scanners/*.php` |
 | Interface RuleHandler | `app/Services/OrderCheck/Contracts/RuleHandler.php` |
-| Handler Họ B (cấu trúc/thời gian/hành nghề) | `app/Services/OrderCheck/RuleHandlers/Structural/*` + registry `StructuralRuleRegistry.php` |
-| Handler Họ A cấp phiếu (lâm sàng) | `app/Services/OrderCheck/RuleHandlers/Clinical/*` + registry `ClinicalServiceReqRuleRegistry.php` |
+| Handler cấp phiếu (class logic) | `app/Services/OrderCheck/RuleHandlers/Structural/*`, `.../Clinical/*` |
+| Điều phối luật cấp phiếu **theo loại DV** | `RuleHandlers/ServiceReq/{CommonRules, ServiceReqRuleRegistry}.php` + `ServiceReq/Types/*Rules.php` (18 loại) |
 | Đọc HIS + dựng context + resolver tên | `app/Services/OrderCheck/HisOrderSource.php` |
 | DTO | `app/Services/OrderCheck/Support/{OrderContext,OrderService,Violation,ViolationContext}.php` |
 | Bảng cấu hình luật | `order_check_rules` (model `app/Models/OrderCheck/OrderCheckRule.php`) |
@@ -61,6 +61,12 @@ Command: php artisan kiemtraylenh:scan   (loop + sleep, chạy bằng nssm servi
 ---
 
 ## 3. Loại A — Handler cấp phiếu chỉ định (dễ nhất)
+
+> **Tổ chức theo loại dịch vụ (SERVICE_REQ_TYPE):** handler cấp phiếu được điều phối qua `RuleHandlers/ServiceReq/ServiceReqRuleRegistry`:
+> - Luật áp **mọi loại phiếu** → thêm vào `RuleHandlers/ServiceReq/CommonRules::handlers()`.
+> - Luật **chỉ cho một loại** (vd CĐHA) → mở `RuleHandlers/ServiceReq/Types/<Loại>Rules.php` (đã tạo sẵn 18 file theo loại), thêm handler vào `handlers()` — vd `ChanDoanHinhAnhRules` (id=3). Không cần sửa scanner/engine.
+>
+> `ServiceReqScanner` tự chạy `common() + forType(loại của phiếu)` cho mỗi phiếu. (Registry cũ `StructuralRuleRegistry`/`ClinicalServiceReqRuleRegistry` đã bỏ.)
 
 Chạy trong `ServiceReqScanner` (nguồn `his_service_req`, quét theo `MODIFY_TIME`). Handler nhận sẵn `OrderContext` (đã có patient, đợt điều trị, người chỉ định/thực hiện, ICD, thời gian vào/ra, danh sách dịch vụ con...).
 
@@ -104,13 +110,13 @@ Viết test thuần tại `tests/Unit/OrderCheck/<TenRule>Test.php` (dựng `Ord
 
 > **Cần một cột HIS chưa có trong `OrderContext`?** Xem §3.1.
 
-### Bước 2 — Đăng ký handler
-Thêm vào registry tương ứng:
-- Họ A: `app/Services/OrderCheck/RuleHandlers/ClinicalServiceReqRuleRegistry.php`
-- Họ B: `app/Services/OrderCheck/RuleHandlers/StructuralRuleRegistry.php`
+### Bước 2 — Đăng ký handler (theo loại dịch vụ)
+- Luật áp **mọi loại phiếu** → thêm vào `RuleHandlers/ServiceReq/CommonRules::handlers()`.
+- Luật **chỉ cho một loại** (vd CĐHA id=3) → mở `RuleHandlers/ServiceReq/Types/ChanDoanHinhAnhRules.php`, thêm vào `handlers()`.
 
 ```php
-public static function handlers()
+// vd CommonRules.php (áp mọi loại) HOẶC Types/<Loại>Rules.php (áp 1 loại):
+public function handlers()   // CommonRules dùng `public static function handlers()`
 {
     return [
         // ...các handler cũ...

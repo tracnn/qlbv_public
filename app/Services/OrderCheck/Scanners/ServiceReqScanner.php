@@ -4,8 +4,7 @@ namespace App\Services\OrderCheck\Scanners;
 
 use App\Services\OrderCheck\Contracts\Scanner;
 use App\Services\OrderCheck\OrderCheckEngine;
-use App\Services\OrderCheck\RuleHandlers\StructuralRuleRegistry;
-use App\Services\OrderCheck\RuleHandlers\ClinicalServiceReqRuleRegistry;
+use App\Services\OrderCheck\RuleHandlers\ServiceReq\ServiceReqRuleRegistry;
 use App\Services\OrderCheck\Support\ViolationContext;
 
 class ServiceReqScanner implements Scanner
@@ -21,10 +20,7 @@ class ServiceReqScanner implements Scanner
     {
         $source = $engine->source();
         $rulesByCode = $engine->activeRules();
-        $handlers = array_merge(
-            StructuralRuleRegistry::handlers(),
-            ClinicalServiceReqRuleRegistry::handlers()
-        );
+        $commonHandlers = ServiceReqRuleRegistry::common();
 
         // Quét theo MODIFY_TIME (HIS_SERVICE_REQ.modify_time có index) để bắt cả phiếu
         // bị SỬA sau khi tạo — vd người thực hiện (execute_loginname) được gán lúc thực hiện.
@@ -44,6 +40,8 @@ class ServiceReqScanner implements Scanner
                 $ctx = $source->buildContext($row, isset($servicesMap[(int) $row->id]) ? $servicesMap[(int) $row->id] : []);
                 $vctx = ViolationContext::fromOrderContext($ctx);
 
+                // Luật áp mọi loại + luật riêng theo loại của phiếu
+                $handlers = array_merge($commonHandlers, ServiceReqRuleRegistry::forType($ctx->serviceReqTypeId));
                 foreach ($handlers as $handler) {
                     if (!isset($rulesByCode[$handler->code()])) {
                         continue;

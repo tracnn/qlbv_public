@@ -1,21 +1,20 @@
 <?php
 
-namespace App\Services\OrderCheck\RuleHandlers;
+namespace App\Services\OrderCheck\RuleHandlers\ServiceReq;
 
 use App\Services\OrderCheck\RuleHandlers\Structural\DischargeBeforeAdmissionRule;
 use App\Services\OrderCheck\RuleHandlers\Structural\OrderTimeOutOfStayRule;
 use App\Services\OrderCheck\RuleHandlers\Structural\ExecuteBeforeOrderRule;
 use App\Services\OrderCheck\RuleHandlers\Structural\DoctorPracticeCertRule;
+use App\Services\OrderCheck\RuleHandlers\Clinical\MissingDiagnosisRule;
 
 /**
- * CHỖ CẬP NHẬT RIÊNG cho luật Họ B (hardcode).
- * Thêm luật mới = thêm 1 class trong Structural/ + 1 dòng vào đây.
+ * Luật cấp phiếu áp cho MỌI loại dịch vụ.
+ * Thêm luật áp cho tất cả loại vào mảng handlers() dưới đây.
  */
-class StructuralRuleRegistry
+class CommonRules
 {
-    /**
-     * @return \App\Services\OrderCheck\Contracts\RuleHandler[]
-     */
+    /** @return \App\Services\OrderCheck\Contracts\RuleHandler[] */
     public static function handlers()
     {
         return [
@@ -23,6 +22,7 @@ class StructuralRuleRegistry
             new OrderTimeOutOfStayRule(),
             new ExecuteBeforeOrderRule(),
             new DoctorPracticeCertRule(),
+            new MissingDiagnosisRule(),
         ];
     }
 }
