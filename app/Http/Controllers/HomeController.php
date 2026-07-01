@@ -178,6 +178,9 @@ class HomeController extends Controller
         ])
         ->whereBetween('out_time', [$from_date, $to_date])
         ->where('tdl_treatment_type_id', 3)
+        ->when($this->excludedPatientTypeIds(), function ($q, $ids) {
+            $q->whereNotIn('his_treatment.tdl_patient_type_id', $ids);
+        })
         ->get();
 
         return $data;
@@ -1284,6 +1287,9 @@ class HomeController extends Controller
         ->where('his_service_req.is_active', 1)
         ->where('his_service_req.is_delete', 0)
         ->whereNotNull('his_treatment.fee_lock_time')
+        ->when($this->excludedPatientTypeIds(), function ($q, $ids) {
+            $q->whereNotIn('his_treatment.tdl_patient_type_id', $ids);
+        })
         ->get();
     }
 
@@ -1394,6 +1400,9 @@ class HomeController extends Controller
         ->whereBetween('his_treatment.out_time', [$from_date, $to_date])
         ->where('his_treatment.tdl_treatment_type_id', 1)
         ->whereNotNull('his_treatment.fee_lock_time')
+        ->when($this->excludedPatientTypeIds(), function ($q, $ids) {
+            $q->whereNotIn('his_treatment.tdl_patient_type_id', $ids);
+        })
         ->get();
     }
 
@@ -1426,6 +1435,9 @@ class HomeController extends Controller
         ->where('his_treatment.is_delete',0)
         ->groupBy('department_name')
         ->orderBy('so_luong','desc')
+        ->when($this->excludedPatientTypeIds(), function ($q, $ids) {
+            $q->whereNotIn('his_treatment.tdl_patient_type_id', $ids);
+        })
         ->get();
     }
 
@@ -1456,6 +1468,9 @@ class HomeController extends Controller
         ->whereBetween('his_transaction.transaction_time', [$from_date, $to_date])
         ->where('his_transaction.is_delete', 0)
         ->whereNull('his_transaction.is_cancel')
+        ->when($this->excludedPatientTypeIds(), function ($q, $ids) {
+            $q->whereNotIn('his_treatment.tdl_patient_type_id', $ids);
+        })
         ->get();
     }
 
@@ -1470,6 +1485,9 @@ class HomeController extends Controller
         ->where('his_treatment.is_delete',0)
         ->groupBy('last_department_id','department_name')
         ->orderBy('so_luong','desc')
+        ->when($this->excludedPatientTypeIds(), function ($q, $ids) {
+            $q->whereNotIn('his_treatment.tdl_patient_type_id', $ids);
+        })
         ->get();
     }
 
@@ -1484,6 +1502,9 @@ class HomeController extends Controller
         ->whereBetween('his_patient.create_time', [$from_date, $to_date])
         ->where('his_patient.is_delete',0)
         ->groupBy('branch_name')
+        ->when($this->excludedPatientTypeIds(), function ($q, $ids) {
+            $q->whereNotIn('his_treatment.tdl_patient_type_id', $ids);
+        })
         ->get();
     }
 
@@ -1526,6 +1547,9 @@ class HomeController extends Controller
         ->whereBetween('in_time', [$from_date, $to_date])
         ->where('his_treatment.is_delete', 0)
         ->groupBy('his_treatment.tdl_patient_type_id', 'his_patient_type.patient_type_name')
+        ->when($this->excludedPatientTypeIds(), function ($q, $ids) {
+            $q->whereNotIn('his_treatment.tdl_patient_type_id', $ids);
+        })
         ->get();
     }
 
@@ -1540,6 +1564,9 @@ class HomeController extends Controller
         ->where('his_patient.create_time', '<', $from_date)
         ->where('his_treatment.is_delete',0)
         ->groupBy('branch_name')
+        ->when($this->excludedPatientTypeIds(), function ($q, $ids) {
+            $q->whereNotIn('his_treatment.tdl_patient_type_id', $ids);
+        })
         ->get();
     }
 
@@ -1559,6 +1586,9 @@ class HomeController extends Controller
             'his_treatment_type.treatment_type_name')
         ->whereBetween('out_time', [$from_date, $to_date])
         ->where('his_treatment.is_delete',0)
+        ->when($this->excludedPatientTypeIds(), function ($q, $ids) {
+            $q->whereNotIn('his_treatment.tdl_patient_type_id', $ids);
+        })
         ->get();
     }
 
@@ -1658,6 +1688,9 @@ class HomeController extends Controller
         })
         ->groupBy('his_department.department_name')
         ->orderBy('so_luong','desc')
+        ->when($this->excludedPatientTypeIds(), function ($q, $ids) {
+            $q->whereNotIn('his_treatment.tdl_patient_type_id', $ids);
+        })
         ->get();
     }
 
@@ -1674,6 +1707,9 @@ class HomeController extends Controller
             ->where('in_time', '<=', date("Ymd", mktime(0, 0, 0, date("m"), date("d"), date("Y"))) . '235959')
             ->groupBy('treatment_end_type_id')
             ->orderBy('so_luong','desc')
+            ->when($this->excludedPatientTypeIds(), function ($q, $ids) {
+                $q->whereNotIn('his_treatment.tdl_patient_type_id', $ids);
+            })
             ->get();
         $sum_sl = $model->sum('so_luong');
 
@@ -1715,6 +1751,9 @@ class HomeController extends Controller
             ->orderBy('in_date','desc')
             ->take(config('__tech.number_in_chart'))
             ->orderBy('in_date')
+            ->when($this->excludedPatientTypeIds(), function ($q, $ids) {
+                $q->whereNotIn('his_treatment.tdl_patient_type_id', $ids);
+            })
             ->get();
         $sum_sl = $model->sum('so_luong');
 
@@ -1847,6 +1886,9 @@ class HomeController extends Controller
             ->where('tdl_treatment_type_id', config('__tech.treatment_type_noitru'))
             ->groupBy('department_name')
             ->orderBy('so_luong','desc')
+            ->when($this->excludedPatientTypeIds(), function ($q, $ids) {
+                $q->whereNotIn('his_treatment.tdl_patient_type_id', $ids);
+            })
             ->get();
         $sum_sl = $model->sum('so_luong');
         $sum_sl_khoa = $model->count('so_luong');
@@ -1890,6 +1932,9 @@ class HomeController extends Controller
             ->where('tdl_treatment_type_id', config('__tech.treatment_type_noitru'))
             ->groupBy('patient_type_name')
             ->orderBy('so_luong','desc')
+            ->when($this->excludedPatientTypeIds(), function ($q, $ids) {
+                $q->whereNotIn('his_treatment.tdl_patient_type_id', $ids);
+            })
             ->get();
         $sum_sl = $model->sum('so_luong');
 
