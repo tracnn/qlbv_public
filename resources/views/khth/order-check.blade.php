@@ -67,7 +67,7 @@
   <div class="box-body table-responsive">
     <table id="oc-table" class="table table-hover table-bordered" width="100%">
       <thead><tr>
-        <th>Thời điểm</th><th>Mức độ</th><th>Luật</th><th>Loại DV</th><th>Phiếu</th><th>Mã ĐT</th><th>Tên BN</th><th>Bác sĩ</th><th>Khoa TH</th><th>Mã DV</th><th>Nội dung</th><th>Trạng thái</th><th>Thao tác</th>
+        <th>Thời điểm</th><th>Mức độ</th><th>Luật</th><th>Loại DV</th><th>Phiếu</th><th>Mã ĐT</th><th>Tên BN</th><th>Bác sĩ</th><th>Khoa TH</th><th>Nội dung</th><th>Trạng thái</th><th>Thao tác</th>
       </tr></thead>
     </table>
   </div>
@@ -121,7 +121,7 @@ function reload(){
     columns:[
       {data:'detected_at'},{data:'severity_badge'},{data:'rule_code'},{data:'service_req_type_name'},
       {data:'service_req_code'},{data:'treatment_code'},{data:'patient_name'},{data:'doctor'},
-      {data:'department_label'},{data:'service_code'},{data:'message'},
+      {data:'department_label'},{data:'message'},
       {data:'status_badge'},{data:'actions',orderable:false,searchable:false}
     ]
   });
