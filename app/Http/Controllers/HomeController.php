@@ -395,6 +395,8 @@ class HomeController extends Controller
 
     private function bedStatusByDepartment()
     {
+        $ids = $this->excludedPatientTypeIds();
+        $excludePt = empty($ids) ? '' : ' AND t.tdl_patient_type_id NOT IN (' . implode(',', $ids) . ')';
         $sql = "
             WITH tong AS (
                 SELECT r.department_id, COUNT(*) tong_giuong
@@ -414,6 +416,7 @@ class HomeController extends Controller
                 WHERE tbr.remove_time IS NULL AND tbr.is_delete=0 AND ct.id IS NULL
                   AND t.tdl_treatment_type_id IN (3,4)
                   AND (t.out_time IS NULL OR t.out_time > :now_ts) -- chưa ra viện HOẶC hẹn ra viện ở tương lai => vẫn đang nằm giường
+                  {$excludePt}
                 GROUP BY r.department_id
             )
             SELECT d.department_name,
