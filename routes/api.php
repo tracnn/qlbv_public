@@ -53,23 +53,5 @@ Route::middleware(['throttle:60,1', 'api.auth'])->group(function () {
     Route::get('/medical-center-dashboard/service-by-type/{id}', 'MedicalCenterDashboardController@getServiceByType')->name('medical-center-dashboard.service-by-type');
 
     // Tra cứu vi phạm y lệnh theo đợt điều trị (cho HIS/màn hình khác)
-    Route::get('order-check/violations', function (\Illuminate\Http\Request $request) {
-        $request->validate(['treatment_code' => 'required_without:treatment_id', 'treatment_id' => 'required_without:treatment_code']);
-
-        $q = \App\Models\OrderCheck\OrderCheckViolation::query();
-        if ($request->filled('treatment_code')) {
-            $q->where('treatment_code', $request->input('treatment_code'));
-        }
-        if ($request->filled('treatment_id')) {
-            $q->where('treatment_id', $request->input('treatment_id'));
-        }
-        if ($request->filled('status')) {
-            $q->where('status', $request->input('status'));
-        }
-
-        return response()->json($q->orderBy('detected_at', 'desc')->get([
-            'id', 'rule_code', 'severity', 'order_ref_type', 'order_ref_id',
-            'message', 'detail', 'status', 'detected_at',
-        ]));
-    });
+    Route::get('order-check/violations', 'KHTH\OrderCheckController@apiViolations');
 });

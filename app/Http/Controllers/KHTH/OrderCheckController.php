@@ -189,4 +189,29 @@ class OrderCheckController extends Controller
         $fileName = 'sai_sot_y_lenh_' . Carbon::now()->format('YmdHis') . '.xlsx';
         return Excel::download(new OrderCheckViolationExport($request->all()), $fileName);
     }
+
+    /** API JSON read-only: tra cứu vi phạm theo đợt điều trị (cho HIS/màn hình khác). */
+    public function apiViolations(Request $request)
+    {
+        $request->validate([
+            'treatment_code' => 'required_without:treatment_id',
+            'treatment_id' => 'required_without:treatment_code',
+        ]);
+
+        $q = OrderCheckViolation::query();
+        if ($request->filled('treatment_code')) {
+            $q->where('treatment_code', $request->input('treatment_code'));
+        }
+        if ($request->filled('treatment_id')) {
+            $q->where('treatment_id', $request->input('treatment_id'));
+        }
+        if ($request->filled('status')) {
+            $q->where('status', $request->input('status'));
+        }
+
+        return response()->json($q->orderBy('detected_at', 'desc')->get([
+            'id', 'rule_code', 'severity', 'order_ref_type', 'order_ref_id',
+            'message', 'detail', 'status', 'detected_at',
+        ]));
+    }
 }
