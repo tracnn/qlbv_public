@@ -898,6 +898,9 @@ class HomeController extends Controller
             ->where('his_service_req.is_active', 1)
             ->where('his_service_req.is_delete', 0)
             ->groupBy('his_execute_room.execute_room_name', 'his_service_req.service_req_stt_id')
+            ->when($this->excludedPatientTypeIds(), function ($q, $ids) {
+                $q->whereNotIn('his_service_req.tdl_patient_type_id', $ids);
+            })
             ->get();
 
         $sum_sl = $data->sum('so_luong');
