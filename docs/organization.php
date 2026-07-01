@@ -122,5 +122,9 @@ return [
     'patient_type_code_evenue' => [
         '01',
         '02'
-    ]
+    ],
+    'dashboard' => [
+        // patient_type_id KHÔNG tính vào thống kê KCB của dashboard Home (KSK đoàn/từ thiện...)
+        'exclude_patient_type_ids' => [43], // 43 = KSK (code 03)
+    ],
 ];
