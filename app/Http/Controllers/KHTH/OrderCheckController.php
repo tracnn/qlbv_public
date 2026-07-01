@@ -25,10 +25,7 @@ class OrderCheckController extends Controller
     public function index()
     {
         $rules = OrderCheckRule::orderBy('code')->get(['code', 'name']);
-        $serviceReqTypes = OrderCheckViolation::whereNotNull('service_req_type_id')
-            ->select('service_req_type_id', 'service_req_type_name')
-            ->distinct()->orderBy('service_req_type_name')->get();
-        return view('khth.order-check', compact('rules', 'serviceReqTypes'));
+        return view('khth.order-check', compact('rules'));
     }
 
     public function summary(Request $request)

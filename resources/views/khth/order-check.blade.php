@@ -27,9 +27,7 @@
     </div>
     <div class="row" style="margin-top:10px">
       <div class="col-md-3"><label>Loại dịch vụ</label>
-        <select id="service_req_type_id" class="form-control select2"><option value="">Tất cả</option>
-          @foreach($serviceReqTypes as $t)<option value="{{ $t->service_req_type_id }}">{{ $t->service_req_type_name }}</option>@endforeach
-        </select>
+        <select id="service_req_type_id" class="form-control select2"><option value="">Tất cả</option></select>
       </div>
       <div class="col-md-3"><label>Khoa thực hiện</label>
         <select id="department_id" class="form-control select2"><option value="">Tất cả</option></select>
@@ -135,6 +133,12 @@ $(function(){
   $.getJSON('{{ route("category-his.fetch-department-catalog") }}', function(data){
     var sel = $('#department_id');
     $.each(data, function(i, c){ sel.append('<option value="'+c.id+'">'+c.department_name+'</option>'); });
+  });
+
+  // Nạp danh mục Loại phiếu chỉ định cho filter "Loại dịch vụ"
+  $.getJSON('{{ route("category-his.fetch-service-req-type") }}', function(data){
+    var sel = $('#service_req_type_id');
+    $.each(data, function(i, c){ sel.append('<option value="'+c.id+'">'+c.service_req_type_name+'</option>'); });
   });
 
   $('#btn-export').on('click', function(){

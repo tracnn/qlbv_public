@@ -307,6 +307,8 @@ Route::group(['middleware' => ['auth', 'check.first.login']], function () {
 
     Route::get('index/category-department-catalog', 'Category\CategoryHISController@listDepartmentCatalog')
     ->name('category-his.fetch-department-catalog');
+    Route::get('index/category-service-req-type', 'Category\CategoryHISController@listServiceReqType')
+    ->name('category-his.fetch-service-req-type');
     Route::get('index/category-patient-type', 'Category\CategoryHISController@listPatientType')
     ->name('category-his.fetch-patient-type');
     Route::get('index/category-treatment-type', 'Category\CategoryHISController@listTreatmentType')

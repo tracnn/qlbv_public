@@ -45,6 +45,17 @@ class CategoryHISController extends Controller
         ->get();
     }
 
+    public function listServiceReqType()
+    {
+        return DB::connection('HISPro')
+        ->table('his_service_req_type')
+        ->where('his_service_req_type.is_active', 1)
+        ->where('his_service_req_type.is_delete', 0)
+        ->select('his_service_req_type.id', 'his_service_req_type.service_req_type_code', 'his_service_req_type.service_req_type_name')
+        ->orderBy('his_service_req_type.id')
+        ->get();
+    }
+
     public function listPatientType()
     {
         return DB::connection('HISPro')
