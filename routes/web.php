@@ -611,6 +611,12 @@ Route::group(['middleware' => ['auth', 'check.first.login']], function () {
         Route::post('order-check-ref-index/{id}', 'KHTH\OrderCheckRefController@update')->name('khth.order-check-ref-update');
         Route::delete('order-check-ref-index/{id}', 'KHTH\OrderCheckRefController@destroy')->name('khth.order-check-ref-destroy');
 
+        /* Quản lý quy tắc kiểm tra y lệnh */
+        Route::get('order-check-rule-index', 'KHTH\OrderCheckRuleController@index')->name('khth.order-check-rule-index');
+        Route::get('order-check-rule-index/fetch', 'KHTH\OrderCheckRuleController@fetch')->name('khth.order-check-rule-fetch');
+        Route::post('order-check-rule-index/{id}', 'KHTH\OrderCheckRuleController@update')->name('khth.order-check-rule-update');
+        Route::post('order-check-rule-index/{id}/toggle', 'KHTH\OrderCheckRuleController@toggle')->name('khth.order-check-rule-toggle');
+
     });
 
     Route::group(['prefix' => 'queue'], function () { 
