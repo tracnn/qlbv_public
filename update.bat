@@ -118,15 +118,21 @@ if errorlevel 1 (
 if errorlevel 1 (
     echo Installing service QLBV KiemTraYLenh...
     %NSSM_PATH%\nssm install "QLBV KiemTraYLenh" %PHP_PATH% "%LARAVEL_PATH%artisan kiemtraylenh:scan"
-    %NSSM_PATH%\nssm set "QLBV KiemTraYLenh" AppDirectory %LARAVEL_PATH%
 )
+:: Luon sua cau hinh (sua service da cai sai o lan truoc)
+%NSSM_PATH%\nssm set "QLBV KiemTraYLenh" Application %PHP_PATH%
+%NSSM_PATH%\nssm set "QLBV KiemTraYLenh" AppParameters "%LARAVEL_PATH%artisan kiemtraylenh:scan"
+%NSSM_PATH%\nssm set "QLBV KiemTraYLenh" AppDirectory %LARAVEL_PATH%
 
 %NSSM_PATH%\nssm status "QLBV KiemTraYLenhNotify" >nul 2>&1
 if errorlevel 1 (
     echo Installing service QLBV KiemTraYLenhNotify...
     %NSSM_PATH%\nssm install "QLBV KiemTraYLenhNotify" %PHP_PATH% "%LARAVEL_PATH%artisan kiemtraylenh:notify"
-    %NSSM_PATH%\nssm set "QLBV KiemTraYLenhNotify" AppDirectory %LARAVEL_PATH%
 )
+:: Luon sua cau hinh (sua service da cai sai o lan truoc)
+%NSSM_PATH%\nssm set "QLBV KiemTraYLenhNotify" Application %PHP_PATH%
+%NSSM_PATH%\nssm set "QLBV KiemTraYLenhNotify" AppParameters "%LARAVEL_PATH%artisan kiemtraylenh:notify"
+%NSSM_PATH%\nssm set "QLBV KiemTraYLenhNotify" AppDirectory %LARAVEL_PATH%
 
 :: Stop từng dịch vụ
 %NSSM_PATH%\nssm stop "QLBV JobQd130Xml"
