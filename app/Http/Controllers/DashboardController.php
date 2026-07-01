@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Crypt;
 use DataTables;
 
 use Illuminate\Http\Request;
+use App\Http\Controllers\Concerns\ExcludesDashboardPatientTypes;
 
 /**
  * Hồ sơ bệnh án chi tiết,
@@ -18,6 +19,8 @@ use Illuminate\Http\Request;
  */
 class DashboardController extends Controller
 {
+    use ExcludesDashboardPatientTypes;
+
     private function convertDate($startDate = null, $endDate = null)
     {
         if ($startDate && $endDate) {
@@ -117,6 +120,10 @@ class DashboardController extends Controller
                 break;
         }
 
+        $query->when($this->excludedPatientTypeIds(), function ($q, $ids) {
+            $q->whereNotIn('his_treatment.tdl_patient_type_id', $ids);
+        });
+
         return DataTables::of($query)
         ->editColumn('in_time', function ($row) {
             return strtodatetime($row->in_time);
@@ -175,6 +182,10 @@ class DashboardController extends Controller
             default:
                 break;
         }
+
+        $query->when($this->excludedPatientTypeIds(), function ($q, $ids) {
+            $q->whereNotIn('his_sere_serv.patient_type_id', $ids);
+        });
 
         return DataTables::of($query)
         ->editColumn('intruction_time', function ($row) {
