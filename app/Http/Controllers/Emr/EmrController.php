@@ -424,7 +424,7 @@ class EmrController extends Controller
             'his_sere_serv_ext.json_form_id'
         )
         ->where('his_sere_serv.is_delete', 0)
-        ->where('his_sere_serv.tdl_service_type_id', 3)
+        ->whereIn('his_sere_serv.tdl_service_type_id', [3, 10]) // 3 = CĐHA (HA), 10 = Siêu âm (SA)
         ->where('his_sere_serv.tdl_treatment_code', $treatment_code)
         ->get();
     }
