@@ -20,40 +20,6 @@ class HisOrderSource
         $this->excludeTreatmentTypeIds = $ex === '' ? [] : explode(',', $ex);
     }
 
-    /**
-     * Ánh xạ source_key -> nơi lấy MAX để khởi tạo mốc ("bắt từ hiện tại, không backfill").
-     * Trả null nếu key không xác định.
-     * @return array{table:string,column:string,field:string}|null
-     */
-    public function initTargetFor($sourceKey)
-    {
-        $map = [
-            'his_service_req'           => ['table' => 'his_service_req',          'column' => 'modify_time', 'field' => 'last_modify_time'],
-            'his_medicine_interactive'  => ['table' => 'his_medicine_interactive', 'column' => 'id',          'field' => 'last_id'],
-            'his_exp_mest_medicine'     => ['table' => 'his_exp_mest_medicine',    'column' => 'id',          'field' => 'last_id'],
-            'his_sere_serv_restriction' => ['table' => 'his_sere_serv',            'column' => 'id',          'field' => 'last_id'],
-        ];
-        return isset($map[$sourceKey]) ? $map[$sourceKey] : null;
-    }
-
-    /**
-     * Mốc khởi tạo = MAX hiện tại của nguồn (đọc HIS). Key lạ -> toàn 0 (không chạm DB).
-     * @return array{last_create_time:int,last_modify_time:int,last_id:int}
-     */
-    public function initialWatermark($sourceKey)
-    {
-        $base = ['last_create_time' => 0, 'last_modify_time' => 0, 'last_id' => 0];
-
-        $target = $this->initTargetFor($sourceKey);
-        if ($target === null) {
-            return $base;
-        }
-
-        $max = (int) DB::connection($this->conn)->table($target['table'])->max($target['column']);
-        $base[$target['field']] = $max;
-        return $base;
-    }
-
     public function fetchServiceRequests($lastModifyTime, $lastId, $limit)
     {
         $q = DB::connection($this->conn)
