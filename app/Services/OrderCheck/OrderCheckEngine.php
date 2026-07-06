@@ -74,10 +74,23 @@ class OrderCheckEngine
 
     public function getWatermark($sourceKey)
     {
-        return OrderCheckWatermark::firstOrCreate(
+        $wm = OrderCheckWatermark::firstOrCreate(
             ['source_key' => $sourceKey],
             ['last_create_time' => 0, 'last_modify_time' => 0, 'last_id' => 0]
         );
+
+        // Lần ĐẦU tạo dòng => đặt mốc = MAX hiện tại (đọc HIS ở runtime scanner),
+        // KHÔNG backfill lịch sử. Các lần sau chạy bình thường.
+        if ($wm->wasRecentlyCreated) {
+            $init = $this->source->initialWatermark($sourceKey);
+            $wm->last_create_time = $init['last_create_time'];
+            $wm->last_modify_time = $init['last_modify_time'];
+            $wm->last_id          = $init['last_id'];
+            $wm->last_run_at      = now();
+            $wm->save();
+        }
+
+        return $wm;
     }
 
     public function saveWatermark($sourceKey, $lastCreateTime, $lastId)
