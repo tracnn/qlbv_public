@@ -15,34 +15,10 @@ class InitOrderCheckWatermarks extends Migration
 {
     public function up()
     {
-        $conn = config('order_check.his_connection');
-        $now = date('Y-m-d H:i:s');
-
-        $maxModifyServiceReq = (int) DB::connection($conn)->table('his_service_req')->max('modify_time');
-        $maxIdInteractive    = (int) DB::connection($conn)->table('his_medicine_interactive')->max('id');
-        $maxIdExpMest        = (int) DB::connection($conn)->table('his_exp_mest_medicine')->max('id');
-        $maxIdSereServ       = (int) DB::connection($conn)->table('his_sere_serv')->max('id');
-
-        $rows = [
-            ['source_key' => 'his_service_req',           'last_modify_time' => $maxModifyServiceReq, 'last_id' => 0],
-            ['source_key' => 'his_medicine_interactive',  'last_modify_time' => 0, 'last_id' => $maxIdInteractive],
-            ['source_key' => 'his_exp_mest_medicine',     'last_modify_time' => 0, 'last_id' => $maxIdExpMest],
-            ['source_key' => 'his_sere_serv_restriction', 'last_modify_time' => 0, 'last_id' => $maxIdSereServ],
-        ];
-
-        foreach ($rows as $r) {
-            DB::table('order_check_watermarks')->updateOrInsert(
-                ['source_key' => $r['source_key']],
-                [
-                    'last_create_time' => 0,
-                    'last_modify_time' => $r['last_modify_time'],
-                    'last_id' => $r['last_id'],
-                    'last_run_at' => $now,
-                    'created_at' => $now,
-                    'updated_at' => $now,
-                ]
-            );
-        }
+        // Cố ý KHÔNG đọc HIS (Oracle) tại đây: migrate không được phụ thuộc Oracle-CLI
+        // (nhiều CSKCB CLI chưa kết nối được Oracle -> Oci8:460 khi deploy).
+        // Việc đặt mốc = MAX hiện tại đã dời sang runtime: OrderCheckEngine::getWatermark()
+        // khởi tạo lần đầu qua HisOrderSource::initialWatermark() (không backfill lịch sử).
     }
 
     public function down()
