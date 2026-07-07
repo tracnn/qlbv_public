@@ -70,13 +70,15 @@ class BHYTLoginService
                 'expires_in' => $expiresAt ?? null,
             ];
 
-            // Lưu token vào cache
+            // Lưu token vào cache.
+            // LƯU Ý: Laravel 5.5 nhận tham số thứ 3 của Cache::put() là PHÚT, không phải giây.
             if ($expiresAt) {
                 $cacheSeconds = max(60, $expiresAt - time() - 60); // Trừ 60 giây để tránh hết hạn sớm
-                Cache::put($this->cacheKey, $tokens, $cacheSeconds);
+                $cacheMinutes = (int) max(1, ceil($cacheSeconds / 60));
+                Cache::put($this->cacheKey, $tokens, $cacheMinutes);
             } else {
-                // Nếu không có thời gian hết hạn, cache 1 giờ
-                Cache::put($this->cacheKey, $tokens, 3600);
+                // Nếu không có thời gian hết hạn, cache 60 phút (1 giờ)
+                Cache::put($this->cacheKey, $tokens, 60);
             }
 
             Log::info('BHYT Login successful', [

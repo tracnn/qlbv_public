@@ -87,22 +87,24 @@ class TrucDuLieuYTeLoginService
                 'access_token' => $accessToken,
                 'id_token' => $idToken,
                 'token_type' => $apiKey['tokenType'] ?? 'Bearer',
-                'username' => $apiKey['username'] ?? $fullUsername,
+                'username' => $apiKey['username'] ?? $username,
                 'expires_in' => $expiresAt,
                 'environment' => $this->environment,
             ];
 
-            // Lưu token vào cache
+            // Lưu token vào cache.
+            // LƯU Ý: Laravel 5.5 nhận tham số thứ 3 của Cache::put() là PHÚT, không phải giây.
             if ($expiresAt) {
                 $cacheSeconds = max(60, $expiresAt - time() - 60); // Trừ 60 giây để tránh hết hạn sớm
-                Cache::put($this->getCacheKey(), $tokens, $cacheSeconds);
+                $cacheMinutes = (int) max(1, ceil($cacheSeconds / 60));
+                Cache::put($this->getCacheKey(), $tokens, $cacheMinutes);
             } else {
-                // Nếu không có thời gian hết hạn, cache 1 giờ
-                Cache::put($this->getCacheKey(), $tokens, 3600);
+                // Nếu không có thời gian hết hạn, cache 60 phút (1 giờ)
+                Cache::put($this->getCacheKey(), $tokens, 60);
             }
 
             Log::info('Truc Du Lieu Y Te Login successful', [
-                'username' => $fullUsername,
+                'username' => $username,
                 'environment' => $this->environment,
                 'expires_at' => $expiresAt ? date('Y-m-d H:i:s', $expiresAt) : 'unknown',
             ]);
