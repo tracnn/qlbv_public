@@ -76,6 +76,30 @@ return [
         'unique_keys' => ['ma_dich_vu', 'ten_dich_vu', 'don_gia', 'quy_trinh', 'tu_ngay'],
     ],
 
+    'icd_yhct' => [
+        'detect_keys' => ['MA_YHCT', 'TEN_YHCT', 'TEN_BENH_YHCT'],
+        'mapping' => [
+            'icd_code' => ['MA_ICD_YHCT', 'MA_YHCT', 'MA_ICD', 'Mã ICD YHCT', 'Mã YHCT', 'MA YHCT'],
+            'icd_name' => ['TEN_ICD_YHCT', 'TEN_YHCT', 'Tên ICD YHCT', 'Tên YHCT', 'TEN YHCT'],
+            'icd_yhct_name' => ['TEN_BENH_YHCT', 'TEN_YHCT_BENH', 'Tên bệnh YHCT', 'ICD_YHCT'],
+            'icd10_code' => ['MA_ICD10', 'MA_BENH', 'Mã ICD10', 'MA ICD10'],
+            'icd10_name' => ['TEN_ICD10', 'TEN_BENH', 'Tên ICD10', 'TEN ICD10'],
+        ],
+        'required_fields' => ['icd_code', 'icd_name', 'icd_yhct_name'],
+        'unique_keys' => ['icd_code'],
+    ],
+
+    'icd10' => [
+        'detect_keys' => ['MA_ICD10', 'MA_BENH', 'TEN_BENH'],
+        'mapping' => [
+            'icd_code' => ['MA_ICD10', 'MA_BENH', 'MA_ICD', 'Mã ICD', 'Mã bệnh', 'MA ICD'],
+            'icd_name' => ['TEN_ICD10', 'TEN_BENH', 'TEN_ICD', 'Tên ICD', 'Tên bệnh', 'TEN ICD'],
+            'is_chronic' => ['BENH_MAN_TINH', 'MAN_TINH', 'Mãn tính', 'MAN TINH'],
+        ],
+        'required_fields' => ['icd_code', 'icd_name'],
+        'unique_keys' => ['icd_code'],
+    ],
+
     'medical_staff' => [
         'detect_keys' => ['MA_BHXH', 'SO_DINH_DANH', 'HO_TEN', 'MA_KHOA', 'MACCHN'],
         'mapping' => [
