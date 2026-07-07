@@ -34,41 +34,73 @@ class CongDuLieuYTeDienBienLoginServiceTest extends TestCase
     }
 
     /** @test */
-    public function login_caches_token_with_ttl_in_minutes_not_seconds(): void
+    public function login_caps_effective_expiry_and_ttl_at_15_minutes_when_server_expiry_longer(): void
     {
-        // Token còn sống 1 giờ nữa
-        $expiresTime = Carbon::now()->addHour()->toIso8601String();
-
+        // Server trả token sống 2 giờ
         $mock = new MockHandler([
             new Response(200, [], json_encode([
                 'access_token' => 'abc123',
                 'token_type'   => 'Bearer',
                 'username'     => 'user',
-                'expiresTime'  => $expiresTime,
+                'expiresTime'  => Carbon::now()->addHours(2)->toIso8601String(),
             ])),
         ]);
 
         $service = $this->makeService($mock);
 
-        // TTL truyền cho Cache::put phải là PHÚT (~55), không phải giây (~3300)
         $capturedTtl = null;
+        $capturedValue = null;
         Cache::shouldReceive('put')
             ->once()
-            ->andReturnUsing(function ($key, $value, $ttl) use (&$capturedTtl) {
+            ->andReturnUsing(function ($key, $value, $ttl) use (&$capturedTtl, &$capturedValue) {
                 $capturedTtl = $ttl;
+                $capturedValue = $value;
                 return null;
             });
 
         $service->login();
 
-        $this->assertNotNull($capturedTtl);
-        // 1 giờ - 5 phút đệm = ~55 phút. Cho phép sai lệch nhỏ do thời gian chạy.
-        $this->assertGreaterThanOrEqual(53, $capturedTtl, 'TTL phải tính bằng phút (~55), không phải giây (~3300)');
-        $this->assertLessThanOrEqual(56, $capturedTtl, 'TTL phải tính bằng phút (~55), không phải giây (~3300)');
+        // Mốc hết hạn hiệu lực bị cap về ~ now + 15 phút (900 giây), không theo 2 giờ của server
+        $this->assertGreaterThanOrEqual(time() + 890, $capturedValue['effective_expires_at']);
+        $this->assertLessThanOrEqual(time() + 901, $capturedValue['effective_expires_at']);
+
+        // TTL cache theo đó ~ 15 phút (đơn vị phút), không phải giây/2 giờ
+        $this->assertGreaterThanOrEqual(14, $capturedTtl);
+        $this->assertLessThanOrEqual(15, $capturedTtl);
     }
 
     /** @test */
-    public function login_defaults_to_60_minutes_when_expiresTime_missing(): void
+    public function login_uses_server_expiry_when_shorter_than_15_minutes(): void
+    {
+        // Server trả token chỉ còn 5 phút
+        $mock = new MockHandler([
+            new Response(200, [], json_encode([
+                'access_token' => 'abc123',
+                'token_type'   => 'Bearer',
+                'username'     => 'user',
+                'expiresTime'  => Carbon::now()->addMinutes(5)->toIso8601String(),
+            ])),
+        ]);
+
+        $service = $this->makeService($mock);
+
+        $capturedValue = null;
+        Cache::shouldReceive('put')
+            ->once()
+            ->andReturnUsing(function ($key, $value, $ttl) use (&$capturedValue) {
+                $capturedValue = $value;
+                return null;
+            });
+
+        $service->login();
+
+        // Ngắn hơn 15 phút → lấy theo server (~ now + 5 phút = 300 giây)
+        $this->assertGreaterThanOrEqual(time() + 290, $capturedValue['effective_expires_at']);
+        $this->assertLessThanOrEqual(time() + 301, $capturedValue['effective_expires_at']);
+    }
+
+    /** @test */
+    public function login_caps_at_15_minutes_when_expiresTime_missing(): void
     {
         $mock = new MockHandler([
             new Response(200, [], json_encode([
@@ -90,7 +122,9 @@ class CongDuLieuYTeDienBienLoginServiceTest extends TestCase
 
         $service->login();
 
-        $this->assertSame(60, $capturedTtl);
+        // Không có expiresTime → dùng trần 15 phút
+        $this->assertGreaterThanOrEqual(14, $capturedTtl);
+        $this->assertLessThanOrEqual(15, $capturedTtl);
     }
 
     /** @test */
@@ -103,27 +137,27 @@ class CongDuLieuYTeDienBienLoginServiceTest extends TestCase
     }
 
     /** @test */
-    public function isTokenExpired_true_when_expiresTime_in_the_past(): void
+    public function isTokenExpired_true_when_effective_expiry_in_the_past(): void
     {
         $service = $this->makeService(new MockHandler([]));
 
-        $tokens = ['access_token' => 'x', 'expiresTime' => Carbon::now()->subHour()->toIso8601String()];
+        $tokens = ['access_token' => 'x', 'effective_expires_at' => time() - 10];
 
         $this->assertTrue($service->isTokenExpired($tokens));
     }
 
     /** @test */
-    public function isTokenExpired_false_when_expiresTime_well_in_future(): void
+    public function isTokenExpired_false_when_effective_expiry_in_the_future(): void
     {
         $service = $this->makeService(new MockHandler([]));
 
-        $tokens = ['access_token' => 'x', 'expiresTime' => Carbon::now()->addHour()->toIso8601String()];
+        $tokens = ['access_token' => 'x', 'effective_expires_at' => time() + 600];
 
         $this->assertFalse($service->isTokenExpired($tokens));
     }
 
     /** @test */
-    public function isTokenExpired_true_when_expiresTime_missing(): void
+    public function isTokenExpired_true_when_effective_expiry_missing(): void
     {
         $service = $this->makeService(new MockHandler([]));
 
@@ -135,10 +169,10 @@ class CongDuLieuYTeDienBienLoginServiceTest extends TestCase
     /** @test */
     public function getTokens_relogins_when_cached_token_is_expired(): void
     {
-        // Token trong cache đã hết hạn theo nội dung (dù cache TTL còn)
+        // Token trong cache đã quá mốc hết hạn hiệu lực (dù cache TTL còn)
         Cache::put('cong_du_lieu_y_te_dien_bien_token', [
-            'access_token' => 'old-token',
-            'expiresTime'  => Carbon::now()->subMinute()->toIso8601String(),
+            'access_token'         => 'old-token',
+            'effective_expires_at' => time() - 60,
         ], 120);
 
         $mock = new MockHandler([
@@ -146,7 +180,7 @@ class CongDuLieuYTeDienBienLoginServiceTest extends TestCase
                 'access_token' => 'fresh-token',
                 'token_type'   => 'Bearer',
                 'username'     => 'user',
-                'expiresTime'  => Carbon::now()->addHour()->toIso8601String(),
+                'expiresTime'  => Carbon::now()->addHours(2)->toIso8601String(),
             ])),
         ]);
 
@@ -161,8 +195,8 @@ class CongDuLieuYTeDienBienLoginServiceTest extends TestCase
     public function getTokens_uses_cached_token_when_not_expired(): void
     {
         Cache::put('cong_du_lieu_y_te_dien_bien_token', [
-            'access_token' => 'cached-token',
-            'expiresTime'  => Carbon::now()->addHour()->toIso8601String(),
+            'access_token'         => 'cached-token',
+            'effective_expires_at' => time() + 600,
         ], 120);
 
         // MockHandler rỗng: nếu login bị gọi nhầm sẽ ném lỗi "Mock queue is empty"

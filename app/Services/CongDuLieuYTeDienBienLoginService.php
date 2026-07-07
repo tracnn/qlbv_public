@@ -12,6 +12,13 @@ use Illuminate\Support\Facades\Log;
 
 class CongDuLieuYTeDienBienLoginService
 {
+    /**
+     * Tuổi thọ tối đa (giây) cho phép dùng 1 access_token, bất kể server trả expiresTime dài hơn.
+     * Server hiện trả token sống ~2 giờ, nhưng ta chỉ dùng tối đa 15 phút rồi lấy lại cho chắc.
+     * Mốc hết hạn hiệu lực = min(expiresTime, thời điểm login + 15 phút). 15 phút = 900 giây.
+     */
+    private const MAX_TOKEN_LIFETIME_SECONDS = 900;
+
     private Client $httpClient;
     private array $config;
     private string $cacheKey = 'cong_du_lieu_y_te_dien_bien_token';
@@ -85,16 +92,20 @@ class CongDuLieuYTeDienBienLoginService
                 throw new \Exception('Cong Du Lieu Y Te Dien Bien login failed: access_token not found');
             }
 
+            // Mốc hết hạn hiệu lực = min(expiresTime của server, login + 15 phút).
+            $effectiveExpiresAt = $this->calculateEffectiveExpiresAt($result['expiresTime'] ?? null);
+
             $tokens = [
                 'access_token' => $result['access_token'],
                 'token_type' => $result['token_type'] ?? 'Bearer',
                 'username' => $result['username'] ?? $username,
-                'expiresTime' => $result['expiresTime'] ?? null,
+                'expiresTime' => $result['expiresTime'] ?? null,   // giữ nguyên gốc để tham khảo
+                'effective_expires_at' => $effectiveExpiresAt,     // mốc dùng để kiểm hạn (đã cap 15 phút)
             ];
 
-            // Tính toán thời gian cache dựa trên expiresTime.
+            // Tính toán thời gian cache dựa trên mốc hết hạn hiệu lực.
             // LƯU Ý: Laravel 5.5 nhận tham số thứ 3 của Cache::put() là PHÚT, không phải giây.
-            $cacheMinutes = $this->calculateCacheMinutes($result['expiresTime'] ?? null);
+            $cacheMinutes = $this->calculateCacheMinutes($effectiveExpiresAt);
             Cache::put($this->getCacheKey(), $tokens, $cacheMinutes);
 
             Log::info('Cong Du Lieu Y Te Dien Bien Login successful', [
@@ -144,8 +155,8 @@ class CongDuLieuYTeDienBienLoginService
     }
 
     /**
-     * Kiểm tra token có hết hạn không (dựa trên trường expiresTime trong token).
-     * Trả về true nếu không có token, thiếu expiresTime, hoặc sắp/đã hết hạn.
+     * Kiểm tra token có hết hạn không (dựa trên mốc hết hạn hiệu lực đã cap 15 phút).
+     * Trả về true nếu không có token, thiếu mốc hết hạn, hoặc đã quá mốc đó.
      *
      * @param array|null $tokens Nếu null sẽ lấy từ cache
      * @return bool
@@ -160,20 +171,13 @@ class CongDuLieuYTeDienBienLoginService
             return true;
         }
 
-        // Nếu không có thông tin expiresTime, coi như hết hạn
-        if (empty($tokens['expiresTime'])) {
+        // Nếu không có mốc hết hạn hiệu lực, coi như hết hạn
+        if (empty($tokens['effective_expires_at'])) {
             return true;
         }
 
-        try {
-            $expiresAt = (new \DateTime($tokens['expiresTime']))->getTimestamp();
-        } catch (\Exception $e) {
-            // Không parse được thời gian hết hạn → coi như hết hạn
-            return true;
-        }
-
-        // Kiểm tra hết hạn trước 60 giây để tránh lỗi biên
-        return $expiresAt < (time() + 60);
+        // Đã tới/quá mốc hết hạn hiệu lực (đã cap 15 phút khi login) → cần lấy lại
+        return (int) $tokens['effective_expires_at'] <= time();
     }
 
     /**
@@ -203,38 +207,48 @@ class CongDuLieuYTeDienBienLoginService
     }
 
     /**
-     * Tính toán thời gian cache (PHÚT) dựa trên expiresTime.
-     * Laravel 5.5 dùng đơn vị phút cho tham số TTL của Cache::put().
+     * Tính mốc hết hạn hiệu lực (timestamp) = min(expiresTime của server, login + 15 phút).
+     * Nếu expiresTime thiếu hoặc parse lỗi thì dùng luôn mốc login + 15 phút.
      */
-    private function calculateCacheMinutes(?string $expiresTime): int
+    private function calculateEffectiveExpiresAt(?string $expiresTime): int
     {
+        // Trần: chỉ cho phép dùng token tối đa 15 phút kể từ khi login
+        $cap = time() + self::MAX_TOKEN_LIFETIME_SECONDS;
+
         if (empty($expiresTime)) {
-            // Nếu không có expiresTime, mặc định 60 phút (1 giờ)
-            return 60;
+            return $cap;
         }
 
         try {
             // Parse expiresTime (format: "2026-01-17T10:34:09.9434625+07:00")
-            $expiresDateTime = new \DateTime($expiresTime);
-            $now = new \DateTime();
-            $diffSeconds = $expiresDateTime->getTimestamp() - $now->getTimestamp();
-
-            // Nếu thời gian hết hạn đã qua, trả về 0 (không cache token đã chết)
-            if ($diffSeconds <= 0) {
-                return 0;
-            }
-
-            // Trừ đi 5 phút (300 giây) đệm rồi đổi ra phút để đảm bảo
-            // token không hết hạn trước khi cache expire.
-            return (int) max(0, floor(($diffSeconds - 300) / 60));
+            $serverExpiresAt = (new \DateTime($expiresTime))->getTimestamp();
         } catch (\Exception $e) {
             Log::warning('Cong Du Lieu Y Te Dien Bien: Failed to parse expiresTime', [
                 'expiresTime' => $expiresTime,
                 'error' => $e->getMessage(),
             ]);
-            // Nếu parse lỗi, mặc định 60 phút (1 giờ)
-            return 60;
+            return $cap;
         }
+
+        // Nếu expiresTime của server còn dài hơn 15 phút thì lấy mốc 15 phút; ngược lại theo server
+        return min($serverExpiresAt, $cap);
+    }
+
+    /**
+     * Tính thời gian cache (PHÚT) từ mốc hết hạn hiệu lực (timestamp).
+     * Laravel 5.5 dùng đơn vị phút cho tham số TTL của Cache::put().
+     */
+    private function calculateCacheMinutes(int $effectiveExpiresAt): int
+    {
+        $diffSeconds = $effectiveExpiresAt - time();
+
+        // Nếu đã tới/quá mốc hết hạn thì không cache token đã chết
+        if ($diffSeconds <= 0) {
+            return 0;
+        }
+
+        // Đổi ra phút, tối thiểu 1 phút để cache còn kịp giữ token
+        return (int) max(1, ceil($diffSeconds / 60));
     }
 }
 
