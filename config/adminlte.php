@@ -558,6 +558,18 @@ return [
                             'active'=> ['category/bhyt/service-catalog*'],
                         ],
                         [
+                            'text'  => 'DM ICD-10',
+                            'icon'  => 'book',
+                            'route'   => 'category-bhyt.icd10-catalog',
+                            'active'=> ['category/bhyt/icd10-catalog*'],
+                        ],
+                        [
+                            'text'  => 'DM ICD-YHCT',
+                            'icon'  => 'book',
+                            'route'   => 'category-bhyt.icd-yhct-catalog',
+                            'active'=> ['category/bhyt/icd-yhct-catalog*'],
+                        ],
+                        [
                             'text'  => 'DM Nhân viên y tế',
                             'icon'  => 'book',
                             'route'   => 'category-bhyt.medical-staff',
