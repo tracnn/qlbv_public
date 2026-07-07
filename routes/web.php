@@ -350,6 +350,11 @@ Route::group(['middleware' => ['auth', 'check.first.login']], function () {
         Route::get('bhyt/fetch-service-catalog', 'Category\CategoryBHYTController@fetchServiceCatalog')
         ->name('category-bhyt.fetch-service-catalog');
 
+        Route::get('bhyt/icd10-catalog', 'Category\CategoryBHYTController@indexIcd10Catalog')->name('category-bhyt.icd10-catalog');
+        Route::get('bhyt/fetch-icd10-catalog', 'Category\CategoryBHYTController@fetchIcd10Catalog')->name('category-bhyt.fetch-icd10-catalog');
+        Route::get('bhyt/icd-yhct-catalog', 'Category\CategoryBHYTController@indexIcdYhctCatalog')->name('category-bhyt.icd-yhct-catalog');
+        Route::get('bhyt/fetch-icd-yhct-catalog', 'Category\CategoryBHYTController@fetchIcdYhctCatalog')->name('category-bhyt.fetch-icd-yhct-catalog');
+
         Route::get('bhyt/medical-staff', 'Category\CategoryBHYTController@indexMedicalStaff')
         ->name('category-bhyt.medical-staff');
         Route::get('bhyt/fetch-medical-staff', 'Category\CategoryBHYTController@fetchMedicalStaff')

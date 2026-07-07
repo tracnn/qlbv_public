@@ -16,6 +16,8 @@ use App\Models\BHYT\EquipmentCatalog;
 use App\Models\BHYT\XmlErrorCatalog;
 use App\Models\BHYT\Qd130XmlErrorCatalog;
 use App\Models\BHYT\Xml3176ErrorCatalog;
+use App\Models\BHYT\Icd10Category;
+use App\Models\BHYT\IcdYhctCategory;
 use App\Services\CatalogImportService;
 
 class CategoryBHYTController extends Controller
@@ -61,7 +63,33 @@ class CategoryBHYTController extends Controller
     public function fetchServiceCatalog()
     {
         $result = ServiceCatalog::query();
-        
+
+        return Datatables::of($result)
+        ->make(true);
+    }
+
+    public function indexIcd10Catalog()
+    {
+        return view('category.bhyt.icd10_catalog');
+    }
+
+    public function fetchIcd10Catalog()
+    {
+        $result = Icd10Category::query();
+
+        return Datatables::of($result)
+        ->make(true);
+    }
+
+    public function indexIcdYhctCatalog()
+    {
+        return view('category.bhyt.icd_yhct_catalog');
+    }
+
+    public function fetchIcdYhctCatalog()
+    {
+        $result = IcdYhctCategory::query();
+
         return Datatables::of($result)
         ->make(true);
     }
