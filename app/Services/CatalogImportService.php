@@ -15,6 +15,8 @@ use App\Models\BHYT\EquipmentCatalog;
 use App\Models\BHYT\AdministrativeUnit;
 use App\Models\BHYT\MedicalOrganization;
 use App\Models\BHYT\JobCategory;
+use App\Models\BHYT\Icd10Category;
+use App\Models\BHYT\IcdYhctCategory;
 
 class CatalogImportService
 {
@@ -72,6 +74,8 @@ class CatalogImportService
             'administrative_unit' => 'importAdministrativeUnit',
             'medical_organization' => 'importMedicalOrganization',
             'job_categories' => 'importJobCategories',
+            'icd10' => 'importIcd10',
+            'icd_yhct' => 'importIcdYhct',
         ];
 
         $methodName = $methodMap[$catalogType] ?? null;
@@ -250,6 +254,92 @@ class CatalogImportService
                 Log::error('Error updating or creating ServiceCatalog record', [
                     'error' => $e->getMessage(),
                     'row' => $row
+                ]);
+                continue;
+            }
+        }
+    }
+
+    private function importIcd10($data, array $fieldMapping, array $config)
+    {
+        $data = $data->slice(1);
+
+        foreach ($data as $row) {
+            if (!$this->hasRequiredFields($row, $config['required_fields'], $fieldMapping)) {
+                continue;
+            }
+
+            try {
+                $uniqueKeys = [];
+                $updateData = [];
+
+                foreach ($config['unique_keys'] as $key) {
+                    $value = $this->getRowValue($row, $key, $fieldMapping);
+                    if ($value !== null) {
+                        $uniqueKeys[$key] = $value;
+                    }
+                }
+
+                foreach ($config['mapping'] as $field => $possibleNames) {
+                    if (!in_array($field, $config['unique_keys'])) {
+                        $value = $this->getRowValue($row, $field, $fieldMapping);
+                        if ($value !== null) {
+                            $updateData[$field] = $value;
+                        }
+                    }
+                }
+
+                // Chuẩn hóa cờ mãn tính về boolean nếu file có cột đó.
+                if (array_key_exists('is_chronic', $updateData)) {
+                    $v = mb_strtolower(trim((string) $updateData['is_chronic']));
+                    $updateData['is_chronic'] = in_array($v, ['1', 'true', 'x', 'co', 'có', 'yes'], true);
+                }
+
+                Icd10Category::updateOrCreate($uniqueKeys, $updateData);
+            } catch (\Exception $e) {
+                Log::error('Error updating or creating Icd10Category record', [
+                    'error' => $e->getMessage(),
+                    'row' => $row,
+                ]);
+                continue;
+            }
+        }
+    }
+
+    private function importIcdYhct($data, array $fieldMapping, array $config)
+    {
+        $data = $data->slice(1);
+
+        foreach ($data as $row) {
+            if (!$this->hasRequiredFields($row, $config['required_fields'], $fieldMapping)) {
+                continue;
+            }
+
+            try {
+                $uniqueKeys = [];
+                $updateData = [];
+
+                foreach ($config['unique_keys'] as $key) {
+                    $value = $this->getRowValue($row, $key, $fieldMapping);
+                    if ($value !== null) {
+                        $uniqueKeys[$key] = $value;
+                    }
+                }
+
+                foreach ($config['mapping'] as $field => $possibleNames) {
+                    if (!in_array($field, $config['unique_keys'])) {
+                        $value = $this->getRowValue($row, $field, $fieldMapping);
+                        if ($value !== null) {
+                            $updateData[$field] = $value;
+                        }
+                    }
+                }
+
+                IcdYhctCategory::updateOrCreate($uniqueKeys, $updateData);
+            } catch (\Exception $e) {
+                Log::error('Error updating or creating IcdYhctCategory record', [
+                    'error' => $e->getMessage(),
+                    'row' => $row,
                 ]);
                 continue;
             }
