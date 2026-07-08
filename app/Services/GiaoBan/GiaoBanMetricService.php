@@ -342,7 +342,7 @@ class GiaoBanMetricService
                     case 'service_count':
                         $filter = isset($m['filter']) ? $m['filter'] : [];
                         if (!empty($filter['execute_department_id_self'])) {
-                            $filter['execute_department_ids'] = $deptIds;
+                            $filter['execute_department_ids'] = $deptIds; // [] nếu chưa gán khoa
                             unset($filter['execute_department_id_self']);
                         } elseif (!empty($deptIds)
                             && empty($filter['execute_room_ids'])
@@ -351,6 +351,15 @@ class GiaoBanMetricService
                             && empty($filter['request_department_id'])
                             && empty($filter['request_department_ids'])) {
                             $filter['request_department_ids'] = $deptIds;
+                        }
+                        // Guard: nếu không có bất kỳ phạm vi khoa/phòng/dịch vụ cụ thể nào -> trả 0,
+                        // tránh đếm nhầm toàn viện khi config chưa gán khoa HIS.
+                        $hasScope = !empty($filter['execute_department_ids']) || !empty($filter['execute_department_id'])
+                            || !empty($filter['request_department_ids']) || !empty($filter['request_department_id'])
+                            || !empty($filter['execute_room_ids']) || !empty($filter['service_ids']);
+                        if (!$hasScope) {
+                            $values[$key] = 0.0;
+                            break;
                         }
                         $rows = $this->selectHis($this->buildServiceCountSql($from, $to, $filter));
                         $values[$key] = (float) ($rows[0]->so_luong ?? 0);
