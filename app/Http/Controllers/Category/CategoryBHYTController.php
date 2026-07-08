@@ -19,6 +19,8 @@ use App\Models\BHYT\Xml3176ErrorCatalog;
 use App\Models\BHYT\Icd10Category;
 use App\Models\BHYT\IcdYhctCategory;
 use App\Services\CatalogImportService;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\CatalogTemplateExport;
 
 class CategoryBHYTController extends Controller
 {
@@ -242,6 +244,18 @@ class CategoryBHYTController extends Controller
     public function importIndex()
     {
         return view('category.bhyt.import');
+    }
+
+    public function downloadTemplate(Request $request)
+    {
+        $type = $request->get('type');
+        $validTypes = array_keys(config('catalog_import_mapping', []));
+
+        if (!in_array($type, $validTypes, true)) {
+            abort(404, 'Loại danh mục không hợp lệ');
+        }
+
+        return Excel::download(new CatalogTemplateExport($type), $type . '_bieu_mau.xlsx');
     }
 
     public function import(Request $request)

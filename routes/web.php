@@ -387,6 +387,8 @@ Route::group(['middleware' => ['auth', 'check.first.login']], function () {
 
         Route::get('bhyt/category-bhyt-import-index', 'Category\CategoryBHYTController@importIndex')
         ->name('category-bhyt.import-index');
+        Route::get('bhyt/category-bhyt-import-template', 'Category\CategoryBHYTController@downloadTemplate')
+        ->name('category-bhyt.import-template');
         Route::post('bhyt/category-bhyt-import', 'Category\CategoryBHYTController@import')
         ->name('category-bhyt.import');
     });
