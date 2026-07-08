@@ -48,10 +48,23 @@
   {"code":"cap_toa_ve","name":"Cấp toa/ngoại trú","type":"exam_visit","filter":{"treatment_type_ids":[2]}},
   {"code":"kham_yeu_cau","name":"Khám yêu cầu","type":"exam_visit","filter":{"patient_type_ids":[82]}},
   {"code":"kham_bhyt","name":"Khám BHYT","type":"exam_visit","filter":{"patient_type_ids":[1]}},
-  {"code":"chuyen_gia","name":"Chuyên gia BV tỉnh","type":"manual"}
+  {"code":"chuyen_gia","name":"Khám chuyên gia","type":"manual"}
 ]</script>
-<script type="application/json" id="tpl-can_lam_sang">[
+<script type="application/json" id="tpl-cls_tong">[
   {"code":"tong_dv","name":"Tổng dịch vụ","type":"service_count","filter":{"execute_department_id_self":true}}
+]</script>
+<script type="application/json" id="tpl-cls_cdha">[
+  {"code":"cdha_xq","name":"X-Quang","type":"service_count","filter":{"execute_department_id_self":true,"service_type_ids":[3],"diim_type_ids":[1]}},
+  {"code":"cdha_ct","name":"CT","type":"service_count","filter":{"execute_department_id_self":true,"service_type_ids":[3],"diim_type_ids":[2]}},
+  {"code":"cdha_mri","name":"MRI","type":"service_count","filter":{"execute_department_id_self":true,"service_type_ids":[3],"diim_type_ids":[3]}},
+  {"code":"sieu_am","name":"Siêu âm","type":"service_count","filter":{"execute_department_id_self":true,"service_type_ids":[10]}}
+]</script>
+<script type="application/json" id="tpl-cls_xn">[
+  {"code":"xn_hh","name":"Huyết học","type":"service_count","filter":{"execute_department_id_self":true,"service_type_ids":[2],"test_type_ids":[1]}},
+  {"code":"xn_sh","name":"Sinh hóa","type":"service_count","filter":{"execute_department_id_self":true,"service_type_ids":[2],"test_type_ids":[3]}},
+  {"code":"xn_vs","name":"Vi sinh","type":"service_count","filter":{"execute_department_id_self":true,"service_type_ids":[2],"test_type_ids":[2]}},
+  {"code":"xn_md","name":"Miễn dịch","type":"service_count","filter":{"execute_department_id_self":true,"service_type_ids":[2],"test_type_ids":[4]}},
+  {"code":"xn_nt","name":"Nước tiểu","type":"service_count","filter":{"execute_department_id_self":true,"service_type_ids":[2],"test_type_ids":[7]}}
 ]</script>
 @stop
 
@@ -61,6 +74,15 @@ var HIS_DEPTS = @json($hisDepartments);
 var STATE = { configs: [], assignments: [], user_names: {} };
 var PICKED_USER = null;
 var BLOCKS = { dieu_tri: 'Điều trị (nội trú)', kham: 'Khám (ngoại trú)', can_lam_sang: 'Cận lâm sàng' };
+var TEMPLATES = {
+  dieu_tri: [{ key: 'dieu_tri', label: 'Điều trị (mặc định)' }],
+  kham: [{ key: 'kham', label: 'Khám (mặc định)' }],
+  can_lam_sang: [
+    { key: 'cls_tong', label: 'Tổng dịch vụ' },
+    { key: 'cls_cdha', label: 'CĐHA (XQ/CT/MRI/SA)' },
+    { key: 'cls_xn', label: 'Xét nghiệm (HH/SH/VS...)' }
+  ]
+};
 
 function esc(s) {
   return String(s === null || s === undefined ? '' : s).replace(/[&<>"']/g, function (c) {
@@ -70,6 +92,11 @@ function esc(s) {
 function blockOptions(sel) {
   var h = '';
   for (var k in BLOCKS) h += '<option value="' + k + '"' + (k === sel ? ' selected' : '') + '>' + esc(BLOCKS[k]) + '</option>';
+  return h;
+}
+function tplOptions(block) {
+  var h = '<option value="">-- Nạp mẫu --</option>';
+  (TEMPLATES[block] || []).forEach(function (t) { h += '<option value="' + t.key + '">' + esc(t.label) + '</option>'; });
   return h;
 }
 function deptMultiOptions(selectedIds) {
@@ -89,13 +116,14 @@ function renderConfigs() {
   var $tb = $('#tbl-configs tbody').empty();
   STATE.configs.forEach(function (c) {
     var ids = parseIds(c.his_department_ids);
+    var block = c.block_type || 'dieu_tri';
     $tb.append('<tr data-id="' + c.id + '">' +
       '<td><input class="form-control f-sort" type="number" value="' + (c.sort_order || 0) + '"></td>' +
       '<td><input class="form-control f-name" value="' + esc(c.display_name) + '"></td>' +
-      '<td><select class="form-control f-block">' + blockOptions(c.block_type || 'dieu_tri') + '</select></td>' +
+      '<td><select class="form-control f-block">' + blockOptions(block) + '</select></td>' +
       '<td><select class="form-control f-depts" multiple size="4">' + deptMultiOptions(ids) + '</select></td>' +
       '<td><textarea class="form-control f-metrics" rows="3">' + esc(c.metrics) + '</textarea>' +
-      '<button class="btn btn-xs btn-default btn-tpl" style="margin-top:4px">Nạp mẫu theo khối</button></td>' +
+      '<select class="form-control input-sm f-tpl" style="margin-top:4px">' + tplOptions(block) + '</select></td>' +
       '<td><input type="checkbox" class="f-active"' + (c.is_active ? ' checked' : '') + '></td>' +
       '<td><button class="btn btn-sm btn-primary btn-save-cfg">Lưu</button></td></tr>');
   });
@@ -138,10 +166,19 @@ $(function () {
     });
   });
 
-  $('#tbl-configs').on('click', '.btn-tpl', function () {
+  // đổi loại khối -> nạp lại danh sách mẫu tương ứng
+  $('#tbl-configs').on('change', '.f-block', function () {
     var $tr = $(this).closest('tr');
-    var block = $tr.find('.f-block').val();
-    $tr.find('.f-metrics').val($('#tpl-' + block).text().trim());
+    $tr.find('.f-tpl').html(tplOptions($(this).val()));
+  });
+
+  // chọn mẫu -> đổ vào ô JSON chỉ tiêu
+  $('#tbl-configs').on('change', '.f-tpl', function () {
+    var key = $(this).val();
+    if (!key) return;
+    var $tr = $(this).closest('tr');
+    $tr.find('.f-metrics').val($('#tpl-' + key).text().trim());
+    $(this).val('');
   });
 
   $('#tbl-configs').on('click', '.btn-save-cfg', function () {
