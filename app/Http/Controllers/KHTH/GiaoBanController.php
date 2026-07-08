@@ -157,6 +157,10 @@ class GiaoBanController extends Controller
 
     public function export(Request $request)
     {
-        abort(501, 'Chưa triển khai');
+        $date = $request->input('date', date('Y-m-d'));
+        $report = \App\Models\GiaoBan\GiaoBanReport::with('cells')->where('report_date', $date)->firstOrFail();
+        $configs = \App\Models\GiaoBan\GiaoBanDeptConfig::where('is_active', true)->orderBy('sort_order')->get();
+        $filename = 'bao-cao-giao-ban-' . $date . ($report->status === 'final' ? '' : '-nhap') . '.xlsx';
+        return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\GiaoBanExport($report, $configs), $filename);
     }
 }
