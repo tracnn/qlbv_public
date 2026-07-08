@@ -173,7 +173,7 @@ $(function () {
   });
 
   $('#btn-present').on('click', function () {
-    window.open('{{ route('khth.giao-ban-present') }}?date=' + $('#report_date').val(), '_blank');
+    window.open('{{ route('khth.giao-ban-present') }}?date=' + encodeURIComponent($('#report_date').val()), '_blank', 'noopener');
   });
 
   loadReport();

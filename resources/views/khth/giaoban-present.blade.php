@@ -200,6 +200,7 @@
   function build(data) {
     slides = [];
     deptNames = [];
+    setupNav(); // gắn phím tắt/fullscreen/nút khoa cả khi chưa có dữ liệu (go() tự no-op nếu deck rỗng)
     if (!data.report) {
       document.getElementById('center').innerHTML =
         'Chưa có dữ liệu báo cáo cho ngày ' + esc(fmtDate(DATE)) + '.<br>Hãy lấy số liệu ở màn nhập trước.';
@@ -228,7 +229,6 @@
     dots.innerHTML = slides.map(function () { return '<i></i>'; }).join('');
 
     go(0);
-    setupNav();
   }
 
   function go(i) {
