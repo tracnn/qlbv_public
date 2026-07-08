@@ -13,9 +13,10 @@
       <div class="col-md-2"><label>Đến thời điểm</label>
         <input type="datetime-local" id="to_time" class="form-control"></div>
       <div class="col-md-6" style="padding-top:24px">
-        <button id="btn-view" class="btn btn-default"><i class="fa fa-eye"></i> Xem</button>
+        <button id="btn-view" class="btn btn-default"><i class="fa fa-refresh"></i> Làm mới</button>
+        <button id="btn-present" class="btn btn-info"><i class="fa fa-desktop"></i> Trình chiếu</button>
         @if($isAdmin)
-        <button id="btn-fetch" class="btn btn-primary"><i class="fa fa-refresh"></i> Lấy số liệu</button>
+        <button id="btn-fetch" class="btn btn-primary"><i class="fa fa-cloud-download"></i> Lấy số liệu</button>
         <button id="btn-finalize" class="btn btn-danger"><i class="fa fa-lock"></i> Chốt báo cáo</button>
         <button id="btn-unlock" class="btn btn-warning" style="display:none"><i class="fa fa-unlock"></i> Mở khóa</button>
         @endif
@@ -169,6 +170,10 @@ $(function () {
   });
   $('#btn-export').on('click', function () {
     window.location = '{{ route('khth.giao-ban-export') }}?date=' + $('#report_date').val();
+  });
+
+  $('#btn-present').on('click', function () {
+    window.open('{{ route('khth.giao-ban-present') }}?date=' + encodeURIComponent($('#report_date').val()), '_blank', 'noopener');
   });
 
   loadReport();
