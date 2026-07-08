@@ -19,6 +19,31 @@
 <!-- /Messages -->
 <div class="panel panel-default">
     <div class="panel-body">
+        <div class="form-inline">
+            <label for="template_type" style="margin-right:8px;">Tải biểu mẫu:</label>
+            <select id="template_type" class="form-control" style="min-width:260px;margin-right:8px;">
+                <option value="medicine">Danh mục Thuốc</option>
+                <option value="medical_supply">Danh mục Vật tư y tế</option>
+                <option value="service">Danh mục Dịch vụ kỹ thuật</option>
+                <option value="medical_staff">Danh mục Nhân viên y tế</option>
+                <option value="department_bed">Danh mục Khoa/Phòng/Giường</option>
+                <option value="equipment">Danh mục Trang thiết bị</option>
+                <option value="administrative_unit">Danh mục Đơn vị hành chính</option>
+                <option value="medical_organization">Danh mục Cơ sở y tế</option>
+                <option value="job_categories">Danh mục Nghề nghiệp</option>
+                <option value="icd10">Danh mục ICD-10</option>
+                <option value="icd_yhct">Danh mục ICD-YHCT</option>
+            </select>
+            <button type="button" id="btn_download_template" class="btn btn-success">
+                <i class="fa fa-download"></i> Tải biểu mẫu
+            </button>
+            <p class="help-block" style="margin-top:6px;">Cột bôi vàng là bắt buộc. Điền dữ liệu từ dòng 2 rồi tải lên ở khung bên dưới.</p>
+        </div>
+    </div>
+</div>
+
+<div class="panel panel-default">
+    <div class="panel-body">
         <form action="{{ route('category-bhyt.import') }}" method="POST" class="dropzone" id="my-dropzone">
             {{ csrf_field() }}
         </form>
@@ -154,6 +179,12 @@
                 }
             }
         }
+    });
+</script>
+<script>
+    document.getElementById('btn_download_template').addEventListener('click', function () {
+        var type = document.getElementById('template_type').value;
+        window.location.href = "{{ route('category-bhyt.import-template') }}?type=" + encodeURIComponent(type);
     });
 </script>
 @endpush
