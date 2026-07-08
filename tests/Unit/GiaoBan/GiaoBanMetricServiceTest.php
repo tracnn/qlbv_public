@@ -71,4 +71,93 @@ class GiaoBanMetricServiceTest extends TestCase
         $this->assertEquals(1, $rows[0]->department_id);
         $this->assertEquals(9, $rows[0]->so_bn);
     }
+
+    /** @test */
+    public function internal_transfer_sql_counts_transfers_within_dept_set()
+    {
+        list($sql, $binds) = $this->svc->buildInternalTransferSql('2026-07-07 07:00:00', '2026-07-08 07:00:00', [73, 54]);
+        $this->assertContains('p.department_id IN (73,54)', $sql);
+        $this->assertContains('nx.department_id IN (73,54)', $sql);
+        $this->assertContains('nx.department_id <> p.department_id', $sql);
+        $this->assertEquals(['from_time' => '20260707070000', 'to_time' => '20260708070000'], $binds);
+    }
+
+    /** @test */
+    public function exam_visit_sql_filters_exam_type_and_execute_dept()
+    {
+        list($sql, $binds) = $this->svc->buildExamVisitSql('2026-07-07 07:00:00', '2026-07-08 07:00:00', [27]);
+        $this->assertContains('is_main_exam = 1', $sql);
+        $this->assertContains('execute_department_id IN (27)', $sql);
+        $this->assertContains('service_req_type_id = :kham_type', $sql);
+        $this->assertNotContains('his_treatment', $sql);
+        $this->assertEquals('20260707070000', $binds['from_time']);
+        $this->assertArrayHasKey('kham_type', $binds);
+    }
+
+    /** @test */
+    public function exam_visit_sql_joins_treatment_for_type_and_patient_filters()
+    {
+        list($sql, $binds) = $this->svc->buildExamVisitSql('2026-07-07 07:00:00', '2026-07-08 07:00:00', [27],
+            ['treatment_type_ids' => [3], 'patient_type_ids' => [82]]);
+        $this->assertContains('JOIN his_treatment t ON t.id = sr.treatment_id', $sql);
+        $this->assertContains('t.tdl_treatment_type_id IN (3)', $sql);
+        $this->assertContains('t.tdl_patient_type_id IN (82)', $sql);
+    }
+
+    /** @test */
+    public function service_count_supports_execute_department_ids_list()
+    {
+        list($sql, $binds) = $this->svc->buildServiceCountSql(
+            '2026-07-07 07:00:00', '2026-07-08 07:00:00',
+            ['service_type_ids' => [2], 'execute_department_ids' => [43, 62]]
+        );
+        $this->assertContains('tdl_execute_department_id IN (43,62)', $sql);
+        $this->assertContains('tdl_service_type_id IN (2)', $sql);
+    }
+
+    /** @test */
+    public function sum_over_depts_sums_map_values()
+    {
+        $map = [73 => 91, 54 => 54, 27 => 3];
+        $this->assertSame(145.0, $this->svc->sumOverDepts($map, [73, 54]));
+        $this->assertSame(0.0, $this->svc->sumOverDepts($map, [999]));
+    }
+
+    /** @test */
+    public function sum_end_type_sums_matching_dept_and_codes()
+    {
+        $rows = [
+            (object) ['department_id' => 73, 'end_code' => 'RV', 'so_bn' => 10],
+            (object) ['department_id' => 73, 'end_code' => 'CV', 'so_bn' => 2],
+            (object) ['department_id' => 54, 'end_code' => 'RV', 'so_bn' => 5],
+        ];
+        $this->assertSame(15.0, $this->svc->sumEndType($rows, [73, 54], ['RV']));
+        $this->assertSame(2.0, $this->svc->sumEndType($rows, [73, 54], ['CV']));
+    }
+
+    /** @test */
+    public function service_count_joins_his_service_for_diim_type()
+    {
+        list($sql, $binds) = $this->svc->buildServiceCountSql('2026-07-07 07:00:00', '2026-07-08 07:00:00',
+            ['execute_department_ids' => [46], 'service_type_ids' => [3], 'diim_type_ids' => [1, 2]]);
+        $this->assertContains('JOIN his_service hs ON hs.id = ss.service_id', $sql);
+        $this->assertContains('hs.diim_type_id IN (1,2)', $sql);
+    }
+
+    /** @test */
+    public function service_count_joins_his_service_for_test_type()
+    {
+        list($sql, $binds) = $this->svc->buildServiceCountSql('2026-07-07 07:00:00', '2026-07-08 07:00:00',
+            ['execute_department_ids' => [43], 'service_type_ids' => [2], 'test_type_ids' => [1, 3]]);
+        $this->assertContains('JOIN his_service hs ON hs.id = ss.service_id', $sql);
+        $this->assertContains('hs.test_type_id IN (1,3)', $sql);
+    }
+
+    /** @test */
+    public function service_count_no_service_join_when_no_subtype_filter()
+    {
+        list($sql, $binds) = $this->svc->buildServiceCountSql('2026-07-07 07:00:00', '2026-07-08 07:00:00',
+            ['service_type_ids' => [2], 'execute_department_ids' => [43]]);
+        $this->assertNotContains('JOIN his_service hs', $sql);
+    }
 }

@@ -974,3 +974,370 @@ Thêm đầu `readme.md`:
 git add readme.md
 git commit -m "docs(giao-ban): readme nang cap cau hinh; hoan tat kiem thu"
 ```
+
+---
+
+### Task 8: Lọc subtype CLS (diim_type/test_type) trong service_count (TDD)
+
+**Bối cảnh HIS đã xác minh:** `his_service` có `DIIM_TYPE_ID` (loại CĐHA) và `TEST_TYPE_ID` (loại XN); `his_sere_serv` KHÔNG có 2 cột này → phải JOIN `his_service hs ON hs.id = ss.service_id`. Danh mục: `his_diim_type` 1=X-Quang, 2=CT, 3=MRI, 4=PET/CT. `his_test_type` 1=Huyết học, 2=Vi sinh, 3=Sinh hóa, 4=Miễn dịch, 6=GPB, 7=Nước tiểu. Đối chiếu khoa 46 (CĐHA): X-Quang 342, CT 73, MRI 41.
+
+**Files:**
+- Modify: `app/Services/GiaoBan/GiaoBanMetricService.php` (method `buildServiceCountSql`)
+- Test: `tests/Unit/GiaoBan/GiaoBanMetricServiceTest.php`
+
+- [ ] **Step 1: Thêm failing tests**
+
+Thêm vào class `GiaoBanMetricServiceTest`:
+```php
+    /** @test */
+    public function service_count_joins_his_service_for_diim_type()
+    {
+        list($sql, $binds) = $this->svc->buildServiceCountSql('2026-07-07 07:00:00', '2026-07-08 07:00:00',
+            ['execute_department_ids' => [46], 'service_type_ids' => [3], 'diim_type_ids' => [1, 2]]);
+        $this->assertContains('JOIN his_service hs ON hs.id = ss.service_id', $sql);
+        $this->assertContains('hs.diim_type_id IN (1,2)', $sql);
+    }
+
+    /** @test */
+    public function service_count_joins_his_service_for_test_type()
+    {
+        list($sql, $binds) = $this->svc->buildServiceCountSql('2026-07-07 07:00:00', '2026-07-08 07:00:00',
+            ['execute_department_ids' => [43], 'service_type_ids' => [2], 'test_type_ids' => [1, 3]]);
+        $this->assertContains('JOIN his_service hs ON hs.id = ss.service_id', $sql);
+        $this->assertContains('hs.test_type_id IN (1,3)', $sql);
+    }
+
+    /** @test */
+    public function service_count_no_service_join_when_no_subtype_filter()
+    {
+        list($sql, $binds) = $this->svc->buildServiceCountSql('2026-07-07 07:00:00', '2026-07-08 07:00:00',
+            ['service_type_ids' => [2], 'execute_department_ids' => [43]]);
+        $this->assertNotContains('JOIN his_service hs', $sql);
+    }
+```
+
+- [ ] **Step 2: Chạy test, xác nhận FAIL**
+
+Run: `vendor\bin\phpunit tests\Unit\GiaoBan\GiaoBanMetricServiceTest.php`
+Expected: FAIL (2 test mới về join fail; test no-join có thể pass sẵn).
+
+- [ ] **Step 3: Sửa `buildServiceCountSql`**
+
+Trong `app/Services/GiaoBan/GiaoBanMetricService.php`, method `buildServiceCountSql`: NGAY SAU dòng khởi tạo `$binds = [...]` (khối mảng binds ban đầu) và TRƯỚC các `if (!empty($filter['service_type_ids']))`, thêm biến `$join`:
+```php
+        $join = '';
+        if (!empty($filter['diim_type_ids']) || !empty($filter['test_type_ids'])) {
+            $join = ' JOIN his_service hs ON hs.id = ss.service_id';
+            if (!empty($filter['diim_type_ids'])) {
+                $d = implode(',', array_map('intval', $filter['diim_type_ids']));
+                $conds[] = "hs.diim_type_id IN ($d)";
+            }
+            if (!empty($filter['test_type_ids'])) {
+                $tt = implode(',', array_map('intval', $filter['test_type_ids']));
+                $conds[] = "hs.test_type_id IN ($tt)";
+            }
+        }
+```
+Rồi sửa câu SQL cuối method — thêm `$join` sau join his_service_req:
+```php
+        $where = implode(' AND ', $conds);
+        $sql = "
+            SELECT COUNT(*) AS so_luong
+            FROM his_sere_serv ss
+            JOIN his_service_req sr ON sr.id = ss.service_req_id$join
+            WHERE $where";
+        return [$sql, $binds];
+```
+(Chỉ thêm `$join` vào chuỗi FROM; phần còn lại giữ nguyên.)
+
+- [ ] **Step 4: Chạy test, xác nhận PASS**
+
+Run: `vendor\bin\phpunit tests\Unit\GiaoBan\GiaoBanMetricServiceTest.php`
+Expected: PASS toàn bộ (14 tests).
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add app/Services/GiaoBan/GiaoBanMetricService.php tests/Unit/GiaoBan/GiaoBanMetricServiceTest.php
+git commit -m "feat(giao-ban): service_count loc subtype CDHA/XN (diim_type/test_type) (TDD)"
+```
+
+---
+
+### Task 9: View — đổi tên chuyên gia + mẫu CLS chi tiết + đối chiếu
+
+**Files:**
+- Modify: `resources/views/khth/giaoban-config.blade.php`
+
+- [ ] **Step 1: Thay toàn bộ view**
+
+Thay `resources/views/khth/giaoban-config.blade.php` bằng (đổi metric `chuyen_gia` name, thêm 3 script mẫu CLS `tpl-cls_tong`/`tpl-cls_cdha`/`tpl-cls_xn`, đổi nút "Nạp mẫu" thành `<select>` mẫu theo khối):
+
+```blade
+@extends('adminlte::page')
+@section('title', 'Cấu hình báo cáo giao ban')
+@section('content_header')<h1>Cấu hình báo cáo giao ban</h1>@stop
+
+@section('content')
+<div class="row">
+  <div class="col-md-8">
+    <div class="box box-primary">
+      <div class="box-header with-border"><b>Khoa hiển thị trên báo cáo</b></div>
+      <div class="box-body table-responsive">
+        <table class="table table-bordered" id="tbl-configs">
+          <thead><tr><th style="width:70px">TT</th><th>Tên hiển thị</th><th style="width:130px">Loại khối</th><th>Khoa HIS (gộp)</th><th>Chỉ tiêu (JSON)</th><th style="width:60px">BID</th><th style="width:60px"></th></tr></thead>
+          <tbody></tbody>
+        </table>
+        <button id="btn-add" class="btn btn-primary"><i class="fa fa-plus"></i> Thêm khoa</button>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="box box-warning">
+      <div class="box-header with-border"><b>Gán tài khoản HIS ↔ khoa</b></div>
+      <div class="box-body">
+        <label>Tìm tài khoản (tên / loginname)</label>
+        <input type="text" id="user-search" class="form-control" placeholder="gõ ≥ 2 ký tự...">
+        <div id="user-results" class="list-group" style="max-height:180px;overflow:auto;margin-top:4px"></div>
+        <div id="user-picked" style="margin-top:8px"></div>
+        <label style="margin-top:10px">Khoa được nhập</label>
+        <select id="assign-depts" class="form-control" multiple size="10"></select>
+        <button id="btn-assign" class="btn btn-warning" style="margin-top:10px" disabled>Lưu gán khoa</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="application/json" id="tpl-dieu_tri">[
+  {"code":"bn_cu","name":"BN cũ","type":"census_from"},
+  {"code":"bn_vao","name":"BN vào","type":"movement_in"},
+  {"code":"bn_chuyen_den","name":"BN chuyển đến","type":"movement_transfer_in"},
+  {"code":"bn_ra_vien","name":"BN ra viện","type":"end_type","end_codes":["RV","HK","CC","XV","KH","TR"]},
+  {"code":"bn_chuyen_vien","name":"BN chuyển viện","type":"end_type","end_codes":["CV"]},
+  {"code":"bn_tu_vong","name":"BN tử vong","type":"end_type","end_codes":["TV"]},
+  {"code":"bn_chuyen_khoa","name":"BN chuyển khoa","type":"movement_transfer_out"},
+  {"code":"hien_co","name":"Hiện có","type":"census_to"}
+]</script>
+<script type="application/json" id="tpl-kham">[
+  {"code":"luot_kham","name":"Lượt khám","type":"exam_visit"},
+  {"code":"vao_vien","name":"Vào viện","type":"exam_visit","filter":{"treatment_type_ids":[3]}},
+  {"code":"cap_toa_ve","name":"Cấp toa/ngoại trú","type":"exam_visit","filter":{"treatment_type_ids":[2]}},
+  {"code":"kham_yeu_cau","name":"Khám yêu cầu","type":"exam_visit","filter":{"patient_type_ids":[82]}},
+  {"code":"kham_bhyt","name":"Khám BHYT","type":"exam_visit","filter":{"patient_type_ids":[1]}},
+  {"code":"chuyen_gia","name":"Khám chuyên gia","type":"manual"}
+]</script>
+<script type="application/json" id="tpl-cls_tong">[
+  {"code":"tong_dv","name":"Tổng dịch vụ","type":"service_count","filter":{"execute_department_id_self":true}}
+]</script>
+<script type="application/json" id="tpl-cls_cdha">[
+  {"code":"cdha_xq","name":"X-Quang","type":"service_count","filter":{"execute_department_id_self":true,"service_type_ids":[3],"diim_type_ids":[1]}},
+  {"code":"cdha_ct","name":"CT","type":"service_count","filter":{"execute_department_id_self":true,"service_type_ids":[3],"diim_type_ids":[2]}},
+  {"code":"cdha_mri","name":"MRI","type":"service_count","filter":{"execute_department_id_self":true,"service_type_ids":[3],"diim_type_ids":[3]}},
+  {"code":"sieu_am","name":"Siêu âm","type":"service_count","filter":{"execute_department_id_self":true,"service_type_ids":[10]}}
+]</script>
+<script type="application/json" id="tpl-cls_xn">[
+  {"code":"xn_hh","name":"Huyết học","type":"service_count","filter":{"execute_department_id_self":true,"service_type_ids":[2],"test_type_ids":[1]}},
+  {"code":"xn_sh","name":"Sinh hóa","type":"service_count","filter":{"execute_department_id_self":true,"service_type_ids":[2],"test_type_ids":[3]}},
+  {"code":"xn_vs","name":"Vi sinh","type":"service_count","filter":{"execute_department_id_self":true,"service_type_ids":[2],"test_type_ids":[2]}},
+  {"code":"xn_md","name":"Miễn dịch","type":"service_count","filter":{"execute_department_id_self":true,"service_type_ids":[2],"test_type_ids":[4]}},
+  {"code":"xn_nt","name":"Nước tiểu","type":"service_count","filter":{"execute_department_id_self":true,"service_type_ids":[2],"test_type_ids":[7]}}
+]</script>
+@stop
+
+@section('js')
+<script>
+var HIS_DEPTS = @json($hisDepartments);
+var STATE = { configs: [], assignments: [], user_names: {} };
+var PICKED_USER = null;
+var BLOCKS = { dieu_tri: 'Điều trị (nội trú)', kham: 'Khám (ngoại trú)', can_lam_sang: 'Cận lâm sàng' };
+var TEMPLATES = {
+  dieu_tri: [{ key: 'dieu_tri', label: 'Điều trị (mặc định)' }],
+  kham: [{ key: 'kham', label: 'Khám (mặc định)' }],
+  can_lam_sang: [
+    { key: 'cls_tong', label: 'Tổng dịch vụ' },
+    { key: 'cls_cdha', label: 'CĐHA (XQ/CT/MRI/SA)' },
+    { key: 'cls_xn', label: 'Xét nghiệm (HH/SH/VS...)' }
+  ]
+};
+
+function esc(s) {
+  return String(s === null || s === undefined ? '' : s).replace(/[&<>"']/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+  });
+}
+function blockOptions(sel) {
+  var h = '';
+  for (var k in BLOCKS) h += '<option value="' + k + '"' + (k === sel ? ' selected' : '') + '>' + esc(BLOCKS[k]) + '</option>';
+  return h;
+}
+function tplOptions(block) {
+  var h = '<option value="">-- Nạp mẫu --</option>';
+  (TEMPLATES[block] || []).forEach(function (t) { h += '<option value="' + t.key + '">' + esc(t.label) + '</option>'; });
+  return h;
+}
+function deptMultiOptions(selectedIds) {
+  var sel = {};
+  (selectedIds || []).forEach(function (id) { sel[String(id)] = 1; });
+  var h = '';
+  HIS_DEPTS.forEach(function (d) {
+    h += '<option value="' + d.id + '"' + (sel[String(d.id)] ? ' selected' : '') + '>' + esc(d.department_name) + '</option>';
+  });
+  return h;
+}
+function parseIds(jsonStr) {
+  try { var a = JSON.parse(jsonStr || '[]'); return Array.isArray(a) ? a : []; } catch (e) { return []; }
+}
+
+function renderConfigs() {
+  var $tb = $('#tbl-configs tbody').empty();
+  STATE.configs.forEach(function (c) {
+    var ids = parseIds(c.his_department_ids);
+    var block = c.block_type || 'dieu_tri';
+    $tb.append('<tr data-id="' + c.id + '">' +
+      '<td><input class="form-control f-sort" type="number" value="' + (c.sort_order || 0) + '"></td>' +
+      '<td><input class="form-control f-name" value="' + esc(c.display_name) + '"></td>' +
+      '<td><select class="form-control f-block">' + blockOptions(block) + '</select></td>' +
+      '<td><select class="form-control f-depts" multiple size="4">' + deptMultiOptions(ids) + '</select></td>' +
+      '<td><textarea class="form-control f-metrics" rows="3">' + esc(c.metrics) + '</textarea>' +
+      '<select class="form-control input-sm f-tpl" style="margin-top:4px">' + tplOptions(block) + '</select></td>' +
+      '<td><input type="checkbox" class="f-active"' + (c.is_active ? ' checked' : '') + '></td>' +
+      '<td><button class="btn btn-sm btn-primary btn-save-cfg">Lưu</button></td></tr>');
+  });
+  var $sel = $('#assign-depts').empty();
+  STATE.configs.forEach(function (c) {
+    if (c.is_active) $sel.append('<option value="' + c.id + '">' + esc(c.display_name) + '</option>');
+  });
+}
+
+function loadAll() {
+  $.get('{{ route('khth.giao-ban-config-fetch') }}', function (res) {
+    STATE = res; renderConfigs(); syncAssign();
+  });
+}
+
+function collectIds($sel) {
+  var v = $sel.val() || [];
+  return JSON.stringify(v.map(function (x) { return parseInt(x, 10); }));
+}
+
+function syncAssign() {
+  if (!PICKED_USER) return;
+  var mine = STATE.assignments.filter(function (a) { return a.user_id === PICKED_USER.id; })
+    .map(function (a) { return String(a.dept_config_id); });
+  $('#assign-depts').val(mine);
+}
+
+$(function () {
+  loadAll();
+
+  $('#btn-add').on('click', function () {
+    var name = prompt('Tên hiển thị khoa mới:');
+    if (!name) return;
+    $.post('{{ route('khth.giao-ban-config-store') }}', {
+      _token: '{{ csrf_token() }}', display_name: name, block_type: 'dieu_tri',
+      sort_order: STATE.configs.length + 1, his_department_ids: '[]',
+      metrics: $('#tpl-dieu_tri').text().trim()
+    }).done(loadAll).fail(function (xhr) {
+      alert(xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Lỗi thêm khoa');
+    });
+  });
+
+  // đổi loại khối -> nạp lại danh sách mẫu tương ứng
+  $('#tbl-configs').on('change', '.f-block', function () {
+    var $tr = $(this).closest('tr');
+    $tr.find('.f-tpl').html(tplOptions($(this).val()));
+  });
+
+  // chọn mẫu -> đổ vào ô JSON chỉ tiêu
+  $('#tbl-configs').on('change', '.f-tpl', function () {
+    var key = $(this).val();
+    if (!key) return;
+    var $tr = $(this).closest('tr');
+    $tr.find('.f-metrics').val($('#tpl-' + key).text().trim());
+    $(this).val('');
+  });
+
+  $('#tbl-configs').on('click', '.btn-save-cfg', function () {
+    var $tr = $(this).closest('tr');
+    $.post('{{ url('khth/giao-ban/cau-hinh') }}/' + $tr.data('id'), {
+      _token: '{{ csrf_token() }}',
+      sort_order: $tr.find('.f-sort').val(), display_name: $tr.find('.f-name').val(),
+      block_type: $tr.find('.f-block').val(),
+      his_department_ids: collectIds($tr.find('.f-depts')),
+      metrics: $tr.find('.f-metrics').val(),
+      is_active: $tr.find('.f-active').is(':checked') ? 1 : 0
+    }).done(loadAll).fail(function (xhr) {
+      alert(xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Lỗi lưu');
+    });
+  });
+
+  var timer = null;
+  $('#user-search').on('input', function () {
+    var q = $(this).val();
+    clearTimeout(timer);
+    if (q.length < 2) { $('#user-results').empty(); return; }
+    timer = setTimeout(function () {
+      $.get('{{ route('khth.giao-ban-config-search-users') }}', { q: q }, function (rows) {
+        var $r = $('#user-results').empty();
+        rows.forEach(function (u) {
+          $r.append('<a href="#" class="list-group-item u-pick" data-id="' + u.id + '" data-name="' +
+            esc((u.username || u.loginname)) + '">' + esc(u.username || u.loginname) +
+            ' <small>(' + esc(u.loginname) + ')</small></a>');
+        });
+      });
+    }, 300);
+  });
+  $('#user-results').on('click', '.u-pick', function (e) {
+    e.preventDefault();
+    PICKED_USER = { id: parseInt($(this).data('id'), 10), name: $(this).data('name') };
+    $('#user-picked').html('Đang gán cho: <b>' + esc(PICKED_USER.name) + '</b>');
+    $('#user-results').empty();
+    $('#btn-assign').prop('disabled', false);
+    syncAssign();
+  });
+
+  $('#btn-assign').on('click', function () {
+    if (!PICKED_USER) return;
+    $.post('{{ route('khth.giao-ban-config-assign') }}', {
+      _token: '{{ csrf_token() }}', user_id: PICKED_USER.id,
+      dept_config_ids: $('#assign-depts').val() || []
+    }).done(function () { alert('Đã lưu'); loadAll(); });
+  });
+});
+</script>
+@stop
+```
+
+- [ ] **Step 2: Verify Blade compile**
+
+Run: `php artisan view:clear`
+Expected: không lỗi.
+Run (PowerShell): `Select-String -Path resources/views/khth/giaoban-config.blade.php -Pattern 'Khám chuyên gia'`
+Expected: 1 dòng (đã đổi tên).
+
+- [ ] **Step 3: Đối chiếu HIS thật (CLS subtype)**
+
+Sửa `scratchpad/verify_config_upgrade.php`: đổi metric khoa CĐHA (46) thành mẫu cls_cdha:
+```php
+GiaoBanDeptConfig::create(['display_name'=>'Khoa CĐHA','block_type'=>'can_lam_sang','sort_order'=>3,'is_active'=>1,
+  'his_department_ids'=>json_encode([46]),
+  'metrics'=>json_encode([
+    ['code'=>'cdha_xq','name'=>'X-Quang','type'=>'service_count','filter'=>['execute_department_id_self'=>true,'service_type_ids'=>[3],'diim_type_ids'=>[1]]],
+    ['code'=>'cdha_ct','name'=>'CT','type'=>'service_count','filter'=>['execute_department_id_self'=>true,'service_type_ids'=>[3],'diim_type_ids'=>[2]]],
+    ['code'=>'cdha_mri','name'=>'MRI','type'=>'service_count','filter'=>['execute_department_id_self'=>true,'service_type_ids'=>[3],'diim_type_ids'=>[3]]],
+  ])]);
+```
+Run: `php scratchpad/verify_config_upgrade.php`
+Expected: X-Quang ≈ 342, CT ≈ 73, MRI ≈ 41 (khớp đối chiếu sqlcl). Dọn dữ liệu sau khi chạy.
+
+- [ ] **Step 4: Chạy full test giao ban**
+
+Run: `vendor\bin\phpunit tests\Unit\GiaoBan`
+Expected: PASS (24 tests).
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add resources/views/khth/giaoban-config.blade.php
+git commit -m "feat(giao-ban): doi ten Kham chuyen gia + mau CLS chi tiet CDHA/XN"
+```

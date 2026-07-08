@@ -145,6 +145,19 @@ class GiaoBanMetricService
             'from_time' => $f, 'to_time' => $t,
         ];
 
+        $join = '';
+        if (!empty($filter['diim_type_ids']) || !empty($filter['test_type_ids'])) {
+            $join = ' JOIN his_service hs ON hs.id = ss.service_id';
+            if (!empty($filter['diim_type_ids'])) {
+                $d = implode(',', array_map('intval', $filter['diim_type_ids']));
+                $conds[] = "hs.diim_type_id IN ($d)";
+            }
+            if (!empty($filter['test_type_ids'])) {
+                $tt = implode(',', array_map('intval', $filter['test_type_ids']));
+                $conds[] = "hs.test_type_id IN ($tt)";
+            }
+        }
+
         if (!empty($filter['service_type_ids'])) {
             $ids = implode(',', array_map('intval', $filter['service_type_ids']));
             $conds[] = "ss.tdl_service_type_id IN ($ids)";
@@ -165,6 +178,14 @@ class GiaoBanMetricService
             $conds[] = 'ss.tdl_execute_department_id = :exec_dept';
             $binds['exec_dept'] = (int) $filter['execute_department_id'];
         }
+        if (!empty($filter['execute_department_ids'])) {
+            $ids = implode(',', array_map('intval', $filter['execute_department_ids']));
+            $conds[] = "ss.tdl_execute_department_id IN ($ids)";
+        }
+        if (!empty($filter['request_department_ids'])) {
+            $ids = implode(',', array_map('intval', $filter['request_department_ids']));
+            $conds[] = "sr.request_department_id IN ($ids)";
+        }
         if (isset($filter['priority_min'])) {
             $conds[] = 'sr.priority >= :priority_min';
             $binds['priority_min'] = (int) $filter['priority_min'];
@@ -178,7 +199,7 @@ class GiaoBanMetricService
         $sql = "
             SELECT COUNT(*) AS so_luong
             FROM his_sere_serv ss
-            JOIN his_service_req sr ON sr.id = ss.service_req_id
+            JOIN his_service_req sr ON sr.id = ss.service_req_id$join
             WHERE $where";
         return [$sql, $binds];
     }
@@ -194,6 +215,85 @@ class GiaoBanMetricService
         return [$sql, ['from_time' => $this->toHisTime($from), 'to_time' => $this->toHisTime($to)]];
     }
 
+    /**
+     * Đếm lượt chuyển khoa NỘI BỘ trong tập khoa (cả nguồn và đích đều thuộc set).
+     * Dùng để trừ khỏi chuyển đến / chuyển đi khi gộp nhiều khoa HIS.
+     */
+    public function buildInternalTransferSql($from, $to, array $deptIds)
+    {
+        $ids = implode(',', array_map('intval', $deptIds)) ?: '-1';
+        $sql = "
+            SELECT COUNT(*) AS so_noi_bo
+            FROM his_department_tran nx
+            JOIN his_department_tran p ON p.id = nx.previous_id
+            JOIN his_treatment t ON t.id = nx.treatment_id
+            WHERE nx.is_delete = 0 AND p.is_delete = 0 AND t.is_delete = 0
+              AND t.tdl_treatment_type_id = 3
+              AND nx.department_id <> p.department_id
+              AND p.department_id IN ($ids) AND nx.department_id IN ($ids)
+              AND nx.department_in_time BETWEEN :from_time AND :to_time";
+        return [$sql, ['from_time' => $this->toHisTime($from), 'to_time' => $this->toHisTime($to)]];
+    }
+
+    /**
+     * Đếm lượt khám (khối ngoại trú) do các khoa khám thực hiện trong kỳ.
+     * $deptIds: danh sách khoa khám (his_department.id).
+     * $filter: treatment_type_ids[], patient_type_ids[] (join his_treatment khi có).
+     */
+    public function buildExamVisitSql($from, $to, array $deptIds, array $filter = [])
+    {
+        $ids = implode(',', array_map('intval', $deptIds)) ?: '-1';
+        $khamType = (int) config('__tech.service_req_type_kham', 1);
+        $join = '';
+        $extra = '';
+        if (!empty($filter['treatment_type_ids'])) {
+            $t = implode(',', array_map('intval', $filter['treatment_type_ids']));
+            $join = ' JOIN his_treatment t ON t.id = sr.treatment_id';
+            $extra .= " AND t.tdl_treatment_type_id IN ($t)";
+        }
+        if (!empty($filter['patient_type_ids'])) {
+            $p = implode(',', array_map('intval', $filter['patient_type_ids']));
+            if ($join === '') $join = ' JOIN his_treatment t ON t.id = sr.treatment_id';
+            $extra .= " AND t.tdl_patient_type_id IN ($p)";
+        }
+        $sql = "
+            SELECT COUNT(*) AS so_luong
+            FROM his_service_req sr$join
+            WHERE sr.is_delete = 0
+              AND sr.service_req_type_id = :kham_type
+              AND sr.is_main_exam = 1
+              AND sr.execute_department_id IN ($ids)
+              AND sr.intruction_time BETWEEN :from_time AND :to_time$extra";
+        return [$sql, [
+            'kham_type' => $khamType,
+            'from_time' => $this->toHisTime($from),
+            'to_time' => $this->toHisTime($to),
+        ]];
+    }
+
+    /** Tổng giá trị map (department_id => value) trên danh sách khoa. */
+    public function sumOverDepts(array $map, array $deptIds)
+    {
+        $s = 0.0;
+        foreach ($deptIds as $id) {
+            if (isset($map[(int) $id])) $s += (float) $map[(int) $id];
+        }
+        return $s;
+    }
+
+    /** Tổng end_type rows khớp khoa (trong deptIds) và mã kết thúc (trong endCodes). */
+    public function sumEndType($endRows, array $deptIds, array $endCodes)
+    {
+        $set = array_map('intval', $deptIds);
+        $s = 0.0;
+        foreach ($endRows as $r) {
+            if (in_array((int) $r->department_id, $set, true) && in_array($r->end_code, $endCodes, true)) {
+                $s += (float) $r->so_bn;
+            }
+        }
+        return $s;
+    }
+
     // ================= chạy trên HISPro và ráp thành ma trận =================
 
     protected function selectHis($sqlAndBinds)
@@ -204,52 +304,75 @@ class GiaoBanMetricService
 
     /**
      * Tính toàn bộ auto_value cho danh sách dept config.
-     * @param \Illuminate\Support\Collection|array $deptConfigs  các GiaoBanDeptConfig active
+     * Rẽ nhánh theo block_type; cộng dồn qua danh sách khoa HIS của config;
+     * loại trừ chuyển nội bộ khi config gộp >1 khoa.
      * @return array map "dept_config_id|metric_code" => float|null
      */
     public function computeAll($deptConfigs, $from, $to)
     {
-        // 1. Batch queries dùng chung
+        // Maps toàn viện dùng chung cho khối điều trị
         $censusFrom = $this->pluckByDept($this->selectHis($this->buildCensusSql($from)), 'so_bn');
         $censusTo   = $this->pluckByDept($this->selectHis($this->buildCensusSql($to)), 'so_bn');
         $moveIn     = $this->selectHis($this->buildMovementInSql($from, $to));
         $bnVao      = $this->pluckByDept($moveIn, 'bn_vao');
         $bnDen      = $this->pluckByDept($moveIn, 'bn_chuyen_den');
         $moveOut    = $this->pluckByDept($this->selectHis($this->buildMovementOutSql($from, $to)), 'bn_chuyen_khoa');
-        $endRows    = $this->selectHis($this->buildEndTypeSql($from, $to)); // department_id, end_code, so_bn
+        $endRows    = $this->selectHis($this->buildEndTypeSql($from, $to));
 
         $values = [];
         foreach ($deptConfigs as $cfg) {
-            $hisDept = $cfg->his_department_id;
+            $deptIds = $cfg->hisDepartmentIds();
+            // Chuyển nội bộ (chỉ khi gộp >1 khoa)
+            $internal = 0.0;
+            if (count($deptIds) > 1) {
+                $rows = $this->selectHis($this->buildInternalTransferSql($from, $to, $deptIds));
+                $internal = (float) ($rows[0]->so_noi_bo ?? 0);
+            }
+
             foreach ($cfg->metricList() as $m) {
                 $key = $cfg->id . '|' . $m['code'];
                 switch ($m['type']) {
-                    case 'census_from':  $values[$key] = (float) ($censusFrom[$hisDept] ?? 0); break;
-                    case 'census_to':    $values[$key] = (float) ($censusTo[$hisDept] ?? 0); break;
-                    case 'movement_in':  $values[$key] = (float) ($bnVao[$hisDept] ?? 0); break;
-                    case 'movement_transfer_in':  $values[$key] = (float) ($bnDen[$hisDept] ?? 0); break;
-                    case 'movement_transfer_out': $values[$key] = (float) ($moveOut[$hisDept] ?? 0); break;
+                    case 'census_from':  $values[$key] = $this->sumOverDepts($censusFrom, $deptIds); break;
+                    case 'census_to':    $values[$key] = $this->sumOverDepts($censusTo, $deptIds); break;
+                    case 'movement_in':  $values[$key] = $this->sumOverDepts($bnVao, $deptIds); break;
+                    case 'movement_transfer_in':
+                        $values[$key] = max(0.0, $this->sumOverDepts($bnDen, $deptIds) - $internal);
+                        break;
+                    case 'movement_transfer_out':
+                        $values[$key] = max(0.0, $this->sumOverDepts($moveOut, $deptIds) - $internal);
+                        break;
                     case 'end_type':
-                        $sum = 0;
-                        foreach ($endRows as $r) {
-                            if ((int) $r->department_id === (int) $hisDept
-                                && in_array($r->end_code, $m['end_codes'], true)) {
-                                $sum += (int) $r->so_bn;
-                            }
-                        }
-                        $values[$key] = (float) $sum;
+                        $values[$key] = $this->sumEndType($endRows, $deptIds, $m['end_codes']);
                         break;
                     case 'bed_count':
                         $rows = $this->selectHis($this->buildBedCountSql($to, isset($m['bed_ids']) ? $m['bed_ids'] : []));
                         $values[$key] = (float) ($rows[0]->so_bn ?? 0);
                         break;
+                    case 'exam_visit':
+                        $rows = $this->selectHis($this->buildExamVisitSql($from, $to, $deptIds, isset($m['filter']) ? $m['filter'] : []));
+                        $values[$key] = (float) ($rows[0]->so_luong ?? 0);
+                        break;
                     case 'service_count':
                         $filter = isset($m['filter']) ? $m['filter'] : [];
                         if (!empty($filter['execute_department_id_self'])) {
-                            $filter['execute_department_id'] = $hisDept;
+                            $filter['execute_department_ids'] = $deptIds; // [] nếu chưa gán khoa
                             unset($filter['execute_department_id_self']);
-                        } elseif ($hisDept && empty($filter['execute_room_ids']) && empty($filter['execute_department_id'])) {
-                            $filter['request_department_id'] = $hisDept;
+                        } elseif (!empty($deptIds)
+                            && empty($filter['execute_room_ids'])
+                            && empty($filter['execute_department_id'])
+                            && empty($filter['execute_department_ids'])
+                            && empty($filter['request_department_id'])
+                            && empty($filter['request_department_ids'])) {
+                            $filter['request_department_ids'] = $deptIds;
+                        }
+                        // Guard: nếu không có bất kỳ phạm vi khoa/phòng/dịch vụ cụ thể nào -> trả 0,
+                        // tránh đếm nhầm toàn viện khi config chưa gán khoa HIS.
+                        $hasScope = !empty($filter['execute_department_ids']) || !empty($filter['execute_department_id'])
+                            || !empty($filter['request_department_ids']) || !empty($filter['request_department_id'])
+                            || !empty($filter['execute_room_ids']) || !empty($filter['service_ids']);
+                        if (!$hasScope) {
+                            $values[$key] = 0.0;
+                            break;
                         }
                         $rows = $this->selectHis($this->buildServiceCountSql($from, $to, $filter));
                         $values[$key] = (float) ($rows[0]->so_luong ?? 0);
@@ -260,7 +383,7 @@ class GiaoBanMetricService
                         break;
                     case 'manual':
                     default:
-                        $values[$key] = null; // ô nhập tay thuần
+                        $values[$key] = null;
                 }
             }
         }
