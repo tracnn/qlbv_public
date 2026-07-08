@@ -165,6 +165,14 @@ class GiaoBanMetricService
             $conds[] = 'ss.tdl_execute_department_id = :exec_dept';
             $binds['exec_dept'] = (int) $filter['execute_department_id'];
         }
+        if (!empty($filter['execute_department_ids'])) {
+            $ids = implode(',', array_map('intval', $filter['execute_department_ids']));
+            $conds[] = "ss.tdl_execute_department_id IN ($ids)";
+        }
+        if (!empty($filter['request_department_ids'])) {
+            $ids = implode(',', array_map('intval', $filter['request_department_ids']));
+            $conds[] = "sr.request_department_id IN ($ids)";
+        }
         if (isset($filter['priority_min'])) {
             $conds[] = 'sr.priority >= :priority_min';
             $binds['priority_min'] = (int) $filter['priority_min'];
@@ -192,6 +200,85 @@ class GiaoBanMetricService
             WHERE t.is_delete = 0 AND t.tdl_treatment_type_id = 3
               AND t.in_time BETWEEN :from_time AND :to_time";
         return [$sql, ['from_time' => $this->toHisTime($from), 'to_time' => $this->toHisTime($to)]];
+    }
+
+    /**
+     * Đếm lượt chuyển khoa NỘI BỘ trong tập khoa (cả nguồn và đích đều thuộc set).
+     * Dùng để trừ khỏi chuyển đến / chuyển đi khi gộp nhiều khoa HIS.
+     */
+    public function buildInternalTransferSql($from, $to, array $deptIds)
+    {
+        $ids = implode(',', array_map('intval', $deptIds)) ?: '-1';
+        $sql = "
+            SELECT COUNT(*) AS so_noi_bo
+            FROM his_department_tran nx
+            JOIN his_department_tran p ON p.id = nx.previous_id
+            JOIN his_treatment t ON t.id = nx.treatment_id
+            WHERE nx.is_delete = 0 AND p.is_delete = 0 AND t.is_delete = 0
+              AND t.tdl_treatment_type_id = 3
+              AND nx.department_id <> p.department_id
+              AND p.department_id IN ($ids) AND nx.department_id IN ($ids)
+              AND nx.department_in_time BETWEEN :from_time AND :to_time";
+        return [$sql, ['from_time' => $this->toHisTime($from), 'to_time' => $this->toHisTime($to)]];
+    }
+
+    /**
+     * Đếm lượt khám (khối ngoại trú) do các khoa khám thực hiện trong kỳ.
+     * $deptIds: danh sách khoa khám (his_department.id).
+     * $filter: treatment_type_ids[], patient_type_ids[] (join his_treatment khi có).
+     */
+    public function buildExamVisitSql($from, $to, array $deptIds, array $filter = [])
+    {
+        $ids = implode(',', array_map('intval', $deptIds)) ?: '-1';
+        $khamType = (int) config('__tech.service_req_type_kham', 1);
+        $join = '';
+        $extra = '';
+        if (!empty($filter['treatment_type_ids'])) {
+            $t = implode(',', array_map('intval', $filter['treatment_type_ids']));
+            $join = ' JOIN his_treatment t ON t.id = sr.treatment_id';
+            $extra .= " AND t.tdl_treatment_type_id IN ($t)";
+        }
+        if (!empty($filter['patient_type_ids'])) {
+            $p = implode(',', array_map('intval', $filter['patient_type_ids']));
+            if ($join === '') $join = ' JOIN his_treatment t ON t.id = sr.treatment_id';
+            $extra .= " AND t.tdl_patient_type_id IN ($p)";
+        }
+        $sql = "
+            SELECT COUNT(*) AS so_luong
+            FROM his_service_req sr$join
+            WHERE sr.is_delete = 0
+              AND sr.service_req_type_id = :kham_type
+              AND sr.is_main_exam = 1
+              AND sr.execute_department_id IN ($ids)
+              AND sr.intruction_time BETWEEN :from_time AND :to_time$extra";
+        return [$sql, [
+            'kham_type' => $khamType,
+            'from_time' => $this->toHisTime($from),
+            'to_time' => $this->toHisTime($to),
+        ]];
+    }
+
+    /** Tổng giá trị map (department_id => value) trên danh sách khoa. */
+    public function sumOverDepts(array $map, array $deptIds)
+    {
+        $s = 0.0;
+        foreach ($deptIds as $id) {
+            if (isset($map[(int) $id])) $s += (float) $map[(int) $id];
+        }
+        return $s;
+    }
+
+    /** Tổng end_type rows khớp khoa (trong deptIds) và mã kết thúc (trong endCodes). */
+    public function sumEndType($endRows, array $deptIds, array $endCodes)
+    {
+        $set = array_map('intval', $deptIds);
+        $s = 0.0;
+        foreach ($endRows as $r) {
+            if (in_array((int) $r->department_id, $set, true) && in_array($r->end_code, $endCodes, true)) {
+                $s += (float) $r->so_bn;
+            }
+        }
+        return $s;
     }
 
     // ================= chạy trên HISPro và ráp thành ma trận =================
