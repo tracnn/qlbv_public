@@ -636,6 +636,7 @@ Route::group(['middleware' => ['auth', 'check.first.login']], function () {
         Route::post('giao-ban/finalize', 'KHTH\GiaoBanController@finalize')->name('khth.giao-ban-finalize');
         Route::post('giao-ban/unlock', 'KHTH\GiaoBanController@unlock')->name('khth.giao-ban-unlock');
         Route::get('giao-ban/export', 'KHTH\GiaoBanController@export')->name('khth.giao-ban-export');
+        Route::get('giao-ban/present', 'KHTH\GiaoBanController@present')->name('khth.giao-ban-present');
         Route::get('giao-ban/cau-hinh', 'KHTH\GiaoBanConfigController@index')->name('khth.giao-ban-config');
         Route::get('giao-ban/cau-hinh/fetch', 'KHTH\GiaoBanConfigController@fetch')->name('khth.giao-ban-config-fetch');
         Route::post('giao-ban/cau-hinh', 'KHTH\GiaoBanConfigController@store')->name('khth.giao-ban-config-store');

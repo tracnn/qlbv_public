@@ -155,6 +155,16 @@ class GiaoBanController extends Controller
         return response()->json(['ok' => true]);
     }
 
+    /** Trang trình chiếu toàn màn hình cho báo cáo ngày đang chọn. */
+    public function present(Request $request)
+    {
+        $date = $request->input('date', date('Y-m-d'));
+        return view('khth.giaoban-present', [
+            'date' => $date,
+            'showUrl' => route('khth.giao-ban-show'),
+        ]);
+    }
+
     public function export(Request $request)
     {
         $date = $request->input('date', date('Y-m-d'));
