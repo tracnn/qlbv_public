@@ -1,3 +1,6 @@
+# 08/07/2026 (cập nhật 1)
+- Bổ tài biểu mẫu import bộ danh mục dịch vụ
+
 # 30/06/2026 (cập nhật 5)
 
 - Module Kiểm tra sai sót y lệnh (giai đoạn 6): thêm danh mục tự quản "Giới hạn dịch vụ" (giới tính/tuổi) + màn nhập (KHTH) + 2 luật A_GENDER_MISMATCH, A_AGE_OUT_OF_RANGE đối chiếu chỉ định với giới tính/tuổi bệnh nhân. Luật chỉ phát hiện khi danh mục đã được nhập (HIS không có sẵn dữ liệu giới hạn).
