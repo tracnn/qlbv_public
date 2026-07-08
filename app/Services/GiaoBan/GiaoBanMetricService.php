@@ -256,15 +256,26 @@ class GiaoBanMetricService
         $khamType = (int) config('__tech.service_req_type_kham', 1);
         $join = '';
         $extra = '';
+        if (!empty($filter['treatment_type_ids']) || !empty($filter['patient_type_ids']) || !empty($filter['end_type_codes'])) {
+            $join = ' JOIN his_treatment t ON t.id = sr.treatment_id';
+        }
         if (!empty($filter['treatment_type_ids'])) {
             $t = implode(',', array_map('intval', $filter['treatment_type_ids']));
-            $join = ' JOIN his_treatment t ON t.id = sr.treatment_id';
             $extra .= " AND t.tdl_treatment_type_id IN ($t)";
         }
         if (!empty($filter['patient_type_ids'])) {
             $p = implode(',', array_map('intval', $filter['patient_type_ids']));
-            if ($join === '') $join = ' JOIN his_treatment t ON t.id = sr.treatment_id';
             $extra .= " AND t.tdl_patient_type_id IN ($p)";
+        }
+        if (!empty($filter['end_type_codes'])) {
+            $codes = array_filter(array_map(function ($c) {
+                preg_match('/^[A-Z]+/', strtoupper((string) $c), $m);
+                return isset($m[0]) ? $m[0] : '';
+            }, $filter['end_type_codes']));
+            if (!empty($codes)) {
+                $join .= ' JOIN his_treatment_end_type et ON et.id = t.treatment_end_type_id';
+                $extra .= " AND et.treatment_end_type_code IN ('" . implode("','", $codes) . "')";
+            }
         }
         $sql = "
             SELECT COUNT(*) AS so_luong

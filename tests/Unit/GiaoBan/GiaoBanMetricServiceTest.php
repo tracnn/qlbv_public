@@ -178,4 +178,23 @@ class GiaoBanMetricServiceTest extends TestCase
             ['service_type_ids' => [2], 'execute_department_ids' => [43]]);
         $this->assertNotContains('JOIN his_service hs', $sql);
     }
+
+    /** @test */
+    public function exam_visit_sql_filters_by_end_type_code()
+    {
+        list($sql, $binds) = $this->svc->buildExamVisitSql('2026-07-07 07:00:00', '2026-07-08 07:00:00', [27],
+            ['end_type_codes' => ['CC', 'CV']]);
+        $this->assertContains('JOIN his_treatment t ON t.id = sr.treatment_id', $sql);
+        $this->assertContains('JOIN his_treatment_end_type et ON et.id = t.treatment_end_type_id', $sql);
+        $this->assertContains("et.treatment_end_type_code IN ('CC','CV')", $sql);
+    }
+
+    /** @test */
+    public function exam_visit_end_type_codes_whitelisted()
+    {
+        list($sql, $binds) = $this->svc->buildExamVisitSql('2026-07-07 07:00:00', '2026-07-08 07:00:00', [27],
+            ['end_type_codes' => ["CC'; DROP--", 'cv']]);
+        $this->assertContains("et.treatment_end_type_code IN ('CC','CV')", $sql);
+        $this->assertNotContains('DROP', $sql);
+    }
 }
