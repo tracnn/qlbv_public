@@ -45,7 +45,9 @@
 <script type="application/json" id="tpl-kham">[
   {"code":"luot_kham","name":"Lượt khám","type":"exam_visit"},
   {"code":"vao_vien","name":"Vào viện","type":"exam_visit","filter":{"treatment_type_ids":[3]}},
-  {"code":"cap_toa_ve","name":"Cấp toa/ngoại trú","type":"exam_visit","filter":{"treatment_type_ids":[2]}},
+  {"code":"cap_toa_ve","name":"Cấp toa cho về","type":"exam_visit","filter":{"end_type_codes":["CC"]}},
+  {"code":"chuyen_vien","name":"Chuyển viện","type":"exam_visit","filter":{"end_type_codes":["CV"]}},
+  {"code":"hen_kham_lai","name":"Hẹn khám lại","type":"exam_visit","filter":{"end_type_codes":["HK"]}},
   {"code":"kham_yeu_cau","name":"Khám yêu cầu","type":"exam_visit","filter":{"patient_type_ids":[82]}},
   {"code":"kham_bhyt","name":"Khám BHYT","type":"exam_visit","filter":{"patient_type_ids":[1]}},
   {"code":"chuyen_gia","name":"Khám chuyên gia","type":"manual"}
