@@ -626,7 +626,19 @@ Route::group(['middleware' => ['auth', 'check.first.login']], function () {
 
     });
 
-    Route::group(['prefix' => 'queue'], function () { 
+    // Báo cáo giao ban — quyền riêng (giaoban), không yêu cầu administrator
+    Route::group(['prefix' => 'khth/', 'middleware' => ['checkrole:giaoban']], function () {
+        Route::get('giao-ban', 'KHTH\GiaoBanController@index')->name('khth.giao-ban');
+        Route::get('giao-ban/show', 'KHTH\GiaoBanController@show')->name('khth.giao-ban-show');
+        Route::post('giao-ban/fetch-data', 'KHTH\GiaoBanController@fetchData')->name('khth.giao-ban-fetch');
+        Route::post('giao-ban/save-cell', 'KHTH\GiaoBanController@saveCell')->name('khth.giao-ban-save-cell');
+        Route::post('giao-ban/save-general-note', 'KHTH\GiaoBanController@saveGeneralNote')->name('khth.giao-ban-save-note');
+        Route::post('giao-ban/finalize', 'KHTH\GiaoBanController@finalize')->name('khth.giao-ban-finalize');
+        Route::post('giao-ban/unlock', 'KHTH\GiaoBanController@unlock')->name('khth.giao-ban-unlock');
+        Route::get('giao-ban/export', 'KHTH\GiaoBanController@export')->name('khth.giao-ban-export');
+    });
+
+    Route::group(['prefix' => 'queue'], function () {
         Route::get('/', 'QueueNumberController@index')->name('queue.index');
         Route::post('/register','QueueNumberController@register')->name('queue.register');
         Route::get('/manage','QueueNumberController@manager')->name('queue.manage');
