@@ -57,11 +57,29 @@ function canEditDept(deptId) {
   return IS_ADMIN || ASSIGNED.indexOf(deptId) !== -1;
 }
 
-function loadReport() {
-  $.get('{{ route('khth.giao-ban-show') }}', { date: $('#report_date').val() }, function (res) {
-    CURRENT = res;
-    render(res);
-  });
+/** Bật/tắt trạng thái loading cho 1 nút (disable + spinner, khôi phục khi xong). */
+function setLoading($btn, loading, loadingText) {
+  if (loading) {
+    if ($btn.data('orig-html') === undefined) $btn.data('orig-html', $btn.html());
+    $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> ' + (loadingText || 'Đang xử lý...'));
+  } else {
+    $btn.prop('disabled', false).html($btn.data('orig-html'));
+    $btn.removeData('orig-html');
+  }
+}
+
+function loadReport(onDone) {
+  $('#report-status').html('<i class="fa fa-spinner fa-spin"></i> đang tải...');
+  $('#report-body').css('opacity', 0.5);
+  $.get('{{ route('khth.giao-ban-show') }}', { date: $('#report_date').val() })
+    .done(function (res) { CURRENT = res; render(res); })
+    .fail(function () {
+      $('#report-status').html('<span class="text-red"><i class="fa fa-exclamation-triangle"></i> Lỗi tải dữ liệu</span>');
+    })
+    .always(function () {
+      $('#report-body').css('opacity', 1);
+      if (typeof onDone === 'function') onDone();
+    });
 }
 
 function esc(s) {
@@ -134,13 +152,22 @@ function saveCell(deptId, metric, payload, done) {
 $(function () {
   defaultTimes();
   $('#report_date').on('change', function () { defaultTimes(); loadReport(); });
-  $('#btn-view').on('click', loadReport);
+  $('#btn-view').on('click', function () {
+    var $b = $(this);
+    setLoading($b, true, 'Đang tải...');
+    loadReport(function () { setLoading($b, false); });
+  });
 
   $('#btn-fetch').on('click', function () {
+    var $b = $(this);
+    setLoading($b, true, 'Đang lấy số liệu...');
     $.post('{{ route('khth.giao-ban-fetch') }}', {
       _token: '{{ csrf_token() }}', date: $('#report_date').val(),
       from_time: fmt($('#from_time').val()), to_time: fmt($('#to_time').val())
-    }).done(loadReport).fail(function (xhr) {
+    }).done(function () {
+      loadReport(function () { setLoading($b, false); });
+    }).fail(function (xhr) {
+      setLoading($b, false);
       alert(xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Lỗi lấy số liệu từ HIS');
     });
   });
