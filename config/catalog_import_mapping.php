@@ -77,7 +77,7 @@ return [
     ],
 
     'icd_yhct' => [
-        'detect_keys' => ['MA_YHCT', 'TEN_YHCT', 'TEN_BENH_YHCT'],
+        'detect_keys' => ['MA_ICD_YHCT', 'TEN_ICD_YHCT', 'TEN_BENH_YHCT'],
         'mapping' => [
             'icd_code' => ['MA_ICD_YHCT', 'MA_YHCT', 'MA_ICD', 'Mã ICD YHCT', 'Mã YHCT', 'MA YHCT'],
             'icd_name' => ['TEN_ICD_YHCT', 'TEN_YHCT', 'Tên ICD YHCT', 'Tên YHCT', 'TEN YHCT'],
@@ -90,7 +90,7 @@ return [
     ],
 
     'icd10' => [
-        'detect_keys' => ['MA_ICD10', 'MA_BENH', 'TEN_BENH'],
+        'detect_keys' => ['MA_ICD10', 'TEN_ICD10'],
         'mapping' => [
             'icd_code' => ['MA_ICD10', 'MA_BENH', 'MA_ICD', 'Mã ICD', 'Mã bệnh', 'MA ICD'],
             'icd_name' => ['TEN_ICD10', 'TEN_BENH', 'TEN_ICD', 'Tên ICD', 'Tên bệnh', 'TEN ICD'],
