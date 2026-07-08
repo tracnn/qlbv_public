@@ -19,7 +19,11 @@
 - `buildServiceCountSql` đã hỗ trợ `service_type_ids`, `service_ids`, `execute_room_ids`, `request_department_id`, `execute_department_id`, `priority_min/max` (đơn).
 
 **Quyết định thiết kế chốt trong plan:**
-- Khối `kham`: chỉ tiêu auto duy nhất là `exam_visit` (lượt khám). "Vào viện/Ngoài viện/Yêu cầu/Chuyên gia" để `manual` (khớp cách nhập biểu mẫu giấy, tránh ship số sai).
+- Khối `kham`: mọi chỉ tiêu dựa trên lượt khám chính (`exam_visit`) + lọc tùy chọn trên `his_treatment` join qua `sr.treatment_id`:
+  - `Lượt khám` = không lọc. `Vào viện` = `treatment_type_ids:[3]` (nội trú). `Cấp toa/ngoại trú` = `treatment_type_ids:[2]`. `Khám yêu cầu` = `patient_type_ids:[82]`. `Khám BHYT` = `patient_type_ids:[1]`.
+  - Đã đối chiếu K01 (id 27) ngày mẫu: tổng 834; type3=34, type2=17; BHYT=773, Yêu cầu=5.
+  - `Chuyên gia BV tỉnh` không có nguồn HIS → `manual`.
+  - `his_patient_type`: 1=BHYT, 42=Viện Phí, 43=KSK, 62=Hợp đồng, 82=Yêu cầu. `his_treatment_type`: 1=Khám, 2=Ngoại trú, 3=Nội trú, 4=Ban ngày.
 - Loại trừ chuyển nội bộ: chỉ áp khi config có >1 khoa HIS và có metric transfer.
 - `computeAll` là orchestration chạm DB → KHÔNG unit-test trực tiếp; unit-test các builder (string-assert) + các hàm gộp thuần (`sumOverDepts`, `sumEndType`). Xác minh `computeAll` bằng preview trên HIS thật (Task 7).
 
@@ -221,8 +225,19 @@ Thêm các method sau vào class `GiaoBanMetricServiceTest` (giữ nguyên 6 tes
         $this->assertContains('is_main_exam = 1', $sql);
         $this->assertContains('execute_department_id IN (27)', $sql);
         $this->assertContains('service_req_type_id = :kham_type', $sql);
+        $this->assertNotContains('his_treatment', $sql); // không join khi không lọc
         $this->assertEquals('20260707070000', $binds['from_time']);
         $this->assertArrayHasKey('kham_type', $binds);
+    }
+
+    /** @test */
+    public function exam_visit_sql_joins_treatment_for_type_and_patient_filters()
+    {
+        list($sql, $binds) = $this->svc->buildExamVisitSql('2026-07-07 07:00:00', '2026-07-08 07:00:00', [27],
+            ['treatment_type_ids' => [3], 'patient_type_ids' => [82]]);
+        $this->assertContains('JOIN his_treatment t ON t.id = sr.treatment_id', $sql);
+        $this->assertContains('t.tdl_treatment_type_id IN (3)', $sql);
+        $this->assertContains('t.tdl_patient_type_id IN (82)', $sql);
     }
 
     /** @test */
@@ -306,18 +321,30 @@ Mở `app/Services/GiaoBan/GiaoBanMetricService.php`.
      * Đếm lượt khám (khối ngoại trú) do các khoa khám thực hiện trong kỳ.
      * $deptIds: danh sách khoa khám (his_department.id).
      */
-    public function buildExamVisitSql($from, $to, array $deptIds)
+    public function buildExamVisitSql($from, $to, array $deptIds, array $filter = [])
     {
         $ids = implode(',', array_map('intval', $deptIds)) ?: '-1';
         $khamType = (int) config('__tech.service_req_type_kham', 1);
+        $join = '';
+        $extra = '';
+        if (!empty($filter['treatment_type_ids'])) {
+            $t = implode(',', array_map('intval', $filter['treatment_type_ids']));
+            $join = ' JOIN his_treatment t ON t.id = sr.treatment_id';
+            $extra .= " AND t.tdl_treatment_type_id IN ($t)";
+        }
+        if (!empty($filter['patient_type_ids'])) {
+            $p = implode(',', array_map('intval', $filter['patient_type_ids']));
+            if ($join === '') $join = ' JOIN his_treatment t ON t.id = sr.treatment_id';
+            $extra .= " AND t.tdl_patient_type_id IN ($p)";
+        }
         $sql = "
             SELECT COUNT(*) AS so_luong
-            FROM his_service_req sr
+            FROM his_service_req sr$join
             WHERE sr.is_delete = 0
               AND sr.service_req_type_id = :kham_type
               AND sr.is_main_exam = 1
               AND sr.execute_department_id IN ($ids)
-              AND sr.intruction_time BETWEEN :from_time AND :to_time";
+              AND sr.intruction_time BETWEEN :from_time AND :to_time$extra";
         return [$sql, [
             'kham_type' => $khamType,
             'from_time' => $this->toHisTime($from),
@@ -422,7 +449,7 @@ Thay method `computeAll(...)` hiện tại bằng:
                         $values[$key] = (float) ($rows[0]->so_bn ?? 0);
                         break;
                     case 'exam_visit':
-                        $rows = $this->selectHis($this->buildExamVisitSql($from, $to, $deptIds));
+                        $rows = $this->selectHis($this->buildExamVisitSql($from, $to, $deptIds, isset($m['filter']) ? $m['filter'] : []));
                         $values[$key] = (float) ($rows[0]->so_luong ?? 0);
                         break;
                     case 'service_count':
@@ -699,8 +726,10 @@ Thay `resources/views/khth/giaoban-config.blade.php` bằng:
 ]</script>
 <script type="application/json" id="tpl-kham">[
   {"code":"luot_kham","name":"Lượt khám","type":"exam_visit"},
-  {"code":"vao_vien","name":"Vào viện","type":"manual"},
-  {"code":"kham_yeu_cau","name":"Khám yêu cầu","type":"manual"},
+  {"code":"vao_vien","name":"Vào viện","type":"exam_visit","filter":{"treatment_type_ids":[3]}},
+  {"code":"cap_toa_ve","name":"Cấp toa/ngoại trú","type":"exam_visit","filter":{"treatment_type_ids":[2]}},
+  {"code":"kham_yeu_cau","name":"Khám yêu cầu","type":"exam_visit","filter":{"patient_type_ids":[82]}},
+  {"code":"kham_bhyt","name":"Khám BHYT","type":"exam_visit","filter":{"patient_type_ids":[1]}},
   {"code":"chuyen_gia","name":"Chuyên gia BV tỉnh","type":"manual"}
 ]</script>
 <script type="application/json" id="tpl-can_lam_sang">[
@@ -892,7 +921,13 @@ GiaoBanDeptConfig::create(['display_name'=>'Hệ Nội (gộp)','block_type'=>'d
   ])]);
 GiaoBanDeptConfig::create(['display_name'=>'Khoa Khám bệnh','block_type'=>'kham','sort_order'=>2,'is_active'=>1,
   'his_department_ids'=>json_encode([27]),
-  'metrics'=>json_encode([['code'=>'luot_kham','name'=>'Lượt khám','type'=>'exam_visit']])]);
+  'metrics'=>json_encode([
+    ['code'=>'luot_kham','name'=>'Lượt khám','type'=>'exam_visit'],
+    ['code'=>'vao_vien','name'=>'Vào viện','type'=>'exam_visit','filter'=>['treatment_type_ids'=>[3]]],
+    ['code'=>'cap_toa_ve','name'=>'Cấp toa/ngoại trú','type'=>'exam_visit','filter'=>['treatment_type_ids'=>[2]]],
+    ['code'=>'kham_yeu_cau','name'=>'Khám yêu cầu','type'=>'exam_visit','filter'=>['patient_type_ids'=>[82]]],
+    ['code'=>'kham_bhyt','name'=>'Khám BHYT','type'=>'exam_visit','filter'=>['patient_type_ids'=>[1]]],
+  ])]);
 GiaoBanDeptConfig::create(['display_name'=>'Khoa CĐHA','block_type'=>'can_lam_sang','sort_order'=>3,'is_active'=>1,
   'his_department_ids'=>json_encode([46]),
   'metrics'=>json_encode([['code'=>'tong_dv','name'=>'Tổng DV','type'=>'service_count','filter'=>['execute_department_id_self'=>true]]])]);

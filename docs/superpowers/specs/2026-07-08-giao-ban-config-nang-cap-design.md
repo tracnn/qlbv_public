@@ -50,11 +50,14 @@ Bốn thay đổi:
 Bộ chỉ tiêu mặc định khối điều trị: bn_cu, bn_vao, bn_chuyen_den, bn_ra_vien, bn_chuyen_vien, bn_tu_vong, bn_chuyen_khoa, hien_co, giuong_yc (giữ như template hiện có).
 
 ### 4.2 Khối `kham` (ngoại trú) — logic mới
-- `exam_visit` (Lượt khám): đếm `his_service_req sr` join `his_execute_room er ON er.room_id = sr.execute_room_id` với `er.is_exam=1`, `sr.service_req_type_id = :kham_type`, `sr.is_main_exam=1`, `sr.is_delete=0`, `sr.intruction_time BETWEEN :from AND :to`, và `er.department_id IN (deptSet)` (lọc khoa khám). `:kham_type` lấy từ `config('__tech.service_req_type_kham')`.
-- `exam_admission` (Vào viện): `COUNT` `his_treatment` `in_time` trong kỳ, `tdl_treatment_type_id=3`, khoa vào (`in_department_id IN (deptSet)` hoặc hospitalize_department_id) — chọn `hospitalize_department_id`/`in_department_id` theo dữ liệu thực (xác minh khi implement bằng preview).
-- Các chỉ tiêu khác của biểu mẫu (Ngoài viện, Yêu cầu, Chuyên gia BV tỉnh): loại `manual` (nhập tay) trừ khi có nguồn rõ; "Yêu cầu" có thể là `exam_visit` lọc thêm đối tượng — để `manual` ở bản này (YAGNI), admin bật khi cần.
+- Base `exam_visit` (Lượt khám): đếm `his_service_req sr` với `sr.service_req_type_id = :kham_type` (config `__tech.service_req_type_kham`=1), `sr.is_main_exam=1`, `sr.is_delete=0`, `sr.execute_department_id IN (deptSet)` (khoa khám thực hiện), `sr.intruction_time BETWEEN`.
+- Chỉ tiêu con lọc bằng JOIN `his_treatment t ON t.id = sr.treatment_id` khi metric có `filter`:
+  - `Vào viện` = `treatment_type_ids:[3]`; `Cấp toa/ngoại trú` = `treatment_type_ids:[2]`.
+  - `Khám yêu cầu` = `patient_type_ids:[82]`; `Khám BHYT` = `patient_type_ids:[1]`.
+- Đã đối chiếu K01 (id 27): tổng 834; type3=34, type2=17; BHYT=773, Yêu cầu=5.
+- `Chuyên gia BV tỉnh` không có nguồn HIS → `manual`. `his_patient_type`: 1=BHYT, 42=Viện Phí, 43=KSK, 82=Yêu cầu. `his_treatment_type`: 1=Khám, 2=Ngoại trú, 3=Nội trú.
 
-Bộ chỉ tiêu mặc định khối khám: exam_visit, exam_admission, và vài ô manual (kham_yeu_cau, chuyen_gia).
+Bộ chỉ tiêu mặc định khối khám: luot_kham, vao_vien, cap_toa_ve, kham_yeu_cau, kham_bhyt, chuyen_gia (manual).
 
 ### 4.3 Khối `can_lam_sang` (XN, CĐHA) — dùng lại service_count
 - Mỗi chỉ tiêu con = `service_count` với `execute_department_id IN (deptSet)` (dịch vụ do khoa CLS thực hiện) + `filter` admin chọn: `service_type_ids` (VD 2=XN, 3=CĐHA, 10=Siêu âm) và/hoặc `service_ids` (danh sách dịch vụ cụ thể cho nhóm con như Huyết học/Sinh hóa).
