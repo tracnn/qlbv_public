@@ -146,7 +146,8 @@ class GiaoBanMetricService
         ];
 
         $join = '';
-        if (!empty($filter['diim_type_ids']) || !empty($filter['test_type_ids'])) {
+        if (!empty($filter['diim_type_ids']) || !empty($filter['test_type_ids'])
+            || !empty($filter['diim_type_other_of']) || !empty($filter['test_type_other_of'])) {
             $join = ' JOIN his_service hs ON hs.id = ss.service_id';
             if (!empty($filter['diim_type_ids'])) {
                 $d = implode(',', array_map('intval', $filter['diim_type_ids']));
@@ -155,6 +156,15 @@ class GiaoBanMetricService
             if (!empty($filter['test_type_ids'])) {
                 $tt = implode(',', array_map('intval', $filter['test_type_ids']));
                 $conds[] = "hs.test_type_id IN ($tt)";
+            }
+            // "Khác": chưa gán loại (NULL) hoặc ngoài danh sách đã tách -> gộp phần còn lại
+            if (!empty($filter['diim_type_other_of'])) {
+                $d = implode(',', array_map('intval', $filter['diim_type_other_of']));
+                $conds[] = "(hs.diim_type_id IS NULL OR hs.diim_type_id NOT IN ($d))";
+            }
+            if (!empty($filter['test_type_other_of'])) {
+                $tt = implode(',', array_map('intval', $filter['test_type_other_of']));
+                $conds[] = "(hs.test_type_id IS NULL OR hs.test_type_id NOT IN ($tt))";
             }
         }
 

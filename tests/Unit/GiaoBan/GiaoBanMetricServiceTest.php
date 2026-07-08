@@ -16,6 +16,24 @@ class GiaoBanMetricServiceTest extends TestCase
     }
 
     /** @test */
+    public function service_count_diim_type_other_of_matches_null_or_out_of_list()
+    {
+        list($sql, $binds) = $this->svc->buildServiceCountSql('2026-07-07 07:00:00', '2026-07-08 07:00:00',
+            ['execute_department_ids' => [46], 'service_type_ids' => [3], 'diim_type_other_of' => [1, 2, 3]]);
+        $this->assertContains('JOIN his_service hs ON hs.id = ss.service_id', $sql);
+        $this->assertContains('(hs.diim_type_id IS NULL OR hs.diim_type_id NOT IN (1,2,3))', $sql);
+    }
+
+    /** @test */
+    public function service_count_test_type_other_of_matches_null_or_out_of_list()
+    {
+        list($sql, $binds) = $this->svc->buildServiceCountSql('2026-07-07 07:00:00', '2026-07-08 07:00:00',
+            ['execute_department_ids' => [43], 'service_type_ids' => [2], 'test_type_other_of' => [1, 3, 7]]);
+        $this->assertContains('JOIN his_service hs ON hs.id = ss.service_id', $sql);
+        $this->assertContains('(hs.test_type_id IS NULL OR hs.test_type_id NOT IN (1,3,7))', $sql);
+    }
+
+    /** @test */
     public function to_his_time_converts_datetime_to_numeric_string()
     {
         $this->assertEquals('20260708070000', $this->svc->toHisTime('2026-07-08 07:00:00'));
