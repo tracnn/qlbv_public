@@ -145,6 +145,19 @@ class GiaoBanMetricService
             'from_time' => $f, 'to_time' => $t,
         ];
 
+        $join = '';
+        if (!empty($filter['diim_type_ids']) || !empty($filter['test_type_ids'])) {
+            $join = ' JOIN his_service hs ON hs.id = ss.service_id';
+            if (!empty($filter['diim_type_ids'])) {
+                $d = implode(',', array_map('intval', $filter['diim_type_ids']));
+                $conds[] = "hs.diim_type_id IN ($d)";
+            }
+            if (!empty($filter['test_type_ids'])) {
+                $tt = implode(',', array_map('intval', $filter['test_type_ids']));
+                $conds[] = "hs.test_type_id IN ($tt)";
+            }
+        }
+
         if (!empty($filter['service_type_ids'])) {
             $ids = implode(',', array_map('intval', $filter['service_type_ids']));
             $conds[] = "ss.tdl_service_type_id IN ($ids)";
@@ -186,7 +199,7 @@ class GiaoBanMetricService
         $sql = "
             SELECT COUNT(*) AS so_luong
             FROM his_sere_serv ss
-            JOIN his_service_req sr ON sr.id = ss.service_req_id
+            JOIN his_service_req sr ON sr.id = ss.service_req_id$join
             WHERE $where";
         return [$sql, $binds];
     }
