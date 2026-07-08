@@ -5,11 +5,10 @@ namespace App\Exports;
 use Maatwebsite\Excel\Concerns\FromArray;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithEvents;
-use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Events\AfterSheet;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 
-class CatalogTemplateExport implements FromArray, WithHeadings, WithEvents, ShouldAutoSize
+class CatalogTemplateExport implements FromArray, WithHeadings, WithEvents
 {
     protected $type;
     protected $config;
@@ -74,6 +73,8 @@ class CatalogTemplateExport implements FromArray, WithHeadings, WithEvents, Shou
                     $col = Coordinate::stringFromColumnIndex($i + 1);
                     $cell = $col . '1';
                     $sheet->getStyle($cell)->getFont()->setBold(true);
+                    // Đặt độ rộng cột tường minh (rộng hơn độ dài chữ) để không bị che header.
+                    $sheet->getColumnDimension($col)->setWidth(max(16, mb_strlen((string) $name) + 6));
                     if (in_array($name, $required, true)) {
                         $sheet->getStyle($cell)->getFill()
                             ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
