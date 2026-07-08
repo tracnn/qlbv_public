@@ -292,6 +292,27 @@ return [
             ],
         ],
         [
+            'text'      => 'Báo cáo giao ban',
+            'icon'      => 'calendar-check-o',
+            'can'       => 'giaoban',
+            'submenu'   => [
+                [
+                    'text'      => 'Báo cáo giao ban',
+                    'icon'      => 'clipboard',
+                    'can'       => 'giaoban',
+                    'route'     => 'khth.giao-ban',
+                    'active'    => ['khth/giao-ban'],
+                ],
+                [
+                    'text'      => 'Cấu hình giao ban',
+                    'icon'      => 'cogs',
+                    'can'       => 'giaoban-admin',
+                    'route'     => 'khth.giao-ban-config',
+                    'active'    => ['khth/giao-ban/cau-hinh*'],
+                ],
+            ],
+        ],
+        [
             'text'    => 'Cập nhật dữ liệu',
             'icon'    => 'database',
             'submenu' => [

@@ -1,3 +1,7 @@
+# 08/07/2026 (cập nhật 2)
+
+- Bổ sung Báo cáo giao ban bệnh viện (KHTH): tự động tính số liệu theo khoa từ HIS (BN cũ/vào/chuyển/ra/hiện có, PTTT, giường YC, XN/CĐHA...) theo khoảng giờ tùy chọn; cho sửa tay từng ô theo phân quyền khoa (giaoban_khoa/giaoban_admin); chốt báo cáo + xuất Excel theo biểu mẫu; màn cấu hình động khoa/chỉ tiêu và gán tài khoản↔khoa.
+
 # 08/07/2026 (cập nhật 1)
 - Bổ tài biểu mẫu import bộ danh mục dịch vụ
 
