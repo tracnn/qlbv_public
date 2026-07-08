@@ -1,3 +1,7 @@
+# 08/07/2026 (cập nhật 4)
+
+- Nâng cấp cấu hình Báo cáo giao ban: 1 khoa báo cáo gộp nhiều khoa HIS (loại trừ chuyển nội bộ); phân loại khối Điều trị/Khám/Cận lâm sàng với cách thống kê riêng (census, lượt khám theo tdl_treatment_type_id/tdl_patient_type_id, đếm dịch vụ CLS theo khoa thực hiện); gán tài khoản bằng tài khoản HIS (acs_user) qua ô tìm kiếm; thêm chỉ tiêu cho khoa CĐHA/Xét nghiệm.
+
 # 08/07/2026 (cập nhật 3)
 
 - Bổ sung chế độ Trình chiếu (Present) cho Báo cáo giao ban: mở trang slide toàn màn hình (tổng quan toàn viện + mỗi khoa 1 slide), điều hướng bằng phím/click, nút nhảy nhanh tới khoa, nền tối chuyên nghiệp; đổi nút "Xem" thành "Làm mới".
