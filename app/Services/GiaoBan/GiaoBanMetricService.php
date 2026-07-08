@@ -291,52 +291,66 @@ class GiaoBanMetricService
 
     /**
      * Tính toàn bộ auto_value cho danh sách dept config.
-     * @param \Illuminate\Support\Collection|array $deptConfigs  các GiaoBanDeptConfig active
+     * Rẽ nhánh theo block_type; cộng dồn qua danh sách khoa HIS của config;
+     * loại trừ chuyển nội bộ khi config gộp >1 khoa.
      * @return array map "dept_config_id|metric_code" => float|null
      */
     public function computeAll($deptConfigs, $from, $to)
     {
-        // 1. Batch queries dùng chung
+        // Maps toàn viện dùng chung cho khối điều trị
         $censusFrom = $this->pluckByDept($this->selectHis($this->buildCensusSql($from)), 'so_bn');
         $censusTo   = $this->pluckByDept($this->selectHis($this->buildCensusSql($to)), 'so_bn');
         $moveIn     = $this->selectHis($this->buildMovementInSql($from, $to));
         $bnVao      = $this->pluckByDept($moveIn, 'bn_vao');
         $bnDen      = $this->pluckByDept($moveIn, 'bn_chuyen_den');
         $moveOut    = $this->pluckByDept($this->selectHis($this->buildMovementOutSql($from, $to)), 'bn_chuyen_khoa');
-        $endRows    = $this->selectHis($this->buildEndTypeSql($from, $to)); // department_id, end_code, so_bn
+        $endRows    = $this->selectHis($this->buildEndTypeSql($from, $to));
 
         $values = [];
         foreach ($deptConfigs as $cfg) {
-            $hisDept = $cfg->his_department_id;
+            $deptIds = $cfg->hisDepartmentIds();
+            // Chuyển nội bộ (chỉ khi gộp >1 khoa)
+            $internal = 0.0;
+            if (count($deptIds) > 1) {
+                $rows = $this->selectHis($this->buildInternalTransferSql($from, $to, $deptIds));
+                $internal = (float) ($rows[0]->so_noi_bo ?? 0);
+            }
+
             foreach ($cfg->metricList() as $m) {
                 $key = $cfg->id . '|' . $m['code'];
                 switch ($m['type']) {
-                    case 'census_from':  $values[$key] = (float) ($censusFrom[$hisDept] ?? 0); break;
-                    case 'census_to':    $values[$key] = (float) ($censusTo[$hisDept] ?? 0); break;
-                    case 'movement_in':  $values[$key] = (float) ($bnVao[$hisDept] ?? 0); break;
-                    case 'movement_transfer_in':  $values[$key] = (float) ($bnDen[$hisDept] ?? 0); break;
-                    case 'movement_transfer_out': $values[$key] = (float) ($moveOut[$hisDept] ?? 0); break;
+                    case 'census_from':  $values[$key] = $this->sumOverDepts($censusFrom, $deptIds); break;
+                    case 'census_to':    $values[$key] = $this->sumOverDepts($censusTo, $deptIds); break;
+                    case 'movement_in':  $values[$key] = $this->sumOverDepts($bnVao, $deptIds); break;
+                    case 'movement_transfer_in':
+                        $values[$key] = max(0.0, $this->sumOverDepts($bnDen, $deptIds) - $internal);
+                        break;
+                    case 'movement_transfer_out':
+                        $values[$key] = max(0.0, $this->sumOverDepts($moveOut, $deptIds) - $internal);
+                        break;
                     case 'end_type':
-                        $sum = 0;
-                        foreach ($endRows as $r) {
-                            if ((int) $r->department_id === (int) $hisDept
-                                && in_array($r->end_code, $m['end_codes'], true)) {
-                                $sum += (int) $r->so_bn;
-                            }
-                        }
-                        $values[$key] = (float) $sum;
+                        $values[$key] = $this->sumEndType($endRows, $deptIds, $m['end_codes']);
                         break;
                     case 'bed_count':
                         $rows = $this->selectHis($this->buildBedCountSql($to, isset($m['bed_ids']) ? $m['bed_ids'] : []));
                         $values[$key] = (float) ($rows[0]->so_bn ?? 0);
                         break;
+                    case 'exam_visit':
+                        $rows = $this->selectHis($this->buildExamVisitSql($from, $to, $deptIds, isset($m['filter']) ? $m['filter'] : []));
+                        $values[$key] = (float) ($rows[0]->so_luong ?? 0);
+                        break;
                     case 'service_count':
                         $filter = isset($m['filter']) ? $m['filter'] : [];
                         if (!empty($filter['execute_department_id_self'])) {
-                            $filter['execute_department_id'] = $hisDept;
+                            $filter['execute_department_ids'] = $deptIds;
                             unset($filter['execute_department_id_self']);
-                        } elseif ($hisDept && empty($filter['execute_room_ids']) && empty($filter['execute_department_id'])) {
-                            $filter['request_department_id'] = $hisDept;
+                        } elseif (!empty($deptIds)
+                            && empty($filter['execute_room_ids'])
+                            && empty($filter['execute_department_id'])
+                            && empty($filter['execute_department_ids'])
+                            && empty($filter['request_department_id'])
+                            && empty($filter['request_department_ids'])) {
+                            $filter['request_department_ids'] = $deptIds;
                         }
                         $rows = $this->selectHis($this->buildServiceCountSql($from, $to, $filter));
                         $values[$key] = (float) ($rows[0]->so_luong ?? 0);
@@ -347,7 +361,7 @@ class GiaoBanMetricService
                         break;
                     case 'manual':
                     default:
-                        $values[$key] = null; // ô nhập tay thuần
+                        $values[$key] = null;
                 }
             }
         }
