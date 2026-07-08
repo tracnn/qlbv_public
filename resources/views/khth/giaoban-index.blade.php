@@ -119,6 +119,7 @@ function render(res) {
   $('#report-status').text(r.status === 'final' ? '(ĐÃ CHỐT)' : '(nháp, số liệu ' + r.from_time + ' → ' + r.to_time + ')');
   $('#btn-unlock').toggle(r.status === 'final');
   $('#btn-finalize').toggle(r.status !== 'final');
+  $('#btn-edit-general').toggle(r.status !== 'final');
   $('#general-note-view').html(r.general_note || '');
 
   res.configs.forEach(function (cfg) {

@@ -66,7 +66,12 @@ class GiaoBanExport implements FromArray, WithStyles, WithColumnWidths
             $this->boldRows[] = count($rows) + 1;
             $rows[] = ['GHI CHÚ CHUNG'];
             $this->italicRows[] = count($rows) + 1;
-            $rows[] = [trim(html_entity_decode(strip_tags((string) $this->report->general_note)))];
+            $gn = trim(html_entity_decode(strip_tags((string) $this->report->general_note)));
+            // Chống formula injection Excel: ký tự đầu =,+,-,@ -> ép về text bằng dấu nháy đơn
+            if ($gn !== '' && strpos('=+-@', $gn[0]) !== false) {
+                $gn = "'" . $gn;
+            }
+            $rows[] = [$gn];
         }
         return $rows;
     }
