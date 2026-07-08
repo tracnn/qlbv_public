@@ -49,10 +49,16 @@
 var HIS_DEPTS = @json($hisDepartments);
 var STATE = { configs: [], assignments: [] };
 
+function esc(s) {
+  return String(s === null || s === undefined ? '' : s).replace(/[&<>"']/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+  });
+}
+
 function deptOptions(selected) {
   var html = '<option value="">— Không gắn khoa HIS —</option>';
   HIS_DEPTS.forEach(function (d) {
-    html += '<option value="' + d.id + '"' + (d.id == selected ? ' selected' : '') + '>' + d.department_name + '</option>';
+    html += '<option value="' + d.id + '"' + (d.id == selected ? ' selected' : '') + '>' + esc(d.department_name) + '</option>';
   });
   return html;
 }
@@ -62,15 +68,15 @@ function renderConfigs() {
   STATE.configs.forEach(function (c) {
     $tb.append('<tr data-id="' + c.id + '">' +
       '<td><input class="form-control f-sort" type="number" value="' + c.sort_order + '" style="width:70px"></td>' +
-      '<td><input class="form-control f-name" value="' + c.display_name + '"></td>' +
+      '<td><input class="form-control f-name" value="' + esc(c.display_name) + '"></td>' +
       '<td><select class="form-control f-dept">' + deptOptions(c.his_department_id) + '</select></td>' +
-      '<td><textarea class="form-control f-metrics" rows="2">' + c.metrics + '</textarea></td>' +
+      '<td><textarea class="form-control f-metrics" rows="2">' + esc(c.metrics) + '</textarea></td>' +
       '<td><input type="checkbox" class="f-active"' + (c.is_active ? ' checked' : '') + '></td>' +
       '<td><button class="btn btn-sm btn-primary btn-save-cfg">Lưu</button></td></tr>');
   });
   var $sel = $('#assign-depts').empty();
   STATE.configs.forEach(function (c) {
-    if (c.is_active) $sel.append('<option value="' + c.id + '">' + c.display_name + '</option>');
+    if (c.is_active) $sel.append('<option value="' + c.id + '">' + esc(c.display_name) + '</option>');
   });
 }
 

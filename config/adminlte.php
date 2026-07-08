@@ -234,27 +234,6 @@ return [
                     ],
                 ],
                 [
-                    'text'      => 'Báo cáo giao ban',
-                    'icon'      => 'calendar-check-o',
-                    'can'       => 'giaoban',
-                    'submenu'   => [
-                        [
-                            'text'      => 'Báo cáo giao ban',
-                            'icon'      => 'clipboard',
-                            'can'       => 'giaoban',
-                            'route'     => 'khth.giao-ban',
-                            'active'    => ['khth/giao-ban'],
-                        ],
-                        [
-                            'text'      => 'Cấu hình giao ban',
-                            'icon'      => 'cogs',
-                            'can'       => 'giaoban-admin',
-                            'route'     => 'khth.giao-ban-config',
-                            'active'    => ['khth/giao-ban/cau-hinh*'],
-                        ],
-                    ],
-                ],
-                [
                     'text'  => 'Số liệu CV19031-BHXH',
                     'icon'  => 'bar-chart',
                     'checkrole'   => 'administrator',
@@ -309,6 +288,27 @@ return [
                     'checkrole' => 'administrator',
                     'route'     => 'khth.revenue-dept-room-index',
                     'active'    => ['khth/revenue-dept-room-index*'],
+                ],
+            ],
+        ],
+        [
+            'text'      => 'Báo cáo giao ban',
+            'icon'      => 'calendar-check-o',
+            'can'       => 'giaoban',
+            'submenu'   => [
+                [
+                    'text'      => 'Báo cáo giao ban',
+                    'icon'      => 'clipboard',
+                    'can'       => 'giaoban',
+                    'route'     => 'khth.giao-ban',
+                    'active'    => ['khth/giao-ban'],
+                ],
+                [
+                    'text'      => 'Cấu hình giao ban',
+                    'icon'      => 'cogs',
+                    'can'       => 'giaoban-admin',
+                    'route'     => 'khth.giao-ban-config',
+                    'active'    => ['khth/giao-ban/cau-hinh*'],
                 ],
             ],
         ],

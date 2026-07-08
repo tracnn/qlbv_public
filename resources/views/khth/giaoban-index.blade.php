@@ -63,6 +63,12 @@ function loadReport() {
   });
 }
 
+function esc(s) {
+  return String(s === null || s === undefined ? '' : s).replace(/[&<>"']/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+  });
+}
+
 function cellOf(res, deptId, code) {
   for (var i = 0; i < res.cells.length; i++) {
     var c = res.cells[i];
@@ -88,12 +94,12 @@ function render(res) {
     var warn = res.balance_warnings && res.balance_warnings[cfg.id]
       ? ' <i class="fa fa-warning text-yellow" title="Lệch cân đối: ' + res.balance_warnings[cfg.id] + '"></i>' : '';
     var html = '<div class="box box-solid"><div class="box-header with-border"><b>' +
-      cfg.display_name + '</b>' + warn + '</div><div class="box-body"><div class="row">';
+      esc(cfg.display_name) + '</b>' + warn + '</div><div class="box-body"><div class="row">';
     cfg.metrics.forEach(function (m) {
       var c = cellOf(res, cfg.id, m.code) || {};
       var val = c.manual_value !== null && c.manual_value !== undefined ? c.manual_value : c.auto_value;
       var edited = c.manual_value !== null && c.manual_value !== undefined;
-      html += '<div class="col-md-2" style="margin-bottom:8px"><label style="font-weight:normal">' + m.name + '</label>' +
+      html += '<div class="col-md-2" style="margin-bottom:8px"><label style="font-weight:normal">' + esc(m.name) + '</label>' +
         '<div class="input-group">' +
         '<input type="number" step="any" class="form-control cell-input' + (edited ? ' bg-warning' : '') + '"' +
         ' data-dept="' + cfg.id + '" data-metric="' + m.code + '"' +
@@ -108,7 +114,7 @@ function render(res) {
     var noteCell = cellOf(res, cfg.id, 'note') || {};
     html += '</div><label style="font-weight:normal">Ghi chú khoa</label>' +
       '<textarea class="form-control dept-note" rows="2" data-dept="' + cfg.id + '"' +
-      (editable ? '' : ' readonly') + '>' + (noteCell.note || '') + '</textarea>';
+      (editable ? '' : ' readonly') + '>' + esc(noteCell.note || '') + '</textarea>';
     html += '</div></div>';
     $body.append(html);
   });
