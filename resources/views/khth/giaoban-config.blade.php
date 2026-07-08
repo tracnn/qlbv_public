@@ -57,6 +57,7 @@
   {"code":"cdha_xq","name":"X-Quang","type":"service_count","filter":{"execute_department_id_self":true,"service_type_ids":[3],"diim_type_ids":[1]}},
   {"code":"cdha_ct","name":"CT","type":"service_count","filter":{"execute_department_id_self":true,"service_type_ids":[3],"diim_type_ids":[2]}},
   {"code":"cdha_mri","name":"MRI","type":"service_count","filter":{"execute_department_id_self":true,"service_type_ids":[3],"diim_type_ids":[3]}},
+  {"code":"cdha_khac","name":"CĐHA khác","type":"service_count","filter":{"execute_department_id_self":true,"service_type_ids":[3],"diim_type_other_of":[1,2,3]}},
   {"code":"sieu_am","name":"Siêu âm","type":"service_count","filter":{"execute_department_id_self":true,"service_type_ids":[10]}}
 ]</script>
 <script type="application/json" id="tpl-cls_xn">[
@@ -64,7 +65,8 @@
   {"code":"xn_sh","name":"Sinh hóa","type":"service_count","filter":{"execute_department_id_self":true,"service_type_ids":[2],"test_type_ids":[3]}},
   {"code":"xn_vs","name":"Vi sinh","type":"service_count","filter":{"execute_department_id_self":true,"service_type_ids":[2],"test_type_ids":[2]}},
   {"code":"xn_md","name":"Miễn dịch","type":"service_count","filter":{"execute_department_id_self":true,"service_type_ids":[2],"test_type_ids":[4]}},
-  {"code":"xn_nt","name":"Nước tiểu","type":"service_count","filter":{"execute_department_id_self":true,"service_type_ids":[2],"test_type_ids":[7]}}
+  {"code":"xn_nt","name":"Nước tiểu","type":"service_count","filter":{"execute_department_id_self":true,"service_type_ids":[2],"test_type_ids":[7]}},
+  {"code":"xn_khac","name":"XN khác","type":"service_count","filter":{"execute_department_id_self":true,"service_type_ids":[2],"test_type_other_of":[1,2,3,4,7]}}
 ]</script>
 @stop
 
