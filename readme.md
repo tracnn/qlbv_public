@@ -1,3 +1,7 @@
+# 08/07/2026 (cập nhật 5)
+
+- Ghi chú khoa và ghi chú chung của Báo cáo giao ban chuyển sang soạn thảo rich text (CKEditor) qua popup; lưu HTML đã làm sạch (HTMLPurifier chống XSS); trình chiếu hiển thị định dạng đẹp; xuất Excel tự bỏ thẻ HTML.
+
 # 08/07/2026 (cập nhật 4)
 
 - Nâng cấp cấu hình Báo cáo giao ban: 1 khoa báo cáo gộp nhiều khoa HIS (loại trừ chuyển nội bộ); phân loại khối Điều trị/Khám/Cận lâm sàng với cách thống kê riêng (census, lượt khám theo tdl_treatment_type_id/tdl_patient_type_id, đếm dịch vụ CLS theo khoa thực hiện); gán tài khoản bằng tài khoản HIS (acs_user) qua ô tìm kiếm; thêm chỉ tiêu cho khoa CĐHA/Xét nghiệm.

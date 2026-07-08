@@ -190,7 +190,7 @@
     }).join('');
     var note = noteOf(data, cfg.id);
     var noteHtml = (note && String(note).trim() !== '')
-      ? '<div class="note"><div class="lbl">Ghi chú khoa</div><div class="txt">' + esc(note) + '</div></div>' : '';
+      ? '<div class="note"><div class="lbl">Ghi chú khoa</div><div class="txt">' + note + '</div></div>' : '';
     return '<div class="slide"><div class="s-head"><div class="s-title">' + esc(cfg.display_name) + warn +
       '</div><div class="s-sub">Giao ban ' + esc(fmtDate(DATE)) + '</div></div>' +
       '<div class="kpis" style="grid-template-columns:repeat(4,1fr)">' + cards + '</div>' +

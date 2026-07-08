@@ -29,11 +29,24 @@
 <div id="report-body"></div>
 
 <div class="box box-default">
-  <div class="box-header with-border"><b>Ghi chú chung</b></div>
-  <div class="box-body">
-    <textarea id="general_note" class="form-control" rows="3" @if(!$isAdmin) readonly @endif></textarea>
-    @if($isAdmin)<button id="btn-save-note" class="btn btn-sm btn-primary" style="margin-top:5px">Lưu ghi chú</button>@endif
+  <div class="box-header with-border"><b>Ghi chú chung</b>
+    @if($isAdmin) <button id="btn-edit-general" class="btn btn-xs btn-default"><i class="fa fa-pencil"></i> Sửa</button>@endif
   </div>
+  <div class="box-body"><div id="general-note-view" class="note-view"></div></div>
+</div>
+
+<div class="modal fade" id="note-modal" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-lg" role="document"><div class="modal-content">
+    <div class="modal-header">
+      <button type="button" class="close" data-dismiss="modal">&times;</button>
+      <h4 class="modal-title">Sửa ghi chú</h4>
+    </div>
+    <div class="modal-body"><textarea id="note-editor" rows="8"></textarea></div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-default" data-dismiss="modal">Hủy</button>
+      <button type="button" id="note-save" class="btn btn-primary">Lưu</button>
+    </div>
+  </div></div>
 </div>
 @stop
 
@@ -106,7 +119,8 @@ function render(res) {
   $('#report-status').text(r.status === 'final' ? '(ĐÃ CHỐT)' : '(nháp, số liệu ' + r.from_time + ' → ' + r.to_time + ')');
   $('#btn-unlock').toggle(r.status === 'final');
   $('#btn-finalize').toggle(r.status !== 'final');
-  $('#general_note').val(r.general_note || '');
+  $('#btn-edit-general').toggle(r.status !== 'final');
+  $('#general-note-view').html(r.general_note || '');
 
   res.configs.forEach(function (cfg) {
     var editable = canEditDept(cfg.id);
@@ -131,11 +145,12 @@ function render(res) {
         '</div></div>';
     });
     var noteCell = cellOf(res, cfg.id, 'note') || {};
-    html += '</div><label style="font-weight:normal">Ghi chú khoa</label>' +
-      '<textarea class="form-control dept-note" rows="2" data-dept="' + cfg.id + '"' +
-      (editable ? '' : ' readonly') + '>' + esc(noteCell.note || '') + '</textarea>';
+    html += '</div><div class="dept-note-block"><label style="font-weight:normal">Ghi chú khoa</label>' +
+      (editable ? ' <button class="btn btn-xs btn-default btn-edit-note" data-dept="' + cfg.id + '"><i class="fa fa-pencil"></i> Sửa</button>' : '') +
+      '<div class="note-view dept-note-view" data-dept="' + cfg.id + '"></div></div>';
     html += '</div></div>';
     $body.append(html);
+    $body.find('.dept-note-view[data-dept="' + cfg.id + '"]').html(noteCell.note || '');
   });
 }
 
@@ -179,15 +194,6 @@ $(function () {
   $('#report-body').on('click', '.btn-reset-cell', function () {
     saveCell($(this).data('dept'), $(this).data('metric'), { manual_value: '' }, loadReport);
   });
-  $('#report-body').on('change', '.dept-note', function () {
-    saveCell($(this).data('dept'), 'note', { note: $(this).val() }, function () {});
-  });
-
-  $('#btn-save-note').on('click', function () {
-    $.post('{{ route('khth.giao-ban-save-note') }}', {
-      _token: '{{ csrf_token() }}', report_id: CURRENT.report.id, general_note: $('#general_note').val()
-    }).done(function () { alert('Đã lưu'); });
-  });
   $('#btn-finalize').on('click', function () {
     if (!confirm('Chốt báo cáo? Sau khi chốt sẽ không sửa được.')) return;
     $.post('{{ route('khth.giao-ban-finalize') }}', { _token: '{{ csrf_token() }}', report_id: CURRENT.report.id }).done(loadReport);
@@ -201,6 +207,58 @@ $(function () {
 
   $('#btn-present').on('click', function () {
     window.open('{{ route('khth.giao-ban-present') }}?date=' + encodeURIComponent($('#report_date').val()), '_blank', 'noopener');
+  });
+
+  var NOTE_TARGET = null;
+  var noteEditorReady = false;
+  function initNoteEditor() {
+    if (window.CKEDITOR && !noteEditorReady) {
+      CKEDITOR.replace('note-editor', {
+        toolbar: [
+          ['Bold', 'Italic', 'Underline'], ['TextColor'], ['FontSize'],
+          ['NumberedList', 'BulletedList'], ['JustifyLeft', 'JustifyCenter', 'JustifyRight'],
+          ['RemoveFormat']
+        ],
+        removePlugins: 'elementspath', resize_enabled: false, height: 200
+      });
+      noteEditorReady = true;
+    }
+  }
+  function editorSet(html) {
+    if (noteEditorReady && CKEDITOR.instances['note-editor']) CKEDITOR.instances['note-editor'].setData(html || '');
+    else $('#note-editor').val(html || '');
+  }
+  function editorGet() {
+    return (noteEditorReady && CKEDITOR.instances['note-editor'])
+      ? CKEDITOR.instances['note-editor'].getData() : $('#note-editor').val();
+  }
+  function openNoteModal(target, html) {
+    NOTE_TARGET = target;
+    initNoteEditor();
+    editorSet(html);
+    $('#note-modal').modal('show');
+  }
+
+  $('#report-body').on('click', '.btn-edit-note', function () {
+    var deptId = $(this).data('dept');
+    var c = cellOf(CURRENT, deptId, 'note') || {};
+    openNoteModal({ type: 'dept', deptId: deptId }, c.note || '');
+  });
+  $('#btn-edit-general').on('click', function () {
+    openNoteModal({ type: 'general' }, (CURRENT && CURRENT.report ? CURRENT.report.general_note : '') || '');
+  });
+  $('#note-save').on('click', function () {
+    if (!NOTE_TARGET || !CURRENT || !CURRENT.report) return;
+    var html = editorGet();
+    if (NOTE_TARGET.type === 'dept') {
+      saveCell(NOTE_TARGET.deptId, 'note', { note: html }, function () { loadReport(); });
+      $('#note-modal').modal('hide');
+    } else {
+      $.post('{{ route('khth.giao-ban-save-note') }}', {
+        _token: '{{ csrf_token() }}', report_id: CURRENT.report.id, general_note: html
+      }).done(function () { $('#note-modal').modal('hide'); loadReport(); })
+        .fail(function () { alert('Lỗi lưu ghi chú'); });
+    }
   });
 
   loadReport();

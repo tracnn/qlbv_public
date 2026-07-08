@@ -9,6 +9,7 @@ use App\Models\GiaoBan\GiaoBanReportCell;
 use App\Models\GiaoBan\GiaoBanUserDepartment;
 use App\Services\GiaoBan\GiaoBanPermission;
 use App\Services\GiaoBan\GiaoBanReportService;
+use App\Services\GiaoBan\NoteSanitizer;
 use Illuminate\Http\Request;
 
 class GiaoBanController extends Controller
@@ -116,7 +117,7 @@ class GiaoBanController extends Controller
             'metric_code' => $request->input('metric_code'),
         ]);
         if ($request->input('metric_code') === 'note') {
-            $cell->note = $request->input('note');
+            $cell->note = NoteSanitizer::clean($request->input('note'));
         } else {
             $cell->manual_value = $request->filled('manual_value') ? $request->input('manual_value') : null;
         }
@@ -131,7 +132,7 @@ class GiaoBanController extends Controller
         if (!$this->isAdmin()) abort(403);
         $report = GiaoBanReport::findOrFail($request->input('report_id'));
         if ($report->isFinal()) return response()->json(['message' => 'Báo cáo đã chốt.'], 422);
-        $report->update(['general_note' => $request->input('general_note')]);
+        $report->update(['general_note' => NoteSanitizer::clean($request->input('general_note'))]);
         return response()->json(['ok' => true]);
     }
 
