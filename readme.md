@@ -1,3 +1,7 @@
+# 08/07/2026 (cập nhật 6)
+
+- Báo cáo giao ban - khối Khám ngoại trú: thống kê thêm theo loại ra viện (his_treatment.treatment_end_type_id) — Cấp toa cho về, Chuyển viện, Hẹn khám lại; gom lại migration giao ban còn 5 file cho gọn.
+
 # 08/07/2026 (cập nhật 5)
 
 - Ghi chú khoa và ghi chú chung của Báo cáo giao ban chuyển sang soạn thảo rich text (CKEditor) qua popup; lưu HTML đã làm sạch (HTMLPurifier chống XSS); trình chiếu hiển thị định dạng đẹp; xuất Excel tự bỏ thẻ HTML.
