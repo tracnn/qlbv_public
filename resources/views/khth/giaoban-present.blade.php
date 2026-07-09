@@ -171,13 +171,26 @@
         '<span><b style="background:#5dcaa5"></b>Ra</span></div></div>'
       : '';
 
+    var duties = (data.duties || []).filter(function (d) { return (d.person_name || '').trim() !== ''; });
+    var posName = {};
+    (data.duty_positions || []).forEach(function (p) { posName[p.id] = p.name; });
+    var dutyHtml = '';
+    if (duties.length) {
+      dutyHtml = '<div class="panel"><div class="lbl">KÍP TRỰC LÃNH ĐẠO</div><div style="display:flex;flex-wrap:wrap;gap:1vh 2vw">';
+      duties.forEach(function (d) {
+        dutyHtml += '<div style="font-size:1.9vh"><span style="color:#8aa4bd">' + esc(posName[d.position_id] || '') +
+          ':</span> <b style="color:#fff">' + esc(d.person_name) + '</b>' + (d.phone ? ' <span style="color:#6ea8d8">' + esc(d.phone) + '</span>' : '') + '</div>';
+      });
+      dutyHtml += '</div></div>';
+    }
+
     var sub = r ? ('Số liệu ' + esc(r.from_time) + ' → ' + esc(r.to_time)) : '';
     return '<div class="slide"><div class="s-head"><div>' +
       '<div class="s-brand">BÁO CÁO GIAO BAN</div>' +
       '<div class="s-title">Giao ban ' + esc(fmtDate(DATE)) + '</div></div>' +
       '<div class="s-sub">' + sub + '</div></div>' +
       '<div class="kpis" style="grid-template-columns:repeat(4,1fr)">' + kpiHtml + '</div>' +
-      '<div class="charts">' + chart + '</div></div>';
+      '<div class="charts">' + chart + '</div>' + dutyHtml + '</div>';
   }
 
   function deptSlide(data, cfg) {
