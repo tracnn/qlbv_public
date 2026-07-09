@@ -5,6 +5,7 @@ namespace App\Http\Controllers\KHTH;
 use App\Http\Controllers\Controller;
 use App\Models\GiaoBan\GiaoBanDeptConfig;
 use App\Models\GiaoBan\GiaoBanUserDepartment;
+use App\Models\GiaoBan\GiaoBanDutyPosition;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -49,7 +50,8 @@ class GiaoBanConfigController extends Controller
                 $users = [];
             }
         }
-        return response()->json(['configs' => $configs, 'assignments' => $assignments, 'user_names' => $users]);
+        $dutyPositions = GiaoBanDutyPosition::orderBy('sort_order')->get();
+        return response()->json(['configs' => $configs, 'assignments' => $assignments, 'user_names' => $users, 'duty_positions' => $dutyPositions]);
     }
 
     /** Tim acs_user (CustomUser HIS) theo ten/loginname. */
@@ -123,6 +125,20 @@ class GiaoBanConfigController extends Controller
         foreach ((array) $request->input('dept_config_ids', []) as $deptId) {
             GiaoBanUserDepartment::create(['user_id' => $userId, 'dept_config_id' => (int) $deptId]);
         }
+        return response()->json(['ok' => true]);
+    }
+
+    public function storeDutyPosition(Request $request)
+    {
+        $this->validate($request, ['name' => 'required|string|max:255', 'sort_order' => 'nullable|integer']);
+        $p = GiaoBanDutyPosition::create($request->only(['name', 'sort_order']) + ['is_active' => true]);
+        return response()->json(['ok' => true, 'id' => $p->id]);
+    }
+
+    public function updateDutyPosition(Request $request, $id)
+    {
+        $p = GiaoBanDutyPosition::findOrFail($id);
+        $p->update($request->only(['name', 'sort_order', 'is_active']));
         return response()->json(['ok' => true]);
     }
 
