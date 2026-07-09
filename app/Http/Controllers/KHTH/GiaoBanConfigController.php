@@ -13,10 +13,12 @@ class GiaoBanConfigController extends Controller
 {
     public function __construct()
     {
+        // Toàn bộ cấu hình yêu cầu giaoban-admin, TRỪ searchUsers (dùng chung cho
+        // ô nhập kíp trực ở màn giao ban - cả role khoa được phép).
         $this->middleware(function ($request, $next) {
             if (!auth()->user()->can('giaoban-admin')) abort(403);
             return $next($request);
-        });
+        })->except('searchUsers');
     }
 
     public function index()

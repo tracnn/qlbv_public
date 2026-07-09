@@ -178,7 +178,7 @@ function renderDuties(res) {
       '<td><input type="text" class="form-control duty-user" data-pos="' + p.id + '" data-uid="' + (d.user_id || '') + '" value="' + esc(d.person_name || '') + '"' + (editable ? '' : ' readonly') + ' placeholder="gõ tìm tài khoản..."></td>' +
       '<td><input type="text" class="form-control duty-phone" data-pos="' + p.id + '" value="' + esc(d.phone || '') + '"' + (editable ? '' : ' readonly') + '></td></tr>';
   });
-  html += '</tbody></table><div id="duty-results" class="list-group" style="position:absolute;z-index:20;max-width:400px;display:none"></div>';
+  html += '</tbody></table><div id="duty-results" class="list-group" style="max-height:200px;overflow:auto;display:none;margin-top:4px"></div>';
   $b.html(html);
 }
 
@@ -299,8 +299,7 @@ $(function () {
     if (q.length < 2) { $res.hide(); return; }
     dutyTimer = setTimeout(function () {
       $.get('{{ route('khth.giao-ban-config-search-users') }}', { q: q }, function (rows) {
-        var off = $i.offset();
-        $res.empty().css({ top: off.top + $i.outerHeight(), left: off.left, width: $i.outerWidth() });
+        $res.empty();
         rows.forEach(function (u) {
           $res.append('<a href="#" class="list-group-item duty-pick" data-uid="' + u.id + '" data-name="' +
             esc(u.username || u.loginname) + '">' + esc(u.username || u.loginname) + ' <small>(' + esc(u.loginname) + ')</small></a>');
