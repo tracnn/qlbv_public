@@ -1,5 +1,6 @@
 # 09/07/2026
 
+- Báo cáo giao ban - trình chiếu mục tổng hợp: bổ sung công suất giường (donut toàn viện Tổng/Đang dùng/Trống + thanh công suất % theo khoa, màu cảnh báo ≥90% đỏ/≥80% cam/≥60% teal) — dữ liệu chụp snapshot cùng thời điểm "Lấy số liệu", lưu bảng giaoban_report_beds; mở rộng lưới KPI tổng quan lên 8 ô (thêm Vào viện/Ra viện/Chuyển viện/Tử vong/Cấp cứu/PT-Đẻ, ẩn ô không có số liệu); tách thành 2 slide (Tổng quan toàn viện + Công suất & biến động theo khoa). Đối chiếu HIS: 831 giường, 506 đang dùng, công suất 60,9%.
 - Báo cáo giao ban: bổ sung Kíp trực lãnh đạo — cấu hình danh mục chức danh trực; nhập người trực chọn từ danh mục nhân viên HIS (his_employee, tự điền SĐT), cho phép nhiều người/chức danh, nút sao chép kíp ngày trước; phân quyền cập nhật kíp trực theo user (danh sách người được cập nhật, ngoài admin); hiển thị trên trình chiếu.
 
 # 08/07/2026 (cập nhật 6)
