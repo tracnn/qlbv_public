@@ -212,6 +212,11 @@
       dutyHtml += '</div></div>';
     }
 
+    var gnote = r && r.general_note ? String(r.general_note).trim() : '';
+    var noteHtml = gnote !== ''
+      ? '<div class="note" style="margin-top:1.6vh"><div class="lbl">GHI CHÚ CHUNG</div><div class="txt">' + gnote + '</div></div>'
+      : '';
+
     var sub = r ? ('Số liệu ' + esc(r.from_time) + ' → ' + esc(r.to_time)) : '';
     return '<div class="slide"><div class="s-head"><div>' +
       '<div class="s-brand">BÁO CÁO GIAO BAN</div>' +
@@ -219,7 +224,7 @@
       '<div class="s-sub">' + sub + '</div></div>' +
       '<div class="ov-main"><div class="kpis ov-kpis" style="grid-template-columns:repeat(4,1fr)">' + kpiHtml + '</div>' +
       donutHtml(Number(data.bed_used || 0), Number(data.bed_total || 0)) + '</div>' +
-      dutyHtml + '</div>';
+      dutyHtml + noteHtml + '</div>';
   }
 
   function capacityDeptSlide(data) {
