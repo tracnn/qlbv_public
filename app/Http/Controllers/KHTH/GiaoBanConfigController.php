@@ -53,7 +53,21 @@ class GiaoBanConfigController extends Controller
             }
         }
         $dutyPositions = GiaoBanDutyPosition::orderBy('sort_order')->get();
-        return response()->json(['configs' => $configs, 'assignments' => $assignments, 'user_names' => $users, 'duty_positions' => $dutyPositions]);
+
+        $editorIds = \App\Models\GiaoBan\GiaoBanDutyEditor::pluck('user_id')->all();
+        $editorNames = [];
+        if (count($editorIds)) {
+            $ids = implode(',', array_map('intval', $editorIds));
+            try {
+                foreach (DB::connection('ACS_RS')->select("SELECT id, loginname, username FROM acs_user WHERE id IN ($ids)") as $r) {
+                    $u = (object) array_change_key_case((array) $r, CASE_LOWER);
+                    $editorNames[(int) $u->id] = $u->username ?: $u->loginname;
+                }
+            } catch (\Exception $e) {}
+        }
+
+        return response()->json(['configs' => $configs, 'assignments' => $assignments, 'user_names' => $users, 'duty_positions' => $dutyPositions,
+            'duty_editors' => $editorIds, 'duty_editor_names' => $editorNames]);
     }
 
     /** Tim acs_user (CustomUser HIS) theo ten/loginname. */
@@ -141,6 +155,16 @@ class GiaoBanConfigController extends Controller
     {
         $p = GiaoBanDutyPosition::findOrFail($id);
         $p->update($request->only(['name', 'sort_order', 'is_active']));
+        return response()->json(['ok' => true]);
+    }
+
+    public function assignDutyEditors(Request $request)
+    {
+        $this->validate($request, ['user_ids' => 'nullable|array']);
+        \App\Models\GiaoBan\GiaoBanDutyEditor::query()->delete();
+        foreach ((array) $request->input('user_ids', []) as $uid) {
+            \App\Models\GiaoBan\GiaoBanDutyEditor::create(['user_id' => (int) $uid]);
+        }
         return response()->json(['ok' => true]);
     }
 
