@@ -54,6 +54,25 @@
   .barcol small { font-size: 1.2vh; color: #6f8aa6; text-align: center; }
   .legend { display: flex; gap: 1.4vw; font-size: 1.3vh; color: #8aa4bd; }
   .legend b { display: inline-block; width: 10px; height: 10px; margin-right: 4px; }
+  .ov-main { display: flex; gap: 1.6vh; margin-top: 2vh; flex: 1; min-height: 0; }
+  .ov-kpis { flex: 1; align-content: start; }
+  .donut-panel { width: 26vw; flex: none; align-items: center; }
+  .donut-wrap { flex: 1; display: flex; align-items: center; justify-content: center; min-height: 0; }
+  .donut-svg { width: 22vh; height: 22vh; }
+  .donut-pct { fill: #fff; font-size: 17px; font-weight: 600; }
+  .donut-cap { fill: #8aa4bd; font-size: 7px; }
+  .donut-legend { display: flex; justify-content: space-around; width: 100%; margin-top: 1.4vh; }
+  .donut-legend > div { display: flex; flex-direction: column; align-items: center; }
+  .donut-legend .dl-num { font-size: 3vh; font-weight: 600; }
+  .donut-legend small { font-size: 1.3vh; color: #8aa4bd; margin-top: .2vh; }
+  .cap-grid { display: grid; gap: 1.6vh; margin-top: 2vh; flex: 1; min-height: 0; }
+  .caplist { flex: 1; display: flex; flex-direction: column; gap: 1.1vh; justify-content: center; overflow: auto; }
+  .caprow { display: flex; align-items: center; gap: 1vw; }
+  .capname { width: 15vw; font-size: 1.8vh; color: #dbe6f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .captrack { flex: 1; height: 2.4vh; background: #24384d; border-radius: 4px; overflow: hidden; }
+  .capfill { height: 100%; border-radius: 4px; transition: none; }
+  .cappct { width: 5vw; text-align: right; font-size: 1.9vh; font-weight: 600; }
+  .capnum { width: 6vw; text-align: right; font-size: 1.6vh; color: #8aa4bd; }
 </style>
 </head>
 <body>
@@ -133,6 +152,31 @@
     return '';
   }
 
+  function capColor(pct) {
+    return pct >= 90 ? '#e57373' : pct >= 80 ? '#ef9f27' : pct >= 60 ? '#5dcaa5' : '#378add';
+  }
+
+  function donutHtml(used, total) {
+    if (!total) return '';
+    var pct = Math.round(used / total * 100);
+    var free = Math.max(0, total - used);
+    var col = capColor(pct);
+    var R = 42, C = 2 * Math.PI * R;
+    var off = C * (1 - Math.min(100, pct) / 100);
+    return '<div class="panel donut-panel"><div class="lbl">CÔNG SUẤT GIƯỜNG</div>' +
+      '<div class="donut-wrap"><svg viewBox="0 0 100 100" class="donut-svg">' +
+      '<circle cx="50" cy="50" r="42" fill="none" stroke="#24384d" stroke-width="12"/>' +
+      '<circle cx="50" cy="50" r="42" fill="none" stroke="' + col + '" stroke-width="12" stroke-linecap="round" ' +
+      'stroke-dasharray="' + C.toFixed(2) + '" stroke-dashoffset="' + off.toFixed(2) + '" transform="rotate(-90 50 50)"/>' +
+      '<text x="50" y="49" text-anchor="middle" class="donut-pct">' + pct + '%</text>' +
+      '<text x="50" y="62" text-anchor="middle" class="donut-cap">công suất</text></svg></div>' +
+      '<div class="donut-legend">' +
+      '<div><span class="dl-num" style="color:#fff">' + total + '</span><small>Tổng giường</small></div>' +
+      '<div><span class="dl-num" style="color:#5dcaa5">' + used + '</span><small>Đang dùng</small></div>' +
+      '<div><span class="dl-num" style="color:#8aa4bd">' + free + '</span><small>Trống</small></div>' +
+      '</div></div>';
+  }
+
   function overviewSlide(data) {
     var r = data.report;
     var kpiHtml = '';
@@ -141,12 +185,60 @@
       return '<div class="kpi' + (cls || '') + '"><div class="lbl">' + esc(label) +
         '</div><div class="val">' + num(val) + '</div></div>';
     }
-    kpiHtml += kpi('Nội trú hiện có', sumMetric(data, ['hien_co']), '');
-    if (cellExists(data, 'kham_benh') || cellExists(data, 'kham'))
-      kpiHtml += kpi('Khám ngoại trú', sumMetric(data, ['kham_benh', 'kham']), '');
-    kpiHtml += kpi('Giường yêu cầu', sumMetric(data, ['giuong_yc']), ' teal');
-    if (cellExists(data, 'pt_cap_cuu') || cellExists(data, 'pt_phien'))
-      kpiHtml += kpi('PT trong ngày', sumMetric(data, ['pt_cap_cuu', 'pt_phien']), ' amber');
+    kpiHtml += kpi('Nội trú hiện có', sumMetric(data, ['hien_co']), ' teal');
+    kpiHtml += kpi('Khám ngoại trú', sumMetric(data, ['kham_benh', 'kham']), '');
+    kpiHtml += kpi('Vào viện', sumMetric(data, ['vao_vien']), ' teal');
+    kpiHtml += kpi('Ra viện', sumMetric(data, ['bn_ra_vien']), ' amber');
+    kpiHtml += kpi('Chuyển viện', sumMetric(data, ['bn_chuyen_vien']), ' amber');
+    kpiHtml += kpi('Tử vong', sumMetric(data, ['bn_tu_vong']), '');
+    kpiHtml += kpi('Cấp cứu', sumMetric(data, ['bn_cap_cuu']), ' amber');
+    kpiHtml += kpi('PT / Đẻ', sumMetric(data, ['pt_cap_cuu', 'pt_phien', 'de_thuong']), ' amber');
+
+    var duties = (data.duties || []).filter(function (d) { return (d.person_name || '').trim() !== ''; });
+    var byPosD = {};
+    duties.forEach(function (d) { (byPosD[d.position_id] = byPosD[d.position_id] || []).push(d); });
+    var dutyHtml = '';
+    if (duties.length) {
+      dutyHtml = '<div class="panel" style="margin-top:1.6vh"><div class="lbl">KÍP TRỰC LÃNH ĐẠO</div><div style="display:flex;flex-wrap:wrap;gap:1vh 2vw">';
+      (data.duty_positions || []).forEach(function (p) {
+        var people = byPosD[p.id]; if (!people || !people.length) return;
+        var names = people.map(function (d) {
+          return '<b style="color:#fff">' + esc(d.person_name) + '</b>' + (d.phone ? ' <span style="color:#6ea8d8">' + esc(d.phone) + '</span>' : '');
+        }).join(', ');
+        dutyHtml += '<div style="font-size:1.9vh"><span style="color:#8aa4bd">' + esc(p.name) + ':</span> ' + names + '</div>';
+      });
+      dutyHtml += '</div></div>';
+    }
+
+    var sub = r ? ('Số liệu ' + esc(r.from_time) + ' → ' + esc(r.to_time)) : '';
+    return '<div class="slide"><div class="s-head"><div>' +
+      '<div class="s-brand">BÁO CÁO GIAO BAN</div>' +
+      '<div class="s-title">Giao ban ' + esc(fmtDate(DATE)) + '</div></div>' +
+      '<div class="s-sub">' + sub + '</div></div>' +
+      '<div class="ov-main"><div class="kpis ov-kpis" style="grid-template-columns:repeat(4,1fr)">' + kpiHtml + '</div>' +
+      donutHtml(Number(data.bed_used || 0), Number(data.bed_total || 0)) + '</div>' +
+      dutyHtml + '</div>';
+  }
+
+  function capacityDeptSlide(data) {
+    var beds = (data.bed_by_config || []).filter(function (b) { return Number(b.total) > 0; })
+      .map(function (b) {
+        var t = Number(b.total), u = Number(b.used);
+        return { name: b.display_name, total: t, used: u, pct: Math.round(u / t * 100) };
+      })
+      .sort(function (a, b) { return b.pct - a.pct; });
+    var capHtml = '';
+    if (beds.length) {
+      var rowsC = beds.map(function (x) {
+        var col = capColor(x.pct);
+        return '<div class="caprow"><div class="capname">' + esc(x.name) + '</div>' +
+          '<div class="captrack"><div class="capfill" style="width:' + Math.min(100, x.pct) + '%;background:' + col + '"></div></div>' +
+          '<div class="cappct" style="color:' + col + '">' + x.pct + '%</div>' +
+          '<div class="capnum">' + x.used + '/' + x.total + '</div></div>';
+      }).join('');
+      capHtml = '<div class="panel"><div class="lbl">CÔNG SUẤT GIƯỜNG THEO KHOA</div>' +
+        '<div class="caplist">' + rowsC + '</div></div>';
+    }
 
     var rows = [];
     data.configs.forEach(function (cfg) {
@@ -171,29 +263,11 @@
         '<span><b style="background:#5dcaa5"></b>Ra</span></div></div>'
       : '';
 
-    var duties = (data.duties || []).filter(function (d) { return (d.person_name || '').trim() !== ''; });
-    var byPosD = {};
-    duties.forEach(function (d) { (byPosD[d.position_id] = byPosD[d.position_id] || []).push(d); });
-    var dutyHtml = '';
-    if (duties.length) {
-      dutyHtml = '<div class="panel"><div class="lbl">KÍP TRỰC LÃNH ĐẠO</div><div style="display:flex;flex-wrap:wrap;gap:1vh 2vw">';
-      (data.duty_positions || []).forEach(function (p) {
-        var people = byPosD[p.id]; if (!people || !people.length) return;
-        var names = people.map(function (d) {
-          return '<b style="color:#fff">' + esc(d.person_name) + '</b>' + (d.phone ? ' <span style="color:#6ea8d8">' + esc(d.phone) + '</span>' : '');
-        }).join(', ');
-        dutyHtml += '<div style="font-size:1.9vh"><span style="color:#8aa4bd">' + esc(p.name) + ':</span> ' + names + '</div>';
-      });
-      dutyHtml += '</div></div>';
-    }
-
-    var sub = r ? ('Số liệu ' + esc(r.from_time) + ' → ' + esc(r.to_time)) : '';
-    return '<div class="slide"><div class="s-head"><div>' +
-      '<div class="s-brand">BÁO CÁO GIAO BAN</div>' +
-      '<div class="s-title">Giao ban ' + esc(fmtDate(DATE)) + '</div></div>' +
-      '<div class="s-sub">' + sub + '</div></div>' +
-      '<div class="kpis" style="grid-template-columns:repeat(4,1fr)">' + kpiHtml + '</div>' +
-      '<div class="charts">' + chart + '</div>' + dutyHtml + '</div>';
+    if (!capHtml && !chart) return '';
+    var cols = (capHtml && chart) ? '1fr 1fr' : '1fr';
+    return '<div class="slide"><div class="s-head"><div class="s-title">Công suất &amp; biến động theo khoa</div>' +
+      '<div class="s-sub">Giao ban ' + esc(fmtDate(DATE)) + '</div></div>' +
+      '<div class="cap-grid" style="grid-template-columns:' + cols + '">' + capHtml + chart + '</div></div>';
   }
 
   function deptSlide(data, cfg) {
@@ -225,6 +299,11 @@
     }
     slides.push(overviewSlide(data));
     deptNames.push({ idx: 0, name: 'Tổng quan' });
+    var capHtml = capacityDeptSlide(data);
+    if (capHtml) {
+      deptNames.push({ idx: slides.length, name: 'Công suất & biến động' });
+      slides.push(capHtml);
+    }
     data.configs.forEach(function (cfg) {
       deptNames.push({ idx: slides.length, name: cfg.display_name });
       slides.push(deptSlide(data, cfg));
