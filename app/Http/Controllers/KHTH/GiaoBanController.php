@@ -159,16 +159,18 @@ class GiaoBanController extends Controller
 
     public function searchEmployees(Request $request)
     {
-        $q = strtolower(trim((string) $request->input('q', '')));
-        if (mb_strlen($q) < 2) return response()->json([]);
+        $raw = trim((string) $request->input('q', ''));
+        if (mb_strlen($raw) < 2) return response()->json([]);
+        $q = \App\Services\GiaoBan\ViSearch::normalize($raw); // bỏ dấu + lowercase
+        $nameExpr = \App\Services\GiaoBan\ViSearch::noDiacriticsSql('tdl_username');
         try {
             $rows = \Illuminate\Support\Facades\DB::connection('HISPro')->select(
                 "SELECT * FROM (
                     SELECT id, tdl_username, tdl_mobile, title FROM his_employee
                     WHERE is_delete = 0 AND is_active = 1
-                      AND (LOWER(tdl_username) LIKE :q1 OR LOWER(employee_code) LIKE :q2)
+                      AND ($nameExpr LIKE :q1 OR LOWER(employee_code) LIKE :q2)
                     ORDER BY tdl_username
-                 ) WHERE ROWNUM <= 20",
+                 ) WHERE ROWNUM <= 30",
                 ['q1' => '%' . $q . '%', 'q2' => '%' . $q . '%']
             );
         } catch (\Exception $e) { return response()->json([]); }

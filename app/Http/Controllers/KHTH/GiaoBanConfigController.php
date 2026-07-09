@@ -73,16 +73,18 @@ class GiaoBanConfigController extends Controller
     /** Tim acs_user (CustomUser HIS) theo ten/loginname. */
     public function searchUsers(Request $request)
     {
-        $q = strtolower(trim((string) $request->input('q', '')));
-        if (mb_strlen($q) < 2) return response()->json([]);
+        $raw = trim((string) $request->input('q', ''));
+        if (mb_strlen($raw) < 2) return response()->json([]);
+        $q = \App\Services\GiaoBan\ViSearch::normalize($raw); // bỏ dấu + lowercase
+        $nameExpr = \App\Services\GiaoBan\ViSearch::noDiacriticsSql('username');
         try {
             $rows = DB::connection('ACS_RS')->select(
                 "SELECT * FROM (
                     SELECT id, loginname, username FROM acs_user
                     WHERE is_active = 1
-                      AND (LOWER(loginname) LIKE :q1 OR LOWER(username) LIKE :q2)
+                      AND (LOWER(loginname) LIKE :q1 OR $nameExpr LIKE :q2)
                     ORDER BY username
-                 ) WHERE ROWNUM <= 20",
+                 ) WHERE ROWNUM <= 30",
                 ['q1' => '%' . $q . '%', 'q2' => '%' . $q . '%']
             );
         } catch (\Exception $e) {
