@@ -166,17 +166,18 @@ class GiaoBanController extends Controller
         try {
             $rows = \Illuminate\Support\Facades\DB::connection('HISPro')->select(
                 "SELECT * FROM (
-                    SELECT id, tdl_username, tdl_mobile, title FROM his_employee
+                    SELECT id, loginname, tdl_username, tdl_mobile, title FROM his_employee
                     WHERE is_delete = 0 AND is_active = 1
-                      AND ($nameExpr LIKE :q1 OR LOWER(employee_code) LIKE :q2)
+                      AND ($nameExpr LIKE :q1 OR LOWER(loginname) LIKE :q2 OR LOWER(employee_code) LIKE :q3)
                     ORDER BY tdl_username
                  ) WHERE ROWNUM <= 30",
-                ['q1' => '%' . $q . '%', 'q2' => '%' . $q . '%']
+                ['q1' => '%' . $q . '%', 'q2' => '%' . $q . '%', 'q3' => '%' . $q . '%']
             );
         } catch (\Exception $e) { return response()->json([]); }
         $out = array_map(function ($r) {
             $u = (object) array_change_key_case((array) $r, CASE_LOWER);
-            return ['id' => (int) $u->id, 'name' => $u->tdl_username, 'phone' => $u->tdl_mobile, 'title' => $u->title];
+            return ['id' => (int) $u->id, 'name' => $u->tdl_username, 'phone' => $u->tdl_mobile,
+                'title' => $u->title, 'loginname' => $u->loginname];
         }, $rows);
         return response()->json($out);
     }

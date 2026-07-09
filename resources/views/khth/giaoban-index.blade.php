@@ -316,6 +316,7 @@ $(function () {
         (rows || []).forEach(function (u) {
           $res.append('<a href="#" class="emp-pick" data-id="' + u.id + '" data-name="' + esc(u.name || '') + '" data-phone="' + esc(u.phone || '') +
             '" style="display:block;padding:6px 10px;border-bottom:1px solid #eee">' + esc(u.name || '') +
+            (u.loginname ? ' <small class="text-muted">[' + esc(u.loginname) + ']</small>' : '') +
             (u.title ? ' <small class="text-muted">(' + esc(u.title) + ')</small>' : '') +
             (u.phone ? ' <small>' + esc(u.phone) + '</small>' : '') + '</a>');
         });
