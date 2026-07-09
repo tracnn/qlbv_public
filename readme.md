@@ -1,6 +1,6 @@
 # 09/07/2026
 
-- Báo cáo giao ban: bổ sung Kíp trực lãnh đạo — cấu hình danh mục chức danh trực; nhập người trực (chọn tài khoản HIS) + SĐT theo ngày, nút sao chép kíp ngày trước; hiển thị trên trình chiếu.
+- Báo cáo giao ban: bổ sung Kíp trực lãnh đạo — cấu hình danh mục chức danh trực; nhập người trực chọn từ danh mục nhân viên HIS (his_employee, tự điền SĐT), cho phép nhiều người/chức danh, nút sao chép kíp ngày trước; phân quyền cập nhật kíp trực theo user (danh sách người được cập nhật, ngoài admin); hiển thị trên trình chiếu.
 
 # 08/07/2026 (cập nhật 6)
 
