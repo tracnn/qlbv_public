@@ -38,8 +38,8 @@
   .btn { background: #13293d; color: #cfe0f0; border: 1px solid #24384d; border-radius: 6px;
     padding: .6vh 1vw; font-size: 1.5vh; cursor: pointer; }
   .btn:hover { background: #1b3348; }
-  #jump { position: absolute; top: 3vh; right: 4vw; z-index: 5; }
-  #jump-list { position: absolute; right: 0; top: 4vh; background: #13293d; border: 1px solid #24384d;
+  #jump { position: relative; display: inline-block; z-index: 5; }
+  #jump-list { position: absolute; left: 0; bottom: 100%; margin-bottom: 6px; background: #13293d; border: 1px solid #24384d;
     border-radius: 8px; padding: 6px; display: none; max-height: 70vh; overflow: auto; min-width: 220px; }
   #jump-list.open { display: block; }
   #jump-list button { display: block; width: 100%; text-align: left; background: none; border: none;
@@ -78,14 +78,16 @@
 <body>
 <div id="deck">
   <div id="stage">
-    <div id="jump">
-      <button class="btn" id="jump-btn">☰ Khoa</button>
-      <div id="jump-list"></div>
-    </div>
     <div id="center">Đang tải dữ liệu…</div>
   </div>
   <div id="bar">
-    <span><button class="btn" id="fs-btn">⛶ Toàn màn hình (F)</button></span>
+    <span style="display:flex;gap:.6vw;align-items:center">
+      <button class="btn" id="fs-btn">⛶ Toàn màn hình (F)</button>
+      <span id="jump">
+        <button class="btn" id="jump-btn">☰ Khoa</button>
+        <div id="jump-list"></div>
+      </span>
+    </span>
     <span id="dots"></span>
     <span id="counter">–/–</span>
     <span>← → chuyển slide · ESC thoát</span>
