@@ -32,6 +32,31 @@
   </div>
 </div>
 
+<div class="row">
+  <div class="col-md-6">
+    <div class="box box-success">
+      <div class="box-header with-border"><b>Danh mục chức danh trực</b></div>
+      <div class="box-body table-responsive">
+        <table class="table table-bordered" id="tbl-duty"><thead><tr><th style="width:70px">TT</th><th>Chức danh</th><th style="width:70px">Hoạt động</th><th style="width:60px"></th></tr></thead><tbody></tbody></table>
+        <button id="btn-add-duty" class="btn btn-success"><i class="fa fa-plus"></i> Thêm chức danh</button>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="box box-info">
+      <div class="box-header with-border"><b>Người được cập nhật kíp trực</b></div>
+      <div class="box-body">
+        <label>Thêm tài khoản (tên / loginname)</label>
+        <input type="text" id="editor-search" class="form-control" placeholder="gõ ≥ 2 ký tự...">
+        <div id="editor-results" class="list-group" style="max-height:160px;overflow:auto;margin-top:4px"></div>
+        <div id="editor-list" style="margin-top:8px"></div>
+        <button id="btn-save-editors" class="btn btn-info" style="margin-top:10px">Lưu danh sách</button>
+        <p class="text-muted" style="margin-top:6px">Admin luôn được cập nhật. Các tài khoản trong danh sách này cũng được cập nhật kíp trực.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script type="application/json" id="tpl-dieu_tri">[
   {"code":"bn_cu","name":"BN cũ","type":"census_from"},
   {"code":"bn_vao","name":"BN vào","type":"movement_in"},
@@ -137,9 +162,36 @@ function renderConfigs() {
   });
 }
 
+function renderDutyPositions() {
+  var $tb = $('#tbl-duty tbody').empty();
+  (STATE.duty_positions || []).forEach(function (p) {
+    $tb.append('<tr data-id="' + p.id + '">' +
+      '<td><input class="form-control d-sort" type="number" value="' + (p.sort_order || 0) + '"></td>' +
+      '<td><input class="form-control d-name" value="' + esc(p.name) + '"></td>' +
+      '<td><input type="checkbox" class="d-active"' + (p.is_active ? ' checked' : '') + '></td>' +
+      '<td><button class="btn btn-sm btn-primary btn-save-duty">Lưu</button></td></tr>');
+  });
+}
+
+var EDITORS = []; // {id, name}
+function initEditors() {
+  EDITORS = (STATE.duty_editors || []).map(function (uid) {
+    return { id: uid, name: (STATE.duty_editor_names && STATE.duty_editor_names[uid]) ? STATE.duty_editor_names[uid] : ('#' + uid) };
+  });
+  renderEditors();
+}
+function renderEditors() {
+  var $l = $('#editor-list').empty();
+  if (!EDITORS.length) { $l.html('<i class="text-muted">Chưa có ai (ngoài admin).</i>'); return; }
+  EDITORS.forEach(function (e) {
+    $l.append('<span style="display:inline-flex;align-items:center;gap:4px;background:#eef;border:1px solid #cce;border-radius:4px;padding:2px 8px;margin:2px">' +
+      esc(e.name) + ' <a href="#" class="editor-remove" data-id="' + e.id + '" style="color:#c00;font-weight:bold">&times;</a></span>');
+  });
+}
+
 function loadAll() {
   $.get('{{ route('khth.giao-ban-config-fetch') }}', function (res) {
-    STATE = res; renderConfigs(); syncAssign();
+    STATE = res; renderConfigs(); renderDutyPositions(); initEditors(); syncAssign();
   });
 }
 
@@ -229,6 +281,58 @@ $(function () {
     $.post('{{ route('khth.giao-ban-config-assign') }}', {
       _token: '{{ csrf_token() }}', user_id: PICKED_USER.id,
       dept_config_ids: $('#assign-depts').val() || []
+    }).done(function () { alert('Đã lưu'); loadAll(); });
+  });
+
+  $('#btn-add-duty').on('click', function () {
+    var name = prompt('Tên chức danh trực:');
+    if (!name) return;
+    $.post('{{ route('khth.giao-ban-config-duty-store') }}', { _token: '{{ csrf_token() }}', name: name, sort_order: (STATE.duty_positions || []).length + 1 })
+      .done(loadAll);
+  });
+  $('#tbl-duty').on('click', '.btn-save-duty', function () {
+    var $tr = $(this).closest('tr');
+    $.post('{{ url('khth/giao-ban/cau-hinh-duty') }}/' + $tr.data('id'), {
+      _token: '{{ csrf_token() }}', name: $tr.find('.d-name').val(),
+      sort_order: $tr.find('.d-sort').val(), is_active: $tr.find('.d-active').is(':checked') ? 1 : 0
+    }).done(loadAll);
+  });
+
+  // Người được cập nhật kíp trực
+  var editorTimer = null;
+  $('#editor-search').on('input', function () {
+    var q = $(this).val();
+    clearTimeout(editorTimer);
+    if (q.length < 2) { $('#editor-results').empty(); return; }
+    editorTimer = setTimeout(function () {
+      $.get('{{ route('khth.giao-ban-config-search-users') }}', { q: q }, function (rows) {
+        var $r = $('#editor-results').empty();
+        (rows || []).forEach(function (u) {
+          $r.append('<a href="#" class="editor-pick" data-id="' + u.id + '" data-name="' + esc(u.username || u.loginname) +
+            '">' + esc(u.username || u.loginname) + ' <small>(' + esc(u.loginname) + ')</small></a>');
+        });
+      });
+    }, 300);
+  });
+  $('#editor-results').on('click', '.editor-pick', function (e) {
+    e.preventDefault();
+    var id = parseInt($(this).data('id'), 10);
+    if (!EDITORS.some(function (x) { return x.id === id; })) {
+      EDITORS.push({ id: id, name: $(this).data('name') });
+      renderEditors();
+    }
+    $('#editor-results').empty();
+    $('#editor-search').val('');
+  });
+  $('#editor-list').on('click', '.editor-remove', function (e) {
+    e.preventDefault();
+    var id = parseInt($(this).data('id'), 10);
+    EDITORS = EDITORS.filter(function (x) { return x.id !== id; });
+    renderEditors();
+  });
+  $('#btn-save-editors').on('click', function () {
+    $.post('{{ route('khth.giao-ban-config-duty-editors') }}', {
+      _token: '{{ csrf_token() }}', user_ids: EDITORS.map(function (x) { return x.id; })
     }).done(function () { alert('Đã lưu'); loadAll(); });
   });
 });

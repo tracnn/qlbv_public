@@ -7,6 +7,10 @@ use App\Models\GiaoBan\GiaoBanDeptConfig;
 use App\Models\GiaoBan\GiaoBanReport;
 use App\Models\GiaoBan\GiaoBanReportCell;
 use App\Models\GiaoBan\GiaoBanUserDepartment;
+use App\Models\GiaoBan\GiaoBanDutyPosition;
+use App\Models\GiaoBan\GiaoBanReportDuty;
+use App\Models\GiaoBan\GiaoBanDutyEditor;
+use App\Services\GiaoBan\GiaoBanDutyService;
 use App\Services\GiaoBan\GiaoBanPermission;
 use App\Services\GiaoBan\GiaoBanReportService;
 use App\Services\GiaoBan\NoteSanitizer;
@@ -66,10 +70,21 @@ class GiaoBanController extends Controller
             );
         }
 
+        $positions = GiaoBanDutyPosition::where('is_active', true)->orderBy('sort_order')->get(['id', 'name']);
+        $duties = [];
+        if ($report) {
+            foreach (GiaoBanReportDuty::where('report_id', $report->id)->orderBy('position_id')->orderBy('id')->get() as $d) {
+                $duties[] = ['id' => $d->id, 'position_id' => $d->position_id,
+                    'employee_id' => $d->employee_id, 'person_name' => $d->person_name, 'phone' => $d->phone];
+            }
+        }
+
         return response()->json([
             'report' => $report, 'configs' => $configs, 'cells' => $cells,
             'balance_warnings' => $warnings,
             'is_admin' => $this->isAdmin(), 'assigned_dept_ids' => $this->assignedDeptIds(),
+            'duty_positions' => $positions, 'duties' => $duties,
+            'can_edit_duty' => $this->canEditDuty(),
         ]);
     }
 
@@ -134,6 +149,100 @@ class GiaoBanController extends Controller
         if ($report->isFinal()) return response()->json(['message' => 'Báo cáo đã chốt.'], 422);
         $report->update(['general_note' => NoteSanitizer::clean($request->input('general_note'))]);
         return response()->json(['ok' => true]);
+    }
+
+    protected function canEditDuty()
+    {
+        return GiaoBanDutyService::canEdit($this->isAdmin(),
+            GiaoBanDutyEditor::pluck('user_id')->all(), auth()->id());
+    }
+
+    public function searchEmployees(Request $request)
+    {
+        $raw = trim((string) $request->input('q', ''));
+        if (mb_strlen($raw) < 2) return response()->json([]);
+        $q = \App\Services\GiaoBan\ViSearch::normalize($raw); // bỏ dấu + lowercase
+        $nameExpr = \App\Services\GiaoBan\ViSearch::noDiacriticsSql('tdl_username');
+        try {
+            $rows = \Illuminate\Support\Facades\DB::connection('HISPro')->select(
+                "SELECT * FROM (
+                    SELECT id, loginname, tdl_username, tdl_mobile, title FROM his_employee
+                    WHERE is_delete = 0 AND is_active = 1
+                      AND ($nameExpr LIKE :q1 OR LOWER(loginname) LIKE :q2 OR LOWER(employee_code) LIKE :q3)
+                    ORDER BY tdl_username
+                 ) WHERE ROWNUM <= 30",
+                ['q1' => '%' . $q . '%', 'q2' => '%' . $q . '%', 'q3' => '%' . $q . '%']
+            );
+        } catch (\Exception $e) { return response()->json([]); }
+        $out = array_map(function ($r) {
+            $u = (object) array_change_key_case((array) $r, CASE_LOWER);
+            return ['id' => (int) $u->id, 'name' => $u->tdl_username, 'phone' => $u->tdl_mobile,
+                'title' => $u->title, 'loginname' => $u->loginname];
+        }, $rows);
+        return response()->json($out);
+    }
+
+    protected function reportForDuty($date)
+    {
+        $from = date('Y-m-d 07:00:00', strtotime('-1 day', strtotime($date)));
+        $to = date('Y-m-d 07:00:00', strtotime($date));
+        return $this->service->getOrCreateReport($date, $from, $to, auth()->id());
+    }
+
+    public function addDuty(Request $request)
+    {
+        if (!$this->canEditDuty()) abort(403);
+        $this->validate($request, [
+            'date' => 'required|date_format:Y-m-d', 'position_id' => 'required|integer',
+            'employee_id' => 'nullable|integer', 'person_name' => 'nullable|string|max:255', 'phone' => 'nullable|string|max:50',
+        ]);
+        $report = $this->reportForDuty($request->input('date'));
+        if ($report->isFinal()) return response()->json(['message' => 'Báo cáo đã chốt.'], 422);
+        $d = (new GiaoBanDutyService())->addDuty($report->id, $request->input('position_id'),
+            $request->input('employee_id'), $request->input('person_name'), $request->input('phone'));
+        return response()->json(['ok' => true, 'id' => $d->id]);
+    }
+
+    public function removeDuty(Request $request)
+    {
+        if (!$this->canEditDuty()) abort(403);
+        $this->validate($request, ['duty_id' => 'required|integer']);
+        $duty = GiaoBanReportDuty::find($request->input('duty_id'));
+        if ($duty) {
+            $report = GiaoBanReport::find($duty->report_id);
+            if ($report && $report->isFinal()) return response()->json(['message' => 'Báo cáo đã chốt.'], 422);
+            (new GiaoBanDutyService())->removeDuty($duty->id);
+        }
+        return response()->json(['ok' => true]);
+    }
+
+    public function updateDutyPhone(Request $request)
+    {
+        if (!$this->canEditDuty()) abort(403);
+        $this->validate($request, ['duty_id' => 'required|integer', 'phone' => 'nullable|string|max:50']);
+        $duty = GiaoBanReportDuty::find($request->input('duty_id'));
+        if ($duty) {
+            $report = GiaoBanReport::find($duty->report_id);
+            if ($report && $report->isFinal()) return response()->json(['message' => 'Báo cáo đã chốt.'], 422);
+            (new GiaoBanDutyService())->updatePhone($duty->id, $request->input('phone'));
+        }
+        return response()->json(['ok' => true]);
+    }
+
+    /** Sao chép kíp trực từ ngày gần nhất trước đó. */
+    public function copyDuties(Request $request)
+    {
+        if (!$this->canEditDuty()) abort(403);
+        $this->validate($request, ['date' => 'required|date_format:Y-m-d']);
+        $from = date('Y-m-d 07:00:00', strtotime('-1 day', strtotime($request->input('date'))));
+        $to = date('Y-m-d 07:00:00', strtotime($request->input('date')));
+        $report = $this->service->getOrCreateReport($request->input('date'), $from, $to, auth()->id());
+        if ($report->isFinal()) {
+            return response()->json(['message' => 'Báo cáo đã chốt.'], 422);
+        }
+        $n = (new GiaoBanDutyService())->copyFromPrevious($report);
+        if ($n === 0) return response()->json(['message' => 'Không có kíp trực ngày trước để sao chép.'], 422);
+        return response()->json(['ok' => true, 'copied' => $n]);
     }
 
     public function finalize(Request $request)

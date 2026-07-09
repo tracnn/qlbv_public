@@ -5,6 +5,7 @@ namespace App\Http\Controllers\KHTH;
 use App\Http\Controllers\Controller;
 use App\Models\GiaoBan\GiaoBanDeptConfig;
 use App\Models\GiaoBan\GiaoBanUserDepartment;
+use App\Models\GiaoBan\GiaoBanDutyPosition;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -12,10 +13,12 @@ class GiaoBanConfigController extends Controller
 {
     public function __construct()
     {
+        // Toàn bộ cấu hình yêu cầu giaoban-admin, TRỪ searchUsers (dùng chung cho
+        // ô nhập kíp trực ở màn giao ban - cả role khoa được phép).
         $this->middleware(function ($request, $next) {
             if (!auth()->user()->can('giaoban-admin')) abort(403);
             return $next($request);
-        });
+        })->except('searchUsers');
     }
 
     public function index()
@@ -49,22 +52,39 @@ class GiaoBanConfigController extends Controller
                 $users = [];
             }
         }
-        return response()->json(['configs' => $configs, 'assignments' => $assignments, 'user_names' => $users]);
+        $dutyPositions = GiaoBanDutyPosition::orderBy('sort_order')->get();
+
+        $editorIds = \App\Models\GiaoBan\GiaoBanDutyEditor::pluck('user_id')->all();
+        $editorNames = [];
+        if (count($editorIds)) {
+            $ids = implode(',', array_map('intval', $editorIds));
+            try {
+                foreach (DB::connection('ACS_RS')->select("SELECT id, loginname, username FROM acs_user WHERE id IN ($ids)") as $r) {
+                    $u = (object) array_change_key_case((array) $r, CASE_LOWER);
+                    $editorNames[(int) $u->id] = $u->username ?: $u->loginname;
+                }
+            } catch (\Exception $e) {}
+        }
+
+        return response()->json(['configs' => $configs, 'assignments' => $assignments, 'user_names' => $users, 'duty_positions' => $dutyPositions,
+            'duty_editors' => $editorIds, 'duty_editor_names' => $editorNames]);
     }
 
     /** Tim acs_user (CustomUser HIS) theo ten/loginname. */
     public function searchUsers(Request $request)
     {
-        $q = strtolower(trim((string) $request->input('q', '')));
-        if (mb_strlen($q) < 2) return response()->json([]);
+        $raw = trim((string) $request->input('q', ''));
+        if (mb_strlen($raw) < 2) return response()->json([]);
+        $q = \App\Services\GiaoBan\ViSearch::normalize($raw); // bỏ dấu + lowercase
+        $nameExpr = \App\Services\GiaoBan\ViSearch::noDiacriticsSql('username');
         try {
             $rows = DB::connection('ACS_RS')->select(
                 "SELECT * FROM (
                     SELECT id, loginname, username FROM acs_user
                     WHERE is_active = 1
-                      AND (LOWER(loginname) LIKE :q1 OR LOWER(username) LIKE :q2)
+                      AND (LOWER(loginname) LIKE :q1 OR $nameExpr LIKE :q2)
                     ORDER BY username
-                 ) WHERE ROWNUM <= 20",
+                 ) WHERE ROWNUM <= 30",
                 ['q1' => '%' . $q . '%', 'q2' => '%' . $q . '%']
             );
         } catch (\Exception $e) {
@@ -122,6 +142,30 @@ class GiaoBanConfigController extends Controller
         GiaoBanUserDepartment::where('user_id', $userId)->delete();
         foreach ((array) $request->input('dept_config_ids', []) as $deptId) {
             GiaoBanUserDepartment::create(['user_id' => $userId, 'dept_config_id' => (int) $deptId]);
+        }
+        return response()->json(['ok' => true]);
+    }
+
+    public function storeDutyPosition(Request $request)
+    {
+        $this->validate($request, ['name' => 'required|string|max:255', 'sort_order' => 'nullable|integer']);
+        $p = GiaoBanDutyPosition::create($request->only(['name', 'sort_order']) + ['is_active' => true]);
+        return response()->json(['ok' => true, 'id' => $p->id]);
+    }
+
+    public function updateDutyPosition(Request $request, $id)
+    {
+        $p = GiaoBanDutyPosition::findOrFail($id);
+        $p->update($request->only(['name', 'sort_order', 'is_active']));
+        return response()->json(['ok' => true]);
+    }
+
+    public function assignDutyEditors(Request $request)
+    {
+        $this->validate($request, ['user_ids' => 'nullable|array']);
+        \App\Models\GiaoBan\GiaoBanDutyEditor::query()->delete();
+        foreach ((array) $request->input('user_ids', []) as $uid) {
+            \App\Models\GiaoBan\GiaoBanDutyEditor::create(['user_id' => (int) $uid]);
         }
         return response()->json(['ok' => true]);
     }
