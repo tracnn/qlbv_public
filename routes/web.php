@@ -633,6 +633,8 @@ Route::group(['middleware' => ['auth', 'check.first.login']], function () {
         Route::post('giao-ban/fetch-data', 'KHTH\GiaoBanController@fetchData')->name('khth.giao-ban-fetch');
         Route::post('giao-ban/save-cell', 'KHTH\GiaoBanController@saveCell')->name('khth.giao-ban-save-cell');
         Route::post('giao-ban/save-general-note', 'KHTH\GiaoBanController@saveGeneralNote')->name('khth.giao-ban-save-note');
+        Route::post('giao-ban/save-duty', 'KHTH\GiaoBanController@saveDuty')->name('khth.giao-ban-save-duty');
+        Route::post('giao-ban/copy-duties', 'KHTH\GiaoBanController@copyDuties')->name('khth.giao-ban-copy-duties');
         Route::post('giao-ban/finalize', 'KHTH\GiaoBanController@finalize')->name('khth.giao-ban-finalize');
         Route::post('giao-ban/unlock', 'KHTH\GiaoBanController@unlock')->name('khth.giao-ban-unlock');
         Route::get('giao-ban/export', 'KHTH\GiaoBanController@export')->name('khth.giao-ban-export');

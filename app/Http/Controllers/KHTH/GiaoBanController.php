@@ -7,6 +7,9 @@ use App\Models\GiaoBan\GiaoBanDeptConfig;
 use App\Models\GiaoBan\GiaoBanReport;
 use App\Models\GiaoBan\GiaoBanReportCell;
 use App\Models\GiaoBan\GiaoBanUserDepartment;
+use App\Models\GiaoBan\GiaoBanDutyPosition;
+use App\Models\GiaoBan\GiaoBanReportDuty;
+use App\Services\GiaoBan\GiaoBanDutyService;
 use App\Services\GiaoBan\GiaoBanPermission;
 use App\Services\GiaoBan\GiaoBanReportService;
 use App\Services\GiaoBan\NoteSanitizer;
@@ -66,10 +69,22 @@ class GiaoBanController extends Controller
             );
         }
 
+        $positions = GiaoBanDutyPosition::where('is_active', true)->orderBy('sort_order')->get(['id', 'name']);
+        $duties = [];
+        if ($report) {
+            foreach (GiaoBanReportDuty::where('report_id', $report->id)->get() as $d) {
+                $duties[] = [
+                    'position_id' => $d->position_id, 'user_id' => $d->user_id,
+                    'person_name' => $d->person_name, 'phone' => $d->phone,
+                ];
+            }
+        }
+
         return response()->json([
             'report' => $report, 'configs' => $configs, 'cells' => $cells,
             'balance_warnings' => $warnings,
             'is_admin' => $this->isAdmin(), 'assigned_dept_ids' => $this->assignedDeptIds(),
+            'duty_positions' => $positions, 'duties' => $duties,
         ]);
     }
 
@@ -134,6 +149,44 @@ class GiaoBanController extends Controller
         if ($report->isFinal()) return response()->json(['message' => 'Báo cáo đã chốt.'], 422);
         $report->update(['general_note' => NoteSanitizer::clean($request->input('general_note'))]);
         return response()->json(['ok' => true]);
+    }
+
+    /** Lưu 1 dòng kíp trực (cả admin & khoa). */
+    public function saveDuty(Request $request)
+    {
+        $this->validate($request, [
+            'date' => 'required|date_format:Y-m-d',
+            'position_id' => 'required|integer',
+            'user_id' => 'nullable|integer',
+            'person_name' => 'nullable|string|max:255',
+            'phone' => 'nullable|string|max:50',
+        ]);
+        $from = date('Y-m-d 07:00:00', strtotime('-1 day', strtotime($request->input('date'))));
+        $to = date('Y-m-d 07:00:00', strtotime($request->input('date')));
+        $report = $this->service->getOrCreateReport($request->input('date'), $from, $to, auth()->id());
+        if ($report->isFinal()) {
+            return response()->json(['message' => 'Báo cáo đã chốt.'], 422);
+        }
+        (new GiaoBanDutyService())->saveDuty(
+            $report->id, $request->input('position_id'),
+            $request->input('user_id'), $request->input('person_name'), $request->input('phone')
+        );
+        return response()->json(['ok' => true, 'report_id' => $report->id]);
+    }
+
+    /** Sao chép kíp trực từ ngày gần nhất trước đó. */
+    public function copyDuties(Request $request)
+    {
+        $this->validate($request, ['date' => 'required|date_format:Y-m-d']);
+        $from = date('Y-m-d 07:00:00', strtotime('-1 day', strtotime($request->input('date'))));
+        $to = date('Y-m-d 07:00:00', strtotime($request->input('date')));
+        $report = $this->service->getOrCreateReport($request->input('date'), $from, $to, auth()->id());
+        if ($report->isFinal()) {
+            return response()->json(['message' => 'Báo cáo đã chốt.'], 422);
+        }
+        $n = (new GiaoBanDutyService())->copyFromPrevious($report);
+        if ($n === 0) return response()->json(['message' => 'Không có kíp trực ngày trước để sao chép.'], 422);
+        return response()->json(['ok' => true, 'copied' => $n]);
     }
 
     public function finalize(Request $request)
