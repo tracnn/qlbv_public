@@ -172,14 +172,17 @@
       : '';
 
     var duties = (data.duties || []).filter(function (d) { return (d.person_name || '').trim() !== ''; });
-    var posName = {};
-    (data.duty_positions || []).forEach(function (p) { posName[p.id] = p.name; });
+    var byPosD = {};
+    duties.forEach(function (d) { (byPosD[d.position_id] = byPosD[d.position_id] || []).push(d); });
     var dutyHtml = '';
     if (duties.length) {
       dutyHtml = '<div class="panel"><div class="lbl">KÍP TRỰC LÃNH ĐẠO</div><div style="display:flex;flex-wrap:wrap;gap:1vh 2vw">';
-      duties.forEach(function (d) {
-        dutyHtml += '<div style="font-size:1.9vh"><span style="color:#8aa4bd">' + esc(posName[d.position_id] || '') +
-          ':</span> <b style="color:#fff">' + esc(d.person_name) + '</b>' + (d.phone ? ' <span style="color:#6ea8d8">' + esc(d.phone) + '</span>' : '') + '</div>';
+      (data.duty_positions || []).forEach(function (p) {
+        var people = byPosD[p.id]; if (!people || !people.length) return;
+        var names = people.map(function (d) {
+          return '<b style="color:#fff">' + esc(d.person_name) + '</b>' + (d.phone ? ' <span style="color:#6ea8d8">' + esc(d.phone) + '</span>' : '');
+        }).join(', ');
+        dutyHtml += '<div style="font-size:1.9vh"><span style="color:#8aa4bd">' + esc(p.name) + ':</span> ' + names + '</div>';
       });
       dutyHtml += '</div></div>';
     }
