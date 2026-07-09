@@ -32,6 +32,16 @@
   </div>
 </div>
 
+<div class="row"><div class="col-md-6">
+  <div class="box box-success">
+    <div class="box-header with-border"><b>Danh mục chức danh trực</b></div>
+    <div class="box-body table-responsive">
+      <table class="table table-bordered" id="tbl-duty"><thead><tr><th style="width:70px">TT</th><th>Chức danh</th><th style="width:70px">Hoạt động</th><th style="width:60px"></th></tr></thead><tbody></tbody></table>
+      <button id="btn-add-duty" class="btn btn-success"><i class="fa fa-plus"></i> Thêm chức danh</button>
+    </div>
+  </div>
+</div></div>
+
 <script type="application/json" id="tpl-dieu_tri">[
   {"code":"bn_cu","name":"BN cũ","type":"census_from"},
   {"code":"bn_vao","name":"BN vào","type":"movement_in"},
@@ -137,9 +147,20 @@ function renderConfigs() {
   });
 }
 
+function renderDutyPositions() {
+  var $tb = $('#tbl-duty tbody').empty();
+  (STATE.duty_positions || []).forEach(function (p) {
+    $tb.append('<tr data-id="' + p.id + '">' +
+      '<td><input class="form-control d-sort" type="number" value="' + (p.sort_order || 0) + '"></td>' +
+      '<td><input class="form-control d-name" value="' + esc(p.name) + '"></td>' +
+      '<td><input type="checkbox" class="d-active"' + (p.is_active ? ' checked' : '') + '></td>' +
+      '<td><button class="btn btn-sm btn-primary btn-save-duty">Lưu</button></td></tr>');
+  });
+}
+
 function loadAll() {
   $.get('{{ route('khth.giao-ban-config-fetch') }}', function (res) {
-    STATE = res; renderConfigs(); syncAssign();
+    STATE = res; renderConfigs(); renderDutyPositions(); syncAssign();
   });
 }
 
@@ -230,6 +251,20 @@ $(function () {
       _token: '{{ csrf_token() }}', user_id: PICKED_USER.id,
       dept_config_ids: $('#assign-depts').val() || []
     }).done(function () { alert('Đã lưu'); loadAll(); });
+  });
+
+  $('#btn-add-duty').on('click', function () {
+    var name = prompt('Tên chức danh trực:');
+    if (!name) return;
+    $.post('{{ route('khth.giao-ban-config-duty-store') }}', { _token: '{{ csrf_token() }}', name: name, sort_order: (STATE.duty_positions || []).length + 1 })
+      .done(loadAll);
+  });
+  $('#tbl-duty').on('click', '.btn-save-duty', function () {
+    var $tr = $(this).closest('tr');
+    $.post('{{ url('khth/giao-ban/cau-hinh-duty') }}/' + $tr.data('id'), {
+      _token: '{{ csrf_token() }}', name: $tr.find('.d-name').val(),
+      sort_order: $tr.find('.d-sort').val(), is_active: $tr.find('.d-active').is(':checked') ? 1 : 0
+    }).done(loadAll);
   });
 });
 </script>

@@ -28,6 +28,13 @@
 
 <div id="report-body"></div>
 
+<div class="box box-info">
+  <div class="box-header with-border"><b>Kíp trực lãnh đạo</b>
+    <button id="btn-copy-duty" class="btn btn-xs btn-default"><i class="fa fa-copy"></i> Sao chép kíp ngày trước</button>
+  </div>
+  <div class="box-body"><div id="duty-body"></div></div>
+</div>
+
 <div class="box box-default">
   <div class="box-header with-border"><b>Ghi chú chung</b>
     @if($isAdmin) <button id="btn-edit-general" class="btn btn-xs btn-default"><i class="fa fa-pencil"></i> Sửa</button>@endif
@@ -121,6 +128,7 @@ function render(res) {
   $('#btn-finalize').toggle(r.status !== 'final');
   $('#btn-edit-general').toggle(r.status !== 'final');
   $('#general-note-view').html(r.general_note || '');
+  renderDuties(res);
 
   res.configs.forEach(function (cfg) {
     var editable = canEditDept(cfg.id);
@@ -152,6 +160,26 @@ function render(res) {
     $body.append(html);
     $body.find('.dept-note-view[data-dept="' + cfg.id + '"]').html(noteCell.note || '');
   });
+}
+
+function renderDuties(res) {
+  var editable = !(res.report && res.report.status === 'final');
+  var byPos = {};
+  (res.duties || []).forEach(function (d) { byPos[d.position_id] = d; });
+  var $b = $('#duty-body').empty();
+  if (!res.duty_positions || !res.duty_positions.length) {
+    $b.html('<i class="text-muted">Chưa cấu hình chức danh trực (Cấu hình giao ban).</i>');
+    return;
+  }
+  var html = '<table class="table table-bordered"><thead><tr><th style="width:220px">Chức danh</th><th>Người trực</th><th style="width:160px">SĐT</th></tr></thead><tbody>';
+  res.duty_positions.forEach(function (p) {
+    var d = byPos[p.id] || {};
+    html += '<tr data-pos="' + p.id + '"><td>' + esc(p.name) + '</td>' +
+      '<td><input type="text" class="form-control duty-user" data-pos="' + p.id + '" data-uid="' + (d.user_id || '') + '" value="' + esc(d.person_name || '') + '"' + (editable ? '' : ' readonly') + ' placeholder="gõ tìm tài khoản..."></td>' +
+      '<td><input type="text" class="form-control duty-phone" data-pos="' + p.id + '" value="' + esc(d.phone || '') + '"' + (editable ? '' : ' readonly') + '></td></tr>';
+  });
+  html += '</tbody></table><div id="duty-results" class="list-group" style="position:absolute;z-index:20;max-width:400px;display:none"></div>';
+  $b.html(html);
 }
 
 function saveCell(deptId, metric, payload, done) {
@@ -259,6 +287,53 @@ $(function () {
       }).done(function () { $('#note-modal').modal('hide'); loadReport(); })
         .fail(function () { alert('Lỗi lưu ghi chú'); });
     }
+  });
+
+  var dutyTimer = null, dutyActivePos = null;
+  $('#duty-body').on('input', '.duty-user', function () {
+    var $i = $(this); dutyActivePos = $i.data('pos');
+    $i.data('uid', '');
+    var q = $i.val();
+    clearTimeout(dutyTimer);
+    var $res = $('#duty-results');
+    if (q.length < 2) { $res.hide(); return; }
+    dutyTimer = setTimeout(function () {
+      $.get('{{ route('khth.giao-ban-config-search-users') }}', { q: q }, function (rows) {
+        var off = $i.offset();
+        $res.empty().css({ top: off.top + $i.outerHeight(), left: off.left, width: $i.outerWidth() });
+        rows.forEach(function (u) {
+          $res.append('<a href="#" class="list-group-item duty-pick" data-uid="' + u.id + '" data-name="' +
+            esc(u.username || u.loginname) + '">' + esc(u.username || u.loginname) + ' <small>(' + esc(u.loginname) + ')</small></a>');
+        });
+        $res.show();
+      });
+    }, 300);
+  });
+  $('#duty-body').on('click', '.duty-pick', function (e) {
+    e.preventDefault();
+    var $row = $('#duty-body tr[data-pos="' + dutyActivePos + '"]');
+    var $u = $row.find('.duty-user');
+    $u.val($(this).data('name')).data('uid', $(this).data('uid'));
+    $('#duty-results').hide();
+    saveDuty(dutyActivePos);
+  });
+  $('#duty-body').on('blur', '.duty-user, .duty-phone', function () { saveDuty($(this).data('pos')); });
+  $(document).on('click', function (e) { if (!$(e.target).closest('#duty-body, #duty-results').length) $('#duty-results').hide(); });
+
+  function saveDuty(posId) {
+    var $row = $('#duty-body tr[data-pos="' + posId + '"]');
+    var $u = $row.find('.duty-user'), $p = $row.find('.duty-phone');
+    $.post('{{ route('khth.giao-ban-save-duty') }}', {
+      _token: '{{ csrf_token() }}', date: $('#report_date').val(), position_id: posId,
+      user_id: $u.data('uid') || '', person_name: $u.val(), phone: $p.val()
+    }).fail(function (xhr) {
+      alert(xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Lỗi lưu kíp trực');
+    });
+  }
+  $('#btn-copy-duty').on('click', function () {
+    $.post('{{ route('khth.giao-ban-copy-duties') }}', { _token: '{{ csrf_token() }}', date: $('#report_date').val() })
+      .done(loadReport)
+      .fail(function (xhr) { alert(xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Lỗi sao chép'); });
   });
 
   loadReport();
