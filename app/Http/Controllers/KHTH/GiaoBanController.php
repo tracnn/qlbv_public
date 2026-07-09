@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\GiaoBan\GiaoBanDeptConfig;
 use App\Models\GiaoBan\GiaoBanReport;
 use App\Models\GiaoBan\GiaoBanReportCell;
+use App\Models\GiaoBan\GiaoBanReportBed;
 use App\Models\GiaoBan\GiaoBanUserDepartment;
 use App\Models\GiaoBan\GiaoBanDutyPosition;
 use App\Models\GiaoBan\GiaoBanReportDuty;
@@ -79,12 +80,29 @@ class GiaoBanController extends Controller
             }
         }
 
+        $bedTotal = 0; $bedUsed = 0; $bedByDept = [];
+        if ($report) {
+            foreach (GiaoBanReportBed::where('report_id', $report->id)->get() as $b) {
+                $bedTotal += (int) $b->total_beds; $bedUsed += (int) $b->used_beds;
+                $bedByDept[(int) $b->department_id] = ['total' => (int) $b->total_beds, 'used' => (int) $b->used_beds];
+            }
+        }
+        $bedByConfig = [];
+        foreach (GiaoBanDeptConfig::where('is_active', true)->orderBy('sort_order')->get() as $cfgBed) {
+            $t = 0; $u = 0; $has = false;
+            foreach ($cfgBed->hisDepartmentIds() as $hid) {
+                if (isset($bedByDept[$hid])) { $t += $bedByDept[$hid]['total']; $u += $bedByDept[$hid]['used']; $has = true; }
+            }
+            if ($has && $t > 0) $bedByConfig[] = ['dept_config_id' => $cfgBed->id, 'display_name' => $cfgBed->display_name, 'total' => $t, 'used' => $u];
+        }
+
         return response()->json([
             'report' => $report, 'configs' => $configs, 'cells' => $cells,
             'balance_warnings' => $warnings,
             'is_admin' => $this->isAdmin(), 'assigned_dept_ids' => $this->assignedDeptIds(),
             'duty_positions' => $positions, 'duties' => $duties,
             'can_edit_duty' => $this->canEditDuty(),
+            'bed_total' => $bedTotal, 'bed_used' => $bedUsed, 'bed_by_config' => $bedByConfig,
         ]);
     }
 
