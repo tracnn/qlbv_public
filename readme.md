@@ -1,3 +1,7 @@
+# 09/07/2026
+
+- Báo cáo giao ban: bổ sung Kíp trực lãnh đạo — cấu hình danh mục chức danh trực; nhập người trực (chọn tài khoản HIS) + SĐT theo ngày, nút sao chép kíp ngày trước; hiển thị trên trình chiếu.
+
 # 08/07/2026 (cập nhật 6)
 
 - Báo cáo giao ban - khối Khám ngoại trú: thống kê thêm theo loại ra viện (his_treatment.treatment_end_type_id) — Cấp toa cho về, Chuyển viện, Hẹn khám lại; gom lại migration giao ban còn 5 file cho gọn.
