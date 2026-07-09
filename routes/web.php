@@ -633,7 +633,10 @@ Route::group(['middleware' => ['auth', 'check.first.login']], function () {
         Route::post('giao-ban/fetch-data', 'KHTH\GiaoBanController@fetchData')->name('khth.giao-ban-fetch');
         Route::post('giao-ban/save-cell', 'KHTH\GiaoBanController@saveCell')->name('khth.giao-ban-save-cell');
         Route::post('giao-ban/save-general-note', 'KHTH\GiaoBanController@saveGeneralNote')->name('khth.giao-ban-save-note');
-        Route::post('giao-ban/save-duty', 'KHTH\GiaoBanController@saveDuty')->name('khth.giao-ban-save-duty');
+        Route::get('giao-ban/search-employees', 'KHTH\GiaoBanController@searchEmployees')->name('khth.giao-ban-search-employees');
+        Route::post('giao-ban/add-duty', 'KHTH\GiaoBanController@addDuty')->name('khth.giao-ban-add-duty');
+        Route::post('giao-ban/remove-duty', 'KHTH\GiaoBanController@removeDuty')->name('khth.giao-ban-remove-duty');
+        Route::post('giao-ban/update-duty-phone', 'KHTH\GiaoBanController@updateDutyPhone')->name('khth.giao-ban-update-duty-phone');
         Route::post('giao-ban/copy-duties', 'KHTH\GiaoBanController@copyDuties')->name('khth.giao-ban-copy-duties');
         Route::post('giao-ban/finalize', 'KHTH\GiaoBanController@finalize')->name('khth.giao-ban-finalize');
         Route::post('giao-ban/unlock', 'KHTH\GiaoBanController@unlock')->name('khth.giao-ban-unlock');
@@ -647,6 +650,7 @@ Route::group(['middleware' => ['auth', 'check.first.login']], function () {
         Route::get('giao-ban/cau-hinh/search-users', 'KHTH\GiaoBanConfigController@searchUsers')->name('khth.giao-ban-config-search-users');
         Route::post('giao-ban/cau-hinh-duty', 'KHTH\GiaoBanConfigController@storeDutyPosition')->name('khth.giao-ban-config-duty-store');
         Route::post('giao-ban/cau-hinh-duty/{id}', 'KHTH\GiaoBanConfigController@updateDutyPosition')->name('khth.giao-ban-config-duty-update');
+        Route::post('giao-ban/cau-hinh-duty-editors', 'KHTH\GiaoBanConfigController@assignDutyEditors')->name('khth.giao-ban-config-duty-editors');
     });
 
     Route::group(['prefix' => 'queue'], function () {
