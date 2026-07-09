@@ -309,8 +309,8 @@ $(function () {
       });
     }, 300);
   });
-  $('#duty-body').on('click', '.duty-pick', function (e) {
-    e.preventDefault();
+  $('#duty-body').on('mousedown', '.duty-pick', function (e) {
+    e.preventDefault(); // fire trước blur + giữ focus input -> tránh blur lưu text gõ dở
     var $row = $('#duty-body tr[data-pos="' + dutyActivePos + '"]');
     var $u = $row.find('.duty-user');
     $u.val($(this).data('name')).data('uid', $(this).data('uid'));
