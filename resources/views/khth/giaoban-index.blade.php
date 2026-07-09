@@ -163,22 +163,36 @@ function render(res) {
 }
 
 function renderDuties(res) {
-  var editable = !(res.report && res.report.status === 'final');
+  var canEdit = res.can_edit_duty && !(res.report && res.report.status === 'final');
   var byPos = {};
-  (res.duties || []).forEach(function (d) { byPos[d.position_id] = d; });
+  (res.duties || []).forEach(function (d) {
+    if (!byPos[d.position_id]) byPos[d.position_id] = [];
+    byPos[d.position_id].push(d);
+  });
   var $b = $('#duty-body').empty();
   if (!res.duty_positions || !res.duty_positions.length) {
     $b.html('<i class="text-muted">Chưa cấu hình chức danh trực (Cấu hình giao ban).</i>');
     return;
   }
-  var html = '<table class="table table-bordered"><thead><tr><th style="width:220px">Chức danh</th><th>Người trực</th><th style="width:160px">SĐT</th></tr></thead><tbody>';
+  var html = '<table class="table table-bordered"><thead><tr><th style="width:220px">Chức danh</th><th>Người trực</th></tr></thead><tbody>';
   res.duty_positions.forEach(function (p) {
-    var d = byPos[p.id] || {};
-    html += '<tr data-pos="' + p.id + '"><td>' + esc(p.name) + '</td>' +
-      '<td><input type="text" class="form-control duty-user" data-pos="' + p.id + '" data-uid="' + (d.user_id || '') + '" value="' + esc(d.person_name || '') + '"' + (editable ? '' : ' readonly') + ' placeholder="gõ tìm tài khoản..."></td>' +
-      '<td><input type="text" class="form-control duty-phone" data-pos="' + p.id + '" value="' + esc(d.phone || '') + '"' + (editable ? '' : ' readonly') + '></td></tr>';
+    var people = byPos[p.id] || [];
+    var cell = '';
+    people.forEach(function (d) {
+      cell += '<div class="duty-chip" style="display:inline-flex;align-items:center;gap:4px;background:#f4f4f4;border:1px solid #ddd;border-radius:4px;padding:2px 6px;margin:2px">' +
+        '<b>' + esc(d.person_name || '') + '</b>' +
+        '<input type="text" class="duty-chip-phone" data-duty="' + d.id + '" value="' + esc(d.phone || '') + '" placeholder="SĐT" style="width:110px;border:none;background:transparent"' + (canEdit ? '' : ' readonly') + '>' +
+        (canEdit ? '<a href="#" class="duty-remove" data-duty="' + d.id + '" title="Xóa" style="color:#c00;font-weight:bold">&times;</a>' : '') +
+        '</div>';
+    });
+    if (canEdit) {
+      cell += '<div style="margin-top:4px"><input type="text" class="form-control input-sm duty-add" data-pos="' + p.id + '" placeholder="+ thêm người (gõ tên/mã NV)..." style="max-width:340px;display:inline-block"></div>';
+    } else if (!people.length) {
+      cell = '<i class="text-muted">—</i>';
+    }
+    html += '<tr data-pos="' + p.id + '"><td>' + esc(p.name) + '</td><td>' + cell + '</td></tr>';
   });
-  html += '</tbody></table><div id="duty-results" class="list-group" style="max-height:200px;overflow:auto;display:none;margin-top:4px"></div>';
+  html += '</tbody></table><div id="duty-results" class="list-group" style="max-height:220px;overflow:auto;display:none;margin-top:4px"></div>';
   $b.html(html);
 }
 
@@ -290,45 +304,46 @@ $(function () {
   });
 
   var dutyTimer = null, dutyActivePos = null;
-  $('#duty-body').on('input', '.duty-user', function () {
+  $('#duty-body').on('input', '.duty-add', function () {
     var $i = $(this); dutyActivePos = $i.data('pos');
-    $i.data('uid', '');
     var q = $i.val();
     clearTimeout(dutyTimer);
     var $res = $('#duty-results');
     if (q.length < 2) { $res.hide(); return; }
     dutyTimer = setTimeout(function () {
-      $.get('{{ route('khth.giao-ban-config-search-users') }}', { q: q }, function (rows) {
+      $.get('{{ route('khth.giao-ban-search-employees') }}', { q: q }, function (rows) {
         $res.empty();
-        rows.forEach(function (u) {
-          $res.append('<a href="#" class="list-group-item duty-pick" data-uid="' + u.id + '" data-name="' +
-            esc(u.username || u.loginname) + '">' + esc(u.username || u.loginname) + ' <small>(' + esc(u.loginname) + ')</small></a>');
+        (rows || []).forEach(function (u) {
+          $res.append('<a href="#" class="emp-pick" data-id="' + u.id + '" data-name="' + esc(u.name || '') + '" data-phone="' + esc(u.phone || '') +
+            '" style="display:block;padding:6px 10px;border-bottom:1px solid #eee">' + esc(u.name || '') +
+            (u.title ? ' <small class="text-muted">(' + esc(u.title) + ')</small>' : '') +
+            (u.phone ? ' <small>' + esc(u.phone) + '</small>' : '') + '</a>');
         });
         $res.show();
       });
     }, 300);
   });
-  $('#duty-body').on('mousedown', '.duty-pick', function (e) {
-    e.preventDefault(); // fire trước blur + giữ focus input -> tránh blur lưu text gõ dở
-    var $row = $('#duty-body tr[data-pos="' + dutyActivePos + '"]');
-    var $u = $row.find('.duty-user');
-    $u.val($(this).data('name')).data('uid', $(this).data('uid'));
+  $('#duty-body').on('mousedown', '.emp-pick', function (e) {
+    e.preventDefault();
+    var $pick = $(this);
     $('#duty-results').hide();
-    saveDuty(dutyActivePos);
-  });
-  $('#duty-body').on('blur', '.duty-user, .duty-phone', function () { saveDuty($(this).data('pos')); });
-  $(document).on('click', function (e) { if (!$(e.target).closest('#duty-body, #duty-results').length) $('#duty-results').hide(); });
-
-  function saveDuty(posId) {
-    var $row = $('#duty-body tr[data-pos="' + posId + '"]');
-    var $u = $row.find('.duty-user'), $p = $row.find('.duty-phone');
-    $.post('{{ route('khth.giao-ban-save-duty') }}', {
-      _token: '{{ csrf_token() }}', date: $('#report_date').val(), position_id: posId,
-      user_id: $u.data('uid') || '', person_name: $u.val(), phone: $p.val()
-    }).fail(function (xhr) {
-      alert(xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Lỗi lưu kíp trực');
+    $('#duty-body tr[data-pos="' + dutyActivePos + '"] .duty-add').val('');
+    $.post('{{ route('khth.giao-ban-add-duty') }}', {
+      _token: '{{ csrf_token() }}', date: $('#report_date').val(), position_id: dutyActivePos,
+      employee_id: $pick.data('id'), person_name: $pick.data('name'), phone: $pick.data('phone')
+    }).done(loadReport).fail(function (xhr) {
+      alert(xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Lỗi thêm người trực');
     });
-  }
+  });
+  $('#duty-body').on('click', '.duty-remove', function (e) {
+    e.preventDefault();
+    $.post('{{ route('khth.giao-ban-remove-duty') }}', { _token: '{{ csrf_token() }}', duty_id: $(this).data('duty') })
+      .done(loadReport).fail(function () { alert('Lỗi xóa người trực'); });
+  });
+  $('#duty-body').on('blur', '.duty-chip-phone', function () {
+    $.post('{{ route('khth.giao-ban-update-duty-phone') }}', { _token: '{{ csrf_token() }}', duty_id: $(this).data('duty'), phone: $(this).val() });
+  });
+  $(document).on('click', function (e) { if (!$(e.target).closest('#duty-body, #duty-results').length) $('#duty-results').hide(); });
   $('#btn-copy-duty').on('click', function () {
     $.post('{{ route('khth.giao-ban-copy-duties') }}', { _token: '{{ csrf_token() }}', date: $('#report_date').val() })
       .done(loadReport)
