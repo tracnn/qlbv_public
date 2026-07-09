@@ -197,4 +197,16 @@ class GiaoBanMetricServiceTest extends TestCase
         $this->assertContains("et.treatment_end_type_code IN ('CC','CV')", $sql);
         $this->assertNotContains('DROP', $sql);
     }
+
+    /** @test */
+    public function bed_capacity_sql_snapshots_beds_at_time()
+    {
+        list($sql, $binds) = $this->svc->buildBedCapacitySql('2026-07-09 07:00:00');
+        $this->assertContains('his_bed', $sql);
+        $this->assertContains('his_treatment_bed_room', $sql);
+        $this->assertContains('tdl_treatment_type_id IN (3,4)', $sql);
+        $this->assertContains('total_beds', $sql);
+        $this->assertContains('used_beds', $sql);
+        $this->assertEquals(['at1' => '20260709070000', 'at2' => '20260709070000', 'at3' => '20260709070000'], $binds);
+    }
 }

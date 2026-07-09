@@ -315,6 +315,40 @@ class GiaoBanMetricService
         return $s;
     }
 
+    /**
+     * Snapshot công suất giường tại thời điểm $at: per department total_beds + used_beds.
+     * (oci8 không cho dùng lại bind name -> at1/at2/at3)
+     */
+    public function buildBedCapacitySql($at)
+    {
+        $ts = $this->toHisTime($at);
+        $sql = "
+            SELECT tong.department_id, tong.total_beds AS total_beds, NVL(dang.used_beds, 0) AS used_beds
+            FROM (
+                SELECT r.department_id, COUNT(*) total_beds
+                FROM his_bed b
+                JOIN his_bed_room br ON br.id = b.bed_room_id
+                JOIN his_room r ON r.id = br.room_id
+                WHERE b.is_active=1 AND b.is_delete=0 AND br.is_active=1 AND br.is_delete=0 AND r.is_active=1
+                GROUP BY r.department_id
+            ) tong
+            LEFT JOIN (
+                SELECT r.department_id, COUNT(*) used_beds
+                FROM his_treatment_bed_room tbr
+                JOIN his_bed_room br ON br.id = tbr.bed_room_id
+                JOIN his_room r ON r.id = br.room_id
+                JOIN his_treatment t ON t.id = tbr.treatment_id
+                LEFT JOIN his_co_treatment ct ON ct.id = tbr.co_treatment_id
+                WHERE tbr.is_delete=0 AND ct.id IS NULL
+                  AND t.tdl_treatment_type_id IN (3,4)
+                  AND tbr.add_time <= :at1
+                  AND (tbr.remove_time IS NULL OR tbr.remove_time = 0 OR tbr.remove_time > :at2)
+                  AND (t.out_time IS NULL OR t.out_time = 0 OR t.out_time > :at3)
+                GROUP BY r.department_id
+            ) dang ON dang.department_id = tong.department_id";
+        return [$sql, ['at1' => $ts, 'at2' => $ts, 'at3' => $ts]];
+    }
+
     // ================= chạy trên HISPro và ráp thành ma trận =================
 
     protected function selectHis($sqlAndBinds)

@@ -111,6 +111,20 @@ class GiaoBanReportService
             $cell->save();
         }
 
+        try {
+            list($bedSql, $bedBinds) = $this->metricService->buildBedCapacitySql($to);
+            $bedRows = $this->metricService->normalizeRows(
+                \Illuminate\Support\Facades\DB::connection('HISPro')->select($bedSql, $bedBinds)
+            );
+            \App\Models\GiaoBan\GiaoBanReportBed::where('report_id', $report->id)->delete();
+            foreach ($bedRows as $b) {
+                \App\Models\GiaoBan\GiaoBanReportBed::create([
+                    'report_id' => $report->id, 'department_id' => (int) $b->department_id,
+                    'total_beds' => (int) $b->total_beds, 'used_beds' => (int) $b->used_beds,
+                ]);
+            }
+        } catch (\Exception $e) { /* HIS loi -> bo qua, khong chan luu cells */ }
+
         $report->update(['from_time' => $from, 'to_time' => $to, 'data_fetched_at' => date('Y-m-d H:i:s')]);
         return $report;
     }
