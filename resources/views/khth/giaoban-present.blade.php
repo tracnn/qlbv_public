@@ -223,7 +223,9 @@
   }
 
   function capacityDeptSlide(data) {
-    var beds = (data.bed_by_config || []).filter(function (b) { return Number(b.total) > 0; })
+    // Ưu tiên khoa báo cáo điều trị; nếu không có thì dùng từng khoa HIS có giường (như dashboard).
+    var bedSrc = (data.bed_by_config && data.bed_by_config.length) ? data.bed_by_config : (data.bed_by_department || []);
+    var beds = bedSrc.filter(function (b) { return Number(b.total) > 0; })
       .map(function (b) {
         var t = Number(b.total), u = Number(b.used);
         return { name: b.display_name, total: t, used: u, pct: Math.round(u / t * 100) };

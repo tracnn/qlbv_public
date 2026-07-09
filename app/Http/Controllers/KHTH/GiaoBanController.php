@@ -96,13 +96,36 @@ class GiaoBanController extends Controller
             if ($has && $t > 0) $bedByConfig[] = ['dept_config_id' => $cfgBed->id, 'display_name' => $cfgBed->display_name, 'total' => $t, 'used' => $u];
         }
 
+        // Công suất theo từng khoa HIS có giường (kèm tên khoa) — fallback khi không có khoa báo cáo điều trị.
+        $bedByDepartment = [];
+        if (!empty($bedByDept)) {
+            $names = [];
+            try {
+                $ids = implode(',', array_map('intval', array_keys($bedByDept)));
+                foreach (\Illuminate\Support\Facades\DB::connection('HISPro')
+                    ->select("SELECT id, department_name FROM his_department WHERE id IN ($ids)") as $d) {
+                    $row = (array) array_change_key_case((array) $d, CASE_LOWER);
+                    $names[(int) $row['id']] = $row['department_name'];
+                }
+            } catch (\Exception $e) { /* HIS lỗi -> dùng id làm tên */ }
+            foreach ($bedByDept as $hid => $bd) {
+                if ($bd['total'] <= 0) continue;
+                $bedByDepartment[] = [
+                    'department_id' => $hid,
+                    'display_name' => isset($names[$hid]) ? $names[$hid] : ('Khoa ' . $hid),
+                    'total' => $bd['total'], 'used' => $bd['used'],
+                ];
+            }
+        }
+
         return response()->json([
             'report' => $report, 'configs' => $configs, 'cells' => $cells,
             'balance_warnings' => $warnings,
             'is_admin' => $this->isAdmin(), 'assigned_dept_ids' => $this->assignedDeptIds(),
             'duty_positions' => $positions, 'duties' => $duties,
             'can_edit_duty' => $this->canEditDuty(),
-            'bed_total' => $bedTotal, 'bed_used' => $bedUsed, 'bed_by_config' => $bedByConfig,
+            'bed_total' => $bedTotal, 'bed_used' => $bedUsed,
+            'bed_by_config' => $bedByConfig, 'bed_by_department' => $bedByDepartment,
         ]);
     }
 
