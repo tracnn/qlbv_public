@@ -53,7 +53,7 @@ Bám đúng pattern dashboard "thế hệ 3" đã chuẩn hoá trong repo (mẫu
 | JS | `public/js/dashboard/xml3176.js` | IIFE + jQuery + Highcharts. Mỗi metric một hàm `load<Metric>()`. |
 | Unit test | `tests/Unit/Dashboard/Xml3176DashboardServiceTest.php` | Test hàm thuần, không chạm DB. |
 | Feature test | `tests/Feature/Dashboard/Xml3176DashboardControllerTest.php` | Mock service qua container; test JSON + validation 422. |
-| Routes | `routes/web.php` | Trong group `middleware => checkrole:dashboard`, prefix `dashboard/xml3176/...` |
+| Routes | `routes/web.php` | Group riêng `middleware => checkrole:xml-man`, URL `dashboard/xml3176/...` (xem D12) |
 | **Sửa nhỏ** | `resources/views/bhyt/xml3176/index.blade.php` | ~15 dòng JS: đọc `URLSearchParams` → prefill bộ lọc → phục vụ drill-down. |
 
 ### 3.1. Hai điểm kỹ thuật quan trọng
@@ -274,6 +274,7 @@ Nếu về sau dữ liệu vượt ngưỡng, có thể thêm cache ngắn (vài
 | D8 | Biểu đồ phễu | Bar ngang | Repo chưa có `funnel.js`; tránh thêm vendor asset |
 | D9 | Hiệu năng | Query live | Đủ nhanh ở quy mô 20k–100k/tháng; pre-aggregate là tối ưu hoá sớm |
 | D10 | "Đã gửi BHXH" có xét `submit_error`? | **Không xét** | Bộ lọc `has_submit` của màn hình danh sách chỉ xét `submitted_at`. Thêm điều kiện sẽ khiến số trên KPI không khớp danh sách sau drill-down. Hồ sơ gửi lỗi xem riêng qua `has_submit_error` |
+| D12 | Quyền truy cập dashboard | **`checkrole:xml-man`**, không phải `checkrole:dashboard` | Quyền đi theo **module**, không theo cụm URL. Dashboard này phục vụ nghiệp vụ XML3176 và drill-down thẳng sang `bhyt/xml3176/index` (vốn là `xml-man`) — nếu để `dashboard` thì nhân viên XML bị 403 trên chính dashboard của module mình, còn lãnh đạo có quyền `dashboard` nhưng thiếu `xml-man` lại không thấy menu (menu cha yêu cầu `xml-man`). Đặt group riêng để giữ URL `dashboard/xml3176` (không lọt vào group prefix `bhyt/`) |
 | D11 | Khối tuổi hồ sơ có chịu bộ lọc kỳ không? | **Không** — luôn theo `ngay_ra` vs hôm nay | Phát hiện khi triển khai Task 5: khối này lọc **hai** điều kiện ngày (kỳ theo `date_type` + `ngay_ra` theo nhóm tuổi), trong khi `fetchData` chỉ nhận **một** `date_type` + một khoảng → drill-down không thể tái hiện, số sẽ lệch với danh sách. Bỏ ràng buộc kỳ đi thì chỉ còn một điều kiện trên `ngay_ra` → khớp tuyệt đối. Cũng đúng nghiệp vụ: tồn đọng là câu hỏi "hiện tại", không phải theo kỳ. Đánh đổi: khối này không đổi khi user đổi khoảng ngày → **bắt buộc ghi nhãn trên biểu đồ** |
 
 ---

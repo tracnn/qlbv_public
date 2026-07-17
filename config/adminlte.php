@@ -471,11 +471,10 @@ return [
                             'active'    => ['bhyt/xml3176/import/index*']
                         ],
                         [
-                            // Route dashboard/xml3176 nằm sau middleware checkrole:dashboard,
-                            // nên mục menu phải cùng quyền, tránh hiện link rồi bấm vào ăn 403.
+                            // Route dashboard/xml3176 dùng middleware checkrole:xml-man,
+                            // trùng quyền với menu cha nên không cần khai checkrole riêng.
                             'text'      => 'Dashboard lỗi XML',
                             'icon'      => 'dashboard',
-                            'checkrole' => 'dashboard',
                             'route'     => 'dashboard.xml3176.index',
                             'active'    => ['dashboard/xml3176*'],
                         ],

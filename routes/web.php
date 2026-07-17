@@ -155,7 +155,14 @@ Route::group(['middleware' => ['auth', 'check.first.login']], function () {
         Route::get('dashboard/operating-room/utilization', 'Dashboard\OperatingRoomController@utilization')
              ->name('dashboard.operating-room.utilization');
 
-        // ── XML3176 ───────────────────────────────────────────────────────────
+    });
+
+    // ── Dashboard XML3176 ─────────────────────────────────────────────────────
+    // Quyền theo MODULE (xml-man), không theo cụm URL dashboard/*: đây là dashboard
+    // của nghiệp vụ XML3176 và drill-down thẳng sang bhyt/xml3176/index (cũng xml-man).
+    // Nếu để checkrole:dashboard thì nhân viên XML sẽ bị 403 trên chính dashboard
+    // của module mình. Giữ URL dashboard/xml3176 (không nằm trong group prefix 'bhyt/').
+    Route::group(['middleware' => ['checkrole:xml-man']], function () {
         Route::get('dashboard/xml3176', 'Dashboard\Xml3176DashboardController@index')
              ->name('dashboard.xml3176.index');
         Route::get('dashboard/xml3176/overview', 'Dashboard\Xml3176DashboardController@overview')
@@ -166,9 +173,8 @@ Route::group(['middleware' => ['auth', 'check.first.login']], function () {
              ->name('dashboard.xml3176.aging');
         Route::get('dashboard/xml3176/by-department', 'Dashboard\Xml3176DashboardController@byDepartment')
              ->name('dashboard.xml3176.by-department');
-
     });
-    
+
     Route::get('/', 'HomeController@index')->name('home');
     Route::get('/home', 'HomeController@index')->name('home');
 
