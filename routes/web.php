@@ -155,6 +155,18 @@ Route::group(['middleware' => ['auth', 'check.first.login']], function () {
         Route::get('dashboard/operating-room/utilization', 'Dashboard\OperatingRoomController@utilization')
              ->name('dashboard.operating-room.utilization');
 
+        // ── XML3176 ───────────────────────────────────────────────────────────
+        Route::get('dashboard/xml3176', 'Dashboard\Xml3176DashboardController@index')
+             ->name('dashboard.xml3176.index');
+        Route::get('dashboard/xml3176/overview', 'Dashboard\Xml3176DashboardController@overview')
+             ->name('dashboard.xml3176.overview');
+        Route::get('dashboard/xml3176/top-errors', 'Dashboard\Xml3176DashboardController@topErrors')
+             ->name('dashboard.xml3176.top-errors');
+        Route::get('dashboard/xml3176/aging', 'Dashboard\Xml3176DashboardController@aging')
+             ->name('dashboard.xml3176.aging');
+        Route::get('dashboard/xml3176/by-department', 'Dashboard\Xml3176DashboardController@byDepartment')
+             ->name('dashboard.xml3176.by-department');
+
     });
     
     Route::get('/', 'HomeController@index')->name('home');

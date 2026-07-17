@@ -89,6 +89,9 @@
     </div>
 </div>
 
+<!-- Cảnh báo bộ lọc không áp dụng được (drill-down từ dashboard XML3176) -->
+<div id="xml3176-filter-warning" class="alert alert-danger" style="display: none; margin-top: 10px;"></div>
+
 <div class="panel panel-default">
     <div class="panel-body table-responsive">
         <table id="xml-list" class="table display table-hover responsive nowrap datatable dtr-inline" width="100%">
@@ -150,7 +153,62 @@
     var table = null;
     var selectedRecords = [];
 
+    // ── Bộ lọc từ URL (phục vụ drill-down từ dashboard XML3176) ──────────────
+    // QUAN TRỌNG: lần gọi fetchData() ĐẦU TIÊN không xuất phát từ
+    // $(document).ready của file này, mà từ partials.load_data_button
+    // (validateAndFetchData() được gọi tự động khi trang tải xong). Script
+    // đó được render/đăng ký ready TRƯỚC script này (nó nằm trong
+    // partials.search, được include phía trên), nên $(document).ready ở
+    // đây luôn chạy SAU khi lần fetch đầu tiên đã xảy ra — đặt code prefill
+    // trong $(document).ready của file này sẽ luôn bị trễ một nhịp.
+    // Giải pháp: đọc query string ngay khi script này được parse (không đợi
+    // ready), rồi áp dụng thật sự bên TRONG fetchData() ở lần gọi đầu tiên -
+    // như vậy áp dụng đúng bất kể fetchData() được gọi từ đâu/khi nào.
+    var xml3176UrlFilters = (function () {
+        if (!window.URLSearchParams) { return null; }
+        var qs = new URLSearchParams(window.location.search);
+        return qs.toString() ? qs : null;
+    })();
+
     function fetchData(startDate, endDate) {
+        // Áp dụng bộ lọc từ URL (nếu có) - chỉ áp dụng đúng 1 lần, cho lần
+        // gọi đầu tiên của fetchData() sau khi trang tải xong.
+        if (xml3176UrlFilters) {
+            var qs = xml3176UrlFilters;
+            xml3176UrlFilters = null; // đảm bảo không áp dụng lại ở các lần sau
+
+            // Các select đơn giản: tên param trùng id element
+            ['date_type', 'xml_filter_status', 'xml3176_error_catalog', 'xml_export_status',
+             'xml_submit_status', 'xml_sign_status', 'imported_by', 'treatment_type_fillter',
+             'hein_card_filter', 'payment_date_filter'].forEach(function (key) {
+                if (qs.has(key)) {
+                    $('#' + key).val(qs.get(key));
+                }
+            });
+
+            // Khoảng ngày: dashboard gửi 'YYYY-MM-DD'
+            if (qs.has('date_from') && qs.has('date_to')) {
+                var urlStart = moment(qs.get('date_from'), 'YYYY-MM-DD').startOf('day');
+                var urlEnd = moment(qs.get('date_to'), 'YYYY-MM-DD').endOf('day');
+
+                // Cập nhật daterangepicker để hiển thị đúng trên UI (nếu đã
+                // được khởi tạo - trong luồng tải trang bình thường thì có,
+                // vì partials.date_range khởi tạo picker trước khi
+                // partials.load_data_button tự gọi fetchData()).
+                var picker = $('#date_range').data('daterangepicker');
+                if (picker) {
+                    picker.setStartDate(urlStart);
+                    picker.setEndDate(urlEnd);
+                }
+
+                // Ghi đè trực tiếp tham số dùng cho lần tải NÀY, không phụ
+                // thuộc việc picker có sẵn sàng đúng lúc hay không (tránh
+                // "stale date" - lần fetch đầu tiên dùng nhầm ngày mặc định).
+                startDate = urlStart.format('YYYY-MM-DD HH:mm:ss');
+                endDate = urlEnd.format('YYYY-MM-DD HH:mm:ss');
+            }
+        }
+
         // Kiểm tra và hủy yêu cầu AJAX trước đó (nếu có)
         if (currentAjaxRequest != null) {
             currentAjaxRequest.abort();
@@ -227,10 +285,33 @@
         });
 
         table.ajax.reload();
-        
+
         // Kiểm tra trạng thái job
         checkJobStatus();
     }
+
+    // ── Hỗ trợ drill-down từ dashboard XML3176 ───────────────────────────────
+    // Nạp lại bảng để áp bộ lọc vừa được set (dùng cho các danh mục nạp bất
+    // đồng bộ - xem partials/xml3176_error_catalog.blade.php).
+    // Callback "data" của DataTables đọc giá trị các select tại thời điểm gửi
+    // request, nên chỉ cần ajax.reload() là bộ lọc mới được áp - không cần
+    // gọi lại fetchData() (tránh dựng lại toàn bộ DataTable).
+    // Nếu bảng chưa kịp khởi tạo thì KHÔNG cần làm gì: lần fetchData() đầu
+    // tiên diễn ra sau đó sẽ tự đọc giá trị select đã set.
+    window.xml3176ReloadTable = function () {
+        if (table) {
+            table.ajax.reload();
+        }
+    };
+
+    // Hiện cảnh báo nhìn thấy được khi một bộ lọc từ URL KHÔNG áp dụng được.
+    // Im lặng bỏ qua là nguy hiểm: danh sách sẽ hiện nhiều dòng hơn con số
+    // người dùng đã bấm trên dashboard.
+    window.xml3176ShowFilterWarning = function (message) {
+        $('#xml3176-filter-warning').html(
+            '<i class="fa fa-exclamation-triangle" aria-hidden="true"></i> ' + message
+        ).show();
+    };
 
     function deleteXML(ma_lk) {
         Swal.fire({

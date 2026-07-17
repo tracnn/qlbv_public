@@ -104,6 +104,7 @@ Gom nhóm theo cặp `(xml, error_code)` — đúng khoá unique của `xml3176_
 - Cột theo nhóm tuổi: **0–7 / 8–15 / 16–30 / >30 ngày**.
 - Chỉ tính hồ sơ **chưa gửi được**.
 - **Click cột → drill-down.**
+- ⚠️ **Khối này KHÔNG chịu bộ lọc kỳ** — luôn tính theo `ngay_ra` so với hôm nay (quyết định **D11**, mục 11). Biểu đồ phải ghi nhãn rõ điều này để người dùng không tưởng nó hỏng khi đổi khoảng ngày mà số không đổi.
 
 ### 4.5. Khối D — Lỗi theo khoa (điểm đau #2)
 
@@ -204,7 +205,7 @@ Click → mở `bhyt.xml3176.index` kèm query param. Màn hình danh sách đ�
 | Bậc phễu 4 — Đã ký số | `xml_sign_status=has_sign` |
 | Bậc phễu 5 — Đã gửi BHXH | `xml_submit_status=has_submit` |
 | Cột Pareto | `xml3176_error_catalog=<catalog_id>` |
-| Nhóm tuổi hồ sơ | `date_type=date_out` + `date_from`/`date_to` (khoảng ngày của nhóm, **giao với** bộ lọc dashboard) + `xml_submit_status=not_submit` |
+| Nhóm tuổi hồ sơ | `date_type=date_out` + `date_from`/`date_to` = **đúng khoảng ngày của nhóm tuổi** + `xml_submit_status=not_submit` — **không** kèm bộ lọc kỳ của dashboard (D11) |
 
 **Cả 5 thẻ KPI và cả 5 bậc phễu đều click được** (bảng trên là danh sách đầy đủ). Chỉ khối D — Lỗi theo khoa là không click được (quyết định D3).
 
@@ -273,6 +274,7 @@ Nếu về sau dữ liệu vượt ngưỡng, có thể thêm cache ngắn (vài
 | D8 | Biểu đồ phễu | Bar ngang | Repo chưa có `funnel.js`; tránh thêm vendor asset |
 | D9 | Hiệu năng | Query live | Đủ nhanh ở quy mô 20k–100k/tháng; pre-aggregate là tối ưu hoá sớm |
 | D10 | "Đã gửi BHXH" có xét `submit_error`? | **Không xét** | Bộ lọc `has_submit` của màn hình danh sách chỉ xét `submitted_at`. Thêm điều kiện sẽ khiến số trên KPI không khớp danh sách sau drill-down. Hồ sơ gửi lỗi xem riêng qua `has_submit_error` |
+| D11 | Khối tuổi hồ sơ có chịu bộ lọc kỳ không? | **Không** — luôn theo `ngay_ra` vs hôm nay | Phát hiện khi triển khai Task 5: khối này lọc **hai** điều kiện ngày (kỳ theo `date_type` + `ngay_ra` theo nhóm tuổi), trong khi `fetchData` chỉ nhận **một** `date_type` + một khoảng → drill-down không thể tái hiện, số sẽ lệch với danh sách. Bỏ ràng buộc kỳ đi thì chỉ còn một điều kiện trên `ngay_ra` → khớp tuyệt đối. Cũng đúng nghiệp vụ: tồn đọng là câu hỏi "hiện tại", không phải theo kỳ. Đánh đổi: khối này không đổi khi user đổi khoảng ngày → **bắt buộc ghi nhãn trên biểu đồ** |
 
 ---
 

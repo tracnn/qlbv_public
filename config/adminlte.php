@@ -470,6 +470,15 @@ return [
                             'route'        => 'bhyt.xml3176.import.index',
                             'active'    => ['bhyt/xml3176/import/index*']
                         ],
+                        [
+                            // Route dashboard/xml3176 nằm sau middleware checkrole:dashboard,
+                            // nên mục menu phải cùng quyền, tránh hiện link rồi bấm vào ăn 403.
+                            'text'      => 'Dashboard lỗi XML',
+                            'icon'      => 'dashboard',
+                            'checkrole' => 'dashboard',
+                            'route'     => 'dashboard.xml3176.index',
+                            'active'    => ['dashboard/xml3176*'],
+                        ],
                     ],
                 ],
                 [
