@@ -1,3 +1,8 @@
+# 20/07/2026
+
+- Bổ sung Dashboard chuyên biệt cho module kiểm tra lỗi XML 3176 (Hồ sơ XML → Xml 3176 → Dashboard lỗi XML): 5 thẻ KPI (tổng hồ sơ, lỗi nghiêm trọng, lỗi thẻ BHYT, chi phí BHYT bị treo, đã gửi BHXH) và 4 biểu đồ — phễu pipeline 5 bậc (import → không lỗi nghiêm trọng → xuất XML → ký số → gửi BHXH, kèm % rơi rụng từng bậc), Pareto top 15 mã lỗi hay gặp (kèm % tích luỹ, phân biệt lỗi nghiêm trọng/cảnh báo), tồn đọng theo tuổi hồ sơ chưa gửi (0–7/8–15/16–30/>30 ngày) và lỗi nghiêm trọng theo khoa. Lọc theo loại ngày (vào/ra/thanh toán/tạo) như màn hình danh sách. Bấm vào mỗi con số hoặc cột biểu đồ sẽ mở màn hình danh sách hồ sơ với bộ lọc áp sẵn, số trên dashboard khớp đúng số dòng trong danh sách. Riêng biểu đồ tồn đọng luôn tính theo ngày ra viện so với hôm nay, không phụ thuộc khoảng ngày đang chọn (đã ghi chú rõ trên biểu đồ).
+- Sửa lỗi cache token khi gửi hồ sơ lên Cổng dữ liệu Y tế Điện Biên và Trục dữ liệu Y tế: thời gian lưu token bị tính sai đơn vị nên giữ lâu gấp 60 lần thực tế, dẫn tới dùng token đã hết hạn và hồ sơ hợp lệ bị đẩy vào thư mục lỗi vĩnh viễn. Bổ sung tự đăng nhập lại và gửi lại một lần khi cổng từ chối token (401), kiểm tra hạn theo nội dung token, và giới hạn tuổi thọ token Điện Biên tối đa 15 phút cho chắc. Sửa thêm lỗi thiếu biến khi ghi log đăng nhập Trục dữ liệu Y tế.
+
 # 09/07/2026
 
 - Báo cáo giao ban - trình chiếu mục tổng hợp: bổ sung công suất giường (donut toàn viện Tổng/Đang dùng/Trống + thanh công suất % theo khoa, màu cảnh báo ≥90% đỏ/≥80% cam/≥60% teal) — dữ liệu chụp snapshot cùng thời điểm "Lấy số liệu", lưu bảng giaoban_report_beds; mở rộng lưới KPI tổng quan lên 8 ô (thêm Vào viện/Ra viện/Chuyển viện/Tử vong/Cấp cứu/PT-Đẻ, ẩn ô không có số liệu); tách thành 2 slide (Tổng quan toàn viện + Công suất & biến động theo khoa). Slide công suất theo khoa ưu tiên khoa báo cáo khối điều trị, nếu chưa cấu hình thì hiển thị theo từng khoa HIS có giường (kèm tên khoa, như dashboard home). Bổ sung hiển thị Ghi chú chung (general_note, rich text) trên slide Tổng quan. Đối chiếu HIS: 831 giường, 506 đang dùng, công suất 60,9% (18 khoa).
@@ -25,6 +30,12 @@
 
 # 08/07/2026 (cập nhật 1)
 - Bổ tài biểu mẫu import bộ danh mục dịch vụ
+
+# 01/07/2026
+
+- Module Kiểm tra sai sót y lệnh (giai đoạn 7): bổ sung trang Quản lý quy tắc (KHTH) — bật/tắt từng luật, sửa mức độ và tên hiển thị ngay trên giao diện, không cần vào database; gom nhóm menu "Kiểm tra sai sót y lệnh" đặt ngang hàng ngay dưới mục "Thống kê".
+- Module Kiểm tra sai sót y lệnh: bộ lọc "Loại dịch vụ" trên dashboard nạp từ danh mục HIS (dropdown, giống bộ lọc Khoa) thay vì gõ tay; bỏ cột "Mã DV" khỏi bảng vi phạm vì chỉ có dữ liệu với luật giới tính/tuổi nên hầu như luôn trống.
+- Module Kiểm tra sai sót y lệnh: tách luật cấp phiếu chỉ định theo từng loại dịch vụ (luật dùng chung + bộ luật riêng cho Đơn thuốc, Đơn phòng khám, Chẩn đoán hình ảnh, Đơn máu...) để mỗi loại có tiêu chí kiểm tra phù hợp và dễ bổ sung luật mới. Sửa lỗi API tra cứu vi phạm khiến `route:cache` không chạy được.
 
 # 30/06/2026 (cập nhật 5)
 
