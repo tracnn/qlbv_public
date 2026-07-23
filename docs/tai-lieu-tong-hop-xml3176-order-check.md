@@ -95,7 +95,7 @@ flowchart TD
 | Controller nghiệp vụ / dashboard | `app/Http/Controllers/BHYT/BHYTXml3176Controller.php`, `Dashboard/Xml3176DashboardController.php` |
 | Service chính | `app/Services/Xml3176Service.php` |
 | Kiểm tra chéo / lưu lỗi | `app/Services/Xml3176CompleteChecker.php`, `Xml3176ErrorService.php` |
-| Checker từng XML | `app/Services/Xml3176Xml{1..14}Checker.php` |
+| Checker từng XML | `app/Services/Xml3176Xml{1,2,3,4,5,7,8,9,10,11,13,14}Checker.php` (XML6/12/15 không có checker riêng) |
 | Ký số / gửi cổng / token | `app/Services/{XMLSignService, BHYTXmlSubmitService, BHYTLoginService}.php` |
 | Jobs | `app/Jobs/{CheckXml3176ErrorsJob, CheckCompleteXml3176RecordJob, ExportXml3176Job, SubmitXml3176Job}.php` |
 | Command import nền | `app/Console/Commands/XML3176Import.php` |
