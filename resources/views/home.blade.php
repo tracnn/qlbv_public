@@ -1,9 +1,3 @@
-{{--
-    Lục bát mượt mà khúc ca,
-    Giao diện rực rỡ thật là tươi vui.
-    Người dùng mỉm cười đẩy lui,
-    Khám chữa bệnh đúng niềm vui ngập tràn.
---}}
 @extends('adminlte::page')
 
 @section('title', __('manager.backend.labels.title'))
@@ -590,6 +584,7 @@
 @stop
 
 @push('after-scripts')
+@if(auth()->user()->hasRole('dashboard'))
   {{-- Vendor đã có của bạn giữ nguyên: numeral, highcharts, moment, daterangepicker... --}}
   <script src="{{ asset('vendor/numeral/numeral.js') }}"></script>
   <script src="{{ asset('vendor/numeral/locales.js') }}"></script>
@@ -645,4 +640,5 @@
   <script src="{{ asset('js/dashboard/charts.js') }}"></script>
   <script src="{{ asset('js/dashboard/autorefresh.js') }}"></script>
   <script src="{{ asset('js/dashboard/init.js') }}"></script>
+@endif
 @endpush

@@ -2,7 +2,10 @@
     'use strict';
     var CFG = win.DASHBOARD_CFG || {};
     var R = (CFG.routes || {});
-  
+
+    // Phòng vệ nhiều lớp: nếu user không có quyền dashboard thì không khởi tạo gì cả
+    if (!CFG.canDashboard) return;
+
     function initDateRange() {
       var startDate = moment().startOf('day');
       var endDate = moment().endOf('day');
