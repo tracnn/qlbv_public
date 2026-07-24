@@ -33,6 +33,8 @@ Xây **một nền tảng standalone** phát hiện vấn đề chất lượng 
 - Thứ tự: **order-check trước**; module khác sau.
 - **Import bộ danh mục**: port đầy đủ ~11 loại danh mục theo QLBV (khung import config-driven tự nhận diện loại + tải biểu mẫu). Là năng lực nền tảng dùng chung mọi module.
 - **Phân quyền theo khoa**: user chỉ thấy finding của khoa được gán; ai có quyền `data_quality:view_all_departments` thấy tất cả. Gán khoa cho user qua UI admin.
+- **Xác thực qua ACS** (theo `bm_patient_hub`): verify credential trên `ACS_USER` (kết nối `ACS_RS`, SHA-512), RBAC ở DEFAULT. KHÔNG dùng bảng user tự chứa + bcrypt.
+- **Module HIS** (`his-module`): đóng gói mọi truy cập HIS read-only; order-check dùng qua module này.
 
 **Non-goals (pha này):** XML3176, ký số/gửi cổng BHXH, i18n, di trú dữ liệu lịch sử.
 
@@ -58,8 +60,11 @@ NestJS 11, Node 24, TypeScript. TypeORM + `oracledb` (`synchronize:false`, migra
 
 | Kết nối | Vai trò | Ghi/Đọc |
 |---|---|---|
-| `DEFAULT` | Schema app (`DQ_*` + bảng module) | Ghi |
+| `DEFAULT` | Schema app (`DQ_*`, RBAC, bảng module) | Ghi |
 | `HIS_RS` | Đọc HIS (`HIS_SERVICE_REQ`…) | Chỉ đọc (raw SQL) |
+| `ACS_RS` | Xác thực người dùng (bảng `ACS_USER`) | Chỉ đọc |
+
+**Xác thực qua ACS (theo khuôn `bm_patient_hub`):** đăng nhập verify credential bằng SQL trên `ACS_USER` (kết nối `ACS_RS`, env `ARS_DB_*`): `SELECT ID, LOGINNAME, USERNAME, EMAIL FROM ACS_USER WHERE LOGINNAME=:u AND PASSWORD=:p`, với `p = SHA-512(password + salt cứng '!@#$%^&*())(*&^%$#@!')` (KHÔNG bcrypt/md5, salt phải trùng dữ liệu ACS gốc). RBAC (role/permission) nằm ở schema `DEFAULT`, join theo `userId = ACS_USER.ID`. Dùng CQRS: login command → validate-credentials → issue JWT (`JWT_ADMIN_SECRET` + refresh `REFRESH_TOKEN_SECRET`); `/auth/me` → get-user-by-id (ACS_RS) + get-user-permissions (DEFAULT). Guard ép `type='STAFF'`. *(ACS HTTP token service để lấy TokenCode gọi HIS là TÙY CHỌN — order-check đọc HIS trực tiếp qua `HIS_RS` nên bỏ ở giai đoạn này.)*
 
 ### 2.4. DQ Engine lõi (module-agnostic)
 
@@ -104,6 +109,14 @@ Scanner/engine chạy nền do `ScanOrchestrator` (scheduled) gọi trực tiế
 4. **Bull**: `BullModule` cấu hình sẵn (ioredis) cho xử lý nặng bất đồng bộ pha sau (parse XML3176). Order-check dùng cron, chưa dùng Bull.
 
 ---
+
+### 2.7. Module HIS (`his-module`) — đóng gói đọc HIS
+
+Một module riêng đóng gói mọi truy cập HIS read-only (kết nối `HIS_RS`), thay vì rải rác `@InjectDataSource` trong từng feature:
+- Kết nối `HIS_RS` (Oracle, `synchronize:false`) đọc bằng raw SQL (pattern sạch nhất cho nhu cầu order-check; không dùng HTTP HIS-integration microservice của bm_patient_hub).
+- Chứa các service query HIS: `HisOrderSource` (đọc `HIS_SERVICE_REQ`/`HIS_TREATMENT`/`HIS_SERE_SERV`/`HIS_EMPLOYEE` cho order-check) và `HisCatalogService` (danh mục khoa từ `HIS_DEPARTMENT`, và các danh mục HIS khác khi cần).
+- (Tùy chọn về sau) `BaseHisEntity` + entity-mapped cho bảng danh mục HIS ổn định + cache Redis (mẫu `catalog-module/his-module` của bm_patient_hub).
+- Export các service để module order-check (và module khác) import dùng. Order-check KHÔNG tự inject `HIS_RS` trực tiếp mà đi qua `his-module`.
 
 ## 3. Mô hình dữ liệu (Oracle, schema DEFAULT) — generic
 

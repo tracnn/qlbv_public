@@ -4,7 +4,7 @@
 
 **Goal:** Dựng nền tảng standalone `bm-data-quality` (NestJS + Vue) với DQ Engine lõi và module order-check: cron quét HIS theo watermark, tính computed-facts, chạy luật `B_*` bằng json-rules-engine (rule-as-data), ghi finding idempotent, áp phân quyền theo khoa, hiển thị trên giao diện.
 
-**Architecture:** DQ Engine module-agnostic (Scanner → FactsBuilder → RuleEvaluator → CodeChecker → FindingSink). Oracle `DEFAULT` (ghi) + `HIS_RS` (đọc). CQRS ở tầng API. Redis: rules cache + pub/sub invalidation + khóa quét. Hybrid rule model: computed-facts (code) + rule-as-data (json-rules-engine). Frontend Vue 3 + PrimeVue, 4 lớp.
+**Architecture:** DQ Engine module-agnostic (Scanner → FactsBuilder → RuleEvaluator → CodeChecker → FindingSink). Oracle `DEFAULT` (ghi) + `HIS_RS` (đọc, qua `his-module`) + `ACS_RS` (xác thực). Auth qua ACS (SHA-512 trên `ACS_USER`), RBAC ở DEFAULT. CQRS ở tầng API. Redis: rules cache + pub/sub invalidation + khóa quét. Hybrid rule model: computed-facts (code) + rule-as-data (json-rules-engine). Frontend Vue 3 + PrimeVue, 4 lớp.
 
 **Tech Stack:** NestJS 11, TypeScript, TypeORM + oracledb, @nestjs/cqrs, @nestjs/schedule, ioredis, @nestjs/bull, json-rules-engine, class-validator, Jest; Vue 3, Vite, PrimeVue, Pinia, axios.
 
@@ -112,9 +112,21 @@ HRS_DB_USER=
 HRS_DB_PASSWORD=
 HRS_DB_POOL_MIN=1
 HRS_DB_POOL_MAX=10
+# ACS (xac thuc nguoi dung)
+ARS_DB_HOST=
+ARS_DB_PORT=1521
+ARS_DB_SID=
+ARS_DB_SERVICE_NAME=
+ARS_DB_USER=
+ARS_DB_PASSWORD=
+ARS_DB_POOL_MIN=1
+ARS_DB_POOL_MAX=10
 REDIS_HOST=127.0.0.1
 REDIS_PORT=6379
 JWT_ADMIN_SECRET=change-me
+JWT_ADMIN_EXPIRES_IN=86400
+REFRESH_TOKEN_SECRET=change-me-refresh
+REFRESH_TOKEN_EXPIRES_IN=604800
 ENABLE_JWT_GUARD=true
 ORDER_CHECK_SCAN_CRON=*/1 * * * *
 DQ_RULES_CACHE_TTL=300
@@ -130,7 +142,7 @@ DQ_RULES_CACHE_TTL=300
 
 - [ ] **Step 1: `constants/common.constant.ts`**
 ```typescript
-export const BASE_SCHEMA = { DEFAULT: 'default', HIS_RS: 'HIS_RS' } as const;
+export const BASE_SCHEMA = { DEFAULT: 'default', HIS_RS: 'HIS_RS', ACS_RS: 'ACS_RS' } as const;
 ```
 - [ ] **Step 2:** Sao `build-oracle-connection-string.config.ts` từ `bm_patient_hub/backend/src/configs/`.
 - [ ] **Step 3: `configs/typeorm.config.ts`**
@@ -153,8 +165,15 @@ export const hisRsDbConfig = (c: ConfigService): TypeOrmModuleOptions => ({
   autoLoadEntities: false, synchronize: false,
   extra: { poolMin: +c.get('HRS_DB_POOL_MIN', 1), poolMax: +c.get('HRS_DB_POOL_MAX', 10) },
 });
+export const acsRsDbConfig = (c: ConfigService): TypeOrmModuleOptions => ({
+  type: 'oracle',
+  connectString: buildOracleConnectString(c.get('ARS_DB_HOST'), c.get('ARS_DB_PORT'), c.get('ARS_DB_SID'), c.get('ARS_DB_SERVICE_NAME')),
+  username: c.get('ARS_DB_USER'), password: c.get('ARS_DB_PASSWORD'),
+  autoLoadEntities: false, synchronize: false,
+  extra: { poolMin: +c.get('ARS_DB_POOL_MIN', 1), poolMax: +c.get('ARS_DB_POOL_MAX', 10) },
+});
 ```
-- [ ] **Step 4:** Trong `app.module.ts` thêm 2 `TypeOrmModule.forRootAsync({ name: BASE_SCHEMA.DEFAULT/HIS_RS, inject:[ConfigService], useFactory })`.
+- [ ] **Step 4:** Trong `app.module.ts` thêm 3 `TypeOrmModule.forRootAsync({ name: BASE_SCHEMA.DEFAULT/HIS_RS/ACS_RS, inject:[ConfigService], useFactory: defaultDbConfig/hisRsDbConfig/acsRsDbConfig })`.
 - [ ] **Step 5: Build** — `cd backend && npm run build`.
 - [ ] **Step 6: Commit** — `git commit -am "feat(backend): oracle DEFAULT + HIS_RS connections"`
 
@@ -220,14 +239,78 @@ export const buildPagination = (total: number, page: number, limit: number): Pag
 
 ---
 
-### Task 6: admin-auth + role-permission
+### Task 6: admin-auth (xác thực qua ACS) + role-permission (RBAC)
 
-**Files:** Create `backend/src/admin-auth/*`, `src/role-permission/*` (sao); Modify `src/app.module.ts`; Create `src/migrations/2026-07-24-create-rbac.sql`
+> **Cơ chế theo `bm_patient_hub` (đã khảo sát):** xác thực verify credential trên bảng `ACS_USER` ở kết nối `ACS_RS` bằng **SHA-512(password + salt cứng)** — KHÔNG dùng bảng user tự chứa/bcrypt. RBAC (role/permission) ở schema `DEFAULT`, join theo `userId = ACS_USER.ID`. Dùng CQRS. URL không tiền tố `admin` (`@Controller('auth')`). Tham khảo CHỈ ĐỌC: `bm_patient_hub/backend/src/admin-auth/`, `src/catalog-module/acs-module/`, `src/role-permission/`.
 
-- [ ] **Step 1:** Sao `admin-auth/` + `role-permission/` từ `bm_patient_hub/backend/src/`; entity RBAC bind `BASE_SCHEMA.DEFAULT`; secret `JWT_ADMIN_SECRET`; strategy `'jwt-admin'`; giữ `@Permission('resource:action')` + `PermissionsGuard` + `JwtAdminAuthGuard`. **Bỏ tiền tố `admin/`** trong mọi `@Controller(...)` khi sao (vd `@Controller('auth')` thay vì `@Controller('admin/auth')`) — toàn hệ thống không dùng tiền tố `admin`. **Bổ sung helper** `req.user.permissions: string[]` để dùng cho phân quyền khoa (Task 22).
-- [ ] **Step 2:** Import 2 module vào `app.module.ts`.
-- [ ] **Step 3:** Sao DDL RBAC từ `bm_patient_hub/backend/src/migrations/` → `src/migrations/2026-07-24-create-rbac.sql`; chạy trên Oracle DEFAULT.
-- [ ] **Step 4: Build & commit** — `npm run build && git commit -am "feat(backend): admin-auth + RBAC"`
+**Files:** Create `backend/src/admin-auth/*`, `src/acs/*`, `src/role-permission/*`; Modify `src/app.module.ts`; Create `src/migrations/2026-07-24-create-rbac.sql`
+
+- [ ] **Step 1 — ACS credential (kết nối ACS_RS):**
+  - `src/acs/acs.service.ts`: `hashPassword(password)` = `crypto.createHash('sha512').update(password + '!@#$%^&*())(*&^%$#@!').digest('hex')` (salt CỨNG, phải trùng dữ liệu ACS gốc — KHÔNG đổi).
+  - `src/acs/acs-user.repository.ts` (hoặc service dùng `@InjectDataSource(BASE_SCHEMA.ACS_RS)`):
+    - `validateCredentials(username, hashedPassword)`:
+      ```typescript
+      const rows = await this.acs.query(
+        `SELECT ID AS "userId", LOGINNAME AS "username", USERNAME AS "fullName", EMAIL AS "email"
+         FROM ACS_USER WHERE LOGINNAME = :u AND PASSWORD = :p`, [username, hashedPassword]);
+      return rows[0] ?? null;
+      ```
+    - `getUserById(userId)`: `SELECT ID AS "userId", LOGINNAME AS "username", USERNAME AS "fullName", EMAIL AS "email", MOBILE AS "phoneNumber" FROM ACS_USER WHERE ID = :id`.
+  - `src/acs/acs.module.ts`: `TypeOrmModule.forFeature([], BASE_SCHEMA.ACS_RS)` + providers `AcsService`/`AcsUserRepository`, exports chúng.
+
+- [ ] **Step 2 — RBAC (schema DEFAULT):** entities `Role, Permission, RoleUser, PermissionRole, PermissionUser` bind `BASE_SCHEMA.DEFAULT` (cột UPPER_SNAKE). `permission.service.ts`: `getAllPermissions(userId): Promise<string[]>` = union quyền qua role (`ROLE_USER`→`PERMISSION_ROLE`→`PERMISSION.CODE`) + trực tiếp (`PERMISSION_USER`→`PERMISSION.CODE`). `decorators/permission.decorator.ts` (`@Permission(...codes)` → SetMetadata). `guards/permissions.guard.ts`: đọc metadata; lấy `req.user.userId` → `getAllPermissions` → **gán `req.user.permissions = perms`** → yêu cầu đủ quyền, thiếu → `ForbiddenException`. `role-permission.module.ts` export `PermissionService` + `PermissionsGuard`.
+
+- [ ] **Step 3 — admin-auth (JWT + CQRS):**
+  - `jwt-admin.strategy.ts` (PassportStrategy `'jwt-admin'`, secret `JWT_ADMIN_SECRET`, `validate(p)` → `{ userId: p.sub, username: p.username, type: p.type }`).
+  - `jwt-admin-auth.guard.ts` (`AuthGuard('jwt-admin')`, ép `user.type === 'STAFF'`; `ENABLE_JWT_GUARD='false'` → bypass gắn user dev).
+  - `auth.service.ts` + CQRS: `LoginCommand`→handler: `hashed = acs.hashPassword(password)` → `acs.validateCredentials(username, hashed)`; null → `throw new ApiException('INVALID_CREDENTIALS')` (thêm key vào errors.config); ký JWT `{ sub: userId, username, fullName, email, type: 'STAFF' }` (secret `JWT_ADMIN_SECRET`, exp `JWT_ADMIN_EXPIRES_IN`) + refresh token (secret `REFRESH_TOKEN_SECRET`, exp `REFRESH_TOKEN_EXPIRES_IN`) → `{ accessToken, refreshToken }`. `RefreshCommand`→handler (verify refresh → cấp access mới). `AdminMeQuery`→handler: `acs.getUserById(userId)` + `permission.getAllPermissions(userId)` → `{ ...user, permissions }`.
+  - `auth.controller.ts` `@Controller('auth')`: `POST /login`, `POST /refresh`, `GET /me` (dùng `JwtAdminAuthGuard`).
+  - `admin-auth.module.ts`: `JwtModule.registerAsync` (secret `JWT_ADMIN_SECRET`), `PassportModule`, `CqrsModule`, import `AcsModule` + `RolePermissionModule`; providers: service + strategy + guard + các handler; exports `JwtAdminAuthGuard`, `CqrsModule`.
+
+- [ ] **Step 4 — Wiring:** import `AcsModule`, `RolePermissionModule`, `AdminAuthModule` vào `app.module.ts`.
+
+- [ ] **Step 5 — DDL RBAC (chỉ schema DEFAULT, KHÔNG có bảng user — user nằm ở ACS):** tạo `src/migrations/2026-07-24-create-rbac.sql` với `CREATE TABLE` cho `ROLES, PERMISSIONS, ROLE_USER, PERMISSION_ROLE, PERMISSION_USER` (ID VARCHAR2(36) DEFAULT SYS_GUID() PK; CODE UNIQUE cho ROLES/PERMISSIONS; ROLE_USER có USER_ID = ACS_USER.ID). KHÔNG tạo bảng `ADMIN_USERS`.
+
+- [ ] **Step 6 — Build + commit:** `cd /c/Users/tracnn/bm-data-quality/backend && npm run build` (pass; chưa cần DB) → `cd .. && git add -A && git commit -m "feat(backend): admin-auth via ACS + role-permission RBAC"`. Ghi chú: đăng nhập cần ACS_USER thật (đã có sẵn trong ACS) — verify runtime ở bước có DB; task này build-time.
+
+---
+
+### Task 6B: Module HIS (`his-module`)
+
+> Đóng gói mọi truy cập HIS read-only (kết nối `HIS_RS`, raw SQL). Là nơi chứa các service đọc HIS để order-check và module khác dùng — KHÔNG inject `HIS_RS` rải rác. Ở Task 6B chỉ dựng khung + 1 service danh mục khoa; `HisOrderSource` sẽ thêm vào module này ở Pha 1 (Task 16).
+
+**Files:** Create `backend/src/his/his-catalog.service.ts`, `his.module.ts`; Modify `src/app.module.ts`
+
+- [ ] **Step 1: `src/his/his-catalog.service.ts`** (đọc danh mục khoa từ HIS_RS)
+```typescript
+import { Injectable } from '@nestjs/common';
+import { InjectDataSource } from '@nestjs/typeorm';
+import { DataSource } from 'typeorm';
+import { BASE_SCHEMA } from '../constants/common.constant';
+
+@Injectable()
+export class HisCatalogService {
+  constructor(@InjectDataSource(BASE_SCHEMA.HIS_RS) private his: DataSource) {}
+  async departments(): Promise<{ id: number; name: string }[]> {
+    const rows = await this.his.query(`SELECT ID, DEPARTMENT_NAME FROM HIS_DEPARTMENT ORDER BY DEPARTMENT_NAME`);
+    return rows.map((r: any) => ({ id: Number(r.ID), name: r.DEPARTMENT_NAME }));
+  }
+}
+```
+> ⚠ Xác minh cột tên khoa (`DEPARTMENT_NAME`) qua sqlcl `hispro_stb` khi thực thi; sửa nếu khác.
+
+- [ ] **Step 2: `src/his/his.module.ts`**
+```typescript
+import { Module } from '@nestjs/common';
+import { HisCatalogService } from './his-catalog.service';
+
+@Module({ providers: [HisCatalogService], exports: [HisCatalogService] })
+export class HisModule {}
+```
+(Kết nối `HIS_RS` đã đăng ký ở AppModule nên `@InjectDataSource(HIS_RS)` dùng được; không cần forFeature nếu chỉ raw SQL.)
+
+- [ ] **Step 3:** Import `HisModule` vào `app.module.ts`; build: `cd /c/Users/tracnn/bm-data-quality/backend && npm run build` → pass.
+- [ ] **Step 4: Commit** — `cd .. && git add -A && git commit -m "feat(backend): HIS module (his-catalog, HIS_RS)"`
 
 ---
 
@@ -272,7 +355,7 @@ VITE_API_TIMEOUT=30000
 ```
 Đồng thời sửa giá trị fallback trong `src/api/config.ts` (khi sao từ khuôn mẫu có mặc định `.../admin`) về `http://localhost:3300` (bỏ `/admin`).
 - [ ] **Step 3:** `cd frontend && npm install && npm run dev` → mở trang đăng nhập.
-- [ ] **Step 4:** Đảm bảo `auth.store.ts` gọi đúng `/auth/login` + `/auth/me` (KHÔNG có `/admin`); tạo 1 user admin test (seeder/insert tay), ghi cách tạo vào `docs/`.
+- [ ] **Step 4:** Đảm bảo `auth.store.ts` gọi đúng `/auth/login` + `/auth/me` (KHÔNG có `/admin`). **Không tạo user** — xác thực qua ACS (`ACS_USER` có sẵn trong hệ ACS của bệnh viện); để đăng nhập cần: (a) một tài khoản ACS thật, (b) cấp quyền cho user đó bằng cách insert RBAC ở DEFAULT (`ROLE`/`PERMISSION`/`ROLE_USER`/`PERMISSION_ROLE` với `USER_ID = ACS_USER.ID`). Ghi hướng dẫn cấp quyền vào `docs/`.
 - [ ] **Step 5: Đăng nhập e2e** — backend + frontend chạy, đăng nhập vào được layout backend.
 - [ ] **Step 6: Commit** — `git add -A && git commit -m "chore(frontend): scaffold + login e2e"`
 
@@ -781,11 +864,11 @@ export class ExecuteBeforeOrderChecker {
 
 ---
 
-### Task 16: HisOrderSource (đọc HIS, batched)
+### Task 16: HisOrderSource (đọc HIS, batched) — thuộc `his-module`
 
-**Files:** Create `backend/src/order-check/his-order-source.service.ts`
+**Files:** Create `backend/src/his/his-order-source.service.ts`; Modify `backend/src/his/his.module.ts` (thêm `HisOrderSource` vào providers + exports)
 
-> Tối ưu: quét `HIS_SERVICE_REQ` theo `MODIFY_TIME` (index); **batched lookup** treatment + sere_serv + employee bằng 1 query IN cho cả batch. Cột đã xác nhận qua sqlcl.
+> Đặt trong **his-module** (Task 6B) cùng `HisCatalogService` — order-check import `HisModule` để dùng, không tự inject `HIS_RS`. Tối ưu: quét `HIS_SERVICE_REQ` theo `MODIFY_TIME` (index); **batched lookup** treatment + sere_serv + employee bằng 1 query IN cho cả batch. Cột đã xác nhận qua sqlcl.
 
 - [ ] **Step 1: Implement**
 ```typescript
@@ -1016,7 +1099,7 @@ export class ScanOrchestrator {
 ```typescript
 import { Injectable } from '@nestjs/common';
 import { Scanner, ScanResult } from '../dq-core/scan-orchestrator.service';
-import { HisOrderSource } from './his-order-source.service';
+import { HisOrderSource } from '../his/his-order-source.service';
 import { OrderFactsBuilder } from './order-facts.builder';
 import { RuleEvaluator } from '../dq-core/rule-evaluator.service';
 import { RulesCache } from '../dq-core/rules-cache.service';
@@ -1346,24 +1429,9 @@ export class DataQualityController {
 
 ### Task 24: User-department API + danh sách khoa (HIS)
 
-**Files:** Modify `backend/src/dq-core/data-quality.controller.ts`; Create `backend/src/dq-core/dto/set-departments.dto.ts`; add HIS department query to `HisOrderSource` or new `his-catalog.service.ts`
+**Files:** Modify `backend/src/dq-core/data-quality.controller.ts`, `backend/src/dq-core/dq-core.module.ts` (import `HisModule`); Create `backend/src/dq-core/dto/set-departments.dto.ts`
 
-- [ ] **Step 1: `his-catalog.service.ts`** (đọc danh sách khoa từ HIS)
-```typescript
-import { Injectable } from '@nestjs/common';
-import { InjectDataSource } from '@nestjs/typeorm';
-import { DataSource } from 'typeorm';
-import { BASE_SCHEMA } from '../constants/common.constant';
-@Injectable()
-export class HisCatalogService {
-  constructor(@InjectDataSource(BASE_SCHEMA.HIS_RS) private his: DataSource) {}
-  async departments(): Promise<{ id: number; name: string }[]> {
-    const rows = await this.his.query(`SELECT ID, DEPARTMENT_NAME FROM HIS_DEPARTMENT ORDER BY DEPARTMENT_NAME`);
-    return rows.map((r: any) => ({ id: Number(r.ID), name: r.DEPARTMENT_NAME }));
-  }
-}
-```
-> ⚠ Xác minh cột tên khoa (`DEPARTMENT_NAME`) qua sqlcl khi thực thi; sửa nếu khác.
+- [ ] **Step 1: Dùng `HisCatalogService` từ `his-module`** (đã tạo ở Task 6B — KHÔNG tạo lại). Import `HisModule` vào `DqCoreModule.imports` để inject `HisCatalogService` vào controller. `HisCatalogService.departments()` trả `{ id, name }[]` từ `HIS_DEPARTMENT`.
 - [ ] **Step 2: DTO + endpoints trong controller**
 ```typescript
 // dto/set-departments.dto.ts
@@ -1501,22 +1569,23 @@ import { RolePermissionModule } from '../role-permission/role-permission.module'
 })
 export class DqCoreModule {}
 ```
-- [ ] **Step 2: `order-check.module.ts`**
+- [ ] **Step 2: `order-check.module.ts`** (import `HisModule` để dùng `HisOrderSource`, không tự provide)
 ```typescript
 import { Module } from '@nestjs/common';
 import { DqCoreModule } from '../dq-core/dq-core.module';
-import { HisOrderSource } from './his-order-source.service';
+import { HisModule } from '../his/his.module';
 import { OrderFactsBuilder } from './order-facts.builder';
 import { ExecuteBeforeOrderChecker } from './checkers/execute-before-order.checker';
 import { ServiceReqScanner } from './service-req.scanner';
 import { OrderCheckScheduler } from './order-check.scheduler';
 
 @Module({
-  imports: [DqCoreModule],
-  providers: [HisOrderSource, OrderFactsBuilder, ExecuteBeforeOrderChecker, ServiceReqScanner, OrderCheckScheduler],
+  imports: [DqCoreModule, HisModule],
+  providers: [OrderFactsBuilder, ExecuteBeforeOrderChecker, ServiceReqScanner, OrderCheckScheduler],
 })
 export class OrderCheckModule {}
 ```
+> `ServiceReqScanner` inject `HisOrderSource` (exported từ `HisModule`).
 - [ ] **Step 3:** Import `DqCoreModule` + `OrderCheckModule` vào `app.module.ts`; build.
 - [ ] **Step 4: Chạy dev** — `npm run start:dev`. Trong 1 phút thấy log ScanOrchestrator; `GET /data-quality/findings` (Bearer) trả `{ data, pagination }`.
 - [ ] **Step 5: Commit** — `cd .. && git add -A && git commit -m "feat: wire dq-core + order-check modules; cron + API live"`
@@ -1694,7 +1763,7 @@ async function save() { await userDepartmentService.setUserDepartments(userId.va
 
 ## Self-review
 
-**1. Spec coverage (Pha 0+1):** scaffold + Redis (T1–8) ✔; DQ_* + DQ_USER_DEPARTMENT (T9–10) ✔; Finding/Facts (T11) ✔; FactsBuilder computed-facts (T12) ✔; RulesCache Redis+pubsub degrade (T13) ✔; RuleEvaluator json-rules-engine reuse (T14) ✔; ExecuteBeforeOrder CodeChecker (T15) ✔; HisOrderSource batched (T16) ✔; FindingSink batch idempotent (T17) ✔; ScanOrchestrator + khóa Redis + watermark + scan logs (T18) ✔; ServiceReqScanner (T19) ✔; cron (T20) ✔; seed B_* + init watermark (T21) ✔; applyDepartmentScope + user-department (T22–24) ✔; ListFindings/ScanLogs/rule toggle CQRS + invalidation (T23,25) ✔; wiring (T26) ✔; FE findings + user-department (T27–29) ✔; e2e (T30) ✔. **Catalog import đầy đủ ~11 loại = Pha 2 (plan riêng); order-check A_*, dashboard, export = Pha 3.**
+**1. Spec coverage (Pha 0+1):** scaffold + Redis (T1–8) ✔; **auth qua ACS (ACS_RS, SHA-512) + RBAC (DEFAULT) (T6) ✔; module HIS `his-module` (T6B) ✔**; DQ_* + DQ_USER_DEPARTMENT (T9–10) ✔; Finding/Facts (T11) ✔; FactsBuilder computed-facts (T12) ✔; RulesCache Redis+pubsub degrade (T13) ✔; RuleEvaluator json-rules-engine reuse (T14) ✔; ExecuteBeforeOrder CodeChecker (T15) ✔; HisOrderSource batched (T16) ✔; FindingSink batch idempotent (T17) ✔; ScanOrchestrator + khóa Redis + watermark + scan logs (T18) ✔; ServiceReqScanner (T19) ✔; cron (T20) ✔; seed B_* + init watermark (T21) ✔; applyDepartmentScope + user-department (T22–24) ✔; ListFindings/ScanLogs/rule toggle CQRS + invalidation (T23,25) ✔; wiring (T26) ✔; FE findings + user-department (T27–29) ✔; e2e (T30) ✔. **Catalog import đầy đủ ~11 loại = Pha 2 (plan riêng); order-check A_*, dashboard, export = Pha 3.**
 
 **2. Placeholder scan:** không có TBD/TODO; mọi step code có nội dung thật. Hai điểm cần xác minh runtime đã ghi rõ (⚠): cột `HIS_SERE_SERV.SERVICE_REQ_ID` và `HIS_DEPARTMENT.DEPARTMENT_NAME` — kiểm qua sqlcl khi thực thi.
 
