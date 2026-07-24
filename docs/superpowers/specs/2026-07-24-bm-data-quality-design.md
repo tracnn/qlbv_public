@@ -31,6 +31,8 @@ Xây **một nền tảng standalone** phát hiện vấn đề chất lượng 
 - **Redis**: có, ngay từ đầu (cache rule + Pub/Sub invalidation + khóa quét phân tán; Bull cấu hình sẵn cho tương lai).
 - Frontend: **Vue 3 + PrimeVue**.
 - Thứ tự: **order-check trước**; module khác sau.
+- **Import bộ danh mục**: port đầy đủ ~11 loại danh mục theo QLBV (khung import config-driven tự nhận diện loại + tải biểu mẫu). Là năng lực nền tảng dùng chung mọi module.
+- **Phân quyền theo khoa**: user chỉ thấy finding của khoa được gán; ai có quyền `data_quality:view_all_departments` thấy tất cả. Gán khoa cho user qua UI admin.
 
 **Non-goals (pha này):** XML3176, ký số/gửi cổng BHXH, i18n, di trú dữ liệu lịch sử.
 
@@ -112,9 +114,17 @@ Scanner/engine chạy nền do `ScanOrchestrator` (scheduled) gọi trực tiế
 | `DQ_WATERMARKS` | `source_key`(unique), `last_id, last_create_time, last_modify_time, last_run_at` |
 | `DQ_SCAN_LOGS` | `source_key, started_at, finished_at, scanned_count, finding_count, status, error, duration_ms` |
 
-Order-check = các dòng `DQ_RULES` (`module='order_check'`) + Scanner/FactsBuilder riêng. XML3176 sau = thêm module, **không đụng bảng lõi**. Bảng phụ riêng module (vd `ORDER_CHECK_REF_SERVICE_RESTRICTION` cho luật giới tính/tuổi) đặt riêng khi tới Pha 2.
+Order-check = các dòng `DQ_RULES` (`module='order_check'`) + Scanner/FactsBuilder riêng. XML3176 sau = thêm module, **không đụng bảng lõi**. Bảng phụ riêng module (vd `ORDER_CHECK_REF_SERVICE_RESTRICTION` cho luật giới tính/tuổi) đặt riêng khi tới pha tương ứng.
+
+**Phân quyền theo khoa:**
+
+| Bảng | Cột chính |
+|---|---|
+| `DQ_USER_DEPARTMENT` | `id, user_id, his_department_id`(NUMBER — khớp `HIS_DEPARTMENT.ID` = `EXECUTE_DEPARTMENT_ID` của finding), `created_at` — mỗi user gán 1..N khoa |
 
 `dedup_key` = `module:rule_code:ref_type:ref_id:sub_key` — idempotent.
+
+**Danh mục (import từ Excel):** ~11 bảng danh mục trong schema DEFAULT, port theo QLBV: `CAT_MEDICINE, CAT_MEDICAL_SUPPLY, CAT_SERVICE, CAT_MEDICAL_STAFF, CAT_DEPARTMENT_BED, CAT_EQUIPMENT, CAT_ADMINISTRATIVE_UNIT, CAT_MEDICAL_ORGANIZATION, CAT_JOB_CATEGORY, CAT_ICD10, CAT_ICD_YHCT`. Cấu trúc cột bám theo model BHYT gốc; `unique_keys` để `updateOrCreate` (upsert). Cấu hình cột đặt trong `config/catalog-import-mapping` (mỗi loại: `detectKeys, mapping` field→alias, `requiredFields, uniqueKeys`).
 
 ---
 
@@ -157,20 +167,50 @@ Khởi tạo = thời điểm hiện tại (không backfill lịch sử).
 
 ---
 
+## 4B. Quản lý danh mục (Catalog Management) — năng lực nền tảng
+
+Port khung import config-driven của QLBV sang NestJS (đầy đủ ~11 loại):
+
+- **`CatalogImportService`** (port `App\Services\CatalogImportService`): đọc `.xlsx` (thư viện `exceljs`), lấy dòng đầu làm header, **`detectCatalogType(header)`** khớp `detectKeys` (ngưỡng `max(2, ceil(count*0.6))`, chọn loại khớp nhiều nhất), `createFieldMapping(header, mapping)`, kiểm `requiredFields`, rồi upsert (`updateOrCreate` theo `uniqueKeys`) vào bảng danh mục tương ứng qua TypeORM.
+- **Config `catalog-import-mapping`** (port `config/catalog_import_mapping.php`): mỗi loại có `detectKeys, mapping`(field→alias), `requiredFields, uniqueKeys`. Thêm danh mục mới = thêm 1 entry config + 1 entity/bảng.
+- **`CatalogTemplateExport`** (port `App\Exports\CatalogTemplateExport`): sinh `.xlsx` biểu mẫu từ config — header = alias đầu mỗi field, tô đậm/nền màu cột bắt buộc, 0 dòng dữ liệu. Có method `headers(type)` để test tự-nhận-diện.
+- **Test chốt chặn** (bám spec QLBV `2026-07-07-catalog-import-template-download`): với MỌI loại, `detectCatalogType(headers(type)) === type` — ép chỉnh `detectKeys` nơi trượt.
+- File lớn → xử lý qua **Bull** (đã cấu hình sẵn) để không chặn request.
+
+Vai trò với module: order-check dùng `CAT_DEPARTMENT_BED`/`HIS_DEPARTMENT` resolve tên khoa, `CAT_SERVICE`/`CAT_ICD10` cho luật `A_*`; XML3176 (sau) dùng phần lớn các danh mục BHYT.
+
 ## 5. API (backend, prefix `admin/data-quality`, RBAC `data_quality:*`)
 
-- `GET /findings` — danh sách (filter module/severity/status/rule/khoa/ngày; phân trang lazy) — `ListFindingsQuery`.
-- `GET /findings/summary` — KPI/thống kê — `FindingsSummaryQuery`.
-- `POST /findings/:id/status` — cập nhật trạng thái + ghi chú — `UpdateFindingStatusCommand`.
-- `GET /findings/export` — xuất Excel.
+- `GET /findings` — danh sách (filter module/severity/status/rule/khoa/ngày; phân trang lazy) — `ListFindingsQuery`. **Áp phân quyền khoa** (mục 5.1).
+- `GET /findings/summary` — KPI/thống kê — `FindingsSummaryQuery`. Áp phân quyền khoa.
+- `POST /findings/:id/status` — cập nhật trạng thái + ghi chú — `UpdateFindingStatusCommand`. Chặn nếu finding thuộc khoa ngoài phạm vi user.
+- `GET /findings/export` — xuất Excel (áp phân quyền khoa).
 - `GET /rules`, `POST /rules/:id/toggle`, `PUT /rules/:id` — quản lý rule (sửa `conditions`/severity; publish invalidation) — CQRS commands.
 - `GET /scan-logs` — nhật ký quét — `ListScanLogsQuery`.
+
+**Catalog (prefix `admin/catalog`, RBAC `catalog:*`):**
+- `POST /catalog/import` — upload `.xlsx`, `CatalogImportService` tự nhận diện loại + upsert — `ImportCatalogCommand` (xử lý qua **Bull** nếu file lớn).
+- `GET /catalog/template?type=<type>` — tải biểu mẫu `.xlsx` sinh từ config.
+- `GET /catalog/:type` — duyệt/tra cứu 1 loại danh mục (phân trang, filter) — `ListCatalogQuery`.
+
+**Phân quyền khoa (prefix `admin/user-department`, RBAC `data_quality:manage_user_department`):**
+- `GET /departments` — danh sách khoa (đọc `HIS_DEPARTMENT` qua HIS_RS: id + tên) để chọn khi gán.
+- `GET /user-department/:userId`, `PUT /user-department/:userId` — xem/gán danh sách khoa cho user.
+
+### 5.1. Phân quyền xem dữ liệu theo khoa
+
+- Mỗi finding có `department_id` = `EXECUTE_DEPARTMENT_ID` (HIS). `DQ_USER_DEPARTMENT` gán user → tập `his_department_id`.
+- Trong `ListFindingsQuery`/`FindingsSummaryQuery`/export: lấy `req.user`; nếu user **có** quyền `data_quality:view_all_departments` → không lọc; nếu **không** → thêm điều kiện `department_id IN (<khoa được gán>)`. User không được gán khoa nào và không có view-all → trả rỗng.
+- Áp dụng nhất quán ở tầng query handler (một helper `applyDepartmentScope(qb, user)`), không rải rác ở controller.
 
 ---
 
 ## 6. Frontend (Vue 3 + PrimeVue)
 
-`views/backend/data-quality/`: **Findings** (Management + Filter + Table lazy + DetailDialog + workflow trạng thái), **Rules** (quản lý luật, sửa `conditions` JSON, bật/tắt), **ScanLogs**, **Dashboard**. Cấu trúc 4 lớp `models/data-quality.model.ts → api/data-quality.service.ts → stores/data-quality.store.ts → views`. Route + menu + `requiresPermission`. Không i18n.
+- `views/backend/data-quality/`: **Findings** (Management + Filter + Table lazy + DetailDialog + workflow trạng thái), **Rules** (quản lý luật, sửa `conditions` JSON, bật/tắt), **ScanLogs**, **Dashboard**.
+- `views/backend/catalog/`: **CatalogImport** (dropdown chọn loại + nút tải biểu mẫu + Dropzone upload), **CatalogBrowse** (tra cứu từng loại danh mục).
+- `views/backend/admin/`: **UserDepartment** (gán khoa cho user — chọn user, tick danh sách khoa từ HIS).
+- Cấu trúc 4 lớp `models → api → stores → views`. Route + menu + `requiresPermission`. Không i18n.
 
 ---
 
@@ -179,9 +219,10 @@ Khởi tạo = thời điểm hiện tại (không backfill lịch sử).
 | Pha | Nội dung | Kiểm chứng |
 |---|---|---|
 | **0. Scaffold** | Repo backend+frontend; Oracle DEFAULT+HIS_RS; Redis; auth+RBAC; health+login; docker | Đăng nhập được, `/health` xanh, Redis ping ok |
-| **1. DQ core + Order-check B_*** | Bảng `DQ_*`; RulesCache (Redis+PubSub); RuleEvaluator (json-rules-engine); FindingSink idempotent; ScanOrchestrator + khóa Redis; ScheduleModule cron; ServiceReqScanner + OrderFactsBuilder; seed luật `B_*` (data) + `B_EXECUTE_BEFORE_ORDER` (CodeChecker); API `findings` + `scan-logs` (CQRS); FE Findings list | Cron quét HIS, sinh finding `B_*` idempotent, hiển thị trên giao diện; sửa rule → cache invalidate |
-| **2. Order-check đầy đủ** | Luật `A_*` + scanner/nguồn tương ứng (tương tác thuốc, thiếu ICD, sai liều, giới tính/tuổi + ref restriction); quản lý rule UI; dashboard; export; email digest | Đủ bộ luật bật/tắt được; dashboard + export |
-| **3+. Module khác** | XML3176 (dùng Bull parse) + module DQ khác cắm lên cùng engine | (plan riêng) |
+| **1. DQ core + Order-check B_* + Phân quyền khoa** | Bảng `DQ_*` + `DQ_USER_DEPARTMENT`; RulesCache (Redis+PubSub); RuleEvaluator (json-rules-engine); FindingSink idempotent; ScanOrchestrator + khóa Redis; cron; ServiceReqScanner + OrderFactsBuilder; seed luật `B_*` (data) + `B_EXECUTE_BEFORE_ORDER` (CodeChecker); API `findings` + `scan-logs` (CQRS) **có phân quyền khoa** (`applyDepartmentScope`); gán khoa cho user (API+UI); FE Findings list | Cron quét HIS, sinh finding `B_*` idempotent; user thường chỉ thấy khoa được gán, view-all thấy tất cả; sửa rule → cache invalidate |
+| **2. Quản lý danh mục (đầy đủ ~11 loại)** | `CatalogImportService` (config-driven, auto-detect) + `CatalogTemplateExport` + ~11 bảng danh mục; API import/template/browse; FE CatalogImport + CatalogBrowse; test tự-nhận-diện | Tải biểu mẫu → điền → upload → upsert đúng loại; test detect pass |
+| **3. Order-check đầy đủ** | Luật `A_*` + scanner/nguồn (tương tác thuốc, thiếu ICD, sai liều, giới tính/tuổi + ref restriction, dùng danh mục ở Pha 2); quản lý rule UI; dashboard; export; email digest | Đủ bộ luật bật/tắt được; dashboard + export |
+| **4+. Module khác** | XML3176 (dùng Bull parse) + module DQ khác cắm lên cùng engine | (plan riêng) |
 
 ---
 
@@ -192,6 +233,8 @@ Khởi tạo = thời điểm hiện tại (không backfill lịch sử).
 - `RuleEvaluator` — chạy json-rules-engine trên facts với rule mẫu → đúng finding/severity.
 - `FindingSink` — idempotent theo dedup_key (repo mock): finding mới lưu; trùng bị bỏ; đã processed không hồi sinh.
 - `ServiceReqScanner`/`HisOrderSource` — test với dữ liệu HIS mock hoặc integration nhẹ.
+- `applyDepartmentScope` — user không view-all bị lọc theo khoa được gán; view-all không lọc; không gán khoa + không view-all → rỗng.
+- `CatalogImportService.detectCatalogType` + test tự-nhận-diện: `detectCatalogType(CatalogTemplateExport.headers(type)) === type` cho MỌI loại.
 
 **Rủi ro & giảm thiểu:**
 - *Hiệu năng quét HIS (bảng lớn)* → quét theo `MODIFY_TIME` (index), batched lookup, không JOIN bảng lớn; giữ 5 quy tắc hiệu năng.
@@ -205,9 +248,10 @@ Khởi tạo = thời điểm hiện tại (không backfill lịch sử).
 ## 9. Câu hỏi mở (khi lập plan)
 
 - Tên repo chính thức (`bm-data-quality`).
-- Có tách `admin-service` (CRUD rule) khỏi `engine` như bm_cdss không, hay một app modular monolith (đề xuất: monolith cho MVP).
-- Mailer cho email digest (chốt ở Pha 2).
-- Danh sách computed-facts đầy đủ cần cho `A_*` (chốt ở Pha 2).
+- Một app modular monolith (đề xuất) hay tách `admin-service`/`engine` như bm_cdss — đề xuất **monolith** cho MVP.
+- Cấu trúc cột chi tiết ~11 bảng danh mục — bám model BHYT gốc QLBV; chốt khi lập plan Pha 2 (đối chiếu `config/catalog_import_mapping.php` + các model `App\Models\BHYT\*`).
+- Mailer cho email digest (chốt ở Pha 3).
+- Danh sách computed-facts đầy đủ cho `A_*` (chốt ở Pha 3).
 
 ---
 
