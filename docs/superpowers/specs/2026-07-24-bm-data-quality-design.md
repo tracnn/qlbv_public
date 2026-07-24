@@ -179,7 +179,7 @@ Port khung import config-driven của QLBV sang NestJS (đầy đủ ~11 loại)
 
 Vai trò với module: order-check dùng `CAT_DEPARTMENT_BED`/`HIS_DEPARTMENT` resolve tên khoa, `CAT_SERVICE`/`CAT_ICD10` cho luật `A_*`; XML3176 (sau) dùng phần lớn các danh mục BHYT.
 
-## 5. API (backend, prefix `admin/data-quality`, RBAC `data_quality:*`)
+## 5. API (backend, prefix `data-quality`, RBAC `data_quality:*`) — không dùng tiền tố `admin`
 
 - `GET /findings` — danh sách (filter module/severity/status/rule/khoa/ngày; phân trang lazy) — `ListFindingsQuery`. **Áp phân quyền khoa** (mục 5.1).
 - `GET /findings/summary` — KPI/thống kê — `FindingsSummaryQuery`. Áp phân quyền khoa.
@@ -188,12 +188,12 @@ Vai trò với module: order-check dùng `CAT_DEPARTMENT_BED`/`HIS_DEPARTMENT` r
 - `GET /rules`, `POST /rules/:id/toggle`, `PUT /rules/:id` — quản lý rule (sửa `conditions`/severity; publish invalidation) — CQRS commands.
 - `GET /scan-logs` — nhật ký quét — `ListScanLogsQuery`.
 
-**Catalog (prefix `admin/catalog`, RBAC `catalog:*`):**
+**Catalog (prefix `catalog`, RBAC `catalog:*`):**
 - `POST /catalog/import` — upload `.xlsx`, `CatalogImportService` tự nhận diện loại + upsert — `ImportCatalogCommand` (xử lý qua **Bull** nếu file lớn).
 - `GET /catalog/template?type=<type>` — tải biểu mẫu `.xlsx` sinh từ config.
 - `GET /catalog/:type` — duyệt/tra cứu 1 loại danh mục (phân trang, filter) — `ListCatalogQuery`.
 
-**Phân quyền khoa (prefix `admin/user-department`, RBAC `data_quality:manage_user_department`):**
+**Phân quyền khoa (prefix `user-department`, RBAC `data_quality:manage_user_department`):**
 - `GET /departments` — danh sách khoa (đọc `HIS_DEPARTMENT` qua HIS_RS: id + tên) để chọn khi gán.
 - `GET /user-department/:userId`, `PUT /user-department/:userId` — xem/gán danh sách khoa cho user.
 

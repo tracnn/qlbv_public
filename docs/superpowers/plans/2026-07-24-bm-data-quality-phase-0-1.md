@@ -224,7 +224,7 @@ export const buildPagination = (total: number, page: number, limit: number): Pag
 
 **Files:** Create `backend/src/admin-auth/*`, `src/role-permission/*` (sao); Modify `src/app.module.ts`; Create `src/migrations/2026-07-24-create-rbac.sql`
 
-- [ ] **Step 1:** Sao `admin-auth/` + `role-permission/` từ `bm_patient_hub/backend/src/`; entity RBAC bind `BASE_SCHEMA.DEFAULT`; secret `JWT_ADMIN_SECRET`; strategy `'jwt-admin'`; giữ `@Permission('resource:action')` + `PermissionsGuard` + `JwtAdminAuthGuard`. **Bổ sung helper** `req.user.permissions: string[]` để dùng cho phân quyền khoa (Task 22).
+- [ ] **Step 1:** Sao `admin-auth/` + `role-permission/` từ `bm_patient_hub/backend/src/`; entity RBAC bind `BASE_SCHEMA.DEFAULT`; secret `JWT_ADMIN_SECRET`; strategy `'jwt-admin'`; giữ `@Permission('resource:action')` + `PermissionsGuard` + `JwtAdminAuthGuard`. **Bỏ tiền tố `admin/`** trong mọi `@Controller(...)` khi sao (vd `@Controller('auth')` thay vì `@Controller('admin/auth')`) — toàn hệ thống không dùng tiền tố `admin`. **Bổ sung helper** `req.user.permissions: string[]` để dùng cho phân quyền khoa (Task 22).
 - [ ] **Step 2:** Import 2 module vào `app.module.ts`.
 - [ ] **Step 3:** Sao DDL RBAC từ `bm_patient_hub/backend/src/migrations/` → `src/migrations/2026-07-24-create-rbac.sql`; chạy trên Oracle DEFAULT.
 - [ ] **Step 4: Build & commit** — `npm run build && git commit -am "feat(backend): admin-auth + RBAC"`
@@ -265,13 +265,14 @@ export class HealthController {
 **Files:** Create `frontend/*` (sao khung), `.env`
 
 - [ ] **Step 1:** Sao khung từ `bm_patient_hub/frontend`: `package.json` (name `bm-data-quality-frontend`), `vite.config.ts`, `tsconfig.json`, `index.html`, `src/main.ts`, `src/layouts/`, `src/components/`, `src/api/config.ts`, `src/utils/`, `src/composables/usePermissions.ts`, `src/stores/auth.store.ts`, `src/router/index.ts` (giữ auth + backend layout + 403), `src/data/menu.ts` (menu rỗng chờ thêm).
-- [ ] **Step 2: `.env`**
+- [ ] **Step 2: `.env`** (KHÔNG có tiền tố `/admin`)
 ```
-VITE_API_BASE_URL=http://localhost:3300/admin
+VITE_API_BASE_URL=http://localhost:3300
 VITE_API_TIMEOUT=30000
 ```
+Đồng thời sửa giá trị fallback trong `src/api/config.ts` (khi sao từ khuôn mẫu có mặc định `.../admin`) về `http://localhost:3300` (bỏ `/admin`).
 - [ ] **Step 3:** `cd frontend && npm install && npm run dev` → mở trang đăng nhập.
-- [ ] **Step 4:** Đảm bảo `auth.store.ts` gọi đúng `/admin/auth/login` + `/admin/auth/me`; tạo 1 user admin test (seeder/insert tay), ghi cách tạo vào `docs/`.
+- [ ] **Step 4:** Đảm bảo `auth.store.ts` gọi đúng `/auth/login` + `/auth/me` (KHÔNG có `/admin`); tạo 1 user admin test (seeder/insert tay), ghi cách tạo vào `docs/`.
 - [ ] **Step 5: Đăng nhập e2e** — backend + frontend chạy, đăng nhập vào được layout backend.
 - [ ] **Step 6: Commit** — `git add -A && git commit -m "chore(frontend): scaffold + login e2e"`
 
@@ -1329,7 +1330,7 @@ import { ListFindingsDto } from './dto/list-findings.dto';
 @ApiTags('data-quality')
 @ApiBearerAuth('access-token')
 @UseGuards(JwtAdminAuthGuard, PermissionsGuard)
-@Controller('admin/data-quality')
+@Controller('data-quality')
 export class DataQualityController {
   constructor(private service: DataQualityService) {}
   @Get('findings')
@@ -1517,7 +1518,7 @@ import { OrderCheckScheduler } from './order-check.scheduler';
 export class OrderCheckModule {}
 ```
 - [ ] **Step 3:** Import `DqCoreModule` + `OrderCheckModule` vào `app.module.ts`; build.
-- [ ] **Step 4: Chạy dev** — `npm run start:dev`. Trong 1 phút thấy log ScanOrchestrator; `GET /admin/data-quality/findings` (Bearer) trả `{ data, pagination }`.
+- [ ] **Step 4: Chạy dev** — `npm run start:dev`. Trong 1 phút thấy log ScanOrchestrator; `GET /data-quality/findings` (Bearer) trả `{ data, pagination }`.
 - [ ] **Step 5: Commit** — `cd .. && git add -A && git commit -m "feat: wire dq-core + order-check modules; cron + API live"`
 
 ---
