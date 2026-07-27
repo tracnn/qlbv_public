@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\GiaoBan\GiaoBanDeptConfig;
 use App\Models\GiaoBan\GiaoBanUserDepartment;
 use App\Models\GiaoBan\GiaoBanDutyPosition;
+use App\Services\GiaoBan\MetricValidator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -105,12 +106,14 @@ class GiaoBanConfigController extends Controller
             'sort_order' => 'nullable|integer',
             'metrics' => 'required|string',
         ]);
-        if (!$this->validJson($request->input('metrics'))) {
-            return response()->json(['message' => 'metrics không phải JSON hợp lệ'], 422);
+        $loi = MetricValidator::validateJson($request->input('metrics'), $request->input('block_type'));
+        if (!empty($loi)) {
+            return $this->traLoiChiTieu($loi);
         }
         if ($request->filled('his_department_ids') && !$this->validJson($request->input('his_department_ids'))) {
-            return response()->json(['message' => 'his_department_ids không phải JSON hợp lệ'], 422);
+            return response()->json(['message' => 'his_department_ids không phải JSON hợp lệ', 'errors' => []], 422);
         }
+
         $cfg = GiaoBanDeptConfig::create(
             $request->only(['display_name', 'block_type', 'his_department_ids', 'sort_order', 'metrics'])
             + ['is_active' => true]
@@ -124,12 +127,19 @@ class GiaoBanConfigController extends Controller
         if ($request->filled('block_type')) {
             $this->validate($request, ['block_type' => 'in:dieu_tri,kham,can_lam_sang']);
         }
-        if ($request->filled('metrics') && !$this->validJson($request->input('metrics'))) {
-            return response()->json(['message' => 'metrics không phải JSON hợp lệ'], 422);
+        // block_type dung de validate: uu tien gia tri gui len, khong co thi lay tu ban ghi
+        $blockType = $request->filled('block_type') ? $request->input('block_type') : $cfg->block_type;
+
+        if ($request->filled('metrics')) {
+            $loi = MetricValidator::validateJson($request->input('metrics'), $blockType);
+            if (!empty($loi)) {
+                return $this->traLoiChiTieu($loi);
+            }
         }
         if ($request->filled('his_department_ids') && !$this->validJson($request->input('his_department_ids'))) {
-            return response()->json(['message' => 'his_department_ids không phải JSON hợp lệ'], 422);
+            return response()->json(['message' => 'his_department_ids không phải JSON hợp lệ', 'errors' => []], 422);
         }
+
         $cfg->update($request->only(['display_name', 'block_type', 'his_department_ids', 'sort_order', 'metrics', 'is_active']));
         return response()->json(['ok' => true]);
     }
@@ -174,5 +184,11 @@ class GiaoBanConfigController extends Controller
     {
         json_decode($s, true);
         return json_last_error() === JSON_ERROR_NONE;
+    }
+
+    /** Gói danh sách lỗi chỉ tiêu thành 422 để form builder tô đỏ đúng card. */
+    protected function traLoiChiTieu(array $loi)
+    {
+        return response()->json(MetricValidator::toResponsePayload($loi), 422);
     }
 }
