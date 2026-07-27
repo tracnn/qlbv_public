@@ -72,7 +72,11 @@ MetricBuilder.init({
     catalogs: '{{ route('khth.giao-ban-config-catalogs') }}',
     catalog: '{{ url('khth/giao-ban/cau-hinh/danh-muc') }}/__KEY__',
     preview: '{{ url('khth/giao-ban/cau-hinh') }}/__ID__/tinh-thu'
-  }
+  },
+  remoteCatalogs: @json(array_values(array_diff(
+      \App\Services\GiaoBan\GiaoBanCatalogService::allKeys(),
+      \App\Services\GiaoBan\GiaoBanCatalogService::smallKeys()
+  )))
 });
 </script>
 <script>

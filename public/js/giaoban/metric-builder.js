@@ -3,6 +3,7 @@ var MetricBuilder = (function ($) {
   var SCHEMA = {}, ROUTES = {}, CSRF = '', BLOCK_LABELS = {};
   var st = { cfg: null, metrics: [], onSaved: null };
   var CATALOGS = null; // null = chua tai
+  var REMOTE = []; // danh sach key danh muc lon (tim qua AJAX thay vi tai tron goi)
   // Chi so card dang duoc keo (HTML5 drag & drop). null = khong co keo nao dang dien ra.
   var dragSrcIndex = null;
 
@@ -17,7 +18,13 @@ var MetricBuilder = (function ($) {
     ROUTES = opts.routes || {};
     CSRF = opts.csrf || '';
     BLOCK_LABELS = opts.blockLabels || {};
+    REMOTE = opts.remoteCatalogs || [];
     bind();
+  }
+
+  /** Danh muc lon (tim qua AJAX) hay danh muc nho (du lieu co san trong CATALOGS). */
+  function laDanhMucLon(key) {
+    return REMOTE.indexOf(key) >= 0;
   }
 
   /** Cac type dung duoc voi block hien tai. */
@@ -203,7 +210,20 @@ var MetricBuilder = (function ($) {
     return h;
   }
 
-  /** Gan select2 cho cac o danh muc nho (du lieu co san trong CATALOGS). */
+  /** Gan handler ghi gia tri khi nguoi dung doi lua chon select2 (dung chung cho 2 nhanh). */
+  function ganDoiGiaTri($s, i, noi, ten, kieu) {
+    $s.on('change', function () {
+      var v = ($s.val() || []).map(function (x) { return kieu === 'int' ? parseInt(x, 10) : String(x); });
+      datGiaTri(st.metrics[i], noi, ten, v);
+      $('#mb-json').val(JSON.stringify(st.metrics, null, 2));
+    });
+  }
+
+  /**
+   * Gan select2 cho o danh muc.
+   * Nhom nho: du lieu tai tron goi san trong CATALOGS.
+   * Nhom lon (service/room/bed): tim qua AJAX, va tra nguoc ten cho gia tri da luu.
+   */
   function ganSelect2($goc) {
     $goc.find('.mb-cat').each(function () {
       var $s = $(this);
@@ -212,19 +232,46 @@ var MetricBuilder = (function ($) {
       var kieu = $s.data('kieu');
       var i = $s.data('i'), noi = $s.data('noi'), ten = $s.data('ten');
       var daChon = layGiaTri(st.metrics[i], noi, ten) || [];
-      var daChonStr = daChon.map(String);
 
-      (CATALOGS[key] || []).forEach(function (o) {
-        var chon = daChonStr.indexOf(String(o.id)) >= 0;
-        $s.append('<option value="' + esc(o.id) + '"' + (chon ? ' selected' : '') + '>' + esc(o.name) + '</option>');
-      });
+      if (!laDanhMucLon(key)) {
+        // nhom nho: du lieu co san
+        var daChonStr = daChon.map(String);
+        (CATALOGS[key] || []).forEach(function (o) {
+          var chon = daChonStr.indexOf(String(o.id)) >= 0;
+          $s.append('<option value="' + esc(o.id) + '"' + (chon ? ' selected' : '') + '>' + esc(o.name) + '</option>');
+        });
+        $s.select2({ width: '100%', placeholder: 'Chọn...', dropdownParent: $('#mb-modal') });
+        ganDoiGiaTri($s, i, noi, ten, kieu);
+        return;
+      }
 
-      $s.select2({ width: '100%', placeholder: 'Chọn...', dropdownParent: $('#mb-modal') });
-      $s.on('change', function () {
-        var v = ($s.val() || []).map(function (x) { return kieu === 'int' ? parseInt(x, 10) : String(x); });
-        datGiaTri(st.metrics[i], noi, ten, v);
-        $('#mb-json').val(JSON.stringify(st.metrics, null, 2));
+      // nhom lon: tim qua AJAX
+      $s.select2({
+        width: '100%',
+        placeholder: 'Gõ ≥ 2 ký tự để tìm...',
+        dropdownParent: $('#mb-modal'),
+        minimumInputLength: 2,
+        ajax: {
+          url: ROUTES.catalog.replace('__KEY__', key),
+          dataType: 'json',
+          delay: 300,
+          data: function (params) { return { q: params.term }; },
+          processResults: function (rows) {
+            return { results: (rows || []).map(function (o) { return { id: o.id, text: o.name }; }) };
+          }
+        }
       });
+      ganDoiGiaTri($s, i, noi, ten, kieu);
+
+      // tra nguoc ID -> ten cho gia tri da luu, neu khong select2 hien so tran
+      if (daChon.length) {
+        $.get(ROUTES.catalog.replace('__KEY__', key), { ids: daChon.join(',') }, function (rows) {
+          (rows || []).forEach(function (o) {
+            $s.append(new Option(o.name, o.id, true, true));
+          });
+          $s.trigger('change.select2');   // change.select2 KHONG kich handler ghi gia tri
+        });
+      }
     });
   }
 
