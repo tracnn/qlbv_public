@@ -422,6 +422,8 @@ class GiaoBanMetricService
                         }
                         // Guard: nếu không có bất kỳ phạm vi khoa/phòng/dịch vụ cụ thể nào -> trả 0,
                         // tránh đếm nhầm toàn viện khi config chưa gán khoa HIS.
+                        // Guard nay duoc MetricSchema::warningFor phan chieu de canh bao khi tinh thu
+                        // (xem comment trong warningFor) — sua o day phai sua ca ben do.
                         $hasScope = !empty($filter['execute_department_ids']) || !empty($filter['execute_department_id'])
                             || !empty($filter['request_department_ids']) || !empty($filter['request_department_id'])
                             || !empty($filter['execute_room_ids']) || !empty($filter['service_ids']);

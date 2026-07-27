@@ -70,13 +70,26 @@ class GiaoBanCatalogService
     /** Toan bo danh muc nho, cache 60 PHUT (Laravel 5.5 nhan phut). */
     public static function allSmall()
     {
-        return \Illuminate\Support\Facades\Cache::remember('giaoban.catalogs', 60, function () {
-            $out = [];
-            foreach (self::smallKeys() as $key) {
-                $out[$key] = self::layDanhMuc($key);
-            }
-            return $out;
-        });
+        $cached = \Illuminate\Support\Facades\Cache::get('giaoban.catalogs');
+        if ($cached !== null) return $cached;
+
+        $out = [];
+        foreach (self::smallKeys() as $key) {
+            $out[$key] = self::layDanhMuc($key);
+        }
+
+        // Chi ghi cache khi KHONG co danh muc nao rong: layDanhMuc() nuot loi HIS va tra [],
+        // neu cache ca cum rong thi khi HIS song lai van phai cho het 60 phut moi thay du lieu that,
+        // trong khi request van "thanh cong" nen JS khong bao giet gi ca.
+        $coRong = false;
+        foreach ($out as $v) {
+            if (empty($v)) { $coRong = true; break; }
+        }
+        if (!$coRong) {
+            \Illuminate\Support\Facades\Cache::put('giaoban.catalogs', $out, 60); // Laravel 5.5: put() nhan PHUT
+        }
+
+        return $out;
     }
 
     /** Chay 1 truy van danh muc tren HISPro. HIS loi -> mang rong, khong lam trang trang cau hinh. */

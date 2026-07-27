@@ -144,35 +144,39 @@ class GiaoBanReportService
         }
 
         // Khoi tao o nhap tay: ke thua ky truoc / gia tri mac dinh.
-        // CHI cham vao o CHUA TON TAI — fetchAndStore duoc goi lai nhieu lan tren cung bao cao draft.
-        $baoCaoTruoc = GiaoBanReport::where('report_date', '<', $report->report_date)
-            ->orderBy('report_date', 'desc')->first();
+        // Chi khoi tao o LAN LAY SO LIEU DAU TIEN cua bao cao (data_fetched_at con rong).
+        // Cac lan pull sau khong duoc cham vao: neu khoa da chu dong xoa o (manual_value = null),
+        // chep lai gia tri ky truoc se dao nguoc thao tac cua ho.
+        if (!$report->data_fetched_at) {
+            $baoCaoTruoc = GiaoBanReport::where('report_date', '<', $report->report_date)
+                ->orderBy('report_date', 'desc')->first();
 
-        foreach ($configs as $cfg) {
-            $daCo = GiaoBanReportCell::where('report_id', $report->id)
-                ->where('dept_config_id', $cfg->id)
-                ->whereNotNull('manual_value')
-                ->pluck('metric_code')->all();
-
-            $truoc = [];
-            if ($baoCaoTruoc) {
-                $truoc = GiaoBanReportCell::where('report_id', $baoCaoTruoc->id)
+            foreach ($configs as $cfg) {
+                $daCo = GiaoBanReportCell::where('report_id', $report->id)
                     ->where('dept_config_id', $cfg->id)
                     ->whereNotNull('manual_value')
-                    ->pluck('manual_value', 'metric_code')->all();
-            }
+                    ->pluck('metric_code')->all();
 
-            foreach (self::initialManualValues($cfg->metricList(), $daCo, $truoc) as $code => $khoiTao) {
-                $cell = GiaoBanReportCell::firstOrNew([
-                    'report_id' => $report->id,
-                    'dept_config_id' => $cfg->id,
-                    'metric_code' => $code,
-                ]);
-                if ($cell->manual_value !== null) continue;   // chan lop hai: khong bao gio de len so co san
-                $cell->manual_value = $khoiTao['value'];
-                $cell->carried_over = $khoiTao['carried'];
-                $cell->updated_by = $userId;
-                $cell->save();
+                $truoc = [];
+                if ($baoCaoTruoc) {
+                    $truoc = GiaoBanReportCell::where('report_id', $baoCaoTruoc->id)
+                        ->where('dept_config_id', $cfg->id)
+                        ->whereNotNull('manual_value')
+                        ->pluck('manual_value', 'metric_code')->all();
+                }
+
+                foreach (self::initialManualValues($cfg->metricList(), $daCo, $truoc) as $code => $khoiTao) {
+                    $cell = GiaoBanReportCell::firstOrNew([
+                        'report_id' => $report->id,
+                        'dept_config_id' => $cfg->id,
+                        'metric_code' => $code,
+                    ]);
+                    if ($cell->manual_value !== null) continue;   // chan lop hai: khong bao gio de len so co san
+                    $cell->manual_value = $khoiTao['value'];
+                    $cell->carried_over = $khoiTao['carried'];
+                    $cell->updated_by = $userId;
+                    $cell->save();
+                }
             }
         }
 

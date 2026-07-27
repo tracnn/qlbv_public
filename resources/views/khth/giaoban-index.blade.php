@@ -182,13 +182,13 @@ function render(res) {
         '<div class="input-group">' +
         '<input type="number"' + rangBuoc + ' class="form-control cell-input' +
           (edited ? ' bg-warning' : '') + (thieuBatBuoc ? ' mb-thieu' : '') + (keThua ? ' mb-ke-thua' : '') + '"' +
-        ' data-dept="' + cfg.id + '" data-metric="' + m.code + '"' +
+        ' data-dept="' + cfg.id + '" data-metric="' + esc(m.code) + '"' +
         (tip ? ' title="' + esc(tip) + '"' : '') +
         ' value="' + (trong ? '' : Number(val)) + '"' + (editable ? '' : ' readonly') + '>' +
         (inp.unit ? '<span class="input-group-addon">' + esc(inp.unit) + '</span>' : '') +
         (edited && editable
           ? '<span class="input-group-btn"><button class="btn btn-default btn-reset-cell" title="Trả về số tự động" data-dept="' +
-            cfg.id + '" data-metric="' + m.code + '"><i class="fa fa-undo"></i></button></span>'
+            cfg.id + '" data-metric="' + esc(m.code) + '"><i class="fa fa-undo"></i></button></span>'
           : '') +
         '</div></div>';
     });

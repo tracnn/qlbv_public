@@ -547,6 +547,9 @@ var MetricBuilder = (function ($) {
       var $c = $(this).closest('.mb-card');
       st.metrics[$c.data('i')][$(this).data('k')] = $(this).val();
       $c.find('.mb-name-view').text($(this).data('k') === 'name' ? $(this).val() : $c.find('.mb-name-view').text());
+      // Dong bo lai textarea JSON: tab JSON la nguon su that khi roi tab hoac khi luu(),
+      // khong ghi lai o day se lam mat sua doi ma/ten vua go tren tab Form.
+      $('#mb-json').val(JSON.stringify(st.metrics, null, 2));
     });
     $(document).on('click', '#mb-save', luu);
     $(document).on('click', '#mb-preview', tinhThu);
@@ -683,6 +686,9 @@ var MetricBuilder = (function ($) {
         dragSrcIndex = null;
         return;
       }
+      // Bu tru vi tri: sau khi rut phan tu o dragSrcIndex, moi chi so tu do ve sau
+      // deu lui 1 o. Khong bu se lam phan tu roi lech huong so voi cho nguoi dung tha.
+      if (dragSrcIndex < dichI) dichI -= 1;
       var item = st.metrics.splice(dragSrcIndex, 1)[0];
       st.metrics.splice(dichI, 0, item);
       dragSrcIndex = null;

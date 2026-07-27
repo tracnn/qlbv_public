@@ -152,4 +152,39 @@ class MetricSchemaTest extends TestCase
         ]];
         $this->assertNull(MetricSchema::warningFor($m, []));
     }
+
+    /** @test */
+    public function danh_sach_khoa_hasScope_trong_computeAll_khop_voi_danh_sach_warningFor_kiem()
+    {
+        // warningFor() co-tinh guard $hasScope cua GiaoBanMetricService::computeAll (case 'service_count').
+        // Neu mot ben doi danh sach khoa filter ma ben kia khong doi theo, canh bao no_scope
+        // se lech voi thuc te tinh toan. Test nay scrape ca hai nguon va doi chieu danh sach khoa.
+
+        $srcService = file_get_contents(app_path('Services/GiaoBan/GiaoBanMetricService.php'));
+        preg_match('/\$hasScope\s*=(.*?);/s', $srcService, $m1);
+        $this->assertNotEmpty($m1, 'Khong tim thay bieu thuc $hasScope trong GiaoBanMetricService.php');
+        preg_match_all("/\\\$filter\\['([a-z_]+)'\\]/", $m1[1], $m2);
+        $khoaHasScope = array_values(array_unique($m2[1]));
+        sort($khoaHasScope);
+
+        $srcSchema = file_get_contents(app_path('Services/GiaoBan/MetricSchema.php'));
+        preg_match('/\$khoaConLai\s*=(.*?);/s', $srcSchema, $m3);
+        $this->assertNotEmpty($m3, 'Khong tim thay bien $khoaConLai trong MetricSchema::warningFor');
+        // Bo phan dieu kien truoc dau '?' (chua $f['execute_department_id_self'], khong phai
+        // khoa can doi chieu), chi lay khoa trong hai mang [...] cua hai nhanh ternary.
+        $vePhaiTernary = strstr($m3[1], '?');
+        $this->assertNotFalse($vePhaiTernary, 'khoaConLai khong phai bieu thuc ternary nhu ky vong');
+        preg_match_all('/\[([^\]]*)\]/', $vePhaiTernary, $mangCon);
+        $khoaWarningFor = [];
+        foreach ($mangCon[1] as $noiDung) {
+            preg_match_all("/'([a-z_]+)'/", $noiDung, $m4);
+            $khoaWarningFor = array_merge($khoaWarningFor, $m4[1]);
+        }
+        $khoaWarningFor = array_values(array_unique($khoaWarningFor));
+        sort($khoaWarningFor);
+
+        $this->assertEquals($khoaHasScope, $khoaWarningFor,
+            'Danh sach khoa filter trong $hasScope (computeAll) va $khoaConLai (warningFor) da lech nhau. '
+            . 'Sua guard o mot ben thi phai sua ca ben kia (xem comment o ca hai noi).');
+    }
 }
