@@ -96,6 +96,19 @@ class MetricSchema
         ],
     ];
 
+    /**
+     * O khai bao ap cho MOI loai chi tieu, khac voi 'fields'/'filter' vốn theo tung loai.
+     *
+     * Man Tong quan tren trinh chieu gom theo NHAN chu khong theo MA: cac chi tieu o nhieu khoa
+     * cung `overview_label` se cong chung thanh mot the. Nho vay man do khong bao gio trong lai
+     * khi KHTH doi ma chi tieu — day la ly do ton tai cua hai khoa nay.
+     */
+    const COMMON_FIELDS = [
+        'overview'       => ['widget' => 'bool', 'label' => 'Hiện ở màn Tổng quan'],
+        'overview_label' => ['widget' => 'text', 'label' => 'Nhãn gộp trên Tổng quan', 'max' => 60,
+                             'show_if' => ['overview' => [true]]],
+    ];
+
     /** Cac type khong can khoa HIS de tinh duoc. */
     const KHONG_CAN_KHOA = ['admission', 'bed_count', 'manual'];
 

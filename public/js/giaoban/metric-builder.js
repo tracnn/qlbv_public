@@ -1,6 +1,6 @@
 /* Form builder chi tieu giao ban. Render field dong tu MetricSchema — khong hard-code type nao. */
 var MetricBuilder = (function ($) {
-  var SCHEMA = {}, ROUTES = {}, CSRF = '', BLOCK_LABELS = {};
+  var SCHEMA = {}, COMMON_FIELDS = {}, ROUTES = {}, CSRF = '', BLOCK_LABELS = {};
   var st = { cfg: null, metrics: [], onSaved: null, templates: [], configs: [] };
   var CATALOGS = null; // null = chua tai
   var REMOTE = []; // danh sach key danh muc lon (tim qua AJAX thay vi tai tron goi)
@@ -22,6 +22,7 @@ var MetricBuilder = (function ($) {
 
   function init(opts) {
     SCHEMA = opts.schema || {};
+    COMMON_FIELDS = opts.commonFields || {};
     ROUTES = opts.routes || {};
     CSRF = opts.csrf || '';
     BLOCK_LABELS = opts.blockLabels || {};
@@ -196,9 +197,10 @@ var MetricBuilder = (function ($) {
     for (var khoa in meta.show_if) {
       var hienTai = layGiaTri(m, noi, khoa);
       if (hienTai === undefined || hienTai === null || hienTai === '') {
-        // chua chon thi lay mac dinh khai trong schema cua khoa do
-        var d = (SCHEMA.manual && SCHEMA.manual.fields[khoa]) ? SCHEMA.manual.fields[khoa].default : undefined;
-        hienTai = d;
+        // chua chon thi lay mac dinh khai trong schema cua khoa do (o dung chung hoac o cua loai manual)
+        var khai = COMMON_FIELDS[khoa] ||
+                   ((SCHEMA.manual && SCHEMA.manual.fields[khoa]) ? SCHEMA.manual.fields[khoa] : null);
+        hienTai = khai ? khai.default : undefined;
       }
       if (meta.show_if[khoa].indexOf(hienTai) < 0) return false;
     }
@@ -209,7 +211,7 @@ var MetricBuilder = (function ($) {
   function laKhoaDieuKhien(m, ten) {
     var def = SCHEMA[m.type];
     if (!def) return false;
-    var nhom = [def.fields || {}, def.filter || {}];
+    var nhom = [def.fields || {}, def.filter || {}, COMMON_FIELDS];
     for (var n = 0; n < nhom.length; n++) {
       for (var k in nhom[n]) {
         var si = nhom[n][k].show_if;
@@ -294,6 +296,16 @@ var MetricBuilder = (function ($) {
     if (oFilter) {
       h += '<div style="margin-top:6px"><b class="text-muted">Điều kiện lọc</b></div>' +
            '<div class="row">' + oFilter + '</div>';
+    }
+
+    // O dung chung cho moi loai chi tieu (hien o man Tong quan, nhan gop).
+    var oChung = '';
+    for (var ck in COMMON_FIELDS) {
+      oChung += renderField(m, i, 'goc', ck, COMMON_FIELDS[ck]);
+    }
+    if (oChung) {
+      h += '<div style="margin-top:6px"><b class="text-muted">Màn Tổng quan</b></div>' +
+           '<div class="row">' + oChung + '</div>';
     }
 
     return h;

@@ -78,11 +78,50 @@ class MetricValidator
 
             $def = MetricSchema::get($type);
 
+            $loi = array_merge($loi, self::kiemKhoaDungChung($i, $m, $type));
+
             if ($type === 'manual') {
                 $loi = array_merge($loi, self::kiemNhapTay($i, isset($m['input']) ? $m['input'] : [], $def['fields']));
             } else {
                 $loi = array_merge($loi, self::kiemFields($i, $m, $def['fields']));
                 $loi = array_merge($loi, self::kiemFilter($i, isset($m['filter']) ? $m['filter'] : [], $def));
+            }
+        }
+
+        return $loi;
+    }
+
+    /**
+     * Kiem hai khoa dung chung cho moi loai chi tieu: overview / overview_label.
+     * Xem MetricSchema::COMMON_FIELDS.
+     */
+    protected static function kiemKhoaDungChung($i, array $m, $type)
+    {
+        $loi = [];
+        $batOverview = isset($m['overview']) && $m['overview'] !== false && $m['overview'] !== '';
+
+        if (isset($m['overview']) && !is_bool($m['overview'])) {
+            $loi[] = self::loi($i, 'overview', "'overview' phải là true/false.");
+            $batOverview = false;
+        }
+
+        // Van ban khong cong duoc -> chan ngay tu cau hinh, dung de man Tong quan am tham bo qua.
+        if ($batOverview && $type === 'manual') {
+            $in = isset($m['input']) && is_array($m['input']) ? $m['input'] : [];
+            if (isset($in['value_type']) && $in['value_type'] === 'text') {
+                $loi[] = self::loi($i, 'overview',
+                    'Chỉ tiêu kiểu chuỗi không hiện được ở màn Tổng quan (không cộng được văn bản).');
+            }
+        }
+
+        if (isset($m['overview_label']) && $m['overview_label'] !== '') {
+            if (!is_string($m['overview_label'])) {
+                $loi[] = self::loi($i, 'overview_label', 'Nhãn gộp phải là chuỗi.');
+            } elseif (mb_strlen($m['overview_label']) > MetricSchema::COMMON_FIELDS['overview_label']['max']) {
+                $loi[] = self::loi($i, 'overview_label', 'Nhãn gộp tối đa 60 ký tự.');
+            } elseif (!$batOverview) {
+                $loi[] = self::loi($i, 'overview_label',
+                    'Đã khai nhãn gộp thì phải bật "Hiện ở màn Tổng quan", nếu không nhãn này không dùng vào đâu.');
             }
         }
 

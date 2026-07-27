@@ -65,6 +65,7 @@
 <script>
 MetricBuilder.init({
   schema: @json(\App\Services\GiaoBan\MetricSchema::TYPES),
+  commonFields: @json(\App\Services\GiaoBan\MetricSchema::COMMON_FIELDS),
   blockLabels: { dieu_tri: 'Điều trị (nội trú)', kham: 'Khám (ngoại trú)', can_lam_sang: 'Cận lâm sàng' },
   csrf: '{{ csrf_token() }}',
   routes: {

@@ -231,6 +231,69 @@ class MetricValidatorTest extends TestCase
         $this->assertEquals('input.carry_over', $loi[0]['field']);
     }
 
+    // ===== Hai khoa dung chung: overview / overview_label =====
+
+    /** @test */
+    public function danh_dau_hien_o_tong_quan_kem_nhan_gop_la_hop_le()
+    {
+        $m = [['code' => 'bn_cu', 'name' => 'BN cũ', 'type' => 'census_from',
+               'overview' => true, 'overview_label' => 'PT / Đẻ']];
+
+        $this->assertSame([], MetricValidator::validate($m, 'dieu_tri'));
+    }
+
+    /** @test */
+    public function chi_tieu_TU_DONG_cung_danh_dau_duoc_vi_hai_khoa_nay_dung_chung()
+    {
+        foreach (['census_from', 'movement_in', 'end_type'] as $type) {
+            $m = [['code' => 'x', 'name' => 'X', 'type' => $type, 'overview' => true]];
+            if ($type === 'end_type') $m[0]['end_codes'] = ['RV'];
+
+            $this->assertSame([], MetricValidator::validate($m, 'dieu_tri'),
+                "Type '$type' le ra phai danh dau overview duoc");
+        }
+    }
+
+    /** @test */
+    public function overview_phai_la_true_false()
+    {
+        $m = [['code' => 'bn_cu', 'name' => 'BN cũ', 'type' => 'census_from', 'overview' => 'co']];
+        $loi = MetricValidator::validate($m, 'dieu_tri');
+
+        $this->assertEquals('overview', $loi[0]['field']);
+    }
+
+    /** @test */
+    public function nhan_gop_qua_dai_bi_chan()
+    {
+        $m = [['code' => 'bn_cu', 'name' => 'BN cũ', 'type' => 'census_from',
+               'overview' => true, 'overview_label' => str_repeat('a', 61)]];
+        $loi = MetricValidator::validate($m, 'dieu_tri');
+
+        $this->assertEquals('overview_label', $loi[0]['field']);
+    }
+
+    /** @test */
+    public function khai_nhan_gop_ma_khong_bat_overview_bi_chan()
+    {
+        $m = [['code' => 'bn_cu', 'name' => 'BN cũ', 'type' => 'census_from',
+               'overview_label' => 'PT / Đẻ']];
+        $loi = MetricValidator::validate($m, 'dieu_tri');
+
+        $this->assertEquals('overview_label', $loi[0]['field']);
+    }
+
+    /** @test */
+    public function chi_tieu_chuoi_khong_danh_dau_overview_duoc()
+    {
+        // khong cong duoc van ban -> chan tu luc cau hinh, dung de man Tong quan am tham bo qua
+        $m = $this->chiTieuChuoi(['value_type' => 'text']);
+        $m[0]['overview'] = true;
+        $loi = MetricValidator::validate($m, 'dieu_tri');
+
+        $this->assertEquals('overview', $loi[0]['field']);
+    }
+
     /** @test */
     public function json_hong_tra_loi_cap_danh_sach()
     {

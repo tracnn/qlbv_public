@@ -88,6 +88,18 @@ class MetricSchemaTest extends TestCase
     }
 
     /** @test */
+    public function common_fields_ap_cho_moi_loai_chi_tieu()
+    {
+        $c = MetricSchema::COMMON_FIELDS;
+
+        $this->assertEquals(['overview', 'overview_label'], array_keys($c));
+        $this->assertEquals('bool', $c['overview']['widget']);
+        // O nhan chi hien sau khi tich — dung lai co che show_if
+        $this->assertEquals(['overview' => [true]], $c['overview_label']['show_if']);
+        $this->assertEquals(60, $c['overview_label']['max']);
+    }
+
+    /** @test */
     public function cac_o_chi_co_nghia_voi_so_deu_khai_show_if()
     {
         $fields = MetricSchema::TYPES['manual']['fields'];
