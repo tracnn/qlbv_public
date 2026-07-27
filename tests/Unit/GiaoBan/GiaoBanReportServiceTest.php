@@ -52,4 +52,61 @@ class GiaoBanReportServiceTest extends TestCase
         ];
         $this->assertEquals(19.0, GiaoBanReportService::sumMetric($cells, 'hien_co', [1, 2]));
     }
+
+    protected function metricsNhapTay()
+    {
+        return [
+            ['code' => 'bn_cu', 'name' => 'BN cũ', 'type' => 'census_from'],
+            ['code' => 'ke_thua', 'name' => 'Giường kế hoạch', 'type' => 'manual',
+             'input' => ['carry_over' => true]],
+            ['code' => 'mac_dinh', 'name' => 'Ca mổ', 'type' => 'manual',
+             'input' => ['default' => 0]],
+            ['code' => 'tron', 'name' => 'Ghi chú số', 'type' => 'manual'],
+        ];
+    }
+
+    /** @test */
+    public function ke_thua_gia_tri_ky_truoc_va_ap_gia_tri_mac_dinh()
+    {
+        $ra = GiaoBanReportService::initialManualValues(
+            $this->metricsNhapTay(), [], ['ke_thua' => 12.0, 'tron' => 5.0]
+        );
+
+        $this->assertEquals(['value' => 12.0, 'carried' => true], $ra['ke_thua']);
+        $this->assertEquals(['value' => 0.0, 'carried' => false], $ra['mac_dinh']);
+        // 'tron' khong bat carry_over -> khong ke thua du ky truoc co so
+        $this->assertArrayNotHasKey('tron', $ra);
+        // chi tieu tu dong khong bao gio duoc gan manual
+        $this->assertArrayNotHasKey('bn_cu', $ra);
+    }
+
+    /** @test */
+    public function khong_dung_toi_o_da_ton_tai()
+    {
+        // day la test chong mat du lieu: fetchAndStore chay lai nhieu lan tren cung bao cao draft
+        $ra = GiaoBanReportService::initialManualValues(
+            $this->metricsNhapTay(), ['ke_thua', 'mac_dinh'], ['ke_thua' => 12.0]
+        );
+
+        $this->assertSame([], $ra);
+    }
+
+    /** @test */
+    public function ky_truoc_khong_co_so_thi_khong_ke_thua()
+    {
+        $ra = GiaoBanReportService::initialManualValues($this->metricsNhapTay(), [], []);
+
+        $this->assertArrayNotHasKey('ke_thua', $ra);
+        $this->assertEquals(['value' => 0.0, 'carried' => false], $ra['mac_dinh']);
+    }
+
+    /** @test */
+    public function carry_over_uu_tien_hon_default()
+    {
+        $metrics = [['code' => 'x', 'name' => 'X', 'type' => 'manual',
+                     'input' => ['carry_over' => true, 'default' => 0]]];
+
+        $ra = GiaoBanReportService::initialManualValues($metrics, [], ['x' => 7.0]);
+        $this->assertEquals(['value' => 7.0, 'carried' => true], $ra['x']);
+    }
 }

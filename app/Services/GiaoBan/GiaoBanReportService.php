@@ -75,6 +75,37 @@ class GiaoBanReportService
         return $sum;
     }
 
+    /**
+     * Gia tri khoi tao cho cac o nhap tay CHUA TON TAI trong bao cao.
+     * carry_over uu tien hon default. O da ton tai khong bao gio bi dung toi
+     * — neu khong, chay lai fetchAndStore se ghi de so khoa vua sua tay.
+     *
+     * @param array $metrics    metricList() cua mot dept config
+     * @param array $daCoCode   cac metric_code da co cell trong bao cao hien tai
+     * @param array $prevManual map metric_code => manual_value cua bao cao lien truoc
+     * @return array map metric_code => ['value' => float, 'carried' => bool]
+     */
+    public static function initialManualValues(array $metrics, array $daCoCode, array $prevManual)
+    {
+        $out = [];
+        foreach ($metrics as $m) {
+            if (!isset($m['type']) || $m['type'] !== 'manual') continue;
+            $code = isset($m['code']) ? $m['code'] : null;
+            if ($code === null || in_array($code, $daCoCode, true)) continue;
+
+            $in = isset($m['input']) && is_array($m['input']) ? $m['input'] : [];
+
+            if (!empty($in['carry_over']) && isset($prevManual[$code]) && $prevManual[$code] !== null) {
+                $out[$code] = ['value' => (float) $prevManual[$code], 'carried' => true];
+                continue;
+            }
+            if (isset($in['default']) && is_numeric($in['default'])) {
+                $out[$code] = ['value' => (float) $in['default'], 'carried' => false];
+            }
+        }
+        return $out;
+    }
+
     // ===== Phần persistence =====
 
     /** Lấy (tạo nếu chưa có) report của ngày. */
