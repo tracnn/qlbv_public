@@ -60,6 +60,22 @@ Màn trình chiếu dùng chính endpoint `show`, nên nếu không chặn thì 
 - Nút **Trình chiếu** và **Xuất Excel** chuyển vào trong `@if($isAdmin)` — để ngoài thì người khoa vẫn thấy nút rồi bấm vào ăn 403.
 - Khối giường không cần sửa: màn nhập liệu chưa bao giờ render nó (chỉ màn trình chiếu dùng), dù trước đây vẫn nhận dữ liệu.
 
+### Thanh công cụ của người dùng khoa
+
+Sau khi gỡ Trình chiếu và Xuất Excel, người khoa chỉ còn một nút **Làm mới**, kèm hai ô **Từ thời điểm** / **Đến thời điểm** vốn chỉ là tham số cho "Lấy số liệu" — thao tác họ không có. Ba ô thì hai ô vô nghĩa.
+
+Tệ hơn, khi KHTH chưa lấy số liệu, màn báo *"(chưa có dữ liệu — bấm Lấy số liệu)"* — chỉ vào một nút không tồn tại trên màn của họ. Hai vấn đề này có từ trước; việc gỡ hai nút chỉ làm chúng lộ ra.
+
+Đã chốt **không** mở quyền "Lấy số liệu" cho người khoa: thao tác đó quét HIS rồi ghi lại `auto_value` cho **toàn bộ** khoa theo mốc thời gian người bấm chọn, nên một khoa bấm là kéo số cho cả viện, và nhiều khoa bấm cùng lúc sẽ dội vào HIS. Nó đúng là việc của KHTH.
+
+Thay vào đó:
+- Ẩn hai ô thời gian với người khoa; cột nút giãn từ `col-md-6` sang `col-md-10`.
+- Khi chưa có báo cáo, người khoa thấy hộp thông tin *"Phòng KHTH chưa lấy số liệu từ HIS cho ngày giao ban đã chọn"* kèm gợi ý bấm Làm mới hoặc chọn ngày khác. Admin vẫn thấy thông báo cũ vì với họ nút đó có thật.
+
+### Khoa được gán nhưng đã tắt `is_active`
+
+`chuaPhanCongKhoa` nhận danh sách **nhìn thấy** (kết quả `visibleDeptConfigIds`) chứ không phải danh sách **được gán**. Nếu nhận danh sách được gán thì người được gán một khoa vừa bị tắt sẽ có `assigned` không rỗng nhưng màn vẫn trống — và không nhận được thông báo nào. Hai trường hợp cùng ra một kết quả nên phải cùng một cờ.
+
 ## Hệ quả cần biết
 
 Cảnh báo lệch cân đối của người dùng khoa thu hẹp theo — họ chỉ thấy cân đối khoa mình. Nếu trước giờ có ai dùng màn này để nhìn toàn viện thì phải chuyển sang màn trình chiếu, và cần quyền admin.
@@ -82,5 +98,7 @@ Chưa kiểm trên trình duyệt (cùng lý do với đợt form builder — kh
 - [ ] Tài khoản đó **không thấy** nút Trình chiếu và Xuất Excel.
 - [ ] Gõ thẳng URL `khth/giao-ban/export` bằng tài khoản đó → **403**.
 - [ ] Đăng nhập tài khoản **chưa được gán khoa** → thấy hộp vàng "Bạn chưa được phân công khoa nào".
-- [ ] Đăng nhập **admin** → thấy đủ 3 khoa, trình chiếu và xuất Excel chạy như cũ.
+- [ ] Tài khoản khoa **không thấy** hai ô Từ/Đến thời điểm; chỉ còn Ngày giao ban + Làm mới.
+- [ ] Chọn một ngày **KHTH chưa lấy số liệu** bằng tài khoản khoa → thấy hộp xanh "Phòng KHTH chưa lấy số liệu…", **không** thấy dòng bảo bấm nút không có.
+- [ ] Đăng nhập **admin** → thấy đủ 3 khoa, đủ hai ô thời gian, trình chiếu và xuất Excel chạy như cũ.
 - [ ] Admin bấm Trình chiếu → vẫn hiện toàn viện kèm công suất giường.

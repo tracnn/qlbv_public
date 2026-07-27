@@ -15,11 +15,15 @@
     <div class="row">
       <div class="col-md-2"><label>Ngày giao ban</label>
         <input type="date" id="report_date" class="form-control" value="{{ date('Y-m-d') }}"></div>
+      {{-- Hai mốc thời gian chỉ là tham số cho "Lấy số liệu" (thao tác của KHTH).
+           Người khoa không có nút đó nên hiện ra chỉ tổ rối. --}}
+      @if($isAdmin)
       <div class="col-md-2"><label>Từ thời điểm</label>
         <input type="datetime-local" id="from_time" class="form-control"></div>
       <div class="col-md-2"><label>Đến thời điểm</label>
         <input type="datetime-local" id="to_time" class="form-control"></div>
-      <div class="col-md-6" style="padding-top:24px">
+      @endif
+      <div class="col-md-{{ $isAdmin ? 6 : 10 }}" style="padding-top:24px">
         <button id="btn-view" class="btn btn-default"><i class="fa fa-refresh"></i> Làm mới</button>
         {{-- Trình chiếu và Xuất Excel đều là số liệu toàn viện -> chỉ admin. Để ngoài thì
              người khoa vẫn thấy nút rồi bấm vào ăn 403. --}}
@@ -139,7 +143,16 @@ function render(res) {
     return;
   }
   if (!res.report) {
-    $('#report-status').text('(chưa có dữ liệu — bấm Lấy số liệu)');
+    // Nguoi khoa khong co nut "Lay so lieu" -> dung chi ho bam mot nut khong ton tai.
+    if (IS_ADMIN) {
+      $('#report-status').text('(chưa có dữ liệu — bấm Lấy số liệu)');
+    } else {
+      $('#report-status').text('');
+      $body.html('<div class="callout callout-info">' +
+        '<h4><i class="fa fa-clock-o"></i> Chưa có số liệu cho ngày này</h4>' +
+        '<p>Phòng KHTH chưa lấy số liệu từ HIS cho ngày giao ban đã chọn. ' +
+        'Bấm <b>Làm mới</b> để kiểm tra lại, hoặc chọn ngày khác.</p></div>');
+    }
     return;
   }
   var r = res.report;

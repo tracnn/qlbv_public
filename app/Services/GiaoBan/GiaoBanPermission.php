@@ -47,10 +47,17 @@ class GiaoBanPermission
         return $out;
     }
 
-    /** User thường chưa được gán khoa nào -> màn giao ban trống, cần báo cho họ biết vì sao. */
-    public static function chuaPhanCongKhoa($isAdmin, array $assignedDeptIds)
+    /**
+     * User thường không nhìn thấy khoa nào -> màn giao ban trống, phải báo cho họ biết vì sao.
+     *
+     * Nhận danh sách khoa NHÌN THẤY (kết quả visibleDeptConfigIds), không phải danh sách được gán:
+     * người được gán một khoa đã tắt is_active cũng ra màn trống y hệt, và cũng cần thông báo.
+     *
+     * @param array $visibleDeptConfigIds kết quả của visibleDeptConfigIds()
+     */
+    public static function chuaPhanCongKhoa($isAdmin, array $visibleDeptConfigIds)
     {
         if ($isAdmin) return false;
-        return empty($assignedDeptIds);
+        return empty($visibleDeptConfigIds);
     }
 }

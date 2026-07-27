@@ -149,7 +149,7 @@ class GiaoBanController extends Controller
             'report' => $reportOut, 'configs' => $configs, 'cells' => $cells,
             'balance_warnings' => $warnings,
             'is_admin' => $isAdmin, 'assigned_dept_ids' => $assigned,
-            'no_assignment' => GiaoBanPermission::chuaPhanCongKhoa($isAdmin, $assigned),
+            'no_assignment' => GiaoBanPermission::chuaPhanCongKhoa($isAdmin, $visibleIds),
             'duty_positions' => $positions, 'duties' => $duties,
             'can_edit_duty' => $this->canEditDuty(),
             'bed_total' => $bedTotal, 'bed_used' => $bedUsed,

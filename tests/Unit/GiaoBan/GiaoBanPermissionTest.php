@@ -74,11 +74,22 @@ class GiaoBanPermissionTest extends TestCase
     }
 
     /** @test */
-    public function chua_gan_khoa_nao_thi_bi_coi_la_chua_phan_cong()
+    public function khong_nhin_thay_khoa_nao_thi_bi_coi_la_chua_phan_cong()
     {
         $this->assertTrue(GiaoBanPermission::chuaPhanCongKhoa(false, []));
         $this->assertFalse(GiaoBanPermission::chuaPhanCongKhoa(false, [2]));
         // admin khong bao gio bi coi la chua phan cong — ho thay tat
         $this->assertFalse(GiaoBanPermission::chuaPhanCongKhoa(true, []));
+    }
+
+    /** @test */
+    public function duoc_gan_khoa_da_tat_is_active_cung_bi_coi_la_chua_phan_cong()
+    {
+        // Nhan danh sach NHIN THAY chu khong phai danh sach duoc gan: user gan khoa 9 nhung
+        // khoa 9 da tat -> visibleDeptConfigIds tra [] -> man trong -> phai bao cho ho biet.
+        $nhinThay = GiaoBanPermission::visibleDeptConfigIds(false, [9], [1, 2, 3]);
+
+        $this->assertSame([], $nhinThay);
+        $this->assertTrue(GiaoBanPermission::chuaPhanCongKhoa(false, $nhinThay));
     }
 }
