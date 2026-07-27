@@ -18,7 +18,7 @@
 - **Oracle trả tên cột HOA** — mọi row lấy từ connection `HISPro` phải qua `array_change_key_case((array) $row, CASE_LOWER)` trước khi dùng.
 - **Mọi truy vấn HIS bọc `try/catch (\Exception $e)`** và trả mảng rỗng khi lỗi, theo khuôn `GiaoBanConfigController::searchUsers` (dòng 74-97). HIS lỗi không được làm trắng trang cấu hình.
 - **Không mock bằng Mockery cho method có khai báo return type** — hỏng ở phiên bản PHPUnit/Mockery của dự án. Dùng dữ liệu thật, fake object, hoặc test hàm thuần.
-- **Test hàm thuần là ưu tiên số một.** Khuôn mẫu đã có: `tests/Unit/GiaoBan/GiaoBanReportServiceTest.php` test toàn static method, không chạm DB. Feature test theo khuôn `tests/Feature/RevenueDeptRoomControllerTest.php` (class `FakeXAdminUser extends \App\User` override `can()`, rồi `actingAs`).
+- **Test hàm thuần là ưu tiên số một.** Khuôn mẫu đã có: `tests/Unit/GiaoBan/GiaoBanReportServiceTest.php` test toàn static method, không chạm DB. Mọi test trong kế hoạch này đều theo khuôn đó.
 - **Chạy test:** `vendor/bin/phpunit --filter <TenTest>`. Suite đầy đủ: `vendor/bin/phpunit`.
 - **Chỉ viết test trong `tests/Unit`.** Baseline đo ngày 2026-07-27: `tests/Unit` xanh sạch, còn **toàn bộ `tests/Feature` đang đỏ** vì hai lý do có sẵn từ trước — Mockery vỡ với return type (15 errors) và Feature test trả 500/403/302 kể cả `ExampleTest` (số lượng dao động giữa các lần chạy, phụ thuộc tài nguyên ngoài). Không thêm test nào vào `tests/Feature`; đường controller được nghiệm thu bằng trình duyệt. Gate "không có test đỏ mới" **chỉ áp dụng cho suite Unit**: `vendor/bin/phpunit --testsuite Unit`.
 - **Dự án không có hạ tầng test JS** (không có `package.json`). Task JS verify bằng trình duyệt với bước quan sát cụ thể ghi trong task.
@@ -44,7 +44,8 @@
 | `tests/Unit/GiaoBan/MetricSchemaTest.php` | Đối chiếu schema ↔ `computeAll`. |
 | `tests/Unit/GiaoBan/MetricValidatorTest.php` | Từng nhánh validate. |
 | `tests/Unit/GiaoBan/GiaoBanCatalogServiceTest.php` | Khai báo danh mục + dựng SQL. |
-| `tests/Feature/GiaoBan/GiaoBanConfigControllerTest.php` | 422 có `index`/`field`, endpoint danh mục, tính thử. |
+| `tests/Unit/GiaoBan/MetricTemplateSeedTest.php` | 5 mẫu chuyển từ blade sang vẫn đạt schema. |
+| `tests/Unit/GiaoBan/ManualInputRuleTest.php` | Ràng buộc giá trị nhập tay phía server. |
 
 **Sửa:**
 
@@ -1842,7 +1843,7 @@ git commit -m "feat(giaoban): CRUD mau chi tieu co validate schema"
 - Modify: `app/Services/GiaoBan/MetricSchema.php` (thêm `warningFor()`)
 - Modify: `app/Http/Controllers/KHTH/GiaoBanConfigController.php` (thêm `preview()`)
 - Modify: `routes/web.php`
-- Test: `tests/Unit/GiaoBan/MetricSchemaTest.php` (bổ sung), `tests/Feature/GiaoBan/GiaoBanConfigControllerTest.php` (bổ sung)
+- Test: `tests/Unit/GiaoBan/MetricSchemaTest.php` (bổ sung)
 
 **Interfaces:**
 - Consumes: `MetricSchema`, `MetricValidator` (Task 2, 3), `GiaoBanMetricService::computeAll()` (đã có, **không sửa**), `GiaoBanDeptConfig` (đã có).
