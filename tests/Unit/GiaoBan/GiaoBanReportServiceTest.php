@@ -101,6 +101,19 @@ class GiaoBanReportServiceTest extends TestCase
     }
 
     /** @test */
+    public function ky_truoc_co_khoa_nhung_gia_tri_null_thi_khong_ke_thua()
+    {
+        // isset() hien dang loc null; test nay khoa hanh vi do lai, tranh ai doi sang
+        // array_key_exists() roi bien null thanh 0.0 kem carried => true.
+        $ra = GiaoBanReportService::initialManualValues(
+            $this->metricsNhapTay(), [], ['ke_thua' => null]
+        );
+
+        $this->assertArrayNotHasKey('ke_thua', $ra);
+        $this->assertEquals(['value' => 0.0, 'carried' => false], $ra['mac_dinh']);
+    }
+
+    /** @test */
     public function carry_over_uu_tien_hon_default()
     {
         $metrics = [['code' => 'x', 'name' => 'X', 'type' => 'manual',

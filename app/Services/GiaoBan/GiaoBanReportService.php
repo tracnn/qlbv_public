@@ -81,7 +81,8 @@ class GiaoBanReportService
      * — neu khong, chay lai fetchAndStore se ghi de so khoa vua sua tay.
      *
      * @param array $metrics    metricList() cua mot dept config
-     * @param array $daCoCode   cac metric_code da co cell trong bao cao hien tai
+     * @param array $daCoCode   cac metric_code (kieu chuoi string) da co cell trong bao cao hien tai;
+     *                          so sanh strict (in_array ... true) nen phai dung kieu string, khong duoc int
      * @param array $prevManual map metric_code => manual_value cua bao cao lien truoc
      * @return array map metric_code => ['value' => float, 'carried' => bool]
      */
