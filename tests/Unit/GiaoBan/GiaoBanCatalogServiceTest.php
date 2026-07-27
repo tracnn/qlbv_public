@@ -38,4 +38,15 @@ class GiaoBanCatalogServiceTest extends TestCase
         // metric end_type luu ["RV","CV"] chu khong luu id -> phai danh dau rieng
         $this->assertEquals('treatment_end_type_code', GiaoBanCatalogService::CATALOGS['end_type']['id_col']);
     }
+
+    /** @test */
+    public function room_dung_view_v_his_room_khong_phai_his_room_hay_his_execute_room()
+    {
+        // tdl_execute_room_id (khoa duoc GiaoBanMetricService::buildServiceCountSql loc) tro toi
+        // his_room.id, nhung his_room khong co cot ten; his_execute_room co ten nhung id lai sai
+        // khoa (~53% lech). v_his_room la view dang duoc RevenueDeptRoomService dung dung cho
+        // chinh muc dich nay -> phai giu nguyen, khong "sua lai cho dung ten bang".
+        $this->assertEquals('v_his_room', GiaoBanCatalogService::CATALOGS['room']['table']);
+        $this->assertEquals('room_name', GiaoBanCatalogService::CATALOGS['room']['name_col']);
+    }
 }

@@ -8,6 +8,7 @@ namespace App\Services\GiaoBan;
  */
 class GiaoBanCatalogService
 {
+    // Dung cho phan truy van (task sau) khi mo connection Oracle HIS.
     const CONN = 'HISPro';
 
     /** key => bang HIS, cot dinh danh, cot ten, co phai danh muc lon hay khong */
@@ -20,9 +21,10 @@ class GiaoBanCatalogService
         // end_type dinh danh bang CODE ('RV','CV'...) vi metric luu code chu khong luu id
         'end_type'       => ['table' => 'his_treatment_end_type', 'id_col' => 'treatment_end_type_code', 'name_col' => 'treatment_end_type_name', 'remote' => false, 'label' => 'Loại kết thúc'],
         'service'        => ['table' => 'his_service',            'id_col' => 'id', 'name_col' => 'service_name',            'remote' => true,  'label' => 'Dịch vụ'],
-        // bang his_room khong co cot ten (chi co code phu tro nhu bhyt_code, g_code...);
-        // "phong thuc hien" thuc te nam o his_execute_room (execute_room_code / execute_room_name)
-        'room'           => ['table' => 'his_execute_room',       'id_col' => 'id', 'name_col' => 'execute_room_name',       'remote' => true,  'label' => 'Phòng thực hiện'],
+        // tdl_execute_room_id (GiaoBanMetricService::buildServiceCountSql) tro toi his_room.id,
+        // nhung his_room khong co cot ten. View v_his_room ghep san ten phong + ten khoa
+        // (RevenueDeptRoomService::buildRoomDetailSqlAndBindings da dung view nay cho dung muc dich).
+        'room'           => ['table' => 'v_his_room',              'id_col' => 'id', 'name_col' => 'room_name',               'remote' => true,  'label' => 'Phòng thực hiện'],
         'bed'            => ['table' => 'his_bed',                'id_col' => 'id', 'name_col' => 'bed_name',                'remote' => true,  'label' => 'Giường'],
     ];
 
@@ -36,7 +38,9 @@ class GiaoBanCatalogService
     {
         $out = [];
         foreach (self::CATALOGS as $k => $c) {
-            if (!$c['remote']) $out[] = $k;
+            if (!$c['remote']) {
+                $out[] = $k;
+            }
         }
         return $out;
     }
