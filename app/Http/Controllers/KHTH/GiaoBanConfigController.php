@@ -8,6 +8,7 @@ use App\Models\GiaoBan\GiaoBanUserDepartment;
 use App\Models\GiaoBan\GiaoBanDutyPosition;
 use App\Services\GiaoBan\GiaoBanCatalogService;
 use App\Services\GiaoBan\MetricValidator;
+use App\Services\GiaoBan\MetricSchema;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -232,6 +233,57 @@ class GiaoBanConfigController extends Controller
             \App\Models\GiaoBan\GiaoBanDutyEditor::create(['user_id' => (int) $uid]);
         }
         return response()->json(['ok' => true]);
+    }
+
+    /**
+     * Tinh thu bo chi tieu DANG SOAN (chua luu) tren mot khoang thoi gian.
+     * Khong ghi gi vao DB.
+     */
+    public function preview(Request $request, $id)
+    {
+        $this->validate($request, [
+            'metrics' => 'required|string',
+            'block_type' => 'required|in:dieu_tri,kham,can_lam_sang',
+            'his_department_ids' => 'nullable|string',
+            'from' => 'required|date_format:Y-m-d H:i:s',
+            'to' => 'required|date_format:Y-m-d H:i:s',
+        ]);
+
+        $loi = MetricValidator::validateJson($request->input('metrics'), $request->input('block_type'));
+        if (!empty($loi)) return $this->traLoiChiTieu($loi);
+
+        // config tam, KHONG save()
+        $tam = new GiaoBanDeptConfig();
+        $tam->id = (int) $id;
+        $tam->display_name = 'Tính thử';
+        $tam->block_type = $request->input('block_type');
+        $tam->his_department_ids = $request->input('his_department_ids', '[]');
+        $tam->metrics = $request->input('metrics');
+
+        $deptIds = $tam->hisDepartmentIds();
+        $batDau = microtime(true);
+        try {
+            $giaTri = app(\App\Services\GiaoBan\GiaoBanMetricService::class)
+                ->computeAll([$tam], $request->input('from'), $request->input('to'));
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Không lấy được số liệu từ HIS: ' . $e->getMessage()], 422);
+        }
+
+        $rows = [];
+        foreach ($tam->metricList() as $m) {
+            $key = $tam->id . '|' . $m['code'];
+            $rows[] = [
+                'code' => $m['code'],
+                'name' => $m['name'],
+                'value' => isset($giaTri[$key]) ? $giaTri[$key] : null,
+                'warning' => MetricSchema::warningFor($m, $deptIds),
+            ];
+        }
+
+        return response()->json([
+            'rows' => $rows,
+            'ms' => (int) round((microtime(true) - $batDau) * 1000),
+        ]);
     }
 
     protected function validJson($s)

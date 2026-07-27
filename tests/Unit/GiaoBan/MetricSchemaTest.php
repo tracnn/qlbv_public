@@ -86,4 +86,48 @@ class MetricSchemaTest extends TestCase
         }
         $this->assertEquals(['int', 'decimal', 'percent'], $fields['value_type']['options']);
     }
+
+    /** @test */
+    public function canh_bao_manual_cho_chi_tieu_nhap_tay()
+    {
+        $m = ['code' => 'cg', 'name' => 'Chuyên gia', 'type' => 'manual'];
+        $this->assertEquals('manual', MetricSchema::warningFor($m, [12]));
+    }
+
+    /** @test */
+    public function canh_bao_no_dept_khi_chua_gan_khoa_HIS()
+    {
+        $m = ['code' => 'bn_cu', 'name' => 'BN cũ', 'type' => 'census_from'];
+        $this->assertEquals('no_dept', MetricSchema::warningFor($m, []));
+        $this->assertNull(MetricSchema::warningFor($m, [12]));
+    }
+
+    /** @test */
+    public function admission_khong_can_khoa_nen_khong_canh_bao()
+    {
+        $m = ['code' => 'vv', 'name' => 'Vào viện', 'type' => 'admission'];
+        $this->assertNull(MetricSchema::warningFor($m, []));
+    }
+
+    /** @test */
+    public function bed_count_dua_vao_bed_ids_nen_khong_canh_bao_thieu_khoa()
+    {
+        $m = ['code' => 'gyc', 'name' => 'Giường YC', 'type' => 'bed_count', 'bed_ids' => [5]];
+        $this->assertNull(MetricSchema::warningFor($m, []));
+    }
+
+    /** @test */
+    public function canh_bao_no_scope_khi_service_count_khong_co_pham_vi_nao()
+    {
+        // khong gan khoa HIS + khong khai pham vi cu the -> computeAll tra 0 trong im lang
+        $m = ['code' => 'dv', 'name' => 'DV', 'type' => 'service_count', 'filter' => ['service_type_ids' => [2]]];
+        $this->assertEquals('no_scope', MetricSchema::warningFor($m, []));
+
+        // co khoa HIS -> computeAll tu gan request_department_ids -> khong canh bao
+        $this->assertNull(MetricSchema::warningFor($m, [12]));
+
+        // khai phong thuc hien cu the -> co pham vi du khong gan khoa
+        $m2 = ['code' => 'dv', 'name' => 'DV', 'type' => 'service_count', 'filter' => ['execute_room_ids' => [9]]];
+        $this->assertNull(MetricSchema::warningFor($m2, []));
+    }
 }

@@ -90,6 +90,37 @@ class MetricSchema
         ],
     ];
 
+    /** Cac type khong can khoa HIS de tinh duoc. */
+    const KHONG_CAN_KHOA = ['admission', 'bed_count', 'manual'];
+
+    /**
+     * Canh bao cho mot chi tieu khi tinh thu.
+     * Phan chieu guard $hasScope trong GiaoBanMetricService::computeAll (dong 412-431).
+     * Neu logic guard ben do doi, sua ham nay theo.
+     *
+     * @return null|string 'manual' | 'no_dept' | 'no_scope'
+     */
+    public static function warningFor(array $metric, array $deptIds)
+    {
+        $type = isset($metric['type']) ? $metric['type'] : '';
+        if ($type === 'manual') return 'manual';
+
+        if ($type === 'service_count') {
+            $f = isset($metric['filter']) ? $metric['filter'] : [];
+            if (!empty($deptIds)) return null; // computeAll tu gan pham vi theo khoa cua config
+            foreach (['execute_department_ids', 'execute_department_id',
+                      'request_department_ids', 'request_department_id',
+                      'execute_room_ids', 'service_ids'] as $k) {
+                if (!empty($f[$k])) return null;
+            }
+            return 'no_scope';
+        }
+
+        if (in_array($type, self::KHONG_CAN_KHOA, true)) return null;
+
+        return empty($deptIds) ? 'no_dept' : null;
+    }
+
     public static function typeKeys()
     {
         return array_keys(self::TYPES);
