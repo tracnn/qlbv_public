@@ -68,8 +68,11 @@ class GiaoBanConfigController extends Controller
             } catch (\Exception $e) {}
         }
 
+        $metricTemplates = \App\Models\GiaoBan\GiaoBanMetricTemplate::where('is_active', true)
+            ->orderBy('sort_order')->get(['id', 'name', 'block_type', 'metrics']);
+
         return response()->json(['configs' => $configs, 'assignments' => $assignments, 'user_names' => $users, 'duty_positions' => $dutyPositions,
-            'duty_editors' => $editorIds, 'duty_editor_names' => $editorNames]);
+            'duty_editors' => $editorIds, 'duty_editor_names' => $editorNames, 'metric_templates' => $metricTemplates]);
     }
 
     /** Tim acs_user (CustomUser HIS) theo ten/loginname. */
