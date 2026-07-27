@@ -196,6 +196,34 @@ class GiaoBanConfigController extends Controller
         return response()->json(['ok' => true]);
     }
 
+    public function storeTemplate(Request $request)
+    {
+        $this->validate($request, [
+            'name' => 'required|string|max:255',
+            'block_type' => 'required|in:dieu_tri,kham,can_lam_sang',
+            'metrics' => 'required|string',
+            'sort_order' => 'nullable|integer',
+        ]);
+        $loi = MetricValidator::validateJson($request->input('metrics'), $request->input('block_type'));
+        if (!empty($loi)) return $this->traLoiChiTieu($loi);
+
+        $t = \App\Models\GiaoBan\GiaoBanMetricTemplate::create(
+            $request->only(['name', 'block_type', 'metrics', 'sort_order']) + ['is_active' => true]
+        );
+        return response()->json(['ok' => true, 'id' => $t->id]);
+    }
+
+    public function updateTemplate(Request $request, $id)
+    {
+        $t = \App\Models\GiaoBan\GiaoBanMetricTemplate::findOrFail($id);
+        if ($request->filled('metrics')) {
+            $loi = MetricValidator::validateJson($request->input('metrics'), $t->block_type);
+            if (!empty($loi)) return $this->traLoiChiTieu($loi);
+        }
+        $t->update($request->only(['name', 'sort_order', 'is_active', 'metrics']));
+        return response()->json(['ok' => true]);
+    }
+
     public function assignDutyEditors(Request $request)
     {
         $this->validate($request, ['user_ids' => 'nullable|array']);

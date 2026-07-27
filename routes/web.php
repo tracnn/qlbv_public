@@ -663,6 +663,8 @@ Route::group(['middleware' => ['auth', 'check.first.login']], function () {
         Route::get('giao-ban/cau-hinh', 'KHTH\GiaoBanConfigController@index')->name('khth.giao-ban-config');
         Route::get('giao-ban/cau-hinh/fetch', 'KHTH\GiaoBanConfigController@fetch')->name('khth.giao-ban-config-fetch');
         Route::post('giao-ban/cau-hinh', 'KHTH\GiaoBanConfigController@store')->name('khth.giao-ban-config-store');
+        Route::post('giao-ban/cau-hinh/mau', 'KHTH\GiaoBanConfigController@storeTemplate')->name('khth.giao-ban-config-template-store');
+        Route::post('giao-ban/cau-hinh/mau/{id}', 'KHTH\GiaoBanConfigController@updateTemplate')->name('khth.giao-ban-config-template-update');
         Route::post('giao-ban/cau-hinh/{id}', 'KHTH\GiaoBanConfigController@update')->name('khth.giao-ban-config-update');
         Route::post('giao-ban/cau-hinh-assign', 'KHTH\GiaoBanConfigController@assignUser')->name('khth.giao-ban-config-assign');
         Route::get('giao-ban/cau-hinh/search-users', 'KHTH\GiaoBanConfigController@searchUsers')->name('khth.giao-ban-config-search-users');
