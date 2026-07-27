@@ -72,10 +72,16 @@
   .donut-panel { width: 26vw; flex: none; align-items: center; }
   /* Trong luoi cap-grid, be rong do cot quyet dinh — bo width co dinh cua bo cuc flex cu */
   .cap-grid > .donut-panel { width: auto; }
-  /* Hien du moi phong: danh sach cuon doc, ten phong rong hon vi ten day du kha dai */
-  .pk-list { justify-content: flex-start; gap: .8vh; }
-  .pk-list .capname { width: 22vw; }
-  .pk-list .caprow { min-height: 2.2vh; }
+  /* Hien du moi phong ma khong phai cuon: chia cot, moi cot tu gian deu theo chieu cao con lai */
+  .pk-cot { display: grid; gap: 1.2vw; margin-top: 1.2vh; flex: 1; min-height: 0; }
+  .pk-list { justify-content: space-between; gap: .4vh; overflow: hidden;
+    background: #13293d; border-radius: 10px; padding: 1.2vh 1vw; }
+  .pk-list .capname { width: 11vw; font-size: 1.6vh; }
+  .pk-list .cappct { width: 3.5vw; font-size: 1.7vh; }
+  .pk-list .captrack { height: 1.8vh; }
+  /* Hai the tong gon lai de nhuong cho cho danh sach */
+  .pk-kpis .val { font-size: 3.4vh; }
+  .pk-kpis .kpi { padding: 1vh 1.4vw; }
   .donut-wrap { flex: 1; display: flex; align-items: center; justify-content: center; min-height: 0; }
   .donut-svg { width: 22vh; height: 22vh; }
   .donut-pct { fill: #fff; font-size: 17px; font-weight: 600; }
@@ -333,23 +339,31 @@
     var maxV = 1, tong = 0;
     ds.forEach(function (x) { maxV = Math.max(maxV, Number(x.so)); tong += Number(x.so); });
 
-    // Thanh nam ngang: ten phong ben trai doc duoc nguyen ven, du bao nhieu phong cung khong
-    // bop cot mong lai. Dung lai bo class cua man Cong suat giuong.
-    var rows = ds.map(function (x) {
+    function motDong(x) {
       var pct = Math.round(Number(x.so) / maxV * 100);
       return '<div class="caprow"><div class="capname">' + esc(x.ten) + '</div>' +
         '<div class="captrack"><div class="capfill" style="width:' + Math.max(2, pct) + '%;background:#378add"></div></div>' +
         '<div class="cappct" style="color:#dbe6f0">' + num(x.so) + '</div></div>';
-    }).join('');
+    }
+
+    // Nhieu phong thi chia doi thanh hai cot. Mot cot doc thi 31 phong tran khoi man va phai
+    // cuon — ma chieu len tuong thi khong ai cuon, coi nhu mat du lieu. Vung thanh ngang von
+    // thua rat nhieu chieu rong, chia doi la dung duoc het ma moi dong van du cao de doc.
+    var soCot = ds.length > 14 ? 2 : 1;
+    var moiCot = Math.ceil(ds.length / soCot);
+    var cotHtml = '';
+    for (var c = 0; c < soCot; c++) {
+      cotHtml += '<div class="caplist pk-list">' +
+        ds.slice(c * moiCot, (c + 1) * moiCot).map(motDong).join('') + '</div>';
+    }
 
     return '<div class="slide"><div class="s-head"><div class="s-title">Lượt khám theo phòng khám</div>' +
       '<div class="s-sub">Giao ban ' + esc(fmtDate(DATE)) + '</div></div>' +
-      '<div class="kpis" style="grid-template-columns:repeat(2,1fr)">' +
+      '<div class="kpis pk-kpis" style="grid-template-columns:repeat(2,1fr)">' +
       '<div class="kpi teal"><div class="lbl">Tổng lượt khám</div><div class="val">' + num(tong) + '</div></div>' +
       '<div class="kpi"><div class="lbl">Số phòng có phát sinh</div><div class="val">' + num(ds.length) + '</div></div>' +
       '</div>' +
-      '<div class="panel" style="margin-top:1.6vh;flex:1;min-height:0">' +
-      '<div class="caplist pk-list">' + rows + '</div></div></div>';
+      '<div class="pk-cot" style="grid-template-columns:repeat(' + soCot + ',1fr)">' + cotHtml + '</div></div>';
   }
 
   function capacityDeptSlide(data) {
