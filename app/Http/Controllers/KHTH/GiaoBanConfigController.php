@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\GiaoBan\GiaoBanDeptConfig;
 use App\Models\GiaoBan\GiaoBanUserDepartment;
 use App\Models\GiaoBan\GiaoBanDutyPosition;
+use App\Services\GiaoBan\GiaoBanCatalogService;
 use App\Services\GiaoBan\MetricValidator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -95,6 +96,15 @@ class GiaoBanConfigController extends Controller
             return (object) array_change_key_case((array) $r, CASE_LOWER);
         }, $rows);
         return response()->json($out);
+    }
+
+    /** Toan bo danh muc nho + nhan, cho form builder tai mot lan khi mo modal. */
+    public function catalogs()
+    {
+        return response()->json([
+            'catalogs' => GiaoBanCatalogService::allSmall(),
+            'labels' => GiaoBanCatalogService::labels(),
+        ]);
     }
 
     public function store(Request $request)

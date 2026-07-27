@@ -49,4 +49,64 @@ class GiaoBanCatalogService
     {
         return isset(self::CATALOGS[$key]) && self::CATALOGS[$key]['remote'];
     }
+
+    /**
+     * SQL lay tron mot danh muc nho. Ham thuan (test duoc khong can Oracle).
+     * Tra ve cot chuan: ma, ten.
+     */
+    public static function buildSmallSql($key)
+    {
+        if (!isset(self::CATALOGS[$key])) {
+            throw new \InvalidArgumentException("Danh muc khong ton tai: $key");
+        }
+        $c = self::CATALOGS[$key];
+        $sql = "SELECT {$c['id_col']} AS ma, {$c['name_col']} AS ten
+                FROM {$c['table']}
+                WHERE is_delete = 0 AND is_active = 1
+                ORDER BY {$c['name_col']}";
+        return [$sql, []];
+    }
+
+    /** Toan bo danh muc nho, cache 60 PHUT (Laravel 5.5 nhan phut). */
+    public static function allSmall()
+    {
+        return \Illuminate\Support\Facades\Cache::remember('giaoban.catalogs', 60, function () {
+            $out = [];
+            foreach (self::smallKeys() as $key) {
+                $out[$key] = self::layDanhMuc($key);
+            }
+            return $out;
+        });
+    }
+
+    /** Chay 1 truy van danh muc tren HISPro. HIS loi -> mang rong, khong lam trang trang cau hinh. */
+    protected static function layDanhMuc($key)
+    {
+        list($sql, $binds) = self::buildSmallSql($key);
+        try {
+            $rows = \Illuminate\Support\Facades\DB::connection(self::CONN)->select($sql, $binds);
+        } catch (\Exception $e) {
+            return [];
+        }
+        return self::chuanHoa($rows);
+    }
+
+    /** Oracle tra cot HOA -> ve dang [['id' =>, 'name' =>], ...] */
+    protected static function chuanHoa($rows)
+    {
+        $out = [];
+        foreach ($rows as $r) {
+            $row = array_change_key_case((array) $r, CASE_LOWER);
+            $out[] = ['id' => $row['ma'], 'name' => $row['ten']];
+        }
+        return $out;
+    }
+
+    /** Nhan hien thi cua tung danh muc, cho form builder dat label. */
+    public static function labels()
+    {
+        $out = [];
+        foreach (self::CATALOGS as $k => $c) $out[$k] = $c['label'];
+        return $out;
+    }
 }

@@ -49,4 +49,31 @@ class GiaoBanCatalogServiceTest extends TestCase
         $this->assertEquals('v_his_room', GiaoBanCatalogService::CATALOGS['room']['table']);
         $this->assertEquals('room_name', GiaoBanCatalogService::CATALOGS['room']['name_col']);
     }
+
+    /** @test */
+    public function dung_sql_danh_muc_nho_lay_dung_bang_va_cot()
+    {
+        list($sql, $binds) = GiaoBanCatalogService::buildSmallSql('diim_type');
+
+        $this->assertContains('FROM his_diim_type', $sql);
+        $this->assertContains('diim_type_name', $sql);
+        $this->assertContains('is_delete = 0', $sql);
+        $this->assertSame([], $binds);
+    }
+
+    /** @test */
+    public function danh_muc_end_type_lay_code_lam_dinh_danh()
+    {
+        list($sql, ) = GiaoBanCatalogService::buildSmallSql('end_type');
+
+        $this->assertContains('treatment_end_type_code AS ma', $sql);
+        $this->assertNotContains('id AS ma', $sql);
+    }
+
+    /** @test */
+    public function danh_muc_khong_ton_tai_thi_nem_loi()
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        GiaoBanCatalogService::buildSmallSql('khong_ton_tai');
+    }
 }
