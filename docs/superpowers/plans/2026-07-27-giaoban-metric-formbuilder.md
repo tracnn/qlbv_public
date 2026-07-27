@@ -20,6 +20,7 @@
 - **Không mock bằng Mockery cho method có khai báo return type** — hỏng ở phiên bản PHPUnit/Mockery của dự án. Dùng dữ liệu thật, fake object, hoặc test hàm thuần.
 - **Test hàm thuần là ưu tiên số một.** Khuôn mẫu đã có: `tests/Unit/GiaoBan/GiaoBanReportServiceTest.php` test toàn static method, không chạm DB. Feature test theo khuôn `tests/Feature/RevenueDeptRoomControllerTest.php` (class `FakeXAdminUser extends \App\User` override `can()`, rồi `actingAs`).
 - **Chạy test:** `vendor/bin/phpunit --filter <TenTest>`. Suite đầy đủ: `vendor/bin/phpunit`.
+- **Chỉ viết test trong `tests/Unit`.** Baseline đo ngày 2026-07-27: `tests/Unit` xanh sạch, còn **toàn bộ `tests/Feature` đang đỏ** vì hai lý do có sẵn từ trước — Mockery vỡ với return type (15 errors) và Feature test trả 500/403/302 kể cả `ExampleTest` (số lượng dao động giữa các lần chạy, phụ thuộc tài nguyên ngoài). Không thêm test nào vào `tests/Feature`; đường controller được nghiệm thu bằng trình duyệt. Gate "không có test đỏ mới" **chỉ áp dụng cho suite Unit**: `vendor/bin/phpunit --testsuite Unit`.
 - **Dự án không có hạ tầng test JS** (không có `package.json`). Task JS verify bằng trình duyệt với bước quan sát cụ thể ghi trong task.
 - **Ngôn ngữ:** comment và message lỗi bằng tiếng Việt, theo đúng văn phong file hiện có.
 - **Commit message:** tiếng Việt không dấu, prefix `feat:` / `test:` / `fix:` / `refactor:` theo khuôn lịch sử repo.
@@ -70,11 +71,13 @@ Task này không viết logic, nhưng nó chặn mọi task sau khỏi xây trê
 **Interfaces:**
 - Produces: `GiaoBanCatalogService::CATALOGS` — mảng `key => ['table', 'id_col', 'name_col', 'remote' => bool]`; `GiaoBanCatalogService::isRemote($key)`, `GiaoBanCatalogService::smallKeys()`, `GiaoBanCatalogService::allKeys()`.
 
-- [ ] **Step 1: Chốt danh sách test đang đỏ sẵn**
+- [ ] **Step 1: Đọc baseline đã chốt**
 
-Chạy: `vendor/bin/phpunit`
+Baseline đã đo và lưu sẵn tại `.superpowers/sdd/2026-07-27-giaoban-metric-formbuilder/baseline.txt` (và tóm tắt ở `progress.md` cùng thư mục). Đọc qua để biết cái gì đang đỏ sẵn.
 
-Ghi lại tên các test FAIL vào một file nháp tạm (không commit). Repo này **có test đỏ sẵn từ trước**; không chốt baseline thì cuối việc không phân biệt được đỏ nào do mình gây ra.
+Tóm tắt: 193 test — **`tests/Unit` xanh sạch**, toàn bộ đỏ nằm ở `tests/Feature` (Mockery vỡ với return type + Feature test trả 500/403/302, số lượng dao động giữa các lần chạy).
+
+Gate của mọi task từ đây: `vendor/bin/phpunit --testsuite Unit` phải xanh sạch.
 
 - [ ] **Step 2: Truy vấn xác minh tên cột 5 bảng danh mục**
 
@@ -474,6 +477,7 @@ git commit -m "feat(giaoban): MetricSchema lam nguon su that cho chi tieu giao b
 - Produces:
   - `MetricValidator::validate(array $metrics, $blockType)` → `array` lỗi, mỗi lỗi `['index' => int, 'field' => string, 'message' => string]`. Mảng rỗng = hợp lệ. `index` là vị trí chỉ tiêu (từ 0); `index = -1` là lỗi cấp toàn danh sách.
   - `MetricValidator::validateJson($jsonString, $blockType)` → cùng dạng, thêm lỗi `index = -1, field = 'metrics'` khi JSON hỏng.
+  - `MetricValidator::toResponsePayload(array $loi)` → `['message' => string, 'errors' => array]` — body của phản hồi 422. Tách ra hàm thuần để test được mà không cần Feature test (xem Global Constraints).
   - `MetricValidator::SCOPE_KEYS` — các khoá phạm vi khoa của `service_count`.
 
 - [ ] **Step 1: Viết test (đỏ)**
@@ -675,6 +679,29 @@ class MetricValidatorTest extends TestCase
     public function json_hop_le_di_qua_duoc()
     {
         $this->assertSame([], MetricValidator::validateJson(json_encode($this->hopLe()), 'dieu_tri'));
+    }
+
+    /** @test */
+    public function goi_loi_thanh_body_422_kem_vi_tri_chi_tieu()
+    {
+        $loi = [
+            ['index' => 2, 'field' => 'code', 'message' => 'Mã sai.'],
+            ['index' => 3, 'field' => 'name', 'message' => 'Tên trống.'],
+        ];
+        $body = MetricValidator::toResponsePayload($loi);
+
+        $this->assertEquals('Mã sai. (chỉ tiêu thứ 3)', $body['message']);
+        $this->assertSame($loi, $body['errors']);
+    }
+
+    /** @test */
+    public function loi_cap_danh_sach_khong_kem_vi_tri()
+    {
+        $body = MetricValidator::toResponsePayload(
+            [['index' => -1, 'field' => 'metrics', 'message' => 'Phải có ít nhất một chỉ tiêu.']]
+        );
+
+        $this->assertEquals('Phải có ít nhất một chỉ tiêu.', $body['message']);
     }
 }
 ```
@@ -943,13 +970,21 @@ class MetricValidator
     {
         return ['index' => $index, 'field' => $field, 'message' => $message];
     }
+
+    /** Body cua phan hoi 422, de form builder to do dung card. */
+    public static function toResponsePayload(array $loi)
+    {
+        $dau = $loi[0];
+        $viTri = $dau['index'] === -1 ? '' : (' (chỉ tiêu thứ ' . ($dau['index'] + 1) . ')');
+        return ['message' => $dau['message'] . $viTri, 'errors' => $loi];
+    }
 }
 ```
 
 - [ ] **Step 4: Chạy test, xác nhận xanh**
 
 Chạy: `vendor/bin/phpunit --filter MetricValidatorTest`
-Kỳ vọng: PASS (19 test)
+Kỳ vọng: PASS (21 test)
 
 - [ ] **Step 5: Commit**
 
@@ -1045,91 +1080,15 @@ git commit -m "feat(giaoban): command kiem tra cau hinh chi tieu theo schema"
 ## Task 5: Siết validate ở controller
 
 **Files:**
-- Modify: `app/Http/Controllers/KHTH/GiaoBanConfigController.php:99-135` (`store`, `update`), bỏ `validJson()` ở dòng 173-177
-- Create: `tests/Feature/GiaoBan/GiaoBanConfigControllerTest.php`
+- Modify: `app/Http/Controllers/KHTH/GiaoBanConfigController.php:99-135` (`store`, `update`)
 
 **Interfaces:**
-- Consumes: `MetricValidator::validateJson()` (Task 3).
-- Produces: `store`/`update` trả `422` với body `['message' => string, 'errors' => [['index','field','message'], ...]]`. Form builder (Task 15) dựa vào đúng hình dạng này để tô đỏ card.
+- Consumes: `MetricValidator::validateJson()`, `MetricValidator::toResponsePayload()` (Task 3).
+- Produces: `store`/`update` trả `422` với body `['message' => string, 'errors' => [['index','field','message'], ...]]`. Form builder (Task 11) dựa vào đúng hình dạng này để tô đỏ card.
 
-- [ ] **Step 1: Viết Feature test (đỏ)**
+**Không viết Feature test cho task này** — xem Global Constraints: `tests/Feature` đang đỏ toàn bộ vì lý do môi trường. Phần logic đã được `MetricValidatorTest` (Task 3) phủ, kể cả hình dạng body 422 qua `toResponsePayload`. Đường controller nghiệm thu bằng trình duyệt ở Step 3 dưới đây và ở Task 11 Step 5 điểm 9.
 
-Theo khuôn `tests/Feature/RevenueDeptRoomControllerTest.php` — không chạm DB thật cho nhánh 422 vì validate chặn trước khi tới model:
-
-```php
-<?php
-
-namespace Tests\Feature\GiaoBan;
-
-use Tests\TestCase;
-
-class FakeGiaoBanAdminUser extends \App\User
-{
-    public function hasRole($r, $team = null, $requireAll = false) { return true; }
-    public function can($permission, $team = null, $requireAll = false) { return true; }
-}
-
-class GiaoBanConfigControllerTest extends TestCase
-{
-    protected function admin() { return new FakeGiaoBanAdminUser(); }
-
-    /** @test */
-    public function store_tra_422_kem_index_va_field_khi_type_khong_hop_khoi()
-    {
-        $metrics = json_encode([
-            ['code' => 'bn_cu', 'name' => 'BN cũ', 'type' => 'census_from'],
-        ]);
-
-        $res = $this->actingAs($this->admin())->postJson(route('khth.giao-ban-config-store'), [
-            'display_name' => 'Khoa thử',
-            'block_type' => 'can_lam_sang',   // census_from khong dung duoc o khoi nay
-            'his_department_ids' => '[]',
-            'sort_order' => 99,
-            'metrics' => $metrics,
-        ]);
-
-        $res->assertStatus(422)
-            ->assertJsonStructure(['message', 'errors' => [['index', 'field', 'message']]]);
-        $this->assertEquals('type', $res->json('errors.0.field'));
-        $this->assertEquals(0, $res->json('errors.0.index'));
-    }
-
-    /** @test */
-    public function store_tra_422_khi_json_hong()
-    {
-        $res = $this->actingAs($this->admin())->postJson(route('khth.giao-ban-config-store'), [
-            'display_name' => 'Khoa thử',
-            'block_type' => 'dieu_tri',
-            'his_department_ids' => '[]',
-            'metrics' => '{khong phai json',
-        ]);
-
-        $res->assertStatus(422);
-        $this->assertEquals('metrics', $res->json('errors.0.field'));
-        $this->assertEquals(-1, $res->json('errors.0.index'));
-    }
-
-    /** @test */
-    public function store_tra_422_khi_his_department_ids_khong_phai_json()
-    {
-        $res = $this->actingAs($this->admin())->postJson(route('khth.giao-ban-config-store'), [
-            'display_name' => 'Khoa thử',
-            'block_type' => 'dieu_tri',
-            'his_department_ids' => 'khong-phai-json',
-            'metrics' => json_encode([['code' => 'bn_cu', 'name' => 'BN cũ', 'type' => 'census_from']]),
-        ]);
-
-        $res->assertStatus(422);
-    }
-}
-```
-
-- [ ] **Step 2: Chạy test, xác nhận đỏ**
-
-Chạy: `vendor/bin/phpunit --filter GiaoBanConfigControllerTest`
-Kỳ vọng: FAIL — hiện `store` chỉ check `validJson` nên trả `200`/`201` hoặc 422 nhưng thiếu khoá `errors`.
-
-- [ ] **Step 3: Thay `validJson` bằng `MetricValidator`**
+- [ ] **Step 1: Thay `validJson` bằng `MetricValidator`**
 
 Trong `GiaoBanConfigController.php`, thêm `use App\Services\GiaoBan\MetricValidator;` ở đầu file, rồi sửa `store`:
 
@@ -1187,35 +1146,45 @@ và `update` — lưu ý `block_type` có thể không gửi kèm, khi đó lấ
     }
 ```
 
-Thêm helper cạnh `validJson` (giữ `validJson` lại vì `his_department_ids` vẫn dùng):
+Thêm helper cạnh `validJson` (giữ `validJson` lại vì `his_department_ids` vẫn dùng). Helper chỉ bọc hàm thuần đã test ở Task 3 thành phản hồi HTTP:
 
 ```php
     /** Gói danh sách lỗi chỉ tiêu thành 422 để form builder tô đỏ đúng card. */
     protected function traLoiChiTieu(array $loi)
     {
-        $dau = $loi[0];
-        $viTri = $dau['index'] === -1 ? '' : (' (chỉ tiêu thứ ' . ($dau['index'] + 1) . ')');
-        return response()->json([
-            'message' => $dau['message'] . $viTri,
-            'errors' => $loi,
-        ], 422);
+        return response()->json(MetricValidator::toResponsePayload($loi), 422);
     }
 ```
 
-- [ ] **Step 4: Chạy test, xác nhận xanh**
+- [ ] **Step 2: Chạy suite Unit, đối chiếu baseline**
 
-Chạy: `vendor/bin/phpunit --filter GiaoBanConfigControllerTest`
-Kỳ vọng: PASS (3 test)
-
-- [ ] **Step 5: Chạy lại toàn bộ suite, đối chiếu baseline**
-
-Chạy: `vendor/bin/phpunit`
+Chạy: `vendor/bin/phpunit --testsuite Unit`
 Kỳ vọng: không có test đỏ nào mới so với baseline ghi ở Task 1 Step 1.
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 3: Thử đường controller trên trình duyệt**
+
+Mở `khth/giao-ban/cau-hinh` bằng tài khoản có quyền `giaoban-admin`, mở Console và gửi thẳng một cấu hình sai schema tới `store`:
+
+```js
+$.post('/khth/giao-ban/cau-hinh', {
+  _token: $('meta[name=csrf-token]').attr('content') || window.Laravel && window.Laravel.csrfToken,
+  display_name: 'Khoa thử validate', block_type: 'can_lam_sang',
+  his_department_ids: '[]', sort_order: 999,
+  metrics: JSON.stringify([{code: 'bn_cu', name: 'BN cũ', type: 'census_from'}])
+}).fail(function (x) { console.log(x.status, x.responseJSON); });
+```
+
+Kỳ vọng: `422` và body có `message` tiếng Việt kèm `(chỉ tiêu thứ 1)`, `errors[0].field === 'type'`, `errors[0].index === 0`.
+**Không được tạo bản ghi mới** — kiểm tra lại bảng cấu hình sau khi tải lại trang.
+
+Thử tiếp với `metrics: '{khong phai json'` → `422`, `errors[0].field === 'metrics'`, `errors[0].index === -1`.
+
+Nếu trang cấu hình chưa có thẻ `csrf-token`, lấy token bằng cách đọc `$('input[name=_token]').val()` hoặc copy trực tiếp từ mã nguồn trang.
+
+- [ ] **Step 4: Commit**
 
 ```bash
-git add app/Http/Controllers/KHTH/GiaoBanConfigController.php tests/Feature/GiaoBan/GiaoBanConfigControllerTest.php
+git add app/Http/Controllers/KHTH/GiaoBanConfigController.php
 git commit -m "feat(giaoban): siet validate chi tieu theo MetricSchema o store/update"
 ```
 
@@ -1791,7 +1760,6 @@ git commit -m "feat(giaoban): chuyen 5 mau chi tieu tu blade vao bang giaoban_me
 **Files:**
 - Modify: `app/Http/Controllers/KHTH/GiaoBanConfigController.php`
 - Modify: `routes/web.php`
-- Test: `tests/Feature/GiaoBan/GiaoBanConfigControllerTest.php` (bổ sung)
 
 **Interfaces:**
 - Consumes: `MetricValidator::validateJson()` (Task 3), `GiaoBanMetricTemplate` (Task 8), `traLoiChiTieu()` (Task 5).
@@ -1799,29 +1767,9 @@ git commit -m "feat(giaoban): chuyen 5 mau chi tieu tu blade vao bang giaoban_me
   - `POST khth/giao-ban/cau-hinh/mau` → `khth.giao-ban-config-template-store`, body `name`, `block_type`, `metrics` (chuỗi JSON), `sort_order`
   - `POST khth/giao-ban/cau-hinh/mau/{id}` → `khth.giao-ban-config-template-update`, body `name`, `sort_order`, `is_active`, `metrics` (tuỳ chọn)
 
-- [ ] **Step 1: Viết test (đỏ)**
+**Không viết Feature test** (xem Global Constraints). Hai action này chỉ ghép `validateJson` + `traLoiChiTieu` đã test ở Task 3; nghiệm thu bằng trình duyệt ở Step 3.
 
-```php
-    /** @test */
-    public function luu_mau_bi_chan_khi_chi_tieu_sai_schema()
-    {
-        $res = $this->actingAs($this->admin())->postJson(route('khth.giao-ban-config-template-store'), [
-            'name' => 'Mẫu hỏng',
-            'block_type' => 'dieu_tri',
-            'metrics' => json_encode([['code' => 'x', 'name' => 'X', 'type' => 'end_type']]), // thieu end_codes
-        ]);
-
-        $res->assertStatus(422);
-        $this->assertEquals('end_codes', $res->json('errors.0.field'));
-    }
-```
-
-- [ ] **Step 2: Chạy test, xác nhận đỏ**
-
-Chạy: `vendor/bin/phpunit --filter GiaoBanConfigControllerTest`
-Kỳ vọng: FAIL — route `khth.giao-ban-config-template-store` chưa tồn tại (`InvalidArgumentException: Route ... not defined`)
-
-- [ ] **Step 3: Thêm hai action**
+- [ ] **Step 1: Thêm hai action**
 
 ```php
     public function storeTemplate(Request $request)
@@ -1853,7 +1801,7 @@ Kỳ vọng: FAIL — route `khth.giao-ban-config-template-store` chưa tồn t�
     }
 ```
 
-- [ ] **Step 4: Thêm route**
+- [ ] **Step 2: Thêm route**
 
 ```php
         Route::post('giao-ban/cau-hinh/mau', 'KHTH\GiaoBanConfigController@storeTemplate')->name('khth.giao-ban-config-template-store');
@@ -1862,15 +1810,27 @@ Kỳ vọng: FAIL — route `khth.giao-ban-config-template-store` chưa tồn t�
 
 **Thứ tự route quan trọng:** hai dòng này phải đặt **trước** `Route::post('giao-ban/cau-hinh/{id}', ...)` (dòng ~666), nếu không `{id}` sẽ nuốt mất `mau`.
 
-- [ ] **Step 5: Chạy test, xác nhận xanh**
+- [ ] **Step 3: Thử trên trình duyệt**
 
-Chạy: `vendor/bin/phpunit --filter GiaoBanConfigControllerTest`
-Kỳ vọng: PASS (4 test)
+Ở Console trang cấu hình (đã đăng nhập quyền `giaoban-admin`):
 
-- [ ] **Step 6: Commit**
+```js
+$.post('/khth/giao-ban/cau-hinh/mau', {
+  _token: $('input[name=_token]').val(),
+  name: 'Mẫu hỏng', block_type: 'dieu_tri',
+  metrics: JSON.stringify([{code: 'x', name: 'X', type: 'end_type'}])   // thieu end_codes
+}).fail(function (x) { console.log(x.status, x.responseJSON); });
+```
+
+Kỳ vọng: `422`, `errors[0].field === 'end_codes'`. **Không tạo mẫu rác** — kiểm tra `GiaoBanMetricTemplate::count()` vẫn là 5.
+
+Thử tiếp một mẫu hợp lệ → `{ok: true, id: 6}`; `count()` thành 6. Xoá bản ghi thử nghiệm sau khi kiểm xong:
+`php artisan tinker` → `App\Models\GiaoBan\GiaoBanMetricTemplate::find(6)->delete();`
+
+- [ ] **Step 4: Commit**
 
 ```bash
-git add app/Http/Controllers/KHTH/GiaoBanConfigController.php routes/web.php tests/Feature/GiaoBan/GiaoBanConfigControllerTest.php
+git add app/Http/Controllers/KHTH/GiaoBanConfigController.php routes/web.php
 git commit -m "feat(giaoban): CRUD mau chi tieu co validate schema"
 ```
 
@@ -2052,41 +2012,38 @@ Thêm `use App\Services\GiaoBan\MetricSchema;` ở đầu controller.
         Route::post('giao-ban/cau-hinh/{id}/tinh-thu', 'KHTH\GiaoBanConfigController@preview')->name('khth.giao-ban-config-preview');
 ```
 
-- [ ] **Step 7: Viết Feature test cho preview (đỏ → xanh)**
+- [ ] **Step 7: Thử thật với HIS trên trình duyệt**
 
-Test chỉ kiểm nhánh validate, không chạm HIS:
+**Không viết Feature test** (xem Global Constraints). Nhánh validate đã được `MetricValidatorTest` phủ; nhánh cảnh báo đã được `MetricSchemaTest` phủ. Còn lại là đường ghép, nghiệm thu tay.
 
-```php
-    /** @test */
-    public function tinh_thu_tra_422_khi_chi_tieu_sai_schema()
-    {
-        $res = $this->actingAs($this->admin())->postJson(route('khth.giao-ban-config-preview', ['id' => 1]), [
-            'metrics' => json_encode([['code' => 'x', 'name' => 'X', 'type' => 'end_type']]),
-            'block_type' => 'dieu_tri',
-            'his_department_ids' => '[]',
-            'from' => '2026-07-26 07:00:00',
-            'to' => '2026-07-27 07:00:00',
-        ]);
+Ở Console trang cấu hình, lấy `id` của một khoa điều trị đã gán khoa HIS thật:
 
-        $res->assertStatus(422);
-        $this->assertEquals('end_codes', $res->json('errors.0.field'));
-    }
+```js
+$.post('/khth/giao-ban/cau-hinh/1/tinh-thu', {
+  _token: $('input[name=_token]').val(),
+  metrics: JSON.stringify([
+    {code: 'bn_cu', name: 'BN cũ', type: 'census_from'},
+    {code: 'hien_co', name: 'Hiện có', type: 'census_to'}
+  ]),
+  block_type: 'dieu_tri',
+  his_department_ids: '[<id khoa HIS that>]',
+  from: '2026-07-26 07:00:00', to: '2026-07-27 07:00:00'
+}).done(function (r) { console.log(r); });
 ```
 
-Chạy: `vendor/bin/phpunit --filter GiaoBanConfigControllerTest`
-Kỳ vọng: PASS (5 test)
+Kỳ vọng: `rows` đủ 2 dòng, `value` là số, `ms > 0`, `warning` là `null`.
 
-- [ ] **Step 8: Thử thật với HIS**
+Thử ba biến thể nữa:
+- `his_department_ids: '[]'` → mọi `warning` là `no_dept`, `value` là 0. **Đây chính là cái bẫy mà tính thử sinh ra để lộ.**
+- Thêm `{code:'cg',name:'Chuyên gia',type:'manual'}` → dòng đó `value: null`, `warning: 'manual'`.
+- `metrics` sai schema (chỉ tiêu `end_type` thiếu `end_codes`) → `422`, `errors[0].field === 'end_codes'`.
 
-Bằng trình duyệt hoặc `php artisan tinker`, gọi `POST khth/giao-ban/cau-hinh/1/tinh-thu` với một bộ chỉ tiêu điều trị hợp lệ và `his_department_ids` là khoa thật.
+Kiểm tra thêm: **không có bản ghi nào được tạo hay sửa** — `GiaoBanDeptConfig::find(1)->metrics` giữ nguyên nội dung cũ.
 
-Kỳ vọng: `rows` có đủ số chỉ tiêu, `value` là số, `ms` > 0.
-Thử tiếp với `his_department_ids: '[]'`: kỳ vọng mọi `warning` là `no_dept`, `value` là 0 — **đây chính là cái bẫy mà preview sinh ra để lộ**.
-
-- [ ] **Step 9: Commit**
+- [ ] **Step 8: Commit**
 
 ```bash
-git add app/Services/GiaoBan/MetricSchema.php app/Http/Controllers/KHTH/GiaoBanConfigController.php routes/web.php tests/Unit/GiaoBan/MetricSchemaTest.php tests/Feature/GiaoBan/GiaoBanConfigControllerTest.php
+git add app/Services/GiaoBan/MetricSchema.php app/Http/Controllers/KHTH/GiaoBanConfigController.php routes/web.php tests/Unit/GiaoBan/MetricSchemaTest.php
 git commit -m "feat(giaoban): tinh thu chi tieu chua luu kem canh bao thieu pham vi"
 ```
 
@@ -3780,10 +3737,10 @@ Chuẩn bị: một chỉ tiêu nhập tay có `"input":{"carry_over":true}` ở
 5. Chỉ tiêu nhập tay có `"input":{"default":0}` mà không bật `carry_over` → ô có sẵn số 0, chữ **bình thường** (không xám, vì không phải kế thừa).
 6. Chỉ tiêu nhập tay không khai gì → ô vẫn trống như trước.
 
-- [ ] **Step 6: Chạy toàn bộ suite, đối chiếu baseline**
+- [ ] **Step 6: Chạy suite Unit lần cuối**
 
-Chạy: `vendor/bin/phpunit`
-Kỳ vọng: không có test đỏ mới so với baseline ghi ở Task 1 Step 1.
+Chạy: `vendor/bin/phpunit --testsuite Unit`
+Kỳ vọng: xanh sạch, không test đỏ nào.
 
 - [ ] **Step 7: Commit**
 
@@ -3816,7 +3773,7 @@ git commit -m "feat(giaoban): ke thua so nhap tay tu phien truoc, danh dau chua 
 | §9.2.1 Màn giao ban render theo khai báo | 18 |
 | §9.2.2 Chặn ràng buộc phía server | 19 |
 | §9.2.3 `carry_over` | 20 (hàm thuần) + 21 (nối vào + UI) |
-| §10 Kiểm thử | rải trong 1, 2, 3, 5, 8, 9, 10, 19, 20 |
+| §10 Kiểm thử | rải trong 1, 2, 3, 8, 10, 19, 20 (chỉ `tests/Unit` — xem Global Constraints) |
 | §12 Command quét cấu hình cũ trước khi siết | 4 |
 | §13 Rủi ro: chặn cấu hình cũ | 4 |
 | §13 Rủi ro: `carry_over` ghi đè | 20 Step 1 test 2, 21 Step 2 hai lớp chặn, 21 Step 5 điểm 4 |
