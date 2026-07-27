@@ -60,13 +60,6 @@
   #jump-list button:hover { background: #1b3348; }
   #center { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
     text-align: center; font-size: 2.4vh; color: #8aa4bd; }
-  .bars { display: flex; align-items: flex-end; gap: 1.2vw; flex: 1; padding-bottom: 1vh; }
-  .barcol { flex: 1; display: flex; flex-direction: column; align-items: center; gap: .4vh; }
-  .barpair { display: flex; gap: 3px; align-items: flex-end; }
-  .barpair span { width: .9vw; display: block; }
-  .barcol small { font-size: 1.2vh; color: #6f8aa6; text-align: center; }
-  .legend { display: flex; gap: 1.4vw; font-size: 1.3vh; color: #8aa4bd; }
-  .legend b { display: inline-block; width: 10px; height: 10px; margin-right: 4px; }
   .ov-main { display: flex; gap: 1.6vh; margin-top: 2vh; flex: 1; min-height: 0; }
   .ov-kpis { flex: 1; align-content: start; }
   .donut-panel { width: 26vw; flex: none; align-items: center; }
@@ -388,45 +381,18 @@
         '<div class="caplist">' + rowsC + '</div></div>';
     }
 
-    var rows = [];
-    data.configs.forEach(function (cfg) {
-      if (cellVal(data, cfg.id, 'hien_co') === null) return;
-      var vao = Number(cellVal(data, cfg.id, 'bn_vao') || 0) + Number(cellVal(data, cfg.id, 'bn_chuyen_den') || 0);
-      var ra = Number(cellVal(data, cfg.id, 'bn_ra_vien') || 0) + Number(cellVal(data, cfg.id, 'bn_chuyen_vien') || 0);
-      rows.push({ name: cfg.display_name, vao: vao, ra: ra });
-    });
-    var maxV = 1;
-    rows.forEach(function (x) { maxV = Math.max(maxV, x.vao, x.ra); });
-    var bars = rows.map(function (x) {
-      var hv = Math.round(x.vao / maxV * 100), hr = Math.round(x.ra / maxV * 100);
-      return '<div class="barcol"><div class="barpair" style="height:16vh">' +
-        '<span style="height:' + hv + '%;background:#378add"></span>' +
-        '<span style="height:' + hr + '%;background:#5dcaa5"></span></div>' +
-        '<small>' + esc(x.name) + '</small></div>';
-    }).join('');
-    var chart = rows.length
-      ? '<div class="panel"><div class="lbl">BN vào / ra theo khoa</div>' +
-        '<div class="bars">' + bars + '</div>' +
-        '<div class="legend"><span><b style="background:#378add"></b>Vào</span>' +
-        '<span><b style="background:#5dcaa5"></b>Ra</span></div></div>'
-      : '';
-
     // Donut tong vien chuyen tu man Tong quan sang day, de moi noi dung ve giuong nam mot cho.
     var tongGiuong = Number(data.bed_total || 0);
     var donut = tongGiuong > 0 ? donutHtml(Number(data.bed_used || 0), tongGiuong) : '';
 
-    if (!capHtml && !chart && !donut) return '';
+    if (!capHtml && !donut) return '';
 
-    // Hang tren: donut mot cot, cong suat theo khoa mot cot. Bieu do bien dong (neu co)
-    // xuong hang duoi chiem ca chieu ngang, khong chen vao hai cot nay.
-    var hangTren = donut + capHtml;
+    // Donut mot cot, cong suat theo khoa mot cot.
     var cols = (donut && capHtml) ? 'minmax(24vw,1fr) 2fr' : '1fr';
 
-    return '<div class="slide"><div class="s-head"><div class="s-title">Công suất giường &amp; biến động</div>' +
+    return '<div class="slide"><div class="s-head"><div class="s-title">Công suất giường</div>' +
       '<div class="s-sub">Giao ban ' + esc(fmtDate(DATE)) + '</div></div>' +
-      (hangTren ? '<div class="cap-grid" style="grid-template-columns:' + cols + '">' + hangTren + '</div>' : '') +
-      (chart ? '<div class="cap-grid" style="grid-template-columns:1fr">' + chart + '</div>' : '') +
-      '</div>';
+      '<div class="cap-grid" style="grid-template-columns:' + cols + '">' + donut + capHtml + '</div></div>';
   }
 
   function deptSlide(data, cfg) {
