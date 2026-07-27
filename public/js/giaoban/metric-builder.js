@@ -2,6 +2,7 @@
 var MetricBuilder = (function ($) {
   var SCHEMA = {}, ROUTES = {}, CSRF = '', BLOCK_LABELS = {};
   var st = { cfg: null, metrics: [], onSaved: null };
+  var CATALOGS = null; // null = chua tai
   // Chi so card dang duoc keo (HTML5 drag & drop). null = khong co keo nao dang dien ra.
   var dragSrcIndex = null;
 
@@ -28,6 +29,19 @@ var MetricBuilder = (function ($) {
     return out;
   }
 
+  /** Tai danh muc nhom nho (HIS) mot lan roi cache lai cho ca phien lam viec modal. */
+  function taiDanhMuc(xong) {
+    if (CATALOGS) { xong(); return; }
+    $.get(ROUTES.catalogs, function (res) {
+      CATALOGS = res.catalogs || {};
+      xong();
+    }).fail(function () {
+      CATALOGS = {};                       // HIS loi -> van mo duoc modal, dropdown rong
+      $('#mb-save-msg').text('Không tải được danh mục HIS — các ô chọn sẽ trống.');
+      xong();
+    });
+  }
+
   function open(cfg, onSaved) {
     st.cfg = cfg;
     st.onSaved = onSaved;
@@ -41,9 +55,11 @@ var MetricBuilder = (function ($) {
     $('#mb-block-label').text('[' + (BLOCK_LABELS[cfg.block_type] || cfg.block_type) + ']');
     $('#mb-save-msg').text('');
     $('#mb-preview-box').hide().empty();
-    renderAddMenu();
-    render();
-    $('#mb-modal').modal('show');
+    taiDanhMuc(function () {
+      renderAddMenu();
+      render();
+      $('#mb-modal').modal('show');
+    });
   }
 
   function renderAddMenu() {
@@ -97,17 +113,119 @@ var MetricBuilder = (function ($) {
       );
     });
 
+    ganSelect2($l);
     $('#mb-json').val(JSON.stringify(st.metrics, null, 2));
   }
 
-  /** Task 12 se thay ham nay bang render field dong tu schema. */
+  /** Doc gia tri cua mot field theo vi tri khai bao: goc / filter / input. */
+  function layGiaTri(m, noi, ten) {
+    if (noi === 'filter') return (m.filter || {})[ten];
+    if (noi === 'input') return (m.input || {})[ten];
+    return m[ten];
+  }
+
+  function datGiaTri(m, noi, ten, v) {
+    var rong = v === '' || v === null || v === undefined ||
+               (Array.isArray(v) && v.length === 0);
+    if (noi === 'goc') {
+      if (rong) delete m[ten]; else m[ten] = v;
+      return;
+    }
+    if (!m[noi]) m[noi] = {};
+    if (rong) delete m[noi][ten]; else m[noi][ten] = v;
+    if (Object.keys(m[noi]).length === 0) delete m[noi];
+  }
+
+  /** Mot o nhap, dua tren khai bao widget trong MetricSchema. */
+  function renderField(m, i, noi, ten, meta) {
+    var id = 'mb-' + i + '-' + noi + '-' + ten;
+    var v = layGiaTri(m, noi, ten);
+    var nhan = esc(meta.label || ten);
+    var attr = 'id="' + id + '" data-i="' + i + '" data-noi="' + noi + '" data-ten="' + ten + '"';
+    var h = '';
+
+    if (meta.widget === 'catalog_multi') {
+      var kieu = meta.value === 'string' ? 'string' : 'int';
+      h = '<select class="form-control mb-cat" multiple ' + attr +
+          ' data-catalog="' + meta.catalog + '" data-kieu="' + kieu + '"></select>';
+    } else if (meta.widget === 'bool') {
+      h = '<div class="checkbox" style="margin-top:0"><label>' +
+          '<input type="checkbox" class="mb-w" ' + attr + (v ? ' checked' : '') + '> ' + nhan +
+          '</label></div>';
+      return '<div class="col-md-3">' + h + '</div>';   // bool tu chua nhan
+    } else if (meta.widget === 'select') {
+      h = '<select class="form-control mb-w" ' + attr + '>';
+      (meta.options || []).forEach(function (o) {
+        h += '<option value="' + esc(o) + '"' + (v === o ? ' selected' : '') + '>' + esc(o) + '</option>';
+      });
+      h += '</select>';
+    } else if (meta.widget === 'number' || meta.widget === 'int') {
+      h = '<input type="number" class="form-control mb-w" ' + attr +
+          ' value="' + (v === undefined || v === null ? '' : esc(v)) + '">';
+    } else {
+      h = '<input type="text" class="form-control mb-w" ' + attr +
+          ' value="' + (v === undefined || v === null ? '' : esc(v)) +
+          '" maxlength="' + (meta.max || 255) + '">';
+    }
+
+    var batBuoc = meta.required ? ' <span class="text-red">*</span>' : '';
+    return '<div class="col-md-4" style="margin-bottom:8px">' +
+             '<label style="font-weight:normal">' + nhan + batBuoc + '</label>' + h +
+           '</div>';
+  }
+
   function renderBody(m, i) {
-    return '<div class="row">' +
-      '<div class="col-md-4"><label>Mã chỉ tiêu</label>' +
+    var def = SCHEMA[m.type] || { fields: {}, filter: {} };
+    var noiFields = def.group === 'input' ? 'input' : 'goc';
+
+    var h = '<div class="row">' +
+      '<div class="col-md-4"><label style="font-weight:normal">Mã chỉ tiêu</label>' +
         '<input class="form-control mb-f" data-k="code" value="' + esc(m.code) + '"></div>' +
-      '<div class="col-md-8"><label>Tên hiển thị</label>' +
+      '<div class="col-md-8"><label style="font-weight:normal">Tên hiển thị</label>' +
         '<input class="form-control mb-f" data-k="name" value="' + esc(m.name) + '"></div>' +
       '</div>';
+
+    var oField = '';
+    for (var ten in (def.fields || {})) {
+      oField += renderField(m, i, noiFields, ten, def.fields[ten]);
+    }
+    if (oField) h += '<div class="row" style="margin-top:6px">' + oField + '</div>';
+
+    var oFilter = '';
+    for (var f in (def.filter || {})) {
+      oFilter += renderField(m, i, 'filter', f, def.filter[f]);
+    }
+    if (oFilter) {
+      h += '<div style="margin-top:6px"><b class="text-muted">Điều kiện lọc</b></div>' +
+           '<div class="row">' + oFilter + '</div>';
+    }
+
+    return h;
+  }
+
+  /** Gan select2 cho cac o danh muc nho (du lieu co san trong CATALOGS). */
+  function ganSelect2($goc) {
+    $goc.find('.mb-cat').each(function () {
+      var $s = $(this);
+      if ($s.data('select2')) return;
+      var key = $s.data('catalog');
+      var kieu = $s.data('kieu');
+      var i = $s.data('i'), noi = $s.data('noi'), ten = $s.data('ten');
+      var daChon = layGiaTri(st.metrics[i], noi, ten) || [];
+      var daChonStr = daChon.map(String);
+
+      (CATALOGS[key] || []).forEach(function (o) {
+        var chon = daChonStr.indexOf(String(o.id)) >= 0;
+        $s.append('<option value="' + esc(o.id) + '"' + (chon ? ' selected' : '') + '>' + esc(o.name) + '</option>');
+      });
+
+      $s.select2({ width: '100%', placeholder: 'Chọn...', dropdownParent: $('#mb-modal') });
+      $s.on('change', function () {
+        var v = ($s.val() || []).map(function (x) { return kieu === 'int' ? parseInt(x, 10) : String(x); });
+        datGiaTri(st.metrics[i], noi, ten, v);
+        $('#mb-json').val(JSON.stringify(st.metrics, null, 2));
+      });
+    });
   }
 
   function themChiTieu(type) {
@@ -169,6 +287,22 @@ var MetricBuilder = (function ($) {
       $c.find('.mb-name-view').text($(this).data('k') === 'name' ? $(this).val() : $c.find('.mb-name-view').text());
     });
     $(document).on('click', '#mb-save', luu);
+
+    // Ghi gia tri cho moi widget dong (text/number/int/select/bool) sinh boi renderField.
+    $(document).on('change input', '#mb-list .mb-w', function () {
+      var $e = $(this);
+      var m = st.metrics[$e.data('i')];
+      var v;
+      if ($e.attr('type') === 'checkbox') {
+        v = $e.is(':checked') ? true : '';          // '' -> datGiaTri xoa khoa
+      } else if ($e.attr('type') === 'number') {
+        v = $e.val() === '' ? '' : Number($e.val());
+      } else {
+        v = $e.val();
+      }
+      datGiaTri(m, $e.data('noi'), $e.data('ten'), v);
+      $('#mb-json').val(JSON.stringify(st.metrics, null, 2));
+    });
 
     // Du an khong nap thu vien keo-tha-sap-xep ngoai (khong co file lien quan "jQuery UI"
     // trong public/), nen keo tha thu tu card dung thang HTML5 Drag and Drop API cua trinh duyet.
