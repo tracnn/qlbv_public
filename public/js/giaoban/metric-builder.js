@@ -420,11 +420,29 @@ var MetricBuilder = (function ($) {
     });
   }
 
-  /** To do dung card sai + hien thong bao (Task 15 mo rong them cho tab JSON). */
+  /** To do dung card sai + hien thong bao (Task 15 mo rong them cho tab JSON).
+   *  Chiu duoc ca hai dang loi tra ve tu server:
+   *  - loi schema tu MetricValidator (vd luu(), tinh-thu voi metrics sai): errors la mang [{index, field, message}]
+   *  - loi validate chuan cua Laravel (vd tinh-thu voi from/to sai dinh dang): errors la object {ten_truong: [thong bao]}
+   *  Khong bao gio duoc goi .forEach tren thu khong phai mang — neu khong, exception nay se chan
+   *  luon .always() cua nguoi goi (xem tinhThu()), kien nut #mb-preview ket disabled vinh vien.
+   */
   function hienLoi(xhr) {
     var res = xhr.responseJSON || {};
+    var loi = res.errors;
+
+    // Dang object cua Laravel -> gop thanh mot dong thong bao, khong to card nao (khong co index).
+    if (loi && !$.isArray(loi)) {
+      var dsach = [];
+      $.each(loi, function (truong, msgs) {
+        dsach.push(truong + ': ' + ($.isArray(msgs) ? msgs.join(' ') : msgs));
+      });
+      $('#mb-save-msg').text(dsach.length ? dsach.join(' | ') : (res.message || 'Dữ liệu gửi lên không hợp lệ.'));
+      return;
+    }
+
     $('#mb-save-msg').text(res.message || 'Lỗi lưu chỉ tiêu');
-    (res.errors || []).forEach(function (e) {
+    (loi || []).forEach(function (e) {
       if (e.index < 0) return;
       var $card = $('#mb-list .mb-card').eq(e.index);
       $card.removeClass('panel-default').addClass('panel-danger');
@@ -501,7 +519,9 @@ var MetricBuilder = (function ($) {
     }).fail(function (xhr) {
       var r = xhr.responseJSON || {};
       $b.html('<div class="text-red">' + esc(r.message || 'Không tính thử được.') + '</div>');
-      hienLoi(xhr);
+      // Bọc try/catch: loi bat ngo trong hienLoi() khong duoc chan mat .always() phia duoi,
+      // neu khong nut #mb-preview se ket disabled vinh vien.
+      try { hienLoi(xhr); } catch (e) { /* khong de loi hien thi lam ket nut Tinh thu */ }
     }).always(function () {
       $('#mb-preview').prop('disabled', false);
     });
