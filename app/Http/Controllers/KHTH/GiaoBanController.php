@@ -98,9 +98,8 @@ class GiaoBanController extends Controller
         // Toan vien nen chi admin; nguoi dung khoa khong phai ganh them mot truy van HIS.
         $roomStats = [];
         if ($report && $isAdmin) {
-            $rows = app(\App\Services\GiaoBan\GiaoBanMetricService::class)
+            $roomStats = app(\App\Services\GiaoBan\GiaoBanMetricService::class)
                 ->examByRoom($report->from_time, $report->to_time);
-            $roomStats = \App\Services\GiaoBan\GiaoBanMetricService::gomPhongKham($rows);
         }
 
         // Cong suat giuong la du lieu toan vien (tong + chi tiet tung khoa) -> chi admin duoc xem.

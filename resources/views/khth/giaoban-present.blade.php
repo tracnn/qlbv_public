@@ -72,10 +72,10 @@
   .donut-panel { width: 26vw; flex: none; align-items: center; }
   /* Trong luoi cap-grid, be rong do cot quyet dinh — bo width co dinh cua bo cuc flex cu */
   .cap-grid > .donut-panel { width: auto; }
-  /* Nhieu phong -> cho phep cuon ngang thay vi bop cot mong den muc khong doc duoc */
-  .pk-bars { overflow-x: auto; align-items: flex-end; }
-  .pk-bars .barcol { min-width: 4.5vw; }
-  .pk-so { font-size: 1.7vh; color: #dbe6f0; font-weight: 600; margin-bottom: .4vh; }
+  /* Hien du moi phong: danh sach cuon doc, ten phong rong hon vi ten day du kha dai */
+  .pk-list { justify-content: flex-start; gap: .8vh; }
+  .pk-list .capname { width: 22vw; }
+  .pk-list .caprow { min-height: 2.2vh; }
   .donut-wrap { flex: 1; display: flex; align-items: center; justify-content: center; min-height: 0; }
   .donut-svg { width: 22vh; height: 22vh; }
   .donut-pct { fill: #fff; font-size: 17px; font-weight: 600; }
@@ -333,13 +333,13 @@
     var maxV = 1, tong = 0;
     ds.forEach(function (x) { maxV = Math.max(maxV, Number(x.so)); tong += Number(x.so); });
 
-    var bars = ds.map(function (x) {
-      var h = Math.round(Number(x.so) / maxV * 100);
-      return '<div class="barcol">' +
-        '<div class="pk-so">' + num(x.so) + '</div>' +
-        '<div class="barpair" style="height:14vh">' +
-        '<span style="height:' + h + '%;background:#378add"></span></div>' +
-        '<small>' + esc(x.ten) + '</small></div>';
+    // Thanh nam ngang: ten phong ben trai doc duoc nguyen ven, du bao nhieu phong cung khong
+    // bop cot mong lai. Dung lai bo class cua man Cong suat giuong.
+    var rows = ds.map(function (x) {
+      var pct = Math.round(Number(x.so) / maxV * 100);
+      return '<div class="caprow"><div class="capname">' + esc(x.ten) + '</div>' +
+        '<div class="captrack"><div class="capfill" style="width:' + Math.max(2, pct) + '%;background:#378add"></div></div>' +
+        '<div class="cappct" style="color:#dbe6f0">' + num(x.so) + '</div></div>';
     }).join('');
 
     return '<div class="slide"><div class="s-head"><div class="s-title">Lượt khám theo phòng khám</div>' +
@@ -349,7 +349,7 @@
       '<div class="kpi"><div class="lbl">Số phòng có phát sinh</div><div class="val">' + num(ds.length) + '</div></div>' +
       '</div>' +
       '<div class="panel" style="margin-top:1.6vh;flex:1;min-height:0">' +
-      '<div class="bars pk-bars">' + bars + '</div></div></div>';
+      '<div class="caplist pk-list">' + rows + '</div></div></div>';
   }
 
   function capacityDeptSlide(data) {
@@ -459,15 +459,15 @@
     // deptNames phai gan chi so theo dung thu tu nay, khong thi bam ten khoa se nhay sai slide.
     slides.push(overviewSlide(data));
     deptNames.push({ idx: 0, name: 'Tổng quan' });
-    data.configs.forEach(function (cfg) {
-      deptNames.push({ idx: slides.length, name: cfg.display_name });
-      slides.push(deptSlide(data, cfg));
-    });
     var pkHtml = phongKhamSlide(data);
     if (pkHtml) {
       deptNames.push({ idx: slides.length, name: 'Phòng khám' });
       slides.push(pkHtml);
     }
+    data.configs.forEach(function (cfg) {
+      deptNames.push({ idx: slides.length, name: cfg.display_name });
+      slides.push(deptSlide(data, cfg));
+    });
     var capHtml = capacityDeptSlide(data);
     if (capHtml) {
       deptNames.push({ idx: slides.length, name: 'Công suất giường' });

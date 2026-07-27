@@ -244,38 +244,22 @@ class GiaoBanMetricService
         ]];
     }
 
-    /** Chạy truy vấn lượt khám theo phòng. HIS lỗi -> mảng rỗng, không chặn màn trình chiếu. */
+    /**
+     * Lượt khám theo phòng, đã chuẩn hoá thành [['ten' =>, 'so' =>], ...] sắp giảm dần.
+     * HIS lỗi -> mảng rỗng, không chặn màn trình chiếu.
+     */
     public function examByRoom($from, $to)
     {
         try {
-            return $this->selectHis($this->buildExamByRoomSql($from, $to));
+            $rows = $this->selectHis($this->buildExamByRoomSql($from, $to));
         } catch (\Exception $e) {
             return [];
         }
-    }
-
-    /**
-     * Rút gọn danh sách phòng cho vừa màn chiếu: giữ $gioiHan phòng nhiều lượt nhất,
-     * phần còn lại gộp thành một cột. Hàm thuần.
-     *
-     * Vẽ hết hơn 20 phòng thì cột mảnh như sợi chỉ, chiếu lên không ai đọc được.
-     */
-    public static function gomPhongKham($rows, $gioiHan = 15)
-    {
         $ds = [];
         foreach ($rows as $r) {
             $ds[] = ['ten' => $r->ten_phong, 'so' => (int) $r->so_luot];
         }
-        if (count($ds) <= $gioiHan) {
-            return $ds;
-        }
-        $dau = array_slice($ds, 0, $gioiHan);
-        $con = array_slice($ds, $gioiHan);
-        $tong = 0;
-        foreach ($con as $x) $tong += $x['so'];
-        $dau[] = ['ten' => count($con) . ' phòng khác', 'so' => $tong];
-
-        return $dau;
+        return $ds;
     }
 
     /** Số BN nhập viện nội trú toàn viện trong kỳ (dùng cho dòng khoa Khám bệnh). */

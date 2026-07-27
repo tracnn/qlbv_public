@@ -26,37 +26,13 @@ class GiaoBanMetricServiceTest extends TestCase
     }
 
     /** @test */
-    public function gom_phong_it_luot_thanh_mot_cot_khac()
+    public function sap_xep_phong_kham_giam_dan_theo_so_luot()
     {
-        $rows = array(
-            (object) array('ten_phong' => 'PK A', 'so_luot' => 50),
-            (object) array('ten_phong' => 'PK B', 'so_luot' => 30),
-            (object) array('ten_phong' => 'PK C', 'so_luot' => 20),
-            (object) array('ten_phong' => 'PK D', 'so_luot' => 5),
-        );
+        list($sql, ) = (new GiaoBanMetricService())->buildExamByRoomSql('2026-07-26 07:00:00', '2026-07-27 07:00:00');
 
-        $ra = GiaoBanMetricService::gomPhongKham($rows, 2);
-
-        $this->assertCount(3, $ra);
-        $this->assertEquals(array('ten' => 'PK A', 'so' => 50), $ra[0]);
-        $this->assertEquals(array('ten' => 'PK B', 'so' => 30), $ra[1]);
-        // 20 + 5 gop lai, nhan noi ro con bao nhieu phong
-        $this->assertEquals(25, $ra[2]['so']);
-        $this->assertContains('2 phòng', $ra[2]['ten']);
-    }
-
-    /** @test */
-    public function khong_gom_khi_so_phong_khong_vuot_gioi_han()
-    {
-        $rows = array(
-            (object) array('ten_phong' => 'PK A', 'so_luot' => 9),
-            (object) array('ten_phong' => 'PK B', 'so_luot' => 4),
-        );
-
-        $ra = GiaoBanMetricService::gomPhongKham($rows, 15);
-
-        $this->assertCount(2, $ra);
-        $this->assertEquals('PK B', $ra[1]['ten']);
+        // Slide hien du moi phong, nen thu tu phai do SQL quyet dinh
+        $this->assertContains('ORDER BY COUNT(*) DESC', $sql);
+        $this->assertContains('GROUP BY v.room_name', $sql);
     }
 
     protected $svc;
