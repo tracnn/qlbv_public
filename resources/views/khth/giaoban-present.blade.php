@@ -29,6 +29,10 @@
     padding: 1.4vh 1.4vw; margin-top: 2vh; }
   .note .lbl { font-size: 1.7vh; color: #efc877; }
   .note .txt { font-size: 2.2vh; color: #dbe6f0; margin-top: .5vh; }
+  /* Chi tieu chuoi luu van ban thuan: xuong dong la \n that, khong phai <br> */
+  .note .txt-pre { white-space: pre-wrap; }
+  /* Nhieu danh sach dai thi cuon trong khung thay vi tran ra ngoai slide va mat hut */
+  .ds-chuoi { flex: 1; min-height: 0; overflow: auto; }
   .warn { color: #ef9f27; font-size: 2vh; margin-left: 8px; }
   #bar { display: flex; justify-content: space-between; align-items: center;
     padding: 1.2vh 4vw; font-size: 1.5vh; color: #6f8aa6; border-top: 1px solid #24384d; }
@@ -140,6 +144,23 @@
     });
     return any ? s : null;
   }
+  /** Chi tieu nay co phai loai nhap tay kieu chuoi khong. */
+  function laChiTieuChuoi(m) {
+    return m.type === 'manual' && m.input && m.input.value_type === 'text';
+  }
+
+  /**
+   * Noi dung chi tieu chuoi nam o cot `note` cua o, khong phai manual_value —
+   * nen cellVal() khong bao gio lay duoc.
+   */
+  function cellNote(data, deptId, code) {
+    for (var i = 0; i < data.cells.length; i++) {
+      var c = data.cells[i];
+      if (c.dept_config_id === deptId && c.metric_code === code) return c.note;
+    }
+    return null;
+  }
+
   function noteOf(data, deptId) {
     for (var i = 0; i < data.cells.length; i++) {
       var c = data.cells[i];
@@ -282,18 +303,31 @@
   function deptSlide(data, cfg) {
     var warn = data.balance_warnings && data.balance_warnings[cfg.id]
       ? '<span class="warn" title="Lệch cân đối">▲ ' + num(data.balance_warnings[cfg.id]) + '</span>' : '';
-    var cards = cfg.metrics.map(function (m) {
+    // Luoi KPI chi nhan chi tieu SO. Chi tieu chuoi xuong khoi rieng ben duoi.
+    var cards = cfg.metrics.filter(function (m) { return !laChiTieuChuoi(m); }).map(function (m) {
       var v = cellVal(data, cfg.id, m.code);
       return '<div class="kpi' + kpiClass(m) + '"><div class="lbl">' + esc(m.name) +
         '</div><div class="val">' + num(v) + '</div></div>';
     }).join('');
+
+    // Moi chi tieu chuoi mot khoi, dung lai class .note. Khoi rong thi bo qua.
+    // Noi dung da qua htmlspecialchars o server nen chen thang vao HTML se hien dung dau < >;
+    // xuong dong la ky tu \n that -> can white-space: pre-wrap (class .txt-pre).
+    var chuoiHtml = cfg.metrics.filter(laChiTieuChuoi).map(function (m) {
+      var t = cellNote(data, cfg.id, m.code);
+      if (!t || String(t).trim() === '') return '';
+      return '<div class="note"><div class="lbl">' + esc(m.name) +
+        '</div><div class="txt txt-pre">' + t + '</div></div>';
+    }).join('');
+    if (chuoiHtml) chuoiHtml = '<div class="ds-chuoi">' + chuoiHtml + '</div>';
+
     var note = noteOf(data, cfg.id);
     var noteHtml = (note && String(note).trim() !== '')
       ? '<div class="note"><div class="lbl">Ghi chú khoa</div><div class="txt">' + note + '</div></div>' : '';
     return '<div class="slide"><div class="s-head"><div class="s-title">' + esc(cfg.display_name) + warn +
       '</div><div class="s-sub">Giao ban ' + esc(fmtDate(DATE)) + '</div></div>' +
       '<div class="kpis" style="grid-template-columns:repeat(4,1fr)">' + cards + '</div>' +
-      noteHtml + '</div>';
+      chuoiHtml + noteHtml + '</div>';
   }
 
   function build(data) {

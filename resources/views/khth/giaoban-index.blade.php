@@ -183,6 +183,8 @@ function render(res) {
       ? ' <i class="fa fa-warning text-yellow" title="Lệch cân đối: ' + res.balance_warnings[cfg.id] + '"></i>' : '';
     var html = '<div class="box box-solid"><div class="box-header with-border"><b>' +
       esc(cfg.display_name) + '</b>' + warn + '</div><div class="box-body"><div class="row">';
+    // Chi tieu chuoi gom xuong duoi luoi o so, khong de xen giua lam vo luoi.
+    var htmlChuoi = '';
     cfg.metrics.forEach(function (m) {
       var c = cellOf(res, cfg.id, m.code) || {};
       var val = c.manual_value !== null && c.manual_value !== undefined ? c.manual_value : c.auto_value;
@@ -222,7 +224,7 @@ function render(res) {
       // Khong co nut hoan tac, khong to vang — nhung thu do chi co nghia voi so.
       if (laNhapTay && inp.value_type === 'text') {
         var thieuChuoi = inp.required && !(c.note || '').length;
-        html += '<div class="col-md-12" style="margin-bottom:8px">' +
+        htmlChuoi += '<div class="col-md-12" style="margin-bottom:8px">' +
           '<label style="font-weight:normal">' + nhan + '</label>' +
           '<textarea rows="4" class="form-control cell-text' + (thieuChuoi ? ' mb-thieu' : '') + '"' +
           ' data-dept="' + cfg.id + '" data-metric="' + esc(m.code) + '"' +
@@ -250,6 +252,8 @@ function render(res) {
         '</div></div>';
     });
     var noteCell = cellOf(res, cfg.id, 'note') || {};
+    // Dong luoi o so, roi mo mot hang rieng cho cac o chuoi.
+    if (htmlChuoi) html += '</div><div class="row">' + htmlChuoi;
     html += '</div><div class="dept-note-block"><label style="font-weight:normal">Ghi chú khoa</label>' +
       (editable ? ' <button class="btn btn-xs btn-default btn-edit-note" data-dept="' + cfg.id + '"><i class="fa fa-pencil"></i> Sửa</button>' : '') +
       '<div class="note-view dept-note-view" data-dept="' + cfg.id + '"></div></div>';
