@@ -344,6 +344,12 @@ var MetricBuilder = (function ($) {
   }
 
   function luu() {
+    if ($('#mb-tab-json').hasClass('active')) {
+      var a = docJson();
+      if (a === null) return;
+      st.metrics = a;
+    }
+
     $('#mb-save-msg').text('');
     $('#mb-list .mb-card').removeClass('panel-danger').addClass('panel-default');
 
@@ -372,6 +378,24 @@ var MetricBuilder = (function ($) {
     });
   }
 
+  /** JSON hong -> vien do + khoa nut Luu. Tra ve mang metrics hoac null. */
+  function docJson() {
+    var raw = $('#mb-json').val();
+    try {
+      var a = JSON.parse(raw);
+      if (!Array.isArray(a)) throw new Error('Phải là một mảng chỉ tiêu.');
+      $('#mb-json').css('border-color', '');
+      $('#mb-json-msg').text('').removeClass('text-red');
+      $('#mb-save').prop('disabled', false);
+      return a;
+    } catch (e) {
+      $('#mb-json').css('border-color', '#dd4b39');
+      $('#mb-json-msg').text('JSON không hợp lệ: ' + e.message).addClass('text-red');
+      $('#mb-save').prop('disabled', true);
+      return null;
+    }
+  }
+
   function bind() {
     $(document).on('click', '.mb-add', function (e) {
       e.preventDefault();
@@ -394,6 +418,20 @@ var MetricBuilder = (function ($) {
       $c.find('.mb-name-view').text($(this).data('k') === 'name' ? $(this).val() : $c.find('.mb-name-view').text());
     });
     $(document).on('click', '#mb-save', luu);
+
+    $(document).on('input', '#mb-json', function () { docJson(); });
+
+    // roi tab JSON -> dung lai danh sach card tu JSON vua go
+    $(document).on('shown.bs.tab', 'a[href="#mb-tab-form"]', function () {
+      var a = docJson();
+      if (a === null) return;          // JSON hong: giu nguyen card cu, khong nuot im lang
+      mbExplicitPending = [];          // st.metrics se la mang object hoan toan moi, cac tham chieu cu thanh rac
+      st.metrics = a;
+      render();
+    });
+
+    // mo modal lai thi go khoa nut Luu
+    $('#mb-modal').on('show.bs.modal', function () { $('#mb-save').prop('disabled', false); });
 
     // Doi radio pham vi khoa: don sach cac khoa cu de khong sinh JSON mau thuan.
     $(document).on('change', '#mb-list .mb-pv', function () {
