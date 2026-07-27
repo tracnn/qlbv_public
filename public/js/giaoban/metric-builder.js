@@ -102,13 +102,19 @@ var MetricBuilder = (function ($) {
 
     st.metrics.forEach(function (m, i) {
       var def = SCHEMA[m.type] || { label: m.type };
+      var ghiChu = '';
+      var d = SCHEMA[m.type] || {};
+      for (var ff in (d.filter || {})) {
+        var ok = (d.filter[ff] || {}).other_key;
+        if (ok && (m.filter || {})[ok]) ghiChu = ' <small class="text-muted">(nhóm Khác)</small>';
+      }
       $l.append(
         '<div class="panel panel-default mb-card" data-i="' + i + '" style="margin-bottom:6px">' +
           '<div class="panel-heading" style="padding:6px 10px">' +
             '<span class="mb-handle text-muted" draggable="true" title="Kéo để đổi thứ tự" style="margin-right:8px;cursor:move">&#x283F;</span>' +
             '<code>' + esc(m.code) + '</code> ' +
             '<b class="mb-name-view">' + esc(m.name) + '</b> ' +
-            '<span class="label label-default">' + esc(def.label) + '</span> ' +
+            '<span class="label label-default">' + esc(def.label) + '</span>' + ghiChu + ' ' +
             '<span class="mb-warn"></span>' +
             '<span class="pull-right">' +
               '<a href="#" class="mb-toggle" title="Mở/đóng"><i class="fa fa-chevron-down"></i></a> ' +
@@ -154,7 +160,15 @@ var MetricBuilder = (function ($) {
     if (meta.widget === 'catalog_multi') {
       var kieu = meta.value === 'string' ? 'string' : 'int';
       h = '<select class="form-control mb-cat" multiple ' + attr +
-          ' data-catalog="' + meta.catalog + '" data-kieu="' + kieu + '"></select>';
+          ' data-catalog="' + meta.catalog + '" data-kieu="' + kieu + '"' +
+          (meta.other_key ? ' data-other-key="' + meta.other_key + '"' : '') + '></select>';
+      if (meta.other_key) {
+        var laKhac = !!((m.filter || {})[meta.other_key]);
+        h += '<div class="checkbox" style="margin:2px 0"><label>' +
+             '<input type="checkbox" class="mb-other" data-i="' + i + '" data-ten="' + ten +
+             '" data-other="' + meta.other_key + '"' + (laKhac ? ' checked' : '') + '> ' +
+             '<small>Là nhóm <b>Khác</b> — lấy phần còn lại ngoài các loại đã chọn</small></label></div>';
+      }
     } else if (meta.widget === 'bool') {
       h = '<div class="checkbox" style="margin-top:0"><label>' +
           '<input type="checkbox" class="mb-w" ' + attr + (v ? ' checked' : '') + '> ' + nhan +
@@ -198,8 +212,12 @@ var MetricBuilder = (function ($) {
     }
     if (oField) h += '<div class="row" style="margin-top:6px">' + oField + '</div>';
 
+    if (def.scope === 'service_dept') h += renderPhamVi(m, i, def);
+
+    var PHAM_VI_FIELDS = ['execute_room_ids', 'service_ids'];
     var oFilter = '';
     for (var f in (def.filter || {})) {
+      if (def.scope === 'service_dept' && PHAM_VI_FIELDS.indexOf(f) >= 0) continue;
       oFilter += renderField(m, i, 'filter', f, def.filter[f]);
     }
     if (oFilter) {
@@ -210,11 +228,51 @@ var MetricBuilder = (function ($) {
     return h;
   }
 
+  // Cac metric dang o pham vi "explicit" nhung chua chon phong/dich vu nao. Khi filter rong,
+  // phamViHienTai khong the phan biet "explicit chua nhap gi" voi "request" (ca hai deu khong
+  // co khoa nao) — neu khong nho tam trang thai nay thi bam radio "explicit" se bi bat nguoc
+  // lai "request" ngay sau render() va 2 o chon phong/dich vu khong bao gio hien ra duoc.
+  var mbExplicitPending = [];
+
+  /** Suy ra pham vi hien tai tu filter da luu. */
+  function phamViHienTai(m) {
+    var f = m.filter || {};
+    if (f.execute_department_id_self) return 'self';
+    if (f.execute_room_ids || f.service_ids || f.execute_department_ids ||
+        f.execute_department_id || f.request_department_ids || f.request_department_id) return 'explicit';
+    if (mbExplicitPending.indexOf(m) >= 0) return 'explicit';
+    return 'request';
+  }
+
+  /** Widget "Phạm vi khoa" cho chi tieu co scope service_dept — thay 6 khoa tho bang 3 lua chon. */
+  function renderPhamVi(m, i, def) {
+    var pv = phamViHienTai(m);
+    var r = function (v, nhan) {
+      return '<div class="radio" style="margin:2px 0"><label>' +
+        '<input type="radio" name="mb-pv-' + i + '" class="mb-pv" data-i="' + i + '" value="' + v + '"' +
+        (pv === v ? ' checked' : '') + '> ' + nhan + '</label></div>';
+    };
+    var h = '<div style="margin-top:6px"><b class="text-muted">Phạm vi khoa</b></div>' +
+      r('self', 'Dịch vụ do <b>khoa này thực hiện</b>') +
+      r('request', 'Dịch vụ do <b>khoa này chỉ định</b>') +
+      r('explicit', 'Chỉ định <b>phòng / dịch vụ cụ thể</b>');
+
+    if (pv === 'explicit') {
+      h += '<div class="row">' +
+        renderField(m, i, 'filter', 'execute_room_ids', def.filter.execute_room_ids) +
+        renderField(m, i, 'filter', 'service_ids', def.filter.service_ids) +
+        '</div>';
+    }
+    return h;
+  }
+
   /** Gan handler ghi gia tri khi nguoi dung doi lua chon select2 (dung chung cho 2 nhanh). */
   function ganDoiGiaTri($s, i, noi, ten, kieu) {
     $s.on('change', function () {
       var v = ($s.val() || []).map(function (x) { return kieu === 'int' ? parseInt(x, 10) : String(x); });
-      datGiaTri(st.metrics[i], noi, ten, v);
+      var otherKey = $s.data('other-key');
+      var dangKhac = otherKey && $('#mb-list .mb-other[data-i="' + i + '"][data-ten="' + ten + '"]').is(':checked');
+      datGiaTri(st.metrics[i], noi, dangKhac ? otherKey : ten, v);
       $('#mb-json').val(JSON.stringify(st.metrics, null, 2));
     });
   }
@@ -232,6 +290,8 @@ var MetricBuilder = (function ($) {
       var kieu = $s.data('kieu');
       var i = $s.data('i'), noi = $s.data('noi'), ten = $s.data('ten');
       var daChon = layGiaTri(st.metrics[i], noi, ten) || [];
+      var otherKey = $s.data('other-key');
+      if (!daChon.length && otherKey) daChon = (st.metrics[i].filter || {})[otherKey] || [];
 
       if (!laDanhMucLon(key)) {
         // nhom nho: du lieu co san
@@ -334,6 +394,47 @@ var MetricBuilder = (function ($) {
       $c.find('.mb-name-view').text($(this).data('k') === 'name' ? $(this).val() : $c.find('.mb-name-view').text());
     });
     $(document).on('click', '#mb-save', luu);
+
+    // Doi radio pham vi khoa: don sach cac khoa cu de khong sinh JSON mau thuan.
+    $(document).on('change', '#mb-list .mb-pv', function () {
+      var i = $(this).data('i');
+      var m = st.metrics[i];
+      var f = m.filter || {};
+      ['execute_department_id_self', 'execute_room_ids', 'service_ids',
+       'execute_department_ids', 'execute_department_id',
+       'request_department_ids', 'request_department_id'].forEach(function (k) { delete f[k]; });
+
+      var val = $(this).val();
+      if (val === 'self') f.execute_department_id_self = true;
+      // 'request' = khong khai gi, computeAll tu gan theo khoa cua config
+      var viTriCho = mbExplicitPending.indexOf(m);
+      if (val === 'explicit') {
+        if (viTriCho < 0) mbExplicitPending.push(m);
+      } else if (viTriCho >= 0) {
+        mbExplicitPending.splice(viTriCho, 1);
+      }
+      m.filter = Object.keys(f).length ? f : undefined;
+      if (!m.filter) delete m.filter;
+      render();
+      $('#mb-list .mb-card').eq(i).find('.mb-body').show();
+    });
+
+    // Bat/tat nhom "Khac": chuyen gia tri dang chon giua khoa *_ids va *_other_of.
+    $(document).on('change', '#mb-list .mb-other', function () {
+      var i = $(this).data('i');
+      var ten = $(this).data('ten'), other = $(this).data('other');
+      var m = st.metrics[i];
+      var f = m.filter || {};
+      if ($(this).is(':checked')) {
+        if (f[ten]) { f[other] = f[ten]; delete f[ten]; }
+      } else {
+        if (f[other]) { f[ten] = f[other]; delete f[other]; }
+      }
+      m.filter = Object.keys(f).length ? f : undefined;
+      if (!m.filter) delete m.filter;
+      render();
+      $('#mb-list .mb-card').eq(i).find('.mb-body').show();
+    });
 
     // Ghi gia tri cho moi widget dong (text/number/int/select/bool) sinh boi renderField.
     $(document).on('change input', '#mb-list .mb-w', function () {
