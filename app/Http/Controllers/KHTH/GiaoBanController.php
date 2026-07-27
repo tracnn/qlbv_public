@@ -167,6 +167,17 @@ class GiaoBanController extends Controller
             abort(403, 'Bạn không có quyền nhập số liệu khoa này.');
         }
 
+        if ($request->input('metric_code') !== 'note' && $request->filled('manual_value')) {
+            $cfg = GiaoBanDeptConfig::find($request->input('dept_config_id'));
+            $metric = $cfg ? $cfg->metricByCode($request->input('metric_code')) : null;
+            if ($metric) {
+                $loi = \App\Services\GiaoBan\MetricSchema::kiemGiaTriNhapTay($metric, $request->input('manual_value'));
+                if ($loi !== null) {
+                    return response()->json(['message' => $loi], 422);
+                }
+            }
+        }
+
         $cell = GiaoBanReportCell::firstOrNew([
             'report_id' => $report->id,
             'dept_config_id' => (int) $request->input('dept_config_id'),

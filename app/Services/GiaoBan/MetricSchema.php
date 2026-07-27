@@ -152,4 +152,37 @@ class MetricSchema
         }
         return $out;
     }
+
+    /**
+     * Kiem gia tri nhap tay theo khai bao input cua chi tieu.
+     * Chi ap dung cho type manual; chi tieu tu dong khong rang buoc.
+     * @return null|string null = hop le, nguoc lai la thong bao loi
+     */
+    public static function kiemGiaTriNhapTay($metric, $value)
+    {
+        if (!is_array($metric) || !isset($metric['type']) || $metric['type'] !== 'manual') return null;
+        if ($value === null || $value === '') return null;   // xoa o
+        if (!is_numeric($value)) return 'Giá trị phải là số.';
+
+        $in = isset($metric['input']) && is_array($metric['input']) ? $metric['input'] : [];
+        $v = (float) $value;
+        $kieu = isset($in['value_type']) ? $in['value_type'] : 'int';
+
+        if ($kieu === 'int' && floor($v) != $v) {
+            return 'Chỉ tiêu này chỉ nhận số nguyên.';
+        }
+        if (in_array($kieu, ['decimal', 'percent'], true) && round($v, 2) != $v) {
+            return 'Chỉ tiêu này tối đa 2 chữ số thập phân.';
+        }
+        if ($kieu === 'percent' && ($v < 0 || $v > 100)) {
+            return 'Giá trị phần trăm phải trong khoảng 0–100.';
+        }
+        if (isset($in['min']) && is_numeric($in['min']) && $v < (float) $in['min']) {
+            return 'Giá trị nhỏ hơn mức tối thiểu (' . $in['min'] . ').';
+        }
+        if (isset($in['max']) && is_numeric($in['max']) && $v > (float) $in['max']) {
+            return 'Giá trị lớn hơn mức tối đa (' . $in['max'] . ').';
+        }
+        return null;
+    }
 }

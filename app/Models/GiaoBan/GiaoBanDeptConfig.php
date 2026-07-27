@@ -17,6 +17,15 @@ class GiaoBanDeptConfig extends Model
         return is_array($m) ? $m : [];
     }
 
+    /** @return array|null khai bao mot chi tieu theo ma */
+    public function metricByCode($code)
+    {
+        foreach ($this->metricList() as $m) {
+            if (isset($m['code']) && $m['code'] === $code) return $m;
+        }
+        return null;
+    }
+
     /** @return int[] danh sách khoa HIS (JSON his_department_ids; fallback cột đơn cũ) */
     public function hisDepartmentIds()
     {
