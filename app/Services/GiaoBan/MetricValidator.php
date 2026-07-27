@@ -206,8 +206,35 @@ class MetricValidator
 
         $valueType = isset($input['value_type']) ? $input['value_type'] : 'int';
         if (!in_array($valueType, $fields['value_type']['options'], true)) {
-            $loi[] = self::loi($i, 'input.value_type', 'Kiểu giá trị chỉ nhận: int, decimal, percent.');
+            $loi[] = self::loi($i, 'input.value_type',
+                'Kiểu giá trị chỉ nhận: ' . implode(', ', $fields['value_type']['options']) . '.');
             $valueType = 'int';
+        }
+
+        // Kieu chuoi: cac thuoc tinh chi co nghia voi so deu bi CHAN, khong phai bo qua.
+        // Rieng carry_over bi cam co ly do sau xa hon thong bao loi: no bao dam
+        // GiaoBanReportService::initialManualValues() khong bao gio sinh gia tri cho o chuoi,
+        // nen duong ghi so lieu (fetchAndStore) khong the cham vao chung.
+        if ($valueType === 'text') {
+            $camKhi = [
+                'unit'       => 'Chỉ tiêu kiểu chuỗi không có đơn vị.',
+                'min'        => 'Chỉ tiêu kiểu chuỗi không đặt được giá trị nhỏ nhất.',
+                'max'        => 'Chỉ tiêu kiểu chuỗi không đặt được giá trị lớn nhất.',
+                'default'    => 'Chỉ tiêu kiểu chuỗi không đặt được giá trị mặc định.',
+                'carry_over' => 'Chỉ tiêu kiểu chuỗi chưa hỗ trợ kế thừa từ phiên trước.',
+            ];
+            foreach ($camKhi as $ten => $thongBao) {
+                if (isset($input[$ten]) && $input[$ten] !== '' && $input[$ten] !== false) {
+                    $loi[] = self::loi($i, 'input.' . $ten, $thongBao);
+                }
+            }
+            if (isset($input['hint']) && mb_strlen((string) $input['hint']) > 255) {
+                $loi[] = self::loi($i, 'input.hint', 'Giải thích tối đa 255 ký tự.');
+            }
+            if (isset($input['required']) && !is_bool($input['required'])) {
+                $loi[] = self::loi($i, 'input.required', "'required' phải là true/false.");
+            }
+            return $loi;
         }
 
         if (isset($input['unit']) && mb_strlen((string) $input['unit']) > 20) {

@@ -4,8 +4,9 @@
 
 @section('css')
 <style>
-  .cell-input.mb-thieu { border-color: #dd4b39; background: #fff5f4; }
+  .cell-input.mb-thieu, .cell-text.mb-thieu { border-color: #dd4b39; background: #fff5f4; }
   .cell-input.mb-ke-thua { color: #999; font-style: italic; background: #fafafa; }
+  .cell-text { font-family: inherit; }
 </style>
 @stop
 
@@ -121,6 +122,19 @@ function esc(s) {
   });
 }
 
+/**
+ * Giai ma nguoc gia tri chi tieu kieu chuoi truoc khi do vao textarea.
+ * Server luu bang NoteSanitizer::cleanPlain (htmlspecialchars) de gia tri khong bao gio
+ * chay duoc du hien thi kieu gi. Khong giai ma o day thi nguoi dung thay "Hb &lt; 8"
+ * roi luu tiep se thanh "&amp;lt;" — hong dan qua tung lan sua.
+ */
+function giaiMaHtml(s) {
+  if (s === null || s === undefined || s === '') return '';
+  var d = document.createElement('textarea');
+  d.innerHTML = String(s);
+  return d.value;
+}
+
 function cellOf(res, deptId, code) {
   for (var i = 0; i < res.cells.length; i++) {
     var c = res.cells[i];
@@ -203,6 +217,23 @@ function render(res) {
 
       var nhan = esc(m.name) + (inp.required ? ' <span class="text-red">*</span>' : '') +
                  (inp.hint ? ' <i class="fa fa-question-circle text-muted" title="' + esc(inp.hint) + '"></i>' : '');
+
+      // Chi tieu nhap tay kieu chuoi: textarea chiem ca hang, gia tri nam o cot `note`.
+      // Khong co nut hoan tac, khong to vang — nhung thu do chi co nghia voi so.
+      if (laNhapTay && inp.value_type === 'text') {
+        var thieuChuoi = inp.required && !(c.note || '').length;
+        html += '<div class="col-md-12" style="margin-bottom:8px">' +
+          '<label style="font-weight:normal">' + nhan + '</label>' +
+          '<textarea rows="4" class="form-control cell-text' + (thieuChuoi ? ' mb-thieu' : '') + '"' +
+          ' data-dept="' + cfg.id + '" data-metric="' + esc(m.code) + '"' +
+          (inp.hint ? ' placeholder="' + esc(inp.hint) + '"' : '') +
+          (editable ? '' : ' readonly') + '>' +
+          // Gia tri luu da qua htmlspecialchars (NoteSanitizer::cleanPlain) nen phai giai ma
+          // truoc khi do vao textarea, neu khong se ma hoa kep dan qua tung lan sua.
+          esc(giaiMaHtml(c.note)) +
+          '</textarea></div>';
+        return;
+      }
 
       html += '<div class="col-md-2" style="margin-bottom:8px"><label style="font-weight:normal">' + nhan + '</label>' +
         '<div class="input-group">' +
@@ -301,6 +332,14 @@ $(function () {
   });
   $('#report-body').on('click', '.btn-reset-cell', function () {
     saveCell($(this).data('dept'), $(this).data('metric'), { manual_value: '' }, loadReport);
+  });
+  // Chi tieu kieu chuoi: gia tri di theo tham so `note`, khong phai `manual_value`.
+  // Khong goi loadReport() sau khi luu — ve lai ca man se cuop con tro dang go cua nguoi dung.
+  $('#report-body').on('change', '.cell-text', function () {
+    var $t = $(this);
+    saveCell($t.data('dept'), $t.data('metric'), { note: $t.val() }, function () {
+      $t.removeClass('mb-thieu');
+    });
   });
   $('#btn-finalize').on('click', function () {
     if (!confirm('Chốt báo cáo? Sau khi chốt sẽ không sửa được.')) return;

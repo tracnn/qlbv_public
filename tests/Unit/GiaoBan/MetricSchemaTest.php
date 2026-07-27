@@ -84,7 +84,27 @@ class MetricSchemaTest extends TestCase
         foreach (['unit', 'hint', 'value_type', 'min', 'max', 'required', 'default', 'carry_over'] as $k) {
             $this->assertArrayHasKey($k, $fields, "Thieu thuoc tinh nhap tay $k");
         }
-        $this->assertEquals(['int', 'decimal', 'percent'], $fields['value_type']['options']);
+        $this->assertEquals(['int', 'decimal', 'percent', 'text'], $fields['value_type']['options']);
+    }
+
+    /** @test */
+    public function cac_o_chi_co_nghia_voi_so_deu_khai_show_if()
+    {
+        $fields = MetricSchema::TYPES['manual']['fields'];
+
+        foreach (['unit', 'min', 'max', 'default'] as $ten) {
+            $this->assertArrayHasKey('show_if', $fields[$ten], "Thieu show_if cho o '$ten'");
+            $this->assertEquals(
+                ['int', 'decimal', 'percent'],
+                $fields[$ten]['show_if']['value_type'],
+                "O '$ten' phai an khi kieu gia tri la text"
+            );
+        }
+
+        // hint / required van hien voi moi kieu
+        foreach (['hint', 'required'] as $ten) {
+            $this->assertArrayNotHasKey('show_if', $fields[$ten]);
+        }
     }
 
     /** @test */

@@ -58,6 +58,45 @@ class ManualInputRuleTest extends TestCase
         $this->assertNull(MetricSchema::kiemGiaTriNhapTay($m, -999));
     }
 
+    // ===== Kieu chuoi =====
+
+    /** @test */
+    public function kieu_text_nhan_chuoi_thuong()
+    {
+        $m = $this->chiTieu(['value_type' => 'text']);
+
+        $this->assertNull(MetricSchema::kiemGiaTriNhapTay($m, "SP Tham: Thai 39 tuan\nSP Huyen"));
+        $this->assertNull(MetricSchema::kiemGiaTriNhapTay($m, ''));   // xoa o
+    }
+
+    /** @test */
+    public function kieu_text_chan_chuoi_qua_dai()
+    {
+        $m = $this->chiTieu(['value_type' => 'text']);
+
+        $this->assertNull(MetricSchema::kiemGiaTriNhapTay($m, str_repeat('a', 5000)));
+        $this->assertNotNull(MetricSchema::kiemGiaTriNhapTay($m, str_repeat('a', 5001)));
+    }
+
+    /** @test */
+    public function nhan_biet_dung_chi_tieu_kieu_chuoi()
+    {
+        $this->assertTrue(MetricSchema::laKieuChuoi($this->chiTieu(['value_type' => 'text'])));
+        $this->assertFalse(MetricSchema::laKieuChuoi($this->chiTieu(['value_type' => 'int'])));
+        $this->assertFalse(MetricSchema::laKieuChuoi($this->chiTieu([])));   // mac dinh int
+        // chi tieu tu dong khong bao gio la kieu chuoi
+        $this->assertFalse(MetricSchema::laKieuChuoi(['code' => 'bn_cu', 'name' => 'BN cũ', 'type' => 'census_from']));
+    }
+
+    /** @test */
+    public function kieu_text_khong_bi_ap_rang_buoc_so()
+    {
+        // chuoi khong phai so nhung van hop le vi kieu la text
+        $m = $this->chiTieu(['value_type' => 'text']);
+
+        $this->assertNull(MetricSchema::kiemGiaTriNhapTay($m, 'khong phai so'));
+    }
+
     /** @test */
     public function gia_tri_null_la_xoa_o_nen_hop_le()
     {

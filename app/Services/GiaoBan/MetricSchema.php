@@ -77,13 +77,19 @@ class MetricSchema
             'label' => 'Nhập tay', 'blocks' => ['dieu_tri', 'kham', 'can_lam_sang'],
             'group' => 'input', // toan bo thuoc tinh nam trong khoa con "input"
             'fields' => [
-                'unit'       => ['widget' => 'text', 'label' => 'Đơn vị', 'max' => 20],
+                // show_if: chi hien o nay khi khoa duoc tro toi dang mang mot trong cac gia tri liet ke.
+                // Co che tong quat, khong phai va rieng cho 'text'.
+                'unit'       => ['widget' => 'text', 'label' => 'Đơn vị', 'max' => 20,
+                                 'show_if' => ['value_type' => ['int', 'decimal', 'percent']]],
                 'hint'       => ['widget' => 'text', 'label' => 'Giải thích cho khoa', 'max' => 255],
-                'value_type' => ['widget' => 'select', 'label' => 'Kiểu giá trị', 'options' => ['int', 'decimal', 'percent'], 'default' => 'int'],
-                'min'        => ['widget' => 'number', 'label' => 'Nhỏ nhất'],
-                'max'        => ['widget' => 'number', 'label' => 'Lớn nhất'],
+                'value_type' => ['widget' => 'select', 'label' => 'Kiểu giá trị', 'options' => ['int', 'decimal', 'percent', 'text'], 'default' => 'int'],
+                'min'        => ['widget' => 'number', 'label' => 'Nhỏ nhất',
+                                 'show_if' => ['value_type' => ['int', 'decimal', 'percent']]],
+                'max'        => ['widget' => 'number', 'label' => 'Lớn nhất',
+                                 'show_if' => ['value_type' => ['int', 'decimal', 'percent']]],
                 'required'   => ['widget' => 'bool', 'label' => 'Bắt buộc nhập'],
-                'default'    => ['widget' => 'number', 'label' => 'Giá trị mặc định'],
+                'default'    => ['widget' => 'number', 'label' => 'Giá trị mặc định',
+                                 'show_if' => ['value_type' => ['int', 'decimal', 'percent']]],
                 'carry_over' => ['widget' => 'bool', 'label' => 'Kế thừa từ phiên trước'],
             ],
             'filter' => [],
@@ -154,6 +160,17 @@ class MetricSchema
     }
 
     /**
+     * Chi tieu nay co phai loai nhap tay kieu CHUOI khong.
+     * Dung de dinh tuyen gia tri sang cot `note` thay vi `manual_value`.
+     */
+    public static function laKieuChuoi($metric)
+    {
+        if (!is_array($metric) || !isset($metric['type']) || $metric['type'] !== 'manual') return false;
+        $in = isset($metric['input']) && is_array($metric['input']) ? $metric['input'] : [];
+        return isset($in['value_type']) && $in['value_type'] === 'text';
+    }
+
+    /**
      * Kiem gia tri nhap tay theo khai bao input cua chi tieu.
      * Chi ap dung cho type manual; chi tieu tu dong khong rang buoc.
      * @return null|string null = hop le, nguoc lai la thong bao loi
@@ -162,11 +179,20 @@ class MetricSchema
     {
         if (!is_array($metric) || !isset($metric['type']) || $metric['type'] !== 'manual') return null;
         if ($value === null || $value === '') return null;   // xoa o
-        if (!is_numeric($value)) return 'Giá trị phải là số.';
 
         $in = isset($metric['input']) && is_array($metric['input']) ? $metric['input'] : [];
-        $v = (float) $value;
         $kieu = isset($in['value_type']) ? $in['value_type'] : 'int';
+
+        // Chi tieu kieu chuoi: khong ap rang buoc so, chi gioi han do dai.
+        if ($kieu === 'text') {
+            if (mb_strlen((string) $value) > NoteSanitizer::MAX_PLAIN) {
+                return 'Nội dung quá dài (tối đa ' . NoteSanitizer::MAX_PLAIN . ' ký tự).';
+            }
+            return null;
+        }
+
+        if (!is_numeric($value)) return 'Giá trị phải là số.';
+        $v = (float) $value;
 
         if ($kieu === 'int' && floor($v) != $v) {
             return 'Chỉ tiêu này chỉ nhận số nguyên.';

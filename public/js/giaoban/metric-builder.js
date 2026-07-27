@@ -186,8 +186,42 @@ var MetricBuilder = (function ($) {
     if (Object.keys(m[noi]).length === 0) delete m[noi];
   }
 
+  /**
+   * Co nen hien o nay khong, theo khai bao show_if trong MetricSchema.
+   * show_if: { <ten_khoa_khac>: [cac gia tri cho phep] } — doc gia tri hien tai cua khoa do
+   * trong CUNG vung (goc / filter / input). Co che tong quat, khong biet gi ve 'text'.
+   */
+  function hienO(m, noi, meta) {
+    if (!meta.show_if) return true;
+    for (var khoa in meta.show_if) {
+      var hienTai = layGiaTri(m, noi, khoa);
+      if (hienTai === undefined || hienTai === null || hienTai === '') {
+        // chua chon thi lay mac dinh khai trong schema cua khoa do
+        var d = (SCHEMA.manual && SCHEMA.manual.fields[khoa]) ? SCHEMA.manual.fields[khoa].default : undefined;
+        hienTai = d;
+      }
+      if (meta.show_if[khoa].indexOf(hienTai) < 0) return false;
+    }
+    return true;
+  }
+
+  /** Co o nao khac dang phu thuoc vao khoa nay qua show_if khong. */
+  function laKhoaDieuKhien(m, ten) {
+    var def = SCHEMA[m.type];
+    if (!def) return false;
+    var nhom = [def.fields || {}, def.filter || {}];
+    for (var n = 0; n < nhom.length; n++) {
+      for (var k in nhom[n]) {
+        var si = nhom[n][k].show_if;
+        if (si && si[ten]) return true;
+      }
+    }
+    return false;
+  }
+
   /** Mot o nhap, dua tren khai bao widget trong MetricSchema. */
   function renderField(m, i, noi, ten, meta) {
+    if (!hienO(m, noi, meta)) return '';
     var id = 'mb-' + i + '-' + noi + '-' + ten;
     var v = layGiaTri(m, noi, ten);
     var nhan = esc(meta.label || ten);
@@ -655,8 +689,16 @@ var MetricBuilder = (function ($) {
       } else {
         v = $e.val();
       }
-      datGiaTri(m, $e.data('noi'), $e.data('ten'), v);
+      var noi = $e.data('noi'), ten = $e.data('ten'), i = $e.data('i');
+      datGiaTri(m, noi, ten, v);
       $('#mb-json').val(JSON.stringify(st.metrics, null, 2));
+
+      // Neu o vua doi duoc show_if cua o khac tro toi thi phai ve lai card,
+      // khong thi cac o phu thuoc van hien/an theo gia tri cu.
+      if (laKhoaDieuKhien(m, ten)) {
+        render();
+        $('#mb-list .mb-card').eq(i).find('.mb-body').show();
+      }
     });
 
     // Du an khong nap thu vien keo-tha-sap-xep ngoai (khong co file lien quan "jQuery UI"

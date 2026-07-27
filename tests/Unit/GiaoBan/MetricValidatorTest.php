@@ -182,6 +182,55 @@ class MetricValidatorTest extends TestCase
         $this->assertEquals('input.decimals', $loi[0]['field']);
     }
 
+    // ===== Chi tieu nhap tay kieu chuoi =====
+
+    protected function chiTieuChuoi($input)
+    {
+        return [['code' => 'ds_mo_cc', 'name' => 'DS mổ cấp cứu', 'type' => 'manual', 'input' => $input]];
+    }
+
+    /** @test */
+    public function nhap_tay_kieu_text_hop_le_voi_hint_va_required()
+    {
+        $m = $this->chiTieuChuoi(['value_type' => 'text', 'hint' => 'Mỗi BN một dòng', 'required' => true]);
+
+        $this->assertSame([], MetricValidator::validate($m, 'dieu_tri'));
+    }
+
+    /** @test */
+    public function kieu_text_khong_duoc_khai_rang_buoc_so()
+    {
+        foreach (['min' => 0, 'max' => 10, 'default' => 0] as $khoa => $gt) {
+            $loi = MetricValidator::validate(
+                $this->chiTieuChuoi(['value_type' => 'text', $khoa => $gt]), 'dieu_tri'
+            );
+
+            $this->assertNotEmpty($loi, "Kieu text khai '$khoa' le ra phai bi chan");
+            $this->assertEquals('input.' . $khoa, $loi[0]['field']);
+        }
+    }
+
+    /** @test */
+    public function kieu_text_khong_duoc_khai_don_vi()
+    {
+        $loi = MetricValidator::validate($this->chiTieuChuoi(['value_type' => 'text', 'unit' => 'ca']), 'dieu_tri');
+
+        $this->assertEquals('input.unit', $loi[0]['field']);
+    }
+
+    /**
+     * Cam carry_over cho kieu text khong phai de nghiem khac: no bao dam
+     * initialManualValues() khong bao gio sinh gia tri cho o chuoi.
+     *
+     * @test
+     */
+    public function kieu_text_khong_duoc_bat_ke_thua_ky_truoc()
+    {
+        $loi = MetricValidator::validate($this->chiTieuChuoi(['value_type' => 'text', 'carry_over' => true]), 'dieu_tri');
+
+        $this->assertEquals('input.carry_over', $loi[0]['field']);
+    }
+
     /** @test */
     public function json_hong_tra_loi_cap_danh_sach()
     {

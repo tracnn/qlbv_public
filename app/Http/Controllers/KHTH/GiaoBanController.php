@@ -195,32 +195,50 @@ class GiaoBanController extends Controller
             abort(403, 'Bạn không có quyền nhập số liệu khoa này.');
         }
 
-        if ($request->input('metric_code') !== 'note' && $request->filled('manual_value')) {
+        $maChiTieu = $request->input('metric_code');
+        $laGhiChuKhoa = $maChiTieu === 'note';
+
+        $metric = null;
+        if (!$laGhiChuKhoa) {
             $cfg = GiaoBanDeptConfig::find($request->input('dept_config_id'));
-            $metric = $cfg ? $cfg->metricByCode($request->input('metric_code')) : null;
-            if ($metric) {
-                $loi = MetricSchema::kiemGiaTriNhapTay($metric, $request->input('manual_value'));
-                if ($loi !== null) {
-                    return response()->json(['message' => $loi], 422);
-                }
-            } else {
+            $metric = $cfg ? $cfg->metricByCode($maChiTieu) : null;
+            if (!$metric) {
                 // Ma chi tieu khong co trong cau hinh khoa -> khong co khai bao de kiem.
                 // Van cho luu (tranh khoa khoa dang nhap lieu khi cau hinh vua doi giua ca),
                 // nhung ghi log de con lan ra khi so lieu bat thuong.
                 \Log::warning('Giao ban saveCell: khong tim thay khai bao chi tieu', [
                     'dept_config_id' => $request->input('dept_config_id'),
-                    'metric_code' => $request->input('metric_code'),
+                    'metric_code' => $maChiTieu,
                 ]);
+            }
+        }
+
+        $laChiTieuChuoi = $metric !== null && MetricSchema::laKieuChuoi($metric);
+
+        // Kiem rang buoc theo khai bao truoc khi ghi. Chi tieu chuoi kiem tren o `note`,
+        // chi tieu so kiem tren o `manual_value`.
+        if ($metric) {
+            $giaTri = $laChiTieuChuoi ? $request->input('note') : $request->input('manual_value');
+            if ($giaTri !== null && $giaTri !== '') {
+                $loi = MetricSchema::kiemGiaTriNhapTay($metric, $giaTri);
+                if ($loi !== null) {
+                    return response()->json(['message' => $loi], 422);
+                }
             }
         }
 
         $cell = GiaoBanReportCell::firstOrNew([
             'report_id' => $report->id,
             'dept_config_id' => (int) $request->input('dept_config_id'),
-            'metric_code' => $request->input('metric_code'),
+            'metric_code' => $maChiTieu,
         ]);
-        if ($request->input('metric_code') === 'note') {
+        if ($laGhiChuKhoa) {
+            // Ghi chu khoa la o giau dinh dang -> loc HTML theo whitelist.
             $cell->note = NoteSanitizer::clean($request->input('note'));
+        } elseif ($laChiTieuChuoi) {
+            // Chi tieu chuoi la van ban thuan -> ma hoa toan bo, khong giu the nao.
+            // Nap vao textarea phai giai ma nguoc, xem giaiMaHtml() trong giaoban-index.blade.php.
+            $cell->note = NoteSanitizer::cleanPlain($request->input('note'));
         } else {
             $cell->manual_value = $request->filled('manual_value') ? $request->input('manual_value') : null;
             $cell->carried_over = false;   // khoa da xac nhan -> khong con la so ke thua
