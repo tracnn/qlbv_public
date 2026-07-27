@@ -143,6 +143,39 @@ class GiaoBanReportService
             $cell->save();
         }
 
+        // Khoi tao o nhap tay: ke thua ky truoc / gia tri mac dinh.
+        // CHI cham vao o CHUA TON TAI — fetchAndStore duoc goi lai nhieu lan tren cung bao cao draft.
+        $baoCaoTruoc = GiaoBanReport::where('report_date', '<', $report->report_date)
+            ->orderBy('report_date', 'desc')->first();
+
+        foreach ($configs as $cfg) {
+            $daCo = GiaoBanReportCell::where('report_id', $report->id)
+                ->where('dept_config_id', $cfg->id)
+                ->whereNotNull('manual_value')
+                ->pluck('metric_code')->all();
+
+            $truoc = [];
+            if ($baoCaoTruoc) {
+                $truoc = GiaoBanReportCell::where('report_id', $baoCaoTruoc->id)
+                    ->where('dept_config_id', $cfg->id)
+                    ->whereNotNull('manual_value')
+                    ->pluck('manual_value', 'metric_code')->all();
+            }
+
+            foreach (self::initialManualValues($cfg->metricList(), $daCo, $truoc) as $code => $khoiTao) {
+                $cell = GiaoBanReportCell::firstOrNew([
+                    'report_id' => $report->id,
+                    'dept_config_id' => $cfg->id,
+                    'metric_code' => $code,
+                ]);
+                if ($cell->manual_value !== null) continue;   // chan lop hai: khong bao gio de len so co san
+                $cell->manual_value = $khoiTao['value'];
+                $cell->carried_over = $khoiTao['carried'];
+                $cell->updated_by = $userId;
+                $cell->save();
+            }
+        }
+
         try {
             list($bedSql, $bedBinds) = $this->metricService->buildBedCapacitySql($to);
             $bedRows = $this->metricService->normalizeRows(

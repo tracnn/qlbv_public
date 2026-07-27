@@ -9,7 +9,10 @@ class GiaoBanReportCell extends Model
     protected $table = 'giaoban_report_cells';
     protected $fillable = [
         'report_id', 'dept_config_id', 'metric_code',
-        'auto_value', 'manual_value', 'note', 'updated_by',
+        'auto_value', 'manual_value', 'note', 'updated_by', 'carried_over',
+    ];
+    protected $casts = [
+        'carried_over' => 'boolean',
     ];
 
     /** Giá trị hiển thị: ưu tiên sửa tay */

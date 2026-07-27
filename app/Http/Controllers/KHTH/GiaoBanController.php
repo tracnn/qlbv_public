@@ -64,6 +64,7 @@ class GiaoBanController extends Controller
                 $cells[] = [
                     'dept_config_id' => $c->dept_config_id, 'metric_code' => $c->metric_code,
                     'auto_value' => $c->auto_value, 'manual_value' => $c->manual_value, 'note' => $c->note,
+                    'carried_over' => (bool) $c->carried_over,
                 ];
             }
             $warnings = GiaoBanReportService::checkBalance(
@@ -196,6 +197,7 @@ class GiaoBanController extends Controller
             $cell->note = NoteSanitizer::clean($request->input('note'));
         } else {
             $cell->manual_value = $request->filled('manual_value') ? $request->input('manual_value') : null;
+            $cell->carried_over = false;   // khoa da xac nhan -> khong con la so ke thua
         }
         $cell->updated_by = auth()->id();
         $cell->save();

@@ -5,6 +5,7 @@
 @section('css')
 <style>
   .cell-input.mb-thieu { border-color: #dd4b39; background: #fff5f4; }
+  .cell-input.mb-ke-thua { color: #999; font-style: italic; background: #fafafa; }
 </style>
 @stop
 
@@ -150,6 +151,7 @@ function render(res) {
       // MetricValidator ep buoc voi type != manual, nen chan thang o day.
       var laNhapTay = m.type === 'manual';
       var inp = laNhapTay ? (m.input || {}) : {};
+      var keThua = !!c.carried_over;
 
       // step theo kieu gia tri; decimal(12,2) o DB nen toi da 2 chu so le
       var step = inp.value_type === 'decimal' || inp.value_type === 'percent' ? '0.01' : '1';
@@ -167,10 +169,11 @@ function render(res) {
       if (maxHL !== null) rangBuoc += ' max="' + maxHL + '"';
 
       var trong = val === null || val === undefined || val === '';
-      var thieuBatBuoc = laNhapTay && inp.required && trong;
+      var thieuBatBuoc = laNhapTay && inp.required && (trong || keThua);
 
-      var tip = edited ? 'Số HIS: ' + (c.auto_value === null ? '—' : c.auto_value)
-                       : (inp.hint || '');
+      var tip = keThua ? 'Kế thừa từ phiên trước, chưa xác nhận'
+                       : (edited ? 'Số HIS: ' + (c.auto_value === null ? '—' : c.auto_value)
+                       : (inp.hint || ''));
 
       var nhan = esc(m.name) + (inp.required ? ' <span class="text-red">*</span>' : '') +
                  (inp.hint ? ' <i class="fa fa-question-circle text-muted" title="' + esc(inp.hint) + '"></i>' : '');
@@ -178,7 +181,7 @@ function render(res) {
       html += '<div class="col-md-2" style="margin-bottom:8px"><label style="font-weight:normal">' + nhan + '</label>' +
         '<div class="input-group">' +
         '<input type="number"' + rangBuoc + ' class="form-control cell-input' +
-          (edited ? ' bg-warning' : '') + (thieuBatBuoc ? ' mb-thieu' : '') + '"' +
+          (edited ? ' bg-warning' : '') + (thieuBatBuoc ? ' mb-thieu' : '') + (keThua ? ' mb-ke-thua' : '') + '"' +
         ' data-dept="' + cfg.id + '" data-metric="' + m.code + '"' +
         (tip ? ' title="' + esc(tip) + '"' : '') +
         ' value="' + (trong ? '' : Number(val)) + '"' + (editable ? '' : ' readonly') + '>' +
