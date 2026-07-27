@@ -21,13 +21,15 @@
         <input type="datetime-local" id="to_time" class="form-control"></div>
       <div class="col-md-6" style="padding-top:24px">
         <button id="btn-view" class="btn btn-default"><i class="fa fa-refresh"></i> Làm mới</button>
-        <button id="btn-present" class="btn btn-info"><i class="fa fa-desktop"></i> Trình chiếu</button>
+        {{-- Trình chiếu và Xuất Excel đều là số liệu toàn viện -> chỉ admin. Để ngoài thì
+             người khoa vẫn thấy nút rồi bấm vào ăn 403. --}}
         @if($isAdmin)
+        <button id="btn-present" class="btn btn-info"><i class="fa fa-desktop"></i> Trình chiếu</button>
         <button id="btn-fetch" class="btn btn-primary"><i class="fa fa-cloud-download"></i> Lấy số liệu</button>
         <button id="btn-finalize" class="btn btn-danger"><i class="fa fa-lock"></i> Chốt báo cáo</button>
         <button id="btn-unlock" class="btn btn-warning" style="display:none"><i class="fa fa-unlock"></i> Mở khóa</button>
-        @endif
         <a id="btn-export" class="btn btn-success"><i class="fa fa-file-excel-o"></i> Xuất Excel</a>
+        @endif
       </div>
     </div>
   </div>
@@ -125,6 +127,17 @@ function cellOf(res, deptId, code) {
 
 function render(res) {
   var $body = $('#report-body').empty();
+
+  // Kiem TRUOC nhanh !res.report: hai trang thai nay deu ra man trong, nhung ly do khac han nhau.
+  // Khong tach thi nguoi dung khong biet minh dang gap cai nao.
+  if (res.no_assignment) {
+    $('#report-status').text('');
+    $body.html('<div class="callout callout-warning">' +
+      '<h4><i class="fa fa-user-times"></i> Bạn chưa được phân công khoa nào</h4>' +
+      '<p>Màn hình giao ban chỉ hiển thị các khoa bạn được phân công nhập số liệu. ' +
+      'Liên hệ phòng KHTH để được gán khoa.</p></div>');
+    return;
+  }
   if (!res.report) {
     $('#report-status').text('(chưa có dữ liệu — bấm Lấy số liệu)');
     return;

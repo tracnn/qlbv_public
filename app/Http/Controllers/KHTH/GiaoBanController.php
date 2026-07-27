@@ -49,18 +49,30 @@ class GiaoBanController extends Controller
     public function show(Request $request)
     {
         $date = $request->input('date', date('Y-m-d'));
+        $isAdmin = $this->isAdmin();
+        $assigned = $this->assignedDeptIds();
         $report = GiaoBanReport::with('cells')->where('report_date', $date)->first();
-        $configs = GiaoBanDeptConfig::where('is_active', true)->orderBy('sort_order')->get()
+
+        $allConfigs = GiaoBanDeptConfig::where('is_active', true)->orderBy('sort_order')->get();
+        // Quyen quyet dinh du lieu nao ROI KHOI server, khong phai CSS quyet dinh.
+        $visibleIds = GiaoBanPermission::visibleDeptConfigIds($isAdmin, $assigned, $allConfigs->pluck('id')->all());
+
+        $configs = $allConfigs
+            ->filter(function ($c) use ($visibleIds) {
+                return in_array((int) $c->id, $visibleIds, true);
+            })
             ->map(function ($c) {
                 return [
                     'id' => $c->id, 'display_name' => $c->display_name,
                     'his_department_id' => $c->his_department_id, 'metrics' => $c->metricList(),
                 ];
-            });
+            })
+            ->values();
 
         $cells = []; $warnings = [];
         if ($report) {
             foreach ($report->cells as $c) {
+                if (!in_array((int) $c->dept_config_id, $visibleIds, true)) continue;
                 $cells[] = [
                     'dept_config_id' => $c->dept_config_id, 'metric_code' => $c->metric_code,
                     'auto_value' => $c->auto_value, 'manual_value' => $c->manual_value, 'note' => $c->note,
@@ -69,7 +81,7 @@ class GiaoBanController extends Controller
             }
             $warnings = GiaoBanReportService::checkBalance(
                 $this->service->cellMap($report),
-                $configs->pluck('id')->all()
+                $visibleIds
             );
         }
 
@@ -82,15 +94,16 @@ class GiaoBanController extends Controller
             }
         }
 
+        // Cong suat giuong la du lieu toan vien (tong + chi tiet tung khoa) -> chi admin duoc xem.
         $bedTotal = 0; $bedUsed = 0; $bedByDept = [];
-        if ($report) {
+        if ($report && $isAdmin) {
             foreach (GiaoBanReportBed::where('report_id', $report->id)->get() as $b) {
                 $bedTotal += (int) $b->total_beds; $bedUsed += (int) $b->used_beds;
                 $bedByDept[(int) $b->department_id] = ['total' => (int) $b->total_beds, 'used' => (int) $b->used_beds];
             }
         }
         $bedByConfig = [];
-        foreach (GiaoBanDeptConfig::where('is_active', true)->orderBy('sort_order')->get() as $cfgBed) {
+        foreach (($isAdmin ? $allConfigs : []) as $cfgBed) {
             $t = 0; $u = 0; $has = false;
             foreach ($cfgBed->hisDepartmentIds() as $hid) {
                 if (isset($bedByDept[$hid])) { $t += $bedByDept[$hid]['total']; $u += $bedByDept[$hid]['used']; $has = true; }
@@ -120,10 +133,23 @@ class GiaoBanController extends Controller
             }
         }
 
+        // $report duoc nap kem quan he cells; tra nguyen doi tuong thi TOAN BO o so lieu di theo
+        // trong JSON, vo hieu hoa viec loc $cells o tren. Nen liet ke tuong minh dung nhung truong
+        // cac view thuc su doc — cot hay quan he them sau nay cung khong the di ke.
+        $reportOut = null;
+        if ($report) {
+            $reportOut = [
+                'id' => $report->id, 'status' => $report->status,
+                'from_time' => $report->from_time, 'to_time' => $report->to_time,
+                'general_note' => $report->general_note,
+            ];
+        }
+
         return response()->json([
-            'report' => $report, 'configs' => $configs, 'cells' => $cells,
+            'report' => $reportOut, 'configs' => $configs, 'cells' => $cells,
             'balance_warnings' => $warnings,
-            'is_admin' => $this->isAdmin(), 'assigned_dept_ids' => $this->assignedDeptIds(),
+            'is_admin' => $isAdmin, 'assigned_dept_ids' => $assigned,
+            'no_assignment' => GiaoBanPermission::chuaPhanCongKhoa($isAdmin, $assigned),
             'duty_positions' => $positions, 'duties' => $duties,
             'can_edit_duty' => $this->canEditDuty(),
             'bed_total' => $bedTotal, 'bed_used' => $bedUsed,
@@ -329,8 +355,10 @@ class GiaoBanController extends Controller
     }
 
     /** Trang trình chiếu toàn màn hình cho báo cáo ngày đang chọn. */
+    /** Trinh chieu toan vien -> chi admin (nguoi khoa chi duoc xem khoa minh). */
     public function present(Request $request)
     {
+        if (!$this->isAdmin()) abort(403);
         $date = $request->input('date', date('Y-m-d'));
         return view('khth.giaoban-present', [
             'date' => $date,
@@ -338,8 +366,10 @@ class GiaoBanController extends Controller
         ]);
     }
 
+    /** File Excel chua so lieu toan vien -> chi admin. Truoc day khong chan quyen gi. */
     public function export(Request $request)
     {
+        if (!$this->isAdmin()) abort(403);
         $date = $request->input('date', date('Y-m-d'));
         $report = \App\Models\GiaoBan\GiaoBanReport::with('cells')->where('report_date', $date)->firstOrFail();
         $configs = \App\Models\GiaoBan\GiaoBanDeptConfig::where('is_active', true)->orderBy('sort_order')->get();
