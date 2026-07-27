@@ -108,9 +108,16 @@ class MetricSchema
         if ($type === 'service_count') {
             $f = isset($metric['filter']) ? $metric['filter'] : [];
             if (!empty($deptIds)) return null; // computeAll tu gan pham vi theo khoa cua config
-            foreach (['execute_department_ids', 'execute_department_id',
-                      'request_department_ids', 'request_department_id',
-                      'execute_room_ids', 'service_ids'] as $k) {
+
+            // computeAll ghi de execute_department_ids = $deptIds khi bat co self.
+            // $deptIds rong -> khoa nay coi nhu rong, chi 5 khoa con lai moi cuu duoc pham vi.
+            $khoaConLai = empty($f['execute_department_id_self'])
+                ? ['execute_department_ids', 'execute_department_id', 'request_department_ids',
+                   'request_department_id', 'execute_room_ids', 'service_ids']
+                : ['execute_department_id', 'request_department_ids',
+                   'request_department_id', 'execute_room_ids', 'service_ids'];
+
+            foreach ($khoaConLai as $k) {
                 if (!empty($f[$k])) return null;
             }
             return 'no_scope';

@@ -130,4 +130,26 @@ class MetricSchemaTest extends TestCase
         $m2 = ['code' => 'dv', 'name' => 'DV', 'type' => 'service_count', 'filter' => ['execute_room_ids' => [9]]];
         $this->assertNull(MetricSchema::warningFor($m2, []));
     }
+
+    /** @test */
+    public function service_count_co_self_thi_execute_department_ids_bi_ghi_de_thanh_rong_nen_van_no_scope()
+    {
+        // computeAll ghi de filter['execute_department_ids'] = $deptIds khi bat co self.
+        // $deptIds rong -> khoa nay coi nhu rong du filter goc co gia tri.
+        $m = ['code' => 'dv', 'name' => 'DV', 'type' => 'service_count', 'filter' => [
+            'execute_department_id_self' => true,
+            'execute_department_ids' => [9],
+        ]];
+        $this->assertEquals('no_scope', MetricSchema::warningFor($m, []));
+    }
+
+    /** @test */
+    public function service_count_co_self_nhung_co_execute_room_ids_thi_van_cuu_duoc_pham_vi()
+    {
+        $m = ['code' => 'dv', 'name' => 'DV', 'type' => 'service_count', 'filter' => [
+            'execute_department_id_self' => true,
+            'execute_room_ids' => [9],
+        ]];
+        $this->assertNull(MetricSchema::warningFor($m, []));
+    }
 }

@@ -251,6 +251,9 @@ class GiaoBanConfigController extends Controller
 
         $loi = MetricValidator::validateJson($request->input('metrics'), $request->input('block_type'));
         if (!empty($loi)) return $this->traLoiChiTieu($loi);
+        if ($request->filled('his_department_ids') && !$this->validJson($request->input('his_department_ids'))) {
+            return response()->json(['message' => 'his_department_ids không phải JSON hợp lệ', 'errors' => []], 422);
+        }
 
         // config tam, KHONG save()
         $tam = new GiaoBanDeptConfig();
@@ -266,7 +269,9 @@ class GiaoBanConfigController extends Controller
             $giaTri = app(\App\Services\GiaoBan\GiaoBanMetricService::class)
                 ->computeAll([$tam], $request->input('from'), $request->input('to'));
         } catch (\Exception $e) {
-            return response()->json(['message' => 'Không lấy được số liệu từ HIS: ' . $e->getMessage()], 422);
+            // Khong day nguyen van loi driver Oracle ra client (theo khuon fetch/searchUsers).
+            \Log::error('Giao ban tinh thu loi HIS: ' . $e->getMessage());
+            return response()->json(['message' => 'Không lấy được số liệu từ HIS. Vui lòng thử lại hoặc báo quản trị.'], 422);
         }
 
         $rows = [];
