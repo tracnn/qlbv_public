@@ -70,6 +70,8 @@
   .ov-main { display: flex; gap: 1.6vh; margin-top: 2vh; flex: 1; min-height: 0; }
   .ov-kpis { flex: 1; align-content: start; }
   .donut-panel { width: 26vw; flex: none; align-items: center; }
+  /* Trong luoi cap-grid, be rong do cot quyet dinh — bo width co dinh cua bo cuc flex cu */
+  .cap-grid > .donut-panel { width: auto; }
   .donut-wrap { flex: 1; display: flex; align-items: center; justify-content: center; min-height: 0; }
   .donut-svg { width: 22vh; height: 22vh; }
   .donut-pct { fill: #fff; font-size: 17px; font-weight: 600; }
@@ -369,11 +371,17 @@
     var donut = tongGiuong > 0 ? donutHtml(Number(data.bed_used || 0), tongGiuong) : '';
 
     if (!capHtml && !chart && !donut) return '';
-    var cols = (capHtml && chart) ? '1fr 1fr' : '1fr';
+
+    // Hang tren: donut mot cot, cong suat theo khoa mot cot. Bieu do bien dong (neu co)
+    // xuong hang duoi chiem ca chieu ngang, khong chen vao hai cot nay.
+    var hangTren = donut + capHtml;
+    var cols = (donut && capHtml) ? 'minmax(24vw,1fr) 2fr' : '1fr';
+
     return '<div class="slide"><div class="s-head"><div class="s-title">Công suất giường &amp; biến động</div>' +
       '<div class="s-sub">Giao ban ' + esc(fmtDate(DATE)) + '</div></div>' +
-      (donut ? '<div class="ov-main">' + donut + '</div>' : '') +
-      '<div class="cap-grid" style="grid-template-columns:' + cols + '">' + capHtml + chart + '</div></div>';
+      (hangTren ? '<div class="cap-grid" style="grid-template-columns:' + cols + '">' + hangTren + '</div>' : '') +
+      (chart ? '<div class="cap-grid" style="grid-template-columns:1fr">' + chart + '</div>' : '') +
+      '</div>';
   }
 
   function deptSlide(data, cfg) {
