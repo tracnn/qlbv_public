@@ -63,4 +63,10 @@ class ManualInputRuleTest extends TestCase
     {
         $this->assertNull(MetricSchema::kiemGiaTriNhapTay($this->chiTieu(['min' => 5]), null));
     }
+
+    /** @test */
+    public function gia_tri_khong_phai_so_bi_chan()
+    {
+        $this->assertNotNull(MetricSchema::kiemGiaTriNhapTay($this->chiTieu(['min' => 0]), 'abc'));
+    }
 }

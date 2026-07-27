@@ -14,6 +14,7 @@ use App\Models\GiaoBan\GiaoBanDutyEditor;
 use App\Services\GiaoBan\GiaoBanDutyService;
 use App\Services\GiaoBan\GiaoBanPermission;
 use App\Services\GiaoBan\GiaoBanReportService;
+use App\Services\GiaoBan\MetricSchema;
 use App\Services\GiaoBan\NoteSanitizer;
 use Illuminate\Http\Request;
 
@@ -171,10 +172,18 @@ class GiaoBanController extends Controller
             $cfg = GiaoBanDeptConfig::find($request->input('dept_config_id'));
             $metric = $cfg ? $cfg->metricByCode($request->input('metric_code')) : null;
             if ($metric) {
-                $loi = \App\Services\GiaoBan\MetricSchema::kiemGiaTriNhapTay($metric, $request->input('manual_value'));
+                $loi = MetricSchema::kiemGiaTriNhapTay($metric, $request->input('manual_value'));
                 if ($loi !== null) {
                     return response()->json(['message' => $loi], 422);
                 }
+            } else {
+                // Ma chi tieu khong co trong cau hinh khoa -> khong co khai bao de kiem.
+                // Van cho luu (tranh khoa khoa dang nhap lieu khi cau hinh vua doi giua ca),
+                // nhung ghi log de con lan ra khi so lieu bat thuong.
+                \Log::warning('Giao ban saveCell: khong tim thay khai bao chi tieu', [
+                    'dept_config_id' => $request->input('dept_config_id'),
+                    'metric_code' => $request->input('metric_code'),
+                ]);
             }
         }
 
