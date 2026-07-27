@@ -1,8 +1,17 @@
 # Nhóm A — Ánh xạ chỉ tiêu XN & CĐHA sang dịch vụ HIS
 
+> **KHÔNG ÁP DỤNG (chốt 2026-07-27).** Chủ đầu tư quyết định cho các khoa **nhập tay** những chỉ tiêu
+> XN & CĐHA thay vì tính tự động từ HIS. Lý do: quá nhiều điểm chưa chốt được — mốc thời gian của kỳ
+> báo cáo không khớp bản Excel, ranh giới Siêu âm màu / tim / mạch dễ đếm trùng, và ba dịch vụ
+> ("SÂ đàn hồi mô", "NSTH gây mê", "Đo CN hô hấp") không có ca nào phát sinh.
+>
+> Tài liệu giữ lại vì hai lý do: (1) phần khảo sát HIS vẫn đúng và dùng được nếu sau này muốn tự động
+> hoá; (2) nó ghi lại chính xác vì sao đã không tự động hoá.
+>
+> **Việc vẫn phải làm dù nhập tay:** xem mục 6 ở cuối.
+
 Ngày: 2026-07-27
-Mục tiêu: cấu hình lại khoa XN&CĐHA cho đúng mẫu KHTH yêu cầu (mục I của phiếu yêu cầu).
-**Không cần sửa code.** Toàn bộ làm bằng form builder chỉ tiêu.
+Mục tiêu ban đầu: cấu hình lại khoa XN&CĐHA cho đúng mẫu KHTH yêu cầu (mục I của phiếu yêu cầu).
 
 Số liệu tra trên HIS thật (`HISPro` = 14.160.70.2/orcl), thống kê tháng 6/2026 để biết dịch vụ nào thực sự phát sinh.
 
@@ -180,3 +189,31 @@ Chưa đủ thông tin. Cần KHTH cho biết đếm cái gì: lượt khám c�
 8. Mốc áp dụng việc tách "Xin về".
 
 Việc cần báo bên quản trị danh mục HIS: *Nội soi tai mũi họng (Ngoài giờ)* đang xếp nhầm loại **Thăm dò chức năng**.
+
+## 6. Phương án đã chốt: nhập tay
+
+Tám câu hỏi ở mục 5 **không còn chặn** nữa — khoa tự nhập số thì không cần định nghĩa công thức. Nhưng ba việc vẫn phải làm:
+
+### 6.1 Vẫn phải đổi khối cho khoa XN&CĐHA
+
+Đây là mấu chốt của mục I và **không tự mất đi khi chuyển sang nhập tay**. Khoa đó đang để khối *Điều trị (nội trú)* nên hệ thống vẫn kéo về 8 chỉ tiêu BN cũ / BN vào / BN chuyển đến… và hiển thị đè lên. Phải đổi khối sang *Cận lâm sàng* rồi xoá 8 chỉ tiêu điều trị đi, mới thay bằng các chỉ tiêu nhập tay được.
+
+### 6.2 Khai chỉ tiêu nhập tay cho tử tế
+
+Với mỗi chỉ tiêu trong 22 cột: *Thêm chỉ tiêu* → **Nhập tay** → đặt tên đúng như mẫu Excel, rồi khai thêm:
+
+- **Đơn vị:** `ca` hoặc `lượt` — hiện ngay cạnh ô nhập, đỡ nhầm.
+- **Kiểu giá trị:** `int` (không ai đếm nửa ca xét nghiệm). Ô nhập sẽ nhảy từng 1 và chặn số lẻ ngay tại chỗ.
+- **Nhỏ nhất:** `0` — chặn số âm cả ở trình duyệt lẫn ở server.
+- **Bắt buộc nhập:** cân nhắc bật cho các cột luôn có số (Huyết học, Sinh hóa, Xquang, Siêu âm); ô để trống sẽ viền đỏ nhắc khoa.
+- **Giải thích:** ghi rõ phạm vi đếm, ví dụ *"Đếm cả ngoài giờ, không tính ca huỷ"*. Đây là chỗ duy nhất luật đếm được ghi lại — nhập tay thì luật nằm trong đầu người nhập, ghi ra để người sau còn biết.
+
+**Đừng bật *kế thừa kỳ trước*** cho nhóm này: số xét nghiệm mỗi ngày mỗi khác, kế thừa sẽ khiến khoa bấm qua và vô tình xác nhận số của hôm trước.
+
+### 6.3 Nhìn trước cái giá của nhập tay
+
+22 ô mỗi ngày cho một khoa là nhiều. Ba hệ quả nên biết trước:
+
+- **Không đối chiếu được với HIS.** Số nhập tay đúng hay sai không ai kiểm được, và "Tính thử" cũng không giúp gì.
+- **Nếu sau này muốn tự động hoá**, số lịch sử đã nhập tay sẽ không khớp số tính máy — cần chốt mốc chuyển đổi, giống hệt vấn đề tách "Xin về".
+- **Cân nhắc chỉ nhập tay phần khó.** Sáu chỉ tiêu xét nghiệm và bốn chỉ tiêu CĐHA cơ bản ở mục 1 ánh xạ **chắc chắn**, không có chỗ mơ hồ nào — để máy tính mấy cột đó vẫn được, chỉ nhập tay phần còn lại. Giảm từ 22 ô xuống còn 12, và phần máy tính thì luôn khớp HIS. Đây là lựa chọn của KHTH, tôi chỉ nêu ra.

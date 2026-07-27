@@ -210,8 +210,20 @@ Khoa nhập trên chính màn giao ban, trong khối khoa mình — thêm một 
 
 ## 6. Thứ tự đề xuất
 
-1. **Nhóm A** — không cần code, gỡ ngay mục I đang hiển thị sai hằng ngày. Cần một buổi tra ID dịch vụ HIS cùng KHTH.
-2. **Nhóm B** — `surgery_count` + chỉ tiêu chờ mổ nhập tay. Nhỏ gọn, khép lại mục V và VI.
+> **Cập nhật 2026-07-27:** chủ đầu tư chốt cho các khoa **nhập tay** các chỉ tiêu XN & CĐHA thay vì
+> tính tự động. Nhóm A vì thế không còn là việc lập trình hay tra cứu, chỉ còn là việc khai chỉ tiêu
+> nhập tay trên giao diện — xem mục 6 của
+> `2026-07-27-giaoban-nhom-A-anh-xa-chi-tieu-xn-cdha.md`.
+>
+> **Vẫn phải đổi khối cho khoa XN&CĐHA**, nếu không 8 chỉ tiêu điều trị nội trú vẫn hiển thị đè lên
+> và mục I chưa được gỡ.
+>
+> Quyết định này cũng đặt lại câu hỏi cho nhóm B: nếu XN&CĐHA nhập tay được thì **mổ cấp cứu / mổ
+> phiên có cần tự động không**, hay cũng nhập tay luôn? Nếu nhập tay thì `surgery_count` không cần
+> viết, và nhóm B thu về chỉ còn khai chỉ tiêu. Cần chốt trước khi bắt đầu nhóm B.
+
+1. ~~**Nhóm A**~~ — chuyển sang nhập tay, không còn việc lập trình.
+2. **Nhóm B** — `surgery_count` + chỉ tiêu chờ mổ nhập tay. Nhỏ gọn, khép lại mục V và VI. *(Xem lại phạm vi theo ghi chú trên.)*
 3. **Nhóm D** — danh sách bệnh nhân. Nhiều việc nhất nhưng độc lập, và là thứ lãnh đạo đọc trực tiếp trong cuộc giao ban.
 4. **Nhóm C** — ba bảng trên màn trình chiếu. Để sau vì phụ thuộc chỉ tiêu của nhóm A và B đã đúng.
 
