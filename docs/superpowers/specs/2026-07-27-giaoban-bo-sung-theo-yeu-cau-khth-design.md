@@ -101,6 +101,44 @@ Làm chỉ tiêu **nhập tay**, đơn vị "BN", bật *kế thừa kỳ trư�
 
 ## 4. Nhóm C — ba bảng mới trên màn tổng hợp / trình chiếu
 
+> **TẠM DỪNG (2026-07-27).** Chủ đầu tư dừng nhóm C để khảo sát thêm. Chưa viết spec, chưa code.
+> Phần khảo sát dưới đây đã làm xong và kiểm chứng trên HIS thật — giữ lại để khỏi tra lại từ đầu.
+>
+> **Đã chốt trong lúc bàn:**
+> - Ba bảng chỉ hiện trên **màn trình chiếu** (thêm slide), không làm bản Word/Excel dạng văn bản.
+> - Cột "Ng.T" = **Điều trị ngoại trú**, **tính tự động** từ HIS (không nhập tay).
+> - Danh sách phòng khám do KHTH **cấu hình cố định**, hiện cả phòng 0 ca.
+> - Số bảng phòng khám **tính lại mỗi lần xem**, không chốt snapshot vào báo cáo.
+>
+> **Đã kiểm chứng trên HIS (14.160.70.2/orcl):**
+> - `his_treatment_type`: 1 Khám · 2 Điều trị ngoại trú · 3 Điều trị nội trú · 4 Điều trị ban ngày.
+> - Đếm BN ngoại trú đang ở khoa dùng được **đúng cơ chế `his_department_tran`** như nội trú.
+>   Lúc 27/07/2026 07:00: ngoại trú **391**, nội trú **600**, ban ngày 1.
+>   => Chỉ cần thêm bộ lọc `treatment_type_ids` vào census, không phải viết cách đếm mới.
+> - Bảng phòng khám **không cần cách tính mới**: nó là `exam_visit` gom theo `execute_room_id`
+>   thay vì lọc theo khoa; cột "Vào viện" đúng bằng `exam_visit` với `treatment_type_ids: [3]`.
+>   Truy vấn thử (26/07 07:00 → 27/07 07:00) ra đúng dáng ảnh mẫu:
+>   *Phòng khám cấp cứu* 51 lượt → 33 vào viện; *PK Tim mạch Nội tiết 2* 59 → 2.
+>
+> **Kết luận thiết kế đã đạt được (chưa duyệt thành spec):**
+> - **C2 và C3 là cùng một tính năng** — một bảng tổng hợp theo khối kèm dòng TỔNG CỘNG.
+>   "Hoạt động điều trị" là bảng khối `dieu_tri`, "Hoạt động KCB" là bảng khối `kham`.
+> - Cột của bảng đó = hợp các mã chỉ tiêu **số** trên các khoa cùng khối, theo thứ tự xuất hiện
+>   đầu tiên; khoa thiếu thì ô trống. Không cần cấu hình thêm, chịu được việc các khoa lệch chỉ tiêu.
+> - Slide **danh sách bệnh nhân** (mục 3–6) gần như miễn phí: gom chỉ tiêu **chuỗi** đã làm
+>   theo mã là ra đúng bảng khoa | nội dung.
+> - Gộp KKB + KKB Sơn Lương: thêm **một cột** `merge_into` vào `giaoban_dept_configs`,
+>   không cần bảng mới. Gộp xử lý ở màn trình chiếu, màn nhập liệu giữ nguyên từng khoa.
+> - Danh sách phòng: bảng nhỏ `giaoban_room_configs`, CRUD dùng lại khuôn box
+>   "Danh mục chức danh trực" đã có.
+>
+> **Rủi ro đã nhận diện:** sửa census là đụng `GiaoBanMetricService` — file duy nhất chưa từng sửa
+> kể từ đầu. Phải có test khẳng định chỉ tiêu **không khai** `treatment_type_ids` sinh ra **đúng
+> chuỗi SQL và bindings như trước**; hồi quy chỗ này là số giao ban sai.
+>
+> **Ràng buộc kế thừa:** slide danh sách bệnh nhân phải render bằng `.html()` chứ không phải
+> `.text()`, để entity do `NoteSanitizer::cleanPlain` sinh ra hiện đúng dấu.
+
 ### C1. Bảng "BN vào viện tại các phòng khám" (mục 1.3)
 
 Đây là tiêu đề file yêu cầu, và là thứ hoàn toàn chưa có.
