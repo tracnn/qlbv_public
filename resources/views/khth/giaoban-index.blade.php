@@ -146,8 +146,10 @@ function render(res) {
       var c = cellOf(res, cfg.id, m.code) || {};
       var val = c.manual_value !== null && c.manual_value !== undefined ? c.manual_value : c.auto_value;
       var edited = c.manual_value !== null && c.manual_value !== undefined;
-      var inp = m.input || {};
+      // Chi tieu tu dong khong bao gio doc khai bao input: quy uoc nay khong duoc
+      // MetricValidator ep buoc voi type != manual, nen chan thang o day.
       var laNhapTay = m.type === 'manual';
+      var inp = laNhapTay ? (m.input || {}) : {};
 
       // step theo kieu gia tri; decimal(12,2) o DB nen toi da 2 chu so le
       var step = inp.value_type === 'decimal' || inp.value_type === 'percent' ? '0.01' : '1';
