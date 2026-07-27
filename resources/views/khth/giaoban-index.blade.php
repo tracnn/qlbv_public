@@ -2,6 +2,12 @@
 @section('title', 'Báo cáo giao ban')
 @section('content_header')<h1>Báo cáo giao ban <small id="report-status"></small></h1>@stop
 
+@section('css')
+<style>
+  .cell-input.mb-thieu { border-color: #dd4b39; background: #fff5f4; }
+</style>
+@stop
+
 @section('content')
 <div class="box box-primary">
   <div class="box-body">
@@ -140,12 +146,41 @@ function render(res) {
       var c = cellOf(res, cfg.id, m.code) || {};
       var val = c.manual_value !== null && c.manual_value !== undefined ? c.manual_value : c.auto_value;
       var edited = c.manual_value !== null && c.manual_value !== undefined;
-      html += '<div class="col-md-2" style="margin-bottom:8px"><label style="font-weight:normal">' + esc(m.name) + '</label>' +
+      var inp = m.input || {};
+      var laNhapTay = m.type === 'manual';
+
+      // step theo kieu gia tri; decimal(12,2) o DB nen toi da 2 chu so le
+      var step = inp.value_type === 'decimal' || inp.value_type === 'percent' ? '0.01' : '1';
+      // tinh min/max hieu luc MOT LAN roi moi xuat ra 1 thuoc tinh duy nhat
+      // (neu noi chuoi rieng "min=..."/"max=..." roi lai noi them max="100" cho percent
+      // se ra 2 thuoc tinh max trung nhau tren cung 1 the html, trinh duyet chi lay cai dau)
+      var minHL = inp.min !== undefined && inp.min !== null ? inp.min : null;
+      var maxHL = inp.max !== undefined && inp.max !== null ? inp.max : null;
+      if (inp.value_type === 'percent') {
+        maxHL = maxHL !== null ? Math.min(maxHL, 100) : 100;
+        minHL = minHL !== null ? Math.max(minHL, 0) : 0;
+      }
+      var rangBuoc = ' step="' + (laNhapTay ? step : 'any') + '"';
+      if (minHL !== null) rangBuoc += ' min="' + minHL + '"';
+      if (maxHL !== null) rangBuoc += ' max="' + maxHL + '"';
+
+      var trong = val === null || val === undefined || val === '';
+      var thieuBatBuoc = laNhapTay && inp.required && trong;
+
+      var tip = edited ? 'Số HIS: ' + (c.auto_value === null ? '—' : c.auto_value)
+                       : (inp.hint || '');
+
+      var nhan = esc(m.name) + (inp.required ? ' <span class="text-red">*</span>' : '') +
+                 (inp.hint ? ' <i class="fa fa-question-circle text-muted" title="' + esc(inp.hint) + '"></i>' : '');
+
+      html += '<div class="col-md-2" style="margin-bottom:8px"><label style="font-weight:normal">' + nhan + '</label>' +
         '<div class="input-group">' +
-        '<input type="number" step="any" class="form-control cell-input' + (edited ? ' bg-warning' : '') + '"' +
+        '<input type="number"' + rangBuoc + ' class="form-control cell-input' +
+          (edited ? ' bg-warning' : '') + (thieuBatBuoc ? ' mb-thieu' : '') + '"' +
         ' data-dept="' + cfg.id + '" data-metric="' + m.code + '"' +
-        (edited ? ' title="Số HIS: ' + (c.auto_value === null ? '—' : c.auto_value) + '"' : '') +
-        ' value="' + (val === null || val === undefined ? '' : Number(val)) + '"' + (editable ? '' : ' readonly') + '>' +
+        (tip ? ' title="' + esc(tip) + '"' : '') +
+        ' value="' + (trong ? '' : Number(val)) + '"' + (editable ? '' : ' readonly') + '>' +
+        (inp.unit ? '<span class="input-group-addon">' + esc(inp.unit) + '</span>' : '') +
         (edited && editable
           ? '<span class="input-group-btn"><button class="btn btn-default btn-reset-cell" title="Trả về số tự động" data-dept="' +
             cfg.id + '" data-metric="' + m.code + '"><i class="fa fa-undo"></i></button></span>'
