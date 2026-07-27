@@ -214,6 +214,70 @@ class GiaoBanMetricService
         return [$sql, $binds];
     }
 
+    /**
+     * Đếm lượt khám theo TỪNG PHÒNG trong kỳ (cho slide phòng khám trên trình chiếu).
+     *
+     * Bám đúng quy ước "Lượt khám" của buildExamVisitSql (is_main_exam = 1) để slide này
+     * khớp với cột Lượt khám ở các slide khác. Màn /phong-kham-tv KHÔNG lọc is_main_exam
+     * nên số của nó sẽ cao hơn — đó là khác biệt có chủ đích.
+     *
+     * Tên phòng lấy từ v_his_room: his_room không có cột tên, còn his_execute_room chỉ phủ
+     * một phần số phòng (xem khảo sát ở Task 1).
+     */
+    public function buildExamByRoomSql($from, $to)
+    {
+        $khamType = (int) config('__tech.service_req_type_kham', 1);
+        $sql = "
+            SELECT v.room_name AS ten_phong, COUNT(*) AS so_luot
+            FROM his_service_req sr
+            JOIN v_his_room v ON v.id = sr.execute_room_id
+            WHERE sr.is_delete = 0
+              AND sr.service_req_type_id = :kham_type
+              AND sr.is_main_exam = 1
+              AND sr.intruction_time BETWEEN :from_time AND :to_time
+            GROUP BY v.room_name
+            ORDER BY COUNT(*) DESC";
+        return [$sql, [
+            'kham_type' => $khamType,
+            'from_time' => $this->toHisTime($from),
+            'to_time' => $this->toHisTime($to),
+        ]];
+    }
+
+    /** Chạy truy vấn lượt khám theo phòng. HIS lỗi -> mảng rỗng, không chặn màn trình chiếu. */
+    public function examByRoom($from, $to)
+    {
+        try {
+            return $this->selectHis($this->buildExamByRoomSql($from, $to));
+        } catch (\Exception $e) {
+            return [];
+        }
+    }
+
+    /**
+     * Rút gọn danh sách phòng cho vừa màn chiếu: giữ $gioiHan phòng nhiều lượt nhất,
+     * phần còn lại gộp thành một cột. Hàm thuần.
+     *
+     * Vẽ hết hơn 20 phòng thì cột mảnh như sợi chỉ, chiếu lên không ai đọc được.
+     */
+    public static function gomPhongKham($rows, $gioiHan = 15)
+    {
+        $ds = [];
+        foreach ($rows as $r) {
+            $ds[] = ['ten' => $r->ten_phong, 'so' => (int) $r->so_luot];
+        }
+        if (count($ds) <= $gioiHan) {
+            return $ds;
+        }
+        $dau = array_slice($ds, 0, $gioiHan);
+        $con = array_slice($ds, $gioiHan);
+        $tong = 0;
+        foreach ($con as $x) $tong += $x['so'];
+        $dau[] = ['ten' => count($con) . ' phòng khác', 'so' => $tong];
+
+        return $dau;
+    }
+
     /** Số BN nhập viện nội trú toàn viện trong kỳ (dùng cho dòng khoa Khám bệnh). */
     public function buildAdmissionCountSql($from, $to)
     {

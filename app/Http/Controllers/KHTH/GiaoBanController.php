@@ -94,6 +94,15 @@ class GiaoBanController extends Controller
             }
         }
 
+        // Luot kham theo tung phong trong ky — cho slide phong kham tren trinh chieu.
+        // Toan vien nen chi admin; nguoi dung khoa khong phai ganh them mot truy van HIS.
+        $roomStats = [];
+        if ($report && $isAdmin) {
+            $rows = app(\App\Services\GiaoBan\GiaoBanMetricService::class)
+                ->examByRoom($report->from_time, $report->to_time);
+            $roomStats = \App\Services\GiaoBan\GiaoBanMetricService::gomPhongKham($rows);
+        }
+
         // Cong suat giuong la du lieu toan vien (tong + chi tiet tung khoa) -> chi admin duoc xem.
         $bedTotal = 0; $bedUsed = 0; $bedByDept = [];
         if ($report && $isAdmin) {
@@ -152,6 +161,7 @@ class GiaoBanController extends Controller
             'no_assignment' => GiaoBanPermission::chuaPhanCongKhoa($isAdmin, $visibleIds),
             'duty_positions' => $positions, 'duties' => $duties,
             'can_edit_duty' => $this->canEditDuty(),
+            'room_stats' => $roomStats,
             'bed_total' => $bedTotal, 'bed_used' => $bedUsed,
             'bed_by_config' => $bedByConfig, 'bed_by_department' => $bedByDepartment,
         ]);

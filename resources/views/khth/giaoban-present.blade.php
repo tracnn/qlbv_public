@@ -72,6 +72,10 @@
   .donut-panel { width: 26vw; flex: none; align-items: center; }
   /* Trong luoi cap-grid, be rong do cot quyet dinh — bo width co dinh cua bo cuc flex cu */
   .cap-grid > .donut-panel { width: auto; }
+  /* Nhieu phong -> cho phep cuon ngang thay vi bop cot mong den muc khong doc duoc */
+  .pk-bars { overflow-x: auto; align-items: flex-end; }
+  .pk-bars .barcol { min-width: 4.5vw; }
+  .pk-so { font-size: 1.7vh; color: #dbe6f0; font-weight: 600; margin-bottom: .4vh; }
   .donut-wrap { flex: 1; display: flex; align-items: center; justify-content: center; min-height: 0; }
   .donut-svg { width: 22vh; height: 22vh; }
   .donut-pct { fill: #fff; font-size: 17px; font-weight: 600; }
@@ -321,6 +325,33 @@
       lechHtml + thieuHtml + dutyHtml + noteHtml + '</div>';
   }
 
+  /** Slide luot kham theo tung phong kham, trong dung ky bao cao. */
+  function phongKhamSlide(data) {
+    var ds = data.room_stats || [];
+    if (!ds.length) return '';
+
+    var maxV = 1, tong = 0;
+    ds.forEach(function (x) { maxV = Math.max(maxV, Number(x.so)); tong += Number(x.so); });
+
+    var bars = ds.map(function (x) {
+      var h = Math.round(Number(x.so) / maxV * 100);
+      return '<div class="barcol">' +
+        '<div class="pk-so">' + num(x.so) + '</div>' +
+        '<div class="barpair" style="height:14vh">' +
+        '<span style="height:' + h + '%;background:#378add"></span></div>' +
+        '<small>' + esc(x.ten) + '</small></div>';
+    }).join('');
+
+    return '<div class="slide"><div class="s-head"><div class="s-title">Lượt khám theo phòng khám</div>' +
+      '<div class="s-sub">Giao ban ' + esc(fmtDate(DATE)) + '</div></div>' +
+      '<div class="kpis" style="grid-template-columns:repeat(2,1fr)">' +
+      '<div class="kpi teal"><div class="lbl">Tổng lượt khám</div><div class="val">' + num(tong) + '</div></div>' +
+      '<div class="kpi"><div class="lbl">Số phòng có phát sinh</div><div class="val">' + num(ds.length) + '</div></div>' +
+      '</div>' +
+      '<div class="panel" style="margin-top:1.6vh;flex:1;min-height:0">' +
+      '<div class="bars pk-bars">' + bars + '</div></div></div>';
+  }
+
   function capacityDeptSlide(data) {
     // Ưu tiên khoa báo cáo điều trị; nếu không có thì dùng từng khoa HIS có giường (như dashboard).
     var bedSrc = (data.bed_by_config && data.bed_by_config.length) ? data.bed_by_config : (data.bed_by_department || []);
@@ -432,6 +463,11 @@
       deptNames.push({ idx: slides.length, name: cfg.display_name });
       slides.push(deptSlide(data, cfg));
     });
+    var pkHtml = phongKhamSlide(data);
+    if (pkHtml) {
+      deptNames.push({ idx: slides.length, name: 'Phòng khám' });
+      slides.push(pkHtml);
+    }
     var capHtml = capacityDeptSlide(data);
     if (capHtml) {
       deptNames.push({ idx: slides.length, name: 'Công suất giường' });

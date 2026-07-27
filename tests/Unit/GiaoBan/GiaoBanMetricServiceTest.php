@@ -7,6 +7,58 @@ use App\Services\GiaoBan\GiaoBanMetricService;
 
 class GiaoBanMetricServiceTest extends TestCase
 {
+    /** @test */
+    public function dem_luot_kham_theo_phong_bam_dung_quy_uoc_luot_kham_cua_bao_cao()
+    {
+        $svc = new GiaoBanMetricService();
+        list($sql, $binds) = $svc->buildExamByRoomSql('2026-07-26 07:00:00', '2026-07-27 07:00:00');
+
+        // Bam dung quy uoc cua buildExamVisitSql: chi dem lan kham chinh
+        $this->assertContains('is_main_exam = 1', $sql);
+        $this->assertContains('sr.service_req_type_id = :kham_type', $sql);
+        // Ten phong lay tu view da xac minh phu du ten, khong phai his_room (khong co cot ten)
+        $this->assertContains('v_his_room', $sql);
+        $this->assertNotContains('his_execute_room', $sql);
+
+        $this->assertEquals('20260726070000', $binds['from_time']);
+        $this->assertEquals('20260727070000', $binds['to_time']);
+        $this->assertArrayHasKey('kham_type', $binds);
+    }
+
+    /** @test */
+    public function gom_phong_it_luot_thanh_mot_cot_khac()
+    {
+        $rows = array(
+            (object) array('ten_phong' => 'PK A', 'so_luot' => 50),
+            (object) array('ten_phong' => 'PK B', 'so_luot' => 30),
+            (object) array('ten_phong' => 'PK C', 'so_luot' => 20),
+            (object) array('ten_phong' => 'PK D', 'so_luot' => 5),
+        );
+
+        $ra = GiaoBanMetricService::gomPhongKham($rows, 2);
+
+        $this->assertCount(3, $ra);
+        $this->assertEquals(array('ten' => 'PK A', 'so' => 50), $ra[0]);
+        $this->assertEquals(array('ten' => 'PK B', 'so' => 30), $ra[1]);
+        // 20 + 5 gop lai, nhan noi ro con bao nhieu phong
+        $this->assertEquals(25, $ra[2]['so']);
+        $this->assertContains('2 phòng', $ra[2]['ten']);
+    }
+
+    /** @test */
+    public function khong_gom_khi_so_phong_khong_vuot_gioi_han()
+    {
+        $rows = array(
+            (object) array('ten_phong' => 'PK A', 'so_luot' => 9),
+            (object) array('ten_phong' => 'PK B', 'so_luot' => 4),
+        );
+
+        $ra = GiaoBanMetricService::gomPhongKham($rows, 15);
+
+        $this->assertCount(2, $ra);
+        $this->assertEquals('PK B', $ra[1]['ten']);
+    }
+
     protected $svc;
 
     protected function setUp()
