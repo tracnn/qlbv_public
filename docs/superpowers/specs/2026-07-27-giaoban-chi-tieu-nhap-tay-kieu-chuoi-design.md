@@ -93,9 +93,53 @@ if (metric_code === 'note')  -> $cell->note = NoteSanitizer::clean(...)
 else                         -> $cell->manual_value = ...
 ```
 
-thành ba nhánh: ghi chú khoa (`note`, có sanitize) / chỉ tiêu chuỗi (`note`, **không** sanitize) / chỉ tiêu số (`manual_value`).
+thành ba nhánh: ghi chú khoa (`note`, sanitize HTML) / chỉ tiêu chuỗi (`note`, sanitize **văn bản thuần**) / chỉ tiêu số (`manual_value`).
 
-**Không chạy `NoteSanitizer` cho chỉ tiêu chuỗi.** Nó là HTMLPurifier dành cho ô ghi chú giàu định dạng; với textarea thuần nó sẽ nuốt dấu `<` `>` mà bác sĩ có thể gõ thật (`HA < 90`). Lưu nguyên văn, escape khi hiển thị.
+### Sanitize ở tầng ghi, không dựa vào kỷ luật escape khi hiển thị
+
+Dựa vào việc mọi nơi hiển thị đều nhớ escape là mong manh — quên một lần là hở XSS lưu trữ, trên màn chiếu giữa cuộc giao ban. Chặn ngay lúc ghi thì sai sót về sau chỉ còn là lỗi thẩm mỹ, không thành lỗ hổng.
+
+**Nhưng không dùng được `NoteSanitizer` hiện có.** Đã kiểm chứng bằng dữ liệu thật:
+
+| Đầu vào | HTMLPurifier (`NoteSanitizer`) | `htmlspecialchars` |
+|---|---|---|
+| `Hb < 8 g/dL` | `Hb &lt; 8 g/dL` | `Hb &lt; 8 g/dL` |
+| `<b>Nặng</b>` | `<b>Nặng</b>` — **giữ thành thẻ thật** | `&lt;b&gt;Nặng&lt;/b&gt;` |
+
+HTMLPurifier nửa nọ nửa kia: escape dấu `<` của chỉ số xét nghiệm nhưng lại giữ `<b>` thành markup. Đổ vào textarea sẽ hiện lẫn lộn, và người dùng không hiểu vì sao chỗ này giữ chỗ kia không.
+
+**Thêm `NoteSanitizer::cleanPlain()`** cho văn bản thuần:
+
+```php
+public static function cleanPlain($s)
+{
+    $s = (string) $s;
+    $s = str_replace(["\r\n", "\r"], "\n", $s);                        // chuan hoa xuong dong
+    $s = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', '', $s);  // bo ky tu dieu khien
+    $s = htmlspecialchars($s, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+    return mb_substr($s, 0, 5000);
+}
+```
+
+Kết quả: giá trị lưu trong DB **không bao giờ chạy được** dù hiển thị bằng `.html()`, `innerHTML` hay bất cứ cách nào. Hỏng thì hỏng theo hướng an toàn (hiện ra `&lt;`), không hỏng theo hướng mở toang.
+
+### Ràng buộc đi kèm: phải giải mã khi đổ vào textarea
+
+Vì lưu ở dạng đã mã hoá, khi nạp vào textarea phải giải mã lại, nếu không người dùng thấy `Hb &lt; 8` rồi lưu tiếp sẽ thành `&amp;lt;` — hỏng dần qua từng lần sửa.
+
+Đã kiểm chứng vòng lặp: `Hb < 8` → mã hoá → giải mã → mã hoá lại **cho ra đúng chuỗi cũ**, không mã hoá kép. Điều kiện là luôn giải mã ở đúng một chỗ nạp.
+
+Phía JS, giải mã bằng chính DOM (không cần thư viện):
+
+```js
+function giaiMaHtml(s) {
+  var d = document.createElement('textarea');
+  d.innerHTML = s === null || s === undefined ? '' : String(s);
+  return d.value;
+}
+```
+
+Phải có test khoá lại tính ổn định này — xem mục Kiểm thử.
 
 ## Bất biến và rủi ro
 
@@ -107,11 +151,13 @@ thành ba nhánh: ghi chú khoa (`note`, có sanitize) / chỉ tiêu chuỗi (`n
 
 Kiểm tra kèm theo: ô chuỗi có `manual_value = null`, nên `$daCo` (lọc `whereNotNull('manual_value')`) coi như chưa tồn tại — nhưng vì `initialManualValues` không trả về mã đó nên vòng ghi không chạy tới. An toàn qua cả hai lớp.
 
-### XSS lưu trữ — ràng buộc cho nhóm C
+### XSS lưu trữ — đã đóng ở tầng ghi
 
-Vì **không** sanitize, nội dung lưu là văn bản thô do người dùng nhập. Ở màn giao ban thì an toàn: textarea nhận giá trị qua `.val()`, không phân giải HTML.
+Giá trị lưu đã qua `htmlspecialchars`, nên không chạy được dù hiển thị bằng cách nào. Màn trình chiếu ở nhóm C **không** phải nhớ escape — đó chính là lý do chọn sanitize tại tầng ghi thay vì dựa vào kỷ luật ở tầng hiển thị.
 
-**Màn trình chiếu ở nhóm C sau này bắt buộc phải escape khi render danh sách này.** Dùng `.html()` là hở XSS lưu trữ. Ghi ở đây vì lúc làm nhóm C sẽ không ai nhớ ra.
+Ngược lại, nhóm C phải nhớ điều khác: hiển thị bằng `.html()` (hoặc `{!! !!}`) để entity hiện ra đúng dấu `<`. Nếu dùng `.text()` thì người xem thấy `&lt;`. Hỏng thẩm mỹ, không hở bảo mật — đúng chiều an toàn.
+
+Chỗ duy nhất phải giải mã là khi nạp vào textarea trên màn nhập liệu.
 
 ### `cellMap` và cân đối
 
@@ -126,6 +172,13 @@ Bổ sung vào `tests/Unit/GiaoBan/`:
 - `MetricSchemaTest`: `'text'` có trong `options` của `value_type`; các field `min`/`max`/`default`/`unit` đều khai `show_if`.
 - `ManualInputRuleTest`: `kiemGiaTriNhapTay` với kiểu `text` — chuỗi thường hợp lệ, chuỗi quá 5.000 ký tự bị chặn, chuỗi rỗng hợp lệ (xoá ô).
 - `GiaoBanReportServiceTest`: `initialManualValues` **không** trả về gì cho chỉ tiêu `text` kể cả khi kỳ trước có giá trị — khoá lại bất biến ở mục trên.
+- `NoteSanitizerTest` (file đã có): `cleanPlain` —
+  - `<script>alert(1)</script>` không còn thẻ chạy được;
+  - `Hb < 8 g/dL, HA > 140` giữ nguyên nghĩa sau khi giải mã;
+  - xuống dòng `\r\n` và `\r` đều thành `\n`, số dòng giữ nguyên;
+  - ký tự điều khiển bị bỏ, `\n` và `\t` được giữ;
+  - cắt đúng 5.000 ký tự;
+  - **chống mã hoá kép:** `cleanPlain(giaiMa(cleanPlain($x))) === cleanPlain($x)`. Đây là test quan trọng nhất của nhóm này — nó khoá lại vòng lưu-sửa-lưu không làm hỏng dần văn bản.
 
 Gate: `vendor/bin/phpunit --testsuite Unit` xanh sạch (hiện 229).
 
@@ -139,6 +192,8 @@ Phần giao diện không có test tự động (dự án không có hạ tầng
 - [ ] Màn giao ban: chỉ tiêu text hiện **textarea chiếm cả hàng**, không có nút hoàn tác.
 - [ ] Gõ danh sách nhiều dòng, Lưu, tải lại trang → nội dung và xuống dòng còn nguyên.
 - [ ] Gõ chuỗi có `<b>test</b>` và `HA < 90` → hiển thị lại **đúng nguyên văn**, không bị nuốt dấu, không thành chữ đậm.
+- [ ] Sửa và lưu ô đó **ba lần liên tiếp** → nội dung không đổi, không xuất hiện `&amp;lt;`. Đây là điểm kiểm chống mã hoá kép.
+- [ ] Gõ `<script>alert(1)</script>`, lưu, tải lại → hiện ra đúng dòng chữ đó, **không** có hộp thoại nào bật lên.
 - [ ] Tài khoản khoa không được phân công → không thấy khoa đó (quy tắc phân quyền đã làm vẫn áp dụng).
 - [ ] Bấm "Lấy số liệu" lại → nội dung textarea **còn nguyên**, không bị xoá.
 
