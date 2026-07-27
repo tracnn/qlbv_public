@@ -198,8 +198,12 @@ $(function () {
     var cfg = null;
     STATE.configs.forEach(function (c) { if (c.id === id) cfg = c; });
     if (!cfg) return;
-    // lay block_type dang chon tren hang (co the vua doi chua luu)
-    cfg = $.extend({}, cfg, { block_type: $(this).closest('tr').find('.f-block').val() });
+    // lay block_type + danh sach khoa HIS dang chon tren hang (co the vua doi chua luu) —
+    // neu dung cfg.his_department_ids goc trong DB thi tinh thu se ra so theo khoa cu, gay hieu nham
+    cfg = $.extend({}, cfg, {
+      block_type: $(this).closest('tr').find('.f-block').val(),
+      his_department_ids: collectIds($(this).closest('tr').find('.f-depts'))
+    });
     MetricBuilder.open(cfg, function () { loadAll(); }, {
       templates: STATE.metric_templates || [],
       configs: STATE.configs || []

@@ -7,6 +7,13 @@ var MetricBuilder = (function ($) {
   // Chi so card dang duoc keo (HTML5 drag & drop). null = khong co keo nao dang dien ra.
   var dragSrcIndex = null;
 
+  /** Y nghia cac canh bao tra ve tu route tinh-thu — phai giai thich ro, khong chi to mau. */
+  var CANH_BAO = {
+    no_scope: ['danger', 'Chưa có phạm vi khoa — số 0 là do cấu hình, không phải do không có dịch vụ'],
+    no_dept:  ['danger', 'Cấu hình chưa gán khoa HIS nào'],
+    manual:   ['info', 'Chỉ tiêu nhập tay — không có số tự động']
+  };
+
   function esc(s) {
     return String(s === null || s === undefined ? '' : s).replace(/[&<>"']/g, function (c) {
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
@@ -444,6 +451,62 @@ var MetricBuilder = (function ($) {
     }
   }
 
+  /** So < 10 thi them so 0 phia truoc — dung khi ghep chuoi ngay/gio. */
+  function haiChuSo(n) { return (n < 10 ? '0' : '') + n; }
+
+  /** Moc thoi gian mac dinh cho tinh thu: 7h hom qua -> 7h hom nay (khop ca dinh giao ban). */
+  function mocThoiGianMacDinh() {
+    var nay = new Date();
+    var hn = nay.getFullYear() + '-' + haiChuSo(nay.getMonth() + 1) + '-' + haiChuSo(nay.getDate());
+    var hq = new Date(nay.getTime() - 86400000);
+    var hqs = hq.getFullYear() + '-' + haiChuSo(hq.getMonth() + 1) + '-' + haiChuSo(hq.getDate());
+    return { from: hqs + ' 07:00:00', to: hn + ' 07:00:00' };
+  }
+
+  /**
+   * Tinh thu bo chi tieu dang soan (chua luu) tren HIS that. Khong ghi gi vao DB.
+   * Khoa nut trong luc chay de tranh ban lien tuc chong request len HIS (vd service_count
+   * voi diim_type_other_of phai quet his_sere_serv, khong nhe).
+   */
+  function tinhThu() {
+    var moc = mocThoiGianMacDinh();
+    var from = prompt('Tính thử từ (YYYY-MM-DD HH:MM:SS):', moc.from);
+    if (!from) return;
+    var to = prompt('đến (YYYY-MM-DD HH:MM:SS):', moc.to);
+    if (!to) return;
+
+    var $b = $('#mb-preview-box').show()
+      .html('<div class="text-muted"><i class="fa fa-spinner fa-spin"></i> Đang tính…</div>');
+    $('#mb-preview').prop('disabled', true);
+
+    $.post(ROUTES.preview.replace('__ID__', st.cfg.id), {
+      _token: CSRF,
+      metrics: JSON.stringify(st.metrics),
+      block_type: st.cfg.block_type,
+      his_department_ids: st.cfg.his_department_ids || '[]',
+      from: from, to: to
+    }).done(function (res) {
+      var h = '<table class="table table-condensed table-bordered" style="margin-bottom:4px">' +
+              '<thead><tr><th>Chỉ tiêu</th><th style="width:100px">Giá trị</th><th>Ghi chú</th></tr></thead><tbody>';
+      (res.rows || []).forEach(function (r) {
+        var cb = CANH_BAO[r.warning];
+        h += '<tr' + (cb && cb[0] === 'danger' ? ' class="danger"' : '') + '>' +
+             '<td>' + esc(r.name) + ' <code>' + esc(r.code) + '</code></td>' +
+             '<td class="text-right">' + (r.value === null ? '—' : esc(r.value)) + '</td>' +
+             '<td><small>' + (cb ? esc(cb[1]) : '') + '</small></td></tr>';
+      });
+      h += '</tbody></table><small class="text-muted">Tính trong ' + res.ms + ' ms. ' +
+           'Đây là số tính thử, chưa ghi vào báo cáo.</small>';
+      $b.html(h);
+    }).fail(function (xhr) {
+      var r = xhr.responseJSON || {};
+      $b.html('<div class="text-red">' + esc(r.message || 'Không tính thử được.') + '</div>');
+      hienLoi(xhr);
+    }).always(function () {
+      $('#mb-preview').prop('disabled', false);
+    });
+  }
+
   function bind() {
     $(document).on('click', '.mb-add', function (e) {
       e.preventDefault();
@@ -466,6 +529,7 @@ var MetricBuilder = (function ($) {
       $c.find('.mb-name-view').text($(this).data('k') === 'name' ? $(this).val() : $c.find('.mb-name-view').text());
     });
     $(document).on('click', '#mb-save', luu);
+    $(document).on('click', '#mb-preview', tinhThu);
 
     // Nap mau tu DB vao bo chi tieu dang sua
     $(document).on('click', '.mb-tpl', function (e) {
