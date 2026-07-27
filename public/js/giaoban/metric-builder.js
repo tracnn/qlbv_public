@@ -1,7 +1,7 @@
 /* Form builder chi tieu giao ban. Render field dong tu MetricSchema — khong hard-code type nao. */
 var MetricBuilder = (function ($) {
   var SCHEMA = {}, ROUTES = {}, CSRF = '', BLOCK_LABELS = {};
-  var st = { cfg: null, metrics: [], onSaved: null };
+  var st = { cfg: null, metrics: [], onSaved: null, templates: [], configs: [] };
   var CATALOGS = null; // null = chua tai
   var REMOTE = []; // danh sach key danh muc lon (tim qua AJAX thay vi tai tron goi)
   // Chi so card dang duoc keo (HTML5 drag & drop). null = khong co keo nao dang dien ra.
@@ -49,9 +49,11 @@ var MetricBuilder = (function ($) {
     });
   }
 
-  function open(cfg, onSaved) {
+  function open(cfg, onSaved, data) {
     st.cfg = cfg;
     st.onSaved = onSaved;
+    st.templates = (data && data.templates) || [];
+    st.configs = (data && data.configs) || [];
     try {
       var parsed = JSON.parse(cfg.metrics || '[]');
       st.metrics = Array.isArray(parsed) ? parsed : [];
@@ -64,9 +66,37 @@ var MetricBuilder = (function ($) {
     $('#mb-preview-box').hide().empty();
     taiDanhMuc(function () {
       renderAddMenu();
+      renderTplMenu();
+      renderCloneMenu();
       render();
       $('#mb-modal').modal('show');
     });
+  }
+
+  /** Menu "Nạp mẫu": chi cac mau cung khoi voi khoa dang sua. */
+  function renderTplMenu() {
+    var $m = $('#mb-tpl-menu').empty();
+    var co = false;
+    st.templates.forEach(function (t) {
+      if (t.block_type !== st.cfg.block_type) return;
+      co = true;
+      $m.append('<li><a href="#" class="mb-tpl" data-id="' + t.id + '">' + esc(t.name) + '</a></li>');
+    });
+    if (co) $m.append('<li class="divider"></li>');
+    $m.append('<li><a href="#" id="mb-tpl-save"><i class="fa fa-save"></i> Lưu bộ này thành mẫu…</a></li>');
+    if (!co) $m.prepend('<li class="disabled"><a href="#">(chưa có mẫu cho khối này)</a></li>');
+  }
+
+  /** Menu "Nhân bản từ khoa khác": chi cac khoa cung khoi, khong gom chinh no. */
+  function renderCloneMenu() {
+    var $m = $('#mb-clone-menu').empty();
+    var co = false;
+    st.configs.forEach(function (c) {
+      if (c.id === st.cfg.id || c.block_type !== st.cfg.block_type) return;
+      co = true;
+      $m.append('<li><a href="#" class="mb-clone" data-id="' + c.id + '">' + esc(c.display_name) + '</a></li>');
+    });
+    if (!co) $m.append('<li class="disabled"><a href="#">(không có khoa cùng khối)</a></li>');
   }
 
   function renderAddMenu() {
@@ -335,6 +365,24 @@ var MetricBuilder = (function ($) {
     });
   }
 
+  /** Nap mot bo chi tieu (tu mau hoac tu khoa khac) — hoi thay the hay noi them. */
+  function napBoChiTieu(ds) {
+    if (!ds.length) return;
+    if (st.metrics.length &&
+        !confirm('Thay thế toàn bộ ' + st.metrics.length + ' chỉ tiêu hiện có?\n\n' +
+                 'OK = thay thế, Cancel = nối thêm vào cuối')) {
+      ds.forEach(function (m) {
+        var b = JSON.parse(JSON.stringify(m));   // deep-copy: tranh dung tham chieu voi du lieu goc
+        b.code = maDuyNhat(b.code);               // noi them phai doi ma trung, khong thi validate chan luc luu
+        st.metrics.push(b);
+      });
+    } else {
+      st.metrics = JSON.parse(JSON.stringify(ds)); // deep-copy: khong de tham chieu chung voi mau/khoa nguon
+    }
+    mbExplicitPending = [];   // st.metrics la mang object hoan toan moi, cac tham chieu cu thanh rac
+    render();
+  }
+
   function themChiTieu(type) {
     var def = SCHEMA[type];
     var ten = def.label;
@@ -418,6 +466,40 @@ var MetricBuilder = (function ($) {
       $c.find('.mb-name-view').text($(this).data('k') === 'name' ? $(this).val() : $c.find('.mb-name-view').text());
     });
     $(document).on('click', '#mb-save', luu);
+
+    // Nap mau tu DB vao bo chi tieu dang sua
+    $(document).on('click', '.mb-tpl', function (e) {
+      e.preventDefault();
+      var id = $(this).data('id'), t = null;
+      st.templates.forEach(function (x) { if (x.id === id) t = x; });
+      if (!t) return;
+      try { napBoChiTieu(JSON.parse(t.metrics || '[]')); } catch (err) { alert('Mẫu hỏng JSON.'); }
+    });
+
+    // Nhan ban bo chi tieu tu mot khoa khac cung khoi
+    $(document).on('click', '.mb-clone', function (e) {
+      e.preventDefault();
+      var id = $(this).data('id'), c = null;
+      st.configs.forEach(function (x) { if (x.id === id) c = x; });
+      if (!c) return;
+      try { napBoChiTieu(JSON.parse(c.metrics || '[]')); } catch (err) { alert('Cấu hình nguồn hỏng JSON.'); }
+    });
+
+    // Luu bo chi tieu hien tai thanh mau moi trong DB
+    $(document).on('click', '#mb-tpl-save', function (e) {
+      e.preventDefault();
+      var ten = prompt('Tên mẫu:', st.cfg.display_name);
+      if (!ten) return;
+      $.post(ROUTES.templateStore, {
+        _token: CSRF, name: ten, block_type: st.cfg.block_type,
+        metrics: JSON.stringify(st.metrics), sort_order: st.templates.length + 1
+      }).done(function () {
+        alert('Đã lưu mẫu.');
+      }).fail(function (xhr) {
+        var r = xhr.responseJSON || {};
+        alert(r.message || 'Không lưu được mẫu.');
+      });
+    });
 
     $(document).on('input', '#mb-json', function () { docJson(); });
 

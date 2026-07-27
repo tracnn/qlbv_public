@@ -71,7 +71,8 @@ MetricBuilder.init({
     update: '{{ url('khth/giao-ban/cau-hinh') }}/__ID__',
     catalogs: '{{ route('khth.giao-ban-config-catalogs') }}',
     catalog: '{{ url('khth/giao-ban/cau-hinh/danh-muc') }}/__KEY__',
-    preview: '{{ url('khth/giao-ban/cau-hinh') }}/__ID__/tinh-thu'
+    preview: '{{ url('khth/giao-ban/cau-hinh') }}/__ID__/tinh-thu',
+    templateStore: '{{ route('khth.giao-ban-config-template-store') }}'
   },
   remoteCatalogs: @json(array_values(array_diff(
       \App\Services\GiaoBan\GiaoBanCatalogService::allKeys(),
@@ -199,7 +200,10 @@ $(function () {
     if (!cfg) return;
     // lay block_type dang chon tren hang (co the vua doi chua luu)
     cfg = $.extend({}, cfg, { block_type: $(this).closest('tr').find('.f-block').val() });
-    MetricBuilder.open(cfg, function () { loadAll(); });
+    MetricBuilder.open(cfg, function () { loadAll(); }, {
+      templates: STATE.metric_templates || [],
+      configs: STATE.configs || []
+    });
   });
 
   $('#tbl-configs').on('click', '.btn-save-cfg', function () {
