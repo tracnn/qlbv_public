@@ -76,4 +76,39 @@ class GiaoBanCatalogServiceTest extends TestCase
         $this->expectException(\InvalidArgumentException::class);
         GiaoBanCatalogService::buildSmallSql('khong_ton_tai');
     }
+
+    /** @test */
+    public function tim_danh_muc_lon_gioi_han_30_dong_va_bo_dau()
+    {
+        list($sql, $binds) = GiaoBanCatalogService::buildSearchSql('service', 'sieu am');
+
+        $this->assertContains('ROWNUM <= 30', $sql);
+        $this->assertContains('FROM his_service', $sql);
+        $this->assertArrayHasKey('q1', $binds);
+        $this->assertContains('%sieu am%', $binds['q1']);
+    }
+
+    /** @test */
+    public function tra_nguoc_theo_ids_chi_nhan_so_nguyen()
+    {
+        list($sql, ) = GiaoBanCatalogService::buildByIdsSql('room', ['12', 34, 'x']);
+
+        // 'x' bi ep ve 0, khong duoc chen chuoi vao SQL
+        $this->assertContains('IN (12,34,0)', $sql);
+        $this->assertNotContains("'x'", $sql);
+    }
+
+    /** @test */
+    public function tra_nguoc_voi_mang_rong_khong_khop_gi()
+    {
+        list($sql, ) = GiaoBanCatalogService::buildByIdsSql('room', []);
+        $this->assertContains('IN (-1)', $sql);
+    }
+
+    /** @test */
+    public function danh_muc_nho_khong_dung_duong_tim_kiem_remote()
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        GiaoBanCatalogService::buildSearchSql('diim_type', 'abc');
+    }
 }

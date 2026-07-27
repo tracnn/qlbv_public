@@ -109,4 +109,66 @@ class GiaoBanCatalogService
         foreach (self::CATALOGS as $k => $c) $out[$k] = $c['label'];
         return $out;
     }
+
+    /** SQL tim danh muc lon theo tu khoa (bo dau). Ham thuan. */
+    public static function buildSearchSql($key, $q)
+    {
+        $c = self::layKhaiBaoRemote($key);
+        $chuan = ViSearch::normalize($q);
+        $bieuThucTen = ViSearch::noDiacriticsSql($c['name_col']);
+        $sql = "SELECT * FROM (
+                    SELECT {$c['id_col']} AS ma, {$c['name_col']} AS ten
+                    FROM {$c['table']}
+                    WHERE is_delete = 0 AND is_active = 1
+                      AND $bieuThucTen LIKE :q1
+                    ORDER BY {$c['name_col']}
+                ) WHERE ROWNUM <= 30";
+        return [$sql, ['q1' => '%' . $chuan . '%']];
+    }
+
+    /** SQL tra nguoc ID -> ten, de select2 hien nhan khi mo lai cau hinh cu. */
+    public static function buildByIdsSql($key, array $ids)
+    {
+        $c = self::layKhaiBaoRemote($key);
+        $danhSach = implode(',', array_map('intval', $ids));
+        if ($danhSach === '') $danhSach = '-1';
+        $sql = "SELECT {$c['id_col']} AS ma, {$c['name_col']} AS ten
+                FROM {$c['table']}
+                WHERE {$c['id_col']} IN ($danhSach)";
+        return [$sql, []];
+    }
+
+    protected static function layKhaiBaoRemote($key)
+    {
+        if (!self::isRemote($key)) {
+            throw new \InvalidArgumentException("Danh muc '$key' khong phai danh muc lon.");
+        }
+        return self::CATALOGS[$key];
+    }
+
+    /** Tim danh muc lon theo tu khoa, toi thieu 2 ky tu. */
+    public static function search($key, $q)
+    {
+        if (mb_strlen(trim((string) $q)) < 2) return [];
+        return self::chay(self::buildSearchSql($key, $q));
+    }
+
+    /** Tra nguoc ID -> ten cho danh muc lon, phuc vu mo lai cau hinh cu. */
+    public static function byIds($key, array $ids)
+    {
+        if (empty($ids)) return [];
+        return self::chay(self::buildByIdsSql($key, $ids));
+    }
+
+    /** Chay 1 truy van danh muc lon tren HISPro. HIS loi -> mang rong. */
+    protected static function chay($sqlVaBinds)
+    {
+        list($sql, $binds) = $sqlVaBinds;
+        try {
+            $rows = \Illuminate\Support\Facades\DB::connection(self::CONN)->select($sql, $binds);
+        } catch (\Exception $e) {
+            return [];
+        }
+        return self::chuanHoa($rows);
+    }
 }

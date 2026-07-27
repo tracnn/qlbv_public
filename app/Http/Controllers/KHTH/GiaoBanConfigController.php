@@ -107,6 +107,19 @@ class GiaoBanConfigController extends Controller
         ]);
     }
 
+    /** Tim danh muc lon theo tu khoa, hoac tra nguoc theo danh sach id. */
+    public function catalog(Request $request, $key)
+    {
+        if (!GiaoBanCatalogService::isRemote($key)) {
+            return response()->json(['message' => 'Danh mục không hợp lệ'], 422);
+        }
+        if ($request->filled('ids')) {
+            $ids = array_filter(explode(',', (string) $request->input('ids')), 'strlen');
+            return response()->json(GiaoBanCatalogService::byIds($key, $ids));
+        }
+        return response()->json(GiaoBanCatalogService::search($key, $request->input('q', '')));
+    }
+
     public function store(Request $request)
     {
         $this->validate($request, [
