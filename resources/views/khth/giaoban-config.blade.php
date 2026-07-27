@@ -9,7 +9,7 @@
       <div class="box-header with-border"><b>Khoa hiển thị trên báo cáo</b></div>
       <div class="box-body table-responsive">
         <table class="table table-bordered" id="tbl-configs">
-          <thead><tr><th style="width:70px">TT</th><th>Tên hiển thị</th><th style="width:130px">Loại khối</th><th>Khoa HIS (gộp)</th><th>Chỉ tiêu (JSON)</th><th style="width:60px">BID</th><th style="width:60px"></th></tr></thead>
+          <thead><tr><th style="width:70px">TT</th><th>Tên hiển thị</th><th style="width:130px">Loại khối</th><th>Khoa HIS (gộp)</th><th>Chỉ tiêu</th><th style="width:60px">BID</th><th style="width:60px"></th></tr></thead>
           <tbody></tbody>
         </table>
         <button id="btn-add" class="btn btn-primary"><i class="fa fa-plus"></i> Thêm khoa</button>
@@ -57,61 +57,29 @@
   </div>
 </div>
 
-<script type="application/json" id="tpl-dieu_tri">[
-  {"code":"bn_cu","name":"BN cũ","type":"census_from"},
-  {"code":"bn_vao","name":"BN vào","type":"movement_in"},
-  {"code":"bn_chuyen_den","name":"BN chuyển đến","type":"movement_transfer_in"},
-  {"code":"bn_ra_vien","name":"BN ra viện","type":"end_type","end_codes":["RV","HK","CC","XV","KH","TR"]},
-  {"code":"bn_chuyen_vien","name":"BN chuyển viện","type":"end_type","end_codes":["CV"]},
-  {"code":"bn_tu_vong","name":"BN tử vong","type":"end_type","end_codes":["TV"]},
-  {"code":"bn_chuyen_khoa","name":"BN chuyển khoa","type":"movement_transfer_out"},
-  {"code":"hien_co","name":"Hiện có","type":"census_to"}
-]</script>
-<script type="application/json" id="tpl-kham">[
-  {"code":"luot_kham","name":"Lượt khám","type":"exam_visit"},
-  {"code":"vao_vien","name":"Vào viện","type":"exam_visit","filter":{"treatment_type_ids":[3]}},
-  {"code":"cap_toa_ve","name":"Cấp toa cho về","type":"exam_visit","filter":{"end_type_codes":["CC"]}},
-  {"code":"chuyen_vien","name":"Chuyển viện","type":"exam_visit","filter":{"end_type_codes":["CV"]}},
-  {"code":"hen_kham_lai","name":"Hẹn khám lại","type":"exam_visit","filter":{"end_type_codes":["HK"]}},
-  {"code":"kham_yeu_cau","name":"Khám yêu cầu","type":"exam_visit","filter":{"patient_type_ids":[82]}},
-  {"code":"kham_bhyt","name":"Khám BHYT","type":"exam_visit","filter":{"patient_type_ids":[1]}},
-  {"code":"chuyen_gia","name":"Khám chuyên gia","type":"manual"}
-]</script>
-<script type="application/json" id="tpl-cls_tong">[
-  {"code":"tong_dv","name":"Tổng dịch vụ","type":"service_count","filter":{"execute_department_id_self":true}}
-]</script>
-<script type="application/json" id="tpl-cls_cdha">[
-  {"code":"cdha_xq","name":"X-Quang","type":"service_count","filter":{"execute_department_id_self":true,"service_type_ids":[3],"diim_type_ids":[1]}},
-  {"code":"cdha_ct","name":"CT","type":"service_count","filter":{"execute_department_id_self":true,"service_type_ids":[3],"diim_type_ids":[2]}},
-  {"code":"cdha_mri","name":"MRI","type":"service_count","filter":{"execute_department_id_self":true,"service_type_ids":[3],"diim_type_ids":[3]}},
-  {"code":"cdha_khac","name":"CĐHA khác","type":"service_count","filter":{"execute_department_id_self":true,"service_type_ids":[3],"diim_type_other_of":[1,2,3]}},
-  {"code":"sieu_am","name":"Siêu âm","type":"service_count","filter":{"execute_department_id_self":true,"service_type_ids":[10]}}
-]</script>
-<script type="application/json" id="tpl-cls_xn">[
-  {"code":"xn_hh","name":"Huyết học","type":"service_count","filter":{"execute_department_id_self":true,"service_type_ids":[2],"test_type_ids":[1]}},
-  {"code":"xn_sh","name":"Sinh hóa","type":"service_count","filter":{"execute_department_id_self":true,"service_type_ids":[2],"test_type_ids":[3]}},
-  {"code":"xn_vs","name":"Vi sinh","type":"service_count","filter":{"execute_department_id_self":true,"service_type_ids":[2],"test_type_ids":[2]}},
-  {"code":"xn_md","name":"Miễn dịch","type":"service_count","filter":{"execute_department_id_self":true,"service_type_ids":[2],"test_type_ids":[4]}},
-  {"code":"xn_nt","name":"Nước tiểu","type":"service_count","filter":{"execute_department_id_self":true,"service_type_ids":[2],"test_type_ids":[7]}},
-  {"code":"xn_khac","name":"XN khác","type":"service_count","filter":{"execute_department_id_self":true,"service_type_ids":[2],"test_type_other_of":[1,2,3,4,7]}}
-]</script>
+@include('khth.partials.giaoban-metric-builder')
 @stop
 
 @section('js')
+<script src="{{ asset('js/giaoban/metric-builder.js') }}"></script>
+<script>
+MetricBuilder.init({
+  schema: @json(\App\Services\GiaoBan\MetricSchema::TYPES),
+  blockLabels: { dieu_tri: 'Điều trị (nội trú)', kham: 'Khám (ngoại trú)', can_lam_sang: 'Cận lâm sàng' },
+  csrf: '{{ csrf_token() }}',
+  routes: {
+    update: '{{ url('khth/giao-ban/cau-hinh') }}/__ID__',
+    catalogs: '{{ route('khth.giao-ban-config-catalogs') }}',
+    catalog: '{{ url('khth/giao-ban/cau-hinh/danh-muc') }}/__KEY__',
+    preview: '{{ url('khth/giao-ban/cau-hinh') }}/__ID__/tinh-thu'
+  }
+});
+</script>
 <script>
 var HIS_DEPTS = @json($hisDepartments);
 var STATE = { configs: [], assignments: [], user_names: {} };
 var PICKED_USER = null;
 var BLOCKS = { dieu_tri: 'Điều trị (nội trú)', kham: 'Khám (ngoại trú)', can_lam_sang: 'Cận lâm sàng' };
-var TEMPLATES = {
-  dieu_tri: [{ key: 'dieu_tri', label: 'Điều trị (mặc định)' }],
-  kham: [{ key: 'kham', label: 'Khám (mặc định)' }],
-  can_lam_sang: [
-    { key: 'cls_tong', label: 'Tổng dịch vụ' },
-    { key: 'cls_cdha', label: 'CĐHA (XQ/CT/MRI/SA)' },
-    { key: 'cls_xn', label: 'Xét nghiệm (HH/SH/VS...)' }
-  ]
-};
 
 function esc(s) {
   return String(s === null || s === undefined ? '' : s).replace(/[&<>"']/g, function (c) {
@@ -121,11 +89,6 @@ function esc(s) {
 function blockOptions(sel) {
   var h = '';
   for (var k in BLOCKS) h += '<option value="' + k + '"' + (k === sel ? ' selected' : '') + '>' + esc(BLOCKS[k]) + '</option>';
-  return h;
-}
-function tplOptions(block) {
-  var h = '<option value="">-- Nạp mẫu --</option>';
-  (TEMPLATES[block] || []).forEach(function (t) { h += '<option value="' + t.key + '">' + esc(t.label) + '</option>'; });
   return h;
 }
 function deptMultiOptions(selectedIds) {
@@ -140,6 +103,9 @@ function deptMultiOptions(selectedIds) {
 function parseIds(jsonStr) {
   try { var a = JSON.parse(jsonStr || '[]'); return Array.isArray(a) ? a : []; } catch (e) { return []; }
 }
+function demChiTieu(jsonStr) {
+  try { var a = JSON.parse(jsonStr || '[]'); return Array.isArray(a) ? a.length : 0; } catch (e) { return '?'; }
+}
 
 function renderConfigs() {
   var $tb = $('#tbl-configs tbody').empty();
@@ -151,8 +117,7 @@ function renderConfigs() {
       '<td><input class="form-control f-name" value="' + esc(c.display_name) + '"></td>' +
       '<td><select class="form-control f-block">' + blockOptions(block) + '</select></td>' +
       '<td><select class="form-control f-depts" multiple size="4">' + deptMultiOptions(ids) + '</select></td>' +
-      '<td><textarea class="form-control f-metrics" rows="3">' + esc(c.metrics) + '</textarea>' +
-      '<select class="form-control input-sm f-tpl" style="margin-top:4px">' + tplOptions(block) + '</select></td>' +
+      '<td><button class="btn btn-default btn-sm btn-edit-metrics">Chỉ tiêu (' + demChiTieu(c.metrics) + ') <i class="fa fa-pencil"></i></button></td>' +
       '<td><input type="checkbox" class="f-active"' + (c.is_active ? ' checked' : '') + '></td>' +
       '<td><button class="btn btn-sm btn-primary btn-save-cfg">Lưu</button></td></tr>');
   });
@@ -216,25 +181,21 @@ $(function () {
     $.post('{{ route('khth.giao-ban-config-store') }}', {
       _token: '{{ csrf_token() }}', display_name: name, block_type: 'dieu_tri',
       sort_order: STATE.configs.length + 1, his_department_ids: '[]',
-      metrics: $('#tpl-dieu_tri').text().trim()
+      metrics: JSON.stringify([{ code: 'bn_cu', name: 'BN cũ', type: 'census_from' }])
     }).done(loadAll).fail(function (xhr) {
       alert(xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Lỗi thêm khoa');
     });
   });
 
-  // đổi loại khối -> nạp lại danh sách mẫu tương ứng
-  $('#tbl-configs').on('change', '.f-block', function () {
-    var $tr = $(this).closest('tr');
-    $tr.find('.f-tpl').html(tplOptions($(this).val()));
-  });
-
-  // chọn mẫu -> đổ vào ô JSON chỉ tiêu
-  $('#tbl-configs').on('change', '.f-tpl', function () {
-    var key = $(this).val();
-    if (!key) return;
-    var $tr = $(this).closest('tr');
-    $tr.find('.f-metrics').val($('#tpl-' + key).text().trim());
-    $(this).val('');
+  // mo modal form builder de sua chi tieu cua mot khoa
+  $('#tbl-configs').on('click', '.btn-edit-metrics', function () {
+    var id = $(this).closest('tr').data('id');
+    var cfg = null;
+    STATE.configs.forEach(function (c) { if (c.id === id) cfg = c; });
+    if (!cfg) return;
+    // lay block_type dang chon tren hang (co the vua doi chua luu)
+    cfg = $.extend({}, cfg, { block_type: $(this).closest('tr').find('.f-block').val() });
+    MetricBuilder.open(cfg, function () { loadAll(); });
   });
 
   $('#tbl-configs').on('click', '.btn-save-cfg', function () {
@@ -244,7 +205,6 @@ $(function () {
       sort_order: $tr.find('.f-sort').val(), display_name: $tr.find('.f-name').val(),
       block_type: $tr.find('.f-block').val(),
       his_department_ids: collectIds($tr.find('.f-depts')),
-      metrics: $tr.find('.f-metrics').val(),
       is_active: $tr.find('.f-active').is(':checked') ? 1 : 0
     }).done(loadAll).fail(function (xhr) {
       alert(xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Lỗi lưu');
