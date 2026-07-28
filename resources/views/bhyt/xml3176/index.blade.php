@@ -153,6 +153,11 @@
     var table = null;
     var selectedRecords = [];
 
+    // Khoang ngay dung cho lan tai hien tai. Phai o pham vi module chu khong phai
+    // tham so cua fetchData(): DataTable chi con duoc dung MOT lan, nen closure
+    // "data" ben trong no phai doc duoc gia tri moi nhat o cac lan tai sau.
+    var xml3176Range = { from: null, to: null };
+
     // ── Bộ lọc từ URL (phục vụ drill-down từ dashboard XML3176) ──────────────
     // QUAN TRỌNG: lần gọi fetchData() ĐẦU TIÊN không xuất phát từ
     // $(document).ready của file này, mà từ partials.load_data_button
@@ -209,22 +214,34 @@
             }
         }
 
+        // Ghi sau khoi xml3176UrlFilters vi khoi do co the ghi de startDate/endDate.
+        xml3176Range.from = startDate;
+        xml3176Range.to = endDate;
+
         // Kiểm tra và hủy yêu cầu AJAX trước đó (nếu có)
         if (currentAjaxRequest != null) {
             currentAjaxRequest.abort();
         }
 
+        // DataTable voi serverSide TU GOI ajax mot lan khi khoi tao. Truoc day code
+        // con goi table.ajax.reload() ngay sau -> hai request nang chay chong nhau
+        // moi lan tai. Gio chi dung bang o lan dau, cac lan sau chi reload.
+        if (table) {
+            table.ajax.reload();
+            checkJobStatus();
+            return;
+        }
+
         table = $('#xml-list').DataTable({
             "processing": true,
             "serverSide": true,
-            "destroy": true, // Destroy any existing DataTable before reinitializing
             "responsive": true, // Giữ responsive
             "scrollX": true, // Đảm bảo cuộn ngang khi bảng quá rộng
             "ajax": {
                 url: "{{ route('bhyt.xml3176.fetch-data') }}",
                 data: function(d) {
-                    d.date_from = startDate;
-                    d.date_to = endDate;
+                    d.date_from = xml3176Range.from;
+                    d.date_to = xml3176Range.to;
                     d.date_type = $('#date_type').val();
                     d.treatment_code = $('#treatment_code').val();
                     d.xml_filter_status = $('#xml_filter_status').val();
@@ -284,7 +301,8 @@
             ],
         });
 
-        table.ajax.reload();
+        // Khong goi table.ajax.reload() o day: DataTable() ben tren da tu gui
+        // request khoi tao roi.
 
         // Kiểm tra trạng thái job
         checkJobStatus();
