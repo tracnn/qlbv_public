@@ -13,6 +13,7 @@ use App\Models\BHYT\Xml3176ErrorCatalog;
 use App\Services\Xml3176Service;
 use App\Services\XmlStructures;
 use App\Services\Xml3176\Xml3176ErrorIndex;
+use App\Services\Xml3176\Xml3176DetailTabs;
 
 use App\Exports\Xml3176ErrorMultiSheetExport;
 use App\Exports\Xml3176XmlExport;
@@ -435,6 +436,51 @@ class BHYTXml3176Controller extends Controller
         return view('bhyt.xml3176.detail-xml', [
             'xml1'      => $xml1,
             'chiMucLoi' => Xml3176ErrorIndex::tu($xml1->Xml3176ErrorResult),
+            // Tam thoi lay tu collection da nap; task sau doi sang pluck de vo modal
+            // thoi nap collection han.
+            'dsNhom'    => [
+                'XML2' => $xml1->Xml3176Xml2->pluck('ngay_yl'),
+                'XML3' => $xml1->Xml3176Xml3->pluck('ma_nhom'),
+                'XML4' => $xml1->Xml3176Xml4->pluck('ngay_kq'),
+                'XML5' => $xml1->Xml3176Xml5->pluck('thoi_diem_dbls'),
+            ],
+        ]);
+    }
+
+    /**
+     * Mot trang cua mot nhom, cho cac bang nhieu dong (XML2..XML5).
+     *
+     * Tra ve dung mot <table> cong thanh phan trang - khong phai ca tab.
+     */
+    public function detailXmlRows(Request $request, $ma_lk, $xml)
+    {
+        $cauHinh = Xml3176DetailTabs::cauHinh($xml);   // abort(404) neu ngoai danh sach trang
+        $model   = $cauHinh['model'];
+        $cot     = $cauHinh['cot_nhom'];
+        $cat     = $cauHinh['cat'];
+        $nhom    = (string) $request->input('nhom', '');
+
+        $truyVan = $model::where('ma_lk', $ma_lk);
+
+        // Ten cot lay tu dang ky (hang so), khong phai tu tham so URL.
+        if ($cat > 0) {
+            $truyVan->where($cot, 'like', $nhom . '%');
+        } else {
+            $truyVan->where($cot, $nhom);
+        }
+
+        $rows = $truyVan->orderBy('stt')->paginate(Xml3176DetailTabs::CO_TRANG);
+
+        // Chi lay loi cua rieng xml nay - du de to do va dung tooltip.
+        $chiMucLoi = Xml3176ErrorIndex::tu(
+            Xml3176ErrorResult::where('ma_lk', $ma_lk)->where('xml', $xml)->get()
+        );
+
+        return view('bhyt.xml3176.detail-xml-' . substr($xml, 3) . '-rows', [
+            'rows'      => $rows,
+            'chiMucLoi' => $chiMucLoi,
+            'urlTrang'  => route('bhyt.xml3176.detail-xml.rows', ['ma_lk' => $ma_lk, 'xml' => $xml])
+                            . '?nhom=' . urlencode($nhom),
         ]);
     }
 

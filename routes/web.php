@@ -525,6 +525,7 @@ Route::group(['middleware' => ['auth', 'check.first.login']], function () {
         Route::get('xml3176/import/index', 'BHYT\BHYTXml3176Controller@importIndex')->name('bhyt.xml3176.import.index');
         Route::post('xml3176/index/upload-data', 'BHYT\BHYTXml3176Controller@uploadData')->name('bhyt.xml3176.upload-data');
         Route::get('xml3176/index/detail-xml/{ma_lk}', 'BHYT\BHYTXml3176Controller@detailXml')->name('bhyt.xml3176.detail-xml');
+        Route::get('xml3176/index/detail-xml/{ma_lk}/rows/{xml}', 'BHYT\BHYTXml3176Controller@detailXmlRows')->name('bhyt.xml3176.detail-xml.rows');
         Route::post('xml3176/export-xml', 'BHYT\BHYTXml3176Controller@exportXml')
         ->name('bhyt.xml3176.export-xml')
         ->middleware('checkrole:superadministrator');

@@ -1,14 +1,13 @@
 @php
-    $groupedDataXml5 = $xml1->Xml3176Xml5->sortBy('thoi_diem_dbls')->groupBy(function ($item) {
-        return substr($item->thoi_diem_dbls, 0, 8); // Group by YYYYMMDD
-    });
+    $cauHinhXml5 = App\Services\Xml3176\Xml3176DetailTabs::BANG_NHIEU_DONG['XML5'];
+    $nhomXml5 = App\Services\Xml3176\Xml3176DetailTabs::khoaNhom($dsNhom['XML5'], $cauHinhXml5['cat']);
 @endphp
 
 <div id="menu5" class="tab-pane fade">
     <ul class="nav nav-tabs">
-        @foreach($groupedDataXml5 as $date => $group)
-            <li class="{{ $loop->first ? 'active' : '' }}">
-                <a data-toggle="tab" href="#tab_dienbien_{{ $date }}">
+        @foreach($nhomXml5 as $i => $date)
+            <li class="{{ $i === 0 ? 'active' : '' }}">
+                <a data-toggle="tab" href="#tab_xml5_{{ $i }}">
                     Ngày: {{ strtodate($date) }}
                 </a>
             </li>
@@ -16,35 +15,13 @@
     </ul>
 
     <div class="tab-content">
-        @foreach($groupedDataXml5 as $date => $group)
-            <div id="tab_dienbien_{{ $date }}" class="tab-pane fade {{ $loop->first ? 'in active' : '' }}">
+        @foreach($nhomXml5 as $i => $date)
+            <div id="tab_xml5_{{ $i }}"
+                 class="tab-pane fade xml3176-lazy {{ $i === 0 ? 'in active' : '' }}"
+                 data-url="{{ route('bhyt.xml3176.detail-xml.rows', ['ma_lk' => $xml1->ma_lk, 'xml' => 'XML5']) }}?nhom={{ urlencode($date) }}">
                 <div class="panel panel-default">
                     <div class="panel-body table-responsive">
-                        <table class="table table-hover responsive datatable" cellspacing="0" width="100%">
-                            <thead>
-                                <tr>
-                                    <th>STT</th>
-                                    <th>Diễn biến</th>
-                                    <th>Hội chẩn</th>
-                                    <th>Phẫu thuật</th>
-                                    <th>Ngày YL</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($group as $value_xml5)
-                                @php
-                                    $errorDescriptions = $chiMucLoi->moTa('XML5', $value_xml5->stt);
-                                @endphp
-                                <tr @if($errorDescriptions) class="highlight-red" data-toggle="tooltip" title="{{ $errorDescriptions }}" @endif>
-                                    <td>{{ $value_xml5->stt }}</td>
-                                    <td>{{ $value_xml5->dien_bien_ls }}</td>
-                                    <td>{{ $value_xml5->hoi_chan }}</td>
-                                    <td>{{ $value_xml5->phau_thuat }}</td>
-                                    <td>{{ strtodatetime($value_xml5->thoi_diem_dbls) }}</td>
-                                </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
+                        <i class="fa fa-spinner fa-spin"></i> Đang tải…
                     </div>
                 </div>
             </div>

@@ -348,6 +348,47 @@
         ).show();
     };
 
+    // ── Tai luoi noi dung modal chi tiet ────────────────────────────────────
+    // Khung nao co data-url thi noi dung duoc nap khi no thuc su hien ra.
+    function napKhung($khung) {
+        if (!$khung.length || !$khung.data('url')) { return; }
+        if ($khung.data('daNap') || $khung.data('dangNap')) { return; }
+
+        $khung.data('dangNap', true);
+
+        $.get($khung.data('url'))
+            .done(function (html) {
+                $khung.html(html);
+                $khung.data('daNap', true);
+                initializeModalDataTables($khung);
+                napKhungDangHien($khung);
+            })
+            .fail(function () {
+                $khung.html('<div class="alert alert-danger">Không tải được nội dung. Vui lòng thử lại.</div>');
+            })
+            .always(function () {
+                $khung.data('dangNap', false);
+            });
+    }
+
+    // Khung dau tien cua moi cap tab mang san class "active" nen khong bao gio phat
+    // shown.bs.tab - phai tu nap sau khi noi dung cha duoc chen vao.
+    function napKhungDangHien($goc) {
+        $goc.find('.tab-pane.active[data-url]').each(function () {
+            napKhung($(this));
+        });
+    }
+
+    $(document).on('shown.bs.tab', '#infoModal a[data-toggle="tab"]', function () {
+        napKhung($($(this).attr('href')));
+    });
+
+    $(document).on('click', '#infoModal .xml3176-trang', function () {
+        var $khung = $(this).closest('[data-url]');
+        $khung.data('url', $(this).data('url')).data('daNap', false);
+        napKhung($khung);
+    });
+
     function deleteXML(ma_lk) {
         Swal.fire({
             title: 'Bạn có chắc chắn muốn xóa?',
@@ -436,7 +477,8 @@
                 success: function(response) {
                     $('#infoModal').modal('show');
                     $('#modalContent').html(response);
-                    initializeModalDataTables();
+                    initializeModalDataTables($('#modalContent'));
+                    napKhungDangHien($('#modalContent'));
                     // Kiểm tra trạng thái job
                     checkJobStatus();
                 },
@@ -610,12 +652,18 @@
         });
     }
 
-    var XML3176_MODAL_TABLES = ['#thuocvt', '#dvkt', '#cls', '#dienbien',
-                                '#checkHeinCard', '#xmlErrorChecks'];
+    // Chi con #checkHeinCard la bang that. Nam id cu (#thuocvt, #dvkt, #cls, #dienbien,
+    // #xmlErrorChecks) khong ton tai trong bat ky blade nao - da bo.
+    var XML3176_MODAL_TABLES = ['#checkHeinCard'];
 
-    function initializeModalDataTables() {
+    function initializeModalDataTables($goc) {
+        var $phamVi = $goc && $goc.length ? $goc : $('#modalContent');
+
         XML3176_MODAL_TABLES.forEach(function (sel) {
-            $(sel).DataTable();
+            var el = $phamVi.find(sel);
+            if (el.length && !$.fn.DataTable.isDataTable(el)) {
+                el.DataTable();
+            }
         });
     }
 

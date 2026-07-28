@@ -1,16 +1,13 @@
 @php
-    $groupedDataXml4 = $xml1->Xml3176Xml4->groupBy(function ($item) {
-        return substr($item->ngay_kq, 0, 8); // Group by YYYYMMDD
-    })->sortBy(function ($group, $key) {
-        return $key; // Sort by the grouped keys (YYYYMMDD)
-    });
+    $cauHinhXml4 = App\Services\Xml3176\Xml3176DetailTabs::BANG_NHIEU_DONG['XML4'];
+    $nhomXml4 = App\Services\Xml3176\Xml3176DetailTabs::khoaNhom($dsNhom['XML4'], $cauHinhXml4['cat']);
 @endphp
 
 <div id="menu4" class="tab-pane fade">
     <ul class="nav nav-tabs">
-        @foreach($groupedDataXml4 as $ngay_kq => $group)
-            <li class="{{ $loop->first ? 'active' : '' }}">
-                <a data-toggle="tab" href="#tab_kq_{{ $ngay_kq }}">
+        @foreach($nhomXml4 as $i => $ngay_kq)
+            <li class="{{ $i === 0 ? 'active' : '' }}">
+                <a data-toggle="tab" href="#tab_xml4_{{ $i }}">
                     Ngày: {{ strtodate($ngay_kq) }}
                 </a>
             </li>
@@ -18,43 +15,13 @@
     </ul>
 
     <div class="tab-content">
-        @foreach($groupedDataXml4 as $ngay_kq => $group)
-            <div id="tab_kq_{{ $ngay_kq }}" class="tab-pane fade {{ $loop->first ? 'in active' : '' }}">
+        @foreach($nhomXml4 as $i => $ngay_kq)
+            <div id="tab_xml4_{{ $i }}"
+                 class="tab-pane fade xml3176-lazy {{ $i === 0 ? 'in active' : '' }}"
+                 data-url="{{ route('bhyt.xml3176.detail-xml.rows', ['ma_lk' => $xml1->ma_lk, 'xml' => 'XML4']) }}?nhom={{ urlencode($ngay_kq) }}">
                 <div class="panel panel-default">
                     <div class="panel-body table-responsive">
-                        <table class="table table-hover responsive datatable" cellspacing="0" width="100%">
-                            <thead>
-                                <tr>
-                                    <th>STT</th>
-                                    <th>Mã DV</th>
-                                    <th>Mã chỉ số</th>
-                                    <th>Tên chỉ số</th>
-                                    <th>Giá trị</th>
-                                    <th>Mã máy</th>
-                                    <th>Kết luận</th>
-                                    <th>Ngày KQ</th>
-                                    <th>BS đọc KQ</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($group as $value_xml4)
-                                @php
-                                    $errorDescriptions = $chiMucLoi->moTa('XML4', $value_xml4->stt);
-                                @endphp
-                                <tr @if($errorDescriptions) class="highlight-red" data-toggle="tooltip" title="{{ $errorDescriptions }}" @endif>
-                                    <td align="right">{{ $value_xml4->stt }}</td>
-                                    <td>{{ $value_xml4->ma_dich_vu }}</td>
-                                    <td>{{ $value_xml4->ma_chi_so }}</td>
-                                    <td>{{ $value_xml4->ten_chi_so }}</td>
-                                    <td>{{ $value_xml4->gia_tri }}</td>
-                                    <td>{{ $value_xml4->ma_may }}</td> 
-                                    <td>{{ $value_xml4->ket_luan }}</td>  
-                                    <td>{{ strtodatetime($value_xml4->ngay_kq) }}</td>
-                                    <td>{{ $value_xml4->ma_bs_doc_kq }}</td>         
-                                </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
+                        <i class="fa fa-spinner fa-spin"></i> Đang tải…
                     </div>
                 </div>
             </div>
