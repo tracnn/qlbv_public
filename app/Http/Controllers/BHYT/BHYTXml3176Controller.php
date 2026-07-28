@@ -495,7 +495,14 @@ class BHYTXml3176Controller extends Controller
             abort(404);
         }
 
-        $xml1 = Xml3176Xml1::with('Xml3176ErrorResult')
+        // Rieng tab Loi XML doc $error->Xml3176ErrorCatalog->error_name cho TUNG dong,
+        // nen phai nap kem - khong thi thanh mot truy van moi dong loi.
+        // Cac tab khac khong dung danh muc nay nen khong nap cho phi.
+        $quanHe = $xml === 'ERR'
+            ? ['Xml3176ErrorResult.Xml3176ErrorCatalog']
+            : ['Xml3176ErrorResult'];
+
+        $xml1 = Xml3176Xml1::with($quanHe)
         ->where('ma_lk', $ma_lk)
         ->firstOrFail();
 

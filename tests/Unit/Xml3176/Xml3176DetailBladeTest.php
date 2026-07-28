@@ -33,4 +33,29 @@ class Xml3176DetailBladeTest extends TestCase
             "Blade chi tiet ban truy van khi render, se thanh N+1: \n" . implode("\n", $viPham)
         );
     }
+
+    /** @test */
+    public function quan_he_blade_doc_trong_vong_lap_phai_duoc_eager_load()
+    {
+        // detail-xml-errors doc $error->Xml3176ErrorCatalog cho TUNG dong loi. Neu
+        // detailXmlTab khong nap kem thi moi dong la mot truy van - dung loi da lam
+        // tab "Loi XML" cham.
+        $blade = file_get_contents(
+            resource_path('views/bhyt/xml3176/detail-xml-errors.blade.php')
+        );
+
+        if (strpos($blade, 'Xml3176ErrorCatalog') === false) {
+            $this->markTestSkipped('Blade khong con doc danh muc loi - hang rao het y nghia');
+        }
+
+        $controller = file_get_contents(
+            app_path('Http/Controllers/BHYT/BHYTXml3176Controller.php')
+        );
+
+        $this->assertContains(
+            'Xml3176ErrorResult.Xml3176ErrorCatalog',
+            $controller,
+            'Blade doc quan he Xml3176ErrorCatalog nhung controller khong eager-load -> N+1'
+        );
+    }
 }

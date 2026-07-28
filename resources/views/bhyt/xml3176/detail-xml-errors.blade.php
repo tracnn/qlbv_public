@@ -45,7 +45,9 @@
                     <tbody>
                         @foreach($errors as $error)
                         <tr>
-                            <td>{{ $error->Xml3176ErrorCatalog->error_name }}</td>
+                            {{-- Ma loi khong co trong danh muc thi quan he la null; truoc
+                                 day truy cap thang ->error_name se lam chet ca trang. --}}
+                            <td>{{ optional($error->Xml3176ErrorCatalog)->error_name ?: $error->error_code }}</td>
                             <td>
                                 @if($error->critical_error)
                                 <i class="fa fa-exclamation-triangle text-danger" aria-hidden="true" title="Critical Error"></i>
@@ -85,10 +87,15 @@
     $(document).ready(function() {
         // Khởi tạo DataTables cho tất cả các bảng có class datatable-xml-errors
         $('.datatable-xml-errors').each(function() {
+            if ($.fn.DataTable.isDataTable(this)) { return; }
             $(this).DataTable({
                 responsive: true,
                 autoWidth: false,
-                paging: false,
+                // Truoc day paging: false -> MOI dong loi nam trong DOM cung luc, cong
+                // responsive tren bang 8 cot. Ho so nhieu loi thi trinh duyet do han.
+                paging: true,
+                pageLength: 25,
+                lengthMenu: [10, 25, 50, 100],
                 searching: true,
                 ordering: true,
             });
