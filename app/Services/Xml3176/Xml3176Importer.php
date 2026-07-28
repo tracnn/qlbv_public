@@ -68,6 +68,47 @@ class Xml3176Importer
     }
 
     /**
+     * So luong ho so khai trong phong bi.
+     *
+     * Ban cu dung count($xmldata->THONGTINHOSO->SOLUONGHOSO) - count() tren mot node la
+     * dem so phan tu con nen LUON ra 1, bat ke gia tri that la bao nhieu.
+     */
+    public static function soLuongHoSo($xmldata)
+    {
+        if (!isset($xmldata->THONGTINHOSO->SOLUONGHOSO)) {
+            return 0;
+        }
+
+        return (int) (string) $xmldata->THONGTINHOSO->SOLUONGHOSO;
+    }
+
+    /**
+     * Thu tu duyet FILEHOSO, dua XML1 len dau.
+     *
+     * deleteExistingXml3176() chi chay khi gap XML1. Neu mot file liet ke XML2 truoc
+     * XML1 thi cac dong XML2 vua ghi bi xoa ngay sau do - im lang.
+     *
+     * @param array $danhSachLoai Cac chuoi LOAIHOSO theo dung thu tu trong file
+     * @return array Mang CHI SO theo thu tu can duyet
+     */
+    public static function sapXml1LenDau(array $danhSachLoai)
+    {
+        $dau = [];
+        $sau = [];
+
+        foreach ($danhSachLoai as $i => $loai) {
+            // Chi dua XML1 DAU TIEN len; cai thu hai (neu co) giu thu tu cu.
+            if ($loai === 'XML1' && empty($dau)) {
+                $dau[] = $i;
+            } else {
+                $sau[] = $i;
+            }
+        }
+
+        return array_merge($dau, $sau);
+    }
+
+    /**
      * Nhap MOT ho so tu chuoi XML.
      *
      * @param string $noiDungXml Noi dung file GIAMDINHHS
