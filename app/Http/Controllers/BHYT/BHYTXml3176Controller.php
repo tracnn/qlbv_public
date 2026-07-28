@@ -554,6 +554,17 @@ class BHYTXml3176Controller extends Controller
 
     public function uploadData(Request $request)
     {
+        // Mot file XML3176 duoc phep toi 100 MB (max:102400 ben duoi). Giai ma base64 roi
+        // dung SimpleXML cho tung phan lam bo nho phinh gap nhieu lan kich thuoc file, ma
+        // may chu moi gioi han 128 MB / 120 giay - con Dropzone thi cho toi 300 giay.
+        //
+        // KHONG dung 4096M nhu cac lop Exports/: chung chay khi MOT nguoi bam xuat bao cao,
+        // con day la endpoint web ma Dropzone ban 2 request song song moi nguoi dung. Cho
+        // moi request 4 GB tren may nay co the lam can RAM that, va tien trinh bi he dieu
+        // hanh giet thi te hon han mot loi PHP sach se.
+        set_time_limit((int) config('xml3176.import_time_limit', 600));
+        ini_set('memory_limit', config('xml3176.import_memory_limit', '512M'));
+
         $request->validate([
             'xmls' => 'required',
             'xmls.*' => 'mimes:xml|max:102400',

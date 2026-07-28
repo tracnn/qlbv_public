@@ -24,6 +24,14 @@ return [
     'hein_card_temp_pattern' => '/^TE1xx\d{10}$/', //Mẫu mã thẻ tạm "xx" được thay bằng mã tỉnh cư trú trong hàm check
     'hein_card_temp_prefix_pattern' => '^TE1', //Khai báo phần đầu mã thẻ tạm
     'hein_card_temp_num_pattern' => '\d{10}$', //Khai báo phần mã BHXH của mã thẻ tạm
+    //Giới hạn nới riêng cho endpoint tải hồ sơ lên (bhyt.xml3176.upload-data).
+    //Một file XML3176 được phép tới 100MB; giải mã base64 rồi dựng SimpleXML cho từng
+    //phần làm bộ nhớ phình gấp nhiều lần kích thước file.
+    //CỐ Ý thấp hơn mức 4096M mà các lớp Exports/ dùng: đây là endpoint web, Dropzone bắn
+    //2 request song song mỗi người dùng, nhiều người cùng lúc thì máy có thể cạn RAM thật.
+    'import_time_limit' => 600, //giây
+    'import_memory_limit' => '512M',
+
     'queue_name' => 'JobXml3176', //Job name chung cho các job 3176 (check lỗi, complete, v.v.)
     'export_queue_name' => 'JobExportXml3176', //Job name riêng cho việc export XML 3176
     'submit_queue_name' => 'JobSubmitXml3176', //Job name riêng cho việc submit XML 3176 lên cổng BHXH (tránh blocking các job khác)
