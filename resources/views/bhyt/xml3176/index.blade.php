@@ -444,7 +444,11 @@
             var imported_by = $('#imported_by').val();
             var xml_submit_status = $('#xml_submit_status').val();
             var xml_sign_status = $('#xml_sign_status').val();
-            
+            // Xml3176Xml7980aExport CO doc tham so nay. Truoc day nut khong gui, nen
+            // loc "Da xuat XML" tren man hinh xong tai 79/80a van nhan ca ho so chua
+            // xuat - sai am tham, khong bao loi.
+            var xml_export_status = $('#xml_export_status').val();
+
             // Tạo URL với các tham số query
             var href = '{{ route("bhyt.xml3176.export-7980a-data") }}?' + $.param({
                 'date_from': startDate,
@@ -453,6 +457,7 @@
                 'date_type': date_type,
                 'xml3176_error_catalog': xml3176_error_catalog,
                 'payment_date_filter': payment_date_filter,
+                'xml_export_status': xml_export_status,
                 'treatment_code': treatment_code,
                 'imported_by': imported_by,
                 'xml_submit_status': xml_submit_status,
