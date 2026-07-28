@@ -39,11 +39,7 @@
                             <tbody>
                                 @foreach($group as $value_xml4)
                                 @php
-                                    $errorDescriptions = $value_xml4
-                                    ->errorResult()
-                                    ->where('stt', $value_xml4->stt)
-                                    ->pluck('description')
-                                    ->implode('; ');
+                                    $errorDescriptions = $chiMucLoi->moTa('XML4', $value_xml4->stt);
                                 @endphp
                                 <tr @if($errorDescriptions) class="highlight-red" data-toggle="tooltip" title="{{ $errorDescriptions }}" @endif>
                                     <td align="right">{{ $value_xml4->stt }}</td>
