@@ -19,11 +19,11 @@
             @endif       
         </a>
     </li>
-    @if($xml1->Xml3176Xml2->isNotEmpty())
+    @if($soDong['XML2'] > 0)
     <li>
         <a data-toggle="tab" href="#menu2">XML2
              @php
-                $errorCountXml = $chiMucLoi->demTheoStt($xml1->Xml3176Xml2, 'XML2');
+                $errorCountXml = $chiMucLoi->demTheoStt($dsStt['XML2'], 'XML2');
             @endphp
             @if($errorCountXml > 0)
                 <span class="badge badge-error">{{ $errorCountXml }}</span>
@@ -31,11 +31,11 @@
         </a>
     </li>
     @endif
-    @if($xml1->Xml3176Xml3->isNotEmpty())
+    @if($soDong['XML3'] > 0)
     <li>
         <a data-toggle="tab" href="#menu3">XML3
             @php
-                $errorCountXml = $chiMucLoi->demTheoStt($xml1->Xml3176Xml3, 'XML3');
+                $errorCountXml = $chiMucLoi->demTheoStt($dsStt['XML3'], 'XML3');
             @endphp
             @if($errorCountXml > 0)
                 <span class="badge badge-error">{{ $errorCountXml }}</span>
@@ -43,11 +43,11 @@
         </a>
     </li>
     @endif
-    @if($xml1->Xml3176Xml4->isNotEmpty())
+    @if($soDong['XML4'] > 0)
     <li>
         <a data-toggle="tab" href="#menu4">XML4
             @php
-                $errorCountXml = $chiMucLoi->demTheoStt($xml1->Xml3176Xml4, 'XML4');
+                $errorCountXml = $chiMucLoi->demTheoStt($dsStt['XML4'], 'XML4');
             @endphp
             @if($errorCountXml > 0)
                 <span class="badge badge-error">{{ $errorCountXml }}</span>
@@ -55,11 +55,11 @@
         </a>
     </li>
     @endif
-    @if($xml1->Xml3176Xml5->isNotEmpty())
+    @if($soDong['XML5'] > 0)
     <li>
         <a data-toggle="tab" href="#menu5">XML5
             @php
-                $errorCountXml = $chiMucLoi->demTheoStt($xml1->Xml3176Xml5, 'XML5');
+                $errorCountXml = $chiMucLoi->demTheoStt($dsStt['XML5'], 'XML5');
             @endphp
             @if($errorCountXml > 0)
                 <span class="badge badge-error">{{ $errorCountXml }}</span>
@@ -67,11 +67,11 @@
         </a>
     </li>
     @endif
-    @if($xml1->Xml3176Xml7->isNotEmpty())
+    @if($soDong['XML7'] > 0)
     <li>
         <a data-toggle="tab" href="#menu7">XML7
             @php
-                $errorCountXml = $chiMucLoi->demTheoXml($xml1->Xml3176Xml7, 'XML7');
+                $errorCountXml = $chiMucLoi->demTheoXml($soDong['XML7'], 'XML7');
             @endphp
             @if($errorCountXml > 0)
                 <span class="badge badge-error">{{ $errorCountXml }}</span>
@@ -79,11 +79,11 @@
         </a>
     </li>
     @endif
-    @if($xml1->Xml3176Xml8->isNotEmpty())
+    @if($soDong['XML8'] > 0)
     <li>
         <a data-toggle="tab" href="#menu8">XML8
             @php
-                $errorCountXml = $chiMucLoi->demTheoXml($xml1->Xml3176Xml8, 'XML8');
+                $errorCountXml = $chiMucLoi->demTheoXml($soDong['XML8'], 'XML8');
             @endphp
             @if($errorCountXml > 0)
                 <span class="badge badge-error">{{ $errorCountXml }}</span>
@@ -91,11 +91,11 @@
         </a>
     </li>
     @endif
-    @if($xml1->Xml3176Xml9->isNotEmpty())
+    @if($soDong['XML9'] > 0)
     <li>
         <a data-toggle="tab" href="#menu9">XML9
             @php
-                $errorCountXml = $chiMucLoi->demTheoXml($xml1->Xml3176Xml9, 'XML9');
+                $errorCountXml = $chiMucLoi->demTheoXml($soDong['XML9'], 'XML9');
             @endphp
             @if($errorCountXml > 0)
                 <span class="badge badge-error">{{ $errorCountXml }}</span>
@@ -103,11 +103,11 @@
         </a>
     </li>
     @endif
-    @if($xml1->Xml3176Xml10->isNotEmpty())
+    @if($soDong['XML10'] > 0)
     <li>
         <a data-toggle="tab" href="#menu10">XML10
             @php
-                $errorCountXml = $chiMucLoi->demTheoXml($xml1->Xml3176Xml10, 'XML10');
+                $errorCountXml = $chiMucLoi->demTheoXml($soDong['XML10'], 'XML10');
             @endphp
             @if($errorCountXml > 0)
                 <span class="badge badge-error">{{ $errorCountXml }}</span>
@@ -115,11 +115,11 @@
         </a>
     </li>
     @endif
-    @if($xml1->Xml3176Xml11->isNotEmpty())
+    @if($soDong['XML11'] > 0)
     <li>
         <a data-toggle="tab" href="#menu11">XML11
             @php
-                $errorCountXml = $chiMucLoi->demTheoXml($xml1->Xml3176Xml11, 'XML11');
+                $errorCountXml = $chiMucLoi->demTheoXml($soDong['XML11'], 'XML11');
             @endphp
             @if($errorCountXml > 0)
                 <span class="badge badge-error">{{ $errorCountXml }}</span>
@@ -127,11 +127,11 @@
         </a>
     </li>
     @endif
-    @if($xml1->Xml3176Xml13->isNotEmpty())
+    @if($soDong['XML13'] > 0)
     <li>
         <a data-toggle="tab" href="#menu13">XML13
             @php
-                $errorCountXml = $chiMucLoi->demTheoXml($xml1->Xml3176Xml13, 'XML13');
+                $errorCountXml = $chiMucLoi->demTheoXml($soDong['XML13'], 'XML13');
             @endphp
             @if($errorCountXml > 0)
                 <span class="badge badge-error">{{ $errorCountXml }}</span>
@@ -139,11 +139,11 @@
         </a>
     </li>
     @endif
-    @if($xml1->Xml3176Xml14->isNotEmpty())
+    @if($soDong['XML14'] > 0)
     <li>
         <a data-toggle="tab" href="#menu14">XML14
             @php
-                $errorCountXml = $chiMucLoi->demTheoXml($xml1->Xml3176Xml14, 'XML14');
+                $errorCountXml = $chiMucLoi->demTheoXml($soDong['XML14'], 'XML14');
             @endphp
             @if($errorCountXml > 0)
                 <span class="badge badge-error">{{ $errorCountXml }}</span>
@@ -151,11 +151,11 @@
         </a>
     </li>
     @endif
-    @if($xml1->Xml3176Xml15->isNotEmpty())
+    @if($soDong['XML15'] > 0)
     <li>
         <a data-toggle="tab" href="#menu15">XML15
             @php
-                $errorCountXml = $chiMucLoi->demTheoXml($xml1->Xml3176Xml15, 'XML15');
+                $errorCountXml = $chiMucLoi->demTheoXml($soDong['XML15'], 'XML15');
             @endphp
             @if($errorCountXml > 0)
                 <span class="badge badge-error">{{ $errorCountXml }}</span>

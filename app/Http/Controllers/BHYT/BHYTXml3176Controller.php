@@ -445,23 +445,44 @@ class BHYTXml3176Controller extends Controller
 
     public function detailXml($ma_lk)
     {
-        $xml1 = Xml3176Xml1::with('Xml3176ErrorResult')
+        $soBang = [2, 3, 4, 5, 7, 8, 9, 10, 11, 13, 14, 15];
+
+        // withCount thay vi with: vo modal chi can BIET moi bang co bao nhieu dong (de
+        // an/hien tab va tinh huy hieu), khong can noi dung dong. Noi dung nap theo tab.
+        $demQuanHe = [];
+        foreach ($soBang as $n) {
+            $demQuanHe[] = 'Xml3176Xml' . $n;
+        }
+
+        // check_hein_card duoc thanh tab doc de to mau -> nap tuong minh thay vi de
+        // blade lazy-load ngam.
+        $xml1 = Xml3176Xml1::with(['Xml3176ErrorResult', 'check_hein_card'])
+        ->withCount($demQuanHe)
         ->where('ma_lk', $ma_lk)
         ->firstOrFail();
 
-        // Dung chi muc MOT lan tu tap loi da nap. Truoc day blade hoi co so du lieu
-        // mot lan cho moi dong, hai luot -> hang nghin truy van moi lan mo modal.
+        $soDong = [];
+        foreach ($soBang as $n) {
+            $soDong['XML' . $n] = (int) $xml1->{'xml3176_xml' . $n . '_count'};
+        }
+
+        // Mot truy van moi bang nhieu dong cho ra CA hai thu: danh sach stt (huy hieu)
+        // va cac khoa nhom (thanh tab con). Chi lay so/chuoi, khong dung model.
+        $dsStt = [];
+        $dsNhom = [];
+        foreach (Xml3176DetailTabs::BANG_NHIEU_DONG as $xml => $ch) {
+            $model = $ch['model'];
+            $map = $model::where('ma_lk', $ma_lk)->pluck($ch['cot_nhom'], 'stt');
+            $dsStt[$xml]  = $map->keys();
+            $dsNhom[$xml] = $map->values();
+        }
+
         return view('bhyt.xml3176.detail-xml', [
             'xml1'      => $xml1,
             'chiMucLoi' => Xml3176ErrorIndex::tu($xml1->Xml3176ErrorResult),
-            // Tam thoi lay tu collection da nap; task sau doi sang pluck de vo modal
-            // thoi nap collection han.
-            'dsNhom'    => [
-                'XML2' => $xml1->Xml3176Xml2->pluck('ngay_yl'),
-                'XML3' => $xml1->Xml3176Xml3->pluck('ma_nhom'),
-                'XML4' => $xml1->Xml3176Xml4->pluck('ngay_kq'),
-                'XML5' => $xml1->Xml3176Xml5->pluck('thoi_diem_dbls'),
-            ],
+            'soDong'    => $soDong,
+            'dsStt'     => $dsStt,
+            'dsNhom'    => $dsNhom,
         ]);
     }
 

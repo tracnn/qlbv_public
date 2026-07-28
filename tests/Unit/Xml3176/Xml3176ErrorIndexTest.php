@@ -89,7 +89,7 @@ class Xml3176ErrorIndexTest extends TestCase
     }
 
     /** @test */
-    public function dem_theo_stt_dem_so_dong_co_loi_khong_phai_tong_so_loi()
+    public function dem_theo_stt_nhan_danh_sach_so_stt_va_dem_so_dong_co_loi()
     {
         $ix = $this->chiMuc([
             $this->loi('XML2', 1, 'Loi mot'),
@@ -97,11 +97,21 @@ class Xml3176ErrorIndexTest extends TestCase
             $this->loi('XML2', 3, 'Loi ba'),
         ]);
 
-        $items = new Collection([
-            (object) ['stt' => 1], (object) ['stt' => 2], (object) ['stt' => 3],
-        ]);
+        // Nhan thang danh sach stt (tu pluck), khong phai danh sach model: vo modal
+        // khong con nap collection nen khong co $item->stt de doc.
+        $this->assertEquals(2, $ix->demTheoStt([1, 2, 3], 'XML2'));
+        $this->assertEquals(2, $ix->demTheoStt(new Collection(['1', '2', '3']), 'XML2'));
+        $this->assertEquals(0, $ix->demTheoStt([2, 4], 'XML2'));
+        $this->assertEquals(0, $ix->demTheoStt([], 'XML2'));
+    }
 
-        $this->assertEquals(2, $ix->demTheoStt($items, 'XML2'));
+    /** @test */
+    public function dem_theo_xml_nhan_ca_so_nguyen_tu_with_count()
+    {
+        $ix = $this->chiMuc([$this->loi('XML13', 1, 'Loi')]);
+
+        $this->assertEquals(5, $ix->demTheoXml(5, 'XML13'));
+        $this->assertEquals(0, $ix->demTheoXml(5, 'XML14'));
     }
 
     /** @test */
@@ -127,7 +137,7 @@ class Xml3176ErrorIndexTest extends TestCase
         $this->assertFalse($ix->coLoi('XML2'));
         $this->assertFalse($ix->coLoi('XML2', 1));
         $this->assertEquals(0, $ix->demLoi('XML2'));
-        $this->assertEquals(0, $ix->demTheoStt($items, 'XML2'));
+        $this->assertEquals(0, $ix->demTheoStt([1], 'XML2'));
         $this->assertEquals(0, $ix->demTheoXml($items, 'XML2'));
     }
 }

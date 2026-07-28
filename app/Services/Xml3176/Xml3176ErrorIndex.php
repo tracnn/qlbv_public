@@ -95,13 +95,16 @@ class Xml3176ErrorIndex
 
     /**
      * So DONG co loi khop stt cua chinh no. Dung cho XML2, XML3, XML4, XML5.
+     *
+     * Nhan thang danh sach so stt (tu pluck) chu khong phai danh sach model: vo modal
+     * khong con nap collection nua, chi lay dung cot stt.
      */
-    public function demTheoStt($items, $xml)
+    public function demTheoStt($dsStt, $xml)
     {
         $dem = 0;
 
-        foreach ($items as $item) {
-            if ($this->coLoi($xml, isset($item->stt) ? $item->stt : null)) {
+        foreach ($dsStt as $stt) {
+            if ($this->coLoi($xml, $stt)) {
                 $dem++;
             }
         }
@@ -122,7 +125,7 @@ class Xml3176ErrorIndex
             return 0;
         }
 
-        // count() nhan ca mang lan Collection (Collection implement Countable).
-        return count($items);
+        // Nhan ca so nguyen (tu withCount) lan mang/Collection.
+        return is_int($items) ? $items : count($items);
     }
 }
