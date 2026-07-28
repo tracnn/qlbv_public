@@ -30,8 +30,8 @@ return [
     // phieu nay la duoc si / dieu duong cap phat, khong phai nguoi can CCHN theo nghia cua
     // luat. RONG = khong loai tru loai nao.
     //
-    // Ap cho ca B_DOCTOR_NO_PRACTICE_CERT lan nua "nguoi thuc hien" cua
-    // A_STAFF_CERT_NOT_IN_CATALOG; nua "bac si chi dinh" van xet o moi loai phieu.
+    // CHI ap cho B_DOCTOR_NO_PRACTICE_CERT. A_STAFF_CERT_NOT_IN_CATALOG van xet ca hai vai
+    // tro o moi loai phieu - nguoi dung chot ngay 2026-07-28.
     'practice_cert_exclude_type_ids' => env('ORDER_CHECK_PRACTICE_CERT_EXCLUDE_TYPES', '6,14,15'),
 
     // ===== Thông báo email digest =====

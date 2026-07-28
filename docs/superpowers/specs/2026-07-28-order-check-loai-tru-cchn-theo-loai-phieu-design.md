@@ -61,11 +61,13 @@ gốc.
 
 - Khoá cấu hình `practice_cert_exclude_type_ids`, mặc định `6,14,15`.
 - `DoctorPracticeCertRule` bỏ qua loại phiếu trong danh sách.
-- `StaffCertNotInCatalogRule` bỏ qua **nửa người thực hiện** với loại phiếu trong danh sách;
-  nửa bác sĩ chỉ định vẫn xét ở mọi loại.
 
 ### Không làm
 
+- **Áp cho `A_STAFF_CERT_NOT_IN_CATALOG`.** Bản đầu của tài liệu này có áp, người dùng chốt
+  bỏ ngày 2026-07-28 sau khi đã triển khai. Luật đó vẫn xét cả hai vai trò ở mọi loại phiếu.
+  Nó đang TẮT và danh mục `medical_staffs` đang rỗng nên chưa sinh vi phạm nào; nếu sau này
+  bật lên mà thấy phiền ở ba loại đơn thuốc thì mở lại quyết định này.
 - Đổi luật sang bắt theo người chỉ định — người dùng đã chốt bỏ phương án này.
 - Cấu hình bắt theo người nào tuỳ từng loại phiếu — chưa có nhu cầu.
 - Sửa việc vi phạm gắn sai tên người (mục 6).
@@ -78,9 +80,10 @@ gốc.
 'practice_cert_exclude_type_ids' => env('ORDER_CHECK_PRACTICE_CERT_EXCLUDE_TYPES', '6,14,15'),
 ```
 
-Hai luật đọc chung khoá này, theo đúng khuôn `missing_diagnosis_exclude_type_ids` đã có
-trong `MissingDiagnosisRule`: hàm dựng nhận `array $excludeTypeIds = null`, null thì đọc
-config. Test truyền thẳng mảng, không phụ thuộc config.
+Chỉ `DoctorPracticeCertRule` đọc khoá này, theo đúng khuôn
+`missing_diagnosis_exclude_type_ids` đã có trong `MissingDiagnosisRule`: hàm dựng nhận
+`array $excludeTypeIds = null`, null thì đọc config. Test truyền thẳng mảng, không phụ
+thuộc config.
 
 Chuỗi rỗng nghĩa là **không loại trừ loại nào** — giữ đường lui để đơn vị bật lại toàn bộ
 mà không phải sửa mã.
@@ -91,18 +94,9 @@ mà không phải sửa mã.
 loại phiếu ∈ danh sách loại trừ  ->  bỏ qua cả phiếu
 ```
 
-### 4.2 `A_STAFF_CERT_NOT_IN_CATALOG`
+### 4.2 `A_STAFF_CERT_NOT_IN_CATALOG` — không đổi
 
-```
-loại phiếu ∈ danh sách loại trừ  ->  bỏ qua RIÊNG vai trò 'th' (người thực hiện)
-                                     vai trò 'bs' (bác sĩ chỉ định) vẫn xét
-```
-
-Khác với luật trên là bỏ cả phiếu. Lý do: luật này xét hai vai trò, mà lý do loại trừ chỉ
-đúng cho vai trò người thực hiện. Bác sĩ ra đơn thuốc vẫn phải có CCHN hợp lệ.
-
-Nếu sau khi loại trừ mà không còn CCHN nào cần tra, luật trả về sớm và **không** chạm cơ sở
-dữ liệu.
+Luật này **không** đọc khoá cấu hình trên. Nó vẫn xét cả hai vai trò ở mọi loại phiếu.
 
 ## 5. Kiểm thử
 
@@ -121,12 +115,7 @@ Cổng: `vendor/bin/phpunit --testsuite Unit`.
 
 | Ca | Kỳ vọng |
 |---|---|
-| Loại 6, cả hai vai trò sai | **1** vi phạm, chỉ vai trò `bs` |
-| Loại 6, chỉ người thực hiện sai | không vi phạm |
-| Loại 6, chỉ bác sĩ chỉ định sai | 1 vi phạm |
-| Loại 2, cả hai sai | 2 vi phạm — không loại trừ |
-| Loại 6, chỉ người thực hiện có CCHN, bác sĩ rỗng | không vi phạm, **không truy vấn danh mục** |
-| `serviceReqTypeId` null | xét cả hai vai trò |
+| Loại 6/14/15/2/null, cả hai vai trò sai | 2 vi phạm ở **mọi** loại — khoá cấu hình không áp cho luật này |
 
 ## 6. Điều tài liệu này cố ý không giải quyết
 
