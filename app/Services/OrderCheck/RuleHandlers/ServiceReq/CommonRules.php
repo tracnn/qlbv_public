@@ -7,6 +7,13 @@ use App\Services\OrderCheck\RuleHandlers\Structural\OrderTimeOutOfStayRule;
 use App\Services\OrderCheck\RuleHandlers\Structural\ExecuteBeforeOrderRule;
 use App\Services\OrderCheck\RuleHandlers\Structural\DoctorPracticeCertRule;
 use App\Services\OrderCheck\RuleHandlers\Clinical\MissingDiagnosisRule;
+use App\Services\OrderCheck\RuleHandlers\Bhyt\BhytCodeMissingRule;
+use App\Services\OrderCheck\RuleHandlers\Bhyt\BhytServiceCatalogRule;
+use App\Services\OrderCheck\RuleHandlers\Bhyt\BhytDrugCatalogRule;
+use App\Services\OrderCheck\RuleHandlers\Bhyt\BhytSupplyCatalogRule;
+use App\Services\OrderCheck\RuleHandlers\Bhyt\BhytServiceNameRule;
+use App\Services\OrderCheck\RuleHandlers\Bhyt\BhytDrugNameRule;
+use App\Services\OrderCheck\RuleHandlers\Bhyt\BhytSupplyNameRule;
 
 /**
  * Luật cấp phiếu áp cho MỌI loại dịch vụ.
@@ -23,6 +30,18 @@ class CommonRules
             new ExecuteBeforeOrderRule(),
             new DoctorPracticeCertRule(),
             new MissingDiagnosisRule(),
+
+            // Nhom doi chieu danh muc BHYT. Chi chay tren DONG thuoc doi tuong BHYT, dung
+            // loai dich vu, va tu im lang khi bang danh muc con rong.
+            new BhytCodeMissingRule(),
+            new BhytServiceCatalogRule(),
+            new BhytDrugCatalogRule(),
+            new BhytSupplyCatalogRule(),
+
+            // Doi chieu TEN: BHXH tu choi ca khi ten lech chu khong chi khi ma sai.
+            new BhytServiceNameRule(),
+            new BhytDrugNameRule(),
+            new BhytSupplyNameRule(),
         ];
     }
 }

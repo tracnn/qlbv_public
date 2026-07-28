@@ -13,6 +13,14 @@ return [
     // Bỏ qua các loại điều trị không áp dụng (vd loại test), CSV id; rỗng = không loại
     'exclude_treatment_type_ids' => env('ORDER_CHECK_EXCLUDE_TREATMENT_TYPES', ''),
 
+    // Doi tuong benh nhan duoc coi la BHYT, CSV id trong HIS_PATIENT_TYPE.
+    // Mac dinh 1 = ma '01' BHYT. RONG = KHONG loc (hanh vi truoc 2026-07-28).
+    //
+    // LUU Y: loc phai o muc DONG DICH VU (his_sere_serv.patient_type_id), khong phai muc
+    // ho so - do tren 7 ngay that thi hai cach lech 44.927 dong (30,17%), lon nhat la
+    // 43.264 dong Vien phi nam trong ho so BHYT.
+    'bhyt_patient_type_ids' => env('ORDER_CHECK_BHYT_PATIENT_TYPES', '1'),
+
     // Loại phiếu chỉ định KHÔNG áp luật A_MISSING_DIAGNOSIS (vd Khám=1: chẩn đoán có SAU khám).
     // CSV id loại phiếu (HIS_SERVICE_REQ_TYPE). Rỗng = áp cho mọi loại.
     'missing_diagnosis_exclude_type_ids' => env('ORDER_CHECK_MISSING_DIAG_EXCLUDE_TYPES', '1'),

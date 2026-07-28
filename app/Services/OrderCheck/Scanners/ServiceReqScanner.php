@@ -6,6 +6,7 @@ use App\Services\OrderCheck\Contracts\Scanner;
 use App\Services\OrderCheck\OrderCheckEngine;
 use App\Services\OrderCheck\RuleHandlers\ServiceReq\ServiceReqRuleRegistry;
 use App\Services\OrderCheck\Support\ViolationContext;
+use App\Services\OrderCheck\Support\BhytScope;
 
 class ServiceReqScanner implements Scanner
 {
@@ -37,7 +38,25 @@ class ServiceReqScanner implements Scanner
             $maxId = $wm->last_id;
 
             foreach ($rows as $row) {
+                // Cap nhat watermark TRUOC moi nhanh bo qua ben duoi. Neu de o cuoi than
+                // vong lap thi mot lo bi loc HET se khong day duoc watermark, va lan quet
+                // sau doc lai dung lo do - vong lap vo han.
+                $mt = (int) $row->modify_time;
+                $rid = (int) $row->id;
+                if ($mt > $maxModify || ($mt == $maxModify && $rid > $maxId)) {
+                    $maxModify = $mt;
+                    $maxId = $rid;
+                }
+
                 $ctx = $source->buildContext($row, isset($servicesMap[(int) $row->id]) ? $servicesMap[(int) $row->id] : []);
+
+                // Tang loc THO: bo phieu khong co dong BHYT nao. Phieu CHUA co dong dich
+                // vu nao van phai di tiep - cac quy tac muc phieu (thieu ICD, chung chi
+                // hanh nghe) khong phu thuoc dong.
+                if (!empty($ctx->services) && !BhytScope::coDongBhyt($ctx->services)) {
+                    continue;
+                }
+
                 $vctx = ViolationContext::fromOrderContext($ctx);
 
                 // Luật áp mọi loại + luật riêng theo loại của phiếu
@@ -52,13 +71,6 @@ class ServiceReqScanner implements Scanner
                             $violations++;
                         }
                     }
-                }
-
-                $mt = (int) $row->modify_time;
-                $rid = (int) $row->id;
-                if ($mt > $maxModify || ($mt == $maxModify && $rid > $maxId)) {
-                    $maxModify = $mt;
-                    $maxId = $rid;
                 }
             }
 

@@ -52,10 +52,14 @@ class HisOrderSource
             return [];
         }
         $rows = DB::connection($this->conn)
-            ->table('his_sere_serv')
-            ->where('is_delete', 0)
-            ->whereIn('service_req_id', $reqIds)
-            ->selectRaw('id, service_req_id, tdl_service_code, tdl_service_name, execute_time, tdl_intruction_time')
+            ->table('his_sere_serv as ss')
+            // Ma BHXH nam tren danh muc dich vu HIS, khong nam tren dong y lenh.
+            ->leftJoin('his_service as sv', 'sv.id', '=', 'ss.service_id')
+            ->where('ss.is_delete', 0)
+            ->whereIn('ss.service_req_id', $reqIds)
+            ->selectRaw('ss.id, ss.service_req_id, ss.tdl_service_code, ss.tdl_service_name,
+                ss.execute_time, ss.tdl_intruction_time, ss.patient_type_id,
+                sv.hein_service_bhyt_code, sv.hein_service_bhyt_name, sv.service_type_id')
             ->get();
 
         $map = [];
@@ -66,6 +70,13 @@ class HisOrderSource
             $s->serviceName = $r->tdl_service_name;
             $s->executeTime = (int) $r->execute_time;
             $s->tdlIntructionTime = (int) $r->tdl_intruction_time;
+            // Doi tuong cua RIENG dong nay - khong lay tu phieu hay ho so.
+            $s->patientTypeId = $r->patient_type_id !== null ? (int) $r->patient_type_id : null;
+            $s->bhytCode = $r->hein_service_bhyt_code;
+            $s->bhytName = $r->hein_service_bhyt_name;
+            // Quyet dinh quy tac doi chieu voi bang danh muc nao: 6 Thuoc, 7 Vat tu, con
+            // lai la DVKT.
+            $s->serviceTypeId = $r->service_type_id !== null ? (int) $r->service_type_id : null;
             $map[(int) $r->service_req_id][] = $s;
         }
         return $map;
