@@ -43,6 +43,16 @@
   .ov-badge.nhap { background: #3a2f12; color: #efc877; }
   .ov-badge.chot { background: #12331f; color: #5dcaa5; }
   .warn { color: #ef9f27; font-size: 2vh; margin-left: 8px; }
+  /* Bang tong hop khoi dieu tri. Co chu do JS dat theo so cot; cham san ma van tran thi
+     khung nay cho cuon thay vi de bang tran ra ngoai slide. */
+  .bdt-wrap { flex: 1; min-height: 0; overflow: auto; margin-top: 1.4vh; }
+  .bdt { width: 100%; border-collapse: collapse; color: #dbe6f0; }
+  .bdt th, .bdt td { border: 1px solid #24405c; padding: .5vh .6vw; white-space: nowrap;
+    text-align: center; }
+  .bdt th { background: #14293e; color: #8aa4bd; font-weight: 600; }
+  .bdt th.ten, .bdt td.ten { text-align: left; }
+  .bdt td.ten { color: #fff; }
+  .bdt tr.tong td { background: #14293e; color: #fff; font-weight: 700; }
   #bar { display: flex; justify-content: space-between; align-items: center;
     padding: 1.2vh 4vw; font-size: 1.5vh; color: #6f8aa6; border-top: 1px solid #24384d; }
   #dots { display: flex; gap: 6px; align-items: center; }
@@ -277,7 +287,8 @@
     duties.forEach(function (d) { (byPosD[d.position_id] = byPosD[d.position_id] || []).push(d); });
     var dutyHtml = '';
     if (duties.length) {
-      dutyHtml = '<div class="panel" style="margin-top:1.6vh"><div class="lbl">KÍP TRỰC LÃNH ĐẠO</div><div style="display:flex;flex-wrap:wrap;gap:1vh 2vw">';
+      // Khoi nay nam DAU slide Tong quan nen dung margin-bottom, khong phai margin-top.
+      dutyHtml = '<div class="panel" style="margin-bottom:1.6vh"><div class="lbl">KÍP TRỰC LÃNH ĐẠO</div><div style="display:flex;flex-wrap:wrap;gap:1vh 2vw">';
       (data.duty_positions || []).forEach(function (p) {
         var people = byPosD[p.id]; if (!people || !people.length) return;
         var names = people.map(function (d) {
@@ -320,8 +331,45 @@
       // Bo class ov-kpis: no co flex:1, von danh cho bo cuc hang ngang cu (KPI canh donut).
       // Gio luoi KPI la con truc tiep cua .slide (flex cot) nen phai de no cao tu nhien,
       // khong thi no gian ra day cac khoi canh bao xuong day man.
+      // Kip truc len DAU: nguoi du giao ban can biet ngay ai truc truoc khi doc so lieu.
+      dutyHtml +
       '<div class="kpis" style="grid-template-columns:repeat(4,1fr)">' + kpiHtml + '</div>' +
-      lechHtml + thieuHtml + dutyHtml + noteHtml + '</div>';
+      lechHtml + thieuHtml + noteHtml + '</div>';
+  }
+
+  /**
+   * Bang tong hop khoi Dieu tri noi tru.
+   *
+   * May chu da dung san cau truc (App\Services\GiaoBan\BangDieuTri): loc khoi, loc quyen,
+   * gop cot theo nhan, quy null ve 0, bo tong cot phan tram. O day CHI VE.
+   *
+   * Co chu nho dan theo so cot: bay khoa moi khoa vai chi tieu rieng thi de len 20+ cot,
+   * giu co chu goc thi tran khoi man chieu. Co san toi thieu; cham san van tran thi
+   * .bdt-wrap cho cuon.
+   */
+  function dieuTriSlide(data) {
+    var b = data.bang_dieu_tri;
+    if (!b || !b.cot || !b.cot.length || !b.dong || !b.dong.length) return '';
+
+    var soCot = b.cot.length;
+    var co = soCot <= 8 ? 2.0 : (soCot <= 14 ? 1.7 : (soCot <= 20 ? 1.45 : 1.25));
+
+    var thead = '<tr><th class="ten">KHOA PHÒNG</th>' +
+      b.cot.map(function (c) { return '<th>' + esc(c.nhan) + '</th>'; }).join('') + '</tr>';
+
+    var tbody = b.dong.map(function (d) {
+      return '<tr><td class="ten">' + esc(d.ten) + '</td>' +
+        d.o.map(function (v) { return '<td>' + num(v) + '</td>'; }).join('') + '</tr>';
+    }).join('');
+
+    var tfoot = '<tr class="tong"><td class="ten">TỔNG CỘNG</td>' +
+      b.tong.map(function (v) { return '<td>' + (v === null ? '—' : num(v)) + '</td>'; }).join('') +
+      '</tr>';
+
+    return '<div class="slide"><div class="s-head"><div class="s-title">Hoạt động điều trị</div>' +
+      '<div class="s-sub">Giao ban ' + esc(fmtDate(DATE)) + '</div></div>' +
+      '<div class="bdt-wrap"><table class="bdt" style="font-size:' + co + 'vh">' +
+      '<thead>' + thead + '</thead><tbody>' + tbody + tfoot + '</tbody></table></div></div>';
   }
 
   /** Slide luot kham theo tung phong kham, trong dung ky bao cao. */
@@ -435,10 +483,16 @@
       document.getElementById('counter').textContent = '0/0';
       return;
     }
-    // Thu tu: Tong quan -> tung khoa (theo sort_order cua cau hinh) -> Cong suat giuong.
+    // Thu tu: Tong quan -> Hoat dong dieu tri -> tung khoa (theo sort_order) -> Cong suat giuong.
     // deptNames phai gan chi so theo dung thu tu nay, khong thi bam ten khoa se nhay sai slide.
     slides.push(overviewSlide(data));
     deptNames.push({ idx: 0, name: 'Tổng quan' });
+    // Xem buc tranh toan khoi dieu tri truoc roi moi di vao tung khoa.
+    var dtHtml = dieuTriSlide(data);
+    if (dtHtml) {
+      deptNames.push({ idx: slides.length, name: 'Hoạt động điều trị' });
+      slides.push(dtHtml);
+    }
     var pkHtml = phongKhamSlide(data);
     if (pkHtml) {
       deptNames.push({ idx: slides.length, name: 'Phòng khám' });

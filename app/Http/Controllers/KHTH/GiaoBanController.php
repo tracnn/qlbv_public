@@ -153,8 +153,31 @@ class GiaoBanController extends Controller
             ];
         }
 
+        // Bang tong hop khoi dieu tri cho trinh chieu. Dung tu khai bao DAY DU (allConfigs)
+        // chu khong dung $configs: bien do da bi map() cat bot block_type / sort_order.
+        $bangDieuTri = \App\Services\GiaoBan\BangDieuTri::dung(
+            $allConfigs
+                ->filter(function ($c) use ($visibleIds) {
+                    return in_array((int) $c->id, $visibleIds, true);
+                })
+                ->map(function ($c) {
+                    return [
+                        'id' => (int) $c->id,
+                        'block_type' => $c->block_type,
+                        'display_name' => $c->display_name,
+                        'sort_order' => (int) $c->sort_order,
+                        'is_active' => (bool) $c->is_active,
+                        'metrics' => $c->metricList(),
+                    ];
+                })
+                ->values()
+                ->all(),
+            $cells
+        );
+
         return response()->json([
             'report' => $reportOut, 'configs' => $configs, 'cells' => $cells,
+            'bang_dieu_tri' => $bangDieuTri,
             'balance_warnings' => $warnings,
             'is_admin' => $isAdmin, 'assigned_dept_ids' => $assigned,
             'no_assignment' => GiaoBanPermission::chuaPhanCongKhoa($isAdmin, $visibleIds),
