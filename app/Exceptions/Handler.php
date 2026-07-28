@@ -40,6 +40,36 @@ class Handler extends ExceptionHandler
     }
 
     /**
+     * Bo sung ngu canh request vao moi dong log loi.
+     *
+     * Ly do: loi fatal cua PHP (het bo nho, qua thoi gian chay) duoc Laravel bat o
+     * shutdown handler nen stacktrace chi con "#0 {main}" — khong the biet request
+     * nao gay ra. Ghi them URL/method/tham so de truy nguoc duoc.
+     */
+    protected function context()
+    {
+        $context = parent::context();
+
+        try {
+            $request = request();
+            if ($request) {
+                $context['url']    = $request->fullUrl();
+                $context['method'] = $request->method();
+                $context['route']  = $request->route() ? $request->route()->getName() : null;
+                // Dung all(): request co the chua file upload hoac payload rat lon.
+                $context['query']  = $request->query();
+                $context['mem_peak_mb'] = round(memory_get_peak_usage(true) / 1048576, 1);
+            }
+        } catch (\Throwable $e) {
+            // Ghi log khong duoc phep lam hong luong bao loi.
+        }
+
+        return array_filter($context, function ($v) {
+            return $v !== null && $v !== [];
+        });
+    }
+
+    /**
      * Render an exception into an HTTP response.
      *
      * @param  \Illuminate\Http\Request  $request
