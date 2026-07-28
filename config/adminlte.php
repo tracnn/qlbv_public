@@ -1,20 +1,15 @@
 <?php
 
-// Logo hien thi o goc tren ben trai. Uu tien logo rieng cua don vi, khong co thi lui ve
-// file mac dinh trong public/images.
+// Logo MAC DINH, dung khi don vi khong cau hinh logo rieng.
 //
-// PHAI doc env() truc tiep, KHONG duoc dung config('organization.organization_logo'):
-// Laravel nap cac file config theo thu tu ksort tu nhien, ma 'adminlte' dung TRUOC
-// 'organization', nen luc file nay chay thi khoa do chua ton tai va se tra ve null.
-// Day cung la env ma config/organization.php doc, nen hai noi khong lech nhau.
+// Muon dung logo rieng thi dat 'organization_logo' trong config/organization.php, hoac
+// bien moi truong ORGANIZATION_LOGO. AppServiceProvider::boot() se ghi de gia tri duoi day.
 //
-// Khong dung asset(): file config duoc nap rat som, truoc khi ung dung boot xong, nen
-// bo sinh URL chua san sang. Muon dat logo o mien khac thi ghi URL day du vao env.
-$logoSrc = env('ORGANIZATION_LOGO') ?: '/images/logo.png';
-
-// Gia tri den tu .env nen boc lai truoc khi nhung vao HTML - view in bang {!! !!}.
-$logoImg = '<img src="' . htmlspecialchars($logoSrc, ENT_QUOTES, 'UTF-8')
-         . '" alt="GĐBHYT" style="height: 50px;">';
+// KHONG doc config('organization.organization_logo') tai day: Laravel nap cac file config
+// theo thu tu ksort tu nhien, ma 'adminlte' dung TRUOC 'organization', nen luc file nay
+// chay thi khoa do chua ton tai va se tra ve null - logo se LUON roi ve mac dinh ma khong
+// ai phat hien, vi mac dinh trong van dung.
+$logoImg = '<img src="/images/logo.png" alt="GĐBHYT" style="height: 50px;">';
 
 return [
 

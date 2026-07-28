@@ -24,6 +24,8 @@ class AppServiceProvider extends ServiceProvider
             URL::forceScheme('https');
         }
 
+        $this->apDungLogoDonVi();
+
         View::composer('adminlte::page', function ($view) {
             $user = Auth::user();
 
@@ -77,6 +79,32 @@ class AppServiceProvider extends ServiceProvider
      *
      * @return void
      */
+    /**
+     * Ghi de logo AdminLTE bang logo rieng cua don vi, neu co cau hinh.
+     *
+     * PHAI lam o boot() chu khong o config/adminlte.php: Laravel nap cac file config theo
+     * thu tu ksort tu nhien, ma 'adminlte' dung TRUOC 'organization', nen doc
+     * config('organization.organization_logo') ngay trong adminlte.php se tra ve null.
+     * Toi boot() thi moi file config deu da nap xong.
+     *
+     * Cung KHONG dat trong View::composer('adminlte::page') nhu phan menu ben duoi: man
+     * dang nhap (adminlte::login) cung doc config('adminlte.logo').
+     */
+    private function apDungLogoDonVi()
+    {
+        $logo = trim((string) config('organization.organization_logo'));
+
+        if ($logo === '') {
+            return;   // giu logo mac dinh khai trong config/adminlte.php
+        }
+
+        // Gia tri den tu cau hinh/.env ma view in bang {!! !!} - boc lai truoc khi nhung.
+        $img = '<img src="' . htmlspecialchars($logo, ENT_QUOTES, 'UTF-8')
+             . '" alt="GĐBHYT" style="height: 50px;">';
+
+        config(['adminlte.logo' => $img, 'adminlte.logo_mini' => $img]);
+    }
+
     public function register()
     {
         // Che do gom cua Xml3176ErrorService chi hoat dong khi job va checker dung CHUNG
