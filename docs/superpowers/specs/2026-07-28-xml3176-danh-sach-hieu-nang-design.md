@@ -203,10 +203,22 @@ Sửa:
 
 Sau thay đổi này cỡ trang 2000 vẫn còn, nhưng người dùng không còn bị ép dùng nó.
 
-### 6. Modal chi tiết khởi tạo lại được
+### 6. Giải phóng DataTable của modal chi tiết
 
-`initializeModalDataTables()` khởi tạo 6 DataTable không có `destroy`, nên mở modal
-lần thứ hai ném "Cannot reinitialise DataTable". Thêm `destroy: true` cho cả sáu.
+**Đính chính so với phân tích ban đầu:** tôi từng nói mở modal lần hai sẽ ném
+"Cannot reinitialise DataTable". Điều đó **sai**. `$('#modalContent').html(response)`
+thay mới toàn bộ node mỗi lần mở, mà DataTables khoá thực thể theo **node** chứ không
+theo id — nên không có xung đột và không có lỗi.
+
+Vấn đề thật nhẹ hơn nhưng có thật: 6 thực thể DataTable cũ vẫn nằm trong registry nội
+bộ của DataTables sau khi node bị gỡ. Mở modal 50 lần trong một phiên là 300 thực thể
+tồn đọng — rò rỉ bộ nhớ phía trình duyệt, không phải lỗi ném ra.
+
+Sửa: bắt sự kiện `hidden.bs.modal` của `#infoModal`, huỷ mọi DataTable còn sống trong
+`#modalContent` rồi dọn nội dung. Thêm `destroy: true` khi khởi tạo là vô ích ở đây
+(node mới thì không có gì để huỷ) nên không làm.
+
+Đây là hạng mục giá trị thấp nhất trong đợt; nếu cần cắt để giảm rủi ro thì cắt cái này.
 
 ## Ngoài phạm vi (nợ kỹ thuật)
 
@@ -243,4 +255,5 @@ trước/sau tại chỗ:**
 7. Chọn hồ sơ ở trang 1, sang trang 2 tích thêm, quay lại trang 1 → lựa chọn cũ còn
    nguyên; "Xuất XML3176" nhận đủ cả hai trang.
 8. Lọc "Đã xuất XML" rồi tải 79/80a → file chỉ chứa hồ sơ đã xuất.
-9. Mở modal chi tiết hai lần liên tiếp → không lỗi console.
+9. Mở modal chi tiết hai lần liên tiếp → các bảng con vẫn hoạt động bình thường
+   (sắp xếp, phân trang), không lỗi console.
