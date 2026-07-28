@@ -6,6 +6,7 @@ use Illuminate\Support\ServiceProvider;
 
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\URL;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -16,7 +17,13 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        //
+        // Khi chay sau reverse proxy (Cloudflare) ma proxy khong day duoc
+        // X-Forwarded-Proto toi PHP, bat FORCE_HTTPS=true trong .env de ep
+        // moi url()/route()/asset() sinh ra scheme https, tranh Mixed Content.
+        if (env('FORCE_HTTPS', false)) {
+            URL::forceScheme('https');
+        }
+
         View::composer('adminlte::page', function ($view) {
             $user = Auth::user();
 
