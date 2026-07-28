@@ -130,3 +130,25 @@ Cổng: `vendor/bin/phpunit --testsuite Unit`. Mốc hiện tại **333 test xan
 
 **Mục 1 là mục chứng minh cả đợt này.** Mục 7 chứng minh một hồ sơ hỏng không kéo hồ sơ
 còn lại xuống theo. Mục 8 là cách duy nhất biết luật đối chiếu có chặn nhầm hay không.
+
+## Phát hiện sau khi hoàn thành: cùng lỗi này còn ở bốn chỗ khác
+
+Quét toàn bộ mã nguồn sau khi sửa xong XML3176:
+
+| Nơi | Cách viết | Đường vào |
+|---|---|---|
+| `app/Console/Commands/XML130Import.php:89` | `HOSO[0]` | QD130 — quét thư mục |
+| `app/Http/Controllers/BHYT/BHYTQd130Controller.php:468` | `->HOSO->` | QD130 — tải lên tay |
+| `app/Console/Commands/XML4210Import.php:66` | `HOSO[0]` | XML4210 — quét thư mục |
+| `app/Http/Controllers/System/UploadXML.php:45` | `->HOSO->` | Tải lên chung |
+
+Hai chỗ viết `HOSO[0]` tường minh hơn — nhìn qua tưởng cố ý, hiệu ứng thì y hệt.
+
+`install_service.bat` đang chạy dịch vụ `QLBV XMLImport` với lệnh `xml130import:day`, nên
+**luồng QD130 đang chạy trên máy chủ với đúng lỗi này**.
+
+Chưa có file mẫu QD130/XML4210 nhiều hồ sơ để chứng minh như đã làm với XML3176. Nhưng cả
+bốn dùng chung cấu trúc phong bì `GIAMDINHHS`, nên nếu bộ xuất gộp nhiều hồ sơ vào một
+file cho XML3176 thì nhiều khả năng cũng gộp cho các định dạng kia.
+
+Chủ đầu tư quyết định chưa xử lý ở thời điểm này.
