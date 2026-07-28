@@ -142,4 +142,61 @@ class StructuralRulesTest extends TestCase
         $c = $this->ctx(['executeLoginname' => null, 'executeDiploma' => null]);
         $this->assertCount(0, $rule->check($c));
     }
+
+    /** @test */
+    public function bo_qua_loai_phieu_trong_danh_sach_loai_tru()
+    {
+        // Nguoi thuc hien cua don thuoc la duoc si / dieu duong cap phat, khong phai nguoi
+        // can CCHN theo nghia cua luat nay.
+        $rule = new DoctorPracticeCertRule([6, 14, 15]);
+
+        foreach ([6, 14, 15] as $loai) {
+            $c = $this->ctx([
+                'serviceReqTypeId' => $loai,
+                'executeLoginname' => 'th09',
+                'executeDiploma' => '',
+            ]);
+
+            $this->assertCount(0, $rule->check($c), "Loai phieu $loai van bi bat");
+        }
+    }
+
+    /** @test */
+    public function loai_phieu_ngoai_danh_sach_van_bi_bat()
+    {
+        $rule = new DoctorPracticeCertRule([6, 14, 15]);
+        $c = $this->ctx([
+            'serviceReqTypeId' => 2,
+            'executeLoginname' => 'th09',
+            'executeDiploma' => '',
+        ]);
+
+        $this->assertCount(1, $rule->check($c));
+    }
+
+    /** @test */
+    public function danh_sach_loai_tru_rong_thi_bat_moi_loai()
+    {
+        $rule = new DoctorPracticeCertRule([]);
+        $c = $this->ctx([
+            'serviceReqTypeId' => 6,
+            'executeLoginname' => 'th09',
+            'executeDiploma' => '',
+        ]);
+
+        $this->assertCount(1, $rule->check($c));
+    }
+
+    /** @test */
+    public function loai_phieu_null_van_duoc_xet()
+    {
+        $rule = new DoctorPracticeCertRule([6, 14, 15]);
+        $c = $this->ctx([
+            'serviceReqTypeId' => null,
+            'executeLoginname' => 'th09',
+            'executeDiploma' => '',
+        ]);
+
+        $this->assertCount(1, $rule->check($c));
+    }
 }

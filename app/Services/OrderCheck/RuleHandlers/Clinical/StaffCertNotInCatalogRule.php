@@ -32,10 +32,23 @@ class StaffCertNotInCatalogRule implements RuleHandler
     /** @var CatalogLookup */
     protected $traMaBhxh;
 
-    public function __construct(CatalogLookup $traCchn = null, CatalogLookup $traMaBhxh = null)
-    {
+    /** @var int[] loai phieu khong xet vai tro nguoi thuc hien */
+    protected $excludeTypeIds;
+
+    public function __construct(
+        CatalogLookup $traCchn = null,
+        CatalogLookup $traMaBhxh = null,
+        array $excludeTypeIds = null
+    ) {
         $this->traCchn = $traCchn ?: new CatalogLookup('medical_staffs', 'macchn');
         $this->traMaBhxh = $traMaBhxh ?: new CatalogLookup('medical_staffs', 'ma_bhxh');
+
+        if ($excludeTypeIds === null) {
+            $csv = trim((string) config('order_check.practice_cert_exclude_type_ids', ''));
+            $excludeTypeIds = $csv === '' ? [] : array_map('intval', array_filter(explode(',', $csv), 'strlen'));
+        }
+
+        $this->excludeTypeIds = $excludeTypeIds;
     }
 
     public function code()
@@ -45,10 +58,6 @@ class StaffCertNotInCatalogRule implements RuleHandler
 
     public function check(OrderContext $c)
     {
-        if (!$this->traCchn->sanSang()) {
-            return [];   // danh muc chua nap - im lang thay vi bao oan toan bo
-        }
-
         $ngay = NgayHieuLuc::tuMocHis($c->intructionTime);
 
         if ($ngay === null) {
@@ -60,6 +69,14 @@ class StaffCertNotInCatalogRule implements RuleHandler
             'th' => ['nhan' => 'người thực hiện', 'cchn' => trim((string) $c->executeDiploma)],
         ];
 
+        // Don thuoc (Don phong kham, Don tu truc, Don dieu tri): nguoi thuc hien la duoc si
+        // hoac dieu duong cap phat. Chi bo vai tro do - bac si ra don van phai co CCHN hop
+        // le, nen KHAC B_DOCTOR_NO_PRACTICE_CERT von bo qua ca phieu.
+        if ($c->serviceReqTypeId !== null
+            && in_array((int) $c->serviceReqTypeId, $this->excludeTypeIds, true)) {
+            unset($vaiTro['th']);
+        }
+
         $can = [];
 
         foreach ($vaiTro as $v) {
@@ -70,6 +87,11 @@ class StaffCertNotInCatalogRule implements RuleHandler
 
         if (empty($can)) {
             return [];   // thieu CCHN da la viec cua B_DOCTOR_NO_PRACTICE_CERT
+        }
+
+        // Kiem san sang SAU khi da loc: phieu bi loai tru het vai tro thi khong cham CSDL.
+        if (!$this->traCchn->sanSang()) {
+            return [];   // danh muc chua nap - im lang thay vi bao oan toan bo
         }
 
         // Mot truy van moi bang tra, cho ca phieu.

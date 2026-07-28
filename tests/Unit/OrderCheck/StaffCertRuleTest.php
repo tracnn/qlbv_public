@@ -9,11 +9,12 @@ use App\Services\OrderCheck\RuleHandlers\Clinical\StaffCertNotInCatalogRule;
 
 class StaffCertRuleTest extends TestCase
 {
-    private function ctx($cchnBacSi, $cchnNguoiTh, $moc = 20240601080000)
+    private function ctx($cchnBacSi, $cchnNguoiTh, $moc = 20240601080000, $loaiPhieu = null)
     {
         $c = new OrderContext();
         $c->serviceReqId = 222;
         $c->serviceReqCode = 'PK002';
+        $c->serviceReqTypeId = $loaiPhieu;
         $c->requestDiploma = $cchnBacSi;
         $c->executeDiploma = $cchnNguoiTh;
         $c->intructionTime = $moc;
@@ -25,7 +26,7 @@ class StaffCertRuleTest extends TestCase
      * @param array $macchn ma => [ ['tu'=>, 'den'=>], ... ]
      * @param array $maBhxh nhu tren
      */
-    private function tra(array $macchn, array $maBhxh = [])
+    private function tra(array $macchn, array $maBhxh = [], array $loaiTru = [])
     {
         $lkCchn = new CatalogLookup('medical_staffs', 'macchn');
         $lkCchn->datSanChoTest([], $macchn);
@@ -33,7 +34,7 @@ class StaffCertRuleTest extends TestCase
         $lkBhxh = new CatalogLookup('medical_staffs', 'ma_bhxh');
         $lkBhxh->datSanChoTest([], $maBhxh);
 
-        return new StaffCertNotInCatalogRule($lkCchn, $lkBhxh);
+        return new StaffCertNotInCatalogRule($lkCchn, $lkBhxh, $loaiTru);
     }
 
     /** @test */
@@ -130,5 +131,59 @@ class StaffCertRuleTest extends TestCase
         $r = $this->tra(['C1' => [['tu' => '', 'den' => '']]]);
 
         $this->assertCount(0, $r->check($this->ctx('X1', 'X2', 0)));
+    }
+
+    /** @test */
+    public function loai_phieu_loai_tru_chi_bo_qua_nguoi_thuc_hien()
+    {
+        // Khac B_DOCTOR_NO_PRACTICE_CERT: chi bo vai tro nguoi thuc hien, bac si ra don
+        // thuoc van phai co CCHN hop le.
+        $r = $this->tra(['C1' => [['tu' => '', 'den' => '']]], [], [6, 14, 15]);
+
+        $vi = $r->check($this->ctx('X1', 'X2', 20240601080000, 6));
+
+        $this->assertCount(1, $vi, 'Phai con lai dung vi pham cua bac si chi dinh');
+        $this->assertSame('bs', $vi[0]->detail['vai_tro']);
+    }
+
+    /** @test */
+    public function loai_phieu_loai_tru_chi_nguoi_thuc_hien_sai_thi_im_lang()
+    {
+        $r = $this->tra(['C1' => [['tu' => '', 'den' => '']]], [], [6, 14, 15]);
+
+        $this->assertCount(0, $r->check($this->ctx('C1', 'X2', 20240601080000, 14)));
+    }
+
+    /** @test */
+    public function loai_phieu_ngoai_danh_sach_van_xet_ca_hai_vai_tro()
+    {
+        $r = $this->tra(['C1' => [['tu' => '', 'den' => '']]], [], [6, 14, 15]);
+
+        $this->assertCount(2, $r->check($this->ctx('X1', 'X2', 20240601080000, 2)));
+    }
+
+    /** @test */
+    public function loai_phieu_null_van_xet_ca_hai_vai_tro()
+    {
+        $r = $this->tra(['C1' => [['tu' => '', 'den' => '']]], [], [6, 14, 15]);
+
+        $this->assertCount(2, $r->check($this->ctx('X1', 'X2', 20240601080000, null)));
+    }
+
+    /** @test */
+    public function loai_tru_het_cchn_can_tra_thi_khong_cham_danh_muc()
+    {
+        // Bac si chi dinh khong co CCHN, nguoi thuc hien bi loai tru -> khong con gi de tra.
+        // De danh muc o trang thai CHUA nap: neu luat cham toi no, sanSang() se hoi CSDL va
+        // medical_staffs dang rong nen cung tra 0 - nen ca nay khang dinh them bang viec
+        // khong co ngoai le nao duoc nem.
+        $lkCchn = new CatalogLookup('medical_staffs', 'macchn');
+        $lkCchn->datSanChoTest([], ['C1' => [['tu' => '', 'den' => '']]]);
+        $lkBhxh = new CatalogLookup('medical_staffs', 'ma_bhxh');
+        $lkBhxh->datSanChoTest([]);
+
+        $r = new StaffCertNotInCatalogRule($lkCchn, $lkBhxh, [6]);
+
+        $this->assertCount(0, $r->check($this->ctx(null, 'X2', 20240601080000, 6)));
     }
 }

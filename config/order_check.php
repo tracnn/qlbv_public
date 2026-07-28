@@ -25,6 +25,15 @@ return [
     // CSV id loại phiếu (HIS_SERVICE_REQ_TYPE). Rỗng = áp cho mọi loại.
     'missing_diagnosis_exclude_type_ids' => env('ORDER_CHECK_MISSING_DIAG_EXCLUDE_TYPES', '1'),
 
+    // Loai phieu KHONG ap luat kiem CCHN nguoi thuc hien, CSV id (HIS_SERVICE_REQ_TYPE).
+    // Mac dinh 6 Don phong kham, 14 Don tu truc, 15 Don dieu tri: nguoi thuc hien cua cac
+    // phieu nay la duoc si / dieu duong cap phat, khong phai nguoi can CCHN theo nghia cua
+    // luat. RONG = khong loai tru loai nao.
+    //
+    // Ap cho ca B_DOCTOR_NO_PRACTICE_CERT lan nua "nguoi thuc hien" cua
+    // A_STAFF_CERT_NOT_IN_CATALOG; nua "bac si chi dinh" van xet o moi loai phieu.
+    'practice_cert_exclude_type_ids' => env('ORDER_CHECK_PRACTICE_CERT_EXCLUDE_TYPES', '6,14,15'),
+
     // ===== Thông báo email digest =====
     // Bật/tắt gửi email (mặc định TẮT cho an toàn, bật khi đã cấu hình người nhận)
     'notify_enabled' => (bool) env('ORDER_CHECK_NOTIFY_ENABLED', false),
