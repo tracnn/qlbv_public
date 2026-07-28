@@ -58,6 +58,67 @@ class Xml3176Xml3Checker
         return $this->prefix . $errorKey;
     }
 
+    /** So ten phe duyet toi da liet ke trong mo ta loi */
+    const TOI_DA_NEU_TEN = 3;
+
+    /**
+     * Gom ten phe duyet tu cac dong danh muc con hieu luc.
+     *
+     * @param \Illuminate\Support\Collection|array $dsDanhMuc cac dong ServiceCatalog
+     * @return string[] da trim, bo rong, bo trung, giu thu tu
+     */
+    public static function tenPheDuyet($dsDanhMuc): array
+    {
+        $ten = [];
+
+        foreach ($dsDanhMuc as $d) {
+            $t = trim((string) (is_object($d) ? $d->ten_dich_vu : $d));
+
+            if ($t !== '' && !in_array($t, $ten, true)) {
+                $ten[] = $t;
+            }
+        }
+
+        return $ten;
+    }
+
+    /**
+     * Ten khai co lech danh muc khong.
+     *
+     * MOT ma DVKT co the co NHIEU dong danh muc (nhieu dot phe duyet, nhieu quy trinh),
+     * nen ten khai chi can trung MOT dong la dat. Ban cu so thang
+     * $data->ten_dich_vu != $validServiceExists->ten_dich_vu trong khi $validServiceExists
+     * la Collection - truy thuoc tinh tren Collection ra null nen MOI dong DVKT deu thanh
+     * vi pham. Do la ly do quy tac nay tung bi chu thich tat.
+     *
+     * Ngu nghia nay thong nhat voi quy tac A_BHYT_SERVICE_NAME_MISMATCH ben order-check,
+     * de hai noi khong cho hai ket luan khac nhau tren cung mot ho so.
+     *
+     * So TUYET DOI, chi trim - giong INVALID_DRUG_NAME va INVALID_MATERIAL_NAME.
+     */
+    public static function tenLechDanhMuc($tenKhai, array $tenPheDuyet): bool
+    {
+        $tenKhai = trim((string) $tenKhai);
+
+        if ($tenKhai === '' || empty($tenPheDuyet)) {
+            return false;   // thieu ten la viec cua quy tac khac; danh muc khong co ten thi khong co gi de so
+        }
+
+        return !in_array($tenKhai, $tenPheDuyet, true);
+    }
+
+    /** Liet ke ten phe duyet trong mo ta, cat bot khi qua dai */
+    public static function neuTenPheDuyet(array $ten): string
+    {
+        $chuoi = implode(', ', array_slice($ten, 0, self::TOI_DA_NEU_TEN));
+
+        if (count($ten) > self::TOI_DA_NEU_TEN) {
+            $chuoi .= ' …';
+        }
+
+        return $chuoi;
+    }
+
     /**
      * Check Xml3176Xml3 Errors
      *
@@ -844,17 +905,20 @@ class Xml3176Xml3Checker
                         ]);
                     }
 
-                    // Kiểm tra tên: Tạm thời chưa xử lý vì liên quan đến tên ánh xạ trên cổng BHXH
-                    // if ($data->ten_dich_vu != $validServiceExists->ten_dich_vu) {
-                    //     $errorCode = $this->generateErrorCode('INVALID_TEN_DICH_VU');
-                    //     $errors->push((object)[
-                    //         'error_code' => $errorCode,
-                    //         'error_name' => 'Tên dịch vụ kỹ thuật khác tên được phê duyệt',
-                    //         'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
-                    //         'description' => 'Mã DVKT: ' . $data->ma_dich_vu . ' có tên: ' . 
-                    //                 formatDescription($data->ten_dich_vu) . '; Tên phê duyệt: ' . $validServiceExists->ten_dich_vu
-                    //     ]);
-                    // }
+                    // Kiểm tra tên DVKT so với danh mục phê duyệt còn hiệu lực.
+                    $tenPheDuyet = self::tenPheDuyet($validServiceExists);
+
+                    if (self::tenLechDanhMuc($data->ten_dich_vu, $tenPheDuyet)) {
+                        $errorCode = $this->generateErrorCode('INVALID_TEN_DICH_VU');
+                        $errors->push((object)[
+                            'error_code' => $errorCode,
+                            'error_name' => 'Tên dịch vụ kỹ thuật khác tên được phê duyệt',
+                            'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+                            'description' => 'Mã DVKT: ' . $data->ma_dich_vu . ' có tên: '
+                                    . formatDescription($data->ten_dich_vu)
+                                    . '; Tên phê duyệt: ' . self::neuTenPheDuyet($tenPheDuyet)
+                        ]);
+                    }
                 }
             }
         }
