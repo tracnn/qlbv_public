@@ -103,15 +103,23 @@ public static function tu($errors): self       // $errors: Collection<Xml3176Err
 
 public function coLoi($xml, $stt = null): bool
 public function moTa($xml, $stt = null): string        // noi bang '; ', '' neu khong co
+public function demLoi($xml): int                      // XML1
 public function demTheoStt($items, $xml): int          // XML2, 3, 4, 5
 public function demTheoXml($items, $xml): int          // XML7..XML15
 ```
 
 - `coLoi($xml)` (không truyền `$stt`) — có bất kỳ lỗi nào thuộc `$xml` hay không.
 - `coLoi($xml, $stt)` — có lỗi đúng cặp `(xml, stt)` hay không.
-- `demTheoStt($items, $xml)` — đếm phần tử có lỗi khớp `stt` của chính nó.
-- `demTheoXml($items, $xml)` — `coLoi($xml) ? count($items) : 0`. Đây chính là ngữ nghĩa
-  hôm nay của bảy tab không có `stt`: nếu bảng có lỗi thì **mọi** phần tử được tính.
+
+Ba phương thức đếm vì màn hình đang dùng **ba ngữ nghĩa đếm khác nhau**. Đây là thực tế
+của giao diện hiện tại, không phải lựa chọn thiết kế; gộp chúng lại sẽ đổi con số người
+dùng nhìn thấy:
+
+| Phương thức | Tab | Đếm cái gì |
+|---|---|---|
+| `demLoi($xml)` | XML1 | số **bản ghi lỗi** thuộc `$xml` |
+| `demTheoStt($items, $xml)` | XML2, 3, 4, 5 | số **dòng** có lỗi khớp `stt` của chính nó |
+| `demTheoXml($items, $xml)` | XML7…XML15 | `coLoi($xml) ? count($items) : 0` — có lỗi thì **mọi** dòng được tính |
 
 Chuẩn hoá `stt` về chuỗi (`(string)`) ở **cả hai phía** trước khi so. Cả `xml3176_error_results.stt`
 lẫn `stt` của các bảng con đều khai `integer`, nhưng driver PDO có thể trả về số nguyên
@@ -143,12 +151,16 @@ nên số truy vấn không đổi.
 
 Biến `$chiMucLoi` truyền từ controller nên `@include` con nhận được tự động.
 
-12 khối huy hiệu trong `detail-xml.blade.php`:
+13 khối huy hiệu trong `detail-xml.blade.php` (XML1 cộng 12 tab con):
 
 ```php
+$errorCountXml = $chiMucLoi->demLoi('XML1');                           // XML1
 $errorCountXml = $chiMucLoi->demTheoStt($xml1->Xml3176Xml2, 'XML2');   // XML2,3,4,5
 $errorCountXml = $chiMucLoi->demTheoXml($xml1->Xml3176Xml15, 'XML15'); // XML7..XML15
 ```
+
+Khối XML1 chỉ tốn một truy vấn (không phải mỗi dòng) nên không phải nguồn chậm, nhưng
+thay luôn cho nhất quán và để không còn lời gọi truy vấn nào sót lại trong blade.
 
 4 vòng lặp thân bảng trong `detail-xml-2/3/4/5.blade.php`:
 
