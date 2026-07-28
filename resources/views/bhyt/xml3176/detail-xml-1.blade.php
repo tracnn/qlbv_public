@@ -1,7 +1,6 @@
 <div id="menu1" class="tab-pane fade in active">
-    {{-- Da xoa mot khoi @php bi boc trong <!-- --> tai day: do la comment HTML chu
-         khong phai comment Blade, nen @php van duoc bien dich va van chay truy van
-         that de dung mot bien khong ai dung. --}}
+    {{-- Da xoa tai day mot khoi code chet bi boc trong comment HTML. Comment HTML
+         KHONG vo hieu hoa Blade: chi thi ben trong van chay truy van that. --}}
     <ul class="nav nav-tabs">
         <li class="active"><a data-toggle="tab" href="#admin_info">Thông tin hành chính</a></li>
         <li><a data-toggle="tab" href="#treatment_info">Quá trình điều trị</a></li>

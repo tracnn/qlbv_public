@@ -5,9 +5,9 @@
     Ngày vào: {{ strtodatetime($xml1->ngay_vao) }} - 
     Ngày ra: {{ strtodatetime($xml1->ngay_ra) }}
 </label>
-{{-- Da xoa mot khoi @php bi boc trong <!-- --> tai day: do la comment HTML chu khong
-     phai comment Blade, nen @php van duoc bien dich va van chay truy van that de dung
-     mot bien khong ai dung. Muon vo hieu hoa Blade thi dung {{-- --}} nhu khoi nay. --}}
+{{-- Da xoa tai day mot khoi code chet bi boc trong comment HTML. Comment HTML KHONG
+     vo hieu hoa Blade: chi thi ben trong van duoc bien dich va van chay truy van that.
+     Muon vo hieu hoa thi dung comment cua Blade nhu khoi nay. --}}
 <ul class="nav nav-tabs">
     <li class="active">
         <a data-toggle="tab" href="#menu1">XML1
