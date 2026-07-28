@@ -54,8 +54,9 @@ class Xml3176Xml1Checker
      */
     public function checkErrors(Xml3176Xml1 $data): void
     {
-        // Delete errors to xml_error_checks table
-        $this->xmlErrorService->deleteErrors($data->ma_lk);
+        // Khong con xoa loi o day: deleteErrors() xoa TOAN BO loi cua ho so, nen mot lan
+        // retry cua job XML1 se xoa sach ket qua ma 11 job kia vua tim ra. Viec don loi
+        // nay do CheckXml3176TypeJob lam theo tung loai, va do luc nhap lai ho so.
 
         // Thực hiện kiểm tra lỗi
         $errors = collect();

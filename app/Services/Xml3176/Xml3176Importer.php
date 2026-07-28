@@ -3,6 +3,7 @@
 namespace App\Services\Xml3176;
 
 use DB;
+use App\Jobs\CheckXml3176TypeJob;
 use App\Services\Xml3176Service;
 use App\Services\XmlStructures;
 
@@ -220,6 +221,16 @@ class Xml3176Importer
             \Log::error('Import that bai' . ($ma_lk ? ' (' . $ma_lk . ')' : '') . ': ' . $e->getMessage());
 
             return Xml3176ImportResult::thatBai($e->getMessage());
+        }
+
+        // Mot job cho moi loai da xu ly, thay vi mot job moi dong. Dat sau commit de job
+        // khong tro toi du lieu chua ton tai. Dispatch TRUOC checkXml3176Complete de giu
+        // dung thu tu FIFO hien nay: kiem tung loai truoc, kiem tong the sau.
+        foreach (array_unique($processedFileTypes) as $loai) {
+            if (Xml3176CheckTypes::coChecker($loai)) {
+                CheckXml3176TypeJob::dispatch($ma_lk, $loai)
+                    ->onQueue(config('xml3176.queue_name'));
+            }
         }
 
         // Sau commit: hai ham nay chi day job, dat o day de rollback khong de lai

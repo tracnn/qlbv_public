@@ -3,30 +3,15 @@
 namespace Tests\Unit\Xml3176;
 
 use Tests\TestCase;
+use Tests\Support\LocComment;
 
 class Xml3176UploadGioiHanTest extends TestCase
 {
-    /**
-     * Than ham uploadData, DA BO COMMENT.
-     *
-     * Phai bo comment thi phep kiem moi kiem MA chu khong kiem van xuoi: chinh cau chu
-     * thich giai thich vi sao khong dung 4096M cung chua chuoi do.
-     */
+    use LocComment;
+
     private function thanUploadData()
     {
-        $src = file_get_contents(app_path('Http/Controllers/BHYT/BHYTXml3176Controller.php'));
-
-        $ma = '';
-        foreach (token_get_all($src) as $token) {
-            if (is_array($token)) {
-                if ($token[0] === T_COMMENT || $token[0] === T_DOC_COMMENT) {
-                    continue;
-                }
-                $ma .= $token[1];
-            } else {
-                $ma .= $token;
-            }
-        }
+        $ma = $this->maKhongComment(app_path('Http/Controllers/BHYT/BHYTXml3176Controller.php'));
 
         $dau = strpos($ma, 'function uploadData');
         $this->assertNotFalse($dau, 'Khong tim thay uploadData');

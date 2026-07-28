@@ -23,7 +23,6 @@ use App\Services\XMLSignService;
 use App\Services\BHYTXmlSubmitService;
 use App\Services\FileCopyService;
 
-use App\Jobs\CheckXml3176ErrorsJob;
 use App\Jobs\CheckCompleteXml3176RecordJob;
 use App\Jobs\jobKtTheBHYT;
 use App\Jobs\ExportXml3176Job;
@@ -100,6 +99,10 @@ class Xml3176Service
         Xml3176Xml14::where('ma_lk', $ma_lk)->delete();
         Xml3176Xml15::where('ma_lk', $ma_lk)->delete();
 
+        // Loi thuoc ve ho so: xoa du lieu thi xoa loi. Truoc day ham nay KHONG xoa loi
+        // trong khi deleteXml3176XmlAndError thi co - mot diem bat nhat co san. Cho nay
+        // don loi cua loai XML khong con xuat hien sau khi nhap lai.
+        Xml3176ErrorResult::where('ma_lk', $ma_lk)->delete();
     }
 
     /**
@@ -195,8 +198,6 @@ class Xml3176Service
             // Đẩy công việc kiểm tra vào hàng đợi
             $this->processXml3176Xml1CheckBHYT($xml1);
 
-            CheckXml3176ErrorsJob::dispatch($xml1, $xmlType)
-            ->onQueue($this->queueName);
 
         } catch (\Exception $e) {
             \Log::error('Error in storeXml3176Xml1: ' . $e->getMessage());
@@ -269,10 +270,6 @@ class Xml3176Service
                     ];
 
                     $xml2 = Xml3176Xml2::updateOrCreate($attributes, $values);
-
-                    //Đẩy công việc kiểm tra vào hàng đợi
-                    CheckXml3176ErrorsJob::dispatch($xml2, $xmlType)
-                    ->onQueue($this->queueName);
 
                 } catch (\Exception $e) {
                     \Log::error('Error in storeXml3176Xml2: ' . $e->getMessage());
@@ -356,10 +353,6 @@ class Xml3176Service
 
                     $xml3 = Xml3176Xml3::updateOrCreate($attributes, $values);
 
-                    // Đẩy công việc kiểm tra vào hàng đợi
-                    CheckXml3176ErrorsJob::dispatch($xml3, $xmlType)
-                    ->onQueue($this->queueName);
-
                 } catch (\Exception $e) {
                     \Log::error('Error in storeXml3176Xml3: ' . $e->getMessage());
                     throw $e;
@@ -406,9 +399,6 @@ class Xml3176Service
                     ];
 
                     $xml4 = Xml3176Xml4::updateOrCreate($attributes, $values);
-                    // Đẩy công việc kiểm tra vào hàng đợi
-                    CheckXml3176ErrorsJob::dispatch($xml4, $xmlType)
-                    ->onQueue($this->queueName);
 
                 } catch (\Exception $e) {
                     \Log::error('Error in storeXml3176Xml4: ' . $e->getMessage());
@@ -453,9 +443,6 @@ class Xml3176Service
                     ];
 
                     $xml5 = Xml3176Xml5::updateOrCreate($attributes, $values);
-                    // Đẩy công việc kiểm tra vào hàng đợi
-                    CheckXml3176ErrorsJob::dispatch($xml5, $xmlType)
-                    ->onQueue($this->queueName);            
 
                 } catch (\Exception $e) {
                     \Log::error('Error in storeXml3176Xml5: ' . $e->getMessage());
@@ -598,10 +585,6 @@ class Xml3176Service
 
             $xml7 = Xml3176Xml7::updateOrCreate($attributes, $values);
 
-            // Đẩy công việc kiểm tra vào hàng đợi
-            CheckXml3176ErrorsJob::dispatch($xml7, $xmlType)
-            ->onQueue($this->queueName);  
-
         } catch (\Exception $e) {
             \Log::error('Error in storeXml3176Xml7: ' . $e->getMessage());
             throw $e;
@@ -651,10 +634,6 @@ class Xml3176Service
             ];
 
             $xml8 = Xml3176Xml8::updateOrCreate($attributes, $values);
-
-            // Đẩy công việc kiểm tra vào hàng đợi
-            CheckXml3176ErrorsJob::dispatch($xml8, $xmlType)
-            ->onQueue($this->queueName);   
 
         } catch (\Exception $e) {
             \Log::error('Error in storeXml3176Xml8: ' . $e->getMessage());
@@ -724,10 +703,6 @@ class Xml3176Service
                     ];
 
                     $xml9 = Xml3176Xml9::updateOrCreate($attributes, $values);
-                    
-                    // Đẩy công việc kiểm tra vào hàng đợi
-                    CheckXml3176ErrorsJob::dispatch($xml9, $xmlType)
-                    ->onQueue($this->queueName);
 
                 } catch (\Exception $e) {
                     \Log::error('Error in storeXml3176Xml9: ' . $e->getMessage());
@@ -775,10 +750,6 @@ class Xml3176Service
 
             // Lưu dữ liệu hoặc cập nhật nếu đã tồn tại
             $xml10 = Xml3176Xml10::updateOrCreate($attributes, $values);
-            
-            // Đẩy công việc kiểm tra vào hàng đợi
-            CheckXml3176ErrorsJob::dispatch($xml10, $xmlType)
-            ->onQueue($this->queueName);
 
         } catch (\Exception $e) {
             \Log::error('Error in storeXml3176Xml10: ' . $e->getMessage());
@@ -830,10 +801,6 @@ class Xml3176Service
             ];
 
             $xml11 = Xml3176Xml11::updateOrCreate($attributes, $values);
-
-            // Đẩy công việc kiểm tra vào hàng đợi
-            CheckXml3176ErrorsJob::dispatch($xml11, $xmlType)
-            ->onQueue($this->queueName); 
 
         } catch (\Exception $e) {
             \Log::error('Error in storeXml3176Xml11: ' . $e->getMessage());
@@ -900,10 +867,6 @@ class Xml3176Service
 
             $xml13 = Xml3176Xml13::updateOrCreate($attributes, $values);
 
-            // Đẩy công việc kiểm tra vào hàng đợi
-            CheckXml3176ErrorsJob::dispatch($xml13, $xmlType)
-            ->onQueue($this->queueName);
-
         } catch (\Exception $e) {
             \Log::error('Error in storeXml3176Xml13: ' . $e->getMessage());
             throw $e;
@@ -954,10 +917,6 @@ class Xml3176Service
             ];
 
             $xml14 = Xml3176Xml14::updateOrCreate($attributes, $values);
-
-            // Đẩy công việc kiểm tra vào hàng đợi
-            CheckXml3176ErrorsJob::dispatch($xml14, $xmlType)
-            ->onQueue($this->queueName);
 
         } catch (\Exception $e) {
             \Log::error('Error in storeXml3176Xml14: ' . $e->getMessage());

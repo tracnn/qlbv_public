@@ -3,9 +3,12 @@
 namespace Tests\Unit\Xml3176;
 
 use Tests\TestCase;
+use Tests\Support\LocComment;
 
 class Xml3176ImportSourceTest extends TestCase
 {
+    use LocComment;
+
     /** @test */
     public function nghiep_vu_phan_loai_xml_chi_con_o_mot_noi()
     {
@@ -23,30 +26,6 @@ class Xml3176ImportSourceTest extends TestCase
                 basename($file) . ' van con khoi switch phan loai XML'
             );
         }
-    }
-
-    /**
-     * Bo comment khoi ma nguon PHP.
-     *
-     * Phai lam vay thi phep kiem duoi moi kiem MA chu khong kiem van xuoi: chinh cau
-     * chu thich giai thich viec bo 'return false' cung chua chuoi do.
-     */
-    private function boComment($src)
-    {
-        $ma = '';
-
-        foreach (token_get_all($src) as $token) {
-            if (is_array($token)) {
-                if ($token[0] === T_COMMENT || $token[0] === T_DOC_COMMENT) {
-                    continue;
-                }
-                $ma .= $token[1];
-            } else {
-                $ma .= $token;
-            }
-        }
-
-        return $ma;
     }
 
     /** @test */
