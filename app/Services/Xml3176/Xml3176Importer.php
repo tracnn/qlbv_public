@@ -3,6 +3,7 @@
 namespace App\Services\Xml3176;
 
 use App\Services\Xml3176Service;
+use App\Services\XmlStructures;
 
 /**
  * Diem vao DUY NHAT de nhap mot ho so XML3176.
@@ -64,5 +65,109 @@ class Xml3176Importer
     public static function handlerCho($loai)
     {
         return self::coTrongDangKy($loai) ? self::LOAI_XML[$loai] : null;
+    }
+
+    /**
+     * Nhap MOT ho so tu chuoi XML.
+     *
+     * @param string $noiDungXml Noi dung file GIAMDINHHS
+     * @param array  $tuyChon    ['cho_phep_xuat' => bool] - mac dinh true
+     * @return Xml3176ImportResult
+     */
+    public function nhapTuChuoi($noiDungXml, array $tuyChon = [])
+    {
+        $choPhepXuat = array_key_exists('cho_phep_xuat', $tuyChon)
+            ? (bool) $tuyChon['cho_phep_xuat']
+            : true;
+
+        // simplexml_load_string phat warning voi chuoi hong; tat di va tu bao loi.
+        $truocDo = libxml_use_internal_errors(true);
+        $xmldata = @simplexml_load_string($noiDungXml);
+        libxml_clear_errors();
+        libxml_use_internal_errors($truocDo);
+
+        if ($xmldata === false) {
+            return Xml3176ImportResult::thatBai('Khong doc duoc noi dung XML');
+        }
+
+        if (!isset($xmldata->THONGTINDONVI->MACSKCB)
+            || trim((string) $xmldata->THONGTINDONVI->MACSKCB) === '') {
+            \Log::error('MACSKCB not found or is empty in XML data');
+
+            return Xml3176ImportResult::thatBai('Thieu MACSKCB trong noi dung XML');
+        }
+
+        $macskcb = (string) $xmldata->THONGTINDONVI->MACSKCB;
+
+        // Tinh MOT lan truoc vong lap. Ban controller cu tinh lai trong moi vong
+        // FILEHOSO - gia tri khong doi nen day la thay doi bao toan hanh vi.
+        // LUU Y: count() tren node la luon ra 1. Day la loi CO SAN, giai doan 2 sua.
+        $soluonghoso = count($xmldata->THONGTINHOSO->SOLUONGHOSO);
+
+        $ma_lk = null;
+        $processedFileTypes = [];
+
+        // Ca hai ban cu deu foreach thang vao day: DANHSACHHOSO rong thi foreach chay
+        // tren null va nem exception. Duong tai len bien thanh loi 500, duong quet thu
+        // muc bi try/catch ngoai nuot roi dung ca luot. Chan lai thanh mot ket qua
+        // that bai sach se.
+        if (!isset($xmldata->THONGTINHOSO->DANHSACHHOSO->HOSO->FILEHOSO)) {
+            return Xml3176ImportResult::thatBai('Khong tim thay FILEHOSO trong file');
+        }
+
+        foreach ($xmldata->THONGTINHOSO->DANHSACHHOSO->HOSO->FILEHOSO as $file_hs) {
+            $fileType = (string) $file_hs->LOAIHOSO;
+
+            if (!self::coTrongDangKy($fileType)) {
+                \Log::warning('Unknown XML type: ' . $fileType);
+                continue;
+            }
+
+            $handler = self::handlerCho($fileType);
+
+            if ($handler === null) {
+                continue;   // bo qua co chu dich
+            }
+
+            $data = simplexml_load_string(base64_decode($file_hs->NOIDUNGFILE));
+
+            if ($data === false) {
+                \Log::error('Khong doc duoc noi dung file ' . $fileType);
+
+                return Xml3176ImportResult::thatBai('Noi dung ' . $fileType . ' khong doc duoc');
+            }
+
+            if ($fileType === 'XML1') {
+                $expectedStructure = XmlStructures::$expectedStructures3176[$fileType] ?? [];
+
+                if (!empty($expectedStructure) && !validateDataStructure($data, $expectedStructure)) {
+                    \Log::error('Invalid data structure for ' . $fileType);
+
+                    return Xml3176ImportResult::thatBai('Sai cau truc du lieu ' . $fileType);
+                }
+
+                $ma_lk = (string) $data->MA_LK;
+                $this->xml3176Service->deleteExistingXml3176($ma_lk);
+            }
+
+            $processedFileTypes[] = $fileType;
+            $this->xml3176Service->{$handler}($data, $fileType);
+        }
+
+        if ($ma_lk === null || empty($processedFileTypes)) {
+            return Xml3176ImportResult::thatBai('Khong tim thay du lieu ho so hop le trong file');
+        }
+
+        $this->xml3176Service->storeXml3176Information($ma_lk, $macskcb, 'import', $soluonghoso);
+
+        if (!config('organization.xml_3176_not_check', false)) {
+            $this->xml3176Service->checkXml3176Complete($ma_lk);
+        }
+
+        if ($choPhepXuat && config('xml3176.export_xml3176_enabled')) {
+            $this->xml3176Service->exportXml3176($ma_lk);
+        }
+
+        return Xml3176ImportResult::thanhCong($ma_lk, $processedFileTypes);
     }
 }
