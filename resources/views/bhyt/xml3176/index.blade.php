@@ -151,7 +151,24 @@
 <script type="text/javascript">
     var currentAjaxRequest = null; // Biến để lưu trữ yêu cầu AJAX hiện tại
     var table = null;
-    var selectedRecords = [];
+
+    // Map { ma_lk: true } chu khong phai mang: phai BEN qua cac lan tai bang.
+    // Truoc day day la mang va bi dung LAI tu cac checkbox dang co tren DOM, ma
+    // voi serverSide thi DOM chi chua trang hien tai -> chon o trang 1, sang trang 2
+    // tich them mot cai la mat sach lua chon trang 1.
+    var selectedRecords = {};
+
+    function xml3176SelectedList() {
+        return Object.keys(selectedRecords);
+    }
+
+    function xml3176SetSelected(maLk, on) {
+        if (on) {
+            selectedRecords[maLk] = true;
+        } else {
+            delete selectedRecords[maLk];
+        }
+    }
 
     // Khoang ngay dung cho lan tai hien tai. Phai o pham vi module chu khong phai
     // tham so cua fetchData(): DataTable chi con duoc dung MOT lan, nen closure
@@ -372,14 +389,18 @@
             width: '100%' // Đặt chiều rộng của Select2 là 100%
         });
         $('#select-all').on('click', function(){
+            // Giu nguyen ngu nghia cu: chi tac dong len cac dong DANG hien thi.
+            var chon = this.checked;
             var rows = table.rows({ 'search': 'applied' }).nodes();
-            $('input[type="checkbox"]', rows).prop('checked', this.checked);
-            updateSelectedRecords();
+            $('input.row-select', rows).each(function () {
+                $(this).prop('checked', chon);
+                xml3176SetSelected($(this).val(), chon);
+            });
             toggleBulkActionBtn();
         });
 
         $('#xml-list tbody').on('change', '.row-select', function() {
-            updateSelectedRecords();
+            xml3176SetSelected($(this).val(), this.checked);
             if (!this.checked) {
                 $('#select-all').prop('checked', false);
             }
@@ -419,13 +440,11 @@
         });
 
         $('#bulk-action-btn').on('click', function(){
-            var selectedRecords = [];
-            $('.row-select:checked').each(function() {
-                selectedRecords.push($(this).val());
-            });
-            
-            if (selectedRecords.length > 0) {
-                exportSelectedRecordsToXml(selectedRecords);
+            // Doc tu map, khong quet DOM: DOM chi co trang hien tai.
+            var danhSach = xml3176SelectedList();
+
+            if (danhSach.length > 0) {
+                exportSelectedRecordsToXml(danhSach);
             } else {
                 alert('Vui lòng chọn ít nhất một hồ sơ.');
             }
@@ -529,38 +548,31 @@
         });
     });
 
-    function updateSelectedRecords() {
-        selectedRecords = [];
-        $('.row-select:checked').each(function() {
-            selectedRecords.push($(this).val());
-        });
-    }
-
     function applySelectedCheckboxes() {
+        // Phai dat ca hai chieu: chi tick ma khong bo tick thi dong khong duoc chon
+        // van con dau tick sot lai tu trang truoc (DataTables dung lai the <tr>).
+        // Tra map thay vi Array.includes() -> het O(n^2) o co trang 2000.
         var rows = table.rows().nodes();
-        $('input[type="checkbox"]', rows).each(function() {
-            if (selectedRecords.includes($(this).val())) {
-                $(this).prop('checked', true);
-            }
+        $('input.row-select', rows).each(function() {
+            $(this).prop('checked', !!selectedRecords[$(this).val()]);
         });
     }
 
     function toggleBulkActionBtn() {
-        if ($('.row-select:checked').length > 0) {
-            $('#bulk-action-btn').prop('disabled', false);
-        } else {
-            $('#bulk-action-btn').prop('disabled', true);
-        }
+        // Dem tren toan bo lua chon, khong chi trang hien tai.
+        $('#bulk-action-btn').prop('disabled', xml3176SelectedList().length === 0);
     }
 
-    function exportSelectedRecordsToXml(selectedRecords) {
+    // Tham so ten khac bien toan cuc selectedRecords: bien do la map { ma_lk: true },
+    // con day nhan MANG ma da lay ra tu map.
+    function exportSelectedRecordsToXml(danhSach) {
         $("#loading_center").show();
         $.ajax({
             url: '{{ route("bhyt.xml3176.export-xml") }}',
             type: 'POST',
             data: {
                 _token: '{{ csrf_token() }}',
-                records: selectedRecords
+                records: danhSach
             },
             success: function(response) {
                 if (response.success) {
