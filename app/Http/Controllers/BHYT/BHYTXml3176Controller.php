@@ -84,10 +84,11 @@ class BHYTXml3176Controller extends Controller
             $result = Xml3176Xml1::select('ma_lk', 'ma_bn', 'ho_ten', 'ma_the_bhyt', 'ngay_sinh', 
                 'ngay_vao', 'ngay_ra', 'ngay_ttoan', 'created_at', 'updated_at')
                 ->where('ma_lk', $treatment_code)
+                // Chi can biet CO loi hay khong (setRowClass), khong can noi dung loi.
+                // Eager-load ca tap loi keo ve cot description kieu TEXT cho tung dong.
+                ->withCount('Xml3176ErrorResult')
                 ->with(['check_hein_card' => function($query) {
                     $query->select('ma_lk', 'ma_kiemtra', 'ma_tracuu', 'ghi_chu');
-                }, 'Xml3176ErrorResult' => function($query) {
-                    $query->select('ma_lk', 'error_code', 'ngay_yl', 'description');
                 }, 'Xml3176Information' => function($query) {
                     $query->select('ma_lk', 
                     'exported_at', 
@@ -111,10 +112,10 @@ class BHYTXml3176Controller extends Controller
                 $result = Xml3176Xml1::select('ma_lk', 'ma_bn', 'ho_ten', 'ma_the_bhyt', 'ngay_sinh', 
                     'ngay_vao', 'ngay_ra', 'ngay_ttoan', 'created_at', 'updated_at')
                     ->where('ma_bn', $patient_code)
+                    // Chi can biet CO loi hay khong (setRowClass), khong can noi dung loi.
+                    ->withCount('Xml3176ErrorResult')
                     ->with(['check_hein_card' => function($query) {
                         $query->select('ma_lk', 'ma_kiemtra', 'ma_tracuu', 'ghi_chu');
-                    }, 'Xml3176ErrorResult' => function($query) {
-                        $query->select('ma_lk', 'error_code', 'ngay_yl', 'description');
                     }, 'Xml3176Information' => function($query) {
                         $query->select('ma_lk', 
                         'exported_at', 
@@ -186,6 +187,9 @@ class BHYTXml3176Controller extends Controller
 
                 $result = Xml3176Xml1::select('ma_lk', 'ma_bn', 'ho_ten', 'ma_the_bhyt', 'ngay_sinh', 
                     'ngay_vao', 'ngay_ra', 'ngay_ttoan', 'created_at', 'updated_at')
+                // Ap dung cho CA hai nhanh ben duoi, ke ca nhanh loc theo ma loi von
+                // khong eager-load - khien setRowClass() lazy-load mot truy van MOI dong.
+                ->withCount('Xml3176ErrorResult')
                 ->whereBetween($dateField, [$formattedDateFrom, $formattedDateTo]);
 
                 // Apply relationships
@@ -214,10 +218,6 @@ class BHYTXml3176Controller extends Controller
                                   ->where('error_code', $xml3176ErrorCatalog->error_code);
                         });
                     }
-                } else {
-                    $result = $result->with(['Xml3176ErrorResult' => function($query) {
-                        $query->select('ma_lk', 'error_code', 'ngay_yl', 'description');
-                    }]);
                 }
 
                 
@@ -403,7 +403,9 @@ class BHYTXml3176Controller extends Controller
                     config('xml3176.hein_card_invalid.result_code', [])))) {
                 $highlight = true;
             }
-            if (!$highlight && $result->Xml3176ErrorResult && $result->Xml3176ErrorResult->isNotEmpty()) {
+            // Dung so dem thay vi tap loi: khong dung quan he o day thi Eloquent
+            // se lazy-load mot truy van cho MOI dong.
+            if (!$highlight && $result->xml3176_error_result_count > 0) {
                 $highlight = true;
             }
             return $highlight ? 'highlight-red' : '';
