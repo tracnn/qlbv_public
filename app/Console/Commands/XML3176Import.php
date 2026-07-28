@@ -11,6 +11,9 @@ class XML3176Import extends Command
 {
     protected $signature = 'xml3176import:day';
     protected $description = 'Import XML3176';
+    /** Thu muc con chua file nhap that bai, tren cung disk. */
+    const THU_MUC_LOI = 'loi/';
+
     protected $xml3176Service;
     protected $importer;
 
@@ -68,6 +71,12 @@ class XML3176Import extends Command
         }
 
         foreach ($files as $file) {
+            // Storage::allFiles() quet DE QUY nen phai loai thu muc loi ra, khong thi
+            // file hong lai duoc nhat len o luot sau.
+            if (starts_with($file, self::THU_MUC_LOI)) {
+                continue;
+            }
+
             // Moi file mot luot doc lap: file hong thi BO QUA FILE DO va di tiep.
             // Truoc day dung 'return false' nen mot file hong lam dung ca luot quet,
             // ma no lai khong bi xoa, nen luot sau lai vap dung no - tac vinh vien.
@@ -82,9 +91,18 @@ class XML3176Import extends Command
                 );
 
                 if (!$kq->thanhCong) {
-                    // Giu nguyen hanh vi hien tai: KHONG xoa file hong, de con du lieu
-                    // ma dieu tra. Giai doan 2 chuyen no sang thu muc rieng.
+                    // Chuyen sang thu muc loi thay vi de nguyen cho cu: de nguyen thi
+                    // moi 3 giay lai thu lai va lai ghi mot dong log. File KHONG bi xoa,
+                    // de con du lieu ma dieu tra.
                     \Log::error('Import that bai ' . $disk . '/' . $file . ': ' . $kq->lyDoThatBai);
+
+                    $dich = self::THU_MUC_LOI . basename($file);
+
+                    if (Storage::disk($disk)->exists($dich)) {
+                        Storage::disk($disk)->delete($dich);
+                    }
+
+                    Storage::disk($disk)->move($file, $dich);
                     continue;
                 }
 
