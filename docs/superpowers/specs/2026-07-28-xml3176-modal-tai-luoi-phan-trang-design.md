@@ -147,8 +147,19 @@ thêm được số nguyên (từ `withCount`) bên cạnh collection.
 2. Ba ngữ nghĩa đếm giữ nguyên: `demLoi` (XML1, số bản ghi lỗi), `demTheoStt`
    (XML2–XML5, số dòng có lỗi), `demTheoXml` (XML7–XML15, có lỗi thì mọi dòng được tính).
 3. Cách nhóm tab con giữ nguyên, kể cả XML3 theo `ma_nhom`.
-4. Thứ tự tab con giữ nguyên: XML2/XML4/XML5 sắp tăng theo khoá ngày; XML3 theo thứ tự
-   `ma_nhom` tăng dần.
+4. Thứ tự tab con: XML2/XML4/XML5 sắp tăng theo khoá ngày — **giống hệt hôm nay**
+   (`groupBy(...)->sortBy(key)` với XML2/XML4, `sortBy('thoi_diem_dbls')->groupBy(...)`
+   với XML5).
+
+   **Riêng XML3 sẽ đổi thứ tự, và đây là thay đổi có chủ ý.** Hôm nay nó dùng
+   `groupBy('ma_nhom')` **không kèm sắp xếp**, nên thứ tự tab con là thứ tự xuất hiện
+   đầu tiên của mỗi `ma_nhom` trong tập dòng — phụ thuộc thứ tự cơ sở dữ liệu trả về,
+   tức không xác định. Thiết kế mới sắp tăng dần theo số (`1, 2, 10`, không phải
+   `1, 10, 2` — `sort()` của PHP so chuỗi số theo giá trị số).
+
+   Đổi từ "không xác định" sang "xác định" là cải thiện, nhưng nó **vẫn là một thay đổi
+   nhìn thấy được**: khi đối chiếu với ảnh chụp cũ, tab con của XML3 có thể xếp khác.
+   Tập hợp tab con phải y nguyên; chỉ thứ tự đổi.
 5. Tô đỏ dòng lỗi và tooltip mô tả giữ nguyên ở mọi bảng.
 
 ## Ngoài phạm vi
@@ -184,7 +195,8 @@ mọi tab con.** Không có ảnh này thì mục 3 và 4 dưới đây không k
 | 1 | Mở modal hồ sơ dài ngày, xem tab Network | Phản hồi đầu nhỏ hơn hẳn; thời gian mở giảm rõ |
 | 2 | Bấm lần lượt từng tab | Mỗi tab nạp một request, lần bấm thứ hai **không** gọi lại |
 | 3 | So huy hiệu từng tab với ảnh chụp cũ | Giống hệt từng con số |
-| 4 | So danh sách tab con XML2–XML5 với ảnh chụp cũ | Đủ và đúng thứ tự |
+| 4 | So danh sách tab con XML2/XML4/XML5 với ảnh chụp cũ | Đủ và **đúng thứ tự** |
+| 4b | So tab con XML3 với ảnh chụp cũ | **Đủ**, nhưng thứ tự nay sắp tăng theo `ma_nhom` — xem ràng buộc 4 |
 | 5 | Bấm một tab con | Bảng hiện đủ dòng của nhóm đó, tối đa 100 dòng mỗi trang |
 | 6 | Nhóm quá 100 dòng (thường là XML3) | Thanh phân trang hiện; bấm trang 2 nạp đúng phần tiếp theo |
 | 7 | Dòng có lỗi | Vẫn tô đỏ, tooltip vẫn đúng mô tả, ở mọi trang |

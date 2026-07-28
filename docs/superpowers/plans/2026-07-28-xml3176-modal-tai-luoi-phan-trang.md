@@ -872,7 +872,8 @@ DB dev trống cả bốn bảng `xml3176_*`; không có hạ tầng test JS. To
 | 1 | Mở modal hồ sơ dài ngày, xem tab Network | Phản hồi đầu nhỏ hơn hẳn; thời gian mở giảm rõ |
 | 2 | Bấm lần lượt từng tab | Mỗi tab nạp một request; bấm lại **không** gọi lại |
 | 3 | So huy hiệu từng tab với ảnh chụp cũ | Giống hệt từng con số |
-| 4 | So danh sách tab con XML2–XML5 với ảnh chụp cũ | Đủ và đúng thứ tự |
+| 4 | So tab con XML2/XML4/XML5 với ảnh chụp cũ | Đủ và **đúng thứ tự** |
+| 4b | So tab con XML3 với ảnh chụp cũ | **Đủ**; thứ tự nay sắp tăng theo `ma_nhom` (trước đây không xác định) — thay đổi có chủ ý, xem spec |
 | 5 | Bấm một tab con | Bảng hiện đủ dòng của nhóm, tối đa 100 dòng mỗi trang |
 | 6 | Nhóm quá 100 dòng (thường là XML3) | Thanh phân trang hiện; bấm sang trang nạp đúng phần tiếp |
 | 7 | Dòng có lỗi | Vẫn tô đỏ, tooltip đúng mô tả, ở mọi trang |
