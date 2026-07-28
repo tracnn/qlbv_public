@@ -106,16 +106,26 @@ chèn từng nhóm.
 **Kích thước lô.** Chèn mỗi nhóm theo lô 500 dòng, tránh câu lệnh quá lớn và chạm giới hạn
 tham số của driver.
 
-### D. Xoá `CheckXml3176ErrorsJob`
+### D. `CheckXml3176ErrorsJob` — đã xoá, rồi phải khôi phục
 
-Xoá hẳn lớp job cũ.
+Ban đầu tôi đề nghị **giữ lại** lớp job cũ, vì lúc deploy hàng đợi sản xuất còn job đang
+chờ và mất lớp thì chúng không unserialize được. Chủ đầu tư quyết định xoá hẳn, và tôi
+làm theo.
 
-**Điều kiện bắt buộc khi triển khai.** Tôi đã nêu rủi ro và chủ đầu tư quyết định xoá.
-Rủi ro là có thật và cần một bước vận hành để triệt tiêu: tại thời điểm deploy, hàng đợi
-sản xuất có thể còn `CheckXml3176ErrorsJob` đang chờ; mất lớp là chúng không unserialize
-được và chết hàng loạt, kéo theo **mất kết quả kiểm lỗi của những hồ sơ vừa nhập**.
+**Rủi ro đó đã xảy ra thật trên sản xuất.** Lớp đã được khôi phục nguyên bản, kèm chú
+thích trong file nêu rõ nó không còn được dispatch và chỉ tồn tại để hàng đợi rút cạn.
 
-Vì vậy quy trình deploy phải là:
+Bài học ghi lại: xoá một lớp job là thay đổi **có trạng thái tồn đọng bên ngoài mã nguồn**.
+Test và `grep` không thấy gì, vì hàng đợi nằm trong cơ sở dữ liệu chứ không nằm trong repo.
+
+**Khi nào mới được xoá lớp này.** Chỉ khi chắc chắn không còn job nào thuộc về nó:
+
+```sql
+SELECT COUNT(*) FROM jobs        WHERE queue = 'JobXml3176' AND payload LIKE '%CheckXml3176ErrorsJob%';
+SELECT COUNT(*) FROM failed_jobs WHERE payload LIKE '%CheckXml3176ErrorsJob%';
+```
+
+Cả hai bằng 0 thì mới bỏ được. Quy trình an toàn:
 
 1. Dừng nhập hồ sơ mới (tạm dừng dịch vụ `QLBV XMLImport3176`, không tải file qua giao diện).
 2. Chờ hàng đợi `JobXml3176` cạn — kiểm bằng chính đồng hồ trên màn danh sách, hoặc

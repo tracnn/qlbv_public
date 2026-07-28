@@ -19,17 +19,28 @@ class Xml3176ChuyenDoiJobTest extends TestCase
     }
 
     /** @test */
-    public function khong_con_cho_nao_nhac_toi_job_cu()
+    public function khong_con_cho_nao_dispatch_job_cu()
     {
-        $this->assertFileNotExists(app_path('Jobs/CheckXml3176ErrorsJob.php'));
-
         foreach ([
             app_path('Services/Xml3176Service.php'),
             app_path('Services/Xml3176/Xml3176Importer.php'),
         ] as $file) {
             $this->assertNotContains('CheckXml3176ErrorsJob', $this->maKhongComment($file),
-                basename($file) . ' con nhac toi lop da xoa');
+                basename($file) . ' con dispatch job cu');
         }
+    }
+
+    /** @test */
+    public function lop_job_cu_van_con_de_hang_doi_rut_can()
+    {
+        // Lop nay tung bi xoa han va viec do gay loi that tren san xuat: hang doi con job
+        // cu dang cho, mat lop thi chung khong unserialize duoc, roi vao failed_jobs, keo
+        // theo mat ket qua kiem loi cua nhung ho so vua nhap.
+        //
+        // Khong con ai dispatch no (test tren da khoa dieu do), nhung PHAI con file de
+        // nhung job da nam trong hang doi chay not.
+        $this->assertFileExists(app_path('Jobs/CheckXml3176ErrorsJob.php'),
+            'Xoa lop nay khi hang doi chua rut can se lam chet cac job dang cho');
     }
 
     /** @test */
