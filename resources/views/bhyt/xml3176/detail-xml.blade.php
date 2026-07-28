@@ -5,21 +5,14 @@
     Ngày vào: {{ strtodatetime($xml1->ngay_vao) }} - 
     Ngày ra: {{ strtodatetime($xml1->ngay_ra) }}
 </label>
-<!-- @php
-    $errorDescriptions = $xml1
-    ->Xml3176ErrorResult()
-    ->where('xml', 'XML1')
-    ->pluck('description')
-    ->implode('; ');
-@endphp
-<ul class="nav nav-tabs" @if($errorDescriptions) class="highlight-red" data-toggle="tooltip" title="{{ $errorDescriptions }}" @endif> -->
+{{-- Da xoa mot khoi @php bi boc trong <!-- --> tai day: do la comment HTML chu khong
+     phai comment Blade, nen @php van duoc bien dich va van chay truy van that de dung
+     mot bien khong ai dung. Muon vo hieu hoa Blade thi dung {{-- --}} nhu khoi nay. --}}
 <ul class="nav nav-tabs">
     <li class="active">
         <a data-toggle="tab" href="#menu1">XML1
             @php
-                $errorCountXml = $xml1->Xml3176ErrorResult()
-                    ->where('xml', 'XML1')
-                    ->count();
+                $errorCountXml = $chiMucLoi->demLoi('XML1');
             @endphp
             @if($errorCountXml > 0)
                 <span class="badge badge-error">{{ $errorCountXml }}</span>
@@ -30,12 +23,7 @@
     <li>
         <a data-toggle="tab" href="#menu2">XML2
              @php
-                $errorCountXml = $xml1->Xml3176Xml2->filter(function($item) {
-                    return $item->errorResult()->where('xml', 'XML2')
-                    ->where('ma_lk', $item->ma_lk)
-                    ->where('stt', $item->stt)
-                    ->exists();
-                })->count();
+                $errorCountXml = $chiMucLoi->demTheoStt($xml1->Xml3176Xml2, 'XML2');
             @endphp
             @if($errorCountXml > 0)
                 <span class="badge badge-error">{{ $errorCountXml }}</span>
@@ -47,13 +35,7 @@
     <li>
         <a data-toggle="tab" href="#menu3">XML3
             @php
-                $errorCountXml = $xml1->Xml3176Xml3->filter(function($item) {
-                    return $item->errorResult()
-                    ->where('xml', 'XML3')
-                    ->where('ma_lk', $item->ma_lk)
-                    ->where('stt', $item->stt)
-                    ->exists();
-                })->count();
+                $errorCountXml = $chiMucLoi->demTheoStt($xml1->Xml3176Xml3, 'XML3');
             @endphp
             @if($errorCountXml > 0)
                 <span class="badge badge-error">{{ $errorCountXml }}</span>
@@ -65,13 +47,7 @@
     <li>
         <a data-toggle="tab" href="#menu4">XML4
             @php
-                $errorCountXml = $xml1->Xml3176Xml4->filter(function($item) {
-                    return $item->errorResult()
-                    ->where('xml', 'XML4')
-                    ->where('ma_lk', $item->ma_lk)
-                    ->where('stt', $item->stt)
-                    ->exists();
-                })->count();
+                $errorCountXml = $chiMucLoi->demTheoStt($xml1->Xml3176Xml4, 'XML4');
             @endphp
             @if($errorCountXml > 0)
                 <span class="badge badge-error">{{ $errorCountXml }}</span>
@@ -83,13 +59,7 @@
     <li>
         <a data-toggle="tab" href="#menu5">XML5
             @php
-                $errorCountXml = $xml1->Xml3176Xml5->filter(function($item) {
-                    return $item->errorResult()
-                    ->where('xml', 'XML5')
-                    ->where('ma_lk', $item->ma_lk)
-                    ->where('stt', $item->stt)
-                    ->exists();
-                })->count();
+                $errorCountXml = $chiMucLoi->demTheoStt($xml1->Xml3176Xml5, 'XML5');
             @endphp
             @if($errorCountXml > 0)
                 <span class="badge badge-error">{{ $errorCountXml }}</span>
@@ -101,12 +71,7 @@
     <li>
         <a data-toggle="tab" href="#menu7">XML7
             @php
-                $errorCountXml = $xml1->Xml3176Xml7->filter(function($item) {
-                    return $item->errorResult()
-                    ->where('xml', 'XML7')
-                    ->where('ma_lk', $item->ma_lk)
-                    ->exists();
-                })->count();
+                $errorCountXml = $chiMucLoi->demTheoXml($xml1->Xml3176Xml7, 'XML7');
             @endphp
             @if($errorCountXml > 0)
                 <span class="badge badge-error">{{ $errorCountXml }}</span>
@@ -118,12 +83,7 @@
     <li>
         <a data-toggle="tab" href="#menu8">XML8
             @php
-                $errorCountXml = $xml1->Xml3176Xml8->filter(function($item) {
-                    return $item->errorResult()
-                    ->where('xml', 'XML8')
-                    ->where('ma_lk', $item->ma_lk)
-                    ->exists();
-                })->count();
+                $errorCountXml = $chiMucLoi->demTheoXml($xml1->Xml3176Xml8, 'XML8');
             @endphp
             @if($errorCountXml > 0)
                 <span class="badge badge-error">{{ $errorCountXml }}</span>
@@ -135,12 +95,7 @@
     <li>
         <a data-toggle="tab" href="#menu9">XML9
             @php
-                $errorCountXml = $xml1->Xml3176Xml9->filter(function($item) {
-                    return $item->errorResult()
-                    ->where('xml', 'XML9')
-                    ->where('ma_lk', $item->ma_lk)
-                    ->exists();
-                })->count();
+                $errorCountXml = $chiMucLoi->demTheoXml($xml1->Xml3176Xml9, 'XML9');
             @endphp
             @if($errorCountXml > 0)
                 <span class="badge badge-error">{{ $errorCountXml }}</span>
@@ -152,12 +107,7 @@
     <li>
         <a data-toggle="tab" href="#menu10">XML10
             @php
-                $errorCountXml = $xml1->Xml3176Xml10->filter(function($item) {
-                    return $item->errorResult()
-                    ->where('xml', 'XML10')
-                    ->where('ma_lk', $item->ma_lk)
-                    ->exists();
-                })->count();
+                $errorCountXml = $chiMucLoi->demTheoXml($xml1->Xml3176Xml10, 'XML10');
             @endphp
             @if($errorCountXml > 0)
                 <span class="badge badge-error">{{ $errorCountXml }}</span>
@@ -169,12 +119,7 @@
     <li>
         <a data-toggle="tab" href="#menu11">XML11
             @php
-                $errorCountXml = $xml1->Xml3176Xml11->filter(function($item) {
-                    return $item->errorResult()
-                    ->where('xml', 'XML11')
-                    ->where('ma_lk', $item->ma_lk)
-                    ->exists();
-                })->count();
+                $errorCountXml = $chiMucLoi->demTheoXml($xml1->Xml3176Xml11, 'XML11');
             @endphp
             @if($errorCountXml > 0)
                 <span class="badge badge-error">{{ $errorCountXml }}</span>
@@ -186,12 +131,7 @@
     <li>
         <a data-toggle="tab" href="#menu13">XML13
             @php
-                $errorCountXml = $xml1->Xml3176Xml13->filter(function($item) {
-                    return $item->errorResult()
-                    ->where('xml', 'XML13')
-                    ->where('ma_lk', $item->ma_lk)
-                    ->exists();
-                })->count();
+                $errorCountXml = $chiMucLoi->demTheoXml($xml1->Xml3176Xml13, 'XML13');
             @endphp
             @if($errorCountXml > 0)
                 <span class="badge badge-error">{{ $errorCountXml }}</span>
@@ -203,12 +143,7 @@
     <li>
         <a data-toggle="tab" href="#menu14">XML14
             @php
-                $errorCountXml = $xml1->Xml3176Xml14->filter(function($item) {
-                    return $item->errorResult()
-                    ->where('xml', 'XML14')
-                    ->where('ma_lk', $item->ma_lk)
-                    ->exists();
-                })->count();
+                $errorCountXml = $chiMucLoi->demTheoXml($xml1->Xml3176Xml14, 'XML14');
             @endphp
             @if($errorCountXml > 0)
                 <span class="badge badge-error">{{ $errorCountXml }}</span>
@@ -220,12 +155,7 @@
     <li>
         <a data-toggle="tab" href="#menu15">XML15
             @php
-                $errorCountXml = $xml1->Xml3176Xml15->filter(function($item) {
-                    return $item->errorResult()
-                    ->where('xml', 'XML15')
-                    ->where('ma_lk', $item->ma_lk)
-                    ->exists();
-                })->count();
+                $errorCountXml = $chiMucLoi->demTheoXml($xml1->Xml3176Xml15, 'XML15');
             @endphp
             @if($errorCountXml > 0)
                 <span class="badge badge-error">{{ $errorCountXml }}</span>

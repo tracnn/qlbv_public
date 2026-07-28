@@ -12,6 +12,7 @@ use App\Models\BHYT\Xml3176ErrorResult;
 use App\Models\BHYT\Xml3176ErrorCatalog;
 use App\Services\Xml3176Service;
 use App\Services\XmlStructures;
+use App\Services\Xml3176\Xml3176ErrorIndex;
 
 use App\Exports\Xml3176ErrorMultiSheetExport;
 use App\Exports\Xml3176XmlExport;
@@ -425,10 +426,16 @@ class BHYTXml3176Controller extends Controller
 
     public function detailXml($ma_lk)
     {
-        $xml1 = Xml3176Xml1::where('ma_lk', $ma_lk)
+        $xml1 = Xml3176Xml1::with('Xml3176ErrorResult')
+        ->where('ma_lk', $ma_lk)
         ->firstOrFail();
 
-        return view('bhyt.xml3176.detail-xml',  compact('xml1')); 
+        // Dung chi muc MOT lan tu tap loi da nap. Truoc day blade hoi co so du lieu
+        // mot lan cho moi dong, hai luot -> hang nghin truy van moi lan mo modal.
+        return view('bhyt.xml3176.detail-xml', [
+            'xml1'      => $xml1,
+            'chiMucLoi' => Xml3176ErrorIndex::tu($xml1->Xml3176ErrorResult),
+        ]);
     }
 
     public function uploadData(Request $request)
