@@ -200,6 +200,7 @@ class Xml3176Service
 
         } catch (\Exception $e) {
             \Log::error('Error in storeXml3176Xml1: ' . $e->getMessage());
+            throw $e;
         }
     }
 
@@ -275,6 +276,7 @@ class Xml3176Service
 
                 } catch (\Exception $e) {
                     \Log::error('Error in storeXml3176Xml2: ' . $e->getMessage());
+                    throw $e;
                 }
             }
         }
@@ -360,6 +362,7 @@ class Xml3176Service
 
                 } catch (\Exception $e) {
                     \Log::error('Error in storeXml3176Xml3: ' . $e->getMessage());
+                    throw $e;
                 }
             }
         }
@@ -409,6 +412,7 @@ class Xml3176Service
 
                 } catch (\Exception $e) {
                     \Log::error('Error in storeXml3176Xml4: ' . $e->getMessage());
+                    throw $e;
                 }
             }
         }
@@ -455,6 +459,7 @@ class Xml3176Service
 
                 } catch (\Exception $e) {
                     \Log::error('Error in storeXml3176Xml5: ' . $e->getMessage());
+                    throw $e;
                 }
             }
         }
@@ -539,6 +544,7 @@ class Xml3176Service
 
                 } catch (\Exception $e) {
                     \Log::error('Error in storeXml3176Xml6: ' . $e->getMessage());
+                    throw $e;
                 }
             }
         }
@@ -598,6 +604,7 @@ class Xml3176Service
 
         } catch (\Exception $e) {
             \Log::error('Error in storeXml3176Xml7: ' . $e->getMessage());
+            throw $e;
         }
     }
 
@@ -651,6 +658,7 @@ class Xml3176Service
 
         } catch (\Exception $e) {
             \Log::error('Error in storeXml3176Xml8: ' . $e->getMessage());
+            throw $e;
         }
 
     }
@@ -723,6 +731,7 @@ class Xml3176Service
 
                 } catch (\Exception $e) {
                     \Log::error('Error in storeXml3176Xml9: ' . $e->getMessage());
+                    throw $e;
                 }
             }
         }
@@ -773,6 +782,7 @@ class Xml3176Service
 
         } catch (\Exception $e) {
             \Log::error('Error in storeXml3176Xml10: ' . $e->getMessage());
+            throw $e;
         }
     }
 
@@ -827,6 +837,7 @@ class Xml3176Service
 
         } catch (\Exception $e) {
             \Log::error('Error in storeXml3176Xml11: ' . $e->getMessage());
+            throw $e;
         }
     }
 
@@ -895,6 +906,7 @@ class Xml3176Service
 
         } catch (\Exception $e) {
             \Log::error('Error in storeXml3176Xml13: ' . $e->getMessage());
+            throw $e;
         }
     }
 
@@ -949,6 +961,7 @@ class Xml3176Service
 
         } catch (\Exception $e) {
             \Log::error('Error in storeXml3176Xml14: ' . $e->getMessage());
+            throw $e;
         }
     }
 
@@ -1018,6 +1031,7 @@ class Xml3176Service
 
         } catch (\Exception $e) {
             \Log::error('Error in Xml3176Information: ' . $e->getMessage());
+            throw $e;
         }
     }
 
@@ -1073,6 +1087,7 @@ class Xml3176Service
 
                 } catch (\Exception $e) {
                     \Log::error('Error in storeXml3176Xml15: ' . $e->getMessage());
+                    throw $e;
                 }
             }
         } else {
