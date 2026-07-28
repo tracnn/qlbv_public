@@ -26,6 +26,19 @@ use DB;
 
 class BHYTXml3176Controller extends Controller
 {
+    /**
+     * Cac cot duoc phep di ra ngoai trong JSON cua DataTables.
+     *
+     * Danh sach TRANG, khong phai danh sach den: quan he them vao truy van sau nay
+     * se khong tu dong lot ra ngoai lam payload phinh lai. Xml3176DatatableColumnsTest
+     * khoa danh sach nay khop dung cac cot blade doc.
+     */
+    const DATATABLE_COLUMNS = [
+        'ma_lk', 'ma_bn', 'ho_ten', 'ma_the_bhyt', 'ngay_sinh',
+        'ngay_vao', 'ngay_ra', 'ngay_ttoan', 'created_at', 'updated_at',
+        'exported_at', 'submitted_at', 'is_signed', 'imported_by', 'action',
+    ];
+
     protected $xml3176Service;
 
     public function __construct(Xml3176Service $xml3176Service)
@@ -395,6 +408,15 @@ class BHYTXml3176Controller extends Controller
             }
             return $highlight ? 'highlight-red' : '';
         })
+        // Cat moi thu ngoai danh sach trang khoi JSON. Truoc day ba quan he long
+        // (Xml3176ErrorResult, check_hein_card, Xml3176Information) di theo phan hoi
+        // ra trinh duyet du KHONG cot nao doc chung, va yajra chay array_dot() + e()
+        // len tung gia tri long ben trong, tung dong mot.
+        // Dat truoc rawColumns: trong DataProcessor::process() thu tu la
+        // addColumns -> editColumns -> setupRowVariables -> selectOnlyNeededColumns,
+        // nen setRowClass() (nam trong setupRowVariables) da chay xong truoc khi cat,
+        // va DT_RowClass nam trong danh sach mien tru nen khong bi cat nham.
+        ->only(self::DATATABLE_COLUMNS)
         ->rawColumns(['exported_at', 'is_signed', 'action', 'submitted_at'])
         ->toJson();
     }
