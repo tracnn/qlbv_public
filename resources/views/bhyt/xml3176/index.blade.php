@@ -385,6 +385,19 @@
         $('#openDownloadModalBtn').on('click', function() {
             $('#downloadModal').modal('show'); // Hiển thị modal
         });
+
+        // Noi dung modal duoc thay moi bang .html() moi lan mo, nen node cu bi go
+        // nhung 6 thuc the DataTable van nam lai trong registry noi bo cua thu vien.
+        // Mo modal 50 lan la 300 thuc the ton dong. Huy tuong minh khi dong modal.
+        $('#infoModal').on('hidden.bs.modal', function () {
+            XML3176_MODAL_TABLES.forEach(function (sel) {
+                var el = $('#modalContent').find(sel);
+                if (el.length && $.fn.DataTable.isDataTable(el)) {
+                    el.DataTable().destroy();
+                }
+            });
+            $('#modalContent').empty();
+        });
         $('.select2').select2({
             width: '100%' // Đặt chiều rộng của Select2 là 100%
         });
@@ -597,13 +610,13 @@
         });
     }
 
+    var XML3176_MODAL_TABLES = ['#thuocvt', '#dvkt', '#cls', '#dienbien',
+                                '#checkHeinCard', '#xmlErrorChecks'];
+
     function initializeModalDataTables() {
-        $('#thuocvt').DataTable();
-        $('#dvkt').DataTable();
-        $('#cls').DataTable();
-        $('#dienbien').DataTable();
-        $('#checkHeinCard').DataTable();
-        $('#xmlErrorChecks').DataTable();
+        XML3176_MODAL_TABLES.forEach(function (sel) {
+            $(sel).DataTable();
+        });
     }
 
     function checkJobStatus() {
