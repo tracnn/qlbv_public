@@ -13,6 +13,9 @@ use App\Services\OrderCheck\RuleHandlers\Bhyt\BhytSupplyCatalogRule;
 use App\Services\OrderCheck\RuleHandlers\Bhyt\BhytServiceNameRule;
 use App\Services\OrderCheck\RuleHandlers\Bhyt\BhytDrugNameRule;
 use App\Services\OrderCheck\RuleHandlers\Bhyt\BhytSupplyNameRule;
+use App\Services\OrderCheck\RuleHandlers\Clinical\IcdNotInCatalogRule;
+use App\Services\OrderCheck\RuleHandlers\Clinical\IcdYhctNotInCatalogRule;
+use App\Services\OrderCheck\RuleHandlers\Clinical\StaffCertNotInCatalogRule;
 use App\Services\OrderCheck\Support\NgayHieuLuc;
 use DB;
 
@@ -47,6 +50,9 @@ class OrderCheckDryRun extends Command
             new BhytServiceNameRule(),
             new BhytDrugNameRule(),
             new BhytSupplyNameRule(),
+            new IcdNotInCatalogRule(),
+            new IcdYhctNotInCatalogRule(),
+            new StaffCertNotInCatalogRule(),
         ];
 
         $tuThoiDiem = (int) (date('Ymd', strtotime('-' . $ngay . ' days')) . '000000');
@@ -115,13 +121,20 @@ class OrderCheckDryRun extends Command
     private function canhBaoDanhMucRong()
     {
         $bang = [
-            'service_catalogs' => 'ma_dich_vu',
-            'medicine_catalogs' => 'ma_thuoc',
-            'medical_supply_catalogs' => 'ma_vat_tu',
+            'service_catalogs' => ['ma_dich_vu', []],
+            'medicine_catalogs' => ['ma_thuoc', []],
+            'medical_supply_catalogs' => ['ma_vat_tu', []],
+            'icd10_categories' => ['icd_code', ['is_active' => 1]],
+            'icd_yhct_categories' => ['icd_code', ['is_active' => 1]],
+            'medical_staffs' => ['macchn', []],
         ];
 
         foreach ($bang as $b => $c) {
-            if (!(new CatalogLookup($b, $c))->sanSang()) {
+            list($cot, $dieuKien) = $c;
+
+            // sanSang() khong dung toi cot ngay nen truyen mac dinh cung duoc, ke ca voi
+            // hai bang ICD von khong co tu_ngay/den_ngay.
+            if (!(new CatalogLookup($b, $cot, null, 'tu_ngay', 'den_ngay', $dieuKien))->sanSang()) {
                 $this->warn('Danh muc ' . $b . ' dang RONG -> quy tac tuong ung se im lang.');
             }
         }

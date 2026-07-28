@@ -26,6 +26,8 @@ class HisOrderSource
             ->table('his_service_req as sr')
             ->leftJoin('his_treatment as t', 'sr.treatment_id', '=', 't.id')
             ->leftJoin('his_employee as e', 'sr.execute_loginname', '=', 'e.loginname')
+            // Join thu hai de lay CCHN cua bac si CHI DINH; alias e da danh cho nguoi thuc hien.
+            ->leftJoin('his_employee as re', 'sr.request_loginname', '=', 're.loginname')
             ->where('sr.is_delete', 0)
             ->where('sr.modify_time', '>', $lastModifyTime)
             ->orderBy('sr.modify_time')
@@ -35,9 +37,11 @@ class HisOrderSource
                 sr.id, sr.service_req_code, sr.service_req_type_id, sr.treatment_id, sr.intruction_time,
                 sr.request_department_id, sr.execute_department_id, sr.request_loginname, sr.request_username,
                 sr.icd_code, sr.icd_name, sr.create_time, sr.modify_time,
+                sr.icd_sub_code, sr.traditional_icd_code, sr.traditional_icd_sub_code,
                 sr.tdl_treatment_code, sr.tdl_patient_code, sr.tdl_patient_name,
                 t.in_time as in_time, t.out_time as out_time,
-                sr.execute_loginname, sr.execute_username, e.diploma as execute_diploma');
+                sr.execute_loginname, sr.execute_username, e.diploma as execute_diploma,
+                re.diploma as request_diploma');
 
         if (!empty($this->excludeTreatmentTypeIds)) {
             $q->whereNotIn('t.tdl_treatment_type_id', $this->excludeTreatmentTypeIds);
@@ -219,6 +223,10 @@ class HisOrderSource
         $c->inTime = (int) $row->in_time;
         $c->outTime = (int) $row->out_time;
         $c->icdCode = $row->icd_code;
+        $c->icdSubCode = $row->icd_sub_code;
+        $c->traditionalIcdCode = $row->traditional_icd_code;
+        $c->traditionalIcdSubCode = $row->traditional_icd_sub_code;
+        $c->requestDiploma = $row->request_diploma;
         $c->services = $services;
         return $c;
     }

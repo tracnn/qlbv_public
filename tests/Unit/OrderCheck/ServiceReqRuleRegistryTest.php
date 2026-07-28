@@ -28,6 +28,9 @@ class ServiceReqRuleRegistryTest extends TestCase
             'A_BHYT_SERVICE_NAME_MISMATCH',
             'A_BHYT_DRUG_NAME_MISMATCH',
             'A_BHYT_SUPPLY_NAME_MISMATCH',
+            'A_ICD_NOT_IN_CATALOG',
+            'A_ICD_YHCT_NOT_IN_CATALOG',
+            'A_STAFF_CERT_NOT_IN_CATALOG',
         ] as $ma) {
             $this->assertContains($ma, $codes, "Thieu handler $ma trong common()");
         }

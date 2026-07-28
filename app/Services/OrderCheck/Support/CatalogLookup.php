@@ -22,19 +22,33 @@ class CatalogLookup
     protected $cotTu;
     protected $cotDen;
 
+    /** @var array dieu kien loc co dinh, vi du ['is_active' => 1] */
+    protected $dieuKien;
+
     /** @var array ma => [ ['ten'=>?string, 'tu'=>mixed, 'den'=>mixed], ... ] */
     protected $dong = [];
 
     /** @var bool|null null = chua kiem */
     protected $sanSang;
 
-    public function __construct($bang, $cot, $cotTen = null, $cotTu = 'tu_ngay', $cotDen = 'den_ngay')
-    {
+    /**
+     * @param string|null $cotTu null = bang khong co cot ngay, bo loc hieu luc
+     * @param array $dieuKien loc co dinh, vi du ['is_active' => 1]
+     */
+    public function __construct(
+        $bang,
+        $cot,
+        $cotTen = null,
+        $cotTu = 'tu_ngay',
+        $cotDen = 'den_ngay',
+        array $dieuKien = []
+    ) {
         $this->bang = $bang;
         $this->cot = $cot;
         $this->cotTen = $cotTen;
         $this->cotTu = $cotTu;
         $this->cotDen = $cotDen;
+        $this->dieuKien = $dieuKien;
     }
 
     /**
@@ -46,7 +60,12 @@ class CatalogLookup
     public function sanSang()
     {
         if ($this->sanSang === null) {
-            $this->sanSang = DB::table($this->bang)->limit(1)->exists();
+            // Dieu kien PHAI duoc ap o day: bang co 12.229 dong nhung khong dong nao
+            // is_active = 1 thi van la "chua co danh muc", khong the de moi ma thanh vi pham.
+            $this->sanSang = DB::table($this->bang)
+                ->where($this->dieuKien)
+                ->limit(1)
+                ->exists();
         }
 
         return $this->sanSang;
@@ -65,7 +84,15 @@ class CatalogLookup
             return;
         }
 
-        $chon = [$this->cot, $this->cotTu, $this->cotDen];
+        $chon = [$this->cot];
+
+        if ($this->cotTu !== null) {
+            $chon[] = $this->cotTu;
+        }
+
+        if ($this->cotDen !== null) {
+            $chon[] = $this->cotDen;
+        }
 
         if ($this->cotTen !== null) {
             $chon[] = $this->cotTen;
@@ -73,6 +100,7 @@ class CatalogLookup
 
         $thay = DB::table($this->bang)
             ->whereIn($this->cot, $ma)
+            ->where($this->dieuKien)
             ->select($chon)
             ->get();
 
@@ -86,8 +114,8 @@ class CatalogLookup
 
             $this->dong[$khoa][] = [
                 'ten' => $this->cotTen === null ? null : trim((string) $d[$this->cotTen]),
-                'tu' => $d[$this->cotTu],
-                'den' => $d[$this->cotDen],
+                'tu' => $this->cotTu === null ? null : $d[$this->cotTu],
+                'den' => $this->cotDen === null ? null : $d[$this->cotDen],
             ];
         }
     }
@@ -158,5 +186,16 @@ class CatalogLookup
         }
 
         $this->sanSang = true;
+    }
+
+    /**
+     * Chi dung trong test: ep trang thai "danh muc chua nap" ma khong phu thuoc noi dung
+     * bang. Can thiet vi icd10_categories tren co so du lieu that dang co 12.229 dong,
+     * icd_yhct_categories 4.144 dong - khong the kiem "bang rong" bang cach tra bang that.
+     */
+    public function datRongChoTest()
+    {
+        $this->dong = [];
+        $this->sanSang = false;
     }
 }

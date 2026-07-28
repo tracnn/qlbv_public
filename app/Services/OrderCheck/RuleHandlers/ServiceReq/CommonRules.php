@@ -14,6 +14,9 @@ use App\Services\OrderCheck\RuleHandlers\Bhyt\BhytSupplyCatalogRule;
 use App\Services\OrderCheck\RuleHandlers\Bhyt\BhytServiceNameRule;
 use App\Services\OrderCheck\RuleHandlers\Bhyt\BhytDrugNameRule;
 use App\Services\OrderCheck\RuleHandlers\Bhyt\BhytSupplyNameRule;
+use App\Services\OrderCheck\RuleHandlers\Clinical\IcdNotInCatalogRule;
+use App\Services\OrderCheck\RuleHandlers\Clinical\IcdYhctNotInCatalogRule;
+use App\Services\OrderCheck\RuleHandlers\Clinical\StaffCertNotInCatalogRule;
 
 /**
  * Luật cấp phiếu áp cho MỌI loại dịch vụ.
@@ -42,6 +45,13 @@ class CommonRules
             new BhytServiceNameRule(),
             new BhytDrugNameRule(),
             new BhytSupplyNameRule(),
+
+            // Doi chieu danh muc trong ung dung. Ba luat deu tu im lang khi bang danh muc
+            // con rong. Khong loc theo doi tuong BHYT: ma benh sai va CCHN sai la loi ho
+            // so bat ke ai chi tra.
+            new IcdNotInCatalogRule(),
+            new IcdYhctNotInCatalogRule(),
+            new StaffCertNotInCatalogRule(),
         ];
     }
 }

@@ -2,6 +2,7 @@
 
 namespace Tests\Unit\OrderCheck;
 
+use DB;
 use Tests\TestCase;
 use App\Services\OrderCheck\Support\CatalogLookup;
 
@@ -139,6 +140,57 @@ class CatalogLookupTest extends TestCase
         ]);
 
         $this->assertSame(['X'], $lk->tenTheoMa('A1', 20240601));
+    }
+
+    /** @test */
+    public function bang_khong_co_cot_ngay_thi_khong_loc_hieu_luc()
+    {
+        // icd10_categories khong co tu_ngay/den_ngay.
+        $lk = new CatalogLookup('icd10_categories', 'icd_code', null, null, null);
+        $lk->datSanChoTest(['A00']);
+
+        $this->assertTrue($lk->coTrongDanhMuc('A00', 20240601));
+        $this->assertTrue($lk->coTrongDanhMuc('A00', 19990101));
+    }
+
+    /** @test */
+    public function dat_rong_cho_test_lam_san_sang_tra_false()
+    {
+        // Khong duoc dua vao noi dung bang that: icd10_categories dang co 12.229 dong.
+        $lk = new CatalogLookup('icd10_categories', 'icd_code', null, null, null, ['is_active' => 1]);
+        $lk->datRongChoTest();
+
+        $this->assertFalse($lk->sanSang());
+        $this->assertFalse($lk->coTrongDanhMuc('A00'));
+    }
+
+    /** @test */
+    public function dieu_kien_loc_duoc_ap_trong_san_sang()
+    {
+        // Bang co dong nhung KHONG dong nao thoa dieu kien -> PHAI tra false. Neu khong,
+        // moi ma se thanh vi pham.
+        $lk = new CatalogLookup('icd10_categories', 'icd_code', null, null, null, ['is_active' => 9]);
+
+        $this->assertFalse($lk->sanSang(), 'Dieu kien khong duoc ap trong sanSang');
+    }
+
+    /** @test */
+    public function dieu_kien_loc_duoc_ap_khi_nap()
+    {
+        DB::table('icd10_categories')->insert([
+            ['icd_code' => 'ZZ1', 'icd_name' => 'Tat', 'is_active' => 0],
+            ['icd_code' => 'ZZ2', 'icd_name' => 'Bat', 'is_active' => 1],
+        ]);
+
+        try {
+            $lk = new CatalogLookup('icd10_categories', 'icd_code', null, null, null, ['is_active' => 1]);
+            $lk->nap(['ZZ1', 'ZZ2']);
+
+            $this->assertFalse($lk->coTrongDanhMuc('ZZ1'), 'Dong is_active=0 van duoc coi la co');
+            $this->assertTrue($lk->coTrongDanhMuc('ZZ2'));
+        } finally {
+            DB::table('icd10_categories')->whereIn('icd_code', ['ZZ1', 'ZZ2'])->delete();
+        }
     }
 
     /** @test */

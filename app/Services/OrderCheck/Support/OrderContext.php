@@ -22,5 +22,17 @@ class OrderContext
     /** @var int */ public $outTime = 0;
     /** @var string|null */ public $icdCode;
 
+    /** @var string|null Chan doan phu; chuoi nhieu ma ngan boi ';' va CO dau ';' dan dau */
+    public $icdSubCode;
+
+    /** @var string|null Chan doan YHCT chinh */
+    public $traditionalIcdCode;
+
+    /** @var string|null Chan doan YHCT phu; cung quy uoc chuoi ghep */
+    public $traditionalIcdSubCode;
+
+    /** @var string|null CCHN cua bac si CHI DINH; executeDiploma la cua nguoi thuc hien */
+    public $requestDiploma;
+
     /** @var OrderService[] */ public $services = [];
 }
