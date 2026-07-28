@@ -106,7 +106,8 @@ class XML3176Import extends Command
                     continue;
                 }
 
-                $this->info($kq->maLk);
+                // Mot file co the chua nhieu ho so.
+                $this->info(implode(', ', $kq->dsMaLk));
 
                 Storage::disk($disk)->delete($file);
             } catch (\Exception $e) {

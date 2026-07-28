@@ -85,6 +85,20 @@ class Xml3176Importer
     }
 
     /**
+     * So the HOSO thuc te trong file.
+     *
+     * Doi chieu voi SOLUONGHOSO: thuc te IT hon khai bao nghia la file co the bi cat cut.
+     */
+    public static function demHoSo($xmldata)
+    {
+        if (!isset($xmldata->THONGTINHOSO->DANHSACHHOSO->HOSO)) {
+            return 0;
+        }
+
+        return count($xmldata->THONGTINHOSO->DANHSACHHOSO->HOSO);
+    }
+
+    /**
      * Thu tu duyet FILEHOSO, dua XML1 len dau.
      *
      * deleteExistingXml3176() chi chay khi gap XML1. Neu mot file liet ke XML2 truoc
@@ -144,12 +158,35 @@ class Xml3176Importer
 
         $soluonghoso = self::soLuongHoSo($xmldata);
 
-        // Ca hai ban cu deu foreach thang vao day: DANHSACHHOSO rong thi foreach chay
-        // tren null va nem exception. Duong tai len bien thanh loi 500, duong quet thu
-        // muc bi try/catch ngoai nuot roi dung ca luot. Chan lai thanh mot ket qua
-        // that bai sach se.
-        if (!isset($xmldata->THONGTINHOSO->DANHSACHHOSO->HOSO->FILEHOSO)) {
-            return Xml3176ImportResult::thatBai('Khong tim thay FILEHOSO trong file');
+        // Ca hai ban cu deu foreach thang vao ->HOSO->FILEHOSO: DANHSACHHOSO rong thi
+        // foreach chay tren null va nem exception.
+        if (!isset($xmldata->THONGTINHOSO->DANHSACHHOSO->HOSO)) {
+            return Xml3176ImportFileResult::thatBaiSom('Khong tim thay HOSO trong file');
+        }
+
+        // MOT file co the chua NHIEU ho so. Ban cu duyet ->HOSO->FILEHOSO, ma trong
+        // SimpleXML thi ->HOSO tren mot tap nhieu phan tu TU LAY PHAN TU DAU - nen moi
+        // ho so tu thu hai tro di bi bo hoan toan, khong loi, khong log.
+        $ketQua = [];
+        $soThucTe = 0;
+
+        foreach ($xmldata->THONGTINHOSO->DANHSACHHOSO->HOSO as $hoSo) {
+            $soThucTe++;
+
+            // Mot ho so hong KHONG duoc keo cac ho so con lai xuong theo.
+            $ketQua[] = $this->nhapMotHoSo($hoSo, $macskcb, $soluonghoso, $choPhepXuat);
+        }
+
+        return Xml3176ImportFileResult::tu($ketQua, $soluonghoso, $soThucTe);
+    }
+
+    /**
+     * Nhap MOT ho so trong file. Moi ho so co transaction rieng va ket qua rieng.
+     */
+    private function nhapMotHoSo($hoSo, $macskcb, $soluonghoso, $choPhepXuat)
+    {
+        if (!isset($hoSo->FILEHOSO)) {
+            return Xml3176ImportResult::thatBai('Khong tim thay FILEHOSO trong ho so');
         }
 
         // Gom thanh mang de sap duoc thu tu: XML1 phai duoc xu ly TRUOC, vi
@@ -157,7 +194,7 @@ class Xml3176Importer
         $danhSachFile = [];
         $danhSachLoai = [];
 
-        foreach ($xmldata->THONGTINHOSO->DANHSACHHOSO->HOSO->FILEHOSO as $file_hs) {
+        foreach ($hoSo->FILEHOSO as $file_hs) {
             $danhSachFile[] = $file_hs;
             $danhSachLoai[] = (string) $file_hs->LOAIHOSO;
         }
@@ -212,7 +249,7 @@ class Xml3176Importer
                 }
 
                 if ($ma_lk === null || empty($processedFileTypes)) {
-                    throw new \RuntimeException('Khong tim thay du lieu ho so hop le trong file');
+                    throw new \RuntimeException('Khong tim thay du lieu ho so hop le');
                 }
 
                 $this->xml3176Service->storeXml3176Information($ma_lk, $macskcb, 'import', $soluonghoso);
