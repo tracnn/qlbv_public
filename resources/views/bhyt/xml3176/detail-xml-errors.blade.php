@@ -2,7 +2,8 @@
     $groupedErrors = $xml1->Xml3176ErrorResult->sortBy('xml')->groupBy('xml');
 @endphp
 
-<div id="menu-xml-errors" class="tab-pane fade">
+{{-- Noi dung tab, khong kem lop boc .tab-pane: khung vo trong detail-xml.blade.php
+     so huu id va class, endpoint chi tra ve phan ben trong. --}}
 
     @if($groupedErrors->isNotEmpty())
     <ul class="nav nav-tabs">
@@ -79,7 +80,6 @@
     <p>Không có lỗi XML nào.</p>
     @endif
 
-</div>
 <!-- DataTables initialization script -->
 <script>
     $(document).ready(function() {

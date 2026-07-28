@@ -41,6 +41,24 @@ class BHYTXml3176Controller extends Controller
         'exported_at', 'submitted_at', 'is_signed', 'imported_by', 'action',
     ];
 
+    /**
+     * Cac tab duoc nap khi nguoi dung bam vao, khong nap san cung vo modal.
+     *
+     * Gia tri la ten blade trong bhyt/xml3176. Danh sach TRANG: {xml} den tu URL.
+     */
+    const TAB_TAI_LUOI = [
+        'XML7'  => 'detail-xml-7',
+        'XML8'  => 'detail-xml-8',
+        'XML9'  => 'detail-xml-9',
+        'XML10' => 'detail-xml-10',
+        'XML11' => 'detail-xml-11',
+        'XML13' => 'detail-xml-13',
+        'XML14' => 'detail-xml-14',
+        'XML15' => 'detail-xml-15',
+        'HEIN'  => 'detail-xml-hein-card',
+        'ERR'   => 'detail-xml-errors',
+    ];
+
     protected $xml3176Service;
 
     public function __construct(Xml3176Service $xml3176Service)
@@ -444,6 +462,25 @@ class BHYTXml3176Controller extends Controller
                 'XML4' => $xml1->Xml3176Xml4->pluck('ngay_kq'),
                 'XML5' => $xml1->Xml3176Xml5->pluck('thoi_diem_dbls'),
             ],
+        ]);
+    }
+
+    /**
+     * Noi dung mot tab cua modal chi tiet (cac tab bieu mau mot dong, The BHYT, Loi XML).
+     */
+    public function detailXmlTab($ma_lk, $xml)
+    {
+        if (!isset(self::TAB_TAI_LUOI[$xml])) {
+            abort(404);
+        }
+
+        $xml1 = Xml3176Xml1::with('Xml3176ErrorResult')
+        ->where('ma_lk', $ma_lk)
+        ->firstOrFail();
+
+        return view('bhyt.xml3176.' . self::TAB_TAI_LUOI[$xml], [
+            'xml1'      => $xml1,
+            'chiMucLoi' => Xml3176ErrorIndex::tu($xml1->Xml3176ErrorResult),
         ]);
     }
 

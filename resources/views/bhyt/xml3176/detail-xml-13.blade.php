@@ -1,4 +1,5 @@
-<div id="menu13" class="tab-pane fade">
+{{-- Noi dung tab, khong kem lop boc .tab-pane: khung vo trong detail-xml.blade.php
+     so huu id va class, endpoint chi tra ve phan ben trong. --}}
     <ul class="nav nav-tabs">
         <li class="active"><a data-toggle="tab" href="#admin_info13">Thông tin hành chính</a></li>
         <li><a data-toggle="tab" href="#treatment_info1">Quá trình điều trị 1</a></li>
@@ -252,4 +253,3 @@
         </div>
     </div>
     @endforeach
-</div>

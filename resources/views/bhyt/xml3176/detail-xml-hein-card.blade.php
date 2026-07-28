@@ -1,4 +1,5 @@
-<div id="menu-hein-card" class="tab-pane fade">
+{{-- Noi dung tab, khong kem lop boc .tab-pane: khung vo trong detail-xml.blade.php
+     so huu id va class, endpoint chi tra ve phan ben trong. --}}
     <div class="panel panel-default">
         <div class="panel-body table-responsive">
             @if($xml1->check_hein_card)
@@ -25,4 +26,3 @@
             @endif
         </div>
     </div>
-</div>

@@ -190,16 +190,18 @@
     @include('bhyt.xml3176.detail-xml-3')
     @include('bhyt.xml3176.detail-xml-4')
     @include('bhyt.xml3176.detail-xml-5')
-    @include('bhyt.xml3176.detail-xml-7')
-    @include('bhyt.xml3176.detail-xml-8')
-    @include('bhyt.xml3176.detail-xml-9')
-    @include('bhyt.xml3176.detail-xml-10')
-    @include('bhyt.xml3176.detail-xml-11')
-    @include('bhyt.xml3176.detail-xml-13')
-    @include('bhyt.xml3176.detail-xml-14')
-    @include('bhyt.xml3176.detail-xml-15')
-    @include('bhyt.xml3176.detail-xml-hein-card')
-    @include('bhyt.xml3176.detail-xml-errors')
+
+    {{-- Muoi tab con lai nap khi nguoi dung bam vao. Khung o day so huu id va class
+         .tab-pane; endpoint chi tra ve phan noi dung ben trong. --}}
+    @foreach(['XML7' => 'menu7', 'XML8' => 'menu8', 'XML9' => 'menu9',
+              'XML10' => 'menu10', 'XML11' => 'menu11', 'XML13' => 'menu13',
+              'XML14' => 'menu14', 'XML15' => 'menu15',
+              'HEIN' => 'menu-hein-card', 'ERR' => 'menu-xml-errors'] as $ma => $id)
+        <div id="{{ $id }}" class="tab-pane fade xml3176-lazy"
+             data-url="{{ route('bhyt.xml3176.detail-xml.tab', ['ma_lk' => $xml1->ma_lk, 'xml' => $ma]) }}">
+            <i class="fa fa-spinner fa-spin"></i> Đang tải…
+        </div>
+    @endforeach
 
 </div>
 
