@@ -106,13 +106,36 @@ chèn từng nhóm.
 **Kích thước lô.** Chèn mỗi nhóm theo lô 500 dòng, tránh câu lệnh quá lớn và chạm giới hạn
 tham số của driver.
 
-### D. Giữ lại `CheckXml3176ErrorsJob` dù không còn ai dispatch
+### D. Xoá `CheckXml3176ErrorsJob`
 
-Xoá file đi thì sạch hơn, nhưng **không xoá**: tại thời điểm deploy, hàng đợi sản xuất gần
-như chắc chắn còn job cũ đang chờ. Mất lớp là chúng không unserialize được và chết hàng
-loạt, kéo theo mất kết quả kiểm lỗi của những hồ sơ vừa nhập.
+Xoá hẳn lớp job cũ.
 
-Đánh dấu không dùng nữa trong chú thích lớp; xoá ở một đợt sau, khi hàng đợi đã rút cạn.
+**Điều kiện bắt buộc khi triển khai.** Tôi đã nêu rủi ro và chủ đầu tư quyết định xoá.
+Rủi ro là có thật và cần một bước vận hành để triệt tiêu: tại thời điểm deploy, hàng đợi
+sản xuất có thể còn `CheckXml3176ErrorsJob` đang chờ; mất lớp là chúng không unserialize
+được và chết hàng loạt, kéo theo **mất kết quả kiểm lỗi của những hồ sơ vừa nhập**.
+
+Vì vậy quy trình deploy phải là:
+
+1. Dừng nhập hồ sơ mới (tạm dừng dịch vụ `QLBV XMLImport3176`, không tải file qua giao diện).
+2. Chờ hàng đợi `JobXml3176` cạn — kiểm bằng chính đồng hồ trên màn danh sách, hoặc
+   `SELECT COUNT(*) FROM jobs WHERE queue = 'JobXml3176'`.
+3. Deploy.
+4. Bật lại dịch vụ nhập.
+
+Nếu lỡ deploy khi hàng đợi chưa cạn: các job cũ sẽ vào `failed_jobs`. Cách chữa là nhập
+lại những hồ sơ liên quan, hoặc chờ tới khi có nút "Kiểm tra lại" (xem mục ngoài phạm vi).
+
+### E. Không cần sửa `install_service.bat`
+
+File đó ánh xạ worker theo **tên hàng đợi**, không theo lớp job — không tên lớp job nào
+xuất hiện trong đó. `CheckXml3176TypeJob` dùng đúng hàng đợi `config('xml3176.queue_name')`
+= `JobXml3176` như job cũ, nên dịch vụ `QLBV JobXml3176` sẵn có đã phục vụ nó.
+
+Đã kiểm cả khả năng phải tách hàng đợi riêng: **không có phụ thuộc thứ tự nào** giữa các
+job. `Xml3176CompleteChecker` ghi loại `XMLComplete` — tách biệt hoàn toàn với 12 loại
+trong bảng đăng ký — và nó **không đọc** `Xml3176ErrorResult`. Nên kể cả chạy nhiều worker
+song song cũng không giẫm chân nhau.
 
 ## Không thuộc phạm vi
 
@@ -135,6 +158,7 @@ loạt, kéo theo mất kết quả kiểm lỗi của những hồ sơ vừa nh
 - Mọi lớp model và checker trong bảng đăng ký đều tồn tại (`class_exists`), và checker có
   phương thức `checkErrors`.
 - `Xml3176Service` **không còn** dispatch trong vòng lặp dòng.
+- Không còn chỗ nào trong mã nguồn nhắc tới `CheckXml3176ErrorsJob` — kể cả `use` sót lại.
 - `Xml3176Xml1Checker` **không còn** gọi `deleteErrors`.
 - `deleteExistingXml3176()` có xoá `Xml3176ErrorResult`.
 - Chế độ gom: bật gom rồi `saveErrors` nhiều lần thì **không** chạm cơ sở dữ liệu cho tới
@@ -156,10 +180,12 @@ Cổng: `vendor/bin/phpunit --testsuite Unit`. Mốc hiện tại **311 test xan
 | 4 | Nhập một hồ sơ mà lần trước có lỗi XML3, lần này file không còn phần XML3 | Lỗi XML3 cũ **biến mất**, không sót lại |
 | 5 | Bảng `xml3176_error_catalogs` sau khi nhập | Không sinh dòng trùng; nội dung như trước |
 | 6 | Lọc danh sách hồ sơ theo mã lỗi | Vẫn ra đúng hồ sơ như trước |
-| 7 | Sau khi deploy, xem hàng đợi `JobXml3176` | Job cũ còn tồn đọng vẫn chạy được, không lỗi unserialize |
+| 7 | **Trước khi deploy**, kiểm hàng đợi `JobXml3176` | Đã cạn — xem mục D, đây là điều kiện bắt buộc |
+| 8 | Sau khi deploy, xem bảng `failed_jobs` | Không có job nào lỗi vì thiếu lớp `CheckXml3176ErrorsJob` |
 
 **Mục 1 là mục quan trọng nhất** và cũng dễ trôi nhất: cả ba thay đổi trên đều đụng vào
 đường ghi lỗi, nên phải chứng minh kết quả **không đổi một chút nào**. Không có ảnh chụp
 danh sách lỗi trước khi sửa thì không kiểm được.
 
-Mục 7 kiểm đúng lý do giữ lại `CheckXml3176ErrorsJob`.
+Mục 7 là **điều kiện tiên quyết**, không phải mục kiểm sau. Bỏ qua nó là mất kết quả kiểm
+lỗi của những hồ sơ đang nằm trong hàng đợi.
