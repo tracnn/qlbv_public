@@ -79,6 +79,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        //
+        // Che do gom cua Xml3176ErrorService chi hoat dong khi job va checker dung CHUNG
+        // mot thuc the: bo dem la TRANG THAI CUA DOI TUONG. Laravel mac dinh khong dung
+        // singleton cho lop thuong, nen thieu dong nay thi checker nhan mot thuc the khac
+        // voi cai job vua bat gom -> che do gom IM LANG khong co tac dung, khong loi,
+        // khong canh bao, chi la cai tien khong xay ra.
+        $this->app->singleton(\App\Services\Xml3176ErrorService::class);
     }
 }
