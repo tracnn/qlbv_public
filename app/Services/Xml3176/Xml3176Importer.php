@@ -2,6 +2,7 @@
 
 namespace App\Services\Xml3176;
 
+use DB;
 use App\Services\Xml3176Service;
 use App\Services\XmlStructures;
 
@@ -140,13 +141,7 @@ class Xml3176Importer
 
         $macskcb = (string) $xmldata->THONGTINDONVI->MACSKCB;
 
-        // Tinh MOT lan truoc vong lap. Ban controller cu tinh lai trong moi vong
-        // FILEHOSO - gia tri khong doi nen day la thay doi bao toan hanh vi.
-        // LUU Y: count() tren node la luon ra 1. Day la loi CO SAN, giai doan 2 sua.
-        $soluonghoso = count($xmldata->THONGTINHOSO->SOLUONGHOSO);
-
-        $ma_lk = null;
-        $processedFileTypes = [];
+        $soluonghoso = self::soLuongHoSo($xmldata);
 
         // Ca hai ban cu deu foreach thang vao day: DANHSACHHOSO rong thi foreach chay
         // tren null va nem exception. Duong tai len bien thanh loi 500, duong quet thu
@@ -156,51 +151,79 @@ class Xml3176Importer
             return Xml3176ImportResult::thatBai('Khong tim thay FILEHOSO trong file');
         }
 
+        // Gom thanh mang de sap duoc thu tu: XML1 phai duoc xu ly TRUOC, vi
+        // deleteExistingXml3176() chi chay khi gap no.
+        $danhSachFile = [];
+        $danhSachLoai = [];
+
         foreach ($xmldata->THONGTINHOSO->DANHSACHHOSO->HOSO->FILEHOSO as $file_hs) {
-            $fileType = (string) $file_hs->LOAIHOSO;
+            $danhSachFile[] = $file_hs;
+            $danhSachLoai[] = (string) $file_hs->LOAIHOSO;
+        }
 
-            if (!self::coTrongDangKy($fileType)) {
-                \Log::warning('Unknown XML type: ' . $fileType);
-                continue;
-            }
+        $ma_lk = null;
+        $processedFileTypes = [];
 
-            $handler = self::handlerCho($fileType);
+        try {
+            // Mot ho so = mot transaction. Hong o dau cung quay lui sach, va vi
+            // deleteExistingXml3176() nam trong day nen DU LIEU CU CON NGUYEN.
+            //
+            // Job kiem loi tung dong duoc dispatch BEN TRONG day la co chu dich:
+            // hang doi dung driver database tren cung connection nen rollback xoa
+            // luon cac job do.
+            DB::transaction(function () use (
+                $danhSachFile, $danhSachLoai, $macskcb, $soluonghoso, &$ma_lk, &$processedFileTypes
+            ) {
+                foreach (self::sapXml1LenDau($danhSachLoai) as $i) {
+                    $file_hs  = $danhSachFile[$i];
+                    $fileType = $danhSachLoai[$i];
 
-            if ($handler === null) {
-                continue;   // bo qua co chu dich
-            }
+                    if (!self::coTrongDangKy($fileType)) {
+                        \Log::warning('Unknown XML type: ' . $fileType);
+                        continue;
+                    }
 
-            $data = simplexml_load_string(base64_decode($file_hs->NOIDUNGFILE));
+                    $handler = self::handlerCho($fileType);
 
-            if ($data === false) {
-                \Log::error('Khong doc duoc noi dung file ' . $fileType);
+                    if ($handler === null) {
+                        continue;   // bo qua co chu dich
+                    }
 
-                return Xml3176ImportResult::thatBai('Noi dung ' . $fileType . ' khong doc duoc');
-            }
+                    $data = simplexml_load_string(base64_decode($file_hs->NOIDUNGFILE));
 
-            if ($fileType === 'XML1') {
-                $expectedStructure = XmlStructures::$expectedStructures3176[$fileType] ?? [];
+                    if ($data === false) {
+                        throw new \RuntimeException('Noi dung ' . $fileType . ' khong doc duoc');
+                    }
 
-                if (!empty($expectedStructure) && !validateDataStructure($data, $expectedStructure)) {
-                    \Log::error('Invalid data structure for ' . $fileType);
+                    if ($fileType === 'XML1') {
+                        $expectedStructure = XmlStructures::$expectedStructures3176[$fileType] ?? [];
 
-                    return Xml3176ImportResult::thatBai('Sai cau truc du lieu ' . $fileType);
+                        if (!empty($expectedStructure) && !validateDataStructure($data, $expectedStructure)) {
+                            throw new \RuntimeException('Sai cau truc du lieu ' . $fileType);
+                        }
+
+                        $ma_lk = (string) $data->MA_LK;
+                        $this->xml3176Service->deleteExistingXml3176($ma_lk);
+                    }
+
+                    $processedFileTypes[] = $fileType;
+                    $this->xml3176Service->{$handler}($data, $fileType);
                 }
 
-                $ma_lk = (string) $data->MA_LK;
-                $this->xml3176Service->deleteExistingXml3176($ma_lk);
-            }
+                if ($ma_lk === null || empty($processedFileTypes)) {
+                    throw new \RuntimeException('Khong tim thay du lieu ho so hop le trong file');
+                }
 
-            $processedFileTypes[] = $fileType;
-            $this->xml3176Service->{$handler}($data, $fileType);
+                $this->xml3176Service->storeXml3176Information($ma_lk, $macskcb, 'import', $soluonghoso);
+            });
+        } catch (\Exception $e) {
+            \Log::error('Import that bai' . ($ma_lk ? ' (' . $ma_lk . ')' : '') . ': ' . $e->getMessage());
+
+            return Xml3176ImportResult::thatBai($e->getMessage());
         }
 
-        if ($ma_lk === null || empty($processedFileTypes)) {
-            return Xml3176ImportResult::thatBai('Khong tim thay du lieu ho so hop le trong file');
-        }
-
-        $this->xml3176Service->storeXml3176Information($ma_lk, $macskcb, 'import', $soluonghoso);
-
+        // Sau commit: hai ham nay chi day job, dat o day de rollback khong de lai
+        // job mo coi tro toi du lieu khong ton tai.
         if (!config('organization.xml_3176_not_check', false)) {
             $this->xml3176Service->checkXml3176Complete($ma_lk);
         }
