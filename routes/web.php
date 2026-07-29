@@ -387,6 +387,22 @@ Route::group(['middleware' => ['auth', 'check.first.login']], function () {
         ->name('category-bhyt.equipment-catalog');
         Route::get('bhyt/fetch-equipment-catalog', 'Category\CategoryBHYTController@fetchEquipmentCatalog')
         ->name('category-bhyt.fetch-equipment-catalog');
+
+        Route::get('bhyt/administrative-unit', 'Category\CategoryBHYTController@indexAdministrativeUnit')
+        ->name('category-bhyt.administrative-unit');
+        Route::get('bhyt/fetch-administrative-unit', 'Category\CategoryBHYTController@fetchAdministrativeUnit')
+        ->name('category-bhyt.fetch-administrative-unit');
+
+        Route::get('bhyt/medical-organization', 'Category\CategoryBHYTController@indexMedicalOrganization')
+        ->name('category-bhyt.medical-organization');
+        Route::get('bhyt/fetch-medical-organization', 'Category\CategoryBHYTController@fetchMedicalOrganization')
+        ->name('category-bhyt.fetch-medical-organization');
+
+        Route::get('bhyt/job-category', 'Category\CategoryBHYTController@indexJobCategory')
+        ->name('category-bhyt.job-category');
+        Route::get('bhyt/fetch-job-category', 'Category\CategoryBHYTController@fetchJobCategory')
+        ->name('category-bhyt.fetch-job-category');
+
         Route::get('bhyt/qd130-xml-error-catalog', 'Category\CategoryBHYTController@indexQd130XmlErrorCatalog')
         ->name('category-bhyt.qd130-xml-error-catalog');
         Route::get('bhyt/category-bhyt-fetch-qd130-xml-error-catalog-datatable', 'Category\CategoryBHYTController@fetchQd130XmlErrorCatalogDatatable')

@@ -130,7 +130,46 @@ class CategoryBHYTController extends Controller
     public function fetchEquipmentCatalog()
     {
         $result = EquipmentCatalog::query();
-        
+
+        return Datatables::of($result)
+        ->make(true);
+    }
+
+    public function indexAdministrativeUnit()
+    {
+        return view('category.bhyt.administrative_unit');
+    }
+
+    public function fetchAdministrativeUnit()
+    {
+        $result = \App\Models\BHYT\AdministrativeUnit::query();
+
+        return Datatables::of($result)
+        ->make(true);
+    }
+
+    public function indexMedicalOrganization()
+    {
+        return view('category.bhyt.medical_organization');
+    }
+
+    public function fetchMedicalOrganization()
+    {
+        $result = \App\Models\BHYT\MedicalOrganization::query();
+
+        return Datatables::of($result)
+        ->make(true);
+    }
+
+    public function indexJobCategory()
+    {
+        return view('category.bhyt.job_category');
+    }
+
+    public function fetchJobCategory()
+    {
+        $result = \App\Models\BHYT\JobCategory::query();
+
         return Datatables::of($result)
         ->make(true);
     }

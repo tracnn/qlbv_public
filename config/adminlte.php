@@ -626,6 +626,24 @@ return [
                             'active'=> ['category/bhyt/equipment-catalog*'],
                         ],
                         [
+                            'text'  => 'DM Đơn vị hành chính',
+                            'icon'  => 'book',
+                            'route'   => 'category-bhyt.administrative-unit',
+                            'active'=> ['category/bhyt/administrative-unit*'],
+                        ],
+                        [
+                            'text'  => 'DM Cơ sở KCB',
+                            'icon'  => 'book',
+                            'route'   => 'category-bhyt.medical-organization',
+                            'active'=> ['category/bhyt/medical-organization*'],
+                        ],
+                        [
+                            'text'  => 'DM Nghề nghiệp',
+                            'icon'  => 'book',
+                            'route'   => 'category-bhyt.job-category',
+                            'active'=> ['category/bhyt/job-category*'],
+                        ],
+                        [
                             'text'  => 'DM lỗi Xml 4750',
                             'icon'  => 'book',
                             'route'   => 'category-bhyt.qd130-xml-error-catalog',
