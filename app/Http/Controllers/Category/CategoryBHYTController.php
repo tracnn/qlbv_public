@@ -260,6 +260,27 @@ class CategoryBHYTController extends Controller
         return Excel::download(new CatalogTemplateExport($type), $type . '_bieu_mau.xlsx');
     }
 
+    /**
+     * Xuat danh sach dong hong cua mot lan nhap ra .xlsx.
+     *
+     * Nhan lai chinh du lieu da tra ve trong JSON cua import() thay vi luu tren may chu:
+     * khong phai them bang, khong phai don tep cu.
+     */
+    public function taiLoiNhap(Request $request)
+    {
+        $ds = json_decode($request->input('dong_loi'), true);
+
+        if (!is_array($ds) || empty($ds)) {
+            abort(404, 'Không có dòng lỗi nào để xuất');
+        }
+
+        $tenTep = (string) $request->input('ten_tep', 'danh-muc');
+        $goc = pathinfo($tenTep, PATHINFO_FILENAME);
+        $ten = 'loi-nhap-' . preg_replace('/[^\p{L}\p{N}._-]+/u', '-', $goc);
+
+        return Excel::download(new \App\Exports\LoiNhapDanhMucExport($ds, $tenTep), $ten . '.xlsx');
+    }
+
     public function import(Request $request)
     {
         // Ma co so chon tren man nhap; chi ap cho ba danh muc theo co so, va chi cho dong

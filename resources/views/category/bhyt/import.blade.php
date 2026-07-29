@@ -122,31 +122,31 @@
                 });
             }
 
-            // Sinh CSV tu danh sach dong hong roi cho tai ve. Lam o trinh duyet nen khong
-            // can them duong dan, khong luu tep tren may chu.
+            // Xuat danh sach dong hong ra .xlsx. Gui lai chinh du lieu da nhan trong JSON
+            // nen may chu khong phai luu gi; dung form POST de trinh duyet tu tai tep ve.
             function taiChiTietLoi(tenTep, dongLoi) {
-                var d = [['Dong Excel', 'Loai', 'Ly do']];
+                var f = document.createElement("form");
 
-                dongLoi.forEach(function (x) {
-                    d.push([x.dong, x.loai === 'bo_qua' ? 'Bỏ qua' : 'Lỗi', x.ly_do]);
-                });
+                f.method = "POST";
+                f.action = "{{ route('category-bhyt.import-loi') }}";
+                f.style.display = "none";
 
-                var csv = d.map(function (h) {
-                    return h.map(function (o) {
-                        return '"' + String(o === null || o === undefined ? '' : o).replace(/"/g, '""') + '"';
-                    }).join(',');
-                }).join(String.fromCharCode(13, 10));
+                function them(ten, giaTri) {
+                    var o = document.createElement("input");
 
-                // BOM de Excel doc dung tieng Viet; fromCharCode de ma nguon khong co ky tu vo hinh.
-                var blob = new Blob([String.fromCharCode(0xFEFF) + csv], { type: 'text/csv;charset=utf-8;' });
-                var a = document.createElement('a');
+                    o.type = "hidden";
+                    o.name = ten;
+                    o.value = giaTri;
+                    f.appendChild(o);
+                }
 
-                a.href = URL.createObjectURL(blob);
-                a.download = 'loi-nhap-' + tenTep.replace(/\.[^.]+$/, '') + '.csv';
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(a.href);
+                them("_token", "{{ csrf_token() }}");
+                them("ten_tep", tenTep);
+                them("dong_loi", JSON.stringify(dongLoi));
+
+                document.body.appendChild(f);
+                f.submit();
+                document.body.removeChild(f);
             }
 
             function ganNutTaiLoi(file, kq) {
@@ -160,7 +160,7 @@
                 var nut = document.createElement('button');
                 nut.className = 'btn btn-xs btn-warning';
                 nut.style.marginLeft = '8px';
-                nut.innerHTML = '<i class="fa fa-download"></i> Chi tiết (' + kq.dong_loi.length + ')';
+                nut.innerHTML = '<i class="fa fa-file-excel-o"></i> Chi tiết (' + kq.dong_loi.length + ')';
                 nut.onclick = function () { taiChiTietLoi(file.name, kq.dong_loi); };
 
                 row.cells[2].appendChild(nut);

@@ -409,6 +409,8 @@ Route::group(['middleware' => ['auth', 'check.first.login']], function () {
         ->name('category-bhyt.import-template');
         Route::post('bhyt/category-bhyt-import', 'Category\CategoryBHYTController@import')
         ->name('category-bhyt.import');
+        Route::post('bhyt/category-bhyt-import-loi', 'Category\CategoryBHYTController@taiLoiNhap')
+        ->name('category-bhyt.import-loi');
     });
 
 	/* Insurance , 'middleware' => ['checkrole:manager'] */
