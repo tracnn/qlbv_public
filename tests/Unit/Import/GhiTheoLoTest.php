@@ -242,4 +242,37 @@ class GhiTheoLoTest extends TestCase
             $this->don();
         }
     }
+
+    /** @test */
+    public function o_dinh_tab_khong_lam_chen_lai_dong_da_co()
+    {
+        // Bat bien: gia tri khoa da luu khong con khoang trang thua, va gia tri vao cung
+        // da qua CatalogImportService::catKhoangTrang(). Khi do o Excel dinh TAB van phai
+        // khop dong da co.
+        //
+        // Neu bat bien bi pha, truy van tra se truot va dong bi chen them MOI LAN NHAP -
+        // da gap that voi ma dich vu '24.0019.1685.K.01910' (sinh 5 ban).
+        $this->don();
+
+        try {
+            $kq = new KetQuaNhapDanhMuc();
+            (new GhiTheoLo('medicine_catalogs', $this->cotKhoa(), $kq))
+                ->ghi([['dong_excel' => 2, 'du_lieu' => $this->dong('ZZLO9')]]);
+
+            $kq2 = new KetQuaNhapDanhMuc();
+            (new GhiTheoLo('medicine_catalogs', $this->cotKhoa(), $kq2))->ghi([[
+                'dong_excel' => 2,
+                'du_lieu' => \App\Services\CatalogImportService::catKhoangTrang(
+                    $this->dong("ZZLO9\t")
+                ),
+            ]]);
+
+            $a = $kq2->toArray();
+
+            $this->assertSame(0, $a['so_da_nhap'], 'Dong da co van bi chen lai');
+            $this->assertSame(1, $a['so_khong_doi']);
+        } finally {
+            $this->don();
+        }
+    }
 }

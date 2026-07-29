@@ -19,6 +19,15 @@ use DB;
  *
  * Chi phi moi lo: 1 SELECT + 1 INSERT + so truy van cap nhat bang dung so dong DOI.
  * Nhap lai dung tep cu khong sua gi: 1 truy van moi lo, khong ghi gi.
+ *
+ * BAT BIEN LOP NAY DUA VAO: gia tri khoa DA LUU phai khong con khoang trang thua.
+ * khoaDong dung trim() cua PHP - von cat ca TAB - con truy van tra lai so sanh bang MySQL,
+ * ma MySQL khong coi tab la khoang trang. Neu ban ghi da luu con dinh tab thi tra khong ra,
+ * dong bi coi la moi va CHEN THEM MOI LAN NHAP. Da gap that: ma dich vu
+ * '24.0019.1685.K.01910' dinh tab sinh 5 ban trong service_catalogs.
+ *
+ * Bat bien duoc GIU boi CatalogImportService::catKhoangTrang() luc ghi, va duoc THIET LAP
+ * cho du lieu cu boi migration 2026_07_28_160000.
  */
 class GhiTheoLo
 {

@@ -232,6 +232,7 @@ class CatalogImportService
                 $duLieu['cskcb_cls'] = null;
             }
 
+            $duLieu = self::catKhoangTrang($duLieu);
             $duLieu = self::ganCoSo($duLieu, $maCskcb);
             $duLieu = self::chuanHoaSo($duLieu, $this->cotSoCua($this->bangCua($tt['type'])));
             $tt['lo'][] = ['dong_excel' => $dongExcel, 'du_lieu' => $duLieu];
@@ -241,6 +242,27 @@ class CatalogImportService
                 $tt['lo'] = [];
             }
         }
+    }
+
+    /**
+     * Cat khoang trang thua o MOI gia tri chuoi truoc khi ghi.
+     *
+     * O Excel hay dinh TAB hoac dau cach o cuoi. Truoc day gia tri do duoc luu nguyen, ma
+     * khoa so khop lai dung trim() cua PHP - hai ben lech nhau nen dong da co bi coi la
+     * moi va chen them MOI LAN nhap. Da gap that: ma '24.0019.1685.K.01910' dinh tab sinh
+     * 5 ban trong service_catalogs.
+     *
+     * Ham THUAN de kiem duoc.
+     */
+    public static function catKhoangTrang(array $duLieu)
+    {
+        foreach ($duLieu as $cot => $v) {
+            if (is_string($v)) {
+                $duLieu[$cot] = trim($v);
+            }
+        }
+
+        return $duLieu;
     }
 
     /**

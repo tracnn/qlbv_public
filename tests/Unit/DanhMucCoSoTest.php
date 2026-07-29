@@ -200,4 +200,19 @@ class DanhMucCoSoTest extends TestCase
 
         $this->assertArrayNotHasKey('don_gia', $ra);
     }
+
+    /** @test */
+    public function cat_khoang_trang_thua_o_gia_tri_chuoi()
+    {
+        // O Excel hay dinh TAB o cuoi; gia tri do luu nguyen se lam khoa so khop lech nhau
+        // va dong da co bi chen lai moi lan nhap.
+        $ra = \App\Services\CatalogImportService::catKhoangTrang([
+            'ma' => "A	", 'ten' => '  B  ', 'gia' => 10, 'rong' => null,
+        ]);
+
+        $this->assertSame('A', $ra['ma']);
+        $this->assertSame('B', $ra['ten']);
+        $this->assertSame(10, $ra['gia'], 'Gia tri khong phai chuoi giu nguyen');
+        $this->assertNull($ra['rong']);
+    }
 }

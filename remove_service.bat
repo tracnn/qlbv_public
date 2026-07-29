@@ -53,5 +53,13 @@ set NSSM_PATH=%~dp0
 %NSSM_PATH%\nssm stop "QLBV JobExportXml3176"
 %NSSM_PATH%\nssm remove "QLBV JobExportXml3176" confirm
 
+:: Xóa dịch vụ cho kiemtraylenh:scan
+%NSSM_PATH%\nssm stop "QLBV KiemTraYLenh"
+%NSSM_PATH%\nssm remove "QLBV KiemTraYLenh" confirm
+
+:: Xóa dịch vụ cho kiemtraylenh:notify
+%NSSM_PATH%\nssm stop "QLBV KiemTraYLenhNotify"
+%NSSM_PATH%\nssm remove "QLBV KiemTraYLenhNotify" confirm
+
 
 echo Services uninstall completed successfully.
