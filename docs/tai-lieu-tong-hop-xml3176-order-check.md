@@ -46,8 +46,17 @@
 | Nguồn dữ liệu | File XML QĐ3176 (import/upload) | Đọc trực tiếp HIS Oracle (chỉ SELECT) |
 | Kích hoạt | Queue Job theo sự kiện import + command import nền | Command quét nền theo watermark (60s/lần) |
 | Kết quả | `xml3176_error_results` + xuất/ký/gửi cổng | `order_check_violations` + dashboard/email/API |
-| Phân quyền | `checkrole:xml-man` | `checkrole:administrator` |
+| Phân quyền | `checkrole:xml-man` | `checkrole:order-check` |
 | Độ nhạy cảm con người | Trung bình (tài chính) | **Rất cao** (bắt lỗi bác sĩ) |
+
+> **Menu và quyền của Order-Check** (từ 29/07/2026): mục `Kiểm tra sai sót y lệnh` là
+> mục **cấp 1**, đặt ngay **trên** `Hồ sơ XML` — trước đây nằm trong `Kế hoạch tổng hợp`.
+> Quyền là role riêng `order-check`, không còn dùng `administrator`.
+>
+> Khi triển khai **bắt buộc chạy `php artisan migrate`** để tạo role. Không chạy thì
+> **không ai vào được**, kể cả superadmin: `AppServiceProvider::filterMenu` cho
+> superadministrator xem toàn bộ menu không lọc, nhưng middleware `CheckRole` **không có**
+> ngoại lệ cho superadministrator — kết quả là thấy menu nhưng bấm vào bị 403.
 
 Cả hai đều **bất đồng bộ / chạy nền**, có **danh mục quy tắc bật/tắt từ UI**, có **lưu vết + dashboard**, và có nhiều **công tắc cấu hình mặc định TẮT** cho hành động ra bên ngoài (gửi cổng BHXH / gửi email).
 
