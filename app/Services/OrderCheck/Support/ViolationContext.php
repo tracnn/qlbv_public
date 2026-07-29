@@ -20,6 +20,13 @@ class ViolationContext
     public $serviceCode;
     public $serviceName;
 
+    /**
+     * @var string|null Ma CSKCB (his_branch.hein_medi_org_code) cua co so xu ly ho so.
+     *                  Luu xuong de man danh sach loc duoc theo co so: vi pham nam o
+     *                  MySQL con HIS o Oracle nen KHONG the join luc truy van.
+     */
+    public $maCskcb;
+
     public static function make(array $a)
     {
         $c = new self();
@@ -34,6 +41,7 @@ class ViolationContext
         $c->serviceReqTypeId = isset($a['service_req_type_id']) ? $a['service_req_type_id'] : null;
         $c->serviceCode = isset($a['service_code']) ? $a['service_code'] : null;
         $c->serviceName = isset($a['service_name']) ? $a['service_name'] : null;
+        $c->maCskcb = isset($a['ma_cskcb']) ? $a['ma_cskcb'] : null;
         return $c;
     }
 
@@ -49,6 +57,7 @@ class ViolationContext
             'department_id' => $o->departmentId,
             'service_req_code' => $o->serviceReqCode,
             'service_req_type_id' => $o->serviceReqTypeId,
+            'ma_cskcb' => $o->maCskcb,
         ]);
     }
 }

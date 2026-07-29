@@ -128,6 +128,7 @@ class OrderCheckEngine
         $row->rule_code = $vio->ruleCode;
         $row->treatment_id = $ctx->treatmentId;
         $row->treatment_code = $ctx->treatmentCode;
+        $row->ma_cskcb = $ctx->maCskcb;
         $row->patient_code = $ctx->patientCode;
         $row->patient_name = $ctx->patientName;
         $row->doctor_loginname = $ctx->doctorLoginname;
