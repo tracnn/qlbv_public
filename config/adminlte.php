@@ -444,14 +444,14 @@ return [
                 [
                     'text'      => 'Danh mục giới hạn DV',
                     'icon'      => 'venus-mars',
-                    'checkrole' => 'order-check',
+                    'checkrole' => 'superadministrator',
                     'route'     => 'khth.order-check-ref-index',
                     'active'    => ['khth/order-check-ref-index*'],
                 ],
                 [
                     'text'      => 'Quản lý quy tắc kiểm tra',
                     'icon'      => 'sliders',
-                    'checkrole' => 'order-check',
+                    'checkrole' => 'superadministrator',
                     'route'     => 'khth.order-check-rule-index',
                     'active'    => ['khth/order-check-rule-index*'],
                 ],

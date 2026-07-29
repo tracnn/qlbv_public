@@ -45,16 +45,53 @@ class RouteOrderCheckTest extends TestCase
         }
     }
 
-    /** @test */
-    public function moi_route_deu_dung_quyen_order_check()
+    /**
+     * Hai man CAU HINH chi danh cho superadministrator: chung sua danh muc gioi han va
+     * bat/tat bo luat, tuc la doi hanh vi bat loi cua ca he thong. Man xem vi pham thi
+     * mo cho ca role order-check.
+     */
+    protected function routeCauHinh()
     {
-        foreach (array_keys($this->banDo()) as $ten) {
+        return [
+            'khth.order-check-ref-index',
+            'khth.order-check-ref-fetch',
+            'khth.order-check-ref-store',
+            'khth.order-check-ref-update',
+            'khth.order-check-ref-destroy',
+            'khth.order-check-rule-index',
+            'khth.order-check-rule-fetch',
+            'khth.order-check-rule-update',
+            'khth.order-check-rule-toggle',
+        ];
+    }
+
+    /** @test */
+    public function man_xem_vi_pham_dung_quyen_order_check()
+    {
+        $xem = array_diff(array_keys($this->banDo()), $this->routeCauHinh());
+
+        $this->assertCount(6, $xem);
+
+        foreach ($xem as $ten) {
             $mw = Route::getRoutes()->getByName($ten)->gatherMiddleware();
 
             $this->assertContains('checkrole:order-check', $mw,
                 "Route $ten chua chuyen sang quyen order-check");
             $this->assertNotContains('checkrole:administrator', $mw,
                 "Route $ten van con quyen administrator");
+        }
+    }
+
+    /** @test */
+    public function man_cau_hinh_chi_danh_cho_superadministrator()
+    {
+        foreach ($this->routeCauHinh() as $ten) {
+            $mw = Route::getRoutes()->getByName($ten)->gatherMiddleware();
+
+            $this->assertContains('checkrole:superadministrator', $mw,
+                "Route cau hinh $ten phai gioi han cho superadministrator");
+            $this->assertNotContains('checkrole:order-check', $mw,
+                "Route cau hinh $ten khong duoc mo cho ca role order-check");
         }
     }
 

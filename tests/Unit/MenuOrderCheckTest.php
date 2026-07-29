@@ -68,10 +68,13 @@ class MenuOrderCheckTest extends TestCase
         $this->assertSame('order-check', $muc['checkrole']);
         $this->assertCount(3, $muc['submenu']);
 
-        foreach ($muc['submenu'] as $con) {
-            $this->assertSame('order-check', $con['checkrole'],
-                'Muc con "' . $con['text'] . '" chua chuyen sang quyen order-check');
-        }
+        // Man xem vi pham mo cho ca role order-check; hai man CAU HINH (sua danh muc gioi
+        // han, bat/tat bo luat) chi danh cho superadministrator vi chung doi hanh vi bat
+        // loi cua ca he thong.
+        $this->assertSame(
+            ['order-check', 'superadministrator', 'superadministrator'],
+            array_column($muc['submenu'], 'checkrole')
+        );
 
         $this->assertSame(
             ['khth.order-check-index', 'khth.order-check-ref-index', 'khth.order-check-rule-index'],

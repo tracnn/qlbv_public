@@ -638,7 +638,17 @@ Route::group(['middleware' => ['auth', 'check.first.login']], function () {
         Route::get('order-check-index/fetch', 'KHTH\OrderCheckController@fetch')->name('khth.order-check-fetch');
         Route::post('order-check-index/update-status', 'KHTH\OrderCheckController@updateStatus')->name('khth.order-check-update-status');
         Route::get('order-check-index/export', 'KHTH\OrderCheckController@export')->name('khth.order-check-export');
+    });
 
+    // Hai man CAU HINH cua order-check chi danh cho superadministrator: chung sua danh muc
+    // gioi han va bat/tat bo luat, tuc la doi hanh vi bat loi cua ca he thong.
+    //
+    // Luu y: middleware CheckRole KHONG co ngoai le cho superadministrator (no chi kiem
+    // hasRole || can), nen phai ghi ro 'checkrole:superadministrator' o day. Trong khi do
+    // AppServiceProvider::filterMenu lai cho superadministrator xem toan bo menu khong loc
+    // - hai ben lech nhau, nhung vi quyen o day dung bang role superadministrator nen
+    // nguoi thay menu cung la nguoi vao duoc.
+    Route::group(['prefix' => 'khth/', 'middleware' => ['checkrole:superadministrator']], function () {
         /* Danh muc gioi han DV (gioi tinh/tuoi) */
         Route::get('order-check-ref-index', 'KHTH\OrderCheckRefController@index')->name('khth.order-check-ref-index');
         Route::get('order-check-ref-index/fetch', 'KHTH\OrderCheckRefController@fetch')->name('khth.order-check-ref-fetch');
