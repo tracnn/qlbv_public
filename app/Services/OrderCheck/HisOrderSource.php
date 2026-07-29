@@ -70,7 +70,7 @@ class HisOrderSource
             ->selectRaw('ss.id, ss.service_req_id, ss.tdl_service_code, ss.tdl_service_name,
                 ss.execute_time, ss.tdl_intruction_time, ss.patient_type_id,
                 sv.hein_service_bhyt_code, sv.hein_service_bhyt_name, sv.service_type_id
-                , mdt.active_ingr_bhyt_code')
+                , mdt.active_ingr_bhyt_code, mdt.active_ingr_bhyt_name')
             ->get();
 
         $map = [];
@@ -89,7 +89,12 @@ class HisOrderSource
                 $r->active_ingr_bhyt_code,
                 $r->hein_service_bhyt_code
             );
-            $s->bhytName = $r->hein_service_bhyt_name;
+            // Ten phai DONG NGUON voi ma: neu ma lay tu danh muc thuoc thi ten cung phai
+            // lay tu danh muc thuoc, khong duoc tron nguon (gay lech khi doi chieu ten BHYT).
+            $s->bhytName = \App\Services\OrderCheck\Support\MaBhytDong::cua(
+                $r->active_ingr_bhyt_name,
+                $r->hein_service_bhyt_name
+            );
             // Quyet dinh quy tac doi chieu voi bang danh muc nao: 6 Thuoc, 7 Vat tu, con
             // lai la DVKT.
             $s->serviceTypeId = $r->service_type_id !== null ? (int) $r->service_type_id : null;

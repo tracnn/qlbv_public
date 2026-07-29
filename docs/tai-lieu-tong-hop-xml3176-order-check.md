@@ -197,10 +197,11 @@ flowchart TD
 > cho dịch vụ kỹ thuật**. Với thuốc, mã BHYT nằm ở
 > `his_medicine_type.active_ingr_bhyt_code`.
 >
-> Đo trên 7 ngày thật, chỉ tính dòng thuộc đối tượng BHYT: **48.234 dòng thuốc** thiếu
+> Đo thật với cửa sổ `tdl_intruction_time >= 20260722000000` (không chặn trên, đo ngày
+> 29/07/2026), chỉ tính dòng thuộc đối tượng BHYT: **48.566 dòng thuốc** thiếu
 > `hein_service_bhyt_code`, và **100% số đó đã khai** `active_ingr_bhyt_code` — tức là nếu
-> bật quy tắc sẽ sinh ~6.900 cảnh báo sai mỗi ngày, không cái nào đúng. Vật tư
-> (0/175.775) và DVKT (0/352.206) không thiếu dòng nào.
+> bật quy tắc sẽ sinh cảnh báo sai hàng loạt, không cái nào đúng. Vật tư
+> (0/177.730) và DVKT (0/355.497) không thiếu dòng nào.
 >
 > Nay `HisOrderSource::fetchServicesByReqIds()` join thêm `his_medicine` →
 > `his_medicine_type` và chọn mã qua `App\Services\OrderCheck\Support\MaBhytDong::cua()`:

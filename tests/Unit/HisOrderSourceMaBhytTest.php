@@ -25,8 +25,8 @@ class HisOrderSourceMaBhytTest extends TestCase
     {
         $ma = $this->ma();
 
-        $this->assertContains('his_medicine', $ma, 'Mat join his_medicine');
-        $this->assertContains('his_medicine_type', $ma, 'Mat join his_medicine_type');
+        $this->assertContains('his_medicine as md', $ma, 'Mat join his_medicine');
+        $this->assertContains('md.medicine_type_id', $ma, 'Mat join his_medicine_type');
     }
 
     /** @test */
@@ -41,5 +41,14 @@ class HisOrderSourceMaBhytTest extends TestCase
     {
         $this->assertContains('MaBhytDong', $this->ma(),
             'Khong con dung MaBhytDong - co the da quay lai gan thang hein_service_bhyt_code');
+    }
+
+    /** @test */
+    public function ten_bhyt_dong_nguon_voi_ma()
+    {
+        $ma = $this->ma();
+
+        $this->assertContains('active_ingr_bhyt_name', $ma,
+            'Truy van khong con chon cot ten hoat chat BHYT - ten se lech nguon voi ma');
     }
 }
