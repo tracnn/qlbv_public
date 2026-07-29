@@ -363,6 +363,12 @@
             $('#xoa_thuc_hien').prop('disabled', $('#xoa_xac_nhan').val().trim() !== 'XOA');
         }
 
+        // Escape truoc khi chen vao DOM bang .html(): thong bao nay co the phan anh du
+        // lieu tu request (vi du thong bao loi), theo dung tien le da co o _chi_tiet.blade.php.
+        function xoaEscape(s) {
+            return $('<div>').text(s).html();
+        }
+
         $('#xoa_loai').on('change', function () {
             $('#xoa_co_so_wrap').toggle($('#xoa_loai option:selected').data('theo-co-so') == 1);
             $('#xoa_ket_qua').html('');
@@ -374,10 +380,10 @@
         $('#xoa_dem').on('click', function () {
             $.getJSON("{{ route('category-bhyt.xoa-danh-muc-dem') }}", xoaThamSo(), function (r) {
                 $('#xoa_ket_qua').html('<div class="alert alert-info">Sẽ xoá <strong>'
-                    + r.so_dong + '</strong> dòng.</div>');
+                    + xoaEscape(r.so_dong) + '</strong> dòng.</div>');
             }).fail(function (x) {
                 $('#xoa_ket_qua').html('<div class="alert alert-danger">'
-                    + ((x.responseJSON && x.responseJSON.message) || 'Lỗi') + '</div>');
+                    + xoaEscape((x.responseJSON && x.responseJSON.message) || 'Lỗi') + '</div>');
             });
         });
 
@@ -388,12 +394,12 @@
 
             $.post("{{ route('category-bhyt.xoa-danh-muc') }}", d, function (r) {
                 $('#xoa_ket_qua').html('<div class="alert alert-success">Đã xoá <strong>'
-                    + r.so_dong + '</strong> dòng.</div>');
+                    + xoaEscape(r.so_dong) + '</strong> dòng.</div>');
                 $('#xoa_xac_nhan').val('');
                 xoaDatLaiNut();
             }, 'json').fail(function (x) {
                 $('#xoa_ket_qua').html('<div class="alert alert-danger">'
-                    + ((x.responseJSON && x.responseJSON.message) || 'Lỗi') + '</div>');
+                    + xoaEscape((x.responseJSON && x.responseJSON.message) || 'Lỗi') + '</div>');
             });
         });
     }

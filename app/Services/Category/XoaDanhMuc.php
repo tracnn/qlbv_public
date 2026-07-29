@@ -24,7 +24,10 @@ class XoaDanhMuc
     public static function dieuKien($loai, $maCskcb, array $soDangKy)
     {
         if (!isset($soDangKy[$loai])) {
-            throw new InvalidArgumentException('Loai danh muc khong hop le: ' . $loai);
+            // Khong noi suy $loai vao thong bao: nguoi dung chon tu danh sach tha xuong
+            // nen khong can biet gia tri ho da gui; tranh chuoi tu client lot vao thong
+            // bao loi ma phia hien thi (JS) co the chen thang vao DOM.
+            throw new InvalidArgumentException('Loai danh muc khong hop le');
         }
 
         $x = $soDangKy[$loai];
