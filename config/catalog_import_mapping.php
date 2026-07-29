@@ -57,7 +57,9 @@ return [
             'ht_thau' => ['HT_THAU', 'HT thầu', 'HT THAU'],
             'den_ngay' => ['DENNGAY', 'Đến ngày', 'DEN NGAY'],
         ],
-        'required_fields' => ['ma_vat_tu', 'nhom_vat_tu', 'ten_vat_tu', 'tt_thau', 'don_gia', 'don_gia_bh', 'tu_ngay'],
+        // Gia KHONG bat buoc: danh muc BHXH cap co dong chua co gia. Cot gia trong CSDL deu
+        // nullable nen de trong la duoc.
+        'required_fields' => ['ma_vat_tu', 'nhom_vat_tu', 'ten_vat_tu', 'tt_thau', 'tu_ngay'],
         'unique_keys' => ['ma_vat_tu', 'ten_vat_tu', 'tt_thau', 'don_gia_bh', 'tu_ngay', 'ma_cskcb'],
     ],
 

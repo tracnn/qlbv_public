@@ -135,4 +135,69 @@ class DanhMucCoSoTest extends TestCase
         $this->assertNotContains("br.is_active", $nguon,
             'HisOrderSource khong duoc loc co so theo trang thai hoat dong');
     }
+
+    /** @test */
+    public function gia_khong_con_bat_buoc_khi_nhap_vat_tu_y_te()
+    {
+        // Danh muc BHXH cap co dong chua co gia; cot gia trong CSDL deu nullable.
+        $bb = config('catalog_import_mapping.medical_supply.required_fields');
+
+        $this->assertNotContains('don_gia', $bb);
+        $this->assertNotContains('don_gia_bh', $bb);
+        $this->assertContains('ma_vat_tu', $bb, 'Van phai bat buoc ma vat tu');
+    }
+
+    /** @test */
+    public function gia_khong_bat_buoc_khi_nhap_thuoc()
+    {
+        $bb = config('catalog_import_mapping.medicine.required_fields');
+
+        $this->assertNotContains('don_gia', $bb);
+        $this->assertNotContains('don_gia_bh', $bb);
+    }
+
+    /** @test */
+    public function o_so_de_trong_duoc_quy_ve_null()
+    {
+        // MySQL o che do STRICT_TRANS_TABLES tu choi chuoi rong cho cot decimal:
+        // "Incorrect decimal value: ''" - dong bi bo va nguoi dung chi thay mot con so loi.
+        $ra = \App\Services\CatalogImportService::chuanHoaSo(
+            ['ma' => 'A', 'don_gia' => '', 'don_gia_bh' => '   ', 'so_luong' => '5'],
+            ['don_gia', 'don_gia_bh', 'so_luong']
+        );
+
+        $this->assertNull($ra['don_gia']);
+        $this->assertNull($ra['don_gia_bh'], 'Chuoi toan khoang trang cung phai ve null');
+        $this->assertSame('5', $ra['so_luong'], 'Gia tri co that phai giu nguyen');
+    }
+
+    /** @test */
+    public function cot_chu_de_trong_khong_bi_quy_ve_null()
+    {
+        // Chi cot SO moi can quy ve null; cot chu de chuoi rong la hop le.
+        $ra = \App\Services\CatalogImportService::chuanHoaSo(
+            ['ten' => '', 'don_gia' => ''],
+            ['don_gia']
+        );
+
+        $this->assertSame('', $ra['ten']);
+        $this->assertNull($ra['don_gia']);
+    }
+
+    /** @test */
+    public function so_0_khong_bi_coi_la_trong()
+    {
+        // Gia = 0 la gia tri hop le, khong duoc bien thanh null.
+        $ra = \App\Services\CatalogImportService::chuanHoaSo(['don_gia' => 0], ['don_gia']);
+
+        $this->assertSame(0, $ra['don_gia']);
+    }
+
+    /** @test */
+    public function cot_khong_co_trong_du_lieu_thi_khong_tu_sinh_ra()
+    {
+        $ra = \App\Services\CatalogImportService::chuanHoaSo(['ma' => 'A'], ['don_gia']);
+
+        $this->assertArrayNotHasKey('don_gia', $ra);
+    }
 }

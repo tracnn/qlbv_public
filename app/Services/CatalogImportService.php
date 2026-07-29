@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Facades\Excel;
 use Carbon\Carbon;
@@ -28,6 +29,9 @@ class CatalogImportService
 
     /** @var KetQuaNhapDanhMuc dat lai moi lan import() */
     protected $ketQua;
+
+    /** @var array bang => [ten cot so]; nho de khong hoi lai lieu do moi lo */
+    protected $cotSo = [];
 
     public function __construct(ExcelColumnMapper $columnMapper)
     {
@@ -229,6 +233,7 @@ class CatalogImportService
             }
 
             $duLieu = self::ganCoSo($duLieu, $maCskcb);
+            $duLieu = self::chuanHoaSo($duLieu, $this->cotSoCua($this->bangCua($tt['type'])));
             $tt['lo'][] = ['dong_excel' => $dongExcel, 'du_lieu' => $duLieu];
 
             if (count($tt['lo']) >= 500) {
@@ -236,6 +241,53 @@ class CatalogImportService
                 $tt['lo'] = [];
             }
         }
+    }
+
+    /**
+     * O SO de trong trong Excel cho ra CHUOI RONG, khong phai null.
+     *
+     * MySQL o che do STRICT_TRANS_TABLES tu choi thang: "Incorrect decimal value: ''".
+     * Dong do bi bo va nguoi dung chi thay mot con so loi. Quy ve null de cot nullable
+     * nhan duoc.
+     *
+     * Ham THUAN de kiem duoc.
+     *
+     * @param array $duLieu
+     * @param array $cotSo ten cac cot kieu so
+     */
+    public static function chuanHoaSo(array $duLieu, array $cotSo)
+    {
+        foreach ($cotSo as $c) {
+            if (array_key_exists($c, $duLieu) && trim((string) $duLieu[$c]) === '') {
+                $duLieu[$c] = null;
+            }
+        }
+
+        return $duLieu;
+    }
+
+    /**
+     * Ten cac cot kieu so cua mot bang, doc tu chinh CSDL.
+     *
+     * Doc tu schema thay vi liet ke tay: bang danh muc co nhieu cot so ngoai gia
+     * (so_luong, dinh_muc, tyle_tt_bh, loai_thau, ht_thau...) va tat ca deu dinh cung mot
+     * loi khi o Excel de trong.
+     */
+    protected function cotSoCua($bang)
+    {
+        if (isset($this->cotSo[$bang])) {
+            return $this->cotSo[$bang];
+        }
+
+        $ra = [];
+
+        foreach (DB::select('SHOW COLUMNS FROM ' . $bang) as $c) {
+            if (preg_match('/^(tinyint|smallint|mediumint|int|bigint|decimal|numeric|float|double)/i', $c->Type)) {
+                $ra[] = $c->Field;
+            }
+        }
+
+        return $this->cotSo[$bang] = $ra;
     }
 
     /** Dem mot ban ghi vua updateOrCreate vao ket qua */
