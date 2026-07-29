@@ -61,11 +61,16 @@ class HisOrderSource
             ->table('his_sere_serv as ss')
             // Ma BHXH nam tren danh muc dich vu HIS, khong nam tren dong y lenh.
             ->leftJoin('his_service as sv', 'sv.id', '=', 'ss.service_id')
+            // Ma BHYT cua THUOC nam o danh muc thuoc, khong nam o danh muc dich vu: cot
+            // sv.hein_service_bhyt_code chi duoc duy tri cho dich vu ky thuat.
+            ->leftJoin('his_medicine as md', 'md.id', '=', 'ss.medicine_id')
+            ->leftJoin('his_medicine_type as mdt', 'mdt.id', '=', 'md.medicine_type_id')
             ->where('ss.is_delete', 0)
             ->whereIn('ss.service_req_id', $reqIds)
             ->selectRaw('ss.id, ss.service_req_id, ss.tdl_service_code, ss.tdl_service_name,
                 ss.execute_time, ss.tdl_intruction_time, ss.patient_type_id,
-                sv.hein_service_bhyt_code, sv.hein_service_bhyt_name, sv.service_type_id')
+                sv.hein_service_bhyt_code, sv.hein_service_bhyt_name, sv.service_type_id
+                , mdt.active_ingr_bhyt_code')
             ->get();
 
         $map = [];
@@ -78,7 +83,12 @@ class HisOrderSource
             $s->tdlIntructionTime = (int) $r->tdl_intruction_time;
             // Doi tuong cua RIENG dong nay - khong lay tu phieu hay ho so.
             $s->patientTypeId = $r->patient_type_id !== null ? (int) $r->patient_type_id : null;
-            $s->bhytCode = $r->hein_service_bhyt_code;
+            // Thuoc lay ma hoat chat; vat tu va DVKT khong join ra duoc danh muc thuoc nen
+            // roi ve ma dich vu nhu cu.
+            $s->bhytCode = \App\Services\OrderCheck\Support\MaBhytDong::cua(
+                $r->active_ingr_bhyt_code,
+                $r->hein_service_bhyt_code
+            );
             $s->bhytName = $r->hein_service_bhyt_name;
             // Quyet dinh quy tac doi chieu voi bang danh muc nao: 6 Thuoc, 7 Vat tu, con
             // lai la DVKT.
