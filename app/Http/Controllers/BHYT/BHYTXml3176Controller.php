@@ -677,15 +677,21 @@ class BHYTXml3176Controller extends Controller
         $imported_by = $request->input('imported_by');
         $xml_submit_status = $request->input('xml_submit_status');
         $xml_sign_status = $request->input('xml_sign_status');
+        // Nut xuat phai tra ve dung pham vi co so nguoi dung dang loc tren man, khong thi
+        // file xuat ra tron ca cac co so khac - im lang, khong bao loi.
+        $ma_cskcb = $request->input('ma_cskcb');
+        $danhSachCoSo = \App\Services\BHYT\DanhSachCoSo::danhSach();
 
         $fileName = 'xml3176_error_data_' . Carbon::now()->format('YmdHis') . '.xlsx';
-        return Excel::download(new Xml3176ErrorMultiSheetExport($date_from, $date_to, $xml_filter_status, 
-            $date_type, 
-            $xml3176_error_catalog_id, 
-            $payment_date_filter, 
-            $imported_by, 
-            $xml_submit_status, 
-            $xml_sign_status), $fileName);
+        return Excel::download(new Xml3176ErrorMultiSheetExport($date_from, $date_to, $xml_filter_status,
+            $date_type,
+            $xml3176_error_catalog_id,
+            $payment_date_filter,
+            $imported_by,
+            $xml_submit_status,
+            $xml_sign_status,
+            $ma_cskcb,
+            $danhSachCoSo), $fileName);
     }
 
     public function export7980aData(Request $request)
@@ -706,16 +712,22 @@ class BHYTXml3176Controller extends Controller
         $imported_by = $request->input('imported_by');
         $xml_submit_status = $request->input('xml_submit_status');
         $xml_sign_status = $request->input('xml_sign_status');
+        // Xem chu thich o exportXml3176XmlErrors(): thieu tham so nay thi file xuat tron
+        // ca cac co so khac du bang tren man da loc dung mot co so.
+        $ma_cskcb = $request->input('ma_cskcb');
+        $danhSachCoSo = \App\Services\BHYT\DanhSachCoSo::danhSach();
 
         $fileName = 'xml3176_xml_data_' . Carbon::now()->format('YmdHis') . '.xlsx';
-        return Excel::download(new Xml3176XmlExport($date_from, $date_to, $xml_filter_status, 
-            $date_type, 
-            $xml3176_error_catalog_id, 
-            $xml_export_status, 
-            $payment_date_filter, 
-            $imported_by, 
-            $xml_submit_status, 
-            $xml_sign_status), $fileName);
+        return Excel::download(new Xml3176XmlExport($date_from, $date_to, $xml_filter_status,
+            $date_type,
+            $xml3176_error_catalog_id,
+            $xml_export_status,
+            $payment_date_filter,
+            $imported_by,
+            $xml_submit_status,
+            $xml_sign_status,
+            $ma_cskcb,
+            $danhSachCoSo), $fileName);
     }
 
     public function deleteXml($ma_lk)

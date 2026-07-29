@@ -119,16 +119,20 @@ class HisOrderSource
             ->get();
     }
 
-    /** Map id => thông tin đợt (treatment_code, bệnh nhân, khoa) cho ngữ cảnh vi phạm. */
+    /**
+     * Map id => thông tin đợt (treatment_code, bệnh nhân, khoa, mã CSKCB) cho ngữ cảnh vi phạm.
+     * Join his_branch giong fetchServiceRequests() de dong bo cach lay ma_cskcb.
+     */
     public function fetchTreatmentInfo(array $treatmentIds)
     {
         if (empty($treatmentIds)) {
             return [];
         }
         $rows = DB::connection($this->conn)
-            ->table('his_treatment')
-            ->whereIn('id', $treatmentIds)
-            ->selectRaw('id, treatment_code, tdl_patient_code, tdl_patient_name, last_department_id')
+            ->table('his_treatment as t')
+            ->leftJoin('his_branch as br', 'br.id', '=', 't.branch_id')
+            ->whereIn('t.id', $treatmentIds)
+            ->selectRaw('t.id, t.treatment_code, t.tdl_patient_code, t.tdl_patient_name, t.last_department_id, br.hein_medi_org_code as ma_cskcb')
             ->get();
 
         $map = [];
@@ -146,12 +150,14 @@ class HisOrderSource
         return DB::connection($this->conn)
             ->table('his_sere_serv as ss')
             ->leftJoin('his_treatment as t', 'ss.tdl_treatment_id', '=', 't.id')
+            // Ma CSKCB de gan vao vi pham, giong cach lam cua fetchServiceRequests().
+            ->leftJoin('his_branch as br', 'br.id', '=', 't.branch_id')
             ->where('ss.is_delete', 0)
             ->where('ss.id', '>', $lastId)
             ->orderBy('ss.id')->limit($limit)
             ->selectRaw('ss.id, ss.create_time, ss.service_req_id, ss.tdl_treatment_id, ss.tdl_service_code, ss.tdl_service_name,
                 t.treatment_code, t.tdl_patient_code, t.tdl_patient_name,
-                t.tdl_patient_gender_id, t.tdl_patient_dob')
+                t.tdl_patient_gender_id, t.tdl_patient_dob, br.hein_medi_org_code as ma_cskcb')
             ->get();
     }
 

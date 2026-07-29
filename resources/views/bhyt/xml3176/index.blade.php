@@ -523,6 +523,9 @@
             // loc "Da xuat XML" tren man hinh xong tai 79/80a van nhan ca ho so chua
             // xuat - sai am tham, khong bao loi.
             var xml_export_status = $('#xml_export_status').val();
+            // Cung ly do voi xml_export_status o tren: thieu tham so nay thi file xuat
+            // se tron ca cac co so khac, du bang tren man da loc dung mot co so.
+            var ma_cskcb = $('#ma_cskcb').val();
 
             // Tạo URL với các tham số query
             var href = '{{ route("bhyt.xml3176.export-7980a-data") }}?' + $.param({
@@ -536,7 +539,8 @@
                 'treatment_code': treatment_code,
                 'imported_by': imported_by,
                 'xml_submit_status': xml_submit_status,
-                'xml_sign_status': xml_sign_status
+                'xml_sign_status': xml_sign_status,
+                'ma_cskcb': ma_cskcb
             });
 
             // Chuyển hướng tới URL với các tham số
@@ -555,6 +559,7 @@
             var imported_by = $('#imported_by').val();
             var xml_submit_status = $('#xml_submit_status').val();
             var xml_sign_status = $('#xml_sign_status').val();
+            var ma_cskcb = $('#ma_cskcb').val();
             // Tạo URL với các tham số query
             var href = '{{ route("bhyt.xml3176.export-xml3176-xml-errors") }}?' + $.param({
                 'date_from': startDate,
@@ -565,7 +570,8 @@
                 'payment_date_filter': payment_date_filter,
                 'imported_by': imported_by,
                 'xml_submit_status': xml_submit_status,
-                'xml_sign_status': xml_sign_status
+                'xml_sign_status': xml_sign_status,
+                'ma_cskcb': ma_cskcb
             });
 
             // Chuyển hướng tới URL với các tham số
@@ -585,6 +591,7 @@
             var imported_by = $('#imported_by').val();
             var xml_submit_status = $('#xml_submit_status').val();
             var xml_sign_status = $('#xml_sign_status').val();
+            var ma_cskcb = $('#ma_cskcb').val();
             // Tạo URL với các tham số query
             var href = '{{ route("bhyt.xml3176.export-xml3176-xml-xlsx") }}?' + $.param({
                 'date_from': startDate,
@@ -596,7 +603,8 @@
                 'payment_date_filter': payment_date_filter,
                 'imported_by': imported_by,
                 'xml_submit_status': xml_submit_status,
-                'xml_sign_status': xml_sign_status
+                'xml_sign_status': xml_sign_status,
+                'ma_cskcb': ma_cskcb
             });
 
             // Chuyển hướng tới URL với các tham số

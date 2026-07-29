@@ -35,13 +35,21 @@ class InteractionLogScanner implements Scanner
             $maxCreate = $wm->last_create_time;
             $maxId = $wm->last_id;
 
+            // Ma CSKCB khong co san tren his_medicine_interactive, tra theo treatment_id
+            // qua HisOrderSource::fetchTreatmentInfo() (cung ham MedicineScanner dung).
+            $info = [];
+            if ($ruleActive) {
+                $treatmentIds = [];
+                foreach ($rows as $row) {
+                    $treatmentIds[(int) $row->treatment_id] = true;
+                }
+                $info = $source->fetchTreatmentInfo(array_keys($treatmentIds));
+            }
+
             foreach ($rows as $row) {
                 if ($ruleActive) {
-                    $vctx = ViolationContext::make([
-                        'treatment_id' => (int) $row->treatment_id,
-                        'doctor_loginname' => $row->request_loginname,
-                        'department_id' => $row->request_department_id !== null ? (int) $row->request_department_id : null,
-                    ]);
+                    $tid = (int) $row->treatment_id;
+                    $vctx = $this->context($row, isset($info[$tid]) ? $info[$tid] : null);
 
                     $vio = new Violation(
                         self::RULE_CODE,
@@ -71,5 +79,15 @@ class InteractionLogScanner implements Scanner
         }
 
         return ['scanned' => $scanned, 'violations' => $violations];
+    }
+
+    private function context($row, $info)
+    {
+        return ViolationContext::make([
+            'treatment_id' => (int) $row->treatment_id,
+            'doctor_loginname' => $row->request_loginname,
+            'department_id' => $row->request_department_id !== null ? (int) $row->request_department_id : null,
+            'ma_cskcb' => $info ? $info->ma_cskcb : null,
+        ]);
     }
 }

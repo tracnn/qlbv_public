@@ -102,6 +102,8 @@ class ServiceRestrictionScanner implements Scanner
             'service_req_type_id' => ($sr && $sr->service_req_type_id !== null) ? (int) $sr->service_req_type_id : null,
             'service_code' => $row->tdl_service_code,
             'service_name' => $row->tdl_service_name,
+            // ma_cskcb da co san tren $row nho fetchSereServWithPatient() join his_branch.
+            'ma_cskcb' => $row->ma_cskcb,
         ]);
     }
 }

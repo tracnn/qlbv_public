@@ -74,6 +74,7 @@ class MedicineScanner implements Scanner
             'patient_code' => $info ? $info->tdl_patient_code : null,
             'patient_name' => $info ? $info->tdl_patient_name : null,
             'department_id' => $info && $info->last_department_id !== null ? (int) $info->last_department_id : null,
+            'ma_cskcb' => $info ? $info->ma_cskcb : null,
         ]);
     }
 }

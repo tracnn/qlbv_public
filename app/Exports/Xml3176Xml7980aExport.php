@@ -20,12 +20,10 @@ class Xml3176Xml7980aExport implements FromQuery, WithHeadings, ShouldAutoSize, 
 {
     protected $request;
     protected $rowNumber = 0;
-    protected $xml_submit_status;
-    
+
     public function __construct(Request $request)
     {
         $this->request = $request;
-        $this->xml_submit_status = $xml_submit_status;
     }
 
     public function query()
@@ -43,10 +41,14 @@ class Xml3176Xml7980aExport implements FromQuery, WithHeadings, ShouldAutoSize, 
         $xml_export_status = $this->request->input('xml_export_status');
         $xml_submit_status = $this->request->input('xml_submit_status');
         $treatmentCode = $this->request->input('treatment_code');
+        // Xem chu thich o xml_export_status ben tren: thieu bo loc nay thi file xuat tron
+        // ca cac co so khac du bang tren man da loc dung mot co so.
+        $ma_cskcb = $this->request->input('ma_cskcb');
+        $danhSachCoSo = \App\Services\BHYT\DanhSachCoSo::danhSach();
 
         // Nếu có truyền treatment_code, chỉ lấy hồ sơ có ma_lk bằng treatmentCode và bỏ qua tất cả các điều kiện khác
         if ($treatmentCode) {
-            return Xml3176Xml1::selectRaw("
+            $query = Xml3176Xml1::selectRaw("
                 xml3176_xml1s.ma_lk,
                 xml3176_xml1s.ma_bn, 
                 xml3176_xml1s.ho_ten, 
@@ -130,6 +132,10 @@ class Xml3176Xml7980aExport implements FromQuery, WithHeadings, ShouldAutoSize, 
                 'xml3176_xml1s.ma_cskcb',
                 'xml3176_xml1s.t_nguonkhac'
             );
+
+            \App\Services\BHYT\LocCoSo::ap($query, $ma_cskcb, $danhSachCoSo, 'xml3176_xml1s.ma_cskcb');
+
+            return $query;
         }
 
         // Nếu không có treatment_code, thực hiện các điều kiện lọc khác như bình thường
@@ -286,6 +292,8 @@ class Xml3176Xml7980aExport implements FromQuery, WithHeadings, ShouldAutoSize, 
         if ($xml3176_error_catalog_id) {
             $query->where('xml3176_xml1s.xml3176_error_catalog_id', '=', $xml3176_error_catalog_id);
         }
+
+        \App\Services\BHYT\LocCoSo::ap($query, $ma_cskcb, $danhSachCoSo, 'xml3176_xml1s.ma_cskcb');
 
         return $query;
     }

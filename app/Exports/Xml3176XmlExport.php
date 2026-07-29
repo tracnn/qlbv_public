@@ -28,15 +28,19 @@ class Xml3176XmlExport implements FromQuery, WithHeadings, ShouldAutoSize, WithS
     protected $imported_by;
     protected $xml_submit_status;
     protected $xml_sign_status;
-    
-    public function __construct($fromDate = null, $toDate = null, $xml_filter_status = null, 
-        $date_type, 
-        $xml3176_error_catalog_id = null, 
-        $xml_export_status = null, 
-        $payment_date_filter = null, 
-        $imported_by = null, 
-        $xml_submit_status = null, 
-        $xml_sign_status = null)
+    protected $ma_cskcb;
+    protected $danhSachCoSo;
+
+    public function __construct($fromDate = null, $toDate = null, $xml_filter_status = null,
+        $date_type,
+        $xml3176_error_catalog_id = null,
+        $xml_export_status = null,
+        $payment_date_filter = null,
+        $imported_by = null,
+        $xml_submit_status = null,
+        $xml_sign_status = null,
+        $ma_cskcb = null,
+        array $danhSachCoSo = [])
     {
         $this->fromDate = $fromDate;
         $this->toDate = $toDate;
@@ -48,6 +52,8 @@ class Xml3176XmlExport implements FromQuery, WithHeadings, ShouldAutoSize, WithS
         $this->imported_by = $imported_by;
         $this->xml_submit_status = $xml_submit_status;
         $this->xml_sign_status = $xml_sign_status;
+        $this->ma_cskcb = $ma_cskcb;
+        $this->danhSachCoSo = $danhSachCoSo;
     }
 
     /**
@@ -159,7 +165,10 @@ class Xml3176XmlExport implements FromQuery, WithHeadings, ShouldAutoSize, WithS
                 });
             }
         }
-        
+
+        // xml3176_xml1s.ma_cskcb: query chi join xml3176_informations, khong co cot trung ten.
+        \App\Services\BHYT\LocCoSo::ap($query, $this->ma_cskcb, $this->danhSachCoSo);
+
         return $query;
     }
 
