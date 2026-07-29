@@ -13,7 +13,11 @@ class CatalogLookupTest extends TestCase
     {
         // Day la phep kiem QUAN TRONG NHAT cua ca dot: don vi chua nhap danh muc ma quy
         // tac van chay thi MOI dich vu thanh vi pham - sai ma trong nhu dung.
-        $lk = new CatalogLookup('service_catalogs', 'ma_dich_vu');
+        //
+        // KHONG dua vao viec bang dang rong: don vi da nhap danh muc that (14.023 dong
+        // service_catalogs). Dung dieu kien khong dong nao thoa de van cham CSDL that.
+        $lk = new CatalogLookup('service_catalogs', 'ma_dich_vu', null, 'tu_ngay', 'den_ngay',
+            ['ma_dich_vu' => '__KHONG_TON_TAI__']);
 
         $this->assertFalse($lk->sanSang(),
             'Bang danh muc dang rong ma van bao san sang - quy tac se bat loi oan toan bo');

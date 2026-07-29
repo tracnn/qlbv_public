@@ -117,8 +117,54 @@
                 tong.boQua += kq.so_bo_qua || 0;
                 tong.loi += kq.so_loi || 0;
                 (kq.dong_loi || []).forEach(function (x) {
+                    // Hop thoai chi hien 20 dong dau; ban day tai bang nut Chi tiet.
                     if (tong.dongLoi.length < 20) { tong.dongLoi.push(x); }
                 });
+            }
+
+            // Sinh CSV tu danh sach dong hong roi cho tai ve. Lam o trinh duyet nen khong
+            // can them duong dan, khong luu tep tren may chu.
+            function taiChiTietLoi(tenTep, dongLoi) {
+                var d = [['Dong Excel', 'Loai', 'Ly do']];
+
+                dongLoi.forEach(function (x) {
+                    d.push([x.dong, x.loai === 'bo_qua' ? 'Bỏ qua' : 'Lỗi', x.ly_do]);
+                });
+
+                var csv = d.map(function (h) {
+                    return h.map(function (o) {
+                        return '"' + String(o === null || o === undefined ? '' : o).replace(/"/g, '""') + '"';
+                    }).join(',');
+                }).join('
+');
+
+                // BOM de Excel doc dung tieng Viet.
+                var blob = new Blob(["﻿" + csv], { type: 'text/csv;charset=utf-8;' });
+                var a = document.createElement('a');
+
+                a.href = URL.createObjectURL(blob);
+                a.download = 'loi-nhap-' + tenTep.replace(/\.[^.]+$/, '') + '.csv';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(a.href);
+            }
+
+            function ganNutTaiLoi(file, kq) {
+                if (!kq || !kq.dong_loi || !kq.dong_loi.length) {
+                    return;
+                }
+
+                var row = findFileRow(file.name);
+                if (!row) { return; }
+
+                var nut = document.createElement('button');
+                nut.className = 'btn btn-xs btn-warning';
+                nut.style.marginLeft = '8px';
+                nut.innerHTML = '<i class="fa fa-download"></i> Chi tiết (' + kq.dong_loi.length + ')';
+                nut.onclick = function () { taiChiTietLoi(file.name, kq.dong_loi); };
+
+                row.cells[2].appendChild(nut);
             }
 
             function moTaKetQua() {
@@ -130,9 +176,11 @@
                     + 'Lỗi: <b>' + tong.loi + '</b>';
 
                 if (tong.dongLoi.length) {
-                    h += '<hr><div style="max-height:200px;overflow:auto;font-size:12px">';
+                    h += '<hr><div style="font-size:12px">Bấm nút <b>Chi tiết</b> ở từng tệp để tải danh sách đầy đủ.</div>';
+                    h += '<div style="max-height:200px;overflow:auto;font-size:12px">';
                     tong.dongLoi.forEach(function (x) {
-                        h += 'Dòng ' + x.dong + ': ' + $('<div>').text(x.ly_do).html() + '<br>';
+                        h += 'Dòng ' + x.dong + ' (' + (x.loai === 'bo_qua' ? 'bỏ qua' : 'lỗi') + '): '
+                            + $('<div>').text(x.ly_do).html() + '<br>';
                     });
                     h += '</div>';
                 }
@@ -165,7 +213,10 @@
                 updateFileStatus(file, 'success', response.message || "Tải lên thành công");
 
                 var kq = response.ket_qua || null;
-                if (kq) { tongHopKetQua(kq); }
+                if (kq) {
+                    tongHopKetQua(kq);
+                    ganNutTaiLoi(file, kq);
+                }
 
                 if (uploadedFiles === totalFiles) {
                     isUploading = false;

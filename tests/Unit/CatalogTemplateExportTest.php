@@ -62,4 +62,20 @@ class CatalogTemplateExportTest extends TestCase
             $this->assertNotContains('MA_CSKCB', (new CatalogTemplateExport($loai))->requiredHeaders(), $loai);
         }
     }
+
+    /** @test */
+    public function dong_tieu_de_co_o_rong_khong_lam_chet_ca_lan_nhap()
+    {
+        // Tep .xls thuong co o tieu de RONG (cot thua o cuoi, o gop) -> PhpSpreadsheet tra
+        // null. Truoc day mot o null lam ca lan nhap chet voi TypeError ngay truoc khi doc
+        // duoc dong nao: mot tep 5,3 MB mat trang.
+        $m = app(\App\Services\ExcelColumnMapper::class);
+
+        foreach ([['MA_THUOC', null], [null], ['MA_THUOC', ['x']], [null, 'MA_THUOC']] as $header) {
+            $m->findColumnIndex($header, ['MA_THUOC']);
+        }
+
+        $this->assertSame(0, $m->findColumnIndex(['MA_THUOC', null], ['MA_THUOC']));
+        $this->assertSame(1, $m->findColumnIndex([null, 'MA_THUOC'], ['MA_THUOC']));
+    }
 }

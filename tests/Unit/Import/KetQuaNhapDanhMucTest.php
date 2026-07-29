@@ -45,7 +45,10 @@ class KetQuaNhapDanhMucTest extends TestCase
         $k = new KetQuaNhapDanhMuc();
         $k->themLoi(42, 'Trung khoa');
 
-        $this->assertSame([['dong' => 42, 'ly_do' => 'Trung khoa']], $k->toArray()['dong_loi']);
+        $this->assertSame(
+            [['dong' => 42, 'loai' => KetQuaNhapDanhMuc::LOAI_LOI, 'ly_do' => 'Trung khoa']],
+            $k->toArray()['dong_loi']
+        );
     }
 
     /** @test */
@@ -53,13 +56,15 @@ class KetQuaNhapDanhMucTest extends TestCase
     {
         $k = new KetQuaNhapDanhMuc();
 
-        for ($i = 1; $i <= 50; $i++) {
+        $qua = KetQuaNhapDanhMuc::TOI_DA_DONG_LOI + 50;
+
+        for ($i = 1; $i <= $qua; $i++) {
             $k->themLoi($i, 'Loi ' . $i);
         }
 
         $a = $k->toArray();
 
-        $this->assertSame(50, $a['so_loi'], 'Phai dem du');
+        $this->assertSame($qua, $a['so_loi'], 'Phai dem du');
         $this->assertCount(KetQuaNhapDanhMuc::TOI_DA_DONG_LOI, $a['dong_loi']);
     }
 
@@ -94,5 +99,27 @@ class KetQuaNhapDanhMucTest extends TestCase
         $khong->themKhongDoi();
         $khong->themBoQua(2, 'x');
         $this->assertFalse($khong->coGhi());
+    }
+
+    /** @test */
+    public function tach_duoc_bo_qua_va_loi_trong_danh_sach_chi_tiet()
+    {
+        // Hai loai nay sua theo hai cach khac nhau: bo qua = thieu cot bat buoc,
+        // loi = nem ngoai le khi ghi.
+        $k = new KetQuaNhapDanhMuc();
+        $k->themBoQua(5, 'Thieu MA_THUOC');
+        $k->themLoi(9, 'Trung khoa');
+
+        $ds = $k->toArray()['dong_loi'];
+
+        $this->assertSame(KetQuaNhapDanhMuc::LOAI_BO_QUA, $ds[0]['loai']);
+        $this->assertSame(KetQuaNhapDanhMuc::LOAI_LOI, $ds[1]['loai']);
+    }
+
+    /** @test */
+    public function gioi_han_du_lon_cho_tinh_huong_that()
+    {
+        // Do tren du lieu that: tep nhieu loi nhat co 27 dong bo qua.
+        $this->assertGreaterThanOrEqual(1000, KetQuaNhapDanhMuc::TOI_DA_DONG_LOI);
     }
 }

@@ -64,13 +64,21 @@ class ExcelColumnMapper
     /**
      * Chuẩn hóa tên cột: loại bỏ khoảng trắng, chuyển về uppercase, loại bỏ ký tự đặc biệt
      *
-     * @param string $columnName
+     * Nhan MOI kieu, khong rang buoc string: dong tieu de cua tep .xls thuong co o RONG
+     * (cot thua o cuoi, o gop) -> PhpSpreadsheet tra null. Truoc day mot o null lam ca lan
+     * nhap chet voi TypeError ngay truoc khi doc duoc dong nao - mot tep 5,3 MB mat trang.
+     *
+     * @param mixed $columnName
      * @return string
      */
-    private function normalizeColumnName(string $columnName): string
+    private function normalizeColumnName($columnName): string
     {
+        if (is_array($columnName) || is_object($columnName)) {
+            return '';
+        }
+
         // Loại bỏ khoảng trắng thừa
-        $normalized = trim($columnName);
+        $normalized = trim((string) $columnName);
         
         // Chuyển về uppercase
         $normalized = mb_strtoupper($normalized, 'UTF-8');

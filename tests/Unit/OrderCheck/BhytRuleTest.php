@@ -81,7 +81,11 @@ class BhytRuleTest extends TestCase
     {
         // Phep kiem quan trong nhat: danh muc chua nhap KHONG duoc bien moi dich vu
         // thanh vi pham.
-        $lk = new CatalogLookup('service_catalogs', 'ma_dich_vu');   // bang dang rong
+        // Dung datRongChoTest chu khong dua vao bang dang rong: don vi da nhap danh muc
+        // that (14.023 dong service_catalogs).
+        $lk = new CatalogLookup('service_catalogs', 'ma_dich_vu');
+        $lk->datRongChoTest();
+
         $r = new BhytServiceCatalogRule($lk);
 
         $vi = $r->check($this->ctx([$this->dv(1, 'DV1', 1, 'BH1')]));

@@ -297,10 +297,13 @@ class CatalogImportService
     {
         $data = $data->slice(1); // Bỏ qua dòng đầu tiên
         
-        foreach ($data as $row) {
+        foreach ($data as $iDong => $row) {
+            // slice(1) giu nguyen khoa nen khoa 1 ung voi dong Excel 2.
+            $dongExcel = (int) $iDong + 1;
+
             // Kiểm tra các trường bắt buộc
             if (!$this->hasRequiredFields($row, $config['required_fields'], $fieldMapping)) {
-                $this->ketQua->themBoQua(0, 'Thiếu trường bắt buộc');
+                $this->ketQua->themBoQua($dongExcel, 'Thiếu trường bắt buộc');
                 continue;
             }
 
@@ -329,7 +332,7 @@ class CatalogImportService
                 $banGhi = MedicineCatalog::updateOrCreate($uniqueKeys, $updateData);
                 $this->demGhi($banGhi);
             } catch (\Exception $e) {
-                $this->ketQua->themLoi(0, $e->getMessage());
+                $this->ketQua->themLoi($dongExcel, $e->getMessage());
                 Log::error('Error updating or creating MedicineCatalog record', [
                     'error' => $e->getMessage(),
                     'row' => $row
@@ -343,9 +346,12 @@ class CatalogImportService
     {
         $data = $data->slice(1);
         
-        foreach ($data as $row) {
+        foreach ($data as $iDong => $row) {
+            // slice(1) giu nguyen khoa nen khoa 1 ung voi dong Excel 2.
+            $dongExcel = (int) $iDong + 1;
+
             if (!$this->hasRequiredFields($row, $config['required_fields'], $fieldMapping)) {
-                $this->ketQua->themBoQua(0, 'Thiếu trường bắt buộc');
+                $this->ketQua->themBoQua($dongExcel, 'Thiếu trường bắt buộc');
                 continue;
             }
 
@@ -374,7 +380,7 @@ class CatalogImportService
                 $banGhi = MedicalSupplyCatalog::updateOrCreate($uniqueKeys, $updateData);
                 $this->demGhi($banGhi);
             } catch (\Exception $e) {
-                $this->ketQua->themLoi(0, $e->getMessage());
+                $this->ketQua->themLoi($dongExcel, $e->getMessage());
                 Log::error('Error updating or creating MedicalSupplyCatalog record', [
                     'error' => $e->getMessage(),
                     'row' => $row
@@ -388,7 +394,10 @@ class CatalogImportService
     {
         $data = $data->slice(1);
         
-        foreach ($data as $row) {
+        foreach ($data as $iDong => $row) {
+            // slice(1) giu nguyen khoa nen khoa 1 ung voi dong Excel 2.
+            $dongExcel = (int) $iDong + 1;
+
             // Loại bỏ ký tự đặc biệt trong cột 'Tên dịch vụ'
             $tenDichVuIndex = $fieldMapping['ten_dich_vu'] ?? null;
             if ($tenDichVuIndex !== null && isset($row[$tenDichVuIndex])) {
@@ -396,7 +405,7 @@ class CatalogImportService
             }
 
             if (!$this->hasRequiredFields($row, $config['required_fields'], $fieldMapping)) {
-                $this->ketQua->themBoQua(0, 'Thiếu trường bắt buộc');
+                $this->ketQua->themBoQua($dongExcel, 'Thiếu trường bắt buộc');
                 continue;
             }
 
@@ -429,7 +438,7 @@ class CatalogImportService
                 $banGhi = ServiceCatalog::updateOrCreate($uniqueKeys, $updateData);
                 $this->demGhi($banGhi);
             } catch (\Exception $e) {
-                $this->ketQua->themLoi(0, $e->getMessage());
+                $this->ketQua->themLoi($dongExcel, $e->getMessage());
                 Log::error('Error updating or creating ServiceCatalog record', [
                     'error' => $e->getMessage(),
                     'row' => $row
@@ -443,9 +452,12 @@ class CatalogImportService
     {
         $data = $data->slice(1);
 
-        foreach ($data as $row) {
+        foreach ($data as $iDong => $row) {
+            // slice(1) giu nguyen khoa nen khoa 1 ung voi dong Excel 2.
+            $dongExcel = (int) $iDong + 1;
+
             if (!$this->hasRequiredFields($row, $config['required_fields'], $fieldMapping)) {
-                $this->ketQua->themBoQua(0, 'Thiếu trường bắt buộc');
+                $this->ketQua->themBoQua($dongExcel, 'Thiếu trường bắt buộc');
                 continue;
             }
 
@@ -478,7 +490,7 @@ class CatalogImportService
                 $banGhi = Icd10Category::updateOrCreate($uniqueKeys, $updateData);
                 $this->demGhi($banGhi);
             } catch (\Exception $e) {
-                $this->ketQua->themLoi(0, $e->getMessage());
+                $this->ketQua->themLoi($dongExcel, $e->getMessage());
                 Log::error('Error updating or creating Icd10Category record', [
                     'error' => $e->getMessage(),
                     'row' => $row,
@@ -492,9 +504,12 @@ class CatalogImportService
     {
         $data = $data->slice(1);
 
-        foreach ($data as $row) {
+        foreach ($data as $iDong => $row) {
+            // slice(1) giu nguyen khoa nen khoa 1 ung voi dong Excel 2.
+            $dongExcel = (int) $iDong + 1;
+
             if (!$this->hasRequiredFields($row, $config['required_fields'], $fieldMapping)) {
-                $this->ketQua->themBoQua(0, 'Thiếu trường bắt buộc');
+                $this->ketQua->themBoQua($dongExcel, 'Thiếu trường bắt buộc');
                 continue;
             }
 
@@ -521,7 +536,7 @@ class CatalogImportService
                 $banGhi = IcdYhctCategory::updateOrCreate($uniqueKeys, $updateData);
                 $this->demGhi($banGhi);
             } catch (\Exception $e) {
-                $this->ketQua->themLoi(0, $e->getMessage());
+                $this->ketQua->themLoi($dongExcel, $e->getMessage());
                 Log::error('Error updating or creating IcdYhctCategory record', [
                     'error' => $e->getMessage(),
                     'row' => $row,
@@ -541,7 +556,10 @@ class CatalogImportService
             $activeUniqueKeys = $config['unique_keys_alt'] ?? ['so_dinh_danh'];
         }
 
-        foreach ($data as $row) {
+        foreach ($data as $iDong => $row) {
+            // slice(1) giu nguyen khoa nen khoa 1 ung voi dong Excel 2.
+            $dongExcel = (int) $iDong + 1;
+
             if (!$this->hasRequiredFields($row, $config['required_fields'], $fieldMapping)) {
                 Log::error('Error importing medical staff', [
                     'error' => 'Thiếu dữ liệu bắt buộc',
@@ -593,7 +611,7 @@ class CatalogImportService
                 $banGhi = MedicalStaff::updateOrCreate($uniqueKeys, $updateData);
                 $this->demGhi($banGhi);
             } catch (\Exception $e) {
-                $this->ketQua->themLoi(0, $e->getMessage());
+                $this->ketQua->themLoi($dongExcel, $e->getMessage());
                 Log::error('Error importing medical staff', [
                     'error' => $e->getMessage(),
                     'row' => $row
@@ -607,9 +625,12 @@ class CatalogImportService
     {
         $data = $data->slice(1);
         
-        foreach ($data as $row) {
+        foreach ($data as $iDong => $row) {
+            // slice(1) giu nguyen khoa nen khoa 1 ung voi dong Excel 2.
+            $dongExcel = (int) $iDong + 1;
+
             if (!$this->hasRequiredFields($row, $config['required_fields'], $fieldMapping)) {
-                $this->ketQua->themBoQua(0, 'Thiếu trường bắt buộc');
+                $this->ketQua->themBoQua($dongExcel, 'Thiếu trường bắt buộc');
                 continue;
             }
 
@@ -636,7 +657,7 @@ class CatalogImportService
                 $banGhi = DepartmentBedCatalog::updateOrCreate($uniqueKeys, $updateData);
                 $this->demGhi($banGhi);
             } catch (\Exception $e) {
-                $this->ketQua->themLoi(0, $e->getMessage());
+                $this->ketQua->themLoi($dongExcel, $e->getMessage());
                 Log::error('Error updating or creating DepartmentBedCatalog record', [
                     'error' => $e->getMessage(),
                     'row' => $row
@@ -650,9 +671,12 @@ class CatalogImportService
     {
         $data = $data->slice(1);
         
-        foreach ($data as $row) {
+        foreach ($data as $iDong => $row) {
+            // slice(1) giu nguyen khoa nen khoa 1 ung voi dong Excel 2.
+            $dongExcel = (int) $iDong + 1;
+
             if (!$this->hasRequiredFields($row, $config['required_fields'], $fieldMapping)) {
-                $this->ketQua->themBoQua(0, 'Thiếu trường bắt buộc');
+                $this->ketQua->themBoQua($dongExcel, 'Thiếu trường bắt buộc');
                 continue;
             }
 
@@ -679,7 +703,7 @@ class CatalogImportService
                 $banGhi = EquipmentCatalog::updateOrCreate($uniqueKeys, $updateData);
                 $this->demGhi($banGhi);
             } catch (\Exception $e) {
-                $this->ketQua->themLoi(0, $e->getMessage());
+                $this->ketQua->themLoi($dongExcel, $e->getMessage());
                 Log::error('Error updating or creating EquipmentCatalog record', [
                     'error' => $e->getMessage(),
                     'row' => $row
@@ -696,9 +720,12 @@ class CatalogImportService
 
         $data = $data->slice(1);
         
-        foreach ($data as $row) {
+        foreach ($data as $iDong => $row) {
+            // slice(1) giu nguyen khoa nen khoa 1 ung voi dong Excel 2.
+            $dongExcel = (int) $iDong + 1;
+
             if (!$this->hasRequiredFields($row, $config['required_fields'], $fieldMapping)) {
-                $this->ketQua->themBoQua(0, 'Thiếu trường bắt buộc');
+                $this->ketQua->themBoQua($dongExcel, 'Thiếu trường bắt buộc');
                 continue;
             }
 
@@ -727,7 +754,7 @@ class CatalogImportService
                 $banGhi = AdministrativeUnit::updateOrCreate($uniqueKeys, $updateData);
                 $this->demGhi($banGhi);
             } catch (\Exception $e) {
-                $this->ketQua->themLoi(0, $e->getMessage());
+                $this->ketQua->themLoi($dongExcel, $e->getMessage());
                 Log::error('Error updating or creating AdministrativeUnit record', [
                     'error' => $e->getMessage(),
                     'row' => $row
@@ -744,9 +771,12 @@ class CatalogImportService
 
         $data = $data->slice(1);
         
-        foreach ($data as $row) {
+        foreach ($data as $iDong => $row) {
+            // slice(1) giu nguyen khoa nen khoa 1 ung voi dong Excel 2.
+            $dongExcel = (int) $iDong + 1;
+
             if (!$this->hasRequiredFields($row, $config['required_fields'], $fieldMapping)) {
-                $this->ketQua->themBoQua(0, 'Thiếu trường bắt buộc');
+                $this->ketQua->themBoQua($dongExcel, 'Thiếu trường bắt buộc');
                 continue;
             }
 
@@ -775,7 +805,7 @@ class CatalogImportService
                 $banGhi = MedicalOrganization::updateOrCreate($uniqueKeys, $updateData);
                 $this->demGhi($banGhi);
             } catch (\Exception $e) {
-                $this->ketQua->themLoi(0, $e->getMessage());
+                $this->ketQua->themLoi($dongExcel, $e->getMessage());
                 Log::error('Error updating or creating MedicalOrganization record', [
                     'error' => $e->getMessage(),
                     'row' => $row
@@ -789,9 +819,12 @@ class CatalogImportService
     {
         $data = $data->slice(1);
         
-        foreach ($data as $row) {
+        foreach ($data as $iDong => $row) {
+            // slice(1) giu nguyen khoa nen khoa 1 ung voi dong Excel 2.
+            $dongExcel = (int) $iDong + 1;
+
             if (!$this->hasRequiredFields($row, $config['required_fields'], $fieldMapping)) {
-                $this->ketQua->themBoQua(0, 'Thiếu trường bắt buộc');
+                $this->ketQua->themBoQua($dongExcel, 'Thiếu trường bắt buộc');
                 continue;
             }
 
@@ -818,7 +851,7 @@ class CatalogImportService
                 $banGhi = JobCategory::updateOrCreate($uniqueKeys, $updateData);
                 $this->demGhi($banGhi);
             } catch (\Exception $e) {
-                $this->ketQua->themLoi(0, $e->getMessage());
+                $this->ketQua->themLoi($dongExcel, $e->getMessage());
                 Log::error('Error updating or creating JobCategory record', [
                     'error' => $e->getMessage(),
                     'row' => $row
