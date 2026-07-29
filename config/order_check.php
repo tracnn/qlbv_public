@@ -13,6 +13,19 @@ return [
     // Bỏ qua các loại điều trị không áp dụng (vd loại test), CSV id; rỗng = không loại
     'exclude_treatment_type_ids' => env('ORDER_CHECK_EXCLUDE_TREATMENT_TYPES', ''),
 
+    // Bo qua han cac LOAI PHIEU khong thuoc pham vi kiem tra y lenh, CSV id trong
+    // HIS_SERVICE_REQ_TYPE; rong = khong loai.
+    //
+    // Mac dinh 11 Khac, 16 Don mau, 17 Suat an, 18 Ngoai kham chua benh.
+    //
+    // Loc tai NGUON (HisOrderSource::fetchServiceRequests) chu khong tai tung quy tac: dat
+    // o mot cho thi khong the sot quy tac nao, va quy tac them sau nay cung tu dong duoc
+    // loai tru.
+    //
+    // Do tren 7 ngay that truoc khi bat: Suat an 89.931 phieu ma chua tung sinh mot vi pham
+    // nao, Khac 13.787, Don mau 1.824, Ngoai KCB 0 — tong 105.542/917.663 y lenh (11,5%).
+    'exclude_service_req_type_ids' => env('ORDER_CHECK_EXCLUDE_SERVICE_REQ_TYPES', '11,16,17,18'),
+
     // Doi tuong benh nhan duoc coi la BHYT, CSV id trong HIS_PATIENT_TYPE.
     // Mac dinh 1 = ma '01' BHYT. RONG = KHONG loc (hanh vi truoc 2026-07-28).
     //

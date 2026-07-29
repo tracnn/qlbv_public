@@ -10,6 +10,7 @@ class HisOrderSource
 {
     protected $conn;
     protected $excludeTreatmentTypeIds;
+    protected $excludeServiceReqTypeIds;
     protected $deptMap;
     protected $typeMap;
 
@@ -18,6 +19,13 @@ class HisOrderSource
         $this->conn = config('order_check.his_connection');
         $ex = config('order_check.exclude_treatment_type_ids');
         $this->excludeTreatmentTypeIds = $ex === '' ? [] : explode(',', $ex);
+
+        // Loai phieu ngoai pham vi kiem tra y lenh (Khac, Don mau, Suat an, Ngoai KCB).
+        // Cau hinh RONG nghia la KHONG loc - khong duoc bien thanh loc bang mang rong.
+        $exLoai = (string) config('order_check.exclude_service_req_type_ids');
+        $this->excludeServiceReqTypeIds = array_values(
+            array_filter(array_map('trim', explode(',', $exLoai)), 'strlen')
+        );
     }
 
     public function fetchServiceRequests($lastModifyTime, $lastId, $limit)
@@ -44,6 +52,13 @@ class HisOrderSource
                 t.in_time as in_time, t.out_time as out_time,
                 sr.execute_loginname, sr.execute_username, e.diploma as execute_diploma,
                 re.diploma as request_diploma, br.hein_medi_org_code as ma_cskcb');
+
+        // Loai han khoi pham vi kiem tra, ngay tai nguon: khong quy tac nao nhin thay cac
+        // loai phieu nay. Do 7 ngay that: rieng Suat an 89.931 phieu chua tung sinh mot vi
+        // pham nao.
+        if (!empty($this->excludeServiceReqTypeIds)) {
+            $q->whereNotIn('sr.service_req_type_id', $this->excludeServiceReqTypeIds);
+        }
 
         if (!empty($this->excludeTreatmentTypeIds)) {
             $q->whereNotIn('t.tdl_treatment_type_id', $this->excludeTreatmentTypeIds);
