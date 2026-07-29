@@ -76,4 +76,30 @@ class SoDangKyDanhMucTest extends TestCase
 
         $this->assertSame(['medical_supply', 'medicine', 'service'], $co);
     }
+
+    /**
+     * CatalogImportService::DANH_MUC_THEO_CO_SO la NGUON THU HAI cho cung thong tin ma
+     * theo_co_so cua so nay dai dien. Hai ben dang khop nhau, nhung khong co gi bat loi
+     * neu sau nay lech: chot bang test de neu BHXH tach them mot danh muc theo co so,
+     * chenh lech giua nhap khau va xoa se bi bat ngay o day.
+     */
+    /** @test */
+    public function catalog_import_service_khop_voi_co_theo_co_so_trong_so_dang_ky()
+    {
+        $tuSo = [];
+
+        foreach ($this->so() as $loai => $x) {
+            if (!empty($x['theo_co_so'])) {
+                $tuSo[] = $loai;
+            }
+        }
+
+        $tuImport = \App\Services\CatalogImportService::DANH_MUC_THEO_CO_SO;
+
+        sort($tuSo);
+        sort($tuImport);
+
+        $this->assertSame($tuSo, $tuImport,
+            'CatalogImportService::DANH_MUC_THEO_CO_SO da lech voi cau hinh theo_co_so trong config/danh_muc_bhyt.php');
+    }
 }

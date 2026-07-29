@@ -74,7 +74,7 @@ class XoaDanhMucControllerTest extends TestCase
         $res = $this->controller()->demXoaDanhMuc($req);
 
         $this->assertSame(422, $res->getStatusCode());
-        $this->assertSame('Loai danh muc khong hop le', $res->getData()->message);
+        $this->assertSame('Loại danh mục không hợp lệ', $res->getData()->message);
     }
 
     /** @test */
@@ -90,6 +90,21 @@ class XoaDanhMucControllerTest extends TestCase
         $res = $this->controller()->xoaDanhMuc($req);
 
         $this->assertSame(422, $res->getStatusCode());
-        $this->assertSame('Loai danh muc khong hop le', $res->getData()->message);
+        $this->assertSame('Loại danh mục không hợp lệ', $res->getData()->message);
+    }
+
+    /**
+     * $loai chua dau cham ("medicine.model") lot qua duoc regex mac dinh cua route
+     * ([^/]+). Truoc day config('danh_muc_bhyt.' . $loai) tra ve CHUOI (ten lop) thay vi
+     * mang, dan toi $so['model'] lay ky tu cua chuoi roi Class 'A' not found -> HTTP 500.
+     * Phai tra 404 nhu moi $loai khong hop le khac.
+     */
+    /** @test */
+    public function chi_tiet_danh_muc_tra_404_khi_loai_chua_dau_cham()
+    {
+        $res = $this->controller()->chiTietDanhMuc('medicine.model', 1);
+
+        $this->assertSame(404, $res->getStatusCode());
+        $this->assertSame('Loại danh mục không hợp lệ', $res->getData()->message);
     }
 }

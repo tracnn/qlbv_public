@@ -183,12 +183,13 @@ class CategoryBHYTController extends Controller
      */
     public function chiTietDanhMuc($loai, $id)
     {
-        $so = config('danh_muc_bhyt.' . $loai);
+        $ds = config('danh_muc_bhyt');
 
-        if (!$so) {
+        if (!isset($ds[$loai])) {
             return response()->json(['message' => 'Loại danh mục không hợp lệ'], 404);
         }
 
+        $so = $ds[$loai];
         $model = $so['model'];
         $ban = $model::find($id);
 
