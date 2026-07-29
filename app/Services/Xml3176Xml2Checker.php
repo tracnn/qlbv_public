@@ -294,14 +294,17 @@ class Xml3176Xml2Checker
                 } else {
                     $ttThau = $ttThauParts[0] . ";" . $ttThauParts[1] . ";" . $ttThauParts[2] . ";" . $ttThauParts[3];
 
-                    $medicine = MedicineCatalog::where('ma_thuoc', $data->ma_thuoc)
+                    // Danh muc thuoc cap theo CO SO; dong khong gan ma co so dung chung.
+                    $maCskcb = $data->Xml3176Xml1 ? $data->Xml3176Xml1->ma_cskcb : null;
+
+                    $medicine = MedicineCatalog::cuaCoSo($maCskcb)->where('ma_thuoc', $data->ma_thuoc)
                         ->where('ham_luong', $data->ham_luong)
                         ->where('so_dang_ky', $data->so_dang_ky)
                         ->where('tt_thau', 'LIKE', $ttThau . '%')
                         ->first(); //* Không được thay bằng exists() *\\
 
                     if (!$medicine) {
-                        if (!MedicineCatalog::where('ma_thuoc', $data->ma_thuoc)->exists()) {
+                        if (!MedicineCatalog::cuaCoSo($maCskcb)->where('ma_thuoc', $data->ma_thuoc)->exists()) {
                             $errorCode = $this->generateErrorCode('INVALID_DRUG_CODE');
                             $errors->push((object)[
                                 'error_code' => $errorCode,
@@ -309,7 +312,7 @@ class Xml3176Xml2Checker
                                 'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
                                 'description' => 'Mã thuốc không có trong danh mục BHYT: ' . formatDescription($data->ma_thuoc)
                             ]);
-                        } elseif (!MedicineCatalog::where('ma_thuoc', $data->ma_thuoc)->where('ham_luong', $data->ham_luong)->exists()) {
+                        } elseif (!MedicineCatalog::cuaCoSo($maCskcb)->where('ma_thuoc', $data->ma_thuoc)->where('ham_luong', $data->ham_luong)->exists()) {
                             $errorCode = $this->generateErrorCode('INVALID_DRUG_CONCENTRATION');
                             $errors->push((object)[
                                 'error_code' => $errorCode,
@@ -317,7 +320,7 @@ class Xml3176Xml2Checker
                                 'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
                                 'description' => 'Mã thuốc: ' . $data->ma_thuoc . '; Sai hàm lượng: ' . formatDescription($data->ham_luong)
                             ]);
-                        } elseif (!MedicineCatalog::where('ma_thuoc', $data->ma_thuoc)->where('ham_luong', $data->ham_luong)->where('so_dang_ky', $data->so_dang_ky)->exists()) {
+                        } elseif (!MedicineCatalog::cuaCoSo($maCskcb)->where('ma_thuoc', $data->ma_thuoc)->where('ham_luong', $data->ham_luong)->where('so_dang_ky', $data->so_dang_ky)->exists()) {
                             $errorCode = $this->generateErrorCode('INVALID_REGISTRATION_NUMBER');
                             $errors->push((object)[
                                 'error_code' => $errorCode,

@@ -25,6 +25,19 @@ class CatalogLookup
     /** @var array dieu kien loc co dinh, vi du ['is_active' => 1] */
     protected $dieuKien;
 
+    /** @var string|null ten cot ma co so; null = bang khong co khai niem co so */
+    protected $cotCoSo;
+
+    /** @var array maCskcb => bool; sanSang tinh RIENG cho tung co so */
+    protected $sanSangCoSo = [];
+
+    /**
+     * @var bool|null Chi dung trong test. true = coi nhu MOI co so deu san sang,
+     *                false = khong co so nao. Dat boi datSanChoTest/datRongChoTest de
+     *                sanSang() khong hoi co so du lieu.
+     */
+    protected $sanSangTest;
+
     /** @var array ma => [ ['ten'=>?string, 'tu'=>mixed, 'den'=>mixed], ... ] */
     protected $dong = [];
 
@@ -41,7 +54,8 @@ class CatalogLookup
         $cotTen = null,
         $cotTu = 'tu_ngay',
         $cotDen = 'den_ngay',
-        array $dieuKien = []
+        array $dieuKien = [],
+        $cotCoSo = null
     ) {
         $this->bang = $bang;
         $this->cot = $cot;
@@ -49,6 +63,7 @@ class CatalogLookup
         $this->cotTu = $cotTu;
         $this->cotDen = $cotDen;
         $this->dieuKien = $dieuKien;
+        $this->cotCoSo = $cotCoSo;
     }
 
     /**
@@ -57,18 +72,42 @@ class CatalogLookup
      * Bang RONG -> tra false -> quy tac goi PHAI bo qua. Neu khong, don vi chua nhap danh
      * muc se thay MOI dich vu thanh vi pham - sai ma trong nhu dung.
      */
-    public function sanSang()
+    public function sanSang($maCskcb = null)
     {
-        if ($this->sanSang === null) {
-            // Dieu kien PHAI duoc ap o day: bang co 12.229 dong nhung khong dong nao
-            // is_active = 1 thi van la "chua co danh muc", khong the de moi ma thanh vi pham.
-            $this->sanSang = DB::table($this->bang)
+        $maCskcb = trim((string) $maCskcb);
+
+        if ($this->sanSangTest !== null) {
+            return $this->sanSangTest;
+        }
+
+        if ($this->cotCoSo === null || $maCskcb === '') {
+            if ($this->sanSang === null) {
+                // Dieu kien PHAI duoc ap o day: bang co 12.229 dong nhung khong dong nao
+                // is_active = 1 thi van la "chua co danh muc", khong the de moi ma thanh vi pham.
+                $this->sanSang = DB::table($this->bang)
+                    ->where($this->dieuKien)
+                    ->limit(1)
+                    ->exists();
+            }
+
+            return $this->sanSang;
+        }
+
+        // Tinh RIENG cho tung co so: co so chua nhap danh muc thi quy tac phai im lang,
+        // du bang co day du lieu cua co so khac.
+        if (!array_key_exists($maCskcb, $this->sanSangCoSo)) {
+            $cot = $this->cotCoSo;
+
+            $this->sanSangCoSo[$maCskcb] = DB::table($this->bang)
                 ->where($this->dieuKien)
+                ->where(function ($w) use ($cot, $maCskcb) {
+                    $w->whereNull($cot)->orWhere($cot, '')->orWhere($cot, $maCskcb);
+                })
                 ->limit(1)
                 ->exists();
         }
 
-        return $this->sanSang;
+        return $this->sanSangCoSo[$maCskcb];
     }
 
     /**
@@ -98,6 +137,10 @@ class CatalogLookup
             $chon[] = $this->cotTen;
         }
 
+        if ($this->cotCoSo !== null) {
+            $chon[] = $this->cotCoSo;
+        }
+
         $thay = DB::table($this->bang)
             ->whereIn($this->cot, $ma)
             ->where($this->dieuKien)
@@ -116,6 +159,7 @@ class CatalogLookup
                 'ten' => $this->cotTen === null ? null : trim((string) $d[$this->cotTen]),
                 'tu' => $this->cotTu === null ? null : $d[$this->cotTu],
                 'den' => $this->cotDen === null ? null : $d[$this->cotDen],
+                'cs' => $this->cotCoSo === null ? null : $d[$this->cotCoSo],
             ];
         }
     }
@@ -125,9 +169,9 @@ class CatalogLookup
      * @param int|null $ngayYmd null = khong loc hieu luc
      * @return bool
      */
-    public function coTrongDanhMuc($ma, $ngayYmd = null)
+    public function coTrongDanhMuc($ma, $ngayYmd = null, $maCskcb = null)
     {
-        return !empty($this->dongConHieuLuc($ma, $ngayYmd));
+        return !empty($this->dongConHieuLuc($ma, $ngayYmd, $maCskcb));
     }
 
     /**
@@ -135,11 +179,11 @@ class CatalogLookup
      *
      * @return string[] da trim, da bo trung, giu thu tu xuat hien
      */
-    public function tenTheoMa($ma, $ngayYmd = null)
+    public function tenTheoMa($ma, $ngayYmd = null, $maCskcb = null)
     {
         $ten = [];
 
-        foreach ($this->dongConHieuLuc($ma, $ngayYmd) as $d) {
+        foreach ($this->dongConHieuLuc($ma, $ngayYmd, $maCskcb) as $d) {
             $t = (string) $d['ten'];
 
             if ($t !== '' && !in_array($t, $ten, true)) {
@@ -150,7 +194,7 @@ class CatalogLookup
         return $ten;
     }
 
-    protected function dongConHieuLuc($ma, $ngayYmd)
+    protected function dongConHieuLuc($ma, $ngayYmd, $maCskcb = null)
     {
         $ma = trim((string) $ma);
 
@@ -158,8 +202,21 @@ class CatalogLookup
             return [];
         }
 
-        return array_values(array_filter($this->dong[$ma], function ($d) use ($ngayYmd) {
-            return NgayHieuLuc::conHieuLuc($d['tu'], $d['den'], $ngayYmd);
+        $cs = trim((string) $maCskcb);
+
+        return array_values(array_filter($this->dong[$ma], function ($d) use ($ngayYmd, $cs) {
+            if (!NgayHieuLuc::conHieuLuc($d['tu'], $d['den'], $ngayYmd)) {
+                return false;
+            }
+
+            if ($cs === '') {
+                return true;   // khong loc co so
+            }
+
+            // Dong khong gan ma co so dung chung cho MOI co so.
+            $dongCs = trim((string) $d['cs']);
+
+            return $dongCs === '' || $dongCs === $cs;
         }));
     }
 
@@ -172,7 +229,7 @@ class CatalogLookup
     public function datSanChoTest(array $ma, array $dong = [])
     {
         foreach ($ma as $m) {
-            $this->dong[trim((string) $m)][] = ['ten' => null, 'tu' => null, 'den' => null];
+            $this->dong[trim((string) $m)][] = ['ten' => null, 'tu' => null, 'den' => null, 'cs' => null];
         }
 
         foreach ($dong as $m => $ds) {
@@ -181,11 +238,13 @@ class CatalogLookup
                     'ten' => isset($d['ten']) ? trim((string) $d['ten']) : null,
                     'tu' => isset($d['tu']) ? $d['tu'] : null,
                     'den' => isset($d['den']) ? $d['den'] : null,
+                    'cs' => isset($d['cs']) ? $d['cs'] : null,
                 ];
             }
         }
 
         $this->sanSang = true;
+        $this->sanSangTest = true;
     }
 
     /**
@@ -197,5 +256,7 @@ class CatalogLookup
     {
         $this->dong = [];
         $this->sanSang = false;
+        $this->sanSangCoSo = [];
+        $this->sanSangTest = false;
     }
 }

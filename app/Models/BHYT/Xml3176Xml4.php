@@ -23,6 +23,12 @@ class Xml3176Xml4 extends Model
         'du_phong'
     ];
 
+    /** Ho so goc; dung de lay ma_cskcb khi doi chieu danh muc theo co so */
+    public function Xml3176Xml1()
+    {
+        return $this->belongsTo('App\Models\BHYT\Xml3176Xml1', 'ma_lk', 'ma_lk');
+    }
+
     public function errorResult()
     {
         return $this->hasMany('App\Models\BHYT\Xml3176ErrorResult', 'ma_lk', 'ma_lk')

@@ -120,6 +120,16 @@ class BhytSeedTest extends TestCase
     }
 
     /** @test */
+    public function his_order_source_lay_ma_co_so_kcb()
+    {
+        $ma = $this->maKhongComment(app_path('Services/OrderCheck/HisOrderSource.php'));
+
+        $this->assertContains('his_branch', $ma);
+        $this->assertContains('hein_medi_org_code', $ma);
+        $this->assertContains('maCskcb', $ma);
+    }
+
+    /** @test */
     public function order_service_co_hai_thuoc_tinh_moi()
     {
         $s = new \App\Services\OrderCheck\Support\OrderService();

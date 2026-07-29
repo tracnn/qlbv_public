@@ -28,6 +28,8 @@ class HisOrderSource
             ->leftJoin('his_employee as e', 'sr.execute_loginname', '=', 'e.loginname')
             // Join thu hai de lay CCHN cua bac si CHI DINH; alias e da danh cho nguoi thuc hien.
             ->leftJoin('his_employee as re', 'sr.request_loginname', '=', 're.loginname')
+            // Ma CSKCB de doi chieu danh muc theo co so; t la his_treatment da join san.
+            ->leftJoin('his_branch as br', 'br.id', '=', 't.branch_id')
             ->where('sr.is_delete', 0)
             ->where('sr.modify_time', '>', $lastModifyTime)
             ->orderBy('sr.modify_time')
@@ -41,7 +43,7 @@ class HisOrderSource
                 sr.tdl_treatment_code, sr.tdl_patient_code, sr.tdl_patient_name,
                 t.in_time as in_time, t.out_time as out_time,
                 sr.execute_loginname, sr.execute_username, e.diploma as execute_diploma,
-                re.diploma as request_diploma');
+                re.diploma as request_diploma, br.hein_medi_org_code as ma_cskcb');
 
         if (!empty($this->excludeTreatmentTypeIds)) {
             $q->whereNotIn('t.tdl_treatment_type_id', $this->excludeTreatmentTypeIds);
@@ -227,6 +229,7 @@ class HisOrderSource
         $c->traditionalIcdCode = $row->traditional_icd_code;
         $c->traditionalIcdSubCode = $row->traditional_icd_sub_code;
         $c->requestDiploma = $row->request_diploma;
+        $c->maCskcb = $row->ma_cskcb;
         $c->services = $services;
         return $c;
     }

@@ -29,7 +29,7 @@ abstract class BhytNameMismatchRule extends BhytCatalogRule
 
     public function check(OrderContext $c)
     {
-        if (!$this->danhMuc->sanSang()) {
+        if (!$this->danhMuc->sanSang($c->maCskcb)) {
             return [];   // danh muc chua nhap - im lang thay vi bao oan toan bo
         }
 
@@ -55,7 +55,7 @@ abstract class BhytNameMismatchRule extends BhytCatalogRule
                 continue;   // do duoc 0 dong thieu ten, khong lam quy tac "thieu ten"
             }
 
-            $tenDanhMuc = $this->danhMuc->tenTheoMa($ma, $ngay);
+            $tenDanhMuc = $this->danhMuc->tenTheoMa($ma, $ngay, $c->maCskcb);
 
             if (empty($tenDanhMuc)) {
                 continue;   // ma khong co hoac het hieu luc - quy tac MA lo, khong bao chong

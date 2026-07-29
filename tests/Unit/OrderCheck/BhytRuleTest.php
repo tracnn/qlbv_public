@@ -181,6 +181,52 @@ class BhytRuleTest extends TestCase
         $this->assertCount(0, $vi);
     }
 
+    private function traTheoCoSo(array $dong)
+    {
+        $lk = new CatalogLookup('medicine_catalogs', 'ma_thuoc', 'ten_thuoc',
+            'tu_ngay', 'den_ngay', [], 'ma_cskcb');
+        $lk->datSanChoTest([], $dong);
+
+        return new BhytDrugCatalogRule($lk);
+    }
+
+    private function ctxCoSo($maCskcb)
+    {
+        $c = $this->ctx([$this->dv(1, 'TH1', 1, 'BH1', 6)]);
+        $c->maCskcb = $maCskcb;
+
+        return $c;
+    }
+
+    /** @test */
+    public function chi_tra_danh_muc_cua_co_so_cua_ho_so()
+    {
+        $r = $this->traTheoCoSo(['BH1' => [['ten' => 'Thuoc A', 'tu' => '', 'den' => '', 'cs' => '01929']]]);
+
+        $this->assertCount(0, $r->check($this->ctxCoSo('01929')),
+            'Ma cua chinh co so minh ma van bao vi pham');
+        $this->assertCount(1, $r->check($this->ctxCoSo('37470')),
+            'Ma cua co so khac ma khong bao vi pham');
+    }
+
+    /** @test */
+    public function dong_danh_muc_dung_chung_khop_moi_co_so()
+    {
+        // Dieu kien de trien khai khong lam tat cac kiem tra dang chay.
+        $r = $this->traTheoCoSo(['BH1' => [['ten' => 'Thuoc A', 'tu' => '', 'den' => '', 'cs' => '']]]);
+
+        $this->assertCount(0, $r->check($this->ctxCoSo('01929')));
+        $this->assertCount(0, $r->check($this->ctxCoSo('37470')));
+    }
+
+    /** @test */
+    public function phieu_khong_co_ma_co_so_thi_khong_loc()
+    {
+        $r = $this->traTheoCoSo(['BH1' => [['ten' => 'Thuoc A', 'tu' => '', 'den' => '', 'cs' => '01929']]]);
+
+        $this->assertCount(0, $r->check($this->ctxCoSo(null)));
+    }
+
     /** @test */
     public function phieu_khong_co_dong_bhyt_nao_thi_khong_bao_gi()
     {

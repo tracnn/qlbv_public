@@ -744,7 +744,9 @@ class Xml3176Xml3Checker
                 list($dataDecision, $dataPackage, $dataGroup, $dataYear) = $parts;
 
                 // Lấy các bản ghi từ MedicalSupplyCatalog có ma_vat_tu khớp với ma_vat_tu trong $data
-                $medicalSupplies = MedicalSupplyCatalog::where('ma_vat_tu', $data->ma_vat_tu)->get();
+                // Danh muc VTYT cap theo CO SO; dong khong gan ma co so dung chung.
+                $maCskcb = $data->Xml3176Xml1 ? $data->Xml3176Xml1->ma_cskcb : null;
+                $medicalSupplies = MedicalSupplyCatalog::cuaCoSo($maCskcb)->where('ma_vat_tu', $data->ma_vat_tu)->get();
                 $found = false;
 
                 foreach ($medicalSupplies as $supply) {
@@ -861,7 +863,9 @@ class Xml3176Xml3Checker
             !in_array($data->ma_nhom, $this->examinationGroupCodes) &&
             !in_array($data->ma_nhom, $this->transportGroupCodes) ) {
 
-            $serviceExists = ServiceCatalog::where('ma_dich_vu', $data->ma_dich_vu)->exists();
+            // Danh muc DVKT cap theo CO SO; dong khong gan ma co so dung chung.
+            $maCskcb = $data->Xml3176Xml1 ? $data->Xml3176Xml1->ma_cskcb : null;
+            $serviceExists = ServiceCatalog::cuaCoSo($maCskcb)->where('ma_dich_vu', $data->ma_dich_vu)->exists();
 
             if (!$serviceExists) {
                 $errorCode = $this->generateErrorCode('INVALID_MA_DICH_VU');
@@ -874,7 +878,7 @@ class Xml3176Xml3Checker
             } else {
                 $ngayVao = \DateTime::createFromFormat('YmdHi', $data->Xml3176Xml1->ngay_vao)->format('Ymd');
 
-                $validServiceExists = ServiceCatalog::where('ma_dich_vu', $data->ma_dich_vu)
+                $validServiceExists = ServiceCatalog::cuaCoSo($maCskcb)->where('ma_dich_vu', $data->ma_dich_vu)
                 ->where('tu_ngay', '<=', $ngayVao)
                 ->where(function ($query) use ($ngayVao) {
                     $query->where('den_ngay', '>=', $ngayVao)

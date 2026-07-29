@@ -193,6 +193,108 @@ class CatalogLookupTest extends TestCase
         }
     }
 
+    /** medicine_catalogs co nhieu cot NOT NULL khong mac dinh; dien du de chen duoc */
+    private function dongThuoc($ma, $maCskcb)
+    {
+        return [
+            'ma_thuoc' => $ma, 'ten_hoat_chat' => 'X', 'ten_thuoc' => 'X',
+            'don_vi_tinh' => 'Vien', 'ham_luong' => '1', 'duong_dung' => 'Uong',
+            'ma_duong_dung' => '1', 'dang_bao_che' => 'Vien', 'so_dang_ky' => 'SDK',
+            'ma_cskcb' => $maCskcb,
+        ];
+    }
+
+    private function traCoSo(array $dong)
+    {
+        $lk = new CatalogLookup('medicine_catalogs', 'ma_thuoc', 'ten_thuoc',
+            'tu_ngay', 'den_ngay', [], 'ma_cskcb');
+        $lk->datSanChoTest([], $dong);
+
+        return $lk;
+    }
+
+    /** @test */
+    public function dong_rong_ma_co_so_dung_chung_moi_co_so()
+    {
+        // Dieu kien de trien khai khong lam tat cac kiem tra danh muc dang chay: du lieu
+        // danh muc cu chua gan ma co so.
+        $lk = $this->traCoSo(['A1' => [['ten' => 'X', 'tu' => '', 'den' => '', 'cs' => '']]]);
+
+        $this->assertTrue($lk->coTrongDanhMuc('A1', null, '01929'));
+        $this->assertTrue($lk->coTrongDanhMuc('A1', null, '37470'));
+    }
+
+    /** @test */
+    public function dong_co_ma_co_so_chi_khop_dung_co_so_do()
+    {
+        $lk = $this->traCoSo(['A1' => [['ten' => 'X', 'tu' => '', 'den' => '', 'cs' => '01929']]]);
+
+        $this->assertTrue($lk->coTrongDanhMuc('A1', null, '01929'));
+        $this->assertFalse($lk->coTrongDanhMuc('A1', null, '37470'));
+    }
+
+    /** @test */
+    public function khong_truyen_co_so_thi_khong_loc()
+    {
+        $lk = $this->traCoSo(['A1' => [['ten' => 'X', 'tu' => '', 'den' => '', 'cs' => '01929']]]);
+
+        $this->assertTrue($lk->coTrongDanhMuc('A1'));
+    }
+
+    /** @test */
+    public function ten_theo_ma_cung_loc_theo_co_so()
+    {
+        $lk = $this->traCoSo(['A1' => [
+            ['ten' => 'Ten BM', 'tu' => '', 'den' => '', 'cs' => '01929'],
+            ['ten' => 'Ten NB', 'tu' => '', 'den' => '', 'cs' => '37470'],
+        ]]);
+
+        $this->assertSame(['Ten BM'], $lk->tenTheoMa('A1', null, '01929'));
+        $this->assertSame(['Ten NB'], $lk->tenTheoMa('A1', null, '37470'));
+    }
+
+    /** @test */
+    public function bang_khong_co_khai_niem_co_so_thi_khong_loc()
+    {
+        // icd10_categories, medical_staffs khong co cot ma_cskcb.
+        $lk = new CatalogLookup('icd10_categories', 'icd_code', null, null, null, [], null);
+        $lk->datSanChoTest(['A00']);
+
+        $this->assertTrue($lk->coTrongDanhMuc('A00', null, '01929'));
+    }
+
+    /** @test */
+    public function san_sang_tinh_rieng_cho_tung_co_so()
+    {
+        DB::table('medicine_catalogs')->insert([$this->dongThuoc('ZZTH1', '01929')]);
+
+        try {
+            $lk = new CatalogLookup('medicine_catalogs', 'ma_thuoc', 'ten_thuoc',
+                'tu_ngay', 'den_ngay', [], 'ma_cskcb');
+
+            $this->assertTrue($lk->sanSang('01929'));
+            $this->assertFalse($lk->sanSang('37470'),
+                'Co so chua nhap danh muc ma van bao san sang');
+        } finally {
+            DB::table('medicine_catalogs')->where('ma_thuoc', 'ZZTH1')->delete();
+        }
+    }
+
+    /** @test */
+    public function dong_dung_chung_lam_moi_co_so_san_sang()
+    {
+        DB::table('medicine_catalogs')->insert([$this->dongThuoc('ZZTH2', null)]);
+
+        try {
+            $lk = new CatalogLookup('medicine_catalogs', 'ma_thuoc', 'ten_thuoc',
+                'tu_ngay', 'den_ngay', [], 'ma_cskcb');
+
+            $this->assertTrue($lk->sanSang('37470'));
+        } finally {
+            DB::table('medicine_catalogs')->where('ma_thuoc', 'ZZTH2')->delete();
+        }
+    }
+
     /** @test */
     public function nap_kieu_cu_va_kieu_moi_cong_don_duoc_voi_nhau()
     {

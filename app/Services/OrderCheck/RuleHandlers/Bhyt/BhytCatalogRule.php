@@ -35,7 +35,9 @@ abstract class BhytCatalogRule implements RuleHandler
 
     public function __construct(CatalogLookup $danhMuc = null)
     {
-        $this->danhMuc = $danhMuc ?: new CatalogLookup($this->bang(), $this->cot(), $this->cotTen());
+        $this->danhMuc = $danhMuc ?: new CatalogLookup(
+            $this->bang(), $this->cot(), $this->cotTen(), 'tu_ngay', 'den_ngay', [], 'ma_cskcb'
+        );
     }
 
     /** Ten bang danh muc cuc bo */
@@ -111,7 +113,9 @@ abstract class BhytCatalogRule implements RuleHandler
 
     public function check(OrderContext $c)
     {
-        if (!$this->danhMuc->sanSang()) {
+        // San sang tinh RIENG cho tung co so: co so chua nhap danh muc thi im lang, du
+        // bang co day du lieu cua co so khac.
+        if (!$this->danhMuc->sanSang($c->maCskcb)) {
             return [];   // danh muc chua nhap - im lang thay vi bao oan toan bo
         }
 
@@ -131,7 +135,7 @@ abstract class BhytCatalogRule implements RuleHandler
         foreach ($dong as $d) {
             list($s, $ngay, $ma) = $d;
 
-            if ($this->danhMuc->coTrongDanhMuc($ma, $ngay)) {
+            if ($this->danhMuc->coTrongDanhMuc($ma, $ngay, $c->maCskcb)) {
                 continue;
             }
 

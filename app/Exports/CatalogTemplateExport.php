@@ -37,6 +37,26 @@ class CatalogTemplateExport implements FromArray, WithHeadings, WithEvents
         return $headers;
     }
 
+    /**
+     * Tên header (first alias) của cột mã cơ sở — tô màu RIÊNG, khác màu cột bắt buộc.
+     *
+     * Cột này không bắt buộc (tệp BHXH cấp thường không có), nhưng bỏ trống thì dòng danh
+     * mục thành "dùng chung mọi cơ sở" một cách im lặng. Với ba danh mục BHXH cấp riêng
+     * theo cơ sở thì đó gần như luôn là sai, nên phải nhìn thấy được.
+     *
+     * @return string[] rỗng nếu danh mục này không theo cơ sở
+     */
+    public function facilityHeaders(): array
+    {
+        if (!in_array($this->type, \App\Services\CatalogImportService::DANH_MUC_THEO_CO_SO, true)) {
+            return [];
+        }
+
+        $alias = $this->config['mapping']['ma_cskcb'][0] ?? null;
+
+        return $alias === null ? [] : [$alias];
+    }
+
     /** Tên header (first alias) của các cột bắt buộc — để tô màu. */
     public function requiredHeaders(): array
     {
@@ -68,6 +88,7 @@ class CatalogTemplateExport implements FromArray, WithHeadings, WithEvents
                 $sheet = $event->sheet->getDelegate();
                 $headers = $this->headers();
                 $required = $this->requiredHeaders();
+                $facility = $this->facilityHeaders();
 
                 foreach ($headers as $i => $name) {
                     $col = Coordinate::stringFromColumnIndex($i + 1);
@@ -79,6 +100,19 @@ class CatalogTemplateExport implements FromArray, WithHeadings, WithEvents
                         $sheet->getStyle($cell)->getFill()
                             ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
                             ->getStartColor()->setRGB('FFF2CC');
+                    } elseif (in_array($name, $facility, true)) {
+                        // Mau RIENG, khong dung mau vang cua cot bat buoc: cot nay khong bat
+                        // buoc, chi la neu bo trong thi danh muc thanh dung chung moi co so.
+                        $sheet->getStyle($cell)->getFill()
+                            ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
+                            ->getStartColor()->setRGB('DDEBF7');
+                        $sheet->getComment($cell)->getText()->createTextRun(
+                            "Ma co so kham chua benh.
+"
+                            . "Bo trong = danh muc dung chung cho MOI co so.
+"
+                            . "Co the chon co so tren man nhap thay vi dien cot nay."
+                        );
                     }
                 }
             },

@@ -32,4 +32,34 @@ class CatalogTemplateExportTest extends TestCase
         $this->assertContains('MA_THUOC', $req);
         $this->assertContains('TEN_THUOC', $req);
     }
+
+    /** @test */
+    public function ba_danh_muc_theo_co_so_deu_to_mau_cot_ma_cskcb()
+    {
+        foreach (['medicine', 'medical_supply', 'service'] as $loai) {
+            $e = new CatalogTemplateExport($loai);
+
+            $this->assertSame(['MA_CSKCB'], $e->facilityHeaders(), "Danh muc $loai");
+            $this->assertContains('MA_CSKCB', $e->headers());
+        }
+    }
+
+    /** @test */
+    public function danh_muc_dung_chung_khong_to_mau_ma_cskcb()
+    {
+        // ICD, nghe nghiep... khong co khai niem co so.
+        foreach (['icd10', 'job_categories'] as $loai) {
+            $this->assertSame([], (new CatalogTemplateExport($loai))->facilityHeaders(), "Danh muc $loai");
+        }
+    }
+
+    /** @test */
+    public function ma_cskcb_khong_nam_trong_nhom_cot_bat_buoc()
+    {
+        // To mau RIENG chu khong dung mau vang cua cot bat buoc: tep BHXH cap thuong khong
+        // co cot nay, bat buoc thi se tu choi nhap.
+        foreach (['medicine', 'medical_supply', 'service'] as $loai) {
+            $this->assertNotContains('MA_CSKCB', (new CatalogTemplateExport($loai))->requiredHeaders(), $loai);
+        }
+    }
 }

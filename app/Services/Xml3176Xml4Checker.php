@@ -88,7 +88,11 @@ class Xml3176Xml4Checker
                 ]);
             }
 
-            if (!ServiceCatalog::where('ma_dich_vu', $data->ma_dich_vu)->exists()) {
+            // Danh muc DVKT cap theo CO SO; dong khong gan ma co so dung chung.
+            $data->loadMissing('Xml3176Xml1');
+            $maCskcb = $data->Xml3176Xml1 ? $data->Xml3176Xml1->ma_cskcb : null;
+
+            if (!ServiceCatalog::cuaCoSo($maCskcb)->where('ma_dich_vu', $data->ma_dich_vu)->exists()) {
                 $errorCode = $this->generateErrorCode('INFO_ERROR_MA_DICH_VU_NOT_FOUND');
                 $errors->push((object)[
                     'error_code' => $errorCode,

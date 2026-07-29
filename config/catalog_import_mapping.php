@@ -29,7 +29,7 @@ return [
             'ht_thau' => ['HT_THAU', 'HT thầu', 'HT THAU'],
         ],
         'required_fields' => ['ma_thuoc', 'ten_thuoc', 'ham_luong', 'so_dang_ky', 'tt_thau', 'tu_ngay'],
-        'unique_keys' => ['ma_thuoc', 'ten_thuoc', 'ham_luong', 'so_dang_ky', 'don_gia_bh', 'tt_thau', 'tu_ngay'],
+        'unique_keys' => ['ma_thuoc', 'ten_thuoc', 'ham_luong', 'so_dang_ky', 'don_gia_bh', 'tt_thau', 'tu_ngay', 'ma_cskcb'],
     ],
 
     'medical_supply' => [
@@ -58,7 +58,7 @@ return [
             'den_ngay' => ['DENNGAY', 'Đến ngày', 'DEN NGAY'],
         ],
         'required_fields' => ['ma_vat_tu', 'nhom_vat_tu', 'ten_vat_tu', 'tt_thau', 'don_gia', 'don_gia_bh', 'tu_ngay'],
-        'unique_keys' => ['ma_vat_tu', 'ten_vat_tu', 'tt_thau', 'don_gia_bh', 'tu_ngay'],
+        'unique_keys' => ['ma_vat_tu', 'ten_vat_tu', 'tt_thau', 'don_gia_bh', 'tu_ngay', 'ma_cskcb'],
     ],
 
     'service' => [
@@ -73,7 +73,7 @@ return [
             'ma_cskcb' => ['MA_CSKCB', 'Mã CSKCB', 'MA CSKCB'],
         ],
         'required_fields' => ['ma_dich_vu', 'ten_dich_vu', 'don_gia', 'tu_ngay'],
-        'unique_keys' => ['ma_dich_vu', 'ten_dich_vu', 'don_gia', 'quy_trinh', 'tu_ngay'],
+        'unique_keys' => ['ma_dich_vu', 'ten_dich_vu', 'don_gia', 'quy_trinh', 'tu_ngay', 'ma_cskcb'],
     ],
 
     'icd_yhct' => [

@@ -20,6 +20,14 @@ class OrderContext
     /** @var int */ public $intructionTime = 0;
     /** @var int */ public $inTime = 0;
     /** @var int */ public $outTime = 0;
+    /**
+     * @var string|null Ma CSKCB cua co so (his_branch.hein_medi_org_code theo branch cua
+     *                  ho so). Danh muc DVKT/thuoc/VTYT cap theo co so nay.
+     *                  NHIEU branch co the dung CHUNG mot ma - vi du Bach Mai va Bach Mai
+     *                  CS2 deu la 01929 - nen khoa danh muc la ma CSKCB, khong phai branch.
+     */
+    public $maCskcb;
+
     /** @var string|null */ public $icdCode;
 
     /** @var string|null Chan doan phu; chuoi nhieu ma ngan boi ';' va CO dau ';' dan dau */

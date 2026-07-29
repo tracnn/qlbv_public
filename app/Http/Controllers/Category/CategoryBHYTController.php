@@ -243,7 +243,9 @@ class CategoryBHYTController extends Controller
 
     public function importIndex()
     {
-        return view('category.bhyt.import');
+        return view('category.bhyt.import', [
+            'danhSachCoSo' => \App\Services\BHYT\DanhSachCoSo::danhSach(),
+        ]);
     }
 
     public function downloadTemplate(Request $request)
@@ -260,6 +262,14 @@ class CategoryBHYTController extends Controller
 
     public function import(Request $request)
     {
+        // Ma co so chon tren man nhap; chi ap cho ba danh muc theo co so, va chi cho dong
+        // khong tu khai MA_CSKCB trong tep.
+        $maCskcb = trim((string) $request->input('ma_cskcb'));
+
+        if ($maCskcb !== '' && !array_key_exists($maCskcb, \App\Services\BHYT\DanhSachCoSo::danhSach())) {
+            return response()->json(['message' => 'Cơ sở khám chữa bệnh không hợp lệ'], 422);
+        }
+
         if ($request->hasFile('import_file')) {
             $files = $request->file('import_file'); // Nhận tất cả các file được gửi lên
 
@@ -278,13 +288,24 @@ class CategoryBHYTController extends Controller
 
                 try {
                     // Xử lý import file tại đây
-                    $this->importService->import($file);
+                    $ketQua = $this->importService->import($file, $maCskcb);
                 } catch (\Exception $e) {
                     return response()->json(['message' => $e->getMessage()], 500);
                 }
             }
 
-            return response()->json(['message' => 'File đã upload và xử lý thành công!'], 200);
+            // Truoc day luon tra 'thanh cong' du co the nhap 0 dong: nguoi dung khong co
+            // cach nao biet bao nhieu dong vao, bao nhieu bi bo.
+            $tomTat = $ketQua->tomTat();
+
+            if (!$ketQua->coGhi()) {
+                $tomTat = 'Không ghi được dòng nào. ' . $tomTat;
+            }
+
+            return response()->json([
+                'message' => $tomTat,
+                'ket_qua' => $ketQua->toArray(),
+            ], 200);
         }
 
         return response()->json(['message' => 'Chưa chọn file để import'], 422);

@@ -37,7 +37,30 @@
             <button type="button" id="btn_download_template" class="btn btn-success">
                 <i class="fa fa-download"></i> Tải biểu mẫu
             </button>
-            <p class="help-block" style="margin-top:6px;">Cột bôi vàng là bắt buộc. Điền dữ liệu từ dòng 2 rồi tải lên ở khung bên dưới.</p>
+            <p class="help-block" style="margin-top:6px;">
+                Cột bôi <span style="background:#FFF2CC;padding:0 6px;">vàng</span> là bắt buộc.
+                Cột bôi <span style="background:#DDEBF7;padding:0 6px;">xanh</span> là mã cơ sở khám chữa bệnh —
+                không bắt buộc, bỏ trống thì danh mục dùng chung cho mọi cơ sở.
+                Điền dữ liệu từ dòng 2 rồi tải lên ở khung bên dưới.
+            </p>
+        </div>
+        <hr>
+        <div class="form-inline">
+            <label for="ma_cskcb" style="margin-right:8px;">Cơ sở khám chữa bệnh:</label>
+            <select id="ma_cskcb" class="form-control" style="min-width:360px;">
+                <option value="">— Dùng chung cho mọi cơ sở —</option>
+                @foreach ($danhSachCoSo as $ma => $nhan)
+                    <option value="{{ $ma }}">{{ $nhan }}</option>
+                @endforeach
+            </select>
+            <p class="help-block" style="margin-top:6px;">
+                Chỉ áp dụng cho danh mục <b>Thuốc</b>, <b>Vật tư y tế</b> và <b>Dịch vụ kỹ thuật</b> — đây là ba
+                danh mục BHXH cấp riêng cho từng cơ sở. Dòng nào trong tệp đã có sẵn cột <code>MA_CSKCB</code>
+                thì lấy theo tệp; ô này chỉ điền cho những dòng bỏ trống.
+                @if (empty($danhSachCoSo))
+                    <br><span class="text-danger">Chưa đọc được danh sách cơ sở từ HIS.</span>
+                @endif
+            </p>
         </div>
     </div>
 </div>
@@ -84,6 +107,45 @@
         parallelUploads: 1, // Chỉ tải lên một file tại một thời điểm
         previewTemplate: '<div></div>', // Tắt giao diện preview mặc định
         init: function () {
+            // Gom ket qua cua moi tep trong mot lan tai len.
+            var tong = { nhap: 0, capNhat: 0, khongDoi: 0, boQua: 0, loi: 0, dongLoi: [] };
+
+            function tongHopKetQua(kq) {
+                tong.nhap += kq.so_da_nhap || 0;
+                tong.capNhat += kq.so_da_cap_nhat || 0;
+                tong.khongDoi += kq.so_khong_doi || 0;
+                tong.boQua += kq.so_bo_qua || 0;
+                tong.loi += kq.so_loi || 0;
+                (kq.dong_loi || []).forEach(function (x) {
+                    if (tong.dongLoi.length < 20) { tong.dongLoi.push(x); }
+                });
+            }
+
+            function moTaKetQua() {
+                var h = '<div style="text-align:left">'
+                    + 'Đã thêm: <b>' + tong.nhap + '</b><br>'
+                    + 'Cập nhật: <b>' + tong.capNhat + '</b><br>'
+                    + 'Không đổi: <b>' + tong.khongDoi + '</b><br>'
+                    + 'Bỏ qua (thiếu trường bắt buộc): <b>' + tong.boQua + '</b><br>'
+                    + 'Lỗi: <b>' + tong.loi + '</b>';
+
+                if (tong.dongLoi.length) {
+                    h += '<hr><div style="max-height:200px;overflow:auto;font-size:12px">';
+                    tong.dongLoi.forEach(function (x) {
+                        h += 'Dòng ' + x.dong + ': ' + $('<div>').text(x.ly_do).html() + '<br>';
+                    });
+                    h += '</div>';
+                }
+
+                return h + '</div>';
+            }
+
+            // Gui kem co so da chon; doc tai thoi diem gui de doi lua chon giua chung
+            // cac tep van co tac dung.
+            this.on("sending", function (file, xhr, formData) {
+                formData.append("ma_cskcb", document.getElementById('ma_cskcb').value);
+            });
+
             var totalFiles = 0;
             var uploadedFiles = 0;
             var isUploading = false;
@@ -101,12 +163,20 @@
                 uploadedFiles++;
                 updateProgress();
                 updateFileStatus(file, 'success', response.message || "Tải lên thành công");
+
+                var kq = response.ket_qua || null;
+                if (kq) { tongHopKetQua(kq); }
+
                 if (uploadedFiles === totalFiles) {
                     isUploading = false;
+
+                    // Truoc day luon bao 'Thanh cong' du co the nhap 0 dong.
+                    var coGhi = tong.nhap > 0 || tong.capNhat > 0;
+
                     Swal.fire({
-                        title: 'Thành công!',
-                        text: 'Đã hoàn thành việc tải lên hồ sơ!',
-                        icon: 'success',
+                        title: coGhi ? 'Đã nhập xong' : 'Không ghi được dòng nào',
+                        html: moTaKetQua(),
+                        icon: coGhi ? 'success' : 'warning',
                     });
                 }
             });
