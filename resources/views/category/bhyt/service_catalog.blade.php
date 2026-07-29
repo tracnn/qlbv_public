@@ -27,11 +27,15 @@
                     <th>CSKCB CLS</th>
                     <th>Từ ngày</th>
                     <th>Đến ngày</th>
+                    <th>MA_CSKCB</th>
+                    <th>Xem</th>
                 </tr>
             </thead>
         </table>
     </div>
 </div>
+
+@include('category.bhyt._chi_tiet')
 
 @stop
 
@@ -75,6 +79,10 @@
                 { "data": "cskcb_cls" },
                 { "data": "tu_ngay" },
                 { "data": "den_ngay" },
+                { "data": "ma_cskcb", "render": function (d) { return d ? d : 'Dùng chung'; } },
+                { "data": "id", "orderable": false, "searchable": false, "render": function (d) {
+                    return '<button type="button" class="btn btn-xs btn-default nut-chi-tiet" data-loai="service" data-id="' + d + '">Xem</button>';
+                } },
             ],
         });
 

@@ -403,6 +403,9 @@ Route::group(['middleware' => ['auth', 'check.first.login']], function () {
         Route::get('bhyt/fetch-job-category', 'Category\CategoryBHYTController@fetchJobCategory')
         ->name('category-bhyt.fetch-job-category');
 
+        Route::get('bhyt/chi-tiet/{loai}/{id}', 'Category\CategoryBHYTController@chiTietDanhMuc')
+        ->name('category-bhyt.chi-tiet');
+
         Route::get('bhyt/qd130-xml-error-catalog', 'Category\CategoryBHYTController@indexQd130XmlErrorCatalog')
         ->name('category-bhyt.qd130-xml-error-catalog');
         Route::get('bhyt/category-bhyt-fetch-qd130-xml-error-catalog-datatable', 'Category\CategoryBHYTController@fetchQd130XmlErrorCatalogDatatable')

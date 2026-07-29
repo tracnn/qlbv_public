@@ -22,11 +22,15 @@
                     <th>Tên bệnh YHCT</th>
                     <th>Mã ICD10</th>
                     <th>Tên ICD10</th>
+                    <th>Xem</th>
                 </tr>
             </thead>
         </table>
     </div>
 </div>
+
+@include('category.bhyt._chi_tiet')
+
 @stop
 
 @push('after-scripts')
@@ -46,6 +50,9 @@
                 { "data": "icd_yhct_name" },
                 { "data": "icd10_code" },
                 { "data": "icd10_name" },
+                { "data": "id", "orderable": false, "searchable": false, "render": function (d) {
+                    return '<button type="button" class="btn btn-xs btn-default nut-chi-tiet" data-loai="icd_yhct" data-id="' + d + '">Xem</button>';
+                } },
             ],
         });
     }

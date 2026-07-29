@@ -20,11 +20,15 @@
                     <th>Mã ICD</th>
                     <th>Tên ICD</th>
                     <th>Mãn tính</th>
+                    <th>Xem</th>
                 </tr>
             </thead>
         </table>
     </div>
 </div>
+
+@include('category.bhyt._chi_tiet')
+
 @stop
 
 @push('after-scripts')
@@ -42,6 +46,9 @@
                 { "data": "icd_code" },
                 { "data": "icd_name" },
                 { "data": "is_chronic", "render": function (d) { return d ? 'Có' : ''; } },
+                { "data": "id", "orderable": false, "searchable": false, "render": function (d) {
+                    return '<button type="button" class="btn btn-xs btn-default nut-chi-tiet" data-loai="icd10" data-id="' + d + '">Xem</button>';
+                } },
             ],
         });
     }

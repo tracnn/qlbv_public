@@ -29,11 +29,14 @@
                     <th>Giường HSTC</th>
                     <th>Giường HSCC</th>
                     <th>Đến ngày</th>
+                    <th>Xem</th>
                 </tr>
             </thead>
         </table>
     </div>
 </div>
+
+@include('category.bhyt._chi_tiet')
 
 @stop
 
@@ -79,6 +82,9 @@
                 { "data": "giuong_hstc" },
                 { "data": "giuong_hscc" },
                 { "data": "den_ngay" },
+                { "data": "id", "orderable": false, "searchable": false, "render": function (d) {
+                    return '<button type="button" class="btn btn-xs btn-default nut-chi-tiet" data-loai="department_bed" data-id="' + d + '">Xem</button>';
+                } },
             ],
         });
 

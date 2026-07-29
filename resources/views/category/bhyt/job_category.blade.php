@@ -19,11 +19,15 @@
                 <tr>
                     <th>Mã nghề nghiệp</th>
                     <th>Tên nghề nghiệp</th>
+                    <th>Xem</th>
                 </tr>
             </thead>
         </table>
     </div>
 </div>
+
+@include('category.bhyt._chi_tiet')
+
 @stop
 
 @push('after-scripts')
@@ -40,6 +44,9 @@
             "columns": [
                 { "data": "job_code" },
                 { "data": "job_name" },
+                { "data": "id", "orderable": false, "searchable": false, "render": function (d) {
+                    return '<button type="button" class="btn btn-xs btn-default nut-chi-tiet" data-loai="job_categories" data-id="' + d + '">Xem</button>';
+                } },
             ],
         });
     }

@@ -29,11 +29,14 @@
                     <th>Số lưu hành</th>
                     <th>Từ ngày</th>
                     <th>Đến ngày</th>
+                    <th>Xem</th>
                 </tr>
             </thead>
         </table>
     </div>
 </div>
+
+@include('category.bhyt._chi_tiet')
 
 @stop
 
@@ -79,6 +82,9 @@
                 { "data": "so_luu_hanh" },
                 { "data": "tu_ngay" },
                 { "data": "den_ngay" },
+                { "data": "id", "orderable": false, "searchable": false, "render": function (d) {
+                    return '<button type="button" class="btn btn-xs btn-default nut-chi-tiet" data-loai="equipment" data-id="' + d + '">Xem</button>';
+                } },
             ],
         });
 

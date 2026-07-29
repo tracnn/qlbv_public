@@ -174,6 +174,39 @@ class CategoryBHYTController extends Controller
         ->make(true);
     }
 
+    /**
+     * Chi tiet mot ban ghi danh muc — CHI DOC, dung chung cho ca 11 bo.
+     *
+     * Man danh sach chi hien duoc vai cot (medicine_catalogs co 26 cot ma danh sach chi
+     * hien 11), nen day moi la cho xem duoc day du.
+     */
+    public function chiTietDanhMuc($loai, $id)
+    {
+        $so = config('danh_muc_bhyt.' . $loai);
+
+        if (!$so) {
+            return response()->json(['message' => 'Loại danh mục không hợp lệ'], 404);
+        }
+
+        $model = $so['model'];
+        $ban = $model::find($id);
+
+        if (!$ban) {
+            return response()->json(['message' => 'Không tìm thấy bản ghi'], 404);
+        }
+
+        $truong = [];
+
+        foreach ($ban->toArray() as $cot => $giaTri) {
+            $truong[] = [
+                'nhan' => \App\Services\Category\NhanTruong::cua($loai, $cot),
+                'gia_tri' => is_null($giaTri) ? '' : (string) $giaTri,
+            ];
+        }
+
+        return response()->json(['ten' => $so['ten'], 'truong' => $truong]);
+    }
+
     public function fetchXmlErrorCatalog()
     {
         $xmlErrorCatalogs = XmlErrorCatalog::orderBy('xml')->get();
