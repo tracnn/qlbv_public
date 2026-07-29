@@ -192,6 +192,25 @@ flowchart TD
 
 > `B_*` = họ cấu trúc/thời gian/hành nghề (logic hardcode); `A_*` = họ lâm sàng (data-driven).
 
+> **`A_BHYT_CODE_MISSING` — nguồn mã BHYT theo loại dòng** (sửa 29/07/2026): quy tắc này
+> trước đây luôn đọc `his_service.hein_service_bhyt_code`, nhưng cột đó **chỉ được duy trì
+> cho dịch vụ kỹ thuật**. Với thuốc, mã BHYT nằm ở
+> `his_medicine_type.active_ingr_bhyt_code`.
+>
+> Đo trên 7 ngày thật, chỉ tính dòng thuộc đối tượng BHYT: **48.234 dòng thuốc** thiếu
+> `hein_service_bhyt_code`, và **100% số đó đã khai** `active_ingr_bhyt_code` — tức là nếu
+> bật quy tắc sẽ sinh ~6.900 cảnh báo sai mỗi ngày, không cái nào đúng. Vật tư
+> (0/175.775) và DVKT (0/352.206) không thiếu dòng nào.
+>
+> Nay `HisOrderSource::fetchServicesByReqIds()` join thêm `his_medicine` →
+> `his_medicine_type` và chọn mã qua `App\Services\OrderCheck\Support\MaBhytDong::cua()`:
+> **mã hoạt chất trước, mã dịch vụ sau**. Gỡ join đó hoặc quay lại gán thẳng
+> `hein_service_bhyt_code` sẽ làm quy tắc báo sai lại toàn bộ dòng thuốc —
+> `tests/Unit/HisOrderSourceMaBhytTest.php` canh đúng hai việc này.
+>
+> **Không** thêm nhánh riêng cho vật tư: số đo cho thấy vật tư đang đúng, thêm nhánh là
+> viết code chết. Quy tắc vẫn đang `is_active = 0`; bật hay không là quyết định nghiệp vụ.
+
 ### 3.5. "Giai đoạn 1..7" là gì
 Là **các mốc phát triển (release)**, không phải bước trong luồng chạy: GĐ1 nền tảng + họ B; GĐ2 engine đa-nguồn + họ A; GĐ3 dashboard/workflow/Excel/API; GĐ4 email digest; GĐ5 luật cấp đợt điều trị (A2/A3 sau đã gỡ, còn A5); GĐ6 danh mục giới hạn DV (giới tính/tuổi); GĐ7 quản lý quy tắc trên UI + tách khung luật theo 18 loại DV.
 
