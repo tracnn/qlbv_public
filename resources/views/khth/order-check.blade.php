@@ -32,7 +32,7 @@
       <div class="col-md-3"><label>Khoa thực hiện</label>
         <select id="department_id" class="form-control select2"><option value="">Tất cả</option></select>
       </div>
-      @include('partials.ma_cskcb')
+      @include('partials.ma_cskcb', ['colClass' => 'col-md-3', 'formGroup' => false])
     </div>
     <div class="row" style="margin-top:10px"><div class="col-md-12">
       <button id="btn-load" class="btn btn-primary"><i class="fa fa-search"></i> Tải dữ liệu</button>
