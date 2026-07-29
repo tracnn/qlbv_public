@@ -215,6 +215,34 @@ Là **các mốc phát triển (release)**, không phải bước trong luồng 
 | Rủi ro hiệu năng | Thấp | **Cao (quét HIS trực tiếp)** |
 
 ---
+
+### 4.1. Quản lý danh mục BHYT (cập nhật 29/07/2026)
+
+Hệ thống quản lý **11 bộ danh mục BHYT**. Danh sách chuẩn nằm ở
+`config/danh_muc_bhyt.php` — đây là nguồn duy nhất, mọi tính năng mới đọc từ đó thay vì
+khai lại.
+
+Ba bộ trước đây nhập được nhưng không xem được, nay đã có màn quản lý: Đơn vị hành chính,
+Cơ sở KCB, Nghề nghiệp.
+
+Mỗi màn danh sách có nút **Xem** mở popup chi tiết **chỉ đọc**, hiển thị đầy đủ mọi cột —
+cần thiết vì `medicine_catalogs` có 26 cột mà danh sách chỉ hiện 11. Không sửa được dữ
+liệu trên giao diện: nguồn chuẩn là tệp BHXH phát hành, sửa tay sẽ bị ghi đè ở lần nhập
+kế tiếp mà người sửa lại tưởng đã sửa xong.
+
+Ba bộ thuốc / vật tư y tế / dịch vụ kỹ thuật tách theo cơ sở KCB, danh sách có cột
+`MA_CSKCB`; giá trị rỗng hiển thị là **Dùng chung**.
+
+**Lưu ý về cột `ma_cskcb`:** bảng `medical_organizations` cũng có cột này nhưng đó là
+**khoá của chính danh mục** (mã của từng cơ sở trong danh sách), không phải cột phân tách
+theo cơ sở. Đừng suy cờ `theo_co_so` từ sự tồn tại của cột.
+
+**Xoá toàn bộ một danh mục** nằm ở màn "Nhập khẩu danh mục", chỉ hiện với
+`superadministrator`. Chọn danh mục, chọn cơ sở (với ba bộ theo cơ sở), đếm số dòng, gõ
+`XOA` để xác nhận. Xoá xong mà chưa nhập lại thì XML3176 và order-check sẽ báo **mọi mã
+đều sai** — đã đo được ba danh mục rỗng sinh khoảng 36.100 vi phạm giả.
+
+---
 ---
 
 # PHẦN II — CHUẨN BỊ TRIỂN KHAI
