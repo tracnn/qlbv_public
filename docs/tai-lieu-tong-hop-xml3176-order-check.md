@@ -243,6 +243,33 @@ theo cơ sở. Đừng suy cờ `theo_co_so` từ sự tồn tại của cột.
 đều sai** — đã đo được ba danh mục rỗng sinh khoảng 36.100 vi phạm giả.
 
 ---
+
+### 4.2. Lọc theo cơ sở KCB (cập nhật 29/07/2026)
+
+Cả màn danh sách hồ sơ XML3176 lẫn màn vi phạm y lệnh đều có ô chọn **Cơ sở KCB**; để
+trống là xem tất cả. Danh sách cơ sở lấy từ `App\Services\BHYT\DanhSachCoSo::danhSach()` —
+cùng nguồn với màn nhập khẩu danh mục, nên ba nơi luôn hiện giống nhau.
+
+**XML3176** lọc trên `xml3176_xml1s.ma_cskcb` (đã có sẵn dữ liệu). Lưu ý cho người bảo trì:
+`BHYTXml3176Controller::fetchData` có **ba nhánh** dựng truy vấn khác nhau (theo mã hồ sơ /
+theo mã bệnh nhân / theo khoảng ngày). Điều kiện lọc được áp qua `App\Services\BHYT\LocCoSo::ap()`
+ở **cả ba**. Thêm nhánh mới mà quên gọi nó thì bộ lọc bị bỏ qua **im lặng** — vẫn ra kết
+quả, chỉ là sai phạm vi.
+
+**Order-check** lọc trên cột `order_check_violations.ma_cskcb`, thêm vào ngày 29/07/2026.
+Không thể nối bảng lúc truy vấn vì vi phạm nằm ở MySQL còn HIS ở Oracle. Mã cơ sở được ghi
+lúc quét, đi theo đường `HisOrderSource` → `OrderContext::$maCskcb` →
+`ViolationContext::$maCskcb` → `OrderCheckEngine::persist()`. `ViolationContext::fromOrderContext()`
+là một danh sách khoá **chép tay** — thêm trường mà quên chỗ đó thì giá trị im lặng không
+bao giờ được ghi.
+
+Dữ liệu cũ đã được vá ngược một lần trong migration `2026_07_29_120000` bằng cách tra
+`treatment_id` sang HIS. Khoảng **72 dòng** không tra ra được (đợt điều trị đã biến mất
+khỏi `his_treatment`) nên để **trống** mã cơ sở — chúng không hiện khi lọc theo một cơ sở
+cụ thể, chỉ hiện khi để trống ô chọn. Cố ý không gán mã mặc định: gán bừa thì chúng trông
+như đã biết chắc thuộc cơ sở nào đó, trong khi không ai kiểm chứng được nữa.
+
+---
 ---
 
 # PHẦN II — CHUẨN BỊ TRIỂN KHAI
