@@ -57,6 +57,23 @@
 > **không ai vào được**, kể cả superadmin: `AppServiceProvider::filterMenu` cho
 > superadministrator xem toàn bộ menu không lọc, nhưng middleware `CheckRole` **không có**
 > ngoại lệ cho superadministrator — kết quả là thấy menu nhưng bấm vào bị 403.
+>
+> Sau khi migrate, còn phải chạy thêm hai lệnh:
+> - `php artisan config:clear` — menu nằm trong `config/adminlte.php`; nếu máy chủ đang
+>   cache config thì menu hiển thị vẫn là bản cũ dù đã deploy code mới.
+> - `php artisan cache:clear` — Laratrust cache kết quả `hasRole()` 60 phút một lần
+>   (`Cache::remember(..., 60, ...)`). Migration đã tự `Cache::forget()` cho từng người
+>   được gán role, nhưng bước này vẫn nên có trong quy trình chuẩn để phòng trường hợp
+>   migrate bằng đường khác (ví dụ chạy tay trên console, không qua script deploy).
+>
+> **Cảnh báo trước khi chạy trên máy chủ thật:** migration gán role `order-check` cho
+> **mọi** người đang có role `xml-man`. Phải kiểm tra danh sách đó có đúng ý không trước,
+> bằng câu lệnh:
+> ```sql
+> SELECT user_id FROM role_user WHERE role_id = (SELECT id FROM roles WHERE name = 'xml-man');
+> ```
+> Order-check là module **rất nhạy cảm** (bắt lỗi bác sĩ), mở quyền nhầm cho người không
+> nên có là chuyện lớn.
 
 Cả hai đều **bất đồng bộ / chạy nền**, có **danh mục quy tắc bật/tắt từ UI**, có **lưu vết + dashboard**, và có nhiều **công tắc cấu hình mặc định TẮT** cho hành động ra bên ngoài (gửi cổng BHXH / gửi email).
 

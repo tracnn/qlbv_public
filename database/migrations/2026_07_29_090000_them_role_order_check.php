@@ -2,6 +2,7 @@
 
 use App\Role;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Database\Migrations\Migration;
 
 /**
@@ -54,6 +55,14 @@ class ThemRoleOrderCheck extends Migration
                 'user_id' => $r->user_id,
                 'user_type' => $r->user_type,
             ]);
+
+            // Bat buoc xoa cache: Laratrust cache hasRole() 60 PHUT (Cache::remember(...,
+            // 60, ...) tai LaratrustUserTrait, tham so 60 la phut trong Laravel 5.5). Insert
+            // qua query builder KHONG bat su kien "role attached" nen Laratrust khong tu xoa
+            // cache. Neu khong Cache::forget() o day, nguoi dang dang nhap se van bi
+            // hasRole('order-check') = false toi 60 phut sau khi migrate xong -> thay menu
+            // nhung bam vao bi 403.
+            Cache::forget('laratrust_roles_for_user_' . $r->user_id);
         }
     }
 
@@ -65,13 +74,26 @@ class ThemRoleOrderCheck extends Migration
             return;
         }
 
+        // Thu danh sach user_id bi anh huong TRUOC khi xoa, de con xoa cache sau do.
+        $userIds = DB::table('role_user')->where('role_id', $role->id)->pluck('user_id');
+
         DB::table('role_user')->where('role_id', $role->id)->delete();
 
-        // Khong dung Eloquent $role->delete(): Laratrust bat su kien "deleting" tren
-        // Role va tu sync rong bang pivot role_user qua quan he morphedByMany, nhung
-        // cau SQL sinh ra bi viet hoa ten bang thanh "ROLE_USER" trong khi bang that
-        // la chu thuong "role_user" -> Oracle nem ORA-00942 (table or view does not
-        // exist). Xoa thang bang query builder de tranh kich hoat event loi nay.
+        // Khong dung Eloquent $role->delete(): LaratrustRoleTrait::bootLaratrustRoleTrait()
+        // dang ky su kien "deleting" tren Role, goi $role->users()->sync([]). Quan he
+        // users() la morphedByMany toi App\CustomUser, ma model nay khai
+        // protected $connection = 'ACS_RS' (ket noi Oracle). Laravel chay truy van cua
+        // quan he tren KET NOI CUA MODEL LIEN QUAN (CustomUser), nen bang role_user bi
+        // tim trong Oracle thay vi MySQL -> Oracle bao khong co bang do (ORA-00942).
+        // Ten bang in hoa "ROLE_USER" trong thong bao loi chi la cach Oracle hien thi
+        // dinh danh, KHONG PHAI nguyen nhan. Xoa thang bang query builder de tranh
+        // kich hoat event nay.
         DB::table('roles')->where('id', $role->id)->delete();
+
+        // Xoa cache role 60 phut (xem giai thich o up()) cho tung nguoi bi mat role,
+        // neu khong rollback xong ho van con quyen order-check trong cache toi 60 phut.
+        foreach ($userIds as $userId) {
+            Cache::forget('laratrust_roles_for_user_' . $userId);
+        }
     }
 }
