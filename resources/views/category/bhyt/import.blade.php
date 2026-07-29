@@ -135,11 +135,10 @@
                     return h.map(function (o) {
                         return '"' + String(o === null || o === undefined ? '' : o).replace(/"/g, '""') + '"';
                     }).join(',');
-                }).join('
-');
+                }).join(String.fromCharCode(13, 10));
 
-                // BOM de Excel doc dung tieng Viet.
-                var blob = new Blob(["﻿" + csv], { type: 'text/csv;charset=utf-8;' });
+                // BOM de Excel doc dung tieng Viet; fromCharCode de ma nguon khong co ky tu vo hinh.
+                var blob = new Blob([String.fromCharCode(0xFEFF) + csv], { type: 'text/csv;charset=utf-8;' });
                 var a = document.createElement('a');
 
                 a.href = URL.createObjectURL(blob);
