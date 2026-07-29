@@ -14,6 +14,7 @@
         <div class="col-sm-12">
             <div class="form-group row">
                 @include('partials.treatment_type_fillter')
+                @include('partials.ma_cskcb')
                 @include('partials.xml_filter_status')
                 @include('partials.xml3176_error_catalog')
                 @include('partials.hein_card_filter')

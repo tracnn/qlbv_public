@@ -269,6 +269,7 @@
                     d.xml_export_status = $('#xml_export_status').val();
                     d.patient_code = $('#patient_code').val();
                     d.imported_by = $('#imported_by').val();
+                    d.ma_cskcb = $('#ma_cskcb').val();
                     d.xml_submit_status = $('#xml_submit_status').val();
                     d.xml_sign_status = $('#xml_sign_status').val();
                 },

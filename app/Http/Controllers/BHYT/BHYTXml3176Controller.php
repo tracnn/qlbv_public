@@ -70,8 +70,10 @@ class BHYTXml3176Controller extends Controller
     }
 
     public function index()
-    {   
-        return view('bhyt.xml3176.index');
+    {
+        return view('bhyt.xml3176.index', [
+            'danhSachCoSo' => \App\Services\BHYT\DanhSachCoSo::danhSach(),
+        ]);
     }
 
     public function importIndex()
@@ -99,6 +101,8 @@ class BHYTXml3176Controller extends Controller
         $xml_submit_status = $request->input('xml_submit_status');
         $xml_sign_status = $request->input('xml_sign_status');
         $imported_by = $request->input('imported_by');
+        $ma_cskcb = $request->input('ma_cskcb');
+        $danhSachCoSo = \App\Services\BHYT\DanhSachCoSo::danhSach();
 
         $dateFrom = $request->input('date_from');
         $dateTo = $request->input('date_to');
@@ -129,7 +133,8 @@ class BHYTXml3176Controller extends Controller
                     $result = $result->whereHas('Xml3176Information', function($query) {
                         $query->where('imported_by', \Auth::user()->loginname);
                     });
-                }                      
+                }
+                \App\Services\BHYT\LocCoSo::ap($result, $ma_cskcb, $danhSachCoSo);
         } else {
             if ($patient_code) {
                 $result = Xml3176Xml1::select('ma_lk', 'ma_bn', 'ho_ten', 'ma_the_bhyt', 'ngay_sinh', 
@@ -156,6 +161,7 @@ class BHYTXml3176Controller extends Controller
                             $query->where('imported_by', \Auth::user()->loginname);
                         });
                     }
+                    \App\Services\BHYT\LocCoSo::ap($result, $ma_cskcb, $danhSachCoSo);
             } else {
                 // Check and convert date format
                 if (strlen($dateFrom) == 10) {
@@ -351,6 +357,8 @@ class BHYTXml3176Controller extends Controller
                         $query->where('imported_by', $imported_by);
                     });
                 }
+
+                \App\Services\BHYT\LocCoSo::ap($result, $ma_cskcb, $danhSachCoSo);
             }
         }
 
