@@ -625,7 +625,13 @@ Route::group(['middleware' => ['auth', 'check.first.login']], function () {
         Route::get('revenue-dept-room-index/rooms', 'KHTH\RevenueDeptRoomController@rooms')->name('khth.revenue-dept-room-rooms');
         Route::get('revenue-dept-room-index/room-types', 'KHTH\RevenueDeptRoomController@roomTypes')->name('khth.revenue-dept-room-room-types');
 
-        /* Kiểm tra sai sót y lệnh */
+    });
+
+    // Kiem tra sai sot y lenh — quyen rieng (order-check), khong yeu cau administrator.
+    // Giu nguyen prefix 'khth/' va ten route: cac blade hardcode
+    // url('khth/order-check-ref-index') va url('khth/order-check-rule-index'), doi URL la vo.
+    Route::group(['prefix' => 'khth/', 'middleware' => ['checkrole:order-check']], function () {
+        /* Danh sach vi pham */
         Route::get('order-check-index', 'KHTH\OrderCheckController@index')->name('khth.order-check-index');
         Route::get('order-check-index/summary', 'KHTH\OrderCheckController@summary')->name('khth.order-check-summary');
         Route::get('order-check-index/scan-stats', 'KHTH\OrderCheckController@scanStats')->name('khth.order-check-scan-stats');
@@ -640,12 +646,11 @@ Route::group(['middleware' => ['auth', 'check.first.login']], function () {
         Route::post('order-check-ref-index/{id}', 'KHTH\OrderCheckRefController@update')->name('khth.order-check-ref-update');
         Route::delete('order-check-ref-index/{id}', 'KHTH\OrderCheckRefController@destroy')->name('khth.order-check-ref-destroy');
 
-        /* Quản lý quy tắc kiểm tra y lệnh */
+        /* Quan ly quy tac kiem tra y lenh */
         Route::get('order-check-rule-index', 'KHTH\OrderCheckRuleController@index')->name('khth.order-check-rule-index');
         Route::get('order-check-rule-index/fetch', 'KHTH\OrderCheckRuleController@fetch')->name('khth.order-check-rule-fetch');
         Route::post('order-check-rule-index/{id}', 'KHTH\OrderCheckRuleController@update')->name('khth.order-check-rule-update');
         Route::post('order-check-rule-index/{id}/toggle', 'KHTH\OrderCheckRuleController@toggle')->name('khth.order-check-rule-toggle');
-
     });
 
     // Báo cáo giao ban — quyền riêng (giaoban), không yêu cầu administrator
