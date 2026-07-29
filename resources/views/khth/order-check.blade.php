@@ -32,6 +32,7 @@
       <div class="col-md-3"><label>Khoa thực hiện</label>
         <select id="department_id" class="form-control select2"><option value="">Tất cả</option></select>
       </div>
+      @include('partials.ma_cskcb')
     </div>
     <div class="row" style="margin-top:10px"><div class="col-md-12">
       <button id="btn-load" class="btn btn-primary"><i class="fa fa-search"></i> Tải dữ liệu</button>
@@ -78,7 +79,7 @@ var DT_VI = { search:'Tìm:', lengthMenu:'Hiện _MENU_ dòng', info:'Hiển th�
 var ocTable = null;
 
 function filters(){
-  return { date_from:$('#date_from').val(), date_to:$('#date_to').val(), severity:$('#severity').val(), status:$('#status').val(), rule_code:$('#rule_code').val(), service_req_type_id:$('#service_req_type_id').val(), department_id:$('#department_id').val(), keyword:$('#keyword').val() };
+  return { date_from:$('#date_from').val(), date_to:$('#date_to').val(), severity:$('#severity').val(), status:$('#status').val(), rule_code:$('#rule_code').val(), service_req_type_id:$('#service_req_type_id').val(), department_id:$('#department_id').val(), ma_cskcb:$('#ma_cskcb').val(), keyword:$('#keyword').val() };
 }
 
 function loadSummary(){

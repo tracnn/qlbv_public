@@ -25,7 +25,9 @@ class OrderCheckController extends Controller
     public function index()
     {
         $rules = OrderCheckRule::orderBy('code')->get(['code', 'name']);
-        return view('khth.order-check', compact('rules'));
+        $danhSachCoSo = \App\Services\BHYT\DanhSachCoSo::danhSach();
+
+        return view('khth.order-check', compact('rules', 'danhSachCoSo'));
     }
 
     public function summary(Request $request)

@@ -41,6 +41,9 @@ class ViolationQueryService
         if ($request->filled('department_id')) {
             $q->where('department_id', $request->input('department_id'));
         }
+        if ($request->filled('ma_cskcb')) {
+            $q->where('ma_cskcb', $request->input('ma_cskcb'));
+        }
         if ($request->filled('service_req_type_id')) {
             $q->where('service_req_type_id', $request->input('service_req_type_id'));
         }
