@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Category;
 
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use DB;
 
 use Yajra\Datatables\Datatables;
 
@@ -205,6 +206,48 @@ class CategoryBHYTController extends Controller
         }
 
         return response()->json(['ten' => $so['ten'], 'truong' => $truong]);
+    }
+
+    /** Dem so dong se bi xoa, de nguoi dung thay con so THAT truoc khi bam nut */
+    public function demXoaDanhMuc(Request $request)
+    {
+        try {
+            $q = $this->truyVanXoa($request);
+        } catch (\Exception $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        }
+
+        return response()->json(['so_dong' => $q->count()]);
+    }
+
+    public function xoaDanhMuc(Request $request)
+    {
+        if (trim((string) $request->input('xac_nhan')) !== 'XOA') {
+            return response()->json(['message' => 'Phải gõ đúng chữ XOA để xác nhận'], 422);
+        }
+
+        try {
+            $q = $this->truyVanXoa($request);
+        } catch (\Exception $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        }
+
+        return response()->json(['so_dong' => $q->delete()]);
+    }
+
+    /** Dung truy van dung chung cho ca dem lan xoa, de hai ben khong bao gio lech nhau */
+    protected function truyVanXoa(Request $request)
+    {
+        $loai = (string) $request->input('loai');
+        $maCskcb = trim((string) $request->input('ma_cskcb'));
+
+        if ($maCskcb !== '' && !array_key_exists($maCskcb, \App\Services\BHYT\DanhSachCoSo::danhSach())) {
+            throw new \InvalidArgumentException('Cơ sở khám chữa bệnh không hợp lệ');
+        }
+
+        $x = \App\Services\Category\XoaDanhMuc::dieuKien($loai, $maCskcb, config('danh_muc_bhyt'));
+
+        return DB::table($x['bang'])->where($x['dieu_kien']);
     }
 
     public function fetchXmlErrorCatalog()

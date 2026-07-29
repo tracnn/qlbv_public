@@ -91,6 +91,47 @@
     </div>
 </div>
 
+@if (auth()->check() && auth()->user()->hasRole('superadministrator'))
+<div class="panel panel-danger">
+    <div class="panel-heading"><strong>Xoá toàn bộ một danh mục</strong></div>
+    <div class="panel-body">
+        <div class="alert alert-warning" style="margin-bottom:12px;">
+            Xoá xong mà <strong>chưa nhập lại</strong> thì XML3176 và kiểm tra y lệnh sẽ báo
+            <strong>mọi mã đều sai</strong> — đã đo được ba danh mục rỗng sinh khoảng 36.100
+            vi phạm giả. Nên xoá và nhập lại liền tay.
+        </div>
+
+        <div class="form-inline" style="margin-bottom:10px;">
+            <label style="margin-right:8px;">Danh mục:</label>
+            <select id="xoa_loai" class="form-control" style="min-width:260px;margin-right:8px;">
+                @foreach (config('danh_muc_bhyt') as $ma => $x)
+                    <option value="{{ $ma }}" data-theo-co-so="{{ $x['theo_co_so'] ? 1 : 0 }}">{{ $x['ten'] }}</option>
+                @endforeach
+            </select>
+
+            <span id="xoa_co_so_wrap" style="display:none;">
+                <label style="margin-right:8px;">Cơ sở:</label>
+                <select id="xoa_ma_cskcb" class="form-control" style="min-width:220px;margin-right:8px;">
+                    <option value="">Tất cả cơ sở</option>
+                    @foreach ($danhSachCoSo as $ma => $nhan)
+                        <option value="{{ $ma }}">{{ $nhan }}</option>
+                    @endforeach
+                </select>
+            </span>
+
+            <button type="button" id="xoa_dem" class="btn btn-default">Đếm số dòng sẽ xoá</button>
+        </div>
+
+        <div id="xoa_ket_qua" style="margin-bottom:10px;"></div>
+
+        <div class="form-inline">
+            <label style="margin-right:8px;">Gõ <code>XOA</code> để xác nhận:</label>
+            <input type="text" id="xoa_xac_nhan" class="form-control" style="width:120px;margin-right:8px;">
+            <button type="button" id="xoa_thuc_hien" class="btn btn-danger" disabled>Xoá</button>
+        </div>
+    </div>
+</div>
+@endif
 @stop
 
 @push('after-scripts')
@@ -306,5 +347,55 @@
         var type = document.getElementById('template_type').value;
         window.location.href = "{{ route('category-bhyt.import-template') }}?type=" + encodeURIComponent(type);
     });
+</script>
+<script>
+    // Khoi xoa danh muc — chi ton tai voi superadministrator nen kiem su ton tai truoc.
+    if (document.getElementById('xoa_loai')) {
+        function xoaThamSo() {
+            var $l = $('#xoa_loai option:selected');
+            return {
+                loai: $l.val(),
+                ma_cskcb: $l.data('theo-co-so') == 1 ? $('#xoa_ma_cskcb').val() : ''
+            };
+        }
+
+        function xoaDatLaiNut() {
+            $('#xoa_thuc_hien').prop('disabled', $('#xoa_xac_nhan').val().trim() !== 'XOA');
+        }
+
+        $('#xoa_loai').on('change', function () {
+            $('#xoa_co_so_wrap').toggle($('#xoa_loai option:selected').data('theo-co-so') == 1);
+            $('#xoa_ket_qua').html('');
+        }).trigger('change');
+
+        $('#xoa_ma_cskcb').on('change', function () { $('#xoa_ket_qua').html(''); });
+        $('#xoa_xac_nhan').on('input', xoaDatLaiNut);
+
+        $('#xoa_dem').on('click', function () {
+            $.getJSON("{{ route('category-bhyt.xoa-danh-muc-dem') }}", xoaThamSo(), function (r) {
+                $('#xoa_ket_qua').html('<div class="alert alert-info">Sẽ xoá <strong>'
+                    + r.so_dong + '</strong> dòng.</div>');
+            }).fail(function (x) {
+                $('#xoa_ket_qua').html('<div class="alert alert-danger">'
+                    + ((x.responseJSON && x.responseJSON.message) || 'Lỗi') + '</div>');
+            });
+        });
+
+        $('#xoa_thuc_hien').on('click', function () {
+            var d = xoaThamSo();
+            d._token = "{{ csrf_token() }}";
+            d.xac_nhan = $('#xoa_xac_nhan').val().trim();
+
+            $.post("{{ route('category-bhyt.xoa-danh-muc') }}", d, function (r) {
+                $('#xoa_ket_qua').html('<div class="alert alert-success">Đã xoá <strong>'
+                    + r.so_dong + '</strong> dòng.</div>');
+                $('#xoa_xac_nhan').val('');
+                xoaDatLaiNut();
+            }, 'json').fail(function (x) {
+                $('#xoa_ket_qua').html('<div class="alert alert-danger">'
+                    + ((x.responseJSON && x.responseJSON.message) || 'Lỗi') + '</div>');
+            });
+        });
+    }
 </script>
 @endpush

@@ -432,6 +432,15 @@ Route::group(['middleware' => ['auth', 'check.first.login']], function () {
         ->name('category-bhyt.import-loi');
     });
 
+    // Xoa toan bo mot danh muc: thao tac PHA HUY, chi superadministrator. Khong gop vao
+    // nhom category-manager o tren.
+    Route::group(['prefix' => 'category/', 'middleware' => ['checkrole:superadministrator']], function () {
+        Route::get('bhyt/xoa-danh-muc/dem', 'Category\CategoryBHYTController@demXoaDanhMuc')
+        ->name('category-bhyt.xoa-danh-muc-dem');
+        Route::post('bhyt/xoa-danh-muc', 'Category\CategoryBHYTController@xoaDanhMuc')
+        ->name('category-bhyt.xoa-danh-muc');
+    });
+
 	/* Insurance , 'middleware' => ['checkrole:manager'] */
     Route::group(['prefix' => 'insurance/'], function () { 	
     	Route::get('check-card', 'Insurance\Manager\InsuranceController@checkCard')->name('insurance.check-card');
