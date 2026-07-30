@@ -45,22 +45,59 @@ class FileCopyService
     }
 
     /**
-     * Copy file XML từ exportXml3176 (sau processExportXml) sang disk Trục dữ liệu Y Tế
-     * (disk dùng bởi TrucDuLieuYTeXmlScan).
+     * Copy file XML tu exportXml3176 sang mot disk cong ngoai, neu cong do dang bat.
      *
-     * @param string $filePath Đường dẫn file trên disk exportXml3176 (vd: 20250129/MACSKCB/file.xml)
-     * @return bool True nếu copy thành công hoặc chức năng chưa bật
+     * Moi cong tu kiem co CUA RIENG NO: tat cong nay khong duoc anh huong cong kia. Do la
+     * dieu kien co lap ma luong 3176 dat ra.
+     *
+     * Chua bat thi tra true chu khong phai false: khong lam gi la ket qua DUNG, khong phai loi.
+     * Loi copy that thi copy() da bat va ghi log - mot dia mang hong khong duoc lam chet export.
+     *
+     * @param string $filePath Duong dan tren disk exportXml3176 (vd: 20250129/MACSKCB/file.xml)
+     * @param string $khoaCauHinh Khoa trong config/organization.php
+     * @param string $diskMacDinh Ten disk dung khi cau hinh khong khai
+     * @return bool True neu copy thanh cong HOAC chuc nang chua bat
      */
-    public function copyExportXml3176ToTrucDuLieuYTe($filePath)
+    private function copyExportXml3176ToDisk($filePath, $khoaCauHinh, $diskMacDinh)
     {
-        $config = config('organization.truc_du_lieu_y_te', []);
+        $config = config($khoaCauHinh, []);
 
         if (!($config['enabled'] ?? false)) {
             return true;
         }
 
-        $targetDisk = $config['disk'] ?? 'trucDuLieuYTe';
+        $targetDisk = $config['disk'] ?? $diskMacDinh;
 
         return $this->copy('exportXml3176', $filePath, $targetDisk, basename($filePath));
+    }
+
+    /**
+     * Copy sang disk Truc du lieu Y Te (disk dung boi TrucDuLieuYTeXmlScan).
+     *
+     * @param string $filePath Duong dan file tren disk exportXml3176
+     * @return bool True neu copy thanh cong hoac chuc nang chua bat
+     */
+    public function copyExportXml3176ToTrucDuLieuYTe($filePath)
+    {
+        return $this->copyExportXml3176ToDisk(
+            $filePath, 'organization.truc_du_lieu_y_te', 'trucDuLieuYTe'
+        );
+    }
+
+    /**
+     * Copy sang disk Cong du lieu Y Te tinh Dien Bien (disk dung boi
+     * CongDuLieuYTeDienBienXmlScan).
+     *
+     * Truoc day KHONG co ham nay: lenh quet canh mot thu muc ma luong 3176 khong bao gio ghi
+     * vao, nen chang copy bi thieu han.
+     *
+     * @param string $filePath Duong dan file tren disk exportXml3176
+     * @return bool True neu copy thanh cong hoac chuc nang chua bat
+     */
+    public function copyExportXml3176ToCongDuLieuYTeDienBien($filePath)
+    {
+        return $this->copyExportXml3176ToDisk(
+            $filePath, 'organization.cong_du_lieu_y_te_dien_bien', 'congDuLieuYTeDienBien'
+        );
     }
 }

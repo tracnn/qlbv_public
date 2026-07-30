@@ -1700,8 +1700,13 @@ class Qd130XmlService
 
         // Gửi hồ sơ XML lên cổng BHXH (async qua queue riêng để không blocking)
         // Chỉ truyền đường dẫn file để tránh payload job quá lớn gây lỗi MySQL (max_allowed_packet)
-        SubmitQd130XmlJob::dispatch($ma_lk, $filePath, $macskcb)
-            ->onQueue(config('qd130xml.submit_queue_name', 'JobSubmitQd130Xml'));
+        //
+        // Hoi co TRUOC khi dispatch: tat la KHONG sinh job. Job VAN kiem lai co lan nua vi no
+        // co the nam cho trong hang doi rat lau, giua luc do cau hinh co the da doi.
+        if (config('organization.BHYT.submit_xml_enabled', false)) {
+            SubmitQd130XmlJob::dispatch($ma_lk, $filePath, $macskcb)
+                ->onQueue(config('qd130xml.submit_queue_name', 'JobSubmitQd130Xml'));
+        }
     }
 
     private function addChildWithCDATA($xmlElement, $name, $value)

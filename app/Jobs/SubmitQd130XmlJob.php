@@ -59,17 +59,18 @@ class SubmitQd130XmlJob implements ShouldQueue
      */
     public function handle(Qd130XmlService $qd130XmlService)
     {
-        // KHONG nhan BHYTXmlSubmitService qua container: container khong biet ho so nay thuoc
-        // co so nao nen se dung BHYTLoginService khong ma co so, va lan gui dau tien se nem.
-        // Dung tuong minh bang ma co so cua chinh ho so.
-        $xmlSubmitService = new BHYTXmlSubmitService(new BHYTLoginService($this->macskcb));
-
-        // Kiểm tra xem có bật tính năng gửi XML không
+        // Kiem co TRUOC khi lam bat cu viec gi. Noi dispatch cung da kiem roi, nhung job co
+        // the nam cho trong hang doi rat lau, giua luc do cau hinh co the da bi tat.
         $submitEnabled = config('organization.BHYT.submit_xml_enabled', false);
         if (!$submitEnabled) {
             Log::info('BHYT XML Submit is disabled for ma_lk: ' . $this->ma_lk);
             return;
         }
+
+        // KHONG nhan BHYTXmlSubmitService qua container: container khong biet ho so nay thuoc
+        // co so nao nen se dung BHYTLoginService khong ma co so, va lan gui dau tien se nem.
+        // Dung tuong minh bang ma co so cua chinh ho so.
+        $xmlSubmitService = new BHYTXmlSubmitService(new BHYTLoginService($this->macskcb));
 
         try {
             // Đọc nội dung XML từ file đã được lưu trước đó

@@ -1799,13 +1799,23 @@ class Xml3176Service
             return false;
         }
 
-        // Copy file sang disk Trục dữ liệu Y Tế (nếu bật) để TrucDuLieuYTeXmlScan quét
-        app(FileCopyService::class)->copyExportXml3176ToTrucDuLieuYTe($filePath);
+        // Copy sang cac cong ngoai (moi cong tu kiem co CUA RIENG NO, tat cong nay khong anh
+        // huong cong kia). Loi copy da duoc bat va ghi log ben trong, khong lam chet export.
+        $fileCopy = app(FileCopyService::class);
+        $fileCopy->copyExportXml3176ToTrucDuLieuYTe($filePath);
+        $fileCopy->copyExportXml3176ToCongDuLieuYTeDienBien($filePath);
 
         // Gửi hồ sơ XML lên cổng BHXH (async qua queue riêng để không blocking)
         // Chỉ truyền đường dẫn file để tránh payload job quá lớn
-        SubmitXml3176Job::dispatch($ma_lk, $filePath, $macskcb)
-            ->onQueue(config('xml3176.submit_queue_name', 'JobSubmitXml3176'));
+        //
+        // Hoi co TRUOC khi dispatch: tat la KHONG sinh job. Truoc day dispatch vo dieu kien
+        // roi job tu thoat, nen tat van ton mot job vao hang doi cho moi ho so export.
+        // Job VAN kiem lai co lan nua - no co the nam cho trong hang doi hang gio, giua luc
+        // do cau hinh co the da doi. Hai lop chan hai tinh huong khac nhau.
+        if (config('organization.BHYT.submit_xml_3176_enabled', false)) {
+            SubmitXml3176Job::dispatch($ma_lk, $filePath, $macskcb)
+                ->onQueue(config('xml3176.submit_queue_name', 'JobSubmitXml3176'));
+        }
     }
 
     private function addChildWithCDATA($xmlElement, $name, $value)
