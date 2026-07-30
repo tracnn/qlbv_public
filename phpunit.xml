@@ -27,5 +27,12 @@
         <env name="CACHE_DRIVER" value="array"/>
         <env name="SESSION_DRIVER" value="array"/>
         <env name="QUEUE_DRIVER" value="sync"/>
+        <!-- Nhieu test co y kich duong loi (401 cong Dien Bien, thieu MACSKCB, sai PIN USB
+             token) nen service ghi WARNING/ERROR. Khong chan thi chung do vao
+             storage/logs/laravel-*.log dung dinh dang y het su co that, va nguoi doc log mat
+             cong dieu tra mot loi khong ton tai - da xay ra that.
+             Laravel 5.5 khong co driver log 'null', nen nang nguong len 'emergency'.
+             Loi cua test van bao qua PHPUnit, khong mat thong tin gi. -->
+        <env name="APP_LOG_LEVEL" value="emergency"/>
     </php>
 </phpunit>
