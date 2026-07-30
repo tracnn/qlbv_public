@@ -41,6 +41,16 @@ Tài khoản `01013_BV` không khớp bất kỳ mã nào trong ba cơ sở.
 Hai nghĩa này tình cờ trùng giá trị ở Bạch Mai nên bị gộp làm một trường. Người dùng đã chốt
 ngày 30/07/2026 rằng chúng khác nhau và phải tách.
 
+### Hai nơi dispatch job kiểm thẻ, cả hai cùng lỗi
+
+`JobKtTheBHYT` được dispatch từ **hai** chỗ, và cả hai đều gán nơi ĐKBĐ vào tham số
+`maCSKCB`:
+
+- `app/Console/Commands/HISProKiemTraTheBHYT.php:96` — quét hồ sơ nội trú từ HIS.
+- `app/Console/Commands/XML4210Import.php:96` — nhập tệp XML 4210, lấy `MA_DKBD` từ XML1.
+
+Đổi tham số của job mà chỉ sửa một nơi sẽ làm nơi kia vỡ. Cả hai phải sửa cùng lượt.
+
 ### Job kiểm thẻ đang gửi sai mã cơ sở lên cổng
 
 `app/Console/Commands/HISProKiemTraTheBHYT.php:70` gán
@@ -153,9 +163,16 @@ Phép so ở `app/Jobs/jobKtTheBHYT.php:152` hiện là `$params['maCSKCB'] != $
 tách, nó phải dùng **`maDkbd`**, vì nó đang đối chiếu nơi đăng ký ban đầu do cổng trả về với
 nơi đăng ký ban đầu trong HIS. Đây là điểm dễ sửa nhầm nhất của cả spec.
 
-**Đường tra cứu thủ công** (`app/BHYT.php`): giữ nguyên công tắc `check_by_user` — khi bật,
-lấy tên và CCCD của người đang đăng nhập. Chỉ nhánh `else` đổi sang đọc theo cơ sở. Job chạy
-nền không có người đăng nhập nên luôn đi đường cấu hình.
+**Đường tra cứu thủ công** (`app/BHYT.php`): **không đụng ở spec này.** `loginBHYT()` và
+`checkInsuranceCard()` là method tĩnh không có tham số cơ sở, được gọi từ **6 controller**;
+thêm tham số là thay đổi lan sang cả 6 nơi. Chuyển sang spec thứ hai, làm cùng lúc với
+`BHYTXmlSubmitService` vốn cũng cần đúng cách sửa đó.
+
+Spec này giữ nguyên các khoá `username`/`password`/`hoTenCb`/`cccdCb` cũ trong khối `BHYT`
+để đường đó chạy y như trước. Công tắc `check_by_user` khi bật vốn lấy tên và CCCD của người
+đang đăng nhập, nên phần lớn lượt tra thủ công không đụng tới cấu hình.
+
+Job chạy nền không có người đăng nhập nên luôn đi đường cấu hình — đó là đường spec này sửa.
 
 ### 6. Lưu kết quả kèm cơ sở
 
@@ -205,6 +222,7 @@ sai cơ sở.
   đó là spec thứ hai.
 - **Không** đổi ba bộ kiểm XML1/XML3 đang dùng `correct_facility_code` — spec thứ hai.
 - **Không** đụng `JobBHYT`, `JobInpatient` (mã chết).
+- **Không** đụng `app/BHYT.php` — method tĩnh, 6 controller gọi; thuộc spec thứ hai.
 - **Không** gọi thật lên cổng BHXH trong lúc kiểm thử.
 - **Không** vá ngược `check_hein_cards` (bảng rỗng).
 - **Không** đưa mật khẩu hiện tại vào `.env` giúp người dùng — đó là việc của người vận hành,
