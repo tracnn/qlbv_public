@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 use App\Services\BHYTXmlSubmitService;
+use App\Services\BHYTLoginService;
+use App\Services\BHYT\CauHinhCoSo;
 use App\Services\Xml3176Service;
 
 class SubmitXml3176Job implements ShouldQueue
@@ -55,8 +57,13 @@ class SubmitXml3176Job implements ShouldQueue
      *
      * @return void
      */
-    public function handle(BHYTXmlSubmitService $xmlSubmitService, Xml3176Service $xml3176Service)
+    public function handle(Xml3176Service $xml3176Service)
     {
+        // KHONG nhan BHYTXmlSubmitService qua container: container khong biet ho so nay thuoc
+        // co so nao nen se dung BHYTLoginService khong ma co so, va lan gui dau tien se nem.
+        // Dung tuong minh bang ma co so cua chinh ho so.
+        $xmlSubmitService = new BHYTXmlSubmitService(new BHYTLoginService($this->macskcb));
+
         // Kiểm tra xem có bật tính năng gửi XML không
         $submitEnabled = config('organization.BHYT.submit_xml_3176_enabled', false);
         if (!$submitEnabled) {
@@ -73,7 +80,9 @@ class SubmitXml3176Job implements ShouldQueue
                 $xmlData,
                 config('organization.BHYT.submit_xml_3176_url'),
                 config('organization.BHYT.loai_ho_so_3176'),
-                config('organization.BHYT.ma_tinh'),
+                // Ma tinh suy tu ma co so, KHONG lay tu config: cau hinh chot cung '01' trong
+                // khi co so 37470 o Ninh Binh phai la '37'.
+                CauHinhCoSo::maTinh($this->macskcb),
                 $this->macskcb
             );
 

@@ -111,25 +111,6 @@ class BHYT
         return '00';
     }
 
-    public static function nhanChiTietHSNgay4210($params)
-    {
-        $params = json_encode($params);
-
-        // $username = config('organization.BHYT.username');
-        // $password = config('organization.BHYT.password'); 
-        $url = "https://egw.baohiemxahoi.gov.vn/api/egw/nhanChiTietHSNgay4210";
-
-        $ch=curl_init($url);
-        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $params);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_HEADER, 0);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json'));
-        $result = curl_exec($ch);
-        curl_close($ch); 
-        return json_decode($result, true);
-    }
-
     public static function nhanThongTinCSKCB($params)
     {
         $params = json_encode($params);

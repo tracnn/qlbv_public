@@ -57,8 +57,12 @@ class BHYTXmlSubmitService
         // Lấy thông tin đăng nhập
         $accessToken = $this->loginService->getAccessToken();
         $idToken = $this->loginService->getIdToken();
-        $passwordHash = $this->config['password'] ?? ''; //Bản thân password đã được mã hóa MD5
-        $username = $this->config['username'] ?? '';
+        // Tai khoan lay tu CHINH loginService da cap token o tren, khong lay tu khoi BHYT cu.
+        // Neu token va tai khoan trong body thuoc hai co so khac nhau thi cong co the van
+        // nhan, va ho so bi ghi sai don vi gui - hong IM LANG, khong co dau hieu gi cho toi
+        // luc doi soat. Lay ca hai tu mot nguon thi chung khong the lech nhau.
+        $passwordHash = $this->loginService->password(); //Bản thân password đã được mã hóa MD5
+        $username = $this->loginService->username();
 
         // Mã hóa XML thành base64
         $fileHSBase64 = base64_encode($xmlContent);

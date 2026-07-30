@@ -20,7 +20,6 @@ use App\Models\BHYT\Xml3176Information;
 use App\Models\BHYT\Xml3176ErrorResult;
 use App\Services\XmlStructures;
 use App\Services\XMLSignService;
-use App\Services\BHYTXmlSubmitService;
 use App\Services\FileCopyService;
 
 use App\Jobs\CheckCompleteXml3176RecordJob;
@@ -35,13 +34,11 @@ class Xml3176Service
 {
     protected $queueName;
     protected $xmlSignService;
-    protected $xmlSubmitService;
     
     public function __construct()
     {
         $this->queueName = config('xml3176.queue_name');
         $this->xmlSignService = new XMLSignService();
-        $this->xmlSubmitService = new BHYTXmlSubmitService();
     }
 
     /**
@@ -1809,76 +1806,6 @@ class Xml3176Service
         // Chỉ truyền đường dẫn file để tránh payload job quá lớn
         SubmitXml3176Job::dispatch($ma_lk, $filePath, $macskcb)
             ->onQueue(config('xml3176.submit_queue_name', 'JobSubmitXml3176'));
-    }
-
-    /**
-     * Gửi hồ sơ XML lên cổng BHXH
-     *
-     * @deprecated Hàm này không còn được sử dụng. Submit XML giờ được xử lý qua SubmitXml3176Job
-     * @param string $ma_lk Mã liên kết
-     * @param string $xmlData Nội dung XML đã ký số
-     * @param string $macskcb Mã cơ sở khám chữa bệnh
-     * @return bool True nếu gửi thành công, false nếu thất bại
-     */
-    /**
-     * Gửi lên bảo hiểm xã hội
-     * Cổng trời tiếp nhận chẳng hề lỗi sai
-     * Kết quả trả về tương lai
-     * Thành công hồ sơ gởi dài niềm tin
-     */
-    private function submitXmlToBHYT($ma_lk, $xmlData, $macskcb)
-    {
-        // Kiểm tra xem có bật tính năng gửi XML không
-        $submitEnabled = config('organization.BHYT.submit_xml_3176_enabled', false);
-        if (!$submitEnabled) {
-            \Log::info('BHYT XML Submit is disabled for ma_lk: ' . $ma_lk);
-            return false;
-        }
-
-        try {
-            // Gửi XML lên cổng BHXH
-            $result = $this->xmlSubmitService->submitXml($xmlData,
-                config('organization.BHYT.submit_xml_3176_url'),
-                config('organization.BHYT.loai_ho_so_3176'),
-                config('organization.BHYT.ma_tinh'),
-                $macskcb
-            );
-
-            // Kiểm tra kết quả
-            $maKetQua = $result['maKetQua'] ?? null;
-            $maGiaoDich = $result['maGiaoDich'] ?? null;
-            $thongDiep = $result['thongDiep'] ?? null;
-            $thoiGianTiepNhan = $result['thoiGianTiepNhan'] ?? null;
-
-            // Lưu thông tin kết quả gửi
-            $error = null;
-            if ($maKetQua !== '200' && $maKetQua !== 200) {
-                $error = 'Mã kết quả: ' . $maKetQua . '. ' . ($thongDiep ?? 'Lỗi không xác định');
-                \Log::error('BHYT XML Submit failed for ma_lk: ' . $ma_lk, [
-                    'maKetQua' => $maKetQua,
-                    'thongDiep' => $thongDiep,
-                    'maGiaoDich' => $maGiaoDich,
-                ]);
-            }
-
-            // Cập nhật thông tin gửi XML
-            // 23-12-2025: Thêm thông tin gửi XML vào database -> submitted_message = maGiaoDich + thongDiep
-            $this->storeXml3176Information($ma_lk, $macskcb, 'submit', 1, $error, null, null, $maGiaoDich);
-
-            return ($maKetQua === '200' || $maKetQua === 200);
-        } catch (\Exception $e) {
-            $error = 'Lỗi gửi XML: ' . $e->getMessage();
-            \Log::error('BHYT XML Submit exception for ma_lk: ' . $ma_lk, [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-
-            // Cập nhật thông tin lỗi
-            // 23-12-2025: Thêm thông tin gửi XML vào database -> submitted_message = maGiaoDich + thongDiep
-            $this->storeXml3176Information($ma_lk, $macskcb, 'submit', 1, $error, null, null, $maGiaoDich . ' - ' . $thongDiep);
-
-            return false;
-        }
     }
 
     private function addChildWithCDATA($xmlElement, $name, $value)
