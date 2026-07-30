@@ -216,6 +216,12 @@ class HisOrderSource
             ->get();
     }
 
+    /** id lon nhat cua his_sere_serv; dung de day moc khi bo qua vong quet */
+    public function maxSereServId()
+    {
+        return (int) DB::connection($this->conn)->table('his_sere_serv')->max('id');
+    }
+
     /** Map service_req_id => thông tin phiếu (code, loại, khoa thực hiện) — tra batched theo IN. */
     public function fetchServiceReqInfoByIds(array $reqIds)
     {

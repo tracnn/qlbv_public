@@ -27,14 +27,16 @@ class InteractionLogScanner implements Scanner
 
         $source = $engine->source();
         $wm = $engine->getWatermark(self::SOURCE_KEY);
-        $rows = $source->fetchInteractions($wm->last_create_time, $wm->last_id, $limit);
+        $cuoiCuaSo = \App\Services\OrderCheck\Support\CuaSoQuet::ketThuc($wm->last_id, $source->cuaSo());
+        $rows = $source->fetchInteractions($wm->last_create_time, $wm->last_id, $limit, $cuoiCuaSo);
         $scanned = $rows->count();
         $violations = 0;
 
-        if ($scanned > 0) {
-            $maxCreate = $wm->last_create_time;
-            $maxId = $wm->last_id;
+        // Khai truoc khoi if: cua so rong van phai day moc duoc.
+        $maxCreate = $wm->last_create_time;
+        $maxId = $wm->last_id;
 
+        if ($scanned > 0) {
             // Ma CSKCB khong co san tren his_medicine_interactive, tra theo treatment_id
             // qua HisOrderSource::fetchTreatmentInfo() (cung ham MedicineScanner dung).
             $info = [];
@@ -75,8 +77,16 @@ class InteractionLogScanner implements Scanner
                 }
             }
 
-            $engine->saveWatermark(self::SOURCE_KEY, $maxCreate, $maxId);
         }
+
+        // Ngoai khoi if: cua so rong cung phai day moc, neu khong bo quet dung im vinh vien.
+        $engine->saveWatermark(
+            self::SOURCE_KEY,
+            $maxCreate,
+            \App\Services\OrderCheck\Support\CuaSoQuet::mocMoi(
+                $wm->last_id, $scanned, $limit, $maxId, $cuoiCuaSo
+            )
+        );
 
         return ['scanned' => $scanned, 'violations' => $violations];
     }

@@ -29,9 +29,32 @@ class ServiceRestrictionScanner implements Scanner
 
         $source = $engine->source();
         $wm = $engine->getWatermark(self::SOURCE_KEY);
-        $rows = $source->fetchSereServWithPatient($wm->last_create_time, $wm->last_id, $limit);
+        $cuoiCuaSo = \App\Services\OrderCheck\Support\CuaSoQuet::ketThuc($wm->last_id, $source->cuaSo());
+
+        // Danh muc gioi han rong thi hai quy tac deu KHONG THE sinh vi pham - khong truy
+        // van HIS lam gi. Do tren production: 24.402 dong da quet, 0 vi pham, ma van ton
+        // 43 phut tong cong.
+        //
+        // Van phai DAY MOC, neu khong den luc nhap danh muc se ton dong ca chuc trieu dong
+        // va roi lai dung van de hieu nang nay. Nhung dong bi bo qua trong luc danh muc
+        // rong se khong duoc kiem lai - khong mat gi so voi hien tai, vi hom nay chung van
+        // duoc quet nhung luon cho ket qua rong, va bo quet von chi chay toi truoc.
+        if (!OrderCheckRefServiceRestriction::where('is_active', true)->exists()) {
+            $maxIdHis = (int) $source->maxSereServId();
+            $mocMoi = $cuoiCuaSo > 0 ? min($cuoiCuaSo, $maxIdHis) : $maxIdHis;
+
+            $engine->saveWatermark(self::SOURCE_KEY, $wm->last_create_time, max((int) $wm->last_id, $mocMoi));
+
+            return ['scanned' => 0, 'violations' => 0];
+        }
+
+        $rows = $source->fetchSereServWithPatient($wm->last_create_time, $wm->last_id, $limit, $cuoiCuaSo);
         $scanned = $rows->count();
         $violations = 0;
+
+        // Khai truoc khoi if: cua so rong van phai day moc duoc.
+        $maxCreate = $wm->last_create_time;
+        $maxId = $wm->last_id;
 
         if ($scanned > 0) {
             // Nạp danh mục giới hạn 1 lần, key theo service_code.
@@ -40,9 +63,6 @@ class ServiceRestrictionScanner implements Scanner
             // Tra thông tin phiếu (mã/loại/khoa thực hiện) theo batch để tránh join chậm.
             $reqIds = $rows->pluck('service_req_id')->filter()->map(function ($v) { return (int) $v; })->unique()->all();
             $reqMap = $source->fetchServiceReqInfoByIds($reqIds);
-
-            $maxCreate = $wm->last_create_time;
-            $maxId = $wm->last_id;
 
             $genderRule = new GenderRestrictionRule();
             $ageRule = new AgeRestrictionRule();
@@ -84,8 +104,16 @@ class ServiceRestrictionScanner implements Scanner
                 }
             }
 
-            $engine->saveWatermark(self::SOURCE_KEY, $maxCreate, $maxId);
         }
+
+        // Ngoai khoi if: cua so rong cung phai day moc, neu khong bo quet dung im vinh vien.
+        $engine->saveWatermark(
+            self::SOURCE_KEY,
+            $maxCreate,
+            \App\Services\OrderCheck\Support\CuaSoQuet::mocMoi(
+                $wm->last_id, $scanned, $limit, $maxId, $cuoiCuaSo
+            )
+        );
 
         return ['scanned' => $scanned, 'violations' => $violations];
     }

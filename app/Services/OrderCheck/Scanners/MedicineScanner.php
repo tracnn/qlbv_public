@@ -25,12 +25,15 @@ class MedicineScanner implements Scanner
 
         $source = $engine->source();
         $wm = $engine->getWatermark(self::SOURCE_KEY);
-        $rows = $source->fetchExpMestBatch($wm->last_create_time, $wm->last_id, $limit);
+        $cuoiCuaSo = \App\Services\OrderCheck\Support\CuaSoQuet::ketThuc($wm->last_id, $source->cuaSo());
+        $rows = $source->fetchExpMestBatch($wm->last_create_time, $wm->last_id, $limit, $cuoiCuaSo);
         $scanned = $rows->count();
         $violations = 0;
 
+        // Khai truoc khoi if: cua so rong (scanned == 0) van phai day moc duoc.
+        $maxId = $wm->last_id;
+
         if ($scanned > 0) {
-            $maxId = $wm->last_id;
             $treatmentIds = [];
             foreach ($rows as $row) {
                 $treatmentIds[(int) $row->tdl_treatment_id] = true;
@@ -60,8 +63,16 @@ class MedicineScanner implements Scanner
                 }
             }
 
-            $engine->saveWatermark(self::SOURCE_KEY, $wm->last_create_time, $maxId);
         }
+
+        // Ngoai khoi if: cua so rong cung phai day moc, neu khong bo quet dung im vinh vien.
+        $engine->saveWatermark(
+            self::SOURCE_KEY,
+            $wm->last_create_time,
+            \App\Services\OrderCheck\Support\CuaSoQuet::mocMoi(
+                $wm->last_id, $scanned, $limit, $maxId, $cuoiCuaSo
+            )
+        );
 
         return ['scanned' => $scanned, 'violations' => $violations];
     }
