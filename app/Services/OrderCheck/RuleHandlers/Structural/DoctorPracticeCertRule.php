@@ -3,6 +3,7 @@
 namespace App\Services\OrderCheck\RuleHandlers\Structural;
 
 use App\Services\OrderCheck\Contracts\RuleHandler;
+use App\Services\OrderCheck\Support\DsMienCchn;
 use App\Services\OrderCheck\Support\OrderContext;
 use App\Services\OrderCheck\Support\Violation;
 
@@ -11,14 +12,23 @@ class DoctorPracticeCertRule implements RuleHandler
     /** @var int[] loai phieu khong ap luat nay */
     protected $excludeTypeIds;
 
-    public function __construct(array $excludeTypeIds = null)
+    /** @var string[] loginname nguoi thuc hien duoc mien kiem CCHN, da chuan hoa */
+    protected $excludeLoginnames;
+
+    public function __construct(array $excludeTypeIds = null, array $excludeLoginnames = null)
     {
         if ($excludeTypeIds === null) {
             $csv = trim((string) config('order_check.practice_cert_exclude_type_ids', ''));
             $excludeTypeIds = $csv === '' ? [] : array_map('intval', array_filter(explode(',', $csv), 'strlen'));
         }
 
+        if ($excludeLoginnames === null) {
+            $excludeLoginnames = DsMienCchn::doc(config('order_check.practice_cert_exclude_loginnames'));
+        }
+
         $this->excludeTypeIds = $excludeTypeIds;
+        // Chuan hoa ca danh sach tiem tu ngoai vao, de test truyen 'MitaLab' van khop.
+        $this->excludeLoginnames = DsMienCchn::doc(implode(',', $excludeLoginnames));
     }
 
     public function code()
@@ -32,6 +42,12 @@ class DoctorPracticeCertRule implements RuleHandler
         // hoac dieu duong cap phat, khong phai nguoi can CCHN theo nghia cua luat nay.
         if ($c->serviceReqTypeId !== null
             && in_array((int) $c->serviceReqTypeId, $this->excludeTypeIds, true)) {
+            return [];
+        }
+
+        // Tai khoan tich hop may moc (mitalab, vietrad, sys) khong phai nguoi nen khong the
+        // co CCHN. Do 30/07/2026: chung chiem 99,2% vi pham cua quy tac nay.
+        if (DsMienCchn::duocMien($c->executeLoginname, $this->excludeLoginnames)) {
             return [];
         }
 
