@@ -212,6 +212,28 @@ flowchart TD
 > **Không** thêm nhánh riêng cho vật tư: số đo cho thấy vật tư đang đúng, thêm nhánh là
 > viết code chết. Quy tắc vẫn đang `is_active = 0`; bật hay không là quyết định nghiệp vụ.
 
+> **`B_DOCTOR_NO_PRACTICE_CERT` — hai chiều miễn trừ** (cập nhật 30/07/2026): quy tắc này
+> bỏ qua theo **loại phiếu** (`practice_cert_exclude_type_ids`, mặc định 6/14/15 — đơn
+> phòng khám, đơn tủ trực, đơn điều trị) và theo **tài khoản người thực hiện**
+> (`practice_cert_exclude_loginnames`, mặc định `mitalab,vietrad,sys`).
+>
+> Lý do chiều thứ hai: `mitalab` là tài khoản tích hợp máy xét nghiệm, `vietrad` là chẩn
+> đoán hình ảnh, `sys` là tài khoản hệ thống — chúng **không phải người** nên không thể có
+> chứng chỉ hành nghề. Đo ngày 30/07/2026: trong 5.422 vi phạm của quy tắc, ba tài khoản
+> này chiếm **5.380 (99,2%)**. Phần còn lại đều là **người thật** thiếu CCHN trong HIS —
+> đó là phát hiện đúng, không được miễn.
+>
+> So khớp **không phân biệt hoa thường** vì HIS có tài khoản viết hoa lẫn lộn
+> (`BHXHConnector`, `BMCS`, `PACS`); so khớp chặt sẽ bỏ sót im lặng.
+>
+> **Không dùng cách tự nhận diện** tài khoản máy bằng `tdl_username = loginname`: đo được
+> 32 tài khoản thoả điều kiện đó, lẫn lộn tài khoản thử nghiệm (`demo1`, `ddtest`), tài
+> khoản phòng ban (`noitru`, `vss` — có diploma `CNTT`), `admin`, `fpt`. Tự động sẽ im lặng
+> bỏ qua thứ không nên bỏ, và người bảo trì sau không biết ai đang được miễn.
+>
+> Cả hai khoá **chỉ** áp cho `B_DOCTOR_NO_PRACTICE_CERT`. `A_STAFF_CERT_NOT_IN_CATALOG`
+> không bị ảnh hưởng — người dùng chốt ngày 2026-07-28.
+
 ### 3.5. "Giai đoạn 1..7" là gì
 Là **các mốc phát triển (release)**, không phải bước trong luồng chạy: GĐ1 nền tảng + họ B; GĐ2 engine đa-nguồn + họ A; GĐ3 dashboard/workflow/Excel/API; GĐ4 email digest; GĐ5 luật cấp đợt điều trị (A2/A3 sau đã gỡ, còn A5); GĐ6 danh mục giới hạn DV (giới tính/tuổi); GĐ7 quản lý quy tắc trên UI + tách khung luật theo 18 loại DV.
 
