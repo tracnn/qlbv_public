@@ -19,8 +19,6 @@ use App\Models\BHYT\EquipmentCatalog;
 use App\Models\BHYT\AdministrativeUnit;
 use App\Models\BHYT\MedicalOrganization;
 use App\Models\BHYT\JobCategory;
-use App\Models\BHYT\Icd10Category;
-use App\Models\BHYT\IcdYhctCategory;
 
 class CatalogImportService
 {
@@ -41,6 +39,54 @@ class CatalogImportService
 
     /** Ba danh muc do BHXH cap RIENG cho tung co so kham chua benh */
     const DANH_MUC_THEO_CO_SO = ['medicine', 'medical_supply', 'service'];
+
+    /**
+     * Danh muc di duong GHI THEO LO: bo nho phang theo lo, khong dung ca tep.
+     *
+     * Duong con lai ("gom") dung TOAN BO dong trong mot Collection roi moi ghi tung dong bang
+     * updateOrCreate. Do tren tep ICD that cua cong BHXH - 52.551 dong x 15 cot, nen 1,1 MB
+     * nhung bung ra 29 MB XML + 5,8 MB sharedStrings - CHI RIENG PHAN DOC da an 128 MB va 346
+     * giay, chua tinh ~105.000 truy van. May chu dat PHP 128 MB / 120 giay nen tien trinh chet
+     * vi fatal error; fatal error khong phai \Exception nen nguoi dung chi thay "Loi khi tai
+     * len" khong kem ly do.
+     *
+     * Danh muc nao co ten bang trong bangCua() va khoa duy nhat trong cau hinh thi dua vao day.
+     */
+    const GHI_THEO_LO = ['medicine', 'medical_supply', 'service', 'icd10', 'icd_yhct'];
+
+    /**
+     * Ma co so THUC SU ap cho mot loai danh muc.
+     *
+     * ganCoSo() them khoa ma_cskcb vao du lieu ghi. Chi ba danh muc theo co so co cot do;
+     * bang icd10_categories khong co nen ap cho ICD la hong ca lo chen.
+     *
+     * Ham THUAN de kiem duoc.
+     */
+    public static function maCoSoApDung($type, $maCskcb)
+    {
+        return in_array($type, self::DANH_MUC_THEO_CO_SO, true) ? $maCskcb : null;
+    }
+
+    /**
+     * Quy co "benh man tinh" ve boolean.
+     *
+     * Cot is_chronic la boolean con gia tri tu Excel la chuoi tu do ('x', 'Co', '1'...).
+     * O de trong cho ra CHUOI RONG nen phai ra false, KHONG duoc de chuanHoaSo bien thanh
+     * null - cot do NOT NULL.
+     *
+     * Ham THUAN de kiem duoc.
+     */
+    public static function chuanHoaManTinh(array $duLieu)
+    {
+        if (!array_key_exists('is_chronic', $duLieu)) {
+            return $duLieu;
+        }
+
+        $v = mb_strtolower(trim((string) $duLieu['is_chronic']));
+        $duLieu['is_chronic'] = in_array($v, ['1', 'true', 'x', 'co', 'có', 'yes'], true);
+
+        return $duLieu;
+    }
 
     /**
      * Gan ma co so cho khoa duy nhat khi dong khong tu khai.
@@ -88,8 +134,8 @@ class CatalogImportService
                 return;
             }
 
-            if (in_array($tt['type'], self::DANH_MUC_THEO_CO_SO, true)) {
-                $this->xuLyLoTheoCoSo($rows, $dongDau, $tt, $maCskcb);
+            if (in_array($tt['type'], self::GHI_THEO_LO, true)) {
+                $this->xuLyLo($rows, $dongDau, $tt, $maCskcb);
 
                 return;
             }
@@ -110,7 +156,7 @@ class CatalogImportService
             throw new \Exception('File không chứa dữ liệu');
         }
 
-        if (in_array($tt['type'], self::DANH_MUC_THEO_CO_SO, true)) {
+        if (in_array($tt['type'], self::GHI_THEO_LO, true)) {
             $tt['ghi']->ghi($tt['lo']);   // lo cuoi con du
 
             return $this->ketQua;
@@ -133,8 +179,6 @@ class CatalogImportService
             'administrative_unit' => 'importAdministrativeUnit',
             'medical_organization' => 'importMedicalOrganization',
             'job_categories' => 'importJobCategories',
-            'icd10' => 'importIcd10',
-            'icd_yhct' => 'importIcdYhct',
         ];
 
         $methodName = $methodMap[$catalogType] ?? null;
@@ -177,32 +221,35 @@ class CatalogImportService
             );
         }
 
-        if (in_array($tt['type'], self::DANH_MUC_THEO_CO_SO, true)) {
+        if (in_array($tt['type'], self::GHI_THEO_LO, true)) {
             $tt['ghi'] = new GhiTheoLo($this->bangCua($tt['type']), $cfg['unique_keys'], $this->ketQua);
         }
     }
 
-    /** Ten bang cua ba danh muc theo co so */
+    /** Ten bang cua cac danh muc ghi theo lo */
     protected function bangCua($type)
     {
         $map = [
             'medicine' => 'medicine_catalogs',
             'medical_supply' => 'medical_supply_catalogs',
             'service' => 'service_catalogs',
+            'icd10' => 'icd10_categories',
+            'icd_yhct' => 'icd_yhct_categories',
         ];
 
         return $map[$type];
     }
 
     /**
-     * Xu ly mot lo cua ba danh muc theo co so: dung du lieu roi gom vao lo ghi.
+     * Xu ly mot lo: dung du lieu roi gom vao lo ghi.
      *
      * Doi Collection sang mang MOT LAN moi dong: getRowValue cu goi toArray() moi truong
      * moi dong - cham 20 lan o doan do.
      */
-    protected function xuLyLoTheoCoSo($rows, $dongDau, array &$tt, $maCskcb)
+    protected function xuLyLo($rows, $dongDau, array &$tt, $maCskcb)
     {
         $cfg = $this->catalogConfigs[$tt['type']];
+        $maCoSo = self::maCoSoApDung($tt['type'], $maCskcb);
         $i = 0;
 
         foreach ($rows as $row) {
@@ -233,8 +280,11 @@ class CatalogImportService
             }
 
             $duLieu = self::catKhoangTrang($duLieu);
-            $duLieu = self::ganCoSo($duLieu, $maCskcb);
+            $duLieu = self::ganCoSo($duLieu, $maCoSo);
             $duLieu = self::chuanHoaSo($duLieu, $this->cotSoCua($this->bangCua($tt['type'])));
+            // SAU chuanHoaSo: is_chronic la cot tinyint nen chuanHoaSo quy o de trong ve null,
+            // ma cot do NOT NULL. Dao thu tu se lam chinh gia tri false bi quy ve null.
+            $duLieu = self::chuanHoaManTinh($duLieu);
             $tt['lo'][] = ['dong_excel' => $dongExcel, 'du_lieu' => $duLieu];
 
             if (count($tt['lo']) >= 500) {
@@ -516,104 +566,6 @@ class CatalogImportService
                 Log::error('Error updating or creating ServiceCatalog record', [
                     'error' => $e->getMessage(),
                     'row' => $row
-                ]);
-                continue;
-            }
-        }
-    }
-
-    private function importIcd10($data, array $fieldMapping, array $config)
-    {
-        $data = $data->slice(1);
-
-        foreach ($data as $iDong => $row) {
-            // slice(1) giu nguyen khoa nen khoa 1 ung voi dong Excel 2.
-            $dongExcel = (int) $iDong + 1;
-
-            if (!$this->hasRequiredFields($row, $config['required_fields'], $fieldMapping)) {
-                $this->ketQua->themBoQua($dongExcel, 'Thiếu trường bắt buộc');
-                continue;
-            }
-
-            try {
-                $uniqueKeys = [];
-                $updateData = [];
-
-                foreach ($config['unique_keys'] as $key) {
-                    $value = $this->getRowValue($row, $key, $fieldMapping);
-                    if ($value !== null) {
-                        $uniqueKeys[$key] = $value;
-                    }
-                }
-
-                foreach ($config['mapping'] as $field => $possibleNames) {
-                    if (!in_array($field, $config['unique_keys'])) {
-                        $value = $this->getRowValue($row, $field, $fieldMapping);
-                        if ($value !== null) {
-                            $updateData[$field] = $value;
-                        }
-                    }
-                }
-
-                // Chuẩn hóa cờ mãn tính về boolean nếu file có cột đó.
-                if (array_key_exists('is_chronic', $updateData)) {
-                    $v = mb_strtolower(trim((string) $updateData['is_chronic']));
-                    $updateData['is_chronic'] = in_array($v, ['1', 'true', 'x', 'co', 'có', 'yes'], true);
-                }
-
-                $banGhi = Icd10Category::updateOrCreate($uniqueKeys, $updateData);
-                $this->demGhi($banGhi);
-            } catch (\Exception $e) {
-                $this->ketQua->themLoi($dongExcel, $e->getMessage());
-                Log::error('Error updating or creating Icd10Category record', [
-                    'error' => $e->getMessage(),
-                    'row' => $row,
-                ]);
-                continue;
-            }
-        }
-    }
-
-    private function importIcdYhct($data, array $fieldMapping, array $config)
-    {
-        $data = $data->slice(1);
-
-        foreach ($data as $iDong => $row) {
-            // slice(1) giu nguyen khoa nen khoa 1 ung voi dong Excel 2.
-            $dongExcel = (int) $iDong + 1;
-
-            if (!$this->hasRequiredFields($row, $config['required_fields'], $fieldMapping)) {
-                $this->ketQua->themBoQua($dongExcel, 'Thiếu trường bắt buộc');
-                continue;
-            }
-
-            try {
-                $uniqueKeys = [];
-                $updateData = [];
-
-                foreach ($config['unique_keys'] as $key) {
-                    $value = $this->getRowValue($row, $key, $fieldMapping);
-                    if ($value !== null) {
-                        $uniqueKeys[$key] = $value;
-                    }
-                }
-
-                foreach ($config['mapping'] as $field => $possibleNames) {
-                    if (!in_array($field, $config['unique_keys'])) {
-                        $value = $this->getRowValue($row, $field, $fieldMapping);
-                        if ($value !== null) {
-                            $updateData[$field] = $value;
-                        }
-                    }
-                }
-
-                $banGhi = IcdYhctCategory::updateOrCreate($uniqueKeys, $updateData);
-                $this->demGhi($banGhi);
-            } catch (\Exception $e) {
-                $this->ketQua->themLoi($dongExcel, $e->getMessage());
-                Log::error('Error updating or creating IcdYhctCategory record', [
-                    'error' => $e->getMessage(),
-                    'row' => $row,
                 ]);
                 continue;
             }
