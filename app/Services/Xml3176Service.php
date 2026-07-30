@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Services\Xml3176\QuyetDinhGui;
 use App\Models\BHYT\Xml3176Xml1;
 use App\Models\BHYT\Xml3176Xml2;
 use App\Models\BHYT\Xml3176Xml3;
@@ -1812,9 +1813,23 @@ class Xml3176Service
         // roi job tu thoat, nen tat van ton mot job vao hang doi cho moi ho so export.
         // Job VAN kiem lai co lan nua - no co the nam cho trong hang doi hang gio, giua luc
         // do cau hinh co the da doi. Hai lop chan hai tinh huong khac nhau.
-        if (config('organization.BHYT.submit_xml_3176_enabled', false)) {
+        //
+        // Ho so chua ky thi khong gui: cong BHXH cung tu choi, chan tai cho vua khong ton mot
+        // vong goi mang vua cho thong bao ro hon. Trang thai ky KHONG can kiem lai trong job:
+        // khac cau hinh, no la thuoc tinh cua tep da ghi ra dia, khong tu doi trong luc cho.
+        $quyetDinh = QuyetDinhGui::nen(
+            config('organization.BHYT.submit_xml_3176_enabled', false),
+            $isSigned
+        );
+
+        if ($quyetDinh === QuyetDinhGui::GUI) {
             SubmitXml3176Job::dispatch($ma_lk, $filePath, $macskcb)
                 ->onQueue(config('xml3176.submit_queue_name', 'JobSubmitXml3176'));
+        } elseif ($quyetDinh === QuyetDinhGui::CHUA_KY) {
+            // Ghi qua dung nhanh 'submit' san co: submit_error duoc dat va submitted_at de
+            // null - dung hinh dang cua mot ho so bi cong tu choi.
+            $this->storeXml3176Information($ma_lk, $macskcb, 'submit', 1,
+                'Hồ sơ chưa ký số, không gửi lên cổng BHXH');
         }
     }
 
