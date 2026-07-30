@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Services\BHYT\CauHinhCoSo;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Support\Facades\Cache;
@@ -14,12 +15,57 @@ class BHYTLoginService
 {
     private Client $httpClient;
     private array $config;
-    private string $cacheKey = 'bhyt_tokens';
+    private ?array $taiKhoan = null;
+    private string $maCskcb;
 
-    public function __construct()
+    /**
+     * Constructor CHI luu ma co so, khong phan giai tai khoan.
+     *
+     * Vi sao khong phan giai (khong goi CauHinhCoSo::cua()) ngay tai day: BHYTXmlSubmitService
+     * dung service nay ngay trong constructor cua no, va Xml3176Service lai dung
+     * BHYTXmlSubmitService vo dieu kien trong constructor cua no. Neu phan giai som, chi
+     * VIEC DUNG doi tuong (kem ca o duong doc XML von khong bao gio dang nhap cong) da nem
+     * ngoai le. Phan giai LUOI dua viec kiem tra tai khoan ve dung luc CAN dung tai khoan.
+     *
+     * @param string|null $maCskcb ma co so KCB
+     */
+    public function __construct($maCskcb = null)
     {
         $this->httpClient = new Client();
         $this->config = Config::get('organization.BHYT', []);
+        $this->maCskcb = trim((string) $maCskcb);
+    }
+
+    /**
+     * Tai khoan cong BHXH cua co so, phan giai LUOI (chi mot lan, sau do nho lai).
+     *
+     * Nem chu khong doan: doan nghia la quay lai dung loi moi co so dung chung mot tai
+     * khoan, hoac roi ve tai khoan mac dinh khi co so chua khai.
+     *
+     * @throws \InvalidArgumentException khi thieu ma co so hoac co so chua khai tai khoan
+     */
+    private function taiKhoan(): array
+    {
+        if ($this->taiKhoan === null) {
+            $this->taiKhoan = CauHinhCoSo::cua($this->maCskcb, Config::get('organization.BHYT_CO_SO', []));
+        }
+
+        return $this->taiKhoan;
+    }
+
+    /**
+     * Khoa cache token cua co so nay, phan giai LUOI.
+     *
+     * Chi tra sau khi taiKhoan() da xac nhan ma co so hop le - de khong bao gio ton tai
+     * khoa 'bhyt_tokens:' rong dung chung giua cac co so.
+     *
+     * @throws \InvalidArgumentException khi thieu ma co so hoac co so chua khai tai khoan
+     */
+    private function khoaCache(): string
+    {
+        $this->taiKhoan();
+
+        return 'bhyt_tokens:' . $this->maCskcb;
     }
 
     /**
@@ -27,8 +73,9 @@ class BHYTLoginService
      */
     public function login(): array
     {
-        $username = $this->config['username'] ?? '';
-        $password = $this->config['password'] ?? '';
+        $taiKhoan = $this->taiKhoan();
+        $username = $taiKhoan['username'];
+        $password = $taiKhoan['password'];
         $loginUrl = $this->config['login_url'] ?? '';
 
         if (empty($username) || empty($password) || empty($loginUrl)) {
@@ -75,10 +122,10 @@ class BHYTLoginService
             if ($expiresAt) {
                 $cacheSeconds = max(60, $expiresAt - time() - 60); // Trừ 60 giây để tránh hết hạn sớm
                 $cacheMinutes = (int) max(1, ceil($cacheSeconds / 60));
-                Cache::put($this->cacheKey, $tokens, $cacheMinutes);
+                Cache::put($this->khoaCache(), $tokens, $cacheMinutes);
             } else {
                 // Nếu không có thời gian hết hạn, cache 60 phút (1 giờ)
-                Cache::put($this->cacheKey, $tokens, 60);
+                Cache::put($this->khoaCache(), $tokens, 60);
             }
 
             Log::info('BHYT Login successful', [
@@ -163,7 +210,7 @@ class BHYTLoginService
      */
     public function getTokens(): array
     {
-        $tokens = Cache::get($this->cacheKey);
+        $tokens = Cache::get($this->khoaCache());
 
         // Nếu không có token hoặc token hết hạn thì đăng nhập lại
         if (!$tokens || $this->isTokenExpired($tokens)) {
@@ -171,7 +218,7 @@ class BHYTLoginService
                 $tokens = $this->login();
             } catch (\Exception $e) {
                 // Nếu đăng nhập thất bại, thử lấy lại từ cache (có thể process khác đã đăng nhập)
-                $tokens = Cache::get($this->cacheKey);
+                $tokens = Cache::get($this->khoaCache());
                 if (!$tokens || $this->isTokenExpired($tokens)) {
                     // Nếu vẫn không có token, throw exception
                     throw $e;
@@ -188,7 +235,7 @@ class BHYTLoginService
     public function isTokenExpired(?array $tokens = null): bool
     {
         if (!$tokens) {
-            $tokens = Cache::get($this->cacheKey);
+            $tokens = Cache::get($this->khoaCache());
         }
 
         if (!$tokens) {
@@ -212,7 +259,7 @@ class BHYTLoginService
      */
     public function logout(): void
     {
-        Cache::forget($this->cacheKey);
+        Cache::forget($this->khoaCache());
         Log::info('BHYT Logout successful');
     }
 
@@ -221,8 +268,37 @@ class BHYTLoginService
      */
     public function isLoggedIn(): bool
     {
-        $tokens = Cache::get($this->cacheKey);
+        $tokens = Cache::get($this->khoaCache());
         return $tokens && !$this->isTokenExpired($tokens);
+    }
+
+    /** Thong tin can bo tra cuu cua co so nay; chuoi rong neu chua khai */
+    public function hoTenCb(): string
+    {
+        return $this->taiKhoan()['ho_ten_cb'];
+    }
+
+    /** @return string CCCD can bo tra cuu; chuoi rong neu chua khai */
+    public function cccdCb(): string
+    {
+        return $this->taiKhoan()['cccd_cb'];
+    }
+
+    /**
+     * Tai khoan dang nhap cong BHXH cua co so nay - dung de dinh kem vao query
+     * cua cac request goi API (vd checkInsuranceCard) ben canh access_token/id_token.
+     *
+     * @return string
+     */
+    public function username(): string
+    {
+        return $this->taiKhoan()['username'];
+    }
+
+    /** @return string Mat khau dang nhap cong BHXH cua co so nay */
+    public function password(): string
+    {
+        return $this->taiKhoan()['password'];
     }
 }
 

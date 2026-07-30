@@ -94,10 +94,15 @@ class XML4210Import extends Command
                                 'hoTen' => (string)$data->HO_TEN,
                                 'ngaySinh' => $ngaySinhFormatted,
                                 'ma_lk' => (string)$data->MA_LK,
-                                'maCSKCB' => $maDKBD,
+                                'maCskcb' => trim((string)$data->MA_CSKCB),
+                                'maDkbd' => $maDKBD,
                                 'gioiTinh' => (string)$data->GIOI_TINH,
-                                // Thêm các thông tin khác nếu cần
                             ];
+
+                            if ($params['maCskcb'] === '') {
+                                $this->warn('Bo qua MA_LK ' . $params['ma_lk'] . ': thieu MA_CSKCB');
+                                continue;
+                            }
 
                             // Dispatch job
                             JobKtTheBHYT::dispatch($params)

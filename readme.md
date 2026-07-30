@@ -1,3 +1,22 @@
+# 30/07/2026 (cập nhật 2)
+
+- **Mỗi cơ sở KCB nay dùng tài khoản cổng BHXH riêng**: `config/organization.php` bổ sung khoá
+  `BHYT_CO_SO`, khai theo mã cơ sở KCB, mỗi mã một khối `username`/`password`/`ho_ten_cb`/`cccd_cb`.
+  Giá trị điền thẳng vào tệp (không qua `env()`); tệp này nằm trong `.gitignore` nên không lên kho
+  mã. Cơ sở nào **không có trong khối `BHYT_CO_SO`** thì hồ sơ của cơ sở đó **bị bỏ qua và ghi
+  log** ngay từ lệnh quét. Cơ sở **có khai nhưng để trống** `username`/`password` thì job **báo
+  lỗi** khi chạy, chứ không âm thầm tra bằng tài khoản của cơ sở khác — tra nhầm tài khoản chính
+  là thứ làm kết quả không hợp lệ. Cả hai đường đều lộ lỗi ra, không có đường nào hỏng im lặng.
+- **Sửa lỗi job kiểm thẻ BHYT gửi sai mã cơ sở**: trước đây tham số `maCSKCB` gửi lên cổng lấy theo
+  nơi đăng ký khám chữa bệnh ban đầu (ĐKBĐ) của bệnh nhân, không phải nơi bệnh nhân đang điều trị.
+  Đo trên 45.995 hồ sơ: trước khi sửa `maCSKCB` có 4.194 giá trị khác nhau, sau khi sửa chỉ còn 2
+  giá trị (đúng hai cơ sở điều trị thật) — nghĩa là khoảng 99,5% lời gọi trước đây khai sai cơ sở.
+  Nghiệm thu bằng `php artisan kiemtrathebhyt:day --thu` trên dữ liệu thật: cơ sở `01929` có 4.336
+  hồ sơ, cơ sở `37470` có 990 hồ sơ, không hồ sơ nào bị bỏ qua vì thiếu cơ sở.
+- Bổ sung cột `ma_cskcb` (varchar 20, có index) vào bảng `check_hein_cards` để lưu đúng cơ sở điều
+  trị của từng hồ sơ. **Khi triển khai**: điền tài khoản từng cơ sở vào `config/organization.php`
+  (khối `BHYT_CO_SO`), sau đó chạy `php artisan migrate` và `php artisan config:clear`.
+
 # 30/07/2026
 
 - **Module Kiểm tra sai sót y lệnh — miễn luật chứng chỉ hành nghề theo tài khoản**: ba tài khoản `mitalab` (tích hợp máy xét nghiệm), `vietrad` (chẩn đoán hình ảnh) và `sys` (hệ thống) không còn bị luật `B_DOCTOR_NO_PRACTICE_CERT` báo vi phạm. Đây không phải người nên không thể có chứng chỉ hành nghề — luật báo vi phạm cho ba tài khoản này là báo oan. Đo ngày 30/07/2026: ba tài khoản này chiếm khoảng 99,2% số vi phạm của luật, phần còn lại đều là người thật thực sự thiếu CCHN trong HIS nên vẫn bị bắt như cũ. Khoảng 5.800 vi phạm sẽ ngừng sinh thêm từ lần quét sau; các vi phạm cũ đã ghi không bị xoá. Danh sách miễn sửa được trong cấu hình (`ORDER_CHECK_PRACTICE_CERT_EXCLUDE_LOGINS`), để rỗng là bắt lại toàn bộ như cũ.

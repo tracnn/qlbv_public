@@ -15,7 +15,8 @@ class HISProKiemTraTheBHYT extends Command
      *
      * @var string
      */
-    protected $signature = 'kiemtrathebhyt:day';
+    protected $signature = 'kiemtrathebhyt:day
+        {--thu : Chi dem va thong ke, KHONG dispatch job - dung de nghiem thu ma khong goi len cong BHXH}';
 
     /**
      * The console command description.
@@ -49,11 +50,13 @@ class HISProKiemTraTheBHYT extends Command
             ->join('his_treatment','his_treatment_bed_room.treatment_id','=','his_treatment.id')
             ->join('his_gender', 'his_gender.id', '=', 'his_treatment.tdl_patient_gender_id')
             ->leftjoin('his_co_treatment','his_treatment_bed_room.co_treatment_id','=','his_co_treatment.id')
+            ->leftJoin('his_branch','his_branch.id','=','his_treatment.branch_id')
             ->selectRaw('his_treatment.treatment_code, his_treatment.tdl_hein_card_number, his_treatment.tdl_patient_name,
                 his_treatment.tdl_patient_gender_id, his_treatment.tdl_hein_medi_org_code,
                 his_treatment.tdl_hein_card_from_time, his_treatment.tdl_hein_card_to_time,
                 his_room.department_id, his_gender.gender_code,
-                his_treatment.tdl_patient_dob, his_department.department_name')
+                his_treatment.tdl_patient_dob, his_department.department_name
+                , his_branch.hein_medi_org_code as ma_cskcb')
             ->whereNull('his_treatment_bed_room.remove_time')
             ->whereNull('his_co_treatment.id')
             ->where('his_bed_room.is_active',1)
@@ -63,37 +66,59 @@ class HISProKiemTraTheBHYT extends Command
             ->where('his_treatment_bed_room.is_delete',0)
             ->get();
 
+        $dsCoSo = config('organization.BHYT_CO_SO', []);
+        $thu = (bool) $this->option('thu');
+        $boQua = 0;
+        $demTheoCoSo = [];
+
         foreach ($count_noitru_bed_room as $key => $value) {
-            $maThe  = $value->tdl_hein_card_number;
-            $hoTen = $value->tdl_patient_name;
-            $ngaySinhFormatted  = dob($value->tdl_patient_dob);
+            $maCskcb = trim((string) $value->ma_cskcb);
             $ma_lk = $value->treatment_code;
-            $maDKBD = $value->tdl_hein_medi_org_code;
-            $gioiTinh = (int)$value->gender_code;
+
+            // Co so dieu tri lay tu his_branch, KHONG phai tdl_hein_medi_org_code - cot do
+            // la noi DKBD cua BENH NHAN. Do 45.995 ho so: 4.194 gia tri DKBD khac nhau so
+            // voi 2 co so dieu tri, trung nhau chi 0,5%.
+            if ($maCskcb === '' || !isset($dsCoSo[$maCskcb])) {
+                $boQua++;
+                \Log::warning('Kiem tra the BHYT: bo qua ho so vi khong xac dinh duoc co so', [
+                    'ma_lk' => $ma_lk,
+                    'ma_cskcb' => $maCskcb,
+                ]);
+                continue;
+            }
+
+            $gioiTinh = (int) $value->gender_code;
 
             if ($gioiTinh === 1) {
                 $gioiTinh = 2;
             } elseif ($gioiTinh === 2) {
                 $gioiTinh = 1;
             }
-            
-            $this->info($ma_lk);
 
             $params = [
-                'maThe' => $maThe,
-                'hoTen' => $hoTen,
-                'ngaySinh' => $ngaySinhFormatted,
+                'maThe' => $value->tdl_hein_card_number,
+                'hoTen' => $value->tdl_patient_name,
+                'ngaySinh' => dob($value->tdl_patient_dob),
                 'ma_lk' => $ma_lk,
-                'maCSKCB' => $maDKBD,
+                'maCskcb' => $maCskcb,
+                'maDkbd' => $value->tdl_hein_medi_org_code,
                 'gioiTinh' => $gioiTinh,
-                // Thêm các thông tin khác nếu cần
             ];
 
-            // Dispatch job
-            JobKtTheBHYT::dispatch($params)
-                ->onQueue('JobKtTheBHYT');
+            $demTheoCoSo[$maCskcb] = isset($demTheoCoSo[$maCskcb]) ? $demTheoCoSo[$maCskcb] + 1 : 1;
+
+            if ($thu) {
+                continue;
+            }
+
+            JobKtTheBHYT::dispatch($params)->onQueue('JobKtTheBHYT');
         }
 
+        foreach ($demTheoCoSo as $ma => $n) {
+            $this->info('Co so ' . $ma . ': ' . $n . ' ho so');
+        }
+
+        $this->info('Bo qua vi khong xac dinh duoc co so: ' . $boQua);
         $this->info($this->description);
     }
 }

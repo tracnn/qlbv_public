@@ -22,6 +22,14 @@ return [
         'submit_xml_3176_url' => 'https://egw.baohiemxahoi.gov.vn/api/qd130/guiHoSoXmlQD3176',
         'loai_ho_so_3176' => '130',
     ],
+    'BHYT_CO_SO' => [
+        '01013' => [
+            'username' => '',
+            'password' => '',
+            'ho_ten_cb' => '',
+            'cccd_cb' => '',
+        ],
+    ],
     'base_url' => '',
     'base_pacs_url' => '',
     'pacs_url_suffix' => '', //''&service_id=',

@@ -61,6 +61,7 @@ return [
             'department' => 'Khoa',
             'patient_type' => 'Đối tượng',
             'info_check' => 'Kiểm tra thông tin',
+            'ma_cskcb' => 'Cơ sở KCB',
         ],
         'history_medical_info' => [
             'maHoSo' => 'Mã hồ sơ',
@@ -131,6 +132,10 @@ return [
             'birthday' => [
                 'required' => 'Ngày sinh không được để trống',
                 'lenght' => 'Ngày sinh phải theo chuẩn (dd/mm/yyyy)',
+            ],
+            'ma_cskcb' => [
+                'required' => 'Phải chọn cơ sở KCB trước khi tra cứu',
+                'in' => 'Cơ sở KCB không hợp lệ hoặc chưa khai tài khoản cổng BHXH',
             ],
             'fromdate_not_equal_todate' => 'Từ ngày phải đúng bằng đến ngày',
         ],

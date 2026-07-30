@@ -15,13 +15,17 @@ class BHYTLoginServiceTest extends TestCase
 {
     private function makeService(MockHandler $mock): BHYTLoginService
     {
+        // login_url la gia tri dung chung, khong theo co so.
         Config::set('organization.BHYT', [
-            'username'  => 'user',
-            'password'  => 'pass',
             'login_url' => 'https://egw.baohiemxahoi.gov.vn/api/token/take',
         ]);
 
-        $service = new BHYTLoginService();
+        // Tai khoan RIENG theo co so - can tu khi BHYTLoginService nhan ma co so.
+        Config::set('organization.BHYT_CO_SO', [
+            '01929' => ['username' => 'user', 'password' => 'pass'],
+        ]);
+
+        $service = new BHYTLoginService('01929');
 
         $stack  = HandlerStack::create($mock);
         $client = new Client(['handler' => $stack]);

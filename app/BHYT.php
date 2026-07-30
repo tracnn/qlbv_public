@@ -30,17 +30,37 @@ class BHYT
         return json_decode($res->getBody(), true);
     }
 
-    public static function checkInsuranceCard($number, $name, $birthday,$access_token,$id_token)
+    /**
+     * @param \App\Services\BHYTLoginService|null $loginService tai khoan CUA CO SO duoc chon.
+     *        Co truyen thi lay username/password tu no; khong truyen thi giu nguyen hanh vi cu
+     *        (khoi BHYT chot cung). De tuy chon nen 5 noi goi con lai khong phai doi.
+     */
+    public static function checkInsuranceCard($number, $name, $birthday,$access_token,$id_token,
+        $loginService = null)
     {
         $check_card_url = config('organization.BHYT.check_card_url_2024');
-        $username = config('organization.BHYT.username');
-        $password = config('organization.BHYT.password');
+
+        if ($loginService !== null) {
+            $username = $loginService->username();
+            $password = $loginService->password();
+        } else {
+            $username = config('organization.BHYT.username');
+            $password = config('organization.BHYT.password');
+        }
 
         if (config('organization.BHYT.check_by_user')) {
             $user = \Auth::user();
             $hoTenCb =  $user->username;
             $cccdCb = $user->his_employee->identification_number;
+        } elseif ($loginService !== null) {
+            // Can bo tra cuu cua CHINH CO SO duoc chon. Truoc day nhanh nay doc khoi BHYT cu
+            // (chot cung, va dang de rong), nen cong tra ve "Null hoTenCb" du da chon co so.
+            $hoTenCb = $loginService->hoTenCb();
+            $cccdCb = $loginService->cccdCb();
         } else {
+            // TAM: loginBHYT() la method tinh khong co tham so co so, duoc goi tu nhieu
+            // controller. Nhung noi chua truyen $loginService van doc khoi BHYT cu; spec thu
+            // hai se chuyen not.
             $hoTenCb =  config('organization.BHYT.hoTenCb');
             $cccdCb = config('organization.BHYT.cccdCb');
         }

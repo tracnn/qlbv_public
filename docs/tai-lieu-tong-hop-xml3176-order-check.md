@@ -146,6 +146,29 @@ flowchart TD
 | `organization.export_xml_not_check` | Cho xuất kể cả có lỗi | false |
 | `organization.BHYT.submit_xml_3176_enabled` | Bật gửi cổng BHXH | **false (tắt)** |
 
+> **Tài khoản cổng BHXH theo từng cơ sở** (từ 30/07/2026): `config/organization.php` khoá
+> `BHYT_CO_SO` khai tài khoản riêng cho từng mã cơ sở KCB, giá trị điền thẳng vào tệp. Hồ sơ của
+> cơ sở nào phải tra bằng tài khoản của cơ sở đó mới hợp lệ.
+>
+> `App\Services\BHYT\CauHinhCoSo::cua()` **ném ngoại lệ** khi cơ sở chưa khai — cố ý không
+> rơi về tài khoản mặc định, vì tra bằng tài khoản cơ sở khác chính là thứ làm kết quả
+> không hợp lệ.
+>
+> Khoá cache token là `bhyt_tokens:{mã cơ sở}`. Bản cũ dùng một khoá `bhyt_tokens` duy nhất
+> nên token cơ sở này ghi đè cơ sở kia và mọi lời gọi sau đó sai danh nghĩa mà **không có
+> dấu hiệu gì** — kiểu hỏng im lặng nguy hiểm nhất.
+>
+> `ma_tinh` **không khai nữa**: luôn là hai ký tự đầu của mã cơ sở
+> (`CauHinhCoSo::maTinh()`). Cấu hình cũ chốt cứng `'01'` trong khi 37470 ở Ninh Bình phải
+> là `'37'`.
+>
+> Lệnh `kiemtrathebhyt:day` có cờ `--thu`: chạy trọn phần quét nhưng **không dispatch job**,
+> dùng để kiểm mà không gọi lên cổng BHXH.
+>
+> **Còn lại cho đợt sau:** đường gửi XML (`BHYTXmlSubmitService` và 4 nơi gọi), `ma_tinh` ở
+> 5 nơi, và việc tách `correct_facility_code` thành hai khái niệm (mã cơ sở của mình / danh
+> sách ĐKBĐ đúng tuyến) vẫn đang dùng giá trị chốt cứng `01013`.
+
 ---
 
 ## 3. Module Order-Check — Kiểm tra sai sót y lệnh

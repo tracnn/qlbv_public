@@ -18,8 +18,6 @@ class jobKtTheBHYT implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     protected $params;
-    protected $username;
-    protected $password;
     protected $check_card_url;
     protected $loginService;
     protected $checkOldValue;
@@ -30,8 +28,6 @@ class jobKtTheBHYT implements ShouldQueue
         $this->checkOldValue = $checkOldValue;
 
         // Lưu các giá trị cấu hình trong các biến đơn giản để tránh vấn đề tuần tự hóa
-        $this->username = config('organization.BHYT.username');
-        $this->password = config('organization.BHYT.password');
         $this->check_card_url = config('organization.BHYT.check_card_url_2024');
     }
 
@@ -62,7 +58,7 @@ class jobKtTheBHYT implements ShouldQueue
 
         // Sử dụng BHYTLoginService để lấy token (tự động đăng nhập lại nếu hết hạn)
         try {
-            $this->loginService = new BHYTLoginService();
+            $this->loginService = new BHYTLoginService($this->params['maCskcb']);
             $accessToken = $this->loginService->getAccessToken();
             $idToken = $this->loginService->getIdToken();
         } catch (\Exception $e) {
@@ -100,14 +96,14 @@ class jobKtTheBHYT implements ShouldQueue
                     'maThe' => $params['maThe'],
                     'hoTen' => $params['hoTen'],
                     'ngaySinh' => $params['ngaySinh'],
-                    'hoTenCb' => config('organization.BHYT.hoTenCb'),
-                    'cccdCb' => config('organization.BHYT.cccdCb'),
+                    'hoTenCb' => $this->loginService->hoTenCb(),
+                    'cccdCb' => $this->loginService->cccdCb(),
                 ],
                 'query' => [
                     'token' => $access_token,
                     'id_token' => $id_token,
-                    'username' => $this->username,
-                    'password' => $this->password,
+                    'username' => $this->loginService->username(),
+                    'password' => $this->loginService->password(),
                 ]
             ]);
 
@@ -149,7 +145,7 @@ class jobKtTheBHYT implements ShouldQueue
         if (!$gioiTinh || !$maDKBD || !$gtTheTu || !$gtTheDen) {
             return '11';
         }
-        if ($params['maCSKCB'] != $maDKBD) {
+        if ($params['maDkbd'] != $maDKBD) {
             return '09';
         }
         if (($params['gioiTinh'] == 1 && $gioiTinh != 'Nam') || 
@@ -167,6 +163,7 @@ class jobKtTheBHYT implements ShouldQueue
                 'ma_lk' => $ma_lk,
             ],
             [
+                'ma_cskcb' => $this->params['maCskcb'],
                 'ma_tracuu' => $ma_tracuu,
                 'ma_kiemtra' => $ma_kiemtra,
                 'ma_ketqua' => $result_check['maKetQua'],
