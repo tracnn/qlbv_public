@@ -4,7 +4,7 @@
 
 **Goal:** Mỗi cơ sở KCB dùng tài khoản cổng BHXH của chính mình khi kiểm tra thẻ, và job gửi lên cổng đúng mã cơ sở điều trị thay vì nơi ĐKBĐ của bệnh nhân.
 
-**Architecture:** Thêm khối cấu hình `BHYT_CO_SO` khoá theo mã cơ sở, giá trị đọc từ `.env`. Một lớp thuần `CauHinhCoSo` phân giải cấu hình và suy ra mã tỉnh. `BHYTLoginService` nhận mã cơ sở và tách khoá cache theo cơ sở. Lệnh quét lấy mã cơ sở thật từ `his_branch`, truyền xuống job hai giá trị tách bạch.
+**Architecture:** Thêm khối cấu hình `BHYT_CO_SO` khoá theo mã cơ sở, giá trị khai thẳng trong `config/organization.php` (tệp đã nằm trong `.gitignore`). Một lớp thuần `CauHinhCoSo` phân giải cấu hình và suy ra mã tỉnh. `BHYTLoginService` nhận mã cơ sở và tách khoá cache theo cơ sở. Lệnh quét lấy mã cơ sở thật từ `his_branch`, truyền xuống job hai giá trị tách bạch.
 
 **Tech Stack:** Laravel 5.5.50, PHP 7.4, PHPUnit 6.5, Oracle qua kết nối `HISPro` (chỉ đọc), Guzzle.
 
@@ -19,7 +19,8 @@
 - `ma_tinh` **không khai** — suy ra từ hai ký tự đầu của mã cơ sở.
 - **Không** đụng đường gửi XML (`BHYTXmlSubmitService` và 4 nơi gọi nó), **không** đụng `ma_tinh` ở 5 nơi, **không** đụng `correct_facility_code` và ba bộ kiểm XML — tất cả thuộc spec thứ hai.
 - **Không** đụng `JobBHYT`, `JobInpatient` (mã chết, không nơi nào dispatch).
-- **Không** đưa mật khẩu thật vào `.env` hay vào bất kỳ tệp nào được commit.
+- **Không** tự điền mật khẩu thật vào bất kỳ đâu — để rỗng, người vận hành điền trên máy chủ.
+- **Không** thêm biến `.env` nào cho phần này; giá trị khai thẳng trong `config/organization.php`.
 
 ## Cấu trúc tệp
 
@@ -111,6 +112,30 @@ class CauHinhCoSoTest extends TestCase
         CauHinhCoSo::cua('01283', $this->ds());
     }
 
+    /**
+     * Khoi BHYT_CO_SO xuat xuong voi cac o de RONG (nguoi van hanh dien sau). Chuoi rong phai
+     * bi chan y het khoa thieu, neu khong he thong lang le goi cong bang tai khoan trong.
+     */
+    /** @test */
+    public function mat_khau_rong_thi_nem_ngoai_le()
+    {
+        $this->expectException(\InvalidArgumentException::class);
+
+        CauHinhCoSo::cua('01929', [
+            '01929' => ['username' => 'u', 'password' => '', 'ho_ten_cb' => '', 'cccd_cb' => ''],
+        ]);
+    }
+
+    /** @test */
+    public function username_rong_thi_nem_ngoai_le()
+    {
+        $this->expectException(\InvalidArgumentException::class);
+
+        CauHinhCoSo::cua('01929', [
+            '01929' => ['username' => '', 'password' => 'p', 'ho_ten_cb' => '', 'cccd_cb' => ''],
+        ]);
+    }
+
     /** @test */
     public function ma_co_so_rong_thi_nem_ngoai_le()
     {
@@ -164,7 +189,7 @@ class CauHinhCoSoTest extends TestCase
 vendor/bin/phpunit tests/Unit/CauHinhCoSoTest.php
 ```
 
-Kỳ vọng: mọi test FAIL với `Class 'App\Services\BHYT\CauHinhCoSo' not found`.
+Kỳ vọng: cả 10 test FAIL với `Class 'App\Services\BHYT\CauHinhCoSo' not found`.
 
 - [ ] **Step 3: Viết lớp**
 
@@ -265,8 +290,10 @@ Trong `config/organization.php`, thêm khối mới **ngay sau** khối `'BHYT' 
      * Tai khoan cong BHXH RIENG cua tung co so KCB.
      *
      * Cau truc nam trong tep config de moi don vi trien khai sua danh sach ma co so cho
-     * khop cua ho. GIA TRI doc tu .env vi do la thu khac nhau giua moi lan cai dat, va de
-     * mat khau khong nam trong kho ma.
+     * khop cua ho. GIA TRI khai THANG vao day, KHONG qua env(): tep nay da nam trong
+     * .gitignore va chua tung duoc commit, nen no von la tep bi mat cua rieng tung lan cai
+     * dat. Them mot tang env() o giua khong giau duoc gi them ma chi lam cau hinh chia doi -
+     * nhin tep khong biet gia tri that, sai mot ten bien thi env() tra null lang le.
      *
      * KHONG khai ma_tinh: no luon la hai ky tu dau cua ma co so (01929 -> 01, 37470 -> 37).
      *
@@ -275,25 +302,29 @@ Trong `config/organization.php`, thêm khối mới **ngay sau** khối `'BHYT' 
      */
     'BHYT_CO_SO' => [
         '01929' => [
-            'username' => env('BHXH_01929_USER'),
-            'password' => env('BHXH_01929_PASS'),
-            'ho_ten_cb' => env('BHXH_01929_HOTEN'),
-            'cccd_cb' => env('BHXH_01929_CCCD'),
+            'username' => '',
+            'password' => '',
+            'ho_ten_cb' => '',
+            'cccd_cb' => '',
         ],
         '37470' => [
-            'username' => env('BHXH_37470_USER'),
-            'password' => env('BHXH_37470_PASS'),
-            'ho_ten_cb' => env('BHXH_37470_HOTEN'),
-            'cccd_cb' => env('BHXH_37470_CCCD'),
+            'username' => '',
+            'password' => '',
+            'ho_ten_cb' => '',
+            'cccd_cb' => '',
         ],
         '01283' => [
-            'username' => env('BHXH_01283_USER'),
-            'password' => env('BHXH_01283_PASS'),
-            'ho_ten_cb' => env('BHXH_01283_HOTEN'),
-            'cccd_cb' => env('BHXH_01283_CCCD'),
+            'username' => '',
+            'password' => '',
+            'ho_ten_cb' => '',
+            'cccd_cb' => '',
         ],
     ],
 ```
+
+**Để rỗng, không tự điền.** Người vận hành điền mật khẩu thật trên máy chủ. Bạn — người thực thi plan này — **không** được đi tìm mật khẩu ở đâu đó rồi điền vào.
+
+Để rỗng là an toàn theo thiết kế: `CauHinhCoSo::cua()` ném ngoại lệ khi `username` hoặc `password` rỗng (Task 1 đã có test `thieu_mat_khau_thi_nem_ngoai_le`), nên chưa khai thì hỏng ngay và rõ, chứ không lặng lẽ gọi cổng bằng tài khoản trống.
 
 Và **xoá** dòng `'ma_cskcb' => '01013', // ...` trong khối `BHYT` — đã kiểm, không nơi nào đọc khoá đó.
 
@@ -874,6 +905,8 @@ Kỳ vọng: không lỗi cú pháp; PASS cả 7 test.
 
 **Chỉ chạy với cờ `--thu`.** Không được chạy chế độ thường: nó gọi thật lên cổng BHXH.
 
+Bước này chạy được **dù `BHYT_CO_SO` còn để rỗng**: `--thu` chỉ đếm và chỉ hỏi `isset($dsCoSo[$maCskcb])` — có khoá là đủ, không đụng tới `username`/`password`. Không cần mật khẩu thật để nghiệm thu.
+
 ```bash
 php artisan kiemtrathebhyt:day --thu
 ```
@@ -915,11 +948,10 @@ git commit -m "fix(bhxh): kiem the dung tai khoan va ma co so cua co so dieu tri
 
 Trong `readme.md`, thêm mục ngày 30/07/2026 theo đúng khuôn các mục có sẵn (đọc vài mục trước để bắt giọng), nêu:
 
-- Mỗi cơ sở KCB nay dùng tài khoản cổng BHXH riêng, khai trong `.env` theo mẫu `BHXH_<mã>_USER`, `BHXH_<mã>_PASS`, `BHXH_<mã>_HOTEN`, `BHXH_<mã>_CCCD`; cấu trúc danh sách cơ sở nằm ở `config/organization.php` khoá `BHYT_CO_SO`.
+- Mỗi cơ sở KCB nay dùng tài khoản cổng BHXH riêng, khai thẳng trong `config/organization.php` khoá `BHYT_CO_SO`, mỗi mã cơ sở một khối `username`/`password`/`ho_ten_cb`/`cccd_cb`. Tệp này nằm trong `.gitignore` nên không lên kho mã.
 - Cơ sở chưa khai tài khoản thì hồ sơ của cơ sở đó **bị bỏ qua và ghi log**, không tra cứu bằng tài khoản của cơ sở khác.
 - Sửa lỗi job kiểm thẻ gửi sai mã cơ sở: trước đây gửi nơi ĐKBĐ của bệnh nhân (4.194 giá trị khác nhau), nay gửi cơ sở điều trị thật (2 giá trị). Trước khi sửa, 99,5% lời gọi khai sai cơ sở.
-- Cần chạy `php artisan migrate` và `php artisan config:clear` khi triển khai.
-- **Đổi mật khẩu cổng BHXH**: mật khẩu cũ nằm trong lịch sử git.
+- Cần chạy `php artisan migrate` và `php artisan config:clear` khi triển khai, sau khi đã điền tài khoản cho từng cơ sở.
 
 - [ ] **Step 2: Thêm mục vào tài liệu tổng hợp**
 
@@ -927,7 +959,7 @@ Trong `docs/tai-lieu-tong-hop-xml3176-order-check.md`, tìm mục `### 2.5. Côn
 
 ```markdown
 > **Tài khoản cổng BHXH theo từng cơ sở** (từ 30/07/2026): `config/organization.php` khoá
-> `BHYT_CO_SO` khai tài khoản riêng cho từng mã cơ sở KCB; giá trị đọc từ `.env`. Hồ sơ của
+> `BHYT_CO_SO` khai tài khoản riêng cho từng mã cơ sở KCB, giá trị điền thẳng vào tệp. Hồ sơ của
 > cơ sở nào phải tra bằng tài khoản của cơ sở đó mới hợp lệ.
 >
 > `App\Services\BHYT\CauHinhCoSo::cua()` **ném ngoại lệ** khi cơ sở chưa khai — cố ý không
@@ -965,4 +997,4 @@ git commit -m "docs(bhxh): ghi lai cau hinh cong BHXH theo tung co so"
 - [ ] `php artisan kiemtrathebhyt:day --thu` in ra **chỉ** các mã cơ sở có trong `BHYT_CO_SO`.
 - [ ] `check_hein_cards` có cột `ma_cskcb`.
 - [ ] **Không** có lời gọi thật nào lên cổng BHXH trong suốt quá trình.
-- [ ] Khi triển khai: `php artisan migrate`, `php artisan config:clear`, khai `.env` cho từng cơ sở, và **đổi mật khẩu cổng BHXH**.
+- [ ] Khi triển khai: điền tài khoản từng cơ sở vào `config/organization.php`, rồi `php artisan migrate` và `php artisan config:clear`.

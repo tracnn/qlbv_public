@@ -79,21 +79,30 @@ Tức 99,5% lời gọi đang khai sai cơ sở.
 ### 1. Cấu trúc cấu hình
 
 Giữ cấu trúc trong `config/organization.php` như người dùng chọn, để mỗi đơn vị triển khai
-sửa danh sách cơ sở cho khớp của họ. **Giá trị đọc từ `.env`** — đó là điểm khác nhau giữa
-mỗi lần cài đặt, và giữ mật khẩu ra ngoài kho mã.
+sửa danh sách cơ sở cho khớp của họ. **Giá trị khai thẳng vào tệp, không qua `env()`.**
+
+`config/organization.php` nằm trong `.gitignore` (dòng 24) và **chưa từng được commit** —
+đã kiểm bằng `git log --all -- config/organization.php` và `git log --all -S<mật khẩu>`, cả
+hai đều rỗng. Nó vốn đã là tệp bí mật của riêng từng lần cài đặt, y hệt vai trò của `.env`.
+Thêm một tầng `env()` ở giữa không giấu được gì thêm mà chỉ làm cấu hình bị chẻ đôi: nhìn
+tệp config không biết giá trị thật là gì, sai một tên biến thì `env()` trả `null` lặng lẽ.
+Khai thẳng thì đọc tệp là thấy đúng thứ hệ thống đang dùng.
 
 ```php
 'BHYT_CO_SO' => [
     '01929' => [
-        'username' => env('BHXH_01929_USER'),
-        'password' => env('BHXH_01929_PASS'),
-        'ho_ten_cb' => env('BHXH_01929_HOTEN'),
-        'cccd_cb'   => env('BHXH_01929_CCCD'),
+        'username'  => '01929_BV',
+        'password'  => 'dat-mat-khau-that-o-day',
+        'ho_ten_cb' => 'Nguyen Van A',
+        'cccd_cb'   => '001200000000',
     ],
-    '37470' => [ /* ... tương tự với hậu tố 37470 ... */ ],
-    '01283' => [ /* ... tương tự với hậu tố 01283 ... */ ],
+    '37470' => [ /* ... tương tự ... */ ],
+    '01283' => [ /* ... tương tự ... */ ],
 ],
 ```
+
+Giá trị trong tệp mẫu/tài liệu luôn là **giá trị giả**. Mật khẩu thật do người vận hành tự
+điền trên máy chủ.
 
 **`ma_tinh` không khai** — nó luôn là hai ký tự đầu của mã cơ sở (`01283`→`01`, `01929`→`01`,
 `37470`→`37`), đúng như chú thích sẵn có trong config. Suy ra thay vì khai giảm một chỗ có
@@ -225,13 +234,12 @@ sai cơ sở.
 - **Không** đụng `app/BHYT.php` — method tĩnh, 6 controller gọi; thuộc spec thứ hai.
 - **Không** gọi thật lên cổng BHXH trong lúc kiểm thử.
 - **Không** vá ngược `check_hein_cards` (bảng rỗng).
-- **Không** đưa mật khẩu hiện tại vào `.env` giúp người dùng — đó là việc của người vận hành,
-  và mật khẩu cũ đã lộ trong lịch sử git nên nên đổi mới.
+- **Không** tự điền mật khẩu thật vào bất kỳ đâu — kể cả `config/organization.php` trên máy
+  phát triển. Người vận hành điền trên máy chủ. Mọi ví dụ trong mã và tài liệu dùng giá trị giả.
+- **Không** thêm biến `.env` nào cho phần này.
 
 ## Việc người vận hành phải làm
 
-1. Khai `.env` cho từng cơ sở: `BHXH_<mã>_USER`, `BHXH_<mã>_PASS`, `BHXH_<mã>_HOTEN`,
-   `BHXH_<mã>_CCCD`.
+1. Mở `config/organization.php` trên máy chủ, điền `username`/`password`/`ho_ten_cb`/`cccd_cb`
+   thật cho từng mã cơ sở trong khối `BHYT_CO_SO`.
 2. `php artisan config:clear`.
-3. **Đổi mật khẩu cổng BHXH** — mật khẩu cũ nằm trong lịch sử git, ai có bản sao kho mã đều
-   đọc được.
