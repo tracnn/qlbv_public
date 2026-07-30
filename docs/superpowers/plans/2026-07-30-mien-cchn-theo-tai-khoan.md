@@ -230,6 +230,12 @@ class DsMienCchn
 }
 ```
 
+> **Cập nhật sau khi triển khai (commit `31b9830`)**: khối `duocMien()` ở trên chỉ chuẩn hoá
+> **một** vế (`$loginname`), còn `$ds` giữ nguyên. Bản đã triển khai chuẩn hoá **cả hai** vế
+> (lặp qua `$ds` và `mb_strtolower(trim(...))` từng phần tử trước khi so khớp), vì gọi trực
+> tiếp `duocMien()` với danh sách chưa qua `doc()` sẽ bỏ sót IM LẶNG. Xem bản thật tại
+> `app/Services/OrderCheck/Support/DsMienCchn.php`.
+
 - [ ] **Step 4: Thêm khoá cấu hình**
 
 Trong `config/order_check.php`, thêm ngay **sau** dòng `'practice_cert_exclude_type_ids' => ...`:

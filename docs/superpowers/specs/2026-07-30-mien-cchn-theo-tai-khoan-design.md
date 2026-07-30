@@ -133,7 +133,7 @@ Trong `tests/Unit`. Cổng: `vendor/bin/phpunit --testsuite Unit`.
 
 ## Phạm vi không làm
 
-- **Không xoá 5.270 vi phạm cũ** của ba tài khoản đó. Chúng là lịch sử đã ghi; xoá là mất
+- **Không xoá 5.380 vi phạm cũ** của ba tài khoản đó. Chúng là lịch sử đã ghi; xoá là mất
   dấu vết. Từ lần quét sau sẽ không sinh thêm. Muốn dọn thì làm riêng, có chủ đích.
 - Không đụng `A_STAFF_CERT_NOT_IN_CATALOG`.
 - Không đụng `practice_cert_exclude_type_ids` đang có.

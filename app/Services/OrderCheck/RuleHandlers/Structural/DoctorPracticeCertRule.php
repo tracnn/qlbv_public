@@ -27,8 +27,14 @@ class DoctorPracticeCertRule implements RuleHandler
         }
 
         $this->excludeTypeIds = $excludeTypeIds;
-        // Chuan hoa ca danh sach tiem tu ngoai vao, de test truyen 'MitaLab' van khop.
-        $this->excludeLoginnames = DsMienCchn::doc(implode(',', $excludeLoginnames));
+        // Chuan hoa truc tiep tung phan tu (khong di vong qua implode/explode) de tranh
+        // bay ngam: mot loginname chua dau phay se bi tach lam hai neu dung implode(',').
+        $this->excludeLoginnames = array_values(array_filter(
+            array_map(function ($t) {
+                return mb_strtolower(trim((string) $t));
+            }, $excludeLoginnames),
+            'strlen'
+        ));
     }
 
     public function code()

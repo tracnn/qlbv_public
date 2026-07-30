@@ -1,3 +1,7 @@
+# 30/07/2026
+
+- **Module Kiểm tra sai sót y lệnh — miễn luật chứng chỉ hành nghề theo tài khoản**: ba tài khoản `mitalab` (tích hợp máy xét nghiệm), `vietrad` (chẩn đoán hình ảnh) và `sys` (hệ thống) không còn bị luật `B_DOCTOR_NO_PRACTICE_CERT` báo vi phạm. Đây không phải người nên không thể có chứng chỉ hành nghề — luật báo vi phạm cho ba tài khoản này là báo oan. Đo ngày 30/07/2026: ba tài khoản này chiếm khoảng 99,2% số vi phạm của luật, phần còn lại đều là người thật thực sự thiếu CCHN trong HIS nên vẫn bị bắt như cũ. Khoảng 5.800 vi phạm sẽ ngừng sinh thêm từ lần quét sau; các vi phạm cũ đã ghi không bị xoá. Danh sách miễn sửa được trong cấu hình (`ORDER_CHECK_PRACTICE_CERT_EXCLUDE_LOGINS`), để rỗng là bắt lại toàn bộ như cũ.
+
 # 28/07/2026
 
 - **Báo cáo giao ban - trình chiếu: bổ sung màn "Hoạt động điều trị"**, đặt ngay sau màn Tổng quan. Bảng tổng hợp các khoa thuộc khối Điều trị nội trú: mỗi khoa một dòng, mỗi chỉ tiêu một cột, kèm dòng TỔNG CỘNG — xem được toàn cảnh cả khối trong một màn thay vì phải nhớ số của từng slide khoa để so sánh. Cột **tự sinh theo chỉ tiêu các khoa đã khai**, không cố định: khoa nào khai thêm chỉ tiêu mới thì bảng tự có thêm cột, khoa nào không khai chỉ tiêu đó thì ô hiện 0. Không cần khai báo hay thiết lập gì thêm.
