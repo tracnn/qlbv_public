@@ -19,14 +19,29 @@ class DocTheoLoTest extends TestCase
         );
     }
 
-    /** @test */
-    public function co_lo_du_nho_de_khong_vo_bo_nho()
+    /**
+     * @test
+     *
+     * Co lo phai du LON de khong doc lai tep theo binh phuong, va du NHO de khong vo bo nho.
+     *
+     * Maatwebsite mo lai tep cho MOI lo: lo cang nho thi cang nhieu lan phan tich lai ca
+     * sheet + sharedStrings. Do tren tep ICD that (52.551 dong x 15 cot, 29 MB XML + 5,8 MB
+     * sharedStrings), chi tinh phan doc:
+     *
+     *   co lo  1.000 -> 346 giay, dinh 128 MB
+     *   co lo  5.000 ->  67 giay, dinh 102 MB
+     *   co lo 20.000 ->  26 giay, dinh 226 MB
+     *
+     * May chu dat PHP 128 MB / 120 giay: lo 1.000 chet ca hai dau, lo 20.000 chet vi bo nho.
+     */
+    public function co_lo_can_bang_giua_bo_nho_va_so_lan_doc_lai_tep()
     {
-        // Tep 10.000 dong x 23 cot lam dinh bo nho 208 MB khi doc mot lan.
         $co = (new CatalogChunkImport())->chunkSize();
 
-        $this->assertGreaterThan(0, $co);
-        $this->assertLessThanOrEqual(2000, $co);
+        $this->assertGreaterThanOrEqual(5000, $co,
+            'Lo qua nho: tep ICD 52.551 dong mat 346 giay chi de doc, vuot gioi han 120 giay');
+        $this->assertLessThanOrEqual(5000, $co,
+            'Lo qua lon: dinh bo nho 226 MB voi lo 20.000, vuot gioi han 128 MB');
     }
 
     /** @test */
