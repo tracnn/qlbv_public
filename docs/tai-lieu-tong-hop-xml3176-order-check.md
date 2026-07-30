@@ -221,6 +221,30 @@ Là **các mốc phát triển (release)**, không phải bước trong luồng 
 - 18 file `Types/*Rules.php` hiện phần lớn **còn rỗng** — là khung mở rộng.
 - Config `config/order_check.php`: `his_connection=HISPro`, `batch_size=500`, `ORDER_CHECK_NOTIFY_ENABLED=false`…
 
+> **Cửa sổ quét có chặn trên** (từ 30/07/2026): Laravel sinh SQL dạng
+> `select * from (select rownum rn, t1.* from (… order by id) t1) where rn <= 500`. Truy vấn
+> **trong cùng không có giới hạn**, nên Oracle nối và sắp xếp **mọi dòng sau mốc** rồi mới
+> cắt ở tầng ngoài. Đo trên production, `limit` giữ nguyên 500: tồn 10.000 → 68 ms;
+> 100.000 → 582 ms; 1.000.000 → 4.849 ms; 5.000.000 → 21.356 ms. Tuyến tính với **khoảng
+> tồn**, không liên quan `limit` — tồn càng lớn thì đuổi kịp càng chậm.
+>
+> Ba nguồn dùng mốc `id` nay có chặn trên `id <= mốc + cửa_sổ`
+> (`config/order_check.php` khoá `scan_id_window`, mặc định 50.000; đặt 0 để bỏ chặn).
+> Nguồn `his_service_req` **không** áp vì nó dùng mốc theo `modify_time` — một dòng cũ được
+> sửa lại sẽ nhảy về cuối hàng đợi, ngữ nghĩa cửa sổ khác hẳn.
+>
+> Quy tắc đẩy mốc nằm ở `App\Services\OrderCheck\Support\CuaSoQuet::mocMoi()`: lấy **đủ**
+> `limit` thì cửa sổ chưa duyệt hết, chỉ tiến tới id lớn nhất đã lấy; lấy **ít hơn** thì
+> cửa sổ đã duyệt hết, nhảy tới cuối cửa sổ. Vế thứ hai là thứ chống cái bẫy **cửa sổ
+> rỗng**: không nhảy thì lượt sau lại hỏi đúng cửa sổ đó, lại 0 dòng, và bộ quét **đứng im
+> vĩnh viễn** mà không lỗi nào báo ra.
+>
+> `ServiceRestrictionScanner` còn bỏ hẳn truy vấn HIS khi
+> `order_check_ref_service_restriction` không có dòng nào `is_active` — khi đó hai quy tắc
+> giới tính/tuổi không thể sinh vi phạm. Đo trước khi sửa: 24.402 dòng đã quét, **0 vi
+> phạm**, mà vẫn tốn 43 phút tổng cộng. Nhánh bỏ qua **vẫn đẩy mốc**, nếu không đến lúc
+> nhập danh mục sẽ tồn đọng cả chục triệu dòng.
+
 ---
 
 ## 4. So sánh & điểm chung hai module
