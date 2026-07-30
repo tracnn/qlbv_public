@@ -91,10 +91,10 @@ class NhapDanhMucLonTheoLoTest extends TestCase
     public function chi_con_dung_nhung_truong_bi_bo_da_biet()
     {
         $ngoaiLe = [
-            // required_fields cua medical_organization BAT BUOC hai truong nay, tuc y dinh la
-            // phai luu, nhung bang chua co cot: nguoi dung nhap "Tuyen CMKT" va "Hang benh
-            // vien" roi tuong da luu. Can migration them cot moi lay lai duoc.
-            'medical_organization' => ['tuyen_cmkt', 'hang_benh_vien'],
+            // Anh xa khai MA_CSKCB nhung bang medical_staffs khong co cot do, va ma_cskcb cung
+            // khong nam trong required_fields nen khong ai bi bat dien. Gia tri neu co trong tep
+            // van bi bo - chua ro co can luu hay khong, nen de nguyen va ghi nhan o day.
+            'medical_staff' => ['ma_cskcb'],
         ];
 
         $svc = app(CatalogImportService::class);

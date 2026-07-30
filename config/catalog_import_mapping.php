@@ -199,7 +199,9 @@ return [
             'hang_benh_vien' => ['Hạng bệnh viện', 'Hạng BV'],
             'dia_chi_cskcb' => ['Địa chỉ', 'Địa chỉ CSKCB'],
         ],
-        'required_fields' => ['ma_cskcb', 'ten_cskcb', 'tuyen_cmkt', 'hang_benh_vien', 'dia_chi_cskcb'],
+        // tuyen_cmkt va hang_benh_vien KHONG bat buoc: tep BHXH cap khong luon co du hai cot,
+        // va bat buoc chung tung khien nguoi dung phai dien roi gia tri bi bo im lang.
+        'required_fields' => ['ma_cskcb', 'ten_cskcb', 'dia_chi_cskcb'],
         'unique_keys' => ['ma_cskcb'],
     ],
 
