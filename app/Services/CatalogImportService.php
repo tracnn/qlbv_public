@@ -16,8 +16,6 @@ use App\Models\BHYT\ServiceCatalog;
 use App\Models\BHYT\MedicalStaff;
 use App\Models\BHYT\DepartmentBedCatalog;
 use App\Models\BHYT\EquipmentCatalog;
-use App\Models\BHYT\AdministrativeUnit;
-use App\Models\BHYT\MedicalOrganization;
 use App\Models\BHYT\JobCategory;
 
 class CatalogImportService
@@ -30,6 +28,9 @@ class CatalogImportService
 
     /** @var array bang => [ten cot so]; nho de khong hoi lai lieu do moi lo */
     protected $cotSo = [];
+
+    /** @var array bang => [ten tat ca cot]; doc cung luot voi cotSo */
+    protected $cot = [];
 
     public function __construct(ExcelColumnMapper $columnMapper)
     {
@@ -52,7 +53,49 @@ class CatalogImportService
      *
      * Danh muc nao co ten bang trong bangCua() va khoa duy nhat trong cau hinh thi dua vao day.
      */
-    const GHI_THEO_LO = ['medicine', 'medical_supply', 'service', 'icd10', 'icd_yhct'];
+    const GHI_THEO_LO = ['medicine', 'medical_supply', 'service', 'icd10', 'icd_yhct',
+                         'administrative_unit', 'medical_organization'];
+
+    /**
+     * Danh muc LAM MOI TRON BO: tat is_active cua toan bo ban ghi cu roi bat lai cho dong co
+     * trong tep, tuc dong khong con trong tep nam lai o trang thai tat.
+     *
+     * Chi hai danh muc dung chung toan quoc nay theo ngu nghia do. Dua danh muc khac vao day
+     * la tat is_active cua du lieu cu ma khong bat lai.
+     */
+    const LAM_MOI_TRON_BO = ['administrative_unit', 'medical_organization'];
+
+    /**
+     * Bat lai trang thai dang dung cho dong co trong tep.
+     *
+     * Ham THUAN de kiem duoc. Dung 1 chu khong phai true: gia tri di thang vao DB::table()
+     * nen phai la thu MySQL nhan cho cot tinyint.
+     */
+    public static function ganDangDung(array $duLieu, $type)
+    {
+        if (in_array($type, self::LAM_MOI_TRON_BO, true)) {
+            $duLieu['is_active'] = 1;
+        }
+
+        return $duLieu;
+    }
+
+    /**
+     * Bo cac truong khong phai cot that cua bang.
+     *
+     * Duong cu ghi qua Eloquent nen fillable am tham loc bo truong la. Ghi theo lo dung
+     * DB::table() thang: de nguyen mot truong la la loi "Unknown column" cho CA lo, tuc mat
+     * ca lan nhap chu khong phai mot dong.
+     *
+     * Da co that: anh xa cua medical_organization khai tuen_cmkt va hang_benh_vien, con bang
+     * medical_organizations khong co hai cot do.
+     *
+     * Ham THUAN de kiem duoc.
+     */
+    public static function giuCotCoThat(array $duLieu, array $cotBang)
+    {
+        return array_intersect_key($duLieu, array_flip($cotBang));
+    }
 
     /**
      * Ma co so THUC SU ap cho mot loai danh muc.
@@ -176,8 +219,6 @@ class CatalogImportService
             'medical_staff' => 'importMedicalStaff',
             'department_bed' => 'importDepartmentBed',
             'equipment' => 'importEquipment',
-            'administrative_unit' => 'importAdministrativeUnit',
-            'medical_organization' => 'importMedicalOrganization',
             'job_categories' => 'importJobCategories',
         ];
 
@@ -224,6 +265,13 @@ class CatalogImportService
         if (in_array($tt['type'], self::GHI_THEO_LO, true)) {
             $tt['ghi'] = new GhiTheoLo($this->bangCua($tt['type']), $cfg['unique_keys'], $this->ketQua);
         }
+
+        // Lam moi tron bo: tat het MOT LAN o day, sau khi da chac tep dung dinh dang. Tat
+        // truoc khi nhan dien la co nguy co tat sach du lieu dang dung roi bao "khong xac dinh
+        // duoc loai danh muc".
+        if (in_array($tt['type'], self::LAM_MOI_TRON_BO, true)) {
+            DB::table($this->bangCua($tt['type']))->where('is_active', 1)->update(['is_active' => 0]);
+        }
     }
 
     /** Ten bang cua cac danh muc ghi theo lo */
@@ -235,6 +283,8 @@ class CatalogImportService
             'service' => 'service_catalogs',
             'icd10' => 'icd10_categories',
             'icd_yhct' => 'icd_yhct_categories',
+            'administrative_unit' => 'administrative_units',
+            'medical_organization' => 'medical_organizations',
         ];
 
         return $map[$type];
@@ -250,6 +300,7 @@ class CatalogImportService
     {
         $cfg = $this->catalogConfigs[$tt['type']];
         $maCoSo = self::maCoSoApDung($tt['type'], $maCskcb);
+        $bang = $this->bangCua($tt['type']);
         $i = 0;
 
         foreach ($rows as $row) {
@@ -281,10 +332,13 @@ class CatalogImportService
 
             $duLieu = self::catKhoangTrang($duLieu);
             $duLieu = self::ganCoSo($duLieu, $maCoSo);
-            $duLieu = self::chuanHoaSo($duLieu, $this->cotSoCua($this->bangCua($tt['type'])));
+            $duLieu = self::chuanHoaSo($duLieu, $this->cotSoCua($bang));
             // SAU chuanHoaSo: is_chronic la cot tinyint nen chuanHoaSo quy o de trong ve null,
             // ma cot do NOT NULL. Dao thu tu se lam chinh gia tri false bi quy ve null.
             $duLieu = self::chuanHoaManTinh($duLieu);
+            $duLieu = self::ganDangDung($duLieu, $tt['type']);
+            // Cuoi cung: mot truong khong phai cot that la loi "Unknown column" cho CA lo.
+            $duLieu = self::giuCotCoThat($duLieu, $this->cotCua($bang));
             $tt['lo'][] = ['dong_excel' => $dongExcel, 'du_lieu' => $duLieu];
 
             if (count($tt['lo']) >= 500) {
@@ -347,19 +401,39 @@ class CatalogImportService
      */
     protected function cotSoCua($bang)
     {
-        if (isset($this->cotSo[$bang])) {
-            return $this->cotSo[$bang];
+        $this->doCot($bang);
+
+        return $this->cotSo[$bang];
+    }
+
+    /** Ten TAT CA cot cua mot bang, de loai truong khong phai cot that truoc khi ghi */
+    protected function cotCua($bang)
+    {
+        $this->doCot($bang);
+
+        return $this->cot[$bang];
+    }
+
+    /** Mot lan SHOW COLUMNS cho ca hai danh sach; nho de khong hoi lai moi lo */
+    private function doCot($bang)
+    {
+        if (isset($this->cot[$bang])) {
+            return;
         }
 
-        $ra = [];
+        $tatCa = [];
+        $so = [];
 
         foreach (DB::select('SHOW COLUMNS FROM ' . $bang) as $c) {
+            $tatCa[] = $c->Field;
+
             if (preg_match('/^(tinyint|smallint|mediumint|int|bigint|decimal|numeric|float|double)/i', $c->Type)) {
-                $ra[] = $c->Field;
+                $so[] = $c->Field;
             }
         }
 
-        return $this->cotSo[$bang] = $ra;
+        $this->cot[$bang] = $tatCa;
+        $this->cotSo[$bang] = $so;
     }
 
     /** Dem mot ban ghi vua updateOrCreate vao ket qua */
@@ -731,108 +805,6 @@ class CatalogImportService
             } catch (\Exception $e) {
                 $this->ketQua->themLoi($dongExcel, $e->getMessage());
                 Log::error('Error updating or creating EquipmentCatalog record', [
-                    'error' => $e->getMessage(),
-                    'row' => $row
-                ]);
-                continue;
-            }
-        }
-    }
-
-    private function importAdministrativeUnit($data, array $fieldMapping, array $config)
-    {
-        // Deactivate all existing active records
-        AdministrativeUnit::where('is_active', true)->update(['is_active' => false]);
-
-        $data = $data->slice(1);
-        
-        foreach ($data as $iDong => $row) {
-            // slice(1) giu nguyen khoa nen khoa 1 ung voi dong Excel 2.
-            $dongExcel = (int) $iDong + 1;
-
-            if (!$this->hasRequiredFields($row, $config['required_fields'], $fieldMapping)) {
-                $this->ketQua->themBoQua($dongExcel, 'Thiếu trường bắt buộc');
-                continue;
-            }
-
-            try {
-                $uniqueKeys = [];
-                $updateData = [];
-                
-                foreach ($config['unique_keys'] as $key) {
-                    $value = $this->getRowValue($row, $key, $fieldMapping);
-                    if ($value !== null) {
-                        $uniqueKeys[$key] = $value;
-                    }
-                }
-
-                foreach ($config['mapping'] as $field => $possibleNames) {
-                    if (!in_array($field, $config['unique_keys'])) {
-                        $value = $this->getRowValue($row, $field, $fieldMapping);
-                        if ($value !== null) {
-                            $updateData[$field] = $value;
-                        }
-                    }
-                }
-
-                $updateData['is_active'] = true;
-
-                $banGhi = AdministrativeUnit::updateOrCreate($uniqueKeys, $updateData);
-                $this->demGhi($banGhi);
-            } catch (\Exception $e) {
-                $this->ketQua->themLoi($dongExcel, $e->getMessage());
-                Log::error('Error updating or creating AdministrativeUnit record', [
-                    'error' => $e->getMessage(),
-                    'row' => $row
-                ]);
-                continue;
-            }
-        }
-    }
-
-    private function importMedicalOrganization($data, array $fieldMapping, array $config)
-    {
-        // Deactivate all existing active records
-        MedicalOrganization::where('is_active', true)->update(['is_active' => false]);
-
-        $data = $data->slice(1);
-        
-        foreach ($data as $iDong => $row) {
-            // slice(1) giu nguyen khoa nen khoa 1 ung voi dong Excel 2.
-            $dongExcel = (int) $iDong + 1;
-
-            if (!$this->hasRequiredFields($row, $config['required_fields'], $fieldMapping)) {
-                $this->ketQua->themBoQua($dongExcel, 'Thiếu trường bắt buộc');
-                continue;
-            }
-
-            try {
-                $uniqueKeys = [];
-                $updateData = [];
-                
-                foreach ($config['unique_keys'] as $key) {
-                    $value = $this->getRowValue($row, $key, $fieldMapping);
-                    if ($value !== null) {
-                        $uniqueKeys[$key] = $value;
-                    }
-                }
-
-                foreach ($config['mapping'] as $field => $possibleNames) {
-                    if (!in_array($field, $config['unique_keys'])) {
-                        $value = $this->getRowValue($row, $field, $fieldMapping);
-                        if ($value !== null) {
-                            $updateData[$field] = $value;
-                        }
-                    }
-                }
-
-                $updateData['is_active'] = true;
-
-                $banGhi = MedicalOrganization::updateOrCreate($uniqueKeys, $updateData);
-                $this->demGhi($banGhi);
-            } catch (\Exception $e) {
-                $this->ketQua->themLoi($dongExcel, $e->getMessage());
-                Log::error('Error updating or creating MedicalOrganization record', [
                     'error' => $e->getMessage(),
                     'row' => $row
                 ]);
