@@ -86,4 +86,14 @@ class DsMienCchnTest extends TestCase
 
         $this->assertSame(['mitalab', 'sys', 'vietrad'], $ds);
     }
+
+    /** @test */
+    public function danh_sach_chua_chuan_hoa_van_so_khop_dung()
+    {
+        // Chuan hoa phai ap CA HAI VE. Neu chi chuan hoa mot ve, ai do truyen thang danh
+        // sach chua qua doc() se bi bo sot IM LANG.
+        $this->assertTrue(DsMienCchn::duocMien('mitalab', ['MitaLab']));
+        $this->assertTrue(DsMienCchn::duocMien('MITALAB', [' mitalab ']));
+        $this->assertFalse(DsMienCchn::duocMien('ntdh3', ['MitaLab', 'VIETRAD']));
+    }
 }

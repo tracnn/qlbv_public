@@ -55,8 +55,11 @@ class DsMienCchn
      * So khop KHONG phan biet hoa thuong va cat khoang trang ca hai ve: HIS co tai khoan
      * viet hoa lan lon (BHXHConnector, BMCS, PACS) nen so khop chat se bo sot IM LANG.
      *
+     * Chuan hoa CA HAI VE: neu chi chuan hoa mot ve, nguoi dung truyen thang danh sach chua
+     * qua doc() se bi bo sot IM LANG.
+     *
      * @param string|null $loginname
-     * @param array $ds danh sach da qua doc()
+     * @param array $ds danh sach, co hay chua qua doc()
      * @return bool
      */
     public static function duocMien($loginname, array $ds)
@@ -71,6 +74,12 @@ class DsMienCchn
             return false;
         }
 
-        return in_array($loginname, $ds, true);
+        foreach ($ds as $ten) {
+            if ($loginname === mb_strtolower(trim((string) $ten))) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
