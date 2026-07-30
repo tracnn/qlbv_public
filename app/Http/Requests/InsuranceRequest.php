@@ -28,11 +28,17 @@ class InsuranceRequest extends FormRequest
         // Ma ngoai danh sach phai bi chan o day, truoc khi cham toi cong BHXH.
         $maHopLe = CoSoTraCuu::maDangChuoi(CoSoTraCuu::tuCauHinh());
 
+        // ma_cskcb la 'nullable' chu KHONG phai 'required': co 8 noi trong he thong tro sau
+        // vao man nay kem so the / ho ten / ngay sinh nhung khong kem ma co so (bao cao trai
+        // tuyen, danh sach XML3176, XML QD130, kiem tra du lieu gui, tra cuu he thong...).
+        // De 'required' thi ca 8 duong do bao loi do, trong khi nguoi dung khong lam gi sai.
+        // Thieu ma co so thi controller dung lai o man da dien san cho nguoi dung chon,
+        // KHONG goi len cong. Con ma SAI thi van bi chan o day.
         return [
             'card-number'   => 'required|min:'.config('__tech.card-number.min').'|max:'.config('__tech.card-number.max'),
             'name'          => 'required',
             'birthday'      => 'required',
-            'ma_cskcb'      => 'required|in:'.implode(',', $maHopLe),
+            'ma_cskcb'      => 'nullable|in:'.implode(',', $maHopLe),
         ];
     }
 

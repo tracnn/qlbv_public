@@ -371,7 +371,9 @@ class BHYTQd130Controller extends Controller
             return $result->Qd130XmlInformation->imported_by ?? null;
         })
         ->addColumn('action', function ($result) {
-            return '<a href="' . route('insurance.check-card.search',['card-number' => $result->ma_the_bhyt, 'name' => $result->ho_ten, 'birthday' => dob($result->ngay_sinh,0,8)]) . '" class="btn btn-sm btn-success" target="_blank"><span class="glyphicon glyphicon-check"></span> Tra thẻ</a>
+            // Truyen ca ma_cskcb: ho so nay thuoc co so nao thi tra bang tai khoan cong BHXH
+            // cua co so do moi hop le.
+            return '<a href="' . route('insurance.check-card.search',['card-number' => $result->ma_the_bhyt, 'name' => $result->ho_ten, 'birthday' => dob($result->ngay_sinh,0,8), 'ma_cskcb' => $result->ma_cskcb]) . '" class="btn btn-sm btn-success" target="_blank"><span class="glyphicon glyphicon-check"></span> Tra thẻ</a>
                 <a href="javascript:void(0);" onclick="deleteXML(\'' . $result->ma_lk . '\');" class="btn btn-sm btn-danger">
                                     <span class="glyphicon glyphicon-trash"></span> Xóa</a>
                 <a href="' .route('treatment-result.search',['treatment_code'=>$result->ma_lk]) .'" class="btn btn-sm btn-primary" target="_blank">

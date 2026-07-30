@@ -94,8 +94,14 @@ class TraCuuTheChonCoSoTest extends TestCase
         $this->assertContains('hoTenCb()', $ma);
     }
 
+    /**
+     * ma_cskcb KHONG duoc la 'required'. Da xay ra that: dat 'required' lam vo ca 8 duong
+     * tro sau vao man nay (bao cao trai tuyen, danh sach XML3176, XML QD130, kiem tra du
+     * lieu gui, tra cuu he thong...) - chung chi truyen so the / ho ten / ngay sinh.
+     * Nguoi dung khong lam gi sai ma nhan thong bao do.
+     */
     /** @test */
-    public function request_bat_buoc_chon_co_so()
+    public function request_khong_bat_buoc_ma_co_so()
     {
         config(['organization.BHYT_CO_SO' => [
             '01929' => ['username' => 'u', 'password' => 'p'],
@@ -103,9 +109,43 @@ class TraCuuTheChonCoSoTest extends TestCase
         ]]);
 
         $luat = (new InsuranceRequest())->rules();
+        $phan = explode('|', $luat['ma_cskcb']);
 
         $this->assertArrayHasKey('ma_cskcb', $luat);
-        $this->assertContains('required', explode('|', $luat['ma_cskcb']));
+        $this->assertNotContains('required', $phan,
+            'De required se lam vo cac duong tro sau vao man tra cuu');
+        $this->assertContains('nullable', $phan);
+    }
+
+    /**
+     * Thieu ma co so thi dung lai o man da dien san, KHONG goi len cong - chua biet dung tai
+     * khoan cua co so nao.
+     */
+    /** @test */
+    public function controller_dung_lai_khi_thieu_ma_co_so()
+    {
+        $ma = $this->maController();
+
+        $this->assertContains("\$params['ma_cskcb'] === ''", $ma,
+            'Phai co nhanh xu ly khi thieu ma co so');
+    }
+
+    /**
+     * Hai man co san ma_cskcb tren ban ghi thi phai truyen di, de bam mot phat ra ket qua
+     * thay vi bat nguoi dung chon lai co so da biet.
+     */
+    /** @test */
+    public function hai_man_xml_truyen_ma_co_so_vao_lien_ket()
+    {
+        foreach ([
+            'app/Http/Controllers/BHYT/BHYTXml3176Controller.php',
+            'app/Http/Controllers/BHYT/BHYTQd130Controller.php',
+        ] as $tep) {
+            $ma = $this->maKhongComment(base_path($tep));
+
+            $this->assertContains("'ma_cskcb' => \$result->ma_cskcb", $ma,
+                $tep . ': lien ket tra cuu the phai truyen ma co so cua ho so');
+        }
     }
 
     /**

@@ -49,6 +49,16 @@ class InsuranceController extends Controller
         $params = $this->__getSearchParam($request);
         $danhSachCoSo = CoSoTraCuu::tuCauHinh();
 
+        // Tam nay co 8 noi tro sau vao kem so the / ho ten / ngay sinh nhung khong kem ma co
+        // so. Khong co ma co so thi dung lai o man da dien san de nguoi dung chon, KHONG bao
+        // loi do: ho khong lam gi sai, va cung KHONG goi len cong vi chua biet dung tai khoan
+        // cua co so nao.
+        if ($params['ma_cskcb'] === '') {
+            flash('Chọn cơ sở khám chữa bệnh rồi bấm Tra cứu')->warning();
+
+            return view('insurance.manager.check-card.index', compact('params', 'danhSachCoSo'));
+        }
+
         // Ma co so den TU LUA CHON cua nguoi dung, khong muon cua ai. InsuranceRequest da
         // chan ma ngoai danh sach nen toi day chac chan hop le.
         // Dung service TRONG ham chu khong trong constructor: BHYTLoginService phan giai tai
