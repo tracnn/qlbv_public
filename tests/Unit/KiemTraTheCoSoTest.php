@@ -83,6 +83,45 @@ class KiemTraTheCoSoTest extends TestCase
             'XML4210Import con dung ten cu maCSKCB - job khong con doc khoa nay');
     }
 
+    /**
+     * Da sot 3 noi dispatch vi grep chi bat 'JobKtTheBHYT::dispatch' viet hoa, trong khi ma
+     * nguon dung ca 'jobKtTheBHYT::dispatch' viet thuong - PHP khong phan biet hoa thuong ten
+     * lop. Test nay quet CA NAM noi, khong phu thuoc cach viet.
+     */
+    /** @test */
+    public function moi_noi_dispatch_deu_truyen_maCskcb_va_maDkbd()
+    {
+        $noi = [
+            'app/Console/Commands/HISProKiemTraTheBHYT.php',
+            'app/Console/Commands/XML4210Import.php',
+            'app/Http/Controllers/System/UploadXML.php',
+            'app/Services/Qd130XmlService.php',
+            'app/Services/Xml3176Service.php',
+        ];
+
+        foreach ($noi as $tep) {
+            $ma = $this->maKhongComment(base_path($tep));
+
+            $this->assertContains("'maCskcb'", $ma, $tep . ' thieu tham so maCskcb');
+            $this->assertContains("'maDkbd'", $ma, $tep . ' thieu tham so maDkbd');
+            $this->assertNotContains("'maCSKCB'", $ma,
+                $tep . ' con dung ten cu maCSKCB - job khong con doc khoa nay');
+        }
+    }
+
+    /**
+     * Chot chan trong chinh job: job cu con ton trong hang doi hoac mot noi dispatch chua sua
+     * phai ra log noi ro ho so nao, thay vi "Undefined index: maCskcb".
+     */
+    /** @test */
+    public function job_chan_som_khi_thieu_maCskcb()
+    {
+        $ma = $this->maJob();
+
+        $this->assertContains("isset(\$this->params['maCskcb'])", $ma,
+            'Job phai kiem tra su ton tai cua maCskcb truoc khi dung');
+    }
+
     /** @test */
     public function bang_ket_qua_co_cot_ma_cskcb()
     {

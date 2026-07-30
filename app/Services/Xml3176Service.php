@@ -1088,15 +1088,24 @@ class Xml3176Service
             }
             $maDKBD = $maDKBDs[$index] ?? '';
 
+            // maCskcb = co so DIEU TRI (ma_cskcb cua XML1), maDkbd = noi DKBD ghi tren the.
+            // Hai khai niem khac nhau: job dung maCskcb de chon tai khoan cong BHXH, va dung
+            // maDkbd de doi chieu voi gia tri cong tra ve.
             $params = [
                 'maThe' => $maThe,
                 'hoTen' => $hoTen,
                 'ngaySinh' => $ngaySinhFormatted,
                 'ma_lk' => $ma_lk,
-                'maCSKCB' => $maDKBD,
+                'maCskcb' => trim((string)$data->ma_cskcb),
+                'maDkbd' => $maDKBD,
                 'gioiTinh' => $gioiTinh,
-                // Add other necessary fields here
             ];
+
+            if ($params['maCskcb'] === '') {
+                \Log::warning('Kiem tra the BHYT: bo qua ho so vi thieu ma_cskcb', ['ma_lk' => $ma_lk]);
+                continue;
+            }
+
             // Dispatch job
             jobKtTheBHYT::dispatch($params)->onQueue('JobKtTheBHYT');
         }

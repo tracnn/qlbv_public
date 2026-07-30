@@ -54,6 +54,21 @@ class jobKtTheBHYT implements ShouldQueue
             }
         }
 
+        // Chan som khi thieu ma co so. Co hai nguon gay ra:
+        //  - job cu con ton trong hang doi, duoc dong goi tu truoc khi doi ten tham so;
+        //  - mot noi dispatch nao do chua sua (da tung sot 3 noi vi grep khong bat chu thuong).
+        // Khong chan thi loi hien ra la "Undefined index: maCskcb" - khong noi duoc ho so nao,
+        // tu dau ra. Bo qua + ghi log chu khong nem: nem se lam hang doi thu lai vo han trong
+        // khi tham so khong bao gio doi.
+        if (!isset($this->params['maCskcb']) || trim((string) $this->params['maCskcb']) === '') {
+            Log::warning('jobKtTheBHYT: bo qua vi thieu maCskcb trong tham so', [
+                'ma_lk' => isset($this->params['ma_lk']) ? $this->params['ma_lk'] : null,
+                'cac_khoa_co' => array_keys((array) $this->params),
+            ]);
+
+            return;
+        }
+
         $client = new Client();
 
         // Sử dụng BHYTLoginService để lấy token (tự động đăng nhập lại nếu hết hạn)

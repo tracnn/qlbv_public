@@ -65,15 +65,24 @@ class UploadXML extends Controller
                             foreach ($maThes as $index => $maThe) {
                                 $maDKBD = isset($maDKBDs[$index]) ? $maDKBDs[$index] : '';
 
+                                // maCskcb = co so DIEU TRI (MA_CSKCB cua XML1), maDkbd = noi
+                                // DKBD ghi tren the. Job dung maCskcb de chon tai khoan cong
+                                // BHXH, dung maDkbd de doi chieu gia tri cong tra ve.
                                 $params = [
                                     'maThe' => $maThe,
                                     'hoTen' => (string)$data->HO_TEN,
                                     'ngaySinh' => $ngaySinhFormatted,
                                     'ma_lk' => (string)$data->MA_LK,
-                                    'maCSKCB' => $maDKBD,
+                                    'maCskcb' => trim((string)$data->MA_CSKCB),
+                                    'maDkbd' => $maDKBD,
                                     'gioiTinh' => (string)$data->GIOI_TINH,
-                                    // Thêm các thông tin khác nếu cần
                                 ];
+
+                                if ($params['maCskcb'] === '') {
+                                    \Log::warning('Kiem tra the BHYT: bo qua ho so vi thieu MA_CSKCB',
+                                        ['ma_lk' => $params['ma_lk']]);
+                                    continue;
+                                }
 
                                 // Dispatch job
                                 jobKtTheBHYT::dispatch($params)
