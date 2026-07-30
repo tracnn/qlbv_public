@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Category;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use DB;
+use Illuminate\Support\Facades\Log;
 
 use Yajra\Datatables\Datatables;
 
@@ -399,6 +400,14 @@ class CategoryBHYTController extends Controller
 
     public function import(Request $request)
     {
+        // Danh muc BHXH cap co the rat lon: tep ICD that co 52.551 dong x 15 cot, nen 1,1 MB
+        // nhung bung ra 29 MB XML. Sau khi da doc theo lo va ghi theo lo, rieng phan doc van
+        // ton ~102 MB va ~67 giay - gioi han mac dinh 128 MB / 120 giay khong con cho cho
+        // phan ghi, va khi vuot thi tien trinh chet lang le: nguoi dung chi thay "Loi khi
+        // tai len" khong kem ly do.
+        ini_set('memory_limit', '512M');
+        set_time_limit(1800);
+
         // Ma co so chon tren man nhap; chi ap cho ba danh muc theo co so, va chi cho dong
         // khong tu khai MA_CSKCB trong tep.
         $maCskcb = trim((string) $request->input('ma_cskcb'));
@@ -426,7 +435,16 @@ class CategoryBHYTController extends Controller
                 try {
                     // Xử lý import file tại đây
                     $ketQua = $this->importService->import($file, $maCskcb);
-                } catch (\Exception $e) {
+                } catch (\Throwable $e) {
+                    // Bat \Throwable chu khong rieng \Exception: TypeError va cac loi \Error
+                    // khac tra ve trang HTML, ma Dropzone doc khong ra message nen chi hien
+                    // duoc chuoi du phong.
+                    Log::error('Nhap danh muc that bai', [
+                        'tep' => $file->getClientOriginalName(),
+                        'loi' => $e->getMessage(),
+                        'tai' => get_class($e),
+                    ]);
+
                     return response()->json(['message' => $e->getMessage()], 500);
                 }
             }

@@ -143,7 +143,10 @@
         paramName: "import_file", // Tên của field gửi lên server
         maxFilesize: 10, // MB
         acceptedFiles: ".xls,.xlsx", // Giới hạn các loại file
-        timeout: 300000, // 5 phút
+        // Bang set_time_limit() phia may chu. Do that: nhap 52.551 dong ICD mat 265 giay, nen
+        // muc 5 phut cu qua sat - tep lon hon mot chut la trinh duyet tu huy yeu cau giua luc
+        // may chu dang ghi, va nguoi dung thay bao loi trong khi du lieu VAN dang vao.
+        timeout: 1800000, // 30 phút
         uploadMultiple: false, // Upload từng file một, để đơn giản hóa việc xử lý
         parallelUploads: 1, // Chỉ tải lên một file tại một thời điểm
         previewTemplate: '<div></div>', // Tắt giao diện preview mặc định
@@ -272,9 +275,30 @@
                 }
             });
 
-            // Khi gặp lỗi trong quá trình upload
-            this.on("error", function (file, response) {
-                updateFileStatus(file, 'error', response.message || "Lỗi khi tải lên");
+            // Khi gặp lỗi trong quá trình upload.
+            //
+            // May chu KHONG luon tra JSON: khi tien trinh chet vi vuot bo nho hoac thoi gian
+            // thi cai ve la trang loi HTML, con vuot post_max_size thi web server tra 413
+            // truoc khi PHP chay. Chuoi du phong tran "Loi khi tai len" khong noi len gi -
+            // phai kem ma HTTP de biet nen doc log PHP hay sua gioi han tai len.
+            this.on("error", function (file, response, xhr) {
+                var thongBao = null;
+
+                if (response && typeof response === 'object' && response.message) {
+                    thongBao = response.message;
+                } else if (typeof response === 'string' && response.length && response.charAt(0) !== '<') {
+                    // Dropzone tu bao loi (qua co, sai duoi tep) bang chuoi thuan.
+                    thongBao = response;
+                }
+
+                if (!thongBao) {
+                    thongBao = xhr && xhr.status
+                        ? "Lỗi khi tải lên (HTTP " + xhr.status + "). Máy chủ không trả về lý do,"
+                            + " xem log để biết chi tiết."
+                        : "Lỗi khi tải lên: không kết nối được máy chủ.";
+                }
+
+                updateFileStatus(file, 'error', thongBao);
                 isUploading = false;
             });
 
