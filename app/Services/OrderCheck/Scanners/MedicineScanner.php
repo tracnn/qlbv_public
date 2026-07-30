@@ -7,6 +7,7 @@ use App\Services\OrderCheck\OrderCheckEngine;
 use App\Services\OrderCheck\Support\Violation;
 use App\Services\OrderCheck\Support\ViolationContext;
 use App\Services\OrderCheck\RuleHandlers\Clinical\DoseSanityRule;
+use App\Services\OrderCheck\Support\CuaSoQuet;
 
 class MedicineScanner implements Scanner
 {
@@ -25,7 +26,9 @@ class MedicineScanner implements Scanner
 
         $source = $engine->source();
         $wm = $engine->getWatermark(self::SOURCE_KEY);
-        $cuoiCuaSo = \App\Services\OrderCheck\Support\CuaSoQuet::ketThuc($wm->last_id, $source->cuaSo());
+        // Lay max(id) THAT SU truoc khi chay truy van lo (xem docblock CuaSoQuet).
+        $maxIdHis = $source->maxExpMestMedicineId();
+        $cuoiCuaSo = CuaSoQuet::ketThuc($wm->last_id, $source->cuaSo(), $maxIdHis);
         $rows = $source->fetchExpMestBatch($wm->last_create_time, $wm->last_id, $limit, $cuoiCuaSo);
         $scanned = $rows->count();
         $violations = 0;
@@ -62,14 +65,13 @@ class MedicineScanner implements Scanner
                     }
                 }
             }
-
         }
 
         // Ngoai khoi if: cua so rong cung phai day moc, neu khong bo quet dung im vinh vien.
         $engine->saveWatermark(
             self::SOURCE_KEY,
             $wm->last_create_time,
-            \App\Services\OrderCheck\Support\CuaSoQuet::mocMoi(
+            CuaSoQuet::mocMoi(
                 $wm->last_id, $scanned, $limit, $maxId, $cuoiCuaSo
             )
         );

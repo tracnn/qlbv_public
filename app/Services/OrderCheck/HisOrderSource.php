@@ -216,10 +216,35 @@ class HisOrderSource
             ->get();
     }
 
-    /** id lon nhat cua his_sere_serv; dung de day moc khi bo qua vong quet */
+    /**
+     * id lon nhat THAT SU cua mot bang - dung de chan cua so quet (CuaSoQuet::ketThuc())
+     * khong bao gio nhay toi id chua ton tai. Phai goi TRUOC khi chay truy van lo tuong ung
+     * (xem docblock CuaSoQuet), neu khong dong vua commit xen giua se bi bo sot.
+     *
+     * Da do tren production: max(id) tren his_sere_serv (168 trieu dong) chi mat 85 ms -
+     * chi phi chap nhan duoc moi luot quet.
+     */
+    protected function maxIdCua($table)
+    {
+        return (int) DB::connection($this->conn)->table($table)->max('id');
+    }
+
+    /** id lon nhat cua his_sere_serv; dung de day moc khi bo qua vong quet / chan cua so */
     public function maxSereServId()
     {
-        return (int) DB::connection($this->conn)->table('his_sere_serv')->max('id');
+        return $this->maxIdCua('his_sere_serv');
+    }
+
+    /** id lon nhat cua his_exp_mest_medicine; dung de chan cua so quet (xem maxIdCua()) */
+    public function maxExpMestMedicineId()
+    {
+        return $this->maxIdCua('his_exp_mest_medicine');
+    }
+
+    /** id lon nhat cua his_medicine_interactive; dung de chan cua so quet (xem maxIdCua()) */
+    public function maxMedicineInteractiveId()
+    {
+        return $this->maxIdCua('his_medicine_interactive');
     }
 
     /** Map service_req_id => thông tin phiếu (code, loại, khoa thực hiện) — tra batched theo IN. */

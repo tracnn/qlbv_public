@@ -9,6 +9,7 @@ use App\Services\OrderCheck\Support\ViolationContext;
 use App\Services\OrderCheck\RuleHandlers\Clinical\GenderRestrictionRule;
 use App\Services\OrderCheck\RuleHandlers\Clinical\AgeRestrictionRule;
 use App\Models\OrderCheck\OrderCheckRefServiceRestriction;
+use App\Services\OrderCheck\Support\CuaSoQuet;
 
 class ServiceRestrictionScanner implements Scanner
 {
@@ -29,7 +30,8 @@ class ServiceRestrictionScanner implements Scanner
 
         $source = $engine->source();
         $wm = $engine->getWatermark(self::SOURCE_KEY);
-        $cuoiCuaSo = \App\Services\OrderCheck\Support\CuaSoQuet::ketThuc($wm->last_id, $source->cuaSo());
+        // Lay max(id) THAT SU truoc khi chay bat ky truy van lo nao (xem docblock CuaSoQuet).
+        $maxIdHis = $source->maxSereServId();
 
         // Danh muc gioi han rong thi hai quy tac deu KHONG THE sinh vi pham - khong truy
         // van HIS lam gi. Do tren production: 24.402 dong da quet, 0 vi pham, ma van ton
@@ -39,15 +41,17 @@ class ServiceRestrictionScanner implements Scanner
         // va roi lai dung van de hieu nang nay. Nhung dong bi bo qua trong luc danh muc
         // rong se khong duoc kiem lai - khong mat gi so voi hien tai, vi hom nay chung van
         // duoc quet nhung luon cho ket qua rong, va bo quet von chi chay toi truoc.
+        //
+        // Day THANG toi max(id) that, KHONG bi gioi han boi mot cua so: nhanh nay khong
+        // quet gi ca nen chan cua so khong bao ve gi het, chi lam mot the tien qua cham
+        // moi luot mot cach vo ich.
         if (!OrderCheckRefServiceRestriction::where('is_active', true)->exists()) {
-            $maxIdHis = (int) $source->maxSereServId();
-            $mocMoi = $cuoiCuaSo > 0 ? min($cuoiCuaSo, $maxIdHis) : $maxIdHis;
-
-            $engine->saveWatermark(self::SOURCE_KEY, $wm->last_create_time, max((int) $wm->last_id, $mocMoi));
+            $engine->saveWatermark(self::SOURCE_KEY, $wm->last_create_time, max((int) $wm->last_id, $maxIdHis));
 
             return ['scanned' => 0, 'violations' => 0];
         }
 
+        $cuoiCuaSo = CuaSoQuet::ketThuc($wm->last_id, $source->cuaSo(), $maxIdHis);
         $rows = $source->fetchSereServWithPatient($wm->last_create_time, $wm->last_id, $limit, $cuoiCuaSo);
         $scanned = $rows->count();
         $violations = 0;
@@ -103,14 +107,13 @@ class ServiceRestrictionScanner implements Scanner
                     $maxId = (int) $row->id;
                 }
             }
-
         }
 
         // Ngoai khoi if: cua so rong cung phai day moc, neu khong bo quet dung im vinh vien.
         $engine->saveWatermark(
             self::SOURCE_KEY,
             $maxCreate,
-            \App\Services\OrderCheck\Support\CuaSoQuet::mocMoi(
+            CuaSoQuet::mocMoi(
                 $wm->last_id, $scanned, $limit, $maxId, $cuoiCuaSo
             )
         );

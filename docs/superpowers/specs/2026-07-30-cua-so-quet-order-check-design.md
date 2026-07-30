@@ -72,26 +72,38 @@ Giá trị `0` nghĩa là **không chặn** — giữ đường lui về hành v
 
 ```php
 /** Cuoi cua so quet; $cuaSo = 0 nghia la khong chan */
-public static function ketThuc($moc, $cuaSo)
+public static function ketThuc($moc, $cuaSo, $maxIdThat)
 
 /** Moc moi sau mot luot quet */
 public static function mocMoi($moc, $soDongLay, $limit, $maxIdTrongLo, $cuoiCuaSo)
 ```
 
-`ketThuc`: `$cuaSo <= 0` → trả `0` (không chặn); ngược lại trả `$moc + $cuaSo`.
+`ketThuc`: `$cuaSo <= 0` → trả `0` (không chặn); ngược lại trả `min($moc + $cuaSo, $maxIdThat)`.
 
-`mocMoi` theo bảng:
+**`$maxIdThat` là `max(id)` THẬT SỰ đang tồn tại trong bảng, lấy TRƯỚC khi chạy truy vấn lô**
+(nếu lấy sau, dòng vừa commit xen giữa hai truy vấn sẽ bị bỏ sót). Đây là điểm sửa quan
+trọng nhất: quy tắc "lấy ít hơn `limit` → cửa sổ đã duyệt hết → nhảy tới `cuoiCuaSo`" chỉ
+đúng khi **còn tồn đọng**. Khi bộ quét đã bắt kịp đuôi bảng, `moc + cuaSo` là một id **chưa
+tồn tại** — nhảy tới đó tức là tuyên bố đã kiểm hàng chục nghìn id tương lai. Bộ quét chạy
+mỗi 60 giây nên mốc sẽ chạy trốn khỏi dữ liệu thật với tốc độ `cuaSo`/phút, nhanh hơn tốc độ
+sinh dữ liệu thật, không bao giờ hồi phục, và hoàn toàn im lặng (`scanned = 0` trông y hệt
+đã bắt kịp). Chặn `ketThuc` bằng `$maxIdThat` khiến khi đã bắt kịp, `cuoiCuaSo` bằng đúng
+`max(id)` thật — mốc dừng đúng ở đó thay vì chạy trốn.
+
+`mocMoi` **không đổi**, theo bảng:
 
 | Số dòng lấy được | Nghĩa | Mốc mới |
 | --- | --- | --- |
 | Bằng `limit` | Cửa sổ **chưa** duyệt hết | `$maxIdTrongLo` |
-| Ít hơn `limit` (kể cả 0) | Cửa sổ **đã** duyệt hết | `$cuoiCuaSo` |
+| Ít hơn `limit` (kể cả 0) | Cửa sổ **đã** duyệt hết hoặc đã bắt kịp | `$cuoiCuaSo` (nay đã bị chặn bởi `$maxIdThat` từ `ketThuc`) |
 
 Và **không bao giờ lùi**: kết quả luôn `>= $moc`. Không chặn cửa sổ (`$cuoiCuaSo = 0`) thì
 luôn trả `$maxIdTrongLo` — giữ nguyên hành vi cũ.
 
 Vế thứ hai chính là thứ chữa cái bẫy: cửa sổ rỗng mà không đẩy mốc thì bộ quét **đứng im
-vĩnh viễn** và im lặng, không lỗi nào báo ra. Vế thứ nhất bảo đảm không bỏ sót dòng.
+vĩnh viễn** và im lặng, không lỗi nào báo ra. Vế thứ nhất bảo đảm không bỏ sót dòng. Vì
+`cuoiCuaSo` giờ không bao giờ vượt quá `max(id)` thật, vế thứ hai không còn có thể nhảy tới
+một id chưa tồn tại.
 
 ### 3. Phạm vi áp dụng
 
@@ -117,8 +129,10 @@ người bảo trì sau dễ hiểu nhầm.
 `is_active`, **không truy vấn HIS** — cả hai quy tắc đều không thể sinh vi phạm.
 
 Nhưng **vẫn phải đẩy mốc**, nếu không đến lúc nhập danh mục sẽ tồn đọng cả chục triệu dòng
-và rơi lại đúng vấn đề hiệu năng này. Đẩy mốc tới `min(mốc + cửa_sổ, max(id) hiện tại)` —
-một truy vấn `max(id)` rẻ, không join.
+và rơi lại đúng vấn đề hiệu năng này. Đẩy THẲNG mốc tới `max(mốc, max(id) hiện tại)` — một
+truy vấn `max(id)` rẻ, không join. Nhánh này **không chặn theo cửa sổ**: nó không quét gì
+cả nên cửa sổ chẳng bảo vệ điều gì, chỉ khiến mốc tiến quá chậm một cách vô ích (đẩy tối đa
+`cửa_sổ` id mỗi lượt thay vì bắt kịp ngay).
 
 **Quyết định có chủ ý:** những dòng bị bỏ qua trong lúc danh mục rỗng sẽ **không bao giờ
 được kiểm lại**, kể cả sau khi nhập danh mục. Điều này **không làm mất gì so với hiện tại**:

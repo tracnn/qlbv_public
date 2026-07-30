@@ -17,6 +17,10 @@ namespace App\Services\OrderCheck\Support;
  *
  * Chan tren lam tap phai sap xep bi chan cung, thoi gian moi luot thanh hang so.
  *
+ * QUAN TRONG cho ben goi: max(id) THAT (tham so $maxIdThat cua ketThuc()) phai duoc lay
+ * TRUOC khi chay truy van lo. Lay SAU thi dong vua commit xen giua hai truy van se bi
+ * nhay qua - mat vinh vien, khong khac gi loi cua so vuot qua du lieu that.
+ *
  * Ham THUAN de kiem duoc.
  */
 class CuaSoQuet
@@ -24,11 +28,20 @@ class CuaSoQuet
     /**
      * Cuoi cua so quet.
      *
-     * @param int $moc   moc hien tai (last_id)
-     * @param int $cuaSo do rong cua so; <= 0 nghia la KHONG chan
+     * Khong bao gio vuot qua $maxIdThat (id lon nhat THAT SU dang ton tai trong bang). Neu
+     * khong chan boi gia tri nay: khi bo quet da bat kip duoi bang, $moc + $cuaSo la mot id
+     * CHUA TON TAI - nhay toi do tuc la tuyen bo da kiem hang chuc nghin id tuong lai. Bo
+     * quet chay moi 60 giay nen moc se chay tron xa hon du lieu that voi toc do $cuaSo/phut,
+     * nhanh hon toc do sinh du lieu that, khong bao gio hoi phuc, va hoan toan im lang
+     * (scanned = 0 trong lai y het da bat kip).
+     *
+     * @param int $moc       moc hien tai (last_id)
+     * @param int $cuaSo     do rong cua so; <= 0 nghia la KHONG chan
+     * @param int $maxIdThat id lon nhat THAT SU dang co trong bang (lay TRUOC khi chay truy
+     *                       van lo, xem docblock lop nay)
      * @return int 0 nghia la khong chan
      */
-    public static function ketThuc($moc, $cuaSo)
+    public static function ketThuc($moc, $cuaSo, $maxIdThat)
     {
         $cuaSo = (int) $cuaSo;
 
@@ -36,7 +49,7 @@ class CuaSoQuet
             return 0;
         }
 
-        return (int) $moc + $cuaSo;
+        return min((int) $moc + $cuaSo, (int) $maxIdThat);
     }
 
     /**

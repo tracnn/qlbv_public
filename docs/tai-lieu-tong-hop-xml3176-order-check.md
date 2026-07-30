@@ -235,15 +235,26 @@ Là **các mốc phát triển (release)**, không phải bước trong luồng 
 >
 > Quy tắc đẩy mốc nằm ở `App\Services\OrderCheck\Support\CuaSoQuet::mocMoi()`: lấy **đủ**
 > `limit` thì cửa sổ chưa duyệt hết, chỉ tiến tới id lớn nhất đã lấy; lấy **ít hơn** thì
-> cửa sổ đã duyệt hết, nhảy tới cuối cửa sổ. Vế thứ hai là thứ chống cái bẫy **cửa sổ
-> rỗng**: không nhảy thì lượt sau lại hỏi đúng cửa sổ đó, lại 0 dòng, và bộ quét **đứng im
-> vĩnh viễn** mà không lỗi nào báo ra.
+> cửa sổ đã duyệt hết, nhảy tới cuối cửa sổ (`cuoiCuaSo`). Vế thứ hai là thứ chống cái bẫy
+> **cửa sổ rỗng**: không nhảy thì lượt sau lại hỏi đúng cửa sổ đó, lại 0 dòng, và bộ quét
+> **đứng im vĩnh viễn** mà không lỗi nào báo ra.
+>
+> **Sửa 30/07/2026 (lỗi Critical):** quy tắc trên chỉ đúng khi **còn tồn đọng**. Khi bộ quét
+> đã bắt kịp đuôi bảng, `cuoiCuaSo = mốc + cửa_sổ` là một id **chưa tồn tại** — nhảy tới đó
+> tức là tuyên bố đã kiểm hàng chục nghìn id tương lai. Bộ quét chạy mỗi 60 giây nên mốc sẽ
+> chạy trốn khỏi dữ liệu thật với tốc độ `cửa_sổ`/phút, nhanh hơn tốc độ sinh dữ liệu thật,
+> **không bao giờ hồi phục**, và hoàn toàn im lặng (`scanned = 0` trông y hệt đã bắt kịp).
+> `CuaSoQuet::ketThuc()` nay nhận thêm `$maxIdThat` — `max(id)` **thật sự** của bảng, lấy
+> **TRƯỚC** khi chạy truy vấn lô (lấy sau thì dòng vừa commit xen giữa sẽ bị bỏ sót) — và
+> **không bao giờ trả về giá trị vượt quá nó**. Nhờ vậy `cuoiCuaSo` không bao giờ vượt quá
+> dữ liệu thật, và khi đã bắt kịp thì mốc dừng đúng tại `max(id)` thay vì chạy trốn.
 >
 > `ServiceRestrictionScanner` còn bỏ hẳn truy vấn HIS khi
 > `order_check_ref_service_restriction` không có dòng nào `is_active` — khi đó hai quy tắc
 > giới tính/tuổi không thể sinh vi phạm. Đo trước khi sửa: 24.402 dòng đã quét, **0 vi
-> phạm**, mà vẫn tốn 43 phút tổng cộng. Nhánh bỏ qua **vẫn đẩy mốc**, nếu không đến lúc
-> nhập danh mục sẽ tồn đọng cả chục triệu dòng.
+> phạm**, mà vẫn tốn 43 phút tổng cộng. Nhánh bỏ qua **vẫn đẩy mốc**, đẩy THẲNG tới
+> `max(mốc, max(id) hiện tại)` — không chặn theo cửa sổ, vì nhánh này không quét gì cả nên
+> cửa sổ chẳng bảo vệ điều gì, chỉ khiến mốc tiến quá chậm một cách vô ích.
 
 ---
 

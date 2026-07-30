@@ -6,6 +6,7 @@ use App\Services\OrderCheck\Contracts\Scanner;
 use App\Services\OrderCheck\OrderCheckEngine;
 use App\Services\OrderCheck\Support\Violation;
 use App\Services\OrderCheck\Support\ViolationContext;
+use App\Services\OrderCheck\Support\CuaSoQuet;
 
 class InteractionLogScanner implements Scanner
 {
@@ -27,7 +28,9 @@ class InteractionLogScanner implements Scanner
 
         $source = $engine->source();
         $wm = $engine->getWatermark(self::SOURCE_KEY);
-        $cuoiCuaSo = \App\Services\OrderCheck\Support\CuaSoQuet::ketThuc($wm->last_id, $source->cuaSo());
+        // Lay max(id) THAT SU truoc khi chay truy van lo (xem docblock CuaSoQuet).
+        $maxIdHis = $source->maxMedicineInteractiveId();
+        $cuoiCuaSo = CuaSoQuet::ketThuc($wm->last_id, $source->cuaSo(), $maxIdHis);
         $rows = $source->fetchInteractions($wm->last_create_time, $wm->last_id, $limit, $cuoiCuaSo);
         $scanned = $rows->count();
         $violations = 0;
@@ -76,14 +79,13 @@ class InteractionLogScanner implements Scanner
                     $maxId = (int) $row->id;
                 }
             }
-
         }
 
         // Ngoai khoi if: cua so rong cung phai day moc, neu khong bo quet dung im vinh vien.
         $engine->saveWatermark(
             self::SOURCE_KEY,
             $maxCreate,
-            \App\Services\OrderCheck\Support\CuaSoQuet::mocMoi(
+            CuaSoQuet::mocMoi(
                 $wm->last_id, $scanned, $limit, $maxId, $cuoiCuaSo
             )
         );
