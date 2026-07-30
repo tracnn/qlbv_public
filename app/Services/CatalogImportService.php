@@ -10,13 +10,6 @@ use PhpOffice\PhpSpreadsheet\Shared\Date;
 use App\Imports\CatalogChunkImport;
 use App\Services\Import\GhiTheoLo;
 use App\Services\Import\KetQuaNhapDanhMuc;
-use App\Models\BHYT\MedicineCatalog;
-use App\Models\BHYT\MedicalSupplyCatalog;
-use App\Models\BHYT\ServiceCatalog;
-use App\Models\BHYT\MedicalStaff;
-use App\Models\BHYT\DepartmentBedCatalog;
-use App\Models\BHYT\EquipmentCatalog;
-use App\Models\BHYT\JobCategory;
 
 class CatalogImportService
 {
@@ -54,7 +47,8 @@ class CatalogImportService
      * Danh muc nao co ten bang trong bangCua() va khoa duy nhat trong cau hinh thi dua vao day.
      */
     const GHI_THEO_LO = ['medicine', 'medical_supply', 'service', 'icd10', 'icd_yhct',
-                         'administrative_unit', 'medical_organization'];
+                         'administrative_unit', 'medical_organization', 'medical_staff',
+                         'department_bed', 'equipment', 'job_categories'];
 
     /**
      * Danh muc LAM MOI TRON BO: tat is_active cua toan bo ban ghi cu roi bat lai cho dong co
@@ -78,6 +72,116 @@ class CatalogImportService
         }
 
         return $duLieu;
+    }
+
+    /**
+     * Khoa duy nhat THUC SU dung cho mot lan nhap.
+     *
+     * Mau moi cua BHXH cho nhan vien y te khong con cot MA_BHXH: bam theo ma_bhxh se cho ra
+     * khoa rong o moi dong, tuc moi dong bi coi la ban ghi moi va chen trung lap moi lan nhap.
+     * Cau hinh khai unique_keys_alt cho truong hop do.
+     *
+     * Ham THUAN de kiem duoc.
+     */
+    public static function khoaDungCho(array $cfg, array $mapping)
+    {
+        $chinh = $cfg['unique_keys'];
+
+        if (empty($cfg['unique_keys_alt'])) {
+            return $chinh;
+        }
+
+        foreach ($chinh as $k) {
+            if (!isset($mapping[$k])) {
+                // Chi doi khi tep co du khoa thay the; khong thi giu khoa chinh de bao loi ro.
+                foreach ($cfg['unique_keys_alt'] as $kt) {
+                    if (!isset($mapping[$kt])) {
+                        return $chinh;
+                    }
+                }
+
+                return $cfg['unique_keys_alt'];
+            }
+        }
+
+        return $chinh;
+    }
+
+    /**
+     * Quy NGAYCAP_CCHN ve chuoi Ymd.
+     *
+     * Excel tra ve SO SERIAL cho o dinh dang ngay, con cot ngaycap_cchn la varchar va XML giam
+     * dinh doi dang YYYYMMDD. O khong doc duoc thi GIU NGUYEN de dong do bao loi: nem ra day se
+     * lam chet ca lan nhap vi mot o hong.
+     *
+     * O de trong phai giu nguyen chuoi rong: Carbon::parse('') tra ve HOM NAY, tuc ghi lang le
+     * mot ngay cap chung chi hanh nghe sai.
+     *
+     * Ham THUAN de kiem duoc.
+     */
+    public static function chuanHoaNgayCchn(array $duLieu)
+    {
+        if (!array_key_exists('ngaycap_cchn', $duLieu)) {
+            return $duLieu;
+        }
+
+        $v = $duLieu['ngaycap_cchn'];
+
+        if ($v === null || trim((string) $v) === '') {
+            return $duLieu;
+        }
+
+        // DA dung dang thi giu nguyen. Phai xet TRUOC so serial: '20230415' vua la 8 chu so
+        // hop le vua la mot so, va doc nham nhu serial cho ra 2008-12-27.
+        if (preg_match('/^\d{8}$/', (string) $v) && self::laNgayDung('Ymd', $v)) {
+            return $duLieu;
+        }
+
+        if (is_numeric($v) && (float) $v > 3000) {
+            // So serial cua Excel. Nguong 3000 de khong doi mot chuoi so ngan thanh ngay.
+            try {
+                $duLieu['ngaycap_cchn'] = Carbon::instance(Date::excelToDateTimeObject($v))->format('Ymd');
+
+                return $duLieu;
+            } catch (\Throwable $e) {
+                // Roi xuong cac cach doc chuoi ben duoi.
+            }
+        }
+
+        foreach (['m/d/Y H:i', 'd/m/Y', 'd/m/Y H:i'] as $dang) {
+            if (self::laNgayDung($dang, $v)) {
+                $duLieu['ngaycap_cchn'] = \DateTime::createFromFormat($dang, (string) $v)->format('Ymd');
+
+                return $duLieu;
+            }
+        }
+
+        try {
+            $duLieu['ngaycap_cchn'] = Carbon::parse($v)->format('Ymd');
+        } catch (\Throwable $e) {
+            // Giu nguyen gia tri goc: dong do se bao loi, cac dong khac van vao.
+        }
+
+        return $duLieu;
+    }
+
+    /**
+     * Gia tri co dung DUNG mot dang ngay khong.
+     *
+     * createFromFormat khong tra false cho '20239999' ma tu "tran" sang thang sau roi ghi mot
+     * warning - phai xet warning_count moi biet la sai.
+     */
+    private static function laNgayDung($dang, $v)
+    {
+        $ngay = \DateTime::createFromFormat($dang, (string) $v);
+
+        if ($ngay === false) {
+            return false;
+        }
+
+        $loi = \DateTime::getLastErrors();
+
+        return $loi['warning_count'] === 0 && $loi['error_count'] === 0;
     }
 
     /**
@@ -161,8 +265,7 @@ class CatalogImportService
     {
         $this->ketQua = new KetQuaNhapDanhMuc();
 
-        $tt = ['type' => null, 'mapping' => null, 'header' => null, 'ghi' => null,
-               'lo' => [], 'gom' => null];
+        $tt = ['type' => null, 'mapping' => null, 'ghi' => null, 'lo' => []];
 
         // Doc THEO LO: Excel::toCollection nap toan bo tep, do duoc tep 1,3 MB (10.000 dong
         // x 23 cot) lam DINH bo nho 208 MB.
@@ -173,24 +276,12 @@ class CatalogImportService
                 $dongDau = 2;
             }
 
+            // Tep rong: nhanDienTuLoDau ra ve tay khong, chua co cau hinh nao de xu ly lo.
             if ($tt['type'] === null) {
                 return;
             }
 
-            if (in_array($tt['type'], self::GHI_THEO_LO, true)) {
-                $this->xuLyLo($rows, $dongDau, $tt, $maCskcb);
-
-                return;
-            }
-
-            // Tam loai con lai giu duong cu: gom lai roi goi ham nhap tuong ung o cuoi.
-            if ($tt['gom'] === null) {
-                $tt['gom'] = collect();
-            }
-
-            foreach ($rows as $r) {
-                $tt['gom']->push($r);
-            }
+            $this->xuLyLo($rows, $dongDau, $tt, $maCskcb);
         });
 
         Excel::import($imp, $filePath);
@@ -199,36 +290,7 @@ class CatalogImportService
             throw new \Exception('File không chứa dữ liệu');
         }
 
-        if (in_array($tt['type'], self::GHI_THEO_LO, true)) {
-            $tt['ghi']->ghi($tt['lo']);   // lo cuoi con du
-
-            return $this->ketQua;
-        }
-
-        // Dung lai collection co dong tieu de o dau vi cac ham cu deu slice(1).
-        $data = collect([$tt['header']])->merge($tt['gom'] ?: collect());
-        $catalogType = $tt['type'];
-        $fieldMapping = $tt['mapping'];
-
-
-        // Gọi method import tương ứng
-        $methodMap = [
-            'medicine' => 'importMedicine',
-            'medical_supply' => 'importMedicalSupply',
-            'service' => 'importService',
-            'medical_staff' => 'importMedicalStaff',
-            'department_bed' => 'importDepartmentBed',
-            'equipment' => 'importEquipment',
-            'job_categories' => 'importJobCategories',
-        ];
-
-        $methodName = $methodMap[$catalogType] ?? null;
-
-        if (!$methodName || !method_exists($this, $methodName)) {
-            throw new \Exception('Không tìm thấy method import cho loại catalog: ' . $catalogType);
-        }
-
-        $this->$methodName($data, $fieldMapping, $this->catalogConfigs[$catalogType]);
+        $tt['ghi']->ghi($tt['lo']);   // lo cuoi con du
 
         return $this->ketQua;
     }
@@ -263,7 +325,8 @@ class CatalogImportService
         }
 
         if (in_array($tt['type'], self::GHI_THEO_LO, true)) {
-            $tt['ghi'] = new GhiTheoLo($this->bangCua($tt['type']), $cfg['unique_keys'], $this->ketQua);
+            $tt['ghi'] = new GhiTheoLo($this->bangCua($tt['type']),
+                self::khoaDungCho($cfg, $tt['mapping']), $this->ketQua);
         }
 
         // Lam moi tron bo: tat het MOT LAN o day, sau khi da chac tep dung dinh dang. Tat
@@ -285,6 +348,10 @@ class CatalogImportService
             'icd_yhct' => 'icd_yhct_categories',
             'administrative_unit' => 'administrative_units',
             'medical_organization' => 'medical_organizations',
+            'medical_staff' => 'medical_staffs',
+            'department_bed' => 'department_bed_catalogs',
+            'equipment' => 'equipment_catalogs',
+            'job_categories' => 'job_categories',
         ];
 
         return $map[$type];
@@ -332,6 +399,7 @@ class CatalogImportService
 
             $duLieu = self::catKhoangTrang($duLieu);
             $duLieu = self::ganCoSo($duLieu, $maCoSo);
+            $duLieu = self::chuanHoaNgayCchn($duLieu);
             $duLieu = self::chuanHoaSo($duLieu, $this->cotSoCua($bang));
             // SAU chuanHoaSo: is_chronic la cot tinyint nen chuanHoaSo quy o de trong ve null,
             // ma cot do NOT NULL. Dao thu tu se lam chinh gia tri false bi quy ve null.
@@ -436,18 +504,6 @@ class CatalogImportService
         $this->cotSo[$bang] = $so;
     }
 
-    /** Dem mot ban ghi vua updateOrCreate vao ket qua */
-    protected function demGhi($banGhi)
-    {
-        if ($banGhi && $banGhi->wasRecentlyCreated) {
-            $this->ketQua->themNhap();
-
-            return;
-        }
-
-        $this->ketQua->themCapNhat();
-    }
-
     /**
      * Lấy giá trị từ row dựa trên field mapping
      *
@@ -491,370 +547,4 @@ class CatalogImportService
         return true;
     }
 
-    private function importMedicine($data, array $fieldMapping, array $config, $maCskcb = null)
-    {
-        $data = $data->slice(1); // Bỏ qua dòng đầu tiên
-        
-        foreach ($data as $iDong => $row) {
-            // slice(1) giu nguyen khoa nen khoa 1 ung voi dong Excel 2.
-            $dongExcel = (int) $iDong + 1;
-
-            // Kiểm tra các trường bắt buộc
-            if (!$this->hasRequiredFields($row, $config['required_fields'], $fieldMapping)) {
-                $this->ketQua->themBoQua($dongExcel, 'Thiếu trường bắt buộc');
-                continue;
-            }
-
-            try {
-                $uniqueKeys = [];
-                $updateData = [];
-                
-                foreach ($config['unique_keys'] as $key) {
-                    $value = $this->getRowValue($row, $key, $fieldMapping);
-                    if ($value !== null) {
-                        $uniqueKeys[$key] = $value;
-                    }
-                }
-
-                foreach ($config['mapping'] as $field => $possibleNames) {
-                    if (!in_array($field, $config['unique_keys'])) {
-                        $value = $this->getRowValue($row, $field, $fieldMapping);
-                        if ($value !== null) {
-                            $updateData[$field] = $value;
-                        }
-                    }
-                }
-
-                $uniqueKeys = self::ganCoSo($uniqueKeys, $maCskcb);
-
-                $banGhi = MedicineCatalog::updateOrCreate($uniqueKeys, $updateData);
-                $this->demGhi($banGhi);
-            } catch (\Exception $e) {
-                $this->ketQua->themLoi($dongExcel, $e->getMessage());
-                Log::error('Error updating or creating MedicineCatalog record', [
-                    'error' => $e->getMessage(),
-                    'row' => $row
-                ]);
-                continue;
-            }
-        }
-    }
-
-    private function importMedicalSupply($data, array $fieldMapping, array $config, $maCskcb = null)
-    {
-        $data = $data->slice(1);
-        
-        foreach ($data as $iDong => $row) {
-            // slice(1) giu nguyen khoa nen khoa 1 ung voi dong Excel 2.
-            $dongExcel = (int) $iDong + 1;
-
-            if (!$this->hasRequiredFields($row, $config['required_fields'], $fieldMapping)) {
-                $this->ketQua->themBoQua($dongExcel, 'Thiếu trường bắt buộc');
-                continue;
-            }
-
-            try {
-                $uniqueKeys = [];
-                $updateData = [];
-                
-                foreach ($config['unique_keys'] as $key) {
-                    $value = $this->getRowValue($row, $key, $fieldMapping);
-                    if ($value !== null) {
-                        $uniqueKeys[$key] = $value;
-                    }
-                }
-
-                foreach ($config['mapping'] as $field => $possibleNames) {
-                    if (!in_array($field, $config['unique_keys'])) {
-                        $value = $this->getRowValue($row, $field, $fieldMapping);
-                        if ($value !== null && $value !== '') {
-                            $updateData[$field] = $value;
-                        }
-                    }
-                }
-
-                $uniqueKeys = self::ganCoSo($uniqueKeys, $maCskcb);
-
-                $banGhi = MedicalSupplyCatalog::updateOrCreate($uniqueKeys, $updateData);
-                $this->demGhi($banGhi);
-            } catch (\Exception $e) {
-                $this->ketQua->themLoi($dongExcel, $e->getMessage());
-                Log::error('Error updating or creating MedicalSupplyCatalog record', [
-                    'error' => $e->getMessage(),
-                    'row' => $row
-                ]);
-                continue;
-            }
-        }
-    }
-
-    private function importService($data, array $fieldMapping, array $config, $maCskcb = null)
-    {
-        $data = $data->slice(1);
-        
-        foreach ($data as $iDong => $row) {
-            // slice(1) giu nguyen khoa nen khoa 1 ung voi dong Excel 2.
-            $dongExcel = (int) $iDong + 1;
-
-            // Loại bỏ ký tự đặc biệt trong cột 'Tên dịch vụ'
-            $tenDichVuIndex = $fieldMapping['ten_dich_vu'] ?? null;
-            if ($tenDichVuIndex !== null && isset($row[$tenDichVuIndex])) {
-                $row[$tenDichVuIndex] = preg_replace('/[^\p{L}\p{N}\s]/u', '', $row[$tenDichVuIndex]);
-            }
-
-            if (!$this->hasRequiredFields($row, $config['required_fields'], $fieldMapping)) {
-                $this->ketQua->themBoQua($dongExcel, 'Thiếu trường bắt buộc');
-                continue;
-            }
-
-            try {
-                $uniqueKeys = [];
-                $updateData = [];
-                
-                foreach ($config['unique_keys'] as $key) {
-                    $value = $this->getRowValue($row, $key, $fieldMapping);
-                    if ($value !== null) {
-                        $uniqueKeys[$key] = $value;
-                    }
-                }
-
-                foreach ($config['mapping'] as $field => $possibleNames) {
-                    if (!in_array($field, $config['unique_keys'])) {
-                        $value = $this->getRowValue($row, $field, $fieldMapping);
-                        if ($value !== null) {
-                            $updateData[$field] = $value;
-                        }
-                    }
-                }
-
-                // Set default values
-                $updateData['cskcb_cgkt'] = null;
-                $updateData['cskcb_cls'] = null;
-
-                $uniqueKeys = self::ganCoSo($uniqueKeys, $maCskcb);
-
-                $banGhi = ServiceCatalog::updateOrCreate($uniqueKeys, $updateData);
-                $this->demGhi($banGhi);
-            } catch (\Exception $e) {
-                $this->ketQua->themLoi($dongExcel, $e->getMessage());
-                Log::error('Error updating or creating ServiceCatalog record', [
-                    'error' => $e->getMessage(),
-                    'row' => $row
-                ]);
-                continue;
-            }
-        }
-    }
-
-    private function importMedicalStaff($data, array $fieldMapping, array $config)
-    {
-        $data = $data->slice(1);
-
-        // Xác định unique keys: dùng ma_bhxh nếu có trong file, ngược lại dùng so_dinh_danh
-        $activeUniqueKeys = $config['unique_keys']; // ['ma_bhxh']
-        if (!isset($fieldMapping['ma_bhxh']) && isset($fieldMapping['so_dinh_danh'])) {
-            $activeUniqueKeys = $config['unique_keys_alt'] ?? ['so_dinh_danh'];
-        }
-
-        foreach ($data as $iDong => $row) {
-            // slice(1) giu nguyen khoa nen khoa 1 ung voi dong Excel 2.
-            $dongExcel = (int) $iDong + 1;
-
-            if (!$this->hasRequiredFields($row, $config['required_fields'], $fieldMapping)) {
-                Log::error('Error importing medical staff', [
-                    'error' => 'Thiếu dữ liệu bắt buộc',
-                    'row' => $row
-                ]);
-                continue;
-            }
-
-            // Chuyển đổi định dạng ngày NGAYCAP_CCHN về dạng text YYYYMMDD
-            $ngaycap_cchn = $this->getRowValue($row, 'ngaycap_cchn', $fieldMapping);
-            if ($ngaycap_cchn !== null) {
-                if (is_numeric($ngaycap_cchn)) {
-                    $ngaycap_cchn = Carbon::instance(Date::excelToDateTimeObject($ngaycap_cchn))->format('Ymd');
-                } else {
-                    try {
-                        $ngaycap_cchn = Carbon::createFromFormat('m/d/Y H:i', $ngaycap_cchn)->format('Ymd');
-                    } catch (\Exception $e) {
-                        // Thử format khác nếu format trên không match
-                        $ngaycap_cchn = Carbon::parse($ngaycap_cchn)->format('Ymd');
-                    }
-                }
-            }
-
-            try {
-                $uniqueKeys = [];
-                $updateData = [];
-
-                foreach ($activeUniqueKeys as $key) {
-                    $value = $this->getRowValue($row, $key, $fieldMapping);
-                    if ($value !== null) {
-                        $uniqueKeys[$key] = $value;
-                    }
-                }
-
-                foreach ($config['mapping'] as $field => $possibleNames) {
-                    if (!in_array($field, $activeUniqueKeys)) {
-                        $value = $this->getRowValue($row, $field, $fieldMapping);
-                        if ($value !== null) {
-                            $updateData[$field] = $value;
-                        }
-                    }
-                }
-
-                // Override với giá trị đã format
-                if ($ngaycap_cchn !== null) {
-                    $updateData['ngaycap_cchn'] = $ngaycap_cchn;
-                }
-
-                $banGhi = MedicalStaff::updateOrCreate($uniqueKeys, $updateData);
-                $this->demGhi($banGhi);
-            } catch (\Exception $e) {
-                $this->ketQua->themLoi($dongExcel, $e->getMessage());
-                Log::error('Error importing medical staff', [
-                    'error' => $e->getMessage(),
-                    'row' => $row
-                ]);
-                continue;
-            }
-        }
-    }
-
-    private function importDepartmentBed($data, array $fieldMapping, array $config)
-    {
-        $data = $data->slice(1);
-        
-        foreach ($data as $iDong => $row) {
-            // slice(1) giu nguyen khoa nen khoa 1 ung voi dong Excel 2.
-            $dongExcel = (int) $iDong + 1;
-
-            if (!$this->hasRequiredFields($row, $config['required_fields'], $fieldMapping)) {
-                $this->ketQua->themBoQua($dongExcel, 'Thiếu trường bắt buộc');
-                continue;
-            }
-
-            try {
-                $uniqueKeys = [];
-                $updateData = [];
-                
-                foreach ($config['unique_keys'] as $key) {
-                    $value = $this->getRowValue($row, $key, $fieldMapping);
-                    if ($value !== null) {
-                        $uniqueKeys[$key] = $value;
-                    }
-                }
-
-                foreach ($config['mapping'] as $field => $possibleNames) {
-                    if (!in_array($field, $config['unique_keys'])) {
-                        $value = $this->getRowValue($row, $field, $fieldMapping);
-                        if ($value !== null) {
-                            $updateData[$field] = $value;
-                        }
-                    }
-                }
-
-                $banGhi = DepartmentBedCatalog::updateOrCreate($uniqueKeys, $updateData);
-                $this->demGhi($banGhi);
-            } catch (\Exception $e) {
-                $this->ketQua->themLoi($dongExcel, $e->getMessage());
-                Log::error('Error updating or creating DepartmentBedCatalog record', [
-                    'error' => $e->getMessage(),
-                    'row' => $row
-                ]);
-                continue;
-            }
-        }
-    }
-
-    private function importEquipment($data, array $fieldMapping, array $config)
-    {
-        $data = $data->slice(1);
-        
-        foreach ($data as $iDong => $row) {
-            // slice(1) giu nguyen khoa nen khoa 1 ung voi dong Excel 2.
-            $dongExcel = (int) $iDong + 1;
-
-            if (!$this->hasRequiredFields($row, $config['required_fields'], $fieldMapping)) {
-                $this->ketQua->themBoQua($dongExcel, 'Thiếu trường bắt buộc');
-                continue;
-            }
-
-            try {
-                $uniqueKeys = [];
-                $updateData = [];
-                
-                foreach ($config['unique_keys'] as $key) {
-                    $value = $this->getRowValue($row, $key, $fieldMapping);
-                    if ($value !== null) {
-                        $uniqueKeys[$key] = $value;
-                    }
-                }
-
-                foreach ($config['mapping'] as $field => $possibleNames) {
-                    if (!in_array($field, $config['unique_keys'])) {
-                        $value = $this->getRowValue($row, $field, $fieldMapping);
-                        if ($value !== null) {
-                            $updateData[$field] = $value;
-                        }
-                    }
-                }
-
-                $banGhi = EquipmentCatalog::updateOrCreate($uniqueKeys, $updateData);
-                $this->demGhi($banGhi);
-            } catch (\Exception $e) {
-                $this->ketQua->themLoi($dongExcel, $e->getMessage());
-                Log::error('Error updating or creating EquipmentCatalog record', [
-                    'error' => $e->getMessage(),
-                    'row' => $row
-                ]);
-                continue;
-            }
-        }
-    }
-
-    private function importJobCategories($data, array $fieldMapping, array $config)
-    {
-        $data = $data->slice(1);
-        
-        foreach ($data as $iDong => $row) {
-            // slice(1) giu nguyen khoa nen khoa 1 ung voi dong Excel 2.
-            $dongExcel = (int) $iDong + 1;
-
-            if (!$this->hasRequiredFields($row, $config['required_fields'], $fieldMapping)) {
-                $this->ketQua->themBoQua($dongExcel, 'Thiếu trường bắt buộc');
-                continue;
-            }
-
-            try {
-                $uniqueKeys = [];
-                $updateData = [];
-                
-                foreach ($config['unique_keys'] as $key) {
-                    $value = $this->getRowValue($row, $key, $fieldMapping);
-                    if ($value !== null) {
-                        $uniqueKeys[$key] = $value;
-                    }
-                }
-
-                foreach ($config['mapping'] as $field => $possibleNames) {
-                    if (!in_array($field, $config['unique_keys'])) {
-                        $value = $this->getRowValue($row, $field, $fieldMapping);
-                        if ($value !== null) {
-                            $updateData[$field] = $value;
-                        }
-                    }
-                }
-
-                $banGhi = JobCategory::updateOrCreate($uniqueKeys, $updateData);
-                $this->demGhi($banGhi);
-            } catch (\Exception $e) {
-                $this->ketQua->themLoi($dongExcel, $e->getMessage());
-                Log::error('Error updating or creating JobCategory record', [
-                    'error' => $e->getMessage(),
-                    'row' => $row
-                ]);
-            }
-        }
-    }
 }
