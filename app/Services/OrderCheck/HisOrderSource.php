@@ -28,6 +28,12 @@ class HisOrderSource
         );
     }
 
+    /** Do rong cua so quet theo id; 0 nghia la khong chan */
+    public function cuaSo()
+    {
+        return (int) config('order_check.scan_id_window', 0);
+    }
+
     public function fetchServiceRequests($lastModifyTime, $lastId, $limit)
     {
         $q = DB::connection($this->conn)
@@ -122,13 +128,19 @@ class HisOrderSource
      * Lấy lô tương tác thuốc HIS đã phát hiện, theo watermark (create_time, id).
      * Mỗi dòng đã gắn treatment_id, bác sĩ, ICD, cặp thuốc, mức độ.
      */
-    public function fetchInteractions($lastCreateTime, $lastId, $limit)
+    public function fetchInteractions($lastCreateTime, $lastId, $limit, $cuoiCuaSo = 0)
     {
-        return DB::connection($this->conn)
+        $q = DB::connection($this->conn)
             ->table('his_medicine_interactive')
             ->where('is_delete', 0)
-            ->where('id', '>', $lastId)
-            ->orderBy('id')
+            ->where('id', '>', $lastId);
+
+        // Chan tren de Oracle chi phai sap xep toi da mot cua so, khong phai toan bo ton.
+        if ($cuoiCuaSo > 0) {
+            $q->where('id', '<=', $cuoiCuaSo);
+        }
+
+        return $q->orderBy('id')
             ->limit($limit)
             ->selectRaw('id, create_time, treatment_id, request_loginname,
                 request_department_id, icd_code, icd_name,
@@ -137,13 +149,19 @@ class HisOrderSource
     }
 
     /** Lô dòng thuốc mới (his_exp_mest_medicine) theo watermark. */
-    public function fetchExpMestBatch($lastCreateTime, $lastId, $limit)
+    public function fetchExpMestBatch($lastCreateTime, $lastId, $limit, $cuoiCuaSo = 0)
     {
-        return DB::connection($this->conn)
+        $q = DB::connection($this->conn)
             ->table('his_exp_mest_medicine')
             ->where('is_delete', 0)
-            ->where('id', '>', $lastId)
-            ->orderBy('id')->limit($limit)
+            ->where('id', '>', $lastId);
+
+        // Chan tren de Oracle chi phai sap xep toi da mot cua so, khong phai toan bo ton.
+        if ($cuoiCuaSo > 0) {
+            $q->where('id', '<=', $cuoiCuaSo);
+        }
+
+        return $q->orderBy('id')->limit($limit)
             ->selectRaw('id, create_time, tdl_treatment_id, medicine_id, tdl_medicine_type_id,
                 amount, day_count, morning, noon, afternoon, evening')
             ->get();
@@ -175,16 +193,23 @@ class HisOrderSource
     /**
      * Lô dòng dịch vụ mới kèm mã DV + giới tính/ngày sinh BN (join treatment) — cho luật giới tính/tuổi.
      */
-    public function fetchSereServWithPatient($lastCreateTime, $lastId, $limit)
+    public function fetchSereServWithPatient($lastCreateTime, $lastId, $limit, $cuoiCuaSo = 0)
     {
-        return DB::connection($this->conn)
+        $q = DB::connection($this->conn)
             ->table('his_sere_serv as ss')
             ->leftJoin('his_treatment as t', 'ss.tdl_treatment_id', '=', 't.id')
             // Ma CSKCB de gan vao vi pham, giong cach lam cua fetchServiceRequests().
             ->leftJoin('his_branch as br', 'br.id', '=', 't.branch_id')
             ->where('ss.is_delete', 0)
-            ->where('ss.id', '>', $lastId)
-            ->orderBy('ss.id')->limit($limit)
+            ->where('ss.id', '>', $lastId);
+
+        // Chan tren de Oracle chi phai sap xep toi da mot cua so, khong phai toan bo ton.
+        // Day la truy van nang nhat: bang 168 trieu id, hai LEFT JOIN.
+        if ($cuoiCuaSo > 0) {
+            $q->where('ss.id', '<=', $cuoiCuaSo);
+        }
+
+        return $q->orderBy('ss.id')->limit($limit)
             ->selectRaw('ss.id, ss.create_time, ss.service_req_id, ss.tdl_treatment_id, ss.tdl_service_code, ss.tdl_service_name,
                 t.treatment_code, t.tdl_patient_code, t.tdl_patient_name,
                 t.tdl_patient_gender_id, t.tdl_patient_dob, br.hein_medi_org_code as ma_cskcb')

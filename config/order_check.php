@@ -26,6 +26,16 @@ return [
     // nao, Khac 13.787, Don mau 1.824, Ngoai KCB 0 — tong 105.542/917.663 y lenh (11,5%).
     'exclude_service_req_type_ids' => env('ORDER_CHECK_EXCLUDE_SERVICE_REQ_TYPES', '11,16,17,18'),
 
+    // Do rong cua so quet theo id. 0 nghia la KHONG chan (hanh vi cu).
+    //
+    // Laravel sinh SQL dang "select * from (select rownum rn, t1.* from (... order by id) t1)
+    // where rn <= 500": truy van trong cung khong co gioi han nen Oracle sap xep MOI dong
+    // sau moc roi moi cat. Do tren production, limit giu nguyen 500:
+    //   ton    10.000 ->     68 ms      ton 1.000.000 ->  4.849 ms
+    //   ton   100.000 ->    582 ms      ton 5.000.000 -> 21.356 ms
+    // Chan tren lam thoi gian moi luot thanh hang so. 50.000 roi vao khoang ~300 ms.
+    'scan_id_window' => (int) env('ORDER_CHECK_SCAN_ID_WINDOW', 50000),
+
     // Doi tuong benh nhan duoc coi la BHYT, CSV id trong HIS_PATIENT_TYPE.
     // Mac dinh 1 = ma '01' BHYT. RONG = KHONG loc (hanh vi truoc 2026-07-28).
     //
