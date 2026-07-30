@@ -32,7 +32,12 @@ class CatalogImportService
     }
 
     /** Ba danh muc do BHXH cap RIENG cho tung co so kham chua benh */
-    const DANH_MUC_THEO_CO_SO = ['medicine', 'medical_supply', 'service'];
+    /**
+     * PHAI khop voi cac danh muc co theo_co_so = true trong config/danh_muc_bhyt.php.
+     * Hai noi cung noi mot dieu; lech nhau thi chuc nang xoa theo co so se xoa nham du lieu
+     * cua co so khac ma khong bao gi. Co test chot hai ben luon khop.
+     */
+    const DANH_MUC_THEO_CO_SO = ['medicine', 'medical_supply', 'service', 'department_bed'];
 
     /**
      * Danh muc di duong GHI THEO LO: bo nho phang theo lo, khong dung ca tep.

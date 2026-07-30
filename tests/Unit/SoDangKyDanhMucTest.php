@@ -59,7 +59,7 @@ class SoDangKyDanhMucTest extends TestCase
      * tu su ton tai cua cot se danh dau nham no.
      */
     /** @test */
-    public function chi_dung_ba_loai_theo_co_so()
+    public function chi_dung_bon_loai_theo_co_so()
     {
         $co = [];
 
@@ -74,7 +74,8 @@ class SoDangKyDanhMucTest extends TestCase
 
         sort($co);
 
-        $this->assertSame(['medical_supply', 'medicine', 'service'], $co);
+        // department_bed vao danh sach tu 30/07/2026.
+        $this->assertSame(['department_bed', 'medical_supply', 'medicine', 'service'], $co);
     }
 
     /**

@@ -150,10 +150,14 @@ return [
             'giuong_hscc' => ['GIUONG_HSCC', 'Giường HSCC', 'GIUONG HSCC'],
             'ldlk' => ['LDLK', 'LDLK'],
             'lien_khoa' => ['LIEN_KHOA', 'Liên khoa', 'LIEN KHOA'],
+            'tu_ngay' => ['TU_NGAY', 'Từ ngày', 'TU NGAY'],
             'den_ngay' => ['DEN_NGAY', 'Đến ngày', 'DEN NGAY'],
+            'ma_cskcb' => ['MA_CSKCB', 'Mã CSKCB', 'MA CSKCB'],
         ],
         'required_fields' => ['ma_khoa', 'ten_khoa'],
-        'unique_keys' => ['ma_khoa'],
+        // ma_cskcb PHAI nam trong khoa duy nhat: khoa cu chi gom ma_khoa nen co so 01929 va
+        // 37470 cung ma khoa K24 se de len nhau.
+        'unique_keys' => ['ma_khoa', 'ma_cskcb'],
     ],
 
     'equipment' => [

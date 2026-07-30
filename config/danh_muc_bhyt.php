@@ -55,7 +55,7 @@ return [
         'ten' => 'DM Khoa Phòng Giường',
         'model' => App\Models\BHYT\DepartmentBedCatalog::class,
         'bang' => 'department_bed_catalogs',
-        'theo_co_so' => false,
+        'theo_co_so' => true,
     ],
     'equipment' => [
         'ten' => 'DM Trang thiết bị',

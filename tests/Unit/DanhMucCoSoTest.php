@@ -114,10 +114,12 @@ class DanhMucCoSoTest extends TestCase
     }
 
     /** @test */
-    public function chi_ba_danh_muc_duoc_gan_theo_co_so()
+    public function chi_bon_danh_muc_duoc_gan_theo_co_so()
     {
         // ICD, nhan vien y te, trang thiet bi... la danh muc DUNG CHUNG.
-        $this->assertSame(['medicine', 'medical_supply', 'service'],
+        // department_bed vao danh sach tu 30/07/2026: moi co so co danh muc khoa phong
+        // giuong rieng, va khoa duy nhat cua bang da gom ma_cskcb.
+        $this->assertSame(['medicine', 'medical_supply', 'service', 'department_bed'],
             \App\Services\CatalogImportService::DANH_MUC_THEO_CO_SO);
     }
 
