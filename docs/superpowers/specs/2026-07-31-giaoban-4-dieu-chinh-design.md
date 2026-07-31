@@ -53,8 +53,29 @@ Bằng quản trị: được chọn khung giờ tùy ý, được tạo báo c�
 - `fetchAndStore()` giữ nguyên `manual_value` (`firstOrNew` chỉ ghi `auto_value`) và chỉ
   khởi tạo ô kế thừa ở lần lấy đầu tiên (`if (!$report->data_fetched_at)`). Khoa bấm lại
   không đè số của khoa khác.
-- Người khoa đổi được `from_time`/`to_time` của báo cáo toàn viện. Đây là hệ quả trực tiếp
-  của việc cho "quyền như quản trị"; chấp nhận.
+- **Khung giờ chốt ở server, không còn "chấp nhận" như nháp ban đầu.** Bản đầu để người
+  khoa tự do đổi `from_time`/`to_time` như quản trị; review vòng cuối phát hiện `defaultTimes()`
+  bên JS luôn gửi khung mặc định (07:00 hôm trước → 07:00 hôm nay) mỗi lần đổi ngày, nên MỘT
+  cú bấm vô tình của người khoa sẽ revert khung giờ KHTH đã đặt và tính lại `auto_value` toàn
+  viện, trong khi `manual_value` các khoa đã nhập theo khung cũ vẫn nằm nguyên → báo cáo lệch
+  không dấu hiệu. Quyết định lại: báo cáo đã từng fetch (`data_fetched_at` khác rỗng) thì người
+  không phải admin lấy lại theo đúng khung đã lưu, bỏ qua giá trị gửi lên; admin vẫn đổi tự do;
+  báo cáo chưa từng fetch thì dùng giá trị gửi lên (lần tạo đầu tiên, chưa có gì để bảo vệ).
+  Xem `GiaoBanPermission::khungGioHieuLuc()` và `GiaoBanController::fetchData()`.
+- **Chạy chồng (chưa xử lý trong đợt này):** không có khóa nào chống `fetchAndStore()` chạy
+  đồng thời. Hai lượt gọi chồng nhau (vd. hai người khoa cùng bấm, hoặc người khoa bấm đúng lúc
+  KHTH bấm) có thể trộn `auto_value` của hai khung giờ khác nhau vào cùng một báo cáo; đoạn
+  `GiaoBanReportBed::where(...)->delete()` rồi `create()` lại không nằm trong transaction nên
+  cũng có thể mất hoặc nhân đôi dòng giường nếu chạy giữa lúc yêu cầu kia đang xóa/tạo. Mở quyền
+  cho nhiều người bấm làm tăng xác suất gặp so với trước (chỉ KHTH bấm). Ghi nhận rủi ro, không
+  thêm khóa trong đợt này.
+- **Ô kế thừa chỉ khởi tạo một lần duy nhất, nay dễ bị kích hoạt sai ngày:**
+  `if (!$report->data_fetched_at)` trong `fetchAndStore()` chỉ chạy ở lần lấy số liệu đầu tiên
+  của một báo cáo, và nó khởi tạo `manual_value` kế thừa cho mọi khoa từ báo cáo ngày gần nhất
+  trước đó. Trước đây chỉ KHTH mới tạo được báo cáo mới nên ít rủi ro bấm nhầm ngày; nay người
+  khoa tạo được báo cáo cho ngày bất kỳ (kể cả ngày không phải hôm nay), nên bấm nhầm sang ngày
+  khác sẽ đóng dấu ngày đó là "đã fetch" với dữ liệu kế thừa seed từ một ngày sai — không có cách
+  seed lại sau đó vì cờ chỉ chạy một lần. Ghi nhận rủi ro, không xử lý trong đợt này.
 - Mỗi lần bấm là một loạt truy vấn HIS toàn viện. Không thêm giới hạn tần suất trong đợt
   này; nếu thực tế bị lạm dụng thì xử lý riêng.
 

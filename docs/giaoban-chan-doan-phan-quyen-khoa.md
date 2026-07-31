@@ -13,8 +13,11 @@ Nếu thực tế khác, chạy các bước dưới đây trước khi sửa co
 Ngay dưới thanh công cụ có dòng `Chế độ: ...`.
 
 - `Chế độ: Quản trị — xem toàn viện` → tài khoản đang có quyền `giaoban-admin`. Sang Bước 2.
-- `Chế độ: Khoa — được phân công N khoa: ...` mà màn hình vẫn hiện nhiều khoa hơn N → lỗi thật,
-  sang Bước 4.
+- `Chế độ: Khoa — phân công N khoa, đang hiện M: ...` — hai con số này lấy từ hai nguồn ĐỘC LẬP
+  nhau trong JSON của `GiaoBanController::show()`: N từ `assigned_dept_ids` (nguyên bản, chưa lọc
+  gì), M từ độ dài `configs` (đã đi qua `visibleDeptConfigIds()`). N = M là bình thường. **N ≠ M**
+  mới là lỗi thật — thường do khoa được gán đã bị tắt `is_active` (M < N), hoặc lọc quyền sai chỗ
+  nào đó (M > N, hiếm gặp) — sang Bước 3 rồi Bước 4.
 
 ## Bước 2 — Kiểm tra role và permission của tài khoản
 

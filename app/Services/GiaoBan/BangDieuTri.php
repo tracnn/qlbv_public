@@ -89,6 +89,13 @@ class BangDieuTri
      * Co `dieu_tri_slide` chon COT chu khong chon o: he mot chi tieu mang nhan do bat co thi
      * cot len slide, va moi khoa khai cung nhan deu do so vao (xem giaTri). Khong khoa nao bat
      * co thi hien tat ca — neu khong, trien khai xong la slide trang cho toi khi KHTH cau hinh.
+     *
+     * Nguong "khong co nao bat -> hien tat ca" (coChiTieuBatCo) chi quet tren $khoa TRUYEN VAO
+     * ham nay, khong phai toan vien: neu sau nay co noi tieu thu truyen mot tap $configs da bi
+     * loc quyen (nhu GiaoBanController::show() dang lam voi $visibleIds), nguong nay se phu
+     * thuoc nguoi xem — hai nguoi xem hai tap khoa khac nhau co the thay bang o hai che do khac
+     * nhau (nguoi thi thay tat ca cot, nguoi thi chi thay cot duoc bat co). Hom nay vo hai vi
+     * bang_dieu_tri chi duoc man trinh chieu admin-only tieu thu (present() chan !isAdmin).
      */
     protected static function dungCot(array $khoa)
     {

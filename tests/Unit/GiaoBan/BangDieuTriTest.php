@@ -328,6 +328,27 @@ class BangDieuTriTest extends TestCase
         $this->assertSame(['A', 'B'], $nhan);
     }
 
+    /**
+     * batCo() dung !empty co y: du lieu cu tu ban ghi khac co the mang 1 hoac '1' thay vi bool.
+     * Neu ai do "don dep" thanh === true, ca test nay se do va giu lai ly do ton tai cua dong do.
+     *
+     * @test
+     */
+    public function co_dieu_tri_slide_dang_so_nguyen_hoac_chuoi_van_duoc_nhan_la_bat()
+    {
+        $b1 = BangDieuTri::dung([
+            $this->cfg(1, 'A', 1, [array_merge($this->m('bn_cu', 'BN cũ'), ['dieu_tri_slide' => 1])]),
+        ], []);
+        $b2 = BangDieuTri::dung([
+            $this->cfg(1, 'A', 1, [array_merge($this->m('bn_cu', 'BN cũ'), ['dieu_tri_slide' => '1'])]),
+        ], []);
+
+        $this->assertCount(1, $b1['cot']);
+        $this->assertSame('BN cũ', $b1['cot'][0]['nhan']);
+        $this->assertCount(1, $b2['cot']);
+        $this->assertSame('BN cũ', $b2['cot'][0]['nhan']);
+    }
+
     /** @test */
     public function chi_tieu_chuoi_bat_co_van_khong_thanh_cot()
     {
