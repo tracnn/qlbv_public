@@ -73,10 +73,25 @@ test vốn đã đỏ. Đây là lý do nhiệm vụ này đứng trước mọi
 **Tệp:**
 - Tạo: `docs/superpowers/plans/moc-nen-test-2026-08-01.txt`
 
-- [ ] **Bước 1: Chạy toàn bộ bộ test và lưu kết quả**
+> **CẢNH BÁO — đọc trước khi gõ lệnh.** `tests/Feature/EmailReceiveReportTest.php`
+> dùng trait `RefreshDatabase`. Dự án không có `.env.testing`, nên bộ test chạy
+> với `DB_CONNECTION=mysql` và `DB_DATABASE=qlbv` lấy từ `.env` — tức **cơ sở dữ
+> liệu phát triển thật**. `RefreshDatabase` gọi `migrate:fresh`, thao tác này
+> **xoá sạch mọi bảng** trong `qlbv`.
+>
+> Vì vậy mốc nền dưới đây **chỉ chạy bộ Unit**, vốn không đụng tới cơ sở dữ liệu
+> đó. Chỉ chạy bộ Feature sau khi đã sao lưu `qlbv`, hoặc sau khi tạo
+> `.env.testing` trỏ sang một cơ sở dữ liệu vứt đi. Việc đó nằm ngoài phạm vi kế
+> hoạch này — nhưng đáng làm thành một việc riêng.
+>
+> Các test Feature mà kế hoạch này thêm vào **không** dùng `RefreshDatabase`;
+> chúng chạy trên SQLite trong bộ nhớ nên an toàn, và chỉ định đích danh tệp khi
+> chạy thì không kéo theo `EmailReceiveReportTest`.
+
+- [ ] **Bước 1: Chạy bộ Unit và lưu kết quả**
 
 ```bash
-./vendor/bin/phpunit > docs/superpowers/plans/moc-nen-test-2026-08-01.txt 2>&1; tail -20 docs/superpowers/plans/moc-nen-test-2026-08-01.txt
+./vendor/bin/phpunit --testsuite Unit > docs/superpowers/plans/moc-nen-test-2026-08-01.txt 2>&1; tail -20 docs/superpowers/plans/moc-nen-test-2026-08-01.txt
 ```
 
 - [ ] **Bước 2: Ghi lại con số**
@@ -1052,15 +1067,22 @@ lịch sử của một đợt làm khác, viết lại là làm mất dấu v�
 
 Kỳ vọng: XANH cả hai tệp.
 
-- [ ] **Bước 8: Chạy toàn bộ bộ test và đối chiếu mốc nền**
+- [ ] **Bước 8: Chạy lại bộ Unit và đối chiếu mốc nền**
+
+Vẫn **chỉ** bộ Unit, vì lý do đã nêu ở cảnh báo trong Nhiệm vụ 0 — bộ Feature
+chứa `EmailReceiveReportTest` dùng `RefreshDatabase` và sẽ xoá sạch cơ sở dữ
+liệu `qlbv`.
 
 ```bash
-./vendor/bin/phpunit > /tmp/sau-khi-sua.txt 2>&1; tail -20 /tmp/sau-khi-sua.txt
+./vendor/bin/phpunit --testsuite Unit > /tmp/sau-khi-sua.txt 2>&1; tail -20 /tmp/sau-khi-sua.txt
+./vendor/bin/phpunit tests/Feature/KhoiTaoSuperAdminTest.php
 ```
 
-So dòng tổng kết với `docs/superpowers/plans/moc-nen-test-2026-08-01.txt` ghi ở
-Nhiệm vụ 0. Kỳ vọng: số lỗi và số test đỏ **không tăng**, số test tổng tăng đúng
-bằng số test mới thêm (8 + 8 + 3 = 19).
+So dòng tổng kết của lệnh đầu với
+`docs/superpowers/plans/moc-nen-test-2026-08-01.txt` ghi ở Nhiệm vụ 0. Kỳ vọng:
+số lỗi và số test đỏ **không tăng**; số test bộ Unit tăng đúng 11 (8 của Nhiệm
+vụ 1 + 3 của Nhiệm vụ 4). Lệnh thứ hai chạy riêng 8 test Feature mới, phải xanh
+toàn bộ.
 
 Nếu có test đỏ mới nằm ngoài danh sách mốc nền, dừng lại và xử lý trước khi
 commit. Không được kết luận "đã xong" khi chưa đối chiếu xong bước này.
