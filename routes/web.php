@@ -550,6 +550,13 @@ Route::group(['middleware' => ['auth', 'check.first.login']], function () {
         Route::get('qd130/export-7980a-data', 'BHYT\BHYTQd130Controller@export7980aData')
         ->name('bhyt.qd130.export-7980a-data');
 
+        // Ket qua tra cuu the BHYT: du lieu gan theo ma_lk cua ho so nen dat cung nhom
+        // quyen xml-man voi danh sach XML3176.
+        Route::get('check-hein-card/index', 'BHYT\CheckHeinCardController@index')
+        ->name('bhyt.check-hein-card.index');
+        Route::get('check-hein-card/fetch-data', 'BHYT\CheckHeinCardController@fetch')
+        ->name('bhyt.check-hein-card.fetch-data');
+
         Route::get('xml3176/index', 'BHYT\BHYTXml3176Controller@index')->name('bhyt.xml3176.index');
         Route::get('xml3176/index/fetch-data', 'BHYT\BHYTXml3176Controller@fetchData')->name('bhyt.xml3176.fetch-data');
         Route::get('xml3176/import/index', 'BHYT\BHYTXml3176Controller@importIndex')->name('bhyt.xml3176.import.index');

@@ -485,6 +485,14 @@ return [
             'checkrole'   => 'xml-man',
             'submenu' => [
                 [
+                    // Du lieu gan theo ma_lk cua ho so nen cung quyen xml-man voi cac muc
+                    // khac trong nhom; route da khai middleware checkrole:xml-man.
+                    'text'   => 'Kết quả tra cứu thẻ',
+                    'icon'   => 'id-card-o',
+                    'route'  => 'bhyt.check-hein-card.index',
+                    'active' => ['bhyt/check-hein-card*'],
+                ],
+                [
                     'text'    => 'Xml 3176',
                     'icon'    => 'archive',
                     'checkrole'   => 'xml-man',
