@@ -319,7 +319,7 @@ Kỳ vọng: `Compiled views cleared!`, không có lỗi cú pháp.
 grep -n "o-tu-thoi-diem\|o-den-thoi-diem\|cot-nut\|da-lay-luc\|capNhatNutLaySoLieu\|gioNgay" resources/views/khth/giaoban-index.blade.php
 ```
 
-Đối chiếu từng `id` xuất hiện **đúng hai lần** (một lần ở markup, một lần ở selector jQuery) — trừ `#o-tu-thoi-diem`/`#o-den-thoi-diem` nằm chung một selector nên mỗi cái hai lần, và `cot-nut` hai lần. `capNhatNutLaySoLieu` xuất hiện hai lần (định nghĩa + lời gọi), `gioNgay` hai lần, `da-lay-luc` ba lần (markup + `.done` + `.fail`).
+Đối chiếu từng `id` xuất hiện **đúng hai lần** (một lần ở markup, một lần ở selector jQuery) — trừ `#o-tu-thoi-diem`/`#o-den-thoi-diem` nằm chung một selector nên mỗi cái hai lần, và `cot-nut` hai lần. `capNhatNutLaySoLieu` xuất hiện hai lần (định nghĩa + lời gọi), `gioNgay` hai lần, `da-lay-luc` **bốn** lần: markup 1, hai nhánh trong `capNhatNutLaySoLieu` (`.empty()` khi không có thời điểm và `.html()` khi có), và `.fail` 1.
 
 Nếu số lần lệch so với mô tả trên, có bước nào đó làm sót hoặc thừa — dừng lại và báo.
 
