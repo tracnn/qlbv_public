@@ -84,7 +84,7 @@ class JobInpatient implements ShouldQueue
 
             event(new \App\Events\CheckInpatientEvent($this->index, $this->count, 
                 $this->params['hoTen'], $sothe, $this->params['ngaySinh'], 
-                $macskcb, $thoihantu, $thoihanden, $ngay, $this->tenkhp, config('__tech.trangthai_noitru')[$this->act], config('__tech.duoc_doituong')[$this->madoituong], config('__tech.insurance_error_code')[$result_check['maKetQua']], config('__tech.check_insurance_code')[$result_insurance['maKetQua']], $this->channel));
+                $macskcb, $thoihantu, $thoihanden, $ngay, $this->tenkhp, config('__tech.trangthai_noitru')[$this->act], config('__tech.duoc_doituong')[$this->madoituong], \App\Services\BHYT\NhanMaThe::traCuu($result_check['maKetQua']), \App\Services\BHYT\NhanMaThe::kiemTra($result_insurance['maKetQua']), $this->channel));
         }
     }
 

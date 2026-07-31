@@ -301,8 +301,8 @@
                             </td>
                             <td style="padding: 5px;">{{$value->department_name}}
                             </td>
-                            <td style="padding: 5px;">{{config('__tech.check_insurance_code')[$value->check_code] . ' - '
-						                . config('__tech.insurance_error_code')[$value->search_code]}} <span style="color: #e03e2d;">({{($value->number != $value->new_number) ? 'Thẻ cũ ' .$value->number .' Thẻ mới ' .$value->new_number : 'Thẻ cũ giống thẻ mới'}})</span>
+                            <td style="padding: 5px;">{{\App\Services\BHYT\NhanMaThe::kiemTra($value->check_code) . ' - '
+						                . \App\Services\BHYT\NhanMaThe::traCuu($value->search_code)}} <span style="color: #e03e2d;">({{($value->number != $value->new_number) ? 'Thẻ cũ ' .$value->number .' Thẻ mới ' .$value->new_number : 'Thẻ cũ giống thẻ mới'}})</span>
                             </td>
                           </tr>
                         @endforeach

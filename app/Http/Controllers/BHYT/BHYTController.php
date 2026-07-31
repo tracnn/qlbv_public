@@ -373,7 +373,7 @@ class BHYTController extends Controller
                 date_format(date_create($value->NGAY_SINH),'d/m/Y'),
             $login_result['APIKey']['access_token'],$login_result['APIKey']['id_token']);
 
-            echo '<td>' . config('__tech.insurance_error_code')[$result_insurance['maKetQua']] .'</td>';
+            echo '<td>' . \App\Services\BHYT\NhanMaThe::traCuu($result_insurance['maKetQua']) .'</td>';
 
             $params_lskcb = array('maThe' => explode(";", $value->MA_THE)[0], 
                 'hoTen' => $value->HO_TEN, 
@@ -385,7 +385,7 @@ class BHYTController extends Controller
             $result_check = BHYT::lichSuKCB($params_lskcb,
                 $login_result['APIKey']['access_token'],$login_result['APIKey']['id_token']);
 
-            echo '<td>' . config('__tech.check_insurance_code')[$result_check['maKetQua']] .'</td>';
+            echo '<td>' . \App\Services\BHYT\NhanMaThe::kiemTra($result_check['maKetQua']) .'</td>';
             echo '</tr>';
         }
         echo '</tbody></table>

@@ -42,6 +42,48 @@ class NhanMaTheTest extends TestCase
         $this->assertSame('', NhanMaThe::nhan('   ', $this->bang()));
     }
 
+    /**
+     * Quet toan bo ma nguon: khong noi nao duoc truy cap thang bang nhan bang [] nua.
+     *
+     * Da do thuc te: config('__tech.insurance_error_code')['997'] nem
+     * "Undefined offset: 997" - trang trang o man chi tiet, va o mail template thi job hang
+     * doi chet lang le. Co 11 tep tung viet kieu do.
+     *
+     * Ngoai le duy nhat: app/BHYTKiemTraHoSo.php da boc isset() nen an toan.
+     */
+    /** @test */
+    public function khong_noi_nao_con_truy_cap_bang_nhan_khong_phong_ve()
+    {
+        $mau = "~config\('__tech\.(insurance_error_code|check_insurance_code)'\)\s*\[~";
+        $viPham = [];
+
+        foreach ([base_path('resources/views'), base_path('app')] as $goc) {
+            $duyet = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($goc));
+
+            foreach ($duyet as $tep) {
+                if ($tep->isDir() || substr($tep->getFilename(), -4) !== '.php') {
+                    continue;
+                }
+
+                $duong = $tep->getPathname();
+
+                // Da boc isset(), an toan. NhanMaThe.php chi nhac chuoi do trong chu thich.
+                if (strpos($duong, 'BHYTKiemTraHoSo.php') !== false
+                    || strpos($duong, 'NhanMaThe.php') !== false) {
+                    continue;
+                }
+
+                if (preg_match($mau, file_get_contents($duong))) {
+                    $viPham[] = str_replace(base_path() . DIRECTORY_SEPARATOR, '', $duong);
+                }
+            }
+        }
+
+        $this->assertSame([], $viPham,
+            "Truy cap bang nhan khong phong ve - ma la se nem Undefined offset:\n  "
+            . implode("\n  ", $viPham));
+    }
+
     /** @test */
     public function hai_ham_tien_ich_doc_dung_bang_cau_hinh()
     {

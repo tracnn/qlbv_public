@@ -87,9 +87,9 @@
             <td>{{ optional($error->xml1)->ma_the }}</td>
             <td>
               @if($error->ma_tracuu != '000')
-                {{ config('__tech.insurance_error_code')[$error->ma_tracuu] }}
+                {{ \App\Services\BHYT\NhanMaThe::traCuu($error->ma_tracuu) }}
               @elseif($error->ma_kiemtra != '00')
-                {{ config('__tech.check_insurance_code')[$error->ma_kiemtra] }}
+                {{ \App\Services\BHYT\NhanMaThe::kiemTra($error->ma_kiemtra) }}
               @endif
             </td>
             <td>{{ $error->ghi_chu }}</td>

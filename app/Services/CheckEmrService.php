@@ -352,13 +352,13 @@ class CheckEmrService
             
             // Kiểm tra ma_kiemtra thuộc config('qd130xml.hein_card_invalid.check_code')
             if (in_array($theBhyt->ma_kiemtra, config('qd130xml.hein_card_invalid.check_code'))) {
-                $msgBhyt .= ' ' . config('__tech.check_insurance_code')[$theBhyt->ma_kiemtra];
+                $msgBhyt .= ' ' . \App\Services\BHYT\NhanMaThe::kiemTra($theBhyt->ma_kiemtra);
             }
             
             // Kiểm tra ma_tracuu thuộc config('qd130xml.hein_card_invalid.result_code')
             if (in_array($theBhyt->ma_tracuu, config('qd130xml.hein_card_invalid.result_code'))) {
                 // Nối thêm thông báo ma_tracuu nếu có
-                $msgBhyt .= ' ' . config('__tech.insurance_error_code')[$theBhyt->ma_tracuu];
+                $msgBhyt .= ' ' . \App\Services\BHYT\NhanMaThe::traCuu($theBhyt->ma_tracuu);
             }
             
             // Nếu có lỗi, hiển thị thông báo lỗi

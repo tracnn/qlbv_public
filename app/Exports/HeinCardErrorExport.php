@@ -91,8 +91,8 @@ class HeinCardErrorExport implements FromQuery, WithHeadings, ShouldAutoSize, Wi
         return [
             $this->rowNumber,
             $data->ma_lk,
-            config('__tech.check_insurance_code')[$data->ma_kiemtra],
-            config('__tech.insurance_error_code')[$data->ma_ketqua],
+            \App\Services\BHYT\NhanMaThe::kiemTra($data->ma_kiemtra),
+            \App\Services\BHYT\NhanMaThe::traCuu($data->ma_ketqua),
             $data->ghi_chu,
             $data->ma_the,
         ];
