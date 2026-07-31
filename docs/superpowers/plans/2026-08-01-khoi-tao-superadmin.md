@@ -41,7 +41,9 @@ Mọi nhiệm vụ đều ngầm chịu các ràng buộc sau.
   trặc giữa Mockery và phương thức khai báo kiểu trả về, mà lớp này khai báo
   `: bool`, `: Role`, `: void`. Test chạy thật vào cơ sở dữ liệu trong bộ nhớ.
 - **Không dùng trait `RefreshDatabase`.** `.env` trỏ `DB_DATABASE=qlbv` là cơ sở
-  dữ liệu phát triển thật; `RefreshDatabase` sẽ xoá sạch nó. Dùng trait
+  dữ liệu phát triển thật, và `phpunit.xml` không ghi đè biến `DB_*`;
+  `RefreshDatabase` gọi `migrate:fresh` nên sẽ xoá sạch nó. Kho hiện không còn
+  test nào dùng trait này — đừng là người đưa nó trở lại. Dùng trait
   `Tests\Support\DungBangPhanQuyenSqlite` tạo ở Nhiệm vụ 1.
 
 ## Bản đồ tệp
@@ -73,20 +75,25 @@ test vốn đã đỏ. Đây là lý do nhiệm vụ này đứng trước mọi
 **Tệp:**
 - Tạo: `docs/superpowers/plans/moc-nen-test-2026-08-01.txt`
 
-> **CẢNH BÁO — đọc trước khi gõ lệnh.** `tests/Feature/EmailReceiveReportTest.php`
-> dùng trait `RefreshDatabase`. Dự án không có `.env.testing`, nên bộ test chạy
-> với `DB_CONNECTION=mysql` và `DB_DATABASE=qlbv` lấy từ `.env` — tức **cơ sở dữ
-> liệu phát triển thật**. `RefreshDatabase` gọi `migrate:fresh`, thao tác này
-> **xoá sạch mọi bảng** trong `qlbv`.
+> **Bối cảnh — mối nguy đã gỡ, nguyên nhân gốc thì chưa.** Trước ngày
+> 2026-08-01, `tests/Feature/EmailReceiveReportTest.php` dùng trait
+> `RefreshDatabase`; trait đó gọi `migrate:fresh`, tức **xoá sạch mọi bảng** của
+> cơ sở dữ liệu đang cấu hình. Sáu test chạm cơ sở dữ liệu trong tệp đó đã bị
+> xoá, nên hiện **không còn test nào** dùng `RefreshDatabase`.
 >
-> Vì vậy mốc nền dưới đây **chỉ chạy bộ Unit**, vốn không đụng tới cơ sở dữ liệu
-> đó. Chỉ chạy bộ Feature sau khi đã sao lưu `qlbv`, hoặc sau khi tạo
-> `.env.testing` trỏ sang một cơ sở dữ liệu vứt đi. Việc đó nằm ngoài phạm vi kế
-> hoạch này — nhưng đáng làm thành một việc riêng.
+> Nguyên nhân gốc vẫn còn: dự án không có `.env.testing`, và `phpunit.xml` không
+> ghi đè biến `DB_*`. Bộ test vẫn chạy với `DB_CONNECTION=mysql`,
+> `DB_DATABASE=qlbv` lấy từ `.env` — cơ sở dữ liệu phát triển thật. Nghĩa là bất
+> kỳ ai thêm `RefreshDatabase` vào một test mới sẽ dựng lại đúng quả mìn đó.
+> **Không thêm `RefreshDatabase` vào bất kỳ test nào của kế hoạch này.**
 >
-> Các test Feature mà kế hoạch này thêm vào **không** dùng `RefreshDatabase`;
-> chúng chạy trên SQLite trong bộ nhớ nên an toàn, và chỉ định đích danh tệp khi
-> chạy thì không kéo theo `EmailReceiveReportTest`.
+> Mốc nền dưới đây vẫn **chỉ chạy bộ Unit**, nhưng nay vì lý do khác: chạy suite
+> đầy đủ gây nhiễm chéo trạng thái khiến nhiều lớp `Tests\Unit\*` đỏ oan (Feature
+> test boot ứng dụng và mở kết nối Oracle rồi để lại trạng thái). Gate thực tế
+> của kho này là `--testsuite Unit`.
+>
+> Các test Feature mà kế hoạch này thêm vào chạy trên SQLite trong bộ nhớ nên an
+> toàn, và được chạy bằng cách chỉ định đích danh tệp.
 
 - [ ] **Bước 1: Chạy bộ Unit và lưu kết quả**
 
@@ -1069,9 +1076,8 @@ Kỳ vọng: XANH cả hai tệp.
 
 - [ ] **Bước 8: Chạy lại bộ Unit và đối chiếu mốc nền**
 
-Vẫn **chỉ** bộ Unit, vì lý do đã nêu ở cảnh báo trong Nhiệm vụ 0 — bộ Feature
-chứa `EmailReceiveReportTest` dùng `RefreshDatabase` và sẽ xoá sạch cơ sở dữ
-liệu `qlbv`.
+Vẫn **chỉ** bộ Unit, vì lý do đã nêu ở đầu Nhiệm vụ 0 — chạy suite đầy đủ gây
+nhiễm chéo trạng thái làm nhiều lớp `Tests\Unit\*` đỏ oan.
 
 ```bash
 ./vendor/bin/phpunit --testsuite Unit > /tmp/sau-khi-sua.txt 2>&1; tail -20 /tmp/sau-khi-sua.txt
