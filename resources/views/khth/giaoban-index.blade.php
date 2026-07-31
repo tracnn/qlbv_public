@@ -21,14 +21,14 @@
            da luu duoc xu ly o JS: loadReport() dien san gia tri report.from_time/to_time khi
            bao cao da ton tai, thay vi luon reset ve mac dinh (xem dienKhungGioDaLuu()). --}}
       @if($canFetch)
-      <div class="col-md-2"><label>Từ thời điểm</label>
+      <div class="col-md-2" id="o-tu-thoi-diem"><label>Từ thời điểm</label>
         <input type="datetime-local" id="from_time" class="form-control"></div>
-      <div class="col-md-2"><label>Đến thời điểm</label>
+      <div class="col-md-2" id="o-den-thoi-diem"><label>Đến thời điểm</label>
         <input type="datetime-local" id="to_time" class="form-control"></div>
       @endif
       {{-- Do rong bam theo canFetch: hai o gio chiem cho khi nguoi dung bam duoc "Lay so lieu",
            giu tong du 12 theo luoi Bootstrap. --}}
-      <div class="col-md-{{ $canFetch ? 6 : 10 }}" style="padding-top:24px">
+      <div id="cot-nut" class="col-md-{{ $canFetch ? 6 : 10 }}" style="padding-top:24px">
         <button id="btn-view" class="btn btn-default"><i class="fa fa-refresh"></i> Làm mới</button>
         {{-- Trình chiếu và Xuất Excel đều là số liệu toàn viện -> chỉ admin. Để ngoài thì
              người khoa vẫn thấy nút rồi bấm vào ăn 403. --}}
@@ -45,6 +45,9 @@
         <button id="btn-unlock" class="btn btn-warning" style="display:none"><i class="fa fa-unlock"></i> Mở khóa</button>
         <a id="btn-export" class="btn btn-success"><i class="fa fa-file-excel-o"></i> Xuất Excel</a>
         @endif
+      </div>
+      <div class="col-md-12" style="padding-top:12px">
+        <small id="da-lay-luc" class="text-muted"></small>
       </div>
       <div class="col-md-12" style="padding-top:12px">
         <small id="che-do" class="text-muted"></small>
@@ -109,6 +112,13 @@ function toDtLocal(ymdHis) {
   return String(ymdHis || '').slice(0, 16).replace(' ', 'T');
 }
 
+/** '2026-07-31 07:12:00' -> '07:12 ngày 31/07/2026'. Chuoi rong hay sai dinh dang -> rong. */
+function gioNgay(ymdHis) {
+  var s = String(ymdHis || '');
+  if (s.length < 16) return '';
+  return s.slice(11, 16) + ' ngày ' + s.slice(8, 10) + '/' + s.slice(5, 7) + '/' + s.slice(0, 4);
+}
+
 /**
  * Dien san khung gio DA LUU cua bao cao vao hai o, thay vi de defaultTimes() luon thang o
  * mac dinh (07:00 hom truoc -> 07:00 hom nay) de nguyen. Day la phan xu ly rui ro "de nham
@@ -123,6 +133,32 @@ function dienKhungGioDaLuu(res) {
   if (!res.report) return; // ngay chua co bao cao -> giu nguyen khung mac dinh cua defaultTimes()
   if (res.report.from_time) $('#from_time').val(toDtLocal(res.report.from_time));
   if (res.report.to_time) $('#to_time').val(toDtLocal(res.report.to_time));
+}
+
+/**
+ * Hien/an nut "Lay so lieu" cung hai o khung gio, va dong "da lay luc nao".
+ *
+ * Khong quyet dinh duoc o Blade: $canFetch render MOT LAN luc mo trang, con dieu kien nay doi
+ * theo NGAY dang xem ma nguoi dung chuyen ngay bang JS, khong tai lai trang. Blade chi quyet
+ * dinh co dua cac phan tu nay vao DOM hay khong (quyen co so); day quyet dinh hien hay an.
+ *
+ * Chan that nam o GiaoBanController::fetchData(); day chi la trai nghiem.
+ */
+function capNhatNutLaySoLieu(res) {
+  var duocLay = !!res.can_fetch;
+
+  // Nguoi khong co quyen co so khong co cac phan tu nay trong DOM; .toggle() tren tap rong
+  // cua jQuery vo hai nen khong can guard rieng.
+  $('#btn-fetch').toggle(duocLay);
+  $('#o-tu-thoi-diem, #o-den-thoi-diem').toggle(duocLay);
+  // Hai o gio an di thi cot nut phai gian ra, neu khong luoi Bootstrap de lai mot khoang trong.
+  $('#cot-nut').toggleClass('col-md-6', duocLay).toggleClass('col-md-10', !duocLay);
+
+  var luc = gioNgay(res.report && res.report.data_fetched_at);
+  if (!luc) { $('#da-lay-luc').empty(); return; }
+  // Hien cho CA admin: "lay luc nao" tu no huu ich, khong phai chi de giai thich viec bi chan.
+  $('#da-lay-luc').html('<i class="fa fa-clock-o"></i> Số liệu đã lấy lúc ' + esc(luc) +
+    (res.is_admin ? '' : ' — cần lấy lại thì liên hệ phòng KHTH.'));
 }
 
 function canEditDept(deptId) {
@@ -150,6 +186,7 @@ function loadReport(onDone) {
       // Phai sau khi co res: defaultTimes() da chay truoc do (luc doi ngay), neu dien khung
       // luu san o day thi moi la gia tri sau cung con lai tren man, khong bi mac dinh de len.
       dienKhungGioDaLuu(res);
+      capNhatNutLaySoLieu(res);
       renderCheDo(res);
       render(res);
     })
@@ -158,6 +195,7 @@ function loadReport(onDone) {
       // Doi ngay ma request hong thi khong duoc de dong "Che do" cua lan tai truoc dung
       // nguyen tren man — voi cong cu chan doan thi hien SAI te hon khong hien.
       $('#che-do').empty();
+      $('#da-lay-luc').empty();
     })
     .always(function () {
       $('#report-body').css('opacity', 1);
