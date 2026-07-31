@@ -330,4 +330,45 @@ class MetricValidatorTest extends TestCase
 
         $this->assertEquals('Phải có ít nhất một chỉ tiêu.', $body['message']);
     }
+
+    // ===== Co chon cot cho slide Hoat dong dieu tri =====
+
+    /** @test */
+    public function bat_co_hien_o_slide_dieu_tri_la_hop_le()
+    {
+        $m = [['code' => 'bn_cu', 'name' => 'BN cũ', 'type' => 'census_from', 'dieu_tri_slide' => true]];
+
+        $this->assertSame([], MetricValidator::validate($m, 'dieu_tri'));
+    }
+
+    /** @test */
+    public function co_slide_dieu_tri_phai_la_true_false()
+    {
+        $m = [['code' => 'bn_cu', 'name' => 'BN cũ', 'type' => 'census_from', 'dieu_tri_slide' => 'co']];
+        $loi = MetricValidator::validate($m, 'dieu_tri');
+
+        $this->assertCount(1, $loi);
+        $this->assertEquals('dieu_tri_slide', $loi[0]['field']);
+    }
+
+    /** @test */
+    public function chi_tieu_chuoi_khong_bat_co_slide_dieu_tri_duoc()
+    {
+        // Bang chi cong duoc so -> chan ngay tu cau hinh, dung de slide am tham bo qua.
+        $m = [['code' => 'ds_mo', 'name' => 'Danh sách mổ', 'type' => 'manual',
+               'input' => ['value_type' => 'text'], 'dieu_tri_slide' => true]];
+        $loi = MetricValidator::validate($m, 'dieu_tri');
+
+        $this->assertCount(1, $loi);
+        $this->assertEquals('dieu_tri_slide', $loi[0]['field']);
+    }
+
+    /** @test */
+    public function chi_tieu_nhap_tay_kieu_so_bat_co_slide_dieu_tri_duoc()
+    {
+        $m = [['code' => 'de_mo', 'name' => 'Đẻ mổ', 'type' => 'manual',
+               'input' => ['value_type' => 'int'], 'dieu_tri_slide' => true]];
+
+        $this->assertSame([], MetricValidator::validate($m, 'dieu_tri'));
+    }
 }

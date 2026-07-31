@@ -92,7 +92,7 @@ class MetricValidator
     }
 
     /**
-     * Kiem hai khoa dung chung cho moi loai chi tieu: overview / overview_label.
+     * Kiem cac khoa dung chung cho moi loai chi tieu: overview / overview_label / dieu_tri_slide.
      * Xem MetricSchema::COMMON_FIELDS.
      */
     protected static function kiemKhoaDungChung($i, array $m, $type)
@@ -122,6 +122,22 @@ class MetricValidator
             } elseif (!$batOverview) {
                 $loi[] = self::loi($i, 'overview_label',
                     'Đã khai nhãn gộp thì phải bật "Hiện ở màn Tổng quan", nếu không nhãn này không dùng vào đâu.');
+            }
+        }
+
+        // Co chon cot slide Hoat dong dieu tri. Cung luat voi overview: bang chi cong duoc so.
+        $batSlide = isset($m['dieu_tri_slide']) && $m['dieu_tri_slide'] !== false && $m['dieu_tri_slide'] !== '';
+
+        if (isset($m['dieu_tri_slide']) && !is_bool($m['dieu_tri_slide'])) {
+            $loi[] = self::loi($i, 'dieu_tri_slide', "'dieu_tri_slide' phải là true/false.");
+            $batSlide = false;
+        }
+
+        if ($batSlide && $type === 'manual') {
+            $inSlide = isset($m['input']) && is_array($m['input']) ? $m['input'] : [];
+            if (isset($inSlide['value_type']) && $inSlide['value_type'] === 'text') {
+                $loi[] = self::loi($i, 'dieu_tri_slide',
+                    'Chỉ tiêu kiểu chuỗi không hiện được ở slide Hoạt động điều trị (bảng chỉ cộng được số).');
             }
         }
 

@@ -102,11 +102,18 @@ class MetricSchema
      * Man Tong quan tren trinh chieu gom theo NHAN chu khong theo MA: cac chi tieu o nhieu khoa
      * cung `overview_label` se cong chung thanh mot the. Nho vay man do khong bao gio trong lai
      * khi KHTH doi ma chi tieu — day la ly do ton tai cua hai khoa nay.
+     *
+     * `dieu_tri_slide` chon cot cho slide Hoat dong dieu tri. Cung theo NHAN: he mot chi tieu
+     * mang nhan do bat co thi cot len slide, va moi khoa khai cung nhan deu do so vao — KHTH
+     * chi phai bat mot noi thay vi nho bat o tung khoa.
      */
     const COMMON_FIELDS = [
         'overview'       => ['widget' => 'bool', 'label' => 'Hiện ở màn Tổng quan'],
         'overview_label' => ['widget' => 'text', 'label' => 'Nhãn gộp trên Tổng quan', 'max' => 60,
                              'show_if' => ['overview' => [true]]],
+        // Chon cot cho slide Hoat dong dieu tri. Khong bat co nao thi slide hien TAT CA cot
+        // nhu truoc — xem BangDieuTri::dungCot().
+        'dieu_tri_slide' => ['widget' => 'bool', 'label' => 'Hiện ở slide Hoạt động điều trị'],
     ];
 
     /** Cac type khong can khoa HIS de tinh duoc. */

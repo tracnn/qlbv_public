@@ -92,11 +92,12 @@ class MetricSchemaTest extends TestCase
     {
         $c = MetricSchema::COMMON_FIELDS;
 
-        $this->assertEquals(['overview', 'overview_label'], array_keys($c));
+        $this->assertEquals(['overview', 'overview_label', 'dieu_tri_slide'], array_keys($c));
         $this->assertEquals('bool', $c['overview']['widget']);
         // O nhan chi hien sau khi tich — dung lai co che show_if
         $this->assertEquals(['overview' => [true]], $c['overview_label']['show_if']);
         $this->assertEquals(60, $c['overview_label']['max']);
+        $this->assertEquals('bool', $c['dieu_tri_slide']['widget']);
     }
 
     /** @test */
