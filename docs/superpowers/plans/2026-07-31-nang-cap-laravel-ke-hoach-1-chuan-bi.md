@@ -16,8 +16,14 @@ Mọi task đều phải tuân thủ, không cần nhắc lại trong từng tas
 
 - **Không đổi schema DB đang dùng.** Không chạy `php artisan migrate` lên DB production trong toàn bộ kế hoạch này.
 - **Không sửa logic nghiệp vụ.** Kế hoạch này chỉ xoá mã chết, thêm test, thêm hạ tầng. Bất kỳ thay đổi hành vi nào là lỗi kế hoạch.
-- **Container/test không được trỏ vào MySQL `qlbv` production** — dùng bản sao. Oracle HIS kết nối bằng tài khoản **chỉ đọc**.
+- **Máy thực thi kế hoạch này CHÍNH LÀ máy production** (XAMPP + nssm queue worker đang phục vụ người dùng thật). Mọi thao tác đều diễn ra cạnh hệ thống đang chạy. Không dừng, không khởi động lại, không sửa cấu hình XAMPP hay dịch vụ nssm nào.
+- **Không có bản sao DB. Mọi thứ chạy trên DB production, và chỉ được ĐỌC.**
+  - MySQL `qlbv`: chỉ `SELECT`. Cấm `INSERT`/`UPDATE`/`DELETE`/`TRUNCATE`/`ALTER`/`DROP`, cấm `php artisan migrate` dưới mọi hình thức.
+  - Oracle HIS: dùng các tài khoản sẵn có trong `config/database.php` (đầy đủ quyền — **không có tài khoản chỉ đọc**), nên kỷ luật là hàng rào duy nhất: **chỉ được chạy câu lệnh `SELECT`**. Mọi câu lệnh khác là vi phạm nghiêm trọng.
+  - Nếu một bước nào đó bắt buộc phải ghi để hoàn thành, **dừng lại và báo cáo** thay vì tự ý ghi.
+- **Container `queue` và `scheduler` không được tranh việc với nssm worker đang chạy thật.** Trong kế hoạch này chúng chỉ được chạy trên **Redis database index riêng (15)** để chứng minh container khởi động và kết nối được; việc thực sự tiếp quản hàng đợi và lịch tác vụ thuộc Kế hoạch 4 (cắt chuyển).
 - **Tích hợp ngoài chạy chế độ chặn gửi** (BHXH, cổng Điện Biên, Trục dữ liệu, ký số, SMS): không phát sinh lời gọi thật ra ngoài trong test.
+- **Docker dùng cổng 8080**, không đụng cổng 80 của XAMPP.
 - **Nhánh làm việc:** `upgrade/laravel-13`. Tạo từ `main` ở Task 1. Không commit thẳng lên `main`.
 - **Ngôn ngữ:** thông điệp commit và tài liệu viết tiếng Việt không dấu cho commit message, có dấu cho tài liệu — theo đúng lệ hiện có của repo.
 - **Chạy test:** `php vendor/bin/phpunit` (PHP 7.4 của XAMPP). Không dùng `php artisan test` (Laravel 5.5 không có lệnh này).
@@ -678,6 +684,31 @@ php vendor/bin/phpunit --filter SmokeAllRoutesTest
 ```
 
 Kỳ vọng: FAIL với thông điệp `Chua co chuan nen. Chay lai voi SMOKE_WRITE_BASELINE=1 truoc.` — chứng tỏ test chạy được và cơ chế chuẩn nền hoạt động.
+
+- [ ] **Bước 2b: CỔNG AN TOÀN — trình danh sách route để chủ dự án duyệt trước khi gọi thật**
+
+Máy này là máy production và không có bản sao DB, nên **tuyệt đối không được gọi 400+ route khi chưa biết route nào có tác dụng phụ**. Sinh danh sách trước, **không gọi**:
+
+```bash
+php -r '
+require "vendor/autoload.php";
+$app = require "bootstrap/app.php";
+$app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+$ds = [];
+foreach (app("router")->getRoutes() as $r) {
+    if (!in_array("GET", $r->methods(), true)) continue;
+    if (strpos($r->uri(), "{") !== false) continue;
+    $ds[] = $r->uri() . "  =>  " . (is_string($r->getActionName()) ? $r->getActionName() : "Closure");
+}
+sort($ds);
+file_put_contents("route-get-can-duyet.txt", implode(PHP_EOL, $ds) . PHP_EOL);
+echo count($ds) . " route ghi vao route-get-can-duyet.txt" . PHP_EOL;
+'
+```
+
+Phân loại thành 3 nhóm và ghi vào `route-get-can-duyet.txt`: **(A) chắc chắn chỉ đọc**, **(B) nghi ngờ có tác dụng phụ** (tên chứa `scan`, `import`, `send`, `sync`, `push`, `run`, `check`, `update`, `create`, `delete`, `job`, `queue`, hoặc controller gọi tới service tích hợp ngoài), **(C) không xác định được nếu không đọc mã**.
+
+Mở từng controller của nhóm B và C để xác nhận. **Dừng lại và trình danh sách cho chủ dự án duyệt.** Chỉ sau khi được duyệt mới bổ sung các route bị loại trừ vào biểu thức `preg_match` trong test, rồi mới sang Bước 3.
 
 - [ ] **Bước 3: Sinh chuẩn nền**
 
@@ -1540,6 +1571,8 @@ git commit -m "build: viet lai docker-compose voi service queue va scheduler, bo
 
 **Đây là hạng mục dễ bỏ sót nhất của cả dự án.** Danh sách tác vụ định kỳ hiện **chỉ tồn tại trên máy production**, không có trong git — `Console\Kernel::schedule()` đang rỗng.
 
+Máy đang làm việc **chính là máy production**, và chủ dự án cho biết phần lớn chạy bằng **nssm** chứ không phải Task Scheduler. Vậy phải liệt kê **cả hai nguồn**: dịch vụ nssm và Windows Task Scheduler.
+
 **Files:**
 - Tạo: `docs/superpowers/notes/2026-07-31-tac-vu-task-scheduler.md`
 - Sửa: `app/Console/Kernel.php`
@@ -1547,7 +1580,21 @@ git commit -m "build: viet lai docker-compose voi service queue va scheduler, bo
 **Interfaces:**
 - Produces: `Console\Kernel::schedule()` chứa đầy đủ tác vụ; container `scheduler` (Task 12) chạy được chúng
 
-- [ ] **Bước 1: Xuất danh sách tác vụ từ máy production**
+- [ ] **Bước 0: Liệt kê dịch vụ nssm — nguồn chính**
+
+```bash
+Get-CimInstance Win32_Service | Where-Object { $_.PathName -match "nssm|artisan|php" } | Select-Object Name, State, StartMode, PathName | Format-List
+```
+
+Với mỗi dịch vụ tìm được, xem tham số đầy đủ nssm đã cấu hình:
+
+```bash
+Get-ChildItem "HKLM:\SYSTEM\CurrentControlSet\Services" | Where-Object { $_.PSChildName -match "qlbv|laravel|queue|schedule" } | ForEach-Object { $p = Get-ItemProperty "$($_.PSPath)\Parameters" -ErrorAction SilentlyContinue; [PSCustomObject]@{ DichVu = $_.PSChildName; Ung = $p.Application; ThamSo = $p.AppParameters; ThuMuc = $p.AppDirectory } } | Format-List
+```
+
+Ghi lại toàn bộ. Phân biệt rõ: dịch vụ nào là **queue worker** (chạy liên tục — thuộc Task 12, không đưa vào `schedule()`), dịch vụ nào là **tác vụ định kỳ** (thuộc Task 13).
+
+- [ ] **Bước 1: Xuất danh sách tác vụ từ Task Scheduler — nguồn phụ**
 
 Chạy trên **máy Windows production** (PowerShell, quyền quản trị):
 
@@ -1718,15 +1765,33 @@ docker compose exec app php vendor/bin/phpunit --filter SmokeAllRoutesTest
 
 Kỳ vọng: PASS. Đây là bằng chứng chính: bản 5.5 chạy trong Docker cho kết quả giống trên XAMPP.
 
-- [ ] **Bước 9: Xác nhận queue và scheduler sống**
+- [ ] **Bước 9: Xác nhận queue và scheduler sống — TRÊN REDIS RIÊNG**
+
+nssm queue worker của production đang chạy trên chính máy này. Nếu container `queue` nối vào cùng hàng đợi, hai worker sẽ tranh job thật và xử lý trùng. Vì vậy trước khi khởi động, đặt trong `.env.docker.local`:
+
+```
+REDIS_DB=15
+REDIS_QUEUE=docker-thu-nghiem
+```
+
+Kiểm chứng container không hề thấy job thật:
 
 ```bash
+docker compose exec app php artisan tinker --execute="echo 'So job trong hang doi thu nghiem: ' . Redis::connection()->llen('queues:docker-thu-nghiem') . PHP_EOL;"
 docker compose logs queue --tail 20
 docker compose logs scheduler --tail 20
 docker compose exec app cat storage/logs/scheduler.log | tail -20
 ```
 
-Kỳ vọng: queue worker đang lắng nghe, scheduler ghi log mỗi phút không lỗi.
+Kỳ vọng: hàng đợi thử nghiệm **rỗng** (chứng tỏ không đụng hàng đợi thật), queue worker đang lắng nghe không lỗi, scheduler ghi log mỗi phút không lỗi.
+
+**Nếu log scheduler cho thấy nó đã thực sự chạy một tác vụ nghiệp vụ** (không chỉ ghi "No scheduled commands are ready to run"), dừng container scheduler ngay và báo cáo — nghĩa là lịch ở Task 13 đang chạy song song với Task Scheduler/nssm thật.
+
+```bash
+docker compose stop scheduler queue
+```
+
+Việc để queue và scheduler thật sự tiếp quản thuộc Kế hoạch 4.
 
 - [ ] **Bước 10: Ghi biên bản nghiệm thu Pha 3**
 
