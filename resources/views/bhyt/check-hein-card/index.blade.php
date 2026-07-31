@@ -33,6 +33,11 @@
         <input type="text" id="tim" class="form-control" placeholder="mã hồ sơ, số thẻ, họ tên...">
       </div>
     </div>
+    <div class="row" style="margin-top:10px">
+      <div class="col-md-12">
+        <a id="btn-xuat" class="btn btn-success"><i class="fa fa-file-excel-o"></i> Xuất Excel</a>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -109,12 +114,20 @@
         ['updated_at', 'Thời gian tra cứu']
     ];
 
+    // MOT nguon tham so cho ca DataTables lan nut xuat: neu tach doi thi them mot bo loc ma
+    // quen ben kia se lam tep xuat khac han man hinh.
+    function thamSoLoc() {
+        return {
+            tu_ngay: $('#tu_ngay').val(),
+            den_ngay: $('#den_ngay').val(),
+            trang_thai: $('#trang_thai').val(),
+            ma_cskcb: $('#ma_cskcb').val(),
+            tim: $('#tim').val()
+        };
+    }
+
     function thamSo(d) {
-        d.tu_ngay = $('#tu_ngay').val();
-        d.den_ngay = $('#den_ngay').val();
-        d.trang_thai = $('#trang_thai').val();
-        d.ma_cskcb = $('#ma_cskcb').val();
-        d.tim = $('#tim').val();
+        $.extend(d, thamSoLoc());
     }
 
     function fetchData() {
@@ -161,6 +174,11 @@
 
         $('#tu_ngay, #den_ngay, #trang_thai, #ma_cskcb').on('change', function () {
             table.ajax.reload();
+        });
+
+        // Gui DUNG bo tham so ma DataTables dang dung: tep xuat ra bang thu dang hien tren man.
+        $('#btn-xuat').on('click', function () {
+            window.location = "{{ route('bhyt.check-hein-card.export') }}?" + $.param(thamSoLoc());
         });
 
         var hen = null;
