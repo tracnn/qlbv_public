@@ -42,6 +42,9 @@
         <a id="btn-export" class="btn btn-success"><i class="fa fa-file-excel-o"></i> Xuất Excel</a>
         @endif
       </div>
+      <div class="col-md-12" style="padding-top:12px">
+        <small id="che-do" class="text-muted"></small>
+      </div>
     </div>
   </div>
 </div>
@@ -113,7 +116,7 @@ function loadReport(onDone) {
   $('#report-status').html('<i class="fa fa-spinner fa-spin"></i> đang tải...');
   $('#report-body').css('opacity', 0.5);
   $.get('{{ route('khth.giao-ban-show') }}', { date: $('#report_date').val() })
-    .done(function (res) { CURRENT = res; render(res); })
+    .done(function (res) { CURRENT = res; renderCheDo(res); render(res); })
     .fail(function () {
       $('#report-status').html('<span class="text-red"><i class="fa fa-exclamation-triangle"></i> Lỗi tải dữ liệu</span>');
     })
@@ -127,6 +130,26 @@ function esc(s) {
   return String(s === null || s === undefined ? '' : s).replace(/[&<>"']/g, function (c) {
     return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
   });
+}
+
+/**
+ * Dong trang thai quyen.
+ *
+ * Cong cu chan doan cho phan anh "da phan quyen khoa nhung van thay tat ca khoa": nhin mot cai
+ * la biet tai khoan dang o che do nao, khong phai hoi KHTH. Tra loi luon cau hoi thuong gap
+ * "sao toi khong thay khoa X".
+ *
+ * Doc tu chinh JSON ma man hinh dang ve, nen no phan anh dung cai server thuc su tra ve.
+ */
+function renderCheDo(res) {
+  var $o = $('#che-do');
+  if (res.is_admin) {
+    $o.html('<i class="fa fa-shield"></i> Chế độ: <b>Quản trị</b> — xem toàn viện');
+    return;
+  }
+  var ten = (res.configs || []).map(function (c) { return esc(c.display_name); });
+  $o.html('<i class="fa fa-user"></i> Chế độ: <b>Khoa</b> — được phân công ' + ten.length + ' khoa' +
+    (ten.length ? ': ' + ten.join(', ') : ''));
 }
 
 /**
