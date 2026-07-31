@@ -16,18 +16,19 @@
     <div class="row">
       <div class="col-md-2"><label>Ngày giao ban</label>
         <input type="date" id="report_date" class="form-control" value="{{ date('Y-m-d') }}"></div>
-      {{-- Hai mốc thời gian chỉ admin đổi được: khung giờ báo cáo là của toàn viện, người khoa
-           bấm "Lấy số liệu" luôn phải dùng đúng khung KHTH đã đặt (server chốt, xem
-           GiaoBanController::fetchData). Hiện ô cho họ chỉ gây hiểu nhầm là đổi được. --}}
-      @if($isAdmin)
+      {{-- Ai bam duoc "Lay so lieu" thi thay va sua duoc khung gio nay (xem
+           GiaoBanPermission::canFetchData) — khong con rieng cho admin. Rui ro de nham khung
+           da luu duoc xu ly o JS: loadReport() dien san gia tri report.from_time/to_time khi
+           bao cao da ton tai, thay vi luon reset ve mac dinh (xem dienKhungGioDaLuu()). --}}
+      @if($canFetch)
       <div class="col-md-2"><label>Từ thời điểm</label>
         <input type="datetime-local" id="from_time" class="form-control"></div>
       <div class="col-md-2"><label>Đến thời điểm</label>
         <input type="datetime-local" id="to_time" class="form-control"></div>
       @endif
-      {{-- Do rong bam theo isAdmin: hai o gio chi con chiem cho khi la admin (xem khoi dieu
-           kien phia tren), khong con bam theo canFetch nua. --}}
-      <div class="col-md-{{ $isAdmin ? 6 : 10 }}" style="padding-top:24px">
+      {{-- Do rong bam theo canFetch: hai o gio chiem cho khi nguoi dung bam duoc "Lay so lieu",
+           giu tong du 12 theo luoi Bootstrap. --}}
+      <div class="col-md-{{ $canFetch ? 6 : 10 }}" style="padding-top:24px">
         <button id="btn-view" class="btn btn-default"><i class="fa fa-refresh"></i> Làm mới</button>
         {{-- Trình chiếu và Xuất Excel đều là số liệu toàn viện -> chỉ admin. Để ngoài thì
              người khoa vẫn thấy nút rồi bấm vào ăn 403. --}}
@@ -91,8 +92,9 @@ var ASSIGNED = @json($assignedDeptIds);
 var CURRENT = null;
 
 function defaultTimes() {
-  // Voi nguoi khong phai admin, #from_time/#to_time khong con trong DOM (xem
-  // giaoban-index.blade.php) -> .length === 0 thi bo qua, khong goi .val() tren rong.
+  // Nguoi khong bam duoc "Lay so lieu" (CAN_FETCH false) khong co #from_time/#to_time trong
+  // DOM, nhung ham nay van duoc goi cho ho moi lan doi ngay (xem $('#report_date').on('change'))
+  // -> giu guard de khoi phai suy nghi lai moi lan doc, du .val() tren tap rong cua jQuery vo hai.
   if (!$('#from_time').length) return;
   var d = $('#report_date').val();
   var prev = new Date(new Date(d).getTime() - 86400000).toISOString().slice(0, 10);
@@ -101,6 +103,27 @@ function defaultTimes() {
 }
 
 function fmt(dtLocal) { return dtLocal.replace('T', ' ') + ':00'; }
+
+/** Chieu nguoc lai fmt(): 'Y-m-d H:i:s' server tra ve -> 'YYYY-MM-DDTHH:MM' cho input datetime-local. */
+function toDtLocal(ymdHis) {
+  return String(ymdHis || '').slice(0, 16).replace(' ', 'T');
+}
+
+/**
+ * Dien san khung gio DA LUU cua bao cao vao hai o, thay vi de defaultTimes() luon thang o
+ * mac dinh (07:00 hom truoc -> 07:00 hom nay) de nguyen. Day la phan xu ly rui ro "de nham
+ * khung gio" sau khi Y 1 chot lai cho nguoi khoa tu do sua nhu admin — xem muc Rui ro Y 1 trong
+ * docs/superpowers/specs/2026-07-31-giaoban-4-dieu-chinh-design.md.
+ *
+ * Chi goi trong luong tai du lieu (loadReport), khong goi o cho nao khac: goi nham luc nguoi
+ * dung dang go do se cuop mat gia tri ho vua sua.
+ */
+function dienKhungGioDaLuu(res) {
+  if (!$('#from_time').length) return; // nguoi khong duoc fetch khong co hai o nay
+  if (!res.report) return; // ngay chua co bao cao -> giu nguyen khung mac dinh cua defaultTimes()
+  if (res.report.from_time) $('#from_time').val(toDtLocal(res.report.from_time));
+  if (res.report.to_time) $('#to_time').val(toDtLocal(res.report.to_time));
+}
 
 function canEditDept(deptId) {
   if (CURRENT && CURRENT.report && CURRENT.report.status === 'final') return false;
@@ -122,7 +145,14 @@ function loadReport(onDone) {
   $('#report-status').html('<i class="fa fa-spinner fa-spin"></i> đang tải...');
   $('#report-body').css('opacity', 0.5);
   $.get('{{ route('khth.giao-ban-show') }}', { date: $('#report_date').val() })
-    .done(function (res) { CURRENT = res; renderCheDo(res); render(res); })
+    .done(function (res) {
+      CURRENT = res;
+      // Phai sau khi co res: defaultTimes() da chay truoc do (luc doi ngay), neu dien khung
+      // luu san o day thi moi la gia tri sau cung con lai tren man, khong bi mac dinh de len.
+      dienKhungGioDaLuu(res);
+      renderCheDo(res);
+      render(res);
+    })
     .fail(function () {
       $('#report-status').html('<span class="text-red"><i class="fa fa-exclamation-triangle"></i> Lỗi tải dữ liệu</span>');
       // Doi ngay ma request hong thi khong duoc de dong "Che do" cua lan tai truoc dung
@@ -366,12 +396,12 @@ $(function () {
   $('#btn-fetch').on('click', function () {
     var $b = $(this);
     setLoading($b, true, 'Đang lấy số liệu...');
-    var data = { _token: '{{ csrf_token() }}', date: $('#report_date').val() };
-    // #from_time/#to_time chi ton tai voi admin (xem dieu kien isAdmin o tren). Nguoi khoa khong
-    // gui gi ca — server tu dung khung gio da luu cho bao cao da fetch (xem
-    // GiaoBanPermission::khungGioHieuLuc), khong con doan .val() tren phan tu khong ton tai.
-    if ($('#from_time').length) data.from_time = fmt($('#from_time').val());
-    if ($('#to_time').length) data.to_time = fmt($('#to_time').val());
+    // #btn-fetch va #from_time/#to_time gio cung chiu chung dieu kien CAN_FETCH (xem
+    // giaoban-index.blade.php) nen luon co mat cung nhau — khong can guard .length nua.
+    var data = {
+      _token: '{{ csrf_token() }}', date: $('#report_date').val(),
+      from_time: fmt($('#from_time').val()), to_time: fmt($('#to_time').val())
+    };
     $.post('{{ route('khth.giao-ban-fetch') }}', data).done(function () {
       loadReport(function () { setLoading($b, false); });
     }).fail(function (xhr) {

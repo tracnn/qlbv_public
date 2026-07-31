@@ -114,48 +114,4 @@ class GiaoBanPermissionTest extends TestCase
     {
         $this->assertFalse(GiaoBanPermission::canFetchData(false, []));
     }
-
-    // ===== Khung gio hieu luc khi lay so lieu (chot o server, khong de client de len) =====
-
-    /** @test */
-    public function admin_luon_dung_khung_gio_gui_len()
-    {
-        // Admin co toan quyen doi khung gio, ke ca khi bao cao da tung fetch voi khung khac.
-        $this->assertSame(
-            ['2026-07-30 08:00:00', '2026-07-31 08:00:00'],
-            GiaoBanPermission::khungGioHieuLuc(
-                true, true,
-                '2026-07-30 08:00:00', '2026-07-31 08:00:00',
-                '2026-07-30 07:00:00', '2026-07-31 07:00:00'
-            )
-        );
-    }
-
-    /** @test */
-    public function nguoi_khoa_bao_cao_da_fetch_thi_dung_khung_gio_da_luu_bo_qua_gui_len()
-    {
-        // Mot cu bam cua nguoi khoa khong duoc phep revert khung gio KHTH da dat.
-        $this->assertSame(
-            ['2026-07-30 07:00:00', '2026-07-31 07:00:00'],
-            GiaoBanPermission::khungGioHieuLuc(
-                false, true,
-                '2026-07-30 08:00:00', '2026-07-31 08:00:00',
-                '2026-07-30 07:00:00', '2026-07-31 07:00:00'
-            )
-        );
-    }
-
-    /** @test */
-    public function nguoi_khoa_bao_cao_chua_fetch_thi_dung_khung_gio_gui_len()
-    {
-        // Lan tao dau tien: chua co gi da luu de bao ve, dung nguyen gia tri gui len.
-        $this->assertSame(
-            ['2026-07-30 07:00:00', '2026-07-31 07:00:00'],
-            GiaoBanPermission::khungGioHieuLuc(
-                false, false,
-                '2026-07-30 07:00:00', '2026-07-31 07:00:00',
-                null, null
-            )
-        );
-    }
 }

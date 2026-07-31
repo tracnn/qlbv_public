@@ -53,15 +53,22 @@ Bằng quản trị: được chọn khung giờ tùy ý, được tạo báo c�
 - `fetchAndStore()` giữ nguyên `manual_value` (`firstOrNew` chỉ ghi `auto_value`) và chỉ
   khởi tạo ô kế thừa ở lần lấy đầu tiên (`if (!$report->data_fetched_at)`). Khoa bấm lại
   không đè số của khoa khác.
-- **Khung giờ chốt ở server, không còn "chấp nhận" như nháp ban đầu.** Bản đầu để người
-  khoa tự do đổi `from_time`/`to_time` như quản trị; review vòng cuối phát hiện `defaultTimes()`
-  bên JS luôn gửi khung mặc định (07:00 hôm trước → 07:00 hôm nay) mỗi lần đổi ngày, nên MỘT
-  cú bấm vô tình của người khoa sẽ revert khung giờ KHTH đã đặt và tính lại `auto_value` toàn
-  viện, trong khi `manual_value` các khoa đã nhập theo khung cũ vẫn nằm nguyên → báo cáo lệch
-  không dấu hiệu. Quyết định lại: báo cáo đã từng fetch (`data_fetched_at` khác rỗng) thì người
-  không phải admin lấy lại theo đúng khung đã lưu, bỏ qua giá trị gửi lên; admin vẫn đổi tự do;
-  báo cáo chưa từng fetch thì dùng giá trị gửi lên (lần tạo đầu tiên, chưa có gì để bảo vệ).
-  Xem `GiaoBanPermission::khungGioHieuLuc()` và `GiaoBanController::fetchData()`.
+- **Khung giờ: người khoa vẫn tự chọn như quản trị — chốt lại lần hai.** Bản đầu để người
+  khoa tự do đổi `from_time`/`to_time`; review phát hiện `defaultTimes()` bên JS luôn gửi khung
+  mặc định (07:00 hôm trước → 07:00 hôm nay) mỗi lần đổi ngày, nên MỘT cú bấm vô tình của người
+  khoa sẽ revert khung giờ KHTH đã đặt và tính lại `auto_value` toàn viện, trong khi
+  `manual_value` các khoa đã nhập theo khung cũ vẫn nằm nguyên → báo cáo lệch không dấu hiệu.
+  Cách xử lý lần đầu (đã revert): chốt cứng khung giờ ở server (`GiaoBanPermission::khungGioHieuLuc()`)
+  và ẩn hai ô khỏi người không phải admin. Tác dụng phụ: lượt fetch ĐẦU TIÊN của một ngày (báo
+  cáo chưa từng tồn tại, chưa có khung đã lưu để bảo vệ) không còn giá trị nào để dùng — người
+  khoa lại phải chờ KHTH bấm phát đầu, bào mòn đúng mục tiêu của Ý 1. Quyết định cuối cùng:
+  người khoa được **thấy và sửa** hai ô khung giờ như quản trị (không còn hàm
+  `khungGioHieuLuc()`, đã xóa khỏi `GiaoBanPermission`); điểm sửa thật sự nằm ở JS, không phải
+  chặn quyền — `loadReport()` (`giaoban-index.blade.php`) điền sẵn hai ô bằng
+  `report.from_time`/`report.to_time` khi báo cáo đã có, thay vì luôn để `defaultTimes()` reset
+  về mặc định; ngày chưa có báo cáo thì vẫn dùng khung mặc định như cũ. Rủi ro còn lại chấp
+  nhận: người khoa vẫn có thể **cố ý** đổi khung giờ của báo cáo toàn viện — đúng như phạm vi
+  thao tác "bằng quản trị" đã nêu ở đầu Ý 1, không phải lỗ hổng phát sinh thêm.
 - **Chạy chồng (chưa xử lý trong đợt này):** không có khóa nào chống `fetchAndStore()` chạy
   đồng thời. Hai lượt gọi chồng nhau (vd. hai người khoa cùng bấm, hoặc người khoa bấm đúng lúc
   KHTH bấm) có thể trộn `auto_value` của hai khung giờ khác nhau vào cùng một báo cáo; đoạn
