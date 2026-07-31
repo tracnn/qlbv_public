@@ -304,15 +304,9 @@
       ? '<div class="note" style="margin-top:1.6vh"><div class="lbl">GHI CHÚ CHUNG</div><div class="txt">' + gnote + '</div></div>'
       : '';
 
-    // Hai khoi canh bao: tra loi "hom nay co gi bat thuong", thu ma cac slide sau khong noi.
-    var lech = data.balance_warnings || {};
-    var dsLech = [];
-    data.configs.forEach(function (cfg) {
-      if (lech[cfg.id]) dsLech.push(esc(cfg.display_name) + ' (' + lech[cfg.id] + ')');
-    });
-    var lechHtml = '<div class="ov-canh-bao' + (dsLech.length ? ' xau' : ' tot') + '">' +
-      '<span class="lbl">LỆCH CÂN ĐỐI</span> ' +
-      (dsLech.length ? dsLech.length + ' khoa: ' + dsLech.join(' · ') : 'Không khoa nào lệch') + '</div>';
+    // Chi con MOT khoi canh bao tren man tong hop. Lech can doi da bo khoi day theo yeu cau
+    // su dung: no van hien o badge tren slide tung khoa va o man nhap lieu — hai cho co ngu
+    // canh de xu ly, con man tong hop thi chi lam nhieu.
 
     var dsThieu = khoaThieuBatBuoc(data).map(function (x) { return esc(x.ten) + ' (' + x.so + ')'; });
     var thieuHtml = '<div class="ov-canh-bao' + (dsThieu.length ? ' xau' : ' tot') + '">' +
@@ -334,7 +328,7 @@
       // Kip truc len DAU: nguoi du giao ban can biet ngay ai truc truoc khi doc so lieu.
       dutyHtml +
       '<div class="kpis" style="grid-template-columns:repeat(4,1fr)">' + kpiHtml + '</div>' +
-      lechHtml + thieuHtml + noteHtml + '</div>';
+      thieuHtml + noteHtml + '</div>';
   }
 
   /**
