@@ -65,7 +65,7 @@ Các quyết định dưới đây đã được chốt trong quá trình brains
 
 ### 3.1 Runtime
 
-- Base image `php:8.x-fpm` trên Debian (**không dùng Alpine** — Oracle Instant Client cần glibc).
+- Base image `php:${PHP_VERSION}-fpm` trên Debian (**không dùng Alpine** — Oracle Instant Client cần glibc). Dockerfile **tham số hoá qua `ARG PHP_VERSION`**: Pha 3 build biến thể `7.4` để chạy bản Laravel 5.5 nguyên trạng, Pha 4 chỉ việc đổi tham số sang `8.x`. Phiên bản extension `oci8` chọn theo PHP (`oci8-2.2.0` cho PHP 7.4, `oci8-3.x` cho PHP 8.x).
 - Oracle Instant Client (basiclite + sdk) + extension `oci8` build qua `pecl`.
 - Extension khác: `pdo_mysql` (DB `qlbv` vẫn là MySQL theo QĐ-6), `gd, mbstring, zip, intl, xml, xsl, gmp, bcmath, soap, opcache, redis`.
 - Cấu hình `NLS_LANG` / charset Oracle và múi giờ Việt Nam ở tầng image; nhúng font tiếng Việt cho dompdf/FPDI.
@@ -221,7 +221,7 @@ Tiêu chí cho phép cắt chuyển:
 | 0 | Spike hạ tầng: `oci8` trên PHP 8.x + Oracle 19c trong Docker; kiểm đường dẫn file dùng chung, NLS_LANG, múi giờ, font tiếng Việt | Kết nối được Oracle 19c, đọc được bảng thật |
 | 1 | Dọn dẹp trên bản 5.5: xoá vaccination, sarcov2, pusher; gỡ `orchestra/parser`, `fideloper/proxy` | Ứng dụng cũ vẫn chạy đúng |
 | 2 | Chuẩn nền + smoke test + 4 test chốt hành vi (viết trên 5.5) | Có mốc so sánh bằng văn bản |
-| 3 | Hạ tầng Docker: image PHP 8.x + oci8 + pdo_mysql, compose, container `queue` và `scheduler` | **Bản 5.5 nguyên trạng chạy được trong Docker** |
+| 3 | Hạ tầng Docker: Dockerfile tham số hoá `ARG PHP_VERSION` (build biến thể **7.4**) + oci8 + pdo_mysql, compose, container `queue` và `scheduler` | **Bản 5.5 nguyên trạng chạy được trong Docker** |
 | 4 | Nâng lên Laravel 13 + toàn bộ package trừ AdminLTE, theo 10 mốc mục 4.4 | Smoke test không hồi quy; 4 test chốt khớp |
 | 5 | Nâng AdminLTE 1.22 → 3.16 | Nghiệm thu giao diện thủ công |
 | 6 | Cắt chuyển production + theo dõi | Chạy ổn 1 tuần thì mới gỡ XAMPP |
