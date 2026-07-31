@@ -93,42 +93,42 @@ class BangDieuTri
     protected static function dungCot(array $khoa)
     {
         $locTheoCo = self::coChiTieuBatCo($khoa);
-        $cot = [];
+        $trangThaiPercent = [];
         $viTri = [];
+        $thuTu = [];
 
-        // Vong 1: TAO cot.
         foreach ($khoa as $k) {
             foreach (self::chiTieuSo($k) as $m) {
                 $kh = self::khoaCot($m);
 
-                if ($kh === '' || isset($viTri[$kh])) {
+                if ($kh === '') {
                     continue;
                 }
 
-                if ($locTheoCo && !self::batCo($m)) {
-                    continue;
-                }
-
-                $viTri[$kh] = count($cot);
-                $cot[] = ['khoa' => $kh, 'nhan' => $kh, 'percent' => true];
-            }
-        }
-
-        // Vong 2: ha co percent. Cot chi la percent khi MOI khai bao gop vao no deu la percent
-        // — ke ca khai bao KHONG bat co, vi gia tri cua no van duoc cong vao cot. Phai tach
-        // thanh vong rieng: khoa lam mat tinh percent co the duoc duyet TRUOC khoa tao ra cot.
-        foreach ($khoa as $k) {
-            foreach (self::chiTieuSo($k) as $m) {
-                $kh = self::khoaCot($m);
-
-                if ($kh === '' || !isset($viTri[$kh])) {
-                    continue;
+                // Trang thai percent bam theo NHAN, khong bam theo cot: khai bao khong bat co
+                // van duoc cong vao cot (xem giaTri) nen van phai ha co, ke ca khi no duoc duyet
+                // TRUOC khai bao tao ra cot (cot chua ton tai luc do).
+                if (!isset($trangThaiPercent[$kh])) {
+                    $trangThaiPercent[$kh] = true;
                 }
 
                 if (!self::laPercent($m)) {
-                    $cot[$viTri[$kh]]['percent'] = false;
+                    $trangThaiPercent[$kh] = false;
                 }
+
+                if (isset($viTri[$kh]) || ($locTheoCo && !self::batCo($m))) {
+                    continue;
+                }
+
+                $viTri[$kh] = count($thuTu);
+                $thuTu[] = $kh;
             }
+        }
+
+        $cot = [];
+
+        foreach ($thuTu as $kh) {
+            $cot[] = ['khoa' => $kh, 'nhan' => $kh, 'percent' => $trangThaiPercent[$kh]];
         }
 
         return $cot;
