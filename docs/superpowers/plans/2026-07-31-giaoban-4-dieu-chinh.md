@@ -455,6 +455,12 @@ git commit -m "feat(giaoban): khai bao co chon cot cho slide Hoat dong dieu tri"
 - Consumes: khóa `dieu_tri_slide` (bool) trên mỗi phần tử `metrics` — do Task 3 khai báo.
 - Produces: `BangDieuTri::dung()` giữ nguyên chữ ký và cấu trúc trả về `['cot' => [...], 'dong' => [...], 'tong' => [...]]`; chỉ nội dung `cot` thay đổi. `giaoban-present.blade.php` không phải sửa gì.
 
+> **Cập nhật sau khi thực thi (2026-07-31):** cấu trúc hai vòng lặp mô tả ở Step 3 bên dưới
+> **không còn hiệu lực**. Task review nêu finding trùng lặp khối logic; người ra quyết định chọn
+> reviewer thắng. Bản đã giao (`daf0274`) gộp về **một lượt duyệt**, theo dõi trạng thái `percent`
+> theo NHÃN trong một map độc lập với việc cột đã tạo hay chưa, rồi chiếu ra mảng `cot` ở bước
+> cuối. Hai quy tắc hành vi ngay dưới đây **vẫn giữ nguyên hiệu lực** — chúng mới là phần cốt lõi.
+
 **Hai quy tắc phải giữ đúng — đọc kỹ trước khi code:**
 
 1. Cờ chọn **CỘT**, không chọn từng ô. Cột đã tồn tại thì **mọi** khoa khai cùng nhãn đều đổ giá trị vào, kể cả khoa không bật cờ. Vì vậy `giaTri()` **không** đổi.
