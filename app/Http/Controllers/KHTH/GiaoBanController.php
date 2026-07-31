@@ -219,7 +219,10 @@ class GiaoBanController extends Controller
         // Nguoi khoa chi lay duoc khi bao cao chua tung co so lieu; admin lay lai tuy y.
         // canFetchReport da bao ham quyen co so nen khong goi canFetchData them o day.
         if (!GiaoBanPermission::canFetchReport($isAdmin, $this->assignedDeptIds(), $daCo ? $daCo->data_fetched_at : null)) {
-            abort(403);
+            // Phai kem thong diep: abort(403) khong tham so tra JSON message rong, .fail() phia
+            // JS coi chuoi rong la falsy nen hien nham "Loi lay so lieu tu HIS" (xem saveCell()
+            // ngay ben duoi lam dung tien le nay).
+            abort(403, 'Báo cáo ngày này đã có số liệu. Cần lấy lại thì liên hệ phòng KHTH.');
         }
 
         // Khung gio lay theo dung gia tri client gui len, khong chot o server: nguoi khoa thay va

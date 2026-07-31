@@ -19,7 +19,10 @@
       {{-- Ai bam duoc "Lay so lieu" thi thay va sua duoc khung gio nay (xem
            GiaoBanPermission::canFetchData) — khong con rieng cho admin. Rui ro de nham khung
            da luu duoc xu ly o JS: loadReport() dien san gia tri report.from_time/to_time khi
-           bao cao da ton tai, thay vi luon reset ve mac dinh (xem dienKhungGioDaLuu()). --}}
+           bao cao da ton tai, thay vi luon reset ve mac dinh (xem dienKhungGioDaLuu()).
+           Luu y: $canFetch o day chi quyet dinh CO MAT trong DOM hay khong (quyen co so, tinh
+           mot lan luc render trang). Hien hay an theo tung ngay dang xem la viec cua JS
+           capNhatNutLaySoLieu(), tinh lai moi lan doi ngay ma khong tai lai trang. --}}
       @if($canFetch)
       <div class="col-md-2" id="o-tu-thoi-diem"><label>Từ thời điểm</label>
         <input type="datetime-local" id="from_time" class="form-control"></div>
@@ -36,7 +39,8 @@
         <button id="btn-present" class="btn btn-info"><i class="fa fa-desktop"></i> Trình chiếu</button>
         @endif
         {{-- Lấy số liệu tách riêng: người được gán khoa cũng bấm được, xem
-             GiaoBanPermission::canFetchData. --}}
+             GiaoBanPermission::canFetchData. Day cung chi la quyen co so (co mat trong DOM);
+             hien/an nut theo ngay dang xem la viec cua JS capNhatNutLaySoLieu(). --}}
         @if($canFetch)
         <button id="btn-fetch" class="btn btn-primary"><i class="fa fa-cloud-download"></i> Lấy số liệu</button>
         @endif
@@ -195,7 +199,10 @@ function loadReport(onDone) {
       // Doi ngay ma request hong thi khong duoc de dong "Che do" cua lan tai truoc dung
       // nguyen tren man — voi cong cu chan doan thi hien SAI te hon khong hien.
       $('#che-do').empty();
-      $('#da-lay-luc').empty();
+      // Goi voi doi tuong rong thay vi chi xoa #da-lay-luc: res.can_fetch undefined -> an nut
+      // va hai o khung gio cua ngay cu di, res.report undefined -> gioNgay() cung tra rong nen
+      // dong "da lay luc" duoc don theo. capNhatNutLaySoLieu() la noi DUY NHAT quyet dinh hien/an.
+      capNhatNutLaySoLieu({});
     })
     .always(function () {
       $('#report-body').css('opacity', 1);
@@ -445,6 +452,9 @@ $(function () {
     }).fail(function (xhr) {
       setLoading($b, false);
       alert(xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Lỗi lấy số liệu từ HIS');
+      // Dong bo lai nut/hai o khung gio: bi chan 403 (nguoi khac vua lay xong) nghia la trang
+      // thai tren man da cu, phai tai lai de an nut di theo dung can_fetch moi.
+      loadReport();
     });
   });
 

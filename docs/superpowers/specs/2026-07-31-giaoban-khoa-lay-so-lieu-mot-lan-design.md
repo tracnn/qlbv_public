@@ -120,6 +120,18 @@ không dùng vào việc gì.
   Chấp nhận: đây chính là ý đồ của yêu cầu — thao tác toàn viện thuộc về KHTH.
 - Rủi ro "ô kế thừa một-lần-duy-nhất bị đóng dấu sai ngày" (spec đợt trước) **giảm nhưng chưa
   hết**: người khoa vẫn tạo được báo cáo cho một ngày bất kỳ ở lượt đầu tiên của ngày đó.
+- Báo cáo `final` mà chưa từng fetch: trường hợp có thật — kíp trực tạo báo cáo qua
+  `getOrCreateReport()`, admin chốt, `data_fetched_at` vẫn null. Người khoa thấy nút, bấm, qua
+  được guard 403 rồi bị chặn ở nhánh 422 "Báo cáo đã chốt, cần mở khóa trước." Kết quả cuối
+  đúng và thông điệp rõ, chỉ là nút không đáng hiện. Không xử lý trong đợt này.
+- Bất biến thứ tự đọc chỉ được bảo vệ bằng comment: trong `fetchData()`, `$daCo` phải đọc trước
+  `getOrCreateReport()`/`fetchAndStore()`. Nếu ai đó về sau chuyển xuống dưới, toàn bộ 173 test
+  vẫn xanh vì `canFetchReport()` là hàm thuần còn tầng controller không có test nào (module giao
+  ban chỉ có Unit test, `tests/Feature` không có test giao ban). Dựng hạ tầng Feature test cho
+  module này vượt phạm vi đợt; ghi nhận rủi ro regression.
+- Đường 403 của `fetchData()` nay trả thông điệp cụ thể thay vì chuỗi rỗng, và JS tự gọi lại
+  `loadReport()` sau khi bị chặn để đồng bộ lại nút/khung giờ theo đúng `can_fetch` mới nhất
+  — tránh kịch bản người dùng bấm lại liên tục vì tưởng HIS lỗi.
 
 ## Không đổi
 
