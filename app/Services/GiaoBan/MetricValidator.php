@@ -78,7 +78,7 @@ class MetricValidator
 
             $def = MetricSchema::get($type);
 
-            $loi = array_merge($loi, self::kiemKhoaDungChung($i, $m, $type));
+            $loi = array_merge($loi, self::kiemKhoaDungChung($i, $m, $type, $blockType));
 
             if ($type === 'manual') {
                 $loi = array_merge($loi, self::kiemNhapTay($i, isset($m['input']) ? $m['input'] : [], $def['fields']));
@@ -95,7 +95,7 @@ class MetricValidator
      * Kiem cac khoa dung chung cho moi loai chi tieu: overview / overview_label / dieu_tri_slide.
      * Xem MetricSchema::COMMON_FIELDS.
      */
-    protected static function kiemKhoaDungChung($i, array $m, $type)
+    protected static function kiemKhoaDungChung($i, array $m, $type, $blockType)
     {
         $loi = [];
         $batOverview = isset($m['overview']) && $m['overview'] !== false && $m['overview'] !== '';
@@ -139,6 +139,14 @@ class MetricValidator
                 $loi[] = self::loi($i, 'dieu_tri_slide',
                     'Chỉ tiêu kiểu chuỗi không hiện được ở slide Hoạt động điều trị (bảng chỉ cộng được số).');
             }
+        }
+
+        // BangDieuTri::locKhoa() chi lay khoa block_type === dieu_tri -> co bat o khoi khac
+        // luu duoc, khong keu, nhung khong bao gio len slide. Chan tu day de KHTH khong cau
+        // hinh cau cam sinh ticket ho tro.
+        if ($batSlide && $blockType !== BangDieuTri::KHOI) {
+            $loi[] = self::loi($i, 'dieu_tri_slide',
+                "'Hiện ở slide Hoạt động điều trị' chỉ dùng được cho khối Điều trị nội trú.");
         }
 
         return $loi;

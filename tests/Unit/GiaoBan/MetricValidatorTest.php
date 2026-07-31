@@ -371,4 +371,37 @@ class MetricValidatorTest extends TestCase
 
         $this->assertSame([], MetricValidator::validate($m, 'dieu_tri'));
     }
+
+    /**
+     * Co dieu_tri_slide chi co tac dung o khoi dieu_tri (BangDieuTri::locKhoa loc dung khoi nay).
+     * Bat co o khoi khac la cau hinh cam, khong sinh ticket ho tro.
+     *
+     * @test
+     */
+    public function bat_co_slide_dieu_tri_o_khoi_kham_bi_chan()
+    {
+        $m = [['code' => 'lk', 'name' => 'Lượt khám', 'type' => 'exam_visit', 'dieu_tri_slide' => true]];
+        $loi = MetricValidator::validate($m, 'kham');
+
+        $this->assertNotEmpty($loi);
+        $this->assertEquals('dieu_tri_slide', $loi[0]['field']);
+    }
+
+    /** @test */
+    public function bat_co_slide_dieu_tri_o_khoi_can_lam_sang_bi_chan()
+    {
+        $m = [['code' => 'dv', 'name' => 'DV', 'type' => 'service_count', 'dieu_tri_slide' => true]];
+        $loi = MetricValidator::validate($m, 'can_lam_sang');
+
+        $this->assertNotEmpty($loi);
+        $this->assertEquals('dieu_tri_slide', $loi[0]['field']);
+    }
+
+    /** @test */
+    public function bat_co_slide_dieu_tri_o_khoi_dieu_tri_van_hop_le()
+    {
+        $m = [['code' => 'bn_cu', 'name' => 'BN cũ', 'type' => 'census_from', 'dieu_tri_slide' => true]];
+
+        $this->assertSame([], MetricValidator::validate($m, 'dieu_tri'));
+    }
 }
