@@ -35,7 +35,11 @@
 #   LoadModule filter_module  modules/mod_filter.so
 #   LoadModule expires_module modules/mod_expires.so
 # mod_filter BAT BUOC: AddOutputFilterByType do no cung cap.
+# PHAI long CA HAI dieu kien. AddOutputFilterByType do mod_FILTER cung cap, khong
+# phai mod_deflate. Boc moi mod_deflate la BAY: bat deflate ma chua bat filter thi
+# khoi nay VAN chay va Apache tra 500 cho moi trang - da xay ra that tren may chu.
 <IfModule mod_deflate.c>
+<IfModule mod_filter.c>
     # DANH SACH CHO PHEP, khong nen tat ca: anh (jpg/png), tep nen san (zip), va
     # .xlsx cua chuc nang xuat Excel deu DA nen roi - nen lai chi ton CPU ma
     # khong giam duoc byte nao.
@@ -55,6 +59,7 @@
     <IfModule mod_headers.c>
         Header append Vary Accept-Encoding
     </IfModule>
+</IfModule>
 </IfModule>
 
 # ── Cache tep tinh tren trinh duyet ─────────────────────────────────────────────
