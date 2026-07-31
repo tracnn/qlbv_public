@@ -14,6 +14,17 @@
 @include('includes.message')
 <!-- /Messages -->
 
+<div class="box box-primary">
+  <div class="box-body">
+    <div class="row">
+      {{-- Khuon giong bo loc man order-check: box box-primary + select2.
+           Chon mot co so se hien danh muc CO HIEU LUC cho co so do, tuc la dong cua
+           co so do LAN dong dung chung. --}}
+      @include('partials.ma_cskcb', ['colClass' => 'col-md-3', 'formGroup' => false])
+    </div>
+  </div>
+</div>
+
 <div class="panel panel-default">
     <div class="panel-body table-responsive">
         <table id="medicine-list" class="table display table-hover responsive nowrap datatable dtr-inline" width="100%">
@@ -61,6 +72,7 @@
             "scrollX": true, // Đảm bảo cuộn ngang khi bảng quá rộng
             "ajax": {
                 url: "{{ route('category-bhyt.fetch-medicine-catalog') }}",
+                data: function (d) { d.ma_cskcb = $("#ma_cskcb").val(); },
                 beforeSend: function(xhr) {
                     currentAjaxRequest = xhr;
                 },
@@ -97,6 +109,11 @@
 
     $(document).ready(function() {
         fetchData();
+
+        // Thieu loi goi nay thi partial chi la mot <select> tho, khong ra select2.
+        $('.select2').select2({width: '100%'});
+
+        $('#ma_cskcb').on('change', function () { table.ajax.reload(); });
     });
 </script>
 @endpush

@@ -133,6 +133,45 @@ class KhoaPhongGiuongTheoCoSoTest extends TestCase
     }
 
     /** @test */
+    public function man_danh_sach_hien_hai_cot_moi()
+    {
+        $ma = file_get_contents(
+            base_path('resources/views/category/bhyt/department_bed_catalog.blade.php')
+        );
+
+        $this->assertContains('<th>Từ ngày</th>', $ma);
+        $this->assertContains('<th>MA_CSKCB</th>', $ma);
+        $this->assertContains('"data": "tu_ngay"', $ma);
+        $this->assertContains('"data": "ma_cskcb"', $ma);
+
+        // O trong nghia la dong dung chung moi co so, khong phai thieu du lieu.
+        $this->assertContains("'Dùng chung'", $ma);
+    }
+
+    /**
+     * Lech so <th> va so phan tu "columns" lam DataTables vo ngay khi tai trang, va loi chi
+     * hien o console trinh duyet chu khong o phia may chu.
+     */
+    /** @test */
+    public function so_tieu_de_khop_so_cot_o_moi_man_danh_muc()
+    {
+        foreach (['department_bed', 'medicine', 'service', 'medical_supply'] as $loai) {
+            $ma = file_get_contents(
+                base_path('resources/views/category/bhyt/' . $loai . '_catalog.blade.php')
+            );
+
+            preg_match('~<thead>(.*?)</thead>~s', $ma, $m);
+            $soTh = preg_match_all('~<th>~', isset($m[1]) ? $m[1] : '');
+
+            preg_match('~"columns"\s*:\s*\[(.*?)\n\s*\],~s', $ma, $c);
+            $soCot = preg_match_all('~\{\s*"data"~', isset($c[1]) ? $c[1] : '');
+
+            $this->assertSame($soTh, $soCot,
+                $loai . ': so <th> (' . $soTh . ') khac so cot (' . $soCot . ')');
+        }
+    }
+
+    /** @test */
     public function bieu_mau_sinh_ra_co_du_hai_cot_moi()
     {
         $x = new CatalogTemplateExport('department_bed');

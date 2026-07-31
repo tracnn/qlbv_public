@@ -35,12 +35,18 @@ class CategoryBHYTController extends Controller
 
     public function indexMedicineCatalog()
     {
-        return view('category.bhyt.medicine_catalog');
+        $danhSachCoSo = \App\Services\BHYT\DanhSachCoSo::danhSach();
+
+        return view('category.bhyt.medicine_catalog', compact('danhSachCoSo'));
     }
 
-    public function fetchMedicineCatalog()
+    public function fetchMedicineCatalog(\Illuminate\Http\Request $request)
     {
-        $result = MedicineCatalog::query();
+        // cuaCoSo() la CHINH quy tac he thong dung khi kiem ho so: chon mot co so thi thay ca
+        // dong cua co so do LAN dong dung chung (ma_cskcb rong). Dung lai scope thay vi viet
+        // dieu kien rieng de danh sach hien ra luon khop voi thu thuc te duoc ap dung.
+        // Ma rong = khong loc, nen muc "Tat ca co so" chay dung ma khong can nhanh rieng.
+        $result = MedicineCatalog::cuaCoSo($request->get('ma_cskcb'));
 
         return Datatables::of($result)
         ->make(true);
@@ -48,25 +54,33 @@ class CategoryBHYTController extends Controller
 
     public function indexMedicalSupplyCatalog()
     {
-        return view('category.bhyt.medical_supply_catalog');
+        $danhSachCoSo = \App\Services\BHYT\DanhSachCoSo::danhSach();
+
+        return view('category.bhyt.medical_supply_catalog', compact('danhSachCoSo'));
     }
 
-    public function fetchMedicalSupplyCatalog()
+    public function fetchMedicalSupplyCatalog(\Illuminate\Http\Request $request)
     {
-        $result = MedicalSupplyCatalog::query();
-        
+        // Xem chu thich o fetchMedicineCatalog: chon co so = danh muc CO HIEU LUC cho co so
+        // do, gom ca dong dung chung.
+        $result = MedicalSupplyCatalog::cuaCoSo($request->get('ma_cskcb'));
+
         return Datatables::of($result)
         ->make(true);
     }
 
     public function indexServiceCatalog()
     {
-        return view('category.bhyt.service_catalog');
+        $danhSachCoSo = \App\Services\BHYT\DanhSachCoSo::danhSach();
+
+        return view('category.bhyt.service_catalog', compact('danhSachCoSo'));
     }
 
-    public function fetchServiceCatalog()
+    public function fetchServiceCatalog(\Illuminate\Http\Request $request)
     {
-        $result = ServiceCatalog::query();
+        // Xem chu thich o fetchMedicineCatalog: chon co so = danh muc CO HIEU LUC cho co so
+        // do, gom ca dong dung chung.
+        $result = ServiceCatalog::cuaCoSo($request->get('ma_cskcb'));
 
         return Datatables::of($result)
         ->make(true);
@@ -113,13 +127,17 @@ class CategoryBHYTController extends Controller
 
     public function indexDepartmentBedCatalog()
     {
-        return view('category.bhyt.department_bed_catalog');
+        $danhSachCoSo = \App\Services\BHYT\DanhSachCoSo::danhSach();
+
+        return view('category.bhyt.department_bed_catalog', compact('danhSachCoSo'));
     }
 
-    public function fetchDepartmentBedCatalog()
+    public function fetchDepartmentBedCatalog(\Illuminate\Http\Request $request)
     {
-        $result = DepartmentBedCatalog::query();
-        
+        // Xem chu thich o fetchMedicineCatalog: chon co so = danh muc CO HIEU LUC cho co so
+        // do, gom ca dong dung chung.
+        $result = DepartmentBedCatalog::cuaCoSo($request->get('ma_cskcb'));
+
         return Datatables::of($result)
         ->make(true);
     }
