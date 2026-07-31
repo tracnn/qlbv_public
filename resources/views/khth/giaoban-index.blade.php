@@ -42,7 +42,7 @@
              GiaoBanPermission::canFetchData. Day cung chi la quyen co so (co mat trong DOM);
              hien/an nut theo ngay dang xem la viec cua JS capNhatNutLaySoLieu(). --}}
         @if($canFetch)
-        <button id="btn-fetch" class="btn btn-primary"><i class="fa fa-cloud-download"></i> Lấy số liệu</button>
+        <button id="btn-fetch" class="btn btn-primary"><i class="fa fa-cloud-download"></i> Tạo số liệu</button>
         @endif
         @if($isAdmin)
         <button id="btn-finalize" class="btn btn-danger"><i class="fa fa-lock"></i> Chốt báo cáo</button>
