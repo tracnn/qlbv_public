@@ -79,4 +79,32 @@ class GiaoBanPermission
         if ($isAdmin) return false;
         return empty($visibleDeptConfigIds);
     }
+
+    /**
+     * Khung gio (from/to) THUC SU dung khi lay so lieu tu HIS.
+     *
+     * Chot o server, khong de client de len: defaultTimes() ben JS luon gui khung mac dinh
+     * moi lan doi ngay, nen mot cu bam "Lay so lieu" cua nguoi khoa se am tham revert khung gio
+     * KHTH da dat va tinh lai auto_value toan vien, trong khi manual_value cac khoa da nhap theo
+     * khung cu van nam nguyen -> bao cao lech khong dau hieu. Admin van doi tu do vi day la
+     * nguoi chiu trach nhiem dat khung gio.
+     *
+     * Bao cao CHUA tung fetch thi khong co gi da luu de bao ve -> dung nguyen gia tri gui len
+     * (day la lan tao dau tien).
+     *
+     * @param bool        $isAdmin    user->can('giaoban-admin')
+     * @param bool        $daFetch    bao cao da tung lay so lieu chua (data_fetched_at khac rong)
+     * @param string|null $fromGuiLen gia tri from_time client gui len (co the null/rong)
+     * @param string|null $toGuiLen   gia tri to_time client gui len
+     * @param string|null $fromDaLuu  from_time dang luu tren report (null neu report chua ton tai)
+     * @param string|null $toDaLuu    to_time dang luu tren report
+     * @return array [$from, $to]
+     */
+    public static function khungGioHieuLuc($isAdmin, $daFetch, $fromGuiLen, $toGuiLen, $fromDaLuu, $toDaLuu)
+    {
+        if (!$isAdmin && $daFetch) {
+            return [$fromDaLuu, $toDaLuu];
+        }
+        return [$fromGuiLen, $toGuiLen];
+    }
 }

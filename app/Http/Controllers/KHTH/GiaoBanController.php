@@ -197,20 +197,41 @@ class GiaoBanController extends Controller
     public function fetchData(Request $request)
     {
         // Khong con la dac quyen cua KHTH: khoa duoc gan cung tu lay duoc so lieu.
-        if (!GiaoBanPermission::canFetchData($this->isAdmin(), $this->assignedDeptIds())) abort(403);
+        $isAdmin = $this->isAdmin();
+        if (!GiaoBanPermission::canFetchData($isAdmin, $this->assignedDeptIds())) abort(403);
+        // from_time/to_time thanh nullable: giao dien an hai o nay voi nguoi khong phai admin
+        // (xem giaoban-index.blade.php), nen ho khong con gui len nua. Rang buoc "khong duoc
+        // thieu khung gio khi bao cao chua tung fetch" nam o nhanh 422 ben duoi, sau khi da
+        // biet gia tri hieu luc that su la gi.
         $this->validate($request, [
             'date' => 'required|date_format:Y-m-d',
-            'from_time' => 'required|date_format:Y-m-d H:i:s',
-            'to_time' => 'required|date_format:Y-m-d H:i:s',
+            'from_time' => 'nullable|date_format:Y-m-d H:i:s',
+            'to_time' => 'nullable|date_format:Y-m-d H:i:s',
         ]);
 
-        $report = $this->service->getOrCreateReport(
-            $request->input('date'), $request->input('from_time'), $request->input('to_time'), auth()->id()
+        $existing = GiaoBanReport::where('report_date', $request->input('date'))->first();
+        // Chot khung gio o SERVER: neu khong, nguoi khoa bam "Lay so lieu" se revert khung gio
+        // KHTH da dat (JS gui mac dinh 07:00 hom truoc -> 07:00 hom nay) va tinh lai auto_value
+        // toan vien, trong khi manual_value cac khoa da nhap theo khung cu van nam nguyen.
+        list($from, $to) = GiaoBanPermission::khungGioHieuLuc(
+            $isAdmin,
+            $existing && $existing->data_fetched_at,
+            $request->input('from_time'),
+            $request->input('to_time'),
+            $existing ? $existing->from_time : null,
+            $existing ? $existing->to_time : null
         );
+        if (!$from || !$to) {
+            // Bao cao chua tung fetch (lan tao dau tien) ma khong co khung gio nao -> khong co
+            // gi de dua vao, phai chan chu khong tu doan.
+            return response()->json(['message' => 'Thiếu khung giờ lấy số liệu.'], 422);
+        }
+
+        $report = $this->service->getOrCreateReport($request->input('date'), $from, $to, auth()->id());
         if ($report->isFinal()) {
             return response()->json(['message' => 'Báo cáo đã chốt, cần mở khóa trước.'], 422);
         }
-        $this->service->fetchAndStore($report, $request->input('from_time'), $request->input('to_time'), auth()->id());
+        $this->service->fetchAndStore($report, $from, $to, auth()->id());
         return response()->json(['ok' => true]);
     }
 

@@ -16,15 +16,18 @@
     <div class="row">
       <div class="col-md-2"><label>Ngày giao ban</label>
         <input type="date" id="report_date" class="form-control" value="{{ date('Y-m-d') }}"></div>
-      {{-- Hai mốc thời gian chỉ là tham số cho "Lấy số liệu". Ai không được lấy thì
-           hiện ra chỉ tổ rối. --}}
-      @if($canFetch)
+      {{-- Hai mốc thời gian chỉ admin đổi được: khung giờ báo cáo là của toàn viện, người khoa
+           bấm "Lấy số liệu" luôn phải dùng đúng khung KHTH đã đặt (server chốt, xem
+           GiaoBanController::fetchData). Hiện ô cho họ chỉ gây hiểu nhầm là đổi được. --}}
+      @if($isAdmin)
       <div class="col-md-2"><label>Từ thời điểm</label>
         <input type="datetime-local" id="from_time" class="form-control"></div>
       <div class="col-md-2"><label>Đến thời điểm</label>
         <input type="datetime-local" id="to_time" class="form-control"></div>
       @endif
-      <div class="col-md-{{ $canFetch ? 6 : 10 }}" style="padding-top:24px">
+      {{-- Do rong bam theo isAdmin: hai o gio chi con chiem cho khi la admin (xem khoi dieu
+           kien phia tren), khong con bam theo canFetch nua. --}}
+      <div class="col-md-{{ $isAdmin ? 6 : 10 }}" style="padding-top:24px">
         <button id="btn-view" class="btn btn-default"><i class="fa fa-refresh"></i> Làm mới</button>
         {{-- Trình chiếu và Xuất Excel đều là số liệu toàn viện -> chỉ admin. Để ngoài thì
              người khoa vẫn thấy nút rồi bấm vào ăn 403. --}}
@@ -88,6 +91,9 @@ var ASSIGNED = @json($assignedDeptIds);
 var CURRENT = null;
 
 function defaultTimes() {
+  // Voi nguoi khong phai admin, #from_time/#to_time khong con trong DOM (xem
+  // giaoban-index.blade.php) -> .length === 0 thi bo qua, khong goi .val() tren rong.
+  if (!$('#from_time').length) return;
   var d = $('#report_date').val();
   var prev = new Date(new Date(d).getTime() - 86400000).toISOString().slice(0, 10);
   $('#from_time').val(prev + 'T07:00');
@@ -119,6 +125,9 @@ function loadReport(onDone) {
     .done(function (res) { CURRENT = res; renderCheDo(res); render(res); })
     .fail(function () {
       $('#report-status').html('<span class="text-red"><i class="fa fa-exclamation-triangle"></i> Lỗi tải dữ liệu</span>');
+      // Doi ngay ma request hong thi khong duoc de dong "Che do" cua lan tai truoc dung
+      // nguyen tren man — voi cong cu chan doan thi hien SAI te hon khong hien.
+      $('#che-do').empty();
     })
     .always(function () {
       $('#report-body').css('opacity', 1);
@@ -143,13 +152,21 @@ function esc(s) {
  */
 function renderCheDo(res) {
   var $o = $('#che-do');
+  // is_admin falsy (false/undefined/null deu roi vao nhanh Khoa): fail-safe co y — sai kieu du
+  // lieu hay thieu truong thi CHAN bot quyen chu khong lo them, an toan hon la mac dinh admin.
   if (res.is_admin) {
     $o.html('<i class="fa fa-shield"></i> Chế độ: <b>Quản trị</b> — xem toàn viện');
     return;
   }
+  // assigned_dept_ids la nguon DOC LAP voi configs (tra thang tu giaoban_user_departments,
+  // khong di qua visibleDeptConfigIds) -> so sanh hai con so nay moi la tin hieu that. Truoc day
+  // so ten rut tu chinh configs voi do dai cua no, nen luon khop, cong cu chan doan khong bao gio
+  // kich hoat duoc. Lech nhau la dau hieu khoa bi tat is_active hoac loc sai — xem Buoc 1 trong
+  // docs/giaoban-chan-doan-phan-quyen-khoa.md.
+  var soPhanCong = (res.assigned_dept_ids || []).length;
   var ten = (res.configs || []).map(function (c) { return esc(c.display_name); });
-  $o.html('<i class="fa fa-user"></i> Chế độ: <b>Khoa</b> — được phân công ' + ten.length + ' khoa' +
-    (ten.length ? ': ' + ten.join(', ') : ''));
+  $o.html('<i class="fa fa-user"></i> Chế độ: <b>Khoa</b> — phân công ' + soPhanCong + ' khoa, đang hiện ' +
+    ten.length + (ten.length ? ': ' + ten.join(', ') : ''));
 }
 
 /**
@@ -349,10 +366,13 @@ $(function () {
   $('#btn-fetch').on('click', function () {
     var $b = $(this);
     setLoading($b, true, 'Đang lấy số liệu...');
-    $.post('{{ route('khth.giao-ban-fetch') }}', {
-      _token: '{{ csrf_token() }}', date: $('#report_date').val(),
-      from_time: fmt($('#from_time').val()), to_time: fmt($('#to_time').val())
-    }).done(function () {
+    var data = { _token: '{{ csrf_token() }}', date: $('#report_date').val() };
+    // #from_time/#to_time chi ton tai voi admin (xem dieu kien isAdmin o tren). Nguoi khoa khong
+    // gui gi ca — server tu dung khung gio da luu cho bao cao da fetch (xem
+    // GiaoBanPermission::khungGioHieuLuc), khong con doan .val() tren phan tu khong ton tai.
+    if ($('#from_time').length) data.from_time = fmt($('#from_time').val());
+    if ($('#to_time').length) data.to_time = fmt($('#to_time').val());
+    $.post('{{ route('khth.giao-ban-fetch') }}', data).done(function () {
       loadReport(function () { setLoading($b, false); });
     }).fail(function (xhr) {
       setLoading($b, false);
