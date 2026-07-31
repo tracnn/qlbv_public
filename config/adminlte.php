@@ -32,6 +32,28 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Footer: phien ban va dong ban quyen
+    |--------------------------------------------------------------------------
+    |
+    | Hai gia tri nay hien o chan trang, doc boi resources/views/vendor/adminlte/
+    | page.blade.php. Doi phien ban hay dong ban quyen thi sua O DAY roi chay
+    | `php artisan config:clear` - KHONG sua blade.
+    |
+    | 'footer' truoc day khong ton tai nen blade luon roi ve chuoi mac dinh viet
+    | thang trong no: nhin thi tuong cau hinh duoc, thuc te thi khong. Khai o day
+    | de gia tri mac dinh do het tac dung.
+    |
+    | 'footer' duoc in bang {!! !!} nen HTML trong do co hieu luc. Chi dat noi dung
+    | do CHINH MINH viet, khong lay tu dau khac vao.
+    |
+    */
+
+    'version' => '2026.07.31.1',
+
+    'footer' => 'Copyright &#9400; by <b><a href="https://www.facebook.com/trac.nguyenngoc" target="_blank">Trác Nguyễn Ngọc</a></b>',
+
+    /*
+    |--------------------------------------------------------------------------
     | Logo
     |--------------------------------------------------------------------------
     |
