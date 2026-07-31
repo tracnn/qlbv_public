@@ -154,6 +154,7 @@ class GiaoBanController extends Controller
                 'id' => $report->id, 'status' => $report->status,
                 'from_time' => $report->from_time, 'to_time' => $report->to_time,
                 'general_note' => $report->general_note,
+                'data_fetched_at' => $report->data_fetched_at,
             ];
         }
 
@@ -184,6 +185,12 @@ class GiaoBanController extends Controller
             'bang_dieu_tri' => $bangDieuTri,
             'balance_warnings' => $warnings,
             'is_admin' => $isAdmin, 'assigned_dept_ids' => $assigned,
+            // Quyen bam "Lay so lieu" cho DUNG ngay dang xem — khac $canFetch ben Blade (quyen
+            // co so, render mot lan luc mo trang). Nguoi dung doi ngay bang JS nen trang thai nay
+            // phai di theo tung lan tai du lieu.
+            'can_fetch' => GiaoBanPermission::canFetchReport(
+                $isAdmin, $assigned, $report ? $report->data_fetched_at : null
+            ),
             'no_assignment' => GiaoBanPermission::chuaPhanCongKhoa($isAdmin, $visibleIds),
             'duty_positions' => $positions, 'duties' => $duties,
             'can_edit_duty' => $this->canEditDuty(),
@@ -193,22 +200,32 @@ class GiaoBanController extends Controller
         ]);
     }
 
-    /** Lấy/Lấy lại số liệu từ HIS (admin hoặc khoa được gán). */
+    /** Lấy số liệu từ HIS. Admin lấy lại tùy ý; khoa được gán chỉ lấy khi báo cáo còn trống. */
     public function fetchData(Request $request)
     {
-        // Khong con la dac quyen cua KHTH: khoa duoc gan cung tu lay duoc so lieu.
         $isAdmin = $this->isAdmin();
-        if (!GiaoBanPermission::canFetchData($isAdmin, $this->assignedDeptIds())) abort(403);
-        // Khung gio lay theo dung gia tri client gui len, khong con chot o server: nguoi khoa
-        // gio thay va sua hai o nay nhu admin (xem giaoban-index.blade.php), va JS da dien san
-        // khung da luu khi bao cao ton tai nen ho khong con vo tinh de len nua (xem
-        // docs/superpowers/specs/2026-07-31-giaoban-4-dieu-chinh-design.md, muc Rui ro Y 1).
+
+        // validate() phai chay TRUOC guard vi guard can $request->input('date') de tra bao cao.
         $this->validate($request, [
             'date' => 'required|date_format:Y-m-d',
             'from_time' => 'required|date_format:Y-m-d H:i:s',
             'to_time' => 'required|date_format:Y-m-d H:i:s',
         ]);
 
+        // Tra ban ghi DA CO truoc khi cham vao getOrCreateReport()/fetchAndStore(): mot ham tao
+        // ban ghi moi, ham kia dat data_fetched_at o dong cuoi — doc sau bat ky ham nao trong hai
+        // ham do deu cho cau tra loi sai.
+        $daCo = GiaoBanReport::where('report_date', $request->input('date'))->first();
+        // Nguoi khoa chi lay duoc khi bao cao chua tung co so lieu; admin lay lai tuy y.
+        // canFetchReport da bao ham quyen co so nen khong goi canFetchData them o day.
+        if (!GiaoBanPermission::canFetchReport($isAdmin, $this->assignedDeptIds(), $daCo ? $daCo->data_fetched_at : null)) {
+            abort(403);
+        }
+
+        // Khung gio lay theo dung gia tri client gui len, khong chot o server: nguoi khoa thay va
+        // sua hai o nay nhu admin o lan lay duy nhat cua ho (xem giaoban-index.blade.php), va JS
+        // da dien san khung da luu khi bao cao ton tai nen ho khong vo tinh de len (xem
+        // docs/superpowers/specs/2026-07-31-giaoban-4-dieu-chinh-design.md, muc Rui ro Y 1).
         $from = $request->input('from_time');
         $to = $request->input('to_time');
 

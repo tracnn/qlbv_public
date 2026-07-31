@@ -41,6 +41,25 @@ class GiaoBanPermission
     }
 
     /**
+     * Ai duoc bam "Lay so lieu" cho MOT bao cao cu the.
+     *
+     * Khac canFetchData (quyen co so, khong phu thuoc ngay nao): ham nay them dieu kien trang
+     * thai. Nguoi khoa chi can lay so lieu khi KHTH chua lay, de co cai ma nhap. Lay LAI la
+     * chuyen khac han — no tinh lai auto_value cua toan vien nen giu rieng cho KHTH.
+     *
+     * @param bool  $isAdmin          user->can('giaoban-admin')
+     * @param array $assignedDeptIds  dept_config_id duoc gan trong giaoban_user_departments
+     * @param mixed $daFetchRoi       giaoban_reports.data_fetched_at cua bao cao ngay dang xet;
+     *                                null hoac rong = chua tung lay so lieu
+     */
+    public static function canFetchReport($isAdmin, array $assignedDeptIds, $daFetchRoi)
+    {
+        if ($isAdmin) return true;
+        if (!self::canFetchData($isAdmin, $assignedDeptIds)) return false;
+        return empty($daFetchRoi);
+    }
+
+    /**
      * Khoa mà user được NHÌN THẤY số liệu.
      *
      * Cố ý tách khỏi canEditDept: quyền xem và quyền sửa là hai chuyện khác nhau.

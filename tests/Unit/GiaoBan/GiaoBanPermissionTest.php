@@ -114,4 +114,30 @@ class GiaoBanPermissionTest extends TestCase
     {
         $this->assertFalse(GiaoBanPermission::canFetchData(false, []));
     }
+
+    // ===== Quyen LAY SO LIEU cho MOT bao cao cu the =====
+
+    /** @test */
+    public function admin_lay_lai_duoc_du_bao_cao_da_co_so_lieu()
+    {
+        $this->assertTrue(GiaoBanPermission::canFetchReport(true, [], '2026-07-31 07:12:00'));
+    }
+
+    /** @test */
+    public function nguoi_khoa_lay_duoc_khi_bao_cao_chua_tung_lay()
+    {
+        $this->assertTrue(GiaoBanPermission::canFetchReport(false, [3], null));
+    }
+
+    /** @test */
+    public function nguoi_khoa_khong_lay_lai_duoc_khi_bao_cao_da_co_so_lieu()
+    {
+        $this->assertFalse(GiaoBanPermission::canFetchReport(false, [3], '2026-07-31 07:12:00'));
+    }
+
+    /** @test */
+    public function chua_duoc_gan_khoa_thi_khong_lay_duoc_du_bao_cao_con_trong()
+    {
+        $this->assertFalse(GiaoBanPermission::canFetchReport(false, [], null));
+    }
 }
