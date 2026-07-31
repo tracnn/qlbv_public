@@ -32,6 +32,15 @@ class BangDieuTriTest extends TestCase
                 'auto_value' => $auto, 'manual_value' => $manual];
     }
 
+    /** Chi tieu co bat co hien tren slide Hoat dong dieu tri. */
+    private function mCo($code, $name, $type = 'census_from', $valueType = null)
+    {
+        $m = $this->m($code, $name, $type, $valueType);
+        $m['dieu_tri_slide'] = true;
+
+        return $m;
+    }
+
     /** @test */
     public function khong_khoa_dieu_tri_nao_thi_bang_rong()
     {
@@ -236,5 +245,101 @@ class BangDieuTriTest extends TestCase
 
         $this->assertCount(1, $b['cot']);
         $this->assertSame([7.0], $b['dong'][0]['o']);
+    }
+
+    // ===== Co chon cot cho slide =====
+
+    /** @test */
+    public function khong_co_nao_bat_thi_hien_toan_bo_cot_nhu_truoc()
+    {
+        // Tuong thich nguoc: trien khai xong ma chua ai cau hinh thi slide khong duoc trang.
+        $b = BangDieuTri::dung([
+            $this->cfg(1, 'A', 1, [$this->m('a', 'A'), $this->m('b', 'B')]),
+        ], []);
+
+        $nhan = array_map(function ($c) { return $c['nhan']; }, $b['cot']);
+
+        $this->assertSame(['A', 'B'], $nhan);
+    }
+
+    /** @test */
+    public function co_it_nhat_mot_co_thi_chi_cot_bat_co_len_slide()
+    {
+        $b = BangDieuTri::dung([
+            $this->cfg(1, 'A', 1, [$this->mCo('bn_cu', 'BN cũ'), $this->m('bn_vao', 'BN vào')]),
+        ], []);
+
+        $this->assertCount(1, $b['cot']);
+        $this->assertSame('BN cũ', $b['cot'][0]['nhan']);
+    }
+
+    /** @test */
+    public function khoa_khong_bat_co_van_do_so_vao_cot_da_ton_tai()
+    {
+        // Co chon COT chu khong chon o: KHTH bat mot noi, moi khoa cung nhan deu duoc cong.
+        $b = BangDieuTri::dung([
+            $this->cfg(1, 'A', 1, [$this->mCo('de_mo', 'Đẻ mổ')]),
+            $this->cfg(2, 'B', 2, [$this->m('de_mo', 'Đẻ mổ')]),
+        ], [$this->o(1, 'de_mo', 3), $this->o(2, 'de_mo', 5)]);
+
+        $this->assertCount(1, $b['cot']);
+        $this->assertSame([3.0], $b['dong'][0]['o']);
+        $this->assertSame([5.0], $b['dong'][1]['o']);
+        $this->assertSame([8.0], $b['tong']);
+    }
+
+    /** @test */
+    public function khai_bao_khong_bat_co_van_lam_cot_mat_tinh_percent()
+    {
+        // Khoa A (sort 1, khong bat co, so tuyet doi) duyet TRUOC khoa B (sort 2, bat co,
+        // percent). So cua A van duoc cong vao cot -> cot khong con la percent, phai co tong.
+        $b = BangDieuTri::dung([
+            $this->cfg(1, 'A', 1, [$this->m('x', 'X', 'manual', 'int')]),
+            $this->cfg(2, 'B', 2, [$this->mCo('x', 'X', 'manual', 'percent')]),
+        ], [$this->o(1, 'x', 2), $this->o(2, 'x', 40)]);
+
+        $this->assertCount(1, $b['cot']);
+        $this->assertFalse($b['cot'][0]['percent']);
+        $this->assertSame([42.0], $b['tong']);
+    }
+
+    /** @test */
+    public function cot_toan_percent_va_deu_bat_co_thi_van_khong_cong_tong()
+    {
+        $b = BangDieuTri::dung([
+            $this->cfg(1, 'A', 1, [$this->mCo('ty_le', 'Tỷ lệ', 'manual', 'percent')]),
+            $this->cfg(2, 'B', 2, [$this->mCo('ty_le', 'Tỷ lệ', 'manual', 'percent')]),
+        ], [$this->o(1, 'ty_le', 40), $this->o(2, 'ty_le', 60)]);
+
+        $this->assertTrue($b['cot'][0]['percent']);
+        $this->assertSame([null], $b['tong']);
+    }
+
+    /** @test */
+    public function loc_theo_co_van_giu_thu_tu_sort_order_roi_thu_tu_khai()
+    {
+        $b = BangDieuTri::dung([
+            $this->cfg(2, 'Sau', 2, [$this->m('c', 'C'), $this->mCo('a', 'A')]),
+            $this->cfg(1, 'Truoc', 1, [$this->mCo('a', 'A'), $this->mCo('b', 'B')]),
+        ], []);
+
+        $nhan = array_map(function ($c) { return $c['nhan']; }, $b['cot']);
+
+        $this->assertSame(['A', 'B'], $nhan);
+    }
+
+    /** @test */
+    public function chi_tieu_chuoi_bat_co_van_khong_thanh_cot()
+    {
+        // MetricValidator da chan tu cau hinh, nhung du lieu cu co the con — khong duoc vo.
+        $b = BangDieuTri::dung([
+            $this->cfg(1, 'A', 1, [
+                $this->mCo('bn_cu', 'BN cũ'),
+                $this->mCo('ds_mo', 'Danh sách mổ', 'manual', 'text'),
+            ]),
+        ], []);
+
+        $this->assertCount(1, $b['cot']);
+        $this->assertSame('BN cũ', $b['cot'][0]['nhan']);
     }
 }

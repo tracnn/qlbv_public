@@ -85,27 +85,46 @@ class BangDieuTri
     /**
      * Cot theo thu tu xuat hien dau tien: duyet khoa theo sort_order, trong moi khoa duyet
      * chi tieu theo thu tu khai.
+     *
+     * Co `dieu_tri_slide` chon COT chu khong chon o: he mot chi tieu mang nhan do bat co thi
+     * cot len slide, va moi khoa khai cung nhan deu do so vao (xem giaTri). Khong khoa nao bat
+     * co thi hien tat ca — neu khong, trien khai xong la slide trang cho toi khi KHTH cau hinh.
      */
     protected static function dungCot(array $khoa)
     {
+        $locTheoCo = self::coChiTieuBatCo($khoa);
         $cot = [];
         $viTri = [];
 
+        // Vong 1: TAO cot.
         foreach ($khoa as $k) {
             foreach (self::chiTieuSo($k) as $m) {
                 $kh = self::khoaCot($m);
 
-                if ($kh === '') {
+                if ($kh === '' || isset($viTri[$kh])) {
                     continue;
                 }
 
-                if (!isset($viTri[$kh])) {
-                    $viTri[$kh] = count($cot);
-                    $cot[] = ['khoa' => $kh, 'nhan' => $kh, 'percent' => self::laPercent($m)];
+                if ($locTheoCo && !self::batCo($m)) {
                     continue;
                 }
 
-                // Cot chi la percent khi MOI khai bao gop vao no deu la percent.
+                $viTri[$kh] = count($cot);
+                $cot[] = ['khoa' => $kh, 'nhan' => $kh, 'percent' => true];
+            }
+        }
+
+        // Vong 2: ha co percent. Cot chi la percent khi MOI khai bao gop vao no deu la percent
+        // — ke ca khai bao KHONG bat co, vi gia tri cua no van duoc cong vao cot. Phai tach
+        // thanh vong rieng: khoa lam mat tinh percent co the duoc duyet TRUOC khoa tao ra cot.
+        foreach ($khoa as $k) {
+            foreach (self::chiTieuSo($k) as $m) {
+                $kh = self::khoaCot($m);
+
+                if ($kh === '' || !isset($viTri[$kh])) {
+                    continue;
+                }
+
                 if (!self::laPercent($m)) {
                     $cot[$viTri[$kh]]['percent'] = false;
                 }
@@ -113,6 +132,20 @@ class BangDieuTri
         }
 
         return $cot;
+    }
+
+    /** Co it nhat mot chi tieu SO bat co -> bat che do chon cot. */
+    protected static function coChiTieuBatCo(array $khoa)
+    {
+        foreach ($khoa as $k) {
+            foreach (self::chiTieuSo($k) as $m) {
+                if (self::batCo($m)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     /** Chi tieu dang SO cua mot khoa; loai chi tieu nhap tay kieu van ban */
@@ -144,6 +177,17 @@ class BangDieuTri
         $vt = isset($m['input']['value_type']) ? $m['input']['value_type'] : '';
 
         return $vt === 'percent';
+    }
+
+    /**
+     * Chi tieu duoc danh dau hien tren slide Hoat dong dieu tri.
+     *
+     * Dung !empty chu khong ===true: MetricValidator ep kieu bool tu nay tro di, nhung ban ghi
+     * cu di qua duong khac co the mang 1 hoac '1'.
+     */
+    protected static function batCo(array $m)
+    {
+        return !empty($m['dieu_tri_slide']);
     }
 
     protected static function khoaCot(array $m)
