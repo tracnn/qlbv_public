@@ -73,7 +73,12 @@ không ghi lại mốc nền trước, sẽ không phân biệt được test đ
 test vốn đã đỏ. Đây là lý do nhiệm vụ này đứng trước mọi thứ khác.
 
 **Tệp:**
-- Tạo: `docs/superpowers/plans/moc-nen-test-2026-08-01.txt`
+- Tạo: `.superpowers/sdd/2026-08-01-khoi-tao-superadmin/moc-nen-test.txt` — thư
+  mục làm việc của đợt thực thi, git bỏ qua. **Không** commit kết quả phpunit thô
+  vào `docs/`: đó là rác tạm, xong việc là xoá.
+
+Nhiệm vụ này không sinh mã, chỉ đo đạc để đối chiếu về sau. Người điều phối tự
+chạy và ghi vào sổ tiến độ, không cần giao cho subagent.
 
 > **Bối cảnh — mối nguy đã gỡ, nguyên nhân gốc thì chưa.** Trước ngày
 > 2026-08-01, `tests/Feature/EmailReceiveReportTest.php` dùng trait
@@ -98,21 +103,17 @@ test vốn đã đỏ. Đây là lý do nhiệm vụ này đứng trước mọi
 - [ ] **Bước 1: Chạy bộ Unit và lưu kết quả**
 
 ```bash
-./vendor/bin/phpunit --testsuite Unit > docs/superpowers/plans/moc-nen-test-2026-08-01.txt 2>&1; tail -20 docs/superpowers/plans/moc-nen-test-2026-08-01.txt
+./vendor/bin/phpunit --testsuite Unit > .superpowers/sdd/2026-08-01-khoi-tao-superadmin/moc-nen-test.txt 2>&1; tail -20 .superpowers/sdd/2026-08-01-khoi-tao-superadmin/moc-nen-test.txt
 ```
 
-- [ ] **Bước 2: Ghi lại con số**
+- [ ] **Bước 2: Ghi con số vào sổ tiến độ**
 
-Mở tệp vừa tạo, ghi ra dòng tổng kết cuối (dạng `Tests: N, Assertions: M,
-Failures: X, Errors: Y`). Từ đây về sau, **chỉ** những test đỏ mới xuất hiện
-ngoài danh sách này mới tính là do thay đổi của mình.
+Lấy dòng tổng kết cuối (dạng `Tests: N, Assertions: M, Failures: X, Errors: Y`)
+và tên các lớp test đỏ, ghi vào sổ tiến độ của đợt thực thi. Từ đây về sau,
+**chỉ** những test đỏ mới xuất hiện ngoài danh sách này mới tính là do thay đổi
+của mình.
 
-- [ ] **Bước 3: Commit mốc nền**
-
-```bash
-git add docs/superpowers/plans/moc-nen-test-2026-08-01.txt
-git commit -m "test: ghi moc nen bo test truoc khi sua khoi tao superadmin"
-```
+Không commit gì ở nhiệm vụ này.
 
 ---
 
