@@ -22,6 +22,25 @@ class GiaoBanPermission
     }
 
     /**
+     * Ai duoc bam "Lay so lieu" tu HIS.
+     *
+     * Nguoi da duoc gan khoa la nguoi chiu trach nhiem nhap lieu -> cho ho tu lay thay vi
+     * cho KHTH bam ho ngoai gio hanh chinh. Pham vi thao tac bang admin (tu chon khung gio,
+     * tao duoc bao cao moi) — day la quyet dinh co y thuc cua nguoi dat yeu cau.
+     *
+     * An toan vi fetchAndStore() chi ghi auto_value, khong de len manual_value cua khoa khac,
+     * va chi khoi tao o ke thua o lan lay dau tien cua bao cao.
+     *
+     * @param bool  $isAdmin          user->can('giaoban-admin')
+     * @param array $assignedDeptIds  dept_config_id duoc gan trong giaoban_user_departments
+     */
+    public static function canFetchData($isAdmin, array $assignedDeptIds)
+    {
+        if ($isAdmin) return true;
+        return count($assignedDeptIds) > 0;
+    }
+
+    /**
      * Khoa mà user được NHÌN THẤY số liệu.
      *
      * Cố ý tách khỏi canEditDept: quyền xem và quyền sửa là hai chuyện khác nhau.

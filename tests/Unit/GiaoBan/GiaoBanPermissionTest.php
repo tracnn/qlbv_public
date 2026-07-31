@@ -92,4 +92,26 @@ class GiaoBanPermissionTest extends TestCase
         $this->assertSame([], $nhinThay);
         $this->assertTrue(GiaoBanPermission::chuaPhanCongKhoa(false, $nhinThay));
     }
+
+    // ===== Quyen LAY SO LIEU tu HIS =====
+
+    /** @test */
+    public function admin_luon_duoc_lay_so_lieu()
+    {
+        $this->assertTrue(GiaoBanPermission::canFetchData(true, []));
+        $this->assertTrue(GiaoBanPermission::canFetchData(true, [3]));
+    }
+
+    /** @test */
+    public function nguoi_duoc_gan_khoa_duoc_lay_so_lieu()
+    {
+        $this->assertTrue(GiaoBanPermission::canFetchData(false, [3]));
+        $this->assertTrue(GiaoBanPermission::canFetchData(false, [3, 5]));
+    }
+
+    /** @test */
+    public function chua_duoc_gan_khoa_nao_thi_khong_duoc_lay_so_lieu()
+    {
+        $this->assertFalse(GiaoBanPermission::canFetchData(false, []));
+    }
 }

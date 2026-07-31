@@ -16,21 +16,27 @@
     <div class="row">
       <div class="col-md-2"><label>Ngày giao ban</label>
         <input type="date" id="report_date" class="form-control" value="{{ date('Y-m-d') }}"></div>
-      {{-- Hai mốc thời gian chỉ là tham số cho "Lấy số liệu" (thao tác của KHTH).
-           Người khoa không có nút đó nên hiện ra chỉ tổ rối. --}}
-      @if($isAdmin)
+      {{-- Hai mốc thời gian chỉ là tham số cho "Lấy số liệu". Ai không được lấy thì
+           hiện ra chỉ tổ rối. --}}
+      @if($canFetch)
       <div class="col-md-2"><label>Từ thời điểm</label>
         <input type="datetime-local" id="from_time" class="form-control"></div>
       <div class="col-md-2"><label>Đến thời điểm</label>
         <input type="datetime-local" id="to_time" class="form-control"></div>
       @endif
-      <div class="col-md-{{ $isAdmin ? 6 : 10 }}" style="padding-top:24px">
+      <div class="col-md-{{ $canFetch ? 6 : 10 }}" style="padding-top:24px">
         <button id="btn-view" class="btn btn-default"><i class="fa fa-refresh"></i> Làm mới</button>
         {{-- Trình chiếu và Xuất Excel đều là số liệu toàn viện -> chỉ admin. Để ngoài thì
              người khoa vẫn thấy nút rồi bấm vào ăn 403. --}}
         @if($isAdmin)
         <button id="btn-present" class="btn btn-info"><i class="fa fa-desktop"></i> Trình chiếu</button>
+        @endif
+        {{-- Lấy số liệu tách riêng: người được gán khoa cũng bấm được, xem
+             GiaoBanPermission::canFetchData. --}}
+        @if($canFetch)
         <button id="btn-fetch" class="btn btn-primary"><i class="fa fa-cloud-download"></i> Lấy số liệu</button>
+        @endif
+        @if($isAdmin)
         <button id="btn-finalize" class="btn btn-danger"><i class="fa fa-lock"></i> Chốt báo cáo</button>
         <button id="btn-unlock" class="btn btn-warning" style="display:none"><i class="fa fa-unlock"></i> Mở khóa</button>
         <a id="btn-export" class="btn btn-success"><i class="fa fa-file-excel-o"></i> Xuất Excel</a>
@@ -74,6 +80,7 @@
 @section('js')
 <script>
 var IS_ADMIN = {{ $isAdmin ? 'true' : 'false' }};
+var CAN_FETCH = {{ $canFetch ? 'true' : 'false' }};
 var ASSIGNED = @json($assignedDeptIds);
 var CURRENT = null;
 
@@ -157,8 +164,8 @@ function render(res) {
     return;
   }
   if (!res.report) {
-    // Nguoi khoa khong co nut "Lay so lieu" -> dung chi ho bam mot nut khong ton tai.
-    if (IS_ADMIN) {
+    // Nguoi khong duoc lay so lieu thi dung chi ho bam mot nut khong ton tai voi ho.
+    if (CAN_FETCH) {
       $('#report-status').text('(chưa có dữ liệu — bấm Lấy số liệu)');
     } else {
       $('#report-status').text('');

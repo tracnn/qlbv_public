@@ -39,9 +39,13 @@ class GiaoBanController extends Controller
 
     public function index()
     {
+        $isAdmin = $this->isAdmin();
+        $assigned = $this->assignedDeptIds();
+
         return view('khth.giaoban-index', [
-            'isAdmin' => $this->isAdmin(),
-            'assignedDeptIds' => $this->assignedDeptIds(),
+            'isAdmin' => $isAdmin,
+            'assignedDeptIds' => $assigned,
+            'canFetch' => GiaoBanPermission::canFetchData($isAdmin, $assigned),
         ]);
     }
 
@@ -189,10 +193,11 @@ class GiaoBanController extends Controller
         ]);
     }
 
-    /** Lấy/Lấy lại số liệu từ HIS (admin). */
+    /** Lấy/Lấy lại số liệu từ HIS (admin hoặc khoa được gán). */
     public function fetchData(Request $request)
     {
-        if (!$this->isAdmin()) abort(403);
+        // Khong con la dac quyen cua KHTH: khoa duoc gan cung tu lay duoc so lieu.
+        if (!GiaoBanPermission::canFetchData($this->isAdmin(), $this->assignedDeptIds())) abort(403);
         $this->validate($request, [
             'date' => 'required|date_format:Y-m-d',
             'from_time' => 'required|date_format:Y-m-d H:i:s',
