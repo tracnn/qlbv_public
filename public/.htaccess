@@ -19,3 +19,64 @@
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 </IfModule>
+
+# ── Nen noi dung ────────────────────────────────────────────────────────────────
+# Do tren mot trang that: HTML 37,3 KB, trong do rieng menu sidebar 28,9 KB (77%).
+# Nen gzip dua xuong 5,2 KB - giam 86%.
+#
+# MOI khoi deu boc <IfModule>: module chua nap thi Apache BO QUA ca khoi, khong bao
+# loi. Viet tran thi Apache tra 500 cho MOI trang - da thu tren Apache 2.4.54:
+#   boc  -> Syntax OK
+#   tran -> AH00526: Invalid command 'AddOutputFilterByType'
+# Nho vay co the trien khai tep nay truoc, bat module trong httpd.conf sau.
+#
+# Tren XAMPP can bo dau # o ba dong nay trong C:\xampp\apache\conf\httpd.conf:
+#   LoadModule deflate_module modules/mod_deflate.so
+#   LoadModule filter_module  modules/mod_filter.so
+#   LoadModule expires_module modules/mod_expires.so
+# mod_filter BAT BUOC: AddOutputFilterByType do no cung cap.
+<IfModule mod_deflate.c>
+    # DANH SACH CHO PHEP, khong nen tat ca: anh (jpg/png), tep nen san (zip), va
+    # .xlsx cua chuc nang xuat Excel deu DA nen roi - nen lai chi ton CPU ma
+    # khong giam duoc byte nao.
+    AddOutputFilterByType DEFLATE text/html
+    AddOutputFilterByType DEFLATE text/plain
+    AddOutputFilterByType DEFLATE text/css
+    AddOutputFilterByType DEFLATE text/xml
+    AddOutputFilterByType DEFLATE application/javascript
+    AddOutputFilterByType DEFLATE application/x-javascript
+    AddOutputFilterByType DEFLATE application/json
+    AddOutputFilterByType DEFLATE application/xml
+    AddOutputFilterByType DEFLATE image/svg+xml
+
+    # Bao cho proxy/CDN biet phan hoi khac nhau tuy trinh duyet co nhan gzip hay
+    # khong. Thieu dong nay thi proxy co the tra ban da nen cho trinh duyet khong
+    # doc duoc gzip.
+    <IfModule mod_headers.c>
+        Header append Vary Accept-Encoding
+    </IfModule>
+</IfModule>
+
+# ── Cache tep tinh tren trinh duyet ─────────────────────────────────────────────
+# Chi ap cho tep TINH (anh, css, js, font). KHONG dat han cho text/html: trang
+# HTML phai luon lay moi, neu khong nguoi dung se thay du lieu cu sau khi doi.
+<IfModule mod_expires.c>
+    ExpiresActive On
+
+    ExpiresByType image/jpeg                  "access plus 1 year"
+    ExpiresByType image/png                   "access plus 1 year"
+    ExpiresByType image/gif                   "access plus 1 year"
+    ExpiresByType image/svg+xml               "access plus 1 year"
+    ExpiresByType image/x-icon                "access plus 1 year"
+    ExpiresByType font/woff2                  "access plus 1 year"
+    ExpiresByType application/font-woff       "access plus 1 year"
+    ExpiresByType application/font-woff2      "access plus 1 year"
+    ExpiresByType application/vnd.ms-fontobject "access plus 1 year"
+
+    # css/js dat 1 THANG chu khong phai 1 nam: du an chua danh dau phien ban vao
+    # ten tep (khong co ?v= hay ten bam), nen dat han qua dai thi nguoi dung se
+    # ket o ban cu sau khi trien khai va phai xoa cache tay moi thay thay doi.
+    ExpiresByType text/css                    "access plus 1 month"
+    ExpiresByType application/javascript      "access plus 1 month"
+    ExpiresByType application/x-javascript    "access plus 1 month"
+</IfModule>
