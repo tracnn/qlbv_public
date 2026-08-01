@@ -597,3 +597,7 @@ git commit -m "docs(order-check): ghi lai quyen order-check va vi tri menu moi"
 3. `php artisan route:clear` — chỉ cần khi máy chủ có cache route (`bootstrap/cache/routes.php`).
    Máy phát triển hiện **không** có tệp này nên bước 3 là không cần ở local, nhưng bỏ qua
    trên máy chủ có cache thì middleware quyền cũ vẫn còn hiệu lực.
+
+> Cập nhật 2026-08-01: nhóm route ngoài cùng nay chỉ còn `['auth']` — middleware
+> `check.first.login` đã bị xoá, xem
+> `docs/superpowers/specs/2026-08-01-khoi-tao-superadmin-design.md`.

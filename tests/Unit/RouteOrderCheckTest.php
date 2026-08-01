@@ -98,7 +98,7 @@ class RouteOrderCheckTest extends TestCase
     /** @test */
     public function van_nam_trong_nhom_xac_thuc()
     {
-        // Nhom ngoai cung cua web.php la ['auth', 'check.first.login']. Neu chen nhom moi
+        // Nhom ngoai cung cua web.php la ['auth']. Neu chen nhom moi
         // ra ngoai nham thi route thanh cong khai - loi bao mat im lang.
         foreach (array_keys($this->banDo()) as $ten) {
             $mw = Route::getRoutes()->getByName($ten)->gatherMiddleware();

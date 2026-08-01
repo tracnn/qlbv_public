@@ -67,7 +67,7 @@ Route::group(['middleware' => ['auth']], function () {
         ->name('setup.quan-tri-dau-tien.gan');
 });
 
-Route::group(['middleware' => ['auth', 'check.first.login']], function () {
+Route::group(['middleware' => ['auth']], function () {
     //    Route::get('/link1', function ()    {
 //        // Uses Auth Middleware
 //    });
