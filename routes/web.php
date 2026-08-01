@@ -55,6 +55,18 @@ Route::get('/get-list-congkhai-days', 'PatientController@getListCongkhaiDays')->
 Route::get('/get-list-congkhai-dvkt', 'PatientController@getListCongkhaiDvkt')->name('get-list-congkhai-dvkt');
 Route::get('/get-list-congkhai-thuoc', 'PatientController@getListCongkhaiThuoc')->name('get-list-congkhai-thuoc');
 
+/*
+ * Man khoi tao quan tri vien dau tien. Nam trong nhom 'auth' nhung KHONG nam
+ * trong nhom lon ben duoi: nhom do se mat middleware check.first.login o Nhiem vu 4,
+ * va man nay phai truy cap duoc ke ca khi he thong chua co quan tri vien nao.
+ */
+Route::group(['middleware' => ['auth']], function () {
+    Route::get('/setup/quan-tri-dau-tien', 'SetupController@hienThi')
+        ->name('setup.quan-tri-dau-tien');
+    Route::post('/setup/quan-tri-dau-tien', 'SetupController@gan')
+        ->name('setup.quan-tri-dau-tien.gan');
+});
+
 Route::group(['middleware' => ['auth', 'check.first.login']], function () {
     //    Route::get('/link1', function ()    {
 //        // Uses Auth Middleware
