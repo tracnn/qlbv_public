@@ -27,11 +27,17 @@
                 </p>
 
                 <div class="callout callout-danger">
-                    <h4>Bước này chỉ làm được một lần</h4>
+                    <h4>Bước này chỉ dành cho lúc cài đặt</h4>
                     <p>
-                        Sau khi xác nhận, màn hình này đóng vĩnh viễn. Việc cấp
-                        quyền cho người khác về sau phải làm qua mục
-                        <em>Quản lý người dùng</em>.
+                        Sau khi xác nhận, màn hình này đóng lại chừng nào hệ thống
+                        còn quản trị viên. Việc cấp quyền cho người khác về sau
+                        phải làm qua mục <em>Quản lý người dùng</em>.
+                    </p>
+                    <p>
+                        Nếu về sau chạy <code>php artisan db:seed</code>, bảng
+                        <code>role_user</code> bị xoá trắng và màn hình này mở lại
+                        cho mọi người đăng nhập. Hãy chạy seeder <strong>trước</strong>
+                        bước này, không chạy sau.
                     </p>
                 </div>
             </div>

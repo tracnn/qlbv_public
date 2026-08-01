@@ -104,7 +104,13 @@ class SuperAdminBootstrapTest extends TestCase
         $this->bootstrap->gan($this->nguoiDungGia(4004));
     }
 
-    /** @test */
+    /**
+     * Khong phai test rollback: gan() nem truoc khi ghi bat cu thu gi, nen khong
+     * co gi de rollback. Cai duoc chung minh la lan kiem tra lai chan dung cho -
+     * TRUOC attachRole() - nen nguoi thu hai khong de lai ban ghi role_user nao.
+     *
+     * @test
+     */
     public function nguoi_thu_hai_bi_tu_choi_khong_de_lai_ban_ghi()
     {
         $this->bootstrap->gan($this->nguoiDungGia(3003));

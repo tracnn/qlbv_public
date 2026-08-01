@@ -25,8 +25,29 @@ class SuperAdminBootstrap
      * Dung value('id') chu khong first()->id: ban cai moi chua chay
      * laratrust:seeder thi bang roles rong, va ma cu doc thuoc tinh tren null o
      * dung cho nay.
+     *
+     * KHONG khoa dong: listener goi ham nay tren moi lan dang nhap, chi de hien
+     * thi. Duong co khoa nam o kiemTra(true), chi dung ben trong transaction cua
+     * gan().
      */
     public function chuaKhoiTao(): bool
+    {
+        return $this->kiemTra(false);
+    }
+
+    /**
+     * @param bool $khoa Dat SELECT ... FOR UPDATE len lan doc role_user.
+     *                   Chi bat ben trong transaction cua gan(): hai nguoi POST
+     *                   cung luc thi lan doc thu hai phai cho lan thu nhat commit,
+     *                   neu khong ca hai deu doc 0 dong, ca hai deu qua, va khoa
+     *                   chinh (user_id, role_id, user_type) khong va cham vi
+     *                   user_id khac nhau.
+     *                   Tren SQLite (test in-memory) day la no-op cam: Laravel 5.5
+     *                   SQLiteGrammar khong ghi de compileLock, va
+     *                   Grammar::compileLock tra '' cho gia tri lock khong phai
+     *                   chuoi. Chi co tac dung that tren MySQL.
+     */
+    private function kiemTra(bool $khoa): bool
     {
         $roleId = Role::where('name', self::TEN_VAI_TRO)->value('id');
 
@@ -34,9 +55,18 @@ class SuperAdminBootstrap
             return true;
         }
 
-        return ! RoleUser::where('role_id', $roleId)
-            ->where('user_type', $this->userType())
-            ->exists();
+        $truyVan = RoleUser::where('role_id', $roleId)
+            ->where('user_type', $this->userType());
+
+        if ($khoa) {
+            // count() chu khong exists(): exists() bi bien thanh
+            // "select exists(select * ... for update)", tuc menh de khoa nam trong
+            // subquery. count() giu "for update" o muc cau lenh ngoai cung, khong
+            // phu thuoc vao cach may chu xu ly khoa trong subquery.
+            return $truyVan->lockForUpdate()->count() === 0;
+        }
+
+        return ! $truyVan->exists();
     }
 
     /**
@@ -58,11 +88,14 @@ class SuperAdminBootstrap
     /**
      * Kiem tra lai ben trong transaction: co session chi de hien thi, ranh gioi
      * bao mat that nam o day.
+     *
+     * Lan kiem tra nay co khoa dong (kiemTra(true)) - neu khong, hai nguoi POST
+     * cung luc deu doc 0 dong roi deu duoc cap quyen.
      */
     public function gan(CustomUser $nguoiDung): void
     {
         DB::connection('mysql')->transaction(function () use ($nguoiDung) {
-            if (! $this->chuaKhoiTao()) {
+            if (! $this->kiemTra(true)) {
                 throw new DaKhoiTaoException('He thong da co quan tri vien.');
             }
 
@@ -83,6 +116,11 @@ class SuperAdminBootstrap
      *
      * getMorphClass() chu khong phai ten lop tho: day dung la gia tri ma
      * attachRole() ghi vao cot user_type, nen hai ben chac chan khop.
+     *
+     * Phu thuoc: config('laratrust.use_morph_map') dang la false, nen
+     * getMorphClass() tra ve ten lop day du ('App\CustomUser'). Neu bat morph map
+     * len thi gia tri nay doi theo ban do da khai bao - van khop voi attachRole(),
+     * nhung se lech voi cac ban ghi role_user cu da ghi bang ten lop.
      */
     private function userType(): string
     {

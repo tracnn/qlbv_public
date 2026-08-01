@@ -36,12 +36,15 @@ class SetupController extends Controller
         try {
             $this->bootstrap->gan(Auth::user());
         } catch (DaKhoiTaoException $e) {
+            // $e khong can dung: chinh loai exception da la toan bo thong tin.
+            // Van phai khai bao bien vi catch khong bat bien chi co tu PHP 8.0,
+            // du an dang chay PHP 7.4.
             abort(404);
         }
 
         $request->session()->forget('setup.can_khoi_tao');
 
-        return redirect('/home')
+        return redirect()->route('home')
             ->with('success', 'Da cap quyen quan tri cao nhat cho tai khoan cua ban.');
     }
 }

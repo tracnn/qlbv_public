@@ -16,6 +16,13 @@ class RouteKhongConCheckFirstLoginTest extends TestCase
     {
         $pham = [];
 
+        // middleware() chu KHONG phai gatherMiddleware(). gatherMiddleware() khoi
+        // tao controller cua tung route, va Emr\EmrController::__construct chay
+        // san truy van Oracle - quet het bang route la vuot 512MB va chet.
+        // Assertion khong vi the ma yeu di: middleware() da bao gom middleware cua
+        // group (Laravel 5.5 RouteGroup::merge tron middleware cua group vao mang
+        // action cua route luc dang ky), ma check.first.login von duoc gan o muc
+        // group. Dung sua nguoc lai.
         foreach (Route::getRoutes() as $route) {
             if (in_array('check.first.login', $route->middleware())) {
                 $pham[] = $route->uri();

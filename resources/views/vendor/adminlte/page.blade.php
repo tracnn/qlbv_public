@@ -127,9 +127,21 @@
             <!-- Main content -->
             <section class="content">
 
-                @if(session('setup.can_khoi_tao'))
+                @if(session('success'))
+                    {{-- Thong bao flash. Can o day vi day la layout chung: neu
+                         khong render, SetupController->with('success', ...) im lang
+                         va nguoi cai dat khong biet buoc mot lan da thanh cong. --}}
+                    <div class="alert alert-success alert-dismissible">
+                        <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+                        {{ session('success') }}
+                    </div>
+                @endif
+
+                @if(session('setup.can_khoi_tao') && ! request()->routeIs('setup.quan-tri-dau-tien'))
                     {{-- He thong chua co quan tri vien. Co duoc dat boi
-                         App\Listeners\DanhDauCanKhoiTaoSuperAdmin luc dang nhap. --}}
+                         App\Listeners\DanhDauCanKhoiTaoSuperAdmin luc dang nhap.
+                         An tren chinh man khoi tao: dai canh bao o do se tro ve
+                         trang dang mo. --}}
                     <div class="callout callout-warning">
                         <h4>Hệ thống chưa có quản trị viên</h4>
                         <p>
