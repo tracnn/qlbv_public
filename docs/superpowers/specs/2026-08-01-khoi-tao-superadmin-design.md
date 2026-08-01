@@ -94,7 +94,12 @@ khi thông báo đường dẫn cho nhân viên.
 ```php
 const TEN_VAI_TRO = 'superadministrator';
 
-public function chuaKhoiTao(): bool
+public function chuaKhoiTao(): bool    // kiemTra(false) — không khoá
+{
+    return $this->kiemTra(false);
+}
+
+private function kiemTra(bool $khoa): bool
 {
     $roleId = Role::where('name', self::TEN_VAI_TRO)->value('id');
 
@@ -102,17 +107,22 @@ public function chuaKhoiTao(): bool
         return true;   // chưa có vai trò thì chắc chắn chưa gán cho ai
     }
 
-    return ! RoleUser::where('role_id', $roleId)
-        ->where('user_type', $this->userType())
-        ->exists();
+    $truyVan = RoleUser::where('role_id', $roleId)
+        ->where('user_type', $this->userType());
+
+    if ($khoa) {
+        return $truyVan->lockForUpdate()->count() === 0;
+    }
+
+    return ! $truyVan->exists();
 }
 
 public function vaiTro(): Role         // firstOrCreate
-public function gan(CustomUser $user): void   // ném DaKhoiTaoException nếu đã có
-private function userType(): string    // config('auth.providers.users.model')
+public function gan(CustomUser $user): void   // kiemTra(true) trong transaction
+private function userType(): string    // getMorphClass() của model provider
 ```
 
-`gan()` kiểm tra lại `chuaKhoiTao()` bên trong transaction; nếu hệ thống đã có
+`gan()` kiểm tra lại (có khoá dòng) bên trong transaction; nếu hệ thống đã có
 quản trị viên thì ném `App\Exceptions\DaKhoiTaoException`, controller bắt và trả
 404. Không có đường nào gán quyền mà bỏ qua lần kiểm tra này.
 
@@ -157,9 +167,25 @@ Route nằm trong nhóm `['auth']` (nhóm `check.first.login` sẽ bị xoá).
 
 ### Đồng thời
 
-`gan()` bọc trong `DB::connection('mysql')->transaction()`, kiểm tra lại
-`chuaKhoiTao()` bên trong transaction. Hai người bấm cùng lúc thì người thứ hai
-nhận thông báo hệ thống đã có quản trị viên, không tạo bản ghi thứ hai.
+`gan()` bọc trong `DB::connection('mysql')->transaction()` và kiểm tra lại bên
+trong transaction bằng **một lần đọc có khoá** (`lockForUpdate()`). Hai người bấm
+cùng lúc thì người thứ hai nhận thông báo hệ thống đã có quản trị viên, không tạo
+bản ghi thứ hai.
+
+Khoá là bắt buộc, không phải trang trí. Nếu chỉ đọc thường: hai transaction cùng
+đọc `role_user` thấy 0 dòng, cả hai đều qua được kiểm tra, và khoá chính
+`(user_id, role_id, user_type)` **không** chặn được vì `user_id` của hai người
+khác nhau — kết quả là hai superadministrator. Với `SELECT ... FOR UPDATE`, ở mức
+cô lập mặc định của InnoDB lần đọc thứ hai phải chờ transaction thứ nhất commit,
+rồi mới thấy bản ghi vừa tạo và bị từ chối.
+
+Chỉ đường đi bên trong transaction mới lấy khoá. `chuaKhoiTao()` công khai — mà
+listener gọi trên **mỗi lần đăng nhập** chỉ để hiển thị dải cảnh báo — vẫn là đọc
+thường, không đặt khoá dòng lên đường đi nóng đó.
+
+Dưới SQLite (test in-memory) `lockForUpdate()` là no-op câm: Laravel 5.5
+`SQLiteGrammar` không ghi đè `compileLock`, và `Grammar::compileLock` trả `''` cho
+giá trị lock không phải chuỗi. Khoá chỉ có tác dụng thật trên MySQL.
 
 ### Ghi log kiểm toán
 
@@ -199,6 +225,57 @@ khi coi phần này là xong; nếu không, `gan()` quay lại ghi qua `RoleUser
   `docs/superpowers/specs/2026-07-29-order-check-menu-quyen-design.md:75` và
   `docs/superpowers/plans/2026-07-29-order-check-menu-quyen.md:101`. Chỉ sửa nếu
   gây hiểu nhầm; không viết lại lịch sử.
+
+## Triển khai
+
+Hai việc dưới đây không phải khuyến nghị. Bỏ qua việc thứ nhất là mất toàn bộ hệ
+thống; bỏ qua việc thứ hai là mở lại cổng đặc quyền cao nhất.
+
+### 1. Bắt buộc xoá cache route và cache config khi cập nhật
+
+```bash
+php artisan route:clear
+php artisan config:clear
+```
+
+Thay đổi này **xoá hẳn lớp** `App\Http\Middleware\CheckFirstLogin` và dòng đăng ký
+bí danh `'check.first.login'` trong `app/Http/Kernel.php`. Nếu máy chủ đích đang có
+`bootstrap/cache/routes.php`, tệp cache đó vẫn giữ chuỗi `check.first.login` trong
+khoảng 210 route action. Bí danh không còn, nên Laravel coi chuỗi đó là **tên lớp**
+và ném `ReflectionException` trên **mọi request đã đăng nhập** — mất trắng dịch vụ,
+không phải suy giảm từng phần. Cache config được xoá kèm vì nó cũng có thể giữ ảnh
+chụp cũ của phần cấu hình liên quan.
+
+Nếu máy chủ vốn chạy có cache (`route:cache`), chạy lại `php artisan route:cache`
+sau khi đã `route:clear` và mã mới đã nằm đúng chỗ.
+
+### 2. Thứ tự bắt buộc: chạy seeder TRƯỚC, khởi tạo quản trị viên SAU
+
+Đúng thứ tự:
+
+1. `php artisan migrate`
+2. `php artisan db:seed` (hoặc `php artisan laratrust:seeder` + seeder phân quyền)
+3. Đăng nhập bằng tài khoản HIS của người cài đặt, mở
+   `/setup/quan-tri-dau-tien`, xác nhận.
+
+**Không được đảo thứ tự.** `DatabaseSeeder::run()` gọi `LaratrustSeeder`, mà
+`LaratrustSeeder::run()` mở đầu bằng `truncateLaratrustTables()` — hàm này
+`truncate()` cả `role_user` lẫn `roles` (`database/seeds/LaratrustSeeder.php:107-115`).
+Nghĩa là chạy `db:seed` **sau** khi đã khởi tạo sẽ xoá sạch bản ghi vừa cấp,
+`chuaKhoiTao()` trả `true` trở lại, và màn khởi tạo — cổng cấp quyền cao nhất — mở
+lại cho **mọi nhân viên đang đăng nhập**. Đây đúng là lỗ hổng mà thay đổi này sinh
+ra để bịt.
+
+Rủi ro này có thật vì thứ tự cài đặt tự nhiên lại là thứ tự sai: người cài mở màn
+khởi tạo trước cho nhanh, rồi mới nhớ ra là phải chạy seeder để có permission.
+
+Seeder cố tình **không** được sửa (xem "Ngoài phạm vi") — nó là công cụ dựng lại
+toàn bộ bảng phân quyền từ đầu, và hành vi truncate là đúng với mục đích đó. Ràng
+buộc nằm ở quy trình, được ghi ở đây và nhắc lại ngay trên màn khởi tạo
+(`resources/views/setup/quan-tri-dau-tien.blade.php`).
+
+Nếu lỡ chạy sai thứ tự: mở lại `/setup/quan-tri-dau-tien` và khởi tạo lại **ngay**,
+trước khi thông báo đường dẫn cho nhân viên.
 
 ## Kiểm thử
 
