@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Role;
 use App\RoleUser;
 use App\Services\SuperAdminBootstrap;
+use Illuminate\Auth\Events\Login;
 use Tests\Support\DungBangPhanQuyenSqlite;
 use Tests\TestCase;
 
@@ -86,5 +87,27 @@ class KhoiTaoSuperAdminTest extends TestCase
             ->assertStatus(404);
 
         $this->assertSame(1, RoleUser::where('user_id', 8008)->count());
+    }
+
+    /** @test */
+    public function dang_nhap_khi_he_thong_trong_thi_bat_co_session()
+    {
+        $this->withSession([]);
+
+        event(new Login($this->nguoiDungGia(9009), false));
+
+        $this->assertTrue(session('setup.can_khoi_tao'));
+    }
+
+    /** @test */
+    public function dang_nhap_khi_da_khoi_tao_thi_co_tat()
+    {
+        app(SuperAdminBootstrap::class)->gan($this->nguoiDungGia(5005));
+
+        $this->withSession([]);
+
+        event(new Login($this->nguoiDungGia(9009), false));
+
+        $this->assertFalse(session('setup.can_khoi_tao'));
     }
 }

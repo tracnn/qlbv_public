@@ -127,6 +127,22 @@
             <!-- Main content -->
             <section class="content">
 
+                @if(session('setup.can_khoi_tao'))
+                    {{-- He thong chua co quan tri vien. Co duoc dat boi
+                         App\Listeners\DanhDauCanKhoiTaoSuperAdmin luc dang nhap. --}}
+                    <div class="callout callout-warning">
+                        <h4>Hệ thống chưa có quản trị viên</h4>
+                        <p>
+                            Chưa tài khoản nào được cấp quyền quản trị cao nhất.
+                            Nếu bạn phụ trách cài đặt, hãy khởi tạo ngay trước khi
+                            thông báo đường dẫn hệ thống cho nhân viên.
+                        </p>
+                        <a href="{{ route('setup.quan-tri-dau-tien') }}" class="btn btn-warning">
+                            Khởi tạo quản trị viên
+                        </a>
+                    </div>
+                @endif
+
                 @yield('content')
             </section>
             <!-- /.content -->
