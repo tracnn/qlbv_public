@@ -55,7 +55,20 @@ Route::get('/get-list-congkhai-days', 'PatientController@getListCongkhaiDays')->
 Route::get('/get-list-congkhai-dvkt', 'PatientController@getListCongkhaiDvkt')->name('get-list-congkhai-dvkt');
 Route::get('/get-list-congkhai-thuoc', 'PatientController@getListCongkhaiThuoc')->name('get-list-congkhai-thuoc');
 
-Route::group(['middleware' => ['auth', 'check.first.login']], function () {
+/*
+ * Man khoi tao quan tri vien dau tien. Giu nhom 'auth' rieng, tach khoi nhom lon
+ * ben duoi, de pham vi middleware cua man nay khong bi keo theo moi lan nhom lon
+ * doi. Man nay chi can dang nhap; no phai vao duoc ngay ca khi he thong chua co
+ * quan tri vien nao va nguoi dung chua co vai tro nao.
+ */
+Route::group(['middleware' => ['auth']], function () {
+    Route::get('/setup/quan-tri-dau-tien', 'SetupController@hienThi')
+        ->name('setup.quan-tri-dau-tien');
+    Route::post('/setup/quan-tri-dau-tien', 'SetupController@gan')
+        ->name('setup.quan-tri-dau-tien.gan');
+});
+
+Route::group(['middleware' => ['auth']], function () {
     //    Route::get('/link1', function ()    {
 //        // Uses Auth Middleware
 //    });

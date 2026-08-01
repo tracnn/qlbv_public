@@ -192,3 +192,7 @@ Cổng kiểm thử của dự án: `vendor/bin/phpunit --testsuite Unit`. Khôn
 
 Chạy `php artisan migrate` trên máy chủ. Không chạy thì role chưa tồn tại và
 **không ai vào được order-check**, kể cả tài khoản superadmin.
+
+> Cập nhật 2026-08-01: nhóm route ngoài cùng nay chỉ còn `['auth']` — middleware
+> `check.first.login` đã bị xoá, xem
+> `docs/superpowers/specs/2026-08-01-khoi-tao-superadmin-design.md`.

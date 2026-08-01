@@ -16,6 +16,9 @@ class EventServiceProvider extends ServiceProvider
         'App\Events\MedicalRegister' => [
             'App\Listeners\SendMailMedicalRegister',
         ],
+        'Illuminate\Auth\Events\Login' => [
+            'App\Listeners\DanhDauCanKhoiTaoSuperAdmin',
+        ],
     ];
 
     /**
