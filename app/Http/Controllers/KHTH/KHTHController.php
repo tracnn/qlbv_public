@@ -48,68 +48,9 @@ class KHTHController extends Controller
 
     public function __construct()
     {
-    	$this->exam_room = DB::connection('HISPro')
-            ->table('his_execute_room')
-            ->where('is_active', 1)
-            ->where('is_exam', 1)
-            ->get();
-        $this->patient_type = DB::connection('HISPro')
-            ->table('his_patient_type')
-            ->where('is_active', 1)
-            ->where('is_delete', 0)
-            ->get();
-        $this->user = DB::connection('ACS_RS')
-            ->table('acs_user')
-            ->where('is_active', 1)
-            ->where('is_delete', 0)
-            ->get();
-        $this->department = DB::connection('HISPro')
-            ->table('his_department')
-            ->where('is_active', 1)
-            ->where('is_delete', 0)
-            ->get();
-        $this->DichvuXetnghiem = DB::connection('HISPro')
-            ->table('his_service')
-            //->where('is_active', 1)
-            ->where('is_delete', 0)
-            ->where('service_type_id', 2)
-            ->where('is_leaf', 1)
-            ->get();
-        $this->DanhmucICD = DB::connection('HISPro')
-            ->table('his_icd')
-            ->where('is_active', 1)
-            ->where('is_delete', 0)
-            ->whereNull('is_traditional')
-            ->get();
-        $this->LoaiDVKT = DB::connection('HISPro')
-            ->table('his_service_type')
-            ->where('is_active', 1)
-            ->where('is_delete', 0)
-            ->get();
-
-        $this->ExecuteRoom = DB::connection('HISPro')
-            ->table('his_execute_room')
-            ->where('is_active', 1)
-            ->where('is_delete', 0)
-            ->get();
-
-        $this->TreatmentType = DB::connection('HISPro')
-            ->table('his_treatment_type')
-            ->where('is_active', 1)
-            ->where('is_delete', 0)
-            ->get();
-
-        $this->Room = DB::connection('HISPro')
-            ->table('his_room')
-            ->leftJoin('his_execute_room', 'his_execute_room.room_id', '=' ,'his_room.id')
-            ->leftJoin('his_bed_room', 'his_bed_room.room_id', '=' ,'his_room.id')
-            ->leftJoin('his_reception_room', 'his_reception_room.room_id', '=' ,'his_room.id')
-            ->selectRaw('his_room.id as id, his_execute_room.execute_room_name || his_bed_room.bed_room_name || his_reception_room.reception_room_name as name')
-            ->where('his_room.is_active', 1)
-            ->where('his_room.is_delete', 0)
-            ->whereIn('room_type_id', [1,4,3])
-            ->get();
-
+        // Cac danh muc dung chung KHONG truy van o day: xem cac ham nap tre ben duoi.
+        // Truy van trong __construct khien moi action (va ca `php artisan route:list`)
+        // phai nap toan bo his_icd/his_service du khong dung den.
         $this->ParamNgay = [
             'tu_ngay' => date_format(now(),'Y-m-d'),
             'den_ngay' => date_format(now(),'Y-m-d'),    
@@ -126,7 +67,150 @@ class KHTHController extends Controller
         $this->ParamLoaiDVKT = [];
         $this->ParamExecuteRoom = [];
         $this->ParamDvkt = [];
-    }	
+    }
+
+    /*
+     * Danh muc dung chung — nap tre, moi request chi truy van khi thuc su can
+     * va chi truy van mot lan (ket qua duoc giu lai o thuoc tinh cung ten).
+     */
+
+    protected function exam_room()
+    {
+        if ($this->exam_room === null) {
+            $this->exam_room = DB::connection('HISPro')
+                ->table('his_execute_room')
+                ->where('is_active', 1)
+                ->where('is_exam', 1)
+                ->get();
+        }
+
+        return $this->exam_room;
+    }
+
+    protected function patient_type()
+    {
+        if ($this->patient_type === null) {
+            $this->patient_type = DB::connection('HISPro')
+                ->table('his_patient_type')
+                ->where('is_active', 1)
+                ->where('is_delete', 0)
+                ->get();
+        }
+
+        return $this->patient_type;
+    }
+
+    protected function user()
+    {
+        if ($this->user === null) {
+            $this->user = DB::connection('ACS_RS')
+                ->table('acs_user')
+                ->where('is_active', 1)
+                ->where('is_delete', 0)
+                ->get();
+        }
+
+        return $this->user;
+    }
+
+    protected function department()
+    {
+        if ($this->department === null) {
+            $this->department = DB::connection('HISPro')
+                ->table('his_department')
+                ->where('is_active', 1)
+                ->where('is_delete', 0)
+                ->get();
+        }
+
+        return $this->department;
+    }
+
+    protected function DichvuXetnghiem()
+    {
+        if ($this->DichvuXetnghiem === null) {
+            $this->DichvuXetnghiem = DB::connection('HISPro')
+                ->table('his_service')
+                //->where('is_active', 1)
+                ->where('is_delete', 0)
+                ->where('service_type_id', 2)
+                ->where('is_leaf', 1)
+                ->get();
+        }
+
+        return $this->DichvuXetnghiem;
+    }
+
+    protected function DanhmucICD()
+    {
+        if ($this->DanhmucICD === null) {
+            $this->DanhmucICD = DB::connection('HISPro')
+                ->table('his_icd')
+                ->where('is_active', 1)
+                ->where('is_delete', 0)
+                ->whereNull('is_traditional')
+                ->get();
+        }
+
+        return $this->DanhmucICD;
+    }
+
+    protected function LoaiDVKT()
+    {
+        if ($this->LoaiDVKT === null) {
+            $this->LoaiDVKT = DB::connection('HISPro')
+                ->table('his_service_type')
+                ->where('is_active', 1)
+                ->where('is_delete', 0)
+                ->get();
+        }
+
+        return $this->LoaiDVKT;
+    }
+
+    protected function ExecuteRoom()
+    {
+        if ($this->ExecuteRoom === null) {
+            $this->ExecuteRoom = DB::connection('HISPro')
+                ->table('his_execute_room')
+                ->where('is_active', 1)
+                ->where('is_delete', 0)
+                ->get();
+        }
+
+        return $this->ExecuteRoom;
+    }
+
+    protected function TreatmentType()
+    {
+        if ($this->TreatmentType === null) {
+            $this->TreatmentType = DB::connection('HISPro')
+                ->table('his_treatment_type')
+                ->where('is_active', 1)
+                ->where('is_delete', 0)
+                ->get();
+        }
+
+        return $this->TreatmentType;
+    }
+
+    protected function Room()
+    {
+        if ($this->Room === null) {
+            $this->Room = DB::connection('HISPro')
+                ->table('his_room')
+                ->leftJoin('his_execute_room', 'his_execute_room.room_id', '=' ,'his_room.id')
+                ->leftJoin('his_bed_room', 'his_bed_room.room_id', '=' ,'his_room.id')
+                ->leftJoin('his_reception_room', 'his_reception_room.room_id', '=' ,'his_room.id')
+                ->selectRaw('his_room.id as id, his_execute_room.execute_room_name || his_bed_room.bed_room_name || his_reception_room.reception_room_name as name')
+                ->where('his_room.is_active', 1)
+                ->where('his_room.is_delete', 0)
+                ->whereIn('room_type_id', [1,4,3])
+                ->get();
+        }
+
+        return $this->Room;
+    }
 
     private function __ParamNgay($request)
     {
@@ -218,9 +302,9 @@ class KHTHController extends Controller
     public function SoLuotKhamIndex(Request $request)
     {
         $ParamNgay = $this->__ParamNgay($request);
-        $exam_room = $this->exam_room;
+        $exam_room = $this->exam_room();
         $ParamExamRoom = $this->__ParamExamRoom($request);
-        $patient_type = $this->patient_type;
+        $patient_type = $this->patient_type();
         $ParamPatientType = $this->__ParamPatientType($request);
 
         //return $this->SoLuotKhamGetData($request);
@@ -291,9 +375,9 @@ class KHTHController extends Controller
     public function ChiPhiKhamBenhIndex(Request $request)
     {
         $ParamNgay = $this->__ParamNgay($request);
-        $patient_type = $this->patient_type;
+        $patient_type = $this->patient_type();
         $ParamPatientType = $this->__ParamPatientType($request);
-        $treatment_type = $this->TreatmentType;
+        $treatment_type = $this->TreatmentType();
         $ParamTreatmentType = $this->__ParamTreatmentType($request);
 
         return view('khth.chi-phi-kham-benh-index',
@@ -361,9 +445,9 @@ class KHTHController extends Controller
     public function DieuTriNoiTruIndex(Request $request)
     {
         $ParamNgay = $this->ParamNgay;
-        $exam_room = $this->exam_room;
+        $exam_room = $this->exam_room();
         $ParamExamRoom = $this->ParamExamRoom;
-        $user = $this->user;
+        $user = $this->user();
         $ParamUser = $this->ParamUser;
 
         $result_th = $this->danhsachnhapvientonghop(date('Ymd',strtotime($ParamNgay['tu_ngay'])) . '000000',
@@ -376,9 +460,9 @@ class KHTHController extends Controller
     public function DieuTriNoiTruSearch(Request $request)
     {
         $ParamNgay = $this->__ParamNgay($request);
-        $exam_room = $this->exam_room;
+        $exam_room = $this->exam_room();
         $ParamExamRoom = $this->__ParamExamRoom($request);
-        $user = $this->user;
+        $user = $this->user();
         $ParamUser = $this->__ParamUser($request);
 
         $result_th = $this->danhsachnhapvientonghop(date('Ymd',strtotime($ParamNgay['tu_ngay'])) . '000000',
@@ -420,9 +504,9 @@ class KHTHController extends Controller
     public function NoiTruTheoKhoaIndex(Request $request)
     {
         $ParamNgay = $this->ParamNgay;
-        $department = $this->department;
+        $department = $this->department();
         $ParamDepartment = $this->ParamDepartment;
-        $patient_type = $this->patient_type;
+        $patient_type = $this->patient_type();
         $ParamPatientType = $this->ParamPatientType;
 
         $result_th = $this->danhsachnoitrutheokhoatonghop(date('Ymd',strtotime($ParamNgay['tu_ngay'])) . '000000',
@@ -435,9 +519,9 @@ class KHTHController extends Controller
     public function NoiTruTheoKhoaSearch(Request $request)
     {
         $ParamNgay = $this->__ParamNgay($request);
-        $department = $this->department;
+        $department = $this->department();
         $ParamDepartment = $this->__ParamDepartment($request);
-        $patient_type = $this->patient_type;
+        $patient_type = $this->patient_type();
         $ParamPatientType = $this->__ParamPatientType($request);
 
         $result_th = $this->danhsachnoitrutheokhoatonghop(date('Ymd',strtotime($ParamNgay['tu_ngay'])) . '000000',
@@ -504,9 +588,9 @@ class KHTHController extends Controller
     public function XetNghiemChanDoan(Request $request)
     {
         $ParamNgay = $this->ParamNgay;
-        $DichvuXetnghiem = $this->DichvuXetnghiem;
+        $DichvuXetnghiem = $this->DichvuXetnghiem();
         $ParamDichvuXetnghiem = $this->ParamDichvuXetnghiem;
-        $DanhmucICD = $this->DanhmucICD;
+        $DanhmucICD = $this->DanhmucICD();
         $ParamDanhmucICD = $this->ParamDanhmucICD;
         return view('khth.xet-nghiem-chan-doan-index',
             compact('ParamNgay','DichvuXetnghiem','ParamDichvuXetnghiem','DanhmucICD','ParamDanhmucICD'));
@@ -633,16 +717,16 @@ class KHTHController extends Controller
     {
         $ParamNgay = $this->__ParamNgay($request);
         $ParamLoaiDVKT = $this->ParamLoaiDVKT;
-        $LoaiDVKT = $this->LoaiDVKT;
+        $LoaiDVKT = $this->LoaiDVKT();
         $ParamExecuteRoom = $this->ParamExecuteRoom;
-        $ExecuteRoom = $this->ExecuteRoom;
+        $ExecuteRoom = $this->ExecuteRoom();
         $ParamDepartment = $this->ParamDepartment;
-        $Department = $this->department;        
+        $Department = $this->department();        
         $ParamDvkt = $this->__ParamDvkt($request);
         $ParamExecuteDepartment = $this->__ParamExecuteDepartment($request);
         $ParamIcd = $this->__ParamIcd($request);
 
-        $Room = $this->Room;
+        $Room = $this->Room();
         $ParamRequestRoom = $this->__ParamRequestRoom($request);
 
         return view('khth.dich-vu-ky-thuat-index',
@@ -654,16 +738,16 @@ class KHTHController extends Controller
     {
         $ParamNgay = $this->__ParamNgay($request);
         $ParamLoaiDVKT = $this->__ParamLoaiDVKT($request);
-        $LoaiDVKT = $this->LoaiDVKT;
+        $LoaiDVKT = $this->LoaiDVKT();
         $ParamExecuteRoom = $this->__ParamExecuteRoom($request);
-        $ExecuteRoom = $this->ExecuteRoom;
+        $ExecuteRoom = $this->ExecuteRoom();
         $ParamDepartment = $this->__ParamDepartment($request);
-        $Department = $this->department;        
+        $Department = $this->department();        
         $ParamDvkt = $this->__ParamDvkt($request);
         $ParamExecuteDepartment = $this->__ParamExecuteDepartment($request);
         $ParamIcd = $this->__ParamIcd($request);
 
-        $Room = $this->Room;
+        $Room = $this->Room();
         $ParamRequestRoom = $this->__ParamRequestRoom($request);
 
         return view('khth.dich-vu-ky-thuat-index',

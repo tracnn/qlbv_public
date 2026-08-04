@@ -47,33 +47,68 @@ class EmrController extends Controller
             'treatment_code' => null,
         ];
 
-        $this->department = DB::connection('HISPro')
-            ->table('his_department')
-            ->where('is_active', 1)
-            ->where('is_delete', 0)
-            ->get();
+        // Cac danh muc dung chung KHONG truy van o day: xem cac ham nap tre ben duoi.
         $this->ParamDepartment = [];
-
-        $this->TreatmentType = DB::connection('HISPro')
-            ->table('his_treatment_type')
-            ->where('is_active', 1)
-            ->where('is_delete', 0)
-            ->get();
         $this->ParamTreatmentType = [];
-
-        $this->PatientType = DB::connection('HISPro')
-            ->table('his_patient_type')
-            ->where('is_active', 1)
-            ->where('is_delete', 0)
-            ->get();
         $this->ParamPatientType = [];
-
-        $this->DocumentType = DB::connection('EMR_RS')
-            ->table('emr_document_type')
-            ->where('is_active', 1)
-            ->where('is_delete', 0)
-            ->get();
         $this->ParamDocumentType = [];
+    }
+
+    /*
+     * Danh muc dung chung — nap tre, moi request chi truy van khi thuc su can
+     * va chi truy van mot lan (ket qua duoc giu lai o thuoc tinh cung ten).
+     */
+
+    protected function department()
+    {
+        if ($this->department === null) {
+            $this->department = DB::connection('HISPro')
+                ->table('his_department')
+                ->where('is_active', 1)
+                ->where('is_delete', 0)
+                ->get();
+        }
+
+        return $this->department;
+    }
+
+    protected function TreatmentType()
+    {
+        if ($this->TreatmentType === null) {
+            $this->TreatmentType = DB::connection('HISPro')
+                ->table('his_treatment_type')
+                ->where('is_active', 1)
+                ->where('is_delete', 0)
+                ->get();
+        }
+
+        return $this->TreatmentType;
+    }
+
+    protected function PatientType()
+    {
+        if ($this->PatientType === null) {
+            $this->PatientType = DB::connection('HISPro')
+                ->table('his_patient_type')
+                ->where('is_active', 1)
+                ->where('is_delete', 0)
+                ->get();
+        }
+
+        return $this->PatientType;
+    }
+
+    protected function DocumentType()
+    {
+        if ($this->DocumentType === null) {
+            $this->DocumentType = DB::connection('EMR_RS')
+                ->table('emr_document_type')
+                ->where('is_active', 1)
+                ->where('is_delete', 0)
+                ->get();
+        }
+
+        return $this->DocumentType;
     }
 
     private function __getSearchParam($request)
@@ -108,13 +143,13 @@ class EmrController extends Controller
     public function index(Request $request)
     {
     	$params = $this->searchParams;
-        $department = $this->department;
+        $department = $this->department();
         $ParamDepartment = $this->ParamDepartment;
 
-        $treatment_type = $this->TreatmentType;
+        $treatment_type = $this->TreatmentType();
         $ParamTreatmentType = $this->ParamTreatmentType;
 
-        $patient_type = $this->PatientType;
+        $patient_type = $this->PatientType();
         $ParamPatientType = $this->ParamPatientType;
 
     	//$emr_treatment = $this->list_emr_treatment($params, $ParamDepartment, $ParamTreatmentType, $ParamPatientType);
@@ -128,13 +163,13 @@ class EmrController extends Controller
     public function search(Request $request)
     {
     	$params = $this->__getSearchParam($request);
-        $department = $this->department;
+        $department = $this->department();
         $ParamDepartment = $this->__ParamDepartment($request);
 
-        $treatment_type = $this->TreatmentType;
+        $treatment_type = $this->TreatmentType();
         $ParamTreatmentType = $this->__ParamTreatmentType($request);
 
-        $patient_type = $this->PatientType;
+        $patient_type = $this->PatientType();
         $ParamPatientType = $this->__ParamPatientType($request);
     	
     	//$emr_treatment = $this->list_emr_treatment($params, $ParamDepartment, $ParamTreatmentType, $ParamPatientType);
@@ -384,7 +419,7 @@ class EmrController extends Controller
     public function TreatmentResultIndex(Request $request)
     {
         $params = $this->searchParams;
-        $document_type = $this->DocumentType;
+        $document_type = $this->DocumentType();
         $ParamDocumentType = $this->ParamDocumentType;
 
         return view('emr.treatment-result.index', 
@@ -396,7 +431,7 @@ class EmrController extends Controller
     {
         $params = $this->__getSearchParam($request);
 
-        $document_type = $this->DocumentType;
+        $document_type = $this->DocumentType();
         $ParamDocumentType = $this->__ParamDocumentType($request);
 
         $emr_treatment = $this->get_treatment($params['treatment_code']);
