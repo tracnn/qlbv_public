@@ -5,44 +5,51 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Trình chiếu giao ban</title>
 <style>
+  /* He so phong chu do nguoi trinh chieu chinh (nut A- / A+ o thanh duoi). Chi nhan CO CHU,
+     khong nhan padding/gap: phong ca khung thi noi dung tran khoi slide. Doi lai, zoom cao thi
+     chu chat dan trong khung va cac danh sach dai phai cuon som hon. */
+  :root { --z: 1; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { height: 100%; background: #0d1b2a; color: #e8eef5;
     font-family: "Segoe UI", Roboto, Arial, sans-serif; overflow: hidden; }
   #deck { height: 100vh; display: flex; flex-direction: column; }
   #stage { flex: 1; position: relative; }
-  .slide { position: absolute; inset: 0; padding: 3vh 4vw; display: none; flex-direction: column; }
+  /* overflow:auto la luoi an toan cho zoom: phong chu du to thi noi dung tran khoi slide, khong
+     co no thi phan tran chui xuong duoi thanh dieu khien va mat hut chu khong phai cuon duoc. */
+  .slide { position: absolute; inset: 0; padding: 3vh 4vw; display: none; flex-direction: column;
+    overflow: auto; }
   .slide.active { display: flex; }
   .s-head { display: flex; justify-content: space-between; align-items: flex-start;
     border-bottom: 1px solid #24384d; padding-bottom: 1.2vh; }
-  .s-brand { font-size: 1.88vh; letter-spacing: 1px; color: #6ea8d8; }
-  .s-title { font-size: 4.25vh; font-weight: 500; color: #fff; margin-top: .3vh; }
-  .s-sub { text-align: right; font-size: 1.88vh; color: #8aa4bd; }
+  .s-brand { font-size: calc(1.88vh * var(--z)); letter-spacing: 1px; color: #6ea8d8; }
+  .s-title { font-size: calc(4.25vh * var(--z)); font-weight: 500; color: #fff; margin-top: .3vh; }
+  .s-sub { text-align: right; font-size: calc(1.88vh * var(--z)); color: #8aa4bd; }
   .kpis { display: grid; gap: 1.4vh; margin-top: 2vh; }
   .kpi { background: #13293d; border-radius: 10px; padding: 1.6vh 1.6vw; }
-  .kpi .lbl { font-size: 2.12vh; color: #8aa4bd; }
-  .kpi .val { font-size: 5.75vh; font-weight: 500; color: #fff; line-height: 1.1; }
+  .kpi .lbl { font-size: calc(2.12vh * var(--z)); color: #8aa4bd; }
+  .kpi .val { font-size: calc(5.75vh * var(--z)); font-weight: 500; color: #fff; line-height: 1.1; }
   .kpi.teal .val { color: #5dcaa5; } .kpi.amber .val { color: #ef9f27; }
   .charts { display: grid; grid-template-columns: 1fr; gap: 1.6vh; margin-top: 2vh; flex: 1; min-height: 0; }
   .panel { background: #13293d; border-radius: 10px; padding: 1.4vh 1.4vw; display: flex; flex-direction: column; }
-  .panel .lbl { font-size: 2.12vh; color: #8aa4bd; margin-bottom: 1vh; }
+  .panel .lbl { font-size: calc(2.12vh * var(--z)); color: #8aa4bd; margin-bottom: 1vh; }
   .note { background: #13293d; border-left: 3px solid #ef9f27; border-radius: 0 8px 8px 0;
     padding: 1.4vh 1.4vw; margin-top: 2vh; }
-  .note .lbl { font-size: 2.12vh; color: #efc877; }
-  .note .txt { font-size: 2.75vh; color: #dbe6f0; margin-top: .5vh; }
+  .note .lbl { font-size: calc(2.12vh * var(--z)); color: #efc877; }
+  .note .txt { font-size: calc(2.75vh * var(--z)); color: #dbe6f0; margin-top: .5vh; }
   /* Chi tieu chuoi luu van ban thuan: xuong dong la \n that, khong phai <br> */
   .note .txt-pre { white-space: pre-wrap; }
   /* Nhieu danh sach dai thi cuon trong khung thay vi tran ra ngoai slide va mat hut */
   .ds-chuoi { flex: 1; min-height: 0; overflow: auto; }
   .ov-canh-bao { margin-top: 1.4vh; padding: 1.1vh 1.4vw; border-radius: 8px;
-    font-size: 2.38vh; color: #dbe6f0; border-left: 4px solid; }
-  .ov-canh-bao .lbl { color: #8aa4bd; font-size: 1.88vh; letter-spacing: .5px; margin-right: .8vw; }
+    font-size: calc(2.38vh * var(--z)); color: #dbe6f0; border-left: 4px solid; }
+  .ov-canh-bao .lbl { color: #8aa4bd; font-size: calc(1.88vh * var(--z)); letter-spacing: .5px; margin-right: .8vw; }
   .ov-canh-bao.tot { background: #122b23; border-color: #5dcaa5; }
   .ov-canh-bao.xau { background: #33201f; border-color: #e57373; }
-  .ov-badge { font-size: 1.88vh; padding: .3vh .8vw; border-radius: 20px; vertical-align: middle;
+  .ov-badge { font-size: calc(1.88vh * var(--z)); padding: .3vh .8vw; border-radius: 20px; vertical-align: middle;
     margin-left: .8vw; letter-spacing: 1px; }
   .ov-badge.nhap { background: #3a2f12; color: #efc877; }
   .ov-badge.chot { background: #12331f; color: #5dcaa5; }
-  .warn { color: #ef9f27; font-size: 2.5vh; margin-left: 8px; }
+  .warn { color: #ef9f27; font-size: calc(2.5vh * var(--z)); margin-left: 8px; }
   /* Bang tong hop khoi dieu tri. Co chu do JS dat theo so cot; cham san ma van tran thi
      khung nay cho cuon thay vi de bang tran ra ngoai slide. */
   .bdt-wrap { flex: 1; min-height: 0; overflow: auto; margin-top: 1.4vh; }
@@ -53,6 +60,8 @@
   .bdt th.ten, .bdt td.ten { text-align: left; }
   .bdt td.ten { color: #fff; }
   .bdt tr.tong td { background: #14293e; color: #fff; font-weight: 700; }
+  /* Thanh dieu khien KHONG theo --z: no la dieu khien, khong phai noi dung. De no phong theo
+     thi o 200% thanh nay xuong dong va an mat 1/4 chieu cao man chieu. */
   #bar { display: flex; justify-content: space-between; align-items: center;
     padding: 1.2vh 4vw; font-size: 1.88vh; color: #6f8aa6; border-top: 1px solid #24384d; }
   #dots { display: flex; gap: 6px; align-items: center; }
@@ -69,7 +78,7 @@
     color: #cfe0f0; padding: 8px 10px; font-size: 2vh; cursor: pointer; border-radius: 6px; }
   #jump-list button:hover { background: #1b3348; }
   #center { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
-    text-align: center; font-size: 3vh; color: #8aa4bd; }
+    text-align: center; font-size: calc(3vh * var(--z)); color: #8aa4bd; }
   .ov-main { display: flex; gap: 1.6vh; margin-top: 2vh; flex: 1; min-height: 0; }
   .ov-kpis { flex: 1; align-content: start; }
   .donut-panel { width: 26vw; flex: none; align-items: center; }
@@ -81,16 +90,16 @@
   .donut-cap { fill: #8aa4bd; font-size: 7px; }
   .donut-legend { display: flex; justify-content: space-around; width: 100%; margin-top: 1.4vh; }
   .donut-legend > div { display: flex; flex-direction: column; align-items: center; }
-  .donut-legend .dl-num { font-size: 3.75vh; font-weight: 600; }
-  .donut-legend small { font-size: 1.62vh; color: #8aa4bd; margin-top: .2vh; }
+  .donut-legend .dl-num { font-size: calc(3.75vh * var(--z)); font-weight: 600; }
+  .donut-legend small { font-size: calc(1.62vh * var(--z)); color: #8aa4bd; margin-top: .2vh; }
   .cap-grid { display: grid; gap: 1.6vh; margin-top: 2vh; flex: 1; min-height: 0; }
   .caplist { flex: 1; display: flex; flex-direction: column; gap: 1.1vh; justify-content: center; overflow: auto; }
   .caprow { display: flex; align-items: center; gap: 1vw; }
-  .capname { width: 15vw; font-size: 2.25vh; color: #dbe6f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .capname { width: 15vw; font-size: calc(2.25vh * var(--z)); color: #dbe6f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .captrack { flex: 1; height: 2.4vh; background: #24384d; border-radius: 4px; overflow: hidden; }
   .capfill { height: 100%; border-radius: 4px; transition: none; }
-  .cappct { width: 5vw; text-align: right; font-size: 2.38vh; font-weight: 600; }
-  .capnum { width: 6vw; text-align: right; font-size: 2vh; color: #8aa4bd; }
+  .cappct { width: 5vw; text-align: right; font-size: calc(2.38vh * var(--z)); font-weight: 600; }
+  .capnum { width: 6vw; text-align: right; font-size: calc(2vh * var(--z)); color: #8aa4bd; }
 </style>
 </head>
 <body>
@@ -101,6 +110,9 @@
   <div id="bar">
     <span style="display:flex;gap:.6vw;align-items:center">
       <button class="btn" id="fs-btn">⛶ Toàn màn hình (F)</button>
+      <button class="btn" id="z-out" title="Chữ nhỏ lại (phím −)">A−</button>
+      <span id="z-val" title="Bấm để về 100% (phím 0)" style="cursor:pointer;min-width:3.5em;text-align:center">100%</span>
+      <button class="btn" id="z-in" title="Chữ to lên (phím +)">A+</button>
       <span id="jump">
         <button class="btn" id="jump-btn">☰ Khoa</button>
         <div id="jump-list"></div>
@@ -268,7 +280,7 @@
     });
     if (kpiHtml === '') {
       kpiHtml = '<div class="kpi" style="grid-column:1/-1"><div class="lbl">Chưa đánh dấu chỉ tiêu nào</div>' +
-        '<div class="txt" style="font-size:2.25vh;color:#8aa4bd;margin-top:.6vh">' +
+        '<div class="txt" style="font-size:calc(2.25vh * var(--z));color:#8aa4bd;margin-top:.6vh">' +
         'Vào Cấu hình giao ban → mở Chỉ tiêu của khoa → tích "Hiện ở màn Tổng quan".</div></div>';
     }
 
@@ -284,7 +296,7 @@
         var names = people.map(function (d) {
           return '<b style="color:#fff">' + esc(d.person_name) + '</b>' + (d.phone ? ' <span style="color:#6ea8d8">' + esc(d.phone) + '</span>' : '');
         }).join(', ');
-        dutyHtml += '<div style="font-size:2.38vh"><span style="color:#8aa4bd">' + esc(p.name) + ':</span> ' + names + '</div>';
+        dutyHtml += '<div style="font-size:calc(2.38vh * var(--z))"><span style="color:#8aa4bd">' + esc(p.name) + ':</span> ' + names + '</div>';
       });
       dutyHtml += '</div></div>';
     }
@@ -356,7 +368,7 @@
 
     return '<div class="slide"><div class="s-head"><div class="s-title">Hoạt động điều trị</div>' +
       '<div class="s-sub">Giao ban ' + esc(fmtDate(DATE)) + '</div></div>' +
-      '<div class="bdt-wrap"><table class="bdt" style="font-size:' + co + 'vh">' +
+      '<div class="bdt-wrap"><table class="bdt" style="font-size:calc(' + co + 'vh * var(--z))">' +
       '<thead>' + thead + '</thead><tbody>' + tbody + tfoot + '</tbody></table></div></div>';
   }
 
@@ -483,6 +495,30 @@
     document.getElementById('counter').textContent = (current + 1) + '/' + slides.length;
   }
 
+  /*
+   * Phong chu. Muc zoom la cua MAY DANG CHIEU, khong phai cua bao cao: luu localStorage de
+   * lan chieu sau khoi chinh lai, khong gui len may chu.
+   */
+  var ZOOM_KEY = 'giaoban.present.zoom';
+  var ZOOM_MIN = 0.7, ZOOM_MAX = 2, ZOOM_BUOC = 0.1;
+  var zoom = 1;
+
+  function datZoom(z) {
+    // Lam tron 2 chu so: cong don 0.1 nhieu lan sinh 1.2000000000000002, hien ra thanh "120%"
+    // thi khong sao nhung ghi vao localStorage roi doc lai la rac.
+    zoom = Math.round(Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, z)) * 100) / 100;
+    document.documentElement.style.setProperty('--z', String(zoom));
+    var o = document.getElementById('z-val');
+    if (o) o.textContent = Math.round(zoom * 100) + '%';
+    try { localStorage.setItem(ZOOM_KEY, String(zoom)); } catch (err) { /* che do rieng tu */ }
+  }
+
+  function napZoom() {
+    var z = 1;
+    try { z = parseFloat(localStorage.getItem(ZOOM_KEY)); } catch (err) { z = 1; }
+    datZoom(isNaN(z) || !z ? 1 : z);
+  }
+
   function setupNav() {
     document.addEventListener('keydown', function (e) {
       if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { go(current + 1); e.preventDefault(); }
@@ -490,6 +526,10 @@
       else if (e.key === 'Home') { go(0); }
       else if (e.key === 'End') { go(slides.length - 1); }
       else if (e.key === 'f' || e.key === 'F') { toggleFs(); }
+      // '=' vi phim + tren hang so phai giu Shift moi ra '+'
+      else if (e.key === '+' || e.key === '=') { datZoom(zoom + ZOOM_BUOC); e.preventDefault(); }
+      else if (e.key === '-' || e.key === '_') { datZoom(zoom - ZOOM_BUOC); e.preventDefault(); }
+      else if (e.key === '0') { datZoom(1); e.preventDefault(); }
     });
     document.getElementById('stage').addEventListener('click', function (e) {
       if (e.target.closest('#jump')) return;
@@ -504,6 +544,10 @@
     });
     document.addEventListener('click', function () { jl.classList.remove('open'); });
     document.getElementById('fs-btn').addEventListener('click', toggleFs);
+    document.getElementById('z-in').addEventListener('click', function () { datZoom(zoom + ZOOM_BUOC); });
+    document.getElementById('z-out').addEventListener('click', function () { datZoom(zoom - ZOOM_BUOC); });
+    document.getElementById('z-val').addEventListener('click', function () { datZoom(1); });
+    napZoom();
   }
 
   function toggleFs() {
