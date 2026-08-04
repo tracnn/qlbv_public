@@ -149,6 +149,17 @@ class MetricValidator
                 "'Hiện ở slide Hoạt động điều trị' chỉ dùng được cho khối Điều trị nội trú.");
         }
 
+        // Thu tu cot. Khong can luat rieng ve block_type: khai thu tu thi buoc phai bat co slide,
+        // ma co slide da bi chan ngoai khoi Dieu tri noi tru o ngay tren.
+        if (isset($m['dieu_tri_order']) && $m['dieu_tri_order'] !== '' && $m['dieu_tri_order'] !== null) {
+            if (!self::laSoNguyen($m['dieu_tri_order'])) {
+                $loi[] = self::loi($i, 'dieu_tri_order', 'Thứ tự cột phải là số nguyên.');
+            } elseif (!$batSlide) {
+                $loi[] = self::loi($i, 'dieu_tri_order',
+                    'Đã khai thứ tự cột thì phải bật "Hiện ở slide Hoạt động điều trị", nếu không thứ tự này không dùng vào đâu.');
+            }
+        }
+
         return $loi;
     }
 
@@ -338,6 +349,25 @@ class MetricValidator
         }
 
         return $loi;
+    }
+
+    /**
+     * So nguyen, ke ca khi den tu form duoi dang chuoi.
+     *
+     * Widget 'number' cua metric-builder gui ve chuoi; ep (int) truoc roi so sanh se nuot
+     * '3abc' va 2.5 thanh 3 nen phai kiem trong khi con la chuoi.
+     */
+    protected static function laSoNguyen($v)
+    {
+        if (is_int($v)) {
+            return true;
+        }
+
+        if (is_float($v)) {
+            return floor($v) == $v;
+        }
+
+        return is_string($v) && preg_match('/^-?\d+$/', trim($v)) === 1;
     }
 
     protected static function loi($index, $field, $message)

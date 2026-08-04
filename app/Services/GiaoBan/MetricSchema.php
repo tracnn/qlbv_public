@@ -114,6 +114,11 @@ class MetricSchema
         // Chon cot cho slide Hoat dong dieu tri. Khong bat co nao thi slide hien TAT CA cot
         // nhu truoc — xem BangDieuTri::dungCot().
         'dieu_tri_slide' => ['widget' => 'bool', 'label' => 'Hiện ở slide Hoạt động điều trị'],
+        // Thu tu cot tren slide do KHTH khai. Bo trong thi cot xep sau cac cot da khai, giu thu tu
+        // xuat hien dau tien nhu cu. Cung theo NHAN nhu hai khoa tren: nhieu khoa khai cung nhan
+        // voi so khac nhau thi lay so NHO NHAT, de KHTH chi phai khai mot cho.
+        'dieu_tri_order' => ['widget' => 'number', 'label' => 'Thứ tự cột trên slide',
+                             'show_if' => ['dieu_tri_slide' => [true]]],
     ];
 
     /** Cac type khong can khoa HIS de tinh duoc. */

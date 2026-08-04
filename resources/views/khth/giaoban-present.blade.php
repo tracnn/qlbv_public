@@ -14,35 +14,35 @@
   .slide.active { display: flex; }
   .s-head { display: flex; justify-content: space-between; align-items: flex-start;
     border-bottom: 1px solid #24384d; padding-bottom: 1.2vh; }
-  .s-brand { font-size: 1.5vh; letter-spacing: 1px; color: #6ea8d8; }
-  .s-title { font-size: 3.4vh; font-weight: 500; color: #fff; margin-top: .3vh; }
-  .s-sub { text-align: right; font-size: 1.5vh; color: #8aa4bd; }
+  .s-brand { font-size: 1.88vh; letter-spacing: 1px; color: #6ea8d8; }
+  .s-title { font-size: 4.25vh; font-weight: 500; color: #fff; margin-top: .3vh; }
+  .s-sub { text-align: right; font-size: 1.88vh; color: #8aa4bd; }
   .kpis { display: grid; gap: 1.4vh; margin-top: 2vh; }
   .kpi { background: #13293d; border-radius: 10px; padding: 1.6vh 1.6vw; }
-  .kpi .lbl { font-size: 1.7vh; color: #8aa4bd; }
-  .kpi .val { font-size: 4.6vh; font-weight: 500; color: #fff; line-height: 1.1; }
+  .kpi .lbl { font-size: 2.12vh; color: #8aa4bd; }
+  .kpi .val { font-size: 5.75vh; font-weight: 500; color: #fff; line-height: 1.1; }
   .kpi.teal .val { color: #5dcaa5; } .kpi.amber .val { color: #ef9f27; }
   .charts { display: grid; grid-template-columns: 1fr; gap: 1.6vh; margin-top: 2vh; flex: 1; min-height: 0; }
   .panel { background: #13293d; border-radius: 10px; padding: 1.4vh 1.4vw; display: flex; flex-direction: column; }
-  .panel .lbl { font-size: 1.7vh; color: #8aa4bd; margin-bottom: 1vh; }
+  .panel .lbl { font-size: 2.12vh; color: #8aa4bd; margin-bottom: 1vh; }
   .note { background: #13293d; border-left: 3px solid #ef9f27; border-radius: 0 8px 8px 0;
     padding: 1.4vh 1.4vw; margin-top: 2vh; }
-  .note .lbl { font-size: 1.7vh; color: #efc877; }
-  .note .txt { font-size: 2.2vh; color: #dbe6f0; margin-top: .5vh; }
+  .note .lbl { font-size: 2.12vh; color: #efc877; }
+  .note .txt { font-size: 2.75vh; color: #dbe6f0; margin-top: .5vh; }
   /* Chi tieu chuoi luu van ban thuan: xuong dong la \n that, khong phai <br> */
   .note .txt-pre { white-space: pre-wrap; }
   /* Nhieu danh sach dai thi cuon trong khung thay vi tran ra ngoai slide va mat hut */
   .ds-chuoi { flex: 1; min-height: 0; overflow: auto; }
   .ov-canh-bao { margin-top: 1.4vh; padding: 1.1vh 1.4vw; border-radius: 8px;
-    font-size: 1.9vh; color: #dbe6f0; border-left: 4px solid; }
-  .ov-canh-bao .lbl { color: #8aa4bd; font-size: 1.5vh; letter-spacing: .5px; margin-right: .8vw; }
+    font-size: 2.38vh; color: #dbe6f0; border-left: 4px solid; }
+  .ov-canh-bao .lbl { color: #8aa4bd; font-size: 1.88vh; letter-spacing: .5px; margin-right: .8vw; }
   .ov-canh-bao.tot { background: #122b23; border-color: #5dcaa5; }
   .ov-canh-bao.xau { background: #33201f; border-color: #e57373; }
-  .ov-badge { font-size: 1.5vh; padding: .3vh .8vw; border-radius: 20px; vertical-align: middle;
+  .ov-badge { font-size: 1.88vh; padding: .3vh .8vw; border-radius: 20px; vertical-align: middle;
     margin-left: .8vw; letter-spacing: 1px; }
   .ov-badge.nhap { background: #3a2f12; color: #efc877; }
   .ov-badge.chot { background: #12331f; color: #5dcaa5; }
-  .warn { color: #ef9f27; font-size: 2vh; margin-left: 8px; }
+  .warn { color: #ef9f27; font-size: 2.5vh; margin-left: 8px; }
   /* Bang tong hop khoi dieu tri. Co chu do JS dat theo so cot; cham san ma van tran thi
      khung nay cho cuon thay vi de bang tran ra ngoai slide. */
   .bdt-wrap { flex: 1; min-height: 0; overflow: auto; margin-top: 1.4vh; }
@@ -54,53 +54,43 @@
   .bdt td.ten { color: #fff; }
   .bdt tr.tong td { background: #14293e; color: #fff; font-weight: 700; }
   #bar { display: flex; justify-content: space-between; align-items: center;
-    padding: 1.2vh 4vw; font-size: 1.5vh; color: #6f8aa6; border-top: 1px solid #24384d; }
+    padding: 1.2vh 4vw; font-size: 1.88vh; color: #6f8aa6; border-top: 1px solid #24384d; }
   #dots { display: flex; gap: 6px; align-items: center; }
   #dots i { width: 6px; height: 6px; border-radius: 50%; background: #3a5570; display: inline-block; }
   #dots i.on { width: 20px; border-radius: 3px; background: #6ea8d8; }
   .btn { background: #13293d; color: #cfe0f0; border: 1px solid #24384d; border-radius: 6px;
-    padding: .6vh 1vw; font-size: 1.5vh; cursor: pointer; }
+    padding: .6vh 1vw; font-size: 1.88vh; cursor: pointer; }
   .btn:hover { background: #1b3348; }
   #jump { position: relative; display: inline-block; z-index: 5; }
   #jump-list { position: absolute; left: 0; bottom: 100%; margin-bottom: 6px; background: #13293d; border: 1px solid #24384d;
     border-radius: 8px; padding: 6px; display: none; max-height: 70vh; overflow: auto; min-width: 220px; }
   #jump-list.open { display: block; }
   #jump-list button { display: block; width: 100%; text-align: left; background: none; border: none;
-    color: #cfe0f0; padding: 8px 10px; font-size: 1.6vh; cursor: pointer; border-radius: 6px; }
+    color: #cfe0f0; padding: 8px 10px; font-size: 2vh; cursor: pointer; border-radius: 6px; }
   #jump-list button:hover { background: #1b3348; }
   #center { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
-    text-align: center; font-size: 2.4vh; color: #8aa4bd; }
+    text-align: center; font-size: 3vh; color: #8aa4bd; }
   .ov-main { display: flex; gap: 1.6vh; margin-top: 2vh; flex: 1; min-height: 0; }
   .ov-kpis { flex: 1; align-content: start; }
   .donut-panel { width: 26vw; flex: none; align-items: center; }
   /* Trong luoi cap-grid, be rong do cot quyet dinh — bo width co dinh cua bo cuc flex cu */
   .cap-grid > .donut-panel { width: auto; }
-  /* Hien du moi phong ma khong phai cuon: chia cot, moi cot tu gian deu theo chieu cao con lai */
-  .pk-cot { display: grid; gap: 1.2vw; margin-top: 1.2vh; flex: 1; min-height: 0; }
-  .pk-list { justify-content: space-between; gap: .4vh; overflow: hidden;
-    background: #13293d; border-radius: 10px; padding: 1.2vh 1vw; }
-  .pk-list .capname { width: 11vw; font-size: 1.6vh; }
-  .pk-list .cappct { width: 3.5vw; font-size: 1.7vh; }
-  .pk-list .captrack { height: 1.8vh; }
-  /* Hai the tong gon lai de nhuong cho cho danh sach */
-  .pk-kpis .val { font-size: 3.4vh; }
-  .pk-kpis .kpi { padding: 1vh 1.4vw; }
   .donut-wrap { flex: 1; display: flex; align-items: center; justify-content: center; min-height: 0; }
   .donut-svg { width: 22vh; height: 22vh; }
   .donut-pct { fill: #fff; font-size: 17px; font-weight: 600; }
   .donut-cap { fill: #8aa4bd; font-size: 7px; }
   .donut-legend { display: flex; justify-content: space-around; width: 100%; margin-top: 1.4vh; }
   .donut-legend > div { display: flex; flex-direction: column; align-items: center; }
-  .donut-legend .dl-num { font-size: 3vh; font-weight: 600; }
-  .donut-legend small { font-size: 1.3vh; color: #8aa4bd; margin-top: .2vh; }
+  .donut-legend .dl-num { font-size: 3.75vh; font-weight: 600; }
+  .donut-legend small { font-size: 1.62vh; color: #8aa4bd; margin-top: .2vh; }
   .cap-grid { display: grid; gap: 1.6vh; margin-top: 2vh; flex: 1; min-height: 0; }
   .caplist { flex: 1; display: flex; flex-direction: column; gap: 1.1vh; justify-content: center; overflow: auto; }
   .caprow { display: flex; align-items: center; gap: 1vw; }
-  .capname { width: 15vw; font-size: 1.8vh; color: #dbe6f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .capname { width: 15vw; font-size: 2.25vh; color: #dbe6f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .captrack { flex: 1; height: 2.4vh; background: #24384d; border-radius: 4px; overflow: hidden; }
   .capfill { height: 100%; border-radius: 4px; transition: none; }
-  .cappct { width: 5vw; text-align: right; font-size: 1.9vh; font-weight: 600; }
-  .capnum { width: 6vw; text-align: right; font-size: 1.6vh; color: #8aa4bd; }
+  .cappct { width: 5vw; text-align: right; font-size: 2.38vh; font-weight: 600; }
+  .capnum { width: 6vw; text-align: right; font-size: 2vh; color: #8aa4bd; }
 </style>
 </head>
 <body>
@@ -278,7 +268,7 @@
     });
     if (kpiHtml === '') {
       kpiHtml = '<div class="kpi" style="grid-column:1/-1"><div class="lbl">Chưa đánh dấu chỉ tiêu nào</div>' +
-        '<div class="txt" style="font-size:1.8vh;color:#8aa4bd;margin-top:.6vh">' +
+        '<div class="txt" style="font-size:2.25vh;color:#8aa4bd;margin-top:.6vh">' +
         'Vào Cấu hình giao ban → mở Chỉ tiêu của khoa → tích "Hiện ở màn Tổng quan".</div></div>';
     }
 
@@ -294,7 +284,7 @@
         var names = people.map(function (d) {
           return '<b style="color:#fff">' + esc(d.person_name) + '</b>' + (d.phone ? ' <span style="color:#6ea8d8">' + esc(d.phone) + '</span>' : '');
         }).join(', ');
-        dutyHtml += '<div style="font-size:1.9vh"><span style="color:#8aa4bd">' + esc(p.name) + ':</span> ' + names + '</div>';
+        dutyHtml += '<div style="font-size:2.38vh"><span style="color:#8aa4bd">' + esc(p.name) + ':</span> ' + names + '</div>';
       });
       dutyHtml += '</div></div>';
     }
@@ -340,13 +330,17 @@
    * Co chu nho dan theo so cot: bay khoa moi khoa vai chi tieu rieng thi de len 20+ cot,
    * giu co chu goc thi tran khoi man chieu. Co san toi thieu; cham san van tran thi
    * .bdt-wrap cho cuon.
+   *
+   * Cac nguong duoi chi tang 15%, khong phai 25% nhu phan con lai cua trinh chieu: bang nay
+   * la cho chat nhat, tang manh la bang nhieu cot phai cuon — ma chieu len tuong thi phan
+   * phai cuon coi nhu mat du lieu.
    */
   function dieuTriSlide(data) {
     var b = data.bang_dieu_tri;
     if (!b || !b.cot || !b.cot.length || !b.dong || !b.dong.length) return '';
 
     var soCot = b.cot.length;
-    var co = soCot <= 8 ? 2.0 : (soCot <= 14 ? 1.7 : (soCot <= 20 ? 1.45 : 1.25));
+    var co = soCot <= 8 ? 2.3 : (soCot <= 14 ? 1.95 : (soCot <= 20 ? 1.65 : 1.45));
 
     var thead = '<tr><th class="ten">KHOA PHÒNG</th>' +
       b.cot.map(function (c) { return '<th>' + esc(c.nhan) + '</th>'; }).join('') + '</tr>';
@@ -364,41 +358,6 @@
       '<div class="s-sub">Giao ban ' + esc(fmtDate(DATE)) + '</div></div>' +
       '<div class="bdt-wrap"><table class="bdt" style="font-size:' + co + 'vh">' +
       '<thead>' + thead + '</thead><tbody>' + tbody + tfoot + '</tbody></table></div></div>';
-  }
-
-  /** Slide luot kham theo tung phong kham, trong dung ky bao cao. */
-  function phongKhamSlide(data) {
-    var ds = data.room_stats || [];
-    if (!ds.length) return '';
-
-    var maxV = 1, tong = 0;
-    ds.forEach(function (x) { maxV = Math.max(maxV, Number(x.so)); tong += Number(x.so); });
-
-    function motDong(x) {
-      var pct = Math.round(Number(x.so) / maxV * 100);
-      return '<div class="caprow"><div class="capname">' + esc(x.ten) + '</div>' +
-        '<div class="captrack"><div class="capfill" style="width:' + Math.max(2, pct) + '%;background:#378add"></div></div>' +
-        '<div class="cappct" style="color:#dbe6f0">' + num(x.so) + '</div></div>';
-    }
-
-    // Nhieu phong thi chia doi thanh hai cot. Mot cot doc thi 31 phong tran khoi man va phai
-    // cuon — ma chieu len tuong thi khong ai cuon, coi nhu mat du lieu. Vung thanh ngang von
-    // thua rat nhieu chieu rong, chia doi la dung duoc het ma moi dong van du cao de doc.
-    var soCot = ds.length > 14 ? 2 : 1;
-    var moiCot = Math.ceil(ds.length / soCot);
-    var cotHtml = '';
-    for (var c = 0; c < soCot; c++) {
-      cotHtml += '<div class="caplist pk-list">' +
-        ds.slice(c * moiCot, (c + 1) * moiCot).map(motDong).join('') + '</div>';
-    }
-
-    return '<div class="slide"><div class="s-head"><div class="s-title">Lượt khám theo phòng khám</div>' +
-      '<div class="s-sub">Giao ban ' + esc(fmtDate(DATE)) + '</div></div>' +
-      '<div class="kpis pk-kpis" style="grid-template-columns:repeat(2,1fr)">' +
-      '<div class="kpi teal"><div class="lbl">Tổng lượt khám</div><div class="val">' + num(tong) + '</div></div>' +
-      '<div class="kpi"><div class="lbl">Số phòng có phát sinh</div><div class="val">' + num(ds.length) + '</div></div>' +
-      '</div>' +
-      '<div class="pk-cot" style="grid-template-columns:repeat(' + soCot + ',1fr)">' + cotHtml + '</div></div>';
   }
 
   function capacityDeptSlide(data) {
@@ -486,11 +445,6 @@
     if (dtHtml) {
       deptNames.push({ idx: slides.length, name: 'Hoạt động điều trị' });
       slides.push(dtHtml);
-    }
-    var pkHtml = phongKhamSlide(data);
-    if (pkHtml) {
-      deptNames.push({ idx: slides.length, name: 'Phòng khám' });
-      slides.push(pkHtml);
     }
     data.configs.forEach(function (cfg) {
       deptNames.push({ idx: slides.length, name: cfg.display_name });

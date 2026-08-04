@@ -398,6 +398,57 @@ class MetricValidatorTest extends TestCase
     }
 
     /** @test */
+    public function thu_tu_cot_kem_co_slide_la_hop_le()
+    {
+        $m = [['code' => 'bn_cu', 'name' => 'BN cũ', 'type' => 'census_from',
+               'dieu_tri_slide' => true, 'dieu_tri_order' => 10]];
+
+        $this->assertSame([], MetricValidator::validate($m, 'dieu_tri'));
+    }
+
+    /** @test */
+    public function thu_tu_cot_dang_chuoi_so_van_hop_le()
+    {
+        // Widget 'number' cua metric-builder gui ve chuoi.
+        $m = [['code' => 'bn_cu', 'name' => 'BN cũ', 'type' => 'census_from',
+               'dieu_tri_slide' => true, 'dieu_tri_order' => '10']];
+
+        $this->assertSame([], MetricValidator::validate($m, 'dieu_tri'));
+    }
+
+    /** @test */
+    public function thu_tu_cot_rong_coi_nhu_khong_khai()
+    {
+        $m = [['code' => 'bn_cu', 'name' => 'BN cũ', 'type' => 'census_from',
+               'dieu_tri_order' => '']];
+
+        $this->assertSame([], MetricValidator::validate($m, 'dieu_tri'));
+    }
+
+    /** @test */
+    public function thu_tu_cot_khong_phai_so_nguyen_bi_chan()
+    {
+        foreach (['abc', '3abc', 2.5, true] as $rac) {
+            $m = [['code' => 'bn_cu', 'name' => 'BN cũ', 'type' => 'census_from',
+                   'dieu_tri_slide' => true, 'dieu_tri_order' => $rac]];
+            $loi = MetricValidator::validate($m, 'dieu_tri');
+
+            $this->assertNotEmpty($loi, 'Phai chan gia tri: ' . var_export($rac, true));
+            $this->assertEquals('dieu_tri_order', $loi[0]['field']);
+        }
+    }
+
+    /** @test */
+    public function khai_thu_tu_cot_ma_khong_bat_co_slide_bi_chan()
+    {
+        $m = [['code' => 'bn_cu', 'name' => 'BN cũ', 'type' => 'census_from', 'dieu_tri_order' => 10]];
+        $loi = MetricValidator::validate($m, 'dieu_tri');
+
+        $this->assertNotEmpty($loi);
+        $this->assertEquals('dieu_tri_order', $loi[0]['field']);
+    }
+
+    /** @test */
     public function bat_co_slide_dieu_tri_o_khoi_dieu_tri_van_hop_le()
     {
         $m = [['code' => 'bn_cu', 'name' => 'BN cũ', 'type' => 'census_from', 'dieu_tri_slide' => true]];

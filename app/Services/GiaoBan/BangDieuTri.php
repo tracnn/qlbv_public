@@ -83,8 +83,10 @@ class BangDieuTri
     }
 
     /**
-     * Cot theo thu tu xuat hien dau tien: duyet khoa theo sort_order, trong moi khoa duyet
-     * chi tieu theo thu tu khai.
+     * Cot sap theo `dieu_tri_order` KHTH khai; cot khong khai xep sau, giu thu tu xuat hien dau
+     * tien (duyet khoa theo sort_order, trong moi khoa duyet chi tieu theo thu tu khai). Truoc khi
+     * co `dieu_tri_order`, thu tu hoan toan la "xuat hien dau tien" nen nhin tren slide nhu ngau
+     * nhien: cot nao len truoc phu thuoc khoa nao tinh co khai nhan do som nhat.
      *
      * Co `dieu_tri_slide` chon COT chu khong chon o: he mot chi tieu mang nhan do bat co thi
      * cot len slide, va moi khoa khai cung nhan deu do so vao (xem giaTri). Khong khoa nao bat
@@ -103,6 +105,7 @@ class BangDieuTri
         $trangThaiPercent = [];
         $viTri = [];
         $thuTu = [];
+        $order = [];
 
         foreach ($khoa as $k) {
             foreach (self::chiTieuSo($k) as $m) {
@@ -123,6 +126,14 @@ class BangDieuTri
                     $trangThaiPercent[$kh] = false;
                 }
 
+                // Thu tu cung bam theo NHAN va cung ly do: nhieu khoa khai cung nhan thi lay so
+                // NHO NHAT, de KHTH chi phai khai mot cho thay vi nho khai du moi khoa.
+                $so = self::thuTuCot($m);
+
+                if ($so !== null && (!isset($order[$kh]) || $so < $order[$kh])) {
+                    $order[$kh] = $so;
+                }
+
                 if (isset($viTri[$kh]) || ($locTheoCo && !self::batCo($m))) {
                     continue;
                 }
@@ -132,6 +143,8 @@ class BangDieuTri
             }
         }
 
+        $thuTu = self::sapTheoOrder($thuTu, $viTri, $order);
+
         $cot = [];
 
         foreach ($thuTu as $kh) {
@@ -139,6 +152,56 @@ class BangDieuTri
         }
 
         return $cot;
+    }
+
+    /**
+     * Sap cot theo so thu tu KHTH khai; cot khong khai xep sau, giu thu tu xuat hien dau tien.
+     *
+     * Sap bang khoa kep (so, vi tri) chu khong chi theo so: usort cua PHP 7.4 KHONG on dinh
+     * (chi on dinh tu PHP 8.0), hai cot cung so ma thieu khoa phu thi thu tu nhay giua cac lan
+     * chay — dung cai benh dang chua.
+     */
+    protected static function sapTheoOrder(array $thuTu, array $viTri, array $order)
+    {
+        if (empty($order)) {
+            return $thuTu;
+        }
+
+        usort($thuTu, function ($a, $b) use ($viTri, $order) {
+            $ca = array_key_exists($a, $order);
+            $cb = array_key_exists($b, $order);
+
+            if ($ca !== $cb) {
+                return $ca ? -1 : 1;
+            }
+
+            if ($ca && $order[$a] !== $order[$b]) {
+                return $order[$a] < $order[$b] ? -1 : 1;
+            }
+
+            $va = isset($viTri[$a]) ? $viTri[$a] : 0;
+            $vb = isset($viTri[$b]) ? $viTri[$b] : 0;
+
+            return $va === $vb ? 0 : ($va < $vb ? -1 : 1);
+        });
+
+        return $thuTu;
+    }
+
+    /** So thu tu cot KHTH khai, null neu bo trong. */
+    protected static function thuTuCot(array $m)
+    {
+        if (!isset($m['dieu_tri_order'])) {
+            return null;
+        }
+
+        $v = $m['dieu_tri_order'];
+
+        if ($v === '' || $v === null || is_bool($v) || is_array($v)) {
+            return null;
+        }
+
+        return is_numeric($v) ? (int) $v : null;
     }
 
     /** Co it nhat mot chi tieu SO bat co -> bat che do chon cot. */

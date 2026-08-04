@@ -363,4 +363,116 @@ class BangDieuTriTest extends TestCase
         $this->assertCount(1, $b['cot']);
         $this->assertSame('BN cũ', $b['cot'][0]['nhan']);
     }
+
+    /** Chi tieu bat co slide kem so thu tu cot. */
+    private function mCoSo($code, $name, $so, $type = 'census_from', $valueType = null)
+    {
+        $m = $this->mCo($code, $name, $type, $valueType);
+        $m['dieu_tri_order'] = $so;
+
+        return $m;
+    }
+
+    private function nhan(array $b)
+    {
+        return array_column($b['cot'], 'nhan');
+    }
+
+    /** @test */
+    public function cot_sap_theo_thu_tu_khai_chu_khong_theo_thu_tu_xuat_hien()
+    {
+        $b = BangDieuTri::dung([
+            $this->cfg(1, 'Nội TH', 1, [
+                $this->mCoSo('c', 'Chuyển viện', 30),
+                $this->mCoSo('a', 'BN cũ', 10),
+            ]),
+            $this->cfg(2, 'Phụ sản', 2, [$this->mCoSo('b', 'Vào viện', 20)]),
+        ], []);
+
+        $this->assertSame(['BN cũ', 'Vào viện', 'Chuyển viện'], $this->nhan($b));
+    }
+
+    /** @test */
+    public function cot_khong_khai_thu_tu_xep_sau_va_giu_thu_tu_xuat_hien()
+    {
+        $b = BangDieuTri::dung([
+            $this->cfg(1, 'Nội TH', 1, [
+                $this->mCo('x', 'Tử vong'),
+                $this->mCo('y', 'Nặng xin về'),
+                $this->mCoSo('a', 'BN cũ', 10),
+            ]),
+        ], []);
+
+        $this->assertSame(['BN cũ', 'Tử vong', 'Nặng xin về'], $this->nhan($b));
+    }
+
+    /** @test */
+    public function nhieu_khoa_khai_cung_nhan_khac_so_thi_lay_so_nho_nhat()
+    {
+        // Khoa sort_order 2 khai so 5, khoa sort_order 1 khai so 50 cho cung nhan 'BN cũ'.
+        // Lay 5 nen 'BN cũ' phai dung truoc 'Vào viện' (so 10).
+        $b = BangDieuTri::dung([
+            $this->cfg(1, 'Nội TH', 1, [
+                $this->mCoSo('a', 'BN cũ', 50),
+                $this->mCoSo('b', 'Vào viện', 10),
+            ]),
+            $this->cfg(2, 'Phụ sản', 2, [$this->mCoSo('a2', 'BN cũ', 5)]),
+        ], []);
+
+        $this->assertSame(['BN cũ', 'Vào viện'], $this->nhan($b));
+    }
+
+    /** @test */
+    public function hai_cot_cung_so_giu_thu_tu_xuat_hien_dau_tien()
+    {
+        // usort PHP 7.4 khong on dinh nen phai co khoa phu; thieu no thi khang dinh nay hong.
+        $b = BangDieuTri::dung([
+            $this->cfg(1, 'Nội TH', 1, [
+                $this->mCoSo('a', 'BN cũ', 7),
+                $this->mCoSo('b', 'Vào viện', 7),
+                $this->mCoSo('c', 'Ra viện', 7),
+            ]),
+        ], []);
+
+        $this->assertSame(['BN cũ', 'Vào viện', 'Ra viện'], $this->nhan($b));
+    }
+
+    /** @test */
+    public function khong_khoa_nao_khai_thu_tu_thi_giu_nguyen_thu_tu_cu()
+    {
+        $b = BangDieuTri::dung([
+            $this->cfg(1, 'Nội TH', 1, [$this->mCo('c', 'Chuyển viện'), $this->mCo('a', 'BN cũ')]),
+            $this->cfg(2, 'Phụ sản', 2, [$this->mCo('b', 'Vào viện')]),
+        ], []);
+
+        $this->assertSame(['Chuyển viện', 'BN cũ', 'Vào viện'], $this->nhan($b));
+    }
+
+    /** @test */
+    public function thu_tu_dang_chuoi_van_duoc_hieu_la_so()
+    {
+        // Widget 'number' cua metric-builder gui ve chuoi.
+        $b = BangDieuTri::dung([
+            $this->cfg(1, 'Nội TH', 1, [
+                $this->mCoSo('a', 'BN cũ', '20'),
+                $this->mCoSo('b', 'Vào viện', '3'),
+            ]),
+        ], []);
+
+        $this->assertSame(['Vào viện', 'BN cũ'], $this->nhan($b));
+    }
+
+    /** @test */
+    public function thu_tu_rong_hoac_rac_coi_nhu_khong_khai()
+    {
+        $b = BangDieuTri::dung([
+            $this->cfg(1, 'Nội TH', 1, [
+                $this->mCoSo('a', 'BN cũ', ''),
+                $this->mCoSo('b', 'Vào viện', 'abc'),
+                $this->mCoSo('c', 'Ra viện', 4),
+            ]),
+        ], []);
+
+        $this->assertSame(['Ra viện', 'BN cũ', 'Vào viện'], $this->nhan($b));
+    }
 }
