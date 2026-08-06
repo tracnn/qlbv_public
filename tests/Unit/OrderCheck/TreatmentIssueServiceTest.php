@@ -92,4 +92,67 @@ class TreatmentIssueServiceTest extends TestCase
         $this->assertSame([], $ketQua['data']['hein_card']);
         $this->assertSame([], $ketQua['data']['xml3176']);
     }
+
+    protected function themTraThe(array $ghiDe = [])
+    {
+        DB::table('check_hein_cards')->insert(array_merge([
+            'ma_lk'      => '01013250800123',
+            'ma_tracuu'  => '000',
+            'ma_kiemtra' => '00',
+            'ma_ketqua'  => 'Hop le',
+            'ghi_chu'    => null,
+            'ma_the'     => 'DN4010112345678',
+            'created_at' => '2026-08-05 14:00:00',
+            'updated_at' => '2026-08-05 14:03:00',
+        ], $ghiDe));
+    }
+
+    /** @test */
+    public function the_hop_le_thi_nhom_tra_the_rong()
+    {
+        $this->themTraThe(['ma_tracuu' => '000', 'ma_kiemtra' => '00']);
+
+        $ketQua = $this->dichVu()->cua('01013250800123');
+
+        $this->assertSame([], $ketQua['data']['hein_card']);
+    }
+
+    /** @test */
+    public function the_bat_thuong_thi_tra_ve_mot_dong()
+    {
+        $this->themTraThe(['ma_tracuu' => '005', 'ma_ketqua' => 'The het han']);
+
+        $ketQua = $this->dichVu()->cua('01013250800123');
+
+        $this->assertCount(1, $ketQua['data']['hein_card']);
+        $this->assertEquals('005', $ketQua['data']['hein_card'][0]['ma_tracuu']);
+        $this->assertEquals('The het han', $ketQua['data']['hein_card'][0]['ma_ketqua']);
+        $this->assertEquals('2026-08-05 14:03:00', $ketQua['data']['hein_card'][0]['checked_at']);
+    }
+
+    /**
+     * HIS da co san thong tin benh nhan; day them PII sang chi lam tang be mat lo lot.
+     *
+     * @test
+     */
+    public function khong_tra_ve_thong_tin_dinh_danh_benh_nhan()
+    {
+        $this->themTraThe(['ma_kiemtra' => '01']);
+
+        $dong = $this->dichVu()->cua('01013250800123')['data']['hein_card'][0];
+
+        foreach (['ho_ten', 'ngay_sinh', 'dia_chi', 'maso_bhxh', 'ma_the'] as $cot) {
+            $this->assertArrayNotHasKey($cot, $dong);
+        }
+
+        $this->assertEquals('****5678', $dong['ma_the_masked']);
+    }
+
+    /** @test */
+    public function che_ma_the_xu_ly_the_rong_va_the_ngan()
+    {
+        $this->assertNull(TreatmentIssueService::cheMaThe(null));
+        $this->assertNull(TreatmentIssueService::cheMaThe('   '));
+        $this->assertEquals('****AB', TreatmentIssueService::cheMaThe('AB'));
+    }
 }

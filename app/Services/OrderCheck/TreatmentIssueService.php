@@ -2,6 +2,7 @@
 
 namespace App\Services\OrderCheck;
 
+use App\Models\CheckBHYT\check_hein_card;
 use App\Models\OrderCheck\OrderCheckViolation;
 
 /**
@@ -35,7 +36,7 @@ class TreatmentIssueService
             'data' => [
                 'treatment_code' => $this->rong($treatmentCode) ? null : $treatmentCode,
                 'order_check' => $viPham,
-                'hein_card' => [],
+                'hein_card' => $this->rong($treatmentCode) ? [] : $this->loiTraThe($treatmentCode),
                 'xml3176' => [],
             ],
             'summary' => [],
@@ -83,6 +84,39 @@ class TreatmentIssueService
         }
 
         return $ra;
+    }
+
+    /**
+     * Chi tra dong CO BAT THUONG. Dung lai scope chiLoi() cua model: quy tac "khac 000
+     * HOAC khac 00" da duoc can nhac va ghi chu ky trong do, viet lai o day la nhan doi
+     * mot quy tac de lech.
+     */
+    protected function loiTraThe($maLk)
+    {
+        $dong = check_hein_card::where('ma_lk', $maLk)->chiLoi()->get();
+
+        $ra = [];
+
+        foreach ($dong as $t) {
+            $ra[] = [
+                'ma_tracuu' => $t->ma_tracuu,
+                'ma_kiemtra' => $t->ma_kiemtra,
+                'ma_ketqua' => $t->ma_ketqua,
+                'ghi_chu' => $t->ghi_chu,
+                'ma_the_masked' => self::cheMaThe($t->ma_the),
+                'checked_at' => $t->updated_at ? (string) $t->updated_at : null,
+            ];
+        }
+
+        return $ra;
+    }
+
+    /** Chi giu 4 ky tu cuoi - du de doi chieu, khong du de tai su dung. */
+    public static function cheMaThe($maThe)
+    {
+        $maThe = trim((string) $maThe);
+
+        return $maThe === '' ? null : '****' . substr($maThe, -4);
     }
 
     /** JSON hong o MOT dong khong duoc lam chet ca lan goi: tra null cho rieng dong do. */
