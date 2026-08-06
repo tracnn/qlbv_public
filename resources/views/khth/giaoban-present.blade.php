@@ -8,9 +8,40 @@
   /* He so phong chu do nguoi trinh chieu chinh (nut A- / A+ o thanh duoi). Chi nhan CO CHU,
      khong nhan padding/gap: phong ca khung thi noi dung tran khoi slide. Doi lai, zoom cao thi
      chu chat dan trong khung va cac danh sach dai phai cuon som hon. */
-  :root { --z: 1; }
+  /* Bang mau nen toi (mac dinh). Theme sang khai bao lai dung bo bien nay o cuoi khoi style.
+     Moi mau cua trinh chieu phai di qua day: mau viet cung con sot lai o dau thi cho do se
+     khong doi theo theme va thanh mang lac long tren nen sang. */
+  :root {
+    --z: 1;
+    --bg: #0d1b2a;          /* nen trang */
+    --text: #e8eef5;        /* chu tren nen trang */
+    --panel: #13293d;       /* nen panel, note, nut */
+    --panel-2: #14293e;     /* nen o tieu de bang va dong tong */
+    --line: #24384d;        /* duong ke chung, vien nut */
+    --line-2: #24405c;      /* vien o bang */
+    --brand: #6ea8d8;       /* nhan thuong hieu, dot dang xem, so dien thoai */
+    --muted: #8aa4bd;       /* chu phu */
+    --txt-2: #dbe6f0;       /* chu noi dung */
+    --strong: #fff;         /* chu nhan manh */
+    --teal: #5dcaa5;        /* tang / tot */
+    --amber: #ef9f27;       /* giam / canh bao */
+    --amber-2: #efc877;     /* nhan cua khoi ghi chu */
+    --red: #e57373;         /* xau */
+    --blue: #378add;        /* cong suat thap */
+    --btn-text: #cfe0f0;
+    --btn-hover: #1b3348;
+    --bar-text: #6f8aa6;
+    --dot: #3a5570;
+    --track: #24384d;       /* ranh thanh cong suat, vong nen donut */
+    --ok-bg: #122b23;
+    --bad-bg: #33201f;
+    --badge-nhap-bg: #3a2f12;
+    --badge-nhap-fg: #efc877;
+    --badge-chot-bg: #12331f;
+    --badge-chot-fg: #5dcaa5;
+  }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body { height: 100%; background: #0d1b2a; color: #e8eef5;
+  html, body { height: 100%; background: var(--bg); color: var(--text);
     font-family: "Segoe UI", Roboto, Arial, sans-serif; overflow: hidden; }
   #deck { height: 100vh; display: flex; flex-direction: column; }
   #stage { flex: 1; position: relative; }
@@ -20,94 +51,94 @@
     overflow: auto; }
   .slide.active { display: flex; }
   .s-head { display: flex; justify-content: space-between; align-items: flex-start;
-    border-bottom: 1px solid #24384d; padding-bottom: 1.2vh; }
-  .s-brand { font-size: calc(1.88vh * var(--z)); letter-spacing: 1px; color: #6ea8d8; }
-  .s-title { font-size: calc(4.25vh * var(--z)); font-weight: 500; color: #fff; margin-top: .3vh; }
-  .s-sub { text-align: right; font-size: calc(1.88vh * var(--z)); color: #8aa4bd; }
+    border-bottom: 1px solid var(--line); padding-bottom: 1.2vh; }
+  .s-brand { font-size: calc(1.88vh * var(--z)); letter-spacing: 1px; color: var(--brand); }
+  .s-title { font-size: calc(4.25vh * var(--z)); font-weight: 500; color: var(--strong); margin-top: .3vh; }
+  .s-sub { text-align: right; font-size: calc(1.88vh * var(--z)); color: var(--muted); }
   .charts { display: grid; grid-template-columns: 1fr; gap: 1.6vh; margin-top: 2vh; flex: 1; min-height: 0; }
-  .panel { background: #13293d; border-radius: 10px; padding: 1.4vh 1.4vw; display: flex; flex-direction: column; }
-  .panel .lbl { font-size: calc(2.12vh * var(--z)); color: #8aa4bd; margin-bottom: 1vh; }
-  .note { background: #13293d; border-left: 3px solid #ef9f27; border-radius: 0 8px 8px 0;
+  .panel { background: var(--panel); border-radius: 10px; padding: 1.4vh 1.4vw; display: flex; flex-direction: column; }
+  .panel .lbl { font-size: calc(2.12vh * var(--z)); color: var(--muted); margin-bottom: 1vh; }
+  .note { background: var(--panel); border-left: 3px solid var(--amber); border-radius: 0 8px 8px 0;
     padding: 1.4vh 1.4vw; margin-top: 2vh; }
-  .note .lbl { font-size: calc(2.12vh * var(--z)); color: #efc877; }
-  .note .txt { font-size: calc(2.75vh * var(--z)); color: #dbe6f0; margin-top: .5vh; }
+  .note .lbl { font-size: calc(2.12vh * var(--z)); color: var(--amber-2); }
+  .note .txt { font-size: calc(2.75vh * var(--z)); color: var(--txt-2); margin-top: .5vh; }
   /* Chi tieu chuoi luu van ban thuan: xuong dong la \n that, khong phai <br> */
   .note .txt-pre { white-space: pre-wrap; }
   /* Nhieu danh sach dai thi cuon trong khung thay vi tran ra ngoai slide va mat hut */
   .ds-chuoi { flex: 1; min-height: 0; overflow: auto; }
   .ov-canh-bao { margin-top: 1.4vh; padding: 1.1vh 1.4vw; border-radius: 8px;
-    font-size: calc(2.38vh * var(--z)); color: #dbe6f0; border-left: 4px solid; }
-  .ov-canh-bao .lbl { color: #8aa4bd; font-size: calc(1.88vh * var(--z)); letter-spacing: .5px; margin-right: .8vw; }
-  .ov-canh-bao.tot { background: #122b23; border-color: #5dcaa5; }
-  .ov-canh-bao.xau { background: #33201f; border-color: #e57373; }
+    font-size: calc(2.38vh * var(--z)); color: var(--txt-2); border-left: 4px solid; }
+  .ov-canh-bao .lbl { color: var(--muted); font-size: calc(1.88vh * var(--z)); letter-spacing: .5px; margin-right: .8vw; }
+  .ov-canh-bao.tot { background: var(--ok-bg); border-color: var(--teal); }
+  .ov-canh-bao.xau { background: var(--bad-bg); border-color: var(--red); }
   .ov-badge { font-size: calc(1.88vh * var(--z)); padding: .3vh .8vw; border-radius: 20px; vertical-align: middle;
     margin-left: .8vw; letter-spacing: 1px; }
-  .ov-badge.nhap { background: #3a2f12; color: #efc877; }
-  .ov-badge.chot { background: #12331f; color: #5dcaa5; }
-  .warn { color: #ef9f27; font-size: calc(2.5vh * var(--z)); margin-left: 8px; }
+  .ov-badge.nhap { background: var(--badge-nhap-bg); color: var(--badge-nhap-fg); }
+  .ov-badge.chot { background: var(--badge-chot-bg); color: var(--badge-chot-fg); }
+  .warn { color: var(--amber); font-size: calc(2.5vh * var(--z)); margin-left: 8px; }
   /* Bang tong hop khoi dieu tri. Co chu do JS dat theo so cot; cham san ma van tran thi
      khung nay cho cuon thay vi de bang tran ra ngoai slide. */
   .bdt-wrap { flex: 1; min-height: 0; overflow: auto; margin-top: 1.4vh; }
-  .bdt { width: 100%; border-collapse: collapse; color: #dbe6f0; }
-  .bdt th, .bdt td { border: 1px solid #24405c; padding: .5vh .6vw; white-space: nowrap;
+  .bdt { width: 100%; border-collapse: collapse; color: var(--txt-2); }
+  .bdt th, .bdt td { border: 1px solid var(--line-2); padding: .5vh .6vw; white-space: nowrap;
     text-align: center; }
-  .bdt th { background: #14293e; color: #8aa4bd; font-weight: 600; }
+  .bdt th { background: var(--panel-2); color: var(--muted); font-weight: 600; }
   .bdt th.ten, .bdt td.ten { text-align: left; }
-  .bdt td.ten { color: #fff; }
-  .bdt tr.tong td { background: #14293e; color: #fff; font-weight: 700; }
+  .bdt td.ten { color: var(--strong); }
+  .bdt tr.tong td { background: var(--panel-2); color: var(--strong); font-weight: 700; }
   /* Bang chi tieu cua man Tong quan va man tung khoa. Dung lai he vien cua .bdt de hai man
      nhin cung mot kieu, nhung cang le theo kieu du lieu: ten trai, so phai. */
   .bct-wrap { min-height: 0; overflow: auto; margin-top: 2vh; }
   /* Chi man tung khoa moi cho bang gian het chieu cao: man Tong quan con cac khoi canh bao
      va ghi chu nam ngay duoi bang, gian ra la day chung xuong day man. */
   .bct-wrap.gian { flex: 1; }
-  .bct { width: 100%; border-collapse: collapse; color: #dbe6f0; table-layout: fixed; }
-  .bct th, .bct td { border: 1px solid #24405c; padding: .6vh .8vw; }
-  .bct th { background: #14293e; color: #8aa4bd; font-weight: 600; text-align: center; }
+  .bct { width: 100%; border-collapse: collapse; color: var(--txt-2); table-layout: fixed; }
+  .bct th, .bct td { border: 1px solid var(--line-2); padding: .6vh .8vw; }
+  .bct th { background: var(--panel-2); color: var(--muted); font-weight: 600; text-align: center; }
   .bct th.so, .bct td.so { width: 15%; }
-  .bct td.ten { text-align: left; color: #fff; }
-  .bct td.so { text-align: right; font-weight: 600; color: #fff; white-space: nowrap; }
-  .bct td.so.teal { color: #5dcaa5; }
-  .bct td.so.amber { color: #ef9f27; }
+  .bct td.ten { text-align: left; color: var(--strong); }
+  .bct td.so { text-align: right; font-weight: 600; color: var(--strong); white-space: nowrap; }
+  .bct td.so.teal { color: var(--teal); }
+  .bct td.so.amber { color: var(--amber); }
   /* Thanh dieu khien KHONG theo --z: no la dieu khien, khong phai noi dung. De no phong theo
      thi o 200% thanh nay xuong dong va an mat 1/4 chieu cao man chieu. */
   #bar { display: flex; justify-content: space-between; align-items: center;
-    padding: 1.2vh 4vw; font-size: 1.88vh; color: #6f8aa6; border-top: 1px solid #24384d; }
+    padding: 1.2vh 4vw; font-size: 1.88vh; color: var(--bar-text); border-top: 1px solid var(--line); }
   #dots { display: flex; gap: 6px; align-items: center; }
-  #dots i { width: 6px; height: 6px; border-radius: 50%; background: #3a5570; display: inline-block; }
-  #dots i.on { width: 20px; border-radius: 3px; background: #6ea8d8; }
-  .btn { background: #13293d; color: #cfe0f0; border: 1px solid #24384d; border-radius: 6px;
+  #dots i { width: 6px; height: 6px; border-radius: 50%; background: var(--dot); display: inline-block; }
+  #dots i.on { width: 20px; border-radius: 3px; background: var(--brand); }
+  .btn { background: var(--panel); color: var(--btn-text); border: 1px solid var(--line); border-radius: 6px;
     padding: .6vh 1vw; font-size: 1.88vh; cursor: pointer; }
-  .btn:hover { background: #1b3348; }
+  .btn:hover { background: var(--btn-hover); }
   #jump { position: relative; display: inline-block; z-index: 5; }
-  #jump-list { position: absolute; left: 0; bottom: 100%; margin-bottom: 6px; background: #13293d; border: 1px solid #24384d;
+  #jump-list { position: absolute; left: 0; bottom: 100%; margin-bottom: 6px; background: var(--panel); border: 1px solid var(--line);
     border-radius: 8px; padding: 6px; display: none; max-height: 70vh; overflow: auto; min-width: 220px; }
   #jump-list.open { display: block; }
   #jump-list button { display: block; width: 100%; text-align: left; background: none; border: none;
-    color: #cfe0f0; padding: 8px 10px; font-size: 2vh; cursor: pointer; border-radius: 6px; }
-  #jump-list button:hover { background: #1b3348; }
+    color: var(--btn-text); padding: 8px 10px; font-size: 2vh; cursor: pointer; border-radius: 6px; }
+  #jump-list button:hover { background: var(--btn-hover); }
   #center { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
-    text-align: center; font-size: calc(3vh * var(--z)); color: #8aa4bd; }
+    text-align: center; font-size: calc(3vh * var(--z)); color: var(--muted); }
   .ov-main { display: flex; gap: 1.6vh; margin-top: 2vh; flex: 1; min-height: 0; }
   .donut-panel { width: 26vw; flex: none; align-items: center; }
   /* Trong luoi cap-grid, be rong do cot quyet dinh — bo width co dinh cua bo cuc flex cu */
   .cap-grid > .donut-panel { width: auto; }
   .donut-wrap { flex: 1; display: flex; align-items: center; justify-content: center; min-height: 0; }
   .donut-svg { width: 22vh; height: 22vh; }
-  .donut-pct { fill: #fff; font-size: 17px; font-weight: 600; }
-  .donut-cap { fill: #8aa4bd; font-size: 7px; }
+  .donut-pct { fill: var(--strong); font-size: 17px; font-weight: 600; }
+  .donut-cap { fill: var(--muted); font-size: 7px; }
   .donut-legend { display: flex; justify-content: space-around; width: 100%; margin-top: 1.4vh; }
   .donut-legend > div { display: flex; flex-direction: column; align-items: center; }
   .donut-legend .dl-num { font-size: calc(3.75vh * var(--z)); font-weight: 600; }
-  .donut-legend small { font-size: calc(1.62vh * var(--z)); color: #8aa4bd; margin-top: .2vh; }
+  .donut-legend small { font-size: calc(1.62vh * var(--z)); color: var(--muted); margin-top: .2vh; }
   .cap-grid { display: grid; gap: 1.6vh; margin-top: 2vh; flex: 1; min-height: 0; }
   .caplist { flex: 1; display: flex; flex-direction: column; gap: 1.1vh; justify-content: center; overflow: auto; }
   .caprow { display: flex; align-items: center; gap: 1vw; }
-  .capname { width: 15vw; font-size: calc(2.25vh * var(--z)); color: #dbe6f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .captrack { flex: 1; height: 2.4vh; background: #24384d; border-radius: 4px; overflow: hidden; }
+  .capname { width: 15vw; font-size: calc(2.25vh * var(--z)); color: var(--txt-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .captrack { flex: 1; height: 2.4vh; background: var(--track); border-radius: 4px; overflow: hidden; }
   .capfill { height: 100%; border-radius: 4px; transition: none; }
   .cappct { width: 5vw; text-align: right; font-size: calc(2.38vh * var(--z)); font-weight: 600; }
-  .capnum { width: 6vw; text-align: right; font-size: calc(2vh * var(--z)); color: #8aa4bd; }
+  .capnum { width: 6vw; text-align: right; font-size: calc(2vh * var(--z)); color: var(--muted); }
 </style>
 </head>
 <body>
@@ -248,8 +279,10 @@
     return '';
   }
 
+  // Tra TEN BIEN chu khong phai hex: mau nam trong style noi tuyen cua thanh cong suat va donut,
+  // tra bien thi doi theme la mau tu doi theo, khong phai dung lai DOM.
   function capColor(pct) {
-    return pct >= 90 ? '#e57373' : pct >= 80 ? '#ef9f27' : pct >= 60 ? '#5dcaa5' : '#378add';
+    return pct >= 90 ? 'var(--red)' : pct >= 80 ? 'var(--amber)' : pct >= 60 ? 'var(--teal)' : 'var(--blue)';
   }
 
   function donutHtml(used, total) {
@@ -261,15 +294,15 @@
     var off = C * (1 - Math.min(100, pct) / 100);
     return '<div class="panel donut-panel"><div class="lbl">CÔNG SUẤT GIƯỜNG</div>' +
       '<div class="donut-wrap"><svg viewBox="0 0 100 100" class="donut-svg">' +
-      '<circle cx="50" cy="50" r="42" fill="none" stroke="#24384d" stroke-width="12"/>' +
+      '<circle cx="50" cy="50" r="42" fill="none" stroke="var(--track)" stroke-width="12"/>' +
       '<circle cx="50" cy="50" r="42" fill="none" stroke="' + col + '" stroke-width="12" stroke-linecap="round" ' +
       'stroke-dasharray="' + C.toFixed(2) + '" stroke-dashoffset="' + off.toFixed(2) + '" transform="rotate(-90 50 50)"/>' +
       '<text x="50" y="49" text-anchor="middle" class="donut-pct">' + pct + '%</text>' +
       '<text x="50" y="62" text-anchor="middle" class="donut-cap">công suất</text></svg></div>' +
       '<div class="donut-legend">' +
-      '<div><span class="dl-num" style="color:#fff">' + total + '</span><small>Tổng giường</small></div>' +
-      '<div><span class="dl-num" style="color:#5dcaa5">' + used + '</span><small>Đang dùng</small></div>' +
-      '<div><span class="dl-num" style="color:#8aa4bd">' + free + '</span><small>Trống</small></div>' +
+      '<div><span class="dl-num" style="color:var(--strong)">' + total + '</span><small>Tổng giường</small></div>' +
+      '<div><span class="dl-num" style="color:var(--teal)">' + used + '</span><small>Đang dùng</small></div>' +
+      '<div><span class="dl-num" style="color:var(--muted)">' + free + '</span><small>Trống</small></div>' +
       '</div></div>';
   }
 
@@ -338,9 +371,9 @@
       (data.duty_positions || []).forEach(function (p) {
         var people = byPosD[p.id]; if (!people || !people.length) return;
         var names = people.map(function (d) {
-          return '<b style="color:#fff">' + esc(d.person_name) + '</b>' + (d.phone ? ' <span style="color:#6ea8d8">' + esc(d.phone) + '</span>' : '');
+          return '<b style="color:var(--strong)">' + esc(d.person_name) + '</b>' + (d.phone ? ' <span style="color:var(--brand)">' + esc(d.phone) + '</span>' : '');
         }).join(', ');
-        dutyHtml += '<div style="font-size:calc(2.38vh * var(--z))"><span style="color:#8aa4bd">' + esc(p.name) + ':</span> ' + names + '</div>';
+        dutyHtml += '<div style="font-size:calc(2.38vh * var(--z))"><span style="color:var(--muted)">' + esc(p.name) + ':</span> ' + names + '</div>';
       });
       dutyHtml += '</div></div>';
     }
