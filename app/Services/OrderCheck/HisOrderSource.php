@@ -131,20 +131,24 @@ class HisOrderSource
     public function fetchInteractions($lastCreateTime, $lastId, $limit, $cuoiCuaSo = 0)
     {
         $q = DB::connection($this->conn)
-            ->table('his_medicine_interactive')
-            ->where('is_delete', 0)
-            ->where('id', '>', $lastId);
+            ->table('his_medicine_interactive as mi')
+            // his_medicine_interactive chi co REQUEST_LOGINNAME, khong co cot ten. Join
+            // his_employee de lay ten bac si - cung cach fetchServiceRequests() dang lam.
+            ->leftJoin('his_employee as re', 'mi.request_loginname', '=', 're.loginname')
+            ->where('mi.is_delete', 0)
+            ->where('mi.id', '>', $lastId);
 
         // Chan tren de Oracle chi phai sap xep toi da mot cua so, khong phai toan bo ton.
         if ($cuoiCuaSo > 0) {
-            $q->where('id', '<=', $cuoiCuaSo);
+            $q->where('mi.id', '<=', $cuoiCuaSo);
         }
 
-        return $q->orderBy('id')
+        return $q->orderBy('mi.id')
             ->limit($limit)
-            ->selectRaw('id, create_time, treatment_id, request_loginname,
-                request_department_id, icd_code, icd_name,
-                medicine_type_id1, medicine_type_id2, interactive_grade_id')
+            ->selectRaw('mi.id, mi.create_time, mi.treatment_id, mi.request_loginname,
+                re.tdl_username as request_username,
+                mi.request_department_id, mi.icd_code, mi.icd_name,
+                mi.medicine_type_id1, mi.medicine_type_id2, mi.interactive_grade_id')
             ->get();
     }
 
