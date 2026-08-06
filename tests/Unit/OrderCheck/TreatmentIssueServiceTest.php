@@ -242,4 +242,95 @@ class TreatmentIssueServiceTest extends TestCase
         $this->assertEquals(['XML1', 2], [$dong[1]['xml'], $dong[1]['stt']]);
         $this->assertEquals(['XML2', 1], [$dong[2]['xml'], $dong[2]['stt']]);
     }
+
+    /** @test */
+    public function tom_tat_dem_du_ba_nhom()
+    {
+        $this->themViPham(['severity' => 'critical']);
+        $this->themViPham(['severity' => 'warning']);
+        $this->themTraThe(['ma_tracuu' => '005']);
+        $this->themLoiXml(['critical_error' => 1]);
+        $this->themLoiXml(['stt' => 2, 'critical_error' => 0]);
+
+        $tomTat = $this->dichVu()->cua('01013250800123')['summary'];
+
+        $this->assertEquals(5, $tomTat['total']);
+        $this->assertEquals(2, $tomTat['order_check']);
+        $this->assertEquals(1, $tomTat['hein_card']);
+        $this->assertEquals(2, $tomTat['xml3176']);
+        $this->assertTrue($tomTat['has_error']);
+        $this->assertFalse($tomTat['truncated']);
+    }
+
+    /**
+     * critical gop hai nguon: severity=critical cua y lenh va critical_error cua XML3176.
+     * Nhom tra the khong co khai niem muc do nen khong tinh vao critical, nhung van tinh
+     * vao total.
+     *
+     * @test
+     */
+    public function critical_gop_y_lenh_va_xml3176()
+    {
+        $this->themViPham(['severity' => 'critical']);
+        $this->themViPham(['severity' => 'warning']);
+        $this->themLoiXml(['critical_error' => 1]);
+        $this->themTraThe(['ma_tracuu' => '005']);
+
+        $tomTat = $this->dichVu()->cua('01013250800123')['summary'];
+
+        $this->assertEquals(2, $tomTat['critical']);
+    }
+
+    /** @test */
+    public function dot_sach_thi_has_error_bang_false()
+    {
+        $tomTat = $this->dichVu()->cua('KHONG-CO-DOT-NAY')['summary'];
+
+        $this->assertEquals(0, $tomTat['total']);
+        $this->assertFalse($tomTat['has_error']);
+    }
+
+    /**
+     * Tran cung de mot dot dieu tri dai khong lam vo gioi han 128MB cua may chu.
+     *
+     * @test
+     */
+    public function cham_tran_thi_cat_bot_va_bat_co_truncated()
+    {
+        for ($i = 0; $i < TreatmentIssueService::TRAN_MOI_NHOM + 5; $i++) {
+            $this->themLoiXml(['stt' => $i + 1]);
+        }
+
+        $ketQua = $this->dichVu()->cua('01013250800123');
+
+        $this->assertCount(TreatmentIssueService::TRAN_MOI_NHOM, $ketQua['data']['xml3176']);
+        $this->assertTrue($ketQua['summary']['truncated']);
+    }
+
+    /**
+     * Chi truyen treatment_id thi van phai ra duoc hai nhom kia - chung khoa theo ma_lk.
+     *
+     * @test
+     */
+    public function chi_truyen_treatment_id_van_suy_ra_duoc_ma_lk()
+    {
+        $this->themViPham(['treatment_id' => 9001, 'treatment_code' => '01013250800123']);
+        $this->themLoiXml();
+
+        $ketQua = $this->dichVu()->cua(null, 9001);
+
+        $this->assertEquals('01013250800123', $ketQua['data']['treatment_code']);
+        $this->assertCount(1, $ketQua['data']['xml3176']);
+    }
+
+    /** @test */
+    public function treatment_id_khong_co_vi_pham_thi_hai_nhom_kia_rong()
+    {
+        $this->themLoiXml();
+
+        $ketQua = $this->dichVu()->cua(null, 7777);
+
+        $this->assertNull($ketQua['data']['treatment_code']);
+        $this->assertSame([], $ketQua['data']['xml3176']);
+    }
 }

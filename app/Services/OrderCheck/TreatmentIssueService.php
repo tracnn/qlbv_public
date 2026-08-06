@@ -33,14 +33,66 @@ class TreatmentIssueService
 
         $viPham = $this->viPhamYLenh($treatmentCode, $treatmentId, $status);
 
+        // Hai nhom kia khoa theo ma_lk. Ben goi chi dua treatment_id thi suy nguoc tu
+        // dong vi pham; khong suy ra duoc thi de rong chu KHONG truy HIS - mot lan goi
+        // API khong dang doi mot vong sang Oracle.
+        $maLk = $this->rong($treatmentCode) ? $this->suyRaMaLk($treatmentId) : $treatmentCode;
+
+        $traThe = $this->rong($maLk) ? [] : $this->loiTraThe($maLk);
+        $xml = $this->rong($maLk) ? [] : $this->loiXml3176($maLk);
+
         return [
             'data' => [
-                'treatment_code' => $this->rong($treatmentCode) ? null : $treatmentCode,
+                'treatment_code' => $this->rong($maLk) ? null : $maLk,
                 'order_check' => $viPham,
-                'hein_card' => $this->rong($treatmentCode) ? [] : $this->loiTraThe($treatmentCode),
-                'xml3176' => $this->rong($treatmentCode) ? [] : $this->loiXml3176($treatmentCode),
+                'hein_card' => $traThe,
+                'xml3176' => $xml,
             ],
-            'summary' => [],
+            'summary' => $this->tomTat($viPham, $traThe, $xml),
+        ];
+    }
+
+    protected function suyRaMaLk($treatmentId)
+    {
+        if ($this->rong($treatmentId)) {
+            return null;
+        }
+
+        $ma = OrderCheckViolation::where('treatment_id', $treatmentId)
+            ->whereNotNull('treatment_code')
+            ->value('treatment_code');
+
+        return $this->rong($ma) ? null : $ma;
+    }
+
+    protected function tomTat(array $viPham, array $traThe, array $xml)
+    {
+        $critical = 0;
+
+        foreach ($viPham as $d) {
+            if ($d['severity'] === 'critical') {
+                $critical++;
+            }
+        }
+
+        foreach ($xml as $d) {
+            if ($d['critical_error']) {
+                $critical++;
+            }
+        }
+
+        $tong = count($viPham) + count($traThe) + count($xml);
+
+        return [
+            'total' => $tong,
+            'order_check' => count($viPham),
+            'hein_card' => count($traThe),
+            'xml3176' => count($xml),
+            'critical' => $critical,
+            'has_error' => $tong > 0,
+            // Nhom tra the unique theo ma_lk nen khong bao gio cham tran.
+            'truncated' => count($viPham) >= self::TRAN_MOI_NHOM
+                || count($xml) >= self::TRAN_MOI_NHOM,
         ];
     }
 
