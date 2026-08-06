@@ -24,11 +24,6 @@
   .s-brand { font-size: calc(1.88vh * var(--z)); letter-spacing: 1px; color: #6ea8d8; }
   .s-title { font-size: calc(4.25vh * var(--z)); font-weight: 500; color: #fff; margin-top: .3vh; }
   .s-sub { text-align: right; font-size: calc(1.88vh * var(--z)); color: #8aa4bd; }
-  .kpis { display: grid; gap: 1.4vh; margin-top: 2vh; }
-  .kpi { background: #13293d; border-radius: 10px; padding: 1.6vh 1.6vw; }
-  .kpi .lbl { font-size: calc(2.12vh * var(--z)); color: #8aa4bd; }
-  .kpi .val { font-size: calc(5.75vh * var(--z)); font-weight: 500; color: #fff; line-height: 1.1; }
-  .kpi.teal .val { color: #5dcaa5; } .kpi.amber .val { color: #ef9f27; }
   .charts { display: grid; grid-template-columns: 1fr; gap: 1.6vh; margin-top: 2vh; flex: 1; min-height: 0; }
   .panel { background: #13293d; border-radius: 10px; padding: 1.4vh 1.4vw; display: flex; flex-direction: column; }
   .panel .lbl { font-size: calc(2.12vh * var(--z)); color: #8aa4bd; margin-bottom: 1vh; }
@@ -94,7 +89,6 @@
   #center { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
     text-align: center; font-size: calc(3vh * var(--z)); color: #8aa4bd; }
   .ov-main { display: flex; gap: 1.6vh; margin-top: 2vh; flex: 1; min-height: 0; }
-  .ov-kpis { flex: 1; align-content: start; }
   .donut-panel { width: 26vw; flex: none; align-items: center; }
   /* Trong luoi cap-grid, be rong do cot quyet dinh — bo width co dinh cua bo cuc flex cu */
   .cap-grid > .donut-panel { width: auto; }
@@ -323,21 +317,15 @@
 
   function overviewSlide(data) {
     var r = data.report;
-    var kpiHtml = '';
-    function kpi(label, val, cls) {
-      if (val === null) return '';
-      return '<div class="kpi' + (cls || '') + '"><div class="lbl">' + esc(label) +
-        '</div><div class="val">' + num(val) + '</div></div>';
-    }
-    // KPI do KHTH danh dau tren tung chi tieu, gom theo NHAN chu khong theo MA.
-    // Ban cu tra theo ma viet cung trong code nen chi can KHTH doi ma la man nay trong tron.
-    theTongQuan(data).forEach(function (t) {
-      kpiHtml += kpi(t.nhan, t.tong, t.cls);
-    });
+    // Chi tieu do KHTH danh dau, gom theo NHAN chu khong theo MA. Ban cu tra theo ma viet cung
+    // trong code nen chi can KHTH doi ma la man nay trong tron.
+    // Khong gian bang: cac khoi canh bao va ghi chu nam ngay duoi, gian ra la day chung xuong day man.
+    var kpiHtml = bangChiTieu(theTongQuan(data).map(function (t) {
+      return { nhan: t.nhan, gia_tri: t.tong, cls: t.cls };
+    }), false);
     if (kpiHtml === '') {
-      kpiHtml = '<div class="kpi" style="grid-column:1/-1"><div class="lbl">Chưa đánh dấu chỉ tiêu nào</div>' +
-        '<div class="txt" style="font-size:calc(2.25vh * var(--z));color:#8aa4bd;margin-top:.6vh">' +
-        'Vào Cấu hình giao ban → mở Chỉ tiêu của khoa → tích "Hiện ở màn Tổng quan".</div></div>';
+      kpiHtml = '<div class="note" style="margin-top:2vh"><div class="lbl">CHƯA ĐÁNH DẤU CHỈ TIÊU NÀO</div>' +
+        '<div class="txt">Vào Cấu hình giao ban → mở Chỉ tiêu của khoa → tích "Hiện ở màn Tổng quan".</div></div>';
     }
 
     var duties = (data.duties || []).filter(function (d) { return (d.person_name || '').trim() !== ''; });
@@ -380,12 +368,9 @@
       '<div class="s-brand">BÁO CÁO GIAO BAN</div>' +
       '<div class="s-title">Giao ban ' + esc(fmtDate(DATE)) + ' ' + trangThai + '</div></div>' +
       '<div class="s-sub">' + sub + '</div></div>' +
-      // Bo class ov-kpis: no co flex:1, von danh cho bo cuc hang ngang cu (KPI canh donut).
-      // Gio luoi KPI la con truc tiep cua .slide (flex cot) nen phai de no cao tu nhien,
-      // khong thi no gian ra day cac khoi canh bao xuong day man.
       // Kip truc len DAU: nguoi du giao ban can biet ngay ai truc truoc khi doc so lieu.
       dutyHtml +
-      '<div class="kpis" style="grid-template-columns:repeat(4,1fr)">' + kpiHtml + '</div>' +
+      kpiHtml +
       thieuHtml + noteHtml + '</div>';
   }
 
