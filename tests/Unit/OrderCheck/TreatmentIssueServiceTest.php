@@ -53,7 +53,7 @@ class TreatmentIssueServiceTest extends TestCase
         $this->themViPham(['status' => 'new']);
         $this->themViPham(['status' => 'false_positive']);
 
-        $ketQua = $this->dichVu()->cua('01013250800123', null, ['status' => 'false_positive']);
+        $ketQua = $this->dichVu()->cua('01013250800123', ['status' => 'false_positive']);
 
         $this->assertCount(1, $ketQua['data']['order_check']);
         $this->assertEquals('false_positive', $ketQua['data']['order_check'][0]['status']);
@@ -308,29 +308,21 @@ class TreatmentIssueServiceTest extends TestCase
     }
 
     /**
-     * Chi truyen treatment_id thi van phai ra duoc hai nhom kia - chung khoa theo ma_lk.
+     * Dich vu chi nhan ma dot dieu tri. Ma rong thi khong duoc am tham tra ve TOAN BO
+     * vi pham cua moi dot - do la ro ri du lieu, khong phai ket qua rong.
      *
      * @test
      */
-    public function chi_truyen_treatment_id_van_suy_ra_duoc_ma_lk()
+    public function ma_dot_rong_thi_tra_ve_rong_chu_khong_lay_het()
     {
-        $this->themViPham(['treatment_id' => 9001, 'treatment_code' => '01013250800123']);
+        $this->themViPham();
         $this->themLoiXml();
 
-        $ketQua = $this->dichVu()->cua(null, 9001);
-
-        $this->assertEquals('01013250800123', $ketQua['data']['treatment_code']);
-        $this->assertCount(1, $ketQua['data']['xml3176']);
-    }
-
-    /** @test */
-    public function treatment_id_khong_co_vi_pham_thi_hai_nhom_kia_rong()
-    {
-        $this->themLoiXml();
-
-        $ketQua = $this->dichVu()->cua(null, 7777);
+        $ketQua = $this->dichVu()->cua('');
 
         $this->assertNull($ketQua['data']['treatment_code']);
+        $this->assertSame([], $ketQua['data']['order_check']);
         $this->assertSame([], $ketQua['data']['xml3176']);
+        $this->assertFalse($ketQua['summary']['has_error']);
     }
 }

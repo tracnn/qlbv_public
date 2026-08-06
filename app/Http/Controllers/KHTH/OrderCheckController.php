@@ -200,12 +200,11 @@ class OrderCheckController extends Controller
     public function apiViolations(Request $request, TreatmentIssueService $issueService)
     {
         $treatmentCode = trim((string) $request->input('treatment_code'));
-        $treatmentId = trim((string) $request->input('treatment_id'));
 
         // Kiểm tham số thủ công thay vì $request->validate(): validate() trả khuôn lỗi
         // mặc định của Laravel, khác hẳn khuôn {success,error,meta} của ApiAuthMiddleware,
         // buộc bên gọi phải xử lý hai định dạng.
-        if ($treatmentCode === '' && $treatmentId === '') {
+        if ($treatmentCode === '') {
             return $this->loiApi(
                 'VALIDATION_ERROR',
                 'Thiếu tham số bắt buộc',
@@ -215,15 +214,10 @@ class OrderCheckController extends Controller
         }
 
         try {
-            $ketQua = $issueService->cua(
-                $treatmentCode !== '' ? $treatmentCode : null,
-                $treatmentId !== '' ? $treatmentId : null,
-                ['status' => $request->input('status')]
-            );
+            $ketQua = $issueService->cua($treatmentCode, ['status' => $request->input('status')]);
         } catch (\Exception $e) {
             \Log::error('Loi API tra cuu loi dot dieu tri', [
                 'treatment_code' => $treatmentCode,
-                'treatment_id' => $treatmentId,
                 'loi' => $e->getMessage(),
             ]);
 

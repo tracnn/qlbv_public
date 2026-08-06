@@ -22,47 +22,44 @@ class TreatmentIssueService
     const BO_QUA = 'false_positive';
 
     /**
+     * Tra cuu CHI theo ma dot dieu tri. Ca ba nguon deu khoa theo gia tri nay, nen no la
+     * tham so duy nhat lay du duoc du lieu cua mot dot.
+     *
      * @param  string|null $treatmentCode Ma dot dieu tri (= ma_lk)
-     * @param  int|string|null $treatmentId ID dot dieu tri tren HIS
      * @param  array $tuyChon ['status' => string|null]
      * @return array ['data' => [...], 'summary' => [...]]
      */
-    public function cua($treatmentCode = null, $treatmentId = null, array $tuyChon = [])
+    public function cua($treatmentCode = null, array $tuyChon = [])
     {
+        // Ma rong => tra ve rong. KHONG duoc bo qua dieu kien loc roi lay het bang: do
+        // la ro ri toan bo vi pham cua moi dot dieu tri, khong phai "ket qua rong".
+        if ($this->rong($treatmentCode)) {
+            return [
+                'data' => [
+                    'treatment_code' => null,
+                    'order_check' => [],
+                    'hein_card' => [],
+                    'xml3176' => [],
+                ],
+                'summary' => $this->tomTat([], [], []),
+            ];
+        }
+
         $status = isset($tuyChon['status']) ? $tuyChon['status'] : null;
 
-        $viPham = $this->viPhamYLenh($treatmentCode, $treatmentId, $status);
-
-        // Hai nhom kia khoa theo ma_lk. Ben goi chi dua treatment_id thi suy nguoc tu
-        // dong vi pham; khong suy ra duoc thi de rong chu KHONG truy HIS - mot lan goi
-        // API khong dang doi mot vong sang Oracle.
-        $maLk = $this->rong($treatmentCode) ? $this->suyRaMaLk($treatmentId) : $treatmentCode;
-
-        $traThe = $this->rong($maLk) ? [] : $this->loiTraThe($maLk);
-        $xml = $this->rong($maLk) ? [] : $this->loiXml3176($maLk);
+        $viPham = $this->viPhamYLenh($treatmentCode, $status);
+        $traThe = $this->loiTraThe($treatmentCode);
+        $xml = $this->loiXml3176($treatmentCode);
 
         return [
             'data' => [
-                'treatment_code' => $this->rong($maLk) ? null : $maLk,
+                'treatment_code' => $treatmentCode,
                 'order_check' => $viPham,
                 'hein_card' => $traThe,
                 'xml3176' => $xml,
             ],
             'summary' => $this->tomTat($viPham, $traThe, $xml),
         ];
-    }
-
-    protected function suyRaMaLk($treatmentId)
-    {
-        if ($this->rong($treatmentId)) {
-            return null;
-        }
-
-        $ma = OrderCheckViolation::where('treatment_id', $treatmentId)
-            ->whereNotNull('treatment_code')
-            ->value('treatment_code');
-
-        return $this->rong($ma) ? null : $ma;
     }
 
     protected function tomTat(array $viPham, array $traThe, array $xml)
@@ -96,16 +93,9 @@ class TreatmentIssueService
         ];
     }
 
-    protected function viPhamYLenh($treatmentCode, $treatmentId, $status)
+    protected function viPhamYLenh($treatmentCode, $status)
     {
-        $q = OrderCheckViolation::query();
-
-        if (!$this->rong($treatmentCode)) {
-            $q->where('treatment_code', $treatmentCode);
-        }
-        if (!$this->rong($treatmentId)) {
-            $q->where('treatment_id', $treatmentId);
-        }
+        $q = OrderCheckViolation::where('treatment_code', $treatmentCode);
 
         if ($this->rong($status)) {
             $q->where('status', '!=', self::BO_QUA);

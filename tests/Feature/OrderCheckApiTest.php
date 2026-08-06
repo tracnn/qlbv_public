@@ -112,13 +112,18 @@ class OrderCheckApiTest extends TestCase
             ]);
     }
 
-    /** @test */
-    public function loc_theo_treatment_id_van_hoat_dong()
+    /**
+     * treatment_id da bi go khoi API: no chi tra ra duoc nhom y lenh, con hai nhom kia
+     * khoa theo ma_lk nen im lang rong - mot ket qua trong ma ben goi tuong la sach.
+     *
+     * @test
+     */
+    public function chi_truyen_treatment_id_thi_tra_422()
     {
         $this->themViPham(['treatment_id' => 9001]);
 
         $this->goi(['treatment_id' => 9001])
-            ->assertStatus(200)
-            ->assertJson(['summary' => ['order_check' => 1]]);
+            ->assertStatus(422)
+            ->assertJson(['success' => false, 'error' => ['code' => 'VALIDATION_ERROR']]);
     }
 }
