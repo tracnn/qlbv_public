@@ -60,6 +60,55 @@ GET /api/order-check/violations?treatment_code=01013250800123
 Authorization: Bearer {token}
 ```
 
+### Ví dụ curl
+
+Thay `{token}` bằng token được cấp và `localhost:8000` bằng địa chỉ máy chủ thật.
+
+Tra cứu theo mã đợt điều trị — cách dùng chính:
+
+```bash
+curl --location 'http://localhost:8000/api/order-check/violations?treatment_code=01013250800123' --header 'Authorization: Bearer {token}'
+```
+
+Tra cứu theo `treatment_id`:
+
+```bash
+curl --location 'http://localhost:8000/api/order-check/violations?treatment_id=2255056' --header 'Authorization: Bearer {token}'
+```
+
+Lọc riêng nhóm y lệnh theo trạng thái (mặc định API đã bỏ `false_positive`):
+
+```bash
+curl --location 'http://localhost:8000/api/order-check/violations?treatment_code=01013250800123&status=processed' --header 'Authorization: Bearer {token}'
+```
+
+Xem kèm mã HTTP, định dạng cho dễ đọc:
+
+```bash
+curl --location --silent --write-out '\nHTTP %{http_code}\n' 'http://localhost:8000/api/order-check/violations?treatment_code=01013250800123' --header 'Authorization: Bearer {token}' | python -m json.tool
+```
+
+Thử nhánh lỗi — sai token trả 401, thiếu cả hai tham số trả 422:
+
+```bash
+curl --location 'http://localhost:8000/api/order-check/violations?treatment_code=01013250800123' --header 'Authorization: Bearer sai-token'
+```
+
+```bash
+curl --location 'http://localhost:8000/api/order-check/violations' --header 'Authorization: Bearer {token}'
+```
+
+Lưu ý khi chạy:
+
+- **Token, không phải hash.** Giá trị gửi trong header là token được cấp. Chuỗi băm lưu
+  trong `config/organization.php` **không** dùng thay được — máy chủ băm token nhận được
+  rồi mới so, nên gửi hash sẽ nhận 401.
+- **Trên Windows PowerShell**, `curl` là bí danh của `Invoke-WebRequest` chứ không phải
+  curl thật; phải gõ `curl.exe`, nếu không các cờ `--header`, `--location` sẽ báo lỗi
+  tham số. Trong Git Bash hoặc cmd thì dùng `curl` bình thường.
+- **Máy chủ dùng HTTPS với chứng chỉ tự ký** (ví dụ `https://localhost`): thêm cờ `-k`.
+  Máy chủ thật có chứng chỉ hợp lệ thì không cần.
+
 ## 3. Ví dụ response thành công (HTTP 200)
 
 ```json
