@@ -33,8 +33,12 @@ chép ngay khi lệnh in ra để giao cho bên gọi; mất thì sinh lại ch�
 Sinh lại token làm mọi bên đang dùng token cũ nhận 401 ngay lập tức. Lệnh hỏi xác nhận
 trước khi ghi đè; `--force` bỏ qua bước hỏi.
 
-Bản cài chưa có khoá `access_token_hash` trong `config/organization.php` sẽ trả 401 cho
-mọi request — thêm dòng `'access_token_hash' => '',` vào mục `api` rồi chạy lại lệnh.
+Giá trị lưu trong `config/organization.php` là **bản băm**, không phải token. Bản cài nào
+còn để token thô ở khoá `access_token` sẽ trả 401 cho mọi request — chạy lệnh trên để
+lệnh tự thay giá trị đó bằng hash.
+
+Muốn giữ nguyên token mà các đơn vị đang dùng (không gián đoạn), thay tay giá trị khoá
+`access_token` bằng SHA-256 của chính token đó thay vì chạy lệnh.
 
 ## 2. Tham số
 

@@ -23,8 +23,9 @@ vẫn nằm ở spec gốc, không thuộc phạm vi tài liệu này.
 - Token chỉ được đọc ở **đúng một chỗ**: `app/Http/Middleware/ApiAuthMiddleware.php:47`.
 - `config/organization.php` nằm trong `.gitignore` — mỗi bản cài là một tệp riêng, chưa
   từng được commit. Tệp này còn chứa cấu hình cơ sở KCB và tài khoản cổng BHXH.
-- **Chưa có bên ngoài nào gọi API thật.** Vì vậy đổi token thẳng, không cần giai đoạn
-  chấp nhận song song token cũ và mới.
+- **Có bản đã triển khai đang dùng token cũ.** Chưa hỗ trợ nhiều token song song (việc đó
+  thuộc ưu tiên 2), nên chuyển đổi đi theo đường quá độ ở mục 6: băm chính token đang lưu
+  hành, rồi đổi token thật khi hẹn được lịch.
 - Nền tảng: Laravel 5.5, PHP ≥ 7.0.
 
 ---
@@ -33,13 +34,22 @@ vẫn nằm ở spec gốc, không thuộc phạm vi tài liệu này.
 
 ### Cấu hình
 
-Mục `api` trong `config/organization.php` **bỏ** khoá `access_token`, thay bằng:
+Mục `api` trong `config/organization.php` **giữ nguyên tên khoá** `access_token`, nhưng
+**giá trị đổi từ token thô sang bản băm SHA-256** của token:
 
 ```php
-'access_token_hash' => '',  // SHA-256 (hex) cua token; token goc KHONG luu o day
+'access_token' => '',  // SHA-256 (hex) cua token; token goc KHONG luu o day
 ```
 
 Token gốc không tồn tại ở bất kỳ đâu trong mã nguồn hay cấu hình — chỉ nằm ở bên gọi.
+
+**Vì sao không đặt tên khoá mới:** bản đã triển khai có sẵn dòng `'access_token' => ...`.
+Giữ nguyên tên khoá thì việc chuyển đổi chỉ là **sửa giá trị một dòng đã có**, thay vì
+thêm khoá mới vào đúng chỗ trong một tệp cấu hình dài — ít thao tác sai hơn.
+
+**Hệ quả phải chấp nhận:** bản đã triển khai vẫn giữ token **thô** trong giá trị đó, nên
+sau khi cập nhật mã nguồn, chúng trả 401 cho tới khi giá trị được thay bằng hash. Xem
+mục 6.
 
 ### Middleware
 
@@ -63,11 +73,12 @@ vì phân biệt "sai token" với "chưa cấu hình" là thông tin có ích c
 | Thiếu header | Không có `Authorization` | `Please include 'Authorization: Bearer {token}' in your request headers` |
 | Sai định dạng | Header không khớp `Bearer {token}` | `Authorization header must be in format: Bearer {token}` |
 | Sai token | Hash không khớp | `The provided token is not valid or has expired` |
-| **Chưa cấu hình** | `access_token_hash` rỗng hoặc thiếu | `The provided token is not valid or has expired` (giống nhánh sai token) |
+| **Chưa cấu hình** | `access_token` rỗng hoặc thiếu | `The provided token is not valid or has expired` (giống nhánh sai token) |
 
 Nhánh thứ tư là điểm dễ sai nhất và phải làm cho đúng: `config/organization.php` không
-nằm trong git, nên bản cài chưa cập nhật sẽ **thiếu** khoá mới. Trạng thái an toàn duy
-nhất khi thiếu cấu hình là **từ chối** — không phải 500, và tuyệt đối không phải cho qua.
+nằm trong git, nên bản cài chưa cập nhật sẽ để khoá đó **rỗng hoặc còn là token thô**.
+Trạng thái an toàn duy nhất khi cấu hình chưa đúng là **từ chối** — không phải 500, và
+tuyệt đối không phải cho qua.
 Người vận hành nhận biết qua log `warning` với lý do `chua_cau_hinh`, chứ không qua
 response.
 
@@ -85,13 +96,13 @@ Mô phỏng đúng cách làm của `php artisan key:generate`.
 
 ```php
 preg_replace(
-    "/'access_token_hash'\s*=>\s*'[^']*'/",
-    "'access_token_hash' => '{$hash}'",
+    "/'access_token'\s*=>\s*'[^']*'/",
+    "'access_token' => '{$hash}'",
     $noiDung
 )
 ```
 
-5. Nếu tệp **không chứa** khoá `access_token_hash`: không ghi gì, in ra dòng cần tự thêm,
+5. Nếu tệp **không chứa** khoá `access_token`: không ghi gì, in ra dòng cần tự thêm,
    trả mã thoát khác 0. Lệnh không đoán chỗ chèn — sửa mù một tệp bí mật thủ công là cách
    nhanh nhất làm hỏng nó.
 6. Nếu tồn tại `bootstrap/cache/config.php`: gọi `config:clear`. Không làm thì hash mới
@@ -154,7 +165,7 @@ Chạy qua chính endpoint `GET /api/order-check/violations`:
 2. Token sai → 401.
 3. Thiếu header `Authorization` → 401.
 4. Header sai định dạng (`Token abc`, `Bearer` trống) → 401.
-5. **`access_token_hash` rỗng trong config → 401** — ca dễ bị bỏ sót nhất.
+5. **`access_token` rỗng trong config → 401** — ca dễ bị bỏ sót nhất.
 6. Hash cũ dạng token thô (không phải SHA-256) → 401, để chắc chắn không còn đường so
    sánh trực tiếp.
 
@@ -167,7 +178,7 @@ thật:
 2. Hai lần chạy cho hai token khác nhau.
 3. Hash ghi vào tệp đúng bằng `hash('sha256', $token)` của token in ra.
 4. Các dòng khác trong tệp giữ nguyên từng ký tự.
-5. Tệp thiếu khoá `access_token_hash` → không ghi gì, mã thoát khác 0.
+5. Tệp thiếu khoá `access_token` → không ghi gì, mã thoát khác 0.
 
 ### Migration index
 
@@ -183,12 +194,27 @@ SHOW INDEX FROM order_check_violations WHERE Column_name = 'treatment_code';
 `config/organization.php` nằm trong `.gitignore` nên **không đi theo commit** — mỗi bản
 cài phải tự sửa. Thứ tự đúng trên từng máy:
 
-1. Trong mục `api`, bỏ dòng `'access_token' => '...'`, thêm `'access_token_hash' => ''`.
-2. Chạy `php artisan api:generate`.
-3. Chép token gốc, giao cho bên gọi.
-4. Chạy `php artisan migrate` để thêm index.
+Có hai đường, chọn theo việc bản cài đó **đã có bên ngoài đang gọi hay chưa**.
 
-Bỏ qua bước 1–2 thì API trả 401 cho mọi request — có chủ đích, xem mục 1.
+**A. Đã có bên đang gọi, không muốn gián đoạn.** Thay giá trị `access_token` bằng bản
+băm SHA-256 **của chính token đang lưu hành**:
+
+```php
+'access_token' => '<sha256 cua token cu>',
+```
+
+Bên gọi không phải sửa gì, vẫn gửi token cũ như trước. Đây là **bước quá độ**: token cũ
+yếu thế nào thì vẫn yếu thế ấy. Hẹn lịch với từng đơn vị rồi chuyển sang đường B.
+
+**B. Chưa có ai gọi, hoặc đã hẹn được lịch đổi token.**
+
+1. Chạy `php artisan api:generate` — lệnh tự thay giá trị dòng `access_token` bằng hash.
+2. Chép token gốc, giao cho bên gọi.
+
+Cả hai đường đều cần: `php artisan config:clear` nếu có cache config, và
+`php artisan migrate` để thêm index.
+
+Không làm gì cả thì API trả 401 cho mọi request — có chủ đích, xem mục 1.
 
 ## 7. Tài liệu
 

@@ -18,7 +18,7 @@ class OrderCheckApiTest extends TestCase
 
         $this->chuanBiBangLoi();
 
-        config(['organization.api.access_token_hash' => hash('sha256', self::TOKEN)]);
+        config(['organization.api.access_token' => hash('sha256', self::TOKEN)]);
     }
 
     protected function goi(array $thamSo, $token = self::TOKEN)

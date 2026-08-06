@@ -19,7 +19,7 @@ class ApiAuthMiddlewareTest extends TestCase
 
         $this->chuanBiBangLoi();
 
-        config(['organization.api.access_token_hash' => hash('sha256', self::TOKEN)]);
+        config(['organization.api.access_token' => hash('sha256', self::TOKEN)]);
     }
 
     protected function goi($header = null)
@@ -84,7 +84,7 @@ class ApiAuthMiddlewareTest extends TestCase
      */
     public function chua_cau_hinh_hash_thi_401_chu_khong_cho_qua()
     {
-        config(['organization.api.access_token_hash' => '']);
+        config(['organization.api.access_token' => '']);
 
         $this->goi('Bearer ' . self::TOKEN)->assertStatus(401);
         $this->goi('Bearer ')->assertStatus(401);
@@ -98,7 +98,7 @@ class ApiAuthMiddlewareTest extends TestCase
      */
     public function cau_hinh_luu_token_tho_thi_khong_qua_duoc()
     {
-        config(['organization.api.access_token_hash' => self::TOKEN]);
+        config(['organization.api.access_token' => self::TOKEN]);
 
         $this->goi('Bearer ' . self::TOKEN)->assertStatus(401);
     }

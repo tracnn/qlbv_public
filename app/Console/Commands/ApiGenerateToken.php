@@ -17,7 +17,8 @@ class ApiGenerateToken extends Command
 
     protected $description = 'Sinh token API moi, ghi ban bam SHA-256 vao config/organization.php';
 
-    const KHOA = 'access_token_hash';
+    /** Ten khoa giu nguyen nhu ban cu; GIA TRI moi la ban bam SHA-256. */
+    const KHOA = 'access_token';
 
     public function handle()
     {

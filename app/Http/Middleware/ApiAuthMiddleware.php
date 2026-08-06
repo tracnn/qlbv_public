@@ -36,7 +36,10 @@ class ApiAuthMiddleware
         }
 
         $token = $khop[1];
-        $hashCauHinh = (string) config('organization.api.access_token_hash');
+        // GIA TRI cua khoa nay la BAN BAM SHA-256, khong phai token tho. Giu nguyen TEN
+        // khoa cu de ban cai da trien khai chi phai sua GIA TRI cua mot dong san co,
+        // khong phai them khoa moi vao dung cho trong tep.
+        $hashCauHinh = (string) config('organization.api.access_token');
 
         // Thieu cau hinh => TU CHOI. config/organization.php khong nam trong git nen ban
         // cai chua cap nhat se thieu khoa nay; trang thai an toan duy nhat la 401.
