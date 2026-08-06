@@ -4,6 +4,7 @@ namespace App\Services\OrderCheck;
 
 use App\Models\CheckBHYT\check_hein_card;
 use App\Models\OrderCheck\OrderCheckViolation;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Gop ba nguon loi cua CUNG MOT dot dieu tri: sai sot y lenh, loi tra the BHYT, loi
@@ -37,7 +38,7 @@ class TreatmentIssueService
                 'treatment_code' => $this->rong($treatmentCode) ? null : $treatmentCode,
                 'order_check' => $viPham,
                 'hein_card' => $this->rong($treatmentCode) ? [] : $this->loiTraThe($treatmentCode),
-                'xml3176' => [],
+                'xml3176' => $this->rong($treatmentCode) ? [] : $this->loiXml3176($treatmentCode),
             ],
             'summary' => [],
         ];
@@ -105,6 +106,49 @@ class TreatmentIssueService
                 'ghi_chu' => $t->ghi_chu,
                 'ma_the_masked' => self::cheMaThe($t->ma_the),
                 'checked_at' => $t->updated_at ? (string) $t->updated_at : null,
+            ];
+        }
+
+        return $ra;
+    }
+
+    /**
+     * JOIN THEO CAP (xml, error_code) - danh muc unique theo cap nay. Noi chi bang
+     * error_code se nhan mot dong loi thanh nhieu dong khi ma loi ton tai o nhieu loai
+     * XML. Quan he hasOne trong model Xml3176ErrorResult noi thieu cot xml nen khong
+     * dung lai duoc o day.
+     *
+     * critical_error lay tu ban ghi ket qua (gia tri tai thoi diem kiem), khong lay tu
+     * danh muc - danh muc co the da doi sau do.
+     */
+    protected function loiXml3176($maLk)
+    {
+        $dong = DB::table('xml3176_error_results as r')
+            ->leftJoin('xml3176_error_catalogs as c', function ($j) {
+                $j->on('c.xml', '=', 'r.xml')
+                  ->on('c.error_code', '=', 'r.error_code');
+            })
+            ->where('r.ma_lk', $maLk)
+            ->orderBy('r.xml')
+            ->orderBy('r.stt')
+            ->limit(self::TRAN_MOI_NHOM)
+            ->get([
+                'r.xml', 'r.stt', 'r.error_code', 'c.error_name', 'r.description',
+                'r.critical_error', 'r.ngay_yl', 'r.ngay_kq',
+            ]);
+
+        $ra = [];
+
+        foreach ($dong as $d) {
+            $ra[] = [
+                'xml' => $d->xml,
+                'stt' => (int) $d->stt,
+                'error_code' => $d->error_code,
+                'error_name' => $d->error_name,
+                'description' => $d->description,
+                'critical_error' => (bool) $d->critical_error,
+                'ngay_yl' => $d->ngay_yl,
+                'ngay_kq' => $d->ngay_kq,
             ];
         }
 

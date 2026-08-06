@@ -155,4 +155,91 @@ class TreatmentIssueServiceTest extends TestCase
         $this->assertNull(TreatmentIssueService::cheMaThe('   '));
         $this->assertEquals('****AB', TreatmentIssueService::cheMaThe('AB'));
     }
+
+    protected function themLoiXml(array $ghiDe = [])
+    {
+        DB::table('xml3176_error_results')->insert(array_merge([
+            'xml'            => 'XML1',
+            'ma_lk'          => '01013250800123',
+            'stt'            => 1,
+            'ngay_yl'        => '20260805',
+            'ngay_kq'        => '20260805',
+            'error_code'     => 'L001',
+            'description'    => 'Chi tiet loi',
+            'critical_error' => 1,
+            'created_at'     => '2026-08-05 15:00:00',
+            'updated_at'     => '2026-08-05 15:00:00',
+        ], $ghiDe));
+    }
+
+    protected function themDanhMucLoi(array $ghiDe = [])
+    {
+        DB::table('xml3176_error_catalogs')->insert(array_merge([
+            'xml'            => 'XML1',
+            'error_code'     => 'L001',
+            'error_name'     => 'Sai ma the BHYT',
+            'description'    => null,
+            'critical_error' => 1,
+            'is_check'       => 1,
+            'created_at'     => '2026-01-09 00:00:00',
+            'updated_at'     => '2026-01-09 00:00:00',
+        ], $ghiDe));
+    }
+
+    /** @test */
+    public function lay_loi_xml3176_kem_ten_loi_tu_danh_muc()
+    {
+        $this->themDanhMucLoi();
+        $this->themLoiXml();
+
+        $dong = $this->dichVu()->cua('01013250800123')['data']['xml3176'];
+
+        $this->assertCount(1, $dong);
+        $this->assertEquals('Sai ma the BHYT', $dong[0]['error_name']);
+        $this->assertTrue($dong[0]['critical_error']);
+        $this->assertEquals('20260805', $dong[0]['ngay_yl']);
+    }
+
+    /**
+     * xml3176_error_catalogs unique theo CAP (xml, error_code). Join thieu cot xml se
+     * nhan mot dong loi thanh nhieu dong khi ma loi do ton tai o nhieu loai XML.
+     *
+     * @test
+     */
+    public function cung_ma_loi_o_hai_loai_xml_thi_khong_nhan_dong()
+    {
+        $this->themDanhMucLoi(['xml' => 'XML1', 'error_name' => 'Ten cua XML1']);
+        $this->themDanhMucLoi(['xml' => 'XML2', 'error_name' => 'Ten cua XML2']);
+        $this->themLoiXml(['xml' => 'XML1']);
+
+        $dong = $this->dichVu()->cua('01013250800123')['data']['xml3176'];
+
+        $this->assertCount(1, $dong);
+        $this->assertEquals('Ten cua XML1', $dong[0]['error_name']);
+    }
+
+    /** @test */
+    public function loi_khong_co_trong_danh_muc_van_duoc_tra_ve()
+    {
+        $this->themLoiXml(['error_code' => 'L999']);
+
+        $dong = $this->dichVu()->cua('01013250800123')['data']['xml3176'];
+
+        $this->assertCount(1, $dong);
+        $this->assertNull($dong[0]['error_name']);
+    }
+
+    /** @test */
+    public function loi_xml_sap_xep_theo_xml_roi_toi_stt()
+    {
+        $this->themLoiXml(['xml' => 'XML2', 'stt' => 1]);
+        $this->themLoiXml(['xml' => 'XML1', 'stt' => 2]);
+        $this->themLoiXml(['xml' => 'XML1', 'stt' => 1]);
+
+        $dong = $this->dichVu()->cua('01013250800123')['data']['xml3176'];
+
+        $this->assertEquals(['XML1', 1], [$dong[0]['xml'], $dong[0]['stt']]);
+        $this->assertEquals(['XML1', 2], [$dong[1]['xml'], $dong[1]['stt']]);
+        $this->assertEquals(['XML2', 1], [$dong[2]['xml'], $dong[2]['stt']]);
+    }
 }
