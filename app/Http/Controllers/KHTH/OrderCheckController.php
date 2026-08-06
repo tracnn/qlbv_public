@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\OrderCheck\OrderCheckViolation;
 use App\Models\OrderCheck\OrderCheckRule;
 use App\Models\OrderCheck\OrderCheckRuleLog;
+use App\Services\OrderCheck\TreatmentIssueService;
 use App\Services\OrderCheck\ViolationQueryService;
 use App\Exports\OrderCheckViolationExport;
 use Illuminate\Http\Request;
@@ -192,28 +193,75 @@ class OrderCheckController extends Controller
         return Excel::download(new OrderCheckViolationExport($request->all()), $fileName);
     }
 
-    /** API JSON read-only: tra cứu vi phạm theo đợt điều trị (cho HIS/màn hình khác). */
-    public function apiViolations(Request $request)
+    /**
+     * API JSON chỉ đọc: tra cứu TOÀN BỘ lỗi của một đợt điều trị - sai sót y lệnh, lỗi
+     * tra thẻ BHYT, lỗi XML3176 - trong một lần gọi.
+     */
+    public function apiViolations(Request $request, TreatmentIssueService $issueService)
     {
-        $request->validate([
-            'treatment_code' => 'required_without:treatment_id',
-            'treatment_id' => 'required_without:treatment_code',
+        $treatmentCode = trim((string) $request->input('treatment_code'));
+        $treatmentId = trim((string) $request->input('treatment_id'));
+
+        // Kiểm tham số thủ công thay vì $request->validate(): validate() trả khuôn lỗi
+        // mặc định của Laravel, khác hẳn khuôn {success,error,meta} của ApiAuthMiddleware,
+        // buộc bên gọi phải xử lý hai định dạng.
+        if ($treatmentCode === '' && $treatmentId === '') {
+            return $this->loiApi(
+                'VALIDATION_ERROR',
+                'Thiếu tham số bắt buộc',
+                'Cần truyền treatment_code hoặc treatment_id',
+                422
+            );
+        }
+
+        try {
+            $ketQua = $issueService->cua(
+                $treatmentCode !== '' ? $treatmentCode : null,
+                $treatmentId !== '' ? $treatmentId : null,
+                ['status' => $request->input('status')]
+            );
+        } catch (\Exception $e) {
+            \Log::error('Loi API tra cuu loi dot dieu tri', [
+                'treatment_code' => $treatmentCode,
+                'treatment_id' => $treatmentId,
+                'loi' => $e->getMessage(),
+            ]);
+
+            return $this->loiApi(
+                'INTERNAL_ERROR',
+                'Lỗi hệ thống',
+                'Vui lòng thử lại sau',
+                500
+            );
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $ketQua['data'],
+            'summary' => $ketQua['summary'],
+            'meta' => $this->metaApi(),
         ]);
+    }
 
-        $q = OrderCheckViolation::query();
-        if ($request->filled('treatment_code')) {
-            $q->where('treatment_code', $request->input('treatment_code'));
-        }
-        if ($request->filled('treatment_id')) {
-            $q->where('treatment_id', $request->input('treatment_id'));
-        }
-        if ($request->filled('status')) {
-            $q->where('status', $request->input('status'));
-        }
+    /** Khuôn lỗi thống nhất với ApiAuthMiddleware. Không lộ thông điệp ngoại lệ ra ngoài. */
+    protected function loiApi($code, $message, $details, $status)
+    {
+        return response()->json([
+            'success' => false,
+            'error' => [
+                'code' => $code,
+                'message' => $message,
+                'details' => $details,
+            ],
+            'meta' => $this->metaApi(),
+        ], $status);
+    }
 
-        return response()->json($q->orderBy('detected_at', 'desc')->get([
-            'id', 'rule_code', 'severity', 'order_ref_type', 'order_ref_id',
-            'message', 'detail', 'status', 'detected_at',
-        ]));
+    protected function metaApi()
+    {
+        return [
+            'timestamp' => Carbon::now()->format('YmdHis'),
+            'request_id' => uniqid('req_'),
+        ];
     }
 }
