@@ -93,13 +93,37 @@ class InteractionLogScanner implements Scanner
         return ['scanned' => $scanned, 'violations' => $violations];
     }
 
+    /**
+     * $info da chua san ma dot dieu tri va thong tin benh nhan (fetchTreatmentInfo tra
+     * ve chung cung luot voi ma_cskcb) - lay het, dung lang phi mot truy van da chay.
+     * Thieu chung thi bo loc tu khoa cua dashboard (ma BN, ten BN, ma dot) khong bao gio
+     * tim ra dong tuong tac thuoc nao.
+     *
+     * KHONG gan service_req_* / service_*: ban ghi tuong tac thuoc khong gan voi phieu
+     * chi dinh hay dich vu nao, de trong o day la dung ban chat.
+     */
     private function context($row, $info)
     {
         return ViolationContext::make([
             'treatment_id' => (int) $row->treatment_id,
+            'treatment_code' => $this->truong($info, 'treatment_code'),
+            'patient_code' => $this->truong($info, 'tdl_patient_code'),
+            'patient_name' => $this->truong($info, 'tdl_patient_name'),
             'doctor_loginname' => $row->request_loginname,
+            // his_medicine_interactive KHONG co cot ten - ten den tu join his_employee
+            // trong fetchInteractions(). Ban ghi cu khong co thuoc tinh nay thi de trong.
+            'doctor_username' => $this->truong($row, 'request_username'),
             'department_id' => $row->request_department_id !== null ? (int) $row->request_department_id : null,
-            'ma_cskcb' => $info ? $info->ma_cskcb : null,
+            'ma_cskcb' => $this->truong($info, 'ma_cskcb'),
         ]);
+    }
+
+    /**
+     * Doc mot truong co the vang mat. Khong gia dinh $info luon du truong: mot vi pham
+     * thieu thong tin van con dung hon la ca lo quet chet vi mot doi tuong khuyet cot.
+     */
+    private function truong($doiTuong, $ten)
+    {
+        return $doiTuong !== null && isset($doiTuong->$ten) ? $doiTuong->$ten : null;
     }
 }
