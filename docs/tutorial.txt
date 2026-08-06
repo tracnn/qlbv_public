@@ -28,6 +28,7 @@ I. Những phần mềm cần thiết
 		+ php artisan migrate --force
 		+ php artisan storage:link
 		+ php artisan key:generate
+		+ php artisan api:generate
 	b. Các service
 		- Cài đặt service:
 			Mở cmd với quyền Administrator, vào thư mục của phần mềm chạy install_service.bat
