@@ -209,7 +209,7 @@ class OrderCheckController extends Controller
             return $this->loiApi(
                 'VALIDATION_ERROR',
                 'Thiếu tham số bắt buộc',
-                'Cần truyền treatment_code hoặc treatment_id',
+                'Cần truyền treatment_code',
                 422
             );
         }

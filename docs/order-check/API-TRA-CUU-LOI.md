@@ -44,14 +44,12 @@ Muốn giữ nguyên token mà các đơn vị đang dùng (không gián đoạn
 
 | Tham số | Bắt buộc | Mô tả |
 |---|---|---|
-| `treatment_code` | Một trong hai | Mã đợt điều trị (chính là `ma_lk` trong hồ sơ XML) |
-| `treatment_id` | Một trong hai | ID đợt điều trị trên HIS |
+| `treatment_code` | **Có** | Mã đợt điều trị (chính là `ma_lk` trong hồ sơ XML) |
 | `status` | Không | Lọc riêng nhóm `order_check` theo trạng thái: `new`, `seen`, `processed`, `false_positive` |
 
-> **Nên truyền `treatment_code`.** Hai nhóm `hein_card` và `xml3176` khoá theo `ma_lk`.
-> Nếu chỉ truyền `treatment_id`, hệ thống phải suy ngược `ma_lk` từ dòng vi phạm y lệnh —
-> đợt điều trị chưa có vi phạm y lệnh nào thì hai nhóm đó sẽ trả về rỗng dù thực tế có lỗi
-> thẻ hoặc lỗi XML.
+> Tra cứu **chỉ theo `treatment_code`**. Cả ba nhóm lỗi đều khoá theo giá trị này
+> (`order_check.treatment_code`, `check_hein_cards.ma_lk`, `xml3176_error_results.ma_lk`),
+> nên đây là tham số duy nhất lấy được đủ dữ liệu của một đợt điều trị.
 
 Ví dụ:
 
@@ -68,12 +66,6 @@ Tra cứu theo mã đợt điều trị — cách dùng chính:
 
 ```bash
 curl --location 'http://localhost:8000/api/order-check/violations?treatment_code=01013250800123' --header 'Authorization: Bearer {token}'
-```
-
-Tra cứu theo `treatment_id`:
-
-```bash
-curl --location 'http://localhost:8000/api/order-check/violations?treatment_id=2255056' --header 'Authorization: Bearer {token}'
 ```
 
 Lọc riêng nhóm y lệnh theo trạng thái (mặc định API đã bỏ `false_positive`):
@@ -243,7 +235,7 @@ Mảng này tối đa một phần tử (mỗi đợt điều trị lưu một k
 |---|---|---|
 | 200 | — | Thành công. **Kể cả khi không có lỗi nào**: ba mảng rỗng, `has_error = false` |
 | 401 | `UNAUTHORIZED` | Thiếu header `Authorization`, sai định dạng `Bearer`, hoặc token không hợp lệ |
-| 422 | `VALIDATION_ERROR` | Thiếu cả `treatment_code` lẫn `treatment_id` |
+| 422 | `VALIDATION_ERROR` | Thiếu `treatment_code` |
 | 429 | — | Vượt 60 request/phút |
 | 500 | `INTERNAL_ERROR` | Lỗi hệ thống. Gửi `meta.request_id` cho quản trị để tra log |
 
@@ -255,7 +247,7 @@ Khuôn response lỗi:
   "error": {
     "code": "VALIDATION_ERROR",
     "message": "Thiếu tham số bắt buộc",
-    "details": "Cần truyền treatment_code hoặc treatment_id"
+    "details": "Cần truyền treatment_code"
   },
   "meta": {
     "timestamp": "20260806091200",
