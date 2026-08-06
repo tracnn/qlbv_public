@@ -139,6 +139,42 @@
   .capfill { height: 100%; border-radius: 4px; transition: none; }
   .cappct { width: 5vw; text-align: right; font-size: calc(2.38vh * var(--z)); font-weight: 600; }
   .capnum { width: 6vw; text-align: right; font-size: calc(2vh * var(--z)); color: var(--muted); }
+  /* Bang mau nen sang. Khong dao mau may moc tu ban toi: cac mau pastel cua nen toi (#5dcaa5,
+     #efc877) doc khong ro tren nen trang nen mau nhan o day dam va bao hoa hon. */
+  html[data-theme="light"] {
+    --bg: #f4f6f9;
+    --text: #1c2733;
+    --panel: #ffffff;
+    --panel-2: #eaf0f6;
+    --line: #d3dde7;
+    --line-2: #c3d0dd;
+    --brand: #1d6fa5;
+    --muted: #4f6577;
+    --txt-2: #2b3949;
+    --strong: #0f1a26;
+    /* Ba mau duoi da dam hon ban dau (#12855f, #b96a00, #5a7085): do tuong phan tren nen
+       trang chi dat 3.8-4.5, chieu len tuong phong sang la doc khong ra. */
+    --teal: #0e6d4e;
+    --amber: #8f5200;
+    --amber-2: #8a5a00;
+    --red: #c53a3a;
+    --blue: #1668b3;
+    --btn-text: #1c2733;
+    --btn-hover: #e6eef6;
+    --bar-text: #5a7085;
+    --dot: #b8c6d3;
+    --track: #dbe4ec;
+    --ok-bg: #e6f5ee;
+    --bad-bg: #fdeceb;
+    --badge-nhap-bg: #fdf0d6;
+    --badge-nhap-fg: #8a5a00;
+    --badge-chot-bg: #ddf3e7;
+    --badge-chot-fg: #12855f;
+  }
+  /* Nen sang: panel trang tren nen trang nga can vien moi tach khoi duoc, ban toi thi khong. */
+  html[data-theme="light"] .panel,
+  html[data-theme="light"] .note { border: 1px solid var(--line); }
+  html[data-theme="light"] .note { border-left: 3px solid var(--amber); }
 </style>
 </head>
 <body>
@@ -152,6 +188,7 @@
       <button class="btn" id="z-out" title="Chữ nhỏ lại (phím −)">A−</button>
       <span id="z-val" title="Bấm để về 100% (phím 0)" style="cursor:pointer;min-width:3.5em;text-align:center">100%</span>
       <button class="btn" id="z-in" title="Chữ to lên (phím +)">A+</button>
+      <button class="btn" id="theme-btn" title="Chuyển nền sáng">☀</button>
       <span id="jump">
         <button class="btn" id="jump-btn">☰ Khoa</button>
         <div id="jump-list"></div>
@@ -592,6 +629,31 @@
     datZoom(isNaN(z) || !z ? 1 : z);
   }
 
+  /*
+   * Theme la thiet lap cua MAY DANG CHIEU giong muc zoom, khong phai cua bao cao: luu
+   * localStorage, khong gui len may chu. Mac dinh nen toi ke ca khi may dat che do sang.
+   */
+  var THEME_KEY = 'giaoban.present.theme';
+  var theme = 'dark';
+
+  function datTheme(t) {
+    theme = t === 'light' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', theme);
+    var b = document.getElementById('theme-btn');
+    if (b) {
+      // Nhan la thu SE chuyen sang khi bam, khong phai thu dang dung.
+      b.textContent = theme === 'dark' ? '☀' : '☾';
+      b.title = theme === 'dark' ? 'Chuyển nền sáng' : 'Chuyển nền tối';
+    }
+    try { localStorage.setItem(THEME_KEY, theme); } catch (err) { /* che do rieng tu */ }
+  }
+
+  function napTheme() {
+    var t = 'dark';
+    try { t = localStorage.getItem(THEME_KEY) || 'dark'; } catch (err) { t = 'dark'; }
+    datTheme(t);
+  }
+
   function setupNav() {
     document.addEventListener('keydown', function (e) {
       if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { go(current + 1); e.preventDefault(); }
@@ -620,6 +682,10 @@
     document.getElementById('z-in').addEventListener('click', function () { datZoom(zoom + ZOOM_BUOC); });
     document.getElementById('z-out').addEventListener('click', function () { datZoom(zoom - ZOOM_BUOC); });
     document.getElementById('z-val').addEventListener('click', function () { datZoom(1); });
+    document.getElementById('theme-btn').addEventListener('click', function () {
+      datTheme(theme === 'dark' ? 'light' : 'dark');
+    });
+    napTheme();
     napZoom();
   }
 
