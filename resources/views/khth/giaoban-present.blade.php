@@ -60,6 +60,20 @@
   .bdt th.ten, .bdt td.ten { text-align: left; }
   .bdt td.ten { color: #fff; }
   .bdt tr.tong td { background: #14293e; color: #fff; font-weight: 700; }
+  /* Bang chi tieu cua man Tong quan va man tung khoa. Dung lai he vien cua .bdt de hai man
+     nhin cung mot kieu, nhung cang le theo kieu du lieu: ten trai, so phai. */
+  .bct-wrap { min-height: 0; overflow: auto; margin-top: 2vh; }
+  /* Chi man tung khoa moi cho bang gian het chieu cao: man Tong quan con cac khoi canh bao
+     va ghi chu nam ngay duoi bang, gian ra la day chung xuong day man. */
+  .bct-wrap.gian { flex: 1; }
+  .bct { width: 100%; border-collapse: collapse; color: #dbe6f0; table-layout: fixed; }
+  .bct th, .bct td { border: 1px solid #24405c; padding: .6vh .8vw; }
+  .bct th { background: #14293e; color: #8aa4bd; font-weight: 600; text-align: center; }
+  .bct th.so, .bct td.so { width: 15%; }
+  .bct td.ten { text-align: left; color: #fff; }
+  .bct td.so { text-align: right; font-weight: 600; color: #fff; white-space: nowrap; }
+  .bct td.so.teal { color: #5dcaa5; }
+  .bct td.so.amber { color: #ef9f27; }
   /* Thanh dieu khien KHONG theo --z: no la dieu khien, khong phai noi dung. De no phong theo
      thi o 200% thanh nay xuong dong va an mat 1/4 chieu cao man chieu. */
   #bar { display: flex; justify-content: space-between; align-items: center;
@@ -265,6 +279,48 @@
       '</div></div>';
   }
 
+  /**
+   * Bang chi tieu dung chung cho man Tong quan va man tung khoa.
+   *
+   * Moi dong hai cap "Chi tieu | So lieu" de tan dung be ngang man chieu; so chi tieu le thi
+   * cap cuoi de trong nhung van co vien cho bang khong khuyet goc.
+   *
+   * Cang le theo KIEU DU LIEU chu khong theo cot: so va phan tram can phai, con lai can trai.
+   * O khuyet (num() tra dau gach) tinh la chuoi nen can trai.
+   *
+   * Co chu nho dan theo so dong, cung tinh than voi cach .bdt nho dan theo so cot. Cham san
+   * ma van tran thi .bct-wrap cho cuon (khi gian) hoac .slide cho cuon (khi khong gian).
+   */
+  function bangChiTieu(items, gian) {
+    if (!items.length) return '';
+
+    var CAP = 2; // so cap "Chi tieu | So lieu" tren mot dong
+    var soDong = Math.ceil(items.length / CAP);
+    var co = soDong <= 6 ? 2.75 : (soDong <= 10 ? 2.3 : (soDong <= 14 ? 2 : 1.75));
+
+    var thead = '<tr>';
+    for (var c = 0; c < CAP; c++) thead += '<th class="ten">CHỈ TIÊU</th><th class="so">SỐ LIỆU</th>';
+    thead += '</tr>';
+
+    var tbody = '';
+    for (var r = 0; r < soDong; r++) {
+      tbody += '<tr>';
+      for (var k = 0; k < CAP; k++) {
+        var it = items[r * CAP + k];
+        if (!it) { tbody += '<td class="ten"></td><td class="so"></td>'; continue; }
+        var v = num(it.gia_tri);
+        var laSo = /^-?[\d.,]+%?$/.test(v);
+        tbody += '<td class="ten">' + esc(it.nhan) + '</td>' +
+          '<td class="' + (laSo ? 'so' + (it.cls || '') : 'ten') + '">' + v + '</td>';
+      }
+      tbody += '</tr>';
+    }
+
+    return '<div class="bct-wrap' + (gian ? ' gian' : '') + '">' +
+      '<table class="bct" style="font-size:calc(' + co + 'vh * var(--z))">' +
+      '<thead>' + thead + '</thead><tbody>' + tbody + '</tbody></table></div>';
+  }
+
   function overviewSlide(data) {
     var r = data.report;
     var kpiHtml = '';
@@ -411,12 +467,11 @@
   function deptSlide(data, cfg) {
     var warn = data.balance_warnings && data.balance_warnings[cfg.id]
       ? '<span class="warn" title="Lệch cân đối">▲ ' + num(data.balance_warnings[cfg.id]) + '</span>' : '';
-    // Luoi KPI chi nhan chi tieu SO. Chi tieu chuoi xuong khoi rieng ben duoi.
-    var cards = cfg.metrics.filter(function (m) { return !laChiTieuChuoi(m); }).map(function (m) {
-      var v = cellVal(data, cfg.id, m.code);
-      return '<div class="kpi' + kpiClass(m) + '"><div class="lbl">' + esc(m.name) +
-        '</div><div class="val">' + num(v) + '</div></div>';
-    }).join('');
+    // Bang chi tieu chi nhan chi tieu SO. Chi tieu chuoi xuong khoi rieng ben duoi.
+    var items = cfg.metrics.filter(function (m) { return !laChiTieuChuoi(m); }).map(function (m) {
+      return { nhan: m.name, gia_tri: cellVal(data, cfg.id, m.code), cls: kpiClass(m) };
+    });
+    var bangHtml = bangChiTieu(items, true);
 
     // Moi chi tieu chuoi mot khoi, dung lai class .note. Khoi rong thi bo qua.
     // Noi dung da qua htmlspecialchars o server nen chen thang vao HTML se hien dung dau < >;
@@ -434,7 +489,7 @@
       ? '<div class="note"><div class="lbl">Ghi chú khoa</div><div class="txt">' + note + '</div></div>' : '';
     return '<div class="slide"><div class="s-head"><div class="s-title">' + esc(cfg.display_name) + warn +
       '</div><div class="s-sub">Giao ban ' + esc(fmtDate(DATE)) + '</div></div>' +
-      '<div class="kpis" style="grid-template-columns:repeat(4,1fr)">' + cards + '</div>' +
+      bangHtml +
       chuoiHtml + noteHtml + '</div>';
   }
 
