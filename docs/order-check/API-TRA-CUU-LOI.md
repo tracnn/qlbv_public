@@ -20,6 +20,22 @@ GET /api/order-check/violations
 
 Token do đơn vị quản trị hệ thống cấp.
 
+### Cấp token (dành cho quản trị)
+
+```bash
+php artisan api:generate
+```
+
+Lệnh sinh token ngẫu nhiên 64 ký tự, in ra màn hình **một lần**, và ghi bản băm SHA-256
+của nó vào `config/organization.php`. Token gốc không được lưu ở đâu trong hệ thống —
+chép ngay khi lệnh in ra để giao cho bên gọi; mất thì sinh lại chứ không xem lại được.
+
+Sinh lại token làm mọi bên đang dùng token cũ nhận 401 ngay lập tức. Lệnh hỏi xác nhận
+trước khi ghi đè; `--force` bỏ qua bước hỏi.
+
+Bản cài chưa có khoá `access_token_hash` trong `config/organization.php` sẽ trả 401 cho
+mọi request — thêm dòng `'access_token_hash' => '',` vào mục `api` rồi chạy lại lệnh.
+
 ## 2. Tham số
 
 | Tham số | Bắt buộc | Mô tả |
