@@ -48,7 +48,7 @@ class ApiGenerateTokenTest extends TestCase
         return "<?php\n\nreturn [\n"
             . "    // Chu thich phai con nguyen sau khi ghi\n"
             . "    'api' => [\n"
-            . "        'access_token_hash' => '" . $hashCu . "',\n"
+            . "        'access_token' => '" . $hashCu . "',\n"
             . "        'organization' => '01013',\n"
             . "    ],\n"
             . "];\n";
@@ -108,7 +108,7 @@ class ApiGenerateTokenTest extends TestCase
         $token = $this->tokenTrongDauRa($this->chay()['ra']);
 
         $this->assertContains(
-            "'access_token_hash' => '" . hash('sha256', $token) . "'",
+            "'access_token' => '" . hash('sha256', $token) . "'",
             file_get_contents($this->tep)
         );
     }
@@ -141,6 +141,6 @@ class ApiGenerateTokenTest extends TestCase
 
         $this->assertNotEquals(0, $kq['ma_thoat']);
         $this->assertEquals($truoc, file_get_contents($this->tep));
-        $this->assertContains('access_token_hash', $kq['ra']);
+        $this->assertContains('access_token', $kq['ra']);
     }
 }
