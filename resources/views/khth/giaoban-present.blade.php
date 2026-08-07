@@ -84,6 +84,9 @@
     text-align: center; }
   .bdt th { background: var(--panel-2); color: var(--muted); font-weight: 600; }
   .bdt th.ten, .bdt td.ten { text-align: left; }
+  /* O so lieu can phai; o khuyet la chu nen can trai. Tieu de cot van can giua. */
+  .bdt td.so { text-align: right; }
+  .bdt td.khuyet { text-align: left; }
   .bdt td.ten { color: var(--strong); }
   .bdt tr.tong td { background: var(--panel-2); color: var(--strong); font-weight: 700; }
   /* Bang chi tieu cua man Tong quan va man tung khoa. Dung lai he vien cua .bdt de hai man
@@ -96,7 +99,8 @@
   .bct th, .bct td { border: 1px solid var(--line-2); padding: .6vh .8vw; }
   .bct th { background: var(--panel-2); color: var(--muted); font-weight: 600; text-align: center; }
   .bct th.so, .bct td.so { width: 15%; }
-  .bct td.ten { text-align: left; color: var(--strong); }
+  .bct td.ten, .bct td.khuyet { text-align: left; }
+  .bct td.ten { color: var(--strong); }
   .bct td.so { text-align: right; font-weight: 600; color: var(--strong); white-space: nowrap; }
   .bct td.so.teal { color: var(--teal); }
   .bct td.so.amber { color: var(--amber); }
@@ -355,6 +359,17 @@
    * Co chu nho dan theo so dong, cung tinh than voi cach .bdt nho dan theo so cot. Cham san
    * ma van tran thi .bct-wrap cho cuon (khi gian) hoac .slide cho cuon (khi khong gian).
    */
+  /**
+   * O so lieu dung chung cho ca bang tieu chi lan bang Hoat dong dieu tri.
+   * So va phan tram can phai; o khuyet (num() tra dau gach) la chu nen can trai.
+   * `cls` la mau nhan tu kpiClass(), chi ap khi o that su la so.
+   */
+  function oSoLieu(v, cls) {
+    var s = num(v);
+    var laSo = /^-?[\d.,]+%?$/.test(s);
+    return '<td class="' + (laSo ? 'so' + (cls || '') : 'khuyet') + '">' + s + '</td>';
+  }
+
   function bangChiTieu(items, gian) {
     if (!items.length) return '';
 
@@ -372,10 +387,7 @@
       for (var k = 0; k < CAP; k++) {
         var it = items[r * CAP + k];
         if (!it) { tbody += '<td class="ten"></td><td class="so"></td>'; continue; }
-        var v = num(it.gia_tri);
-        var laSo = /^-?[\d.,]+%?$/.test(v);
-        tbody += '<td class="ten">' + esc(it.nhan) + '</td>' +
-          '<td class="' + (laSo ? 'so' + (it.cls || '') : 'ten') + '">' + v + '</td>';
+        tbody += '<td class="ten">' + esc(it.nhan) + '</td>' + oSoLieu(it.gia_tri, it.cls);
       }
       tbody += '</tr>';
     }
@@ -471,12 +483,11 @@
 
     var tbody = b.dong.map(function (d) {
       return '<tr><td class="ten">' + esc(d.ten) + '</td>' +
-        d.o.map(function (v) { return '<td>' + num(v) + '</td>'; }).join('') + '</tr>';
+        d.o.map(function (v) { return oSoLieu(v); }).join('') + '</tr>';
     }).join('');
 
     var tfoot = '<tr class="tong"><td class="ten">TỔNG CỘNG</td>' +
-      b.tong.map(function (v) { return '<td>' + (v === null ? '—' : num(v)) + '</td>'; }).join('') +
-      '</tr>';
+      b.tong.map(function (v) { return oSoLieu(v); }).join('') + '</tr>';
 
     return '<div class="slide"><div class="s-head"><div class="s-title">Hoạt động điều trị</div>' +
       '<div class="s-sub">Giao ban ' + esc(fmtDate(DATE)) + '</div></div>' +
