@@ -394,10 +394,9 @@
       return { nhan: t.nhan, gia_tri: t.tong, cls: t.cls };
     }), false);
     if (kpiHtml === '') {
-      // Cau huong dan van goi dung ten nut that ben man Cau hinh giao ban ("Chỉ tiêu"),
-      // doi theo o day thi nguoi dung di tim mot nut khong ton tai.
+      // Cau huong dan goi dung ten nut that ben man Cau hinh giao ban.
       kpiHtml = '<div class="note" style="margin-top:2vh"><div class="lbl">CHƯA ĐÁNH DẤU TIÊU CHÍ NÀO</div>' +
-        '<div class="txt">Vào Cấu hình giao ban → mở Chỉ tiêu của khoa → tích "Hiện ở màn Tổng quan".</div></div>';
+        '<div class="txt">Vào Cấu hình giao ban → mở Tiêu chí của khoa → tích "Hiện ở màn Tổng quan".</div></div>';
     }
 
     var duties = (data.duties || []).filter(function (d) { return (d.person_name || '').trim() !== ''; });

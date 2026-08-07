@@ -28,7 +28,7 @@ class GiaoBanKiemTraChiTieu extends Command
             $this->error(sprintf('#%d %s (khối %s) — %d lỗi',
                 $cfg->id, $cfg->display_name, $cfg->block_type, count($loi)));
             foreach ($loi as $l) {
-                $viTri = $l['index'] === -1 ? 'toàn danh sách' : ('chỉ tiêu thứ ' . ($l['index'] + 1));
+                $viTri = $l['index'] === -1 ? 'toàn danh sách' : ('tiêu chí thứ ' . ($l['index'] + 1));
                 $this->line(sprintf('    - %s / %s: %s', $viTri, $l['field'], $l['message']));
             }
         }

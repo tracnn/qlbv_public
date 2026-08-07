@@ -11,7 +11,7 @@ var MetricBuilder = (function ($) {
   var CANH_BAO = {
     no_scope: ['danger', 'Chưa có phạm vi khoa — số 0 là do cấu hình, không phải do không có dịch vụ'],
     no_dept:  ['danger', 'Cấu hình chưa gán khoa HIS nào'],
-    manual:   ['info', 'Chỉ tiêu nhập tay — không có số tự động']
+    manual:   ['info', 'Tiêu chí nhập tay — không có số tự động']
   };
 
   function esc(s) {
@@ -273,7 +273,7 @@ var MetricBuilder = (function ($) {
     var noiFields = def.group === 'input' ? 'input' : 'goc';
 
     var h = '<div class="row">' +
-      '<div class="col-md-4"><label style="font-weight:normal">Mã chỉ tiêu</label>' +
+      '<div class="col-md-4"><label style="font-weight:normal">Mã tiêu chí</label>' +
         '<input class="form-control mb-f" data-k="code" value="' + esc(m.code) + '"></div>' +
       '<div class="col-md-8"><label style="font-weight:normal">Tên hiển thị</label>' +
         '<input class="form-control mb-f" data-k="name" value="' + esc(m.name) + '"></div>' +
@@ -422,7 +422,7 @@ var MetricBuilder = (function ($) {
   function napBoChiTieu(ds) {
     if (!ds.length) return;
     if (st.metrics.length &&
-        !confirm('Thay thế toàn bộ ' + st.metrics.length + ' chỉ tiêu hiện có?\n\n' +
+        !confirm('Thay thế toàn bộ ' + st.metrics.length + ' tiêu chí hiện có?\n\n' +
                  'OK = thay thế, Cancel = nối thêm vào cuối')) {
       ds.forEach(function (m) {
         var b = JSON.parse(JSON.stringify(m));   // deep-copy: tranh dung tham chieu voi du lieu goc
@@ -487,7 +487,7 @@ var MetricBuilder = (function ($) {
       return;
     }
 
-    $('#mb-save-msg').text(res.message || 'Lỗi lưu chỉ tiêu');
+    $('#mb-save-msg').text(res.message || 'Lỗi lưu tiêu chí');
     (loi || []).forEach(function (e) {
       if (e.index < 0) return;
       var $card = $('#mb-list .mb-card').eq(e.index);
@@ -502,7 +502,7 @@ var MetricBuilder = (function ($) {
     var raw = $('#mb-json').val();
     try {
       var a = JSON.parse(raw);
-      if (!Array.isArray(a)) throw new Error('Phải là một mảng chỉ tiêu.');
+      if (!Array.isArray(a)) throw new Error('Phải là một mảng tiêu chí.');
       $('#mb-json').css('border-color', '');
       $('#mb-json-msg').text('').removeClass('text-red');
       $('#mb-save').prop('disabled', false);
@@ -551,7 +551,7 @@ var MetricBuilder = (function ($) {
       from: from, to: to
     }).done(function (res) {
       var h = '<table class="table table-condensed table-bordered" style="margin-bottom:4px">' +
-              '<thead><tr><th>Chỉ tiêu</th><th style="width:100px">Giá trị</th><th>Ghi chú</th></tr></thead><tbody>';
+              '<thead><tr><th>Tiêu chí</th><th style="width:100px">Giá trị</th><th>Ghi chú</th></tr></thead><tbody>';
       (res.rows || []).forEach(function (r) {
         var cb = CANH_BAO[r.warning];
         h += '<tr' + (cb && cb[0] === 'danger' ? ' class="danger"' : '') + '>' +
@@ -585,7 +585,7 @@ var MetricBuilder = (function ($) {
     $(document).on('click', '.mb-del', function (e) {
       e.preventDefault();
       var i = $(this).closest('.mb-card').data('i');
-      if (!confirm('Xoá chỉ tiêu "' + st.metrics[i].name + '"?')) return;
+      if (!confirm('Xoá tiêu chí "' + st.metrics[i].name + '"?')) return;
       st.metrics.splice(i, 1);
       render();
     });

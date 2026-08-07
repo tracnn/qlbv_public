@@ -9,7 +9,7 @@
       <div class="box-header with-border"><b>Khoa hiển thị trên báo cáo</b></div>
       <div class="box-body table-responsive">
         <table class="table table-bordered" id="tbl-configs">
-          <thead><tr><th style="width:70px">TT</th><th>Tên hiển thị</th><th style="width:130px">Loại khối</th><th>Khoa HIS (gộp)</th><th>Chỉ tiêu</th><th style="width:60px">BID</th><th style="width:60px"></th></tr></thead>
+          <thead><tr><th style="width:70px">TT</th><th>Tên hiển thị</th><th style="width:130px">Loại khối</th><th>Khoa HIS (gộp)</th><th>Tiêu chí</th><th style="width:60px">BID</th><th style="width:60px"></th></tr></thead>
           <tbody></tbody>
         </table>
         <button id="btn-add" class="btn btn-primary"><i class="fa fa-plus"></i> Thêm khoa</button>
@@ -123,7 +123,7 @@ function renderConfigs() {
       '<td><input class="form-control f-name" value="' + esc(c.display_name) + '"></td>' +
       '<td><select class="form-control f-block">' + blockOptions(block) + '</select></td>' +
       '<td><select class="form-control f-depts" multiple size="4">' + deptMultiOptions(ids) + '</select></td>' +
-      '<td><button class="btn btn-default btn-sm btn-edit-metrics">Chỉ tiêu (' + demChiTieu(c.metrics) + ') <i class="fa fa-pencil"></i></button></td>' +
+      '<td><button class="btn btn-default btn-sm btn-edit-metrics">Tiêu chí (' + demChiTieu(c.metrics) + ') <i class="fa fa-pencil"></i></button></td>' +
       '<td><input type="checkbox" class="f-active"' + (c.is_active ? ' checked' : '') + '></td>' +
       '<td><button class="btn btn-sm btn-primary btn-save-cfg">Lưu</button></td></tr>');
   });

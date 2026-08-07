@@ -317,7 +317,7 @@ class MetricValidatorTest extends TestCase
         ];
         $body = MetricValidator::toResponsePayload($loi);
 
-        $this->assertEquals('Mã sai. (chỉ tiêu thứ 3)', $body['message']);
+        $this->assertEquals('Mã sai. (tiêu chí thứ 3)', $body['message']);
         $this->assertSame($loi, $body['errors']);
     }
 
@@ -325,10 +325,10 @@ class MetricValidatorTest extends TestCase
     public function loi_cap_danh_sach_khong_kem_vi_tri()
     {
         $body = MetricValidator::toResponsePayload(
-            [['index' => -1, 'field' => 'metrics', 'message' => 'Phải có ít nhất một chỉ tiêu.']]
+            [['index' => -1, 'field' => 'metrics', 'message' => 'Phải có ít nhất một tiêu chí.']]
         );
 
-        $this->assertEquals('Phải có ít nhất một chỉ tiêu.', $body['message']);
+        $this->assertEquals('Phải có ít nhất một tiêu chí.', $body['message']);
     }
 
     // ===== Co chon cot cho slide Hoat dong dieu tri =====

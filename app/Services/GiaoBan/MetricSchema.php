@@ -220,10 +220,10 @@ class MetricSchema
         $v = (float) $value;
 
         if ($kieu === 'int' && floor($v) != $v) {
-            return 'Chỉ tiêu này chỉ nhận số nguyên.';
+            return 'Tiêu chí này chỉ nhận số nguyên.';
         }
         if (in_array($kieu, ['decimal', 'percent'], true) && round($v, 2) != $v) {
-            return 'Chỉ tiêu này tối đa 2 chữ số thập phân.';
+            return 'Tiêu chí này tối đa 2 chữ số thập phân.';
         }
         if ($kieu === 'percent' && ($v < 0 || $v > 100)) {
             return 'Giá trị phần trăm phải trong khoảng 0–100.';

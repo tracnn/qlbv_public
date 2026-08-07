@@ -22,10 +22,10 @@ class MetricValidator
     {
         $data = json_decode($jsonString, true);
         if (json_last_error() !== JSON_ERROR_NONE) {
-            return [self::loi(-1, 'metrics', 'Chỉ tiêu không phải JSON hợp lệ.')];
+            return [self::loi(-1, 'metrics', 'Tiêu chí không phải JSON hợp lệ.')];
         }
         if (!is_array($data)) {
-            return [self::loi(-1, 'metrics', 'Chỉ tiêu phải là một mảng.')];
+            return [self::loi(-1, 'metrics', 'Tiêu chí phải là một mảng.')];
         }
         return self::validate($data, $blockType);
     }
@@ -35,10 +35,10 @@ class MetricValidator
         $loi = [];
 
         if (empty($metrics)) {
-            return [self::loi(-1, 'metrics', 'Phải có ít nhất một chỉ tiêu.')];
+            return [self::loi(-1, 'metrics', 'Phải có ít nhất một tiêu chí.')];
         }
         if (array_keys($metrics) !== range(0, count($metrics) - 1)) {
-            return [self::loi(-1, 'metrics', 'Chỉ tiêu phải là mảng tuần tự, không phải object.')];
+            return [self::loi(-1, 'metrics', 'Tiêu chí phải là mảng tuần tự, không phải object.')];
         }
 
         $typeHopLe = MetricSchema::forBlock($blockType);
@@ -46,15 +46,15 @@ class MetricValidator
 
         foreach ($metrics as $i => $m) {
             if (!is_array($m)) {
-                $loi[] = self::loi($i, 'metrics', 'Chỉ tiêu phải là object.');
+                $loi[] = self::loi($i, 'metrics', 'Tiêu chí phải là object.');
                 continue;
             }
 
             $code = isset($m['code']) ? (string) $m['code'] : '';
             if (!preg_match(self::CODE_PATTERN, $code)) {
-                $loi[] = self::loi($i, 'code', 'Mã chỉ tiêu phải bắt đầu bằng chữ thường, chỉ gồm a-z 0-9 _, tối đa 32 ký tự.');
+                $loi[] = self::loi($i, 'code', 'Mã tiêu chí phải bắt đầu bằng chữ thường, chỉ gồm a-z 0-9 _, tối đa 32 ký tự.');
             } elseif (isset($daThayCode[$code])) {
-                $loi[] = self::loi($i, 'code', "Mã chỉ tiêu '$code' trùng với chỉ tiêu thứ " . ($daThayCode[$code] + 1) . '.');
+                $loi[] = self::loi($i, 'code', "Mã tiêu chí '$code' trùng với tiêu chí thứ " . ($daThayCode[$code] + 1) . '.');
             } else {
                 $daThayCode[$code] = $i;
             }
@@ -68,7 +68,7 @@ class MetricValidator
 
             $type = isset($m['type']) ? (string) $m['type'] : '';
             if (!MetricSchema::has($type)) {
-                $loi[] = self::loi($i, 'type', "Loại chỉ tiêu '$type' không tồn tại.");
+                $loi[] = self::loi($i, 'type', "Loại tiêu chí '$type' không tồn tại.");
                 continue; // khong biet type thi khong kiem tiep duoc
             }
             if (!in_array($type, $typeHopLe, true)) {
@@ -110,7 +110,7 @@ class MetricValidator
             $in = isset($m['input']) && is_array($m['input']) ? $m['input'] : [];
             if (isset($in['value_type']) && $in['value_type'] === 'text') {
                 $loi[] = self::loi($i, 'overview',
-                    'Chỉ tiêu kiểu chuỗi không hiện được ở màn Tổng quan (không cộng được văn bản).');
+                    'Tiêu chí kiểu chuỗi không hiện được ở màn Tổng quan (không cộng được văn bản).');
             }
         }
 
@@ -137,7 +137,7 @@ class MetricValidator
             $inSlide = isset($m['input']) && is_array($m['input']) ? $m['input'] : [];
             if (isset($inSlide['value_type']) && $inSlide['value_type'] === 'text') {
                 $loi[] = self::loi($i, 'dieu_tri_slide',
-                    'Chỉ tiêu kiểu chuỗi không hiện được ở slide Hoạt động điều trị (bảng chỉ cộng được số).');
+                    'Tiêu chí kiểu chuỗi không hiện được ở slide Hoạt động điều trị (bảng chỉ cộng được số).');
             }
         }
 
@@ -274,7 +274,7 @@ class MetricValidator
 
         foreach ($input as $ten => $v) {
             if (!isset($fields[$ten])) {
-                $loi[] = self::loi($i, 'input.' . $ten, "Thuộc tính '$ten' không dùng được cho chỉ tiêu nhập tay.");
+                $loi[] = self::loi($i, 'input.' . $ten, "Thuộc tính '$ten' không dùng được cho tiêu chí nhập tay.");
             }
         }
 
@@ -291,11 +291,11 @@ class MetricValidator
         // nen duong ghi so lieu (fetchAndStore) khong the cham vao chung.
         if ($valueType === 'text') {
             $camKhi = [
-                'unit'       => 'Chỉ tiêu kiểu chuỗi không có đơn vị.',
-                'min'        => 'Chỉ tiêu kiểu chuỗi không đặt được giá trị nhỏ nhất.',
-                'max'        => 'Chỉ tiêu kiểu chuỗi không đặt được giá trị lớn nhất.',
-                'default'    => 'Chỉ tiêu kiểu chuỗi không đặt được giá trị mặc định.',
-                'carry_over' => 'Chỉ tiêu kiểu chuỗi chưa hỗ trợ kế thừa từ phiên trước.',
+                'unit'       => 'Tiêu chí kiểu chuỗi không có đơn vị.',
+                'min'        => 'Tiêu chí kiểu chuỗi không đặt được giá trị nhỏ nhất.',
+                'max'        => 'Tiêu chí kiểu chuỗi không đặt được giá trị lớn nhất.',
+                'default'    => 'Tiêu chí kiểu chuỗi không đặt được giá trị mặc định.',
+                'carry_over' => 'Tiêu chí kiểu chuỗi chưa hỗ trợ kế thừa từ phiên trước.',
             ];
             foreach ($camKhi as $ten => $thongBao) {
                 if (isset($input[$ten]) && $input[$ten] !== '' && $input[$ten] !== false) {
@@ -379,7 +379,7 @@ class MetricValidator
     public static function toResponsePayload(array $loi)
     {
         $dau = $loi[0];
-        $viTri = $dau['index'] === -1 ? '' : (' (chỉ tiêu thứ ' . ($dau['index'] + 1) . ')');
+        $viTri = $dau['index'] === -1 ? '' : (' (tiêu chí thứ ' . ($dau['index'] + 1) . ')');
         return ['message' => $dau['message'] . $viTri, 'errors' => $loi];
     }
 }
