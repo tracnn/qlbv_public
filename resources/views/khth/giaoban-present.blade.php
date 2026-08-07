@@ -363,7 +363,7 @@
     var co = soDong <= 6 ? 2.75 : (soDong <= 10 ? 2.3 : (soDong <= 14 ? 2 : 1.75));
 
     var thead = '<tr>';
-    for (var c = 0; c < CAP; c++) thead += '<th class="ten">CHỈ TIÊU</th><th class="so">SỐ LIỆU</th>';
+    for (var c = 0; c < CAP; c++) thead += '<th class="ten">TIÊU CHÍ</th><th class="so">SỐ LIỆU</th>';
     thead += '</tr>';
 
     var tbody = '';
@@ -394,7 +394,9 @@
       return { nhan: t.nhan, gia_tri: t.tong, cls: t.cls };
     }), false);
     if (kpiHtml === '') {
-      kpiHtml = '<div class="note" style="margin-top:2vh"><div class="lbl">CHƯA ĐÁNH DẤU CHỈ TIÊU NÀO</div>' +
+      // Cau huong dan van goi dung ten nut that ben man Cau hinh giao ban ("Chỉ tiêu"),
+      // doi theo o day thi nguoi dung di tim mot nut khong ton tai.
+      kpiHtml = '<div class="note" style="margin-top:2vh"><div class="lbl">CHƯA ĐÁNH DẤU TIÊU CHÍ NÀO</div>' +
         '<div class="txt">Vào Cấu hình giao ban → mở Chỉ tiêu của khoa → tích "Hiện ở màn Tổng quan".</div></div>';
     }
 
