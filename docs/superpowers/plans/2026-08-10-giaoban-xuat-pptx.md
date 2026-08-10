@@ -81,18 +81,27 @@ node "<scratchpad>/kiem-thu-vien.js" "<scratchpad>/smoke.pptx"
 
 Kỳ vọng: in `OK` và tệp `smoke.pptx` tồn tại, kích thước > 10KB.
 
-Nếu `require` báo lỗi vì bundle chỉ gán vào biến toàn cục, bọc lại bằng shim sau (vẫn không sửa tệp thư viện):
+**Kết quả thực tế: `require()` thẳng KHÔNG chạy được.** Bundle gộp JSZip trước; UMD của JSZip thấy `module` nên đẩy mình vào `module.exports` thay vì gán biến toàn cục, rồi phần PptxGenJS lại tìm `JSZip` ở toàn cục → `ReferenceError: JSZip is not defined`.
+
+Dùng shim `vm` dưới đây (vẫn **không sửa** tệp thư viện). Điểm mấu chốt: ngữ cảnh **không** có `module`/`exports` (để JSZip gán vào toàn cục của ngữ cảnh) và **không** có `window` (để PptxGenJS hiểu đang chạy ở Node và ghi tệp bằng `fs`):
 
 ```js
 var fs = require('fs'), vm = require('vm');
 var ma = fs.readFileSync('C:/Users/tracnn/qlbv/public/js/vendor/pptxgen.bundle.js', 'utf8');
-var hop = { window: {}, self: {}, module: { exports: {} }, exports: {}, console: console, Buffer: Buffer,
-  setTimeout: setTimeout, clearTimeout: clearTimeout, process: process };
-hop.global = hop; hop.window.global = hop;
+var hop = {
+  require: require, Buffer: Buffer, console: console, process: process,
+  setTimeout: setTimeout, clearTimeout: clearTimeout,
+  setInterval: setInterval, clearInterval: clearInterval,
+  setImmediate: setImmediate, TextDecoder: TextDecoder, TextEncoder: TextEncoder,
+  Promise: Promise, URL: URL
+};
+hop.global = hop;
 vm.createContext(hop);
 vm.runInContext(ma, hop);
-var PptxGenJS = hop.module.exports || hop.window.PptxGenJS;
+var PptxGenJS = hop.PptxGenJS;
 ```
+
+Shim này nằm ở `<scratchpad>/nap-lib.js` và được Task 3 dùng lại. **Chỉ dùng cho kiểm chứng ở Node** — trong trình duyệt thẻ `<script>` nạp bình thường và thư viện tự gắn vào `window.PptxGenJS`.
 
 - [ ] **Step 3: Kiểm tra tệp sinh ra là PPTX hợp lệ**
 
