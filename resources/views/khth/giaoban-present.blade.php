@@ -193,6 +193,7 @@
       <span id="z-val" title="Bấm để về 100% (phím 0)" style="cursor:pointer;min-width:3.5em;text-align:center">100%</span>
       <button class="btn" id="z-in" title="Chữ to lên (phím +)">A+</button>
       <button class="btn" id="theme-btn" title="Chuyển nền sáng">☀</button>
+      <button class="btn" id="pptx-btn" title="Xuất tệp PowerPoint" style="display:none">⬇ PPTX</button>
       <span id="jump">
         <button class="btn" id="jump-btn">☰ Khoa</button>
         <div id="jump-list"></div>
@@ -691,6 +692,8 @@
       deptNames.push({ idx: slides.length, name: s.ten });
       slides.push(veSlide(s));
     });
+    // Co du lieu roi moi cho xuat.
+    document.getElementById('pptx-btn').style.display = '';
 
     var stage = document.getElementById('stage');
     document.getElementById('center').remove();
@@ -768,6 +771,84 @@
     datTheme(t);
   }
 
+  /*
+   * Xuat PPTX.
+   *
+   * Thu vien nang khoang nua MB nen chi nap o lan bam dau tien: nguoi chi chieu ma khong xuat
+   * thi khong phai tai. Lan bam sau dung lai ban da nap.
+   *
+   * Loi thi chi bao o nut, KHONG dung den man chieu: dang hop ma trang man vi bam nham nut
+   * xuat la hong viec.
+   */
+  var PPTX_LIB = '/js/vendor/pptxgen.bundle.js';
+  var PPTX_SRC = '/js/giaoban/pptx.js';
+  var dangXuat = false;
+
+  /** Nap mot tep script mot lan, tra Promise. */
+  function napScript(src) {
+    return new Promise(function (ok, hong) {
+      var da = document.querySelector('script[data-nap="' + src + '"]');
+      if (da) { ok(); return; }
+      var el = document.createElement('script');
+      el.src = src;
+      el.setAttribute('data-nap', src);
+      el.onload = function () { ok(); };
+      el.onerror = function () { hong(new Error('Không nạp được ' + src)); };
+      document.head.appendChild(el);
+    });
+  }
+
+  /**
+   * Bang mau cho PPTX lay tu chinh cac bien CSS dang ap, nen "theo theme dang chon" la he qua
+   * tu nhien, khong phai chep lai bang mau lan thu ba.
+   */
+  function bangMauPptx() {
+    var st = getComputedStyle(document.documentElement);
+    function lay(ten, luiVe) {
+      var v = (st.getPropertyValue(ten) || '').trim().replace('#', '');
+      if (v.length === 3) v = v[0] + v[0] + v[1] + v[1] + v[2] + v[2];
+      return /^[0-9a-fA-F]{6}$/.test(v) ? v.toUpperCase() : luiVe;
+    }
+    return {
+      bg: lay('--bg', '0D1B2A'), strong: lay('--strong', 'FFFFFF'),
+      muted: lay('--muted', '8AA4BD'), txt2: lay('--txt-2', 'DBE6F0'),
+      panel2: lay('--panel-2', '14293E'), line2: lay('--line-2', '24405C'),
+      teal: lay('--teal', '5DCAA5'), amber: lay('--amber', 'EF9F27'),
+      red: lay('--red', 'E57373'), blue: lay('--blue', '378ADD'),
+      brand: lay('--brand', '6EA8D8')
+    };
+  }
+
+  function datTrangThaiNut(chu, khoa) {
+    var b = document.getElementById('pptx-btn');
+    if (!b) return;
+    b.textContent = chu;
+    b.disabled = !!khoa;
+  }
+
+  function xuatFile() {
+    if (dangXuat || !deck.length) return;
+    dangXuat = true;
+    datTrangThaiNut('Đang xuất…', true);
+    napScript(PPTX_LIB)
+      .then(function () { return napScript(PPTX_SRC); })
+      .then(function () {
+        return window.GiaoBanPptx.xuatPptx(deck, bangMauPptx(),
+          'giao-ban-' + DATE + '.pptx', window.PptxGenJS);
+      })
+      .then(function () {
+        dangXuat = false;
+        datTrangThaiNut('⬇ PPTX', false);
+      })
+      .catch(function (e) {
+        // Ghi console de con lan ra nguyen nhan; man chieu giu nguyen.
+        if (window.console) console.error('Xuất PPTX lỗi:', e);
+        dangXuat = false;
+        datTrangThaiNut('Xuất lỗi', true);
+        setTimeout(function () { datTrangThaiNut('⬇ PPTX', false); }, 3000);
+      });
+  }
+
   function setupNav() {
     document.addEventListener('keydown', function (e) {
       if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { go(current + 1); e.preventDefault(); }
@@ -799,6 +880,7 @@
     document.getElementById('theme-btn').addEventListener('click', function () {
       datTheme(theme === 'dark' ? 'light' : 'dark');
     });
+    document.getElementById('pptx-btn').addEventListener('click', xuatFile);
     napTheme();
     napZoom();
   }
