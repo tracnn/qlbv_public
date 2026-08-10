@@ -226,6 +226,7 @@
   var slides = [];
   var current = 0;
   var deptNames = [];
+  var deck = []; // mo ta deck, nut xuat PPTX doc lai tu day
 
   function cellVal(data, deptId, code) {
     for (var i = 0; i < data.cells.length; i++) {
@@ -364,10 +365,150 @@
    * So va phan tram can phai; o khuyet (num() tra dau gach) la chu nen can trai.
    * `cls` la mau nhan tu kpiClass(), chi ap khi o that su la so.
    */
-  function oSoLieu(v, cls) {
+  function oSoLieu(v, mau) {
     var s = num(v);
     var laSo = /^-?[\d.,]+%?$/.test(s);
-    return '<td class="' + (laSo ? 'so' + (cls || '') : 'khuyet') + '">' + s + '</td>';
+    return '<td class="' + (laSo ? 'so' + (mau ? ' ' + mau : '') : 'khuyet') + '">' + s + '</td>';
+  }
+
+  /**
+   * Mo ta toan bo deck duoi dang du lieu thuan, KHONG chua HTML.
+   *
+   * Bo dung HTML va bo dung PPTX cung doc tu day, nen khong co ban sao logic thu hai.
+   * PPTX tuyet doi khong duoc doc nguoc tu DOM: doi mot ten class la hong ban xuat ma
+   * khong test nao bat duoc.
+   *
+   * Thu tu giu nguyen nhu truoc: Tong quan -> Hoat dong dieu tri -> tung khoa (sort_order)
+   * -> Cong suat giuong. Slide thieu du lieu thi bo qua, khong tao muc rong.
+   *
+   * Truong `ten` la nhan cho nut nhay khoa; `tieuDe` la chu in tren slide. Hai thu nay khac
+   * nhau o slide Tong quan.
+   *
+   * `noiDung` cua khoi chuoi va `ghiChu` giu NGUYEN chuoi may chu tra ve — no da qua
+   * htmlspecialchars nen cam vao HTML la dung, con PPTX phai giai ma nguoc (xem pptx.js).
+   */
+  function moTaDeck(data) {
+    var ngay = fmtDate(DATE);
+    var ds = [];
+
+    ds.push(moTaTongQuan(data, ngay));
+
+    var dt = moTaDieuTri(data, ngay);
+    if (dt) ds.push(dt);
+
+    data.configs.forEach(function (cfg) { ds.push(moTaKhoa(data, cfg, ngay)); });
+
+    var cs = moTaCongSuat(data, ngay);
+    if (cs) ds.push(cs);
+
+    return ds;
+  }
+
+  function moTaTongQuan(data, ngay) {
+    var r = data.report;
+
+    var duties = (data.duties || []).filter(function (d) { return (d.person_name || '').trim() !== ''; });
+    var theoViTri = {};
+    duties.forEach(function (d) { (theoViTri[d.position_id] = theoViTri[d.position_id] || []).push(d); });
+    var kipTruc = [];
+    (data.duty_positions || []).forEach(function (p) {
+      var dsN = theoViTri[p.id];
+      if (!dsN || !dsN.length) return;
+      kipTruc.push({
+        viTri: p.name,
+        nguoi: dsN.map(function (d) { return { ten: d.person_name, dienThoai: d.phone || '' }; })
+      });
+    });
+
+    var dsThieu = khoaThieuBatBuoc(data);
+    var chuThieu = dsThieu.length
+      ? dsThieu.length + ' khoa: ' + dsThieu.map(function (x) { return x.ten + ' (' + x.so + ')'; }).join(' · ')
+      : 'Các khoa đã nhập đủ';
+
+    return {
+      loai: 'tong-quan',
+      ten: 'Tổng quan',
+      tieuDe: 'Giao ban ' + ngay,
+      ngay: ngay,
+      badge: (r && r.status === 'final')
+        ? { chu: 'ĐÃ CHỐT', loai: 'chot' }
+        : { chu: 'BẢN NHÁP', loai: 'nhap' },
+      phuDe: r ? ('Số liệu ' + r.from_time + ' → ' + r.to_time) : '',
+      kipTruc: kipTruc,
+      items: theTongQuan(data).map(function (t) {
+        return { nhan: t.nhan, giaTri: t.tong, mau: (t.cls || '').replace(/^\s+/, '') };
+      }),
+      canhBao: { dat: dsThieu.length === 0, chu: chuThieu },
+      ghiChu: (r && r.general_note) ? String(r.general_note).trim() : ''
+    };
+  }
+
+  function moTaDieuTri(data, ngay) {
+    var b = data.bang_dieu_tri;
+    if (!b || !b.cot || !b.cot.length || !b.dong || !b.dong.length) return null;
+    return {
+      loai: 'dieu-tri',
+      ten: 'Hoạt động điều trị',
+      tieuDe: 'Hoạt động điều trị',
+      ngay: ngay,
+      cot: b.cot.map(function (c) { return c.nhan; }),
+      dong: b.dong.map(function (d) { return { ten: d.ten, o: d.o.slice() }; }),
+      tong: b.tong.slice()
+    };
+  }
+
+  function moTaKhoa(data, cfg, ngay) {
+    var khoiChuoi = [];
+    cfg.metrics.filter(laChiTieuChuoi).forEach(function (m) {
+      var t = cellNote(data, cfg.id, m.code);
+      if (!t || String(t).trim() === '') return;
+      khoiChuoi.push({ nhan: m.name, noiDung: t });
+    });
+    var gc = noteOf(data, cfg.id);
+    return {
+      loai: 'khoa',
+      ten: cfg.display_name,
+      tieuDe: cfg.display_name,
+      ngay: ngay,
+      lechCanDoi: (data.balance_warnings && data.balance_warnings[cfg.id]) || null,
+      items: cfg.metrics.filter(function (m) { return !laChiTieuChuoi(m); }).map(function (m) {
+        return {
+          nhan: m.name,
+          giaTri: cellVal(data, cfg.id, m.code),
+          mau: (kpiClass(m) || '').replace(/^\s+/, '')
+        };
+      }),
+      khoiChuoi: khoiChuoi,
+      ghiChu: (gc && String(gc).trim() !== '') ? gc : ''
+    };
+  }
+
+  function moTaCongSuat(data, ngay) {
+    // Uu tien khoa bao cao dieu tri; khong co thi dung tung khoa HIS co giuong (nhu dashboard).
+    var nguon = (data.bed_by_config && data.bed_by_config.length)
+      ? data.bed_by_config : (data.bed_by_department || []);
+    var theoKhoa = nguon.filter(function (b) { return Number(b.total) > 0; })
+      .map(function (b) {
+        var t = Number(b.total), u = Number(b.used);
+        return { ten: b.display_name, dung: u, tong: t, pct: Math.round(u / t * 100) };
+      })
+      .sort(function (a, b) { return b.pct - a.pct; });
+
+    var tongGiuong = Number(data.bed_total || 0);
+    var donut = null;
+    if (tongGiuong > 0) {
+      var dung = Number(data.bed_used || 0);
+      donut = {
+        tong: tongGiuong,
+        dung: dung,
+        trong: Math.max(0, tongGiuong - dung),
+        pct: Math.round(dung / tongGiuong * 100)
+      };
+    }
+
+    if (!theoKhoa.length && !donut) return null;
+    return { loai: 'cong-suat', ten: 'Công suất giường', tieuDe: 'Công suất giường',
+      ngay: ngay, donut: donut, theoKhoa: theoKhoa };
   }
 
   function bangChiTieu(items, gian) {
@@ -387,7 +528,7 @@
       for (var k = 0; k < CAP; k++) {
         var it = items[r * CAP + k];
         if (!it) { tbody += '<td class="ten"></td><td class="so"></td>'; continue; }
-        tbody += '<td class="ten">' + esc(it.nhan) + '</td>' + oSoLieu(it.gia_tri, it.cls);
+        tbody += '<td class="ten">' + esc(it.nhan) + '</td>' + oSoLieu(it.giaTri, it.mau);
       }
       tbody += '</tr>';
     }
@@ -397,63 +538,56 @@
       '<thead>' + thead + '</thead><tbody>' + tbody + '</tbody></table></div>';
   }
 
-  function overviewSlide(data) {
-    var r = data.report;
-    // Chi tieu do KHTH danh dau, gom theo NHAN chu khong theo MA. Ban cu tra theo ma viet cung
-    // trong code nen chi can KHTH doi ma la man nay trong tron.
-    // Khong gian bang: cac khoi canh bao va ghi chu nam ngay duoi, gian ra la day chung xuong day man.
-    var kpiHtml = bangChiTieu(theTongQuan(data).map(function (t) {
-      return { nhan: t.nhan, gia_tri: t.tong, cls: t.cls };
-    }), false);
-    if (kpiHtml === '') {
+  function veSlide(s) {
+    if (s.loai === 'tong-quan') return veTongQuan(s);
+    if (s.loai === 'dieu-tri') return veDieuTri(s);
+    if (s.loai === 'khoa') return veKhoa(s);
+    return veCongSuat(s);
+  }
+
+  function veTongQuan(s) {
+    var bangHtml = bangChiTieu(s.items, false);
+    if (bangHtml === '') {
       // Cau huong dan goi dung ten nut that ben man Cau hinh giao ban.
-      kpiHtml = '<div class="note" style="margin-top:2vh"><div class="lbl">CHƯA ĐÁNH DẤU TIÊU CHÍ NÀO</div>' +
+      bangHtml = '<div class="note" style="margin-top:2vh"><div class="lbl">CHƯA ĐÁNH DẤU TIÊU CHÍ NÀO</div>' +
         '<div class="txt">Vào Cấu hình giao ban → mở Tiêu chí của khoa → tích "Hiện ở màn Tổng quan".</div></div>';
     }
 
-    var duties = (data.duties || []).filter(function (d) { return (d.person_name || '').trim() !== ''; });
-    var byPosD = {};
-    duties.forEach(function (d) { (byPosD[d.position_id] = byPosD[d.position_id] || []).push(d); });
     var dutyHtml = '';
-    if (duties.length) {
+    if (s.kipTruc.length) {
       // Khoi nay nam DAU slide Tong quan nen dung margin-bottom, khong phai margin-top.
       dutyHtml = '<div class="panel" style="margin-bottom:1.6vh"><div class="lbl">KÍP TRỰC LÃNH ĐẠO</div><div style="display:flex;flex-wrap:wrap;gap:1vh 2vw">';
-      (data.duty_positions || []).forEach(function (p) {
-        var people = byPosD[p.id]; if (!people || !people.length) return;
-        var names = people.map(function (d) {
-          return '<b style="color:var(--strong)">' + esc(d.person_name) + '</b>' + (d.phone ? ' <span style="color:var(--brand)">' + esc(d.phone) + '</span>' : '');
+      s.kipTruc.forEach(function (v) {
+        var names = v.nguoi.map(function (n) {
+          return '<b style="color:var(--strong)">' + esc(n.ten) + '</b>' +
+            (n.dienThoai ? ' <span style="color:var(--brand)">' + esc(n.dienThoai) + '</span>' : '');
         }).join(', ');
-        dutyHtml += '<div style="font-size:calc(2.38vh * var(--z))"><span style="color:var(--muted)">' + esc(p.name) + ':</span> ' + names + '</div>';
+        dutyHtml += '<div style="font-size:calc(2.38vh * var(--z))"><span style="color:var(--muted)">' +
+          esc(v.viTri) + ':</span> ' + names + '</div>';
       });
       dutyHtml += '</div></div>';
     }
 
-    var gnote = r && r.general_note ? String(r.general_note).trim() : '';
-    var noteHtml = gnote !== ''
-      ? '<div class="note" style="margin-top:1.6vh"><div class="lbl">GHI CHÚ CHUNG</div><div class="txt">' + gnote + '</div></div>'
+    var noteHtml = s.ghiChu !== ''
+      ? '<div class="note" style="margin-top:1.6vh"><div class="lbl">GHI CHÚ CHUNG</div><div class="txt">' +
+        s.ghiChu + '</div></div>'
       : '';
 
     // Chi con MOT khoi canh bao tren man tong hop. Lech can doi da bo khoi day theo yeu cau
     // su dung: no van hien o badge tren slide tung khoa va o man nhap lieu — hai cho co ngu
     // canh de xu ly, con man tong hop thi chi lam nhieu.
+    var thieuHtml = '<div class="ov-canh-bao' + (s.canhBao.dat ? ' tot' : ' xau') + '">' +
+      '<span class="lbl">Ô BẮT BUỘC CÒN TRỐNG</span> ' + esc(s.canhBao.chu) + '</div>';
 
-    var dsThieu = khoaThieuBatBuoc(data).map(function (x) { return esc(x.ten) + ' (' + x.so + ')'; });
-    var thieuHtml = '<div class="ov-canh-bao' + (dsThieu.length ? ' xau' : ' tot') + '">' +
-      '<span class="lbl">Ô BẮT BUỘC CÒN TRỐNG</span> ' +
-      (dsThieu.length ? dsThieu.length + ' khoa: ' + dsThieu.join(' · ') : 'Các khoa đã nhập đủ') + '</div>';
+    var trangThai = '<span class="ov-badge ' + s.badge.loai + '">' + s.badge.chu + '</span>';
 
-    var trangThai = r && r.status === 'final'
-      ? '<span class="ov-badge chot">ĐÃ CHỐT</span>'
-      : '<span class="ov-badge nhap">BẢN NHÁP</span>';
-
-    var sub = r ? ('Số liệu ' + esc(r.from_time) + ' → ' + esc(r.to_time)) : '';
     return '<div class="slide"><div class="s-head"><div>' +
       '<div class="s-brand">BÁO CÁO GIAO BAN</div>' +
-      '<div class="s-title">Giao ban ' + esc(fmtDate(DATE)) + ' ' + trangThai + '</div></div>' +
-      '<div class="s-sub">' + sub + '</div></div>' +
+      '<div class="s-title">' + esc(s.tieuDe) + ' ' + trangThai + '</div></div>' +
+      '<div class="s-sub">' + esc(s.phuDe) + '</div></div>' +
       // Kip truc len DAU: nguoi du giao ban can biet ngay ai truc truoc khi doc so lieu.
       dutyHtml +
-      kpiHtml +
+      bangHtml +
       thieuHtml + noteHtml + '</div>';
   }
 
@@ -471,93 +605,73 @@
    * la cho chat nhat, tang manh la bang nhieu cot phai cuon — ma chieu len tuong thi phan
    * phai cuon coi nhu mat du lieu.
    */
-  function dieuTriSlide(data) {
-    var b = data.bang_dieu_tri;
-    if (!b || !b.cot || !b.cot.length || !b.dong || !b.dong.length) return '';
-
-    var soCot = b.cot.length;
+  function veDieuTri(s) {
+    var soCot = s.cot.length;
     var co = soCot <= 8 ? 2.3 : (soCot <= 14 ? 1.95 : (soCot <= 20 ? 1.65 : 1.45));
 
     var thead = '<tr><th class="ten">KHOA PHÒNG</th>' +
-      b.cot.map(function (c) { return '<th>' + esc(c.nhan) + '</th>'; }).join('') + '</tr>';
+      s.cot.map(function (c) { return '<th>' + esc(c) + '</th>'; }).join('') + '</tr>';
 
-    var tbody = b.dong.map(function (d) {
+    var tbody = s.dong.map(function (d) {
       return '<tr><td class="ten">' + esc(d.ten) + '</td>' +
         d.o.map(function (v) { return oSoLieu(v); }).join('') + '</tr>';
     }).join('');
 
     var tfoot = '<tr class="tong"><td class="ten">TỔNG CỘNG</td>' +
-      b.tong.map(function (v) { return oSoLieu(v); }).join('') + '</tr>';
+      s.tong.map(function (v) { return oSoLieu(v); }).join('') + '</tr>';
 
-    return '<div class="slide"><div class="s-head"><div class="s-title">Hoạt động điều trị</div>' +
-      '<div class="s-sub">Giao ban ' + esc(fmtDate(DATE)) + '</div></div>' +
+    return '<div class="slide"><div class="s-head"><div class="s-title">' + esc(s.tieuDe) + '</div>' +
+      '<div class="s-sub">Giao ban ' + esc(s.ngay) + '</div></div>' +
       '<div class="bdt-wrap"><table class="bdt" style="font-size:calc(' + co + 'vh * var(--z))">' +
       '<thead>' + thead + '</thead><tbody>' + tbody + tfoot + '</tbody></table></div></div>';
   }
 
-  function capacityDeptSlide(data) {
-    // Ưu tiên khoa báo cáo điều trị; nếu không có thì dùng từng khoa HIS có giường (như dashboard).
-    var bedSrc = (data.bed_by_config && data.bed_by_config.length) ? data.bed_by_config : (data.bed_by_department || []);
-    var beds = bedSrc.filter(function (b) { return Number(b.total) > 0; })
-      .map(function (b) {
-        var t = Number(b.total), u = Number(b.used);
-        return { name: b.display_name, total: t, used: u, pct: Math.round(u / t * 100) };
-      })
-      .sort(function (a, b) { return b.pct - a.pct; });
+  function veCongSuat(s) {
     var capHtml = '';
-    if (beds.length) {
-      var rowsC = beds.map(function (x) {
+    if (s.theoKhoa.length) {
+      var rowsC = s.theoKhoa.map(function (x) {
         var col = capColor(x.pct);
-        return '<div class="caprow"><div class="capname">' + esc(x.name) + '</div>' +
-          '<div class="captrack"><div class="capfill" style="width:' + Math.min(100, x.pct) + '%;background:' + col + '"></div></div>' +
+        return '<div class="caprow"><div class="capname">' + esc(x.ten) + '</div>' +
+          '<div class="captrack"><div class="capfill" style="width:' + Math.min(100, x.pct) +
+          '%;background:' + col + '"></div></div>' +
           '<div class="cappct" style="color:' + col + '">' + x.pct + '%</div>' +
-          '<div class="capnum">' + x.used + '/' + x.total + '</div></div>';
+          '<div class="capnum">' + x.dung + '/' + x.tong + '</div></div>';
       }).join('');
       capHtml = '<div class="panel"><div class="lbl">CÔNG SUẤT GIƯỜNG THEO KHOA</div>' +
         '<div class="caplist">' + rowsC + '</div></div>';
     }
 
-    // Donut tong vien chuyen tu man Tong quan sang day, de moi noi dung ve giuong nam mot cho.
-    var tongGiuong = Number(data.bed_total || 0);
-    var donut = tongGiuong > 0 ? donutHtml(Number(data.bed_used || 0), tongGiuong) : '';
-
-    if (!capHtml && !donut) return '';
+    // Donut tong vien nam cung cho voi cong suat theo khoa, de moi thu ve giuong mot slide.
+    var donut = s.donut ? donutHtml(s.donut.dung, s.donut.tong) : '';
 
     // Donut mot cot, cong suat theo khoa mot cot.
     var cols = (donut && capHtml) ? 'minmax(24vw,1fr) 2fr' : '1fr';
 
-    return '<div class="slide"><div class="s-head"><div class="s-title">Công suất giường</div>' +
-      '<div class="s-sub">Giao ban ' + esc(fmtDate(DATE)) + '</div></div>' +
+    return '<div class="slide"><div class="s-head"><div class="s-title">' + esc(s.tieuDe) + '</div>' +
+      '<div class="s-sub">Giao ban ' + esc(s.ngay) + '</div></div>' +
       '<div class="cap-grid" style="grid-template-columns:' + cols + '">' + donut + capHtml + '</div></div>';
   }
 
-  function deptSlide(data, cfg) {
-    var warn = data.balance_warnings && data.balance_warnings[cfg.id]
-      ? '<span class="warn" title="Lệch cân đối">▲ ' + num(data.balance_warnings[cfg.id]) + '</span>' : '';
-    // Bang chi tieu chi nhan chi tieu SO. Chi tieu chuoi xuong khoi rieng ben duoi.
-    var items = cfg.metrics.filter(function (m) { return !laChiTieuChuoi(m); }).map(function (m) {
-      return { nhan: m.name, gia_tri: cellVal(data, cfg.id, m.code), cls: kpiClass(m) };
-    });
-    var bangHtml = bangChiTieu(items, true);
+  function veKhoa(s) {
+    var warn = s.lechCanDoi
+      ? '<span class="warn" title="Lệch cân đối">▲ ' + num(s.lechCanDoi) + '</span>' : '';
+    var bangHtml = bangChiTieu(s.items, true);
 
-    // Moi chi tieu chuoi mot khoi, dung lai class .note. Khoi rong thi bo qua.
+    // Moi chi tieu chuoi mot khoi, dung lai class .note.
     // Noi dung da qua htmlspecialchars o server nen chen thang vao HTML se hien dung dau < >;
     // xuong dong la ky tu \n that -> can white-space: pre-wrap (class .txt-pre).
-    var chuoiHtml = cfg.metrics.filter(laChiTieuChuoi).map(function (m) {
-      var t = cellNote(data, cfg.id, m.code);
-      if (!t || String(t).trim() === '') return '';
-      return '<div class="note"><div class="lbl">' + esc(m.name) +
-        '</div><div class="txt txt-pre">' + t + '</div></div>';
+    var chuoiHtml = s.khoiChuoi.map(function (k) {
+      return '<div class="note"><div class="lbl">' + esc(k.nhan) +
+        '</div><div class="txt txt-pre">' + k.noiDung + '</div></div>';
     }).join('');
     if (chuoiHtml) chuoiHtml = '<div class="ds-chuoi">' + chuoiHtml + '</div>';
 
-    var note = noteOf(data, cfg.id);
-    var noteHtml = (note && String(note).trim() !== '')
-      ? '<div class="note"><div class="lbl">Ghi chú khoa</div><div class="txt">' + note + '</div></div>' : '';
-    return '<div class="slide"><div class="s-head"><div class="s-title">' + esc(cfg.display_name) + warn +
-      '</div><div class="s-sub">Giao ban ' + esc(fmtDate(DATE)) + '</div></div>' +
-      bangHtml +
-      chuoiHtml + noteHtml + '</div>';
+    var noteHtml = s.ghiChu !== ''
+      ? '<div class="note"><div class="lbl">Ghi chú khoa</div><div class="txt">' + s.ghiChu + '</div></div>' : '';
+
+    return '<div class="slide"><div class="s-head"><div class="s-title">' + esc(s.tieuDe) + warn +
+      '</div><div class="s-sub">Giao ban ' + esc(s.ngay) + '</div></div>' +
+      bangHtml + chuoiHtml + noteHtml + '</div>';
   }
 
   function build(data) {
@@ -570,25 +684,13 @@
       document.getElementById('counter').textContent = '0/0';
       return;
     }
-    // Thu tu: Tong quan -> Hoat dong dieu tri -> tung khoa (theo sort_order) -> Cong suat giuong.
-    // deptNames phai gan chi so theo dung thu tu nay, khong thi bam ten khoa se nhay sai slide.
-    slides.push(overviewSlide(data));
-    deptNames.push({ idx: 0, name: 'Tổng quan' });
-    // Xem buc tranh toan khoi dieu tri truoc roi moi di vao tung khoa.
-    var dtHtml = dieuTriSlide(data);
-    if (dtHtml) {
-      deptNames.push({ idx: slides.length, name: 'Hoạt động điều trị' });
-      slides.push(dtHtml);
-    }
-    data.configs.forEach(function (cfg) {
-      deptNames.push({ idx: slides.length, name: cfg.display_name });
-      slides.push(deptSlide(data, cfg));
+    // Thu tu do moTaDeck() quyet dinh. deptNames bam theo dung thu tu ay, khong thi bam ten
+    // khoa se nhay sai slide.
+    deck = moTaDeck(data);
+    deck.forEach(function (s) {
+      deptNames.push({ idx: slides.length, name: s.ten });
+      slides.push(veSlide(s));
     });
-    var capHtml = capacityDeptSlide(data);
-    if (capHtml) {
-      deptNames.push({ idx: slides.length, name: 'Công suất giường' });
-      slides.push(capHtml);
-    }
 
     var stage = document.getElementById('stage');
     document.getElementById('center').remove();
