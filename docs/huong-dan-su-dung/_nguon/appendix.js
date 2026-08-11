@@ -1,0 +1,49 @@
+const { h1, h2, p, bullet, note, table } = require('./lib');
+
+module.exports = function appendix() {
+  return [
+    h1('PHỤ LỤC A. TRA CỨU NHANH SỰ CỐ THEO TRIỆU CHỨNG'),
+    p('Bảng này dành cho tình huống "thấy hiện tượng lạ nhưng chưa biết tra ở đâu". Cột cuối chỉ tới mục có hướng dẫn chi tiết.'),
+    table(
+      ['Hiện tượng quan sát được', 'Nguyên nhân thường gặp nhất', 'Xem mục'],
+      [
+        ['Hồ sơ đã nạp nhưng không thấy trong Danh sách hồ sơ', 'Tài khoản chỉ thấy hồ sơ do chính mình nhập; hoặc bộ lọc thời gian đang chọn loại ngày khác.', '1.4.1 và 1.4.5'],
+        ['Đặt tệp vào thư mục theo dõi nhưng hồ sơ không vào', 'Tệp hỏng cấu trúc và đã bị chuyển vào thư mục con "loi"; hoặc dịch vụ nền đã dừng.', '1.3'],
+        ['Hồ sơ hết lỗi nhưng vẫn không được gửi lên cổng', 'Chức năng tự động gửi đang tắt; hoặc hồ sơ chưa được ký số.', '1.6.2'],
+        ['Bấm Xuất XML3176 rồi mà cổng vẫn không nhận hồ sơ', 'Nút này chỉ tải tệp nén về máy, không gửi lên cổng.', '1.1 và 1.4.4'],
+        ['Hồ sơ bị chặn xuất mà không rõ vì lỗi gì', 'Đang có lỗi ở mức nghiêm trọng; hoặc mã lỗi mới chưa khai trong danh mục nên mặc định là nghiêm trọng.', '1.8'],
+        ['Số liệu trên dashboard khác số dòng trong danh sách', 'Một bộ lọc từ dashboard không áp dụng được, có dải cảnh báo đỏ dưới thanh nút.', '1.7.3'],
+        ['Danh sách vi phạm y lệnh trống trơn cả ngày', 'Bộ lọc mặc định chỉ lấy ngày hôm nay; hoặc bộ quét nền đã dừng.', '2.2.3 và 2.8'],
+        ['Vi phạm y lệnh đã sửa trên HIS nhưng vẫn còn trong danh sách', 'Con trỏ quét chỉ tiến, phiếu đã quét không được đánh giá lại.', '2.2.2'],
+        ['Bật một quy tắc xong thì vi phạm tăng vọt hàng chục nghìn', 'Bật quy tắc đối chiếu danh mục trong khi danh mục chưa được nhập.', '2.5.3 và 4.7'],
+        ['Mọi mã thuốc, mã dịch vụ đều báo không có trong danh mục', 'Danh mục đã bị xoá mà chưa nhập lại; hoặc ngày hiệu lực trong tệp danh mục sai.', '4.4.3 và 4.7'],
+        ['Thẻ BHYT hợp lệ nhưng hồ sơ vẫn báo lỗi thẻ', 'Mã kiểm tra khác 00 do lệch giới tính hoặc lệch nơi đăng ký ban đầu giữa HIS và cổng.', '3.3.5 và 3.6'],
+        ['Tra cứu thẻ báo lỗi xác thực tài khoản', 'Tài khoản cổng của cơ sở sai, hết hạn, hoặc thiếu thông tin cán bộ tra cứu.', '3.7'],
+        ['Giá dịch vụ của cơ sở này bị áp cho cơ sở khác', 'Nhập danh mục theo cơ sở mà quên chọn Cơ sở khám chữa bệnh, dữ liệu vào dạng dùng chung.', '4.5'],
+        ['Nhập danh mục xong thì nhiều đơn vị hành chính biến mất', 'Đơn vị hành chính và Cơ sở KCB nhập theo kiểu thay thế trọn bộ.', '4.4.2'],
+        ['Tệp danh mục tải từ cổng không nhập được', 'Dòng tiêu đề không nằm ở dòng 1 của trang tính.', '4.9.1'],
+      ],
+      [2900, 4300, 1820],
+    ),
+
+    h1('PHỤ LỤC B. CÁC TIẾN TRÌNH NỀN VÀ DỊCH VỤ HỆ THỐNG'),
+    p('Phụ lục này dành cho bộ phận công nghệ thông tin và cho người dùng nghiệp vụ khi cần mô tả sự cố chính xác hơn với bộ phận hỗ trợ. Các tiến trình dưới đây chạy thường trực dưới dạng dịch vụ trên máy chủ ứng dụng, không có mục lên lịch trong phần mềm.'),
+    table(
+      ['Tiến trình', 'Nhiệm vụ', 'Dấu hiệu khi dừng'],
+      [
+        ['xml3176import:day', 'Quét hai thư mục theo dõi và nhập khẩu hồ sơ XML tự động; chuyển tệp lỗi vào thư mục con "loi".', 'Tệp ứ đọng trong thư mục theo dõi, hồ sơ không xuất hiện trong danh sách.'],
+        ['Hàng đợi JobXml3176', 'Chạy các bộ kiểm lỗi cho từng loại XML và kiểm tra chéo toàn hồ sơ.', 'Con số ở góc dưới phải màn Danh sách hồ sơ không giảm.'],
+        ['Hàng đợi JobExportXml3176', 'Ký số và xuất tệp XML cho các hồ sơ đã hết lỗi nghiêm trọng.', 'Cột Exp của các hồ sơ hợp lệ đứng ở trạng thái chưa xuất.'],
+        ['Hàng đợi JobSubmitXml3176', 'Gửi hồ sơ đã ký lên cổng Bảo hiểm xã hội, tự thử lại tối đa ba lần.', 'Cột Sub đứng ở trạng thái chưa gửi dù hồ sơ đã ký.'],
+        ['Hàng đợi JobKtTheBHYT', 'Thực hiện các yêu cầu tra cứu thẻ bảo hiểm y tế.', 'Màn Kết quả tra cứu thẻ không có dữ liệu mới.'],
+        ['kiemtrathebhyt:day', 'Quét danh sách bệnh nhân đang điều trị có thẻ bảo hiểm y tế và đẩy yêu cầu tra cứu.', 'Không phát sinh kết quả tra cứu cho bệnh nhân mới nhập viện.'],
+        ['kiemtraylenh:scan', 'Bộ quét sai sót y lệnh, chạy vòng lặp nghỉ khoảng 60 giây mỗi lượt.', 'Cột "Chạy gần nhất" trong hộp Thống kê quét không cập nhật.'],
+        ['kiemtraylenh:notify', 'Gửi thư điện tử tổng hợp các vi phạm mới theo chu kỳ. Chức năng tuỳ chọn.', 'Không nhận được thư tổng hợp.'],
+        ['sendxml3176errors:day', 'Gửi thư điện tử tổng hợp lỗi hồ sơ XML hằng ngày.', 'Không nhận được thư tổng hợp lỗi.'],
+        ['importCatalogBHXH:data', 'Quét thư mục danh mục và nhập khẩu tự động khoảng 10 giây một lần.', 'Tệp danh mục nằm lại trong thư mục, không được nhập.'],
+      ],
+      [2300, 4300, 2420],
+    ),
+    note('Khi báo sự cố:', 'Cung cấp cho bộ phận hỗ trợ ba thông tin sau sẽ rút ngắn đáng kể thời gian xử lý: (1) mã điều trị hoặc số phiếu cụ thể; (2) ảnh chụp màn hình có thông báo lỗi nguyên văn; (3) thời điểm xảy ra sự cố. Với lỗi gửi cổng Bảo hiểm xã hội, hãy dùng biểu tượng sao chép cạnh cột Sub để chép nguyên văn thông điệp của cổng.'),
+  ];
+};
