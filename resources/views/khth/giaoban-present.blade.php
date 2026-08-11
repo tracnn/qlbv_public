@@ -397,13 +397,35 @@
     hop.innerHTML = s;
 
     var doan = [];
-    for (var i = 0; i < hop.children.length; i++) doan.push(hop.children[i].outerHTML);
+    for (var i = 0; i < hop.children.length; i++) {
+      // Co khoa go ca ban giao vao MOT the <p>, ngan dong bang <br>. De nguyen thi ca khoi do
+      // la mot doan khong the cat, dai them la tran im lang. Moi <br> cung la mot ranh gioi.
+      doan = doan.concat(tachTheoBr(hop.children[i]));
+    }
     if (doan.length) return doan;
 
     // Khong co the khoi nao -> van ban thuan
     return hop.textContent.split('\n')
       .filter(function (d) { return d.trim() !== ''; })
       .map(function (d) { return '<p>' + esc(d) + '</p>'; });
+  }
+
+  /**
+   * Tach mot phan tu khoi thanh nhieu doan tai cac the <br>.
+   * Khong co <br> thi tra ve chinh no, khong dong cham.
+   *
+   * Manh cat co the ho the (vd mo <span> o manh nay, dong o manh kia). Gan lai vao innerHTML
+   * de trinh duyet tu va lai, roi moi lay ra — re hon nhieu so voi tu phan tich HTML.
+   */
+  function tachTheoBr(el) {
+    if (!el.querySelector('br')) return [el.outerHTML];
+    return el.innerHTML.split(/<br\s*\/?>/i)
+      .map(function (manh) {
+        var v = document.createElement('div');
+        v.innerHTML = manh;
+        return v.textContent.trim() === '' ? '' : '<p>' + v.innerHTML + '</p>';
+      })
+      .filter(function (d) { return d !== ''; });
   }
 
   /** So dong uoc luong cua mot doan. Doan rong van chiem mot dong. */
