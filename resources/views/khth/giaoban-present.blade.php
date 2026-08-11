@@ -64,8 +64,13 @@
   .note .txt { font-size: calc(2.75vh * var(--z)); color: var(--txt-2); margin-top: .5vh; }
   /* Chi tieu chuoi luu van ban thuan: xuong dong la \n that, khong phai <br> */
   .note .txt-pre { white-space: pre-wrap; }
-  /* Nhieu danh sach dai thi cuon trong khung thay vi tran ra ngoai slide va mat hut */
-  .ds-chuoi { flex: 1; min-height: 0; overflow: auto; }
+  /* Cac khoi dien bien thuc te chi 1-2 dong ("BS truc", "DD truc"). De flex:1 thi no an dung
+     mot nua chieu cao va bang tieu chi bi cat, du con thua cho. Cho no cao tu nhien co tran;
+     dai qua tran thi cuon trong khung thay vi tran ra ngoai slide va mat hut. */
+  .ds-chuoi { flex: 0 1 auto; max-height: 40%; min-height: 0; overflow: auto; }
+  /* Slide ghi chu: khoi chiem het chieu cao con lai, van cuon duoc neu zoom cao lam tran. */
+  .gc-wrap { flex: 1; min-height: 0; overflow: auto; margin-top: 1.4vh; }
+  .gc-wrap .note { margin-top: 0; }
   .ov-canh-bao { margin-top: 1.4vh; padding: 1.1vh 1.4vw; border-radius: 8px;
     font-size: calc(2.38vh * var(--z)); color: var(--txt-2); border-left: 4px solid; }
   .ov-canh-bao .lbl { color: var(--muted); font-size: calc(1.88vh * var(--z)); letter-spacing: .5px; margin-right: .8vw; }
@@ -372,6 +377,87 @@
     return '<td class="' + (laSo ? 'so' + (mau ? ' ' + mau : '') : 'khuyet') + '">' + s + '</td>';
   }
 
+  var NGAN_SACH_DONG = 20;   // so dong uoc luong toi da mot slide ghi chu
+  var KY_TU_MOI_DONG = 85;   // do duoc 104 tren 16:9; lay 85 de con dung tren may chieu 4:3
+
+  /**
+   * Tach noi dung ghi chu thanh tung doan.
+   *
+   * May chu tra ve HTML tu trinh soan thao: mot chuoi the <p>, moi dong mot the. Dung DOM de
+   * tach cho chac — regex tren HTML la cach hong nguoi khac.
+   *
+   * Ghi chu cu nhap bang van ban thuan thi khong co the khoi nao: khi do tach theo ky tu
+   * xuong dong, moi dong mot doan.
+   */
+  function tachDoan(html) {
+    var s = String(html === null || html === undefined ? '' : html);
+    if (s.trim() === '') return [];
+
+    var hop = document.createElement('div');
+    hop.innerHTML = s;
+
+    var doan = [];
+    for (var i = 0; i < hop.children.length; i++) doan.push(hop.children[i].outerHTML);
+    if (doan.length) return doan;
+
+    // Khong co the khoi nao -> van ban thuan
+    return hop.textContent.split('\n')
+      .filter(function (d) { return d.trim() !== ''; })
+      .map(function (d) { return '<p>' + esc(d) + '</p>'; });
+  }
+
+  /** So dong uoc luong cua mot doan. Doan rong van chiem mot dong. */
+  function soDongCuaDoan(html) {
+    var hop = document.createElement('div');
+    hop.innerHTML = html;
+    // \u00a0 la khoang trang cung (&nbsp;) do trinh soan thao chen; viet bang ma de khoi
+    // nhin giong khoang trang thuong trong ma nguon.
+    var dai = hop.textContent.replace(/\u00a0/g, ' ').trim().length;
+    return Math.max(1, Math.ceil(dai / KY_TU_MOI_DONG));
+  }
+
+  /**
+   * Cat danh sach doan thanh cac trang theo ngan sach dong.
+   *
+   * KHONG cat giua mot doan: mot benh nhan khong bi dut doi giua hai slide. Doan dai hon ca
+   * ngan sach thi dung rieng mot trang.
+   */
+  function catTrang(doan) {
+    if (!doan.length) return [];
+    var trang = [], hienTai = [], dem = 0;
+    doan.forEach(function (d) {
+      var n = soDongCuaDoan(d);
+      if (hienTai.length && dem + n > NGAN_SACH_DONG) {
+        trang.push(hienTai); hienTai = []; dem = 0;
+      }
+      hienTai.push(d); dem += n;
+    });
+    if (hienTai.length) trang.push(hienTai);
+    return trang;
+  }
+
+  /**
+   * Sinh cac slide ghi chu cho mot nguon (ghi chu chung hoac ghi chu khoa).
+   * Ghi chu LUON ra slide rieng, ke ca khi ngan: bo cuc moi khoa giong nhau, de doan.
+   */
+  function moTaGhiChu(html, tenGoc, ngay) {
+    var trang = catTrang(tachDoan(html));
+    if (!trang.length) return [];
+    // Ghi chu chung da tu no la mot ten day du; ghi chu khoa thi phai ghep them.
+    var tieuDe = tenGoc === 'Ghi chú chung' ? tenGoc : (tenGoc + ' — Ghi chú');
+    return trang.map(function (doan, i) {
+      var phuTrang = trang.length > 1 ? ((i + 1) + '/' + trang.length) : '';
+      return {
+        loai: 'ghi-chu',
+        ten: tieuDe + (phuTrang ? ' (' + phuTrang + ')' : ''),
+        tieuDe: tieuDe,
+        phuTrang: phuTrang,
+        ngay: ngay,
+        doan: doan
+      };
+    });
+  }
+
   /**
    * Mo ta toan bo deck duoi dang du lieu thuan, KHONG chua HTML.
    *
@@ -392,12 +478,20 @@
     var ngay = fmtDate(DATE);
     var ds = [];
 
-    ds.push(moTaTongQuan(data, ngay));
+    // Ghi chu nam ngay sau slide sinh ra no, khong don het xuong cuoi: nguoi du giao ban doc
+    // so lieu cua khoa xong la doc luon ban giao cua khoa do.
+    var tq = moTaTongQuan(data, ngay);
+    ds.push(tq);
+    ds = ds.concat(moTaGhiChu(tq.ghiChu, 'Ghi chú chung', ngay));
 
     var dt = moTaDieuTri(data, ngay);
     if (dt) ds.push(dt);
 
-    data.configs.forEach(function (cfg) { ds.push(moTaKhoa(data, cfg, ngay)); });
+    data.configs.forEach(function (cfg) {
+      var k = moTaKhoa(data, cfg, ngay);
+      ds.push(k);
+      ds = ds.concat(moTaGhiChu(k.ghiChu, k.ten, ngay));
+    });
 
     var cs = moTaCongSuat(data, ngay);
     if (cs) ds.push(cs);
@@ -543,7 +637,20 @@
     if (s.loai === 'tong-quan') return veTongQuan(s);
     if (s.loai === 'dieu-tri') return veDieuTri(s);
     if (s.loai === 'khoa') return veKhoa(s);
+    if (s.loai === 'ghi-chu') return veGhiChu(s);
     return veCongSuat(s);
+  }
+
+  /**
+   * Slide ghi chu. Cac doan chen nguyen van: noi dung da qua htmlspecialchars phia may chu nen
+   * an toan, va giu duoc dinh dang doan cua trinh soan thao.
+   */
+  function veGhiChu(s) {
+    var phu = s.phuTrang ? '<span class="ov-badge nhap">' + esc(s.phuTrang) + '</span>' : '';
+    return '<div class="slide"><div class="s-head"><div class="s-title">' + esc(s.tieuDe) + phu +
+      '</div><div class="s-sub">Giao ban ' + esc(s.ngay) + '</div></div>' +
+      '<div class="gc-wrap"><div class="note"><div class="txt">' +
+      s.doan.join('') + '</div></div></div></div>';
   }
 
   function veTongQuan(s) {
@@ -569,11 +676,6 @@
       dutyHtml += '</div></div>';
     }
 
-    var noteHtml = s.ghiChu !== ''
-      ? '<div class="note" style="margin-top:1.6vh"><div class="lbl">GHI CHÚ CHUNG</div><div class="txt">' +
-        s.ghiChu + '</div></div>'
-      : '';
-
     // Chi con MOT khoi canh bao tren man tong hop. Lech can doi da bo khoi day theo yeu cau
     // su dung: no van hien o badge tren slide tung khoa va o man nhap lieu — hai cho co ngu
     // canh de xu ly, con man tong hop thi chi lam nhieu.
@@ -589,7 +691,7 @@
       // Kip truc len DAU: nguoi du giao ban can biet ngay ai truc truoc khi doc so lieu.
       dutyHtml +
       bangHtml +
-      thieuHtml + noteHtml + '</div>';
+      thieuHtml + '</div>';
   }
 
   /**
@@ -667,12 +769,9 @@
     }).join('');
     if (chuoiHtml) chuoiHtml = '<div class="ds-chuoi">' + chuoiHtml + '</div>';
 
-    var noteHtml = s.ghiChu !== ''
-      ? '<div class="note"><div class="lbl">Ghi chú khoa</div><div class="txt">' + s.ghiChu + '</div></div>' : '';
-
     return '<div class="slide"><div class="s-head"><div class="s-title">' + esc(s.tieuDe) + warn +
       '</div><div class="s-sub">Giao ban ' + esc(s.ngay) + '</div></div>' +
-      bangHtml + chuoiHtml + noteHtml + '</div>';
+      bangHtml + chuoiHtml + '</div>';
   }
 
   function build(data) {
