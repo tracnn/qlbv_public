@@ -23,6 +23,22 @@
       .replace(/&amp;/g, '&');
   }
 
+  /**
+   * Doi mot doan HTML thanh chu thuan cho hop van ban PowerPoint.
+   * Ghi chu den tu trinh soan thao nen day the <p> va &nbsp; — de nguyen thi PPTX hien ca the.
+   *
+   * Luoc the TRUOC, giai ma entity SAU: nguoc lai thi chuoi nguoi dung go tay nhu &lt;p&gt;
+   * se bi hieu nham thanh the roi bi xoa mat.
+   */
+  function chuThuan(html) {
+    return giaiMa(String(html === null || html === undefined ? '' : html)
+      .replace(/<[^>]*>/g, ''))
+      .replace(/&nbsp;/g, ' ')
+      .replace(/ /g, ' ')
+      .replace(/[ \t]+/g, ' ')
+      .trim();
+  }
+
   function so(v) {
     return v === null || v === undefined || v === ''
       ? '—' : String(Math.round(Number(v) * 100) / 100);
@@ -130,13 +146,8 @@
 
     sl.addText('Ô BẮT BUỘC CÒN TRỐNG:  ' + s.canhBao.chu, { x: LE, y: y, w: RONG, h: 0.32,
       fontSize: 11, color: s.canhBao.dat ? mau.teal : mau.red });
-    y += 0.4;
-
-    if (s.ghiChu) {
-      sl.addText('GHI CHÚ CHUNG', { x: LE, y: y, w: RONG, h: 0.24, fontSize: 10, color: mau.muted });
-      sl.addText(giaiMa(s.ghiChu), { x: LE, y: y + 0.24, w: RONG, h: Math.max(0.3, H - y - 0.4),
-        fontSize: 12, color: mau.txt2, valign: 'top' });
-    }
+    // Ghi chu chung KHONG in o day: no da co slide rieng do moTaDeck sinh ra. In ca hai cho
+    // la noi dung lap lai.
     return sl;
   }
 
@@ -200,16 +211,29 @@
     s.khoiChuoi.forEach(function (k) {
       if (y > H - 0.6) return; // het cho tren slide, bo qua phan con lai
       sl.addText(k.nhan, { x: LE, y: y, w: RONG, h: 0.22, fontSize: 10, color: mau.amber });
-      sl.addText(giaiMa(k.noiDung), { x: LE, y: y + 0.22, w: RONG, h: 0.5,
+      // chuThuan chu khong phai giaiMa: chi tieu chuoi cung do trinh soan thao nhap nen co
+      // the day the <p>/<span>. giaiMa khong luoc the, de nguyen thi PPTX hien ca the ra chu.
+      sl.addText(chuThuan(k.noiDung), { x: LE, y: y + 0.22, w: RONG, h: 0.5,
         fontSize: 11, color: mau.txt2, valign: 'top' });
       y += 0.78;
     });
 
-    if (s.ghiChu && y <= H - 0.6) {
-      sl.addText('Ghi chú khoa', { x: LE, y: y, w: RONG, h: 0.22, fontSize: 10, color: mau.amber });
-      sl.addText(giaiMa(s.ghiChu), { x: LE, y: y + 0.22, w: RONG, h: Math.max(0.3, H - y - 0.4),
-        fontSize: 11, color: mau.txt2, valign: 'top' });
-    }
+    // Ghi chu khoa KHONG in o day: no da co slide rieng do moTaDeck sinh ra.
+    return sl;
+  }
+
+  /**
+   * Slide ghi chu. Deck da cat san trang o tang mo ta nen o day chi do chu ra.
+   * `khungSlide` ghep `badge` vao tieu de, nen so trang di duong badge.
+   */
+  function veGhiChu(pptx, s, mau) {
+    var sKhung = { tieuDe: s.tieuDe, ngay: s.ngay,
+      badge: s.phuTrang ? { chu: '(' + s.phuTrang + ')' } : null };
+    var sl = khungSlide(pptx, sKhung, mau);
+    var dong = s.doan.map(function (d) { return chuThuan(d); })
+      .filter(function (d) { return d !== ''; });
+    sl.addText(dong.join('\n'), { x: LE, y: Y_NOI_DUNG, w: RONG, h: H - Y_NOI_DUNG - 0.3,
+      fontSize: 12, color: mau.txt2, valign: 'top', lineSpacingMultiple: 1.1 });
     return sl;
   }
 
@@ -247,6 +271,7 @@
     if (s.loai === 'tong-quan') return veTongQuan(pptx, s, mau);
     if (s.loai === 'dieu-tri') return veDieuTri(pptx, s, mau);
     if (s.loai === 'khoa') return veKhoa(pptx, s, mau);
+    if (s.loai === 'ghi-chu') return veGhiChu(pptx, s, mau);
     return veCongSuat(pptx, s, mau);
   }
 
@@ -260,7 +285,7 @@
     return pptx.writeFile({ fileName: tenTep });
   }
 
-  var api = { xuatPptx: xuatPptx, giaiMa: giaiMa };
+  var api = { xuatPptx: xuatPptx, giaiMa: giaiMa, chuThuan: chuThuan };
   if (typeof module === 'object' && module.exports) module.exports = api;
   else root.GiaoBanPptx = api;
 })(typeof window !== 'undefined' ? window : this);
