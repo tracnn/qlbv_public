@@ -39,6 +39,7 @@
 </div>
 
 <div id="ket-qua" style="display:none">
+  <p><a id="btn-in" class="btn btn-default" target="_blank"><i class="fa fa-print"></i> In phiếu lỗi</a></p>
   <div class="box box-solid">
     <div class="box-header with-border"><h3 class="box-title">Thông tin hồ sơ</h3></div>
     <div class="box-body" id="khoi-ho-so"></div>
@@ -172,6 +173,8 @@ $(function () {
         $('#dem-hein-card').text(r.summary.hein_card);
         $('#dem-xml3176').text(r.summary.xml3176);
         $('#khong-loi').toggle(!r.summary.has_error);
+        $('#btn-in').attr('href',
+          '{{ route('khth.tra-cuu-loi-ho-so-in') }}?treatment_code=' + encodeURIComponent(ma));
         $('#ket-qua').show();
         // Boi den de luot quet ke tiep ghi de: may quet barcode go chuoi roi gui Enter.
         $('#ma-dieu-tri').focus().select();

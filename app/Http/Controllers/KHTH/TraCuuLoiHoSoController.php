@@ -56,4 +56,33 @@ class TraCuuLoiHoSoController extends Controller
             'summary' => $ketQua['summary'],
         ]);
     }
+
+    public function in(Request $request)
+    {
+        $ma = trim((string) $request->input('treatment_code'));
+
+        if ($ma === '') {
+            return response('Chưa nhập mã điều trị', 422);
+        }
+
+        $ketQua = $this->loi->cua($ma);
+
+        $hoSo = null;
+
+        try {
+            $hoSo = $this->hoSo->cua($ma);
+        } catch (\Exception $e) {
+            Log::error('Tra cuu loi ho so: loi doc HIS khi in', [
+                'treatment_code' => $ma,
+                'loi' => $e->getMessage(),
+            ]);
+        }
+
+        return view('khth.tra-cuu-loi-ho-so-in', [
+            'ma' => $ma,
+            'hoSo' => $hoSo,
+            'data' => $ketQua['data'],
+            'summary' => $ketQua['summary'],
+        ]);
+    }
 }

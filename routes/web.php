@@ -697,6 +697,8 @@ Route::group(['middleware' => ['auth']], function () {
             ->name('khth.tra-cuu-loi-ho-so');
         Route::get('tra-cuu-loi-ho-so/tra-cuu', 'KHTH\TraCuuLoiHoSoController@traCuu')
             ->name('khth.tra-cuu-loi-ho-so-tra-cuu');
+        Route::get('tra-cuu-loi-ho-so/in', 'KHTH\TraCuuLoiHoSoController@in')
+            ->name('khth.tra-cuu-loi-ho-so-in');
     });
 
     // Hai man CAU HINH cua order-check chi danh cho superadministrator: chung sua danh muc

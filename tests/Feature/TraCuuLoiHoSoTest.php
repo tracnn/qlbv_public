@@ -149,4 +149,26 @@ class TraCuuLoiHoSoTest extends TestCase
         $this->assertSame('Không lấy được thông tin từ HIS', $res->json()['profile_error']);
         $this->assertCount(1, $res->json()['data']['order_check']);
     }
+
+    /** @test */
+    public function trang_in_hien_ho_so_va_loi()
+    {
+        $this->themHoSo();
+        $this->themViPham(['treatment_code' => self::MA, 'message' => 'Loi y lenh in thu']);
+
+        $res = $this->actingAs($this->nguoiDung(['tra-cuu-loi-ho-so']))
+            ->get('/khth/tra-cuu-loi-ho-so/in?treatment_code=' . self::MA);
+
+        $res->assertStatus(200);
+        $res->assertSee('Nguyễn Văn A');
+        $res->assertSee('Loi y lenh in thu');
+    }
+
+    /** @test */
+    public function trang_in_thieu_ma_thi_422()
+    {
+        $this->actingAs($this->nguoiDung(['tra-cuu-loi-ho-so']))
+            ->get('/khth/tra-cuu-loi-ho-so/in')
+            ->assertStatus(422);
+    }
 }
