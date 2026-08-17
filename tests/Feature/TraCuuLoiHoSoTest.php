@@ -8,8 +8,12 @@ use Tests\Support\DungBangHoSoHisSqlite;
 use Tests\Support\DungBangLoiDotDieuTriSqlite;
 use Tests\TestCase;
 
-/** Nguoi dung gia: hasRole() tra true dung cho danh sach role duoc cap. */
-class NguoiDungCoRole extends \App\User
+/**
+ * Nguoi dung gia: hasRole() tra true dung cho danh sach role duoc cap.
+ * Ten rieng cho feature nay (khong dat NguoiDungCoRole chung chung) de test feature khac
+ * trong cung namespace Tests\Feature khong dung ten lop va va cham.
+ */
+class NguoiDungTraCuuLoiHoSo extends \App\User
 {
     public $roles = [];
 
@@ -40,7 +44,7 @@ class TraCuuLoiHoSoTest extends TestCase
 
     protected function nguoiDung(array $roles)
     {
-        $u = new NguoiDungCoRole();
+        $u = new NguoiDungTraCuuLoiHoSo();
         $u->id = 1;
         $u->roles = $roles;
 
@@ -153,6 +157,28 @@ class TraCuuLoiHoSoTest extends TestCase
     }
 
     /** @test */
+    public function mysql_hong_van_tra_200_kem_data_error_va_ho_so_cua_his()
+    {
+        $this->themHoSo();
+
+        // Gia lap MySQL hong: ep TreatmentIssueService nem exception de kiem tra nhanh
+        // catch rieng trong controller (Finding 5) - truoc day nhanh nay khong duoc bat,
+        // MySQL hong se lam ca request 500 dong theo ca ho so doc tu Oracle.
+        $this->app->instance(\App\Services\OrderCheck\TreatmentIssueService::class, new class extends \App\Services\OrderCheck\TreatmentIssueService {
+            public function cua($treatmentCode = null, array $tuyChon = [])
+            {
+                throw new \Exception('MySQL sap');
+            }
+        });
+
+        $res = $this->traCuu(self::MA)->assertStatus(200);
+
+        $this->assertSame('Nguyễn Văn A', $res->json()['profile']['patient_name']);
+        $this->assertSame([], $res->json()['data']['order_check']);
+        $this->assertNotNull($res->json()['data_error']);
+    }
+
+    /** @test */
     public function trang_in_hien_ho_so_va_loi()
     {
         $this->themHoSo();
@@ -164,6 +190,28 @@ class TraCuuLoiHoSoTest extends TestCase
         $res->assertStatus(200);
         $res->assertSee('Nguyễn Văn A');
         $res->assertSee('Loi y lenh in thu');
+    }
+
+    /** @test */
+    public function trang_in_bao_loi_oracle_khong_noi_khong_tim_thay_ho_so()
+    {
+        $this->themViPham(['treatment_code' => self::MA]);
+
+        // Finding 2: Oracle hong khac han "khong tim thay". Truoc day in() nuot loi va
+        // phieu in ghi mot cau sai su that "Khong tim thay ho so voi ma nay tren HIS".
+        $this->app->instance(\App\Services\OrderCheck\TreatmentProfileService::class, new class extends \App\Services\OrderCheck\TreatmentProfileService {
+            public function cua($treatmentCode)
+            {
+                throw new \Exception('Oracle sap khi in');
+            }
+        });
+
+        $res = $this->actingAs($this->nguoiDung(['tra-cuu-loi-ho-so']))
+            ->get('/khth/tra-cuu-loi-ho-so/in?treatment_code=' . self::MA);
+
+        $res->assertStatus(200);
+        $res->assertSee('Không lấy được thông tin từ HIS');
+        $res->assertDontSee('Không tìm thấy hồ sơ với mã này trên HIS');
     }
 
     /** @test */
@@ -190,6 +238,13 @@ class TraCuuLoiHoSoTest extends TestCase
         $this->traLaiThe(self::MA)->assertStatus(200);
 
         Queue::assertPushed(jobKtTheBHYT::class, 1);
+
+        // Ten queue la load-bearing: mot service Windows va mot worker docker rieng chi
+        // lang nghe dung ten 'JobKtTheBHYT'. assertPushed khong kiem ten queue - thieu
+        // dong nay thi ai do xoa ->onQueue() ma moi test van xanh, nut bam se lang le
+        // khong lam gi trong production.
+        Queue::assertPushedOn('JobKtTheBHYT', jobKtTheBHYT::class);
+
         Queue::assertPushed(jobKtTheBHYT::class, function ($job) {
             $p = $this->thamSoJob($job);
 
@@ -267,5 +322,35 @@ class TraCuuLoiHoSoTest extends TestCase
         $this->traLaiThe('KHONG-CO')->assertStatus(422);
 
         Queue::assertNotPushed(jobKtTheBHYT::class);
+    }
+
+    /**
+     * Spec muc 8 diem 6: toan bo lap luan bao mat cho nut doi trang thai dua vao viec
+     * route khth.order-check-index/update-status nam trong nhom checkrole:order-check.
+     * Nguoi chi co tra-cuu-loi-ho-so KHONG duoc phep doi trang thai du man hinh nay goi
+     * thang vao route do (xem muc 6.1 cua spec) - test nay chot lai dieu do, khong gi
+     * khac pin no.
+     *
+     * @test
+     */
+    public function co_tra_cuu_loi_ho_so_nhung_thieu_order_check_thi_403_khi_doi_trang_thai()
+    {
+        $this->themHoSo();
+        $this->themViPham(['treatment_code' => self::MA, 'status' => 'new']);
+
+        $id = \App\Models\OrderCheck\OrderCheckViolation::where('treatment_code', self::MA)->value('id');
+
+        $res = $this->actingAs($this->nguoiDung(['tra-cuu-loi-ho-so']))
+            ->postJson('/khth/order-check-index/update-status', [
+                'id' => $id,
+                'status' => 'seen',
+            ]);
+
+        $res->assertStatus(403);
+
+        $this->assertSame(
+            'new',
+            \App\Models\OrderCheck\OrderCheckViolation::find($id)->status
+        );
     }
 }
