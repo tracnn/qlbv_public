@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use GuzzleHttp\Client;
-use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
 
@@ -67,11 +66,18 @@ class XMLSignService
             ]
         ];
 
+        $endpoint = $this->normalizeEndpoint($this->config['endpoint'] ?? '');
+        if ($endpoint === null) {
+            $errorMessage = 'HSM endpoint is invalid: ' . ($this->config['endpoint'] ?? '');
+            Log::error($errorMessage);
+            return ['isSigned' => false, 'data' => $xmlContent, 'error' => $errorMessage, 'method' => 'HSM'];
+        }
+
         try {
             // Lấy token từ ACS
             $tokenCode = $this->acsLoginService->getToken();
-            
-            $response = $this->httpClient->post($this->config['endpoint'], [
+
+            $response = $this->httpClient->post($endpoint, [
                 'headers' => [
                     'Content-Type' => 'application/json',
                     'TokenCode' => $tokenCode,
@@ -93,7 +99,7 @@ class XMLSignService
 
             return ['isSigned' => true, 'data' => base64_decode($result['Data']), 'method' => 'HSM'];
 
-        } catch (GuzzleException $e) {
+        } catch (\Throwable $e) {
             Log::error('HSM Sign API Error: ' . $e->getMessage());
             return ['isSigned' => false, 'data' => $xmlContent, 'error' => $e->getMessage(), 'method' => 'HSM'];
         }
@@ -114,8 +120,15 @@ class XMLSignService
      */
     private function signWithUsbToken(string $xmlContent, array $usbConfig): array
     {
+        $endpoint = $this->normalizeEndpoint($usbConfig['endpoint'] ?? '');
+        if ($endpoint === null) {
+            $error = 'USB Token endpoint is invalid: ' . ($usbConfig['endpoint'] ?? '');
+            Log::error($error);
+            return ['isSigned' => false, 'data' => $xmlContent, 'error' => $error, 'method' => 'USB Token'];
+        }
+
         try {
-            $response = $this->httpClient->post($usbConfig['endpoint'], [
+            $response = $this->httpClient->post($endpoint, [
                 'headers' => [
                     'Content-Type'    => 'application/json',
                     'X-Service-Token' => $usbConfig['service_token'] ?? '',
@@ -140,9 +153,31 @@ class XMLSignService
 
             return ['isSigned' => true, 'data' => base64_decode($result['Data']), 'method' => 'USB Token'];
 
-        } catch (\GuzzleHttp\Exception\GuzzleException $e) {
+        } catch (\Throwable $e) {
             Log::error('USB Token Sign Service Error: ' . $e->getMessage());
             return ['isSigned' => false, 'data' => $xmlContent, 'error' => $e->getMessage(), 'method' => 'USB Token'];
         }
+    }
+
+    /**
+     * Chuẩn hoá URL cấu hình trước khi gọi
+     * Cắt khoảng trắng, gộp dấu gạch chéo thừa sau scheme
+     * Trả về null nếu URL không dùng được để Guzzle không ném ngoại lệ
+     */
+    private function normalizeEndpoint(string $endpoint): ?string
+    {
+        $endpoint = trim($endpoint);
+        if ($endpoint === '') {
+            return null;
+        }
+
+        // http:///host -> http://host (dấu / thừa do gõ nhầm trong .env)
+        $endpoint = preg_replace('#^(https?:)/{2,}#i', '$1//', $endpoint);
+
+        if (!preg_match('#^https?://[^/?\#]+#i', $endpoint)) {
+            return null;
+        }
+
+        return filter_var($endpoint, FILTER_VALIDATE_URL) ? $endpoint : null;
     }
 }
