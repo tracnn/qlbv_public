@@ -350,7 +350,9 @@ $(function () {
     var rong = Math.floor(rongKhungHinh * 0.9);
     var cao = Math.floor(Math.min(caoKhungHinh * 0.6, Math.max(rong * 0.4, 140)));
 
-    return { width: rong, height: Math.max(cao, 60) };
+    // Thu vien NEM loi neu mot chieu nho hon 50px, va loi do lai noi ra dung cho voi loi
+    // "khong mo duoc camera" - phai chan tai day thay vi de no lam hong ca lan mo camera.
+    return { width: Math.max(rong, 50), height: Math.max(cao, 60) };
   }
 
   function dongCamera() {
@@ -368,15 +370,9 @@ $(function () {
     });
   }
 
-  $('#btn-camera').on('click', function () {
-    if (mayQuet) { return; }
-
-    $('#vung-camera').show();
-    mayQuet = new Html5Qrcode('khung-camera');
-    mayQuet.start(
-      // Xin do phan giai cao: nhieu trinh duyet mac dinh tra ve 640x480, o muc do ay so
-      // diem anh phu len moi vach cua Code 128 khong du de giai ma.
-      { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
+  function batDauQuet(rangBuocCamera) {
+    return mayQuet.start(
+      rangBuocCamera,
       { fps: 10, qrbox: khungQuet },
       function (ma) {
         $('#ma-dieu-tri').val(ma);
@@ -384,11 +380,37 @@ $(function () {
         traCuu();
       },
       function () { /* moi khung hinh khong doc duoc deu goi vao day - bo qua */ }
-    ).catch(function () {
-      $('#vung-camera').hide();
-      mayQuet = null;
-      alert('Không mở được camera');
-    });
+    );
+  }
+
+  $('#btn-camera').on('click', function () {
+    if (mayQuet) { return; }
+
+    $('#vung-camera').show();
+    mayQuet = new Html5Qrcode('khung-camera');
+
+    // Do phan giai cao giup giai ma Code 128 (moi vach can du diem anh), NHUNG mot so may
+    // tu choi mo camera khi bi kem rang buoc kich thuoc - da gap that tren dien thoai.
+    // Vi vay coi day la mong muon, khong phai dieu kien: hong thi lui ve rang buoc toi
+    // thieu von van chay. Mo duoc camera o do phan giai thap con hon khong mo duoc.
+    //
+    // start() goi u.cancel() tren moi nhanh loi nen trang thai da duoc tra lai, thu lai
+    // tren cung mot doi tuong Html5Qrcode la an toan.
+    batDauQuet({ facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } })
+      .catch(function (loi) {
+        console.warn('Khong mo duoc camera kem rang buoc do phan giai, thu lai khong rang buoc:', loi);
+
+        return batDauQuet({ facingMode: 'environment' });
+      })
+      .catch(function (loi) {
+        $('#vung-camera').hide();
+        mayQuet = null;
+        // Hien nguyen van loi cua thu vien: bao chung chung "Khong mo duoc camera" khien
+        // moi nguyen nhan (tu choi quyen, trinh duyet chan vi HTTP, qrbox sai kich thuoc)
+        // trong giong het nhau va khong the chan doan tu xa.
+        console.error('Khong mo duoc camera:', loi);
+        alert('Không mở được camera: ' + (loi && loi.message ? loi.message : loi));
+      });
   });
 
   $('#btn-dong-camera').on('click', dongCamera);
