@@ -17,28 +17,6 @@
         </div>
         <p class="help-block" id="loi-nhap" style="color:#dd4b39"></p>
       </div>
-      <div class="col-md-3">
-        <label>&nbsp;</label>
-        <div>
-          <button id="btn-camera" class="btn btn-default btn-lg" style="display:none">
-            <i class="fa fa-camera"></i> Quét bằng camera
-          </button>
-          <p class="help-block" id="camera-khong-san-sang" style="display:none">
-            Trình duyệt không cho dùng camera ở trang này (cần HTTPS).
-          </p>
-        </div>
-      </div>
-    </div>
-    <div class="row" id="vung-camera" style="display:none; margin-top:10px">
-      <div class="col-md-6">
-        <div id="khung-camera"></div>
-        <p class="help-block" style="margin-top:5px">
-          Đưa mã vạch nằm ngang, chiếm gần hết bề ngang khung hình rồi giữ yên máy.
-          Mã vạch càng nhỏ trong khung thì càng ít điểm ảnh trên mỗi vạch và càng khó đọc.
-        </p>
-        <p class="help-block" id="trang-thai-quet"></p>
-        <button id="btn-dong-camera" class="btn btn-default">Đóng camera</button>
-      </div>
     </div>
   </div>
 </div>
@@ -104,7 +82,6 @@
 @stop
 
 @section('js')
-<script src="{{ asset('js/html5-qrcode.min.js') }}"></script>
 @include('partials.dt-vi')
 <script>
 $(function () {
@@ -334,102 +311,6 @@ $(function () {
       $s.val('');
     });
   });
-
-  // Camera chi kha dung tren HTTPS (hoac localhost). Tren HTTP thuan
-  // navigator.mediaDevices khong ton tai -> hien chu thich thay vi mot nut bam khong an.
-  var coCamera = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
-  $(coCamera ? '#btn-camera' : '#camera-khong-san-sang').show();
-
-  var mayQuet = null;
-
-  var demKhungQuet = 0;
-
-  /**
-   * Dong trang thai duoi khung camera. Muc dich la chan doan tu xa: khi nguoi dung bao
-   * "quet mai khong an", ba con so nay noi ngay van de nam o dau - vong quet khong chay,
-   * camera mo o do phan giai qua thap, hay may dang dung bo giai ma nao.
-   */
-  function capNhatTrangThaiQuet() {
-    var video = $('#khung-camera video')[0];
-    var co = (video && video.videoWidth) ? (video.videoWidth + 'x' + video.videoHeight) : 'chưa rõ';
-    var coApiGoc = ('BarcodeDetector' in window) ? 'có, đã tắt' : 'không có';
-
-    $('#trang-thai-quet').text(
-      'Đang quét: ' + demKhungQuet + ' khung hình · camera ' + co +
-      ' · BarcodeDetector của máy: ' + coApiGoc
-    );
-  }
-
-  function dongCamera() {
-    if (!mayQuet) { return; }
-    mayQuet.stop().then(function () {
-      mayQuet.clear();
-      mayQuet = null;
-      $('#vung-camera').hide();
-    }).catch(function () {
-      // stop() bi tu choi (vi du camera da bi rut/thu hoi quyen giua chung): van phai don
-      // dep trang thai o day, khong thi nut "Quet bang camera" se khong mo lai duoc vi
-      // dieu kien "if (mayQuet) return" o tren coi nhu dang mo.
-      mayQuet = null;
-      $('#vung-camera').hide();
-    });
-  }
-
-  $('#btn-camera').on('click', function () {
-    if (mayQuet) { return; }
-
-    $('#vung-camera').show();
-    demKhungQuet = 0;
-    capNhatTrangThaiQuet();
-
-    // Khong dat formatsToSupport: bo trong thi thu vien nhan het 17 dinh dang, gom ca
-    // CODE_128 cua ma dieu tri lan QR_CODE. Cung khong dung
-    // useBarCodeDetectorIfSupported: may thu nghiem khong he co BarcodeDetector (dong
-    // trang thai duoi khung hinh xac nhan), nen de mac dinh cho may nao co thi dung.
-    mayQuet = new Html5Qrcode('khung-camera');
-
-    // Do phan giai la DIEU KIEN de giai ma duoc ma vach, khong phai thu co cung duoc:
-    // do tren may that, camera mac dinh cho 480x640, ma vach Code 128 cua ma dieu tri chi
-    // duoc ~1,6 diem anh moi vach - duoi nguong ~2 ma ZXing can, nen quet mai khong ra.
-    //
-    // Xin bang 'advanced' chu KHONG bang 'ideal' hay 'min': theo chuan WebRTC, cac bo
-    // rang buoc trong advanced duoc ap dung theo kieu co gang het suc, khong dat thi bo
-    // qua chu khong lam getUserMedia that bai. Lan truoc xin thang 1280x720 thi may that
-    // bao khong mo duoc camera.
-    //
-    // Khong dat vung quet (tham so qrbox): de trong thi thu vien giai ma TOAN khung hinh.
-    // Vung quet la mot o cat ra tu khung hinh, ma vach dai va thap rat de nam ngoai o do.
-    mayQuet.start(
-      {
-        facingMode: 'environment',
-        advanced: [{ width: 1920, height: 1080 }, { width: 1280, height: 720 }]
-      },
-      { fps: 10 },
-      function (ma) {
-        $('#ma-dieu-tri').val(ma);
-        dongCamera();
-        traCuu();
-      },
-      function () {
-        // Goi lai voi MOI khung hinh khong giai ma duoc. Dem o day de biet vong quet co
-        // chay hay khong: dung yen o 0 nghia la thu vien khong he doc khung hinh nao, khac
-        // han voi "co doc nhung khong ra ma" - hai nguyen nhan hoan toan khac nhau ma neu
-        // khong dem thi nhin tu ngoai giong het nhau.
-        demKhungQuet++;
-        if (demKhungQuet % 10 === 0) { capNhatTrangThaiQuet(); }
-      }
-    ).catch(function (loi) {
-      $('#vung-camera').hide();
-      mayQuet = null;
-      // Hien nguyen van loi cua thu vien: bao chung chung "Khong mo duoc camera" khien moi
-      // nguyen nhan (tu choi quyen, trinh duyet chan vi HTTP, qrbox sai kich thuoc) trong
-      // giong het nhau va khong the chan doan tu xa.
-      console.error('Khong mo duoc camera:', loi);
-      alert('Không mở được camera: ' + (loi && loi.message ? loi.message : loi));
-    });
-  });
-
-  $('#btn-dong-camera').on('click', dongCamera);
 
   $('#btn-tra-lai-the').on('click', function () {
     if (!maHienTai) { return; }
