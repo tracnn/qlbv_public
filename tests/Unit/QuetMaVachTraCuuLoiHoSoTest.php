@@ -69,15 +69,37 @@ class QuetMaVachTraCuuLoiHoSoTest extends TestCase
         }
     }
 
-    /** @test */
-    public function co_xin_do_phan_giai_cao_cho_camera()
+    /**
+     * Da tung them rang buoc { width: { ideal: 1280 } } vao lenh mo camera de Code 128 de
+     * giai ma hon; may that bao "Khong mo duoc camera" nen da bo. Neu sau nay co nguoi
+     * dinh them lai, phai kiem tren dien thoai truoc chu khong chi tren may ban.
+     *
+     * @test
+     */
+    public function khong_kem_rang_buoc_do_phan_giai_khi_mo_camera()
+    {
+        $this->assertNotContains(
+            'ideal:',
+            $this->maBlade(),
+            'Rang buoc do phan giai da quay lai - tung lam dien thoai khong mo duoc camera'
+        );
+    }
+
+    /**
+     * Thu lai bang mot lenh start() thu hai ngay trong .catch lam thu vien nem
+     * "Cannot transition to a new state, already under transition", va loi that cua lan
+     * dau bi che mat - da xay ra that.
+     *
+     * @test
+     */
+    public function loi_mo_camera_duoc_hien_nguyen_van()
     {
         $ma = $this->maBlade();
 
         $this->assertContains(
-            'width: { ideal: 1280 }',
+            "alert('Không mở được camera: '",
             $ma,
-            'Khong con xin do phan giai cao - 640x480 khong du diem anh tren moi vach Code 128'
+            'Bao loi mo camera quay lai dang chung chung, khong chan doan duoc tu xa'
         );
     }
 

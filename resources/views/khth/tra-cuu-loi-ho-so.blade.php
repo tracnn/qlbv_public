@@ -370,9 +370,21 @@ $(function () {
     });
   }
 
-  function batDauQuet(rangBuocCamera) {
-    return mayQuet.start(
-      rangBuocCamera,
+  $('#btn-camera').on('click', function () {
+    if (mayQuet) { return; }
+
+    $('#vung-camera').show();
+    mayQuet = new Html5Qrcode('khung-camera');
+
+    // KHONG kem rang buoc do phan giai o day. Da thu xin 1280x720 va may that bao khong
+    // mo duoc camera; do phan giai cao chi giup giai ma Code 128 de hon chu khong phai
+    // dieu kien de quet, con mo duoc camera thi la dieu kien.
+    //
+    // Cung KHONG thu lai bang mot lenh start() thu hai trong .catch: lam vay thi
+    // startTransition() cua thu vien nem "Cannot transition to a new state, already under
+    // transition", va loi that cua lan dau bi loi cua lan thu hai che mat.
+    mayQuet.start(
+      { facingMode: 'environment' },
       { fps: 10, qrbox: khungQuet },
       function (ma) {
         $('#ma-dieu-tri').val(ma);
@@ -380,37 +392,15 @@ $(function () {
         traCuu();
       },
       function () { /* moi khung hinh khong doc duoc deu goi vao day - bo qua */ }
-    );
-  }
-
-  $('#btn-camera').on('click', function () {
-    if (mayQuet) { return; }
-
-    $('#vung-camera').show();
-    mayQuet = new Html5Qrcode('khung-camera');
-
-    // Do phan giai cao giup giai ma Code 128 (moi vach can du diem anh), NHUNG mot so may
-    // tu choi mo camera khi bi kem rang buoc kich thuoc - da gap that tren dien thoai.
-    // Vi vay coi day la mong muon, khong phai dieu kien: hong thi lui ve rang buoc toi
-    // thieu von van chay. Mo duoc camera o do phan giai thap con hon khong mo duoc.
-    //
-    // start() goi u.cancel() tren moi nhanh loi nen trang thai da duoc tra lai, thu lai
-    // tren cung mot doi tuong Html5Qrcode la an toan.
-    batDauQuet({ facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } })
-      .catch(function (loi) {
-        console.warn('Khong mo duoc camera kem rang buoc do phan giai, thu lai khong rang buoc:', loi);
-
-        return batDauQuet({ facingMode: 'environment' });
-      })
-      .catch(function (loi) {
-        $('#vung-camera').hide();
-        mayQuet = null;
-        // Hien nguyen van loi cua thu vien: bao chung chung "Khong mo duoc camera" khien
-        // moi nguyen nhan (tu choi quyen, trinh duyet chan vi HTTP, qrbox sai kich thuoc)
-        // trong giong het nhau va khong the chan doan tu xa.
-        console.error('Khong mo duoc camera:', loi);
-        alert('Không mở được camera: ' + (loi && loi.message ? loi.message : loi));
-      });
+    ).catch(function (loi) {
+      $('#vung-camera').hide();
+      mayQuet = null;
+      // Hien nguyen van loi cua thu vien: bao chung chung "Khong mo duoc camera" khien moi
+      // nguyen nhan (tu choi quyen, trinh duyet chan vi HTTP, qrbox sai kich thuoc) trong
+      // giong het nhau va khong the chan doan tu xa.
+      console.error('Khong mo duoc camera:', loi);
+      alert('Không mở được camera: ' + (loi && loi.message ? loi.message : loi));
+    });
   });
 
   $('#btn-dong-camera').on('click', dongCamera);
