@@ -68,6 +68,18 @@ class TraCuuLoiHoSoTest extends TestCase
     }
 
     /** @test */
+    public function man_hinh_hien_thi_giao_dien_tra_cuu_that_khong_phai_khung_rong()
+    {
+        $this->actingAs($this->nguoiDung(['tra-cuu-loi-ho-so']))
+            ->get('/khth/tra-cuu-loi-ho-so')
+            ->assertStatus(200)
+            ->assertSee('id="ma-dieu-tri"', false)
+            ->assertSee('id="khoi-order-check"', false)
+            ->assertSee('id="khoi-hein-card"', false)
+            ->assertSee('id="khoi-xml3176"', false);
+    }
+
+    /** @test */
     public function ho_so_co_loi_tra_du_ho_so_va_ba_nhom()
     {
         $this->themHoSo();
