@@ -480,6 +480,13 @@ return [
             ],
         ],
         [
+            'text'      => 'Tra cứu lỗi hồ sơ',
+            'icon'      => 'barcode',
+            'checkrole' => 'tra-cuu-loi-ho-so',
+            'route'     => 'khth.tra-cuu-loi-ho-so',
+            'active'    => ['khth/tra-cuu-loi-ho-so*'],
+        ],
+        [
             'text'    => 'Hồ sơ XML',
             'icon'    => 'file',
             'checkrole'   => 'xml-man',

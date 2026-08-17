@@ -690,6 +690,15 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('order-check-index/export', 'KHTH\OrderCheckController@export')->name('khth.order-check-export');
     });
 
+    // Tra cuu loi ho so theo ma dieu tri — quyen rieng, de khoa quet ma tra nhanh ma
+    // khong phai mo quyen quan tri y lenh.
+    Route::group(['prefix' => 'khth/', 'middleware' => ['checkrole:tra-cuu-loi-ho-so']], function () {
+        Route::get('tra-cuu-loi-ho-so', 'KHTH\TraCuuLoiHoSoController@index')
+            ->name('khth.tra-cuu-loi-ho-so');
+        Route::get('tra-cuu-loi-ho-so/tra-cuu', 'KHTH\TraCuuLoiHoSoController@traCuu')
+            ->name('khth.tra-cuu-loi-ho-so-tra-cuu');
+    });
+
     // Hai man CAU HINH cua order-check chi danh cho superadministrator: chung sua danh muc
     // gioi han va bat/tat bo luat, tuc la doi hanh vi bat loi cua ca he thong.
     //
