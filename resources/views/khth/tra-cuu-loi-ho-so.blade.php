@@ -32,7 +32,8 @@
     <div class="row" id="vung-camera" style="display:none; margin-top:10px">
       <div class="col-md-6">
         <div id="khung-camera"></div>
-        <button id="btn-dong-camera" class="btn btn-default" style="margin-top:5px">Đóng camera</button>
+        <p class="help-block" id="trang-thai-quet" style="margin-top:5px"></p>
+        <button id="btn-dong-camera" class="btn btn-default">Đóng camera</button>
       </div>
     </div>
   </div>
@@ -337,22 +338,22 @@ $(function () {
 
   var mayQuet = null;
 
-  /**
-   * Vung giai ma phai la HINH CHU NHAT NGANG, khong duoc de o vuong.
-   *
-   * Thu vien cat khung hinh dung bang qrbox roi moi dua di giai ma. Voi o vuong 250px,
-   * ma vach Code 128 cua ma dieu tri (14 ky tu, rat dai va thap) chi nhet vua chieu ngang
-   * khi nguoi dung lui that xa - luc do be rong moi vach tut xuong duoi nguong doc duoc,
-   * nen barcode khong bao gio giai ma noi trong khi QR van chay (QR vuong, nam gon trong
-   * o do). Khung ngang giai quyet ca hai loai ma.
-   */
-  function khungQuet(rongKhungHinh, caoKhungHinh) {
-    var rong = Math.floor(rongKhungHinh * 0.9);
-    var cao = Math.floor(Math.min(caoKhungHinh * 0.6, Math.max(rong * 0.4, 140)));
+  var demKhungQuet = 0;
 
-    // Thu vien NEM loi neu mot chieu nho hon 50px, va loi do lai noi ra dung cho voi loi
-    // "khong mo duoc camera" - phai chan tai day thay vi de no lam hong ca lan mo camera.
-    return { width: Math.max(rong, 50), height: Math.max(cao, 60) };
+  /**
+   * Dong trang thai duoi khung camera. Muc dich la chan doan tu xa: khi nguoi dung bao
+   * "quet mai khong an", ba con so nay noi ngay van de nam o dau - vong quet khong chay,
+   * camera mo o do phan giai qua thap, hay may dang dung bo giai ma nao.
+   */
+  function capNhatTrangThaiQuet() {
+    var video = $('#khung-camera video')[0];
+    var co = (video && video.videoWidth) ? (video.videoWidth + 'x' + video.videoHeight) : 'chưa rõ';
+    var coApiGoc = ('BarcodeDetector' in window) ? 'có, đã tắt' : 'không có';
+
+    $('#trang-thai-quet').text(
+      'Đang quét: ' + demKhungQuet + ' khung hình · camera ' + co +
+      ' · BarcodeDetector của máy: ' + coApiGoc
+    );
   }
 
   function dongCamera() {
@@ -374,7 +375,17 @@ $(function () {
     if (mayQuet) { return; }
 
     $('#vung-camera').show();
-    mayQuet = new Html5Qrcode('khung-camera');
+    demKhungQuet = 0;
+    capNhatTrangThaiQuet();
+
+    // useBarCodeDetectorIfSupported: false — ep dung bo giai ma ZXing di kem thu vien.
+    // Mac dinh thu vien uu tien BarcodeDetector san co cua trinh duyet; tren mot so may
+    // API do ton tai nhung tra ve rong voi moi khung hinh, tuc camera chay binh thuong ma
+    // khong bao gio bat duoc ma nao - dung trieu chung dang gap.
+    //
+    // Khong dat formatsToSupport: bo trong thi thu vien nhan het 17 dinh dang, gom ca
+    // CODE_128 cua ma dieu tri lan QR_CODE.
+    mayQuet = new Html5Qrcode('khung-camera', { useBarCodeDetectorIfSupported: false });
 
     // KHONG kem rang buoc do phan giai o day. Da thu xin 1280x720 va may that bao khong
     // mo duoc camera; do phan giai cao chi giup giai ma Code 128 de hon chu khong phai
@@ -383,15 +394,25 @@ $(function () {
     // Cung KHONG thu lai bang mot lenh start() thu hai trong .catch: lam vay thi
     // startTransition() cua thu vien nem "Cannot transition to a new state, already under
     // transition", va loi that cua lan dau bi loi cua lan thu hai che mat.
+    //
+    // Khong dat vung quet (tham so qrbox): de trong thi thu vien giai ma TOAN khung hinh.
+    // Vung quet la mot o cat ra tu khung hinh, ma vach dai va thap rat de nam ngoai o do.
     mayQuet.start(
       { facingMode: 'environment' },
-      { fps: 10, qrbox: khungQuet },
+      { fps: 10 },
       function (ma) {
         $('#ma-dieu-tri').val(ma);
         dongCamera();
         traCuu();
       },
-      function () { /* moi khung hinh khong doc duoc deu goi vao day - bo qua */ }
+      function () {
+        // Goi lai voi MOI khung hinh khong giai ma duoc. Dem o day de biet vong quet co
+        // chay hay khong: dung yen o 0 nghia la thu vien khong he doc khung hinh nao, khac
+        // han voi "co doc nhung khong ra ma" - hai nguyen nhan hoan toan khac nhau ma neu
+        // khong dem thi nhin tu ngoai giong het nhau.
+        demKhungQuet++;
+        if (demKhungQuet % 10 === 0) { capNhatTrangThaiQuet(); }
+      }
     ).catch(function (loi) {
       $('#vung-camera').hide();
       mayQuet = null;

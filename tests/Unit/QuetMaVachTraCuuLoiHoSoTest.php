@@ -28,45 +28,53 @@ class QuetMaVachTraCuuLoiHoSoTest extends TestCase
         return file_get_contents(base_path('resources/views/khth/tra-cuu-loi-ho-so.blade.php'));
     }
 
-    /** @test */
-    public function qrbox_khong_duoc_la_o_vuong_co_dinh()
+    /**
+     * Vung quet la mot o CAT ra tu khung hinh roi moi giai ma; de trong thi thu vien giai
+     * ma toan khung hinh. Ma vach dai va thap rat de nam ngoai o cat do, nen man nay khong
+     * dat vung quet.
+     *
+     * Luu y cho nguoi sua sau: chu thich trong blade khong duoc viet nguyen van 'qrbox' kem
+     * dau hai cham, neu khong test nay do oan (doc thang tep, khong boc tach comment).
+     *
+     * @test
+     */
+    public function khong_cat_vung_quet_ma_giai_ma_toan_khung_hinh()
     {
-        $ma = $this->maBlade();
-
         $this->assertNotContains(
-            'qrbox: 250',
-            $ma,
-            'qrbox quay lai o vuong co dinh - ma vach Code 128 se khong giai ma duoc nua'
-        );
-
-        $this->assertContains(
-            'qrbox: khungQuet',
-            $ma,
-            'Khong con dung ham khungQuet() de tinh vung giai ma hinh chu nhat ngang'
+            'qrbox:',
+            $this->maBlade(),
+            'Da dat lai vung quet - ma vach dai de nam ngoai o cat va khong bao gio giai ma duoc'
         );
     }
 
-    /** @test */
-    public function vung_giai_ma_rong_hon_cao()
+    /**
+     * Mac dinh thu vien uu tien BarcodeDetector san co cua trinh duyet. Tren may thu
+     * nghiem, camera chay binh thuong nhung khong bao gio bat duoc ma nao - ke ca QR - nen
+     * ep dung ZXing di kem thu vien.
+     *
+     * @test
+     */
+    public function ep_dung_bo_giai_ma_zxing()
+    {
+        $this->assertContains(
+            'useBarCodeDetectorIfSupported: false',
+            $this->maBlade(),
+            'Da tro lai dung BarcodeDetector cua trinh duyet - tung khong bat duoc ma nao'
+        );
+    }
+
+    /**
+     * Dem khung hinh la thu duy nhat phan biet "vong quet khong chay" voi "co doc khung
+     * hinh nhung khong ra ma". Hai nguyen nhan nay nhin tu ngoai giong het nhau.
+     *
+     * @test
+     */
+    public function co_hien_so_khung_hinh_da_quet()
     {
         $ma = $this->maBlade();
 
-        $this->assertContains('function khungQuet(', $ma, 'Mat ham khungQuet()');
-
-        // Lay chinh cong thuc trong blade ra chay thu: khung phai NGANG (rong > cao) o moi
-        // co khung hinh thuong gap, neu khong thi ma vach lai khong doc duoc.
-        foreach ([[640, 480], [1280, 720], [360, 640]] as $co) {
-            $khung = $this->khungQuet($co[0], $co[1]);
-
-            $this->assertGreaterThan(
-                $khung['height'],
-                $khung['width'],
-                'Vung giai ma khong con rong hon cao o khung hinh ' . $co[0] . 'x' . $co[1]
-            );
-
-            $this->assertLessThanOrEqual($co[0], $khung['width'], 'Vung giai ma rong hon khung hinh');
-            $this->assertLessThanOrEqual($co[1], $khung['height'], 'Vung giai ma cao hon khung hinh');
-        }
+        $this->assertContains('id="trang-thai-quet"', $ma, 'Mat dong trang thai duoi khung camera');
+        $this->assertContains('demKhungQuet++', $ma, 'Khong con dem khung hinh da quet');
     }
 
     /**
@@ -103,12 +111,4 @@ class QuetMaVachTraCuuLoiHoSoTest extends TestCase
         );
     }
 
-    /** Ban PHP cua ham khungQuet() trong blade, giu dong bo bang test o tren. */
-    protected function khungQuet($rongKhungHinh, $caoKhungHinh)
-    {
-        $rong = (int) floor($rongKhungHinh * 0.9);
-        $cao = (int) floor(min($caoKhungHinh * 0.6, max($rong * 0.4, 140)));
-
-        return ['width' => $rong, 'height' => max($cao, 60)];
-    }
 }
