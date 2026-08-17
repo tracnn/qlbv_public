@@ -48,19 +48,32 @@ class QuetMaVachTraCuuLoiHoSoTest extends TestCase
     }
 
     /**
-     * Mac dinh thu vien uu tien BarcodeDetector san co cua trinh duyet. Tren may thu
-     * nghiem, camera chay binh thuong nhung khong bao gio bat duoc ma nao - ke ca QR - nen
-     * ep dung ZXing di kem thu vien.
+     * Do phan giai la dieu kien de giai ma duoc ma vach: do tren may that, camera mac dinh
+     * cho 480x640 va Code 128 cua ma dieu tri chi con ~1,6 diem anh moi vach, duoi nguong
+     * ~2 ma ZXing can.
+     *
+     * Phai xin bang 'advanced' - theo chuan WebRTC no la co gang het suc, khong dat thi bo
+     * qua. Xin bang 'ideal'/'min' tung lam may that khong mo duoc camera.
      *
      * @test
      */
-    public function ep_dung_bo_giai_ma_zxing()
+    public function xin_do_phan_giai_cao_theo_kieu_khong_lam_hong_viec_mo_camera()
     {
+        $ma = $this->maBlade();
+
         $this->assertContains(
-            'useBarCodeDetectorIfSupported: false',
-            $this->maBlade(),
-            'Da tro lai dung BarcodeDetector cua trinh duyet - tung khong bat duoc ma nao'
+            'advanced: [{ width: 1920',
+            $ma,
+            'Khong con xin do phan giai cao - ma vach se khong du diem anh moi vach de giai ma'
         );
+
+        foreach (['width: { ideal', 'width: { min'] as $cam) {
+            $this->assertNotContains(
+                $cam,
+                $ma,
+                'Rang buoc do phan giai cung da quay lai - tung lam dien thoai khong mo duoc camera'
+            );
+        }
     }
 
     /**
@@ -75,22 +88,6 @@ class QuetMaVachTraCuuLoiHoSoTest extends TestCase
 
         $this->assertContains('id="trang-thai-quet"', $ma, 'Mat dong trang thai duoi khung camera');
         $this->assertContains('demKhungQuet++', $ma, 'Khong con dem khung hinh da quet');
-    }
-
-    /**
-     * Da tung them rang buoc { width: { ideal: 1280 } } vao lenh mo camera de Code 128 de
-     * giai ma hon; may that bao "Khong mo duoc camera" nen da bo. Neu sau nay co nguoi
-     * dinh them lai, phai kiem tren dien thoai truoc chu khong chi tren may ban.
-     *
-     * @test
-     */
-    public function khong_kem_rang_buoc_do_phan_giai_khi_mo_camera()
-    {
-        $this->assertNotContains(
-            'ideal:',
-            $this->maBlade(),
-            'Rang buoc do phan giai da quay lai - tung lam dien thoai khong mo duoc camera'
-        );
     }
 
     /**

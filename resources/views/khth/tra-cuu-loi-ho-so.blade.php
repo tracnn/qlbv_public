@@ -32,7 +32,11 @@
     <div class="row" id="vung-camera" style="display:none; margin-top:10px">
       <div class="col-md-6">
         <div id="khung-camera"></div>
-        <p class="help-block" id="trang-thai-quet" style="margin-top:5px"></p>
+        <p class="help-block" style="margin-top:5px">
+          Đưa mã vạch nằm ngang, chiếm gần hết bề ngang khung hình rồi giữ yên máy.
+          Mã vạch càng nhỏ trong khung thì càng ít điểm ảnh trên mỗi vạch và càng khó đọc.
+        </p>
+        <p class="help-block" id="trang-thai-quet"></p>
         <button id="btn-dong-camera" class="btn btn-default">Đóng camera</button>
       </div>
     </div>
@@ -378,27 +382,28 @@ $(function () {
     demKhungQuet = 0;
     capNhatTrangThaiQuet();
 
-    // useBarCodeDetectorIfSupported: false — ep dung bo giai ma ZXing di kem thu vien.
-    // Mac dinh thu vien uu tien BarcodeDetector san co cua trinh duyet; tren mot so may
-    // API do ton tai nhung tra ve rong voi moi khung hinh, tuc camera chay binh thuong ma
-    // khong bao gio bat duoc ma nao - dung trieu chung dang gap.
-    //
     // Khong dat formatsToSupport: bo trong thi thu vien nhan het 17 dinh dang, gom ca
-    // CODE_128 cua ma dieu tri lan QR_CODE.
-    mayQuet = new Html5Qrcode('khung-camera', { useBarCodeDetectorIfSupported: false });
+    // CODE_128 cua ma dieu tri lan QR_CODE. Cung khong dung
+    // useBarCodeDetectorIfSupported: may thu nghiem khong he co BarcodeDetector (dong
+    // trang thai duoi khung hinh xac nhan), nen de mac dinh cho may nao co thi dung.
+    mayQuet = new Html5Qrcode('khung-camera');
 
-    // KHONG kem rang buoc do phan giai o day. Da thu xin 1280x720 va may that bao khong
-    // mo duoc camera; do phan giai cao chi giup giai ma Code 128 de hon chu khong phai
-    // dieu kien de quet, con mo duoc camera thi la dieu kien.
+    // Do phan giai la DIEU KIEN de giai ma duoc ma vach, khong phai thu co cung duoc:
+    // do tren may that, camera mac dinh cho 480x640, ma vach Code 128 cua ma dieu tri chi
+    // duoc ~1,6 diem anh moi vach - duoi nguong ~2 ma ZXing can, nen quet mai khong ra.
     //
-    // Cung KHONG thu lai bang mot lenh start() thu hai trong .catch: lam vay thi
-    // startTransition() cua thu vien nem "Cannot transition to a new state, already under
-    // transition", va loi that cua lan dau bi loi cua lan thu hai che mat.
+    // Xin bang 'advanced' chu KHONG bang 'ideal' hay 'min': theo chuan WebRTC, cac bo
+    // rang buoc trong advanced duoc ap dung theo kieu co gang het suc, khong dat thi bo
+    // qua chu khong lam getUserMedia that bai. Lan truoc xin thang 1280x720 thi may that
+    // bao khong mo duoc camera.
     //
     // Khong dat vung quet (tham so qrbox): de trong thi thu vien giai ma TOAN khung hinh.
     // Vung quet la mot o cat ra tu khung hinh, ma vach dai va thap rat de nam ngoai o do.
     mayQuet.start(
-      { facingMode: 'environment' },
+      {
+        facingMode: 'environment',
+        advanced: [{ width: 1920, height: 1080 }, { width: 1280, height: 720 }]
+      },
       { fps: 10 },
       function (ma) {
         $('#ma-dieu-tri').val(ma);
