@@ -109,13 +109,21 @@ Controller không chứa truy vấn.
 ## 4. Nguồn dữ liệu hồ sơ
 
 Truy vấn `his_treatment` trên kết nối `HISPro`, lọc `treatment_code = ?`, với
-`join his_gender ON his_gender.id = his_treatment.tdl_patient_gender_id`,
+`left join his_gender ON his_gender.id = his_treatment.tdl_patient_gender_id`,
 `left join his_branch ON his_branch.id = his_treatment.branch_id`,
 `left join his_department ON his_department.id = his_treatment.last_department_id`,
 `left join his_treatment_type ON his_treatment_type.id = his_treatment.tdl_treatment_type_id`.
 
-Ba join sau để `left`: hồ sơ thiếu khoa, thiếu loại điều trị hoặc thiếu chi nhánh vẫn phải
-hiện ra thay vì biến mất khỏi kết quả — màn này tồn tại để soi hồ sơ có vấn đề.
+**Cả bốn join đều `left`** — kể cả giới tính. Lệnh quét
+`HISProKiemTraTheBHYT` dùng inner join `his_gender` vì nó chỉ cần hồ sơ đủ điều kiện gửi
+cổng BHXH; màn này thì ngược lại, hồ sơ khuyết dữ liệu chính là hồ sơ cần soi, inner join
+sẽ làm nó biến mất và người dùng tưởng mã sai. Hệ quả: `gender_code` có thể `null`, mục
+6.3 phải chặn trước khi dispatch.
+
+Ngoài các cột thô, service trả kèm bản đã định dạng để blade khỏi tự xử lý chuỗi ngày của
+HIS: `patient_dob_text` (qua `dob()`), `in_time_text`, `out_time_text`,
+`hein_card_from_time_text`, `hein_card_to_time_text` (qua `strtodatetime()`). Hai helper
+này đã có sẵn ở `app/Http/Controllers/app-helpers.php`.
 
 Cột trả về:
 
@@ -222,6 +230,8 @@ Chặn trước khi dispatch:
 - `maCskcb` rỗng hoặc không nằm trong `config('organization.BHYT_CO_SO')` → trả lỗi "Không
   xác định được cơ sở của hồ sơ", không dispatch. Đây chính là điều kiện command đang dùng.
 - Mã thẻ rỗng → "Hồ sơ không có mã thẻ BHYT", không dispatch.
+- `gender_code` rỗng (hệ quả của left join ở mục 4) → "Hồ sơ thiếu giới tính", không
+  dispatch. Gửi giới tính rỗng lên cổng chỉ đổi một lỗi rõ ràng lấy một kết quả sai.
 
 Job chạy bất đồng bộ. Giao diện báo "Đã gửi yêu cầu tra lại thẻ, bấm Tra cứu lại sau ít
 giây để xem kết quả" và **không** tự nạp lại rồi hiển thị như thể đã có kết quả mới.
