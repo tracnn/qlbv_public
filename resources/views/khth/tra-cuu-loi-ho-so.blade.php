@@ -59,27 +59,48 @@
     <div class="box-header with-border">
       <h3 class="box-title">Sai sót y lệnh <span class="badge" id="dem-order-check">0</span></h3>
     </div>
-    <div class="box-body table-responsive" id="khoi-order-check"></div>
+    <div class="box-body table-responsive">
+      <table id="bang-order-check" class="table table-bordered table-condensed" style="width:100%">
+        <thead><tr>
+          <th>Mức độ</th><th>Luật</th><th>Nội dung</th><th>Phát hiện lúc</th>
+          <th>Trạng thái</th><th>Xử lý</th>
+        </tr></thead>
+      </table>
+    </div>
   </div>
 
   <div class="box box-warning">
     <div class="box-header with-border">
       <h3 class="box-title">Lỗi tra thẻ BHYT <span class="badge" id="dem-hein-card">0</span></h3>
     </div>
-    <div class="box-body table-responsive" id="khoi-hein-card"></div>
+    <div class="box-body table-responsive">
+      <table id="bang-hein-card" class="table table-bordered table-condensed" style="width:100%">
+        <thead><tr>
+          <th>Mã tra cứu</th><th>Mã kiểm tra</th><th>Kết quả</th>
+          <th>Ghi chú</th><th>Mã thẻ</th><th>Tra lúc</th>
+        </tr></thead>
+      </table>
+    </div>
   </div>
 
   <div class="box box-warning">
     <div class="box-header with-border">
       <h3 class="box-title">Lỗi XML3176 <span class="badge" id="dem-xml3176">0</span></h3>
     </div>
-    <div class="box-body table-responsive" id="khoi-xml3176"></div>
+    <div class="box-body table-responsive">
+      <table id="bang-xml3176" class="table table-bordered table-condensed" style="width:100%">
+        <thead><tr>
+          <th>XML</th><th>STT</th><th>Mã lỗi</th><th>Tên lỗi</th><th>Mô tả</th><th>Ngày YL</th>
+        </tr></thead>
+      </table>
+    </div>
   </div>
 </div>
 @stop
 
 @section('js')
 <script src="{{ asset('js/html5-qrcode.min.js') }}"></script>
+@include('partials.dt-vi')
 <script>
 $(function () {
   var URL_TRA_CUU = '{{ route('khth.tra-cuu-loi-ho-so-tra-cuu') }}';
@@ -105,15 +126,6 @@ $(function () {
     return m[3] + '/' + m[2] + '/' + m[1] + ' ' + m[4] + ':' + m[5];
   }
 
-  function bang(cot, dong, veDong) {
-    if (!dong.length) { return '<p class="text-muted">Không có</p>'; }
-    var h = '<table class="table table-bordered table-condensed"><thead><tr>';
-    cot.forEach(function (c) { h += '<th>' + thoat(c) + '</th>'; });
-    h += '</tr></thead><tbody>';
-    dong.forEach(function (d) { h += veDong(d); });
-    return h + '</tbody></table>';
-  }
-
   function veHoSo(ho, loi) {
     if (loi) { return '<p style="color:#dd4b39">' + thoat(loi) + '</p>'; }
     if (!ho) { return '<p style="color:#dd4b39">Không tìm thấy hồ sơ với mã này trên HIS</p>'; }
@@ -136,45 +148,114 @@ $(function () {
     return h + '</div>';
   }
 
-  function veOrderCheck(dong) {
-    var cot = ['Mức độ', 'Luật', 'Nội dung', 'Phát hiện lúc', 'Trạng thái'];
-    if (DUOC_DOI_TRANG_THAI) { cot.push('Xử lý'); }
+  // Cot dang van ban thuan: van phai qua thoat() vi DataTables KHONG tu thoat gia tri.
+  function cotChu(khoa) {
+    return { data: khoa, defaultContent: '', render: function (v) { return thoat(v); } };
+  }
 
-    return bang(cot, dong, function (d) {
-      var cls = d.severity === 'critical' ? 'label-danger'
-        : (d.severity === 'warning' ? 'label-warning' : 'label-info');
-      var nhan = '<span class="label ' + cls + '">' +
-                 thoat(NHAN_SEVERITY[d.severity] || d.severity) + '</span>';
-      var h = '<tr><td>' + nhan + '</td><td>' + thoat(d.rule_code) + '</td><td>' +
-              thoat(d.message) + '</td><td>' + thoat(ngayGio(d.detected_at)) + '</td><td>' +
-              thoat(NHAN_STATUS[d.status] || d.status) + '</td>';
-      if (DUOC_DOI_TRANG_THAI) {
-        h += '<td><select class="form-control input-sm doi-trang-thai" data-id="' + d.id + '">' +
-             '<option value="">— đổi —</option><option value="seen">Đã xem</option>' +
-             '<option value="processed">Đã xử lý</option>' +
-             '<option value="false_positive">Bỏ qua</option></select></td>';
+  /**
+   * Cot ngay gio: hien "d/m/Y H:i" nhung sap xep tren chuoi goc "Y-m-d H:i:s".
+   * Neu sap xep tren chuoi da dinh dang thi 01/09 se dung truoc 02/08 - sai thu tu thoi
+   * gian, ma bang loi thi thu tu thoi gian chinh la thu can nhat.
+   */
+  function cotNgayGio(khoa) {
+    return {
+      data: khoa,
+      defaultContent: '',
+      render: function (v, loai) {
+        return loai === 'display' ? thoat(ngayGio(v)) : (v || '');
       }
-      return h + '</tr>';
-    });
+    };
   }
 
-  function veHeinCard(dong) {
-    return bang(['Mã tra cứu', 'Mã kiểm tra', 'Kết quả', 'Ghi chú', 'Mã thẻ', 'Tra lúc'], dong, function (d) {
-      return '<tr><td>' + thoat(d.ma_tracuu) + '</td><td>' + thoat(d.ma_kiemtra) +
-             '</td><td>' + thoat(d.ma_ketqua) + '</td><td>' + thoat(d.ghi_chu) +
-             '</td><td>' + thoat(d.ma_the_masked) + '</td><td>' + thoat(ngayGio(d.checked_at)) + '</td></tr>';
-    });
+  var CAU_HINH_BANG = {
+    language: DT_VI,
+    autoWidth: false,
+    pageLength: 10,
+    lengthChange: false,
+    // Giu nguyen thu tu service da sap xep (vi pham theo detected_at giam dan, XML3176
+    // theo xml roi stt). Nguoi dung van bam duoc vao tieu de cot de sap lai.
+    order: [],
+    deferRender: true
+  };
+
+  var bangOrderCheck = null;
+  var bangHeinCard = null;
+  var bangXml3176 = null;
+
+  function taoBangOrderCheck() {
+    return $('#bang-order-check').DataTable($.extend({}, CAU_HINH_BANG, {
+      columns: [
+        {
+          data: 'severity',
+          render: function (v) {
+            var cls = v === 'critical' ? 'label-danger' : (v === 'warning' ? 'label-warning' : 'label-info');
+            return '<span class="label ' + cls + '">' + thoat(NHAN_SEVERITY[v] || v) + '</span>';
+          }
+        },
+        cotChu('rule_code'),
+        cotChu('message'),
+        cotNgayGio('detected_at'),
+        { data: 'status', render: function (v) { return thoat(NHAN_STATUS[v] || v); } },
+        {
+          data: 'id',
+          orderable: false,
+          searchable: false,
+          // An han cot thay vi dung hai bo cot khac nhau: thead trong blade luon co du
+          // cot, chi hien voi nguoi co quyen order-check.
+          visible: DUOC_DOI_TRANG_THAI,
+          render: function (v) {
+            return '<select class="form-control input-sm doi-trang-thai" data-id="' + thoat(v) + '">' +
+              '<option value="">— đổi —</option><option value="seen">Đã xem</option>' +
+              '<option value="processed">Đã xử lý</option>' +
+              '<option value="false_positive">Bỏ qua</option></select>';
+          }
+        }
+      ]
+    }));
   }
 
-  function veXml3176(dong) {
-    return bang(['XML', 'STT', 'Mã lỗi', 'Tên lỗi', 'Mô tả', 'Ngày YL'], dong, function (d) {
-      var ma = d.critical_error
-        ? '<span class="label label-danger">' + thoat(d.error_code) + '</span>'
-        : thoat(d.error_code);
-      return '<tr><td>' + thoat(d.xml) + '</td><td>' + thoat(d.stt) + '</td><td>' + ma +
-             '</td><td>' + thoat(d.error_name) + '</td><td>' + thoat(d.description) +
-             '</td><td>' + thoat(d.ngay_yl) + '</td></tr>';
-    });
+  function taoBangHeinCard() {
+    return $('#bang-hein-card').DataTable($.extend({}, CAU_HINH_BANG, {
+      columns: [
+        cotChu('ma_tracuu'), cotChu('ma_kiemtra'), cotChu('ma_ketqua'),
+        cotChu('ghi_chu'), cotChu('ma_the_masked'), cotNgayGio('checked_at')
+      ]
+    }));
+  }
+
+  function taoBangXml3176() {
+    return $('#bang-xml3176').DataTable($.extend({}, CAU_HINH_BANG, {
+      columns: [
+        cotChu('xml'),
+        cotChu('stt'),
+        {
+          data: 'error_code',
+          render: function (v, loai, dong) {
+            if (loai !== 'display') { return v || ''; }
+            return dong.critical_error
+              ? '<span class="label label-danger">' + thoat(v) + '</span>'
+              : thoat(v);
+          }
+        },
+        cotChu('error_name'), cotChu('description'), cotChu('ngay_yl')
+      ]
+    }));
+  }
+
+  /**
+   * Nap du lieu moi vao mot bang. Bang duoc tao o lan nap dau tien chu khong tao san luc
+   * trang tai xong: #ket-qua dang an, DataTables do be rong cot tren phan tu an se ra 0.
+   * columns.adjust() sau khi #ket-qua hien lo not phan con lai.
+   */
+  function napBang(bang, taoBang, dong) {
+    var b = bang || taoBang();
+
+    b.clear();
+    b.rows.add(dong || []);
+    b.draw();
+
+    return b;
   }
 
   // Dem luot goi tang dan: may quet barcode co the ban hai lan lien tiep, phan hoi cua
@@ -203,9 +284,9 @@ $(function () {
         maHienTai = ma;
         $('#khoi-ho-so').html(veHoSo(r.profile, r.profile_error));
         $('#loi-ket-qua').toggle(!!r.data_error).text(r.data_error || '');
-        $('#khoi-order-check').html(veOrderCheck(r.data.order_check));
-        $('#khoi-hein-card').html(veHeinCard(r.data.hein_card));
-        $('#khoi-xml3176').html(veXml3176(r.data.xml3176));
+        bangOrderCheck = napBang(bangOrderCheck, taoBangOrderCheck, r.data.order_check);
+        bangHeinCard = napBang(bangHeinCard, taoBangHeinCard, r.data.hein_card);
+        bangXml3176 = napBang(bangXml3176, taoBangXml3176, r.data.xml3176);
         $('#dem-order-check').text(r.summary.order_check);
         $('#dem-hein-card').text(r.summary.hein_card);
         $('#dem-xml3176').text(r.summary.xml3176);
@@ -213,6 +294,11 @@ $(function () {
         $('#btn-in').attr('href',
           '{{ route('khth.tra-cuu-loi-ho-so-in') }}?treatment_code=' + encodeURIComponent(ma));
         $('#ket-qua').show();
+        // Do lai be rong cot SAU khi #ket-qua hien: DataTables khoi tao tren phan tu dang
+        // an se do ra 0 va tieu de lech khoi than bang.
+        bangOrderCheck.columns.adjust();
+        bangHeinCard.columns.adjust();
+        bangXml3176.columns.adjust();
         // Boi den de luot quet ke tiep ghi de: may quet barcode go chuoi roi gui Enter.
         $('#ma-dieu-tri').focus().select();
       })
@@ -251,6 +337,22 @@ $(function () {
 
   var mayQuet = null;
 
+  /**
+   * Vung giai ma phai la HINH CHU NHAT NGANG, khong duoc de o vuong.
+   *
+   * Thu vien cat khung hinh dung bang qrbox roi moi dua di giai ma. Voi o vuong 250px,
+   * ma vach Code 128 cua ma dieu tri (14 ky tu, rat dai va thap) chi nhet vua chieu ngang
+   * khi nguoi dung lui that xa - luc do be rong moi vach tut xuong duoi nguong doc duoc,
+   * nen barcode khong bao gio giai ma noi trong khi QR van chay (QR vuong, nam gon trong
+   * o do). Khung ngang giai quyet ca hai loai ma.
+   */
+  function khungQuet(rongKhungHinh, caoKhungHinh) {
+    var rong = Math.floor(rongKhungHinh * 0.9);
+    var cao = Math.floor(Math.min(caoKhungHinh * 0.6, Math.max(rong * 0.4, 140)));
+
+    return { width: rong, height: Math.max(cao, 60) };
+  }
+
   function dongCamera() {
     if (!mayQuet) { return; }
     mayQuet.stop().then(function () {
@@ -272,8 +374,10 @@ $(function () {
     $('#vung-camera').show();
     mayQuet = new Html5Qrcode('khung-camera');
     mayQuet.start(
-      { facingMode: 'environment' },
-      { fps: 10, qrbox: 250 },
+      // Xin do phan giai cao: nhieu trinh duyet mac dinh tra ve 640x480, o muc do ay so
+      // diem anh phu len moi vach cua Code 128 khong du de giai ma.
+      { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
+      { fps: 10, qrbox: khungQuet },
       function (ma) {
         $('#ma-dieu-tri').val(ma);
         dongCamera();

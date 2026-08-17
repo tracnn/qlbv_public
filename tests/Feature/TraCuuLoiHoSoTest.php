@@ -80,10 +80,29 @@ class TraCuuLoiHoSoTest extends TestCase
             ->get('/khth/tra-cuu-loi-ho-so')
             ->assertStatus(200)
             ->assertSee('id="ma-dieu-tri"', false)
-            ->assertSee('id="khoi-order-check"', false)
-            ->assertSee('id="khoi-hein-card"', false)
-            ->assertSee('id="khoi-xml3176"', false)
+            ->assertSee('id="bang-order-check"', false)
+            ->assertSee('id="bang-hein-card"', false)
+            ->assertSee('id="bang-xml3176"', false)
             ->assertSee('id="btn-camera"', false);
+    }
+
+    /**
+     * Ba bang loi phai la DataTable. Thead phai co san trong HTML: DataTables doc cau
+     * truc cot tu thead, thieu no thi bang khong khoi tao duoc.
+     *
+     * @test
+     */
+    public function ba_bang_loi_co_thead_de_datatables_khoi_tao()
+    {
+        $res = $this->actingAs($this->nguoiDung(['tra-cuu-loi-ho-so']))
+            ->get('/khth/tra-cuu-loi-ho-so')
+            ->assertStatus(200);
+
+        $res->assertSee('DataTable(', false);
+
+        foreach (['Mức độ', 'Mã tra cứu', 'Mã lỗi'] as $tieuDe) {
+            $res->assertSee('<th>' . $tieuDe . '</th>', false);
+        }
     }
 
     /** @test */
