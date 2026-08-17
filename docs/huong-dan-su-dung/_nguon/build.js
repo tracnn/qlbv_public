@@ -11,6 +11,7 @@ const part1 = require('./part1');
 const part2 = require('./part2');
 const part3 = require('./part3');
 const part4 = require('./part4');
+const part5 = require('./part5');
 const appendix = require('./appendix');
 
 const children = [
@@ -20,6 +21,7 @@ const children = [
   ...part2(),
   ...part3(),
   ...part4(),
+  ...part5(),
   ...appendix(),
 ];
 

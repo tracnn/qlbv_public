@@ -79,9 +79,28 @@ PHẦN IV. QUẢN LÝ DANH MỤC
   4.7 Xoá toàn bộ một danh mục
   4.8 Xử lý sự cố khi nhập khẩu
 
+PHẦN V. TRA CỨU LỖI HỒ SƠ THEO MÃ ĐIỀU TRỊ     [BỔ SUNG 17/08/2026]
+  5.1 Chức năng này dùng để làm gì
+  5.2 Mở màn hình và quyền truy cập
+  5.3 Nhập hoặc quét mã điều trị
+  5.4 Khối Thông tin hồ sơ
+  5.5 Ba bảng lỗi
+  5.6 Đổi trạng thái một vi phạm y lệnh
+  5.7 In phiếu lỗi
+  5.8 Tra lại thẻ BHYT
+  5.9 Xử lý sự cố thường gặp
+
 PHỤ LỤC A. Tra cứu nhanh sự cố theo triệu chứng
 PHỤ LỤC B. Các lệnh nền và dịch vụ hệ thống
 ```
+
+Phần V được bổ sung ngày 17/08/2026, sau khi màn hình tra cứu lỗi hồ sơ theo mã điều trị
+được xây dựng (xem `docs/superpowers/specs/2026-08-17-tra-cuu-loi-ho-so-design.md`). Bìa
+tài liệu chuyển sang phiên bản 1.1.
+
+Màn hình này không quét mã bằng camera: chức năng đó đã thử nghiệm rồi gỡ bỏ vì camera
+thiết bị thông thường cho ảnh quá thấp so với mức cần để đọc mã vạch Code 128 của mã điều
+trị. Tài liệu phải nói rõ điều này để người dùng không đi tìm nút quét.
 
 ## 5. Quy ước trình bày
 
