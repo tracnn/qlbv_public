@@ -115,4 +115,25 @@ class TraCuuLoiHoSoTest extends TestCase
             ->assertStatus(422)
             ->assertJson(['message' => 'Chưa nhập mã điều trị']);
     }
+
+    /** @test */
+    public function his_hong_van_tra_200_kem_profile_error_va_loi_cua_mysql()
+    {
+        $this->themViPham(['treatment_code' => self::MA]);
+
+        // Gia lap Oracle (HIS) hong: ep TreatmentProfileService nem exception de
+        // kiem tra nhanh catch trong controller, khong phai nhanh "khong tim thay".
+        $this->app->instance(\App\Services\OrderCheck\TreatmentProfileService::class, new class extends \App\Services\OrderCheck\TreatmentProfileService {
+            public function cua($treatmentCode)
+            {
+                throw new \Exception('Oracle sap');
+            }
+        });
+
+        $res = $this->traCuu(self::MA)->assertStatus(200);
+
+        $this->assertNull($res->json()['profile']);
+        $this->assertSame('Không lấy được thông tin từ HIS', $res->json()['profile_error']);
+        $this->assertCount(1, $res->json()['data']['order_check']);
+    }
 }
