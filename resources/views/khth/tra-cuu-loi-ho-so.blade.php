@@ -49,6 +49,8 @@
     <div class="box-body" id="khoi-ho-so"></div>
   </div>
 
+  <div class="callout callout-danger" id="loi-ket-qua" style="display:none"></div>
+
   <div class="callout callout-success" id="khong-loi" style="display:none">
     <h4>Không phát hiện lỗi trên hồ sơ này</h4>
   </div>
@@ -83,10 +85,24 @@ $(function () {
   var URL_TRA_CUU = '{{ route('khth.tra-cuu-loi-ho-so-tra-cuu') }}';
   var URL_DOI_TRANG_THAI = '{{ route('khth.order-check-update-status') }}';
   var DUOC_DOI_TRANG_THAI = {{ Auth::user()->hasRole('order-check') ? 'true' : 'false' }};
+  // Nhan tieng Viet cho severity/status: MOT nguon duy nhat la ViolationLabels o PHP,
+  // xuong day qua json_encode - khong tu dich lai o JS keo lech voi OrderCheckController
+  // va phieu in.
+  var NHAN_SEVERITY = {!! json_encode(\App\Services\OrderCheck\ViolationLabels::severity()) !!};
+  var NHAN_STATUS = {!! json_encode(\App\Services\OrderCheck\ViolationLabels::status()) !!};
   var maHienTai = '';
 
   function thoat(s) {
     return $('<div>').text(s === null || s === undefined ? '' : s).html();
+  }
+
+  // Chuoi ngay MySQL "Y-m-d H:i:s" -> "d/m/Y H:i", dong bo voi cach app dang hien ngay
+  // o cac man khac (xem OrderCheckController::fetch).
+  function ngayGio(s) {
+    if (!s) { return ''; }
+    var m = /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})/.exec(s);
+    if (!m) { return s; }
+    return m[3] + '/' + m[2] + '/' + m[1] + ' ' + m[4] + ':' + m[5];
   }
 
   function bang(cot, dong, veDong) {
@@ -125,12 +141,13 @@ $(function () {
     if (DUOC_DOI_TRANG_THAI) { cot.push('Xử lý'); }
 
     return bang(cot, dong, function (d) {
-      var nhan = d.severity === 'critical'
-        ? '<span class="label label-danger">Nghiêm trọng</span>'
-        : '<span class="label label-warning">' + thoat(d.severity) + '</span>';
+      var cls = d.severity === 'critical' ? 'label-danger'
+        : (d.severity === 'warning' ? 'label-warning' : 'label-info');
+      var nhan = '<span class="label ' + cls + '">' +
+                 thoat(NHAN_SEVERITY[d.severity] || d.severity) + '</span>';
       var h = '<tr><td>' + nhan + '</td><td>' + thoat(d.rule_code) + '</td><td>' +
-              thoat(d.message) + '</td><td>' + thoat(d.detected_at) + '</td><td>' +
-              thoat(d.status) + '</td>';
+              thoat(d.message) + '</td><td>' + thoat(ngayGio(d.detected_at)) + '</td><td>' +
+              thoat(NHAN_STATUS[d.status] || d.status) + '</td>';
       if (DUOC_DOI_TRANG_THAI) {
         h += '<td><select class="form-control input-sm doi-trang-thai" data-id="' + d.id + '">' +
              '<option value="">— đổi —</option><option value="seen">Đã xem</option>' +
@@ -145,7 +162,7 @@ $(function () {
     return bang(['Mã tra cứu', 'Mã kiểm tra', 'Kết quả', 'Ghi chú', 'Mã thẻ', 'Tra lúc'], dong, function (d) {
       return '<tr><td>' + thoat(d.ma_tracuu) + '</td><td>' + thoat(d.ma_kiemtra) +
              '</td><td>' + thoat(d.ma_ketqua) + '</td><td>' + thoat(d.ghi_chu) +
-             '</td><td>' + thoat(d.ma_the_masked) + '</td><td>' + thoat(d.checked_at) + '</td></tr>';
+             '</td><td>' + thoat(d.ma_the_masked) + '</td><td>' + thoat(ngayGio(d.checked_at)) + '</td></tr>';
     });
   }
 
@@ -160,16 +177,32 @@ $(function () {
     });
   }
 
+  // Dem luot goi tang dan: may quet barcode co the ban hai lan lien tiep, phan hoi cua
+  // luot cu ve sau phai bi bo qua, khong duoc ve de len ket qua cua luot moi.
+  var demTraCuu = 0;
+
   function traCuu() {
     var ma = $.trim($('#ma-dieu-tri').val());
     $('#loi-nhap').text('');
 
+    // An ket qua cu VA xoa maHienTai NGAY tu dau, truoc khi goi server: neu luot tra cuu
+    // nay that bai (mat phien, loi 500, mang chap chon) thi man hinh khong duoc tiep tuc
+    // hien ho so/loi cua ma truoc do, va nut In / Tra lai the khong duoc tro vao ma cu.
+    $('#ket-qua').hide();
+    maHienTai = '';
+
     if (!ma) { $('#loi-nhap').text('Chưa nhập mã điều trị'); return; }
+
+    demTraCuu++;
+    var luotNay = demTraCuu;
 
     $.getJSON(URL_TRA_CUU, { treatment_code: ma })
       .done(function (r) {
+        if (luotNay !== demTraCuu) { return; } // co luot goi moi hon da chay sau luot nay
+
         maHienTai = ma;
         $('#khoi-ho-so').html(veHoSo(r.profile, r.profile_error));
+        $('#loi-ket-qua').toggle(!!r.data_error).text(r.data_error || '');
         $('#khoi-order-check').html(veOrderCheck(r.data.order_check));
         $('#khoi-hein-card').html(veHeinCard(r.data.hein_card));
         $('#khoi-xml3176').html(veXml3176(r.data.xml3176));
@@ -184,6 +217,8 @@ $(function () {
         $('#ma-dieu-tri').focus().select();
       })
       .fail(function (x) {
+        if (luotNay !== demTraCuu) { return; }
+
         var t = (x.responseJSON && x.responseJSON.message) || 'Không tra cứu được';
         $('#loi-nhap').text(t);
       });
@@ -220,6 +255,12 @@ $(function () {
     if (!mayQuet) { return; }
     mayQuet.stop().then(function () {
       mayQuet.clear();
+      mayQuet = null;
+      $('#vung-camera').hide();
+    }).catch(function () {
+      // stop() bi tu choi (vi du camera da bi rut/thu hoi quyen giua chung): van phai don
+      // dep trang thai o day, khong thi nut "Quet bang camera" se khong mo lai duoc vi
+      // dieu kien "if (mayQuet) return" o tren coi nhu dang mo.
       mayQuet = null;
       $('#vung-camera').hide();
     });

@@ -13,6 +13,10 @@
   th { background: #eee; }
   .ho-so td { border: none; padding: 2px 4px; }
   .chan { margin-top: 10px; text-align: right; font-style: italic; }
+  /* Danh dau hang nghiem trong bang chu dam + vien trai day: mau do khong hien khi in
+     den trang, phai co dau hieu khac song song voi mau. */
+  tr.crit td { font-weight: bold; border-left: 3px solid #000; }
+  .ghi-chu-crit { font-size: 11px; font-style: italic; }
 </style>
 </head>
 <body onload="window.print()">
@@ -21,7 +25,9 @@
 <p style="text-align:center">Mã điều trị: <strong>{{ $ma }}</strong></p>
 
 <h2>Thông tin hồ sơ</h2>
-@if ($hoSo)
+@if ($loiHoSo)
+<p><em>{{ $loiHoSo }}</em></p>
+@elseif ($hoSo)
 <table class="ho-so">
   <tr><td>Họ tên: <strong>{{ $hoSo['patient_name'] }}</strong></td>
       <td>Ngày sinh: {{ $hoSo['patient_dob_text'] }}</td>
@@ -37,15 +43,23 @@
 <p><em>Không tìm thấy hồ sơ với mã này trên HIS.</em></p>
 @endif
 
+@if ($loiKetQua)
+<p><em>{{ $loiKetQua }}</em></p>
+@endif
+
 <h2>Sai sót y lệnh ({{ $summary['order_check'] }})</h2>
 @if (count($data['order_check']))
 <table>
   <tr><th>Mức độ</th><th>Luật</th><th>Nội dung</th><th>Phát hiện lúc</th><th>Trạng thái</th></tr>
   @foreach ($data['order_check'] as $d)
-  <tr><td>{{ $d['severity'] }}</td><td>{{ $d['rule_code'] }}</td><td>{{ $d['message'] }}</td>
-      <td>{{ $d['detected_at'] }}</td><td>{{ $d['status'] }}</td></tr>
+  <tr @if ($d['severity'] === 'critical') class="crit" @endif>
+      <td>{{ \App\Services\OrderCheck\ViolationLabels::severityLabel($d['severity']) }}</td>
+      <td>{{ $d['rule_code'] }}</td><td>{{ $d['message'] }}</td>
+      <td>{{ $d['detected_at'] ? \Carbon\Carbon::parse($d['detected_at'])->format('d/m/Y H:i') : '' }}</td>
+      <td>{{ \App\Services\OrderCheck\ViolationLabels::statusLabel($d['status']) }}</td></tr>
   @endforeach
 </table>
+<p class="ghi-chu-crit">Hàng in đậm, có vạch trái: mức độ nghiêm trọng.</p>
 @else<p><em>Không có</em></p>@endif
 
 <h2>Lỗi tra thẻ BHYT ({{ $summary['hein_card'] }})</h2>
@@ -54,7 +68,8 @@
   <tr><th>Mã tra cứu</th><th>Mã kiểm tra</th><th>Kết quả</th><th>Ghi chú</th><th>Tra lúc</th></tr>
   @foreach ($data['hein_card'] as $d)
   <tr><td>{{ $d['ma_tracuu'] }}</td><td>{{ $d['ma_kiemtra'] }}</td><td>{{ $d['ma_ketqua'] }}</td>
-      <td>{{ $d['ghi_chu'] }}</td><td>{{ $d['checked_at'] }}</td></tr>
+      <td>{{ $d['ghi_chu'] }}</td>
+      <td>{{ $d['checked_at'] ? \Carbon\Carbon::parse($d['checked_at'])->format('d/m/Y H:i') : '' }}</td></tr>
   @endforeach
 </table>
 @else<p><em>Không có</em></p>@endif
@@ -64,10 +79,12 @@
 <table>
   <tr><th>XML</th><th>STT</th><th>Mã lỗi</th><th>Tên lỗi</th><th>Mô tả</th></tr>
   @foreach ($data['xml3176'] as $d)
-  <tr><td>{{ $d['xml'] }}</td><td>{{ $d['stt'] }}</td><td>{{ $d['error_code'] }}</td>
+  <tr @if (!empty($d['critical_error'])) class="crit" @endif>
+      <td>{{ $d['xml'] }}</td><td>{{ $d['stt'] }}</td><td>{{ $d['error_code'] }}</td>
       <td>{{ $d['error_name'] }}</td><td>{{ $d['description'] }}</td></tr>
   @endforeach
 </table>
+<p class="ghi-chu-crit">Hàng in đậm, có vạch trái: lỗi nghiêm trọng.</p>
 @else<p><em>Không có</em></p>@endif
 
 <p class="chan">In lúc {{ date('d/m/Y H:i') }}</p>

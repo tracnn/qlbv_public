@@ -123,21 +123,23 @@ class OrderCheckController extends Controller
                 return $v->detected_at ? Carbon::parse($v->detected_at)->format('d/m/Y H:i') : '';
             })
             ->addColumn('severity_badge', function ($v) {
-                $map = [
-                    'critical' => '<span class="label label-danger">Nghiêm trọng</span>',
-                    'warning' => '<span class="label label-warning">Cảnh báo</span>',
-                    'info' => '<span class="label label-info">Thông tin</span>',
+                $cls = [
+                    'critical' => 'label-danger',
+                    'warning' => 'label-warning',
+                    'info' => 'label-info',
                 ];
-                return $map[$v->severity] ?? $v->severity;
+                $c = isset($cls[$v->severity]) ? $cls[$v->severity] : 'label-default';
+                return '<span class="label ' . $c . '">' . e(\App\Services\OrderCheck\ViolationLabels::severityLabel($v->severity)) . '</span>';
             })
             ->addColumn('status_badge', function ($v) {
-                $map = [
-                    'new' => '<span class="label label-default">Mới</span>',
-                    'seen' => '<span class="label label-primary">Đã xem</span>',
-                    'processed' => '<span class="label label-success">Đã xử lý</span>',
-                    'false_positive' => '<span class="label label-warning">Bỏ qua</span>',
+                $cls = [
+                    'new' => 'label-default',
+                    'seen' => 'label-primary',
+                    'processed' => 'label-success',
+                    'false_positive' => 'label-warning',
                 ];
-                return $map[$v->status] ?? $v->status;
+                $c = isset($cls[$v->status]) ? $cls[$v->status] : 'label-default';
+                return '<span class="label ' . $c . '">' . e(\App\Services\OrderCheck\ViolationLabels::statusLabel($v->status)) . '</span>';
             })
             ->addColumn('doctor', function ($v) {
                 return $v->doctor_username ?: $v->doctor_loginname;
