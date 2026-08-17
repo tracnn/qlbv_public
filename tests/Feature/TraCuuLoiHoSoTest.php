@@ -76,7 +76,8 @@ class TraCuuLoiHoSoTest extends TestCase
             ->assertSee('id="ma-dieu-tri"', false)
             ->assertSee('id="khoi-order-check"', false)
             ->assertSee('id="khoi-hein-card"', false)
-            ->assertSee('id="khoi-xml3176"', false);
+            ->assertSee('id="khoi-xml3176"', false)
+            ->assertSee('id="btn-camera"', false);
     }
 
     /** @test */

@@ -17,6 +17,23 @@
         </div>
         <p class="help-block" id="loi-nhap" style="color:#dd4b39"></p>
       </div>
+      <div class="col-md-3">
+        <label>&nbsp;</label>
+        <div>
+          <button id="btn-camera" class="btn btn-default btn-lg" style="display:none">
+            <i class="fa fa-camera"></i> Quét bằng camera
+          </button>
+          <p class="help-block" id="camera-khong-san-sang" style="display:none">
+            Trình duyệt không cho dùng camera ở trang này (cần HTTPS).
+          </p>
+        </div>
+      </div>
+    </div>
+    <div class="row" id="vung-camera" style="display:none; margin-top:10px">
+      <div class="col-md-6">
+        <div id="khung-camera"></div>
+        <button id="btn-dong-camera" class="btn btn-default" style="margin-top:5px">Đóng camera</button>
+      </div>
     </div>
   </div>
 </div>
@@ -55,6 +72,7 @@
 @stop
 
 @section('js')
+<script src="{{ asset('js/html5-qrcode.min.js') }}"></script>
 <script>
 $(function () {
   var URL_TRA_CUU = '{{ route('khth.tra-cuu-loi-ho-so-tra-cuu') }}';
@@ -183,6 +201,45 @@ $(function () {
       $s.val('');
     });
   });
+
+  // Camera chi kha dung tren HTTPS (hoac localhost). Tren HTTP thuan
+  // navigator.mediaDevices khong ton tai -> hien chu thich thay vi mot nut bam khong an.
+  var coCamera = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+  $(coCamera ? '#btn-camera' : '#camera-khong-san-sang').show();
+
+  var mayQuet = null;
+
+  function dongCamera() {
+    if (!mayQuet) { return; }
+    mayQuet.stop().then(function () {
+      mayQuet.clear();
+      mayQuet = null;
+      $('#vung-camera').hide();
+    });
+  }
+
+  $('#btn-camera').on('click', function () {
+    if (mayQuet) { return; }
+
+    $('#vung-camera').show();
+    mayQuet = new Html5Qrcode('khung-camera');
+    mayQuet.start(
+      { facingMode: 'environment' },
+      { fps: 10, qrbox: 250 },
+      function (ma) {
+        $('#ma-dieu-tri').val(ma);
+        dongCamera();
+        traCuu();
+      },
+      function () { /* moi khung hinh khong doc duoc deu goi vao day - bo qua */ }
+    ).catch(function () {
+      $('#vung-camera').hide();
+      mayQuet = null;
+      alert('Không mở được camera');
+    });
+  });
+
+  $('#btn-dong-camera').on('click', dongCamera);
 });
 </script>
 @stop
