@@ -39,7 +39,11 @@
 </div>
 
 <div id="ket-qua" style="display:none">
-  <p><a id="btn-in" class="btn btn-default" target="_blank"><i class="fa fa-print"></i> In phiếu lỗi</a></p>
+  <p>
+    <a id="btn-in" class="btn btn-default" target="_blank"><i class="fa fa-print"></i> In phiếu lỗi</a>
+    <button id="btn-tra-lai-the" class="btn btn-default"><i class="fa fa-refresh"></i> Tra lại thẻ BHYT</button>
+    <span id="ket-qua-tra-lai-the" style="margin-left:8px"></span>
+  </p>
   <div class="box box-solid">
     <div class="box-header with-border"><h3 class="box-title">Thông tin hồ sơ</h3></div>
     <div class="box-body" id="khoi-ho-so"></div>
@@ -243,6 +247,25 @@ $(function () {
   });
 
   $('#btn-dong-camera').on('click', dongCamera);
+
+  $('#btn-tra-lai-the').on('click', function () {
+    if (!maHienTai) { return; }
+
+    var $b = $(this).prop('disabled', true);
+    $('#ket-qua-tra-lai-the').text('');
+
+    $.post('{{ route('khth.tra-cuu-loi-ho-so-tra-lai-the') }}', {
+      _token: '{{ csrf_token() }}', treatment_code: maHienTai
+    }).done(function (r) {
+      // Job chay bat dong bo: KHONG tu nap lai roi hien nhu the da co ket qua moi.
+      $('#ket-qua-tra-lai-the').css('color', '#00a65a').text(r.message);
+    }).fail(function (x) {
+      var t = (x.responseJSON && x.responseJSON.message) || 'Không gửi được yêu cầu';
+      $('#ket-qua-tra-lai-the').css('color', '#dd4b39').text(t);
+    }).always(function () {
+      $b.prop('disabled', false);
+    });
+  });
 });
 </script>
 @stop

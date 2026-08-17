@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Jobs\jobKtTheBHYT;
+use Illuminate\Support\Facades\Queue;
 use Tests\Support\DungBangHoSoHisSqlite;
 use Tests\Support\DungBangLoiDotDieuTriSqlite;
 use Tests\TestCase;
@@ -170,5 +172,100 @@ class TraCuuLoiHoSoTest extends TestCase
         $this->actingAs($this->nguoiDung(['tra-cuu-loi-ho-so']))
             ->get('/khth/tra-cuu-loi-ho-so/in')
             ->assertStatus(422);
+    }
+
+    protected function traLaiThe($ma)
+    {
+        return $this->actingAs($this->nguoiDung(['tra-cuu-loi-ho-so']))
+            ->postJson('/khth/tra-cuu-loi-ho-so/tra-lai-the', ['treatment_code' => $ma]);
+    }
+
+    /** @test */
+    public function tra_lai_the_dispatch_job_mot_lan_voi_tham_so_dung()
+    {
+        Queue::fake();
+        config(['organization.BHYT_CO_SO' => ['01001' => ['username' => 'u']]]);
+        $this->themHoSo();
+
+        $this->traLaiThe(self::MA)->assertStatus(200);
+
+        Queue::assertPushed(jobKtTheBHYT::class, 1);
+        Queue::assertPushed(jobKtTheBHYT::class, function ($job) {
+            $p = $this->thamSoJob($job);
+
+            // gender_code cua ho so mau la '1' (Nam); cong BHXH dung quy uoc nguoc lai
+            // nen phai gui 2. Sai cho nay thi cong tra ve ket qua sai gioi tinh.
+            $this->assertSame(2, $p['gioiTinh']);
+            $this->assertSame('01001', $p['maCskcb']);     // co so dieu tri, tu his_branch
+            $this->assertSame('01005', $p['maDkbd']);      // noi DKBD, tu the benh nhan
+            $this->assertSame('DN4010112345678', $p['maThe']);
+            $this->assertSame(self::MA, $p['ma_lk']);
+            $this->assertFalse($this->coDungKetQuaCu($job));
+
+            return true;
+        });
+    }
+
+    /** Doc thuoc tinh protected cua job de kiem tham so da dong goi. */
+    protected function thamSoJob($job)
+    {
+        $r = new \ReflectionProperty(get_class($job), 'params');
+        $r->setAccessible(true);
+
+        return $r->getValue($job);
+    }
+
+    protected function coDungKetQuaCu($job)
+    {
+        $r = new \ReflectionProperty(get_class($job), 'checkOldValue');
+        $r->setAccessible(true);
+
+        return $r->getValue($job);
+    }
+
+    /** @test */
+    public function tra_lai_the_chan_khi_co_so_khong_nam_trong_cau_hinh()
+    {
+        Queue::fake();
+        config(['organization.BHYT_CO_SO' => ['09999' => ['username' => 'u']]]);
+        $this->themHoSo();
+
+        $this->traLaiThe(self::MA)->assertStatus(422);
+
+        Queue::assertNotPushed(jobKtTheBHYT::class);
+    }
+
+    /** @test */
+    public function tra_lai_the_chan_khi_thieu_ma_the()
+    {
+        Queue::fake();
+        config(['organization.BHYT_CO_SO' => ['01001' => ['username' => 'u']]]);
+        $this->themHoSo(['treatment_code' => 'HS-KHONG-THE', 'tdl_hein_card_number' => null]);
+
+        $this->traLaiThe('HS-KHONG-THE')->assertStatus(422);
+
+        Queue::assertNotPushed(jobKtTheBHYT::class);
+    }
+
+    /** @test */
+    public function tra_lai_the_chan_khi_thieu_gioi_tinh()
+    {
+        Queue::fake();
+        config(['organization.BHYT_CO_SO' => ['01001' => ['username' => 'u']]]);
+        $this->themHoSo(['treatment_code' => 'HS-KHONG-GT', 'tdl_patient_gender_id' => null]);
+
+        $this->traLaiThe('HS-KHONG-GT')->assertStatus(422);
+
+        Queue::assertNotPushed(jobKtTheBHYT::class);
+    }
+
+    /** @test */
+    public function tra_lai_the_chan_khi_khong_co_ho_so()
+    {
+        Queue::fake();
+
+        $this->traLaiThe('KHONG-CO')->assertStatus(422);
+
+        Queue::assertNotPushed(jobKtTheBHYT::class);
     }
 }
