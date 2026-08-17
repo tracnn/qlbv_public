@@ -27,16 +27,63 @@ class TraCuuLoiHoSoController extends Controller
 
     public function traCuu(Request $request)
     {
-        $ma = trim((string) $request->input('treatment_code'));
+        $ma = $this->layMa($request);
 
         if ($ma === '') {
             return response()->json(['message' => 'Chưa nhập mã điều trị'], 422);
         }
 
-        $ketQua = $this->loi->cua($ma);
+        $kq = $this->docHoSoVaLoi($ma);
 
-        // Oracle hong khong duoc keo theo phan loi doc tu MySQL: bat rieng o day, tra
-        // profile_error de man hinh hien mot dong canh bao thay vi trang trang.
+        return response()->json([
+            'profile' => $kq['ho_so'],
+            'profile_error' => $kq['loi_ho_so'],
+            'data' => $kq['ket_qua']['data'],
+            'summary' => $kq['ket_qua']['summary'],
+            'data_error' => $kq['loi_ket_qua'],
+        ]);
+    }
+
+    public function in(Request $request)
+    {
+        $ma = $this->layMa($request);
+
+        if ($ma === '') {
+            return response('Chưa nhập mã điều trị', 422);
+        }
+
+        $kq = $this->docHoSoVaLoi($ma);
+
+        return view('khth.tra-cuu-loi-ho-so-in', [
+            'ma' => $ma,
+            'hoSo' => $kq['ho_so'],
+            'loiHoSo' => $kq['loi_ho_so'],
+            'data' => $kq['ket_qua']['data'],
+            'summary' => $kq['ket_qua']['summary'],
+            'loiKetQua' => $kq['loi_ket_qua'],
+        ]);
+    }
+
+    /**
+     * Ma dieu tri da trim, dung chung cho ca ba action - tranh lap trim() ba noi.
+     */
+    protected function layMa(Request $request)
+    {
+        return trim((string) $request->input('treatment_code'));
+    }
+
+    /**
+     * Doc ho so (Oracle) va loi (MySQL) cho mot ma dieu tri. Hai try/catch TACH RIENG:
+     * dung nghia cua man hinh la mot nguon hong khong duoc keo theo nguon kia. Dung chung
+     * cho traCuu() va in() nen cau tra loi HIS hong ("Khong lay duoc thong tin tu HIS")
+     * chi song o mot cho - truoc day in() bo qua loi nay va phieu in ghi nham "khong tim
+     * thay ho so".
+     *
+     * @return array ['ho_so' => array|null, 'loi_ho_so' => string|null,
+     *                'ket_qua' => array, 'loi_ket_qua' => string|null]
+     */
+    protected function docHoSoVaLoi($ma)
+    {
         $hoSo = null;
         $loiHoSo = null;
 
@@ -50,46 +97,52 @@ class TraCuuLoiHoSoController extends Controller
             ]);
         }
 
-        return response()->json([
-            'profile' => $hoSo,
-            'profile_error' => $loiHoSo,
-            'data' => $ketQua['data'],
-            'summary' => $ketQua['summary'],
-        ]);
-    }
-
-    public function in(Request $request)
-    {
-        $ma = trim((string) $request->input('treatment_code'));
-
-        if ($ma === '') {
-            return response('Chưa nhập mã điều trị', 422);
-        }
-
-        $ketQua = $this->loi->cua($ma);
-
-        $hoSo = null;
+        $ketQua = $this->ketQuaRong();
+        $loiKetQua = null;
 
         try {
-            $hoSo = $this->hoSo->cua($ma);
+            $ketQua = $this->loi->cua($ma);
         } catch (\Exception $e) {
-            Log::error('Tra cuu loi ho so: loi doc HIS khi in', [
+            $loiKetQua = 'Không lấy được dữ liệu lỗi từ MySQL';
+            Log::error('Tra cuu loi ho so: loi doc du lieu loi (MySQL)', [
                 'treatment_code' => $ma,
                 'loi' => $e->getMessage(),
             ]);
         }
 
-        return view('khth.tra-cuu-loi-ho-so-in', [
-            'ma' => $ma,
-            'hoSo' => $hoSo,
-            'data' => $ketQua['data'],
-            'summary' => $ketQua['summary'],
-        ]);
+        return [
+            'ho_so' => $hoSo,
+            'loi_ho_so' => $loiHoSo,
+            'ket_qua' => $ketQua,
+            'loi_ket_qua' => $loiKetQua,
+        ];
+    }
+
+    /** Khung du lieu rong dung khi TreatmentIssueService nem loi - de view khong vo. */
+    protected function ketQuaRong()
+    {
+        return [
+            'data' => [
+                'treatment_code' => null,
+                'order_check' => [],
+                'hein_card' => [],
+                'xml3176' => [],
+            ],
+            'summary' => [
+                'total' => 0,
+                'order_check' => 0,
+                'hein_card' => 0,
+                'xml3176' => 0,
+                'critical' => 0,
+                'has_error' => false,
+                'truncated' => false,
+            ],
+        ];
     }
 
     public function traLaiThe(Request $request)
     {
-        $ma = trim((string) $request->input('treatment_code'));
+        $ma = $this->layMa($request);
 
         if ($ma === '') {
             return response()->json(['message' => 'Chưa nhập mã điều trị'], 422);
