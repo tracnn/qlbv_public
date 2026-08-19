@@ -39,6 +39,27 @@ mà giấy chứng sinh phục vụ.
 **(3) Bỏ `CTDT010` (độ dài `username`/`password`/`macskcb`).** Ba trường đó là tham số API, không
 phải nội dung chứng từ. `macskcb` đã được `CtdtMacskcb::phanGiai()` kiểm từ Giai đoạn 2B.
 
+### Lỗi nội dung KHÔNG chặn nạp
+
+Bộ kiểm **báo lỗi, không từ chối hồ sơ**. Đây là quyết định thiết kế, không phải thiếu sót — đừng
+thêm nhánh ném lỗi vào `CtdtImporter` cho các mã `CTDT001`–`CTDT008`.
+
+| | Chặn ở đâu | Ví dụ |
+|---|---|---|
+| Lỗi cấu trúc | Chặn ngay khi nạp (đã có từ Giai đoạn 2A) | base64 hỏng, `LOAIHOSO` không nhận ra, `<HOSO/>` rỗng |
+| Lỗi nội dung (Giai đoạn 3) | Không chặn nạp — chặn ở bước **gửi** | thiếu `HO_TEN`, ngày sai định dạng, `MACSKCB` lệch |
+
+Ba lý do:
+
+1. **Không lưu thì không có gì để xem.** Người vận hành cần mở tab Lỗi, thấy đúng chứng từ nào và
+   trường nào sai, rồi quay sang phần mềm sinh XML sửa. Chặn nạp thì bản ghi không tồn tại — họ chỉ
+   nhận được một dòng thông báo và không tra cứu được gì.
+2. **Một gói có nhiều hồ sơ.** Chặn cả gói vì một trường thiếu sẽ vứt luôn phần đúng.
+3. **Chỗ gây hại thật là lúc gửi lên cổng BHXH, không phải lúc lưu vào máy mình.** Cửa chặn đã ở đúng
+   chỗ đó: `so_loi > 0` → `CtdtTrangThaiGui::cua()` trả `CON_LOI` → Giai đoạn 4 không cho ký và gửi.
+
+Test `trang_thai_gui_thanh_CON_LOI_khi_bo_kiem_bat_duoc_loi` (Task 7) canh chính bất biến này.
+
 ### Bộ mã lỗi cuối cùng
 
 | Mã | Kiểm | Mức |
