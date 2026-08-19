@@ -60,4 +60,23 @@ return [
         '403' => 'Tài khoản đã bị khóa',
         '500' => 'Lỗi hệ thống',
     ],
+
+    // Danh muc ma loi cua bo kiem noi dung.
+    //
+    // VI SAO O CONFIG chu khong phai mot bang danh muc nhu xml3176_error_catalogs: ma loi
+    // o day do TA tu dinh nghia tu dac ta PL02, khong phai do BHXH ban hanh va cap nhat
+    // dinh ky. Mot bang danh muc chi co nghia khi co nguoi ngoai doi noi dung cua no.
+    //
+    // muc_do 'chan'    -> tinh vao ctdt_ho_so.so_loi, ho so khong duoc gui
+    // muc_do 'canh_bao' -> hien cho nguoi doc, KHONG chan gui
+    'ma_loi' => [
+        'CTDT001' => ['mo_ta' => 'Thiếu trường bắt buộc',                    'muc_do' => 'chan'],
+        'CTDT002' => ['mo_ta' => 'Trường ngày sai định dạng',                'muc_do' => 'chan'],
+        'CTDT003' => ['mo_ta' => 'Giới tính ngoài giá trị cho phép',         'muc_do' => 'chan'],
+        'CTDT004' => ['mo_ta' => 'Loại giấy tờ ngoài giá trị cho phép',      'muc_do' => 'chan'],
+        'CTDT005' => ['mo_ta' => 'Trường cờ ngoài giá trị 0/1',              'muc_do' => 'canh_bao'],
+        'CTDT006' => ['mo_ta' => 'Ngày kết thúc sớm hơn ngày bắt đầu',       'muc_do' => 'chan'],
+        'CTDT007' => ['mo_ta' => 'Mã cơ sở trong chứng từ lệch với hồ sơ',   'muc_do' => 'chan'],
+        'CTDT008' => ['mo_ta' => 'Thiếu mã thẻ BHYT',                        'muc_do' => 'canh_bao'],
+    ],
 ];
