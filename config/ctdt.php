@@ -41,6 +41,12 @@ return [
     ],
 
     // Bang ma ket qua muc 4 cua PL02, dung chung cho ca ba dich vu gui.
+    // CANH BAO KHOA MANG: PHP ep khoa mang dang chuoi so thanh int, vd '200' => int(200).
+    // array_key_exists('200', ...) va $mang['200'] van chay dung (PHP tu ep chuoi truy
+    // van thanh int), NHUNG foreach ($cfg as $ma => $mo) if ($ma === $maKetQuaTuCong) se
+    // LUON trUOT vi 200 === '200' la false. Tra bang array_key_exists() hoac so sanh
+    // long (==), tuyet doi KHONG dung === voi chuoi. Cung mot bay ma loai_hs o tren da
+    // canh bao.
     'ma_ket_qua' => [
         '200'  => 'Thành công',
         '205'  => 'fileBase64Str không hợp lệ',
@@ -50,6 +56,8 @@ return [
     ],
 
     // Ma ket qua lay token (muc I) - khac bang tren, dung rieng cho duong dang nhap.
+    // CUNG BAY KHOA INT NHU 'ma_ket_qua' O TREN: tra bang array_key_exists()/so sanh
+    // long, khong dung === voi chuoi.
     'ma_ket_qua_token' => [
         '200' => 'Lấy token thành công',
         '401' => 'Tài khoản không tồn tại',
