@@ -453,9 +453,16 @@ Hàm thuần trên chuỗi XML:
 - `nhanDienDichVu($xml): string` — thẻ gốc `HSCHUNGTU`→`CT2025`, `HSDLGBT`→`GBT`,
   `HSDLGCS`→`GCS`. Thẻ lạ → ném lỗi.
 - `macskcb($xml): string` — thiếu → ném lỗi (bài học XML3176).
-- `danhSachHoSo($xml): array` — chuẩn hóa cả ba dịch vụ về cùng một dạng: mảng các `HOSO`,
-  mỗi `HOSO` là mảng các `['loai_ho_so' => ..., 'noi_dung' => <XML đã giải base64>]`.
+- `danhSachHoSo($xml, $dichVu): array` — chuẩn hóa cả ba dịch vụ về cùng một dạng: mảng các
+  `HOSO`, mỗi `HOSO` là mảng các `['loai_ho_so' => ..., 'noi_dung' => <chuỗi XML>]`.
   Với `GBT`/`GCS` thì mảng có đúng một `HOSO` gồm một chứng từ.
+- `phanTichChungTu(array $chungTu, $chiSoHoSo): array` — biến `noi_dung` từ chuỗi thành
+  `SimpleXMLElement`, ném `GoiKhongDocDuocException` kèm ngữ cảnh `Ho so #N, FILEHOSO <loại>`.
+
+⚠️ **`danhSachHoSo()` cố ý KHÔNG parse nội dung.** Parse ngay lúc dựng danh sách nghĩa là việc
+đó nằm ngoài vòng lặp per-hồ-sơ, nên **một `NOIDUNGFILE` base64 hỏng sẽ kéo đổ cả tệp** — một
+gói 200 hồ sơ bị từ chối vì một hồ sơ sai. Tách `phanTichChungTu()` để `CtdtImporter` gọi nó
+**bên trong** khối `try` của từng hồ sơ.
 
 `SOLUONGHOSO` phải đọc bằng `(int)(string)`, **không** dùng `count()` trên node —
 `count()` trên một node SimpleXML luôn trả 1 bất kể giá trị thật (lỗi đã từng có trong XML3176).
@@ -477,7 +484,8 @@ Các bước:
    còn lại xuống.
 4. Với mỗi `FILEHOSO`: giải base64, `simplexml_load_string` bọc trong
    `libxml_use_internal_errors(true)` (tắt warning, tự báo lỗi).
-5. Đối chiếu `LOAIHOSO` ↔ thẻ gốc qua registry. Lệch → lỗi.
+5. Đối chiếu `LOAIHOSO` ↔ thẻ gốc qua registry. Lệch → lỗi. Hồ sơ **không có chứng từ nào**
+   → lỗi: `<HOSO/>` rỗng mà đi tiếp sẽ xóa sạch dữ liệu cũ rồi báo thành công.
 6. Xác định `ma_ho_so`, gọi `xoaHoSoCu($maHoSo)` — **trong transaction**, hỏng thì dữ liệu cũ
    còn nguyên.
 7. Lưu chi tiết vào bảng của từng loại, ghi `ctdt_chung_tu` với cột rút gọn.
@@ -831,3 +839,61 @@ xanh. Suite `Unit` giữ đúng mức đỏ có sẵn của repo (4 lỗi + 7 đ
 6. **Khóa mảng `config('ctdt.ma_ket_qua')` bị PHP ép thành `int`.** `'200' => ...` thành khóa
    `int(200)`, nên `$ma === $phanHoi['MaKetQua']` luôn trượt. Tra bằng `array_key_exists()`.
    Cảnh báo đã ghi ngay trên mảng trong `config/ctdt.php`.
+
+---
+
+## 12. Ghi chú chuyển tiếp — kết thúc Giai đoạn 2A
+
+Giai đoạn 2A hoàn tất trên nhánh `feature/ctdt-pl02-giai-doan-2a` (10 commit, `eda8b42..3c62d20`):
+`CtdtGoiParser`, `CtdtMaHoSo`, `CtdtLuuHoSo`, `CtdtImporter`, hai lớp kết quả, cây ngoại lệ có
+gốc chung, và 145 test đơn vị xanh. Suite `Unit` giữ đúng mức đỏ có sẵn của repo.
+
+### 12.1. Ba lỗi review toàn nhánh bắt được — đáng nhớ vì cả ba đều hỏng im lặng
+
+1. **Gói có `<HOSO/>` rỗng xóa sạch dữ liệu cũ rồi báo thành công.** Hồ sơ rỗng đi lọt qua
+   `CtdtMaHoSo` (khóa lùi vẫn suy được), qua vòng `xacNhanTheGoc` (chạy rỗng thì không kiểm gì),
+   và `xoaHoSoCu()` xóa hết chứng từ cũ trước khi ghi lại một vỏ rỗng. Chốt chặn nằm ở
+   `CtdtLuuHoSo::luu()`, **trước** mọi thao tác xóa — đặt ở tầng ghi để mọi đường vào tương lai
+   đều được bảo vệ.
+2. **Một `NOIDUNGFILE` base64 hỏng kéo đổ cả tệp.** Xem cảnh báo ở mục 5.2.
+3. **Không kiểm độ dài `macskcb` và `ma_ho_so`.** SQLite không cưỡng chế độ dài nên test không
+   bao giờ bắt được; trên MySQL strict thì `QueryException` **không mang `CtdtLoiNap`** nên thoát
+   khỏi `catch` và đổ cả lần nạp, còn MySQL lỏng thì cắt cụt im lặng và hồ sơ được gửi lên cổng
+   với mã cơ sở SAI. Nay có kiểm ở `CtdtImporter::macskcb()` (≤ 5) và `CtdtMaHoSo` (≤ 100).
+
+### 12.2. Bảy rủi ro cần xử khi viết Giai đoạn 2B
+
+1. **`CtdtImporter` chỉ nhận chuỗi, chưa có `nhapTuTep()`.** Controller sẽ phải tự đọc tệp, tự
+   xử mã hóa, tự giải nén nếu BHXH giao `.zip` — rồi lệnh Console ở Giai đoạn 5 viết lại bản thứ
+   hai. **Đúng cái bệnh mà module này sinh ra để tránh.** Thêm `nhapTuTep($duongDan, $tuyChon)`
+   vào `CtdtImporter` ngay từ 2B.
+2. **Chuỗi phân giải `macskcb` nằm trong một hàm private.** Màn tải lên muốn hiện "gói này sẽ
+   dùng mã cơ sở X, đúng không?" trước khi ghi thì phải nhân bản logic. Tách thành hàm công khai.
+3. **Tệp hỏng từ đầu không để lại vết trong CSDL.** `thatBaiSom()` trả `soThanhCong = 0`,
+   `soThatBai = 0`, không bản ghi nào. Cột `ctdt_ho_so.import_error` chưa ai ghi. Quyết định ở
+   2B: bảng nhật ký nạp riêng, hay chỉ thông báo tức thời.
+4. **Nạp lại reset trạng thái ký/gửi.** Nạp lại một hồ sơ **đã gửi thành công** là mất
+   `ma_gd`/`ma_ket_qua` (chỉ còn một dòng trong `lich_su_gui`). Màn tải lên **phải** hỏi lại khi
+   `ma_ho_so` trùng và bản cũ đã có `ma_gd`.
+5. **Ngoại lệ không mang `CtdtLoiNap` sẽ thành 500 trần** và hủy toàn bộ lần nạp. Controller 2B
+   cần `try/catch` bao ngoài đổi thành thông báo lịch sự cộng ghi log.
+6. **`ctdt_loi` bị xóa theo `ho_so_id`.** Khi Giai đoạn 3 dựng `CtdtChecker`, bản ghi lỗi nào tạo
+   ra với `ho_so_id` để trống sẽ sống sót qua lần nạp lại. Bất biến "mọi `ctdt_loi` luôn có
+   `ho_so_id`" phải được giữ.
+7. **`config('ctdt.dich_vu')` mới là seam một nửa.** `nhanDienDichVu()` đọc từ config, nhưng
+   `macskcb()`, `idGoi()`, `danhSachHoSo()` vẫn hardcode `'CT2025'`/`'GBT'`/`'GCS'`. Thêm dịch vụ
+   thứ tư phải sửa bốn chỗ trong parser, không phải chỉ thêm một dòng config.
+
+### 12.3. Một việc phải kiểm trên máy chủ thật, không phải bằng test
+
+`config/database.php` đặt `'engine' => null`, tức phó mặc `default_storage_engine` của máy chủ.
+Toàn bộ lập luận "nạp lại không để lại dữ liệu mồ côi" dựa vào khóa ngoại `onDelete('cascade')`
+của 12 bảng, mà **bộ test SQLite không chứng minh được** (Laravel 5.5 không bật
+`PRAGMA foreign_keys`). Trước khi tin, chạy trên máy chủ:
+
+```sql
+SHOW CREATE TABLE ctdt_chung_tu;
+SHOW CREATE TABLE ctdt_ct03;
+```
+
+và xác nhận `ENGINE=InnoDB` cùng các ràng buộc `FOREIGN KEY ... ON DELETE CASCADE` thực sự tồn tại.
