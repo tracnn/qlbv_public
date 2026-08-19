@@ -9,6 +9,7 @@ use App\Services\BHYT\DanhSachCoSo;
 use Yajra\Datatables\Datatables;
 use App\Services\Ctdt\CtdtDanhSach;
 use App\Services\Ctdt\CtdtTrangThaiGui;
+use App\Services\Ctdt\CtdtImporter;
 use App\Models\BHYT\Ctdt\CtdtChungTu;
 
 /**
@@ -112,6 +113,72 @@ class BHYTCtdtController extends Controller
     {
         return view('bhyt.ctdt.import', [
             'danhSachCoSo' => DanhSachCoSo::danhSach(),
+        ]);
+    }
+
+    /**
+     * Nhan tep tai len, nap dong bo va tra ket qua theo TUNG tep.
+     *
+     * Nap dong bo (khong day job) giong BHYTXml3176Controller: ket qua hien ngay, va noi
+     * gioi han bo nho tai cho thay vi phu thuoc mac dinh 128MB cua may chu.
+     */
+    public function uploadData(Request $request)
+    {
+        // Mot goi chung tu duoc phep toi 100MB. Giai base64 roi dung SimpleXML cho tung
+        // phan lam bo nho phinh gap nhieu lan kich thuoc tep, ma may chu chi cho 128MB.
+        // KHONG dung muc 4096M nhu cac lop Exports/: day la endpoint web ma Dropzone ban
+        // nhieu request song song, cho moi request 4GB co the lam can RAM that.
+        set_time_limit(600);
+        ini_set('memory_limit', '512M');
+
+        $tep = $request->file('xmls');
+
+        if (empty($tep)) {
+            return response()->json([
+                'thanh_cong' => false,
+                'thong_diep' => 'Không nhận được tệp nào.',
+                'chi_tiet'   => [],
+            ], 400);
+        }
+
+        $tep = is_array($tep) ? $tep : [$tep];
+
+        $importer = new CtdtImporter();
+        $tuyChon = [
+            'macskcb'     => $request->input('macskcb'),
+            'imported_by' => $request->user() ? $request->user()->loginname : null,
+        ];
+
+        $chiTiet = [];
+        $tatCaThanhCong = true;
+
+        foreach ($tep as $mot) {
+            $ten = $mot->getClientOriginalName();
+
+            // duong_dan_goc ghi TEN NGUOI DUNG THAY, khong phai duong dan tam cua PHP: tep
+            // tam bi xoa ngay sau request nen luu duong dan do la luu mot con tro chet.
+            $kq = $importer->nhapTuTep($mot->getRealPath(), array_merge($tuyChon, [
+                'duong_dan_goc' => $ten,
+            ]));
+
+            $tatCaThanhCong = $tatCaThanhCong && $kq->thanhCong;
+
+            $chiTiet[] = [
+                'tep'           => $ten,
+                'thanh_cong'    => (bool) $kq->thanhCong,
+                'so_thanh_cong' => (int) $kq->soThanhCong,
+                'so_that_bai'   => (int) $kq->soThatBai,
+                'ly_do'         => $kq->lyDoThatBai,
+                'ghi_de_da_gui' => $kq->dsGhiDeDaGui,
+            ];
+        }
+
+        return response()->json([
+            'thanh_cong' => $tatCaThanhCong,
+            'thong_diep' => $tatCaThanhCong
+                ? 'Đã nạp xong ' . count($chiTiet) . ' tệp.'
+                : 'Có tệp không nạp được, xem chi tiết bên dưới.',
+            'chi_tiet'   => $chiTiet,
         ]);
     }
 }
