@@ -46,6 +46,14 @@
 
 @push('after-scripts')
 <script>
+// Khoi tao select2 cho MOI o chon tren trang, ke ca cac o do partial dung chung sinh ra
+// (ma_cskcb). Cac o deu mang class 'select2' nhung class do chi la danh dau - khong goi
+// .select2() thi chung hien nhu <select> tron: mat o tim kiem, va khac han man XML3176.
+// Rieng imported_by tu goi .select2() cua no sau khi nap xong AJAX; goi hai lan la vo hai.
+$(function () {
+    $('.select2').select2({ width: '100%' });
+});
+
 // KHONG boc trong $(function(){...}): partials.load_data_button goi ham TOAN CUC
 // fetchData(startDate, endDate) va tu goi mot lan ngay khi trang tai xong. Ham nay phai
 // nam o pham vi window de no thay duoc.

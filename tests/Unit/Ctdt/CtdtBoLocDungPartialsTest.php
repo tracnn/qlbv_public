@@ -95,4 +95,30 @@ class CtdtBoLocDungPartialsTest extends TestCase
             'Man XML3176 khong truyen showExport, nen no phu thuoc gia tri mac dinh');
         $this->assertContains('id="export_xlsx"', view('partials.date_range')->render());
     }
+    /** @test */
+    public function man_danh_sach_co_khoi_tao_select2()
+    {
+        // Cac o loc mang class 'select2' nhung class do chi la danh dau. Khong goi
+        // .select2() thi chung hien nhu <select> tron - mat o tim kiem, va khac han man
+        // XML3176 von la thu ma man nay duoc yeu cau lam giong.
+        $blade = file_get_contents(base_path('resources/views/bhyt/ctdt/index.blade.php'));
+
+        $this->assertNotFalse($blade);
+        $this->assertContains(".select2').select2(", $blade,
+            'index.blade.php phai khoi tao select2 cho cac o loc');
+    }
+
+    /** @test */
+    public function moi_o_loc_deu_mang_class_select2()
+    {
+        $html = $this->locCtdt();
+
+        foreach (['dich_vu', 'loai_ho_so', 'trang_thai_gui', 'chi_con_loi'] as $id) {
+            $this->assertRegExp(
+                '/<select id="' . $id . '"[^>]*class="[^"]*select2/',
+                $html,
+                'O loc ' . $id . ' phai mang class select2'
+            );
+        }
+    }
 }
