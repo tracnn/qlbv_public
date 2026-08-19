@@ -897,3 +897,52 @@ SHOW CREATE TABLE ctdt_ct03;
 ```
 
 và xác nhận `ENGINE=InnoDB` cùng các ràng buộc `FOREIGN KEY ... ON DELETE CASCADE` thực sự tồn tại.
+
+---
+
+## 13. Ghi chú chuyển tiếp — kết thúc Giai đoạn 2B
+
+Giai đoạn 2B hoàn tất trên nhánh `feature/ctdt-pl02-giai-doan-2b` (15 commit, `bc8515f..7534fbc`):
+ba màn hình, `CtdtTrangThaiGui`, `CtdtDanhSach`, `CtdtDetailTabs`, `CtdtNhanTruong`, và 226 test
+đơn vị xanh. Suite `Unit` và `Feature` đều giữ đúng mức đỏ có sẵn của repo.
+
+### 13.1. Bốn lỗi review bắt được — ba trong số đó bảy vòng review từng task không thấy
+
+1. **XSS lưu trữ qua thẻ `<title>`.** `@section('title', ...)` đi vào `@yield` của layout, mà
+   `@yield` **không thoát**. Vòng review màn danh sách soi rất kỹ DataTables nhưng tiêu đề trang
+   nằm ngoài tầm nhìn của nó. `ma_ho_so` đến từ thẻ `MA_YTE` trong tệp XML, chỉ bị chặn 100 ký tự
+   — thừa chỗ cho một thẻ `</title><script>`. Nay bọc `e()`.
+2. **Danh sách trắng `DATATABLE_COLUMNS` được viết, được test, nhưng chưa nối vào truy vấn.**
+   Thiếu `->only(self::DATATABLE_COLUMNS)` trong `fetchData()`. Test canh nó **vẫn xanh** vì chỉ
+   soi hằng số chứ không soi hành vi — một niềm tin sai còn tệ hơn không có test. Bài học: test
+   một hàng rào phải gọi thật đường dẫn mà hàng rào bảo vệ.
+3. **Sắp xếp cột tính toán làm vỡ truy vấn.** `ho_ten`, `ma_the`, `trang_thai_nhan` là
+   `addColumn` nhưng thiếu `orderable: false` — bấm tiêu đề cột sinh `order by "ho_ten"` và trả
+   500. Nay đã khóa.
+4. **Bộ lọc lệch hàm suy trạng thái khi `ma_ket_qua` là `''` hoặc `'0'`.** `cua()` dùng
+   `!empty()` nên coi chúng là chưa có kết quả; SQL thì `whereNotNull` lại khớp. Nay đã đồng bộ,
+   và test tính chất phủ cả hai giá trị.
+
+### 13.2. Điểm tựa và điểm đau cho Giai đoạn 3–4
+
+**Điểm tựa:** `CtdtDanhSach::truyVan()` trả `Builder` chứ không phải `Collection`, nên nút "Ký và
+gửi hàng loạt theo bộ lọc hiện tại" cắm vào được mà controller vẫn mỏng.
+
+**Điểm đau — hai nguồn sự thật về trạng thái.** Cột hiển thị suy ở PHP (`CtdtTrangThaiGui::cua()`),
+bộ lọc suy ở SQL (`CtdtDanhSach::locTrangThai()`). Không có gì trong ngôn ngữ buộc chúng khớp —
+chỉ có test tính chất `bo_loc_trang_thai_khop_voi_CtdtTrangThaiGui_cho_moi_ho_so`. **Mỗi trạng
+thái mới của Giai đoạn 4 phải sửa hai chỗ, và phải thêm ca vào bộ dữ liệu của test đó.**
+
+Bốn điều khác cần nhớ:
+
+- **`->only()` chưa có sẽ tự phóng đại.** Mọi cột Giai đoạn 3 thêm vào `ctdt_ho_so` sẽ tự lọt ra
+  JSON danh sách nếu ai đó gỡ `->only()`. Giữ nó và giữ cả test hành vi.
+- **Nạp lại xóa sạch `ctdt_loi` và reset `so_loi`.** Giai đoạn 3 phải chạy lại bộ kiểm sau **mỗi**
+  lần nạp; nếu không, hồ sơ hỏng vừa nạp lại sẽ hiện "0 lỗi" — trông y như đã được sửa.
+- **`so_loi` là trục xoay của ba nơi**: cột trạng thái, bộ lọc "chỉ hồ sơ còn lỗi", và tab Lỗi.
+  Bộ kiểm phải ghi `so_loi` và các bản ghi `ctdt_loi` trong **cùng một transaction**.
+- **`delete()` xóa vĩnh viễn hồ sơ đã có `MaGD`** mà không để lại dấu vết ai xóa. Hộp xác nhận là
+  đủ cho hôm nay, nhưng khi đã gửi lên cổng thật thì cần soft-delete hoặc bảng nhật ký — tranh
+  chấp đối soát với BHXH sẽ không có gì để tra.
+- **Ngân sách tài nguyên của `uploadData`** (`set_time_limit(600)`, `memory_limit 512M`) không giữ
+  nổi nếu Giai đoạn 4 nhét ký số vào cùng request. Ký phải đi đường job.
