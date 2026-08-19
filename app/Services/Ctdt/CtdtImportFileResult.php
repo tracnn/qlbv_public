@@ -28,6 +28,9 @@ class CtdtImportFileResult
     /** @var array Cac ma_ho_so nhap thanh cong */
     public $dsMaHoSo = [];
 
+    /** @var array Cac ho so DA TUNG GUI vua bi ghi de: ['ma_ho_so' =>, 'ma_gd' =>] */
+    public $dsGhiDeDaGui = [];
+
     /** Hong ngay tu dau tep, chua xu ly ho so nao. */
     public static function thatBaiSom($lyDo)
     {
@@ -54,6 +57,13 @@ class CtdtImportFileResult
             if ($r->thanhCong) {
                 $kq->soThanhCong++;
                 $kq->dsMaHoSo[] = $r->maHoSo;
+
+                if (!empty($r->maGdBiGhiDe)) {
+                    // Nguoi dung duoc phep ghi de, nhung man hinh phai neu dich danh ho so
+                    // nao vua mat trang thai gui - im lang o day nghia la mot ho so da doi
+                    // soat voi BHXH mat dau vet ma khong ai hay.
+                    $kq->dsGhiDeDaGui[] = ['ma_ho_so' => $r->maHoSo, 'ma_gd' => $r->maGdBiGhiDe];
+                }
             } else {
                 $kq->soThatBai++;
                 $lyDo[] = 'Ho so #' . ($i + 1) . ': ' . $r->lyDoThatBai;
