@@ -131,4 +131,41 @@ class CtdtTrangThaiGuiTest extends TestCase
     {
         $this->assertNotEmpty(CtdtTrangThaiGui::nhan('khong_ton_tai'));
     }
+
+    /** @test */
+    public function ket_qua_tu_cong_thang_cau_hinh_dang_tat()
+    {
+        // Kịch bản: quản trị tắt submit_enabled sau khi hồ sơ đã gửi xong và có ma_ket_qua.
+        // Nhánh kiểm ma_ket_qua PHẢI đứng TRƯỚC nhánh kiểm cấu hình. Nếu không, danh sách sẽ
+        // hiện "Chức năng gửi đang tắt" cho một hồ sơ ĐÃ GỬI THÀNH CÔNG, làm nhầm người dùng.
+        config(['organization.chung_tu_dien_tu.submit_enabled' => false]);
+
+        $hoSo = $this->hoSo([
+            'so_loi' => 0, 'is_signed' => true, 'ma_gd' => 'HS_1', 'ma_ket_qua' => '200',
+        ]);
+
+        $this->assertSame(
+            CtdtTrangThaiGui::DA_GUI,
+            CtdtTrangThaiGui::cua($hoSo),
+            'Hồ sơ đã gửi xong (có ma_ket_qua = 200) phải báo DA_GUI, không phải GUI_TAT, dù cấu hình hiện đang tắt'
+        );
+    }
+
+    /** @test */
+    public function cong_tu_choi_thang_cau_hinh_dang_tat()
+    {
+        // Tương tự: nếu cấu hình bị tắt nhưng cổng từ chối (ma_ket_qua != 200), vẫn phải báo
+        // CONG_TU_CHOI, không phải GUI_TAT, để người dùng biết cần hành động gì.
+        config(['organization.chung_tu_dien_tu.submit_enabled' => false]);
+
+        $hoSo = $this->hoSo([
+            'so_loi' => 0, 'is_signed' => true, 'ma_gd' => 'HS_1', 'ma_ket_qua' => '205',
+        ]);
+
+        $this->assertSame(
+            CtdtTrangThaiGui::CONG_TU_CHOI,
+            CtdtTrangThaiGui::cua($hoSo),
+            'Hồ sơ bị cổng từ chối (ma_ket_qua = 205) phải báo CONG_TU_CHOI, không phải GUI_TAT'
+        );
+    }
 }
