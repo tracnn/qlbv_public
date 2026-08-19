@@ -2031,7 +2031,7 @@ class CtdtUploadTest extends TestCase
     }
 
     /** @test */
-    public function ghi_nhan_nguoi_nap()
+    public function khong_dang_nhap_van_nap_duoc()
     {
         $xml = $this->goiCt2025([[$this->chungTu('CT03', ['MA_YTE' => 'YT001'])]]);
 
