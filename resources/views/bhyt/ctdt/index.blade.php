@@ -82,8 +82,16 @@ $(function () {
             },
             columns: [
                 {
+                    // Ho ten, dich vu... deu doc thang tu tep XML ben ngoai (khong qua kiem
+                    // duyet). Moi gia tri lot vao chuoi HTML PHAI qua $('<div>').text(x).html()
+                    // truoc khi noi - khong thi mot ho ten dang "<img src=x onerror=...>" chay
+                    // ngay khi mo man danh sach.
                     "data": "ma_ho_so",
                     render: function (data, type, row) {
+                        if (type !== 'display') {
+                            return data;
+                        }
+
                         // ma_ho_so o nhanh lui chua dau '#' (vd Id-abc#1). Khong ma hoa thi
                         // trinh duyet cat tu dau '#' va URL tro sai ho so.
                         var url = "{{ route('bhyt.ctdt.detail', ['ma_ho_so' => '__MA__']) }}"
@@ -95,27 +103,44 @@ $(function () {
                         return '<a href="' + url + '">' + $('<div>').text(data).html() + '</a>' + canhBao;
                     }
                 },
-                { "data": "dich_vu", render: function (d) { return nhanDichVu(d); } },
-                { "data": "macskcb" },
-                { "data": "ho_ten" },
-                { "data": "ma_the" },
-                { "data": "so_chung_tu" },
+                {
+                    "data": "dich_vu",
+                    render: function (d, type) {
+                        var nhan = nhanDichVu(d);
+
+                        return type === 'display' ? $('<div>').text(nhan).html() : nhan;
+                    }
+                },
+                { "data": "macskcb", render: $.fn.dataTable.render.text() },
+                { "data": "ho_ten", render: $.fn.dataTable.render.text() },
+                { "data": "ma_the", render: $.fn.dataTable.render.text() },
+                { "data": "so_chung_tu", render: $.fn.dataTable.render.text() },
                 {
                     "data": "so_loi",
-                    render: function (d) {
-                        return Number(d) > 0 ? '<span class="nhan-canh-bao">' + d + '</span>' : d;
+                    render: function (d, type) {
+                        if (type !== 'display') {
+                            return d;
+                        }
+
+                        var an = $('<div>').text(d).html();
+
+                        return Number(d) > 0 ? '<span class="nhan-canh-bao">' + an + '</span>' : an;
                     }
                 },
                 { "data": "is_signed", render: function (d) { return Number(d) ? 'Đã ký' : '—'; } },
-                { "data": "trang_thai_nhan" },
-                { "data": "ma_gd" },
-                { "data": "thoi_gian_tiep_nhan" },
-                { "data": "imported_at" },
+                { "data": "trang_thai_nhan", render: $.fn.dataTable.render.text() },
+                { "data": "ma_gd", render: $.fn.dataTable.render.text() },
+                { "data": "thoi_gian_tiep_nhan", render: $.fn.dataTable.render.text() },
+                { "data": "imported_at", render: $.fn.dataTable.render.text() },
                 {
                     "data": "action",
                     orderable: false,
                     searchable: false,
-                    render: function (data) {
+                    render: function (data, type) {
+                        if (type !== 'display') {
+                            return data;
+                        }
+
                         var url = "{{ route('bhyt.ctdt.detail', ['ma_ho_so' => '__MA__']) }}"
                                   .replace('__MA__', encodeURIComponent(data));
 
