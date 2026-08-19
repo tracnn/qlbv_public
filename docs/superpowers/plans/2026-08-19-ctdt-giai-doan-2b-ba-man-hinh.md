@@ -25,6 +25,12 @@
 
 ## Hai quyết định đã chốt
 
+**(0) Màn nạp xử lý ĐỒNG BỘ, lệch đặc tả mục 6.4.** Đặc tả chọn "chỉ lưu tệp rồi đẩy job" vì
+máy chủ giới hạn PHP 128MB/120s. Nhưng `BHYTXml3176Controller::uploadData` đang parse ngay trong
+request và **tự nâng giới hạn** bằng `ini_set('memory_limit', '512M')` + `set_time_limit(600)` —
+lý do trong đặc tả yếu hơn tưởng. Đi đường đồng bộ thì kết quả hiện ngay, không cần bảng theo dõi
+tiến độ. Task 6 nâng giới hạn đúng cách đó.
+
 **(1) Tệp nạp hỏng ngay từ đầu chỉ hiện lỗi trên màn nạp**, không thêm bảng nhật ký. Giống XML3176
 đang làm. Cái giá: đóng trình duyệt là mất dấu vết — chấp nhận ở giai đoạn này.
 
@@ -1548,7 +1554,9 @@ Thêm phương thức:
             'loai_ho_so'     => $request->input('loai_ho_so'),
             'macskcb'        => $request->input('macskcb'),
             'tim'            => $request->input('tim'),
-            'chi_con_loi'    => $request->boolean('chi_con_loi'),
+            // Laravel 5.5 KHONG co Request::boolean() (them tu 5.8). DataTables gui '0'/'1'
+            // dang chuoi, ma (bool) '0' la TRUE - o loc se luon bat.
+            'chi_con_loi'    => filter_var($request->input('chi_con_loi'), FILTER_VALIDATE_BOOLEAN),
             'trang_thai_gui' => $request->input('trang_thai_gui'),
         ]);
 
@@ -2822,9 +2830,11 @@ class CtdtChiTietTest extends TestCase
     }
 
     /** @test */
-    public function ma_ho_so_khong_ton_tai_thi_404()
+    public function ma_ho_so_khong_ton_tai_thi_nem()
     {
-        $this->expectException(\Symfony\Component\HttpKernel\Exception\NotFoundHttpException::class);
+        // firstOrFail() nem ModelNotFoundException; Laravel chi doi no thanh 404 o tang xu ly
+        // ngoai le cua HTTP, ma test nay goi thang controller nen thay ngoai le goc.
+        $this->expectException(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
 
         $this->controller->detail('KHONG_TON_TAI');
     }
@@ -2903,9 +2913,9 @@ class CtdtChiTietTest extends TestCase
     }
 
     /** @test */
-    public function xoa_ho_so_khong_ton_tai_thi_404()
+    public function xoa_ho_so_khong_ton_tai_thi_nem()
     {
-        $this->expectException(\Symfony\Component\HttpKernel\Exception\NotFoundHttpException::class);
+        $this->expectException(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
 
         $this->controller->delete('KHONG_TON_TAI');
     }
