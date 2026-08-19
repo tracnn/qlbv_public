@@ -775,3 +775,45 @@ Những chỗ module này **cố tình làm khác**, kèm lý do:
 Những chỗ **giữ nguyên khuôn** vì đã được kiểm chứng: điểm vào nạp duy nhất · một hồ sơ một
 transaction · dispatch job sau commit · `QuyetDinhGui` kiểm cờ trước · lớp kết quả nạp
 (`ImportResult`/`ImportFileResult`) · bộ ba màn hình · route trong group `checkrole:xml-man`.
+
+---
+
+## 11. Ghi chú chuyển tiếp — kết thúc Giai đoạn 1
+
+Giai đoạn 1 hoàn tất trên nhánh `feature/ctdt-pl02-giai-doan-1` (12 commit, `f2e0b75..bf0c0e8`):
+12 bảng, 12 model, 9 lớp loại chứng từ, registry, cấu hình, disk `exportCtdt`, và 57 test đơn vị
+xanh. Suite `Unit` giữ đúng mức đỏ có sẵn của repo (4 lỗi + 7 đỏ, không liên quan module này).
+
+### 11.1. Điểm đã hoãn có chủ đích
+
+| Điểm | Vì sao hoãn |
+|---|---|
+| `CtdtLoaiRegistry::cho()` ném `InvalidArgumentException` còn `xacNhanTheGoc()` ném `RuntimeException` | Giai đoạn 2 nên gom về một `CtdtLoaiException` chung. Nếu importer chỉ bắt một loại, loại kia sẽ thoát ra và **kéo đổ cả gói XML** — trái nguyên tắc "một `HOSO` hỏng không kéo `HOSO` khác" ở mục 5.3. Quyết định lúc viết importer, không phải bây giờ. |
+| `DocThe` nằm trong namespace `App\Services\Ctdt\Loai` | Khi Giai đoạn 2 thêm namespace parser thật, tiện ích đọc XML này sẽ lạc chỗ. Dời cùng lúc, tránh đổi import hai lần. |
+| `config/ctdt.php` chưa có danh mục `ma_loi` | Thuộc Giai đoạn 3 (bộ kiểm), theo mục 4.7. |
+| `ctdt_loi.ma_loi` và `ctdt_loi.muc_do` để `NOT NULL` | Hai cột phân loại do chính bộ kiểm sinh ra, không phải dữ liệu nạp từ XML. `NULL` ở đó nghĩa là bộ kiểm có lỗi — chặn ở tầng CSDL là đúng chỗ. |
+| Khóa ngoại chưa được kiểm bằng test | Laravel 5.5 không bật `PRAGMA foreign_keys` cho SQLite (tùy chọn `foreign_key_constraints` có từ 5.7), nên ràng buộc khóa ngoại **không được thực thi trong test**. Ràng buộc `unique` thì có kiểm thật. Đừng viết test khẳng định cascade — nó cho cảm giác an tâm giả. |
+
+### 11.2. Sáu rủi ro cần xử khi viết Giai đoạn 2
+
+1. **Nhận dạng chứng từ khi nạp lại — nặng nhất.** `ctdt_chung_tu` không có ràng buộc unique nào
+   ngoài `id`, và ba trên chín loại (CT04, CT06, CT07) trả `maChungTu() === null`. Do đó **không
+   dùng được `updateOrCreate` theo `ma_chung_tu`**; chiến lược an toàn duy nhất là xóa sạch chứng
+   từ của hồ sơ rồi tạo lại, trong một transaction, xóa `ctdt_loi` của hồ sơ đó trước.
+2. **Không có cột trạng thái duy nhất.** Trạng thái trải trên `imported_at` / `checked_at` /
+   `is_signed` + `signed_at` / `submitted_at` / `so_loi`, và `is_signed` có thể mâu thuẫn với
+   `signed_at` khi ký hỏng giữa chừng. Chốt **một** scope/hàm định nghĩa trạng thái trước khi
+   viết importer, đừng để mỗi màn tự suy diễn.
+3. **`LoaiChungTu` là hợp đồng tĩnh hoàn toàn.** Nếu parser cần bơm phụ thuộc (bảng ánh xạ ICD,
+   cấu hình cơ sở, logger) thì không có chỗ bơm. Để parser là **lớp riêng nhận mô tả từ**
+   `LoaiChungTu`, đừng thêm `parse()` vào chính interface.
+4. **`noi_dung_goc` nhân đôi lưu trữ.** Mỗi chứng từ giữ XML nguyên văn trong CSDL, đồng thời
+   tệp gốc nằm trên disk `exportCtdt`. Với giới hạn PHP 128MB/120s của máy chủ mới, phải chunk
+   và giải phóng `SimpleXMLElement` sau mỗi `FILEHOSO`.
+5. **`submit_error` là `string(255)` có index, MySQL strict mode.** Một `ConnectException` của
+   Guzzle dài quá 255 ký tự đưa thẳng vào cột này sẽ ném `Data too long` — tức là **việc ghi
+   lại lỗi lại tự nó thất bại**, và hồ sơ mất luôn dấu vết. Toàn văn phản hồi phải vào
+   `submitted_message` (`text`); `submit_error` chỉ nhận mã hoặc tóm tắt đã `mb_substr`.
+6. **Khóa mảng `config('ctdt.ma_ket_qua')` bị PHP ép thành `int`.** `'200' => ...` thành khóa
+   `int(200)`, nên `$ma === $phanHoi['MaKetQua']` luôn trượt. Tra bằng `array_key_exists()`.
+   Cảnh báo đã ghi ngay trên mảng trong `config/ctdt.php`.

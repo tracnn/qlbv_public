@@ -128,6 +128,11 @@ return [
             'root' => 'D:\XML\ExportXml3176',
         ],
 
+        'exportCtdt' => [
+            'driver' => 'local',
+            'root' => 'D:\XML\ChungTuDienTu',
+        ],
+
         'congDuLieuYTeDienBien' => [
             'driver' => 'local',
             'root' => 'D:\XML\CongDuLieuYTeDienBien',
