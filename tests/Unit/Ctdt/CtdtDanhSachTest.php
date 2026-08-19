@@ -207,4 +207,54 @@ class CtdtDanhSachTest extends TestCase
 
         $this->assertSame(1, CtdtDanhSach::truyVan($loc)->count());
     }
+
+    /** @test */
+    public function cac_bo_loc_trang_thai_loai_tru_nhau()
+    {
+        // Ho so A vua con loi vua chua ky: theo thu tu uu tien cua CtdtTrangThaiGui::cua(),
+        // trang thai cua no la CON_LOI, khong phai CHUA_KY. Neu bo loc CHUA_KY khong loai
+        // tru ho so con loi, ho so A se hien o CA HAI bo loc va tong cac bo loc se lon hon
+        // tong so ho so - nguoi dung se khong tin man hinh nua.
+        $hoSoConLoi = $this->taoHoSo(['ma_ho_so' => 'YT_CON_LOI', 'so_loi' => 5, 'is_signed' => false]);
+        $hoSoChuaKy = $this->taoHoSo(['ma_ho_so' => 'YT_CHUA_KY', 'so_loi' => 0, 'is_signed' => false]);
+
+        $kqChuaKy = CtdtDanhSach::truyVan(['trang_thai_gui' => CtdtTrangThaiGui::CHUA_KY])->get();
+        $this->assertCount(
+            1,
+            $kqChuaKy,
+            'Bo loc CHUA_KY phai loai tru ho so con loi, neu khong tong cac bo loc se lon hon tong so ho so'
+        );
+        $this->assertSame(
+            'YT_CHUA_KY',
+            $kqChuaKy->first()->ma_ho_so,
+            'Ho so con loi (YT_CON_LOI) khong duoc xuat hien o bo loc CHUA_KY'
+        );
+
+        $kqConLoi = CtdtDanhSach::truyVan(['trang_thai_gui' => CtdtTrangThaiGui::CON_LOI])->get();
+        $this->assertCount(1, $kqConLoi);
+        $this->assertSame('YT_CON_LOI', $kqConLoi->first()->ma_ho_so);
+    }
+
+    /** @test */
+    public function ho_so_chua_ky_khong_xuat_hien_o_bo_loc_da_gui_hay_cong_tu_choi()
+    {
+        // Tang thu hai cua tinh loai tru: ho so chua ky (so_loi = 0, is_signed = false) chi
+        // duoc thuoc bo loc CHUA_KY, khong duoc lot qua cac bo loc "da ky" phia sau
+        // (DA_GUI, CONG_TU_CHOI) vi cung ly do tong cac bo loc phai bang tong so ho so.
+        $this->taoHoSo(['ma_ho_so' => 'YT_CHUA_KY', 'so_loi' => 0, 'is_signed' => false]);
+
+        $kqDaGui = CtdtDanhSach::truyVan(['trang_thai_gui' => CtdtTrangThaiGui::DA_GUI])->get();
+        $this->assertCount(
+            0,
+            $kqDaGui,
+            'Ho so chua ky khong duoc xuat hien o bo loc DA_GUI'
+        );
+
+        $kqCongTuChoi = CtdtDanhSach::truyVan(['trang_thai_gui' => CtdtTrangThaiGui::CONG_TU_CHOI])->get();
+        $this->assertCount(
+            0,
+            $kqCongTuChoi,
+            'Ho so chua ky khong duoc xuat hien o bo loc CONG_TU_CHOI'
+        );
+    }
 }
