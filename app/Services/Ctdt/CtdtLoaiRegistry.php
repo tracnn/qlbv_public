@@ -6,6 +6,9 @@ use App\Services\Ctdt\Loai\Ct03;
 use App\Services\Ctdt\Loai\Ct04;
 use App\Services\Ctdt\Loai\Ct06;
 use App\Services\Ctdt\Loai\Ct07;
+use App\Services\Ctdt\Loai\DieuTriNoiTru;
+use App\Services\Ctdt\Loai\DieuTriVoSinh;
+use App\Services\Ctdt\Loai\SucKhoeMe;
 
 /**
  * Diem tra cuu DUY NHAT tu gia tri LOAIHOSO sang lop loai chung tu.
@@ -23,10 +26,13 @@ class CtdtLoaiRegistry
     public static function tatCa()
     {
         return [
-            'CT03' => Ct03::class,
-            'CT04' => Ct04::class,
-            'CT06' => Ct06::class,
-            'CT07' => Ct07::class,
+            'CT03'              => Ct03::class,
+            'CT04'              => Ct04::class,
+            'CT06'              => Ct06::class,
+            'CT07'              => Ct07::class,
+            'GIAYDIEUTRINOITRU' => DieuTriNoiTru::class,
+            'GIAYDIEUTRIVOSINH' => DieuTriVoSinh::class,
+            'GIAYSUCKHOEME'     => SucKhoeMe::class,
         ];
     }
 
