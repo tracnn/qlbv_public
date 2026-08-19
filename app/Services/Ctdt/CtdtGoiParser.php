@@ -144,4 +144,66 @@ class CtdtGoiParser
 
         return $giaTri === '' ? null : $giaTri;
     }
+
+    /**
+     * Chuan hoa ca ba dich vu ve CUNG MOT dang.
+     *
+     * @return array Mang cac HOSO; moi HOSO la mang cac
+     *               ['loai_ho_so' => string, 'noi_dung' => \SimpleXMLElement],
+     *               GIU DUNG thu tu xuat hien trong tep.
+     * @throws GoiKhongDocDuocException khi noi dung base64 cua mot FILEHOSO khong parse duoc
+     */
+    public static function danhSachHoSo(\SimpleXMLElement $goi, $dichVu)
+    {
+        if ($dichVu === 'CT2025') {
+            return self::hoSoCuaCt2025($goi);
+        }
+
+        return self::hoSoCuaGoiPhang($goi, $dichVu === 'GBT' ? 'GIAYBAOTU' : 'GIAYCHUNGSINH');
+    }
+
+    /**
+     * HSCHUNGTU: DANHSACHHOSO > nhieu HOSO > nhieu FILEHOSO, noi dung base64.
+     */
+    private static function hoSoCuaCt2025(\SimpleXMLElement $goi)
+    {
+        if (!isset($goi->THONGTINHOSO->DANHSACHHOSO->HOSO)) {
+            return [];
+        }
+
+        $ketQua = [];
+
+        // PHAI foreach tren tap. Truy cap ->HOSO->FILEHOSO tren mot tap nhieu phan tu se
+        // TU LAY PHAN TU DAU va bo im lang cac ho so con lai - loi da tung co that.
+        foreach ($goi->THONGTINHOSO->DANHSACHHOSO->HOSO as $hoSo) {
+            $chungTu = [];
+
+            if (isset($hoSo->FILEHOSO)) {
+                foreach ($hoSo->FILEHOSO as $file) {
+                    $loai = trim((string) $file->LOAIHOSO);
+                    $noiDung = self::doc(base64_decode((string) $file->NOIDUNGFILE));
+
+                    $chungTu[] = ['loai_ho_so' => $loai, 'noi_dung' => $noiDung];
+                }
+            }
+
+            $ketQua[] = $chungTu;
+        }
+
+        return $ketQua;
+    }
+
+    /**
+     * HSDLGBT / HSDLGCS: mot the con duy nhat, noi dung nam thang trong the, KHONG base64.
+     *
+     * Van tra ve dang long hai tang de importer chi biet MOT dang.
+     */
+    private static function hoSoCuaGoiPhang(\SimpleXMLElement $goi, $tenThe)
+    {
+        if (!isset($goi->{$tenThe})) {
+            return [[]];
+        }
+
+        return [[['loai_ho_so' => $tenThe, 'noi_dung' => $goi->{$tenThe}]]];
+    }
 }
