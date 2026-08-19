@@ -257,4 +257,61 @@ class CtdtDanhSachTest extends TestCase
             'Ho so chua ky khong duoc xuat hien o bo loc CONG_TU_CHOI'
         );
     }
+
+    /**
+     * @test
+     *
+     * Test TINH CHAT: bo loc SQL trong CtdtDanhSach va ham suy trang thai
+     * CtdtTrangThaiGui::cua() la HAI CACH DIEN DAT cung mot quy tac. Kiem tung ca
+     * roi rac (nhu hai test truoc) thi cu va cho nay lai ho cho khac - vong fix
+     * round 1 da chung minh dieu do (bo qua ca so_loi=0,is_signed=false,ma_ket_qua=200).
+     * O day, voi MOI ho so trong bo du lieu, tap ma_ho_so ma bo loc SQL tra ve cho tung
+     * trang thai phai KHOP TUYET DOI voi tap ma_ho_so ma cua() gan cho trang thai do.
+     */
+    public function bo_loc_trang_thai_khop_voi_CtdtTrangThaiGui_cho_moi_ho_so()
+    {
+        config(['organization.chung_tu_dien_tu.submit_enabled' => true]);
+
+        $this->taoHoSo(['ma_ho_so' => 'A_CON_LOI_CHUA_KY', 'so_loi' => 5, 'is_signed' => false]);
+        $this->taoHoSo(['ma_ho_so' => 'B_CON_LOI_DA_KY_200', 'so_loi' => 5, 'is_signed' => true, 'ma_ket_qua' => '200']);
+        $this->taoHoSo(['ma_ho_so' => 'C_CHUA_KY', 'so_loi' => 0, 'is_signed' => false]);
+        $this->taoHoSo(['ma_ho_so' => 'D_CHUA_KY_CO_KET_QUA_200', 'so_loi' => 0, 'is_signed' => false, 'ma_ket_qua' => '200']);
+        $this->taoHoSo(['ma_ho_so' => 'E_DA_KY_CHUA_CO_KET_QUA', 'so_loi' => 0, 'is_signed' => true]);
+        $this->taoHoSo(['ma_ho_so' => 'F_DA_GUI', 'so_loi' => 0, 'is_signed' => true, 'ma_ket_qua' => '200']);
+        $this->taoHoSo(['ma_ho_so' => 'G_CONG_TU_CHOI', 'so_loi' => 0, 'is_signed' => true, 'ma_ket_qua' => '205']);
+
+        $tatCaHoSo = CtdtHoSo::all();
+
+        $cacTrangThaiCanKiem = [
+            CtdtTrangThaiGui::CON_LOI,
+            CtdtTrangThaiGui::CHUA_KY,
+            CtdtTrangThaiGui::DA_GUI,
+            CtdtTrangThaiGui::CONG_TU_CHOI,
+        ];
+
+        foreach ($cacTrangThaiCanKiem as $trangThai) {
+            $mongDoi = $tatCaHoSo
+                ->filter(function ($hoSo) use ($trangThai) {
+                    return CtdtTrangThaiGui::cua($hoSo) === $trangThai;
+                })
+                ->pluck('ma_ho_so')
+                ->sort()
+                ->values()
+                ->all();
+
+            $thucTe = CtdtDanhSach::truyVan(['trang_thai_gui' => $trangThai])
+                ->pluck('ma_ho_so')
+                ->sort()
+                ->values()
+                ->all();
+
+            $this->assertSame(
+                $mongDoi,
+                $thucTe,
+                "Bo loc SQL cho trang thai '{$trangThai}' phai tra ve dung tap ma_ho_so ma "
+                . "CtdtTrangThaiGui::cua() gan cho trang thai do. Mong doi: "
+                . implode(',', $mongDoi) . ' - Thuc te: ' . implode(',', $thucTe)
+            );
+        }
+    }
 }
