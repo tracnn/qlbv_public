@@ -11,6 +11,11 @@ use App\Services\Ctdt\CtdtDanhSach;
 use App\Services\Ctdt\CtdtTrangThaiGui;
 use App\Services\Ctdt\CtdtImporter;
 use App\Models\BHYT\Ctdt\CtdtChungTu;
+use App\Services\Ctdt\CtdtDetailTabs;
+use App\Services\Ctdt\CtdtNhanTruong;
+use App\Services\Ctdt\CtdtLoaiRegistry;
+use App\Services\Ctdt\CtdtLuuHoSo;
+use App\Models\BHYT\Ctdt\CtdtHoSo;
 
 /**
  * Ba man hinh cua module chung tu dien tu: danh sach, nap tep, chi tiet.
@@ -180,5 +185,94 @@ class BHYTCtdtController extends Controller
                 : 'Có tệp không nạp được, xem chi tiết bên dưới.',
             'chi_tiet'   => $chiTiet,
         ]);
+    }
+
+    public function detail($ma_ho_so)
+    {
+        $hoSo = CtdtHoSo::with('chungTu')->where('ma_ho_so', $ma_ho_so)->firstOrFail();
+
+        return view('bhyt.ctdt.detail', [
+            'hoSo' => $hoSo,
+            'tabs' => CtdtDetailTabs::cua($hoSo),
+        ]);
+    }
+
+    /**
+     * Mot tab, nap luoi khi nguoi dung bam vao.
+     *
+     * Chin loai x toi 69 truong ma nap het mot luot thi trang nang vo ich - phan lon tab
+     * khong bao gio duoc mo.
+     */
+    public function detailTab($ma_ho_so, $loai)
+    {
+        $hoSo = CtdtHoSo::with('chungTu')->where('ma_ho_so', $ma_ho_so)->firstOrFail();
+
+        if (!CtdtDetailTabs::hopLe($hoSo, $loai)) {
+            abort(404);
+        }
+
+        if ($loai === CtdtDetailTabs::TAB_XML) {
+            return view('bhyt.ctdt.tab-xml-goc', [
+                'hoSo'    => $hoSo,
+                'chungTu' => $hoSo->chungTu->values(),
+            ]);
+        }
+
+        $lop = CtdtLoaiRegistry::cho($loai);
+        $truong = $lop::truong();
+        $tenModel = $lop::model();
+
+        $banGhi = [];
+
+        foreach ($hoSo->chungTu->where('loai_ho_so', $loai) as $chungTu) {
+            $chiTiet = $tenModel::where('chung_tu_id', $chungTu->id)->first();
+
+            if ($chiTiet === null) {
+                continue;
+            }
+
+            $dong = [];
+
+            foreach ($truong as $the => $cot) {
+                $giaTri = $chiTiet->{$cot};
+
+                // Bo qua o trong: CT03 co 33 truong, giay chung sinh 69, ma mot ho so that
+                // thuong chi dien mot phan. Hien du ca truong trong lam nguoi doc phai loc
+                // bang mat.
+                if ($giaTri === null || trim((string) $giaTri) === '') {
+                    continue;
+                }
+
+                $dong[] = ['nhan' => CtdtNhanTruong::cua($the), 'gia_tri' => (string) $giaTri];
+            }
+
+            $banGhi[] = $dong;
+        }
+
+        return view('bhyt.ctdt.tab-chung-tu', [
+            'hoSo'   => $hoSo,
+            'loai'   => $loai,
+            'nhan'   => $lop::tenTab(),
+            'banGhi' => $banGhi,
+        ]);
+    }
+
+    /**
+     * Xoa han mot ho so. Route da gioi han checkrole:superadministrator - xoa mot ho so da
+     * co MaGD la xoa dau vet doi soat voi BHXH.
+     */
+    public function delete($ma_ho_so)
+    {
+        $hoSo = CtdtHoSo::where('ma_ho_so', $ma_ho_so)->firstOrFail();
+
+        // Dung lai CtdtLuuHoSo::xoaHoSoCu(): no biet xoa ban ghi chi tiet o dung bang cua
+        // tung loai. Dua vao khoa ngoai cascade thi tren SQLite (va tren may chu neu bang
+        // khong phai InnoDB) se de lai rac ma khong ai phat hien.
+        $luu = new CtdtLuuHoSo();
+        $luu->xoaHoSoCu($ma_ho_so);
+
+        $hoSo->delete();
+
+        return response()->json(['thanh_cong' => true]);
     }
 }
