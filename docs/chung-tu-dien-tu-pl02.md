@@ -62,7 +62,7 @@ Máy chủ cổng: `https://egw.baohiemxahoi.gov.vn`. Lấy token dùng lại
 | Cây ngoại lệ nạp | `app/Services/Ctdt/Loi/` |
 | Ba màn hình | `app/Http/Controllers/BHYT/BHYTCtdtController.php`, `resources/views/bhyt/ctdt/` |
 | Suy trạng thái, bộ lọc, tab động, nhãn trường | `app/Services/Ctdt/CtdtTrangThaiGui.php`, `CtdtDanhSach.php`, `CtdtDetailTabs.php`, `CtdtNhanTruong.php` |
-| 226 test đơn vị | `tests/Unit/Ctdt/` |
+| 239 test đơn vị | `tests/Unit/Ctdt/` |
 
 **Chưa có (đúng phạm vi, không phải thiếu sót):** bộ kiểm lỗi và job kiểm (Giai đoạn 3); ký số,
 service gửi lên cổng, nút "Ký và gửi" (Giai đoạn 4); xuất Excel, lệnh Console quét thư mục,

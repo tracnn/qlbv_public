@@ -73,6 +73,7 @@ class BHYTCtdtController extends Controller
             'dich_vu'        => $request->input('dich_vu'),
             'loai_ho_so'     => $request->input('loai_ho_so'),
             'macskcb'        => $request->input('macskcb'),
+            'imported_by'    => $request->input('imported_by'),
             'tim'            => $request->input('tim'),
             // Laravel 5.5 KHONG co Request::boolean() (them tu 5.8). DataTables gui '0'/'1'
             // dang chuoi, ma (bool) '0' la TRUE - o loc se luon bat.

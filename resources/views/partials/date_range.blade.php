@@ -45,6 +45,11 @@
                 <input class="form-control" type="text" id="date_range">
             </div>
         </div>
+        {{-- Nut xuat Excel gan lien voi khoi chon khoang thoi gian vi moi man dung no
+             deu xuat theo dung khoang dang loc. Man nao CHUA co duong xuat thi truyen
+             ['showExport' => false] khi include - de nut o day se la mot nut chet.
+             MAC DINH true: cac man dang dung partial nay khong phai sua gi. --}}
+        @if (isset($showExport) ? $showExport : true)
         <div class="col-sm-2">
             <div class="form-group row">
                 <label for="export_xlsx">XLS</label>
@@ -53,6 +58,7 @@
                 </button>
             </div>
         </div>
+        @endif
     </div>
 </div>
 

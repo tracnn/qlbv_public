@@ -323,4 +323,45 @@ class CtdtDanhSachTest extends TestCase
             );
         }
     }
+    /** @test */
+    public function loc_theo_nguoi_nap()
+    {
+        $this->taoHoSo(['ma_ho_so' => 'YT001', 'imported_by' => 'nguoia']);
+        $this->taoHoSo(['ma_ho_so' => 'YT002', 'imported_by' => 'nguoib']);
+
+        $kq = CtdtDanhSach::truyVan(['imported_by' => 'nguoib'])->get();
+
+        $this->assertCount(1, $kq);
+        $this->assertSame('YT002', $kq->first()->ma_ho_so);
+    }
+
+    /** @test */
+    public function khoang_ngay_dang_co_gio_duoc_dung_nguyen_van()
+    {
+        // Bo chon khoang thoi gian (partials.date_range) gui len 'YYYY-MM-DD HH:mm:ss'.
+        // Cu noi ' 00:00:00' vao thi thanh '2026-08-19 08:00:00 00:00:00' - MySQL doc
+        // khong ra, tra ve rong, va man hinh trong tron ma khong bao gi ca.
+        $this->taoHoSo(['ma_ho_so' => 'SOM', 'imported_at' => '2026-08-19 07:00:00']);
+        $this->taoHoSo(['ma_ho_so' => 'TRONG', 'imported_at' => '2026-08-19 10:00:00']);
+        $this->taoHoSo(['ma_ho_so' => 'MUON', 'imported_at' => '2026-08-19 20:00:00']);
+
+        $kq = CtdtDanhSach::truyVan([
+            'tu_ngay'  => '2026-08-19 08:00:00',
+            'den_ngay' => '2026-08-19 12:00:00',
+        ])->get();
+
+        $this->assertCount(1, $kq, 'Chi ho so nap trong khung gio duoc chon');
+        $this->assertSame('TRONG', $kq->first()->ma_ho_so);
+    }
+
+    /** @test */
+    public function khoang_ngay_dang_ngay_tran_van_bao_gom_ca_ngay()
+    {
+        // Hai dang phai cung song: o ngay tran (khong co gio) van phai lay tron ngay.
+        $this->taoHoSo(['ma_ho_so' => 'YT001', 'imported_at' => '2026-08-19 23:30:00']);
+
+        $kq = CtdtDanhSach::truyVan(['tu_ngay' => '2026-08-19', 'den_ngay' => '2026-08-19'])->get();
+
+        $this->assertCount(1, $kq);
+    }
 }
