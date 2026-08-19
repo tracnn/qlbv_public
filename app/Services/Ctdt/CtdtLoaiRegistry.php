@@ -11,6 +11,8 @@ use App\Services\Ctdt\Loai\DieuTriVoSinh;
 use App\Services\Ctdt\Loai\SucKhoeMe;
 use App\Services\Ctdt\Loai\GiayBaoTu;
 use App\Services\Ctdt\Loai\GiayChungSinh;
+use App\Services\Ctdt\Loi\LoaiKhongBietException;
+use App\Services\Ctdt\Loi\TheGocLechException;
 
 /**
  * Diem tra cuu DUY NHAT tu gia tri LOAIHOSO sang lop loai chung tu.
@@ -51,7 +53,7 @@ class CtdtLoaiRegistry
     public static function cho($loaiHoSo)
     {
         if (!self::co($loaiHoSo)) {
-            throw new \InvalidArgumentException('Loai ho so khong nam trong dang ky: ' . $loaiHoSo);
+            throw new LoaiKhongBietException('Loai ho so khong nam trong dang ky: ' . $loaiHoSo);
         }
 
         return self::tatCa()[$loaiHoSo];
@@ -66,7 +68,7 @@ class CtdtLoaiRegistry
         $mongDoi = $lop::theGoc();
 
         if ($mongDoi !== $theGocThucTe) {
-            throw new \RuntimeException(
+            throw new TheGocLechException(
                 'LOAIHOSO ' . $loaiHoSo . ' mong doi the goc <' . $mongDoi
                 . '> nhung noi dung la <' . $theGocThucTe . '>'
             );
