@@ -44,6 +44,7 @@ class CtdtImporterTest extends TestCase
     /** @test */
     public function nhap_giay_bao_tu_va_giay_chung_sinh()
     {
+        config(['organization.BHYT.ma_cskcb' => '01013']);
         $kqGbt = $this->importer->nhapTuChuoi($this->goiGbt(['MA_GBT' => 'GBT-1']));
         $kqGcs = $this->importer->nhapTuChuoi(
             $this->goiGcs(['MA_GCS' => 'GCS-1']),
