@@ -280,6 +280,15 @@ class CtdtDanhSachTest extends TestCase
         $this->taoHoSo(['ma_ho_so' => 'F_DA_GUI', 'so_loi' => 0, 'is_signed' => true, 'ma_ket_qua' => '200']);
         $this->taoHoSo(['ma_ho_so' => 'G_CONG_TU_CHOI', 'so_loi' => 0, 'is_signed' => true, 'ma_ket_qua' => '205']);
 
+        // I2: Giai doan 4 luu phan hoi cong co the co maKetQua RONG (chuoi rong hoac '0').
+        // !empty($hoSo->ma_ket_qua) cua CtdtTrangThaiGui::cua() coi CA HAI la "chua co ket
+        // qua" -> ho so nay phai la CHUA_GUI, khong phai CONG_TU_CHOI. Truoc khi sua, bo
+        // loc SQL cua CONG_TU_CHOI khop ca chuoi rong/'0', nen hai ho so nay se lot vao bo
+        // loc CONG_TU_CHOI trong khi cua() gan chung cho CHUA_GUI - vong lap kiem tra ben
+        // duoi se bat duoc lech nay o nhanh CONG_TU_CHOI (mongDoi khong co, thuc te co).
+        $this->taoHoSo(['ma_ho_so' => 'H_KET_QUA_RONG', 'so_loi' => 0, 'is_signed' => true, 'ma_ket_qua' => '']);
+        $this->taoHoSo(['ma_ho_so' => 'I_KET_QUA_KHONG', 'so_loi' => 0, 'is_signed' => true, 'ma_ket_qua' => '0']);
+
         $tatCaHoSo = CtdtHoSo::all();
 
         $cacTrangThaiCanKiem = [

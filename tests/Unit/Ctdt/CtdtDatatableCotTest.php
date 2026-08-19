@@ -3,7 +3,11 @@
 namespace Tests\Unit\Ctdt;
 
 use Tests\TestCase;
+use Tests\Support\DungBangCtdtSqlite;
+use Illuminate\Http\Request;
 use App\Http\Controllers\BHYT\BHYTCtdtController;
+use App\Models\BHYT\Ctdt\CtdtHoSo;
+use App\Models\BHYT\Ctdt\CtdtChungTu;
 
 /**
  * Khoa danh sach cot di ra ngoai trong JSON cua DataTables.
@@ -17,6 +21,8 @@ use App\Http\Controllers\BHYT\BHYTCtdtController;
  */
 class CtdtDatatableCotTest extends TestCase
 {
+    use DungBangCtdtSqlite;
+
     /** @test */
     public function danh_sach_cot_khong_rong_va_khong_trung()
     {
@@ -68,6 +74,59 @@ class CtdtDatatableCotTest extends TestCase
         foreach (['noi_dung_goc', 'lich_su_gui', 'submitted_message'] as $cam) {
             $this->assertNotContains($cam, BHYTCtdtController::DATATABLE_COLUMNS,
                 'Cot ' . $cam . ' khong duoc ra JSON danh sach');
+        }
+    }
+
+    /**
+     * @test
+     *
+     * Test HANH VI - khong chi soi hang so DATATABLE_COLUMNS nhu bon test tren, ma goi
+     * THAT fetchData() va kiem JSON tra ra. Truoc dot sua nay, ba test tren van XANH trong
+     * khi fetchData() khong he goi ->only(...): DATATABLE_COLUMNS chi la mot hang so vo
+     * chu, khong ai ap dung no. Do la niem tin sai, con te hon la khong co test.
+     */
+    public function fetchData_khong_tra_cac_cot_nhay_cam_ra_JSON()
+    {
+        $this->chuanBiBangCtdt();
+
+        $hoSo = CtdtHoSo::create([
+            'ma_ho_so'           => 'YT001',
+            'dich_vu'            => 'CT2025',
+            'loai_hs'            => '39',
+            'macskcb'            => '01929',
+            'so_chung_tu'        => 1,
+            'imported_at'        => '2026-08-19 08:00:00',
+            'lich_su_gui'        => '[2026-08-01] nap lai, ban truoc: MaGD=HS_1',
+            'submitted_message'  => 'Cong tra ve: khong hop le',
+            'import_error'       => 'The XML nao do bi thieu',
+            'duong_dan_goc'      => '/tmp/goi-that.xml',
+        ]);
+
+        CtdtChungTu::create([
+            'ho_so_id'     => $hoSo->id,
+            'loai_ho_so'   => 'CT03',
+            'ma_chung_tu'  => 'YT001',
+            'ma_the'       => 'DN123',
+            'ho_ten'       => 'Nguyen Van Test',
+            'noi_dung_goc' => '<CT03/>',
+        ]);
+
+        $controller = new BHYTCtdtController();
+
+        $phanHoi = $controller->fetchData(Request::create('/bhyt/ctdt/fetch-data', 'GET'));
+        $json = json_decode($phanHoi->getContent(), true);
+
+        $this->assertArrayHasKey('data', $json, 'Phan hoi khong co khoa data: ' . $phanHoi->getContent());
+        $this->assertNotEmpty($json['data'], 'Khong co dong nao duoc tra ve');
+
+        $dong = $json['data'][0];
+
+        foreach (['lich_su_gui', 'submitted_message', 'import_error', 'duong_dan_goc', 'id'] as $cam) {
+            $this->assertArrayNotHasKey(
+                $cam,
+                $dong,
+                'Cot nhay cam "' . $cam . '" lot ra JSON danh sach - only(DATATABLE_COLUMNS) khong duoc ap dung'
+            );
         }
     }
 }

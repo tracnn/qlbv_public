@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\BHYT;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 
 use App\Services\BHYT\DanhSachCoSo;
@@ -110,6 +111,7 @@ class BHYTCtdtController extends Controller
             ->addColumn('action', function ($hoSo) {
                 return $hoSo->ma_ho_so;
             })
+            ->only(self::DATATABLE_COLUMNS)
             ->rawColumns([])
             ->make(true);
     }
@@ -157,8 +159,43 @@ class BHYTCtdtController extends Controller
         $chiTiet = [];
         $tatCaThanhCong = true;
 
+        // Toi da 100MB moi tep - phai khop voi con so acceptedFiles/maxFilesize trong blade.
+        // Kiem o day: "acceptedFiles" va "maxFilesize" cua Dropzone CHI la kiem phia trinh
+        // duyet, ai goi thang endpoint (khong qua form) se lot qua het.
+        $kichThuocToiDa = 100 * 1024 * 1024;
+
         foreach ($tep as $mot) {
             $ten = $mot->getClientOriginalName();
+
+            // Ba kiem server-side ma trinh duyet khong the thay the: tep tai len loi giua
+            // chung, khong phai .xml, hoac vuot 100MB deu phai bi chan TRUOC khi cham toi
+            // SimpleXML - nap thang mot tep nhi phan lon vao file_get_contents() la fatal
+            // het bo nho thay vi mot dong "tep hong" tu te.
+            if (!$mot->isValid()) {
+                $tatCaThanhCong = false;
+                $chiTiet[] = $this->chiTietLoiTaiLen($ten, 'Tải lên lỗi, mã lỗi: ' . $mot->getError());
+                continue;
+            }
+
+            $phanMoRong = strtolower($mot->getClientOriginalExtension());
+
+            if ($phanMoRong !== 'xml') {
+                $tatCaThanhCong = false;
+                $chiTiet[] = $this->chiTietLoiTaiLen(
+                    $ten,
+                    'Chỉ nhận tệp .xml, tệp này có phần mở rộng "' . $phanMoRong . '"'
+                );
+                continue;
+            }
+
+            if ($mot->getSize() > $kichThuocToiDa) {
+                $tatCaThanhCong = false;
+                $chiTiet[] = $this->chiTietLoiTaiLen(
+                    $ten,
+                    'Tệp vượt quá 100MB (kích thước thực: ' . $mot->getSize() . ' byte)'
+                );
+                continue;
+            }
 
             // duong_dan_goc ghi TEN NGUOI DUNG THAY, khong phai duong dan tam cua PHP: tep
             // tam bi xoa ngay sau request nen luu duong dan do la luu mot con tro chet.
@@ -185,6 +222,23 @@ class BHYTCtdtController extends Controller
                 : 'Có tệp không nạp được, xem chi tiết bên dưới.',
             'chi_tiet'   => $chiTiet,
         ]);
+    }
+
+    /**
+     * Mot dong chi_tiet cho tep bi chan TRUOC khi cham toi CtdtImporter - cung hinh dang voi
+     * dong duoc dung tu CtdtImportFileResult, de phia trinh duyet khong phai phan biet hai
+     * nguon.
+     */
+    private function chiTietLoiTaiLen($ten, $lyDo)
+    {
+        return [
+            'tep'           => $ten,
+            'thanh_cong'    => false,
+            'so_thanh_cong' => 0,
+            'so_that_bai'   => 0,
+            'ly_do'         => $lyDo,
+            'ghi_de_da_gui' => [],
+        ];
     }
 
     public function detail($ma_ho_so)
@@ -216,6 +270,14 @@ class BHYTCtdtController extends Controller
                 'hoSo'    => $hoSo,
                 'chungTu' => $hoSo->chungTu->values(),
             ]);
+        }
+
+        // hopLe() lui ve chinh ma loai khi registry khong biet no, nen no van tra true cho
+        // mot loai da bi go khoi registry (vd sau khi Giai doan 3/4 thu hep dang ky). Khong
+        // kiem lai o day thi CtdtLoaiRegistry::cho() ben duoi nem LoaiKhongBietException va
+        // nguoi dung thay 500 thay vi 404.
+        if (!CtdtLoaiRegistry::co($loai)) {
+            abort(404);
         }
 
         $lop = CtdtLoaiRegistry::cho($loai);
@@ -268,10 +330,16 @@ class BHYTCtdtController extends Controller
         // Dung lai CtdtLuuHoSo::xoaHoSoCu(): no biet xoa ban ghi chi tiet o dung bang cua
         // tung loai. Dua vao khoa ngoai cascade thi tren SQLite (va tren may chu neu bang
         // khong phai InnoDB) se de lai rac ma khong ai phat hien.
-        $luu = new CtdtLuuHoSo();
-        $luu->xoaHoSoCu($ma_ho_so);
+        //
+        // Boc trong transaction: neu $hoSo->delete() hong giua chung, khong duoc de lai
+        // mot ctdt_ho_so mo coi (so_chung_tu > 0 nhung chung tu da bi xoa het) - man danh
+        // sach van dem no, man chi tiet mo ra rong.
+        DB::transaction(function () use ($ma_ho_so, $hoSo) {
+            $luu = new CtdtLuuHoSo();
+            $luu->xoaHoSoCu($ma_ho_so);
 
-        $hoSo->delete();
+            $hoSo->delete();
+        });
 
         return response()->json(['thanh_cong' => true]);
     }

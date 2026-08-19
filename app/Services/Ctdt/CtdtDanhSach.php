@@ -101,12 +101,22 @@ class CtdtDanhSach
         }
 
         if ($trangThai === CtdtTrangThaiGui::CONG_TU_CHOI) {
-            return $q->whereNotNull('ma_ket_qua')->where('ma_ket_qua', '<>', '200');
+            // Phai khop CHINH XAC voi !empty($hoSo->ma_ket_qua) cua CtdtTrangThaiGui::cua():
+            // chuoi rong VA chuoi '0' deu la "chua co ket qua", khong phai "bi tu choi".
+            return $q->whereNotNull('ma_ket_qua')
+                ->where('ma_ket_qua', '<>', '200')
+                ->where('ma_ket_qua', '<>', '')
+                ->where('ma_ket_qua', '<>', '0');
         }
 
         // GUI_TAT va CHUA_GUI cung la "da ky, chua co ket qua tu cong"; phan biet chung
         // bang CAU HINH chu khong bang du lieu, nen khong the loc bang SQL rieng.
-        return $q->whereNull('ma_ket_qua');
+        // Gom ca null LAN chuoi rong/'0': !empty() cua PHP coi ca ba la "chua co ket qua".
+        return $q->where(function ($q2) {
+            $q2->whereNull('ma_ket_qua')
+                ->orWhere('ma_ket_qua', '')
+                ->orWhere('ma_ket_qua', '0');
+        });
     }
 
     private static function coGiaTri(array $loc, $khoa)

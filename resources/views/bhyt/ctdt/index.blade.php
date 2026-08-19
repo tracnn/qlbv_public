@@ -112,8 +112,8 @@ $(function () {
                     }
                 },
                 { "data": "macskcb", render: $.fn.dataTable.render.text() },
-                { "data": "ho_ten", render: $.fn.dataTable.render.text() },
-                { "data": "ma_the", render: $.fn.dataTable.render.text() },
+                { "data": "ho_ten", orderable: false, searchable: false, render: $.fn.dataTable.render.text() },
+                { "data": "ma_the", orderable: false, searchable: false, render: $.fn.dataTable.render.text() },
                 { "data": "so_chung_tu", render: $.fn.dataTable.render.text() },
                 {
                     "data": "so_loi",
@@ -128,7 +128,7 @@ $(function () {
                     }
                 },
                 { "data": "is_signed", render: function (d) { return Number(d) ? 'Đã ký' : '—'; } },
-                { "data": "trang_thai_nhan", render: $.fn.dataTable.render.text() },
+                { "data": "trang_thai_nhan", orderable: false, searchable: false, render: $.fn.dataTable.render.text() },
                 { "data": "ma_gd", render: $.fn.dataTable.render.text() },
                 { "data": "thoi_gian_tiep_nhan", render: $.fn.dataTable.render.text() },
                 { "data": "imported_at", render: $.fn.dataTable.render.text() },

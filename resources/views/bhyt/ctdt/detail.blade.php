@@ -1,6 +1,6 @@
 @extends('adminlte::page')
 
-@section('title', 'Chi tiết hồ sơ ' . $hoSo->ma_ho_so)
+@section('title', e('Chi tiết hồ sơ ' . $hoSo->ma_ho_so))
 
 @section('content_header')
 <h1>Chi tiết hồ sơ <small>{{ $hoSo->ma_ho_so }}</small></h1>

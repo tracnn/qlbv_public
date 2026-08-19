@@ -149,6 +149,50 @@ class CtdtUploadTest extends TestCase
     }
 
     /** @test */
+    public function chan_tep_khong_phai_xml_phia_may_chu()
+    {
+        // acceptedFiles: ".xml" trong blade CHI la kiem phia trinh duyet. POST thang mot
+        // tep nhi phan (vd .exe) phai bi chan o day, TRUOC khi cham toi SimpleXML.
+        $duongDan = tempnam(sys_get_temp_dir(), 'up') . '.exe';
+        file_put_contents($duongDan, 'MZ khong phai XML');
+        $this->tepTam[] = $duongDan;
+
+        $tep = new UploadedFile($duongDan, 'ma-doc.exe', 'application/octet-stream', filesize($duongDan), null, true);
+
+        $kq = $this->layJson($this->controller->uploadData($this->yeuCau([$tep])));
+
+        $this->assertFalse($kq['thanh_cong']);
+        $this->assertFalse($kq['chi_tiet'][0]['thanh_cong']);
+        $this->assertNotEmpty($kq['chi_tiet'][0]['ly_do']);
+        $this->assertSame(0, CtdtHoSo::count(), 'Tep khong phai xml khong duoc di toi importer');
+    }
+
+    /** @test */
+    public function chan_tep_vuot_qua_100mb_phia_may_chu()
+    {
+        // maxFilesize: 100 trong blade CHI la kiem phia trinh duyet. Khong kiem o server
+        // thi mot tep 90-100MB se khien file_get_contents() nap tron vao bo nho roi giao
+        // cho SimpleXML - fatal het bo nho thay vi mot dong "tep hong" tu te.
+        $duongDan = tempnam(sys_get_temp_dir(), 'up') . '.xml';
+        $tayCam = fopen($duongDan, 'w');
+        // Tep THUA (sparse): UploadedFile::getSize() doc kich thuoc THAT tren dia (khong
+        // dung tham so $size trong constructor), nen phai tao mot tep that co kich thuoc
+        // vuot 100MB. ftruncate() cap phat 101MB gan nhu tuc thi, khong ghi tung byte.
+        ftruncate($tayCam, 101 * 1024 * 1024);
+        fclose($tayCam);
+        $this->tepTam[] = $duongDan;
+
+        $tep = new UploadedFile($duongDan, 'goi-lon.xml', 'text/xml', null, null, true);
+
+        $kq = $this->layJson($this->controller->uploadData($this->yeuCau([$tep])));
+
+        $this->assertFalse($kq['thanh_cong']);
+        $this->assertFalse($kq['chi_tiet'][0]['thanh_cong']);
+        $this->assertNotEmpty($kq['chi_tiet'][0]['ly_do']);
+        $this->assertSame(0, CtdtHoSo::count(), 'Tep vuot kich thuoc khong duoc di toi importer');
+    }
+
+    /** @test */
     public function khong_dang_nhap_van_nap_duoc()
     {
         $xml = $this->goiCt2025([[$this->chungTu('CT03', ['MA_YTE' => 'YT001'])]]);

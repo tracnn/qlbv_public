@@ -10,6 +10,8 @@ use App\Models\BHYT\Ctdt\CtdtHoSo;
 use App\Models\BHYT\Ctdt\CtdtChungTu;
 use App\Services\Ctdt\Loai\GiayChungSinh;
 use App\Services\Ctdt\Loai\GiayBaoTu;
+use App\Http\Controllers\BHYT\BHYTCtdtController;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class CtdtDetailTabsTest extends TestCase
 {
@@ -108,6 +110,23 @@ class CtdtDetailTabsTest extends TestCase
         $this->assertTrue(CtdtDetailTabs::hopLe($hoSo, '__XML__'));
         $this->assertFalse(CtdtDetailTabs::hopLe($hoSo, 'CT04'));
         $this->assertFalse(CtdtDetailTabs::hopLe($hoSo, 'khong_ton_tai'));
+    }
+
+    /**
+     * @test
+     *
+     * I6: hopLe() lui ve chinh ma loai khi registry khong biet no, nen no van tra true cho
+     * mot ma da bi go khoi registry. Ho so cu mang loai do (vd sau khi Giai doan 3/4 thu
+     * hep dang ky) phai cho ra 404 tu te, khong duoc de CtdtLoaiRegistry::cho() nem
+     * LoaiKhongBietException thanh 500.
+     */
+    public function detailTab_tra_404_cho_loai_da_bi_go_khoi_registry()
+    {
+        $hoSo = $this->hoSoVoi(['LOAI_DA_GO_KHOI_DANG_KY']);
+
+        $this->expectException(NotFoundHttpException::class);
+
+        (new BHYTCtdtController())->detailTab($hoSo->ma_ho_so, 'LOAI_DA_GO_KHOI_DANG_KY');
     }
 
     /** @test */
