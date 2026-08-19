@@ -527,6 +527,25 @@ return [
                     ],
                 ],
                 [
+                    'text'      => 'Chứng từ điện tử',
+                    'icon'      => 'file-text-o',
+                    'checkrole' => 'xml-man',
+                    'submenu'   => [
+                        [
+                            'text'   => 'Danh sách hồ sơ',
+                            'icon'   => 'file',
+                            'route'  => 'bhyt.ctdt.index',
+                            'active' => ['bhyt/ctdt/index*'],
+                        ],
+                        [
+                            'text'   => 'Nạp hồ sơ',
+                            'icon'   => 'plus',
+                            'route'  => 'bhyt.ctdt.import.index',
+                            'active' => ['bhyt/ctdt/import*'],
+                        ],
+                    ],
+                ],
+                [
                     'text'    => 'Xml 4750',
                     'icon'    => 'archive',
                     'checkrole'   => 'xml-man',
