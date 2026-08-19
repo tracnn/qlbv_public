@@ -45,16 +45,37 @@ class CtdtMaHoSo
             $ma  = $lop::maChungTu($ct['noi_dung']);
 
             if ($ma !== null && $ma !== '') {
+                self::kiemDoDai($ma, $chiSoHoSo);
+
                 return $ma;
             }
         }
 
         if ($idGoi !== null && $idGoi !== '') {
-            return $idGoi . '#' . $chiSoHoSo;
+            $khoa = $idGoi . '#' . $chiSoHoSo;
+            self::kiemDoDai($khoa, $chiSoHoSo);
+
+            return $khoa;
         }
 
         throw new KhongXacDinhDuocMaHoSoException(
             'Ho so #' . $chiSoHoSo . ': khong co MA_YTE/MA_GBT/MA_GCS va goi cung khong co Id'
         );
+    }
+
+    /**
+     * Cot ctdt_ho_so.ma_ho_so la varchar(100). MA_YTE/MA_GBT/MA_GCS den tu XML nguoi dung
+     * tai len - du lieu ben ngoai, khong duoc tin la ngan.
+     *
+     * @throws KhongXacDinhDuocMaHoSoException khi khoa suy ra dai qua 100 ky tu
+     */
+    private static function kiemDoDai($khoa, $chiSoHoSo)
+    {
+        if (strlen($khoa) > 100) {
+            throw new KhongXacDinhDuocMaHoSoException(
+                'Ho so #' . $chiSoHoSo . ': ma ho so suy ra dai ' . strlen($khoa)
+                . ' ky tu, vuot qua gioi han 100 ky tu'
+            );
+        }
     }
 }

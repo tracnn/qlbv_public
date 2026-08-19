@@ -21,7 +21,9 @@ class CtdtMaHoSoTest extends TestCase
     {
         $ds = CtdtGoiParser::danhSachHoSo(CtdtGoiParser::doc($xml), $dichVu);
 
-        return $ds[0];
+        // danhSachHoSo() tra 'noi_dung' la chuoi XML CHUA PARSE (hop dong Task I-1);
+        // CtdtMaHoSo::cua() van can \SimpleXMLElement nen phai phanTichChungTu() truoc.
+        return CtdtGoiParser::phanTichChungTu($ds[0], 1);
     }
 
     /** @test */
@@ -76,8 +78,8 @@ class CtdtMaHoSoTest extends TestCase
 
         $ds = CtdtGoiParser::danhSachHoSo(CtdtGoiParser::doc($xml), 'CT2025');
 
-        $khoa1 = CtdtMaHoSo::cua($ds[0], 'Id-abc', 1);
-        $khoa2 = CtdtMaHoSo::cua($ds[1], 'Id-abc', 2);
+        $khoa1 = CtdtMaHoSo::cua(CtdtGoiParser::phanTichChungTu($ds[0], 1), 'Id-abc', 1);
+        $khoa2 = CtdtMaHoSo::cua(CtdtGoiParser::phanTichChungTu($ds[1], 2), 'Id-abc', 2);
 
         $this->assertNotSame($khoa1, $khoa2, 'Hai ho so trong cung mot tep phai co khoa khac nhau');
         $this->assertSame('Id-abc#1', $khoa1);

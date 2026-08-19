@@ -26,8 +26,11 @@ class CtdtGoiParser
         // simplexml_load_string phat warning voi chuoi hong. De nguyen thi warning do chui
         // vao storage/logs dung dinh dang mot su co that, va nguoi doc log mat cong dieu
         // tra mot loi khong ton tai. Tat di va tu bao loi.
+        // trim() TRUOC khi parse: simplexml_load_string chiu duoc BOM UTF-8 nhung FAIL voi
+        // khoang trang hoac newline dung truoc <?xml - va tep nguoi dung tai len rat de
+        // dinh dieu do.
         $truocDo = libxml_use_internal_errors(true);
-        $goi = @simplexml_load_string((string) $noiDungXml);
+        $goi = @simplexml_load_string(trim((string) $noiDungXml));
         libxml_clear_errors();
         libxml_use_internal_errors($truocDo);
 
@@ -146,12 +149,17 @@ class CtdtGoiParser
     }
 
     /**
-     * Chuan hoa ca ba dich vu ve CUNG MOT dang.
+     * Chuan hoa ca ba dich vu ve CUNG MOT dang. KHONG parse noi dung tai day - chi tach
+     * khung. 'noi_dung' la CHUOI XML chua parse; goi phanTichChungTu() cho tung ho so o
+     * BEN TRONG transaction/try rieng cua ho so do (xem CtdtImporter::nhapMotHoSo()).
+     *
+     * VI SAO HOAN PARSE: neu ham nay tu giai base64 va parse ngay, mot NOIDUNGFILE hong o
+     * ho so #2 se nem ngay tai day - truoc khi vong lap per-ho-so cua importer (moi ho so
+     * mot transaction rieng) kip chay - va keo CA TEP bi tu choi thay vi chi ho so do.
      *
      * @return array Mang cac HOSO; moi HOSO la mang cac
-     *               ['loai_ho_so' => string, 'noi_dung' => \SimpleXMLElement],
+     *               ['loai_ho_so' => string, 'noi_dung' => string (XML CHUA PARSE)],
      *               GIU DUNG thu tu xuat hien trong tep.
-     * @throws GoiKhongDocDuocException khi noi dung base64 cua mot FILEHOSO khong parse duoc
      */
     public static function danhSachHoSo(\SimpleXMLElement $goi, $dichVu)
     {
@@ -160,6 +168,37 @@ class CtdtGoiParser
         }
 
         return self::hoSoCuaGoiPhang($goi, $dichVu === 'GBT' ? 'GIAYBAOTU' : 'GIAYCHUNGSINH');
+    }
+
+    /**
+     * Parse noi dung CHUOI XML cua tung chung tu trong MOT ho so thanh \SimpleXMLElement.
+     *
+     * Goi rieng cho tung ho so, BEN TRONG try/transaction cua ho so do, de mot NOIDUNGFILE
+     * hong chi lam HO SO DO that bai chu khong keo ca tep.
+     *
+     * @param array $chungTu   Mang ['loai_ho_so' =>, 'noi_dung' => string] cua MOT ho so
+     * @param int   $chiSoHoSo Vi tri ho so trong tep, dem tu 1 - de thong diep loi neu ro
+     * @return array Cung cau truc, 'noi_dung' da la \SimpleXMLElement
+     * @throws GoiKhongDocDuocException khi mot phan tu khong parse duoc
+     */
+    public static function phanTichChungTu(array $chungTu, $chiSoHoSo)
+    {
+        $ketQua = [];
+
+        foreach ($chungTu as $ct) {
+            try {
+                $noiDung = self::doc($ct['noi_dung']);
+            } catch (GoiKhongDocDuocException $e) {
+                throw new GoiKhongDocDuocException(
+                    'Ho so #' . $chiSoHoSo . ', FILEHOSO ' . $ct['loai_ho_so']
+                    . ': khong doc duoc noi dung'
+                );
+            }
+
+            $ketQua[] = ['loai_ho_so' => $ct['loai_ho_so'], 'noi_dung' => $noiDung];
+        }
+
+        return $ketQua;
     }
 
     /**
@@ -181,7 +220,7 @@ class CtdtGoiParser
             if (isset($hoSo->FILEHOSO)) {
                 foreach ($hoSo->FILEHOSO as $file) {
                     $loai = trim((string) $file->LOAIHOSO);
-                    $noiDung = self::doc(base64_decode((string) $file->NOIDUNGFILE));
+                    $noiDung = base64_decode((string) $file->NOIDUNGFILE);
 
                     $chungTu[] = ['loai_ho_so' => $loai, 'noi_dung' => $noiDung];
                 }
@@ -204,6 +243,6 @@ class CtdtGoiParser
             return [[]];
         }
 
-        return [[['loai_ho_so' => $tenThe, 'noi_dung' => $goi->{$tenThe}]]];
+        return [[['loai_ho_so' => $tenThe, 'noi_dung' => $goi->{$tenThe}->asXML()]]];
     }
 }

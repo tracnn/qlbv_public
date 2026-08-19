@@ -29,10 +29,16 @@ class CtdtGoiParserDanhSachTest extends TestCase
         $this->assertCount(2, $ds[0], 'Hai chung tu trong ho so do');
 
         $this->assertSame('CT03', $ds[0][0]['loai_ho_so']);
-        $this->assertSame('CT03', $ds[0][0]['noi_dung']->getName());
-        $this->assertSame('YT001', (string) $ds[0][0]['noi_dung']->MA_YTE);
+        // 'noi_dung' la CHUOI XML CHUA PARSE tai day - parse chi xay ra o phanTichChungTu(),
+        // ben trong try/transaction rieng cua tung ho so ben phia CtdtImporter.
+        $this->assertTrue(is_string($ds[0][0]['noi_dung']));
+        $this->assertContains('YT001', $ds[0][0]['noi_dung']);
 
         $this->assertSame('CT04', $ds[0][1]['loai_ho_so']);
+
+        $daPhanTich = CtdtGoiParser::phanTichChungTu($ds[0], 1);
+        $this->assertSame('CT03', $daPhanTich[0]['noi_dung']->getName());
+        $this->assertSame('YT001', (string) $daPhanTich[0]['noi_dung']->MA_YTE);
     }
 
     /** @test */
@@ -50,8 +56,13 @@ class CtdtGoiParserDanhSachTest extends TestCase
         $ds = CtdtGoiParser::danhSachHoSo(CtdtGoiParser::doc($xml), 'CT2025');
 
         $this->assertCount(3, $ds);
-        $this->assertSame('YT002', (string) $ds[1][0]['noi_dung']->MA_YTE);
-        $this->assertSame('YT003', (string) $ds[2][0]['noi_dung']->MA_YTE);
+        $this->assertContains('YT002', $ds[1][0]['noi_dung']);
+        $this->assertContains('YT003', $ds[2][0]['noi_dung']);
+
+        $hoSo2 = CtdtGoiParser::phanTichChungTu($ds[1], 2);
+        $hoSo3 = CtdtGoiParser::phanTichChungTu($ds[2], 3);
+        $this->assertSame('YT002', (string) $hoSo2[0]['noi_dung']->MA_YTE);
+        $this->assertSame('YT003', (string) $hoSo3[0]['noi_dung']->MA_YTE);
     }
 
     /** @test */
@@ -80,8 +91,12 @@ class CtdtGoiParserDanhSachTest extends TestCase
         $this->assertCount(1, $ds);
         $this->assertCount(1, $ds[0]);
         $this->assertSame('GIAYBAOTU', $ds[0][0]['loai_ho_so']);
-        $this->assertSame('GIAYBAOTU', $ds[0][0]['noi_dung']->getName());
-        $this->assertSame('00002.GBT.XXXX.25', (string) $ds[0][0]['noi_dung']->MA_GBT);
+        $this->assertTrue(is_string($ds[0][0]['noi_dung']));
+        $this->assertContains('00002.GBT.XXXX.25', $ds[0][0]['noi_dung']);
+
+        $daPhanTich = CtdtGoiParser::phanTichChungTu($ds[0], 1);
+        $this->assertSame('GIAYBAOTU', $daPhanTich[0]['noi_dung']->getName());
+        $this->assertSame('00002.GBT.XXXX.25', (string) $daPhanTich[0]['noi_dung']->MA_GBT);
     }
 
     /** @test */
@@ -93,7 +108,9 @@ class CtdtGoiParserDanhSachTest extends TestCase
 
         $this->assertCount(1, $ds);
         $this->assertSame('GIAYCHUNGSINH', $ds[0][0]['loai_ho_so']);
-        $this->assertSame('00005.GCS.XXXXX.25', (string) $ds[0][0]['noi_dung']->MA_GCS);
+
+        $daPhanTich = CtdtGoiParser::phanTichChungTu($ds[0], 1);
+        $this->assertSame('00005.GCS.XXXXX.25', (string) $daPhanTich[0]['noi_dung']->MA_GCS);
     }
 
     /** @test */
@@ -120,17 +137,41 @@ class CtdtGoiParserDanhSachTest extends TestCase
     }
 
     /** @test */
-    public function noi_dung_base64_hong_thi_nem()
+    public function noi_dung_base64_hong_thi_danh_sach_ho_so_khong_nem()
     {
+        // danhSachHoSo() chi tach khung, KHONG parse - noi dung base64 hong khong duoc phep
+        // lam no nem, neu khong mot NOIDUNGFILE hong o mot ho so se keo ca tep bi tu choi
+        // truoc khi vong lap per-ho-so cua importer kip chay.
         $goi = CtdtGoiParser::doc(
             '<HSCHUNGTU><THONGTINHOSO><DANHSACHHOSO><HOSO><FILEHOSO>'
             . '<LOAIHOSO>CT03</LOAIHOSO><NOIDUNGFILE>' . base64_encode('<CT03><chua dong') . '</NOIDUNGFILE>'
             . '</FILEHOSO></HOSO></DANHSACHHOSO></THONGTINHOSO></HSCHUNGTU>'
         );
 
-        $this->expectException(GoiKhongDocDuocException::class);
+        $ds = CtdtGoiParser::danhSachHoSo($goi, 'CT2025');
 
-        CtdtGoiParser::danhSachHoSo($goi, 'CT2025');
+        $this->assertCount(1, $ds);
+        $this->assertSame('CT03', $ds[0][0]['loai_ho_so']);
+        $this->assertTrue(is_string($ds[0][0]['noi_dung']));
+    }
+
+    /** @test */
+    public function noi_dung_base64_hong_thi_phan_tich_chung_tu_nem_voi_ngu_canh_ro()
+    {
+        $goi = CtdtGoiParser::doc(
+            '<HSCHUNGTU><THONGTINHOSO><DANHSACHHOSO><HOSO><FILEHOSO>'
+            . '<LOAIHOSO>CT03</LOAIHOSO><NOIDUNGFILE>' . base64_encode('<CT03><chua dong') . '</NOIDUNGFILE>'
+            . '</FILEHOSO></HOSO></DANHSACHHOSO></THONGTINHOSO></HSCHUNGTU>'
+        );
+        $ds = CtdtGoiParser::danhSachHoSo($goi, 'CT2025');
+
+        try {
+            CtdtGoiParser::phanTichChungTu($ds[0], 2);
+            $this->fail('Phai nem GoiKhongDocDuocException');
+        } catch (GoiKhongDocDuocException $e) {
+            $this->assertContains('Ho so #2', $e->getMessage());
+            $this->assertContains('CT03', $e->getMessage());
+        }
     }
 
     /** @test */

@@ -31,6 +31,16 @@ class CtdtGoiParserNhanDienTest extends TestCase
     }
 
     /** @test */
+    public function khoang_trang_dung_truoc_khai_bao_xml_van_doc_duoc()
+    {
+        // simplexml_load_string chiu duoc BOM UTF-8 nhung FAIL voi khoang trang/newline
+        // dung truoc <?xml - va tep nguoi dung tai len rat de dinh dieu do.
+        $goi = CtdtGoiParser::doc("\n  " . '<HSCHUNGTU/>');
+
+        $this->assertSame('HSCHUNGTU', $goi->getName());
+    }
+
+    /** @test */
     public function nhan_dien_ba_dich_vu_theo_the_goc()
     {
         $bo = [

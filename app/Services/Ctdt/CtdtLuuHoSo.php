@@ -5,6 +5,7 @@ namespace App\Services\Ctdt;
 use App\Models\BHYT\Ctdt\CtdtHoSo;
 use App\Models\BHYT\Ctdt\CtdtChungTu;
 use App\Models\BHYT\Ctdt\CtdtLoi;
+use App\Services\Ctdt\Loi\HoSoRongException;
 
 /**
  * Tang ghi CSDL cua luong nap. TACH KHOI CtdtImporter co chu dich: importer lo viec phan
@@ -47,6 +48,16 @@ class CtdtLuuHoSo
      */
     public function luu(array $hoSo)
     {
+        // Bat bien cua tang ghi: mot ho so PHAI co it nhat mot chung tu. Nem TRUOC khi xoa
+        // bat cu gi - <HOSO/> rong (hoac tat ca FILEHOSO da bi loai bo truoc do) khong duoc
+        // phep di toi xoaHoSoCu() roi ghi lai voi so_chung_tu = 0, vi the la xoa sach du
+        // lieu cu cua mot lan nap truoc trong khi bao "thanh cong".
+        if (empty($hoSo['chung_tu'])) {
+            throw new HoSoRongException(
+                'Ho so ma_ho_so=' . $hoSo['ma_ho_so'] . ' khong co chung tu nao (HOSO rong)'
+            );
+        }
+
         // Kiem TOAN BO loai va the goc TRUOC khi ghi bat cu gi. Phat hien lech o giua chung
         // se de lai mot ho so nap do dang neu noi goi quen bao transaction.
         foreach ($hoSo['chung_tu'] as $ct) {

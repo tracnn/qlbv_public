@@ -5,6 +5,7 @@ namespace App\Services\Ctdt;
 use DB;
 use App\Services\Ctdt\Loi\CtdtLoiNap;
 use App\Services\Ctdt\Loi\ThieuMacskcbException;
+use App\Services\Ctdt\Loi\MacskcbKhongHopLeException;
 
 /**
  * Diem vao DUY NHAT de nhap mot goi chung tu dien tu.
@@ -66,6 +67,8 @@ class CtdtImporter
         array $chungTu, $chiSo, $dichVu, $macskcb, $idGoi, $ngayLap, $soKhaiBao, array $tuyChon
     ) {
         try {
+            $chungTu = CtdtGoiParser::phanTichChungTu($chungTu, $chiSo);
+
             $maHoSo = CtdtMaHoSo::cua($chungTu, $idGoi, $chiSo);
 
             $moTa = [
@@ -105,6 +108,7 @@ class CtdtImporter
      * co so, khong phai ma co so), nen chuoi lui nay la duong duy nhat cho GCS.
      *
      * @throws ThieuMacskcbException khi can ca ba nguon
+     * @throws MacskcbKhongHopLeException khi ma phan giai duoc dai qua cot varchar(5)
      */
     private function macskcb(\SimpleXMLElement $goi, $dichVu, array $tuyChon)
     {
@@ -122,6 +126,17 @@ class CtdtImporter
             throw new ThieuMacskcbException(
                 'Khong xac dinh duoc ma co so KCB: goi khong khai, nguoi nap khong chon,'
                 . ' va cau hinh organization.BHYT.ma_cskcb dang trong'
+            );
+        }
+
+        // Cot ctdt_ho_so.macskcb la varchar(5). SQLite cua test khong cuong che do dai nen
+        // khong tu bat duoc; tren MySQL strict mode se la QueryException KHONG mang
+        // CtdtLoiNap (thoat khoi catch cua importer, thanh 500 chua bat), con che do long
+        // se cat cut im lang va gui sai ma co so len cong BHXH. Chan som tai day.
+        if (strlen($ma) > 5) {
+            throw new MacskcbKhongHopLeException(
+                'Ma co so KCB khong hop le: "' . $ma . '" dai ' . strlen($ma)
+                . ' ky tu, vuot qua gioi han 5 ky tu'
             );
         }
 

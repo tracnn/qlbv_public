@@ -9,6 +9,7 @@ use App\Services\Ctdt\CtdtImporter;
 use App\Models\BHYT\Ctdt\CtdtHoSo;
 use App\Models\BHYT\Ctdt\CtdtChungTu;
 use App\Models\BHYT\Ctdt\CtdtCt03;
+use App\Models\BHYT\Ctdt\CtdtCt04;
 
 class CtdtImporterTest extends TestCase
 {
@@ -178,6 +179,37 @@ class CtdtImporterTest extends TestCase
     }
 
     /** @test */
+    public function mot_NOIDUNGFILE_base64_hong_o_giua_tep_khong_keo_ca_tep_xuong()
+    {
+        // Tai hien I-1: dac ta muc 5.3 xep "duyet tung HOSO, moi HOSO mot transaction
+        // rieng" TRUOC "voi moi FILEHOSO: giai base64, parse". Ban cu nhac buoc parse len
+        // truoc, nen mot NOIDUNGFILE hong o ho so giua tep lam CA TEP bi tu choi ngay tu
+        // dau, truoc khi vong lap per-ho-so kip chay.
+        $xml = '<?xml version="1.0" encoding="utf-8"?><HSCHUNGTU>'
+            . '<THONGTINDONVI><MACSKCB>01929</MACSKCB></THONGTINDONVI>'
+            . '<THONGTINHOSO Id="Id-abc"><NGAYLAP>20251101</NGAYLAP><SOLUONGHOSO>3</SOLUONGHOSO>'
+            . '<DANHSACHHOSO>'
+            . '<HOSO><FILEHOSO><LOAIHOSO>CT03</LOAIHOSO><NOIDUNGFILE>'
+            . base64_encode('<CT03><MA_YTE>YT001</MA_YTE></CT03>') . '</NOIDUNGFILE></FILEHOSO></HOSO>'
+            . '<HOSO><FILEHOSO><LOAIHOSO>CT03</LOAIHOSO><NOIDUNGFILE>'
+            . base64_encode('<CT03><chua dong the') . '</NOIDUNGFILE></FILEHOSO></HOSO>'
+            . '<HOSO><FILEHOSO><LOAIHOSO>CT03</LOAIHOSO><NOIDUNGFILE>'
+            . base64_encode('<CT03><MA_YTE>YT003</MA_YTE></CT03>') . '</NOIDUNGFILE></FILEHOSO></HOSO>'
+            . '</DANHSACHHOSO></THONGTINHOSO></HSCHUNGTU>';
+
+        $kq = $this->importer->nhapTuChuoi($xml);
+
+        $this->assertSame(2, $kq->soThanhCong);
+        $this->assertSame(1, $kq->soThatBai);
+        $this->assertSame(['YT001', 'YT003'], $kq->dsMaHoSo);
+        $this->assertContains('Ho so #2', $kq->lyDoThatBai);
+
+        $this->assertSame(2, CtdtHoSo::count(), 'Hai ho so lanh phai xuong CSDL');
+        $this->assertNotNull(CtdtHoSo::where('ma_ho_so', 'YT001')->first());
+        $this->assertNotNull(CtdtHoSo::where('ma_ho_so', 'YT003')->first());
+    }
+
+    /** @test */
     public function nap_lai_ghi_de_qua_importer()
     {
         $this->importer->nhapTuChuoi($this->goiCt2025([[
@@ -218,6 +250,70 @@ class CtdtImporterTest extends TestCase
 
         $this->assertFalse($kq->thanhCong);
         $this->assertContains('SOLUONGHOSO', $kq->lyDoThatBai);
+    }
+
+    /** @test */
+    public function ho_so_rong_de_de_KHONG_xoa_sach_du_lieu_cu_va_bao_that_bai()
+    {
+        // Tai hien C-1: mot goi voi <HOSO/> rong, cung Id, cung chi so voi mot lan nap
+        // truoc do khong co MA_YTE (nen khoa lui ve id_goi#chi_so). Truoc khi sua, chuoi
+        // hong nay lam CtdtMaHoSo::cua([], ...) van tra ve DUNG khoa cua ban ghi cu, roi
+        // CtdtLuuHoSo::xoaHoSoCu() xoa sach du lieu cu va ghi lai voi so_chung_tu = 0 - va
+        // BAO THANH CONG.
+        $lanDau = $this->importer->nhapTuChuoi($this->goiCt2025([[
+            $this->chungTu('CT04', ['MA_CT' => 'CT-1']),
+        ]], ['id' => 'Id-goi-mau', 'macskcb' => '01929']));
+
+        $this->assertTrue($lanDau->thanhCong, (string) $lanDau->lyDoThatBai);
+        $this->assertSame(['Id-goi-mau#1'], $lanDau->dsMaHoSo);
+        $this->assertSame(1, CtdtHoSo::count());
+        $this->assertSame(1, CtdtChungTu::count());
+        $this->assertSame(1, CtdtCt04::count());
+
+        // Goi thu hai: cung Id, HOSO thu nhat rong (khong co FILEHOSO nao) - vd loi truyen
+        // tep hoac loi phia BHXH.
+        $xmlHong = '<?xml version="1.0" encoding="utf-8"?><HSCHUNGTU>'
+            . '<THONGTINDONVI><MACSKCB>01929</MACSKCB></THONGTINDONVI>'
+            . '<THONGTINHOSO Id="Id-goi-mau"><NGAYLAP>20251101</NGAYLAP><SOLUONGHOSO>1</SOLUONGHOSO>'
+            . '<DANHSACHHOSO><HOSO/></DANHSACHHOSO></THONGTINHOSO></HSCHUNGTU>';
+
+        $lanHai = $this->importer->nhapTuChuoi($xmlHong);
+
+        $this->assertFalse($lanHai->thanhCong, 'Ho so rong phai bi tu choi, khong duoc bao thanh cong');
+
+        // Du lieu cu phai con NGUYEN - khong bi xoa boi ho so rong ghi de.
+        $this->assertSame(1, CtdtHoSo::count(), 'Ban ghi ho so cu phai con');
+        $this->assertSame(1, CtdtChungTu::count(), 'Chung tu cu phai con');
+        $this->assertSame(1, CtdtCt04::count(), 'Chi tiet cu phai con');
+        $this->assertSame('CT-1', CtdtCt04::first()->ma_ct);
+    }
+
+    /** @test */
+    public function macskcb_dai_qua_5_ky_tu_thi_tu_choi_ca_tep()
+    {
+        $xml = $this->goiCt2025(
+            [[$this->chungTu('CT03', ['MA_YTE' => 'YT001'])]],
+            ['macskcb' => null]
+        );
+
+        $kq = $this->importer->nhapTuChuoi($xml, ['macskcb' => '0192912345']);
+
+        $this->assertFalse($kq->thanhCong);
+        $this->assertSame(0, CtdtHoSo::count());
+    }
+
+    /** @test */
+    public function ma_ho_so_suy_ra_dai_qua_100_ky_tu_thi_ho_so_do_that_bai()
+    {
+        $xml = $this->goiCt2025(
+            [[$this->chungTu('CT03', ['MA_YTE' => str_repeat('Y', 150)])]],
+            ['macskcb' => '01929']
+        );
+
+        $kq = $this->importer->nhapTuChuoi($xml);
+
+        $this->assertFalse($kq->thanhCong, (string) $kq->lyDoThatBai);
+        $this->assertSame(0, CtdtHoSo::count());
     }
 
     /** @test */

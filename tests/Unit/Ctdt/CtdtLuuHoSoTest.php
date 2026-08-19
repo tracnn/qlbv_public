@@ -50,7 +50,9 @@ class CtdtLuuHoSoTest extends TestCase
         $xml = $this->goiCt2025([[$this->chungTu($loaiHoSo, $truong)]]);
         $ds = CtdtGoiParser::danhSachHoSo(CtdtGoiParser::doc($xml), 'CT2025');
 
-        return $ds[0];
+        // 'noi_dung' cua danhSachHoSo() gio la chuoi XML chua parse; CtdtLuuHoSo::luu() van
+        // can \SimpleXMLElement nen phai phanTichChungTu() truoc khi tra ve.
+        return CtdtGoiParser::phanTichChungTu($ds[0], 1);
     }
 
     /** @test */
@@ -129,7 +131,7 @@ class CtdtLuuHoSoTest extends TestCase
         ]]);
         $ds = CtdtGoiParser::danhSachHoSo(CtdtGoiParser::doc($xml), 'CT2025');
 
-        $hoSo = $this->luu->luu($this->moTaHoSo($ds[0]));
+        $hoSo = $this->luu->luu($this->moTaHoSo(CtdtGoiParser::phanTichChungTu($ds[0], 1)));
 
         $this->assertSame(2, (int) $hoSo->so_chung_tu);
         $this->assertSame(1, CtdtCt03::count());
@@ -242,7 +244,7 @@ class CtdtLuuHoSoTest extends TestCase
         $ds = CtdtGoiParser::danhSachHoSo(CtdtGoiParser::doc($xml), 'CT2025');
 
         try {
-            $this->luu->luu($this->moTaHoSo($ds[0]));
+            $this->luu->luu($this->moTaHoSo(CtdtGoiParser::phanTichChungTu($ds[0], 1)));
             $this->fail('Phai nem TheGocLechException');
         } catch (TheGocLechException $e) {
             // Mong doi
@@ -285,7 +287,7 @@ class CtdtLuuHoSoTest extends TestCase
         $xml = $this->goiGbt(['MA_GBT' => '00002.GBT.XXXX.25', 'HO_TEN' => 'Nguyen Van Test']);
         $ds = CtdtGoiParser::danhSachHoSo(CtdtGoiParser::doc($xml), 'GBT');
 
-        $hoSo = $this->luu->luu($this->moTaHoSo($ds[0], [
+        $hoSo = $this->luu->luu($this->moTaHoSo(CtdtGoiParser::phanTichChungTu($ds[0], 1), [
             'ma_ho_so' => '00002.GBT.XXXX.25',
             'dich_vu'  => 'GBT',
             'loai_hs'  => '60',

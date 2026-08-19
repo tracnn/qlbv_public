@@ -56,7 +56,13 @@ class CtdtNapToanLuongTest extends TestCase
     /** @test */
     public function bay_loai_tt25_deu_nap_duoc_va_xuong_dung_bang()
     {
-        foreach (CtdtLoaiRegistry::cuaDichVu('CT2025') as $loai => $lop) {
+        $dsLoai = CtdtLoaiRegistry::cuaDichVu('CT2025');
+
+        // Canh so luong: rut mot loai khoi registry ma khong sua test se lam vong lap duoi
+        // day am tham kiem IT hon ma van xanh.
+        $this->assertCount(7, $dsLoai);
+
+        foreach ($dsLoai as $loai => $lop) {
             $xml = $this->goiCt2025([[$this->chungTu($loai, $this->truongToiThieu($lop))]]);
 
             $kq = $this->importer->nhapTuChuoi($xml, ['macskcb' => '01929']);
