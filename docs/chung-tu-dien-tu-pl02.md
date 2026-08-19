@@ -4,7 +4,7 @@
 > ban hành kèm công văn BHXH Việt Nam 2025.
 >
 > Mọi `file:line` trích từ mã nguồn thực tế; khi mã thay đổi cần đối chiếu lại.
-> Cập nhật: 2026-08-19 — **Giai đoạn 1 (nền dữ liệu) đã hoàn tất.**
+> Cập nhật: 2026-08-19 — **Giai đoạn 1 (nền dữ liệu) và 2A (nền nạp) đã hoàn tất.**
 
 ---
 
@@ -46,7 +46,7 @@ Máy chủ cổng: `https://egw.baohiemxahoi.gov.vn`. Lấy token dùng lại
 
 ## 2. Trạng thái hiện tại
 
-**Đã có (Giai đoạn 1 — nền dữ liệu):**
+**Đã có (Giai đoạn 1 — nền dữ liệu; Giai đoạn 2A — nền nạp):**
 
 | Thành phần | Vị trí |
 |---|---|
@@ -58,12 +58,14 @@ Máy chủ cổng: `https://egw.baohiemxahoi.gov.vn`. Lấy token dùng lại
 | Interface loại chứng từ | `app/Services/Ctdt/Loai/LoaiChungTu.php` |
 | 9 lớp loại tự mô tả | `app/Services/Ctdt/Loai/` |
 | Registry tra loại | `app/Services/Ctdt/CtdtLoaiRegistry.php` |
-| 59 test đơn vị | `tests/Unit/Ctdt/` |
+| Luồng nạp | `app/Services/Ctdt/CtdtGoiParser.php`, `CtdtMaHoSo.php`, `CtdtLuuHoSo.php`, `CtdtImporter.php` |
+| Cây ngoại lệ nạp | `app/Services/Ctdt/Loi/` |
+| 145 test đơn vị | `tests/Unit/Ctdt/` |
 
-**Chưa có (đúng phạm vi, không phải thiếu sót):** parser gói XML, importer, controller, view,
-job kiểm/ký/gửi, service gửi lên cổng, lệnh Console quét thư mục, dashboard.
+**Chưa có (đúng phạm vi, không phải thiếu sót):** controller, view, job kiểm/ký/gửi, service
+gửi lên cổng, lệnh Console quét thư mục, dashboard.
 
-Vì vậy **module hiện chưa gọi mạng, chưa đọc tệp, chưa có giao diện** — triển khai lên máy chủ
+Vì vậy **module hiện chưa gọi mạng, chưa có giao diện** — triển khai lên máy chủ
 ở trạng thái này không ảnh hưởng gì tới XML3176 hay bất kỳ nghiệp vụ nào đang chạy.
 
 Lộ trình 5 giai đoạn và ghi chú chuyển tiếp: xem
