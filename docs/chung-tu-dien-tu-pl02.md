@@ -4,7 +4,7 @@
 > ban hành kèm công văn BHXH Việt Nam 2025.
 >
 > Mọi `file:line` trích từ mã nguồn thực tế; khi mã thay đổi cần đối chiếu lại.
-> Cập nhật: 2026-08-19 — **Giai đoạn 1 (nền dữ liệu) và 2A (nền nạp) đã hoàn tất.**
+> Cập nhật: 2026-08-19 — **Giai đoạn 1 (nền dữ liệu), 2A (nền nạp) và 2B (ba màn hình) đã hoàn tất.**
 
 ---
 
@@ -46,7 +46,7 @@ Máy chủ cổng: `https://egw.baohiemxahoi.gov.vn`. Lấy token dùng lại
 
 ## 2. Trạng thái hiện tại
 
-**Đã có (Giai đoạn 1 — nền dữ liệu; Giai đoạn 2A — nền nạp):**
+**Đã có (Giai đoạn 1 — nền dữ liệu; 2A — nền nạp; 2B — ba màn hình):**
 
 | Thành phần | Vị trí |
 |---|---|
@@ -60,13 +60,17 @@ Máy chủ cổng: `https://egw.baohiemxahoi.gov.vn`. Lấy token dùng lại
 | Registry tra loại | `app/Services/Ctdt/CtdtLoaiRegistry.php` |
 | Luồng nạp | `app/Services/Ctdt/CtdtGoiParser.php`, `CtdtMaHoSo.php`, `CtdtLuuHoSo.php`, `CtdtImporter.php` |
 | Cây ngoại lệ nạp | `app/Services/Ctdt/Loi/` |
-| 145 test đơn vị | `tests/Unit/Ctdt/` |
+| Ba màn hình | `app/Http/Controllers/BHYT/BHYTCtdtController.php`, `resources/views/bhyt/ctdt/` |
+| Suy trạng thái, bộ lọc, tab động, nhãn trường | `app/Services/Ctdt/CtdtTrangThaiGui.php`, `CtdtDanhSach.php`, `CtdtDetailTabs.php`, `CtdtNhanTruong.php` |
+| 226 test đơn vị | `tests/Unit/Ctdt/` |
 
-**Chưa có (đúng phạm vi, không phải thiếu sót):** controller, view, job kiểm/ký/gửi, service
-gửi lên cổng, lệnh Console quét thư mục, dashboard.
+**Chưa có (đúng phạm vi, không phải thiếu sót):** bộ kiểm lỗi và job kiểm (Giai đoạn 3); ký số,
+service gửi lên cổng, nút "Ký và gửi" (Giai đoạn 4); xuất Excel, lệnh Console quét thư mục,
+dashboard (Giai đoạn 5).
 
-Vì vậy **module hiện chưa gọi mạng, chưa có giao diện** — triển khai lên máy chủ
-ở trạng thái này không ảnh hưởng gì tới XML3176 hay bất kỳ nghiệp vụ nào đang chạy.
+Vì vậy **module hiện chưa gọi mạng** — triển khai lên máy chủ ở trạng thái này không ảnh hưởng
+gì tới XML3176 hay bất kỳ nghiệp vụ nào đang chạy. Cột **Số lỗi** trên màn danh sách luôn bằng
+`0` cho tới khi Giai đoạn 3 xong; đó là đúng, không phải hỏng.
 
 Lộ trình 5 giai đoạn và ghi chú chuyển tiếp: xem
 [docs/superpowers/specs/2026-08-19-chung-tu-dien-tu-pl02-design.md](superpowers/specs/2026-08-19-chung-tu-dien-tu-pl02-design.md)

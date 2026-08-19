@@ -592,6 +592,20 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('xml3176/export-7980a-data', 'BHYT\BHYTXml3176Controller@export7980aData')
         ->name('bhyt.xml3176.export-7980a-data');
 
+        // ── Chứng từ điện tử theo Phụ lục 02 ───────────────────────────────────
+        // Cùng quyền xml-man với XML3176: cùng nhóm người dùng, cùng nghiệp vụ liên
+        // thông BHXH. Không tạo role mới - tách role chỉ thêm việc quản trị mà không
+        // tách được trách nhiệm thực tế.
+        Route::get('ctdt/index', 'BHYT\BHYTCtdtController@index')->name('bhyt.ctdt.index');
+        Route::get('ctdt/index/fetch-data', 'BHYT\BHYTCtdtController@fetchData')->name('bhyt.ctdt.fetch-data');
+        Route::get('ctdt/import', 'BHYT\BHYTCtdtController@importIndex')->name('bhyt.ctdt.import.index');
+        Route::post('ctdt/import/upload', 'BHYT\BHYTCtdtController@uploadData')->name('bhyt.ctdt.upload');
+        Route::get('ctdt/detail/{ma_ho_so}', 'BHYT\BHYTCtdtController@detail')->name('bhyt.ctdt.detail');
+        Route::get('ctdt/detail/{ma_ho_so}/tab/{loai}', 'BHYT\BHYTCtdtController@detailTab')->name('bhyt.ctdt.detail.tab');
+        Route::delete('ctdt/{ma_ho_so}', 'BHYT\BHYTCtdtController@delete')
+        ->name('bhyt.ctdt.delete')
+        ->middleware('checkrole:superadministrator');
+
         Route::get('reports/bac-si-y-lenh', 'BHYT\ReportBHYTController@indexBacSiYLenh')
         ->name('bhyt.reports.bac-si-y-lenh');
         Route::get('reports/fetch-bac-si-y-lenh', 'BHYT\ReportBHYTController@fetchDataBacSiYLenh')

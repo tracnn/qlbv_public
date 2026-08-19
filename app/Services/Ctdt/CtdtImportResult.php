@@ -22,12 +22,16 @@ class CtdtImportResult
     /** @var string|null */
     public $lyDoThatBai;
 
-    public static function thanhCong($maHoSo, array $loaiDaXuLy)
+    /** @var string|null MaGD cua ban da gui vua bi ghi de, null neu chua tung gui */
+    public $maGdBiGhiDe;
+
+    public static function thanhCong($maHoSo, array $loaiDaXuLy, $maGdBiGhiDe = null)
     {
         $kq = new self();
-        $kq->thanhCong  = true;
-        $kq->maHoSo     = $maHoSo;
-        $kq->loaiDaXuLy = $loaiDaXuLy;
+        $kq->thanhCong    = true;
+        $kq->maHoSo       = $maHoSo;
+        $kq->loaiDaXuLy   = $loaiDaXuLy;
+        $kq->maGdBiGhiDe  = $maGdBiGhiDe;
 
         return $kq;
     }
