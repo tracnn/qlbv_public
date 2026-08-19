@@ -34,6 +34,15 @@
             </div>
         </div>
         @endif
+        @if (auth()->check() && auth()->user()->hasRole('superadministrator'))
+        <div class="row" style="margin-top:8px">
+            <div class="col-sm-12 text-right">
+                <button type="button" id="btn-xoa-ho-so" class="btn btn-danger btn-sm">
+                    <i class="fa fa-trash"></i> Xóa hồ sơ
+                </button>
+            </div>
+        </div>
+        @endif
     </div>
 </div>
 
@@ -84,6 +93,51 @@ $(function () {
     if (dau.length) {
         napTab(dau.data('loai'));
     }
+
+    // Nut "Xoa ho so": chi hien voi superadministrator (Blade @if o tren), nhung van hoi
+    // lai truoc khi xoa - dinh xoa nham mot ho so co MaGD la mat dau vet doi soat voi BHXH.
+    $('#btn-xoa-ho-so').on('click', function () {
+        var maHoSo = @json($hoSo->ma_ho_so);
+        var maGd = @json($hoSo->ma_gd);
+
+        // Swal.fire 'text' hien thi nhu van ban thuan (khong dien giai HTML), nen maHoSo/
+        // maGd - von la du lieu tu XML/phan hoi BHXH ben ngoai - khong the bien thanh the
+        // HTML du khong tu tay thoat them.
+        var noiDung = 'Xóa hồ sơ ' + maHoSo + '? ' +
+            (maGd ? 'Nếu hồ sơ đã gửi lên cổng BHXH thì dấu vết đối soát (MaGD ' + maGd + ') cũng mất theo. ' : '') +
+            'Việc này không hoàn tác được.';
+
+        Swal.fire({
+            title: 'Xác nhận xóa hồ sơ',
+            text: noiDung,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Xóa',
+            cancelButtonText: 'Hủy',
+            confirmButtonColor: '#d33',
+        }).then(function (result) {
+            if (!result.isConfirmed) {
+                return;
+            }
+
+            // ma_ho_so co the chua dau '#' - phai ma hoa truoc khi ghep vao URL, giong
+            // cach lam voi tab o tren.
+            var url = "{{ route('bhyt.ctdt.delete', ['ma_ho_so' => '__MA__']) }}"
+                      .replace('__MA__', encodeURIComponent(maHoSo));
+
+            $.ajax({
+                url: url,
+                type: 'DELETE',
+                data: { _token: '{{ csrf_token() }}' },
+                success: function () {
+                    window.location.href = "{{ route('bhyt.ctdt.index') }}";
+                },
+                error: function () {
+                    Swal.fire('Có lỗi xảy ra', 'Không xóa được hồ sơ. Vui lòng thử lại.', 'error');
+                },
+            });
+        });
+    });
 });
 </script>
 @endpush
