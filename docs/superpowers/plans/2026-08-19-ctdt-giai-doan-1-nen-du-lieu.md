@@ -626,7 +626,7 @@ class CreateCtdtLoiTable extends Migration
 
             $table->string('ma_loi', 20)->index();
             $table->string('ten_truong', 50)->nullable();
-            $table->string('mo_ta', 255);
+            $table->string('mo_ta', 255)->nullable();
             $table->string('muc_do', 10)->index();   // chan | canh_bao
 
             $table->timestamps();
