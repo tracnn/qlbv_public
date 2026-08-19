@@ -32,7 +32,9 @@ class CtdtNhanTruong
 
         // Nhan than
         'HO_TEN'          => 'Họ tên',
+        'HOTEN'           => 'Họ tên',
         'NGAY_SINH'       => 'Ngày sinh',
+        'NGAYSINH'        => 'Ngày sinh',
         'GIOI_TINH'       => 'Giới tính',
         'MA_DANTOC'       => 'Mã dân tộc',
         'MA_DAN_TOC'      => 'Mã dân tộc',
@@ -55,6 +57,7 @@ class CtdtNhanTruong
         'NOI_CAP'         => 'Nơi cấp',
 
         // Cu tru
+        'NOI_CU_TRU'          => 'Nơi cư trú',
         'NOI_CU_TRU_NND'      => 'Nơi cư trú',
         'MATINH_CU_TRU'       => 'Mã tỉnh cư trú',
         'MAHUYEN_CU_TRU'      => 'Mã huyện cư trú',

@@ -8,6 +8,8 @@ use App\Services\Ctdt\CtdtDetailTabs;
 use App\Services\Ctdt\CtdtNhanTruong;
 use App\Models\BHYT\Ctdt\CtdtHoSo;
 use App\Models\BHYT\Ctdt\CtdtChungTu;
+use App\Services\Ctdt\Loai\GiayChungSinh;
+use App\Services\Ctdt\Loai\GiayBaoTu;
 
 class CtdtDetailTabsTest extends TestCase
 {
@@ -122,5 +124,48 @@ class CtdtDetailTabsTest extends TestCase
         // BHXH them the moi truoc khi ta kip cap nhat tu dien la chuyen se xay ra. Hien ten
         // the con hon hien o trong.
         $this->assertSame('THE_MOI_TINH', CtdtNhanTruong::cua('THE_MOI_TINH'));
+    }
+
+    /** @test */
+    public function hau_to_nhom_nguoi_duoc_thu_dung_thu_tu()
+    {
+        // '_CHA_MTH' PHAI duoc thu TRUOC '_MTH', khong thi 'HO_TEN_CHA_MTH' bi cat sai
+        // thanh 'HO_TEN_CHA' va gan nhan cua nhom nguoi khac - du lieu cua nguoi nay hien
+        // duoi ten nguoi kia. Day la rang buoc quan trong nhat cua lop nay.
+        $this->assertSame('Họ tên (cha của mẹ thay thế)', CtdtNhanTruong::cua('HO_TEN_CHA_MTH'));
+        $this->assertSame('Số giấy tờ (cha của người đẻ)', CtdtNhanTruong::cua('SO_CCCD_CHA_NND'));
+    }
+
+    /** @test */
+    public function nhan_truong_dich_ca_kieu_viet_lien_khong_gach_duoi()
+    {
+        // PL02 dung ca hai cach viet o cac loai khac nhau: HO_TEN (co gach duoi) va HOTEN
+        // (viet lien) deu ton tai. Ho ten nguoi de la truong nguoi dung nhin dau tien tren
+        // giay chung sinh, khong the de no roi ve ten the tho.
+        $this->assertSame('Họ tên (người đẻ)', CtdtNhanTruong::cua('HOTEN_NND'));
+        $this->assertSame('Họ tên (mẹ thay thế)', CtdtNhanTruong::cua('HOTEN_MTH'));
+    }
+
+    /** @test */
+    public function khong_the_nao_cua_giay_chung_sinh_va_giay_bao_tu_con_roi_ve_ten_tho()
+    {
+        // Test tinh chat: duyet toan bo the khai bao trong truong() cua hai loai chung tu
+        // dung nhieu nhat, dam bao moi the deu co nhan tieng Viet. Lan sau BHXH them the
+        // moi ma tu dien chua theo kip la bai test nay do do ngay, neu ten the tra ra
+        // dung bang chinh no.
+        $theoLoai = [
+            'GiayChungSinh' => GiayChungSinh::truong(),
+            'GiayBaoTu'     => GiayBaoTu::truong(),
+        ];
+
+        foreach ($theoLoai as $tenLoai => $truong) {
+            foreach (array_keys($truong) as $the) {
+                $this->assertNotSame(
+                    $the,
+                    CtdtNhanTruong::cua($the),
+                    "The '{$the}' cua {$tenLoai} chua co nhan trong CtdtNhanTruong::TU_DIEN"
+                );
+            }
+        }
     }
 }
