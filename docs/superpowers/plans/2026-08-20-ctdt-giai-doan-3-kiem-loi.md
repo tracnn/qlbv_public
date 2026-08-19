@@ -2133,10 +2133,13 @@ class CtdtKiemToanLuongTest extends TestCase
                 $this->assertNotNull($hoSo->checked_at, $loai . ': chua duoc kiem');
             }
 
+            // PHP 7.4 khong cho $lop::model()::query() - phai qua bien trung gian.
+            $tenModel = $lop::model();
+
             CtdtLoi::query()->delete();
             \App\Models\BHYT\Ctdt\CtdtChungTu::query()->delete();
             CtdtHoSo::query()->delete();
-            $lop::model()::query()->delete();
+            $tenModel::query()->delete();
         }
     }
 }
@@ -2149,13 +2152,6 @@ php vendor/bin/phpunit tests/Unit/Ctdt/CtdtKiemToanLuongTest.php
 ```
 
 Kỳ vọng: `OK (7 tests)`. Nếu đỏ, thông điệp sẽ nêu đúng loại nào hỏng — sửa nơi lệch thật, đừng nới test.
-
-**Lưu ý cú pháp:** `$lop::model()::query()` cần PHP 8. Trên PHP 7.4 viết hai dòng:
-
-```php
-            $tenModel = $lop::model();
-            $tenModel::query()->delete();
-```
 
 - [ ] **Step 3: Thêm dịch vụ worker vào `install_service.bat`**
 
