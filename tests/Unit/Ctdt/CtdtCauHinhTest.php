@@ -65,8 +65,43 @@ class CtdtCauHinhTest extends TestCase
     {
         // Cong that cua BHXH nhan la nhan that. Mac dinh phai TAT de mot lan chay thu
         // khong tro thanh mot lan gui that.
-        $this->assertFalse((bool) config('ctdt.submit_enabled'),
-            'ctdt.submit_enabled phai mac dinh false');
+        $this->assertFalse((bool) config('organization.chung_tu_dien_tu.submit_enabled'),
+            'organization.chung_tu_dien_tu.submit_enabled phai mac dinh false');
+    }
+
+    /** @test */
+    public function tham_so_theo_co_so_nam_trong_organization()
+    {
+        $khoi = config('organization.chung_tu_dien_tu');
+
+        $this->assertInternalType('array', $khoi, 'Thieu khoi organization.chung_tu_dien_tu');
+
+        foreach (['submit_enabled', 'import_enabled', 'sign_enabled', 'import_path',
+                  'queue_name', 'sign_queue_name', 'submit_queue_name'] as $khoa) {
+            $this->assertArrayHasKey($khoa, $khoi, 'organization.chung_tu_dien_tu thieu ' . $khoa);
+        }
+
+        $this->assertNotEmpty($khoi['queue_name']);
+        $this->assertNotEmpty($khoi['sign_queue_name']);
+        $this->assertNotEmpty($khoi['submit_queue_name']);
+
+        // Ba hang doi RIENG BIET. Trung ten thi ky so cham se chan viec gui va nguoc lai -
+        // dung thu ma viec tach hang doi sinh ra de tranh.
+        $this->assertCount(3, array_unique([
+            $khoi['queue_name'], $khoi['sign_queue_name'], $khoi['submit_queue_name'],
+        ]), 'Ba hang doi phai khac ten nhau');
+    }
+
+    /** @test */
+    public function config_ctdt_khong_giu_tham_so_theo_co_so()
+    {
+        // Hai nguon su that cho cung mot co bat/tat la cach chac chan de mot ngay nao do
+        // co so bat gui o mot noi ma noi kia van tat - hoac te hon, nguoc lai.
+        foreach (['submit_enabled', 'import_enabled', 'sign_enabled', 'import_path',
+                  'queue_name', 'sign_queue_name', 'submit_queue_name'] as $khoa) {
+            $this->assertNull(config('ctdt.' . $khoa),
+                'ctdt.' . $khoa . ' phai nam o organization.chung_tu_dien_tu, khong phai config/ctdt.php');
+        }
     }
 
     /** @test */

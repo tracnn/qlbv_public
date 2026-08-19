@@ -593,7 +593,7 @@ Bộ lọc (`partials/search.blade.php`): khoảng ngày nạp · dịch vụ ·
 |---|---|
 | Chưa ký | `is_signed = false` |
 | Còn lỗi chặn | `so_loi > 0` |
-| Chức năng gửi đang tắt | `config('ctdt.submit_enabled') = false` |
+| Chức năng gửi đang tắt | `config('organization.chung_tu_dien_tu.submit_enabled') = false` |
 | Cổng từ chối | `ma_ket_qua ≠ 200`, hiện kèm mã |
 
 Gộp lại là cách nhanh nhất để người vận hành ngồi chờ một hồ sơ vĩnh viễn không bao giờ được gửi.
@@ -637,15 +637,29 @@ là xóa dấu vết đối soát với BHXH.
 
 ### 6.3. Cấu hình
 
-`config/ctdt.php` mới, song song `config/xml3176.php`:
+Cấu hình chia làm **hai tệp theo một seam duy nhất**: thứ giống nhau ở mọi cơ sở nằm trong
+`config/ctdt.php` (được track), thứ đổi theo nơi cài đặt nằm trong `config/organization.php`
+(`.gitignore`, mỗi máy một bản) — cùng chỗ với `BHYT.submit_xml_3176_enabled` của XML3176.
+**Module không dùng biến `.env` nào.**
+
+`config/organization.php` — tham số theo từng cơ sở:
+
+```php
+'chung_tu_dien_tu' => [
+    'submit_enabled' => false,   // MẶC ĐỊNH TẮT
+    'import_enabled' => true,
+    'sign_enabled'   => true,
+    'import_path'    => 'D:\XML\ChungTuDienTu\inbox',
+    'queue_name'        => 'JobCtdt',
+    'sign_queue_name'   => 'JobSignCtdt',
+    'submit_queue_name' => 'JobSubmitCtdt',
+],
+```
+
+`config/ctdt.php` — hằng số giao thức PL02, song song `config/xml3176.php`:
 
 ```php
 return [
-    'queue_name'     => env('CTDT_QUEUE', 'ctdt'),
-    'import_enabled' => true,
-    'sign_enabled'   => true,
-    'submit_enabled' => env('CTDT_SUBMIT_ENABLED', false),   // MẶC ĐỊNH TẮT
-    'import_path'    => env('CTDT_IMPORT_PATH', 'D:\XML\ChungTuDienTu\inbox'),
     'token_url'      => 'https://egw.baohiemxahoi.gov.vn/api/token/take',
     'dich_vu' => [
         'CT2025' => [
@@ -698,7 +712,7 @@ trong request upload).
 
 ### 6.5. Console command
 
-`ctdt:import` — quét `config('ctdt.import_path')`, mỗi tệp gọi `CtdtImporter`, chuyển tệp đã xử lý
+`ctdt:import` — quét `config('organization.chung_tu_dien_tu.import_path')`, mỗi tệp gọi `CtdtImporter`, chuyển tệp đã xử lý
 sang thư mục con `da-nhap/` hoặc `loi/`. Cùng khuôn `App\Console\Commands\XML3176Import`.
 
 ---

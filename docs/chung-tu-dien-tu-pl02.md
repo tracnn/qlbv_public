@@ -50,14 +50,15 @@ Máy chủ cổng: `https://egw.baohiemxahoi.gov.vn`. Lấy token dùng lại
 
 | Thành phần | Vị trí |
 |---|---|
-| Cấu hình module | `config/ctdt.php` |
+| Hằng số giao thức PL02 | `config/ctdt.php` |
+| Tham số theo cơ sở | `config/organization.php` khóa `chung_tu_dien_tu` |
 | Disk lưu tệp | `config/filesystems.php` khóa `exportCtdt` |
 | 12 bảng | `database/migrations/2026_08_19_1000*.php` |
 | 12 model | `app/Models/BHYT/Ctdt/` |
 | Interface loại chứng từ | `app/Services/Ctdt/Loai/LoaiChungTu.php` |
 | 9 lớp loại tự mô tả | `app/Services/Ctdt/Loai/` |
 | Registry tra loại | `app/Services/Ctdt/CtdtLoaiRegistry.php` |
-| 57 test đơn vị | `tests/Unit/Ctdt/` |
+| 59 test đơn vị | `tests/Unit/Ctdt/` |
 
 **Chưa có (đúng phạm vi, không phải thiếu sót):** parser gói XML, importer, controller, view,
 job kiểm/ký/gửi, service gửi lên cổng, lệnh Console quét thư mục, dashboard.
@@ -73,7 +74,9 @@ mục 9 và mục 11.
 
 ## 3. Cấu hình
 
-### 3.1. `config/ctdt.php` (được track trong git)
+### 3.1. `config/organization.php` — tham số theo từng cơ sở
+
+Khối `chung_tu_dien_tu`. Đây là thứ **người triển khai chỉnh khi cài đặt**:
 
 | Khóa | Mặc định | Ghi chú |
 |---|---|---|
@@ -84,28 +87,37 @@ mục 9 và mục 11.
 | `queue_name` | `JobCtdt` | Hàng đợi kiểm lỗi |
 | `sign_queue_name` | `JobSignCtdt` | Hàng đợi ký số |
 | `submit_queue_name` | `JobSubmitCtdt` | Hàng đợi gửi cổng |
-| `dich_vu` | 3 mục | `the_goc`, `loai_hs`, `url` của ba dịch vụ |
-| `ma_ket_qua` | 5 mã | `200` · `205` · `401` · `500` · `1001` |
-| `ma_ket_qua_token` | 5 mã | Mã của dịch vụ lấy token (mục I của PL02) |
 
-⚠️ **Khóa của `ma_ket_qua` và `ma_ket_qua_token` bị PHP ép thành `int`.** `'200' => ...` trở
-thành khóa `int(200)`, nên `$ma === $phanHoi['MaKetQua']` **luôn trượt**. Tra bằng
-`array_key_exists()` hoặc so sánh lỏng. Cảnh báo này đã ghi ngay trên hai mảng đó trong mã.
+Đọc trong mã bằng `config('organization.chung_tu_dien_tu.submit_enabled')` — cùng cách
+`SubmitXml3176Job` đọc `config('organization.BHYT.submit_xml_3176_enabled')`.
 
-### 3.2. Biến môi trường (`.env`)
+⚠️ **`submit_enabled` phải để `false` ở mọi môi trường thử nghiệm.** Cổng thật của BHXH nhận là
+nhận thật, không có đường rút lại. Chỉ bật sau khi đã chạy thử và đối chiếu tay một hồ sơ.
 
-```env
-CTDT_SUBMIT_ENABLED=false
-CTDT_IMPORT_PATH=D:\XML\ChungTuDienTu\inbox
-CTDT_QUEUE=JobCtdt
-CTDT_SIGN_QUEUE=JobSignCtdt
-CTDT_SUBMIT_QUEUE=JobSubmitCtdt
-```
+⚠️ `config/organization.php` nằm trong `.gitignore` — **mỗi máy phải tự thêm khối này**, không tự
+có khi `git pull`. Bản tham chiếu: [`docs/organization.php:37`](organization.php).
 
-Mẫu đầy đủ: [`docs/.env_example`](.env_example).
+Tài khoản cổng BHXH thì **không cần khai thêm gì**: module dùng lại `organization.BHYT_CO_SO`
+sẵn có (mỗi mã cơ sở KCB một tài khoản) qua `App\Services\BHYT\CauHinhCoSo`.
 
-⚠️ **`CTDT_SUBMIT_ENABLED` phải để `false` ở mọi môi trường thử nghiệm.** Cổng thật của BHXH
-nhận là nhận thật, không có đường rút lại. Chỉ bật sau khi đã chạy thử và đối chiếu tay.
+### 3.2. `config/ctdt.php` — hằng số giao thức PL02
+
+Được track trong git, **giống nhau ở mọi cơ sở**, không ai chỉnh khi triển khai:
+
+| Khóa | Nội dung |
+|---|---|
+| `token_url` | `https://egw.baohiemxahoi.gov.vn/api/token/take` |
+| `dich_vu` | 3 mục — `the_goc`, `loai_hs`, `url` của ba dịch vụ |
+| `ma_ket_qua` | 5 mã — `200` · `205` · `401` · `500` · `1001` |
+| `ma_ket_qua_token` | 5 mã của dịch vụ lấy token (mục I của PL02) |
+
+**Không có biến `.env` nào cho module này.** Đường cấu hình duy nhất là hai tệp trên; test
+`CtdtCauHinhTest::config_ctdt_khong_giu_tham_so_theo_co_so` canh không ai vô tình dựng lại nguồn
+sự thật thứ hai trong `config/ctdt.php`.
+
+⚠️ **Khóa của `ma_ket_qua` và `ma_ket_qua_token` bị PHP ép thành `int`.** `'200' => ...` trở thành
+khóa `int(200)`, nên `$ma === $phanHoi['MaKetQua']` **luôn trượt**. Tra bằng `array_key_exists()`
+hoặc so sánh lỏng. Cảnh báo này đã ghi ngay trên hai mảng đó trong mã.
 
 ### 3.3. Disk `exportCtdt`
 
@@ -120,11 +132,6 @@ nhận là nhận thật, không có đường rút lại. Chỉ bật sau khi �
 tự có khi `git pull`. Bản tham chiếu: [`docs/filesystems.php:131`](filesystems.php).
 
 Cần tạo sẵn hai thư mục trên đĩa: `D:\XML\ChungTuDienTu` và `D:\XML\ChungTuDienTu\inbox`.
-
-### 3.4. Tài khoản cổng BHXH
-
-Module dùng lại `organization.BHYT_CO_SO` sẵn có (mỗi mã cơ sở KCB một tài khoản) qua
-`App\Services\BHYT\CauHinhCoSo`. **Không cần khai thêm gì.**
 
 ---
 
@@ -206,7 +213,7 @@ cảnh báo "hồ sơ không có mã y tế".
 
 1. `git pull`
 2. Thêm khối `exportCtdt` vào `config/filesystems.php` (xem mục 3.3) — **không tự có**.
-3. Thêm các biến `CTDT_*` vào `.env` (xem mục 3.2).
+3. Thêm khối `chung_tu_dien_tu` vào `config/organization.php` (xem mục 3.1) — **không tự có**.
 4. Tạo thư mục `D:\XML\ChungTuDienTu` và `D:\XML\ChungTuDienTu\inbox`.
 5. `php artisan migrate --path=database/migrations`
 6. `php artisan config:clear`
@@ -237,7 +244,7 @@ lại — thao tác tốn thời gian nhất trong chuỗi.
 php vendor/bin/phpunit tests/Unit/Ctdt
 ```
 
-Kỳ vọng `OK (57 tests)`.
+Kỳ vọng `OK (59 tests)`.
 
 ⚠️ Repo có sẵn test đỏ **không liên quan** module này: suite `Unit` cho 4 lỗi + 7 đỏ
 (`NhapDanhMucUniqueTest`, `OrderCheck\CatalogLookupTest`, `BHYT\Xml3176ExportLocCoSoTest`,

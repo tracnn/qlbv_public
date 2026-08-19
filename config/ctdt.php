@@ -1,20 +1,15 @@
 <?php
 
+/*
+ * Hang so GIAO THUC cua Phu luc 02 - giong nhau o moi co so KCB, khong ai chinh khi
+ * trien khai. URL, loai_hs va bang ma ket qua do BHXH quy dinh.
+ *
+ * Tham so THEO TUNG CO SO (bat/tat gui, duong dan thu muc nap, ten hang doi) KHONG nam
+ * o day ma o config/organization.php khoa 'chung_tu_dien_tu' - dung cho ma nguon khong
+ * phai la noi khai bao thu thay doi theo noi cai dat, va organization.php la tep .gitignore
+ * rieng cua tung may.
+ */
 return [
-    // Hang doi rieng cho tung viec: ky so cham (USB token) khong duoc chan viec kiem loi.
-    'queue_name'        => env('CTDT_QUEUE', 'JobCtdt'),
-    'sign_queue_name'   => env('CTDT_SIGN_QUEUE', 'JobSignCtdt'),
-    'submit_queue_name' => env('CTDT_SUBMIT_QUEUE', 'JobSubmitCtdt'),
-
-    'import_enabled' => true,
-    'sign_enabled'   => true,
-
-    // MAC DINH TAT. Cong that cua BHXH nhan la nhan that; chi bat sau khi da chay thu
-    // va doi chieu.
-    'submit_enabled' => env('CTDT_SUBMIT_ENABLED', false),
-
-    'import_path' => env('CTDT_IMPORT_PATH', 'D:\XML\ChungTuDienTu\inbox'),
-
     'token_url' => 'https://egw.baohiemxahoi.gov.vn/api/token/take',
 
     // Ba dich vu gui cua PL02. Khac nhau DUY NHAT o the goc, loai_hs va url.

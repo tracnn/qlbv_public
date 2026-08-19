@@ -30,6 +30,28 @@ return [
             'cccd_cb' => '',
         ],
     ],
+    // Chung tu dien tu BHXH theo Phu luc 02 (module ctdt). Xem docs/chung-tu-dien-tu-pl02.md.
+    // Dat o day chu khong o config/ctdt.php: day la tham so THEO TUNG CO SO (bat/tat, duong
+    // dan thu muc, ten hang doi), con config/ctdt.php chi giu hang so giao thuc PL02 dung
+    // chung cho moi co so (URL, loai_hs, bang ma ket qua).
+    'chung_tu_dien_tu' => [
+        // MAC DINH TAT. Cong that cua BHXH nhan la nhan that, khong co duong rut lai.
+        // Chi bat sau khi da chay thu va doi chieu tay mot ho so.
+        'submit_enabled' => false,
+
+        'import_enabled' => true,
+        'sign_enabled'   => true,
+
+        // Thu muc lenh Console quet de nap tu dong (Giai doan 5).
+        'import_path' => 'D:\XML\ChungTuDienTu\inbox',
+
+        // Ba hang doi RIENG: ky so hong vi ly do cuc bo (USB token bi rut, HSM khong phan
+        // hoi) con gui hong vi mang. Gop chung thi mot lan mang chap keo theo ba lan ky lai
+        // - thao tac ton thoi gian nhat trong chuoi.
+        'queue_name'        => 'JobCtdt',
+        'sign_queue_name'   => 'JobSignCtdt',
+        'submit_queue_name' => 'JobSubmitCtdt',
+    ],
     'base_url' => '',
     'base_pacs_url' => '',
     'pacs_url_suffix' => '', //''&service_id=',
