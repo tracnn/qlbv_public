@@ -3,6 +3,9 @@
 namespace App\Services\Ctdt;
 
 use App\Services\Ctdt\Loai\Ct03;
+use App\Services\Ctdt\Loai\Ct04;
+use App\Services\Ctdt\Loai\Ct06;
+use App\Services\Ctdt\Loai\Ct07;
 
 /**
  * Diem tra cuu DUY NHAT tu gia tri LOAIHOSO sang lop loai chung tu.
@@ -21,6 +24,9 @@ class CtdtLoaiRegistry
     {
         return [
             'CT03' => Ct03::class,
+            'CT04' => Ct04::class,
+            'CT06' => Ct06::class,
+            'CT07' => Ct07::class,
         ];
     }
 
