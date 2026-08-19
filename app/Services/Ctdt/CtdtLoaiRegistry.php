@@ -9,6 +9,8 @@ use App\Services\Ctdt\Loai\Ct07;
 use App\Services\Ctdt\Loai\DieuTriNoiTru;
 use App\Services\Ctdt\Loai\DieuTriVoSinh;
 use App\Services\Ctdt\Loai\SucKhoeMe;
+use App\Services\Ctdt\Loai\GiayBaoTu;
+use App\Services\Ctdt\Loai\GiayChungSinh;
 
 /**
  * Diem tra cuu DUY NHAT tu gia tri LOAIHOSO sang lop loai chung tu.
@@ -33,6 +35,8 @@ class CtdtLoaiRegistry
             'GIAYDIEUTRINOITRU' => DieuTriNoiTru::class,
             'GIAYDIEUTRIVOSINH' => DieuTriVoSinh::class,
             'GIAYSUCKHOEME'     => SucKhoeMe::class,
+            'GIAYBAOTU'         => GiayBaoTu::class,
+            'GIAYCHUNGSINH'     => GiayChungSinh::class,
         ];
     }
 
