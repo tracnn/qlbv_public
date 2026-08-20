@@ -141,16 +141,22 @@ class CtdtTabLoiTest extends TestCase
     /** @test */
     public function tab_loi_render_duoc_va_thoat_noi_dung()
     {
-        // mo_ta chua gia tri trich tu the XML ben ngoai. Mot mo_ta dang
-        // '<img src=x onerror=...>' phai hien ra thanh chu, khong duoc chay.
+        // ten_truong, mo_ta va loai_ho_so deu la gia tri trich thang tu the XML ben ngoai.
+        // Bo thoat o BAT KY o nao trong ba o do la mot lo hong XSS - nen ca ba deu phai co
+        // test rieng, khong the coi mot o dai dien cho hai o kia.
         $this->hoSoCoLoi([
-            ['mo_ta' => 'Sai dinh dang <img src=x onerror=alert(1)>'],
+            [
+                'ten_truong' => 'HO<script>alert(1)</script>',
+                'mo_ta'      => 'Sai dinh dang <img src=x onerror=alert(1)>',
+            ],
         ]);
 
         $html = $this->controller->detailTab('YT001', CtdtDetailTabs::TAB_LOI)->render();
 
-        $this->assertNotContains('<img src=x', $html, 'Noi dung phai duoc thoat');
+        $this->assertNotContains('<img src=x', $html, 'mo_ta phai duoc thoat');
+        $this->assertNotContains('<script>', $html, 'ten_truong cung tu XML ngoai, phai thoat');
         $this->assertContains('&lt;img', $html);
+        $this->assertContains('&lt;script&gt;', $html);
     }
 
     /** @test */

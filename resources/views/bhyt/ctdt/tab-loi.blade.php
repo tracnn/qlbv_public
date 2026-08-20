@@ -17,10 +17,16 @@
         </p>
     @endif
 @else
+    @php
+        // Dem thang tu tap dang hien thi, khong lay $hoSo->so_loi: so_loi la con so CHOT
+        // luc job chay, con $loi dem SONG. Hai nguon lech nhau la hien ra so cảnh báo am.
+        $soChan = $loi->where('muc_do', 'chan')->count();
+        $soCanhBao = $loi->count() - $soChan;
+    @endphp
     <p class="text-muted">
         Kiểm lúc {{ $hoSo->checked_at }} —
-        <strong>{{ $hoSo->so_loi }}</strong> lỗi chặn gửi,
-        {{ $loi->count() - $hoSo->so_loi }} cảnh báo.
+        <strong>{{ $soChan }}</strong> lỗi chặn gửi,
+        {{ $soCanhBao }} cảnh báo.
     </p>
     <table class="table table-condensed table-bordered">
         <thead>
