@@ -3,6 +3,7 @@
 namespace App\Services\Ctdt;
 
 use DB;
+use App\Jobs\CheckCtdtJob;
 use App\Models\BHYT\Ctdt\CtdtHoSo;
 use App\Services\Ctdt\CtdtMacskcb;
 use App\Services\Ctdt\Loi\CtdtLoiNap;
@@ -129,6 +130,15 @@ class CtdtImporter
             DB::transaction(function () use ($moTa) {
                 $this->luu->luu($moTa);
             });
+
+            // SAU COMMIT, khong phai trong transaction: job dat trong transaction se tro
+            // toi du lieu chua ton tai neu rollback. Ghi chu nay da co trong Xml3176Importer
+            // va van dung nguyen o day.
+            //
+            // Moi ho so MOT job rieng: mot ho so hong khong lam mat ket qua kiem cua cac
+            // ho so con lai trong cung mot tep.
+            CheckCtdtJob::dispatch($maHoSo)
+                ->onQueue(config('organization.chung_tu_dien_tu.queue_name', 'JobCtdt'));
 
             return CtdtImportResult::thanhCong(
                 $maHoSo,

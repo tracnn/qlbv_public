@@ -5,11 +5,13 @@ namespace Tests\Unit\Ctdt;
 use Tests\TestCase;
 use Tests\Support\DungBangCtdtSqlite;
 use Tests\Support\GoiCtdtMau;
+use Illuminate\Support\Facades\Queue;
 use App\Services\Ctdt\CtdtImporter;
 use App\Models\BHYT\Ctdt\CtdtHoSo;
 use App\Models\BHYT\Ctdt\CtdtChungTu;
 use App\Models\BHYT\Ctdt\CtdtCt03;
 use App\Models\BHYT\Ctdt\CtdtCt04;
+use App\Models\BHYT\Ctdt\CtdtLoi;
 
 class CtdtImporterTest extends TestCase
 {
@@ -24,6 +26,7 @@ class CtdtImporterTest extends TestCase
         parent::setUp();
         $this->chuanBiBangCtdt();
         $this->importer = new CtdtImporter();
+        Queue::fake();
     }
 
     /** @test */
@@ -334,5 +337,79 @@ class CtdtImporterTest extends TestCase
         $this->expectException(\LogicException::class);
 
         $importer->nhapTuChuoi($this->goiCt2025([[$this->chungTu('CT03', ['MA_YTE' => 'YT001'])]]));
+    }
+
+    /** @test */
+    public function nap_xong_thi_day_job_kiem_loi()
+    {
+        $this->importer->nhapTuChuoi($this->goiCt2025([[
+            $this->chungTu('CT03', ['MA_YTE' => 'YT001']),
+        ]]));
+
+        Queue::assertPushed(\App\Jobs\CheckCtdtJob::class);
+    }
+
+    /** @test */
+    public function job_kiem_di_dung_hang_doi_lay_tu_cau_hinh()
+    {
+        // KHONG co luoi nao canh ten hang doi truoc dot sua nay: doi ->onQueue(...) thanh
+        // mot ten bia thi CA 315 test van xanh. Worker se nghe mot hang doi con job vao
+        // hang doi khac, IM LANG, va vi ho so chua kiem cung co so_loi = 0 nen man danh
+        // sach se bao moi ho so deu sach mai mai.
+        //
+        // Dat mot ten KHAC mac dinh de chung minh ma that su DOC cau hinh chu khong go
+        // cung - va de test khong phu thuoc config/organization.php cua tung may.
+        config(['organization.chung_tu_dien_tu.queue_name' => 'HangDoiThuNghiem']);
+
+        $this->importer->nhapTuChuoi($this->goiCt2025([[
+            $this->chungTu('CT03', ['MA_YTE' => 'YT001']),
+        ]]));
+
+        Queue::assertPushed(\App\Jobs\CheckCtdtJob::class, function ($job) {
+            return $job->queue === 'HangDoiThuNghiem';
+        });
+    }
+
+    /** @test */
+    public function moi_ho_so_mot_job_rieng()
+    {
+        $this->importer->nhapTuChuoi($this->goiCt2025([
+            [$this->chungTu('CT03', ['MA_YTE' => 'YT001'])],
+            [$this->chungTu('CT03', ['MA_YTE' => 'YT002'])],
+        ]));
+
+        Queue::assertPushed(\App\Jobs\CheckCtdtJob::class, 2);
+    }
+
+    /** @test */
+    public function ho_so_hong_KHONG_day_job_kiem()
+    {
+        // Ho so hong khong co gi de kiem, va job se chi tim thay mot ma ho so khong ton tai.
+        $xml = '<?xml version="1.0" encoding="utf-8"?><HSCHUNGTU>'
+            . '<THONGTINDONVI><MACSKCB>01929</MACSKCB></THONGTINDONVI>'
+            . '<THONGTINHOSO Id="Id-abc"><SOLUONGHOSO>1</SOLUONGHOSO><DANHSACHHOSO><HOSO>'
+            . '<FILEHOSO><LOAIHOSO>CT03</LOAIHOSO><NOIDUNGFILE>'
+            . base64_encode('<CT04><MA_YTE>YT001</MA_YTE></CT04>') . '</NOIDUNGFILE></FILEHOSO>'
+            . '</HOSO></DANHSACHHOSO></THONGTINHOSO></HSCHUNGTU>';
+
+        $this->importer->nhapTuChuoi($xml);
+
+        Queue::assertNotPushed(\App\Jobs\CheckCtdtJob::class);
+    }
+
+    /** @test */
+    public function nap_KHONG_chay_bo_kiem_ngay_chi_xep_hang()
+    {
+        // Ho so nay thieu HO_TEN/NGAY_SINH/NGAY_VAO/NGAY_RA - neu bo kiem chay ngay
+        // trong luc nap thi chac chan sinh loi. Test nap phai kiem viec NAP, khong phai
+        // viec KIEM: voi QUEUE_DRIVER=sync (phpunit.xml), thieu Queue::fake() se lam job
+        // chay that ngay tai day, va mot thay doi o bang quy tac (Task 1-3) se lam do
+        // nhung test nap khong lien quan gi toi no.
+        $this->importer->nhapTuChuoi($this->goiCt2025([[
+            $this->chungTu('CT03', ['MA_YTE' => 'YT001']),
+        ]]));
+
+        $this->assertSame(0, CtdtLoi::count());
+        $this->assertSame(0, (int) CtdtHoSo::where('ma_ho_so', 'YT001')->value('so_loi'));
     }
 }

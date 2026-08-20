@@ -17,6 +17,7 @@ use App\Services\Ctdt\CtdtNhanTruong;
 use App\Services\Ctdt\CtdtLoaiRegistry;
 use App\Services\Ctdt\CtdtLuuHoSo;
 use App\Models\BHYT\Ctdt\CtdtHoSo;
+use App\Models\BHYT\Ctdt\CtdtLoi;
 
 /**
  * Ba man hinh cua module chung tu dien tu: danh sach, nap tep, chi tiet.
@@ -264,6 +265,21 @@ class BHYTCtdtController extends Controller
 
         if (!CtdtDetailTabs::hopLe($hoSo, $loai)) {
             abort(404);
+        }
+
+        if ($loai === CtdtDetailTabs::TAB_LOI) {
+            // Loi muc chan hien TRUOC: nguoi doc can thay ngay thu dang chan minh gui,
+            // khong phai loc bang mat qua mot danh sach tron lan.
+            $loi = CtdtLoi::with('chungTu')
+                ->where('ho_so_id', $hoSo->id)
+                ->orderByRaw("CASE WHEN muc_do = 'chan' THEN 0 ELSE 1 END")
+                ->orderBy('id')
+                ->get();
+
+            return view('bhyt.ctdt.tab-loi', [
+                'hoSo' => $hoSo,
+                'loi'  => $loi,
+            ]);
         }
 
         if ($loai === CtdtDetailTabs::TAB_XML) {

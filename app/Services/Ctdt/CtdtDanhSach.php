@@ -85,6 +85,16 @@ class CtdtDanhSach
      */
     private static function locTrangThai($q, $trangThai)
     {
+        // Dung TRUOC CON_LOI, dung nhu thu tu cua cua(): ho so chua kiem cung co
+        // so_loi = 0, nen neu khong loai tru o day thi no se lot vao bo loc CHUA_KY va
+        // hien la "sach" trong khi chua ai kiem no.
+        if ($trangThai === CtdtTrangThaiGui::CHUA_KIEM) {
+            return $q->whereNull('checked_at');
+        }
+
+        // Moi trang thai con lai deu ngu y "da kiem".
+        $q->whereNotNull('checked_at');
+
         if ($trangThai === CtdtTrangThaiGui::CON_LOI) {
             return $q->where('so_loi', '>', 0);
         }

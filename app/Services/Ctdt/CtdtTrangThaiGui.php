@@ -7,7 +7,8 @@ use App\Models\BHYT\Ctdt\CtdtHoSo;
 /**
  * Suy trang thai gui cua mot ho so, de man danh sach hien mot cot duy nhat.
  *
- * BON LY DO "chua gui" la BON chuyen khac nhau, va nguoi van hanh phai phan biet duoc:
+ * NAM LY DO "chua gui" la NAM chuyen khac nhau, va nguoi van hanh phai phan biet duoc:
+ *   chua kiem -> bo kiem chua chay: xem worker hang doi JobCtdt con song khong
  *   con loi   -> di sua ho so
  *   chua ky   -> di ky so
  *   gui tat   -> bao quan tri bat cau hinh
@@ -19,6 +20,7 @@ use App\Models\BHYT\Ctdt\CtdtHoSo;
  */
 class CtdtTrangThaiGui
 {
+    const CHUA_KIEM    = 'chua_kiem';
     const CON_LOI      = 'con_loi';
     const CHUA_KY      = 'chua_ky';
     const GUI_TAT      = 'gui_tat';
@@ -27,6 +29,7 @@ class CtdtTrangThaiGui
     const CHUA_GUI     = 'chua_gui';
 
     const NHAN = [
+        self::CHUA_KIEM    => 'Chưa kiểm',
         self::CON_LOI      => 'Còn lỗi chặn',
         self::CHUA_KY      => 'Chưa ký số',
         self::GUI_TAT      => 'Chức năng gửi đang tắt',
@@ -41,6 +44,14 @@ class CtdtTrangThaiGui
      */
     public static function cua($hoSo)
     {
+        // "Chua kiem" KHAC "da kiem va sach", du ca hai deu co so_loi = 0. Ho so vua nap
+        // xong - hay MOI ho so tren may chu chua cai dich vu JobCtdt - roi vao nhanh nay.
+        // Khong tach ra thi cua chan gui chi dong khi hang doi dang chay, va khong co gi
+        // bao cho ai biet khi no khong chay.
+        if (empty($hoSo->checked_at)) {
+            return self::CHUA_KIEM;
+        }
+
         if ((int) $hoSo->so_loi > 0) {
             return self::CON_LOI;
         }

@@ -3,6 +3,7 @@
 namespace App\Services\Ctdt;
 
 use App\Models\BHYT\Ctdt\CtdtHoSo;
+use App\Models\BHYT\Ctdt\CtdtLoi;
 
 /**
  * Sinh danh sach tab cua man chi tiet, tu chung tu ho so THUC CO.
@@ -14,6 +15,9 @@ class CtdtDetailTabs
 {
     /** Tab xem XML nguyen van, luon dung cuoi. */
     const TAB_XML = '__XML__';
+
+    /** Tab liet ke loi kiem, luon dung TRUOC tab XML goc. */
+    const TAB_LOI = '__LOI__';
 
     /**
      * @return array Mang ['ma' =>, 'nhan' =>, 'so_luong' =>], tab XML goc o cuoi
@@ -36,6 +40,15 @@ class CtdtDetailTabs
                 'so_luong' => $soLuong,
             ];
         }
+
+        // Tab Loi LUON co, ke ca khi khong co loi: hien tab rong de nguoi dung xac nhan
+        // duoc "ho so nay khong co loi". An tab di thi khong phan biet duoc "khong loi"
+        // voi "chua kiem".
+        $tabs[] = [
+            'ma'       => self::TAB_LOI,
+            'nhan'     => 'Lỗi',
+            'so_luong' => CtdtLoi::where('ho_so_id', $hoSo->id)->count(),
+        ];
 
         // Khi cong bao 205 (fileBase64Str khong hop le), xem XML nguyen van la cach duy nhat
         // doi chieu xem minh da gui gi.

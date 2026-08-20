@@ -501,6 +501,15 @@ Kết quả trả về theo khuôn `Xml3176ImportResult` / `Xml3176ImportFileRes
 
 ### 5.4. `CtdtChecker`
 
+> ⚠️ **BẢNG DƯỚI ĐÂY ĐÃ LỖI THỜI — đừng dựng mã theo nó.** Bộ mã lỗi đã được đánh số lại ở
+> Giai đoạn 3 (gộp ba mã ngày làm một, hạ `MA_THE` xuống mức cảnh báo, bỏ mã dành cho tham số
+> API). Bảng **có hiệu lực** nằm ở [`docs/chung-tu-dien-tu-pl02.md`](../../chung-tu-dien-tu-pl02.md)
+> mục 6, cùng lý do của từng điều chỉnh; nguồn sự thật là `config/ctdt.php` khóa `ma_loi`.
+> Đáng chú ý nhất: `CTDT008` trong mã hiện tại là *"thiếu mã thẻ BHYT", mức cảnh báo*, **không**
+> phải *"ngày ra sớm hơn ngày vào", mức chặn* như bảng dưới.
+>
+> Mục này giữ nguyên như bản ghi lịch sử của lúc thiết kế.
+
 Quy tắc chung, áp cho mọi loại:
 
 | Mã lỗi | Kiểm | Mức |
@@ -946,3 +955,58 @@ Bốn điều khác cần nhớ:
   chấp đối soát với BHXH sẽ không có gì để tra.
 - **Ngân sách tài nguyên của `uploadData`** (`set_time_limit(600)`, `memory_limit 512M`) không giữ
   nổi nếu Giai đoạn 4 nhét ký số vào cùng request. Ký phải đi đường job.
+
+## 14. Ghi chú chuyển tiếp — kết thúc Giai đoạn 3
+
+Bộ kiểm đã chạy. Nạp xong hồ sơ là `CtdtImporter` đẩy `CheckCtdtJob` lên hàng đợi `JobCtdt`;
+job gọi `CtdtChecker` (hàm thuần), ghi `ctdt_loi` và `so_loi` trong **một** transaction. Kết quả
+hiện ở cột "Số lỗi" trên màn danh sách, bộ lọc "chỉ hồ sơ còn lỗi", và tab **Lỗi** trên màn chi
+tiết. `tests/Unit/Ctdt` từ 239 lên **325 test**.
+
+**Bộ mã lỗi có hiệu lực nằm ở `docs/chung-tu-dien-tu-pl02.md` mục 6, KHÔNG phải mục 5.4 của tài
+liệu này.** Mục 5.4 giữ nguyên như lúc thiết kế và đã bị đánh số lại: đọc nhầm nó sẽ dựng
+`CTDT008` thành lỗi chặn "ngày ra sớm hơn ngày vào", trong khi mã sinh ra `CTDT008` = "thiếu mã
+thẻ, mức **cảnh báo**" — tức chặn nhầm đúng nhóm trẻ sơ sinh mà điều chỉnh đó sinh ra để tránh.
+
+### Ba điều Giai đoạn 4 phải xử lý
+
+**1. Thứ tự ưu tiên trong `CtdtTrangThaiGui::cua()` chưa chốt.** Hiện là
+`CHUA_KIEM → CON_LOI → CHUA_KY → ma_ket_qua → GUI_TAT → CHUA_GUI`, tức cờ bật/tắt nằm **cuối**.
+Ghi chú thiết kế ban đầu nói cờ phải đứng **đầu**. Chốt lại một lần, và nhớ `CtdtDanhSach::locTrangThai()`
+là nguồn sự thật thứ hai — sửa một chỗ mà quên chỗ kia là tổng các bộ lọc không bằng tổng hồ sơ.
+Test tính chất `bo_loc_trang_thai_khop_voi_CtdtTrangThaiGui_cho_moi_ho_so` canh việc này.
+
+**2. `CtdtImporter` không reset `checked_at` khi nạp đè.** Hồ sơ nạp lại vẫn hiện trạng thái và số
+lỗi **cũ** cho tới khi job chạy xong — một cửa sổ dữ liệu cũ, và trong cửa sổ đó nó không bao giờ
+hiện "Chưa kiểm". Đặt `checked_at = null` lúc ghi đè sẽ khớp đúng nghĩa của trạng thái mới.
+
+**3. `CTDT007` là quy tắc chết trong đời thực.** Nó đối chiếu thẻ `MACSKCB` của chứng từ với
+`ctdt_ho_so.macskcb`. Nhưng loại **duy nhất** khai `MACSKCB` trong `truong()` là `GIAYBAOTU`, mà
+`macskcb` của hồ sơ GBT lại được `CtdtGoiParser::macskcb()` đọc từ **chính thẻ đó** — hai vế luôn
+bằng nhau. Quy tắc chỉ có nghĩa khi CT2025 mang `MACSKCB` riêng. Giữ hay bỏ đều được, nhưng đừng
+tưởng nó đang bảo vệ điều gì.
+
+### Bốn khoảng trống đã biết của bộ kiểm
+
+- **Phần giờ của trường ngày không được kiểm.** `20251003` + giờ `9999` vẫn qua, vì `checkdate()`
+  chỉ soi 8 ký tự đầu. Cùng lý do, `CTDT006` mù trong cùng một ngày: ra viện 08:00 sau khi vào viện
+  14:00 cùng ngày thì lọt.
+- **Độ dài trường ngày không ghim theo loại.** Quy tắc chỉ đòi 8/12/14 chữ số và là ngày có thật,
+  nên ca "lẽ ra 12 nhưng ghi 8" không bắt được. Ghim được khi có dữ liệu thật của từng loại.
+- **`'chan'` / `'canh_bao'` là chuỗi gõ tay ở 5 nơi** (`CheckCtdtJob`, `orderByRaw` của controller,
+  hai chỗ trong `tab-loi.blade.php`, `config/ctdt.php`). Giá trị đã có một nguồn sự thật; bảng chữ
+  thì chưa. Một lỗi chính tả trong `orderByRaw` chỉ làm sai thứ tự sắp xếp, im lặng.
+- **Tính nguyên tử của `DB::transaction` trong job không test được** trên SQLite in-memory. Hạn chế
+  nền tảng, không phải thiếu sót.
+
+### Hai bài học vận hành
+
+- **Không có worker `JobCtdt` thì không hồ sơ nào được kiểm**, và trước Giai đoạn 3 cột "Số lỗi"
+  bằng 0 trông y hệt "mọi hồ sơ đều sạch". Nay đã tách trạng thái **"Chưa kiểm"** để phân biệt.
+  Nhưng job hết 3 lần thử sẽ rơi vào `failed_jobs` và hồ sơ ở lại `checked_at = null` vĩnh viễn —
+  `CheckCtdtJob` chưa có `failed()`, và câu SQL đếm hàng đợi trong tài liệu không phát hiện ca này.
+- **`resources/views/bhyt/ctdt/detail.blade.php` đã hỏng nhiều ngày mà không ai biết**: một chỉ thị
+  `@if` nằm trong chú thích JavaScript, Blade vẫn dịch nó và sinh ra PHP không biên dịch được. Không
+  test nào render tệp cha nên không ai bắt. Nay có `CtdtBladeCompilesTest` quét cả
+  `views/bhyt/ctdt/` và `views/bhyt/ctdt/partials/`. **Mọi màn hình mới phải có lưới tương đương** —
+  chỉ thị Blade trong chú thích là lớp lỗi mà mắt người đọc lướt qua.
