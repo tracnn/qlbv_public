@@ -70,7 +70,7 @@ và gửi):**
 | Gọi cổng BHXH, ghi kết quả gửi | `app/Services/Ctdt/CtdtSubmitService.php` |
 | Job ký số, ghi tệp đã ký lên disk `exportCtdt` | `app/Jobs/SignCtdtJob.php` |
 | Job gửi hồ sơ đã ký lên cổng BHXH | `app/Jobs/SubmitCtdtJob.php` |
-| 431 test đơn vị | `tests/Unit/Ctdt/` |
+| 438 test đơn vị | `tests/Unit/Ctdt/` |
 
 **Chưa có (đúng phạm vi, không phải thiếu sót):** xuất Excel, lệnh Console `ctdt:import` quét
 thư mục, dashboard (Giai đoạn 5).
@@ -360,7 +360,28 @@ lại — thao tác tốn thời gian nhất trong chuỗi.
 php vendor/bin/phpunit tests/Unit/Ctdt
 ```
 
-Kỳ vọng `OK (431 tests)`.
+Kỳ vọng `OK (438 tests)` — **trừ một test đỏ CÓ CHỦ ĐÍCH trên máy đã chạy thật**, xem ngay dưới.
+
+### ⚠️ `CtdtCauHinhTest::gui_len_cong_mac_dinh_tat` — đỏ có chủ đích, ĐỪNG "SỬA"
+
+Test này khẳng định `organization.chung_tu_dien_tu.submit_enabled` phải là `false`, và nó đọc
+thẳng `config/organization.php` **của máy đang chạy** — tệp nằm trong `.gitignore`, mỗi máy một bản.
+
+Trên máy đã đưa vào vận hành thật (đã bật gửi lên cổng BHXH), test này **sẽ đỏ vĩnh viễn**, và
+đó là **lựa chọn có ý thức của chủ dự án**: giữ nó như một lời nhắc thường trực rằng máy này
+gửi thật, không phải chạy thử.
+
+Vì vậy:
+
+- **Đừng sửa test, đừng xoá test, đừng đổi nó sang đọc `docs/organization.php`.** Đã cân nhắc và
+  bác bỏ cả ba.
+- Khi đối chiếu baseline, `tests/Unit/Ctdt` trên máy đã bật gửi có **đúng một** test đỏ là test
+  này. **Hai** test đỏ trở lên mới là dấu hiệu có gì đó thật sự vỡ.
+- Bản mẫu phát hành `docs/organization.php` vẫn giữ `submit_enabled => false` — đó mới là thứ
+  quyết định trạng thái mặc định của một máy cài mới.
+
+Cái giá phải trả: bộ test của module không bao giờ xanh hoàn toàn trên máy này nữa, nên một test
+đỏ thật sau này dễ bị nhìn lướt qua. Đếm số lượng, đừng chỉ nhìn màu.
 
 ⚠️ Repo có sẵn test đỏ **không liên quan** module này: suite `Unit` cho 4 lỗi + 7 đỏ
 (`NhapDanhMucUniqueTest`, `OrderCheck\CatalogLookupTest`, `BHYT\Xml3176ExportLocCoSoTest`,

@@ -310,9 +310,9 @@ class SubmitCtdtJobTest extends TestCase
 
         $hoSo = CtdtHoSo::first();
 
-        $this->assertLessThanOrEqual(50, mb_strlen((string) $hoSo->ma_gd));
-        $this->assertLessThanOrEqual(10, mb_strlen((string) $hoSo->ma_ket_qua));
-        $this->assertLessThanOrEqual(14, mb_strlen((string) $hoSo->thoi_gian_tiep_nhan));
+        $this->assertLessThanOrEqual(100, mb_strlen((string) $hoSo->ma_gd));
+        $this->assertLessThanOrEqual(20, mb_strlen((string) $hoSo->ma_ket_qua));
+        $this->assertLessThanOrEqual(20, mb_strlen((string) $hoSo->thoi_gian_tiep_nhan));
         $this->assertLessThanOrEqual(255, mb_strlen((string) $hoSo->submit_error));
     }
 
@@ -328,6 +328,28 @@ class SubmitCtdtJobTest extends TestCase
 
         $this->assertLessThanOrEqual(255, mb_strlen((string) CtdtHoSo::first()->submit_error));
         $this->assertNotEmpty(CtdtHoSo::first()->submit_error);
+    }
+
+    /** @test */
+    public function MaGD_that_cua_cong_52_ky_tu_duoc_luu_NGUYEN_VEN()
+    {
+        // Gia tri THAT cong BHXH tra ve trong lan gui dau tien (2026-08-20). Cot ma_gd cu la
+        // VARCHAR(50) nen no bi cat mat hai ky tu cuoi - va ma_gd la cot TRA CUU QUAN TRONG
+        // NHAT khi doi soat: mot ma cut thi khong tra duoc giao dich.
+        //
+        // Khang dinh NGUYEN VEN chu khong chi khang dinh do dai: neu cong doi dinh dang dai
+        // hon nua, test nay do ngay thay vi de du lieu cut im lang mot lan nua.
+        $that = 'HS_CHUNGTU01929_094D388C-6DD7-4CA1-A3BE-6D5BF53FEE75';
+
+        $this->assertSame(52, strlen($that), 'Gia tri mau phai dung 52 ky tu nhu cong da tra');
+
+        $this->hoSo();
+        $gui = new FakeCtdtSubmitService();
+        $gui->ketQua['ma_gd'] = $that;
+
+        $this->chay($gui);
+
+        $this->assertSame($that, CtdtHoSo::first()->ma_gd);
     }
 
     /** @test */
