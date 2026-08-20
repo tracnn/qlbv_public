@@ -384,8 +384,16 @@ class BHYTCtdtController extends Controller
      */
     public function kyVaGui($ma_ho_so, Request $request = null)
     {
-        // Lui ve request() khi khong ai truyen: cac test goi thang controller nhu mot doi
-        // tuong thuong, khong di qua router nen khong co gi tiem $request vao.
+        // Dong nay BAT BUOC cho CA route lan test, khong phai chi de test.
+        //
+        // Tham so vua co typehint lop VUA co gia tri mac dinh thi
+        // RouteDependencyResolverTrait::transformDependency() tra getDefaultValue() chu
+        // KHONG goi container->make() - tuc router cung truyen null. Da kiem chung bang
+        // ControllerDispatcher::resolveClassMethodDependencies: ket qua la
+        // ['ma_ho_so' => ..., 0 => NULL].
+        //
+        // Go dong nay di la route chet bang fatal "Call to a member function input() on
+        // null", va chi lo ra khi co nguoi bam nut tren moi truong that.
         $request = $request ?: request();
 
         $hoSo = CtdtHoSo::where('ma_ho_so', $ma_ho_so)->firstOrFail();
@@ -441,13 +449,18 @@ class BHYTCtdtController extends Controller
         // buoc nguoi bam nhin thay minh dang gui lai mot ho so cong da nhan.
         //
         // Laravel 5.5 KHONG co Request::boolean(), nen dung filter_var().
+        //
+        // Loi van phai dung cho CA HAI ca: CtdtLuuHoSo::noiLichSu() ghi mot dong lich su khi
+        // ma_gd HOAC ma_ket_qua khac rong, nen mot ho so tung bi cong TU CHOI (chi co
+        // ma_ket_qua) cung thoa dieu kien nay. Noi "da duoc tiep nhan" o do la noi sai voi
+        // nguoi van hanh.
         $tungGui = !empty($hoSo->lich_su_gui) && empty($hoSo->ma_gd);
 
         if ($tungGui && !filter_var($request->input('xac_nhan_gui_lai'), FILTER_VALIDATE_BOOLEAN)) {
             return response()->json([
                 'thanh_cong' => false,
                 'can_xac_nhan' => true,
-                'thong_diep' => 'Hồ sơ này đã từng được cổng BHXH tiếp nhận, nhưng dấu vết đã bị '
+                'thong_diep' => 'Hồ sơ này đã từng được gửi lên cổng BHXH, nhưng dấu vết đã bị '
                     . 'xoá khi nạp lại. Xem tab lịch sử gửi ở màn chi tiết trước khi gửi lại.',
             ]);
         }

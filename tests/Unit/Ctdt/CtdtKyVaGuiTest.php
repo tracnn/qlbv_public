@@ -542,7 +542,7 @@ class CtdtKyVaGuiTest extends TestCase
 
         $this->assertFalse($kq['thanh_cong'], 'Lan bam dau phai bi tu choi de nguoi bam nhin thay');
         $this->assertTrue($kq['can_xac_nhan']);
-        $this->assertContains('đã từng được cổng BHXH tiếp nhận', $kq['thong_diep']);
+        $this->assertContains('đã từng được gửi lên cổng BHXH', $kq['thong_diep']);
 
         Queue::assertNotPushed(SignCtdtJob::class);
     }
@@ -582,5 +582,25 @@ class CtdtKyVaGuiTest extends TestCase
 
         $this->assertTrue($kq['thanh_cong']);
         Queue::assertPushed(SignCtdtJob::class);
+    }
+
+    /** @test */
+    public function ho_so_tung_bi_cong_TU_CHOI_cung_doi_xac_nhan_nhung_KHONG_noi_la_da_tiep_nhan()
+    {
+        // noiLichSu() ghi dong lich su khi ma_gd HOAC ma_ket_qua khac rong. Mot ho so tung bi
+        // cong tu choi chi co ma_ket_qua - no van thoa dieu kien "tung gui", nhung noi voi
+        // nguoi van hanh rang cong "da tiep nhan" la noi sai.
+        $this->hoSo([
+            'ma_gd'       => null,
+            'ma_ket_qua'  => null,
+            'lich_su_gui' => '[2026-08-20 08:00:00] MaGD= MaKetQua=205',
+        ]);
+
+        $kq = $this->layJson($this->controller->kyVaGui('YT001'));
+
+        $this->assertFalse($kq['thanh_cong']);
+        $this->assertTrue($kq['can_xac_nhan']);
+        $this->assertNotContains('tiếp nhận', $kq['thong_diep'],
+            'Loi van khong duoc khang dinh cong da tiep nhan');
     }
 }
