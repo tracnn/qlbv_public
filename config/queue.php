@@ -38,7 +38,17 @@ return [
             'driver' => 'database',
             'table' => 'jobs',
             'queue' => 'default',
-            'retry_after' => 90,
+
+            // PHAI LON HON timeout cua job lau nhat. SignCtdtJob::$timeout = 120,
+            // SubmitCtdtJob::$timeout = 90 (con CtdtSubmitService co Guzzle 60s + mot lan
+            // thu lai khi cong tra MaKetQua 401 -> xau nhat ~125s).
+            //
+            // Nho hon thi hang doi GIAO LAI job cho worker thu hai trong khi worker thu nhat
+            // van dang chay - voi SubmitCtdtJob do la HAI lan POST that cung mot goi len cong
+            // BHXH, ma body PL02 khong co ma giao dich phia client nen cong khong khu trung
+            // duoc. Khoa cache chong bam trung KHONG che duoc ca nay: ca hai ban deu la cung
+            // mot job.
+            'retry_after' => 300,
         ],
 
         'beanstalkd' => [

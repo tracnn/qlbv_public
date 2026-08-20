@@ -8,10 +8,12 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Cache;
 
 use App\Models\BHYT\Ctdt\CtdtHoSo;
 use App\Services\Ctdt\CtdtPhongBi;
 use App\Services\XMLSignService;
+use App\Http\Controllers\BHYT\BHYTCtdtController;
 
 /**
  * Dung phong bi mot ho so, ky so, luu tep da ky.
@@ -196,5 +198,16 @@ class SignCtdtJob implements ShouldQueue
                 'signed_error' => 'Job ky that bai: ' . $exception->getMessage(),
             ]);
         }
+
+        $this->nhaKhoa();
+    }
+
+    /**
+     * Nha khoa chong bam trung. CHI goi trong failed(): duong binh thuong thi SubmitCtdtJob
+     * noi sau se nha, con failed() cua job ky nghia la chuoi dut o day va khong ai nha nua.
+     */
+    private function nhaKhoa()
+    {
+        Cache::forget(BHYTCtdtController::KHOA_XU_LY . $this->maHoSo);
     }
 }

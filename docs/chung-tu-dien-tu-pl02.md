@@ -70,7 +70,7 @@ và gửi):**
 | Gọi cổng BHXH, ghi kết quả gửi | `app/Services/Ctdt/CtdtSubmitService.php` |
 | Job ký số, ghi tệp đã ký lên disk `exportCtdt` | `app/Jobs/SignCtdtJob.php` |
 | Job gửi hồ sơ đã ký lên cổng BHXH | `app/Jobs/SubmitCtdtJob.php` |
-| 448 test đơn vị | `tests/Unit/Ctdt/` |
+| 471 test đơn vị | `tests/Unit/Ctdt/` |
 
 **Chưa có (đúng phạm vi, không phải thiếu sót):** xuất Excel, lệnh Console `ctdt:import` quét
 thư mục, dashboard (Giai đoạn 5).
@@ -288,6 +288,60 @@ tiếp: `SignCtdtJob` (hàng đợi `JobSignCtdt`) rồi `SubmitCtdtJob` (hàng 
 | `so_loi > 0` | "Hồ sơ còn lỗi chặn gửi" | Cổng cũng sẽ từ chối; chặn tại chỗ cho thông báo rõ hơn |
 | `sign_enabled = false` **và** hồ sơ chưa ký (`is_signed = false`) | "Chức năng ký số đang tắt trong cấu hình, và hồ sơ này chưa ký" | Chặn ở controller (không phải `CtdtQuyetDinhGui`) — hồ sơ **đã** ký từ trước vẫn gửi lại được dù chức năng ký đang tắt |
 
+### Trạng thái gửi trên màn danh sách — chín nhãn, một thứ tự cố định
+
+`CtdtTrangThaiGui::cua()` là hàm thuần suy một nhãn duy nhất cho cột "Trạng thái gửi", để người
+vận hành không phải mở từng hồ sơ mới biết nó kẹt ở đâu. Hai nhãn mới bổ sung là **"Ký số thất
+bại"** (`KY_HONG`) và **"Gửi thất bại"** (`GUI_HONG`), mỗi nhãn tách ra khỏi một nhãn cũ đang gộp
+chung hai chuyện khác nhau:
+
+- **"Ký số thất bại" tách khỏi "Chưa ký số".** Cả hai đều có `is_signed = false`, nhưng "chưa ký"
+  là hồ sơ chưa ai bấm, còn "ký thất bại" là **đã bấm và hỏng** (USB token bị rút, HSM không phản
+  hồi) — lý do nằm ở cột `signed_error`. Gộp chung thì người vận hành nhìn thấy "Chưa ký số" lại
+  đi tìm nút ký đã bấm rồi, không biết phải đi sửa nguyên nhân cục bộ ở máy ký.
+- **"Gửi thất bại" tách khỏi "Chờ gửi".** Hồ sơ đã ký, cổng chưa từng trả lời (`ma_ket_qua` rỗng),
+  nhưng có `submit_error` là hồ sơ **đã thử gửi và hỏng trước khi tới cổng** (mạng chập, timeout) —
+  khác với "Chờ gửi" là hồ sơ còn chưa từng thử.
+
+**Thứ tự kiểm tra trong `cua()` cố ý, không phải ngẫu nhiên** (trích chú thích trong mã):
+
+- `KY_HONG` được kiểm **trước** `CHUA_KY`: cả hai đều `is_signed = false`, nhưng nhánh nào **cụ
+  thể hơn phải thắng** — không tách thì lý do thật chỉ nằm trong `laravel.log`, còn màn hình báo
+  chung chung "Chưa ký số".
+- `GUI_HONG` được kiểm **sau** nhánh `ma_ket_qua` — cổng **đã** trả lời thì kết quả đó là **sự
+  thật cuối cùng**, kể cả khi `submit_error` cũ còn sót lại từ một lần gửi hỏng trước đó — nhưng
+  **trước** `GUI_TAT`: cấu hình gửi có thể vừa bị tắt **sau** một lần gửi hỏng, và lúc đó hiện
+  "đang tắt" là **giấu mất lỗi thật**, đẩy người vận hành đi bật lại cấu hình thay vì đọc lý do
+  thật trong `submit_error`.
+
+Bộ lọc SQL trong `CtdtDanhSach::locTrangThai()` soi gương đúng thứ tự này, để lọc theo trạng thái
+trên màn danh sách ra đúng tập hồ sơ mà `cua()` sẽ gán nhãn.
+
+### Chống bấm trùng — khóa cache theo từng mã hồ sơ
+
+PL02 **không có mã giao dịch phía client** để cổng BHXH tự khử trùng; một hồ sơ bị bấm "Ký và
+gửi" nhiều lần liên tiếp (tay nhanh, double-click, mạng chậm khiến người dùng bấm lại) sinh ra
+từng đó chuỗi `SignCtdtJob → SubmitCtdtJob` độc lập, và **mỗi chuỗi là một lần POST thật lên
+cổng**. Đây không phải giả định: trên CSDL đã ghi nhận một hồ sơ bị bấm **ba lần**, sinh ba chuỗi
+job.
+
+`BHYTCtdtController::KHOA_XU_LY` là một khóa cache theo tiền tố `ctdt:dang-xu-ly:<ma_ho_so>`, hết
+hạn sau **10 phút** (`KHOA_XU_LY_PHUT`). Khóa được đặt bằng `Cache::add()` — trả `false` nếu khóa
+đã tồn tại, dùng chính kết quả đó làm phép thử "đã có người bấm chưa". Hai điểm cố ý:
+
+- **Đặt khóa NGAY TRƯỚC dispatch, sau mọi nhánh từ chối** (`submit_enabled`, `checked_at`,
+  `so_loi`, `sign_enabled`): một lần bấm bị từ chối không làm gì cả, giữ khóa ở đó sẽ khóa người
+  dùng ra ngoài 10 phút mà không được gì.
+- **Khóa được nhả ở mọi đường ra**: cuối `SubmitCtdtJob::handle()` (dòng thành công) và `failed()`
+  của cả `SignCtdtJob` lẫn `SubmitCtdtJob` — không nhả ở một nhánh mà quên nhánh lỗi thì một lần
+  ký/gửi hỏng sẽ khóa hồ sơ đó 10 phút dù chẳng có gì đang chạy.
+
+⚠️ **`Cache::add()` với driver `file`/`array` không phải mutex thật.** Nó lùi về `get()` rồi
+`put()` bên trong, có cửa sổ TOCTOU (time-of-check to time-of-use) giữa hai bước đó. Đủ tốt cho
+ca dùng thật — hai lần bấm của cùng một người thật hiếm khi rơi đúng vào khe hở micro-giây đó —
+nhưng **không phải khóa cứng** kiểu mutex hệ điều hành hay khóa CSDL. Đừng dựa vào nó cho một ca
+cần đúng-một-lần tuyệt đối.
+
 **Tệp gửi lên cổng là tệp ĐÃ KÝ trên disk `exportCtdt`**, đường dẫn
 `da-ky/<dịch vụ>/<tên đã làm sạch>-<id>.xml`, không phải phong bì dựng lại lúc gửi. Dựng lại lúc
 gửi là gửi một gói không có chữ ký.
@@ -360,7 +414,7 @@ lại — thao tác tốn thời gian nhất trong chuỗi.
 php vendor/bin/phpunit tests/Unit/Ctdt
 ```
 
-Kỳ vọng `OK (448 tests)` — **trừ một test đỏ CÓ CHỦ ĐÍCH trên máy đã chạy thật**, xem ngay dưới.
+Kỳ vọng `OK (471 tests)` — **trừ một test đỏ CÓ CHỦ ĐÍCH trên máy đã chạy thật**, xem ngay dưới.
 
 ### `MA_YTE` KHÔNG bắt buộc — đừng thêm lại
 
@@ -408,6 +462,33 @@ văn 2076 (CT04 thiếu 11 trường, CT06 thiếu 7, CT07 thiếu 8) nên **c�
 siết thẳng lên mức chặn sẽ đồng loạt khoá lại những hồ sơ đang gửi được. Có một test canh việc
 `CtdtChecker` còn hỏi tầng đó, để nó không chết im lặng.
 
+### Bổ sung trường bắt buộc theo công văn 2076 — đo trước khi siết
+
+Công văn 2076/BHXH-CNTT, PL02 mục 3.2–3.6 đánh dấu bắt buộc nhiều trường hơn bảng ban đầu của
+Giai đoạn 3. `App\Services\Ctdt\Kiem\CtdtTruongBatBuoc` thêm chúng theo đúng một nguyên tắc:
+**đo trên dữ liệu thật trước khi thêm vào mức chặn** — bài học từ `MA_YTE` (mục trên): thêm mà
+không đo từng chặn 97% hồ sơ trong nhiều ngày.
+
+**Mức chặn (`BAT_BUOC`) — chỉ thêm trường đo được 0% hồ sơ thật thiếu:**
+
+| Loại | Trường thêm | Số lượng |
+|---|---|---|
+| CT03 | `MA_KHOA`, `GIOI_TINH`, `DIA_CHI` | 3 |
+| CT04 | `GIOI_TINH`, `DIA_CHI`, `CHAN_DOAN_VAO`, `CHAN_DOAN_RA`, `QT_BENHLY`, `TOMTAT_KQ`, `TT_RAVIEN`, `NGAY_CT` | 8 |
+| CT07 | `SO_KCB`, `GIOI_TINH`, `DON_VI`, `CHANDOAN_DIEUTRI`, `MA_CCHN`, `TEN_NGUOI_HANH_NGHE`, `TEKT` | 7 |
+
+**Mức cảnh báo (`KHUYEN_NGHI`) — trường công văn yêu cầu nhưng dữ liệu thật chưa sẵn sàng chặn:**
+
+| Loại | Trường thêm | Vì sao chưa chặn |
+|---|---|---|
+| CT04 | `MA_DANTOC`, `PP_DIEUTRI` | Đo được còn thiếu: `MA_DANTOC` rỗng 6/1050, `PP_DIEUTRI` rỗng 79/1050 |
+| CT06 | `SO_KCB`, `TEN_DVI`, `CHAN_DOAN`, `TEN_BS`, `MA_BS`, `NGAY_CT` | CSDL chưa có chứng từ CT06 nào để đối chiếu — không có gì để đo |
+
+**Kết quả đo được sau khi chạy lại bộ kiểm trên 1074 hồ sơ thật (2026-08-20):** 0 hồ sơ bị chặn,
+85 hồ sơ có cảnh báo (79 `PP_DIEUTRI` + 6 `MA_DANTOC`, đúng khớp số đo lúc siết mức chặn ở trên —
+không phát sinh cảnh báo mới), 1074 hồ sơ sẵn sàng gửi. Việc siết mức chặn ở bảng đầu không khóa
+lại hồ sơ nào, đúng như đo trước đã dự kiến.
+
 ### Trường ngày sinh chấp nhận dạng chỉ có năm (`yyyy`)
 
 Cùng công văn 2076, bảng trường CT03/CT04/CT07 ghi: *"`NGAY_SINH` … định dạng **`yyyyMMdd`
@@ -445,10 +526,13 @@ Vì vậy:
 Cái giá phải trả: bộ test của module không bao giờ xanh hoàn toàn trên máy này nữa, nên một test
 đỏ thật sau này dễ bị nhìn lướt qua. Đếm số lượng, đừng chỉ nhìn màu.
 
-⚠️ Repo có sẵn test đỏ **không liên quan** module này: suite `Unit` cho 4 lỗi + 7 đỏ
+⚠️ Repo có sẵn test đỏ **không liên quan** module này: suite `Unit` cho 4 lỗi + 8 đỏ
 (`NhapDanhMucUniqueTest`, `OrderCheck\CatalogLookupTest`, `BHYT\Xml3176ExportLocCoSoTest`,
-`Import\GhiTheoLoTest`), suite `Feature` cho 8 lỗi + 4 đỏ (`Dashboard\*ControllerTest`,
-`ExampleTest`). Chạy `php vendor/bin/phpunit` trước khi sửa gì để biết đâu là đỏ cũ.
+`Import\GhiTheoLoTest` — riêng tệp này lệ thuộc dữ liệu CSDL phát triển thật `qlbv` nên số đỏ
+của nó trôi theo thời gian; đo ngày 2026-08-20 ra 5 đỏ trong tệp đó, tổng suite `Unit` ra 8),
+suite `Feature` cho 8 lỗi + 4 đỏ (`Dashboard\*ControllerTest`, `ExampleTest`). Chạy
+`php vendor/bin/phpunit` trước khi sửa gì để biết đâu là đỏ cũ — đừng chỉ tin con số 7/8 cố định,
+đếm lại trên máy đang chạy.
 
 **Lưu ý khi viết test cho module này:**
 

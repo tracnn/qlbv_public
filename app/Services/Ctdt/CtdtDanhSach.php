@@ -102,8 +102,21 @@ class CtdtDanhSach
         // Moi trang thai con lai deu ngu y "khong con loi".
         $q->where('so_loi', '<=', 0);
 
+        // Soi guong dung thu tu cua CtdtTrangThaiGui::cua(): KY_HONG truoc CHUA_KY vi ca hai
+        // deu is_signed = false.
+        if ($trangThai === CtdtTrangThaiGui::KY_HONG) {
+            return $q->where('is_signed', false)
+                ->whereNotNull('signed_error')
+                ->where('signed_error', '<>', '');
+        }
+
         if ($trangThai === CtdtTrangThaiGui::CHUA_KY) {
-            return $q->where('is_signed', false);
+            // CHUA_KY phai LOAI TRU ky hong, khong thi mot ho so hien o ca hai bo loc va
+            // tong cac bo loc khong con bang tong so ho so.
+            return $q->where('is_signed', false)
+                ->where(function ($q2) {
+                    $q2->whereNull('signed_error')->orWhere('signed_error', '');
+                });
         }
 
         $q->where('is_signed', true);
@@ -121,14 +134,23 @@ class CtdtDanhSach
                 ->where('ma_ket_qua', '<>', '0');
         }
 
-        // GUI_TAT va CHUA_GUI cung la "da ky, chua co ket qua tu cong"; phan biet chung
-        // bang CAU HINH chu khong bang du lieu, nen khong the loc bang SQL rieng.
-        // Gom ca null LAN chuoi rong/'0': !empty() cua PHP coi ca ba la "chua co ket qua".
+        if ($trangThai === CtdtTrangThaiGui::GUI_HONG) {
+            // Da ky, cong CHUA tra loi, nhung co submit_error: da thu gui va hong truoc khi
+            // toi cong.
+            return $q->where(function ($q2) {
+                    $q2->whereNull('ma_ket_qua')->orWhere('ma_ket_qua', '')->orWhere('ma_ket_qua', '0');
+                })
+                ->whereNotNull('submit_error')
+                ->where('submit_error', '<>', '');
+        }
+
+        // GUI_TAT va CHUA_GUI cung la "da ky, chua co ket qua tu cong VA chua tung gui hong".
         return $q->where(function ($q2) {
-            $q2->whereNull('ma_ket_qua')
-                ->orWhere('ma_ket_qua', '')
-                ->orWhere('ma_ket_qua', '0');
-        });
+                $q2->whereNull('ma_ket_qua')->orWhere('ma_ket_qua', '')->orWhere('ma_ket_qua', '0');
+            })
+            ->where(function ($q2) {
+                $q2->whereNull('submit_error')->orWhere('submit_error', '');
+            });
     }
 
     /**

@@ -251,4 +251,95 @@ class CtdtTrangThaiGuiTest extends TestCase
             'Hồ sơ bị cổng từ chối (ma_ket_qua = 205) phải báo CONG_TU_CHOI, không phải GUI_TAT'
         );
     }
+
+    /** @test */
+    public function ky_hong_KHAC_chua_ky()
+    {
+        // SignCtdtJob ghi signed_error o ba noi va truoc day KHONG noi nao doc tren man danh
+        // sach. Ca thuong gap nhat khi trien khai: bat sign_enabled nhung quen
+        // usb_token_sign.enabled -> ho so hien "Chua ky so", va nguoi van hanh di tim nut ky
+        // (da bam roi) thay vi di cam lai USB token.
+        $hoSo = $this->hoSo([
+            'checked_at' => '2026-08-20 08:00:00', 'so_loi' => 0,
+            'is_signed' => false, 'signed_error' => 'Khong ket noi duoc dich vu ky cuc bo',
+        ]);
+
+        $this->assertSame(CtdtTrangThaiGui::KY_HONG, CtdtTrangThaiGui::cua($hoSo));
+    }
+
+    /** @test */
+    public function chua_ky_VA_chua_thu_ky_van_la_CHUA_KY()
+    {
+        // Khong co signed_error nghia la chua ai bam ky. Phai phan biet duoc voi da bam va
+        // hong - nguoc lai thi trang thai moi nuot mat trang thai cu.
+        $hoSo = $this->hoSo([
+            'checked_at' => '2026-08-20 08:00:00', 'so_loi' => 0,
+            'is_signed' => false, 'signed_error' => null,
+        ]);
+
+        $this->assertSame(CtdtTrangThaiGui::CHUA_KY, CtdtTrangThaiGui::cua($hoSo));
+    }
+
+    /** @test */
+    public function ky_lai_thanh_cong_thi_KHONG_con_la_ky_hong()
+    {
+        // SignCtdtJob xoa signed_error khi ky thanh cong. Neu nhanh KY_HONG chi hoi
+        // signed_error ma khong hoi is_signed, mot ho so da ky lai duoc van hien "Ky hong".
+        $hoSo = $this->hoSo([
+            'checked_at' => '2026-08-20 08:00:00', 'so_loi' => 0,
+            'is_signed' => true, 'signed_error' => null,
+        ]);
+
+        $this->assertNotSame(CtdtTrangThaiGui::KY_HONG, CtdtTrangThaiGui::cua($hoSo));
+    }
+
+    /** @test */
+    public function gui_hong_KHAC_cho_gui()
+    {
+        // submit_error co nhung ma_ket_qua rong = da thu gui va hong TRUOC khi toi cong
+        // (mat mang, khong tim thay tep da ky, job het luot thu). Khac han voi ho so con
+        // nam trong hang doi.
+        $hoSo = $this->hoSo([
+            'checked_at' => '2026-08-20 08:00:00', 'so_loi' => 0, 'is_signed' => true,
+            'ma_ket_qua' => null, 'submit_error' => 'Job gui that bai: Connection refused',
+        ]);
+
+        $this->assertSame(CtdtTrangThaiGui::GUI_HONG, CtdtTrangThaiGui::cua($hoSo));
+    }
+
+    /** @test */
+    public function cong_da_tra_loi_thi_ket_qua_do_THANG_submit_error()
+    {
+        // Ho so tung gui hong roi gui lai thanh cong: submit_error cu con sot lai la chuyen
+        // co that. Ket qua cua cong moi la su that cuoi cung.
+        $hoSo = $this->hoSo([
+            'checked_at' => '2026-08-20 08:00:00', 'so_loi' => 0, 'is_signed' => true,
+            'ma_ket_qua' => '200', 'submit_error' => 'Loi cu con sot',
+        ]);
+
+        $this->assertSame(CtdtTrangThaiGui::DA_GUI, CtdtTrangThaiGui::cua($hoSo));
+    }
+
+    /** @test */
+    public function gui_hong_THANG_co_gui_tat()
+    {
+        // Cau hinh bi tat SAU mot lan gui hong: hien "dang tat" la giau mat loi.
+        config(['organization.chung_tu_dien_tu.submit_enabled' => false]);
+
+        $hoSo = $this->hoSo([
+            'checked_at' => '2026-08-20 08:00:00', 'so_loi' => 0, 'is_signed' => true,
+            'ma_ket_qua' => null, 'submit_error' => 'Khong tim thay tep da ky',
+        ]);
+
+        $this->assertSame(CtdtTrangThaiGui::GUI_HONG, CtdtTrangThaiGui::cua($hoSo));
+    }
+
+    /** @test */
+    public function moi_trang_thai_moi_deu_co_nhan_tieng_viet()
+    {
+        foreach ([CtdtTrangThaiGui::KY_HONG, CtdtTrangThaiGui::GUI_HONG] as $ma) {
+            $this->assertArrayHasKey($ma, CtdtTrangThaiGui::NHAN, $ma);
+            $this->assertNotEmpty(CtdtTrangThaiGui::NHAN[$ma], $ma);
+        }
+    }
 }

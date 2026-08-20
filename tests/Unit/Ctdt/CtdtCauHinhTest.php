@@ -150,4 +150,32 @@ class CtdtCauHinhTest extends TestCase
             'exportCtdt phai tro thu muc khac exportXml3176'
         );
     }
+
+    /** @test */
+    public function retry_after_phai_lon_hon_timeout_cua_moi_job_ctdt()
+    {
+        // Quy tac cua Laravel: retry_after phai LON HON thoi gian chay lau nhat cua job.
+        // Nho hon thi hang doi giao lai job cho worker thu hai trong khi worker thu nhat van
+        // dang chay - voi SubmitCtdtJob do la hai lan POST that cung mot goi len cong BHXH.
+        //
+        // Canh o day chu khong chi ghi chu thich: hai con so nam o hai tep khac nhau
+        // (config/queue.php va app/Jobs/*), khong co gi buoc chung phai di cung nhau.
+        //
+        // Canh connection 'database' chu KHONG phai config('queue.default'): phpunit.xml ep
+        // QUEUE_DRIVER=sync cho test, ma driver sync chay job ngay trong tien trinh web nen
+        // khong co retry_after. 'database' moi la connection cac worker that dang dung.
+        $retryAfter = (int) config('queue.connections.database.retry_after');
+
+        $this->assertGreaterThan(0, $retryAfter, 'Phai khai retry_after');
+
+        foreach ([\App\Jobs\SignCtdtJob::class, \App\Jobs\SubmitCtdtJob::class] as $lop) {
+            $timeout = (new \ReflectionClass($lop))->getDefaultProperties()['timeout'];
+
+            $this->assertGreaterThan(
+                (int) $timeout,
+                $retryAfter,
+                $lop . ': timeout (' . $timeout . 's) phai NHO HON retry_after (' . $retryAfter . 's)'
+            );
+        }
+    }
 }

@@ -49,7 +49,9 @@ class CheckCtdtJobTest extends TestCase
     public function ho_so_hop_le_khong_sinh_loi_va_so_loi_bang_khong()
     {
         $this->hoSoCt03([
-            'ma_yte' => 'YT001', 'ma_bhxh' => '0123456789', 'ho_ten' => 'Nguyen Van Test', 'ngay_sinh' => '19950914',
+            'ma_yte' => 'YT001', 'ma_bhxh' => '0123456789', 'ma_khoa' => 'K01',
+            'ho_ten' => 'Nguyen Van Test', 'ngay_sinh' => '19950914', 'gioi_tinh' => '1',
+            'dia_chi' => 'Ha Noi',
             'ngay_vao' => '201912121200', 'ngay_ra' => '201912180001', 'ma_the' => 'DN1',
         ]);
 
@@ -63,7 +65,8 @@ class CheckCtdtJobTest extends TestCase
     /** @test */
     public function ghi_loi_kem_ho_so_id_va_chung_tu_id()
     {
-        $this->hoSoCt03(['ma_yte' => 'YT001', 'ma_bhxh' => '0123456789', 'ho_ten' => '', 'ngay_sinh' => '19950914',
+        $this->hoSoCt03(['ma_yte' => 'YT001', 'ma_bhxh' => '0123456789', 'ma_khoa' => 'K01',
+            'ho_ten' => '', 'ngay_sinh' => '19950914', 'gioi_tinh' => '1', 'dia_chi' => 'Ha Noi',
             'ngay_vao' => '201912121200', 'ngay_ra' => '201912180001', 'ma_the' => 'DN1']);
 
         $this->chay();
@@ -89,7 +92,8 @@ class CheckCtdtJobTest extends TestCase
         // Truoc day ca nay dung "thieu ma the" lam nguon canh bao. MA_THE nay khong con sinh
         // loi nao (rat nhieu benh nhan khong co the BHYT), nen doi sang TEKT - nguon canh bao
         // con lai duy nhat o muc truong.
-        $this->hoSoCt03(['ma_yte' => 'YT001', 'ma_bhxh' => '0123456789', 'ho_ten' => '', 'ngay_sinh' => '19950914',
+        $this->hoSoCt03(['ma_yte' => 'YT001', 'ma_bhxh' => '0123456789', 'ma_khoa' => 'K01',
+            'ho_ten' => '', 'ngay_sinh' => '19950914', 'dia_chi' => 'Ha Noi',
             'ngay_vao' => '201912121200', 'ngay_ra' => '201912180001',
             'gioi_tinh' => '9', 'tekt' => '7']);
 
@@ -104,7 +108,8 @@ class CheckCtdtJobTest extends TestCase
     public function chay_lai_khong_nhan_doi_loi()
     {
         // Job phai tu idempotent: hang doi co the giao lai sau khi that bai giua chung.
-        $this->hoSoCt03(['ma_yte' => 'YT001', 'ma_bhxh' => '0123456789', 'ho_ten' => '', 'ngay_sinh' => '19950914',
+        $this->hoSoCt03(['ma_yte' => 'YT001', 'ma_bhxh' => '0123456789', 'ma_khoa' => 'K01',
+            'ho_ten' => '', 'ngay_sinh' => '19950914', 'gioi_tinh' => '1', 'dia_chi' => 'Ha Noi',
             'ngay_vao' => '201912121200', 'ngay_ra' => '201912180001', 'ma_the' => 'DN1']);
 
         $this->chay();
@@ -118,7 +123,8 @@ class CheckCtdtJobTest extends TestCase
     /** @test */
     public function sua_du_lieu_roi_chay_lai_thi_loi_cu_bien_mat()
     {
-        $hoSo = $this->hoSoCt03(['ma_yte' => 'YT001', 'ma_bhxh' => '0123456789', 'ho_ten' => '', 'ngay_sinh' => '19950914',
+        $hoSo = $this->hoSoCt03(['ma_yte' => 'YT001', 'ma_bhxh' => '0123456789', 'ma_khoa' => 'K01',
+            'ho_ten' => '', 'ngay_sinh' => '19950914', 'gioi_tinh' => '1', 'dia_chi' => 'Ha Noi',
             'ngay_vao' => '201912121200', 'ngay_ra' => '201912180001', 'ma_the' => 'DN1']);
 
         $this->chay();

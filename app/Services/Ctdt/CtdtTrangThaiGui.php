@@ -22,19 +22,23 @@ class CtdtTrangThaiGui
 {
     const CHUA_KIEM    = 'chua_kiem';
     const CON_LOI      = 'con_loi';
+    const KY_HONG      = 'ky_hong';
     const CHUA_KY      = 'chua_ky';
     const GUI_TAT      = 'gui_tat';
     const DA_GUI       = 'da_gui';
     const CONG_TU_CHOI = 'cong_tu_choi';
+    const GUI_HONG     = 'gui_hong';
     const CHUA_GUI     = 'chua_gui';
 
     const NHAN = [
         self::CHUA_KIEM    => 'Chưa kiểm',
         self::CON_LOI      => 'Còn lỗi chặn',
+        self::KY_HONG      => 'Ký số thất bại',
         self::CHUA_KY      => 'Chưa ký số',
         self::GUI_TAT      => 'Chức năng gửi đang tắt',
         self::DA_GUI       => 'Đã gửi',
         self::CONG_TU_CHOI => 'Cổng từ chối',
+        self::GUI_HONG     => 'Gửi thất bại',
         self::CHUA_GUI     => 'Chờ gửi',
     ];
 
@@ -56,6 +60,14 @@ class CtdtTrangThaiGui
             return self::CON_LOI;
         }
 
+        // TRUOC CHUA_KY: ca hai deu is_signed = false, cai CU THE HON phai thang. Khong tach
+        // ra thi ly do that (USB token bi rut, HSM khong phan hoi, chuc nang ky chua bat) chi
+        // nam trong laravel.log, con man hinh bao "Chua ky so" - nguoi van hanh di tim nut ky
+        // da bam roi.
+        if (!(bool) $hoSo->is_signed && !empty($hoSo->signed_error)) {
+            return self::KY_HONG;
+        }
+
         // Ep ve bool: is_signed doc tu MySQL tinyint(1) ve dang 0/1. So sanh === true se
         // coi MOI ho so la chua ky.
         if (!(bool) $hoSo->is_signed) {
@@ -68,6 +80,15 @@ class CtdtTrangThaiGui
             // So sanh LONG: cong co the tra ve so 200 thay vi chuoi '200'. So sanh nghiem
             // ngat se coi mot ho so THANH CONG la bi tu choi.
             return (string) $hoSo->ma_ket_qua == '200' ? self::DA_GUI : self::CONG_TU_CHOI;
+        }
+
+        // SAU ma_ket_qua: cong da tra loi thi ket qua do la su that cuoi cung, ke ca khi
+        // submit_error cu con sot lai tu mot lan gui hong truoc do.
+        //
+        // TRUOC GUI_TAT: co gui bi tat SAU mot lan gui hong thi hien "dang tat" la giau mat
+        // loi - nguoi van hanh se di bat cau hinh thay vi doc ly do that.
+        if (!empty($hoSo->submit_error)) {
+            return self::GUI_HONG;
         }
 
         if (!(bool) config('organization.chung_tu_dien_tu.submit_enabled', false)) {

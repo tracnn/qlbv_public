@@ -6,6 +6,7 @@ use Tests\TestCase;
 use Tests\Support\DungBangCtdtSqlite;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Cache;
 use App\Http\Controllers\BHYT\BHYTCtdtController;
 use App\Jobs\SignCtdtJob;
 use App\Models\BHYT\Ctdt\CtdtHoSo;
@@ -38,6 +39,11 @@ class CtdtKyVaGuiTest extends TestCase
             'organization.chung_tu_dien_tu.sign_queue_name'   => 'JobSignCtdt',
             'organization.chung_tu_dien_tu.submit_queue_name' => 'JobSubmitCtdt',
         ]);
+
+        // phpunit.xml dat CACHE_DRIVER=array cho test, nen khoa cache chong bam trung dung
+        // ArrayStore chu khong phai FileStore. ArrayStore van ton tai giua cac test TRONG
+        // CUNG mot tien trinh PHPUnit - khoa cua test truoc se chan test sau neu khong xoa.
+        Cache::flush();
     }
 
     private function hoSo(array $ghiDe = [])
@@ -374,5 +380,227 @@ class CtdtKyVaGuiTest extends TestCase
         ])->render();
 
         $this->assertContains('GD-001', $html);
+    }
+
+    /** @test */
+    public function bam_lan_hai_khi_lan_mot_dang_chay_thi_TU_CHOI()
+    {
+        // Da xay ra that: mot ho so bi bam ba lan, sinh ba chuoi job. Voi ho so ky duoc thi
+        // thanh BA lan POST that len cong - va PL02 khong co ma giao dich phia client nen
+        // cong khong khu trung duoc.
+        $this->hoSo();
+
+        $lan1 = $this->layJson($this->controller->kyVaGui('YT001'));
+        $lan2 = $this->layJson($this->controller->kyVaGui('YT001'));
+
+        $this->assertTrue($lan1['thanh_cong']);
+        $this->assertFalse($lan2['thanh_cong'], 'Lan bam thu hai phai bi tu choi');
+        $this->assertContains('đang xử lý', $lan2['thong_diep']);
+
+        Queue::assertPushed(SignCtdtJob::class, 1);
+    }
+
+    /** @test */
+    public function ho_so_KHAC_van_bam_duoc_binh_thuong()
+    {
+        // Khoa phai theo TUNG ho so. Khoa chung se bien mot lan bam thanh mot hang doi mot
+        // nguoi - ca phong khong ai gui duoc trong luc mot ho so dang chay.
+        $this->hoSo();
+        $this->hoSo(['ma_ho_so' => 'YT002']);
+
+        $this->controller->kyVaGui('YT001');
+        $kq = $this->layJson($this->controller->kyVaGui('YT002'));
+
+        $this->assertTrue($kq['thanh_cong']);
+        Queue::assertPushed(SignCtdtJob::class, 2);
+    }
+
+    /** @test */
+    public function ho_so_bi_TU_CHOI_thi_KHONG_giu_khoa()
+    {
+        // Bi tu choi nghia la khong co chuoi job nao chay, nen khong co gi de nha khoa. Giu
+        // khoa o day se khoa nguoi dung ra ngoai het thoi han vi mot lan bam khong lam gi ca.
+        config(['organization.chung_tu_dien_tu.submit_enabled' => false]);
+        $this->hoSo();
+
+        $this->controller->kyVaGui('YT001');
+
+        config(['organization.chung_tu_dien_tu.submit_enabled' => true]);
+        $kq = $this->layJson($this->controller->kyVaGui('YT001'));
+
+        $this->assertTrue($kq['thanh_cong'], 'Lan bam bi tu choi khong duoc giu khoa');
+    }
+
+    /** @test */
+    public function job_gui_nha_khoa_khi_xong()
+    {
+        // Khong nha thi nguoi dung phai cho het han khoa moi gui lai duoc - ke ca khi lan
+        // gui truoc da xong tu lau.
+        $this->hoSo();
+        $this->controller->kyVaGui('YT001');
+
+        // Dung Cache::has() de tham do, KHONG dung Cache::add(): add() se TU DAT khoa khi
+        // no chua ton tai, tuc phep do lam thay doi thu no dang do.
+        $this->assertTrue(Cache::has(BHYTCtdtController::KHOA_XU_LY . 'YT001'),
+            'Khoa phai dang giu sau khi bam');
+
+        $job = new \App\Jobs\SubmitCtdtJob('YT001', 'tracnn');
+        $job->submitServiceGia = new \Tests\Support\FakeCtdtSubmitService();
+        $job->handle();
+
+        $this->assertFalse(Cache::has(BHYTCtdtController::KHOA_XU_LY . 'YT001'),
+            'Job gui xong phai nha khoa');
+    }
+
+    /** @test */
+    public function job_gui_nha_khoa_tren_duong_THANH_CONG()
+    {
+        // Nhanh $quyetDinh === GUI la nhanh DUY NHAT dan toi mot lan POST that len cong.
+        // Neu no khong nha khoa, moi lan gui THANH CONG deu khoa ho so lai het thoi han - dung
+        // duong di binh thuong nhat lai la duong khong duoc canh.
+        $this->hoSo(['is_signed' => true, 'duong_dan_da_ky' => 'da-ky/YT001.xml']);
+        \Illuminate\Support\Facades\Storage::fake('exportCtdt');
+        \Illuminate\Support\Facades\Storage::disk('exportCtdt')->put('da-ky/YT001.xml', '<x/>');
+
+        $this->controller->kyVaGui('YT001');
+
+        $job = new \App\Jobs\SubmitCtdtJob('YT001', 'tracnn');
+        $job->submitServiceGia = new \Tests\Support\FakeCtdtSubmitService();
+        $job->handle();
+
+        $this->assertFalse(Cache::has(BHYTCtdtController::KHOA_XU_LY . 'YT001'));
+    }
+
+    /** @test */
+    public function job_gui_nha_khoa_khi_KHONG_TIM_THAY_tep_da_ky()
+    {
+        // Tep tren dia co the bi don dep. Job ghi loi roi tra ve som - van phai nha khoa.
+        $this->hoSo(['is_signed' => true, 'duong_dan_da_ky' => 'khong-ton-tai.xml']);
+        \Illuminate\Support\Facades\Storage::fake('exportCtdt');
+
+        $this->controller->kyVaGui('YT001');
+
+        (new \App\Jobs\SubmitCtdtJob('YT001', 'tracnn'))->handle();
+
+        $this->assertFalse(Cache::has(BHYTCtdtController::KHOA_XU_LY . 'YT001'));
+    }
+
+    /** @test */
+    public function ca_hai_job_nha_khoa_trong_failed()
+    {
+        // failed() la luoi cuoi: het luot thu ma khong nha thi ho so bi khoa het thoi han
+        // du lan gui do da chet tu lau.
+        foreach ([\App\Jobs\SignCtdtJob::class, \App\Jobs\SubmitCtdtJob::class] as $lop) {
+            $this->hoSo();
+            Cache::add(BHYTCtdtController::KHOA_XU_LY . 'YT001', true, BHYTCtdtController::KHOA_XU_LY_PHUT);
+
+            (new $lop('YT001'))->failed(new \RuntimeException('mang chap'));
+
+            $this->assertFalse(Cache::has(BHYTCtdtController::KHOA_XU_LY . 'YT001'),
+                $lop . '::failed() phai nha khoa');
+
+            CtdtHoSo::where('ma_ho_so', 'YT001')->delete();
+        }
+    }
+
+    /** @test */
+    public function thoi_han_khoa_phai_lon_hon_ngan_sach_thu_lai_cua_ca_chuoi()
+    {
+        // Khoa het han GIUA CHUNG thi nguoi dung bam lai va sinh chuoi thu hai - hai chuoi
+        // song song cho mot ho so la hai lan POST that len cong.
+        //
+        // Ngan sach chay thuan cua chuoi: SignCtdtJob tries x timeout + SubmitCtdtJob
+        // tries x timeout. Chua tinh thoi gian nam cho trong hang doi, nen thoi han khoa
+        // phai co bien du.
+        $nganSach = 0;
+
+        foreach ([\App\Jobs\SignCtdtJob::class, \App\Jobs\SubmitCtdtJob::class] as $lop) {
+            $mac = (new \ReflectionClass($lop))->getDefaultProperties();
+            $nganSach += (int) $mac['tries'] * (int) $mac['timeout'];
+        }
+
+        $khoaGiay = BHYTCtdtController::KHOA_XU_LY_PHUT * 60;
+
+        $this->assertGreaterThan($nganSach, $khoaGiay,
+            'Thoi han khoa (' . $khoaGiay . 's) phai lon hon ngan sach chuoi (' . $nganSach . 's)');
+    }
+
+    /** @test */
+    public function ho_so_tung_gui_ma_dau_vet_bi_nap_lai_xoa_thi_doi_XAC_NHAN()
+    {
+        // CtdtLuuHoSo::ghiHoSo() reset ma_gd/ma_ket_qua/is_signed khi nap de - dung thiet
+        // ke, vi noi dung da doi. Nhung hau qua: mot ho so DA duoc cong nhan that se hien
+        // "Chua ky so" tren man danh sach va gui lai duoc ma khong co gi canh bao. Bang
+        // chung da gui chi con o lich_su_gui, von chi hien o man CHI TIET.
+        $this->hoSo([
+            'ma_gd'        => null,
+            'ma_ket_qua'   => null,
+            'lich_su_gui'  => '2026-08-19 10:00:00 | MaGD GD-001 | MaKetQua 200',
+        ]);
+
+        $kq = $this->layJson($this->controller->kyVaGui('YT001'));
+
+        $this->assertFalse($kq['thanh_cong'], 'Lan bam dau phai bi tu choi de nguoi bam nhin thay');
+        $this->assertTrue($kq['can_xac_nhan']);
+        $this->assertContains('đã từng được gửi lên cổng BHXH', $kq['thong_diep']);
+
+        Queue::assertNotPushed(SignCtdtJob::class);
+    }
+
+    /** @test */
+    public function bam_lai_kem_xac_nhan_gui_lai_thi_day_job_binh_thuong()
+    {
+        // Gui lai sau khi sua noi dung la viec HOP LE - canh bao chu khong chan cung.
+        $this->hoSo([
+            'ma_gd'        => null,
+            'ma_ket_qua'   => null,
+            'lich_su_gui'  => '2026-08-19 10:00:00 | MaGD GD-001 | MaKetQua 200',
+        ]);
+
+        request()->merge(['xac_nhan_gui_lai' => 1]);
+
+        $kq = $this->layJson($this->controller->kyVaGui('YT001'));
+
+        $this->assertTrue($kq['thanh_cong']);
+        $this->assertArrayNotHasKey('can_xac_nhan', $kq);
+        Queue::assertPushed(SignCtdtJob::class);
+    }
+
+    /** @test */
+    public function ho_so_con_giu_ma_gd_thi_KHONG_doi_xac_nhan_them()
+    {
+        // Nhanh canh bao chi danh cho ca dau vet DA BI XOA. Ho so con ma_gd thi hop xac
+        // nhan dau tien cua nut da noi ro "da gui (MaGD ...)" roi - hoi lan hai la thua.
+        $this->hoSo([
+            'ma_gd'       => 'GD-001',
+            'ma_ket_qua'  => '200',
+            'lich_su_gui' => '2026-08-19 10:00:00 | MaGD GD-001 | MaKetQua 200',
+            'is_signed'   => true,
+        ]);
+
+        $kq = $this->layJson($this->controller->kyVaGui('YT001'));
+
+        $this->assertTrue($kq['thanh_cong']);
+        Queue::assertPushed(SignCtdtJob::class);
+    }
+
+    /** @test */
+    public function ho_so_tung_bi_cong_TU_CHOI_cung_doi_xac_nhan_nhung_KHONG_noi_la_da_tiep_nhan()
+    {
+        // noiLichSu() ghi dong lich su khi ma_gd HOAC ma_ket_qua khac rong. Mot ho so tung bi
+        // cong tu choi chi co ma_ket_qua - no van thoa dieu kien "tung gui", nhung noi voi
+        // nguoi van hanh rang cong "da tiep nhan" la noi sai.
+        $this->hoSo([
+            'ma_gd'       => null,
+            'ma_ket_qua'  => null,
+            'lich_su_gui' => '[2026-08-20 08:00:00] MaGD= MaKetQua=205',
+        ]);
+
+        $kq = $this->layJson($this->controller->kyVaGui('YT001'));
+
+        $this->assertFalse($kq['thanh_cong']);
+        $this->assertTrue($kq['can_xac_nhan']);
+        $this->assertNotContains('tiếp nhận', $kq['thong_diep'],
+            'Loi van khong duoc khang dinh cong da tiep nhan');
     }
 }

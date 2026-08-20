@@ -4,6 +4,7 @@ namespace App\Http\Controllers\BHYT;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 use App\Http\Controllers\Controller;
 
 use App\Services\BHYT\DanhSachCoSo;
@@ -42,6 +43,41 @@ class BHYTCtdtController extends Controller
         'is_signed', 'trang_thai_gui', 'trang_thai_nhan', 'ma_gd', 'ma_ket_qua',
         'thoi_gian_tiep_nhan', 'imported_at', 'imported_by', 'khong_co_ma_yte', 'action',
     ];
+
+    /**
+     * Tien to khoa cache chong bam trung nut "Ky va gui".
+     *
+     * VI SAO CACHE chu khong phai mot cot moi: day la trang thai TAM THOI. Mot cot phai co
+     * duong don khi tien trinh chet giua chung; khoa cache tu het han. Cache driver cua du
+     * an la 'file' (mot may chu) nen du dung.
+     *
+     * Hai job nha khoa nay khi chay xong - xem SubmitCtdtJob va SignCtdtJob.
+     *
+     * KHONG phai mutex that: FileStore va ArrayStore cua Laravel 5.5 khong co add() rieng,
+     * nen Repository::add() lui ve get() roi put() - co cua so TOCTOU. Hai request that su
+     * dong thoi (cach nhau mili-giay) van lot ca hai. Du cho ca dung that o day (mot nguoi
+     * bam hai lan cach nhau vai tram mili-giay); neu sau nay can chan that thi phai dung
+     * khoa o tang CSDL.
+     */
+    const KHOA_XU_LY = 'ctdt:dang-xu-ly:';
+
+    /**
+     * Thoi han khoa, tinh bang PHUT - Cache::add() cua Laravel 5.5 nhan phut, khong phai
+     * giay. Chi la luoi chan cuoi: duong nha khoa binh thuong la o cuoi chuoi job.
+     *
+     * CAN CU CON SO 30: ngan sach THU LAI cua ca chuoi la
+     *   SignCtdtJob   tries 2 x timeout 120s = 240s
+     *   SubmitCtdtJob tries 3 x timeout  90s = 270s
+     *   -> 510s = 8,5 phut chay THUAN, chua tinh thoi gian nam cho trong hang doi.
+     *
+     * Muoi phut (con so cu) chi can hang doi un 2 phut la khoa het han TRONG KHI chuoi van
+     * dang chay: nguoi dung bam lai, sinh chuoi thu hai, thanh hai lan POST that len cong
+     * BHXH cho cung mot ho so. 30 phut = 8,5 phut chay thuan + bien cho thoi gian nam cho.
+     *
+     * Quan he nay duoc canh boi
+     * CtdtKyVaGuiTest::thoi_han_khoa_phai_lon_hon_ngan_sach_thu_lai_cua_ca_chuoi().
+     */
+    const KHOA_XU_LY_PHUT = 30;
 
     public function index()
     {
@@ -346,8 +382,20 @@ class BHYTCtdtController extends Controller
      * khong co gi xay ra, khong thi ho bam lai mai. Job van kiem lai lan nua vi no co the
      * nam cho trong hang doi rat lau, giua luc do cau hinh hoac ho so co the da doi.
      */
-    public function kyVaGui($ma_ho_so)
+    public function kyVaGui($ma_ho_so, Request $request = null)
     {
+        // Dong nay BAT BUOC cho CA route lan test, khong phai chi de test.
+        //
+        // Tham so vua co typehint lop VUA co gia tri mac dinh thi
+        // RouteDependencyResolverTrait::transformDependency() tra getDefaultValue() chu
+        // KHONG goi container->make() - tuc router cung truyen null. Da kiem chung bang
+        // ControllerDispatcher::resolveClassMethodDependencies: ket qua la
+        // ['ma_ho_so' => ..., 0 => NULL].
+        //
+        // Go dong nay di la route chet bang fatal "Call to a member function input() on
+        // null", va chi lo ra khi co nguoi bam nut tren moi truong that.
+        $request = $request ?: request();
+
         $hoSo = CtdtHoSo::where('ma_ho_so', $ma_ho_so)->firstOrFail();
 
         $quyetDinh = CtdtQuyetDinhGui::nen(
@@ -392,6 +440,42 @@ class BHYTCtdtController extends Controller
         // khoa ton tai nhung rong/null.
         $hangDoiKy  = config('organization.chung_tu_dien_tu.sign_queue_name') ?: 'JobSignCtdt';
         $hangDoiGui = config('organization.chung_tu_dien_tu.submit_queue_name') ?: 'JobSubmitCtdt';
+
+        // Nap lai xoa ma_gd/ma_ket_qua (noi dung da doi thi ket qua cu noi ve mot ban khac),
+        // nen mot ho so DA duoc cong nhan that se hien "Chua ky so" va gui lai duoc ma khong
+        // co gi canh bao - dau vet chi con o lich_su_gui, von chi hien o man chi tiet.
+        //
+        // Canh bao chu khong chan cung: gui lai sau khi sua noi dung la viec HOP LE. Chi
+        // buoc nguoi bam nhin thay minh dang gui lai mot ho so cong da nhan.
+        //
+        // Laravel 5.5 KHONG co Request::boolean(), nen dung filter_var().
+        //
+        // Loi van phai dung cho CA HAI ca: CtdtLuuHoSo::noiLichSu() ghi mot dong lich su khi
+        // ma_gd HOAC ma_ket_qua khac rong, nen mot ho so tung bi cong TU CHOI (chi co
+        // ma_ket_qua) cung thoa dieu kien nay. Noi "da duoc tiep nhan" o do la noi sai voi
+        // nguoi van hanh.
+        $tungGui = !empty($hoSo->lich_su_gui) && empty($hoSo->ma_gd);
+
+        if ($tungGui && !filter_var($request->input('xac_nhan_gui_lai'), FILTER_VALIDATE_BOOLEAN)) {
+            return response()->json([
+                'thanh_cong' => false,
+                'can_xac_nhan' => true,
+                'thong_diep' => 'Hồ sơ này đã từng được gửi lên cổng BHXH, nhưng dấu vết đã bị '
+                    . 'xoá khi nạp lại. Xem tab lịch sử gửi ở màn chi tiết trước khi gửi lại.',
+            ]);
+        }
+
+        // Dat khoa NGAY TRUOC dispatch, sau moi nhanh tu choi: mot lan bam bi tu choi khong
+        // lam gi ca, giu khoa se khoa nguoi dung ra ngoai het thoi han ma khong duoc gi.
+        //
+        // Cache::add() tra false khi khoa da ton tai - do chinh la phep thu "da co nguoi bam
+        // chua". Khoa theo TUNG ma ho so, khong phai mot khoa chung.
+        if (!Cache::add(self::KHOA_XU_LY . $ma_ho_so, true, self::KHOA_XU_LY_PHUT)) {
+            return response()->json([
+                'thanh_cong' => false,
+                'thong_diep' => 'Hồ sơ này đang xử lý. Chờ ít phút rồi tải lại trang để xem kết quả.',
+            ]);
+        }
 
         SignCtdtJob::withChain([
             (new SubmitCtdtJob($ma_ho_so, $nguoiGui))->onQueue($hangDoiGui),
