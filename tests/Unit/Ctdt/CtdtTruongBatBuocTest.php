@@ -162,4 +162,43 @@ class CtdtTruongBatBuocTest extends TestCase
         $this->assertSame([], CtdtTruongBatBuoc::cua('KHONG_TON_TAI'));
         $this->assertSame([], CtdtTruongBatBuoc::khuyenNghi('KHONG_TON_TAI'));
     }
+
+    /** @test */
+    public function bo_sung_truong_bat_buoc_theo_cong_van_2076()
+    {
+        // Chi CHAN nhung truong ma du lieu that da du (do ngay 2026-08-20 tren 3047 chung tu):
+        // rong 0% thi chan duoc ma khong khoa lai ho so nao.
+        $mongDoi = [
+            'CT03' => ['MA_KHOA', 'GIOI_TINH', 'DIA_CHI'],
+            'CT04' => ['GIOI_TINH', 'DIA_CHI', 'CHAN_DOAN_VAO', 'CHAN_DOAN_RA',
+                       'QT_BENHLY', 'TOMTAT_KQ', 'TT_RAVIEN', 'NGAY_CT'],
+            'CT07' => ['SO_KCB', 'GIOI_TINH', 'DON_VI', 'CHANDOAN_DIEUTRI',
+                       'MA_CCHN', 'TEN_NGUOI_HANH_NGHE', 'TEKT'],
+        ];
+
+        foreach ($mongDoi as $loai => $cac) {
+            foreach ($cac as $the) {
+                $this->assertContains($the, CtdtTruongBatBuoc::cua($loai), $loai . '/' . $the);
+            }
+        }
+    }
+
+    /** @test */
+    public function truong_du_lieu_chua_du_thi_chi_CANH_BAO()
+    {
+        // MA_DANTOC rong 6/1050, PP_DIEUTRI rong 79/1050 - chan se khoa lai dung nhung ho so
+        // dang gui duoc. CT06 chua co mot chung tu nao de doi chieu, chan la doan mo.
+        $mongDoi = [
+            'CT04' => ['MA_DANTOC', 'PP_DIEUTRI'],
+            'CT06' => ['SO_KCB', 'TEN_DVI', 'CHAN_DOAN', 'TEN_BS', 'MA_BS', 'NGAY_CT'],
+        ];
+
+        foreach ($mongDoi as $loai => $cac) {
+            foreach ($cac as $the) {
+                $this->assertContains($the, CtdtTruongBatBuoc::khuyenNghi($loai), $loai . '/' . $the);
+                $this->assertNotContains($the, CtdtTruongBatBuoc::cua($loai),
+                    $loai . '/' . $the . ': chua du can cu de CHAN');
+            }
+        }
+    }
 }
