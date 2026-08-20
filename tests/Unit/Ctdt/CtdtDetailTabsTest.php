@@ -94,9 +94,13 @@ class CtdtDetailTabsTest extends TestCase
     public function ho_so_khong_co_chung_tu_nao_van_co_tab_xml_goc()
     {
         $tabs = CtdtDetailTabs::cua($this->hoSoVoi([]));
+        $ma = array_column($tabs, 'ma');
 
-        $this->assertCount(1, $tabs);
-        $this->assertSame('__XML__', $tabs[0]['ma']);
+        // Bat bien that su la "tab XML goc LUON co va LUON dung cuoi", khong phai "chi co
+        // dung mot tab". Giai doan 3 them tab Loi dung truoc no; dem so tab la dem mot con
+        // so tinh co, se vo moi lan them tab moi ma khong bat duoc loi nao.
+        $this->assertContains('__XML__', $ma);
+        $this->assertSame('__XML__', end($ma), 'Tab XML goc phai dung cuoi');
     }
 
     /** @test */
