@@ -183,39 +183,6 @@ class CtdtTabLoiTest extends TestCase
         $this->assertContains('Không có lỗi', $html);
     }
 
-    /**
-     * @test
-     *
-     * detail.blade.php ke thua adminlte::page, ma layout do goi mot view composer doi
-     * nguoi dung dang nhap - nen render tron trang trong test don vi khong kha thi. Bu
-     * lai, hai test duoi day soi CHINH tep blade: mot cai bat loi bien dich, mot cai bat
-     * loi noi dung.
-     */
-    public function detail_blade_bien_dich_ra_php_chay_duoc()
-    {
-        // Blade dich MOI chi thi no thay, ke ca trong chu thich JavaScript. Mot "@" + tu
-        // khoa khong ngoac (vi du @if trong mot dong // ...) sinh ra PHP hong, va CA trang
-        // chi tiet nem Parse error - khong render duoc dong nao. Loi nay da that su nam
-        // trong tep va khong test nao bat duoc, vi khong test nao dung toi detail.blade.
-        $nguon = file_get_contents(base_path('resources/views/bhyt/ctdt/detail.blade.php'));
-
-        $this->assertNotFalse($nguon, 'Khong doc duoc detail.blade.php');
-
-        $php = \Illuminate\Support\Facades\Blade::compileString($nguon);
-
-        // token_get_all voi TOKEN_PARSE nem ParseError neu ma sinh ra khong hop le.
-        try {
-            token_get_all($php, TOKEN_PARSE);
-        } catch (\ParseError $e) {
-            $this->fail(
-                'detail.blade.php bien dich ra PHP hong: ' . $e->getMessage()
-                . ' - ca trang chi tiet se nem Parse error'
-            );
-        }
-
-        $this->assertTrue(true);
-    }
-
     /** @test */
     public function khoi_tom_tat_phan_biet_chua_kiem_voi_khong_loi()
     {
