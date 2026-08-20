@@ -9,10 +9,12 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Cache;
 
 use App\Models\BHYT\Ctdt\CtdtHoSo;
 use App\Services\Ctdt\CtdtQuyetDinhGui;
 use App\Services\Ctdt\CtdtSubmitService;
+use App\Http\Controllers\BHYT\BHYTCtdtController;
 
 /**
  * Gui mot ho so da ky len cong BHXH va ghi lai ket qua.
@@ -65,6 +67,7 @@ class SubmitCtdtJob implements ShouldQueue
         if ($hoSo === null) {
             // Ho so co the da bi xoa trong luc job cho trong hang doi.
             Log::info('SubmitCtdtJob: khong tim thay ho so ' . $this->maHoSo);
+            $this->nhaKhoa();
 
             return;
         }
@@ -80,12 +83,14 @@ class SubmitCtdtJob implements ShouldQueue
             // KHONG ghi gi ca, ke ca submit_error. Khi chuc nang gui dang tat thi khong co
             // lan gui nao dien ra - ghi loi la bia, nguoi doc se tuong da thu gui va that bai.
             Log::info('SubmitCtdtJob: chuc nang gui dang tat, bo qua ' . $this->maHoSo);
+            $this->nhaKhoa();
 
             return;
         }
 
         if ($quyetDinh !== CtdtQuyetDinhGui::GUI) {
             $this->ghiLoi($hoSo, $this->lyDo($quyetDinh));
+            $this->nhaKhoa();
 
             return;
         }
@@ -96,6 +101,7 @@ class SubmitCtdtJob implements ShouldQueue
             // Tep tren dia co the bi don dep. Ghi lai de nguoi van hanh doc, dung nem: nem
             // chi lam hang doi thu lai ba lan cho cung mot ket qua.
             $this->ghiLoi($hoSo, 'Khong tim thay tep da ky: ' . ($duongDan === '' ? '(trong)' : $duongDan));
+            $this->nhaKhoa();
 
             return;
         }
@@ -118,6 +124,22 @@ class SubmitCtdtJob implements ShouldQueue
         $ketQua = $submitService->gui($xmlDaKy, $hoSo->dich_vu, $hoSo->macskcb);
 
         $this->ghiKetQua($hoSo, $ketQua);
+        $this->nhaKhoa();
+    }
+
+    /**
+     * Nha khoa chong bam trung. Goi o MOI duong ra cua job, ke ca duong that bai.
+     *
+     * Khong nha thi nguoi dung phai cho het han khoa moi gui lai duoc - ke ca khi lan gui
+     * truoc da xong tu lau.
+     *
+     * KHONG goi trong nhanh nem cua $submitService->gui(): o do job co y de ngoai le bay ra
+     * cho hang doi thu lai, va lan thu sau van thuoc cung mot luot xu ly. failed() se nha
+     * khoa khi het luot.
+     */
+    private function nhaKhoa()
+    {
+        Cache::forget(BHYTCtdtController::KHOA_XU_LY . $this->maHoSo);
     }
 
     /**
@@ -234,5 +256,7 @@ class SubmitCtdtJob implements ShouldQueue
         if ($hoSo !== null) {
             $hoSo->update(['submit_error' => $this->cat('Job gửi thất bại: ' . $exception->getMessage(), 255)]);
         }
+
+        $this->nhaKhoa();
     }
 }

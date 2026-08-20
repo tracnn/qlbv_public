@@ -4,6 +4,7 @@ namespace App\Http\Controllers\BHYT;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 use App\Http\Controllers\Controller;
 
 use App\Services\BHYT\DanhSachCoSo;
@@ -42,6 +43,21 @@ class BHYTCtdtController extends Controller
         'is_signed', 'trang_thai_gui', 'trang_thai_nhan', 'ma_gd', 'ma_ket_qua',
         'thoi_gian_tiep_nhan', 'imported_at', 'imported_by', 'khong_co_ma_yte', 'action',
     ];
+
+    /**
+     * Tien to khoa cache chong bam trung nut "Ky va gui".
+     *
+     * VI SAO CACHE chu khong phai mot cot moi: day la trang thai TAM THOI. Mot cot phai co
+     * duong don khi tien trinh chet giua chung; khoa cache tu het han. Cache driver cua du
+     * an la 'file' (mot may chu) nen du dung.
+     *
+     * Hai job nha khoa nay khi chay xong - xem SubmitCtdtJob va SignCtdtJob.
+     */
+    const KHOA_XU_LY = 'ctdt:dang-xu-ly:';
+
+    /** Muoi PHUT - Cache::add() cua Laravel 5.5 nhan phut, khong phai giay. Chi la luoi
+     *  chan cuoi: duong nha khoa binh thuong la o cuoi chuoi job. */
+    const KHOA_XU_LY_PHUT = 10;
 
     public function index()
     {
@@ -392,6 +408,18 @@ class BHYTCtdtController extends Controller
         // khoa ton tai nhung rong/null.
         $hangDoiKy  = config('organization.chung_tu_dien_tu.sign_queue_name') ?: 'JobSignCtdt';
         $hangDoiGui = config('organization.chung_tu_dien_tu.submit_queue_name') ?: 'JobSubmitCtdt';
+
+        // Dat khoa NGAY TRUOC dispatch, sau moi nhanh tu choi: mot lan bam bi tu choi khong
+        // lam gi ca, giu khoa se khoa nguoi dung ra ngoai muoi phut ma khong duoc gi.
+        //
+        // Cache::add() tra false khi khoa da ton tai - do chinh la phep thu "da co nguoi bam
+        // chua". Khoa theo TUNG ma ho so, khong phai mot khoa chung.
+        if (!Cache::add(self::KHOA_XU_LY . $ma_ho_so, true, self::KHOA_XU_LY_PHUT)) {
+            return response()->json([
+                'thanh_cong' => false,
+                'thong_diep' => 'Hồ sơ này đang xử lý. Chờ ít phút rồi tải lại trang để xem kết quả.',
+            ]);
+        }
 
         SignCtdtJob::withChain([
             (new SubmitCtdtJob($ma_ho_so, $nguoiGui))->onQueue($hangDoiGui),

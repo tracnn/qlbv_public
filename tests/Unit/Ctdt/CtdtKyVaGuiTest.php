@@ -6,6 +6,7 @@ use Tests\TestCase;
 use Tests\Support\DungBangCtdtSqlite;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Cache;
 use App\Http\Controllers\BHYT\BHYTCtdtController;
 use App\Jobs\SignCtdtJob;
 use App\Models\BHYT\Ctdt\CtdtHoSo;
@@ -38,6 +39,10 @@ class CtdtKyVaGuiTest extends TestCase
             'organization.chung_tu_dien_tu.sign_queue_name'   => 'JobSignCtdt',
             'organization.chung_tu_dien_tu.submit_queue_name' => 'JobSubmitCtdt',
         ]);
+
+        // Khoa cache chong bam trung dung khoa file, ton tai giua cac test neu khong xoa -
+        // khoa cua test truoc se chan test sau.
+        Cache::flush();
     }
 
     private function hoSo(array $ghiDe = [])
@@ -374,5 +379,75 @@ class CtdtKyVaGuiTest extends TestCase
         ])->render();
 
         $this->assertContains('GD-001', $html);
+    }
+
+    /** @test */
+    public function bam_lan_hai_khi_lan_mot_dang_chay_thi_TU_CHOI()
+    {
+        // Da xay ra that: mot ho so bi bam ba lan, sinh ba chuoi job. Voi ho so ky duoc thi
+        // thanh BA lan POST that len cong - va PL02 khong co ma giao dich phia client nen
+        // cong khong khu trung duoc.
+        $this->hoSo();
+
+        $lan1 = $this->layJson($this->controller->kyVaGui('YT001'));
+        $lan2 = $this->layJson($this->controller->kyVaGui('YT001'));
+
+        $this->assertTrue($lan1['thanh_cong']);
+        $this->assertFalse($lan2['thanh_cong'], 'Lan bam thu hai phai bi tu choi');
+        $this->assertContains('đang xử lý', $lan2['thong_diep']);
+
+        Queue::assertPushed(SignCtdtJob::class, 1);
+    }
+
+    /** @test */
+    public function ho_so_KHAC_van_bam_duoc_binh_thuong()
+    {
+        // Khoa phai theo TUNG ho so. Khoa chung se bien mot lan bam thanh mot hang doi mot
+        // nguoi - ca phong khong ai gui duoc trong luc mot ho so dang chay.
+        $this->hoSo();
+        $this->hoSo(['ma_ho_so' => 'YT002']);
+
+        $this->controller->kyVaGui('YT001');
+        $kq = $this->layJson($this->controller->kyVaGui('YT002'));
+
+        $this->assertTrue($kq['thanh_cong']);
+        Queue::assertPushed(SignCtdtJob::class, 2);
+    }
+
+    /** @test */
+    public function ho_so_bi_TU_CHOI_thi_KHONG_giu_khoa()
+    {
+        // Bi tu choi nghia la khong co chuoi job nao chay, nen khong co gi de nha khoa. Giu
+        // khoa o day se khoa nguoi dung ra ngoai muoi phut vi mot lan bam khong lam gi ca.
+        config(['organization.chung_tu_dien_tu.submit_enabled' => false]);
+        $this->hoSo();
+
+        $this->controller->kyVaGui('YT001');
+
+        config(['organization.chung_tu_dien_tu.submit_enabled' => true]);
+        $kq = $this->layJson($this->controller->kyVaGui('YT001'));
+
+        $this->assertTrue($kq['thanh_cong'], 'Lan bam bi tu choi khong duoc giu khoa');
+    }
+
+    /** @test */
+    public function job_gui_nha_khoa_khi_xong()
+    {
+        // Khong nha thi nguoi dung phai cho het han khoa moi gui lai duoc - ke ca khi lan
+        // gui truoc da xong tu lau.
+        $this->hoSo();
+        $this->controller->kyVaGui('YT001');
+
+        // Dung Cache::has() de tham do, KHONG dung Cache::add(): add() se TU DAT khoa khi
+        // no chua ton tai, tuc phep do lam thay doi thu no dang do.
+        $this->assertTrue(Cache::has(BHYTCtdtController::KHOA_XU_LY . 'YT001'),
+            'Khoa phai dang giu sau khi bam');
+
+        $job = new \App\Jobs\SubmitCtdtJob('YT001', 'tracnn');
+        $job->submitServiceGia = new \Tests\Support\FakeCtdtSubmitService();
+        $job->handle();
+
+        $this->assertFalse(Cache::has(BHYTCtdtController::KHOA_XU_LY . 'YT001'),
+            'Job gui xong phai nha khoa');
     }
 }
