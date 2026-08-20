@@ -52,6 +52,12 @@ class BHYTCtdtController extends Controller
      * an la 'file' (mot may chu) nen du dung.
      *
      * Hai job nha khoa nay khi chay xong - xem SubmitCtdtJob va SignCtdtJob.
+     *
+     * KHONG phai mutex that: FileStore va ArrayStore cua Laravel 5.5 khong co add() rieng,
+     * nen Repository::add() lui ve get() roi put() - co cua so TOCTOU. Hai request that su
+     * dong thoi (cach nhau mili-giay) van lot ca hai. Du cho ca dung that o day (mot nguoi
+     * bam hai lan cach nhau vai tram mili-giay); neu sau nay can chan that thi phai dung
+     * khoa o tang CSDL.
      */
     const KHOA_XU_LY = 'ctdt:dang-xu-ly:';
 
