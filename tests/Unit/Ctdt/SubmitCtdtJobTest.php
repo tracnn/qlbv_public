@@ -289,4 +289,59 @@ class SubmitCtdtJobTest extends TestCase
 
         $this->assertContains('Connection refused', (string) CtdtHoSo::first()->submit_error);
     }
+
+    /** @test */
+    public function gia_tri_qua_dai_tu_cong_bi_cat_chu_khong_lam_update_nem()
+    {
+        // MySQL cua du an bat strict mode. Mot gia tri tran cot lam update() nem SAU KHI
+        // cong da nhan ho so, va vi job co y khong bat exception, hang doi se gui lai -
+        // toi da sau lan POST cung mot goi len cong.
+        $this->hoSo();
+        $gui = new FakeCtdtSubmitService();
+        $gui->ketQua = [
+            'ma_ket_qua'          => str_repeat('9', 30),
+            'ma_gd'               => str_repeat('G', 200),
+            'thoi_gian_tiep_nhan' => '2026-08-20 08:30:00',
+            'thong_diep'          => str_repeat('x', 500),
+            'nguyen_van'          => '{}',
+        ];
+
+        $this->chay($gui);
+
+        $hoSo = CtdtHoSo::first();
+
+        $this->assertLessThanOrEqual(50, mb_strlen((string) $hoSo->ma_gd));
+        $this->assertLessThanOrEqual(10, mb_strlen((string) $hoSo->ma_ket_qua));
+        $this->assertLessThanOrEqual(14, mb_strlen((string) $hoSo->thoi_gian_tiep_nhan));
+        $this->assertLessThanOrEqual(255, mb_strlen((string) $hoSo->submit_error));
+    }
+
+    /** @test */
+    public function failed_voi_thong_diep_rat_dai_van_ghi_duoc()
+    {
+        // failed() la luoi cuoi cung. Neu chinh no nem vi tran cot thi ho so o lai khong
+        // mot dau vet nao - dung tinh huong ma failed() duoc viet ra de chan. Va no chi
+        // hong khi cong tra loi dai, tuc dung luc can nhat.
+        $this->hoSo();
+
+        (new SubmitCtdtJob('YT001', 'tracnn'))->failed(new \Exception(str_repeat('L', 600)));
+
+        $this->assertLessThanOrEqual(255, mb_strlen((string) CtdtHoSo::first()->submit_error));
+        $this->assertNotEmpty(CtdtHoSo::first()->submit_error);
+    }
+
+    /** @test */
+    public function gia_tri_ngan_binh_thuong_KHONG_bi_cat()
+    {
+        // Cat khong duoc lam hong duong di binh thuong.
+        $this->hoSo();
+
+        $this->chay(new FakeCtdtSubmitService());
+
+        $hoSo = CtdtHoSo::first();
+
+        $this->assertSame('GD-001', $hoSo->ma_gd);
+        $this->assertSame('200', $hoSo->ma_ket_qua);
+        $this->assertSame('20260820083000', $hoSo->thoi_gian_tiep_nhan);
+    }
 }

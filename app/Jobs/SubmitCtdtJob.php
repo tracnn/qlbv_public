@@ -120,6 +120,31 @@ class SubmitCtdtJob implements ShouldQueue
         $this->ghiKetQua($hoSo, $ketQua);
     }
 
+    /**
+     * Cat gia tri cho vua cot truoc khi ghi.
+     *
+     * VI SAO CAN: cac gia tri nay den tu phan hoi cua cong, con MySQL cua du an bat strict
+     * mode (config/database.php:53). Mot gia tri dai hon cot lam update() nem - va no nem
+     * SAU KHI cong da nhan ho so. Job co y khong bat exception (de hang doi thu lai khi mang
+     * chap), nen mot lan tran cot bien thanh toi da SAU lan POST cung mot goi len cong:
+     * tries = 3, moi luot con retry-on-401 mot lan nua. Body PL02 khong co ma giao dich phia
+     * client nen cong khong khu trung duoc.
+     *
+     * thoi_gian_tiep_nhan dac biet sat: VARCHAR(14) vua khit 'yyyyMMddHHmmss', khong du mot
+     * ky tu. Cong doi sang '2026-08-20 08:30:00' la tran ngay.
+     *
+     * Ban day du cua phan hoi van con nguyen trong submitted_message (TEXT) va trong log,
+     * nen cat o day khong mat thong tin nao khong tra cuu duoc.
+     */
+    private function cat($giaTri, $doDai)
+    {
+        if ($giaTri === null) {
+            return null;
+        }
+
+        return mb_substr((string) $giaTri, 0, $doDai);
+    }
+
     private function ghiKetQua(CtdtHoSo $hoSo, array $ketQua)
     {
         // So sanh LONG: cong co the tra so 200 thay vi chuoi '200'. So sanh nghiem ngat se
@@ -127,15 +152,15 @@ class SubmitCtdtJob implements ShouldQueue
         $thanhCong = isset($ketQua['ma_ket_qua']) && $ketQua['ma_ket_qua'] == '200';
 
         $thuocTinh = [
-            'ma_gd'               => isset($ketQua['ma_gd']) ? $ketQua['ma_gd'] : null,
-            'ma_ket_qua'          => isset($ketQua['ma_ket_qua']) ? $ketQua['ma_ket_qua'] : null,
-            'thoi_gian_tiep_nhan' => isset($ketQua['thoi_gian_tiep_nhan']) ? $ketQua['thoi_gian_tiep_nhan'] : null,
+            'ma_gd'               => $this->cat(isset($ketQua['ma_gd']) ? $ketQua['ma_gd'] : null, 50),
+            'ma_ket_qua'          => $this->cat(isset($ketQua['ma_ket_qua']) ? $ketQua['ma_ket_qua'] : null, 10),
+            'thoi_gian_tiep_nhan' => $this->cat(isset($ketQua['thoi_gian_tiep_nhan']) ? $ketQua['thoi_gian_tiep_nhan'] : null, 14),
             'submitted_at'        => now(),
             'submitted_by'        => $this->nguoiGui,
             // Toan van phan hoi cua cong, KHONG loc: man chi tiet ho so hien nguyen dong nay
             // cho nguoi van hanh doc, chua can cat do dai o day.
             'submitted_message'   => isset($ketQua['nguyen_van']) ? $ketQua['nguyen_van'] : null,
-            'submit_error'        => $thanhCong ? null : (isset($ketQua['thong_diep']) ? $ketQua['thong_diep'] : 'Cong tu choi'),
+            'submit_error'        => $this->cat($thanhCong ? null : (isset($ketQua['thong_diep']) ? $ketQua['thong_diep'] : 'Cong tu choi'), 255),
         ];
 
         $lichSu = $this->noiLichSu($hoSo);
@@ -188,7 +213,7 @@ class SubmitCtdtJob implements ShouldQueue
     {
         Log::info('SubmitCtdtJob: ' . $loi, ['ma_ho_so' => $this->maHoSo]);
 
-        $hoSo->update(['submit_error' => $loi]);
+        $hoSo->update(['submit_error' => $this->cat($loi, 255)]);
     }
 
     public function failed(\Throwable $exception)
@@ -202,7 +227,7 @@ class SubmitCtdtJob implements ShouldQueue
         $hoSo = CtdtHoSo::where('ma_ho_so', $this->maHoSo)->first();
 
         if ($hoSo !== null) {
-            $hoSo->update(['submit_error' => 'Job gửi thất bại: ' . $exception->getMessage()]);
+            $hoSo->update(['submit_error' => $this->cat('Job gửi thất bại: ' . $exception->getMessage(), 255)]);
         }
     }
 }
