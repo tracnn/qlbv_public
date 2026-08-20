@@ -70,17 +70,17 @@ class CtdtTruongBatBuoc
     /**
      * LOAIHOSO => danh sach the khuyen nghi (muc canh bao).
      *
-     * HIEN TRONG O MOI LOAI - co chu dich, khong phai quen dien.
-     *
      * MA_THE tung nam o day. Da go: rat nhieu benh nhan khong co the BHYT (tu tra, the het
      * han, tre chua duoc cap the - TEKT = 1), va cong van 2076 khong danh dau MA_THE bat buoc
      * o loai nao. Canh bao tren mot tinh huong BINH THUONG khong phai canh bao - no la tieng
      * on, va no day nguoi van hanh toi cho bo qua ca cot so loi. Cung mot ly le da dung khi
      * go MA_YTE.
      *
-     * GIU LAI TANG NAY du dang trong: buoc bo sung cac truong con thieu so voi cong van 2076
-     * (CT04 thieu 11 truong, CT06 thieu 7, CT07 thieu 8) nen canh bao truoc roi moi chan -
-     * siet thang len muc chan se dong loat khoa lai nhung ho so dang gui duoc.
+     * TANG NAY GIO DA CO NOI DUNG: CT04 (MA_DANTOC rong 6/1050, PP_DIEUTRI rong 79/1050) va
+     * CT06 (chua co mot chung tu nao de doi chieu) duoc canh bao truoc roi moi chan - siet
+     * thang len muc chan se dong loat khoa lai nhung ho so dang gui duoc.
+     *
+     * So truong con thieu so voi cong van 2076 sau dot 2026-08-20: CT04 con 1, CT07 con 1.
      *
      * @var array
      */

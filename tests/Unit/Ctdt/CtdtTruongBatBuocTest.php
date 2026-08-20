@@ -142,12 +142,14 @@ class CtdtTruongBatBuocTest extends TestCase
     /** @test */
     public function tang_khuyen_nghi_van_duoc_bo_kiem_hoi_den()
     {
-        // Hien KHONG loai nao co truong khuyen nghi, nen khong test nao chay qua nhanh do
-        // bang duong binh thuong. Giu tang nay vi buoc bo sung truong con thieu (xem tai
-        // lieu module) se dung no de canh bao truoc roi moi chan.
+        // CT04 va CT06 gio da co truong khuyen nghi (MA_DANTOC, PP_DIEUTRI, ...), nen tang
+        // nay khong con la duong chet - nhung test nay van giu vai tro rieng: no canh viec
+        // CtdtChecker con hoi toi CtdtTruongBatBuoc::khuyenNghi() bang cach doc thang ma
+        // nguon, chu khong suy ra tu hanh vi.
         //
-        // Neu ai do go loi goi khoi CtdtChecker, tang khuyen nghi se chet im lang va lan
-        // them truong sau se tuong minh da bat dau canh bao trong khi khong co gi xay ra.
+        // Neu ai do go loi goi khoi CtdtChecker, tang khuyen nghi se chet im lang: cac canh
+        // bao dang co (CT04, CT06) bien mat ma khong test hanh vi nao bat duoc, vi khuyenNghi()
+        // van tra ve dung du lieu - chi la khong ai hoi toi no nua.
         $ma = $this->maKhongComment(base_path('app/Services/Ctdt/Kiem/CtdtChecker.php'));
 
         $this->assertContains('khuyenNghi(', $ma,
@@ -200,5 +202,35 @@ class CtdtTruongBatBuocTest extends TestCase
                     $loai . '/' . $the . ': chua du can cu de CHAN');
             }
         }
+    }
+    /** @test */
+    public function danh_sach_chan_cua_ba_loai_da_do_la_DONG_KHONG_duoc_them_tu_do()
+    {
+        // Chieu nguy hiem KHONG phai "quen mot truong" ma la "them mot truong CHUA DO":
+        // MA_YTE tung duoc them nhu the va chan 97% ho so trong nhieu ngay. assertContains
+        // khoa duoc chieu thu nhat nhung bo ngo chieu thu hai.
+        //
+        // Danh sach nay chot theo lan do 2026-08-20 (1074 ho so / 3047 chung tu). Muon them
+        // mot truong: DO TRUOC tren du lieu that, roi sua o day va ghi so do vao docblock
+        // cua lop - de lan sua nao cung phai di qua mot cho buoc nguoi ta dung lai.
+        //
+        // assertSame khoa luon THU TU mang, va thu tu do dang co y nghia hanh vi: test
+        // ghi_loi_kem_ho_so_id_va_chung_tu_id phu thuoc MA_KHOA dung truoc HO_TEN.
+        $this->assertSame(
+            ['MA_BHXH', 'MA_KHOA', 'HO_TEN', 'NGAY_SINH', 'GIOI_TINH', 'DIA_CHI',
+             'NGAY_VAO', 'NGAY_RA'],
+            CtdtTruongBatBuoc::cua('CT03'));
+
+        $this->assertSame(
+            ['MA_BHXH', 'HO_TEN', 'NGAY_SINH', 'GIOI_TINH', 'DIA_CHI', 'NGAY_VAO',
+             'NGAY_RA', 'CHAN_DOAN_VAO', 'CHAN_DOAN_RA', 'QT_BENHLY', 'TOMTAT_KQ',
+             'TT_RAVIEN', 'NGAY_CT'],
+            CtdtTruongBatBuoc::cua('CT04'));
+
+        $this->assertSame(
+            ['MA_BHXH', 'SO_KCB', 'HO_TEN', 'NGAY_SINH', 'GIOI_TINH', 'DON_VI',
+             'CHANDOAN_DIEUTRI', 'TU_NGAY', 'DEN_NGAY', 'MA_CCHN',
+             'TEN_NGUOI_HANH_NGHE', 'TEKT'],
+            CtdtTruongBatBuoc::cua('CT07'));
     }
 }
