@@ -70,7 +70,7 @@ và gửi):**
 | Gọi cổng BHXH, ghi kết quả gửi | `app/Services/Ctdt/CtdtSubmitService.php` |
 | Job ký số, ghi tệp đã ký lên disk `exportCtdt` | `app/Jobs/SignCtdtJob.php` |
 | Job gửi hồ sơ đã ký lên cổng BHXH | `app/Jobs/SubmitCtdtJob.php` |
-| 446 test đơn vị | `tests/Unit/Ctdt/` |
+| 448 test đơn vị | `tests/Unit/Ctdt/` |
 
 **Chưa có (đúng phạm vi, không phải thiếu sót):** xuất Excel, lệnh Console `ctdt:import` quét
 thư mục, dashboard (Giai đoạn 5).
@@ -360,7 +360,7 @@ lại — thao tác tốn thời gian nhất trong chuỗi.
 php vendor/bin/phpunit tests/Unit/Ctdt
 ```
 
-Kỳ vọng `OK (446 tests)` — **trừ một test đỏ CÓ CHỦ ĐÍCH trên máy đã chạy thật**, xem ngay dưới.
+Kỳ vọng `OK (448 tests)` — **trừ một test đỏ CÓ CHỦ ĐÍCH trên máy đã chạy thật**, xem ngay dưới.
 
 ### `MA_YTE` KHÔNG bắt buộc — đừng thêm lại
 
@@ -379,6 +379,20 @@ Sau khi gỡ và chạy lại bộ kiểm trên 1074 hồ sơ: số hồ sơ b�
 
 Cũng **không** hạ xuống mức cảnh báo: để trống là một trong hai cách dùng hợp lệ, nên cảnh báo
 trên gần như mọi hồ sơ chỉ làm người vận hành học cách bỏ qua cả cột số lỗi.
+
+### `MA_BHXH` — bắt buộc ở năm loại, cảnh báo ở ba loại
+
+Công văn 2076 đánh dấu `x` cho `MA_BHXH` ở **mọi loại nó phủ**: CT03, CT04, CT06, CT07, và
+`MA_BHXH_NND` ở CT05 (giấy chứng sinh). `GIAYDIEUTRINOITRU` không nằm trong công văn đó, nhưng
+**923/923 chứng từ thật đều đã có giá trị** — đủ căn cứ để chặn.
+
+Ba loại còn lại — `GIAYDIEUTRIVOSINH`, `GIAYSUCKHOEME`, `GIAYBAOTU` — chỉ **cảnh báo**: công văn
+không phủ, CSDL chưa có chứng từ nào để đối chiếu, và riêng giấy báo tử còn một khả năng thật:
+**người qua đời có thể không có mã số BHXH**. Nâng lên mức chặn khi dữ liệu thật xác nhận, đừng
+đoán mò. Đây đúng là việc mà tầng khuyến nghị được giữ lại để làm.
+
+**Đo trước khi siết:** 0/3047 chứng từ thật thiếu `ma_bhxh`, nên thay đổi này không chặn lại hồ sơ
+nào. Luôn đo trước khi thêm một trường bắt buộc — bài học từ `MA_YTE`.
 
 ### `MA_THE` không sinh lỗi, kể cả cảnh báo
 

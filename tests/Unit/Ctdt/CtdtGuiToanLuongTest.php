@@ -48,7 +48,7 @@ class CtdtGuiToanLuongTest extends TestCase
     {
         return $this->goiCt2025([[
             $this->chungTu('CT03', [
-                'MA_YTE' => 'YT001', 'HO_TEN' => 'Nguyen Van Test',
+                'MA_YTE' => 'YT001', 'MA_BHXH' => '0123456789', 'HO_TEN' => 'Nguyen Van Test',
                 'NGAY_SINH' => '19950914', 'NGAY_VAO' => '201912121200',
                 'NGAY_RA' => '201912180001', 'MA_THE' => 'DN1234567890',
             ]),
@@ -119,7 +119,7 @@ class CtdtGuiToanLuongTest extends TestCase
     public function ho_so_con_loi_KHONG_duoc_ky_va_KHONG_duoc_gui()
     {
         // Day la ly do ca Giai doan 3 va 4 ton tai: mot ho so con loi khong duoc di tiep.
-        $this->napVaKiem($this->goiCt2025([[$this->chungTu('CT03', ['MA_YTE' => 'YT001'])]]));
+        $this->napVaKiem($this->goiCt2025([[$this->chungTu('CT03', ['MA_YTE' => 'YT001', 'MA_BHXH' => '0123456789'])]]));
 
         $kyGia = $this->ky();
         $guiGia = $this->gui();
@@ -255,11 +255,11 @@ class CtdtGuiToanLuongTest extends TestCase
     {
         $this->napVaKiem($this->goiHopLe());
         $this->napVaKiem($this->goiGbt([
-            'MA_GBT' => 'GBT-1', 'HO_TEN' => 'Tran Thi Test',
+            'MA_GBT' => 'GBT-1', 'MA_BHXH' => '0123456789', 'HO_TEN' => 'Tran Thi Test',
             'NGAY_SINH' => '19480826', 'NGAY_TV' => '202510070200', 'MA_THE' => 'DN1',
         ]));
         $this->napVaKiem($this->goiGcs([
-            'MA_GCS' => 'GCS-1', 'HOTEN_NND' => 'Le Thi Test',
+            'MA_GCS' => 'GCS-1', 'MA_BHXH_NND' => '0123456789', 'HOTEN_NND' => 'Le Thi Test',
             'NGAYSINH_NND' => '19950101', 'NGAY_SINH_CON' => '202601011200', 'MA_THE_NND' => 'DN2',
         ]));
 

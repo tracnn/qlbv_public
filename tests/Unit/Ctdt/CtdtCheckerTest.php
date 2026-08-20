@@ -16,6 +16,7 @@ class CtdtCheckerTest extends TestCase
     {
         return array_merge([
             'MA_YTE'    => 'YT001',
+            'MA_BHXH'   => '0123456789',
             'HO_TEN'    => 'Nguyen Van Test',
             'NGAY_SINH' => '19950914',
             'NGAY_VAO'  => '201912121200',
@@ -85,7 +86,8 @@ class CtdtCheckerTest extends TestCase
     {
         // MA_THE_NND: me khong co the BHYT cung la chuyen thuong.
         $loi = CtdtChecker::kiem('GIAYCHUNGSINH', [
-            'MA_GCS' => 'GCS-1', 'HOTEN_NND' => 'Le Thi Test',
+            'MA_GCS' => 'GCS-1', 'MA_BHXH_NND' => '0123456789',
+            'HOTEN_NND' => 'Le Thi Test',
             'NGAYSINH_NND' => '19950101', 'NGAY_SINH_CON' => '202601011200',
             'MA_THE_NND' => '',
         ], '01929');
@@ -326,7 +328,7 @@ class CtdtCheckerTest extends TestCase
         $loi = CtdtChecker::kiem('GIAYBAOTU', [
             'MA_GBT' => 'GBT-1', 'HO_TEN' => 'Nguyen Van Test',
             'NGAY_SINH' => '20220101', 'NGAY_TV' => '202510070200',
-            'MACSKCB' => '01929', 'MA_THE' => 'DN1',
+            'MACSKCB' => '01929', 'MA_THE' => 'DN1', 'MA_BHXH' => '0123456789',
         ], '01929');
 
         $this->assertSame([], $loi);

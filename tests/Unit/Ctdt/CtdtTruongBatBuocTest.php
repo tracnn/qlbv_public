@@ -95,6 +95,35 @@ class CtdtTruongBatBuocTest extends TestCase
     }
 
     /** @test */
+    public function MA_BHXH_bat_buoc_o_nhung_loai_co_can_cu()
+    {
+        // Cong van 2076/BHXH-CNTT PL02 danh dau "x" cho MA_BHXH o CT03, CT04, CT06, CT07 va
+        // MA_BHXH_NND o CT05 (giay chung sinh). GIAYDIEUTRINOITRU khong nam trong cong van
+        // do, nhung 923/923 chung tu that deu da co gia tri - du can cu de chan.
+        foreach (['CT03', 'CT04', 'CT06', 'CT07', 'GIAYDIEUTRINOITRU'] as $loai) {
+            $this->assertContains('MA_BHXH', CtdtTruongBatBuoc::cua($loai), $loai);
+        }
+
+        $this->assertContains('MA_BHXH_NND', CtdtTruongBatBuoc::cua('GIAYCHUNGSINH'));
+    }
+
+    /** @test */
+    public function MA_BHXH_chi_CANH_BAO_o_ba_loai_chua_co_can_cu()
+    {
+        // GIAYDIEUTRIVOSINH, GIAYSUCKHOEME, GIAYBAOTU: cong van 2076 KHONG phu, va CSDL chua
+        // co mot chung tu nao de doi chieu. Chan o day la doan mo.
+        //
+        // Rieng giay bao tu con mot kha nang that: nguoi qua doi co the khong co ma so BHXH.
+        // Canh bao truoc, chi nang len muc chan khi du lieu that xac nhan.
+        foreach (['GIAYDIEUTRIVOSINH', 'GIAYSUCKHOEME', 'GIAYBAOTU'] as $loai) {
+            $this->assertNotContains('MA_BHXH', CtdtTruongBatBuoc::cua($loai),
+                $loai . ': chua du can cu de CHAN');
+            $this->assertContains('MA_BHXH', CtdtTruongBatBuoc::khuyenNghi($loai),
+                $loai . ': phai it nhat canh bao');
+        }
+    }
+
+    /** @test */
     public function MA_THE_khong_bat_buoc_VA_khong_khuyen_nghi()
     {
         // Rat nhieu benh nhan khong co the BHYT: tu tra, the het han, tre chua duoc cap the

@@ -53,7 +53,7 @@ class CtdtKiemToanLuongTest extends TestCase
         // bo kiem khong duoc "qua tay" bao loi cho ho so dung.
         $this->napVaKiem($this->goiCt2025([[
             $this->chungTu('CT03', [
-                'MA_YTE' => 'YT001', 'HO_TEN' => 'Nguyen Van Test',
+                'MA_YTE' => 'YT001', 'MA_BHXH' => '0123456789', 'HO_TEN' => 'Nguyen Van Test',
                 'NGAY_SINH' => '19950914', 'NGAY_VAO' => '201912121200',
                 'NGAY_RA' => '201912180001', 'MA_THE' => 'DN1234567890',
             ]),
@@ -69,7 +69,7 @@ class CtdtKiemToanLuongTest extends TestCase
         // Bat bien that: cot "So loi" va bo loc chi_con_loi phai noi cung mot chuyen - lech
         // nhau la nguoi dung loc ra mot danh sach khong khop voi con so ho vua nhin thay.
         $this->napVaKiem($this->goiCt2025([[
-            $this->chungTu('CT03', ['MA_YTE' => 'YT001', 'MA_THE' => 'DN1']),
+            $this->chungTu('CT03', ['MA_YTE' => 'YT001', 'MA_BHXH' => '0123456789', 'MA_THE' => 'DN1']),
         ]]));
 
         $hoSo = CtdtHoSo::first();
@@ -84,7 +84,7 @@ class CtdtKiemToanLuongTest extends TestCase
         // Day la ly do ca Giai doan 3 ton tai: mot ho so con loi khong duoc di tiep sang
         // duong ky va gui.
         $this->napVaKiem($this->goiCt2025([[
-            $this->chungTu('CT03', ['MA_YTE' => 'YT001']),
+            $this->chungTu('CT03', ['MA_YTE' => 'YT001', 'MA_BHXH' => '0123456789']),
         ]]));
 
         $hoSo = CtdtHoSo::first();
@@ -100,14 +100,14 @@ class CtdtKiemToanLuongTest extends TestCase
         // khong chay lai sau moi lan nap thi ho so hong vua nap lai se hien "0 loi" -
         // trong y het da duoc sua.
         $this->napVaKiem($this->goiCt2025([[
-            $this->chungTu('CT03', ['MA_YTE' => 'YT001']),
+            $this->chungTu('CT03', ['MA_YTE' => 'YT001', 'MA_BHXH' => '0123456789']),
         ]]));
 
         $this->assertGreaterThan(0, (int) CtdtHoSo::first()->so_loi);
 
         $xmlDaSua = $this->goiCt2025([[
             $this->chungTu('CT03', [
-                'MA_YTE' => 'YT001', 'HO_TEN' => 'Nguyen Van Test',
+                'MA_YTE' => 'YT001', 'MA_BHXH' => '0123456789', 'HO_TEN' => 'Nguyen Van Test',
                 'NGAY_SINH' => '19950914', 'NGAY_VAO' => '201912121200',
                 'NGAY_RA' => '201912180001', 'MA_THE' => 'DN1',
             ]),
@@ -141,7 +141,7 @@ class CtdtKiemToanLuongTest extends TestCase
         // Bat bien nay giu cho nap lai don sach duoc: CtdtLuuHoSo::xoaHoSoCu() xoa ctdt_loi
         // theo ho_so_id. Mot ban ghi loi khong co ho_so_id se song sot mai mai.
         $this->napVaKiem($this->goiCt2025([[
-            $this->chungTu('CT03', ['MA_YTE' => 'YT001']),
+            $this->chungTu('CT03', ['MA_YTE' => 'YT001', 'MA_BHXH' => '0123456789']),
         ]]));
 
         $this->assertGreaterThan(0, CtdtLoi::count());
@@ -153,7 +153,7 @@ class CtdtKiemToanLuongTest extends TestCase
     {
         // Bat bien: ca ba dich vu (CT2025, GBT, GCS) deu phai co ho so duoc kiem - khong
         // dich vu nao duoc bo qua bo kiem chi vi loai ho so cua no khac CT2025.
-        $this->napVaKiem($this->goiCt2025([[$this->chungTu('CT03', ['MA_YTE' => 'YT001'])]]));
+        $this->napVaKiem($this->goiCt2025([[$this->chungTu('CT03', ['MA_YTE' => 'YT001', 'MA_BHXH' => '0123456789'])]]));
         $this->napVaKiem($this->goiGbt(['MA_GBT' => 'GBT-1']));
         $this->napVaKiem($this->goiGcs(['MA_GCS' => 'GCS-1']));
 
