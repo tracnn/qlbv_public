@@ -4,7 +4,7 @@
 > ban hành kèm công văn BHXH Việt Nam 2025.
 >
 > Mọi `file:line` trích từ mã nguồn thực tế; khi mã thay đổi cần đối chiếu lại.
-> Cập nhật: 2026-08-20 — **Giai đoạn 1 (nền dữ liệu), 2A (nền nạp), 2B (ba màn hình) và 3 (bộ kiểm lỗi) đã hoàn tất.**
+> Cập nhật: 2026-08-20 — **Giai đoạn 1 (nền dữ liệu), 2A (nền nạp), 2B (ba màn hình), 3 (bộ kiểm lỗi) và 4 (ký số và gửi) đã hoàn tất.**
 
 ---
 
@@ -46,7 +46,8 @@ Máy chủ cổng: `https://egw.baohiemxahoi.gov.vn`. Lấy token dùng lại
 
 ## 2. Trạng thái hiện tại
 
-**Đã có (Giai đoạn 1 — nền dữ liệu; 2A — nền nạp; 2B — ba màn hình; 3 — bộ kiểm lỗi):**
+**Đã có (Giai đoạn 1 — nền dữ liệu; 2A — nền nạp; 2B — ba màn hình; 3 — bộ kiểm lỗi; 4 — ký số
+và gửi):**
 
 | Thành phần | Vị trí |
 |---|---|
@@ -64,21 +65,28 @@ Máy chủ cổng: `https://egw.baohiemxahoi.gov.vn`. Lấy token dùng lại
 | Suy trạng thái, bộ lọc, tab động, nhãn trường | `app/Services/Ctdt/CtdtTrangThaiGui.php`, `CtdtDanhSach.php`, `CtdtDetailTabs.php`, `CtdtNhanTruong.php` |
 | Bộ kiểm lỗi | `app/Services/Ctdt/Kiem/CtdtChecker.php`, `config/ctdt.php` khóa `ma_loi` |
 | Job kiểm, một hồ sơ một job | `app/Jobs/CheckCtdtJob.php` |
-| 323 test đơn vị | `tests/Unit/Ctdt/` |
+| Quyết định có gửi hay không (ba cửa chặn) | `app/Services/Ctdt/CtdtQuyetDinhGui.php` |
+| Dựng phong bì gửi/ký từ dữ liệu đã lưu | `app/Services/Ctdt/CtdtPhongBi.php` |
+| Gọi cổng BHXH, ghi kết quả gửi | `app/Services/Ctdt/CtdtSubmitService.php` |
+| Job ký số, ghi tệp đã ký lên disk `exportCtdt` | `app/Jobs/SignCtdtJob.php` |
+| Job gửi hồ sơ đã ký lên cổng BHXH | `app/Jobs/SubmitCtdtJob.php` |
+| 431 test đơn vị | `tests/Unit/Ctdt/` |
 
 **Chưa có (đúng phạm vi, không phải thiếu sót):** xuất Excel, lệnh Console `ctdt:import` quét
 thư mục, dashboard (Giai đoạn 5).
 
-Vì vậy **module hiện chưa gọi mạng** — triển khai lên máy chủ ở trạng thái này không ảnh hưởng
-gì tới XML3176 hay bất kỳ nghiệp vụ nào đang chạy.
+**Từ Giai đoạn 4, module đã gọi mạng thật** — `SubmitCtdtJob` gửi hồ sơ đã ký lên cổng BHXH.
+Sự an toàn khi triển khai không nằm ở chỗ module chưa biết gọi mạng, mà ở chỗ
+`organization.chung_tu_dien_tu.submit_enabled` **mặc định TẮT**: cho tới khi cấu hình này được
+bật tay ở từng cơ sở, không một lần gửi nào diễn ra, dù ký số vẫn dùng được để kiểm tra bằng mắt.
 
 ⚠️ **Từ Giai đoạn 3, một cột "Số lỗi" bằng `0` KHÔNG còn là chuyện đương nhiên.** Hồ sơ nạp
 xong sẽ được đẩy vào hàng đợi `JobCtdt` để kiểm; nếu worker của hàng đợi đó không chạy thì không
 hồ sơ nào được kiểm, và số lỗi sẽ đứng yên ở `0` — trông y như mọi hồ sơ đều sạch. Đây chính là
 lý do có trạng thái riêng **"Chưa kiểm"**: hồ sơ chưa đi qua bộ kiểm được gắn nhãn "Chưa kiểm"
 (cột "Trạng thái gửi" trên màn danh sách, và khối tóm tắt trên màn chi tiết) chứ **không** rơi vào
-"Chờ gửi", nên một worker chết là chuyện nhìn thấy được ngay trên màn hình. Xem mục 8, khối
-"Worker hàng đợi — BẮT BUỘC từ Giai đoạn 3".
+"Chờ gửi", nên một worker chết là chuyện nhìn thấy được ngay trên màn hình. Xem mục 9, khối
+"Worker hàng đợi — BẮT BUỘC cả ba".
 
 Lộ trình 5 giai đoạn và ghi chú chuyển tiếp: xem
 [docs/superpowers/specs/2026-08-19-chung-tu-dien-tu-pl02-design.md](superpowers/specs/2026-08-19-chung-tu-dien-tu-pl02-design.md)
@@ -345,7 +353,7 @@ lại — thao tác tốn thời gian nhất trong chuỗi.
 php vendor/bin/phpunit tests/Unit/Ctdt
 ```
 
-Kỳ vọng `OK (323 tests)`.
+Kỳ vọng `OK (431 tests)`.
 
 ⚠️ Repo có sẵn test đỏ **không liên quan** module này: suite `Unit` cho 4 lỗi + 7 đỏ
 (`NhapDanhMucUniqueTest`, `OrderCheck\CatalogLookupTest`, `BHYT\Xml3176ExportLocCoSoTest`,

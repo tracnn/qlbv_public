@@ -55,6 +55,13 @@ class CtdtGuiToanLuongTest extends TestCase
         ]]);
     }
 
+    /**
+     * CtdtImporter::nhapMotHoSo() da tu dispatch() CheckCtdtJob, va QUEUE_DRIVER=sync trong
+     * moi truong test chay job do NGAY LAP TUC trong cung tien trinh - truoc khi vong lap
+     * duoi day kip chay. Vong lap nay vi vay la LUOT KIEM THU HAI, khong phai lan dau. Job
+     * kiem tu idempotent (xem CheckCtdtJobTest::chay_lai_khong_nhan_doi_loi) nen vo hai, chi
+     * can nguoi doc biet ro de khong tuong day la noi "kich hoat" viec kiem.
+     */
     private function napVaKiem($xml)
     {
         $kq = $this->importer->nhapTuChuoi($xml, ['macskcb' => '01929']);
@@ -153,6 +160,46 @@ class CtdtGuiToanLuongTest extends TestCase
     }
 
     /** @test */
+    public function ho_so_CHUA_KIEM_khong_duoc_gui_DU_da_co_tep_da_ky()
+    {
+        // Ky TRUOC roi moi dua checked_at ve null: neu de ho so chua kiem tu dau thi
+        // SignCtdtJob tu choi ky, duong_dan_da_ky rong, va job gui thoat o nhanh "khong tim
+        // thay tep da ky" - tuc khang dinh soLanGoi === 0 duoc thoa nho mot tuyen phong thu
+        // PHU, khong phai nho cua chan dang duoc canh (CtdtQuyetDinhGui). Co tep tren dia roi
+        // thi chi con dung cua chan giu lai.
+        $this->napVaKiem($this->goiHopLe());
+        $this->ky();
+
+        $this->assertNotEmpty(CtdtHoSo::first()->duong_dan_da_ky, 'Phai co tep da ky that');
+
+        CtdtHoSo::first()->update(['checked_at' => null]);
+
+        $guiGia = $this->gui();
+
+        $this->assertSame(0, $guiGia->soLanGoi, 'Ho so chua kiem khong duoc gui');
+        $this->assertNull(CtdtHoSo::first()->ma_gd);
+    }
+
+    /** @test */
+    public function ho_so_con_loi_khong_duoc_gui_DU_da_co_tep_da_ky()
+    {
+        // Cung ly do voi test tren: ky TRUOC de co tep that tren dia, roi moi ap so_loi > 0,
+        // de khang dinh soLanGoi === 0 chi con quy ve dung cua chan so_loi cua
+        // CtdtQuyetDinhGui, khong lan sang nhanh "khong tim thay tep da ky".
+        $this->napVaKiem($this->goiHopLe());
+        $this->ky();
+
+        $this->assertNotEmpty(CtdtHoSo::first()->duong_dan_da_ky, 'Phai co tep da ky that');
+
+        CtdtHoSo::first()->update(['so_loi' => 3]);
+
+        $guiGia = $this->gui();
+
+        $this->assertSame(0, $guiGia->soLanGoi, 'Ho so con loi khong duoc gui');
+        $this->assertNull(CtdtHoSo::first()->ma_gd);
+    }
+
+    /** @test */
     public function goi_gui_len_cong_la_tep_DA_KY_chu_khong_phai_phong_bi_tran()
     {
         $this->napVaKiem($this->goiHopLe());
@@ -183,6 +230,10 @@ class CtdtGuiToanLuongTest extends TestCase
 
         $this->assertNull($hoSo->ma_gd, 'Nap lai phai reset ket qua gui cu');
         $this->assertFalse((bool) $hoSo->is_signed, 'Nap lai phai reset trang thai ky');
+        // Dong nay do CtdtLuuHoSo::noiLichSu() ghi luc NAP LAI, KHONG PHAI
+        // SubmitCtdtJob::noiLichSu() (ham rieng, chi chay luc GUI). Test nay khong phu duong
+        // ghi lich su cua SubmitCtdtJob - xem SubmitCtdtJobTest::lich_su_gui_giu_ca_ba_lan
+        // cho duong do.
         $this->assertContains('GD-001', (string) $hoSo->lich_su_gui, 'Phai giu dau vet lan gui truoc');
     }
 
