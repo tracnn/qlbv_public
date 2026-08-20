@@ -40,6 +40,21 @@
             </div>
         </div>
         @endif
+        @if ($hoSo->submit_error)
+        <div class="row" style="margin-top:8px">
+            <div class="col-sm-12">
+                {{-- submit_error va submitted_message chua nguyen van phan hoi cua cong -
+                     du lieu ben ngoai. Moi cho hien deu dung {{ }}. --}}
+                <div class="alert alert-warning" style="margin-bottom:4px">
+                    <strong>Lỗi gửi:</strong> {{ $hoSo->submit_error }}
+                </div>
+                @if ($hoSo->submitted_message)
+                <pre style="white-space:pre-wrap">{{ $hoSo->submitted_message }}</pre>
+                @endif
+            </div>
+        </div>
+        @endif
+        @include('bhyt.ctdt.partials.nut-ky-va-gui', ['hoSo' => $hoSo])
         @if (auth()->check() && auth()->user()->hasRole('superadministrator'))
         <div class="row" style="margin-top:8px">
             <div class="col-sm-12 text-right">

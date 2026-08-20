@@ -18,6 +18,9 @@ use App\Services\Ctdt\CtdtLoaiRegistry;
 use App\Services\Ctdt\CtdtLuuHoSo;
 use App\Models\BHYT\Ctdt\CtdtHoSo;
 use App\Models\BHYT\Ctdt\CtdtLoi;
+use App\Jobs\SignCtdtJob;
+use App\Jobs\SubmitCtdtJob;
+use App\Services\Ctdt\CtdtQuyetDinhGui;
 
 /**
  * Ba man hinh cua module chung tu dien tu: danh sach, nap tep, chi tiet.
@@ -334,6 +337,72 @@ class BHYTCtdtController extends Controller
             'nhan'   => $lop::tenTab(),
             'banGhi' => $banGhi,
         ]);
+    }
+
+    /**
+     * Ky so roi gui mot ho so len cong BHXH.
+     *
+     * Kiem dieu kien NGAY TAI DAY thay vi de job tu tu choi: nguoi bam nut phai biet VI SAO
+     * khong co gi xay ra, khong thi ho bam lai mai. Job van kiem lai lan nua vi no co the
+     * nam cho trong hang doi rat lau, giua luc do cau hinh hoac ho so co the da doi.
+     */
+    public function kyVaGui($ma_ho_so)
+    {
+        $hoSo = CtdtHoSo::where('ma_ho_so', $ma_ho_so)->firstOrFail();
+
+        $quyetDinh = CtdtQuyetDinhGui::nen(
+            config('organization.chung_tu_dien_tu.submit_enabled', false),
+            $hoSo->checked_at,
+            $hoSo->so_loi,
+            // KHONG truyen $hoSo->is_signed: ho so chua ky la binh thuong o day - ta sap ky
+            // no. Truyen gia tri that se lam moi ho so chua ky bi tu choi ngay tai nut.
+            true
+        );
+
+        if ($quyetDinh !== CtdtQuyetDinhGui::GUI) {
+            return response()->json([
+                'thanh_cong' => false,
+                'thong_diep' => $this->lyDoKhongGui($quyetDinh),
+            ]);
+        }
+
+        // XAU CHUOI chu khong day hai job doc lap: ky xong moi gui duoc. Hai job doc lap thi
+        // job gui co the chay truoc job ky va luon thay is_signed = false.
+        //
+        // Model App\User dung cot 'loginname' de dinh danh nguoi dang nhap (khong phai
+        // 'username' - cot nay khong ton tai trong $fillable cua User). Cach dung khac o
+        // chinh controller nay, o import(): $request->user()->loginname.
+        $nguoiGui = auth()->check() ? auth()->user()->loginname : null;
+
+        SignCtdtJob::withChain([
+            (new SubmitCtdtJob($ma_ho_so, $nguoiGui))
+                ->onQueue(config('organization.chung_tu_dien_tu.submit_queue_name', 'JobSubmitCtdt')),
+        ])
+        ->dispatch($ma_ho_so)
+        ->onQueue(config('organization.chung_tu_dien_tu.sign_queue_name', 'JobSignCtdt'));
+
+        return response()->json([
+            'thanh_cong' => true,
+            'thong_diep' => 'Đã xếp hàng ký số và gửi. Tải lại trang sau ít phút để xem kết quả.',
+        ]);
+    }
+
+    /** Ly do doc duoc cho nguoi bam nut, khong phai ma trang thai */
+    private function lyDoKhongGui($quyetDinh)
+    {
+        if ($quyetDinh === CtdtQuyetDinhGui::KHONG_GUI) {
+            return 'Chức năng gửi đang tắt trong cấu hình. Liên hệ quản trị để bật.';
+        }
+
+        if ($quyetDinh === CtdtQuyetDinhGui::CHUA_KIEM) {
+            return 'Hồ sơ chưa kiểm — công việc kiểm còn nằm trong hàng đợi. Thử lại sau ít phút.';
+        }
+
+        if ($quyetDinh === CtdtQuyetDinhGui::CON_LOI) {
+            return 'Hồ sơ còn lỗi chặn gửi. Xem tab Lỗi, sửa ở phần mềm sinh XML rồi nạp lại.';
+        }
+
+        return 'Hồ sơ chưa đủ điều kiện gửi.';
     }
 
     /**

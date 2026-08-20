@@ -602,6 +602,8 @@ Route::group(['middleware' => ['auth']], function () {
         Route::post('ctdt/import/upload', 'BHYT\BHYTCtdtController@uploadData')->name('bhyt.ctdt.upload');
         Route::get('ctdt/detail/{ma_ho_so}', 'BHYT\BHYTCtdtController@detail')->name('bhyt.ctdt.detail');
         Route::get('ctdt/detail/{ma_ho_so}/tab/{loai}', 'BHYT\BHYTCtdtController@detailTab')->name('bhyt.ctdt.detail.tab');
+        Route::post('ctdt/{ma_ho_so}/ky-va-gui', 'BHYT\BHYTCtdtController@kyVaGui')
+        ->name('bhyt.ctdt.ky-va-gui');
         Route::delete('ctdt/{ma_ho_so}', 'BHYT\BHYTCtdtController@delete')
         ->name('bhyt.ctdt.delete')
         ->middleware('checkrole:superadministrator');
