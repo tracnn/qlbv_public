@@ -70,7 +70,7 @@ và gửi):**
 | Gọi cổng BHXH, ghi kết quả gửi | `app/Services/Ctdt/CtdtSubmitService.php` |
 | Job ký số, ghi tệp đã ký lên disk `exportCtdt` | `app/Jobs/SignCtdtJob.php` |
 | Job gửi hồ sơ đã ký lên cổng BHXH | `app/Jobs/SubmitCtdtJob.php` |
-| 438 test đơn vị | `tests/Unit/Ctdt/` |
+| 439 test đơn vị | `tests/Unit/Ctdt/` |
 
 **Chưa có (đúng phạm vi, không phải thiếu sót):** xuất Excel, lệnh Console `ctdt:import` quét
 thư mục, dashboard (Giai đoạn 5).
@@ -360,7 +360,25 @@ lại — thao tác tốn thời gian nhất trong chuỗi.
 php vendor/bin/phpunit tests/Unit/Ctdt
 ```
 
-Kỳ vọng `OK (438 tests)` — **trừ một test đỏ CÓ CHỦ ĐÍCH trên máy đã chạy thật**, xem ngay dưới.
+Kỳ vọng `OK (439 tests)` — **trừ một test đỏ CÓ CHỦ ĐÍCH trên máy đã chạy thật**, xem ngay dưới.
+
+### `MA_YTE` KHÔNG bắt buộc — đừng thêm lại
+
+Công văn **2076/BHXH-CNTT, Phụ lục 02, mục 3.4** (bảng trường của CT03) để **trống** cột
+"Bắt buộc" cho `MA_YTE`, và diễn giải ghi rõ:
+
+> *"Mã y tế định danh chứng từ của cskcb, **để trống để hệ thống BHXH tự sinh** (chỉ nên sử
+> dụng 1 cách)"*
+
+Giai đoạn 3 từng bắt buộc nó. Đối chiếu dữ liệu thật cho thấy điều đó **chặn 97% hồ sơ**:
+1049/1050 CT03 và 923/923 GIAYDIEUTRINOITRU đều có thẻ `MA_YTE` nhưng giá trị rỗng — phần mềm
+sinh XML làm đúng đặc tả, quy tắc của ta sai. Lần gửi thật đầu tiên xác nhận: `MaGD` cổng trả
+về là `HS_CHUNGTU01929_<GUID>`, đúng là mã BHXH tự sinh.
+
+Sau khi gỡ và chạy lại bộ kiểm trên 1074 hồ sơ: số hồ sơ bị chặn từ **1049 xuống 14**.
+
+Cũng **không** hạ xuống mức cảnh báo: để trống là một trong hai cách dùng hợp lệ, nên cảnh báo
+trên gần như mọi hồ sơ chỉ làm người vận hành học cách bỏ qua cả cột số lỗi.
 
 ### ⚠️ `CtdtCauHinhTest::gui_len_cong_mac_dinh_tat` — đỏ có chủ đích, ĐỪNG "SỬA"
 
