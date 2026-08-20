@@ -5,6 +5,7 @@ namespace Tests\Unit\Ctdt;
 use Tests\TestCase;
 use Tests\Support\DungBangCtdtSqlite;
 use Tests\Support\GoiCtdtMau;
+use Illuminate\Support\Facades\Queue;
 use App\Services\Ctdt\CtdtImporter;
 use App\Services\Ctdt\CtdtMacskcb;
 use App\Services\Ctdt\Loi\ThieuMacskcbException;
@@ -28,6 +29,7 @@ class CtdtNhapTuTepTest extends TestCase
         $this->chuanBiBangCtdt();
         $this->importer = new CtdtImporter();
         config(['organization.BHYT.ma_cskcb' => '01013']);
+        Queue::fake();
     }
 
     protected function tearDown()

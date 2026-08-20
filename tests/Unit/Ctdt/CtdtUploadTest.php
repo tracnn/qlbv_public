@@ -7,6 +7,7 @@ use Tests\Support\DungBangCtdtSqlite;
 use Tests\Support\GoiCtdtMau;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Queue;
 use App\Http\Controllers\BHYT\BHYTCtdtController;
 use App\Models\BHYT\Ctdt\CtdtHoSo;
 
@@ -26,6 +27,7 @@ class CtdtUploadTest extends TestCase
         $this->chuanBiBangCtdt();
         $this->controller = new BHYTCtdtController();
         config(['organization.BHYT.ma_cskcb' => '01013']);
+        Queue::fake();
     }
 
     protected function tearDown()
