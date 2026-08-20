@@ -341,14 +341,29 @@ class CtdtDanhSachTest extends TestCase
         // moi la cau tra loi dung, vi con so so_loi luc do da CU, khong con dang tin.
         $this->taoHoSo(['ma_ho_so' => 'M_CHUA_KIEM_CON_LOI', 'checked_at' => null, 'so_loi' => 5, 'is_signed' => false]);
 
+        // N, O: hai trang thai moi. N nguy trang thanh CHUA_KY (cung is_signed = false),
+        // O nguy trang thanh CHUA_GUI (cung chua co ma_ket_qua) - neu bo loc SQL khong loai
+        // tru chung, hai ho so nay se hien o bo loc sai va ly do that bien mat khoi man hinh.
+        $this->taoHoSo(['ma_ho_so' => 'N_KY_HONG', 'so_loi' => 0, 'is_signed' => false,
+            'signed_error' => 'USB token bi rut']);
+        $this->taoHoSo(['ma_ho_so' => 'O_GUI_HONG', 'so_loi' => 0, 'is_signed' => true,
+            'submit_error' => 'Connection refused']);
+
+        // P: da gui hong roi gui lai duoc. submit_error cu con sot lai, nhung ket qua cua
+        // cong moi la su that - phai la DA_GUI, khong phai GUI_HONG.
+        $this->taoHoSo(['ma_ho_so' => 'P_GUI_LAI_THANH_CONG', 'so_loi' => 0, 'is_signed' => true,
+            'ma_ket_qua' => '200', 'submit_error' => 'Loi cu con sot']);
+
         $tatCaHoSo = CtdtHoSo::all();
 
         $cacTrangThaiCanKiem = [
             CtdtTrangThaiGui::CHUA_KIEM,
             CtdtTrangThaiGui::CON_LOI,
+            CtdtTrangThaiGui::KY_HONG,
             CtdtTrangThaiGui::CHUA_KY,
             CtdtTrangThaiGui::DA_GUI,
             CtdtTrangThaiGui::CONG_TU_CHOI,
+            CtdtTrangThaiGui::GUI_HONG,
         ];
 
         foreach ($cacTrangThaiCanKiem as $trangThai) {
@@ -385,9 +400,11 @@ class CtdtDanhSachTest extends TestCase
         $cacBoLocRoiNhau = [
             CtdtTrangThaiGui::CHUA_KIEM,
             CtdtTrangThaiGui::CON_LOI,
+            CtdtTrangThaiGui::KY_HONG,
             CtdtTrangThaiGui::CHUA_KY,
             CtdtTrangThaiGui::DA_GUI,
             CtdtTrangThaiGui::CONG_TU_CHOI,
+            CtdtTrangThaiGui::GUI_HONG,
             CtdtTrangThaiGui::CHUA_GUI,
         ];
 
