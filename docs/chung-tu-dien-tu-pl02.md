@@ -70,7 +70,7 @@ và gửi):**
 | Gọi cổng BHXH, ghi kết quả gửi | `app/Services/Ctdt/CtdtSubmitService.php` |
 | Job ký số, ghi tệp đã ký lên disk `exportCtdt` | `app/Jobs/SignCtdtJob.php` |
 | Job gửi hồ sơ đã ký lên cổng BHXH | `app/Jobs/SubmitCtdtJob.php` |
-| 439 test đơn vị | `tests/Unit/Ctdt/` |
+| 444 test đơn vị | `tests/Unit/Ctdt/` |
 
 **Chưa có (đúng phạm vi, không phải thiếu sót):** xuất Excel, lệnh Console `ctdt:import` quét
 thư mục, dashboard (Giai đoạn 5).
@@ -360,7 +360,7 @@ lại — thao tác tốn thời gian nhất trong chuỗi.
 php vendor/bin/phpunit tests/Unit/Ctdt
 ```
 
-Kỳ vọng `OK (439 tests)` — **trừ một test đỏ CÓ CHỦ ĐÍCH trên máy đã chạy thật**, xem ngay dưới.
+Kỳ vọng `OK (444 tests)` — **trừ một test đỏ CÓ CHỦ ĐÍCH trên máy đã chạy thật**, xem ngay dưới.
 
 ### `MA_YTE` KHÔNG bắt buộc — đừng thêm lại
 
@@ -379,6 +379,22 @@ Sau khi gỡ và chạy lại bộ kiểm trên 1074 hồ sơ: số hồ sơ b�
 
 Cũng **không** hạ xuống mức cảnh báo: để trống là một trong hai cách dùng hợp lệ, nên cảnh báo
 trên gần như mọi hồ sơ chỉ làm người vận hành học cách bỏ qua cả cột số lỗi.
+
+### Trường ngày sinh chấp nhận dạng chỉ có năm (`yyyy`)
+
+Cùng công văn 2076, bảng trường CT03/CT04/CT07 ghi: *"`NGAY_SINH` … định dạng **`yyyyMMdd`
+hoặc `yyyy`**, với yyyy là năm sinh"*. Năm sinh không rõ ngày tháng là quy ước quen thuộc với
+người cao tuổi — trên dữ liệu thật có 41 trường hợp dạng `1950` / `1948` / `1945` / `1939`
+từng bị bắt nhầm.
+
+Nới theo **danh sách hẹp** `CtdtQuyTac::CHI_NAM`, **không** nới quy tắc chung: `NGAY_VAO` và
+`NGAY_RA` là `yyyyMMddHHmm`, `TU_NGAY`/`DEN_NGAY` là `yyyyMMdd`. Cho `yyyy` qua ở những trường
+đó là để lọt `NGAY_RA = 2026` — một hồ sơ ra viện vào "năm nào đó".
+
+Bốn trường được tài liệu nêu đích danh (`NGAY_SINH`, `NGAYSINH_NND`, `NGAY_SINHCON`,
+`NGAY_CHETCON`); các trường ngày sinh của mẹ/cha và ngày cấp giấy tờ là **suy ra** từ cùng ngữ
+nghĩa, đã ghi rõ trong chú thích. Nếu đối chiếu với cổng cho thấy suy luận đó sai thì **thu hẹp
+danh sách**, đừng sửa `ngayHopLe()`.
 
 ### ⚠️ `CtdtCauHinhTest::gui_len_cong_mac_dinh_tat` — đỏ có chủ đích, ĐỪNG "SỬA"
 
