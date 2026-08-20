@@ -91,6 +91,71 @@ class CtdtCheckerTest extends TestCase
     }
 
     /** @test */
+    public function NGAY_SINH_chi_co_NAM_bon_chu_so_la_HOP_LE()
+    {
+        // Cong van 2076/BHXH-CNTT PL02, bang truong CT03/CT04/CT07: NGAY_SINH co "dinh dang
+        // yyyyMMdd HOAC yyyy, voi yyyy la nam sinh". Nam sinh khong ro ngay thang la quy uoc
+        // quen thuoc voi nguoi cao tuoi.
+        //
+        // Quy tac cu chi nhan 8/12/14 chu so nen bat nham - 41 loi tren du lieu that, toan
+        // la nam sinh dang 1950 / 1948 / 1945 / 1939.
+        foreach (['1950', '1948', '1939', '2026'] as $nam) {
+            $this->assertSame([], CtdtChecker::kiem('CT03', $this->ct03HopLe(['NGAY_SINH' => $nam]), '01929'),
+                'Nam sinh ' . $nam . ' phai hop le');
+        }
+    }
+
+    /** @test */
+    public function nam_bon_chu_so_KHONG_hop_le_o_truong_ngay_khac()
+    {
+        // Chi NGAY_SINH (va cac truong ngay sinh/khai sinh khac) duoc phep chi co nam.
+        // NGAY_VAO/NGAY_RA la yyyyMMddHHmm, TU_NGAY/DEN_NGAY la yyyyMMdd - noi long o day
+        // se de lot 'NGAY_RA = 2026', tuc mot ho so ra vien vao mot nam nao do.
+        $loi = CtdtChecker::kiem('CT03', $this->ct03HopLe(['NGAY_RA' => '2026']), '01929');
+
+        $this->assertContains('CTDT002', $this->maLoi($loi), 'NGAY_RA chi co nam phai bi bat');
+    }
+
+    /** @test */
+    public function nam_bon_chu_so_phai_la_SO()
+    {
+        $loi = CtdtChecker::kiem('CT03', $this->ct03HopLe(['NGAY_SINH' => '19x0']), '01929');
+
+        $this->assertContains('CTDT002', $this->maLoi($loi));
+    }
+
+    /** @test */
+    public function do_dai_5_den_7_van_KHONG_hop_le()
+    {
+        // Chi chap nhan dung 4, 8, 12 hoac 14. Do dai o giua la go thieu hoac thua chu so.
+        foreach (['19500', '195012', '1950123'] as $xau) {
+            $loi = CtdtChecker::kiem('CT03', $this->ct03HopLe(['NGAY_SINH' => $xau]), '01929');
+
+            $this->assertContains('CTDT002', $this->maLoi($loi), $xau . ' phai bi bat');
+        }
+    }
+
+    /** @test */
+    public function moi_truong_cho_phep_chi_nam_deu_ton_tai_o_it_nhat_mot_loai()
+    {
+        // Khai mot truong khong loai nao co nghia la go sai ten, va noi long do se khong bao
+        // gio co hieu luc - im lang.
+        $coThat = [];
+
+        foreach (\App\Services\Ctdt\CtdtLoaiRegistry::tatCa() as $lop) {
+            foreach (array_keys($lop::truong()) as $the) {
+                $coThat[$the] = true;
+            }
+        }
+
+        foreach (\App\Services\Ctdt\Kiem\CtdtQuyTac::CHI_NAM as $the) {
+            $this->assertArrayHasKey($the, $coThat, 'The "' . $the . '" khong loai nao co');
+            $this->assertSame('ngay', \App\Services\Ctdt\Kiem\CtdtQuyTac::kieuCua($the),
+                'The "' . $the . '" phai la truong ngay thi noi long moi co nghia');
+        }
+    }
+
+    /** @test */
     public function ngay_co_chu_sinh_CTDT002()
     {
         $loi = CtdtChecker::kiem('CT03', $this->ct03HopLe(['NGAY_SINH' => '1995091X']), '01929');

@@ -73,6 +73,50 @@ class CtdtQuyTac
     ];
 
     /**
+     * Cac truong ngay CHAP NHAN dang chi co nam (yyyy), ngoai 8/12/14 chu so.
+     *
+     * Cong van 2076/BHXH-CNTT PL02 ghi ro o bang truong CT03/CT04/CT07:
+     *   "NGAY_SINH ... dinh dang yyyyMMdd HOAC yyyy, voi yyyy la nam sinh"
+     * va tuong tu cho NGAYSINH_NND, NGAY_SINHCON, NGAY_CHETCON, NGAYCAP_CMND_NND.
+     * Nam sinh khong ro ngay thang la quy uoc quen thuoc voi nguoi cao tuoi - tren du lieu
+     * that co 41 truong hop dang 1950 / 1948 / 1945 / 1939 tung bi bat nham.
+     *
+     * DANH SACH HEP CO CHU DICH. Cac truong ngay khac KHONG duoc noi long: NGAY_VAO/NGAY_RA
+     * la yyyyMMddHHmm, TU_NGAY/DEN_NGAY la yyyyMMdd. Cho yyyy qua o do la de lot
+     * 'NGAY_RA = 2026' - mot ho so ra vien vao "nam nao do".
+     *
+     * Bon truong dau duoc tai lieu neu DICH DANH. Cac truong con lai (ngay sinh cua me,
+     * cua cha, va ngay cap giay to) la SUY RA tu cung mot ngu nghia: cung la ngay sinh /
+     * ngay cap giay to cua mot nguoi, noi ma ngay thang co the khong ro. Neu doi chieu voi
+     * cong cho thay suy luan nay sai, thu hep lai danh sach nay chu dung sua ngayHopLe().
+     *
+     * @var string[]
+     */
+    const CHI_NAM = [
+        // Duoc tai lieu neu dich danh
+        'NGAY_SINH',
+        'NGAYSINH_NND',
+        'NGAY_SINHCON',
+        'NGAY_CHETCON',
+
+        // Suy ra tu cung ngu nghia
+        'NGAYSINH_MTH',
+        'NGAYSINH_CHA_MTH',
+        'NGAYSINH_CHA_NND',
+        'NGAYCAP_CCCD',
+        'NGAYCAP_CCCD_NND',
+        'NGAYCAP_CCCD_MTH',
+        'NGAYCAP_CCCD_CHA_MTH',
+        'NGAYCAP_CCCD_CHA_NND',
+    ];
+
+    /** @return bool The nay co chap nhan dang chi co nam khong */
+    public static function choPhepChiNam($tenThe)
+    {
+        return in_array((string) $tenThe, self::CHI_NAM, true);
+    }
+
+    /**
      * Cac cap ngay bat dau - ket thuc, cho quy tac CTDT006.
      *
      * So sanh tren TAM ky tu dau (phan ngay), vi hai the trong cung mot cap co the khac
