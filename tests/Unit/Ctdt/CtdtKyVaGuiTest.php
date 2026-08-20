@@ -524,4 +524,63 @@ class CtdtKyVaGuiTest extends TestCase
         $this->assertGreaterThan($nganSach, $khoaGiay,
             'Thoi han khoa (' . $khoaGiay . 's) phai lon hon ngan sach chuoi (' . $nganSach . 's)');
     }
+
+    /** @test */
+    public function ho_so_tung_gui_ma_dau_vet_bi_nap_lai_xoa_thi_doi_XAC_NHAN()
+    {
+        // CtdtLuuHoSo::ghiHoSo() reset ma_gd/ma_ket_qua/is_signed khi nap de - dung thiet
+        // ke, vi noi dung da doi. Nhung hau qua: mot ho so DA duoc cong nhan that se hien
+        // "Chua ky so" tren man danh sach va gui lai duoc ma khong co gi canh bao. Bang
+        // chung da gui chi con o lich_su_gui, von chi hien o man CHI TIET.
+        $this->hoSo([
+            'ma_gd'        => null,
+            'ma_ket_qua'   => null,
+            'lich_su_gui'  => '2026-08-19 10:00:00 | MaGD GD-001 | MaKetQua 200',
+        ]);
+
+        $kq = $this->layJson($this->controller->kyVaGui('YT001'));
+
+        $this->assertFalse($kq['thanh_cong'], 'Lan bam dau phai bi tu choi de nguoi bam nhin thay');
+        $this->assertTrue($kq['can_xac_nhan']);
+        $this->assertContains('đã từng được cổng BHXH tiếp nhận', $kq['thong_diep']);
+
+        Queue::assertNotPushed(SignCtdtJob::class);
+    }
+
+    /** @test */
+    public function bam_lai_kem_xac_nhan_gui_lai_thi_day_job_binh_thuong()
+    {
+        // Gui lai sau khi sua noi dung la viec HOP LE - canh bao chu khong chan cung.
+        $this->hoSo([
+            'ma_gd'        => null,
+            'ma_ket_qua'   => null,
+            'lich_su_gui'  => '2026-08-19 10:00:00 | MaGD GD-001 | MaKetQua 200',
+        ]);
+
+        request()->merge(['xac_nhan_gui_lai' => 1]);
+
+        $kq = $this->layJson($this->controller->kyVaGui('YT001'));
+
+        $this->assertTrue($kq['thanh_cong']);
+        $this->assertArrayNotHasKey('can_xac_nhan', $kq);
+        Queue::assertPushed(SignCtdtJob::class);
+    }
+
+    /** @test */
+    public function ho_so_con_giu_ma_gd_thi_KHONG_doi_xac_nhan_them()
+    {
+        // Nhanh canh bao chi danh cho ca dau vet DA BI XOA. Ho so con ma_gd thi hop xac
+        // nhan dau tien cua nut da noi ro "da gui (MaGD ...)" roi - hoi lan hai la thua.
+        $this->hoSo([
+            'ma_gd'       => 'GD-001',
+            'ma_ket_qua'  => '200',
+            'lich_su_gui' => '2026-08-19 10:00:00 | MaGD GD-001 | MaKetQua 200',
+            'is_signed'   => true,
+        ]);
+
+        $kq = $this->layJson($this->controller->kyVaGui('YT001'));
+
+        $this->assertTrue($kq['thanh_cong']);
+        Queue::assertPushed(SignCtdtJob::class);
+    }
 }

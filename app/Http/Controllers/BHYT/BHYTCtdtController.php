@@ -382,8 +382,12 @@ class BHYTCtdtController extends Controller
      * khong co gi xay ra, khong thi ho bam lai mai. Job van kiem lai lan nua vi no co the
      * nam cho trong hang doi rat lau, giua luc do cau hinh hoac ho so co the da doi.
      */
-    public function kyVaGui($ma_ho_so)
+    public function kyVaGui($ma_ho_so, Request $request = null)
     {
+        // Lui ve request() khi khong ai truyen: cac test goi thang controller nhu mot doi
+        // tuong thuong, khong di qua router nen khong co gi tiem $request vao.
+        $request = $request ?: request();
+
         $hoSo = CtdtHoSo::where('ma_ho_so', $ma_ho_so)->firstOrFail();
 
         $quyetDinh = CtdtQuyetDinhGui::nen(
@@ -428,6 +432,25 @@ class BHYTCtdtController extends Controller
         // khoa ton tai nhung rong/null.
         $hangDoiKy  = config('organization.chung_tu_dien_tu.sign_queue_name') ?: 'JobSignCtdt';
         $hangDoiGui = config('organization.chung_tu_dien_tu.submit_queue_name') ?: 'JobSubmitCtdt';
+
+        // Nap lai xoa ma_gd/ma_ket_qua (noi dung da doi thi ket qua cu noi ve mot ban khac),
+        // nen mot ho so DA duoc cong nhan that se hien "Chua ky so" va gui lai duoc ma khong
+        // co gi canh bao - dau vet chi con o lich_su_gui, von chi hien o man chi tiet.
+        //
+        // Canh bao chu khong chan cung: gui lai sau khi sua noi dung la viec HOP LE. Chi
+        // buoc nguoi bam nhin thay minh dang gui lai mot ho so cong da nhan.
+        //
+        // Laravel 5.5 KHONG co Request::boolean(), nen dung filter_var().
+        $tungGui = !empty($hoSo->lich_su_gui) && empty($hoSo->ma_gd);
+
+        if ($tungGui && !filter_var($request->input('xac_nhan_gui_lai'), FILTER_VALIDATE_BOOLEAN)) {
+            return response()->json([
+                'thanh_cong' => false,
+                'can_xac_nhan' => true,
+                'thong_diep' => 'Hồ sơ này đã từng được cổng BHXH tiếp nhận, nhưng dấu vết đã bị '
+                    . 'xoá khi nạp lại. Xem tab lịch sử gửi ở màn chi tiết trước khi gửi lại.',
+            ]);
+        }
 
         // Dat khoa NGAY TRUOC dispatch, sau moi nhanh tu choi: mot lan bam bi tu choi khong
         // lam gi ca, giu khoa se khoa nguoi dung ra ngoai het thoi han ma khong duoc gi.
