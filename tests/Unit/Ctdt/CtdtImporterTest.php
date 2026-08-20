@@ -350,6 +350,27 @@ class CtdtImporterTest extends TestCase
     }
 
     /** @test */
+    public function job_kiem_di_dung_hang_doi_lay_tu_cau_hinh()
+    {
+        // KHONG co luoi nao canh ten hang doi truoc dot sua nay: doi ->onQueue(...) thanh
+        // mot ten bia thi CA 315 test van xanh. Worker se nghe mot hang doi con job vao
+        // hang doi khac, IM LANG, va vi ho so chua kiem cung co so_loi = 0 nen man danh
+        // sach se bao moi ho so deu sach mai mai.
+        //
+        // Dat mot ten KHAC mac dinh de chung minh ma that su DOC cau hinh chu khong go
+        // cung - va de test khong phu thuoc config/organization.php cua tung may.
+        config(['organization.chung_tu_dien_tu.queue_name' => 'HangDoiThuNghiem']);
+
+        $this->importer->nhapTuChuoi($this->goiCt2025([[
+            $this->chungTu('CT03', ['MA_YTE' => 'YT001']),
+        ]]));
+
+        Queue::assertPushed(\App\Jobs\CheckCtdtJob::class, function ($job) {
+            return $job->queue === 'HangDoiThuNghiem';
+        });
+    }
+
+    /** @test */
     public function moi_ho_so_mot_job_rieng()
     {
         $this->importer->nhapTuChuoi($this->goiCt2025([

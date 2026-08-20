@@ -93,6 +93,36 @@ class CtdtCauHinhTest extends TestCase
     }
 
     /** @test */
+    public function install_service_bat_cai_dung_hang_doi_ma_code_day_job_vao()
+    {
+        // Ten hang doi JobCtdt duoc go DOC LAP o hai noi: gia tri mac dinh trong
+        // CtdtImporter::nhapMotHoSo() va lenh nssm trong install_service.bat. Lech nhau
+        // thi worker nghe MOT hang doi con job vao hang doi KHAC - khong nem, khong log,
+        // khong co dau hieu gi; ho so nam mai trong hang doi va cot "So loi" tren man danh
+        // sach vinh vien bang 0, trong y het nhu moi ho so deu sach.
+        //
+        // config/organization.php nam trong .gitignore nen KHONG lay lam chuan duoc: chuan
+        // la gia tri mac dinh go trong ma nguon, thu duy nhat co mat tren moi may.
+        $bat = file_get_contents(base_path('install_service.bat'));
+
+        $this->assertNotFalse($bat, 'Khong doc duoc install_service.bat');
+        $this->assertContains(
+            '--queue=JobCtdt',
+            $bat,
+            'install_service.bat phai cai worker nghe hang doi JobCtdt - dung ten mac dinh '
+            . 'trong CtdtImporter::nhapMotHoSo()'
+        );
+
+        $importer = file_get_contents(base_path('app/Services/Ctdt/CtdtImporter.php'));
+
+        $this->assertContains(
+            "config('organization.chung_tu_dien_tu.queue_name', 'JobCtdt')",
+            $importer,
+            'Ten hang doi mac dinh trong CtdtImporter phai la JobCtdt, khop install_service.bat'
+        );
+    }
+
+    /** @test */
     public function config_ctdt_khong_giu_tham_so_theo_co_so()
     {
         // Hai nguon su that cho cung mot co bat/tat la cach chac chan de mot ngay nao do

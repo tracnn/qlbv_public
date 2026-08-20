@@ -17,7 +17,13 @@
             </div>
             <div class="col-sm-2"><strong>Mã CSKCB:</strong> {{ $hoSo->macskcb }}</div>
             <div class="col-sm-2"><strong>Số chứng từ:</strong> {{ $hoSo->so_chung_tu }}</div>
-            <div class="col-sm-2"><strong>Số lỗi:</strong> {{ $hoSo->so_loi }}</div>
+            {{-- Nhan "Loi chan gui" chu khong phai "So loi": so_loi CHI dem loi muc chan,
+                 con badge tren tab Loi dem ca canh bao - hai con so khac nhau ma cung mot
+                 nhan la de nguoi doc tuong mot trong hai cho bi hong. Va khi checked_at
+                 rong thi con so 0 khong co nghia "sach" ma la "chua ai kiem". --}}
+            <div class="col-sm-2"><strong>Lỗi chặn gửi:</strong>
+                {{ empty($hoSo->checked_at) ? 'Chưa kiểm' : $hoSo->so_loi }}
+            </div>
             <div class="col-sm-3"><strong>Nạp lúc:</strong> {{ $hoSo->imported_at }}</div>
         </div>
         <div class="row" style="margin-top:8px">

@@ -20,9 +20,15 @@ class CtdtDanhSachTest extends TestCase
         config(['organization.chung_tu_dien_tu.submit_enabled' => true]);
     }
 
+    /**
+     * Mac dinh la ho so DA di qua bo kiem (checked_at co gia tri). Test nao muon kich ban
+     * "chua kiem" phai noi ro 'checked_at' => null: ho so chua kiem cung co so_loi = 0
+     * nhung KHONG phai la ho so sach, va tron hai thu lam test noi sai su that.
+     */
     private function taoHoSo(array $hoSo, array $chungTu = [])
     {
         $ban = CtdtHoSo::create(array_merge([
+            'checked_at'  => '2026-08-20 08:00:00',
             'ma_ho_so'    => 'YT001',
             'dich_vu'     => 'CT2025',
             'loai_hs'     => '39',
@@ -164,6 +170,35 @@ class CtdtDanhSachTest extends TestCase
     }
 
     /** @test */
+    public function loc_theo_trang_thai_chua_kiem()
+    {
+        // Hai ho so giong het nhau ve so_loi (deu 0) - chi khac checked_at. Neu bo loc
+        // khong nhin checked_at thi ca hai deu ra "sach", va nguoi van hanh khong co cach
+        // nao thay duoc worker JobCtdt da chet.
+        $this->taoHoSo(['ma_ho_so' => 'YT_CHUA_KIEM', 'checked_at' => null, 'so_loi' => 0]);
+        $this->taoHoSo(['ma_ho_so' => 'YT_DA_KIEM', 'so_loi' => 0]);
+
+        $kq = CtdtDanhSach::truyVan(['trang_thai_gui' => CtdtTrangThaiGui::CHUA_KIEM])->get();
+
+        $this->assertCount(1, $kq);
+        $this->assertSame('YT_CHUA_KIEM', $kq->first()->ma_ho_so);
+    }
+
+    /** @test */
+    public function ho_so_chua_kiem_khong_lot_vao_bo_loc_chua_ky()
+    {
+        // Ho so chua kiem cung co is_signed = false, nen neu bo loc CHUA_KY khong loai tru
+        // "chua kiem" thi no se hien o day va nguoi dung se di ky mot ho so chua kiem.
+        $this->taoHoSo(['ma_ho_so' => 'YT_CHUA_KIEM', 'checked_at' => null, 'so_loi' => 0, 'is_signed' => false]);
+
+        $this->assertCount(
+            0,
+            CtdtDanhSach::truyVan(['trang_thai_gui' => CtdtTrangThaiGui::CHUA_KY])->get(),
+            'Ho so chua kiem khong duoc xuat hien o bo loc CHUA_KY'
+        );
+    }
+
+    /** @test */
     public function loc_theo_trang_thai_chua_ky()
     {
         $this->taoHoSo(['ma_ho_so' => 'YT001', 'so_loi' => 0, 'is_signed' => false]);
@@ -289,9 +324,17 @@ class CtdtDanhSachTest extends TestCase
         $this->taoHoSo(['ma_ho_so' => 'H_KET_QUA_RONG', 'so_loi' => 0, 'is_signed' => true, 'ma_ket_qua' => '']);
         $this->taoHoSo(['ma_ho_so' => 'I_KET_QUA_KHONG', 'so_loi' => 0, 'is_signed' => true, 'ma_ket_qua' => '0']);
 
+        // Ba ho so CHUA KIEM, moi cai nguy trang thanh mot trang thai "sach" khac nhau:
+        // neu bo loc khong loai tru chung, J se hien o CHUA_KY, K o CHUA_GUI va L o DA_GUI
+        // - tuc man hinh bao "khong loi" cho ba ho so ma chua ai kiem bao gio.
+        $this->taoHoSo(['ma_ho_so' => 'J_CHUA_KIEM_CHUA_KY', 'checked_at' => null, 'so_loi' => 0, 'is_signed' => false]);
+        $this->taoHoSo(['ma_ho_so' => 'K_CHUA_KIEM_DA_KY', 'checked_at' => null, 'so_loi' => 0, 'is_signed' => true]);
+        $this->taoHoSo(['ma_ho_so' => 'L_CHUA_KIEM_CO_KET_QUA', 'checked_at' => null, 'so_loi' => 0, 'is_signed' => true, 'ma_ket_qua' => '200']);
+
         $tatCaHoSo = CtdtHoSo::all();
 
         $cacTrangThaiCanKiem = [
+            CtdtTrangThaiGui::CHUA_KIEM,
             CtdtTrangThaiGui::CON_LOI,
             CtdtTrangThaiGui::CHUA_KY,
             CtdtTrangThaiGui::DA_GUI,
@@ -322,6 +365,47 @@ class CtdtDanhSachTest extends TestCase
                 . implode(',', $mongDoi) . ' - Thuc te: ' . implode(',', $thucTe)
             );
         }
+
+        // TONG cac bo loc phai bang TONG so ho so: khong trung (mot ho so hien o hai bo
+        // loc) va khong sot (mot ho so khong thuoc bo loc nao, bien mat khi nguoi dung loc).
+        //
+        // GUI_TAT KHONG co trong danh sach nay mot cach co chu dich: no va CHUA_GUI dung
+        // CHUNG mot dieu kien SQL (phan biet nhau bang CAU HINH, khong bang du lieu), nen
+        // cong ca hai vao se dem hai lan cung mot tap.
+        $cacBoLocRoiNhau = [
+            CtdtTrangThaiGui::CHUA_KIEM,
+            CtdtTrangThaiGui::CON_LOI,
+            CtdtTrangThaiGui::CHUA_KY,
+            CtdtTrangThaiGui::DA_GUI,
+            CtdtTrangThaiGui::CONG_TU_CHOI,
+            CtdtTrangThaiGui::CHUA_GUI,
+        ];
+
+        $daGap = [];
+
+        foreach ($cacBoLocRoiNhau as $trangThai) {
+            foreach (CtdtDanhSach::truyVan(['trang_thai_gui' => $trangThai])->pluck('ma_ho_so') as $ma) {
+                $this->assertArrayNotHasKey(
+                    $ma,
+                    $daGap,
+                    "Ho so {$ma} hien o hai bo loc trang thai (lan hai: {$trangThai}) - "
+                    . 'tong cac bo loc se lon hon tong so ho so'
+                );
+                $daGap[$ma] = $trangThai;
+            }
+        }
+
+        $thieu = array_diff($tatCaHoSo->pluck('ma_ho_so')->all(), array_keys($daGap));
+
+        $this->assertEmpty(
+            $thieu,
+            'Ho so khong thuoc bo loc trang thai nao: ' . implode(',', $thieu)
+        );
+        $this->assertCount(
+            $tatCaHoSo->count(),
+            $daGap,
+            'Tong so ho so cua tat ca cac bo loc trang thai phai bang tong so ho so'
+        );
     }
     /** @test */
     public function loc_theo_nguoi_nap()

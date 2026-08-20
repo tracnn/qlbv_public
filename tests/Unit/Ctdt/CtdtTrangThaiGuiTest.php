@@ -14,8 +14,15 @@ use App\Models\BHYT\Ctdt\CtdtHoSo;
  */
 class CtdtTrangThaiGuiTest extends TestCase
 {
+    /**
+     * Mac dinh la ho so DA di qua bo kiem. Test nao muon kich ban "chua kiem" phai noi ro
+     * 'checked_at' => null - de khong ai vo tinh viet mot test mo ta hanh vi cua ho so
+     * chua kiem trong khi tuong minh dang mo ta ho so sach.
+     */
     private function hoSo(array $thuocTinh)
     {
+        $thuocTinh = array_merge(['checked_at' => '2026-08-20 08:00:00'], $thuocTinh);
+
         $hoSo = new CtdtHoSo();
 
         foreach ($thuocTinh as $cot => $giaTri) {
@@ -26,10 +33,50 @@ class CtdtTrangThaiGuiTest extends TestCase
     }
 
     /** @test */
+    public function chua_kiem_khong_duoc_coi_la_sach()
+    {
+        // ĐÂY là hồ sơ mà nếu không có test này, Giai đoạn 4 sẽ ký và GỬI LÊN CỔNG BHXH
+        // dù chưa ai kiểm nó: so_loi = 0 vì bộ kiểm CHƯA CHẠY (checked_at = null), không
+        // phải vì hồ sơ sạch. Mọi hồ sơ trên một máy chủ chưa cài dịch vụ JobCtdt đều
+        // trông y hệt thế này.
+        config(['organization.chung_tu_dien_tu.submit_enabled' => true]);
+
+        $hoSo = $this->hoSo([
+            'checked_at' => null, 'so_loi' => 0, 'is_signed' => true,
+        ]);
+
+        $this->assertSame(
+            CtdtTrangThaiGui::CHUA_KIEM,
+            CtdtTrangThaiGui::cua($hoSo),
+            'Ho so chua di qua bo kiem phai la CHUA_KIEM, khong duoc rot vao CHUA_GUI - '
+            . 'CHUA_GUI la cua chan mo cho Giai doan 4 gui len cong BHXH'
+        );
+    }
+
+    /** @test */
+    public function da_kiem_va_sach_thi_khong_bi_chan_nham()
+    {
+        // Mat kia cua bat bien: cua chan chi duoc dong voi ho so CHUA kiem. Neu no dong
+        // voi ca ho so da kiem va sach thi khong ho so nao gui duoc nua.
+        config(['organization.chung_tu_dien_tu.submit_enabled' => true]);
+
+        $hoSo = $this->hoSo([
+            'checked_at' => '2026-08-20 08:00:00', 'so_loi' => 0, 'is_signed' => true,
+        ]);
+
+        $this->assertNotSame(
+            CtdtTrangThaiGui::CHUA_KIEM,
+            CtdtTrangThaiGui::cua($hoSo),
+            'Ho so da kiem (checked_at co gia tri) va sach khong duoc bao la CHUA_KIEM'
+        );
+        $this->assertSame(CtdtTrangThaiGui::CHUA_GUI, CtdtTrangThaiGui::cua($hoSo));
+    }
+
+    /** @test */
     public function con_loi_chan_duoc_bao_truoc_moi_thu()
     {
         // Ho so con loi thi du co ky cung khong gui duoc - bao ly do gan nhat truoc.
-        $hoSo = $this->hoSo(['so_loi' => 3, 'is_signed' => false]);
+        $hoSo = $this->hoSo(['checked_at' => '2026-08-20 08:00:00', 'so_loi' => 3, 'is_signed' => false]);
 
         $this->assertSame(CtdtTrangThaiGui::CON_LOI, CtdtTrangThaiGui::cua($hoSo));
     }
@@ -114,14 +161,25 @@ class CtdtTrangThaiGuiTest extends TestCase
     /** @test */
     public function moi_trang_thai_deu_co_nhan_tieng_viet()
     {
-        $ma = [
-            CtdtTrangThaiGui::CON_LOI, CtdtTrangThaiGui::CHUA_KY, CtdtTrangThaiGui::GUI_TAT,
-            CtdtTrangThaiGui::DA_GUI, CtdtTrangThaiGui::CONG_TU_CHOI, CtdtTrangThaiGui::CHUA_GUI,
-        ];
+        // Khang dinh BAT BIEN chu khong khang dinh con so: lay thang cac hang so cua lop
+        // thay vi go tay mot danh sach va mot con dem. Them mot trang thai moi ma quen
+        // nhan thi test nay do ngay, khong can ai nho sua con so o day.
+        $phanChieu = new \ReflectionClass(CtdtTrangThaiGui::class);
+        $ma = $phanChieu->getConstants();
+        unset($ma['NHAN']);
 
-        $this->assertCount(6, array_unique($ma), 'Sau hang phai khac nhau');
+        $this->assertNotEmpty($ma);
+        $this->assertCount(count($ma), array_unique($ma), 'Cac ma trang thai phai khac nhau');
+        $this->assertCount(
+            count($ma),
+            CtdtTrangThaiGui::NHAN,
+            'Bang NHAN phai co dung mot dong cho moi trang thai, khong thua khong thieu'
+        );
 
         foreach ($ma as $m) {
+            // nhan() lui ve chinh ma khi thieu, nen assertNotEmpty mot minh khong bat duoc
+            // thieu nhan - phai soi thang bang NHAN.
+            $this->assertArrayHasKey($m, CtdtTrangThaiGui::NHAN, 'Thieu nhan cho ' . $m);
             $this->assertNotEmpty(CtdtTrangThaiGui::nhan($m), 'Thieu nhan cho ' . $m);
         }
     }
