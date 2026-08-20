@@ -70,7 +70,7 @@ và gửi):**
 | Gọi cổng BHXH, ghi kết quả gửi | `app/Services/Ctdt/CtdtSubmitService.php` |
 | Job ký số, ghi tệp đã ký lên disk `exportCtdt` | `app/Jobs/SignCtdtJob.php` |
 | Job gửi hồ sơ đã ký lên cổng BHXH | `app/Jobs/SubmitCtdtJob.php` |
-| 444 test đơn vị | `tests/Unit/Ctdt/` |
+| 446 test đơn vị | `tests/Unit/Ctdt/` |
 
 **Chưa có (đúng phạm vi, không phải thiếu sót):** xuất Excel, lệnh Console `ctdt:import` quét
 thư mục, dashboard (Giai đoạn 5).
@@ -360,7 +360,7 @@ lại — thao tác tốn thời gian nhất trong chuỗi.
 php vendor/bin/phpunit tests/Unit/Ctdt
 ```
 
-Kỳ vọng `OK (444 tests)` — **trừ một test đỏ CÓ CHỦ ĐÍCH trên máy đã chạy thật**, xem ngay dưới.
+Kỳ vọng `OK (446 tests)` — **trừ một test đỏ CÓ CHỦ ĐÍCH trên máy đã chạy thật**, xem ngay dưới.
 
 ### `MA_YTE` KHÔNG bắt buộc — đừng thêm lại
 
@@ -379,6 +379,20 @@ Sau khi gỡ và chạy lại bộ kiểm trên 1074 hồ sơ: số hồ sơ b�
 
 Cũng **không** hạ xuống mức cảnh báo: để trống là một trong hai cách dùng hợp lệ, nên cảnh báo
 trên gần như mọi hồ sơ chỉ làm người vận hành học cách bỏ qua cả cột số lỗi.
+
+### `MA_THE` không sinh lỗi, kể cả cảnh báo
+
+Rất nhiều bệnh nhân không có thẻ BHYT: tự trả, thẻ hết hạn, trẻ chưa được cấp thẻ
+(`TEKT = 1`). Công văn 2076 cũng không đánh dấu `MA_THE` bắt buộc ở loại nào.
+
+Trước đây đây là cảnh báo. Nhưng **cảnh báo trên một tình huống bình thường thì không phải
+cảnh báo** — nó là tiếng ồn, và nó đẩy người vận hành tới chỗ bỏ qua cả cột số lỗi. Cùng một
+lý lẽ đã dùng khi gỡ `MA_YTE`.
+
+**Tầng khuyến nghị vẫn được giữ dù đang trống.** Bước bổ sung các trường còn thiếu so với công
+văn 2076 (CT04 thiếu 11 trường, CT06 thiếu 7, CT07 thiếu 8) nên **cảnh báo trước rồi mới chặn** —
+siết thẳng lên mức chặn sẽ đồng loạt khoá lại những hồ sơ đang gửi được. Có một test canh việc
+`CtdtChecker` còn hỏi tầng đó, để nó không chết im lặng.
 
 ### Trường ngày sinh chấp nhận dạng chỉ có năm (`yyyy`)
 
