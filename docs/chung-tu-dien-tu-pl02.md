@@ -66,8 +66,8 @@ Máy chủ cổng: `https://egw.baohiemxahoi.gov.vn`. Lấy token dùng lại
 | Job kiểm, một hồ sơ một job | `app/Jobs/CheckCtdtJob.php` |
 | 323 test đơn vị | `tests/Unit/Ctdt/` |
 
-**Chưa có (đúng phạm vi, không phải thiếu sót):** ký số, service gửi lên cổng, nút "Ký và gửi"
-(Giai đoạn 4); xuất Excel, lệnh Console quét thư mục, dashboard (Giai đoạn 5).
+**Chưa có (đúng phạm vi, không phải thiếu sót):** xuất Excel, lệnh Console `ctdt:import` quét
+thư mục, dashboard (Giai đoạn 5).
 
 Vì vậy **module hiện chưa gọi mạng** — triển khai lên máy chủ ở trạng thái này không ảnh hưởng
 gì tới XML3176 hay bất kỳ nghiệp vụ nào đang chạy.
@@ -266,9 +266,45 @@ cảnh báo "hồ sơ không có mã y tế".
 
 ---
 
-## 8. Triển khai
+## 8. Ký số và gửi
 
-### Hiện tại (sau Giai đoạn 3)
+Người vận hành mở màn chi tiết một hồ sơ và bấm **Ký và gửi**. Hệ thống xếp hai công việc nối
+tiếp: `SignCtdtJob` (hàng đợi `JobSignCtdt`) rồi `SubmitCtdtJob` (hàng đợi `JobSubmitCtdt`).
+
+**Ba cửa chặn, theo đúng thứ tự này:**
+
+| Điều kiện | Nút báo gì | Vì sao chặn |
+|---|---|---|
+| `submit_enabled = false` | "Chức năng gửi đang tắt" | Không lần gửi nào diễn ra, nên không ghi lỗi — ghi là bịa |
+| `checked_at` rỗng | "Hồ sơ chưa kiểm" | `so_loi = 0` của hồ sơ chưa kiểm không có nghĩa là sạch |
+| `so_loi > 0` | "Hồ sơ còn lỗi chặn gửi" | Cổng cũng sẽ từ chối; chặn tại chỗ cho thông báo rõ hơn |
+
+**Tệp gửi lên cổng là tệp ĐÃ KÝ trên disk `exportCtdt`**, đường dẫn `da-ky/<dịch vụ>/<mã hồ sơ>.xml`,
+không phải phong bì dựng lại lúc gửi. Dựng lại lúc gửi là gửi một gói không có chữ ký.
+
+**Phong bì được dựng lại từ dữ liệu đã lưu, không phải tệp gốc.** Tệp XML người dùng tải lên không
+được giữ trên đĩa (cột `duong_dan_goc` chỉ ghi tên tệp), nên chữ ký `CHUKYDONVI` của bên gửi đã mất
+từ lúc nạp. Mỗi hồ sơ được đóng thành một gói riêng với `SOLUONGHOSO = 1`.
+
+**Gửi lại được.** Nút đổi thành "Ký và gửi lại" khi hồ sơ đã có `MaGD`. `MaGD` cũ được nối vào cột
+`lich_su_gui` trước khi ghi đè — đó là dấu vết đối soát với BHXH, mất nó là tranh chấp không có gì để tra.
+
+**Ba worker phải chạy đủ:**
+
+```sql
+SELECT queue, COUNT(*) FROM jobs GROUP BY queue;
+```
+
+`JobCtdt`, `JobSignCtdt`, `JobSubmitCtdt` — hàng nào tăng dần mà không giảm nghĩa là worker đó chưa chạy.
+
+**`submit_enabled` mặc định TẮT.** Cổng thật của BHXH nhận là nhận thật. Bật sau khi đã chạy thử và
+đối chiếu vài hồ sơ bằng tay.
+
+---
+
+## 9. Triển khai
+
+### Hiện tại (sau Giai đoạn 4)
 
 1. `git pull`
 2. Thêm khối `exportCtdt` vào `config/filesystems.php` (xem mục 3.3) — **không tự có**.
@@ -277,40 +313,25 @@ cảnh báo "hồ sơ không có mã y tế".
 5. `php artisan migrate --path=database/migrations`
 6. `php artisan config:clear`
 
-**`JobCtdt` là BẮT BUỘC** từ Giai đoạn 3 — xem khối ngay dưới đây. `JobSignCtdt` và
-`JobSubmitCtdt` thì chưa cần: hai hàng đợi này mới chỉ được khai trong cấu hình, để dành ký số và
-gửi của Giai đoạn 4; dựng worker cho chúng bây giờ chỉ tạo ra hai tiến trình chạy không.
+**Ba worker `JobCtdt`, `JobSignCtdt`, `JobSubmitCtdt` đều BẮT BUỘC** — xem khối ngay dưới đây.
+Cả ba đều đã được `install_service.bat` cài và khởi động sẵn, không cần thêm tay.
 
-### Worker hàng đợi — BẮT BUỘC từ Giai đoạn 3
+### Worker hàng đợi — BẮT BUỘC cả ba
 
-Bộ kiểm lỗi chạy trong hàng đợi `JobCtdt`. **Không có worker nghĩa là không hồ sơ nào được kiểm**,
-và cột "Số lỗi" sẽ vĩnh viễn bằng `0` — trông y như mọi hồ sơ đều sạch.
+`JobCtdt` chạy bộ kiểm lỗi; `JobSignCtdt` chạy ký số; `JobSubmitCtdt` chạy gửi lên cổng BHXH.
+**Thiếu worker nào thì mọi hồ sơ đứng khựng ở bước đó** — ví dụ `JobCtdt` chết thì không hồ sơ
+nào được kiểm và cột "Số lỗi" vĩnh viễn bằng `0`, trông y như mọi hồ sơ đều sạch.
 
-Cài dịch vụ (đã có sẵn trong `install_service.bat`):
+Cả ba dịch vụ đã có sẵn trong `install_service.bat`, được cài và khởi động cùng lúc với các
+dịch vụ khác của hệ thống — không cần cài tay từng dịch vụ.
 
-```bat
-nssm install "QLBV JobCtdt" php.exe "<đường dẫn dự án>artisan queue:work --queue=JobCtdt"
-nssm start "QLBV JobCtdt"
-```
-
-Kiểm hàng đợi có đang chạy không:
+Kiểm cả ba hàng đợi có đang chạy không:
 
 ```sql
-SELECT COUNT(*) FROM jobs WHERE queue = 'JobCtdt';
+SELECT queue, COUNT(*) FROM jobs GROUP BY queue;
 ```
 
-Con số này tăng dần mà không giảm nghĩa là worker chưa chạy.
-
-### Khi Giai đoạn 4 hoàn tất
-
-`JobCtdt` đã có sẵn trong `install_service.bat` từ Giai đoạn 3 (xem khối "Worker hàng đợi" ở
-trên) — không cần thêm lại. Bổ sung hai dịch vụ ký số/gửi vào `install_service.bat` theo đúng
-khuôn các dịch vụ sẵn có:
-
-```bat
-%NSSM_PATH%\nssm install "QLBV JobSignCtdt" %PHP_PATH% "%LARAVEL_PATH%artisan queue:work --queue=JobSignCtdt"
-%NSSM_PATH%\nssm install "QLBV JobSubmitCtdt" %PHP_PATH% "%LARAVEL_PATH%artisan queue:work --queue=JobSubmitCtdt"
-```
+Hàng nào tăng dần mà không giảm nghĩa là worker của hàng đợi đó chưa chạy.
 
 Ký số và gửi để **hai hàng đợi riêng** là có chủ đích: ký hỏng vì lý do cục bộ (USB token bị rút,
 HSM không phản hồi) còn gửi hỏng vì mạng. Gộp chung thì một lần mạng chập sẽ kéo theo ba lần ký
@@ -318,7 +339,7 @@ lại — thao tác tốn thời gian nhất trong chuỗi.
 
 ---
 
-## 9. Kiểm thử
+## 10. Kiểm thử
 
 ```bash
 php vendor/bin/phpunit tests/Unit/Ctdt
@@ -341,7 +362,7 @@ Kỳ vọng `OK (323 tests)`.
 
 ---
 
-## 10. Tài liệu liên quan
+## 11. Tài liệu liên quan
 
 | Tài liệu | Nội dung |
 |---|---|

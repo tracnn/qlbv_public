@@ -184,6 +184,34 @@ class CheckCtdtJobTest extends TestCase
     }
 
     /** @test */
+    public function het_luot_thu_thi_ghi_lai_dau_vet_tren_ho_so()
+    {
+        // Job het ba luot thu roi roi vao failed_jobs, va ho so o lai checked_at = null
+        // VINH VIEN. Cau SQL dem hang doi khong phat hien duoc ca nay vi hang doi van rong.
+        // Tu Giai doan 4, mot ho so "chua kiem" la mot ho so khong bao gio gui duoc.
+        $this->hoSoCt03([
+            'ma_yte' => 'YT001', 'ho_ten' => 'Nguyen Van Test', 'ngay_sinh' => '19950914',
+            'ngay_vao' => '201912121200', 'ngay_ra' => '201912180001', 'ma_the' => 'DN1',
+        ]);
+
+        (new CheckCtdtJob('YT001'))->failed(new \Exception('CSDL mat ket noi'));
+
+        $hoSo = CtdtHoSo::first();
+
+        $this->assertNotEmpty($hoSo->import_error, 'Phai de lai dau vet doc duoc tren man hinh');
+        $this->assertContains('CSDL mat ket noi', (string) $hoSo->import_error);
+        $this->assertNull($hoSo->checked_at, 'Khong duoc gia vo la da kiem');
+    }
+
+    /** @test */
+    public function failed_voi_ho_so_khong_ton_tai_thi_khong_nem()
+    {
+        (new CheckCtdtJob('KHONG_TON_TAI'))->failed(new \Exception('loi gi do'));
+
+        $this->assertSame(0, CtdtHoSo::count());
+    }
+
+    /** @test */
     public function loai_la_trong_CSDL_thi_bo_qua_khong_nem()
     {
         // Registry co the bi thu hep sau khi du lieu da duoc ghi. Nem o day thi mot loai

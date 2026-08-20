@@ -118,4 +118,29 @@ class CheckCtdtJob implements ShouldQueue
 
         return CtdtChecker::kiem($chungTu->loai_ho_so, $duLieu, $hoSo->macskcb);
     }
+
+    /**
+     * Het luot thu ma khong ghi gi thi ho so o lai checked_at = null VINH VIEN, khong dau
+     * vet nao tren man hinh. Cau SQL dem hang doi khong phat hien duoc ca nay vi hang doi
+     * van rong - nguoi van hanh se thay mot ho so mai mai "Chua kiem" ma khong hieu vi sao.
+     *
+     * Ghi vao import_error chu khong tao cot moi: day la cot da co, da duoc man chi tiet
+     * doc, va noi dung "vi sao ho so nay khong dung duoc" dung la viec cua no.
+     */
+    public function failed(\Throwable $exception)
+    {
+        \Log::error('CheckCtdtJob that bai sau moi luot thu: ' . $exception->getMessage(), [
+            'ma_ho_so' => $this->maHoSo,
+        ]);
+
+        $hoSo = CtdtHoSo::where('ma_ho_so', $this->maHoSo)->first();
+
+        if ($hoSo === null) {
+            return;
+        }
+
+        $hoSo->update([
+            'import_error' => 'Job kiểm thất bại: ' . $exception->getMessage(),
+        ]);
+    }
 }
