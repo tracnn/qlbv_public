@@ -294,19 +294,10 @@ class CtdtDanhSachTest extends TestCase
     }
 
     /**
-     * @test
-     *
-     * Test TINH CHAT: bo loc SQL trong CtdtDanhSach va ham suy trang thai
-     * CtdtTrangThaiGui::cua() la HAI CACH DIEN DAT cung mot quy tac. Kiem tung ca
-     * roi rac (nhu hai test truoc) thi cu va cho nay lai ho cho khac - vong fix
-     * round 1 da chung minh dieu do (bo qua ca so_loi=0,is_signed=false,ma_ket_qua=200).
-     * O day, voi MOI ho so trong bo du lieu, tap ma_ho_so ma bo loc SQL tra ve cho tung
-     * trang thai phai KHOP TUYET DOI voi tap ma_ho_so ma cua() gan cho trang thai do.
+     * Bo du lieu cho test tinh chat: moi ho so nguy trang thanh mot trang thai khac.
      */
-    public function bo_loc_trang_thai_khop_voi_CtdtTrangThaiGui_cho_moi_ho_so()
+    private function gieoBoDuLieuTinhChat()
     {
-        config(['organization.chung_tu_dien_tu.submit_enabled' => true]);
-
         $this->taoHoSo(['ma_ho_so' => 'A_CON_LOI_CHUA_KY', 'so_loi' => 5, 'is_signed' => false]);
         $this->taoHoSo(['ma_ho_so' => 'B_CON_LOI_DA_KY_200', 'so_loi' => 5, 'is_signed' => true, 'ma_ket_qua' => '200']);
         $this->taoHoSo(['ma_ho_so' => 'C_CHUA_KY', 'so_loi' => 0, 'is_signed' => false]);
@@ -364,20 +355,64 @@ class CtdtDanhSachTest extends TestCase
         // cong moi la su that - phai la DA_GUI, khong phai GUI_HONG.
         $this->taoHoSo(['ma_ho_so' => 'P_GUI_LAI_THANH_CONG', 'so_loi' => 0, 'is_signed' => true,
             'ma_ket_qua' => '200', 'submit_error' => 'Loi cu con sot']);
+    }
 
+    /**
+     * @test
+     *
+     * Test TINH CHAT: bo loc SQL trong CtdtDanhSach va ham suy trang thai
+     * CtdtTrangThaiGui::cua() la HAI CACH DIEN DAT cung mot quy tac. Kiem tung ca
+     * roi rac (nhu hai test truoc) thi cu va cho nay lai ho cho khac - vong fix
+     * round 1 da chung minh dieu do (bo qua ca so_loi=0,is_signed=false,ma_ket_qua=200).
+     * O day, voi MOI ho so trong bo du lieu, tap ma_ho_so ma bo loc SQL tra ve cho tung
+     * trang thai phai KHOP TUYET DOI voi tap ma_ho_so ma cua() gan cho trang thai do.
+     *
+     * Chay HAI LAN - mot lan submit_enabled = true, mot lan false. GUI_TAT va CHUA_GUI
+     * dung CHUNG mot dieu kien SQL, phan biet nhau bang CAU HINH chu khong bang du lieu:
+     * lan BAT, tap do thuoc ve CHUA_GUI; lan TAT, chinh tap do thuoc ve GUI_TAT. Nen moi
+     * lan chay chi duoc so mot trong hai - so ca hai la dem hai lan cung mot tap.
+     *
+     * Chay mot lan (bat) thi nhanh GUI_TAT cua locTrangThai() KHONG duoc canh gi ca, va
+     * toan bo cau hinh "gui dang tat" chua tung duoc kiem o tang trang thai.
+     */
+    public function bo_loc_trang_thai_khop_voi_CtdtTrangThaiGui_cho_moi_ho_so()
+    {
+        $this->gieoBoDuLieuTinhChat();
+
+        // SUY tu NHAN chu khong go tay: mot trang thai thu muoi them vao CtdtTrangThaiGui
+        // ma khong co nhanh SQL rieng se lang le tro thanh bi danh cua "Cho gui" (nhanh
+        // mac dinh cuoi locTrangThai()). Suy o day thi no vao thang danh sach so khop va
+        // test do ngay.
+        $moiTrangThai = array_keys(CtdtTrangThaiGui::NHAN);
+
+        $lanBat = array_values(array_diff($moiTrangThai, [CtdtTrangThaiGui::GUI_TAT]));
+        $lanTat = array_values(array_diff($moiTrangThai, [CtdtTrangThaiGui::CHUA_GUI]));
+
+        // De quen la do: moi khoa trong NHAN phai duoc so o it nhat mot trong hai lan chay.
+        $this->assertEmpty(
+            array_diff($moiTrangThai, array_merge($lanBat, $lanTat)),
+            'Co trang thai trong CtdtTrangThaiGui::NHAN khong duoc so o lan chay nao'
+        );
+
+        config(['organization.chung_tu_dien_tu.submit_enabled' => true]);
+        $this->soKhopBoLocVoiTrangThai($lanBat, 'submit_enabled = true');
+
+        config(['organization.chung_tu_dien_tu.submit_enabled' => false]);
+        $this->soKhopBoLocVoiTrangThai($lanTat, 'submit_enabled = false');
+    }
+
+    /**
+     * So khop bo loc SQL voi CtdtTrangThaiGui::cua() cho mot danh sach trang thai, roi
+     * kiem tinh ROI NHAU + PHU KIN tren chinh danh sach do.
+     *
+     * @param array  $cacTrangThai Danh sach trang thai roi nhau cua LAN CHAY nay
+     * @param string $boiCanh      Ghi vao thong diep de biet lan chay nao do
+     */
+    private function soKhopBoLocVoiTrangThai(array $cacTrangThai, $boiCanh)
+    {
         $tatCaHoSo = CtdtHoSo::all();
 
-        $cacTrangThaiCanKiem = [
-            CtdtTrangThaiGui::CHUA_KIEM,
-            CtdtTrangThaiGui::CON_LOI,
-            CtdtTrangThaiGui::KY_HONG,
-            CtdtTrangThaiGui::CHUA_KY,
-            CtdtTrangThaiGui::DA_GUI,
-            CtdtTrangThaiGui::CONG_TU_CHOI,
-            CtdtTrangThaiGui::GUI_HONG,
-        ];
-
-        foreach ($cacTrangThaiCanKiem as $trangThai) {
+        foreach ($cacTrangThai as $trangThai) {
             $mongDoi = $tatCaHoSo
                 ->filter(function ($hoSo) use ($trangThai) {
                     return CtdtTrangThaiGui::cua($hoSo) === $trangThai;
@@ -396,37 +431,22 @@ class CtdtDanhSachTest extends TestCase
             $this->assertSame(
                 $mongDoi,
                 $thucTe,
-                "Bo loc SQL cho trang thai '{$trangThai}' phai tra ve dung tap ma_ho_so ma "
-                . "CtdtTrangThaiGui::cua() gan cho trang thai do. Mong doi: "
+                "[{$boiCanh}] Bo loc SQL cho trang thai '{$trangThai}' phai tra ve dung tap "
+                . "ma_ho_so ma CtdtTrangThaiGui::cua() gan cho trang thai do. Mong doi: "
                 . implode(',', $mongDoi) . ' - Thuc te: ' . implode(',', $thucTe)
             );
         }
 
         // TONG cac bo loc phai bang TONG so ho so: khong trung (mot ho so hien o hai bo
         // loc) va khong sot (mot ho so khong thuoc bo loc nao, bien mat khi nguoi dung loc).
-        //
-        // GUI_TAT KHONG co trong danh sach nay mot cach co chu dich: no va CHUA_GUI dung
-        // CHUNG mot dieu kien SQL (phan biet nhau bang CAU HINH, khong bang du lieu), nen
-        // cong ca hai vao se dem hai lan cung mot tap.
-        $cacBoLocRoiNhau = [
-            CtdtTrangThaiGui::CHUA_KIEM,
-            CtdtTrangThaiGui::CON_LOI,
-            CtdtTrangThaiGui::KY_HONG,
-            CtdtTrangThaiGui::CHUA_KY,
-            CtdtTrangThaiGui::DA_GUI,
-            CtdtTrangThaiGui::CONG_TU_CHOI,
-            CtdtTrangThaiGui::GUI_HONG,
-            CtdtTrangThaiGui::CHUA_GUI,
-        ];
-
         $daGap = [];
 
-        foreach ($cacBoLocRoiNhau as $trangThai) {
+        foreach ($cacTrangThai as $trangThai) {
             foreach (CtdtDanhSach::truyVan(['trang_thai_gui' => $trangThai])->pluck('ma_ho_so') as $ma) {
                 $this->assertArrayNotHasKey(
                     $ma,
                     $daGap,
-                    "Ho so {$ma} hien o hai bo loc trang thai (lan hai: {$trangThai}) - "
+                    "[{$boiCanh}] Ho so {$ma} hien o hai bo loc trang thai (lan hai: {$trangThai}) - "
                     . 'tong cac bo loc se lon hon tong so ho so'
                 );
                 $daGap[$ma] = $trangThai;
@@ -437,12 +457,12 @@ class CtdtDanhSachTest extends TestCase
 
         $this->assertEmpty(
             $thieu,
-            'Ho so khong thuoc bo loc trang thai nao: ' . implode(',', $thieu)
+            "[{$boiCanh}] Ho so khong thuoc bo loc trang thai nao: " . implode(',', $thieu)
         );
         $this->assertCount(
             $tatCaHoSo->count(),
             $daGap,
-            'Tong so ho so cua tat ca cac bo loc trang thai phai bang tong so ho so'
+            "[{$boiCanh}] Tong so ho so cua tat ca cac bo loc trang thai phai bang tong so ho so"
         );
     }
     /** @test */
