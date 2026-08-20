@@ -171,6 +171,53 @@ class CtdtPhongBiTest extends TestCase
     }
 
     /** @test */
+    public function CT2025_noi_dung_chung_tu_hong_thi_nem()
+    {
+        // CT2025 la dich vu chinh - phan lon ho so di duong nay. Truoc day chi nhanh phang
+        // GBT/GCS duoc kiem, nen mot chung tu CT03 hong van duoc dong goi, ky va gui.
+        $this->expectException(\InvalidArgumentException::class);
+
+        CtdtPhongBi::dung($this->hoSoCt2025(), [
+            ['loai_ho_so' => 'CT03', 'noi_dung_goc' => '<CT03>chua dong the'],
+        ]);
+    }
+
+    /** @test */
+    public function CT2025_base64_giu_NGUYEN_VAN_chuoi_goc_khong_serialize_lai()
+    {
+        // Parse chi de KIEM. Base64 lai ban da serialize se doi khoang trang va khai bao,
+        // lam noi dung gui len cong khac voi noi dung da nap - va tab "XML goc" tren man
+        // chi tiet se noi mot dang khac voi thu BHXH nhan duoc.
+        $goc = '<CT03>  <MA_YTE>YT001</MA_YTE>  </CT03>';
+
+        $goi = simplexml_load_string(CtdtPhongBi::dung($this->hoSoCt2025(), [
+            ['loai_ho_so' => 'CT03', 'noi_dung_goc' => $goc],
+        ]));
+
+        $this->assertSame($goc, base64_decode(
+            (string) $goi->THONGTINHOSO->DANHSACHHOSO->HOSO->FILEHOSO->NOIDUNGFILE
+        ));
+    }
+
+    /** @test */
+    public function noi_dung_goc_co_khoang_trang_truoc_khai_bao_XML_van_ghep_duoc()
+    {
+        // Day la truong hop DUY NHAT phep cat khai bao that su can: loadXML() loi khi co
+        // khoang trang dung truoc khai bao. Khong co test nay thi lan don dep sau se go
+        // preg_replace di, bo test van xanh, va loi chi lo ra tren du lieu that.
+        $khaiBao = '<' . '?xml version="1.0" encoding="UTF-8"?' . '>';
+        $goc = "\n  " . $khaiBao . "\n" . '<GIAYBAOTU Id="Id-1"><MA_GBT>G1</MA_GBT></GIAYBAOTU>';
+
+        $goi = simplexml_load_string(CtdtPhongBi::dung(
+            ['dich_vu' => 'GBT', 'macskcb' => '01929', 'id_goi_xml' => 'Id-1', 'ngay_lap' => null],
+            [['loai_ho_so' => 'GIAYBAOTU', 'noi_dung_goc' => $goc]]
+        ));
+
+        $this->assertNotFalse($goi);
+        $this->assertSame('G1', (string) $goi->GIAYBAOTU->MA_GBT);
+    }
+
+    /** @test */
     public function dich_vu_la_thi_nem()
     {
         $this->expectException(\InvalidArgumentException::class);

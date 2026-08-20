@@ -87,6 +87,11 @@ class CtdtPhongBi
         $motHoSo = $doc->createElement('HOSO');
 
         foreach ($chungTu as $ct) {
+            // Parse chi de KIEM tinh hop le - roi VAN base64 chuoi GOC, khong phai ban da
+            // parse lai serialize (saveXML() co the doi khoang trang/khai bao, lam noi dung
+            // gui len cong khac voi noi dung da nap).
+            self::parseChungTu($ct);
+
             $file = $doc->createElement('FILEHOSO');
             $file->appendChild(self::the($doc, 'LOAIHOSO', (string) $ct['loai_ho_so']));
             $file->appendChild(self::the($doc, 'NOIDUNGFILE', base64_encode((string) $ct['noi_dung_goc'])));
@@ -102,31 +107,52 @@ class CtdtPhongBi
     private static function dungPhang(\DOMDocument $doc, \DOMElement $goc, array $chungTu)
     {
         foreach ($chungTu as $ct) {
-            $manh = new \DOMDocument('1.0', 'UTF-8');
+            $manh = self::parseChungTu($ct);
 
-            // Cat bo khai bao XML neu co: CtdtLuuHoSo luu noi_dung_goc bang asXML() tren mot
-            // tai lieu da parse, nen chuoi co the mang san khai bao. Ghep thang vao giua mot
-            // tai lieu khac la XML hong.
-            $nguon = preg_replace('/^\s*<\?xml[^>]*\?>\s*/i', '', (string) $ct['noi_dung_goc']);
-
-            $truoc = libxml_use_internal_errors(true);
-            $ok = $manh->loadXML($nguon);
-            libxml_clear_errors();
-            libxml_use_internal_errors($truoc);
-
-            if (!$ok || $manh->documentElement === null) {
-                // NEM chu khong bo qua: bo qua roi van gui thi cong nhan mot ho so THIEU
-                // chung tu va tra MaGD - hong im lang, khong lo ra cho toi luc doi soat.
-                throw new \InvalidArgumentException(
-                    'Noi dung chung tu ' . (string) $ct['loai_ho_so'] . ' khong phai XML hop le'
-                );
-            }
-
-            // importNode voi deep = true giu nguyen ca cay con VA cac thuoc tinh - trong do
-            // co Id, thu ma chu ky XMLDSig tro toi. Mat Id la chu ky khong tham chieu duoc
-            // vao dau va cong tra 205.
+            // importNode voi deep = true giu nguyen ca CAY CON. Thuoc tinh (trong do co Id,
+            // thu ma chu ky XMLDSig tro toi) luon di theo vi ta import chinh phan tu goc chu
+            // khong dung lai the moi - deep chi anh huong toi cay con, khong anh huong toi
+            // thuoc tinh cua chinh phan tu duoc import. Mat Id la chu ky khong tham chieu
+            // duoc vao dau va cong tra 205.
             $goc->appendChild($doc->importNode($manh->documentElement, true));
         }
+    }
+
+    /**
+     * Parse mot chung tu de KIEM tinh hop le. Nem neu hong.
+     *
+     * Dung chung cho ca hai nhanh: nhanh phang dung luon cay tra ve de importNode; nhanh long
+     * nhau (CT2025 - dich vu chinh) chi dung ket qua de KIEM roi van base64 chuoi GOC, khong
+     * base64 ban da serialize lai (saveXML() co the doi khoang trang/thu tu khai bao). Bo qua
+     * phep kiem nay roi van gui thi cong nhan mot ho so THIEU noi dung va tra MaGD - hong im
+     * lang, khong lo ra cho toi luc doi soat.
+     *
+     * @return \DOMDocument Tai lieu da parse (dung cho nhanh phang; nhanh long nhau bo qua)
+     * @throws \InvalidArgumentException
+     */
+    private static function parseChungTu(array $ct)
+    {
+        $manh = new \DOMDocument('1.0', 'UTF-8');
+
+        // Cat bo khai bao XML neu co: CtdtLuuHoSo luu noi_dung_goc bang asXML() tren mot
+        // tai lieu da parse, nen chuoi co the mang san khai bao. Ghep thang vao giua mot
+        // tai lieu khac la XML hong.
+        $nguon = preg_replace('/^\s*<\?xml[^>]*\?>\s*/i', '', (string) $ct['noi_dung_goc']);
+
+        $truoc = libxml_use_internal_errors(true);
+        $ok = $manh->loadXML($nguon);
+        libxml_clear_errors();
+        libxml_use_internal_errors($truoc);
+
+        if (!$ok || $manh->documentElement === null) {
+            // NEM chu khong bo qua: bo qua roi van gui thi cong nhan mot ho so THIEU
+            // chung tu va tra MaGD - hong im lang, khong lo ra cho toi luc doi soat.
+            throw new \InvalidArgumentException(
+                'Noi dung chung tu ' . (string) $ct['loai_ho_so'] . ' khong phai XML hop le'
+            );
+        }
+
+        return $manh;
     }
 
     /** Tao mot the co noi dung van ban, de createTextNode lo phan thoat ky tu dac biet */
