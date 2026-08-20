@@ -215,7 +215,7 @@ cảnh báo "hồ sơ không có mã y tế".
 
 ## 7. Triển khai
 
-### Hiện tại (sau Giai đoạn 1)
+### Hiện tại (sau Giai đoạn 3)
 
 1. `git pull`
 2. Thêm khối `exportCtdt` vào `config/filesystems.php` (xem mục 3.3) — **không tự có**.
@@ -224,9 +224,9 @@ cảnh báo "hồ sơ không có mã y tế".
 5. `php artisan migrate --path=database/migrations`
 6. `php artisan config:clear`
 
-**Chưa cần thêm dịch vụ queue worker nào.** Ba hàng đợi `JobCtdt` / `JobSignCtdt` /
-`JobSubmitCtdt` mới chỉ được khai trong cấu hình; chưa job nào đẩy vào chúng. Dựng worker bây giờ
-chỉ tạo ra ba tiến trình chạy không.
+**`JobCtdt` là BẮT BUỘC** từ Giai đoạn 3 — xem khối ngay dưới đây. `JobSignCtdt` và
+`JobSubmitCtdt` thì chưa cần: hai hàng đợi này mới chỉ được khai trong cấu hình, để dành ký số và
+gửi của Giai đoạn 4; dựng worker cho chúng bây giờ chỉ tạo ra hai tiến trình chạy không.
 
 ### Worker hàng đợi — BẮT BUỘC từ Giai đoạn 3
 
@@ -248,12 +248,13 @@ SELECT COUNT(*) FROM jobs WHERE queue = 'JobCtdt';
 
 Con số này tăng dần mà không giảm nghĩa là worker chưa chạy.
 
-### Khi Giai đoạn 3–4 hoàn tất
+### Khi Giai đoạn 4 hoàn tất
 
-Bổ sung ba dịch vụ vào `install_service.bat` theo đúng khuôn các dịch vụ sẵn có:
+`JobCtdt` đã có sẵn trong `install_service.bat` từ Giai đoạn 3 (xem khối "Worker hàng đợi" ở
+trên) — không cần thêm lại. Bổ sung hai dịch vụ ký số/gửi vào `install_service.bat` theo đúng
+khuôn các dịch vụ sẵn có:
 
 ```bat
-%NSSM_PATH%\nssm install "QLBV JobCtdt" %PHP_PATH% "%LARAVEL_PATH%artisan queue:work --queue=JobCtdt"
 %NSSM_PATH%\nssm install "QLBV JobSignCtdt" %PHP_PATH% "%LARAVEL_PATH%artisan queue:work --queue=JobSignCtdt"
 %NSSM_PATH%\nssm install "QLBV JobSubmitCtdt" %PHP_PATH% "%LARAVEL_PATH%artisan queue:work --queue=JobSubmitCtdt"
 ```
@@ -270,7 +271,7 @@ lại — thao tác tốn thời gian nhất trong chuỗi.
 php vendor/bin/phpunit tests/Unit/Ctdt
 ```
 
-Kỳ vọng `OK (59 tests)`.
+Kỳ vọng `OK (315 tests)`.
 
 ⚠️ Repo có sẵn test đỏ **không liên quan** module này: suite `Unit` cho 4 lỗi + 7 đỏ
 (`NhapDanhMucUniqueTest`, `OrderCheck\CatalogLookupTest`, `BHYT\Xml3176ExportLocCoSoTest`,
