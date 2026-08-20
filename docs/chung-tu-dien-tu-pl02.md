@@ -228,6 +228,26 @@ cảnh báo "hồ sơ không có mã y tế".
 `JobSubmitCtdt` mới chỉ được khai trong cấu hình; chưa job nào đẩy vào chúng. Dựng worker bây giờ
 chỉ tạo ra ba tiến trình chạy không.
 
+### Worker hàng đợi — BẮT BUỘC từ Giai đoạn 3
+
+Bộ kiểm lỗi chạy trong hàng đợi `JobCtdt`. **Không có worker nghĩa là không hồ sơ nào được kiểm**,
+và cột "Số lỗi" sẽ vĩnh viễn bằng `0` — trông y như mọi hồ sơ đều sạch.
+
+Cài dịch vụ (đã có sẵn trong `install_service.bat`):
+
+```bat
+nssm install "QLBV JobCtdt" php.exe "<đường dẫn dự án>artisan queue:work --queue=JobCtdt"
+nssm start "QLBV JobCtdt"
+```
+
+Kiểm hàng đợi có đang chạy không:
+
+```sql
+SELECT COUNT(*) FROM jobs WHERE queue = 'JobCtdt';
+```
+
+Con số này tăng dần mà không giảm nghĩa là worker chưa chạy.
+
 ### Khi Giai đoạn 3–4 hoàn tất
 
 Bổ sung ba dịch vụ vào `install_service.bat` theo đúng khuôn các dịch vụ sẵn có:
