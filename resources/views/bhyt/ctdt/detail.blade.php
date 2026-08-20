@@ -40,6 +40,18 @@
             </div>
         </div>
         @endif
+        @if ($hoSo->signed_error)
+        <div class="row" style="margin-top:8px">
+            <div class="col-sm-12">
+                {{-- signed_error chua thong diep tu dich vu ky (USB token / HSM) - du lieu
+                     ben ngoai, nen dung {{ }}. Hien no TRUOC loi gui: khi ky hong thi loi
+                     gui chi la he qua ("Ho so chua ky so"), con ly do that nam o day. --}}
+                <div class="alert alert-danger" style="margin-bottom:4px">
+                    <strong>Lỗi ký số:</strong> {{ $hoSo->signed_error }}
+                </div>
+            </div>
+        </div>
+        @endif
         @if ($hoSo->submit_error)
         <div class="row" style="margin-top:8px">
             <div class="col-sm-12">
@@ -48,9 +60,15 @@
                 <div class="alert alert-warning" style="margin-bottom:4px">
                     <strong>Lỗi gửi:</strong> {{ $hoSo->submit_error }}
                 </div>
-                @if ($hoSo->submitted_message)
+            </div>
+        </div>
+        @endif
+        {{-- submitted_message tach rieng khoi khoi submit_error o tren: phan hoi nguyen van
+             cua MOT LAN GUI THANH CONG cung phai hien duoc, khong chi khi gui that bai. --}}
+        @if ($hoSo->submitted_message)
+        <div class="row" style="margin-top:8px">
+            <div class="col-sm-12">
                 <pre style="white-space:pre-wrap">{{ $hoSo->submitted_message }}</pre>
-                @endif
             </div>
         </div>
         @endif

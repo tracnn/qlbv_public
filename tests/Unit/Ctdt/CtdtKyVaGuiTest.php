@@ -335,4 +335,44 @@ class CtdtKyVaGuiTest extends TestCase
         $this->assertNotContains('<script>alert(2)', $html);
         $this->assertContains('&lt;img', $html);
     }
+
+    /** @test */
+    public function man_chi_tiet_hien_ly_do_ky_hong_va_thoat_noi_dung()
+    {
+        // signed_error tung la cot chi-ghi: SignCtdtJob ghi vao ma khong man hinh nao doc.
+        // Nguoi van hanh thay "Chua ky so" va di tim nut ky (da bam roi) thay vi di cam lai
+        // USB token.
+        $this->giaLapDangNhap();
+        $hoSo = $this->hoSo(['signed_error' => 'USB token bi rut <img src=x onerror=alert(1)>']);
+
+        $html = view('bhyt.ctdt.detail', [
+            'hoSo' => $hoSo->fresh(),
+            'tabs' => \App\Services\Ctdt\CtdtDetailTabs::cua($hoSo->fresh()),
+        ])->render();
+
+        $this->assertContains('Lỗi ký số', $html);
+        $this->assertNotContains('<img src=x', $html, 'signed_error tu dich vu ky, phai thoat');
+        $this->assertContains('&lt;img', $html);
+    }
+
+    /** @test */
+    public function phan_hoi_cua_lan_gui_THANH_CONG_van_hien_tren_man_chi_tiet()
+    {
+        // submitted_message tung bi long trong @if($hoSo->submit_error), nen phan hoi cua
+        // mot lan gui thanh cong khong bao gio hien - dung thu ma buoc nghiem thu tay cua
+        // Giai doan 4 can doc.
+        $this->giaLapDangNhap();
+        $hoSo = $this->hoSo([
+            'submit_error'      => null,
+            'ma_ket_qua'        => '200',
+            'submitted_message' => '{"MaKetQua":"200","MaGD":"GD-001"}',
+        ]);
+
+        $html = view('bhyt.ctdt.detail', [
+            'hoSo' => $hoSo->fresh(),
+            'tabs' => \App\Services\Ctdt\CtdtDetailTabs::cua($hoSo->fresh()),
+        ])->render();
+
+        $this->assertContains('GD-001', $html);
+    }
 }

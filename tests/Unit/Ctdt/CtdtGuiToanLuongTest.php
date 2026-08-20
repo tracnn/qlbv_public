@@ -275,4 +275,28 @@ class CtdtGuiToanLuongTest extends TestCase
             $this->assertSame('GD-001', $hoSo->ma_gd, $hoSo->ma_ho_so . ' chua gui duoc');
         }
     }
+
+    /** @test */
+    public function ky_that_bai_thi_khong_gui_va_ly_do_that_hien_len_man_chi_tiet()
+    {
+        // Ca thuong gap nhat khi trien khai: bat sign_enabled nhung quen usb_token_sign.
+        // Ho so dung lai o "chua ky", va ly do THAT phai den duoc nguoi van hanh - khong
+        // thi ho di tim nut ky (da bam roi) thay vi di cam lai USB token.
+        $this->napVaKiem($this->goiHopLe());
+
+        $kyGia = new FakeXMLSignService();
+        $kyGia->ketQua = [
+            'isSigned' => false, 'data' => '<X/>', 'method' => 'USB Token',
+            'error' => 'Khong ket noi duoc dich vu ky cuc bo',
+        ];
+        (new SignCtdtJob('YT001'))->handle($kyGia);
+
+        $guiGia = $this->gui();
+
+        $hoSo = CtdtHoSo::first();
+
+        $this->assertFalse((bool) $hoSo->is_signed);
+        $this->assertSame(0, $guiGia->soLanGoi, 'Ho so chua ky khong duoc gui');
+        $this->assertContains('Khong ket noi duoc', (string) $hoSo->signed_error);
+    }
 }
