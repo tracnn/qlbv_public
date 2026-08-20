@@ -285,10 +285,34 @@ class CtdtKyVaGuiTest extends TestCase
         ])->render();
 
         $this->assertContains('btn-ky-va-gui', $html);
+    }
 
+    /** @test */
+    public function nut_ky_va_gui_ma_hoa_ma_ho_so_truoc_khi_ghep_url()
+    {
         // ma_ho_so co the chua '#' (nhanh lui GUID). Khong ma hoa thi trinh duyet cat tu dau
         // '#' va yeu cau tro sai ho so - hoac te hon, gui nham mot ho so khac len cong.
-        $this->assertContains('encodeURIComponent(maHoSo)', $html);
+        //
+        // KHONG the render RIENG partial: no dung @push('after-scripts'), va noi dung day
+        // chi hien ra khi co layout cha voi @stack('after-scripts') - render partial mot
+        // minh se mat trang script. Ma cung KHONG the kiem tren toan bo $html cua trang: nut
+        // "Xoa ho so" co san (Task 1-5) dung dung chuoi 'encodeURIComponent(maHoSo)' cho URL
+        // cua no, nen assertContains tren ca trang PASS gia du toi xoa mat encodeURIComponent
+        // trong partial cua chinh minh (da phat hien dieu nay khi tu do mutation). Vi vay
+        // cat rieng doan HTML NGAY SAU diem gan click-handler cua nut ky-va-gui roi moi kiem.
+        $this->giaLapDangNhap();
+        $hoSo = $this->hoSo();
+
+        $html = view('bhyt.ctdt.detail', [
+            'hoSo' => $hoSo->fresh(),
+            'tabs' => \App\Services\Ctdt\CtdtDetailTabs::cua($hoSo->fresh()),
+        ])->render();
+
+        $diem = strpos($html, "\$('#btn-ky-va-gui').on('click'");
+        $this->assertNotFalse($diem, 'Khong tim thay script gan click cho nut ky-va-gui');
+
+        $doanRieng = substr($html, $diem, 2000);
+        $this->assertContains('encodeURIComponent(maHoSo)', $doanRieng);
     }
 
     /** @test */
