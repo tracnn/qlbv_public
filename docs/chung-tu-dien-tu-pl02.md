@@ -279,16 +279,23 @@ cảnh báo "hồ sơ không có mã y tế".
 Người vận hành mở màn chi tiết một hồ sơ và bấm **Ký và gửi**. Hệ thống xếp hai công việc nối
 tiếp: `SignCtdtJob` (hàng đợi `JobSignCtdt`) rồi `SubmitCtdtJob` (hàng đợi `JobSubmitCtdt`).
 
-**Ba cửa chặn, theo đúng thứ tự này:**
+**Bốn cửa chặn, theo đúng thứ tự này:**
 
 | Điều kiện | Nút báo gì | Vì sao chặn |
 |---|---|---|
 | `submit_enabled = false` | "Chức năng gửi đang tắt" | Không lần gửi nào diễn ra, nên không ghi lỗi — ghi là bịa |
 | `checked_at` rỗng | "Hồ sơ chưa kiểm" | `so_loi = 0` của hồ sơ chưa kiểm không có nghĩa là sạch |
 | `so_loi > 0` | "Hồ sơ còn lỗi chặn gửi" | Cổng cũng sẽ từ chối; chặn tại chỗ cho thông báo rõ hơn |
+| `sign_enabled = false` **và** hồ sơ chưa ký (`is_signed = false`) | "Chức năng ký số đang tắt trong cấu hình, và hồ sơ này chưa ký" | Chặn ở controller (không phải `CtdtQuyetDinhGui`) — hồ sơ **đã** ký từ trước vẫn gửi lại được dù chức năng ký đang tắt |
 
-**Tệp gửi lên cổng là tệp ĐÃ KÝ trên disk `exportCtdt`**, đường dẫn `da-ky/<dịch vụ>/<mã hồ sơ>.xml`,
-không phải phong bì dựng lại lúc gửi. Dựng lại lúc gửi là gửi một gói không có chữ ký.
+**Tệp gửi lên cổng là tệp ĐÃ KÝ trên disk `exportCtdt`**, đường dẫn
+`da-ky/<dịch vụ>/<tên đã làm sạch>-<id>.xml`, không phải phong bì dựng lại lúc gửi. Dựng lại lúc
+gửi là gửi một gói không có chữ ký.
+
+Tên tệp **không** dùng thẳng `ma_ho_so`: mọi ký tự ngoài `A-Za-z0-9_-` (kể cả `#`, `/`, `.`) bị thay
+bằng `_`, và hậu tố `-<id>` (khóa chính) được nối thêm để hai hồ sơ có `ma_ho_so` làm sạch trùng
+nhau (vd. `YT#1` và `YT/1` đều ra `YT_1`) không ghi đè lên tệp của nhau. Xem
+`SignCtdtJob::duongDan()`.
 
 **Phong bì được dựng lại từ dữ liệu đã lưu, không phải tệp gốc.** Tệp XML người dùng tải lên không
 được giữ trên đĩa (cột `duong_dan_goc` chỉ ghi tên tệp), nên chữ ký `CHUKYDONVI` của bên gửi đã mất
