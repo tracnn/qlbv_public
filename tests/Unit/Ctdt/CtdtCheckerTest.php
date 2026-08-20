@@ -300,4 +300,33 @@ class CtdtCheckerTest extends TestCase
                 $mot['ma_loi'] . ': muc do phai lay tu danh muc, khong go tay');
         }
     }
+
+    /** @test */
+    public function macskcb_ho_so_rong_thi_khong_sinh_CTDT007()
+    {
+        // Ho so chua phan giai duoc ma co so (macskcbHoSo = '') thi khong co gi de doi
+        // chieu; bao lech o day la bao bua.
+        $loi = CtdtChecker::kiem('GIAYBAOTU', [
+            'MA_GBT' => 'GBT-1', 'HO_TEN' => 'Nguyen Van Test',
+            'NGAY_SINH' => '20220101', 'NGAY_TV' => '202510070200',
+            'MACSKCB' => '37470',
+        ], '');
+
+        $this->assertNotContains('CTDT007', $this->maLoi($loi));
+    }
+
+    /** @test */
+    public function mot_ve_cap_ngay_sai_dinh_dang_thi_khong_them_CTDT006()
+    {
+        // Mot ve da sai dinh dang (da co CTDT002) thi so sanh tiep chi sinh them mot loi
+        // thu hai cho cung mot nguyen nhan, lam nguoi doc tuong co hai van de.
+        $loi = CtdtChecker::kiem('CT03', $this->ct03HopLe([
+            'NGAY_VAO' => 'xxxx',
+            'NGAY_RA'  => '201912180001',
+        ]), '01929');
+
+        $ma = $this->maLoi($loi);
+        $this->assertContains('CTDT002', $ma);
+        $this->assertNotContains('CTDT006', $ma);
+    }
 }
