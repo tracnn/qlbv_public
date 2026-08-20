@@ -20,7 +20,7 @@
 <div class="panel panel-default">
     <div class="panel-body">
         <div class="table-responsive">
-            <table class="table table-hover table-bordered" id="ctdt-list" style="width:100%">
+            <table class="table display table-hover responsive wrap datatable dtr-inline" width="100%" id="ctdt-list" style="width:100%">
                 <thead>
                     <tr>
                         <th>Mã hồ sơ</th>
