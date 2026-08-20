@@ -61,9 +61,23 @@ class BHYTCtdtController extends Controller
      */
     const KHOA_XU_LY = 'ctdt:dang-xu-ly:';
 
-    /** Muoi PHUT - Cache::add() cua Laravel 5.5 nhan phut, khong phai giay. Chi la luoi
-     *  chan cuoi: duong nha khoa binh thuong la o cuoi chuoi job. */
-    const KHOA_XU_LY_PHUT = 10;
+    /**
+     * Thoi han khoa, tinh bang PHUT - Cache::add() cua Laravel 5.5 nhan phut, khong phai
+     * giay. Chi la luoi chan cuoi: duong nha khoa binh thuong la o cuoi chuoi job.
+     *
+     * CAN CU CON SO 30: ngan sach THU LAI cua ca chuoi la
+     *   SignCtdtJob   tries 2 x timeout 120s = 240s
+     *   SubmitCtdtJob tries 3 x timeout  90s = 270s
+     *   -> 510s = 8,5 phut chay THUAN, chua tinh thoi gian nam cho trong hang doi.
+     *
+     * Muoi phut (con so cu) chi can hang doi un 2 phut la khoa het han TRONG KHI chuoi van
+     * dang chay: nguoi dung bam lai, sinh chuoi thu hai, thanh hai lan POST that len cong
+     * BHXH cho cung mot ho so. 30 phut = 8,5 phut chay thuan + bien cho thoi gian nam cho.
+     *
+     * Quan he nay duoc canh boi
+     * CtdtKyVaGuiTest::thoi_han_khoa_phai_lon_hon_ngan_sach_thu_lai_cua_ca_chuoi().
+     */
+    const KHOA_XU_LY_PHUT = 30;
 
     public function index()
     {
@@ -416,7 +430,7 @@ class BHYTCtdtController extends Controller
         $hangDoiGui = config('organization.chung_tu_dien_tu.submit_queue_name') ?: 'JobSubmitCtdt';
 
         // Dat khoa NGAY TRUOC dispatch, sau moi nhanh tu choi: mot lan bam bi tu choi khong
-        // lam gi ca, giu khoa se khoa nguoi dung ra ngoai muoi phut ma khong duoc gi.
+        // lam gi ca, giu khoa se khoa nguoi dung ra ngoai het thoi han ma khong duoc gi.
         //
         // Cache::add() tra false khi khoa da ton tai - do chinh la phep thu "da co nguoi bam
         // chua". Khoa theo TUNG ma ho so, khong phai mot khoa chung.

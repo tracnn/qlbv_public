@@ -419,7 +419,7 @@ class CtdtKyVaGuiTest extends TestCase
     public function ho_so_bi_TU_CHOI_thi_KHONG_giu_khoa()
     {
         // Bi tu choi nghia la khong co chuoi job nao chay, nen khong co gi de nha khoa. Giu
-        // khoa o day se khoa nguoi dung ra ngoai muoi phut vi mot lan bam khong lam gi ca.
+        // khoa o day se khoa nguoi dung ra ngoai het thoi han vi mot lan bam khong lam gi ca.
         config(['organization.chung_tu_dien_tu.submit_enabled' => false]);
         $this->hoSo();
 
@@ -456,7 +456,7 @@ class CtdtKyVaGuiTest extends TestCase
     public function job_gui_nha_khoa_tren_duong_THANH_CONG()
     {
         // Nhanh $quyetDinh === GUI la nhanh DUY NHAT dan toi mot lan POST that len cong.
-        // Neu no khong nha khoa, moi lan gui THANH CONG deu khoa ho so lai muoi phut - dung
+        // Neu no khong nha khoa, moi lan gui THANH CONG deu khoa ho so lai het thoi han - dung
         // duong di binh thuong nhat lai la duong khong duoc canh.
         $this->hoSo(['is_signed' => true, 'duong_dan_da_ky' => 'da-ky/YT001.xml']);
         \Illuminate\Support\Facades\Storage::fake('exportCtdt');
@@ -488,11 +488,11 @@ class CtdtKyVaGuiTest extends TestCase
     /** @test */
     public function ca_hai_job_nha_khoa_trong_failed()
     {
-        // failed() la luoi cuoi: het luot thu ma khong nha thi ho so bi khoa het muoi phut
+        // failed() la luoi cuoi: het luot thu ma khong nha thi ho so bi khoa het thoi han
         // du lan gui do da chet tu lau.
         foreach ([\App\Jobs\SignCtdtJob::class, \App\Jobs\SubmitCtdtJob::class] as $lop) {
             $this->hoSo();
-            Cache::add(BHYTCtdtController::KHOA_XU_LY . 'YT001', true, 10);
+            Cache::add(BHYTCtdtController::KHOA_XU_LY . 'YT001', true, BHYTCtdtController::KHOA_XU_LY_PHUT);
 
             (new $lop('YT001'))->failed(new \RuntimeException('mang chap'));
 
@@ -501,5 +501,27 @@ class CtdtKyVaGuiTest extends TestCase
 
             CtdtHoSo::where('ma_ho_so', 'YT001')->delete();
         }
+    }
+
+    /** @test */
+    public function thoi_han_khoa_phai_lon_hon_ngan_sach_thu_lai_cua_ca_chuoi()
+    {
+        // Khoa het han GIUA CHUNG thi nguoi dung bam lai va sinh chuoi thu hai - hai chuoi
+        // song song cho mot ho so la hai lan POST that len cong.
+        //
+        // Ngan sach chay thuan cua chuoi: SignCtdtJob tries x timeout + SubmitCtdtJob
+        // tries x timeout. Chua tinh thoi gian nam cho trong hang doi, nen thoi han khoa
+        // phai co bien du.
+        $nganSach = 0;
+
+        foreach ([\App\Jobs\SignCtdtJob::class, \App\Jobs\SubmitCtdtJob::class] as $lop) {
+            $mac = (new \ReflectionClass($lop))->getDefaultProperties();
+            $nganSach += (int) $mac['tries'] * (int) $mac['timeout'];
+        }
+
+        $khoaGiay = BHYTCtdtController::KHOA_XU_LY_PHUT * 60;
+
+        $this->assertGreaterThan($nganSach, $khoaGiay,
+            'Thoi han khoa (' . $khoaGiay . 's) phai lon hon ngan sach chuoi (' . $nganSach . 's)');
     }
 }
