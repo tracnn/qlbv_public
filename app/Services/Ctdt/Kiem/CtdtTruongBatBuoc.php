@@ -25,9 +25,9 @@ namespace App\Services\Ctdt\Kiem;
  * Cung khong ha xuong muc khuyen nghi: de trong la mot trong hai cach dung hop le, nen canh
  * bao tren gan nhu moi ho so chi lam nguoi van hanh hoc cach bo qua ca cot so loi.
  *
- * MA_THE nam o KHUYEN NGHI chu khong phai bat buoc: PL02 co the TEKT (tre em khong the)
- * voi gia tri 1 la hop le. Dat o muc bat buoc se chan nham moi ho so tre so sinh - dung
- * nhom ma giay chung sinh phuc vu.
+ * MA_THE KHONG bat buoc va cung KHONG khuyen nghi: rat nhieu benh nhan khong co the BHYT
+ * (tu tra, the het han, tre chua duoc cap the - TEKT = 1), va cong van 2076 khong danh dau
+ * no bat buoc o loai nao. Xem chu thich cua KHUYEN_NGHI.
  */
 class CtdtTruongBatBuoc
 {
@@ -44,17 +44,33 @@ class CtdtTruongBatBuoc
         'GIAYCHUNGSINH'     => ['MA_GCS', 'HOTEN_NND', 'NGAYSINH_NND', 'NGAY_SINH_CON'],
     ];
 
-    /** @var array LOAIHOSO => danh sach the khuyen nghi (muc canh bao) */
+    /**
+     * LOAIHOSO => danh sach the khuyen nghi (muc canh bao).
+     *
+     * HIEN TRONG O MOI LOAI - co chu dich, khong phai quen dien.
+     *
+     * MA_THE tung nam o day. Da go: rat nhieu benh nhan khong co the BHYT (tu tra, the het
+     * han, tre chua duoc cap the - TEKT = 1), va cong van 2076 khong danh dau MA_THE bat buoc
+     * o loai nao. Canh bao tren mot tinh huong BINH THUONG khong phai canh bao - no la tieng
+     * on, va no day nguoi van hanh toi cho bo qua ca cot so loi. Cung mot ly le da dung khi
+     * go MA_YTE.
+     *
+     * GIU LAI TANG NAY du dang trong: buoc bo sung cac truong con thieu so voi cong van 2076
+     * (CT04 thieu 11 truong, CT06 thieu 7, CT07 thieu 8) nen canh bao truoc roi moi chan -
+     * siet thang len muc chan se dong loat khoa lai nhung ho so dang gui duoc.
+     *
+     * @var array
+     */
     const KHUYEN_NGHI = [
-        'CT03'              => ['MA_THE'],
-        'CT04'              => ['MA_THE'],
-        'CT06'              => ['MA_THE'],
-        'CT07'              => ['MA_THE'],
-        'GIAYDIEUTRINOITRU' => ['MA_THE'],
-        'GIAYDIEUTRIVOSINH' => ['MA_THE'],
-        'GIAYSUCKHOEME'     => ['MA_THE'],
-        'GIAYBAOTU'         => ['MA_THE'],
-        'GIAYCHUNGSINH'     => ['MA_THE_NND'],
+        'CT03'              => [],
+        'CT04'              => [],
+        'CT06'              => [],
+        'CT07'              => [],
+        'GIAYDIEUTRINOITRU' => [],
+        'GIAYDIEUTRIVOSINH' => [],
+        'GIAYSUCKHOEME'     => [],
+        'GIAYBAOTU'         => [],
+        'GIAYCHUNGSINH'     => [],
     ];
 
     /** @return array Mang rong voi loai la - loai do do CtdtChecker bo qua, khong nem */

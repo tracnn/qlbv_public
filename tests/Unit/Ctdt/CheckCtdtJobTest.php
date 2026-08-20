@@ -82,18 +82,22 @@ class CheckCtdtJobTest extends TestCase
     /** @test */
     public function so_loi_chi_dem_muc_chan()
     {
-        // Thieu ho ten (chan) + thieu ma the (canh bao) + co sai (canh bao) = 3 ban ghi
-        // loi nhung so_loi phai la 1. so_loi la con so quyet dinh ho so co duoc gui hay
+        // Thieu ho ten (chan) + co TEKT sai 0/1 (canh bao) + gioi tinh sai (chan) = 3 ban
+        // ghi loi nhung so_loi phai la 2. so_loi la con so quyet dinh ho so co duoc gui hay
         // khong; dem ca canh bao vao se chan nham nhung ho so hop le.
+        //
+        // Truoc day ca nay dung "thieu ma the" lam nguon canh bao. MA_THE nay khong con sinh
+        // loi nao (rat nhieu benh nhan khong co the BHYT), nen doi sang TEKT - nguon canh bao
+        // con lai duy nhat o muc truong.
         $this->hoSoCt03(['ma_yte' => 'YT001', 'ho_ten' => '', 'ngay_sinh' => '19950914',
             'ngay_vao' => '201912121200', 'ngay_ra' => '201912180001',
-            'ma_the' => '', 'tekt' => '7']);
+            'gioi_tinh' => '9', 'tekt' => '7']);
 
         $this->chay();
 
         $this->assertSame(3, CtdtLoi::count());
-        $this->assertSame(1, (int) CtdtHoSo::first()->so_loi);
-        $this->assertSame(2, CtdtLoi::where('muc_do', 'canh_bao')->count());
+        $this->assertSame(2, (int) CtdtHoSo::first()->so_loi);
+        $this->assertSame(1, CtdtLoi::where('muc_do', 'canh_bao')->count());
     }
 
     /** @test */
