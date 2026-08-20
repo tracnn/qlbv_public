@@ -349,6 +349,17 @@ class CtdtDanhSachTest extends TestCase
         $this->taoHoSo(['ma_ho_so' => 'O_GUI_HONG', 'so_loi' => 0, 'is_signed' => true,
             'submit_error' => 'Connection refused']);
 
+        // Q, R: chuoi RONG, khong phai null. !empty() cua PHP coi '' la "khong co loi", nen
+        // Q phai la CHUA_KY va R phai la CHUA_GUI. whereNotNull mot minh KHONG bat duoc '' -
+        // bo dieu kien <> '' di thi hai ho so nay chay sang bo loc sai, va tong cac bo loc
+        // khong con bang tong so ho so.
+        //
+        // Cung ly le da dung cho H_KET_QUA_RONG / I_KET_QUA_KHONG o tren.
+        $this->taoHoSo(['ma_ho_so' => 'Q_KY_LOI_RONG', 'so_loi' => 0, 'is_signed' => false,
+            'signed_error' => '']);
+        $this->taoHoSo(['ma_ho_so' => 'R_GUI_LOI_RONG', 'so_loi' => 0, 'is_signed' => true,
+            'submit_error' => '']);
+
         // P: da gui hong roi gui lai duoc. submit_error cu con sot lai, nhung ket qua cua
         // cong moi la su that - phai la DA_GUI, khong phai GUI_HONG.
         $this->taoHoSo(['ma_ho_so' => 'P_GUI_LAI_THANH_CONG', 'so_loi' => 0, 'is_signed' => true,
