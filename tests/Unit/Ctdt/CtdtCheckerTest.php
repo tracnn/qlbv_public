@@ -69,15 +69,28 @@ class CtdtCheckerTest extends TestCase
     }
 
     /** @test */
-    public function thieu_ma_the_chi_la_canh_bao()
+    public function thieu_ma_the_KHONG_sinh_loi_nao()
     {
-        // Tre em khong the (TEKT = 1) la hop le. Chan o day se chan nham ho so tre so sinh.
-        $loi = CtdtChecker::kiem('CT03', $this->ct03HopLe(['MA_THE' => '']), '01929');
+        // Rat nhieu benh nhan khong co the BHYT: tu tra, the het han, tre chua duoc cap the
+        // (TEKT = 1). Cong van 2076 cung khong danh dau MA_THE bat buoc o loai nao.
+        //
+        // Truoc day day la canh bao. Nhung canh bao tren mot tinh huong BINH THUONG thi
+        // khong phai canh bao - no la tieng on, va nguoi van hanh se hoc cach bo qua ca cot
+        // so loi. Cung mot ly le da dung khi go MA_YTE.
+        $this->assertSame([], CtdtChecker::kiem('CT03', $this->ct03HopLe(['MA_THE' => '']), '01929'));
+    }
 
-        $ma = $this->maLoi($loi);
-        $this->assertContains('CTDT008', $ma);
-        $this->assertNotContains('CTDT001', $ma, 'Ma the KHONG duoc la loi muc chan');
-        $this->assertSame('canh_bao', $loi[0]['muc_do']);
+    /** @test */
+    public function thieu_ma_the_o_giay_chung_sinh_cung_KHONG_sinh_loi()
+    {
+        // MA_THE_NND: me khong co the BHYT cung la chuyen thuong.
+        $loi = CtdtChecker::kiem('GIAYCHUNGSINH', [
+            'MA_GCS' => 'GCS-1', 'HOTEN_NND' => 'Le Thi Test',
+            'NGAYSINH_NND' => '19950101', 'NGAY_SINH_CON' => '202601011200',
+            'MA_THE_NND' => '',
+        ], '01929');
+
+        $this->assertSame([], $loi);
     }
 
     /** @test */

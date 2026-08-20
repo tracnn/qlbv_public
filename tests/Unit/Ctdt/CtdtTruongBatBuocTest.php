@@ -5,9 +5,12 @@ namespace Tests\Unit\Ctdt;
 use Tests\TestCase;
 use App\Services\Ctdt\Kiem\CtdtTruongBatBuoc;
 use App\Services\Ctdt\CtdtLoaiRegistry;
+use Tests\Support\LocComment;
 
 class CtdtTruongBatBuocTest extends TestCase
 {
+    use LocComment;
+
     /** @test */
     public function moi_loai_deu_co_danh_sach_bat_buoc_khong_rong()
     {
@@ -92,12 +95,34 @@ class CtdtTruongBatBuocTest extends TestCase
     }
 
     /** @test */
-    public function ma_the_o_muc_khuyen_nghi_khong_phai_bat_buoc()
+    public function MA_THE_khong_bat_buoc_VA_khong_khuyen_nghi()
     {
-        // Tre em khong the (TEKT = 1) la hop le va khong co MA_THE. Dat o muc bat buoc se
-        // chan nham dung nhom ma giay chung sinh phuc vu.
-        $this->assertNotContains('MA_THE', CtdtTruongBatBuoc::cua('CT03'));
-        $this->assertContains('MA_THE', CtdtTruongBatBuoc::khuyenNghi('CT03'));
+        // Rat nhieu benh nhan khong co the BHYT: tu tra, the het han, tre chua duoc cap the
+        // (TEKT = 1). Cong van 2076 khong danh dau MA_THE bat buoc o loai nao.
+        //
+        // Cung KHONG de o muc khuyen nghi: canh bao tren mot tinh huong binh thuong la tieng
+        // on, va no day nguoi van hanh toi cho bo qua ca cot so loi.
+        foreach (array_keys(CtdtLoaiRegistry::tatCa()) as $loai) {
+            foreach (['MA_THE', 'MA_THE_NND'] as $the) {
+                $this->assertNotContains($the, CtdtTruongBatBuoc::cua($loai), $loai . '/' . $the);
+                $this->assertNotContains($the, CtdtTruongBatBuoc::khuyenNghi($loai), $loai . '/' . $the);
+            }
+        }
+    }
+
+    /** @test */
+    public function tang_khuyen_nghi_van_duoc_bo_kiem_hoi_den()
+    {
+        // Hien KHONG loai nao co truong khuyen nghi, nen khong test nao chay qua nhanh do
+        // bang duong binh thuong. Giu tang nay vi buoc bo sung truong con thieu (xem tai
+        // lieu module) se dung no de canh bao truoc roi moi chan.
+        //
+        // Neu ai do go loi goi khoi CtdtChecker, tang khuyen nghi se chet im lang va lan
+        // them truong sau se tuong minh da bat dau canh bao trong khi khong co gi xay ra.
+        $ma = $this->maKhongComment(base_path('app/Services/Ctdt/Kiem/CtdtChecker.php'));
+
+        $this->assertContains('khuyenNghi(', $ma,
+            'CtdtChecker phai con hoi CtdtTruongBatBuoc::khuyenNghi()');
     }
 
     /** @test */
