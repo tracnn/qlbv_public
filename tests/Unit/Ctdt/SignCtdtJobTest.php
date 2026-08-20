@@ -248,4 +248,63 @@ class SignCtdtJobTest extends TestCase
         $this->assertNotContains('..', (string) $duongDan);
         $this->assertNotContains('#', (string) $duongDan);
     }
+
+    /** @test */
+    public function hai_ma_ho_so_khac_nhau_khong_duoc_dung_chung_mot_tep()
+    {
+        // Ham lam sach anh xa nhieu ve mot: 'YT#1' va 'YT/1' deu thanh 'YT_1'. Khong phan
+        // biet thi gui ho so nay se day len cong goi cua ho so kia.
+        $this->hoSo(['ma_ho_so' => 'YT#1']);
+        $this->hoSo(['ma_ho_so' => 'YT/1']);
+
+        $ky = new FakeXMLSignService();
+        $this->chay($ky, 'YT#1');
+        $this->chay($ky, 'YT/1');
+
+        $a = CtdtHoSo::where('ma_ho_so', 'YT#1')->first()->duong_dan_da_ky;
+        $b = CtdtHoSo::where('ma_ho_so', 'YT/1')->first()->duong_dan_da_ky;
+
+        $this->assertNotSame($a, $b, 'Hai ho so khac nhau phai ra hai tep khac nhau');
+        $this->assertCount(2, Storage::disk('exportCtdt')->allFiles());
+    }
+
+    /** @test */
+    public function ky_lai_that_bai_thi_xoa_duong_dan_cu()
+    {
+        // Ky thanh cong roi ky lai that bai: cot duong_dan_da_ky con tro tep cu la mot cot
+        // noi doi - man hinh bao "chua ky" nhung van co duong dan mot tep da ky.
+        $this->hoSo();
+        $ky = new FakeXMLSignService();
+
+        $this->chay($ky);
+        $this->assertNotEmpty(CtdtHoSo::first()->duong_dan_da_ky);
+
+        $ky->ketQua = ['isSigned' => false, 'data' => '<X/>', 'method' => 'HSM', 'error' => 'USB token bi rut'];
+        $this->chay($ky);
+
+        $this->assertEmpty(CtdtHoSo::first()->duong_dan_da_ky);
+    }
+
+    /** @test */
+    public function het_luot_thu_thi_de_lai_dau_vet_tren_ho_so()
+    {
+        // Het luot thu roi roi vao failed_jobs ma khong ghi gi thi ho so nam "chua ky" vinh
+        // vien, va nguoi van hanh ngoi cho mot viec da chet.
+        $this->hoSo();
+
+        (new SignCtdtJob('YT001'))->failed(new \RuntimeException('HSM khong phan hoi'));
+
+        $hoSo = CtdtHoSo::first();
+
+        $this->assertContains('HSM khong phan hoi', (string) $hoSo->signed_error);
+        $this->assertFalse((bool) $hoSo->is_signed);
+    }
+
+    /** @test */
+    public function failed_voi_ho_so_khong_ton_tai_thi_khong_nem()
+    {
+        (new SignCtdtJob('KHONG_TON_TAI'))->failed(new \RuntimeException('loi gi do'));
+
+        $this->assertSame(0, CtdtHoSo::count());
+    }
 }

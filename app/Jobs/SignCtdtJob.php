@@ -3,7 +3,6 @@
 namespace App\Jobs;
 
 use Illuminate\Bus\Queueable;
-use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -26,7 +25,7 @@ use App\Services\XMLSignService;
  */
 class SignCtdtJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable, InteractsWithQueue, Queueable;
 
     /** @var int Ky lai it lan hon gui: hong ky thuong la ly do cuc bo, thu lai it giup */
     public $tries = 2;
@@ -139,6 +138,11 @@ class SignCtdtJob implements ShouldQueue
      *
      * ma_ho_so den tu the XML ben ngoai va co the chua '#' (nhanh lui GUID) hoac '../'.
      * Ghep thang vao duong dan tep la mo duong di ra khoi thu muc.
+     *
+     * dich_vu da qua bang trang GIAN TIEP: CtdtPhongBi::dung() chay TRUOC loi goi nay
+     * trong handle() va nem InvalidArgumentException neu config('ctdt.dich_vu.'.$dichVu)
+     * rong, nen thuc te dich_vu chi con la CT2025/GBT/GCS. Su an toan nay phu thuoc THU TU
+     * loi goi - dung dao nguoc.
      */
     private function duongDan(CtdtHoSo $hoSo)
     {
@@ -150,7 +154,12 @@ class SignCtdtJob implements ShouldQueue
             $ten = 'ho-so-' . $hoSo->id;
         }
 
-        return 'da-ky/' . $hoSo->dich_vu . '/' . $ten . '.xml';
+        // Gan id vao ten: ham lam sach anh xa NHIEU ma ho so ve MOT ten (vd 'YT#1' va
+        // 'YT/1' deu ra 'YT_1'). Khong phan biet thi hai ho so ghi de len tep cua nhau, va
+        // gui ho so nay se day len cong goi cua ho so kia - khong co gi tren man hinh lo ra.
+        // id la khoa chinh nen on dinh giua cac lan chay lai: ghi de dung tep cu, khong
+        // sinh them tep moi.
+        return 'da-ky/' . $hoSo->dich_vu . '/' . $ten . '-' . $hoSo->id . '.xml';
     }
 
     private function ghiLoi(CtdtHoSo $hoSo, $loi)
@@ -158,10 +167,13 @@ class SignCtdtJob implements ShouldQueue
         Log::warning('SignCtdtJob: ' . $loi, ['ma_ho_so' => $this->maHoSo]);
 
         $hoSo->update([
-            'is_signed'    => false,
-            'sign_method'  => null,
-            'signed_at'    => null,
-            'signed_error' => $loi,
+            'is_signed'       => false,
+            'sign_method'     => null,
+            'signed_at'       => null,
+            'signed_error'    => $loi,
+            // Ky lai that bai sau khi tung ky thanh cong: xoa duong dan cu, khong de cot
+            // noi doi - man hinh bao "chua ky" nhung van tro toi mot tep da ky that.
+            'duong_dan_da_ky' => null,
         ]);
     }
 
@@ -176,7 +188,13 @@ class SignCtdtJob implements ShouldQueue
         $hoSo = CtdtHoSo::where('ma_ho_so', $this->maHoSo)->first();
 
         if ($hoSo !== null) {
-            $hoSo->update(['signed_error' => 'Job ky that bai: ' . $exception->getMessage()]);
+            // Dat ca is_signed=false cung luc: neu ngoai le xay ra GIUA Storage::put va
+            // $hoSo->update trong handle(), tep da nam tren dia nhung cot chua kip cap
+            // nhat - dat lai o day cho khop trang thai that.
+            $hoSo->update([
+                'is_signed'    => false,
+                'signed_error' => 'Job ky that bai: ' . $exception->getMessage(),
+            ]);
         }
     }
 }
