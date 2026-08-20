@@ -366,6 +366,17 @@ class BHYTCtdtController extends Controller
             ]);
         }
 
+        // Chuc nang ky tat + ho so CHUA ky = bam nut cung khong di den dau. Ho so DA ky roi
+        // thi van gui lai duoc binh thuong: khong can ky lai.
+        $kyBat = (bool) config('organization.chung_tu_dien_tu.sign_enabled', false);
+
+        if (!$kyBat && !(bool) $hoSo->is_signed) {
+            return response()->json([
+                'thanh_cong' => false,
+                'thong_diep' => 'Chức năng ký số đang tắt trong cấu hình, và hồ sơ này chưa ký. Liên hệ quản trị để bật.',
+            ]);
+        }
+
         // XAU CHUOI chu khong day hai job doc lap: ky xong moi gui duoc. Hai job doc lap thi
         // job gui co the chay truoc job ky va luon thay is_signed = false.
         //
@@ -374,12 +385,19 @@ class BHYTCtdtController extends Controller
         // chinh controller nay, o import(): $request->user()->loginname.
         $nguoiGui = auth()->check() ? auth()->user()->loginname : null;
 
+        // config(..., default) CHI lui ve default khi thieu khoa (Arr::get dung
+        // array_key_exists) - mot config/organization.php ghi de khoa nay thanh null (vd.
+        // ban config:cache cu) van khien config() tra ve null chu KHONG tu lui ve default.
+        // Dung ?: de lui ve ten hang doi mac dinh trong ca hai truong hop thieu khoa LAN
+        // khoa ton tai nhung rong/null.
+        $hangDoiKy  = config('organization.chung_tu_dien_tu.sign_queue_name') ?: 'JobSignCtdt';
+        $hangDoiGui = config('organization.chung_tu_dien_tu.submit_queue_name') ?: 'JobSubmitCtdt';
+
         SignCtdtJob::withChain([
-            (new SubmitCtdtJob($ma_ho_so, $nguoiGui))
-                ->onQueue(config('organization.chung_tu_dien_tu.submit_queue_name', 'JobSubmitCtdt')),
+            (new SubmitCtdtJob($ma_ho_so, $nguoiGui))->onQueue($hangDoiGui),
         ])
         ->dispatch($ma_ho_so)
-        ->onQueue(config('organization.chung_tu_dien_tu.sign_queue_name', 'JobSignCtdt'));
+        ->onQueue($hangDoiKy);
 
         return response()->json([
             'thanh_cong' => true,

@@ -99,6 +99,73 @@ class CtdtKyVaGuiTest extends TestCase
     }
 
     /** @test */
+    public function job_gui_trong_chain_cung_di_dung_hang_doi_lay_tu_cau_hinh()
+    {
+        // Chi khoa hang doi cua job KY la khong du: bo onQueue() cua job GUI thi ho so ky
+        // xong roi nam mai o "da ky, chua gui" - worker JobSubmitCtdt khong bao gio nhat, va
+        // khong co dau hieu gi tren man hinh.
+        config([
+            'organization.chung_tu_dien_tu.sign_queue_name'   => 'HangDoiKyRieng',
+            'organization.chung_tu_dien_tu.submit_queue_name' => 'HangDoiGuiRieng',
+        ]);
+
+        $this->hoSo();
+
+        $this->controller->kyVaGui('YT001');
+
+        Queue::assertPushed(SignCtdtJob::class, function ($job) {
+            return isset($job->chained[0])
+                && unserialize($job->chained[0])->queue === 'HangDoiGuiRieng';
+        });
+    }
+
+    /** @test */
+    public function thieu_cau_hinh_hang_doi_thi_lui_ve_ten_mac_dinh()
+    {
+        // config/organization.php la tep rieng cua tung may va nam trong .gitignore. Mot ban
+        // config:cache cu hay mot lan ghi de thieu khoa se lam ca hai job im lang roi vao
+        // hang doi 'default', va khong worker nao nhat chung.
+        config([
+            'organization.chung_tu_dien_tu.sign_queue_name'   => null,
+            'organization.chung_tu_dien_tu.submit_queue_name' => null,
+        ]);
+
+        $this->hoSo();
+
+        $this->controller->kyVaGui('YT001');
+
+        Queue::assertPushed(SignCtdtJob::class, function ($job) {
+            return $job->queue === 'JobSignCtdt';
+        });
+    }
+
+    /** @test */
+    public function ky_tat_va_ho_so_chua_ky_thi_tu_choi_va_noi_ro_ly_do()
+    {
+        config(['organization.chung_tu_dien_tu.sign_enabled' => false]);
+        $this->hoSo(['is_signed' => false]);
+
+        $kq = $this->layJson($this->controller->kyVaGui('YT001'));
+
+        $this->assertFalse($kq['thanh_cong']);
+        $this->assertContains('ký số đang tắt', $kq['thong_diep']);
+        Queue::assertNotPushed(SignCtdtJob::class);
+    }
+
+    /** @test */
+    public function ky_tat_nhung_ho_so_DA_ky_thi_van_gui_lai_duoc()
+    {
+        // Gui lai mot ho so da ky khong can ky lai, nen co ky tat khong lien quan.
+        config(['organization.chung_tu_dien_tu.sign_enabled' => false]);
+        $this->hoSo(['is_signed' => true]);
+
+        $kq = $this->layJson($this->controller->kyVaGui('YT001'));
+
+        $this->assertTrue($kq['thanh_cong']);
+        Queue::assertPushed(SignCtdtJob::class);
+    }
+
+    /** @test */
     public function ho_so_du_dieu_kien_thi_day_job_ky()
     {
         $this->hoSo();
@@ -218,6 +285,10 @@ class CtdtKyVaGuiTest extends TestCase
         ])->render();
 
         $this->assertContains('btn-ky-va-gui', $html);
+
+        // ma_ho_so co the chua '#' (nhanh lui GUID). Khong ma hoa thi trinh duyet cat tu dau
+        // '#' va yeu cau tro sai ho so - hoac te hon, gui nham mot ho so khac len cong.
+        $this->assertContains('encodeURIComponent(maHoSo)', $html);
     }
 
     /** @test */
