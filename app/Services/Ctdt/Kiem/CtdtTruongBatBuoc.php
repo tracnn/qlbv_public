@@ -25,6 +25,15 @@ namespace App\Services\Ctdt\Kiem;
  * Cung khong ha xuong muc khuyen nghi: de trong la mot trong hai cach dung hop le, nen canh
  * bao tren gan nhu moi ho so chi lam nguoi van hanh hoc cach bo qua ca cot so loi.
  *
+ * MA_BHXH la truong cong van 2076 danh dau bat buoc o MOI loai no phu (CT03, CT04, CT06,
+ * CT07, va MA_BHXH_NND o CT05). Voi GIAYDIEUTRINOITRU thi cong van khong phu, nhung 923/923
+ * chung tu that deu da co gia tri - du can cu de chan.
+ *
+ * Ba loai con lai (GIAYDIEUTRIVOSINH, GIAYSUCKHOEME, GIAYBAOTU) chi CANH BAO: cong van khong
+ * phu, va CSDL chua co mot chung tu nao de doi chieu. Rieng giay bao tu con mot kha nang
+ * that - nguoi qua doi co the khong co ma so BHXH. Nang len muc chan khi du lieu that xac
+ * nhan, dung doan mo.
+ *
  * MA_THE KHONG bat buoc va cung KHONG khuyen nghi: rat nhieu benh nhan khong co the BHYT
  * (tu tra, the het han, tre chua duoc cap the - TEKT = 1), va cong van 2076 khong danh dau
  * no bat buoc o loai nao. Xem chu thich cua KHUYEN_NGHI.
@@ -33,15 +42,15 @@ class CtdtTruongBatBuoc
 {
     /** @var array LOAIHOSO => danh sach the bat buoc (muc chan) */
     const BAT_BUOC = [
-        'CT03'              => ['HO_TEN', 'NGAY_SINH', 'NGAY_VAO', 'NGAY_RA'],
-        'CT04'              => ['HO_TEN', 'NGAY_SINH', 'NGAY_VAO', 'NGAY_RA'],
-        'CT06'              => ['HO_TEN', 'NGAY_SINH', 'NGAY_VAO', 'NGAY_RA'],
-        'CT07'              => ['HO_TEN', 'NGAY_SINH', 'TU_NGAY', 'DEN_NGAY'],
-        'GIAYDIEUTRINOITRU' => ['HO_TEN', 'NGAY_SINH', 'NGAY_VAO', 'NGAY_RA'],
+        'CT03'              => ['MA_BHXH', 'HO_TEN', 'NGAY_SINH', 'NGAY_VAO', 'NGAY_RA'],
+        'CT04'              => ['MA_BHXH', 'HO_TEN', 'NGAY_SINH', 'NGAY_VAO', 'NGAY_RA'],
+        'CT06'              => ['MA_BHXH', 'HO_TEN', 'NGAY_SINH', 'NGAY_VAO', 'NGAY_RA'],
+        'CT07'              => ['MA_BHXH', 'HO_TEN', 'NGAY_SINH', 'TU_NGAY', 'DEN_NGAY'],
+        'GIAYDIEUTRINOITRU' => ['MA_BHXH', 'HO_TEN', 'NGAY_SINH', 'NGAY_VAO', 'NGAY_RA'],
         'GIAYDIEUTRIVOSINH' => ['HO_TEN', 'NGAY_SINH', 'NGAY_VAO', 'NGAY_RA'],
         'GIAYSUCKHOEME'     => ['HO_TEN', 'NGAY_SINH', 'NGAY_VAO', 'NGAY_RA'],
         'GIAYBAOTU'         => ['MA_GBT', 'HO_TEN', 'NGAY_SINH', 'NGAY_TV'],
-        'GIAYCHUNGSINH'     => ['MA_GCS', 'HOTEN_NND', 'NGAYSINH_NND', 'NGAY_SINH_CON'],
+        'GIAYCHUNGSINH'     => ['MA_GCS', 'MA_BHXH_NND', 'HOTEN_NND', 'NGAYSINH_NND', 'NGAY_SINH_CON'],
     ];
 
     /**
@@ -67,9 +76,9 @@ class CtdtTruongBatBuoc
         'CT06'              => [],
         'CT07'              => [],
         'GIAYDIEUTRINOITRU' => [],
-        'GIAYDIEUTRIVOSINH' => [],
-        'GIAYSUCKHOEME'     => [],
-        'GIAYBAOTU'         => [],
+        'GIAYDIEUTRIVOSINH' => ['MA_BHXH'],
+        'GIAYSUCKHOEME'     => ['MA_BHXH'],
+        'GIAYBAOTU'         => ['MA_BHXH'],
         'GIAYCHUNGSINH'     => [],
     ];
 
