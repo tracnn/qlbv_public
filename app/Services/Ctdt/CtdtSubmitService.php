@@ -27,7 +27,11 @@ class CtdtSubmitService
     /** @var Client */
     private $httpClient;
 
-    /** @var BHYTLoginService */
+    /**
+     * @var BHYTLoginService|null Chi khac null khi duoc TIEM (vi du trong test). San pham
+     * de null, vi login service phai duoc dung theo dung ma co so cua TUNG ho so gui - xem
+     * ghi chu trong gui().
+     */
     private $loginService;
 
     public function __construct(BHYTLoginService $loginService = null)
@@ -37,7 +41,7 @@ class CtdtSubmitService
             'connect_timeout' => 5,
         ]);
 
-        $this->loginService = $loginService ?: new BHYTLoginService();
+        $this->loginService = $loginService;
     }
 
     /**
@@ -55,6 +59,15 @@ class CtdtSubmitService
             throw new \InvalidArgumentException('Dich vu khong biet: ' . (string) $dichVu);
         }
 
+        // Dung login service theo dung ma co so cua ho so nay, KHONG dung mot ban khong ma
+        // co so. Hai ly do:
+        //  - BHYTLoginService khong ma co so nem ngay o lan getAccessToken() dau tien, nen
+        //    nhanh mac dinh cu la ma chet.
+        //  - Quan trong hon: neu token va maCskcb trong body thuoc HAI co so khac nhau thi
+        //    cong van nhan, va ho so bi ghi sai don vi gui - hong im lang, khong lo ra cho
+        //    toi luc doi soat. Lay ca hai tu mot nguon thi chung khong the lech nhau.
+        $login = $this->loginService ?: new BHYTLoginService($maCskcb);
+
         $base64 = base64_encode($xmlDaKy);
 
         // Ghi kich thuoc moi lan gui: tai lieu khong noi nguong cua ma 1001 (file size qua
@@ -65,7 +78,7 @@ class CtdtSubmitService
             'so_ky_tu_base64' => strlen($base64),
         ]);
 
-        $ketQua = $this->motLanGui($cauHinh, $base64, $maCskcb);
+        $ketQua = $this->motLanGui($cauHinh, $base64, $maCskcb, $login);
 
         // Ma 401 = token bi tu choi. Xoa cache token, dang nhap lai, thu lai DUNG MOT LAN.
         // BHYTLoginService cache token theo co so va token co the het han giua chung.
@@ -74,26 +87,26 @@ class CtdtSubmitService
                 'dich_vu' => $dichVu,
             ]);
 
-            $this->loginService->logout();
+            $login->logout();
 
-            $ketQua = $this->motLanGui($cauHinh, $base64, $maCskcb);
+            $ketQua = $this->motLanGui($cauHinh, $base64, $maCskcb, $login);
         }
 
         return $ketQua;
     }
 
     /** Mot lan goi mang, khong retry */
-    private function motLanGui(array $cauHinh, $base64, $maCskcb)
+    private function motLanGui(array $cauHinh, $base64, $maCskcb, BHYTLoginService $login)
     {
         // Token VA tai khoan lay tu CUNG mot loginService. Neu chung thuoc hai co so khac
         // nhau thi cong van nhan, va ho so bi ghi sai don vi gui - hong im lang, khong co
         // dau hieu gi cho toi luc doi soat.
         $body = [
             'maCskcb'       => (string) $maCskcb,
-            'token'         => $this->loginService->getAccessToken(),
-            'id_token'      => $this->loginService->getIdToken(),
-            'username'      => $this->loginService->username(),
-            'password'      => $this->loginService->password(),
+            'token'         => $login->getAccessToken(),
+            'id_token'      => $login->getIdToken(),
+            'username'      => $login->username(),
+            'password'      => $login->password(),
             'loaiHs'        => (string) $cauHinh['loai_hs'],
             'fileBase64Str' => $base64,
         ];
@@ -163,6 +176,6 @@ class CtdtSubmitService
     /** So sanh LONG: cong co the tra so 401 thay vi chuoi '401' */
     private function la401($maKetQua)
     {
-        return $maKetQua !== '' && $maKetQua == '401';
+        return $maKetQua == '401';
     }
 }

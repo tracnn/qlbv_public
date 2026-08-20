@@ -23,6 +23,15 @@ class FakeCtdtLoginService extends BHYTLoginService
     public $tokenCallCount = 0;
     public $logoutCallCount = 0;
 
+    /**
+     * Nhan de chung minh bon truong (token/id_token/username/password) den tu CUNG mot
+     * nguon. Neu mot trong bon phuong thuc bi hard-code thanh hang so, gia tri cua no se
+     * khong mang nhan nay va test bao ve se bat duoc.
+     *
+     * @var string
+     */
+    public $nhan = '01929';
+
     public function __construct()
     {
         // Bo qua constructor cha de khong khoi tao Guzzle/Config that.
@@ -30,9 +39,11 @@ class FakeCtdtLoginService extends BHYTLoginService
 
     public function getAccessToken(): string
     {
-        $token = isset($this->tokenSequence[$this->tokenCallCount])
-            ? $this->tokenSequence[$this->tokenCallCount]
-            : 'fallback';
+        if (isset($this->tokenSequence[$this->tokenCallCount])) {
+            $token = $this->tokenSequence[$this->tokenCallCount];
+        } else {
+            $token = 'token@' . $this->nhan;
+        }
         $this->tokenCallCount++;
 
         return $token;
@@ -40,17 +51,17 @@ class FakeCtdtLoginService extends BHYTLoginService
 
     public function getIdToken(): string
     {
-        return 'id-token';
+        return 'id@' . $this->nhan;
     }
 
     public function username(): string
     {
-        return 'tk01929';
+        return 'user@' . $this->nhan;
     }
 
     public function password(): string
     {
-        return 'md5-cua-mat-khau';
+        return 'pw@' . $this->nhan;
     }
 
     public function logout(): void
@@ -185,14 +196,21 @@ class CtdtSubmitServiceTest extends TestCase
         ]);
 
         $login = new FakeCtdtLoginService();
-        $login->tokenSequence = ['token-cua-01929'];
+        $login->nhan = 'nguon-rieng-01929';
+        $login->tokenSequence = []; // ep getAccessToken() roi ve nhan, khong dung gia tri co dinh
 
         $this->dungService($mock, $login)->gui('<HSCHUNGTU/>', 'CT2025', '01929');
 
-        $this->assertSame('token-cua-01929', $than['token']);
-        $this->assertSame('tk01929', $than['username']);
-        $this->assertSame('id-token', $than['id_token']);
-        $this->assertSame('md5-cua-mat-khau', $than['password']);
+        // Khang dinh CA BON truong mang cung mot nhan, thay vi khoa vao gia tri hang so cu
+        // the - khoa hang so de lot mot phep hard-code khien ca bon van "dung" ma khong con
+        // den tu cung mot nguon.
+        foreach (['token', 'id_token', 'username', 'password'] as $truong) {
+            $this->assertContains(
+                '@nguon-rieng-01929',
+                $than[$truong],
+                $truong . ' phai den tu cung mot loginService'
+            );
+        }
     }
 
     /** @test */
@@ -338,5 +356,70 @@ class CtdtSubmitServiceTest extends TestCase
         $this->expectException(\Exception::class);
 
         $this->dungService($mock, new FakeCtdtLoginService())->gui('<HSCHUNGTU/>', 'CT2025', '01929');
+    }
+
+    /** @test */
+    public function khong_tiem_phu_thuoc_thi_dung_login_service_theo_dung_ma_co_so()
+    {
+        // Nhanh mac dinh phai dung duoc that. Truoc day no dung BHYTLoginService khong ma
+        // co so, nen moi lan goi deu nem "Thieu ma co so KCB" - mot nhanh chet.
+        //
+        // Khong khai tai khoan cho ma co so nay (99999 khong nam trong
+        // organization.BHYT_CO_SO), nen ta ky vong loi NEU DICH DANH chinh no, chu khong
+        // phai loi "thieu ma co so" - dieu do chung minh maCskcb da duoc truyen xuong.
+        $this->dungDichVu();
+
+        $service = new CtdtSubmitService();
+
+        $client = new Client(['handler' => HandlerStack::create(new MockHandler([]))]);
+        $ref = new \ReflectionProperty(CtdtSubmitService::class, 'httpClient');
+        $ref->setAccessible(true);
+        $ref->setValue($service, $client);
+
+        try {
+            $service->gui('<HSCHUNGTU/>', 'CT2025', '99999');
+            $this->fail('Phai nem vi co so 99999 chua khai tai khoan');
+        } catch (\Throwable $e) {
+            $this->assertNotContains(
+                'Thieu ma co so',
+                $e->getMessage(),
+                'Phai neu dich danh co so 99999, khong phai "thieu ma co so"'
+            );
+        }
+    }
+
+    /** @test */
+    public function ma_ket_qua_luon_tra_ve_kieu_CHUOI()
+    {
+        // Cong co the tra so 200 thay vi chuoi '200'. Lop goi o cac task sau so sanh voi
+        // chuoi; tra ve so la mot phep so sanh truot im lang.
+        $mock = new MockHandler([$this->phanHoi(['MaKetQua' => 200, 'MaGD' => 'GD-1'])]);
+
+        $kq = $this->dungService($mock, new FakeCtdtLoginService())->gui('<HSCHUNGTU/>', 'CT2025', '01929');
+
+        $this->assertSame('200', $kq['ma_ket_qua']);
+    }
+
+    /** @test */
+    public function ghi_log_kich_thuoc_base64_moi_lan_gui()
+    {
+        // Tai lieu PL02 khong noi nguong cua ma 1001 (file size qua dai). Dong log nay la
+        // cach duy nhat do duoc tu thuc te - xoa no di la mat luon duong do.
+        $xml = '<HSCHUNGTU/>';
+
+        \Log::shouldReceive('info')->once()->with(
+            'CTDT gui ho so',
+            \Mockery::on(function ($ngucanh) use ($xml) {
+                return is_array($ngucanh)
+                    && isset($ngucanh['so_ky_tu_base64'])
+                    && $ngucanh['so_ky_tu_base64'] === strlen(base64_encode($xml));
+            })
+        );
+        \Log::shouldReceive('warning')->zeroOrMoreTimes();
+        \Log::shouldReceive('error')->zeroOrMoreTimes();
+
+        $mock = new MockHandler([$this->phanHoi(['MaKetQua' => '200'])]);
+
+        $this->dungService($mock, new FakeCtdtLoginService())->gui($xml, 'CT2025', '01929');
     }
 }
