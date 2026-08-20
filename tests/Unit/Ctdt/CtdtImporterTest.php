@@ -11,6 +11,7 @@ use App\Models\BHYT\Ctdt\CtdtHoSo;
 use App\Models\BHYT\Ctdt\CtdtChungTu;
 use App\Models\BHYT\Ctdt\CtdtCt03;
 use App\Models\BHYT\Ctdt\CtdtCt04;
+use App\Models\BHYT\Ctdt\CtdtLoi;
 
 class CtdtImporterTest extends TestCase
 {
@@ -373,5 +374,21 @@ class CtdtImporterTest extends TestCase
         $this->importer->nhapTuChuoi($xml);
 
         Queue::assertNotPushed(\App\Jobs\CheckCtdtJob::class);
+    }
+
+    /** @test */
+    public function nap_KHONG_chay_bo_kiem_ngay_chi_xep_hang()
+    {
+        // Ho so nay thieu HO_TEN/NGAY_SINH/NGAY_VAO/NGAY_RA - neu bo kiem chay ngay
+        // trong luc nap thi chac chan sinh loi. Test nap phai kiem viec NAP, khong phai
+        // viec KIEM: voi QUEUE_DRIVER=sync (phpunit.xml), thieu Queue::fake() se lam job
+        // chay that ngay tai day, va mot thay doi o bang quy tac (Task 1-3) se lam do
+        // nhung test nap khong lien quan gi toi no.
+        $this->importer->nhapTuChuoi($this->goiCt2025([[
+            $this->chungTu('CT03', ['MA_YTE' => 'YT001']),
+        ]]));
+
+        $this->assertSame(0, CtdtLoi::count());
+        $this->assertSame(0, (int) CtdtHoSo::where('ma_ho_so', 'YT001')->value('so_loi'));
     }
 }
