@@ -77,7 +77,9 @@ class SubmitCtdtJobTest extends TestCase
 
     private function chay($gui, $maHoSo = 'YT001', $nguoiGui = 'tracnn')
     {
-        (new SubmitCtdtJob($maHoSo, $nguoiGui))->handle($gui);
+        $job = new SubmitCtdtJob($maHoSo, $nguoiGui);
+        $job->submitServiceGia = $gui;
+        $job->handle();
     }
 
     /** @test */
@@ -276,5 +278,52 @@ class SubmitCtdtJobTest extends TestCase
         $this->assertContains('GD-A', $lichSu);
         $this->assertContains('GD-B', $lichSu);
         $this->assertSame('GD-C', CtdtHoSo::first()->ma_gd);
+    }
+
+    /** @test */
+    public function chay_qua_container_van_dung_ma_co_so_cua_CHINH_ho_so()
+    {
+        // Container Laravel 5.5 tiem tham so co type-hint KE CA khi no co gia tri mac dinh
+        // null (BoundMethod::addDependencyForCallParameter() xet getClass() TRUOC
+        // isDefaultValueAvailable()). Neu handle() nhan service qua tham so thi ban container
+        // dung ra mang BHYTLoginService rong ma co so, va MOI ho so deu gui hong.
+        //
+        // Ho so nay dung ma co so chua khai tai khoan, nen ta ky vong loi NEU DICH DANH no -
+        // chu khong phai loi "thieu ma co so", von la dau hieu service da bi tiem nham.
+        $this->hoSo(['macskcb' => '99999']);
+
+        try {
+            app()->call([new SubmitCtdtJob('YT001', 'tracnn'), 'handle']);
+            $this->fail('Phai nem vi co so 99999 chua khai tai khoan');
+        } catch (\Throwable $e) {
+            $this->assertNotContains('Thieu ma co so', $e->getMessage(),
+                'Loi "thieu ma co so" nghia la service bi container tiem nham');
+        }
+    }
+
+    /** @test */
+    public function cong_tra_SO_200_van_phai_coi_la_thanh_cong()
+    {
+        // Cong co the tra so 200 thay vi chuoi. So sanh nghiem ngat se coi mot ho so THANH
+        // CONG la bi tu choi, va nguoi van hanh gui lai vo ich.
+        $this->hoSo();
+        $gui = new FakeCtdtSubmitService();
+        $gui->ketQua['ma_ket_qua'] = 200;
+
+        $this->chay($gui);
+
+        $this->assertNull(CtdtHoSo::first()->submit_error, 'Ma 200 dang so van la thanh cong');
+    }
+
+    /** @test */
+    public function het_luot_thu_thi_failed_ghi_dau_vet_len_ho_so()
+    {
+        // Het ba luot thu ma khong ghi gi thi ho so nam im khong dau vet tren man hinh, va
+        // nguoi van hanh ngoi cho mot viec da chet.
+        $this->hoSo();
+
+        (new SubmitCtdtJob('YT001', 'tracnn'))->failed(new \Exception('Connection refused'));
+
+        $this->assertContains('Connection refused', (string) CtdtHoSo::first()->submit_error);
     }
 }

@@ -11,7 +11,6 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 use App\Models\BHYT\Ctdt\CtdtHoSo;
-use App\Services\BHYTLoginService;
 use App\Services\Ctdt\CtdtQuyetDinhGui;
 use App\Services\Ctdt\CtdtSubmitService;
 
@@ -28,8 +27,13 @@ class SubmitCtdtJob implements ShouldQueue
     /** @var int */
     public $tries = 3;
 
-    /** @var int */
-    public $timeout = 60;
+    /**
+     * PHAI lon hon timeout cua CtdtSubmitService (60s Guzzle): job bi cat ngang dung luc
+     * HTTP sap xong la hong so - ho so co the da toi cong ma ta khong ghi duoc ket qua.
+     *
+     * @var int
+     */
+    public $timeout = 90;
 
     /** @var string */
     protected $maHoSo;
@@ -37,17 +41,24 @@ class SubmitCtdtJob implements ShouldQueue
     /** @var string|null */
     protected $nguoiGui;
 
+    /**
+     * @var CtdtSubmitService|null Chi TEST moi dat. KHONG dua vao tham so co type-hint cua
+     *      handle(): container Laravel 5.5 tiem theo getClass() TRUOC khi xet gia tri mac
+     *      dinh (Illuminate\Container\BoundMethod::addDependencyForCallParameter(), dong
+     *      getClass() truoc isDefaultValueAvailable()), nen mot tham so `= null` van luon bi
+     *      tiem, va ban container dung ra mang BHYTLoginService RONG ma co so - moi lan gui
+     *      deu nem InvalidArgumentException. Day dung la bay ma SubmitXml3176Job.php:70-73
+     *      da dinh mot lan roi.
+     */
+    public $submitServiceGia = null;
+
     public function __construct($maHoSo, $nguoiGui = null)
     {
         $this->maHoSo = $maHoSo;
         $this->nguoiGui = $nguoiGui;
     }
 
-    /**
-     * @param CtdtSubmitService|null $submitService Chi de test tiem ban gia. Khi null, job tu
-     *        dung service bang ma co so cua CHINH ho so - xem chu thich trong than ham.
-     */
-    public function handle(CtdtSubmitService $submitService = null)
+    public function handle()
     {
         $hoSo = CtdtHoSo::where('ma_ho_so', $this->maHoSo)->first();
 
@@ -94,14 +105,13 @@ class SubmitCtdtJob implements ShouldQueue
         // phap ly.
         $xmlDaKy = Storage::disk('exportCtdt')->get($duongDan);
 
-        if ($submitService === null) {
-            // KHONG nhan service qua container: container khong biet ho so nay thuoc co so
-            // nao nen se dung BHYTLoginService KHONG ma co so, va lan gui dau tien se nem.
-            // SubmitXml3176Job.php:70-73 da dinh dung bay nay va co san chu thich canh bao.
-            // Dung tuong minh bang ma co so cua CHINH ho so, de token va tai khoan trong body
-            // khong the thuoc hai co so khac nhau.
-            $submitService = new CtdtSubmitService(new BHYTLoginService($hoSo->macskcb));
-        }
+        // Tu dung service, KHONG nhan qua tham so co type-hint cua handle(): container
+        // Laravel 5.5 tiem theo getClass() TRUOC khi xet gia tri mac dinh, nen mot tham so
+        // `= null` van luon bi tiem - xem chu thich tren $submitServiceGia. Khong can dung
+        // rieng BHYTLoginService(macskcb) o day: CtdtSubmitService::gui() da tu dung dung
+        // theo $maCskcb duoc truyen vao, de mot noi duy nhat chiu trach nhiem noi ma co so
+        // voi token.
+        $submitService = $this->submitServiceGia ?: new CtdtSubmitService();
 
         // KHONG bat exception o day: loi mang la loi TAM THOI va phai de hang doi thu lai.
         // Nuot no thanh mot dong submit_error la ho so mat co hoi duoc gui lai tu dong.
@@ -122,6 +132,8 @@ class SubmitCtdtJob implements ShouldQueue
             'thoi_gian_tiep_nhan' => isset($ketQua['thoi_gian_tiep_nhan']) ? $ketQua['thoi_gian_tiep_nhan'] : null,
             'submitted_at'        => now(),
             'submitted_by'        => $this->nguoiGui,
+            // Toan van phan hoi cua cong, KHONG loc: man chi tiet ho so hien nguyen dong nay
+            // cho nguoi van hanh doc, chua can cat do dai o day.
             'submitted_message'   => isset($ketQua['nguyen_van']) ? $ketQua['nguyen_van'] : null,
             'submit_error'        => $thanhCong ? null : (isset($ketQua['thong_diep']) ? $ketQua['thong_diep'] : 'Cong tu choi'),
         ];
