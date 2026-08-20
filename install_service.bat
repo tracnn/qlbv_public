@@ -55,6 +55,14 @@ set LARAVEL_PATH=%~dp0
 %NSSM_PATH%\nssm install "QLBV JobCtdt" %PHP_PATH% "%LARAVEL_PATH%artisan queue:work --queue=JobCtdt"
 %NSSM_PATH%\nssm set "QLBV JobCtdt" AppDirectory %LARAVEL_PATH%
 
+:: Tạo dịch vụ cho JobSignCtdt (ký số chứng từ điện tử)
+%NSSM_PATH%\nssm install "QLBV JobSignCtdt" %PHP_PATH% "%LARAVEL_PATH%artisan queue:work --queue=JobSignCtdt"
+%NSSM_PATH%\nssm set "QLBV JobSignCtdt" AppDirectory %LARAVEL_PATH%
+
+:: Tạo dịch vụ cho JobSubmitCtdt (gửi chứng từ điện tử lên cổng BHXH)
+%NSSM_PATH%\nssm install "QLBV JobSubmitCtdt" %PHP_PATH% "%LARAVEL_PATH%artisan queue:work --queue=JobSubmitCtdt"
+%NSSM_PATH%\nssm set "QLBV JobSubmitCtdt" AppDirectory %LARAVEL_PATH%
+
 :: Tạo dịch vụ cho JobExportQd130Xml
 %NSSM_PATH%\nssm install "QLBV JobExportQd130Xml" %PHP_PATH% "%LARAVEL_PATH%artisan queue:work --queue=JobExportQd130Xml"
 %NSSM_PATH%\nssm set "QLBV JobExportQd130Xml" AppDirectory %LARAVEL_PATH%
@@ -83,6 +91,8 @@ set LARAVEL_PATH=%~dp0
 %NSSM_PATH%\nssm start "QLBV JobSubmitQd130Xml"
 %NSSM_PATH%\nssm start "QLBV JobSubmitXml3176"
 %NSSM_PATH%\nssm start "QLBV JobCtdt"
+%NSSM_PATH%\nssm start "QLBV JobSignCtdt"
+%NSSM_PATH%\nssm start "QLBV JobSubmitCtdt"
 %NSSM_PATH%\nssm start "QLBV JobExportQd130Xml"
 %NSSM_PATH%\nssm start "QLBV JobExportXml3176"
 %NSSM_PATH%\nssm start "QLBV KiemTraYLenh"
