@@ -135,6 +135,11 @@ class SubmitCtdtJob implements ShouldQueue
      *
      * Ban day du cua phan hoi van con nguyen trong submitted_message (TEXT) va trong log,
      * nen cat o day khong mat thong tin nao khong tra cuu duoc.
+     *
+     * DO RONG O DAY PHAI KHOP MIGRATION. Lan gui that dau tien (2026-08-20) cho thay MaGD
+     * cong tra ve dai 52 ky tu trong khi cot cu la VARCHAR(50) - phep cat nay chan duoc lan
+     * gui trung, nhung lai cat mat hai ky tu cuoi cua chinh cot doi soat quan trong nhat.
+     * Migration 2026_08_20_100001 noi ma_gd len 100, ma_ket_qua va thoi_gian_tiep_nhan len 20.
      */
     private function cat($giaTri, $doDai)
     {
@@ -152,9 +157,9 @@ class SubmitCtdtJob implements ShouldQueue
         $thanhCong = isset($ketQua['ma_ket_qua']) && $ketQua['ma_ket_qua'] == '200';
 
         $thuocTinh = [
-            'ma_gd'               => $this->cat(isset($ketQua['ma_gd']) ? $ketQua['ma_gd'] : null, 50),
-            'ma_ket_qua'          => $this->cat(isset($ketQua['ma_ket_qua']) ? $ketQua['ma_ket_qua'] : null, 10),
-            'thoi_gian_tiep_nhan' => $this->cat(isset($ketQua['thoi_gian_tiep_nhan']) ? $ketQua['thoi_gian_tiep_nhan'] : null, 14),
+            'ma_gd'               => $this->cat(isset($ketQua['ma_gd']) ? $ketQua['ma_gd'] : null, 100),
+            'ma_ket_qua'          => $this->cat(isset($ketQua['ma_ket_qua']) ? $ketQua['ma_ket_qua'] : null, 20),
+            'thoi_gian_tiep_nhan' => $this->cat(isset($ketQua['thoi_gian_tiep_nhan']) ? $ketQua['thoi_gian_tiep_nhan'] : null, 20),
             'submitted_at'        => now(),
             'submitted_by'        => $this->nguoiGui,
             // Toan van phan hoi cua cong, KHONG loc: man chi tiet ho so hien nguyen dong nay
