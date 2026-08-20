@@ -106,8 +106,10 @@ class CtdtCauHinhTest extends TestCase
         $bat = file_get_contents(base_path('install_service.bat'));
 
         $this->assertNotFalse($bat, 'Khong doc duoc install_service.bat');
+        // Khang dinh CA DAU NHAY DONG cuoi lenh: '--queue=JobCtdt' khong thoi van khop
+        // voi '--queue=JobCtdtSai', tuc test se xanh cho dung cai lech no phai bat.
         $this->assertContains(
-            '--queue=JobCtdt',
+            '--queue=JobCtdt"',
             $bat,
             'install_service.bat phai cai worker nghe hang doi JobCtdt - dung ten mac dinh '
             . 'trong CtdtImporter::nhapMotHoSo()'

@@ -182,4 +182,67 @@ class CtdtTabLoiTest extends TestCase
         $this->assertNotContains('chưa được kiểm', $html);
         $this->assertContains('Không có lỗi', $html);
     }
+
+    /**
+     * @test
+     *
+     * detail.blade.php ke thua adminlte::page, ma layout do goi mot view composer doi
+     * nguoi dung dang nhap - nen render tron trang trong test don vi khong kha thi. Bu
+     * lai, hai test duoi day soi CHINH tep blade: mot cai bat loi bien dich, mot cai bat
+     * loi noi dung.
+     */
+    public function detail_blade_bien_dich_ra_php_chay_duoc()
+    {
+        // Blade dich MOI chi thi no thay, ke ca trong chu thich JavaScript. Mot "@" + tu
+        // khoa khong ngoac (vi du @if trong mot dong // ...) sinh ra PHP hong, va CA trang
+        // chi tiet nem Parse error - khong render duoc dong nao. Loi nay da that su nam
+        // trong tep va khong test nao bat duoc, vi khong test nao dung toi detail.blade.
+        $nguon = file_get_contents(base_path('resources/views/bhyt/ctdt/detail.blade.php'));
+
+        $this->assertNotFalse($nguon, 'Khong doc duoc detail.blade.php');
+
+        $php = \Illuminate\Support\Facades\Blade::compileString($nguon);
+
+        // token_get_all voi TOKEN_PARSE nem ParseError neu ma sinh ra khong hop le.
+        try {
+            token_get_all($php, TOKEN_PARSE);
+        } catch (\ParseError $e) {
+            $this->fail(
+                'detail.blade.php bien dich ra PHP hong: ' . $e->getMessage()
+                . ' - ca trang chi tiet se nem Parse error'
+            );
+        }
+
+        $this->assertTrue(true);
+    }
+
+    /** @test */
+    public function khoi_tom_tat_phan_biet_chua_kiem_voi_khong_loi()
+    {
+        // Con so 0 duoi nhan "So lo" tren mot ho so CHUA KIEM la mot loi noi doi: no doc
+        // ra la "da kiem, khong loi". Nguoi van hanh nhin thay no se khong bao gio nghi
+        // toi chuyen worker JobCtdt da chet.
+        //
+        // Va nhan phai la "Loi chan gui" chu khong phai "So loi": so_loi CHI dem loi muc
+        // chan, con badge tren tab Loi dem CA canh bao - hai con so khac nhau ma cung mot
+        // nhan thi nguoi doc se tuong mot trong hai cho dang hong.
+        $nguon = file_get_contents(base_path('resources/views/bhyt/ctdt/detail.blade.php'));
+
+        $this->assertContains(
+            'Lỗi chặn gửi',
+            $nguon,
+            'Khoi tom tat phai dat nhan "Loi chan gui", khong phai "So loi"'
+        );
+        $this->assertNotContains(
+            '<strong>Số lỗi:</strong>',
+            $nguon,
+            'Nhan cu "So loi" gay hieu nham voi badge tren tab Loi (badge dem ca canh bao)'
+        );
+
+        $this->assertContains(
+            "empty(\$hoSo->checked_at) ? 'Chưa kiểm' : \$hoSo->so_loi",
+            $nguon,
+            'Khoi tom tat phai hien "Chua kiem" khi checked_at rong, khong phai con so 0'
+        );
+    }
 }

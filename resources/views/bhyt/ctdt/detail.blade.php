@@ -100,8 +100,12 @@ $(function () {
         napTab(dau.data('loai'));
     }
 
-    // Nut "Xoa ho so": chi hien voi superadministrator (Blade @if o tren), nhung van hoi
+    // Nut "Xoa ho so": chi hien voi superadministrator (chi thi @@if o tren), nhung van hoi
     // lai truoc khi xoa - dinh xoa nham mot ho so co MaGD la mat dau vet doi soat voi BHXH.
+    //
+    // Phai viet @@if (hai dau a-cong) chu khong phai mot dau: Blade dich MOI chi thi no
+    // thay - ke ca trong chu thich JavaScript nhu dong nay - va mot chi thi khong ngoac
+    // sinh ra PHP hong, lam CA trang chi tiet nem Parse error, khong render duoc dong nao.
     $('#btn-xoa-ho-so').on('click', function () {
         var maHoSo = @json($hoSo->ma_ho_so);
         var maGd = @json($hoSo->ma_gd);
