@@ -185,10 +185,13 @@ class CtdtPhongBiTest extends TestCase
     /** @test */
     public function CT2025_base64_giu_NGUYEN_VAN_chuoi_goc_khong_serialize_lai()
     {
-        // Parse chi de KIEM. Base64 lai ban da serialize se doi khoang trang va khai bao,
-        // lam noi dung gui len cong khac voi noi dung da nap - va tab "XML goc" tren man
-        // chi tiet se noi mot dang khac voi thu BHXH nhan duoc.
-        $goc = '<CT03>  <MA_YTE>YT001</MA_YTE>  </CT03>';
+        // Parse chi de KIEM. Base64 lai ban da serialize se doi kieu nhay thuoc tinh va dang
+        // the rong, lam noi dung gui len cong khac voi noi dung da nap - va tab "XML goc" tren
+        // man chi tiet se noi mot dang khac voi thu BHXH nhan duoc. Dung nhay don + the rong
+        // vi DOMDocument::saveXML() CHUAN HOA ca hai thanh nhay kep + tu dong (dang
+        // '<CT03 attr="YT001"/>'), nen mot phep so sanh ngay tho voi khoang trang se khong
+        // phat hien duoc dot bien nay.
+        $goc = "<CT03 attr='YT001'></CT03>";
 
         $goi = simplexml_load_string(CtdtPhongBi::dung($this->hoSoCt2025(), [
             ['loai_ho_so' => 'CT03', 'noi_dung_goc' => $goc],
