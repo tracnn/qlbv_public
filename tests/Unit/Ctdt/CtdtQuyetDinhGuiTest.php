@@ -105,6 +105,16 @@ class CtdtQuyetDinhGuiTest extends TestCase
         $this->assertSame(CtdtQuyetDinhGui::CON_LOI, CtdtQuyetDinhGui::nen(true, 1, '2', true));
         $this->assertSame(CtdtQuyetDinhGui::CHUA_KY, CtdtQuyetDinhGui::nen(true, 1, 0, null));
         $this->assertSame(CtdtQuyetDinhGui::CHUA_KY, CtdtQuyetDinhGui::nen(true, 1, 0, '0'));
+
+        // Phep ep (int) o nhanh so_loi: '0.5' > 0 cho true, con (int)'0.5' > 0 cho false.
+        // Day la HAI gia tri duy nhat phan biet duoc hai cach viet - 'abc' hay '2abc' deu
+        // cho cung ket qua o ca hai ben nen khong canh duoc gi.
+        //
+        // so_loi la cot integer nen phan so khong den tu luong that; phep ep kieu la lop
+        // phong ve, va lop phong ve khong co gi canh thi lan refactor sau se go no di ma
+        // khong ai biet.
+        $this->assertSame(CtdtQuyetDinhGui::GUI, CtdtQuyetDinhGui::nen(true, 1, '0.5', true));
+        $this->assertSame(CtdtQuyetDinhGui::GUI, CtdtQuyetDinhGui::nen(true, 1, 0.5, true));
     }
 
     /** @test */
