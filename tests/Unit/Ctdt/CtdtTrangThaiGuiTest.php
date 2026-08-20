@@ -54,6 +54,31 @@ class CtdtTrangThaiGuiTest extends TestCase
     }
 
     /** @test */
+    public function chua_kiem_uu_tien_hon_con_loi_khi_so_loi_cu_con_dong()
+    {
+        // Luong that (CheckCtdtJob) ghi so_loi va checked_at CUNG MOT LUC, nen ho so
+        // checked_at = null VOI so_loi > 0 khong tung xay ra trong du lieu that. Nhung
+        // chinh vi khong ai gap no ma thu tu uu tien giua CHUA_KIEM va CON_LOI trong
+        // cua() chua bao gio bi canh: dao hai nhanh do cho nhau se khong lam do bat ky
+        // test nao khac.
+        //
+        // Neu sau nay co duong nao reset checked_at (vi du nap lai ho so) ma quen reset
+        // so_loi, thu tu nay la thu quyet dinh man hinh hien "Chua kiem" hay "Con loi
+        // chan". "Chua kiem" moi dung, vi con so so_loi luc do da CU - no la ket qua cua
+        // lan kiem TRUOC, khong phai ket qua kiem cua du lieu hien tai.
+        $hoSo = $this->hoSo([
+            'checked_at' => null, 'so_loi' => 5, 'is_signed' => true,
+        ]);
+
+        $this->assertSame(
+            CtdtTrangThaiGui::CHUA_KIEM,
+            CtdtTrangThaiGui::cua($hoSo),
+            'Ho so checked_at = null phai la CHUA_KIEM du so_loi > 0 - so_loi luc nay la '
+            . 'du lieu CU, khong dang tin'
+        );
+    }
+
+    /** @test */
     public function da_kiem_va_sach_thi_khong_bi_chan_nham()
     {
         // Mat kia cua bat bien: cua chan chi duoc dong voi ho so CHUA kiem. Neu no dong

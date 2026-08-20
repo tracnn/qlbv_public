@@ -331,6 +331,16 @@ class CtdtDanhSachTest extends TestCase
         $this->taoHoSo(['ma_ho_so' => 'K_CHUA_KIEM_DA_KY', 'checked_at' => null, 'so_loi' => 0, 'is_signed' => true]);
         $this->taoHoSo(['ma_ho_so' => 'L_CHUA_KIEM_CO_KET_QUA', 'checked_at' => null, 'so_loi' => 0, 'is_signed' => true, 'ma_ket_qua' => '200']);
 
+        // M: chua kiem NHUNG so_loi > 0. Luong that hien tai khong sinh ra duoc ca nay -
+        // CheckCtdtJob ghi so_loi va checked_at CUNG MOT LUC - nhung chinh vi vay thu tu
+        // uu tien giua CHUA_KIEM va CON_LOI trong CtdtTrangThaiGui::cua() chua tung bi
+        // canh: dao hai nhanh do cho nhau, 11 ho so con lai van xanh het vi khong ho so
+        // nao gap ca hai dieu kien cung luc. Neu sau nay co duong nao reset checked_at ma
+        // quen reset so_loi (vi du: nap lai file nhung khong xoa ket qua kiem cu), thu tu
+        // nay la thu quyet dinh ho so hien "Chua kiem" hay "Con loi chan" - va "Chua kiem"
+        // moi la cau tra loi dung, vi con so so_loi luc do da CU, khong con dang tin.
+        $this->taoHoSo(['ma_ho_so' => 'M_CHUA_KIEM_CON_LOI', 'checked_at' => null, 'so_loi' => 5, 'is_signed' => false]);
+
         $tatCaHoSo = CtdtHoSo::all();
 
         $cacTrangThaiCanKiem = [

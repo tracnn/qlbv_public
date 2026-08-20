@@ -72,7 +72,7 @@ Máy chủ cổng: `https://egw.baohiemxahoi.gov.vn`. Lấy token dùng lại
 Vì vậy **module hiện chưa gọi mạng** — triển khai lên máy chủ ở trạng thái này không ảnh hưởng
 gì tới XML3176 hay bất kỳ nghiệp vụ nào đang chạy.
 
-⚠️ **Từ Giai đoạn 3, một cột "Lỗi chặn gửi" bằng `0` KHÔNG còn là chuyện đương nhiên.** Hồ sơ nạp
+⚠️ **Từ Giai đoạn 3, một cột "Số lỗi" bằng `0` KHÔNG còn là chuyện đương nhiên.** Hồ sơ nạp
 xong sẽ được đẩy vào hàng đợi `JobCtdt` để kiểm; nếu worker của hàng đợi đó không chạy thì không
 hồ sơ nào được kiểm, và số lỗi sẽ đứng yên ở `0` — trông y như mọi hồ sơ đều sạch. Đây chính là
 lý do có trạng thái riêng **"Chưa kiểm"**: hồ sơ chưa đi qua bộ kiểm được gắn nhãn "Chưa kiểm"
