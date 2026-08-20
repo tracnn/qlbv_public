@@ -501,6 +501,15 @@ Kết quả trả về theo khuôn `Xml3176ImportResult` / `Xml3176ImportFileRes
 
 ### 5.4. `CtdtChecker`
 
+> ⚠️ **BẢNG DƯỚI ĐÂY ĐÃ LỖI THỜI — đừng dựng mã theo nó.** Bộ mã lỗi đã được đánh số lại ở
+> Giai đoạn 3 (gộp ba mã ngày làm một, hạ `MA_THE` xuống mức cảnh báo, bỏ mã dành cho tham số
+> API). Bảng **có hiệu lực** nằm ở [`docs/chung-tu-dien-tu-pl02.md`](../../chung-tu-dien-tu-pl02.md)
+> mục 6, cùng lý do của từng điều chỉnh; nguồn sự thật là `config/ctdt.php` khóa `ma_loi`.
+> Đáng chú ý nhất: `CTDT008` trong mã hiện tại là *"thiếu mã thẻ BHYT", mức cảnh báo*, **không**
+> phải *"ngày ra sớm hơn ngày vào", mức chặn* như bảng dưới.
+>
+> Mục này giữ nguyên như bản ghi lịch sử của lúc thiết kế.
+
 Quy tắc chung, áp cho mọi loại:
 
 | Mã lỗi | Kiểm | Mức |

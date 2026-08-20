@@ -4,7 +4,7 @@
 > ban hành kèm công văn BHXH Việt Nam 2025.
 >
 > Mọi `file:line` trích từ mã nguồn thực tế; khi mã thay đổi cần đối chiếu lại.
-> Cập nhật: 2026-08-19 — **Giai đoạn 1 (nền dữ liệu), 2A (nền nạp) và 2B (ba màn hình) đã hoàn tất.**
+> Cập nhật: 2026-08-20 — **Giai đoạn 1 (nền dữ liệu), 2A (nền nạp), 2B (ba màn hình) và 3 (bộ kiểm lỗi) đã hoàn tất.**
 
 ---
 
@@ -46,7 +46,7 @@ Máy chủ cổng: `https://egw.baohiemxahoi.gov.vn`. Lấy token dùng lại
 
 ## 2. Trạng thái hiện tại
 
-**Đã có (Giai đoạn 1 — nền dữ liệu; 2A — nền nạp; 2B — ba màn hình):**
+**Đã có (Giai đoạn 1 — nền dữ liệu; 2A — nền nạp; 2B — ba màn hình; 3 — bộ kiểm lỗi):**
 
 | Thành phần | Vị trí |
 |---|---|
@@ -62,15 +62,23 @@ Máy chủ cổng: `https://egw.baohiemxahoi.gov.vn`. Lấy token dùng lại
 | Cây ngoại lệ nạp | `app/Services/Ctdt/Loi/` |
 | Ba màn hình | `app/Http/Controllers/BHYT/BHYTCtdtController.php`, `resources/views/bhyt/ctdt/` |
 | Suy trạng thái, bộ lọc, tab động, nhãn trường | `app/Services/Ctdt/CtdtTrangThaiGui.php`, `CtdtDanhSach.php`, `CtdtDetailTabs.php`, `CtdtNhanTruong.php` |
-| 239 test đơn vị | `tests/Unit/Ctdt/` |
+| Bộ kiểm lỗi | `app/Services/Ctdt/Kiem/CtdtChecker.php`, `config/ctdt.php` khóa `ma_loi` |
+| Job kiểm, một hồ sơ một job | `app/Jobs/CheckCtdtJob.php` |
+| 323 test đơn vị | `tests/Unit/Ctdt/` |
 
-**Chưa có (đúng phạm vi, không phải thiếu sót):** bộ kiểm lỗi và job kiểm (Giai đoạn 3); ký số,
-service gửi lên cổng, nút "Ký và gửi" (Giai đoạn 4); xuất Excel, lệnh Console quét thư mục,
-dashboard (Giai đoạn 5).
+**Chưa có (đúng phạm vi, không phải thiếu sót):** ký số, service gửi lên cổng, nút "Ký và gửi"
+(Giai đoạn 4); xuất Excel, lệnh Console quét thư mục, dashboard (Giai đoạn 5).
 
 Vì vậy **module hiện chưa gọi mạng** — triển khai lên máy chủ ở trạng thái này không ảnh hưởng
-gì tới XML3176 hay bất kỳ nghiệp vụ nào đang chạy. Cột **Số lỗi** trên màn danh sách luôn bằng
-`0` cho tới khi Giai đoạn 3 xong; đó là đúng, không phải hỏng.
+gì tới XML3176 hay bất kỳ nghiệp vụ nào đang chạy.
+
+⚠️ **Từ Giai đoạn 3, một cột "Lỗi chặn gửi" bằng `0` KHÔNG còn là chuyện đương nhiên.** Hồ sơ nạp
+xong sẽ được đẩy vào hàng đợi `JobCtdt` để kiểm; nếu worker của hàng đợi đó không chạy thì không
+hồ sơ nào được kiểm, và số lỗi sẽ đứng yên ở `0` — trông y như mọi hồ sơ đều sạch. Đây chính là
+lý do có trạng thái riêng **"Chưa kiểm"**: hồ sơ chưa đi qua bộ kiểm được gắn nhãn "Chưa kiểm"
+(cột "Trạng thái gửi" trên màn danh sách, và khối tóm tắt trên màn chi tiết) chứ **không** rơi vào
+"Chờ gửi", nên một worker chết là chuyện nhìn thấy được ngay trên màn hình. Xem mục 8, khối
+"Worker hàng đợi — BẮT BUỘC từ Giai đoạn 3".
 
 Lộ trình 5 giai đoạn và ghi chú chuyển tiếp: xem
 [docs/superpowers/specs/2026-08-19-chung-tu-dien-tu-pl02-design.md](superpowers/specs/2026-08-19-chung-tu-dien-tu-pl02-design.md)
@@ -201,7 +209,52 @@ thứ duy nhất giữ chín bản không trôi khỏi nhau.
 
 ---
 
-## 6. Một hạn chế đã biết
+## 6. Bộ mã lỗi của bộ kiểm — bảng có hiệu lực
+
+Nguồn sự thật là `config/ctdt.php` khóa `ma_loi`; bảng dưới là bản chép của nó tại thời điểm
+Giai đoạn 3 hoàn tất. Bộ kiểm là `app/Services/Ctdt/Kiem/CtdtChecker.php` (hàm thuần), job ghi
+kết quả là `app/Jobs/CheckCtdtJob.php`.
+
+| Mã | Kiểm gì | Mức |
+|---|---|---|
+| `CTDT001` | Trường bắt buộc rỗng | chặn |
+| `CTDT002` | Trường ngày sai định dạng (độ dài nào cũng vào mã này) | chặn |
+| `CTDT003` | `GIOI_TINH` ngoài giá trị cho phép | chặn |
+| `CTDT004` | `LOAI_GIAYTO` ngoài giá trị cho phép | chặn |
+| `CTDT005` | Trường cờ (`TEKT`, `DINH_CHI_THAI_NGHEN`, `IS_*`, `CAP_LAN_DAU`, `SINHCON_*`) ngoài `0/1` | cảnh báo |
+| `CTDT006` | Ngày kết thúc sớm hơn ngày bắt đầu | chặn |
+| `CTDT007` | `MACSKCB` trong chứng từ lệch với mã cơ sở của hồ sơ | chặn |
+| `CTDT008` | Thiếu mã thẻ BHYT | **cảnh báo** |
+
+Chỉ lỗi mức **chặn** mới cộng vào `ctdt_ho_so.so_loi` và mới chặn việc gửi. Lỗi mức cảnh báo vẫn
+hiện đủ trên tab "Lỗi" của màn chi tiết — vì vậy badge trên tab (đếm **cả** cảnh báo) thường lớn
+hơn con số "Lỗi chặn gửi" ở khối tóm tắt. Hai con số khác nhau là đúng.
+
+### Vì sao lệch với bảng trong đặc tả
+
+Mục 5.4 của [tệp đặc tả](superpowers/specs/2026-08-19-chung-tu-dien-tu-pl02-design.md) còn giữ
+bộ mã **cũ** của lúc thiết kế. Bảng trên mới là bảng có hiệu lực. Ba điều chỉnh, và lý do:
+
+1. **Gộp ba mã ngày (`CTDT002`/`CTDT003`/`CTDT004` cũ) thành một `CTDT002`.** Đặc tả tách theo độ
+   dài chuỗi — 8, 12, 14 ký tự — như thể mỗi độ dài là một loại lỗi khác nhau. Nhưng **cùng một
+   tên thẻ có độ dài khác nhau tùy loại chứng từ**: `NGAY_VAO` của CT03 là 12 ký tự, còn
+   `NGAY_VAO` của CT06 là 8. Giữ ba mã thì cùng một sai sót của người nhập lại được báo bằng ba
+   mã khác nhau tùy chứng từ nó nằm trong — người sửa hồ sơ không tra cứu nổi.
+2. **`MA_THE` để mức cảnh báo, không phải chặn.** PL02 có thẻ `TEKT` (trẻ em chưa có thẻ) và giá
+   trị `1` của nó là **hợp lệ**: đó là hồ sơ trẻ sơ sinh chưa được cấp thẻ BHYT. Đặt "thiếu mã
+   thẻ" ở mức chặn sẽ chặn nhầm **mọi hồ sơ trẻ sơ sinh** — đúng nhóm mà thẻ `TEKT` sinh ra để
+   xử lý.
+3. **Bỏ `CTDT010` (độ dài `username`/`password`/`macskcb`).** Đó là ràng buộc của **tham số gọi
+   API**, không phải nội dung chứng từ. Bộ kiểm nhận một mảng dữ liệu chứng từ và không hề thấy
+   thông tin đăng nhập; chỗ đúng để canh chúng là service gửi của Giai đoạn 4.
+
+⚠️ **Người làm Giai đoạn 4 đọc kỹ:** trong mã hiện tại `CTDT008` là **"thiếu mã thẻ BHYT", mức
+cảnh báo** — *không* phải "ngày ra sớm hơn ngày vào, mức chặn" như bảng cũ trong đặc tả. Dựng
+theo bảng cũ sẽ chặn nhầm đúng nhóm trẻ sơ sinh nói trên.
+
+---
+
+## 7. Một hạn chế đã biết
 
 **Hồ sơ chỉ gồm CT04 / CT06 / CT07 sẽ không ghi đè được khi nạp lại.** Ba loại này **không có**
 thẻ `MA_YTE`, nên khóa nghiệp vụ phải lùi về `Id` GUID của `THONGTINHOSO` — mà GUID đổi mỗi lần
@@ -213,7 +266,7 @@ cảnh báo "hồ sơ không có mã y tế".
 
 ---
 
-## 7. Triển khai
+## 8. Triển khai
 
 ### Hiện tại (sau Giai đoạn 3)
 
@@ -265,13 +318,13 @@ lại — thao tác tốn thời gian nhất trong chuỗi.
 
 ---
 
-## 8. Kiểm thử
+## 9. Kiểm thử
 
 ```bash
 php vendor/bin/phpunit tests/Unit/Ctdt
 ```
 
-Kỳ vọng `OK (315 tests)`.
+Kỳ vọng `OK (323 tests)`.
 
 ⚠️ Repo có sẵn test đỏ **không liên quan** module này: suite `Unit` cho 4 lỗi + 7 đỏ
 (`NhapDanhMucUniqueTest`, `OrderCheck\CatalogLookupTest`, `BHYT\Xml3176ExportLocCoSoTest`,
@@ -288,7 +341,7 @@ Kỳ vọng `OK (315 tests)`.
 
 ---
 
-## 9. Tài liệu liên quan
+## 10. Tài liệu liên quan
 
 | Tài liệu | Nội dung |
 |---|---|
