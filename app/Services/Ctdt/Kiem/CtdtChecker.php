@@ -68,10 +68,11 @@ class CtdtChecker
 
             $kieu = CtdtQuyTac::kieuCua($the);
 
-            if ($kieu === 'ngay' && !self::ngayHopLe($giaTri)) {
+            if ($kieu === 'ngay' && !self::ngayHopLe($giaTri, CtdtQuyTac::choPhepChiNam($the))) {
                 $loi[] = self::loi('CTDT002', $the,
-                    $the . ' = "' . $giaTri . '" không phải ngày hợp lệ'
-                    . ' (cần 8, 12 hoặc 14 chữ số và là ngày có thật)');
+                    $the . ' = "' . $giaTri . '" không phải ngày hợp lệ (cần '
+                    . (CtdtQuyTac::choPhepChiNam($the) ? '4, ' : '')
+                    . '8, 12 hoặc 14 chữ số và là ngày có thật)');
             } elseif ($kieu === 'gioi_tinh' && !in_array($giaTri, ['1', '2', '3'], true)) {
                 $loi[] = self::loi('CTDT003', $the,
                     $the . ' = "' . $giaTri . '" ngoài giá trị cho phép (1 Nam, 2 Nữ, 3 chưa xác định)');
@@ -135,8 +136,15 @@ class CtdtChecker
      * KHONG ghim do dai theo tung the: cung mot ten the co do dai khac nhau tuy loai -
      * NGAY_VAO cua CT03 la 12 ky tu con cua CT06 la 8.
      */
-    private static function ngayHopLe($giaTri)
+    private static function ngayHopLe($giaTri, $choPhepChiNam = false)
     {
+        // Dang chi co nam: hop le NGAY tai day, khong di tiep xuong checkdate() vi khong co
+        // thang/ngay de kiem. Chi mo cho nhung the trong CtdtQuyTac::CHI_NAM - xem chu thich
+        // o do de biet vi sao danh sach phai hep.
+        if ($choPhepChiNam && preg_match('/^\d{4}$/', $giaTri)) {
+            return true;
+        }
+
         if (!preg_match('/^\d{8}$|^\d{12}$|^\d{14}$/', $giaTri)) {
             return false;
         }
