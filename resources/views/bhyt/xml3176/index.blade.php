@@ -292,29 +292,38 @@
                 [10, 25, 50, 100, 200, 500, 1000, 2000], 
                 [10, 25, 50, 100, 200, 500, 1000, 2000]
             ],
+            // Ho ten, ma the, ma benh nhan... deu doc thang tu tep XML co so KCB nap len
+            // (du lieu ngoai, khong qua kiem duyet). DataTables 1.10.16 gan thang
+            // nTd.innerHTML = gia tri khi cot KHONG co render, nen moi cot hien gia tri
+            // tu CSDL PHAI co render.text(); moi gia tri noi vao chuoi HTML trong render
+            // rieng PHAI qua $('<div>').text(x).html().
+            // Bon cot exported_at / submitted_at / is_signed / action nam trong
+            // rawColumns() phia controller (chuoi HTML that su), nen KHONG boc text() o
+            // day - viec thoat cua chung lam o BHYTXml3176Controller::fetchData().
             "columns": [
-                { "data": "ma_lk" },
-                { 
-                    "data": null, 
+                { "data": "ma_lk", render: $.fn.dataTable.render.text() },
+                {
+                    "data": null,
                     "render": function (data, type, row) {
-                        return '<input type="checkbox" class="row-select" value="' + row.ma_lk + '">';
-                    }, 
+                        return '<input type="checkbox" class="row-select" value="'
+                            + $('<div>').text(row.ma_lk).html() + '">';
+                    },
                     "orderable": false,
-                    "searchable": false 
+                    "searchable": false
                 },
                 { "data": "exported_at", "orderable": false, "searchable": false },
                 { "data": "submitted_at", "orderable": false, "searchable": false },
-                { "data": "ma_bn" },
-                { "data": "ho_ten" },
-                { "data": "ma_the_bhyt" },
-                { "data": "ngay_sinh" },
-                { "data": "ngay_vao" },
-                { "data": "ngay_ra" },
-                { "data": "ngay_ttoan" },
-                { "data": "created_at" },
-                { "data": "updated_at" },
+                { "data": "ma_bn", render: $.fn.dataTable.render.text() },
+                { "data": "ho_ten", render: $.fn.dataTable.render.text() },
+                { "data": "ma_the_bhyt", render: $.fn.dataTable.render.text() },
+                { "data": "ngay_sinh", render: $.fn.dataTable.render.text() },
+                { "data": "ngay_vao", render: $.fn.dataTable.render.text() },
+                { "data": "ngay_ra", render: $.fn.dataTable.render.text() },
+                { "data": "ngay_ttoan", render: $.fn.dataTable.render.text() },
+                { "data": "created_at", render: $.fn.dataTable.render.text() },
+                { "data": "updated_at", render: $.fn.dataTable.render.text() },
                 { "data": "is_signed", "orderable": false, "searchable": false },
-                { "data": "imported_by", "orderable": false, "searchable": false },
+                { "data": "imported_by", "orderable": false, "searchable": false, render: $.fn.dataTable.render.text() },
                 { "data": "action" },
             ],
         });
@@ -388,6 +397,15 @@
         var $khung = $(this).closest('[data-url]');
         $khung.data('url', $(this).data('url')).data('daNap', false);
         napKhung($khung);
+    });
+
+    // Nut xoa mang ma_lk trong thuoc tinh data-ma-lk thay vi trong mot loi goi JS noi
+    // chuoi o thuoc tinh onclick. ma_lk den tu tep XML ben ngoai: nam trong chuoi JS do
+    // thi mot ma_lk chua dau nhay se thoat ra va chay ma tuy y.
+    $(document).on('click', '#xml-list .xml3176-xoa', function () {
+        // .attr() chu khong .data(): .data() tu ep chuoi toan so ve Number, ma_lk dai
+        // se mat do chinh xac va URL xoa tro sai ho so.
+        deleteXML($(this).attr('data-ma-lk'));
     });
 
     function deleteXML(ma_lk) {

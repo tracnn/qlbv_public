@@ -375,12 +375,19 @@ class BHYTXml3176Controller extends Controller
         ->editColumn('ngay_ttoan', function($result) {
             return $result->ngay_ttoan ? strtodatetime($result->ngay_ttoan) : $result->ngay_ttoan;
         })
+        // CHU Y cho ca 4 cot exported_at / submitted_at / is_signed / action: chung nam
+        // trong rawColumns() nen yajra KHONG chay e() len chung (datatables.columns.escape
+        // = '*' chi phu cho cac cot con lai), va DataTables gan thang chuoi nay vao
+        // innerHTML. Moi gia tri dong vao HTML o day - ke ca khi chi nam trong title="..."
+        // - PHAI qua e(): thong bao loi va sign_method den tu phan hoi cong BHXH, con
+        // ma_lk / ho_ten den tu tep XML do co so KCB nap len.
         ->addColumn('exported_at', function ($result) {
             $tooltip = $result->Xml3176Information && $result->Xml3176Information->exported_at 
                 ? $result->Xml3176Information->exported_at
                 : ($result->Xml3176Information && $result->Xml3176Information->export_error
                     ? $result->Xml3176Information->export_error
                     : 'Not exported');
+            $tooltip = e($tooltip);
             $icon = $result->Xml3176Information && $result->Xml3176Information->export_error
                 ? '<i class="fa fa-times-circle text-warning" title="'.$tooltip.'"></i>'
                 : ($result->Xml3176Information && $result->Xml3176Information->exported_at
@@ -394,6 +401,7 @@ class BHYTXml3176Controller extends Controller
                 : ($result->Xml3176Information && $result->Xml3176Information->submit_error
                     ? $result->Xml3176Information->submit_error
                     : 'Not submitted');
+            $tooltip = e($tooltip);
             $icon = $result->Xml3176Information && $result->Xml3176Information->submit_error
                 ? '<i class="fa fa-times-circle text-warning" title="'.$tooltip.'"></i>'
                 : ($result->Xml3176Information && $result->Xml3176Information->submitted_at
@@ -411,11 +419,11 @@ class BHYTXml3176Controller extends Controller
         })
         ->addColumn('is_signed', function ($result) {
             $signMethod = $result->Xml3176Information && $result->Xml3176Information->sign_method 
-                ? ' (' . $result->Xml3176Information->sign_method . ')' 
+                ? ' (' . e($result->Xml3176Information->sign_method) . ')' 
                 : '';
             return $result->Xml3176Information && $result->Xml3176Information->is_signed ? 
             '<i class="fa fa-check-circle text-success" title="Đã ký số' . $signMethod . '"></i>' : 
-            ($result->Xml3176Information && $result->Xml3176Information->signed_error ? '<i class="fa fa-times-circle text-danger" title="'.$result->Xml3176Information->signed_error.'"></i>' : '<i class="fa fa-times-circle text-danger" title="Chưa ký số"></i>');
+            ($result->Xml3176Information && $result->Xml3176Information->signed_error ? '<i class="fa fa-times-circle text-danger" title="'.e($result->Xml3176Information->signed_error).'"></i>' : '<i class="fa fa-times-circle text-danger" title="Chưa ký số"></i>');
         })
         ->addColumn('imported_by', function ($result) {
             return $result->Xml3176Information->imported_by ?? null;
@@ -424,10 +432,17 @@ class BHYTXml3176Controller extends Controller
             // Truyen ca ma_cskcb: ho so nay thuoc co so nao thi tra bang tai khoan cong BHXH
             // cua co so do moi hop le. Khong truyen thi man tra cuu phai dung lai hoi nguoi
             // dung chon co so.
-            return '<a href="' . route('insurance.check-card.search',['card-number' => $result->ma_the_bhyt, 'name' => $result->ho_ten, 'birthday' => dob($result->ngay_sinh,0,8), 'ma_cskcb' => $result->ma_cskcb]) . '" class="btn btn-sm btn-success" target="_blank"><span class="glyphicon glyphicon-check"></span> Tra thẻ</a>
-                <a href="javascript:void(0);" onclick="deleteXML(\'' . $result->ma_lk . '\');" class="btn btn-sm btn-danger">
+            // ma_lk di vao thuoc tinh data-ma-lk (co e()) thay vi duoc noi thang vao mot
+            // loi goi JS trong thuoc tinh onclick: nam trong chuoi JS do thi mot ma_lk
+            // chua dau nhay se thoat ra va chay ma tuy y. Trinh xu ly bam nut nam trong
+            // bhyt/xml3176/index.blade.php.
+            $traThe = route('insurance.check-card.search', ['card-number' => $result->ma_the_bhyt, 'name' => $result->ho_ten, 'birthday' => dob($result->ngay_sinh,0,8), 'ma_cskcb' => $result->ma_cskcb]);
+            $emr = route('treatment-result.search', ['treatment_code' => $result->ma_lk]);
+
+            return '<a href="' . e($traThe) . '" class="btn btn-sm btn-success" target="_blank"><span class="glyphicon glyphicon-check"></span> Tra thẻ</a>
+                <a href="javascript:void(0);" data-ma-lk="' . e($result->ma_lk) . '" class="btn btn-sm btn-danger xml3176-xoa">
                                     <span class="glyphicon glyphicon-trash"></span> Xóa</a>
-                <a href="' .route('treatment-result.search',['treatment_code'=>$result->ma_lk]) .'" class="btn btn-sm btn-primary" target="_blank">
+                <a href="' . e($emr) . '" class="btn btn-sm btn-primary" target="_blank">
                                     <span class="glyphicon glyphicon-envelope"></span> EMR</a>';
         })
         ->setRowClass(function ($result) {
