@@ -1010,3 +1010,93 @@ tưởng nó đang bảo vệ điều gì.
   test nào render tệp cha nên không ai bắt. Nay có `CtdtBladeCompilesTest` quét cả
   `views/bhyt/ctdt/` và `views/bhyt/ctdt/partials/`. **Mọi màn hình mới phải có lưới tương đương** —
   chỉ thị Blade trong chú thích là lớp lỗi mà mắt người đọc lướt qua.
+
+## 15. Ghi chú chuyển tiếp — kết thúc Giai đoạn 4
+
+Đường ký và gửi đã chạy. Người vận hành bấm **Ký và gửi** trên màn chi tiết → controller kiểm bốn
+cửa chặn → `SignCtdtJob` (hàng đợi `JobSignCtdt`) dựng phong bì bằng `CtdtPhongBi`, ký bằng
+`XMLSignService`, lưu tệp lên disk `exportCtdt` → xâu chuỗi sang `SubmitCtdtJob` (hàng đợi
+`JobSubmitCtdt`) đọc tệp đã ký, gửi qua `CtdtSubmitService` lên cổng BHXH, ghi `MaGD` và mã kết quả.
+`tests/Unit/Ctdt` từ 325 lên **437 test**.
+
+### Ba lỗi nghiêm trọng review bắt được — đáng nhớ vì cả ba đều hỏng im lặng
+
+**1. Container Laravel 5.5 tiêm mọi tham số type-hint, kể cả khi có mặc định `null`.**
+`Illuminate\Container\BoundMethod:155-158` xét `getClass()` **trước** `isDefaultValueAvailable()`.
+`SubmitCtdtJob::handle(CtdtSubmitService $submitService = null)` vì thế **không bao giờ** nhận `null`
+khi hàng đợi chạy job, và bản container dựng ra mang `BHYTLoginService` **rỗng mã cơ sở** →
+`Thieu ma co so KCB` → **mọi hồ sơ đều gửi hỏng**. Bộ test 13/13 xanh không thấy vì test luôn gọi
+thẳng `->handle($gia)`. Cách sửa: `handle()` **không nhận tham số nào**, test tiêm qua thuộc tính
+công khai `$submitServiceGia`.
+
+Ngược lại, `SignCtdtJob::handle(XMLSignService $signService)` **an toàn** — `XMLSignService` không có
+khái niệm mã cơ sở, cấu hình lấy từ `organization.xml_sign` toàn cục. Khác biệt là **ngữ nghĩa**, không
+phải cú pháp: mọi job nhận dịch vụ phụ thuộc mã cơ sở qua tham số đều dính bẫy này.
+
+**2. Hai `ma_ho_so` khác nhau dồn về cùng một tệp đã ký.**
+Hàm làm sạch tên tệp ánh xạ nhiều-về-một: `YT#1` và `YT/1` đều ra `YT_1.xml`. Hai bản ghi cùng trỏ một
+tệp, cả hai `is_signed = true` — **gửi hồ sơ A sẽ đẩy lên cổng gói của hồ sơ B**, không dấu hiệu gì.
+Sửa bằng hậu tố `-<id>` (khoá chính, ổn định giữa các lần chạy lại nên vẫn ghi đè đúng chỗ).
+Kèm theo: regex ban đầu cho `.` đi qua nên `../` sau khi thay `/` bằng `_` vẫn còn `..`.
+
+**3. Giá trị từ cổng tràn cột làm `update()` ném SAU KHI cổng đã nhận hồ sơ.**
+`ma_gd VARCHAR(50)`, `ma_ket_qua VARCHAR(10)`, `thoi_gian_tiep_nhan VARCHAR(14)`,
+`submit_error VARCHAR(255)`, và `config/database.php` bật strict mode. `SubmitCtdtJob` **cố ý không
+bắt** exception (để hàng đợi thử lại khi mạng chập), `tries = 3`, mỗi lượt còn retry-on-401 một lần →
+tối đa **sáu lần POST cùng một gói**. Body PL02 không có mã giao dịch phía client nên cổng không khử
+trùng được. Và `failed()` — lưới cuối — tự nó ném vì cùng lý do.
+
+Đây là kẽ hở **liên-task** điển hình: độ rộng cột là di sản Giai đoạn 1, kẻ ghi vào là Giai đoạn 4;
+không review từng task nào đứng ở chỗ nhìn được cả hai. Sửa bằng cắt độ dài, **không** bằng migration —
+`submit_error` có index, đổi sang `TEXT` phải sửa index thành index có độ dài tiền tố, rủi ro trên CSDL
+đang chạy mà đổi lấy vài trăm ký tự vốn đã có đủ trong `submitted_message` (TEXT) và trong log.
+
+### Bốn cửa chặn, theo đúng thứ tự
+
+| Điều kiện | Ở đâu | Vì sao |
+|---|---|---|
+| `submit_enabled = false` | `CtdtQuyetDinhGui` | Không lần gửi nào diễn ra — ghi `submit_error` là bịa |
+| `checked_at` rỗng | `CtdtQuyetDinhGui` | `so_loi = 0` của hồ sơ chưa kiểm không có nghĩa là sạch |
+| `so_loi > 0` | `CtdtQuyetDinhGui` | Cổng cũng sẽ từ chối; chặn tại chỗ cho thông báo rõ hơn |
+| `sign_enabled = false` **và** hồ sơ chưa ký | controller `kyVaGui()` | Bấm nút cũng không đi đến đâu; hồ sơ **đã ký** thì vẫn gửi lại được |
+
+`CtdtQuyetDinhGui` hỏi cờ **trước**, còn `CtdtTrangThaiGui` hỏi tình trạng hồ sơ trước — khác nhau **có
+chủ đích**: một bên trả lời "có gửi không", bên kia trả lời "hiện chữ gì". Ghi chú giải thích hiện chỉ
+nằm ở `CtdtQuyetDinhGui`; `CtdtTrangThaiGui` **không nhắc ngược lại**, mà đó mới là phía dễ bị sửa nhầm.
+
+### Sáu việc Giai đoạn 5 nên xử lý
+
+1. **`CtdtTrangThaiGui` không phân biệt "ký hỏng" với "chưa ký".** Trên màn **danh sách**, hồ sơ có
+   `signed_error` vẫn hiện "Chưa ký số", và hồ sơ có `submit_error` mà chưa tới cổng vẫn hiện "Chờ gửi".
+   Người vận hành phải mở từng hồ sơ mới biết. Màn chi tiết đã hiện cả hai cột lỗi; màn danh sách thì chưa.
+2. **Không có cơ chế chống bấm hai lần.** Nút chỉ `disabled` cho tới khi ajax trả về. Không có trạng thái
+   "đang xử lý" trong CSDL, không kiểm "hồ sơ này đã có chain trong hàng đợi chưa". Bấm hai lần = hai lần
+   POST thật lên cổng.
+3. **Luật "chưa kiểm / còn lỗi" được chép tay ở ba nơi**: `CtdtQuyetDinhGui`, `CtdtTrangThaiGui`, và
+   `SignCtdtJob` (chỗ này không gọi `CtdtQuyetDinhGui`). Hiện đồng bộ, nhưng không gì buộc chúng đồng bộ.
+4. **Tên hàng đợi gõ ở năm nơi, không nơi nào là hằng** — `BHYTCtdtController` (mặc định lùi),
+   `install_service.bat`, `docs/organization.php`, tài liệu, test. `config/xml3176.php:37` và
+   `config/qd130xml.php:29` cho thấy quy ước dự án là khai trong `config/`.
+5. **`thoi_gian_tiep_nhan` cắt còn 14 ký tự cho ra giá trị vô nghĩa** nếu cổng đổi định dạng (ví dụ
+   `2026-08-20 08:30:00` → `2026-08-20 08:`). Đánh đổi chấp nhận được ở đợt "không động lược đồ" vì toàn
+   văn vẫn nằm trong `submitted_message`, nhưng nên nới cột khi có dịp sửa lược đồ.
+6. **`config($khoa, $macDinh)` KHÔNG lùi về mặc định khi khoá tồn tại nhưng giá trị là `null`.** Phải viết
+   `config($khoa) ?: $macDinh`. Đã sửa ở Giai đoạn 4; kiểm lại các chỗ khác trong module nếu có.
+
+### Việc phải kiểm bằng tay — không test nào thay được
+
+1. **Ký số thật.** Cắm USB token (hoặc bật HSM), bật `sign_enabled`, bấm Ký và gửi với `submit_enabled`
+   vẫn **tắt**. Mở tệp trong `D:\XML\ChungTuDienTu\da-ky\CT2025\` và xác nhận thẻ `CHUKYDONVI` đã có chữ
+   ký bên trong. **Cả phần phong bì dựa trên suy luận từ mã XML3176 — phải nhìn tận mắt một lần.**
+2. **Một hồ sơ thật lên cổng thử.** Bật `submit_enabled`, gửi **đúng một** hồ sơ, đọc `ma_ket_qua`. Nếu là
+   `205` thì phong bì sai — mở tab XML gốc đối chiếu. Phản hồi nguyên văn hiện ở khối `submitted_message`
+   trên màn chi tiết (đã tách khỏi nhánh lỗi, nên lần gửi **thành công** cũng xem được).
+3. **Đo kích thước.** Xem log dòng `CTDT gui ho so` để biết `so_ky_tu_base64` của hồ sơ lớn nhất, đối chiếu
+   với ngưỡng mã `1001` — tài liệu PL02 không nói ngưỡng đó là bao nhiêu.
+4. **Cắt mạng giữa chừng** để xác nhận job gửi được hàng đợi thử lại chứ không nuốt lỗi. Đồng thời quan sát
+   xem có sinh gửi trùng không (xem lỗi số 3 ở trên).
+5. **Ba worker.** `SELECT queue, COUNT(*) FROM jobs GROUP BY queue` phải về 0 sau khi xong. `JobCtdt`,
+   `JobSignCtdt`, `JobSubmitCtdt` — thiếu cái nào thì dây chuyền đứt ở đúng chỗ đó.
+6. **Nội dung `submitted_message`.** Đọc một phản hồi thật xem cổng có dội lại dữ liệu hồ sơ trong thân
+   thông báo không — cột này ghi nguyên văn không lọc và hiện trên màn chi tiết cho mọi người có quyền
+   `xml-man`.
