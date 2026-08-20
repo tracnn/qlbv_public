@@ -3,6 +3,7 @@
 namespace Tests\Unit\Ctdt;
 
 use Tests\TestCase;
+use Tests\Support\LocComment;
 use App\Services\Ctdt\CtdtQuyetDinhGui;
 
 /**
@@ -11,6 +12,8 @@ use App\Services\Ctdt\CtdtQuyetDinhGui;
  */
 class CtdtQuyetDinhGuiTest extends TestCase
 {
+    use LocComment;
+
     /** @test */
     public function du_dieu_kien_thi_GUI()
     {
@@ -115,12 +118,26 @@ class CtdtQuyetDinhGuiTest extends TestCase
     /** @test */
     public function KHONG_dung_lai_lop_QuyetDinhGui_cua_xml3176()
     {
-        // QuyetDinhGui::nen($guiBat, $daKy) dang duoc Xml3176Service va Qd130XmlService goi
-        // voi dung HAI tham so, va tests/Unit/QuyetDinhGuiTest.php khoa du moi to hop.
-        // Them tham so bat buoc vao do la lam vo hai duong san pham khong lien quan.
-        $ma = file_get_contents(base_path('app/Services/Ctdt/CtdtQuyetDinhGui.php'));
+        // BO COMMENT truoc khi quet: docblock cua lop CO nhac ten App\Services\Xml3176\
+        // QuyetDinhGui - va no phai nhac, vi nguoi doc sau nay can biet lop nao da bi co y
+        // khong dung lai. Quet ca comment la cam mot cau giai thich dang lam viec huu ich.
+        // Bat bien that su la MA khong tham chieu toi lop do.
+        $ma = $this->maKhongComment(base_path('app/Services/Ctdt/CtdtQuyetDinhGui.php'));
 
         $this->assertNotContains('Xml3176', $ma,
-            'CtdtQuyetDinhGui phai doc lap voi lop cua xml3176');
+            'CtdtQuyetDinhGui phai doc lap voi lop cua xml3176 trong MA, khong chi trong y dinh');
+    }
+
+    /** @test */
+    public function KHONG_lam_vo_chu_ky_hai_tham_so_cua_lop_dung_chung()
+    {
+        // Day moi la thu that su vo ra se lam hong Xml3176Service va Qd130XmlService: chung
+        // goi nen() voi dung HAI tham so. Neu ai do sau nay them tham so bat buoc vao lop
+        // dung chung, hai duong san pham do do ngay - nhung khong test nao cua Giai doan 4
+        // bat duoc, tru test nay.
+        $ma = $this->maKhongComment(base_path('app/Services/Xml3176/QuyetDinhGui.php'));
+
+        $this->assertContains('function nen($guiBat, $daKy)', $ma,
+            'Lop dung chung phai giu nguyen chu ky hai tham so');
     }
 }
