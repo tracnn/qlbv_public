@@ -50,8 +50,12 @@ class CtdtCheckerTest extends TestCase
     /** @test */
     public function truong_bat_buoc_vang_han_cung_sinh_CTDT001()
     {
+        // Dung HO_TEN chu khong phai MA_YTE: MA_YTE khong con la truong bat buoc (cong van
+        // 2076 cho phep de trong de BHXH tu sinh). Bat bien can canh o day la "vang HAN cung
+        // bi bat", khong phai "MA_YTE bi bat" - array_key_exists() va trim('') la hai duong
+        // khac nhau, va chi mot trong hai duoc test o cho khac.
         $duLieu = $this->ct03HopLe();
-        unset($duLieu['MA_YTE']);
+        unset($duLieu['HO_TEN']);
 
         $this->assertContains('CTDT001', $this->maLoi(CtdtChecker::kiem('CT03', $duLieu, '01929')));
     }

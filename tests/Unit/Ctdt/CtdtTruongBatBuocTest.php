@@ -40,18 +40,39 @@ class CtdtTruongBatBuocTest extends TestCase
     /** @test */
     public function khoa_nghiep_vu_la_bat_buoc_o_nhung_loai_co_no()
     {
-        $this->assertContains('MA_YTE', CtdtTruongBatBuoc::cua('CT03'));
-        $this->assertContains('MA_YTE', CtdtTruongBatBuoc::cua('GIAYDIEUTRINOITRU'));
         $this->assertContains('MA_GBT', CtdtTruongBatBuoc::cua('GIAYBAOTU'));
         $this->assertContains('MA_GCS', CtdtTruongBatBuoc::cua('GIAYCHUNGSINH'));
     }
 
     /** @test */
-    public function ba_loai_khong_co_MA_YTE_thi_khong_doi_no()
+    public function MA_YTE_KHONG_bat_buoc_o_bat_ky_loai_nao()
     {
-        // CT04, CT06, CT07 khong co the MA_YTE trong dac ta.
-        foreach (['CT04', 'CT06', 'CT07'] as $loai) {
-            $this->assertNotContains('MA_YTE', CtdtTruongBatBuoc::cua($loai));
+        // Cong van 2076/BHXH-CNTT, Phu luc 02, muc 3.4 (bang truong cua CT03): cot "Bat buoc"
+        // cua MA_YTE BO TRONG, va dien giai ghi ro:
+        //
+        //   "Ma y te dinh danh chung tu cua cskcb, DE TRONG DE HE THONG BHXH TU SINH
+        //    (chi nen su dung 1 cach)"
+        //
+        // De trong la DUNG dac ta, khong phai loi. Truoc day ta bat buoc no, va dieu do chan
+        // 97% ho so that (1049/1050 CT03 va 923/923 GIAYDIEUTRINOITRU deu co the MA_YTE nhung
+        // gia tri rong) - phan mem sinh XML lam dung, quy tac cua ta moi sai.
+        //
+        // Xac nhan bang lan gui that dau tien: MaGD cong tra ve la HS_CHUNGTU01929_<GUID>,
+        // dung la ma BHXH tu sinh.
+        foreach (array_keys(CtdtLoaiRegistry::tatCa()) as $loai) {
+            $this->assertNotContains('MA_YTE', CtdtTruongBatBuoc::cua($loai),
+                $loai . ': MA_YTE khong duoc la truong bat buoc');
+        }
+    }
+
+    /** @test */
+    public function MA_YTE_cung_KHONG_nam_o_muc_khuyen_nghi()
+    {
+        // Khong ha xuong canh bao: dac ta cho phep de trong nhu mot trong hai cach dung hop
+        // le. Canh bao tren gan nhu MOI ho so la mot bien canh bao vo nghia, va nguoi van
+        // hanh se hoc cach bo qua ca cot so loi - dung dieu docblock cua lop nay canh bao.
+        foreach (array_keys(CtdtLoaiRegistry::tatCa()) as $loai) {
+            $this->assertNotContains('MA_YTE', CtdtTruongBatBuoc::khuyenNghi($loai), $loai);
         }
     }
 
