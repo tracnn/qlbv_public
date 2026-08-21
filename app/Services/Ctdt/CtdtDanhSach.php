@@ -143,6 +143,26 @@ class CtdtDanhSach
         }
 
         // GUI_TAT va CHUA_GUI cung la "da ky, chua co ket qua tu cong VA chua tung gui hong".
+        //
+        // Hai trang thai nay phan biet nhau bang CAU HINH chu khong bang du lieu ban ghi:
+        // CtdtTrangThaiGui::cua() hoi submit_enabled o dung cho nay. Neu o day khong hoi
+        // cung cai co do thi hai bo loc sinh Y HET mot cau SQL, va MOT ho so bi dem VAO CA
+        // HAI - tren man danh sach khong ai thay (moi lan chon mot bo loc), nhung tren
+        // dashboard hai thanh nam canh nhau va tong chin thanh lon hon tong so ho so.
+        //
+        // Nhanh khong khop cau hinh phai tra tap RONG, khong phai tra cung tap: cau hinh
+        // dang BAT thi khong ho so nao mang trang thai "Chuc nang gui dang tat" ca, va bao
+        // mot con so khac 0 o do se day nguoi van hanh di bat mot cau hinh da bat san.
+        $guiBat = (bool) config('organization.chung_tu_dien_tu.submit_enabled', false);
+
+        if ($trangThai === CtdtTrangThaiGui::GUI_TAT && $guiBat) {
+            return $q->whereRaw('1 = 0');
+        }
+
+        if ($trangThai !== CtdtTrangThaiGui::GUI_TAT && !$guiBat) {
+            return $q->whereRaw('1 = 0');
+        }
+
         return self::chuaCoKetQua($q)
             ->where(function ($q2) {
                 $q2->whereNull('submit_error')->orWhere('submit_error', '');
