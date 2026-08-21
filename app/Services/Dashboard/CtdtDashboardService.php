@@ -138,8 +138,12 @@ class CtdtDashboardService
      */
     public function sanLuong(array $loc)
     {
-        $tuNgay  = !empty($loc['tu_ngay']) ? $loc['tu_ngay'] : now()->subDays(29)->format('Y-m-d');
-        $denNgay = !empty($loc['den_ngay']) ? $loc['den_ngay'] : now()->format('Y-m-d');
+        // Bu ngay bang CHINH ham ma controller dung, khong tu che moc rieng: ban truoc bu
+        // 29 ngay o day trong khi khoangMacDinh() bu 30, va sucKhoe()/chatLuong() khong bu
+        // gi ca - ba khoi cua cung mot man hinh doc ba khoang thoi gian khac nhau.
+        $loc     = CtdtDanhSach::khoangMacDinh($loc);
+        $tuNgay  = $loc['tu_ngay'];
+        $denNgay = $loc['den_ngay'];
 
         $ngay = $this->khungNgay($tuNgay, $denNgay);
 

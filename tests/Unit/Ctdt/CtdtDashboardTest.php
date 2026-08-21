@@ -422,4 +422,80 @@ class CtdtDashboardTest extends TestCase
                 'theo_cskcb'  => [['macskcb', 'so_loi', 'so_ho_so']],
             ]);
     }
+
+    /** @test */
+    public function tong_chin_thanh_trang_thai_bang_dung_tong_so_ho_so()
+    {
+        // Tren man DANH SACH khong ai thay duoc loi nay - moi lan nguoi dung chon MOT bo
+        // loc. Tren dashboard chin thanh nam canh nhau, nen mot ho so bi dem vao hai thanh
+        // la mot con so sai bay ngay truoc mat. Tai lieu cua man nay khang dinh thang
+        // "Tong phai khop man danh sach".
+        $this->hoSo([
+            'checked_at' => '2026-08-20 08:00:00', 'so_loi' => 0, 'is_signed' => true,
+        ]);
+        $this->hoSo(['checked_at' => null]);
+        $this->hoSo(['checked_at' => '2026-08-20 08:00:00', 'so_loi' => 3]);
+
+        foreach ([true, false] as $guiBat) {
+            config(['organization.chung_tu_dien_tu.submit_enabled' => $guiBat]);
+
+            $kq = (new CtdtDashboardService())->sucKhoe([]);
+            $tong = array_sum(array_column($kq['theo_trang_thai'], 'so_luong'));
+
+            $this->assertSame(
+                CtdtHoSo::count(),
+                $tong,
+                'Tong chin thanh phai bang tong so ho so (submit_enabled = '
+                . ($guiBat ? 'true' : 'false') . ')'
+            );
+        }
+    }
+
+    /** @test */
+    public function ba_khoi_dung_CUNG_MOT_khoang_ngay_mac_dinh_khi_khong_co_tham_so()
+    {
+        // Ba moc ngay mac dinh khac nhau tren cung mot man hinh: sanLuong() tu bu 30 ngay,
+        // sucKhoe()/chatLuong() khong bu gi (tuc toan thoi gian), o nhap trong view lai mac
+        // dinh dau thang. Nguoi dung thay "co ho so con loi" o khoi tren va mot duong san
+        // luong phang bang 0 ngay duoi - cung mot bo loc.
+        //
+        // Do cung la duong quet TOAN BANG tren may chu 128MB/120s.
+        $gan = $this->hoSo([
+            'imported_at' => now()->subDays(5)->format('Y-m-d H:i:s'),
+            'checked_at'  => now()->subDays(5)->format('Y-m-d H:i:s'),
+            'so_loi'      => 1,
+        ]);
+        $xa = $this->hoSo([
+            'imported_at' => now()->subDays(200)->format('Y-m-d H:i:s'),
+            'checked_at'  => now()->subDays(200)->format('Y-m-d H:i:s'),
+            'so_loi'      => 1,
+        ]);
+
+        $this->ghiLoi($gan, ['ma_loi' => 'GAN']);
+        $this->ghiLoi($xa, ['ma_loi' => 'XA']);
+
+        $nguoiDung = $this->nguoiDungGia();
+
+        $sucKhoe = $this->actingAs($nguoiDung)->getJson('/dashboard/ctdt/suc-khoe')->json();
+        $sanLuong = $this->actingAs($nguoiDung)->getJson('/dashboard/ctdt/san-luong')->json();
+        $chatLuong = $this->actingAs($nguoiDung)->getJson('/dashboard/ctdt/chat-luong')->json();
+
+        $tongTrangThai = array_sum(array_column($sucKhoe['theo_trang_thai'], 'so_luong'));
+
+        $tongSanLuong = 0;
+        foreach ($sanLuong['chuoi'] as $chuoi) {
+            $tongSanLuong += array_sum($chuoi['du_lieu']);
+        }
+
+        $maLoi = array_column($chatLuong['theo_ma_loi'], 'ma_loi');
+
+        $this->assertSame(1, $tongTrangThai,
+            'Khoi suc khoe phai chi thay ho so trong 30 ngay mac dinh');
+        $this->assertSame(1, $tongSanLuong,
+            'Khoi san luong phai thay dung mot ho so nhu khoi suc khoe');
+        $this->assertTrue(in_array('GAN', $maLoi, true),
+            'Khoi chat luong phai thay ho so trong khoang mac dinh');
+        $this->assertFalse(in_array('XA', $maLoi, true),
+            'Khoi chat luong phai bo ho so 200 ngay truoc, giong hai khoi kia');
+    }
 }

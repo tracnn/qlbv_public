@@ -18,7 +18,11 @@
 <div class="row filter-row">
     <div class="col-md-2">
         <label>Từ ngày</label>
-        <input type="date" id="tu-ngay" class="form-control" value="{{ date('Y-m-01') }}">
+        {{-- 30 ngay: DUNG khoang ma CtdtDanhSach::khoangMacDinh() bu o phia server khi
+             thieu tham so. De date('Y-m-01') o day la moc thu ba cua cung mot man hinh -
+             ngay mung 1 thang thi o nhap bao "hom nay den hom nay" con server bao 30 ngay. --}}
+        <input type="date" id="tu-ngay" class="form-control"
+               value="{{ \Carbon\Carbon::now()->subDays(30)->format('Y-m-d') }}">
     </div>
     <div class="col-md-2">
         <label>Đến ngày</label>
