@@ -186,6 +186,14 @@ Route::group(['middleware' => ['auth']], function () {
              ->name('dashboard.xml3176.aging');
         Route::get('dashboard/xml3176/by-department', 'Dashboard\Xml3176DashboardController@byDepartment')
              ->name('dashboard.xml3176.by-department');
+
+        // ── Dashboard chung tu dien tu (PL02) ──────────────────────────────
+        // Cung quyen xml-man voi XML3176: cung nhom nguoi dung, cung nghiep vu
+        // lien thong BHXH.
+        Route::get('dashboard/ctdt', 'Dashboard\CtdtDashboardController@index')
+             ->name('bhyt.ctdt.dashboard');
+        Route::get('dashboard/ctdt/suc-khoe', 'Dashboard\CtdtDashboardController@sucKhoe')
+             ->name('bhyt.ctdt.dashboard.suc-khoe');
     });
 
     Route::get('/', 'HomeController@index')->name('home');
