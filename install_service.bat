@@ -71,6 +71,24 @@ set LARAVEL_PATH=%~dp0
 %NSSM_PATH%\nssm install "QLBV JobExportXml3176" %PHP_PATH% "%LARAVEL_PATH%artisan queue:work --queue=JobExportXml3176"
 %NSSM_PATH%\nssm set "QLBV JobExportXml3176" AppDirectory %LARAVEL_PATH%
 
+:: Tao dich vu cho ctdt:import (quet inbox chung tu dien tu, nap, roi xep hang ky va gui)
+::
+:: AppExit Default Restart la BAT BUOC, khong phai tuy chon: lenh nay CO Y thoat sau
+:: --so-vong vong de nssm dung lai mot tien trinh sach. PHP chay dai han o gioi han 128MB se
+:: phinh, va thoat chu dong thi khac han bi OOM giet GIUA LUC dang goi cong BHXH - luc do
+:: khong ai biet cong da nhan hay chua. Thieu dong nay thi dich vu chet han sau vong doi dau.
+::
+:: Cai dich vu nay KHONG bat duong gui that. Con chan cua viec gui la
+:: organization.chung_tu_dien_tu.import_tu_dong_gui (mac dinh TAT) - duocGui() hoi no truoc
+:: khi xep hang, nen khi chua bat thi lenh chi quet, nap va kiem loi.
+::
+:: Phanh tay: dat mot tep rong ten DUNG-GUI trong thu muc inbox la chan buoc gui NGAY vong
+:: sau, khong can khoi dong lai dich vu.
+%NSSM_PATH%\nssm install "QLBV CtdtImport" %PHP_PATH% "%LARAVEL_PATH%artisan ctdt:import --lien-tuc"
+%NSSM_PATH%\nssm set "QLBV CtdtImport" AppDirectory %LARAVEL_PATH%
+%NSSM_PATH%\nssm set "QLBV CtdtImport" AppExit Default Restart
+%NSSM_PATH%\nssm set "QLBV CtdtImport" AppRestartDelay 10000
+
 :: Tạo dịch vụ cho kiemtraylenh:scan (Kiểm tra sai sót y lệnh - quét HIS định kỳ)
 %NSSM_PATH%\nssm install "QLBV KiemTraYLenh" %PHP_PATH% "%LARAVEL_PATH%artisan kiemtraylenh:scan"
 %NSSM_PATH%\nssm set "QLBV KiemTraYLenh" AppDirectory %LARAVEL_PATH%
@@ -93,6 +111,7 @@ set LARAVEL_PATH=%~dp0
 %NSSM_PATH%\nssm start "QLBV JobCtdt"
 %NSSM_PATH%\nssm start "QLBV JobSignCtdt"
 %NSSM_PATH%\nssm start "QLBV JobSubmitCtdt"
+%NSSM_PATH%\nssm start "QLBV CtdtImport"
 %NSSM_PATH%\nssm start "QLBV JobExportQd130Xml"
 %NSSM_PATH%\nssm start "QLBV JobExportXml3176"
 %NSSM_PATH%\nssm start "QLBV KiemTraYLenh"

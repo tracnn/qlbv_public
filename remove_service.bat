@@ -53,6 +53,22 @@ set NSSM_PATH=%~dp0
 %NSSM_PATH%\nssm stop "QLBV JobExportXml3176"
 %NSSM_PATH%\nssm remove "QLBV JobExportXml3176" confirm
 
+:: Xoa dich vu cho JobCtdt (bo kiem loi)
+%NSSM_PATH%\nssm stop "QLBV JobCtdt"
+%NSSM_PATH%\nssm remove "QLBV JobCtdt" confirm
+
+:: Xoa dich vu cho JobSignCtdt (ky so)
+%NSSM_PATH%\nssm stop "QLBV JobSignCtdt"
+%NSSM_PATH%\nssm remove "QLBV JobSignCtdt" confirm
+
+:: Xoa dich vu cho JobSubmitCtdt (gui cong BHXH)
+%NSSM_PATH%\nssm stop "QLBV JobSubmitCtdt"
+%NSSM_PATH%\nssm remove "QLBV JobSubmitCtdt" confirm
+
+:: Xoa dich vu cho ctdt:import (quet inbox chung tu dien tu)
+%NSSM_PATH%\nssm stop "QLBV CtdtImport"
+%NSSM_PATH%\nssm remove "QLBV CtdtImport" confirm
+
 :: Xóa dịch vụ cho kiemtraylenh:scan
 %NSSM_PATH%\nssm stop "QLBV KiemTraYLenh"
 %NSSM_PATH%\nssm remove "QLBV KiemTraYLenh" confirm
