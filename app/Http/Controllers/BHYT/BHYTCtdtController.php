@@ -4,7 +4,6 @@ namespace App\Http\Controllers\BHYT;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Cache;
 use App\Http\Controllers\Controller;
 
 use App\Services\BHYT\DanhSachCoSo;
@@ -19,10 +18,8 @@ use App\Services\Ctdt\CtdtLoaiRegistry;
 use App\Services\Ctdt\CtdtLuuHoSo;
 use App\Models\BHYT\Ctdt\CtdtHoSo;
 use App\Models\BHYT\Ctdt\CtdtLoi;
-use App\Jobs\SignCtdtJob;
-use App\Jobs\SubmitCtdtJob;
 use App\Services\Ctdt\CtdtQuyetDinhGui;
-use App\Services\Ctdt\CtdtHangDoi;
+use App\Services\Ctdt\CtdtXepHangKyGui;
 
 /**
  * Ba man hinh cua module chung tu dien tu: danh sach, nap tep, chi tiet.
@@ -44,41 +41,6 @@ class BHYTCtdtController extends Controller
         'is_signed', 'trang_thai_gui', 'trang_thai_nhan', 'ma_gd', 'ma_ket_qua',
         'thoi_gian_tiep_nhan', 'imported_at', 'imported_by', 'khong_co_ma_yte', 'action',
     ];
-
-    /**
-     * Tien to khoa cache chong bam trung nut "Ky va gui".
-     *
-     * VI SAO CACHE chu khong phai mot cot moi: day la trang thai TAM THOI. Mot cot phai co
-     * duong don khi tien trinh chet giua chung; khoa cache tu het han. Cache driver cua du
-     * an la 'file' (mot may chu) nen du dung.
-     *
-     * Hai job nha khoa nay khi chay xong - xem SubmitCtdtJob va SignCtdtJob.
-     *
-     * KHONG phai mutex that: FileStore va ArrayStore cua Laravel 5.5 khong co add() rieng,
-     * nen Repository::add() lui ve get() roi put() - co cua so TOCTOU. Hai request that su
-     * dong thoi (cach nhau mili-giay) van lot ca hai. Du cho ca dung that o day (mot nguoi
-     * bam hai lan cach nhau vai tram mili-giay); neu sau nay can chan that thi phai dung
-     * khoa o tang CSDL.
-     */
-    const KHOA_XU_LY = 'ctdt:dang-xu-ly:';
-
-    /**
-     * Thoi han khoa, tinh bang PHUT - Cache::add() cua Laravel 5.5 nhan phut, khong phai
-     * giay. Chi la luoi chan cuoi: duong nha khoa binh thuong la o cuoi chuoi job.
-     *
-     * CAN CU CON SO 30: ngan sach THU LAI cua ca chuoi la
-     *   SignCtdtJob   tries 2 x timeout 120s = 240s
-     *   SubmitCtdtJob tries 3 x timeout  90s = 270s
-     *   -> 510s = 8,5 phut chay THUAN, chua tinh thoi gian nam cho trong hang doi.
-     *
-     * Muoi phut (con so cu) chi can hang doi un 2 phut la khoa het han TRONG KHI chuoi van
-     * dang chay: nguoi dung bam lai, sinh chuoi thu hai, thanh hai lan POST that len cong
-     * BHXH cho cung mot ho so. 30 phut = 8,5 phut chay thuan + bien cho thoi gian nam cho.
-     *
-     * Quan he nay duoc canh boi
-     * CtdtKyVaGuiTest::thoi_han_khoa_phai_lon_hon_ngan_sach_thu_lai_cua_ca_chuoi().
-     */
-    const KHOA_XU_LY_PHUT = 30;
 
     public function index()
     {
@@ -434,11 +396,6 @@ class BHYTCtdtController extends Controller
         // chinh controller nay, o import(): $request->user()->loginname.
         $nguoiGui = auth()->check() ? auth()->user()->loginname : null;
 
-        // CtdtHangDoi giu ca ten mac dinh lan phep lui ve mac dinh - xem chu thich trong
-        // lop do ve vi sao khong dung config($khoa, $macDinh).
-        $hangDoiKy  = CtdtHangDoi::ky();
-        $hangDoiGui = CtdtHangDoi::gui();
-
         // Nap lai xoa ma_gd/ma_ket_qua (noi dung da doi thi ket qua cu noi ve mot ban khac),
         // nen mot ho so DA duoc cong nhan that se hien "Chua ky so" va gui lai duoc ma khong
         // co gi canh bao - dau vet chi con o lich_su_gui, von chi hien o man chi tiet.
@@ -463,23 +420,18 @@ class BHYTCtdtController extends Controller
             ]);
         }
 
-        // Dat khoa NGAY TRUOC dispatch, sau moi nhanh tu choi: mot lan bam bi tu choi khong
-        // lam gi ca, giu khoa se khoa nguoi dung ra ngoai het thoi han ma khong duoc gi.
+        // Xep hang qua CtdtXepHangKyGui chu khong tu dat khoa va tu dispatch: lenh Console
+        // ctdt:import can dung mot viec nay, va hai ban se lech nhau.
         //
-        // Cache::add() tra false khi khoa da ton tai - do chinh la phep thu "da co nguoi bam
-        // chua". Khoa theo TUNG ma ho so, khong phai mot khoa chung.
-        if (!Cache::add(self::KHOA_XU_LY . $ma_ho_so, true, self::KHOA_XU_LY_PHUT)) {
+        // Dat khoa NGAY TRUOC dispatch, SAU moi nhanh tu choi phia tren: mot lan bam bi tu
+        // choi khong lam gi ca, giu khoa se khoa nguoi dung ra ngoai het thoi han ma khong
+        // duoc gi.
+        if (!CtdtXepHangKyGui::xep($ma_ho_so, $nguoiGui)) {
             return response()->json([
                 'thanh_cong' => false,
                 'thong_diep' => 'Hồ sơ này đang xử lý. Chờ ít phút rồi tải lại trang để xem kết quả.',
             ]);
         }
-
-        SignCtdtJob::withChain([
-            (new SubmitCtdtJob($ma_ho_so, $nguoiGui))->onQueue($hangDoiGui),
-        ])
-        ->dispatch($ma_ho_so)
-        ->onQueue($hangDoiKy);
 
         return response()->json([
             'thanh_cong' => true,

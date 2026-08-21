@@ -15,7 +15,7 @@ use App\Models\BHYT\Ctdt\CtdtHoSo;
 use App\Models\BHYT\Ctdt\CtdtLichSuGui;
 use App\Services\Ctdt\CtdtQuyetDinhGui;
 use App\Services\Ctdt\CtdtSubmitService;
-use App\Http\Controllers\BHYT\BHYTCtdtController;
+use App\Services\Ctdt\CtdtXepHangKyGui;
 
 /**
  * Gui mot ho so da ky len cong BHXH va ghi lai ket qua.
@@ -152,7 +152,7 @@ class SubmitCtdtJob implements ShouldQueue
      */
     private function nhaKhoa()
     {
-        Cache::forget(BHYTCtdtController::KHOA_XU_LY . $this->maHoSo);
+        Cache::forget(CtdtXepHangKyGui::KHOA . $this->maHoSo);
     }
 
     /**

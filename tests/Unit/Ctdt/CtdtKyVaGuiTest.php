@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Cache;
 use App\Http\Controllers\BHYT\BHYTCtdtController;
+use App\Services\Ctdt\CtdtXepHangKyGui;
 use App\Jobs\SignCtdtJob;
 use App\Models\BHYT\Ctdt\CtdtHoSo;
 use App\Models\BHYT\Ctdt\CtdtChungTu;
@@ -441,14 +442,14 @@ class CtdtKyVaGuiTest extends TestCase
 
         // Dung Cache::has() de tham do, KHONG dung Cache::add(): add() se TU DAT khoa khi
         // no chua ton tai, tuc phep do lam thay doi thu no dang do.
-        $this->assertTrue(Cache::has(BHYTCtdtController::KHOA_XU_LY . 'YT001'),
+        $this->assertTrue(Cache::has(CtdtXepHangKyGui::KHOA . 'YT001'),
             'Khoa phai dang giu sau khi bam');
 
         $job = new \App\Jobs\SubmitCtdtJob('YT001', 'tracnn');
         $job->submitServiceGia = new \Tests\Support\FakeCtdtSubmitService();
         $job->handle();
 
-        $this->assertFalse(Cache::has(BHYTCtdtController::KHOA_XU_LY . 'YT001'),
+        $this->assertFalse(Cache::has(CtdtXepHangKyGui::KHOA . 'YT001'),
             'Job gui xong phai nha khoa');
     }
 
@@ -468,7 +469,7 @@ class CtdtKyVaGuiTest extends TestCase
         $job->submitServiceGia = new \Tests\Support\FakeCtdtSubmitService();
         $job->handle();
 
-        $this->assertFalse(Cache::has(BHYTCtdtController::KHOA_XU_LY . 'YT001'));
+        $this->assertFalse(Cache::has(CtdtXepHangKyGui::KHOA . 'YT001'));
     }
 
     /** @test */
@@ -482,7 +483,7 @@ class CtdtKyVaGuiTest extends TestCase
 
         (new \App\Jobs\SubmitCtdtJob('YT001', 'tracnn'))->handle();
 
-        $this->assertFalse(Cache::has(BHYTCtdtController::KHOA_XU_LY . 'YT001'));
+        $this->assertFalse(Cache::has(CtdtXepHangKyGui::KHOA . 'YT001'));
     }
 
     /** @test */
@@ -492,11 +493,11 @@ class CtdtKyVaGuiTest extends TestCase
         // du lan gui do da chet tu lau.
         foreach ([\App\Jobs\SignCtdtJob::class, \App\Jobs\SubmitCtdtJob::class] as $lop) {
             $this->hoSo();
-            Cache::add(BHYTCtdtController::KHOA_XU_LY . 'YT001', true, BHYTCtdtController::KHOA_XU_LY_PHUT);
+            Cache::add(CtdtXepHangKyGui::KHOA . 'YT001', true, CtdtXepHangKyGui::KHOA_PHUT);
 
             (new $lop('YT001'))->failed(new \RuntimeException('mang chap'));
 
-            $this->assertFalse(Cache::has(BHYTCtdtController::KHOA_XU_LY . 'YT001'),
+            $this->assertFalse(Cache::has(CtdtXepHangKyGui::KHOA . 'YT001'),
                 $lop . '::failed() phai nha khoa');
 
             CtdtHoSo::where('ma_ho_so', 'YT001')->delete();
@@ -519,7 +520,7 @@ class CtdtKyVaGuiTest extends TestCase
             $nganSach += (int) $mac['tries'] * (int) $mac['timeout'];
         }
 
-        $khoaGiay = BHYTCtdtController::KHOA_XU_LY_PHUT * 60;
+        $khoaGiay = CtdtXepHangKyGui::KHOA_PHUT * 60;
 
         $this->assertGreaterThan($nganSach, $khoaGiay,
             'Thoi han khoa (' . $khoaGiay . 's) phai lon hon ngan sach chuoi (' . $nganSach . 's)');
