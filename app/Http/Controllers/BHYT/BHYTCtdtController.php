@@ -20,6 +20,10 @@ use App\Models\BHYT\Ctdt\CtdtHoSo;
 use App\Models\BHYT\Ctdt\CtdtLoi;
 use App\Services\Ctdt\CtdtQuyetDinhGui;
 use App\Services\Ctdt\CtdtXepHangKyGui;
+use App\Exports\CtdtDanhSachExport;
+use App\Exports\CtdtLoiExport;
+use App\Exports\CtdtNhatKyGuiExport;
+use Maatwebsite\Excel\Facades\Excel;
 
 /**
  * Ba man hinh cua module chung tu dien tu: danh sach, nap tep, chi tiet.
@@ -70,19 +74,7 @@ class BHYTCtdtController extends Controller
 
     public function fetchData(Request $request)
     {
-        $truyVan = CtdtDanhSach::truyVan([
-            'tu_ngay'        => $request->input('tu_ngay'),
-            'den_ngay'       => $request->input('den_ngay'),
-            'dich_vu'        => $request->input('dich_vu'),
-            'loai_ho_so'     => $request->input('loai_ho_so'),
-            'macskcb'        => $request->input('macskcb'),
-            'imported_by'    => $request->input('imported_by'),
-            'tim'            => $request->input('tim'),
-            // Laravel 5.5 KHONG co Request::boolean() (them tu 5.8). DataTables gui '0'/'1'
-            // dang chuoi, ma (bool) '0' la TRUE - o loc se luon bat.
-            'chi_con_loi'    => filter_var($request->input('chi_con_loi'), FILTER_VALIDATE_BOOLEAN),
-            'trang_thai_gui' => $request->input('trang_thai_gui'),
-        ]);
+        $truyVan = CtdtDanhSach::truyVan($this->locTu($request));
 
         // Nap kem chung tu: cot ho ten / ma the lay tu chung tu DAU TIEN cua ho so. Khong
         // nap kem thi moi dong la mot truy van rieng - 200 dong thanh 201 truy van.
@@ -118,6 +110,107 @@ class BHYTCtdtController extends Controller
             ->only(self::DATATABLE_COLUMNS)
             ->rawColumns([])
             ->make(true);
+    }
+
+    /**
+     * Doc bo loc tu request. MOT ban duy nhat cho ca man hinh lan tep xuat.
+     *
+     * Hai ban se lech nhau: them mot o loc ma quen ben kia se lam tep xuat khac han man
+     * hinh, va khong co dau hieu gi cho toi luc ai do ngoi doi chieu tung dong voi ban cua
+     * BHXH.
+     *
+     * @return array
+     */
+    private function locTu(Request $request)
+    {
+        return [
+            'tu_ngay'        => $request->input('tu_ngay'),
+            'den_ngay'       => $request->input('den_ngay'),
+            'dich_vu'        => $request->input('dich_vu'),
+            'loai_ho_so'     => $request->input('loai_ho_so'),
+            'macskcb'        => $request->input('macskcb'),
+            'imported_by'    => $request->input('imported_by'),
+            'tim'            => $request->input('tim'),
+            // Laravel 5.5 KHONG co Request::boolean() (them tu 5.8). DataTables gui '0'/'1'
+            // dang chuoi, ma (bool) '0' la TRUE - o loc se luon bat.
+            'chi_con_loi'    => filter_var($request->input('chi_con_loi'), FILTER_VALIDATE_BOOLEAN),
+            'trang_thai_gui' => $request->input('trang_thai_gui'),
+        ];
+    }
+
+    /**
+     * Bo loc cho MOT LAN XUAT: giong locTu() nhung bat buoc co khoang ngay.
+     *
+     * Goi thang URL xuat khong kem tham so - hoac man hinh chua kip dat ctdtRange - se quet
+     * TOAN BO ctdt_ho_so. Mot cu bam ra mot truy van toan bang tren may chu 128MB/120s la
+     * mot yeu cau chet giua chung, khong phai mot tep xuat lon.
+     *
+     * @return array
+     */
+    private function locXuatTu(Request $request)
+    {
+        return CtdtDanhSach::khoangMacDinh($this->locTu($request));
+    }
+
+    /**
+     * Phan ngay cua mot moc loc, dung dat ten tep.
+     *
+     * Man hinh gui dang 'YYYY-MM-DD HH:mm:ss'. Ghep nguyen van vao ten tep cho ra dau ':' -
+     * ky tu KHONG hop le trong ten tep tren Windows, tuc tep khong luu duoc.
+     *
+     * @return string
+     */
+    private function phanNgay($moc)
+    {
+        return substr(trim((string) $moc), 0, 10);
+    }
+
+    /** Tai danh sach ho so theo dung bo loc dang xem */
+    public function xuatDanhSach(Request $request)
+    {
+        $ten = 'chung-tu-dien-tu-' . now()->format('Ymd-His') . '.xlsx';
+
+        return Excel::download(
+            new CtdtDanhSachExport(CtdtDanhSach::truyVan($this->locXuatTu($request))),
+            $ten
+        );
+    }
+
+    /** Tai bang loi de dua nguoi nhap lieu di sua */
+    public function xuatLoi(Request $request)
+    {
+        $ten = 'loi-chung-tu-dien-tu-' . now()->format('Ymd-His') . '.xlsx';
+
+        return Excel::download(
+            new CtdtLoiExport(CtdtDanhSach::truyVan($this->locXuatTu($request))),
+            $ten
+        );
+    }
+
+    /** Tai nhat ky gui trong mot khoang ngay */
+    public function xuatNhatKy(Request $request)
+    {
+        // Lui ve 30 ngay gan nhat khi nguoi dung khong chon: bang nay chi tang, khong bao
+        // gio giam, nen mac dinh "tat ca" la mot truy van toan bang.
+        $khoang = CtdtDanhSach::khoangMacDinh([
+            'tu_ngay'  => $request->input('tu_ngay'),
+            'den_ngay' => $request->input('den_ngay'),
+        ]);
+
+        // CHI lay phan ngay: moc tu man hinh co dang '2026-08-01 00:00:00', ghep nguyen van
+        // vao ten tep se sinh dau ':' - Windows khong luu duoc tep do.
+        $ten = 'nhat-ky-gui-ctdt-' . $this->phanNgay($khoang['tu_ngay'])
+             . '-den-' . $this->phanNgay($khoang['den_ngay']) . '.xlsx';
+
+        try {
+            $xuat = new CtdtNhatKyGuiExport($khoang['tu_ngay'], $khoang['den_ngay']);
+        } catch (\InvalidArgumentException $e) {
+            // Bao ro thay vi de yeu cau chet giua chung voi mot trang trang: tran khoang
+            // ngay la mot lua chon sai cua nguoi dung, khong phai loi he thong.
+            abort(422, $e->getMessage());
+        }
+
+        return Excel::download($xuat, $ten);
     }
 
     public function importIndex()
