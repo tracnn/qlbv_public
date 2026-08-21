@@ -292,6 +292,36 @@ class CtdtImportCommandTest extends TestCase
     }
 
     /**
+     * Phan biet duoc voi mutation2 (xoa nhanh goi CtdtQuyetDinhGui::nenKy() trong
+     * nhatVaXepHang()) MA khong dua vao doc nguon: checked_at = '' (chuoi rong, KHAC NULL
+     * ve mat SQL) lot qua duoc whereNotNull() o tang loc tho, nhung empty('') === true nen
+     * nenKy() van coi la CHUA_KIEM. Neu nhanh goi nenKy() bi xoa, ho so nay se lot xuong
+     * duoi va bi xep hang - day la truong hop DUY NHAT ma tang loc SQL va nenKy() lech
+     * nhau, nen la ca duy nhat mot test hanh vi thuan tuy co the bat duoc mutation do (test
+     * doc nguon o tren co the bi mot dong chu thich con sot lai lam "gia mu").
+     *
+     * @test
+     */
+    public function ho_so_checked_at_rong_lot_qua_loc_SQL_van_bi_nenKy_chan_lai()
+    {
+        Bus::fake();
+        config(['organization.chung_tu_dien_tu.import_tu_dong_gui' => true]);
+
+        \App\Models\BHYT\Ctdt\CtdtHoSo::create([
+            'ma_ho_so' => 'YT-CHECKED-RONG', 'dich_vu' => 'CT2025', 'loai_hs' => '39',
+            'macskcb' => '01001', 'imported_at' => now(),
+            'checked_at' => '', 'so_loi' => 0,
+        ]);
+
+        $lenh = new CtdtImportLoRa();
+        $lenh->ganInputTest(new ArrayInput([], $lenh->getDefinition()));
+        $lenh->ganOutputTest(new BufferedOutput());
+        $lenh->nhatVaXepHangCong(sys_get_temp_dir());
+
+        Bus::assertNotDispatched(\App\Jobs\SignCtdtJob::class);
+    }
+
+    /**
      * Hanh vi that, khong chi doc nguon: ho so CHUA KIEM (checked_at null) khong duoc
      * xep hang, ho so DA KIEM VA SACH (checked_at co, so_loi = 0) thi duoc.
      *
