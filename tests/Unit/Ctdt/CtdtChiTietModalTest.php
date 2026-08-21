@@ -161,4 +161,38 @@ class CtdtChiTietModalTest extends TestCase
         $this->assertContains('ctdt-chi-tiet', $ra, 'phai la than that, khong phai dau ra rong');
         $this->assertContains('YT001', $ra);
     }
+
+    /** @test */
+    public function man_danh_sach_co_khung_modal_va_nap_js_dung_chung()
+    {
+        $nguon = $this->nguon('index.blade.php');
+
+        $this->assertContains('id="modal-ctdt"', $nguon, 'Thieu khung modal');
+        $this->assertContains('bhyt.ctdt.partials.js-chi-tiet', $nguon,
+            'Khong nap JS dung chung thi nut trong modal se im lang');
+        $this->assertContains('modal-xxl', $nguon,
+            'Dung lai lop modal-xxl da co trong public/css/customize.css');
+    }
+
+    /** @test */
+    public function man_danh_sach_nghe_ca_hai_su_kien()
+    {
+        // Thieu mot trong hai thi modal van mo duoc, van gui duoc, nhung bang khong bao gio
+        // cap nhat - nguoi dung se bam gui lan hai.
+        $nguon = $this->nguon('index.blade.php');
+
+        $this->assertContains('ctdt:da-xep-hang', $nguon);
+        $this->assertContains('ctdt:da-xoa', $nguon);
+    }
+
+    /** @test */
+    public function nut_chi_tiet_van_la_the_a_co_href_that()
+    {
+        // Ctrl+click va chuot giua phai mo duoc tab moi. <a href="#"> hoac <button> se giet
+        // hanh vi do - va do la thoi quen cua dung nhung nguoi dung man nay nhieu nhat.
+        $nguon = $this->nguon('index.blade.php');
+
+        $this->assertNotContains('href="#"', $nguon,
+            'Nut mo chi tiet phai tro URL that de ctrl+click con mo duoc tab moi');
+    }
 }
