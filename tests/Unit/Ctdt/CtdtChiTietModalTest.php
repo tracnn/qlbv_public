@@ -3,6 +3,10 @@
 namespace Tests\Unit\Ctdt;
 
 use Tests\TestCase;
+use Tests\Support\DungBangCtdtSqlite;
+use Tests\Support\GoiCtdtMau;
+use App\Http\Controllers\BHYT\BHYTCtdtController;
+use App\Services\Ctdt\CtdtImporter;
 
 /**
  * Chot canh cho man chi tiet dang modal.
@@ -17,6 +21,31 @@ use Tests\TestCase;
  */
 class CtdtChiTietModalTest extends TestCase
 {
+    use DungBangCtdtSqlite;
+    use GoiCtdtMau;
+
+    /** @var BHYTCtdtController */
+    private $controller;
+
+    protected function setUp()
+    {
+        parent::setUp();
+        $this->chuanBiBangCtdt();
+        $this->controller = new BHYTCtdtController();
+        config(['organization.BHYT.ma_cskcb' => '01013']);
+    }
+
+    private function napMau()
+    {
+        $xml = $this->goiCt2025([[
+            $this->chungTu('CT03', [
+                'MA_YTE' => 'YT001', 'HO_TEN' => 'Nguyen Van Test', 'CHAN_DOAN' => 'Dau bung',
+            ]),
+        ]]);
+
+        (new CtdtImporter())->nhapTuChuoi($xml);
+    }
+
     /** @return string noi dung tho cua mot view blade */
     private function nguon($duongDanTuongDoi)
     {
@@ -112,5 +141,24 @@ class CtdtChiTietModalTest extends TestCase
 
         $this->assertContains("bhyt.ctdt.partials.than-chi-tiet", $nguon,
             'detailThan() phai tra partial, khong tra view bhyt.ctdt.detail');
+    }
+
+    /** @test */
+    public function detailThan_render_ra_than_tran_khong_layout()
+    {
+        // Kiem tinh (grep @extends trong .blade.php) khong bat duoc mot @include layout an
+        // trong partial, hay mot View::composer toan cuc gan them the. Chi render that moi
+        // khang dinh duoc dau ra THAT cua detailThan() khong mang theo AdminLTE.
+        $this->napMau();
+
+        $ra = (string) $this->controller->detailThan('YT001')->render();
+
+        $this->assertNotContains('<html', $ra);
+        $this->assertNotContains('<body', $ra);
+        $this->assertNotContains('main-sidebar', $ra,
+            'main-sidebar la dau hieu rieng cua layout AdminLTE (aside menu ben trai)');
+
+        $this->assertContains('ctdt-chi-tiet', $ra, 'phai la than that, khong phai dau ra rong');
+        $this->assertContains('YT001', $ra);
     }
 }
