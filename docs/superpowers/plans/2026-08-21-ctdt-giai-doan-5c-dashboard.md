@@ -65,7 +65,7 @@ Tạo `tests/Unit/Ctdt/CtdtDashboardTest.php`:
 namespace Tests\Unit\Ctdt;
 
 use Tests\TestCase;
-use Illuminate\Foundation\Testing\DatabaseMigrations;
+use Tests\Support\DungBangCtdtSqlite;
 use App\Models\BHYT\Ctdt\CtdtHoSo;
 use App\Services\Ctdt\CtdtTrangThaiGui;
 use App\Services\Dashboard\CtdtDashboardService;
@@ -76,7 +76,9 @@ use App\Services\Dashboard\CtdtDashboardService;
  */
 class CtdtDashboardTest extends TestCase
 {
-    use DatabaseMigrations;
+    // KHONG DatabaseMigrations: trait do goi migrate:fresh, tuc DROP toan bo bang cua CSDL
+    // phat trien. Da xay ra that ngay 2026-08-21.
+    use DungBangCtdtSqlite;
 
     private function hoSo(array $ghiDe = [])
     {
