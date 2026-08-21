@@ -114,10 +114,26 @@ Khối `chung_tu_dien_tu`. Đây là thứ **người triển khai chỉnh khi c
 | `submit_enabled` | `false` | **Cờ chặn gửi thật.** Mặc định tắt. |
 | `import_enabled` | `true` | |
 | `sign_enabled` | `true` | |
-| `import_path` | `D:\XML\ChungTuDienTu\inbox` | Thư mục lệnh Console sẽ quét (Giai đoạn 5) |
 | `queue_name` | `JobCtdt` | Hàng đợi kiểm lỗi |
 | `sign_queue_name` | `JobSignCtdt` | Hàng đợi ký số |
 | `submit_queue_name` | `JobSubmitCtdt` | Hàng đợi gửi cổng |
+
+### Hai đường dẫn hệ tệp nằm ở `config/filesystems.php`, không ở `organization.php`
+
+| Disk | Biến `.env` | Mặc định | Dùng làm gì |
+|---|---|---|---|
+| `importCtdt` | `CTDT_IMPORT_PATH` | `D:\XML\ChungTuDienTu\inbox` | Thư mục lệnh `ctdt:import` quét |
+| `exportCtdt` | `CTDT_EXPORT_PATH` | `D:\XML\ChungTuDienTu` | Nơi ghi tệp đã ký |
+
+Đường dẫn hệ tệp là đường dẫn hệ tệp — để hai cái cạnh nhau thì người triển khai cho đơn vị
+mới chỉ phải nhìn **một chỗ**. Cả hai đọc được từ `.env`, nên đơn vị không có ổ `D:` chỉ cần
+đặt hai biến, không phải sửa một tệp đã track.
+
+⚠️ **Đơn vị mới không có gì liên quan chứng từ điện tử vẫn chạy bình thường.** Thiếu hẳn khối
+`organization.chung_tu_dien_tu` thì mọi cờ lùi về **TẮT** (không phải bật), tên ba hàng đợi lùi
+về hằng số trong `CtdtHangDoi`, và hai đường dẫn trên vẫn có giá trị mặc định. Không chỗ nào ném
+lúc khởi động. `CtdtCauHinhTest::don_vi_moi_khong_co_khoi_chung_tu_dien_tu_thi_KHONG_gay_loi`
+canh điều đó.
 
 Đọc trong mã bằng `config('organization.chung_tu_dien_tu.submit_enabled')` — cùng cách
 `SubmitXml3176Job` đọc `config('organization.BHYT.submit_xml_3176_enabled')`.
@@ -435,7 +451,7 @@ lệnh lặp lại việc quét trong một tiến trình nssm sống lâu, cùn
 nhưng lệnh này **POST thật lên cổng BHXH** chứ không chỉ ghi tệp, nên có thêm mấy cái phanh mà
 `xml3176import:day` không cần.
 
-Mỗi vòng làm hai việc: **quét** thư mục `organization.chung_tu_dien_tu.import_path`, nạp mọi tệp
+Mỗi vòng làm hai việc: **quét** thư mục `filesystems.disks.importCtdt.root`, nạp mọi tệp
 `.xml` **ngay trong thư mục gốc** (không quét đệ quy), chuyển tệp đã xử lý sang `da-nap/` và tệp
 hỏng sang `loi/`; rồi **nhặt** mọi hồ sơ đã kiểm, sạch, chưa có `ma_ket_qua` **và cổng chưa từng
 được gọi cho nó** mà xếp hàng ký số và gửi.

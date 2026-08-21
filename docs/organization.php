@@ -42,9 +42,6 @@ return [
         'import_enabled' => true,
         'sign_enabled'   => true,
 
-        // Thu muc lenh Console quet de nap tu dong (Giai doan 5).
-        'import_path' => 'D:\XML\ChungTuDienTu\inbox',
-
         // Tran so TEP lenh ctdt:import xu ly moi luot. Khong co tran thi mot thu muc do nham
         // 3000 tep thanh 3000 lan POST that len cong trong MOT luot, khong ai kip dung lai.
         'import_gioi_han' => 200,

@@ -142,10 +142,11 @@ class CtdtImport extends Command
         }
 
         $thuMuc = $this->option('duong-dan')
-            ?: config('organization.chung_tu_dien_tu.import_path');
+            ?: config('filesystems.disks.importCtdt.root');
 
         if (empty($thuMuc)) {
-            $this->error('Chua cau hinh organization.chung_tu_dien_tu.import_path');
+            $this->error('Chua cau hinh filesystems.disks.importCtdt.root'
+                . ' (dat CTDT_IMPORT_PATH trong .env).');
 
             return 1;
         }

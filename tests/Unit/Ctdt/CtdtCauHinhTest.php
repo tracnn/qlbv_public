@@ -78,10 +78,17 @@ class CtdtCauHinhTest extends TestCase
 
         $this->assertInternalType('array', $khoi, 'Thieu khoi organization.chung_tu_dien_tu');
 
-        foreach (['submit_enabled', 'import_enabled', 'sign_enabled', 'import_path',
+        foreach (['submit_enabled', 'import_enabled', 'sign_enabled',
                   'queue_name', 'sign_queue_name', 'submit_queue_name'] as $khoa) {
             $this->assertArrayHasKey($khoa, $khoi, 'organization.chung_tu_dien_tu thieu ' . $khoa);
         }
+
+        // Duong dan he tep KHONG nam o day nua - no da chuyen sang filesystems.disks de
+        // dung cho voi exportCtdt. Hai nguon su that cho cung mot duong dan la cach chac
+        // chan de mot ngay nao do lenh Console quet mot thu muc con nguoi ta do tep vao
+        // thu muc khac.
+        $this->assertArrayNotHasKey('import_path', $khoi,
+            'import_path da chuyen sang filesystems.disks.importCtdt.root');
 
         $this->assertNotEmpty($khoi['queue_name']);
         $this->assertNotEmpty($khoi['sign_queue_name']);
@@ -133,11 +140,53 @@ class CtdtCauHinhTest extends TestCase
     {
         // Hai nguon su that cho cung mot co bat/tat la cach chac chan de mot ngay nao do
         // co so bat gui o mot noi ma noi kia van tat - hoac te hon, nguoc lai.
-        foreach (['submit_enabled', 'import_enabled', 'sign_enabled', 'import_path',
+        foreach (['submit_enabled', 'import_enabled', 'sign_enabled',
                   'queue_name', 'sign_queue_name', 'submit_queue_name'] as $khoa) {
             $this->assertNull(config('ctdt.' . $khoa),
                 'ctdt.' . $khoa . ' phai nam o organization.chung_tu_dien_tu, khong phai config/ctdt.php');
         }
+    }
+
+    /** @test */
+    public function co_disk_import_ctdt_rieng_va_doc_duoc_tu_env()
+    {
+        // Duong dan he tep cua module nam CANH NHAU trong filesystems.disks, de nguoi trien
+        // khai cho don vi moi chi phai nhin mot cho.
+        $disk = config('filesystems.disks.importCtdt');
+
+        $this->assertInternalType('array', $disk, 'Thieu disk importCtdt');
+        $this->assertSame('local', $disk['driver']);
+        $this->assertNotEmpty($disk['root']);
+
+        // Phai doc duoc tu env: don vi khong co o D: thi dat bien trong .env, khong phai sua
+        // mot tep da track.
+        $nguon = file_get_contents(base_path('config/filesystems.php'));
+
+        $this->assertContains("env('CTDT_IMPORT_PATH'", $nguon);
+        $this->assertContains("env('CTDT_EXPORT_PATH'", $nguon);
+    }
+
+    /** @test */
+    public function don_vi_moi_khong_co_khoi_chung_tu_dien_tu_thi_KHONG_gay_loi()
+    {
+        // Trien khai cho don vi moi: config/organization.php cua ho co the khong he co khoi
+        // chung_tu_dien_tu. Moi noi doc khoa do PHAI lui ve mot gia tri an toan, khong duoc
+        // nem - va "an toan" nghia la TAT, khong phai bat.
+        config(['organization.chung_tu_dien_tu' => null]);
+
+        $this->assertFalse((bool) config('organization.chung_tu_dien_tu.submit_enabled'),
+            'Thieu cau hinh phai la TAT gui, khong duoc mac dinh bat');
+        $this->assertFalse((bool) config('organization.chung_tu_dien_tu.sign_enabled', false));
+        $this->assertFalse((bool) config('organization.chung_tu_dien_tu.import_tu_dong_gui'));
+
+        // Ten hang doi lui ve hang so trong ma nguon, khong phai null - ->onQueue(null) day
+        // job vao hang doi 'default' ma khong worker nao nghe.
+        $this->assertSame(\App\Services\Ctdt\CtdtHangDoi::KIEM, \App\Services\Ctdt\CtdtHangDoi::kiem());
+        $this->assertSame(\App\Services\Ctdt\CtdtHangDoi::KY, \App\Services\Ctdt\CtdtHangDoi::ky());
+        $this->assertSame(\App\Services\Ctdt\CtdtHangDoi::GUI, \App\Services\Ctdt\CtdtHangDoi::gui());
+
+        // Duong dan quet van con vi no da chuyen sang filesystems.disks.
+        $this->assertNotEmpty(config('filesystems.disks.importCtdt.root'));
     }
 
     /** @test */
