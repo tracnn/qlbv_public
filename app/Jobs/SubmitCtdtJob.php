@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Cache;
 
 use App\Models\BHYT\Ctdt\CtdtHoSo;
+use App\Models\BHYT\Ctdt\CtdtLichSuGui;
 use App\Services\Ctdt\CtdtQuyetDinhGui;
 use App\Services\Ctdt\CtdtSubmitService;
 use App\Http\Controllers\BHYT\BHYTCtdtController;
@@ -54,10 +55,22 @@ class SubmitCtdtJob implements ShouldQueue
      */
     public $submitServiceGia = null;
 
-    public function __construct($maHoSo, $nguoiGui = null)
+    /**
+     * Ai gay ra lan gui nay: 'man_hinh' hay 'console'.
+     *
+     * Co GIA TRI MAC DINH nen payload cua nhung job da nam san trong hang doi truoc khi
+     * trien khai van giai tuan tu duoc - PHP dat lai gia tri mac dinh cua lop cho thuoc tinh
+     * vang mat trong chuoi da serialize.
+     *
+     * @var string
+     */
+    public $nguon = CtdtLichSuGui::NGUON_MAN_HINH;
+
+    public function __construct($maHoSo, $nguoiGui = null, $nguon = CtdtLichSuGui::NGUON_MAN_HINH)
     {
         $this->maHoSo = $maHoSo;
         $this->nguoiGui = $nguoiGui;
+        $this->nguon = $nguon;
     }
 
     public function handle()
@@ -197,6 +210,33 @@ class SubmitCtdtJob implements ShouldQueue
         }
 
         $hoSo->update($thuocTinh);
+
+        // Ghi nhat ky TRUOC moi nhanh return phia duoi: mot lan goi cong da xay ra roi thi
+        // phai co dau vet, ke ca khi cong tu choi. Dung create() chu khong updateOrCreate:
+        // moi lan gui la MOT dong, gui lai lan hai khong duoc de len lan mot.
+        try {
+            CtdtLichSuGui::create([
+                'ho_so_id'            => $hoSo->id,
+                'ma_ho_so'            => $hoSo->ma_ho_so,
+                'nguoi_gui'           => $this->nguoiGui,
+                // Nguon la tham so TUONG MINH, khong suy tu $nguoiGui === null: kyVaGui()
+                // cung truyen null khi auth()->check() tra false, nen suy se ghi mot cu bam
+                // tay thanh "lenh nen". Quy sai mot lan gui khong nguoi truc cho mot con
+                // nguoi la kieu noi doi te nhat mot bang nhat ky co the mac.
+                'nguon'               => $this->nguon,
+                'ma_gd'               => isset($ketQua['ma_gd']) ? $ketQua['ma_gd'] : null,
+                'ma_ket_qua'          => isset($ketQua['ma_ket_qua']) ? $ketQua['ma_ket_qua'] : null,
+                'thoi_gian_tiep_nhan' => isset($ketQua['thoi_gian_tiep_nhan'])
+                    ? $ketQua['thoi_gian_tiep_nhan'] : null,
+                'thanh_cong'          => $thanhCong,
+                'thong_diep'          => isset($ketQua['thong_diep']) ? $ketQua['thong_diep'] : null,
+            ]);
+        } catch (\Exception $e) {
+            // Mat mot dong nhat ky con hon nem sau khi cong DA NHAN ho so: nem o day lam job
+            // that bai, hang doi gui lai, va cong nhan LAN HAI cung mot goi - ma PL02 khong
+            // co ma giao dich phia client de cong khu trung.
+            Log::error('CTDT khong ghi duoc lich su gui ' . $hoSo->ma_ho_so . ': ' . $e->getMessage());
+        }
 
         Log::info('SubmitCtdtJob: da gui', [
             'ma_ho_so'   => $this->maHoSo,

@@ -32,6 +32,7 @@ trait DungBangCtdtSqlite
     {
         return [
             '2026_08_19_100001_create_ctdt_ho_so_table'              => 'CreateCtdtHoSoTable',
+            '2026_08_21_100001_create_ctdt_lich_su_gui_table'        => 'CreateCtdtLichSuGuiTable',
             '2026_08_19_100002_create_ctdt_chung_tu_table'           => 'CreateCtdtChungTuTable',
             '2026_08_19_100003_create_ctdt_loi_table'                => 'CreateCtdtLoiTable',
             '2026_08_19_100011_create_ctdt_ct03_table'               => 'CreateCtdtCt03Table',
