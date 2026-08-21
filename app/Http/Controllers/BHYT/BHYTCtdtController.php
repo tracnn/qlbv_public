@@ -22,6 +22,7 @@ use App\Services\Ctdt\CtdtQuyetDinhGui;
 use App\Services\Ctdt\CtdtXepHangKyGui;
 use App\Exports\CtdtDanhSachExport;
 use App\Exports\CtdtLoiExport;
+use App\Exports\CtdtNhatKyGuiExport;
 use Maatwebsite\Excel\Facades\Excel;
 
 /**
@@ -157,6 +158,19 @@ class BHYTCtdtController extends Controller
             new CtdtLoiExport(CtdtDanhSach::truyVan($this->locTu($request))),
             $ten
         );
+    }
+
+    /** Tai nhat ky gui trong mot khoang ngay */
+    public function xuatNhatKy(Request $request)
+    {
+        // Lui ve 30 ngay gan nhat khi nguoi dung khong chon: bang nay chi tang, khong bao
+        // gio giam, nen mac dinh "tat ca" la mot truy van toan bang.
+        $tuNgay  = $request->input('tu_ngay') ?: now()->subDays(30)->format('Y-m-d');
+        $denNgay = $request->input('den_ngay') ?: now()->format('Y-m-d');
+
+        $ten = 'nhat-ky-gui-ctdt-' . $tuNgay . '-den-' . $denNgay . '.xlsx';
+
+        return Excel::download(new CtdtNhatKyGuiExport($tuNgay, $denNgay), $ten);
     }
 
     public function importIndex()

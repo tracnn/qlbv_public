@@ -600,6 +600,7 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('ctdt/index/fetch-data', 'BHYT\BHYTCtdtController@fetchData')->name('bhyt.ctdt.fetch-data');
         Route::get('ctdt/xuat/danh-sach', 'BHYT\BHYTCtdtController@xuatDanhSach')->name('bhyt.ctdt.xuat.danh-sach');
         Route::get('ctdt/xuat/loi', 'BHYT\BHYTCtdtController@xuatLoi')->name('bhyt.ctdt.xuat.loi');
+        Route::get('ctdt/xuat/nhat-ky', 'BHYT\BHYTCtdtController@xuatNhatKy')->name('bhyt.ctdt.xuat.nhat-ky');
         Route::get('ctdt/import', 'BHYT\BHYTCtdtController@importIndex')->name('bhyt.ctdt.import.index');
         Route::post('ctdt/import/upload', 'BHYT\BHYTCtdtController@uploadData')->name('bhyt.ctdt.upload');
         Route::get('ctdt/detail/{ma_ho_so}', 'BHYT\BHYTCtdtController@detail')->name('bhyt.ctdt.detail');

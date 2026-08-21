@@ -200,4 +200,64 @@ class CtdtXuatExcelTest extends TestCase
             );
         }
     }
+
+    /** @test */
+    public function nhat_ky_phan_biet_nguoi_bam_voi_lenh_nen()
+    {
+        // Cau hoi van hanh dau tien khi co su co: "dem qua LENH NEN gui bao nhieu ho so".
+        // Khong phan biet duoc nguon thi cau hoi do khong tra loi duoc.
+        $xuat = new \App\Exports\CtdtNhatKyGuiExport('2026-08-01', '2026-08-31');
+
+        $this->assertContains('Nguồn', $xuat->headings());
+    }
+
+    /** @test */
+    public function nhat_ky_bat_buoc_co_khoang_ngay()
+    {
+        // Bang nay chi tang, khong bao gio giam. Xuat khong gioi han khoang la mot truy van
+        // toan bang tren may chu gioi han PHP 128MB.
+        $nguon = file_get_contents(base_path('app/Exports/CtdtNhatKyGuiExport.php'));
+
+        $this->assertContains('whereBetween', $nguon,
+            'Phai gioi han theo khoang ngay, khong duoc xuat toan bang');
+    }
+
+    /** @test */
+    public function nhat_ky_phan_biet_nguon_qua_map()
+    {
+        // Dung ban ghi CtdtLichSuGui THAT trong SQLite bo nho, kem ca hai gia tri nguon, de
+        // chung minh cot "Nguon" doc dung truong nguon chu khong suy tu nguoi_gui rong/khong.
+        $hoSo1 = CtdtHoSo::create([
+            'ma_ho_so' => 'YT001', 'dich_vu' => 'CT2025', 'loai_hs' => '39',
+            'macskcb' => '01929', 'so_chung_tu' => 1, 'so_loi' => 0,
+        ]);
+        $hoSo2 = CtdtHoSo::create([
+            'ma_ho_so' => 'YT002', 'dich_vu' => 'CT2025', 'loai_hs' => '39',
+            'macskcb' => '01929', 'so_chung_tu' => 1, 'so_loi' => 0,
+        ]);
+
+        $manHinh = \App\Models\BHYT\Ctdt\CtdtLichSuGui::create([
+            'ho_so_id' => $hoSo1->id, 'ma_ho_so' => 'YT001', 'nguoi_gui' => 'tracnn',
+            'nguon' => \App\Models\BHYT\Ctdt\CtdtLichSuGui::NGUON_MAN_HINH,
+            'ma_gd' => 'GD001', 'ma_ket_qua' => '00', 'thoi_gian_tiep_nhan' => '2026-08-10 08:00:00',
+            'thanh_cong' => true, 'thong_diep' => 'OK',
+        ]);
+        $lenhNen = \App\Models\BHYT\Ctdt\CtdtLichSuGui::create([
+            'ho_so_id' => $hoSo2->id, 'ma_ho_so' => 'YT002', 'nguoi_gui' => null,
+            'nguon' => \App\Models\BHYT\Ctdt\CtdtLichSuGui::NGUON_CONSOLE,
+            'ma_gd' => 'GD002', 'ma_ket_qua' => '01', 'thoi_gian_tiep_nhan' => '2026-08-10 09:00:00',
+            'thanh_cong' => false, 'thong_diep' => 'Loi',
+        ]);
+
+        $xuat = new \App\Exports\CtdtNhatKyGuiExport('2026-08-01', '2026-08-31');
+
+        $dongManHinh = $xuat->map($manHinh);
+        $dongLenhNen = $xuat->map($lenhNen);
+
+        $this->assertCount(count($xuat->headings()), $dongManHinh, 'So o moi dong phai bang so tieu de');
+        $this->assertCount(count($xuat->headings()), $dongLenhNen, 'So o moi dong phai bang so tieu de');
+
+        $this->assertSame('Người bấm', $dongManHinh[3], 'Nguon man_hinh phai ra chu Nguoi bam');
+        $this->assertSame('Lệnh nền', $dongLenhNen[3], 'Nguon console phai ra chu Lenh nen');
+    }
 }

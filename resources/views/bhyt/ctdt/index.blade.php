@@ -26,6 +26,9 @@
             <button type="button" id="btn-xuat-loi" class="btn btn-warning btn-sm">
                 <i class="fa fa-file-excel-o"></i> Xuất bảng lỗi
             </button>
+            <button type="button" id="btn-xuat-nhat-ky" class="btn btn-default btn-sm">
+                <i class="fa fa-history"></i> Xuất nhật ký gửi
+            </button>
         </div>
         <div class="table-responsive">
             <table class="table display table-hover responsive wrap datatable dtr-inline" width="100%" id="ctdt-list" style="width:100%">
@@ -247,6 +250,14 @@ $(function () {
 
     $('#btn-xuat-loi').on('click', function () {
         window.location = '{{ route('bhyt.ctdt.xuat.loi') }}?' + $.param(thamSoLoc());
+    });
+
+    // Nhat ky chi nhan khoang ngay, KHONG nhan cac o loc khac: bang nay khong co cot dich
+    // vu / co so, nen truyen chung vao chi tao ao giac da loc.
+    $('#btn-xuat-nhat-ky').on('click', function () {
+        window.location = '{{ route('bhyt.ctdt.xuat.nhat-ky') }}'
+            + '?tu_ngay=' + encodeURIComponent(ctdtRange.from || '')
+            + '&den_ngay=' + encodeURIComponent(ctdtRange.to || '');
     });
 
     // Mo modal chi tiet. Chan click THUONG thoi - the <a> van giu href that nen ctrl+click
