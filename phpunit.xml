@@ -24,6 +24,21 @@
     </filter>
     <php>
         <env name="APP_ENV" value="testing"/>
+
+        <!-- CHOT AN TOAN - DUNG BAO GIO XOA HAI DONG NAY.
+
+             .env cua du an tro DB_DATABASE=qlbv, la co so du lieu PHAT TRIEN THAT. Truoc khi
+             co hai dong nay, bat ky test nao dung RefreshDatabase hay DatabaseMigrations deu
+             goi migrate:fresh THANG VAO qlbv - tuc DROP TOAN BO BANG. Chuyen do da xay ra
+             that ngay 2026-08-21: toan bo qlbv bi xoa sach, khong co binlog va khong co ban
+             dump nao chua bang ctdt de lui ve.
+
+             Ghi de o day khien moi test chay tren SQLite trong bo nho, nen mot trait nhu the
+             chi xoa mot co so du lieu tam roi bien mat cung tien trinh.
+
+             tests/TestCase.php con mot lop chan thu hai, phong khi tep nay bi sua. -->
+        <env name="DB_CONNECTION" value="sqlite"/>
+        <env name="DB_DATABASE" value=":memory:"/>
         <env name="CACHE_DRIVER" value="array"/>
         <env name="SESSION_DRIVER" value="array"/>
         <env name="QUEUE_DRIVER" value="sync"/>
