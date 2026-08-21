@@ -78,13 +78,13 @@ class DsMienCchnTest extends TestCase
     }
 
     /** @test */
-    public function cau_hinh_mac_dinh_co_ba_tai_khoan()
+    public function cau_hinh_mac_dinh_co_bon_tai_khoan()
     {
         $ds = DsMienCchn::doc(config('order_check.practice_cert_exclude_loginnames'));
 
         sort($ds);
 
-        $this->assertSame(['mitalab', 'sys', 'vietrad'], $ds);
+        $this->assertSame(['mitalab', 'sys', 'test', 'vietrad'], $ds);
     }
 
     /** @test */

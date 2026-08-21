@@ -60,14 +60,14 @@ return [
     // Tai khoan nguoi thuc hien KHONG bi kiem CCHN, CSV loginname. RONG = khong mien ai.
     //
     // Mac dinh mitalab (tich hop may xet nghiem), vietrad (chan doan hinh anh), sys (he
-    // thong). Day khong phai nguoi nen khong the co CCHN.
+    // thong), test (tai khoan thu nghiem). Day khong phai nguoi nen khong the co CCHN.
     //
-    // Do ngay 30/07/2026: 5.422 vi pham B_DOCTOR_NO_PRACTICE_CERT thi ba tai khoan nay
+    // Do ngay 30/07/2026: 5.422 vi pham B_DOCTOR_NO_PRACTICE_CERT thi BA tai khoan dau
     // chiem 5.380 (99,2%). Phan con lai deu la NGUOI THAT thieu CCHN trong HIS - phat hien
-    // dung, khong duoc mien.
+    // dung, khong duoc mien. Phep do do KHONG bao gom 'test' (them sau).
     //
     // So khop khong phan biet hoa thuong. CHI ap cho B_DOCTOR_NO_PRACTICE_CERT.
-    'practice_cert_exclude_loginnames' => env('ORDER_CHECK_PRACTICE_CERT_EXCLUDE_LOGINS', 'mitalab,vietrad,sys'),
+    'practice_cert_exclude_loginnames' => env('ORDER_CHECK_PRACTICE_CERT_EXCLUDE_LOGINS', 'mitalab,vietrad,sys,test'),
 
     // ===== Thông báo email digest =====
     // Bật/tắt gửi email (mặc định TẮT cho an toàn, bật khi đã cấu hình người nhận)
