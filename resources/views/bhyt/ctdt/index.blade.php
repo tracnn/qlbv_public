@@ -19,6 +19,11 @@
 
 <div class="panel panel-default">
     <div class="panel-body">
+        <div style="margin-bottom: 10px;">
+            <button type="button" id="btn-xuat-danh-sach" class="btn btn-success btn-sm">
+                <i class="fa fa-file-excel-o"></i> Xuất danh sách
+            </button>
+        </div>
         <div class="table-responsive">
             <table class="table display table-hover responsive wrap datatable dtr-inline" width="100%" id="ctdt-list" style="width:100%">
                 <thead>
@@ -89,6 +94,24 @@ function ctdtNhanDichVu(ma) {
     return nhan[ma] ? nhan[ma] : ma;
 }
 
+// Bo loc dang xem tren man hinh - MOT ban duy nhat cho ca ajax.data cua DataTable lan nut
+// tai Excel. Neu hai noi tu dung mot ban rieng thi them mot o loc ma quen ben kia se lam
+// tep xuat khac han bang dang hien, va khong co dau hieu gi cho toi luc ai do ngoi doi
+// chieu tung dong voi ban cua BHXH.
+function thamSoLoc() {
+    return {
+        tu_ngay:        ctdtRange.from,
+        den_ngay:       ctdtRange.to,
+        dich_vu:        $('#dich_vu').val(),
+        loai_ho_so:     $('#loai_ho_so').val(),
+        macskcb:        $('#ma_cskcb').val(),
+        imported_by:    $('#imported_by').val(),
+        tim:            $('#tim').val(),
+        chi_con_loi:    $('#chi_con_loi').val(),
+        trang_thai_gui: $('#trang_thai_gui').val()
+    };
+}
+
 function fetchData(startDate, endDate) {
     ctdtRange.from = startDate;
     ctdtRange.to = endDate;
@@ -110,15 +133,7 @@ function fetchData(startDate, endDate) {
                 // Khoang ngay den tu partials.date_range qua partials.load_data_button,
                 // dang 'YYYY-MM-DD HH:mm:ss'. CtdtDanhSach nhan ca dang co gio lan dang
                 // chi co ngay.
-                d.tu_ngay        = ctdtRange.from;
-                d.den_ngay       = ctdtRange.to;
-                d.dich_vu        = $('#dich_vu').val();
-                d.loai_ho_so     = $('#loai_ho_so').val();
-                d.macskcb        = $('#ma_cskcb').val();
-                d.imported_by    = $('#imported_by').val();
-                d.tim            = $('#tim').val();
-                d.chi_con_loi    = $('#chi_con_loi').val();
-                d.trang_thai_gui = $('#trang_thai_gui').val();
+                $.extend(d, thamSoLoc());
             }
         },
         columns: [
@@ -221,6 +236,12 @@ function fetchData(startDate, endDate) {
 var luotMoModal = 0;
 
 $(function () {
+    // Ghep DUNG bo loc dang xem vao URL tai: nut tai ma bo qua bo loc se cho ra mot tep
+    // khac han bang dang hien, va nguoi dung se tuong man hinh sai.
+    $('#btn-xuat-danh-sach').on('click', function () {
+        window.location = '{{ route('bhyt.ctdt.xuat.danh-sach') }}?' + $.param(thamSoLoc());
+    });
+
     // Mo modal chi tiet. Chan click THUONG thoi - the <a> van giu href that nen ctrl+click
     // van mo tab moi nhu cu.
     //

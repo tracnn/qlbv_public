@@ -598,6 +598,7 @@ Route::group(['middleware' => ['auth']], function () {
         // tách được trách nhiệm thực tế.
         Route::get('ctdt/index', 'BHYT\BHYTCtdtController@index')->name('bhyt.ctdt.index');
         Route::get('ctdt/index/fetch-data', 'BHYT\BHYTCtdtController@fetchData')->name('bhyt.ctdt.fetch-data');
+        Route::get('ctdt/xuat/danh-sach', 'BHYT\BHYTCtdtController@xuatDanhSach')->name('bhyt.ctdt.xuat.danh-sach');
         Route::get('ctdt/import', 'BHYT\BHYTCtdtController@importIndex')->name('bhyt.ctdt.import.index');
         Route::post('ctdt/import/upload', 'BHYT\BHYTCtdtController@uploadData')->name('bhyt.ctdt.upload');
         Route::get('ctdt/detail/{ma_ho_so}', 'BHYT\BHYTCtdtController@detail')->name('bhyt.ctdt.detail');
