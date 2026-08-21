@@ -300,13 +300,12 @@ class CtdtKyVaGuiTest extends TestCase
         // ma_ho_so co the chua '#' (nhanh lui GUID). Khong ma hoa thi trinh duyet cat tu dau
         // '#' va yeu cau tro sai ho so - hoac te hon, gui nham mot ho so khac len cong.
         //
-        // KHONG the render RIENG partial: no dung @push('after-scripts'), va noi dung day
-        // chi hien ra khi co layout cha voi @stack('after-scripts') - render partial mot
-        // minh se mat trang script. Ma cung KHONG the kiem tren toan bo $html cua trang: nut
-        // "Xoa ho so" co san (Task 1-5) dung dung chuoi 'encodeURIComponent(maHoSo)' cho URL
-        // cua no, nen assertContains tren ca trang PASS gia du toi xoa mat encodeURIComponent
-        // trong partial cua chinh minh (da phat hien dieu nay khi tu do mutation). Vi vay
-        // cat rieng doan HTML NGAY SAU diem gan click-handler cua nut ky-va-gui roi moi kiem.
+        // Tu Task 1 (tach than+JS thanh partial dung chung), nut duoc gan bang UY NHIEM su
+        // kien tren document (khong con gan truc tiep tren nut), va URL duoc ghep qua ham
+        // dung chung ghepUrl() thay vi goi encodeURIComponent() rai ngay tai cho. Vi vay bai
+        // test nay kiem hai buoc rieng: (1) handler cua nut ky-va-gui co goi ghepUrl voi
+        // maHoSo, va (2) chinh ham ghepUrl dung chung co ma hoa truoc khi ghep - dung cho ca
+        // nut ky-va-gui lan nut xoa ho so nen khong the nham lan nhu truoc.
         $this->giaLapDangNhap();
         $hoSo = $this->hoSo();
 
@@ -315,11 +314,17 @@ class CtdtKyVaGuiTest extends TestCase
             'tabs' => \App\Services\Ctdt\CtdtDetailTabs::cua($hoSo->fresh()),
         ])->render();
 
-        $diem = strpos($html, "\$('#btn-ky-va-gui').on('click'");
+        $diem = strpos($html, "\$(document).on('click', '#btn-ky-va-gui'");
         $this->assertNotFalse($diem, 'Khong tim thay script gan click cho nut ky-va-gui');
 
         $doanRieng = substr($html, $diem, 2000);
-        $this->assertContains('encodeURIComponent(maHoSo)', $doanRieng);
+        $this->assertContains('ghepUrl(mauUrlGui, maHoSo)', $doanRieng);
+
+        $this->assertContains(
+            "return mau.replace('__MA__', encodeURIComponent(maHoSo));",
+            $html,
+            'Ham dung chung ghepUrl phai ma hoa ma ho so truoc khi ghep vao URL'
+        );
     }
 
     /** @test */

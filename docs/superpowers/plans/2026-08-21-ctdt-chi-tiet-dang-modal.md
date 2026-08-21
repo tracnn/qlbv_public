@@ -768,8 +768,20 @@ git commit -m "feat(ctdt): xem chi tiet ho so bang modal ngay tren man danh sach
 
 ## Việc phải nghiệm thu bằng tay — không test nào thay được
 
-1. **Ctrl+click và chuột giữa** trên cả hai chỗ mở chi tiết → mở tab mới, modal không bật.
-2. **Mở modal hồ sơ A, đóng, mở hồ sơ B** → không thấy thoáng nội dung của A.
-3. **Bộ lọc và số trang sống sót** qua một lần mở/đóng modal, và qua một lần ký-và-gửi.
-4. **Trang riêng vẫn chạy đủ**: `/bhyt/ctdt/detail/<mã>` hiện đúng như trước khi tách, nút ký-và-gửi có phản ứng.
-5. **Xoá hồ sơ từ trong modal** (tài khoản `superadministrator`) → modal đóng, bảng nạp lại, hồ sơ biến mất khỏi danh sách.
+**Không có test JS hay test trình duyệt nào trong dự án này.** Toàn bộ bộ test của màn danh sách là khớp chuỗi mã nguồn Blade — cách đó về nguyên tắc không thấy được lỗi thoát ký tự trong ngữ cảnh thuộc tính, cũng không thấy được một cuộc đua thời gian. Cả hai lỗi Critical của nhánh này đều lọt qua ba vòng review từng task vì đúng lý do đó.
+
+Làm các bước 1–9 trên môi trường có **`submit_enabled = false`**. Chỉ bước 10 mới chạm cổng thật.
+
+1. **Modal mở được.** Bấm mã hồ sơ → modal mở, thân đủ khối thông tin và dải tab, tab đầu tự nạp. Bấm nút "Chi tiết" ở cột cuối: y hệt.
+2. **Không lồng layout.** Trong modal không có menu trái AdminLTE, không có tiêu đề trang thứ hai. Console DevTools **trống**.
+3. **Ctrl+click và chuột giữa** vẫn mở tab mới trỏ trang chi tiết riêng, ở **cả hai** chỗ mở.
+4. **Chuyển tab trong modal**: bấm lần lượt hết các tab, nội dung đổi theo, thẻ tab sáng đúng cái vừa bấm.
+5. **Hồ sơ có `#` trong mã** (nhánh lùi GUID): mở modal → đúng hồ sơ đó, tab nạp được. Tab Network: URL có `%23`, không bị cắt.
+6. **Đổi hồ sơ.** Mở A, đóng, mở B → thân là B, tiêu đề là B, `data-ma-ho-so` trong DevTools là B.
+7. **Nghiệm thu chống đua (Critical 2).** DevTools → Network → *Slow 3G*. Bấm A, đợi "Đang tải…", đóng modal, bấm B ngay. Thân cuối cùng phải là **B**, không bao giờ nhảy về A.
+8. **Nghiệm thu chống chèn HTML (Critical 1).** Nạp một tệp XML có `MA_YTE` chứa dấu `"` (ví dụ `A" x="1`) → mở màn danh sách → không cửa sổ lạ, Console không lỗi, DOM cho thấy thuộc tính đóng đúng chỗ.
+9. **Xoá hồ sơ** (`superadministrator`): nút hiện trong modal → hộp xác nhận nêu đúng `MaGD` → xác nhận → báo "Đã xóa", modal đóng, bảng nạp lại, **bộ lọc và trang giữ nguyên**, hồ sơ biến mất. Đăng nhập `xml-man` thường: nút không hiện.
+10. **Ký và gửi — chạm cổng thật.** Chọn **một** hồ sơ. Hộp xác nhận phải nêu **đúng mã hồ sơ đang xem** → xác nhận → nút xám lại → "Đã xếp hàng" → modal đóng, bảng nạp lại giữ nguyên bộ lọc và trang. Sau đó **kiểm cổng BHXH: đúng MỘT giao dịch**, không phải hai.
+11. **Đường xác nhận gửi lại:** hồ sơ có `lich_su_gui` nhưng `ma_gd` rỗng → hộp thứ hai ghi *"Hồ sơ đã từng được gửi lên cổng"* (không phải "đã từng được tiếp nhận"). Bấm Hủy → **không** POST thêm lần nào (kiểm tab Network).
+12. **Đường lỗi:** xoá một hồ sơ ở tab khác rồi mở nó trong modal → hiện "Không tìm thấy hồ sơ này. Có thể nó vừa bị xóa.", không treo "Đang tải…".
+13. **Trang chi tiết riêng vẫn sống:** mở thẳng `ctdt/detail/{ma}` → tab đầu tự nạp; ký-gửi xong thì **nạp lại trang**; xoá xong thì **về màn danh sách**. Đây là đường lùi khi modal hỏng.
