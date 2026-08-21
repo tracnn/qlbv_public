@@ -128,9 +128,24 @@ return [
             'root' => 'D:\XML\ExportXml3176',
         ],
 
+        // Hai thu muc cua module chung tu dien tu (PL02). Dat canh nhau o day chu khong o
+        // organization.chung_tu_dien_tu: duong dan he tep la duong dan he tep, va de chung
+        // canh nhau thi nguoi trien khai cho don vi moi chi phai nhin MOT cho.
+        //
+        // Ca hai doc duoc tu env, nen don vi khong co o D: chi can dat hai bien trong .env
+        // chu khong phai sua tep nay.
+        //
+        // PHAI CO CA HAI o day: tep nay la ban mau ma don vi moi chep sang config/. Thieu
+        // mot disk thi Storage::disk() nem InvalidArgumentException - va no nem luc nguoi ta
+        // bam nut, khong phai luc trien khai.
         'exportCtdt' => [
             'driver' => 'local',
-            'root' => 'D:\XML\ChungTuDienTu',
+            'root' => env('CTDT_EXPORT_PATH', 'D:\XML\ChungTuDienTu'),
+        ],
+
+        'importCtdt' => [
+            'driver' => 'local',
+            'root' => env('CTDT_IMPORT_PATH', 'D:\XML\ChungTuDienTu\inbox'),
         ],
 
         'congDuLieuYTeDienBien' => [

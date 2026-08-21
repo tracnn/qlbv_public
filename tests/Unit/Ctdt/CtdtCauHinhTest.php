@@ -158,12 +158,18 @@ class CtdtCauHinhTest extends TestCase
         $this->assertSame('local', $disk['driver']);
         $this->assertNotEmpty($disk['root']);
 
-        // Phai doc duoc tu env: don vi khong co o D: thi dat bien trong .env, khong phai sua
-        // mot tep da track.
-        $nguon = file_get_contents(base_path('config/filesystems.php'));
+        // Khang dinh tren BAN MAU docs/filesystems.php chu KHONG phai config/filesystems.php:
+        // tep config nam trong .gitignore, nen mot khang dinh tren no se xanh o may nay va
+        // KHONG CO NGHIA GI o mot ban sao moi. Ban mau moi la thu don vi moi chep sang.
+        //
+        // Thieu disk trong ban mau thi Storage::disk() nem InvalidArgumentException - va no
+        // nem luc nguoi ta bam nut, khong phai luc trien khai.
+        $mau = file_get_contents(base_path('docs/filesystems.php'));
 
-        $this->assertContains("env('CTDT_IMPORT_PATH'", $nguon);
-        $this->assertContains("env('CTDT_EXPORT_PATH'", $nguon);
+        $this->assertContains("'importCtdt' => [", $mau, 'Ban mau thieu disk importCtdt');
+        $this->assertContains("'exportCtdt' => [", $mau, 'Ban mau thieu disk exportCtdt');
+        $this->assertContains("env('CTDT_IMPORT_PATH'", $mau);
+        $this->assertContains("env('CTDT_EXPORT_PATH'", $mau);
     }
 
     /** @test */
