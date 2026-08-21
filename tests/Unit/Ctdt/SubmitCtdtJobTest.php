@@ -316,6 +316,39 @@ class SubmitCtdtJobTest extends TestCase
         $this->assertLessThanOrEqual(255, mb_strlen((string) $hoSo->submit_error));
     }
 
+    /**
+     * Cot cua ctdt_lich_su_gui cung hep y het ctdt_ho_so, va truoc day ghi vao do KHONG qua
+     * cat(). Mot ma_gd 101 ky tu lam create() nem; try/catch trong ghiKetQua() giu cho job
+     * khong that bai, nhung ta MAT NGUYEN DONG NHAT KY - dung luc can no nhat, vi do la lan
+     * gui co phan hoi bat thuong.
+     *
+     * @test
+     */
+    public function gia_tri_qua_dai_van_ghi_duoc_MOT_dong_lich_su_gui()
+    {
+        $this->hoSo();
+        $gui = new FakeCtdtSubmitService();
+        $gui->ketQua = [
+            'ma_ket_qua'          => str_repeat('9', 30),
+            'ma_gd'               => str_repeat('G', 200),
+            'thoi_gian_tiep_nhan' => '2026-08-20 08:30:00 GMT+7',
+            'thong_diep'          => str_repeat('x', 500),
+            'nguyen_van'          => '{}',
+        ];
+
+        $this->chay($gui);
+
+        $dong = \App\Models\BHYT\Ctdt\CtdtLichSuGui::where('ma_ho_so', 'YT001')->first();
+
+        $this->assertNotNull($dong, 'Mot lan goi cong DA xay ra thi phai co dong nhat ky, '
+            . 'du cong tra ve gia tri tran cot');
+        $this->assertLessThanOrEqual(100, mb_strlen((string) $dong->ma_gd));
+        $this->assertLessThanOrEqual(20, mb_strlen((string) $dong->ma_ket_qua));
+        $this->assertLessThanOrEqual(20, mb_strlen((string) $dong->thoi_gian_tiep_nhan));
+        // thong_diep la cot TEXT - phai giu NGUYEN VEN, khong cat.
+        $this->assertSame(500, mb_strlen((string) $dong->thong_diep));
+    }
+
     /** @test */
     public function failed_voi_thong_diep_rat_dai_van_ghi_duoc()
     {
