@@ -6,6 +6,7 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Storage;
 use App\Services\Ctdt\CtdtImporter;
 use App\Models\BHYT\Ctdt\CtdtHoSo;
 use App\Models\BHYT\Ctdt\CtdtLichSuGui;
@@ -151,10 +152,39 @@ class CtdtImport extends Command
             return 1;
         }
 
+        // Tu tao thu muc neu chua co - GIONG cac module khac, chi khac duong di toi do.
+        //
+        // Cac lenh quet khac (xml3176import:day, truc-du-lieu-y-te:scan...) dung
+        // Storage::disk(), va adapter Local cua Flysystem TU TAO thu muc goc ngay luc khoi
+        // dung. Vi vay D:\XML\3176 va ho hang xuat hien ngay lan dau dich vu chay.
+        //
+        // Lenh nay doc duong dan THO roi dung glob()/rename() - no can di lai giua thu muc
+        // goc, da-nap/ va loi/, ma Storage khong giup gi cho viec do. Doi lai, khong co gi
+        // tao thu muc ho: tren mot don vi trien khai moi, nguoi van hanh chi thay lenh bao
+        // "Khong phai thu muc" ma khong hieu vi sao module khac tu tao duoc con cai nay thi
+        // khong.
         if (!is_dir($thuMuc)) {
-            $this->error('Khong phai thu muc: ' . $thuMuc);
+            if (!@mkdir($thuMuc, 0775, true) && !is_dir($thuMuc)) {
+                $this->error('Khong tao duoc thu muc: ' . $thuMuc);
+                $this->line('Kiem quyen ghi, va kiem o dia co ton tai khong. Doi duong dan'
+                    . ' bang CTDT_IMPORT_PATH trong .env.');
 
-            return 1;
+                return 1;
+            }
+
+            $this->info('Da tao thu muc quet: ' . $thuMuc);
+        }
+
+        // Cham vao disk xuat de thu muc "da ky" cung duoc tao luon. SignCtdtJob se tu tao no
+        // khi ky lan dau, nhung lan do co the cach day hang tuan va dien ra trong mot worker
+        // nen chay - khong ai nhin thay. Nguoi trien khai don vi moi can thay CA CAY thu muc
+        // ngay khi dich vu chay lan dau, giong moi module khac.
+        try {
+            Storage::disk('exportCtdt');
+        } catch (\Exception $e) {
+            // Thieu disk trong config/filesystems.php thi bao ro, nhung KHONG dung lenh:
+            // quet va nap van chay duoc, chi rieng duong ky la khong.
+            $this->warn('Khong mo duoc disk exportCtdt: ' . $e->getMessage());
         }
 
         $khoDe = (bool) $this->option('dry-run');

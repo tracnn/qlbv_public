@@ -61,6 +61,31 @@ class CtdtImportCommandTest extends TestCase
     }
 
     /** @test */
+    public function tu_tao_thu_muc_quet_neu_chua_co()
+    {
+        // Cac lenh quet khac (xml3176import:day, truc-du-lieu-y-te:scan...) dung
+        // Storage::disk(), va adapter Local cua Flysystem TU TAO thu muc goc luc khoi dung -
+        // vi vay D:\XML\3176 va ho hang xuat hien ngay lan dau dich vu chay.
+        //
+        // Lenh nay doc duong dan THO (can di lai giua thu muc goc, da-nap/ va loi/), nen
+        // khong co gi tao ho. Tren mot don vi trien khai moi, nguoi van hanh chi thay
+        // "Khong phai thu muc" ma khong hieu vi sao module khac tu tao duoc con cai nay
+        // thi khong.
+        $goc = $this->thuMucTam();
+        $chuaCo = $goc . DIRECTORY_SEPARATOR . 'chua-ton-tai' . DIRECTORY_SEPARATOR . 'inbox';
+
+        $this->assertFalse(is_dir($chuaCo), 'Dieu kien dau: thu muc chua duoc tao');
+
+        $maThoat = Artisan::call('ctdt:import', [
+            '--dry-run'   => true,
+            '--duong-dan' => $chuaCo,
+        ]);
+
+        $this->assertSame(0, $maThoat, 'Thu muc chua co KHONG duoc lam lenh that bai');
+        $this->assertTrue(is_dir($chuaCo), 'Lenh phai tu tao thu muc quet, giong cac module khac');
+    }
+
+    /** @test */
     public function ten_lenh_dung_tien_to_ctdt()
     {
         $this->assertSame('ctdt:import', (new CtdtImport())->getName());
