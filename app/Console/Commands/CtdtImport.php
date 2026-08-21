@@ -40,7 +40,7 @@ class CtdtImport extends Command
         {--lien-tuc : Chay nen lien tuc giong xml3176import:day, tu thoat sau --so-vong vong}
         {--nghi=5 : So giay nghi giua hai vong khi --lien-tuc}
         {--so-vong=1000 : Tran so vong khi --lien-tuc, lenh tu thoat sau khi chay du}
-        {--go-khoa : Go khoa luot mo coi (tien trinh --lien-tuc bi kill -9), roi thoat NGAY - khong quet/nap/xep hang gi ca}';
+        {--go-khoa : CAP CUU: go khoa luot vo dieu kien. CHI dung khi CHAC CHAN khong con tien trinh ctdt:import nao dang chay - kiem truoc bang tasklist hoac dich vu nssm, roi thoat NGAY, khong quet/nap/xep hang gi ca}';
 
     protected $description = 'Quet thu muc inbox, nap chung tu dien tu PL02';
 
@@ -60,6 +60,10 @@ class CtdtImport extends Command
      * trong finally; truong hop bi kill -9 (finally KHONG chay) thi nguoi truc dem go bang
      * `php artisan ctdt:import --go-khoa` - mot dong ho go duoc, khong can biet Redis hay
      * tinker, khong dung `cache:clear` (xoa sach cache ca he thong, anh huong module khac).
+     * --go-khoa go VO DIEU KIEN, khong kiem tien trinh nao con song - CHI dung sau khi da
+     * tu xac nhan (vi du bang tasklist) khong con tien trinh ctdt:import nao dang chay; xem
+     * chu thich tai nhanh xu ly --go-khoa trong handle() de biet ly do va hau qua neu go
+     * nham.
      *
      * TASK 5 NANG TU 60 LEN 1440: --lien-tuc giu khoa nay SUOT ca vong doi tien trinh (dat
      * MOT LAN truoc vongLap(), mo MOT LAN sau khi vongLap() ket thuc), khong phai suot mot
@@ -109,10 +113,28 @@ class CtdtImport extends Command
         // cap cuu cho nguoi truc dem gap khoa mo coi (tien trinh --lien-tuc truoc bi kill
         // -9 nen finally() khong chay toi Cache::forget()). Chi go khoa roi thoat NGAY -
         // KHONG quet, KHONG nap, KHONG xep hang gi ca, du co --duong-dan hop le hay khong.
+        //
+        // CO Y KHONG kiem tien trinh --lien-tuc nao dang song truoc khi go: day la lenh cap
+        // cuu, phai chay duoc ca khi moi thu khac da hong, va KHONG CO heartbeat/PID nao de
+        // so sanh - khoa cache chi la true/false, khong mang theo "ai dang giu no". Neu go
+        // NHAM luc mot tien trinh --lien-tuc that su con song, Cache::add() cua no da thanh
+        // cong tu truoc nen no KHONG kiem tra lai - no cu chay tiep binh thuong, chi la
+        // KHONG con khoa nua. Mot lenh ctdt:import khac goi ngay sau do se Cache::add()
+        // thanh cong va bat dau quet CUNG thu muc - hai tien trinh cung nhat mot tep, va vi
+        // day la lenh POST that len cong BHXH, hau qua la NAP TRUNG roi GUI TRUNG ho so. Bu
+        // lai bang canh bao to o thong diep duoi day va o mo ta --go-khoa trong $signature,
+        // chu khong bang kiem tra tu dong.
         if ($this->option('go-khoa')) {
             Cache::forget(self::KHOA_LUOT);
-            $this->info('Da go khoa ' . self::KHOA_LUOT . '. Khong quet/nap/xep hang gi ca'
-                . ' - chay lai ctdt:import binh thuong (co hoac khong --lien-tuc) de tiep tuc.');
+            $this->warn('CAP CUU: da go khoa ' . self::KHOA_LUOT . ' VO DIEU KIEN.');
+            $this->warn('Neu mot tien trinh --lien-tuc THAT SU dang chay va ban vua go NHAM'
+                . ' khoa cua no, mot lenh ctdt:import khac chay tiep theo se quet CUNG thu'
+                . ' muc dong thoi - nap trung roi GUI TRUNG ho so len cong BHXH.');
+            $this->warn('Kiem TRUOC khi chay lenh ke tiep: tasklist /FI "IMAGENAME eq'
+                . ' php.exe" /V (tim dong lenh co ctdt:import --lien-tuc), hoac xem dich vu'
+                . ' nssm "QLBV CtdtImport" con dang chay khong. Chi tiep tuc khi da xac nhan'
+                . ' KHONG con tien trinh ctdt:import nao con song.');
+            $this->info('Khong quet/nap/xep hang gi ca trong lan chay nay.');
 
             return 0;
         }
