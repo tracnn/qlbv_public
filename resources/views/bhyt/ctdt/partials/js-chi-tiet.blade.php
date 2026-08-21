@@ -173,7 +173,17 @@ $(function () {
                 type: 'DELETE',
                 data: { _token: token },
                 success: function () {
-                    $(document).trigger('ctdt:da-xoa', [maHoSo]);
+                    // Bao thanh cong TRUOC khi phat su kien. Tren trang rieng nguoi dung con
+                    // thay minh bi chuyen trang; trong modal thi modal dong va bang nap lai,
+                    // khong co dau hieu nao noi "da xoa". Xoa la thao tac khong hoan tac -
+                    // phai co xac nhan da xong.
+                    Swal.fire({
+                        title: 'Đã xóa',
+                        text: 'Hồ sơ ' + maHoSo + ' đã được xóa.',
+                        icon: 'success'
+                    }).then(function () {
+                        $(document).trigger('ctdt:da-xoa', [maHoSo]);
+                    });
                 },
                 error: function () {
                     Swal.fire('Có lỗi xảy ra', 'Không xóa được hồ sơ. Vui lòng thử lại.', 'error');

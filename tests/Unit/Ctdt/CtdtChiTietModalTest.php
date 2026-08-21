@@ -195,4 +195,92 @@ class CtdtChiTietModalTest extends TestCase
         $this->assertNotContains('href="#"', $nguon,
             'Nut mo chi tiet phai tro URL that de ctrl+click con mo duoc tab moi');
     }
+
+    /** @test */
+    public function hai_ham_render_khong_noi_chuoi_vao_thuoc_tinh_data_ma_ho_so()
+    {
+        // $('<div>').text(x).html() CHI thoat '&', '<', '>' - KHONG thoat dau nhay kep. Noi
+        // gia tri da "an" kieu do vao mot THUOC TINH van cho phep mot MA_YTE dang
+        // 'A" onmouseover=... x="' thoat ra khoi thuoc tinh va chay ngay khi mo man danh
+        // sach, voi phien cua chinh nguoi co quyen bam "Ky va gui".
+        //
+        // CtdtMaHoSo::cua() lay MA_YTE nguyen van tu XML va chi kiem do dai, khong kiem bo
+        // ky tu - nen gia tri do vao duoc that.
+        $nguon = $this->nguon('index.blade.php');
+
+        $this->assertNotRegExp('/data-ma-ho-so="\'\s*\+/', $nguon,
+            'khong duoc noi chuoi vao thuoc tinh data-ma-ho-so; dung .attr() roi lay outerHTML');
+
+        $this->assertSame(2, substr_count($nguon, ".attr('data-ma-ho-so', data)"),
+            'ca hai cot (ma_ho_so va action) deu phai dung .attr() de dat data-ma-ho-so');
+    }
+
+    /** @test */
+    public function mo_modal_co_ma_the_he_o_ca_done_lan_fail()
+    {
+        // Bam ho so A (cham) -> dong modal -> bam ho so B (nhanh) -> B hien -> roi A ve muon
+        // va DE LEN than dang mang ten B. Nut "Ky va gui" trong than do se POST HO SO A len
+        // cong BHXH. Khoa phia may chu (CtdtXepHangKyGui) khong do duoc vi A la ho so khac,
+        // hoan toan chua bi khoa.
+        $nguon = $this->nguon('index.blade.php');
+
+        $this->assertContains('var luot = ++luotMoModal;', $nguon,
+            'moi lan mo modal phai lay mot so the he');
+
+        $this->assertSame(2, substr_count($nguon, 'if (luot !== luotMoModal) {'),
+            'phep kiem the he phai co o CA HAI nhanh .done va .fail');
+    }
+
+    /** @test */
+    public function duong_dan_than_dung_bang_duong_dan_chi_tiet_cong_than()
+    {
+        // index.blade.php dung $(this).attr('href') + '/than' de dung URL. Phep ghep do CHI
+        // dung khi route than la route chi tiet cong '/than'. Doi mot ben ma quen ben kia thi
+        // modal 404 va chi lo ra khi co nguoi bam.
+        $chiTiet = route('bhyt.ctdt.detail', ['ma_ho_so' => 'YT001']);
+        $than = route('bhyt.ctdt.detail.than', ['ma_ho_so' => 'YT001']);
+
+        $this->assertSame($chiTiet . '/than', $than);
+    }
+
+    /** @test */
+    public function man_danh_sach_khong_nhung_than_chi_tiet_thang_vao_trang()
+    {
+        // Than dung dinh danh don (#ctdt-tabs, #noi-dung-tab, #btn-ky-va-gui). Co HAI than
+        // cung luc thi $('#noi-dung-tab') va $('#ctdt-tabs li') chi trung phan tu DAU TIEN:
+        // bam tab o than thu hai lai nap noi dung vao than thu nhat - im lang, khong loi
+        // console. Trong khi $(document).on('click', '#btn-ky-va-gui') lai khop CA HAI.
+        // Than chi duoc nap qua AJAX vao modal.
+        $nguon = $this->nguon('index.blade.php');
+
+        $this->assertNotContains('partials.than-chi-tiet', $nguon,
+            'than chi duoc nap bang AJAX vao modal, khong @include thang vao man danh sach');
+    }
+
+    /** @test */
+    public function nap_lai_bang_giu_nguyen_bo_loc_va_trang_dang_xem()
+    {
+        // Day la LY DO TON TAI cua ca tinh nang. Mat 'null, false' thi moi lan gui xong man
+        // nhay ve trang 1 va nguoi xu nhieu ho so lien tiep phai loc lai tu dau - dung thu
+        // ma nhanh nay hua chua.
+        $nguon = $this->nguon('index.blade.php');
+
+        $this->assertContains('ajax.reload(null, false)', $nguon,
+            'phai giu bo loc va trang dang xem khi nap lai bang');
+    }
+
+    /** @test */
+    public function xoa_ho_so_co_bao_thanh_cong_truoc_khi_phat_su_kien()
+    {
+        // Trong modal, xoa xong thi modal dong va bang nap lai - khong mot thong diep nao
+        // noi "da xoa". Voi thao tac khong hoan tac thi phai co xac nhan da xong.
+        $nguon = $this->nguon('partials/js-chi-tiet.blade.php');
+
+        $viTriBao = strpos($nguon, "title: 'Đã xóa'");
+        $viTriPhat = strpos($nguon, "trigger('ctdt:da-xoa'");
+
+        $this->assertNotFalse($viTriBao, 'thieu thong diep bao xoa thanh cong');
+        $this->assertNotFalse($viTriPhat);
+        $this->assertTrue($viTriBao < $viTriPhat, 'phai bao thanh cong TRUOC khi phat su kien');
+    }
 }
