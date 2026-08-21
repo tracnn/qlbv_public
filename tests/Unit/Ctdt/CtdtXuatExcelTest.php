@@ -57,10 +57,17 @@ class CtdtXuatExcelTest extends TestCase
 
         $dong = (new CtdtDanhSachExport(CtdtHoSo::query()))->map($hoSo);
 
+        // Bon tham so cuoi ep so sanh NGHIEM NGAT (===): assertContains mac dinh dung so
+        // sanh long (==), va mang $dong co nhieu phan tu int(0) (so_chung_tu, so_loi). Trong
+        // PHP7, 0 == '<bat ky chuoi khong phai so nao>' la TRUE - nen ban so sanh long se
+        // luon xanh du nhan co dung hay khong.
         $this->assertContains(
             CtdtTrangThaiGui::nhan(CtdtTrangThaiGui::KY_HONG),
             $dong,
-            'Phai dung dung nhan cua CtdtTrangThaiGui'
+            'Phai dung dung nhan cua CtdtTrangThaiGui',
+            false,
+            false,
+            true
         );
     }
 
@@ -70,9 +77,14 @@ class CtdtXuatExcelTest extends TestCase
         // ma_gd la cot doi soat quan trong nhat voi BHXH. Cong tra ve 52 ky tu that.
         $dong = (new CtdtDanhSachExport(CtdtHoSo::query()))->map($this->hoSo());
 
+        // So sanh NGHIEM NGAT - xem chu thich o test ben tren ve loi 0 == chuoi cua PHP7.
         $this->assertContains(
             'HS_CHUNGTU01929_094D388C-6DD7-4CA1-A3BE-6D5BF53FEE75',
-            $dong
+            $dong,
+            '',
+            false,
+            false,
+            true
         );
     }
 
