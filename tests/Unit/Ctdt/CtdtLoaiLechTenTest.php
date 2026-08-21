@@ -68,15 +68,22 @@ class CtdtLoaiLechTenTest extends TestCase
     }
 
     /** @test */
-    public function noi_tru_giu_ten_the_khong_deu_theo_dac_ta()
+    public function noi_tru_giu_ten_the_khong_deu_theo_HO_SO_THAT()
     {
         $truong = DieuTriNoiTru::truong();
 
-        // MA_DAN_TOC co gach duoi, khac CT03 (MA_DANTOC). BENH_ICD10_MA la MA khong phai ID.
+        // MA_DAN_TOC co gach duoi, khac CT03 (MA_DANTOC).
+        //
+        // BENH_ICD10_ID chu KHONG phai BENH_ICD10_MA: tai lieu PL02 ghi _MA, nhung 924/924
+        // chung tu GIAYDIEUTRINOITRU da nap deu mang the BENH_ICD10_ID va deu CO du lieu.
+        // Nguon su that la ho so import, khong phai tai lieu.
         $this->assertSame('ma_dan_toc', $truong['MA_DAN_TOC']);
-        $this->assertSame('benh_icd10_ma', $truong['BENH_ICD10_MA']);
+        $this->assertSame('benh_icd10_id', $truong['BENH_ICD10_ID']);
         $this->assertArrayNotHasKey('MA_DANTOC', $truong);
-        $this->assertArrayNotHasKey('BENH_ICD10_ID', $truong);
+
+        // Chot canh chieu nguoc: BENH_ICD10_MA la ten tai lieu PL02 ghi, va no SAI. Neu no
+        // quay lai thi 924/924 chung tu se lai bi bo qua the ICD trong im lang.
+        $this->assertArrayNotHasKey('BENH_ICD10_MA', $truong);
     }
 
     /** @test */

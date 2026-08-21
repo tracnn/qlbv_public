@@ -14,7 +14,7 @@ use App\Models\BHYT\Ctdt\CtdtHoSo;
 use App\Services\Ctdt\CtdtPhongBi;
 use App\Services\Ctdt\CtdtQuyetDinhGui;
 use App\Services\XMLSignService;
-use App\Http\Controllers\BHYT\BHYTCtdtController;
+use App\Services\Ctdt\CtdtXepHangKyGui;
 
 /**
  * Dung phong bi mot ho so, ky so, luu tep da ky.
@@ -213,6 +213,6 @@ class SignCtdtJob implements ShouldQueue
      */
     private function nhaKhoa()
     {
-        Cache::forget(BHYTCtdtController::KHOA_XU_LY . $this->maHoSo);
+        Cache::forget(CtdtXepHangKyGui::KHOA . $this->maHoSo);
     }
 }

@@ -335,7 +335,12 @@ ngay_dinh_chi_thainghen, is_nghiduongthai, so_ngay_nghiduongthai
 ```
 
 Lưu ý: loại này dùng `MA_DAN_TOC` (có gạch dưới giữa DAN và TOC) khác CT03 dùng `MA_DANTOC`,
-và dùng `BENH_ICD10_MA` (mã) thay vì `BENH_ICD10_ID`. Giữ nguyên.
+và dùng `BENH_ICD10_MA` (mã) thay vì `BENH_ICD10_ID`.
+
+⚠️ **ĐÃ BÁC BỎ ngày 2026-08-21 cho nội trú.** 924/924 chứng từ `GIAYDIEUTRINOITRU` đã nạp
+đều mang thẻ `BENH_ICD10_ID` và đều có dữ liệu — tài liệu PL02 ghi sai. Nguồn sự thật từ nay
+là hồ sơ import. Vô sinh và sức khỏe mẹ **chưa có mẫu nào** nên vẫn giữ `_MA`; kiểm lại khi
+có hồ sơ đầu tiên.
 
 **`ctdt_dieu_tri_vo_sinh`** — Giấy xác nhận quá trình điều trị vô sinh (Mẫu 09 - TT25),
 thẻ gốc `CTGiayDieuTriVoSinh`, 29 trường:

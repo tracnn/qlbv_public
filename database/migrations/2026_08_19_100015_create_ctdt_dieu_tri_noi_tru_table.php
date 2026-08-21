@@ -8,7 +8,7 @@ use Illuminate\Database\Migrations\Migration;
  * GIAYDIEUTRINOITRU - Giay xac nhan qua trinh dieu tri noi tru (Mau so 06 - TT25).
  *
  * The goc trong base64 la <CTGiayDieuTriNoiTru>, KHAC gia tri LOAIHOSO.
- * MA_DAN_TOC co gach duoi giua DAN va TOC, khac CT03 (MA_DANTOC). BENH_ICD10_MA la MA,
+ * MA_DAN_TOC co gach duoi giua DAN va TOC, khac CT03 (MA_DANTOC).
  * khong phai ID. Giu nguyen.
  */
 class CreateCtdtDieuTriNoiTruTable extends Migration
@@ -25,7 +25,7 @@ class CreateCtdtDieuTriNoiTruTable extends Migration
                 'ngay_vao', 'ngay_ra',
                 'dai_dien_dvi', 'ma_cchn_bs', 'ten_bs',
                 'loai_giayto', 'so_cccd', 'ngaycap_cccd', 'noicap_cccd',
-                'benh_icd10_ma', 'ma_ct', 'ngay_ct', 'so_seri', 'tuoi_thai',
+                'benh_icd10_id', 'ma_ct', 'ngay_ct', 'so_seri', 'tuoi_thai',
                 'loai_phuong_phap', 'loai_pp_dieu_tri_vosinh',
                 'ngay_dinh_chi_thainghen', 'is_nghiduongthai', 'so_ngay_nghiduongthai',
             ];

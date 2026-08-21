@@ -108,7 +108,7 @@ class CtdtNhanTruong
         'BENH_ICD10_MA'   => 'Mã bệnh ICD10',
         'BENH_ICD10_TEN'  => 'Tên bệnh ICD10',
         'BENHICD10_ID'    => 'Mã bệnh ICD10',
-        'TENBENHNICD10'   => 'Tên bệnh ICD10',
+        'TENBENHICD10'   => 'Tên bệnh ICD10',
 
         // Thai san
         'DINH_CHI_THAI_NGHEN'     => 'Đình chỉ thai nghén',
@@ -184,9 +184,9 @@ class CtdtNhanTruong
      * khai rieng 60 dong: cung mot the SO_CCCD xuat hien o ca bon nhom.
      */
     const HAU_TO = [
-        '_CHA_MTH' => ' (cha của mẹ thay thế)',
+        '_CHA_MTH' => ' (cha của mang thai hộ)',
         '_CHA_NND' => ' (cha của người đẻ)',
-        '_MTH'     => ' (mẹ thay thế)',
+        '_MTH'     => ' (mang thai hộ)',
         '_NND'     => ' (người đẻ)',
     ];
 

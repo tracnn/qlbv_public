@@ -65,7 +65,7 @@ class CtdtLoaiRegistryTest extends TestCase
         // Anh xa la THE -> COT, khong phai cot -> the: doc XML thi ta co ten the truoc.
         $this->assertSame('ma_yte', $truong['MA_YTE']);
         $this->assertSame('benhicd10_id', $truong['BENHICD10_ID']);
-        $this->assertSame('tenbenhnicd10', $truong['TENBENHNICD10']);
+        $this->assertSame('tenbenhicd10', $truong['TENBENHICD10']);
         $this->assertSame('ghi_chu', $truong['GHI_CHU']);
         $this->assertCount(33, $truong, 'CT03 phai co dung 33 truong');
     }

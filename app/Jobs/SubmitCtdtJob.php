@@ -12,9 +12,10 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Cache;
 
 use App\Models\BHYT\Ctdt\CtdtHoSo;
+use App\Models\BHYT\Ctdt\CtdtLichSuGui;
 use App\Services\Ctdt\CtdtQuyetDinhGui;
 use App\Services\Ctdt\CtdtSubmitService;
-use App\Http\Controllers\BHYT\BHYTCtdtController;
+use App\Services\Ctdt\CtdtXepHangKyGui;
 
 /**
  * Gui mot ho so da ky len cong BHXH va ghi lai ket qua.
@@ -54,10 +55,22 @@ class SubmitCtdtJob implements ShouldQueue
      */
     public $submitServiceGia = null;
 
-    public function __construct($maHoSo, $nguoiGui = null)
+    /**
+     * Ai gay ra lan gui nay: 'man_hinh' hay 'console'.
+     *
+     * Co GIA TRI MAC DINH nen payload cua nhung job da nam san trong hang doi truoc khi
+     * trien khai van giai tuan tu duoc - PHP dat lai gia tri mac dinh cua lop cho thuoc tinh
+     * vang mat trong chuoi da serialize.
+     *
+     * @var string
+     */
+    public $nguon = CtdtLichSuGui::NGUON_MAN_HINH;
+
+    public function __construct($maHoSo, $nguoiGui = null, $nguon = CtdtLichSuGui::NGUON_MAN_HINH)
     {
         $this->maHoSo = $maHoSo;
         $this->nguoiGui = $nguoiGui;
+        $this->nguon = $nguon;
     }
 
     public function handle()
@@ -139,7 +152,7 @@ class SubmitCtdtJob implements ShouldQueue
      */
     private function nhaKhoa()
     {
-        Cache::forget(BHYTCtdtController::KHOA_XU_LY . $this->maHoSo);
+        Cache::forget(CtdtXepHangKyGui::KHOA . $this->maHoSo);
     }
 
     /**
@@ -197,6 +210,39 @@ class SubmitCtdtJob implements ShouldQueue
         }
 
         $hoSo->update($thuocTinh);
+
+        // Ghi nhat ky TRUOC moi nhanh return phia duoi: mot lan goi cong da xay ra roi thi
+        // phai co dau vet, ke ca khi cong tu choi. Dung create() chu khong updateOrCreate:
+        // moi lan gui la MOT dong, gui lai lan hai khong duoc de len lan mot.
+        try {
+            CtdtLichSuGui::create([
+                'ho_so_id'            => $hoSo->id,
+                'ma_ho_so'            => $hoSo->ma_ho_so,
+                'nguoi_gui'           => $this->nguoiGui,
+                // Nguon la tham so TUONG MINH, khong suy tu $nguoiGui === null: kyVaGui()
+                // cung truyen null khi auth()->check() tra false, nen suy se ghi mot cu bam
+                // tay thanh "lenh nen". Quy sai mot lan gui khong nguoi truc cho mot con
+                // nguoi la kieu noi doi te nhat mot bang nhat ky co the mac.
+                'nguon'               => $this->nguon,
+                // CAT y het khi ghi vao ctdt_ho_so o tren, va theo DUNG do rong cot cua
+                // migration 2026_08_21_100001 (ma_gd 100, ma_ket_qua 20, thoi_gian_tiep_nhan
+                // 20). Truoc day khong cat o day: mot ma_gd 101 ky tu tu cong lam create()
+                // nem, va tuy try/catch ben duoi khong lam job that bai, ta van MAT NGUYEN
+                // DONG NHAT KY - dung luc can no nhat, vi do la lan gui co phan hoi bat
+                // thuong. thong_diep la cot TEXT nen giu nguyen ven, khong cat.
+                'ma_gd'               => $this->cat(isset($ketQua['ma_gd']) ? $ketQua['ma_gd'] : null, 100),
+                'ma_ket_qua'          => $this->cat(isset($ketQua['ma_ket_qua']) ? $ketQua['ma_ket_qua'] : null, 20),
+                'thoi_gian_tiep_nhan' => $this->cat(isset($ketQua['thoi_gian_tiep_nhan'])
+                    ? $ketQua['thoi_gian_tiep_nhan'] : null, 20),
+                'thanh_cong'          => $thanhCong,
+                'thong_diep'          => isset($ketQua['thong_diep']) ? $ketQua['thong_diep'] : null,
+            ]);
+        } catch (\Exception $e) {
+            // Mat mot dong nhat ky con hon nem sau khi cong DA NHAN ho so: nem o day lam job
+            // that bai, hang doi gui lai, va cong nhan LAN HAI cung mot goi - ma PL02 khong
+            // co ma giao dich phia client de cong khu trung.
+            Log::error('CTDT khong ghi duoc lich su gui ' . $hoSo->ma_ho_so . ': ' . $e->getMessage());
+        }
 
         Log::info('SubmitCtdtJob: da gui', [
             'ma_ho_so'   => $this->maHoSo,

@@ -8,7 +8,7 @@ use Illuminate\Database\Migrations\Migration;
  * CT03 - Giay ra vien (Mau so 02 - TT25).
  *
  * GHI_CHU co trong bang mo ta muc 9.2 nhung khong co trong XML mau muc 9.1 - van tao cot.
- * BENHICD10_ID / TENBENHNICD10 dat ten KHAC cac loai khac (benh_icd10_id / benh_icd10_ten).
+ * BENHICD10_ID / TENBENHICD10 dat ten KHAC cac loai khac (benh_icd10_id / benh_icd10_ten).
  * Giu nguyen theo dac ta, khong sua cho deu.
  */
 class CreateCtdtCt03Table extends Migration
@@ -30,7 +30,7 @@ class CreateCtdtCt03Table extends Migration
                 'benhicd10_id',
             ];
 
-            $vanBan = ['dia_chi', 'chan_doan', 'pp_dieutri', 'ghi_chu', 'tenbenhnicd10'];
+            $vanBan = ['dia_chi', 'chan_doan', 'pp_dieutri', 'ghi_chu', 'tenbenhicd10'];
 
             foreach ($chuoi as $cot) {
                 $table->string($cot)->nullable();

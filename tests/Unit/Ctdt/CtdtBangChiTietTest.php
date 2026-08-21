@@ -57,12 +57,12 @@ class CtdtBangChiTietTest extends TestCase
         // Ba kieu dat ten ICD khac nhau trong cung mot dac ta. Sua cho deu la lam sai
         // anh xa the -> cot, va loi chi lo ra luc gui that bai.
         $this->assertTrue(Schema::hasColumn('ctdt_ct03', 'benhicd10_id'), 'CT03 phai la benhicd10_id');
-        $this->assertTrue(Schema::hasColumn('ctdt_ct03', 'tenbenhnicd10'), 'CT03 phai la tenbenhnicd10');
+        $this->assertTrue(Schema::hasColumn('ctdt_ct03', 'tenbenhicd10'), 'CT03 phai la tenbenhicd10');
 
         $this->assertTrue(Schema::hasColumn('ctdt_ct04', 'benh_icd10_id'), 'CT04 phai la benh_icd10_id');
         $this->assertTrue(Schema::hasColumn('ctdt_giay_bao_tu', 'benh_icd10_id'), 'GBT phai la benh_icd10_id');
 
-        $this->assertTrue(Schema::hasColumn('ctdt_dieu_tri_noi_tru', 'benh_icd10_ma'), 'Noi tru phai la benh_icd10_ma');
+        $this->assertTrue(Schema::hasColumn('ctdt_dieu_tri_noi_tru', 'benh_icd10_id'), 'Noi tru phai la benh_icd10_id - XML that dung BENH_ICD10_ID');
         $this->assertTrue(Schema::hasColumn('ctdt_dieu_tri_vo_sinh', 'benh_icd10_ma'), 'Vo sinh phai la benh_icd10_ma');
         $this->assertTrue(Schema::hasColumn('ctdt_suc_khoe_me', 'benh_icd10_ma'), 'Suc khoe me phai la benh_icd10_ma');
     }

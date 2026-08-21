@@ -4,7 +4,9 @@
 > ban hành kèm công văn BHXH Việt Nam 2025.
 >
 > Mọi `file:line` trích từ mã nguồn thực tế; khi mã thay đổi cần đối chiếu lại.
-> Cập nhật: 2026-08-20 — **Giai đoạn 1 (nền dữ liệu), 2A (nền nạp), 2B (ba màn hình), 3 (bộ kiểm lỗi) và 4 (ký số và gửi) đã hoàn tất.**
+> Cập nhật: 2026-08-21 — **Giai đoạn 1 (nền dữ liệu), 2A (nền nạp), 2B (ba màn hình), 3 (bộ kiểm
+> lỗi), 4 (ký số và gửi) đã hoàn tất; Giai đoạn 5A (lệnh Console `ctdt:import`, kể cả chế độ
+> chạy liên tục) đã hoàn tất.**
 
 ---
 
@@ -71,10 +73,10 @@ và gửi):**
 | Job ký số, ghi tệp đã ký lên disk `exportCtdt` | `app/Jobs/SignCtdtJob.php` |
 | Job gửi hồ sơ đã ký lên cổng BHXH | `app/Jobs/SubmitCtdtJob.php` |
 | Tên ba hàng đợi, một nguồn duy nhất | `app/Services/Ctdt/CtdtHangDoi.php` |
-| 485 test đơn vị | `tests/Unit/Ctdt/` |
+| Lệnh Console quét thư mục + nạp + xếp hàng ký-gửi, chạy một lượt hoặc liên tục | `app/Console/Commands/CtdtImport.php` |
+| 519 test đơn vị | `tests/Unit/Ctdt/` |
 
-**Chưa có (đúng phạm vi, không phải thiếu sót):** xuất Excel, lệnh Console `ctdt:import` quét
-thư mục, dashboard (Giai đoạn 5).
+**Chưa có (đúng phạm vi, không phải thiếu sót):** xuất Excel, dashboard (Giai đoạn 5B trở đi).
 
 **Từ Giai đoạn 4, module đã gọi mạng thật** — `SubmitCtdtJob` gửi hồ sơ đã ký lên cổng BHXH.
 Sự an toàn khi triển khai không nằm ở chỗ module chưa biết gọi mạng, mà ở chỗ
@@ -215,14 +217,15 @@ khi lệch.
 
 | Loại | Trường ICD |
 |---|---|
-| CT03 | `BENHICD10_ID` / `TENBENHNICD10` (không gạch dưới) |
+| CT03 | `BENHICD10_ID` / `TENBENHICD10` (không gạch dưới) |
 | CT04, CT06, CT07, giấy báo tử | `BENH_ICD10_ID` / `BENH_ICD10_TEN` |
-| nội trú, vô sinh, sức khỏe mẹ | `BENH_ICD10_MA` / `BENH_ICD10_TEN` |
+| nội trú | `BENH_ICD10_ID` / `BENH_ICD10_TEN` |
+| vô sinh, sức khỏe mẹ | `BENH_ICD10_MA` / `BENH_ICD10_TEN` — **chưa kiểm chứng**, xem cảnh báo dưới bảng |
 
 Tương tự: CT03 dùng `MA_DANTOC`, nội trú dùng `MA_DAN_TOC`.
 
-**(3) Giấy chứng sinh có bốn nhóm người phân biệt bằng hậu tố.** `_NND` người đẻ · `_MTH` mẹ
-thay thế (mang thai hộ) · `_CHA_MTH` cha của mẹ thay thế · `_CHA_NND` cha của người đẻ. Gán nhầm
+**(3) Giấy chứng sinh có bốn nhóm người phân biệt bằng hậu tố.** `_NND` người đẻ · `_MTH`
+mang thai hộ · `_CHA_MTH` cha của mang thai hộ · `_CHA_NND` cha của người đẻ. Gán nhầm
 một thẻ sang nhóm khác nghĩa là dữ liệu người này ghi vào chỗ người kia.
 
 **Lưới an toàn:** `tests/Unit/Ctdt/CtdtToanVenTest.php` canh ba nơi khai cột (migration ↔
@@ -421,6 +424,158 @@ Ký số và gửi để **hai hàng đợi riêng** là có chủ đích: ký h
 HSM không phản hồi) còn gửi hỏng vì mạng. Gộp chung thì một lần mạng chập sẽ kéo theo ba lần ký
 lại — thao tác tốn thời gian nhất trong chuỗi.
 
+### `ctdt:import --lien-tuc` — chạy tự động không cần người trực
+
+```bash
+php artisan ctdt:import --lien-tuc
+```
+
+Mặc định `ctdt:import` chạy **một lượt rồi thoát** (dùng cho cron / chạy tay). Với `--lien-tuc`,
+lệnh lặp lại việc quét trong một tiến trình nssm sống lâu, cùng khuôn với `xml3176import:day` —
+nhưng lệnh này **POST thật lên cổng BHXH** chứ không chỉ ghi tệp, nên có thêm mấy cái phanh mà
+`xml3176import:day` không cần.
+
+Mỗi vòng làm hai việc: **quét** thư mục `organization.chung_tu_dien_tu.import_path`, nạp mọi tệp
+`.xml` **ngay trong thư mục gốc** (không quét đệ quy), chuyển tệp đã xử lý sang `da-nap/` và tệp
+hỏng sang `loi/`; rồi **nhặt** mọi hồ sơ đã kiểm, sạch, chưa có `ma_ket_qua` **và cổng chưa từng
+được gọi cho nó** mà xếp hàng ký số và gửi.
+
+### ⚠️ Lệnh nền CHỈ gửi lần đầu — gửi lại là việc của người
+
+Đây là một **ranh giới ngữ nghĩa**, không phải chi tiết cài đặt:
+
+> Lệnh chạy nền chỉ tự động gửi hồ sơ mà **cổng BHXH chưa từng được gọi** cho nó. Đã gọi một lần
+> rồi mà chưa có kết quả rõ ràng thì phải để **người** quyết định gửi lại — bằng nút "Ký và gửi"
+> trên màn chi tiết, có mắt người đọc log và đối soát với cổng.
+
+Vì sao phải cứng như vậy: cổng có thể **đã nhận gói** rồi mạng mới chập lúc đọc phản hồi.
+`CtdtSubmitService::gui()` ném, `SubmitCtdtJob` cố ý không bắt (để hàng đợi thử lại), hết `tries`
+thì `failed()` ghi `submit_error` và nhả khoá — nhưng `ma_ket_qua` **vẫn NULL**. Nếu lệnh nền cứ
+thấy `ma_ket_qua` trống là gửi, nó sẽ POST lại đúng hồ sơ đó **mỗi vòng, mãi mãi**. Không phanh
+nào chặn được: `DUNG-GUI` / `import_tu_dong_gui` / `submit_enabled` đều là công tắc **toàn cục**;
+`--gioi-han` giới hạn số **tệp** chứ không giới hạn số lần POST; khoá lượt chặn hai *tiến trình*
+chứ không chặn hai *lần gửi*. Body PL02 không mang mã giao dịch phía client nên cổng cũng không
+khử trùng lặp giúp được.
+
+Truy vấn nhặt vì thế loại hai nhóm — **hai lớp, mỗi lớp bắt một thời điểm khác nhau của cùng câu
+chuyện**:
+
+| Điều kiện loại | Bắt lúc nào |
+|---|---|
+| `submit_error` khác rỗng | Job đã kết thúc và **kịp ghi** — `failed()`, hoặc các nhánh `ghiLoi()` như *"Hồ sơ chưa ký số"* |
+| Đã có ít nhất một dòng trong `ctdt_lich_su_gui` | Cổng **đã trả lời** một lần (kể cả từ chối) — dòng nhật ký được ghi ngay trong `ghiKetQua()`, trước cả khi ai kịp đọc hồ sơ |
+| `signed_error` khác rỗng | **Ký hỏng.** Trước đây hồ sơ ký hỏng cũng kẹt y hệt: `SubmitCtdtJob` ghi `submit_error` *"chưa ký số"* mà `ma_ket_qua` vẫn NULL. Một đêm rút nhầm USB token = hàng chục nghìn job rác |
+
+"Rỗng" ở đây theo đúng quy ước chung của module (xem `CtdtDanhSach.php`): `NULL` **hoặc** chuỗi
+rỗng.
+
+Hệ quả vận hành: **hồ sơ gửi hỏng sẽ nằm lại, lệnh nền không tự động thử lại nữa.** Người trực
+phải mở màn danh sách, lọc trạng thái *"Gửi thất bại"*, đọc `submit_error`, đối soát với cổng
+rồi mới bấm gửi lại. Đó là chủ ý — không phải thiếu sót.
+
+### Vì sao bước nhặt đi bằng truy vấn, không theo "vừa nạp"
+
+Hồ sơ vừa nạp gần như **luôn** ở trạng thái *chưa kiểm* — bộ kiểm còn nằm trong hàng đợi
+`JobCtdt`. Nếu lệnh chỉ xếp hàng cho những mã nó vừa nạp thì gần như lượt nào cũng trượt, và hồ
+sơ phải chờ tới lượt sau mới được nhặt. Truy vấn thẳng thì mỗi vòng vét đúng những hồ sơ *vừa
+mới* đủ điều kiện — kể cả hồ sơ người ta sửa tay trên màn hình rồi cho kiểm lại.
+
+### Sáu cái phanh
+
+| Phanh | Tác dụng |
+|---|---|
+| **Tệp `DUNG-GUI`** | Đặt một tệp rỗng tên `DUNG-GUI` trong thư mục inbox là **dừng ký và gửi ngay vòng sau**, vẫn tiếp tục nạp và kiểm. Xoá tệp đi là chạy lại. Đây là phanh tay duy nhất có tác dụng **không cần khởi động lại dịch vụ** — xem khối cảnh báo ngay dưới. |
+| `import_tu_dong_gui` | **Cổng riêng, mặc định TẮT.** `submit_enabled` cho phép *người* bấm nút gửi; khoá này cho phép *máy* gửi khi không ai nhìn. Bật cái thứ nhất không kéo theo cái thứ hai. |
+| `submit_enabled` | **Vẫn thắng ở chiều TẮT.** Đây là công tắc "gửi thật", không có đường nào vòng qua nó: `import_tu_dong_gui = true` mà `submit_enabled = false` thì lệnh nền **không xếp hàng gì cả**, kèm cảnh báo đọc được. Nếu không hỏi khoá này, mỗi vòng sẽ xếp tới 200 chuỗi job mà `SubmitCtdtJob` từ chối *không ghi gì*, nên vòng sau nhặt lại y nguyên — ngập hàng đợi, và 200 hồ sơ kẹt ở đầu `orderBy('imported_at')` chặn vĩnh viễn mọi hồ sơ mới. |
+| `--gioi-han` | Trần số **tệp** nạp mỗi vòng. Không truyền thì lấy cấu hình `organization.chung_tu_dien_tu.import_gioi_han`; cấu hình đó cũng trống mới lùi về `200`. Một thư mục đổ nhầm 3000 tệp không thành 3000 lần POST trong một vòng. Vượt trần thì lệnh **báo to** rồi cắt, không cắt im lặng. ⚠️ Nó giới hạn số **tệp**, KHÔNG giới hạn số lần POST — chống POST lặp là việc của hai lớp ở mục *"Lệnh nền CHỈ gửi lần đầu"* phía trên. |
+| `--so-vong=1000` | Tiến trình **tự thoát** sau bấy nhiêu vòng để nssm dựng lại bản sạch. |
+| `--dry-run` / `--khong-ky` / `--khong-gui` | `--dry-run` chỉ liệt kê, không đụng gì. `--khong-ky` dừng trước bước ký. `--khong-gui` dừng **cả chuỗi ký-gửi** — xem ngay dưới. `--dry-run` **không** kết hợp được với `--lien-tuc` — lệnh thoát mã khác 0 kèm thông điệp từ chối, không chạy vòng lặp nào. |
+
+#### ⚠️ Chưa được phép gửi thì lệnh KHÔNG ký hồ sơ nào
+
+`--khong-gui`, `import_tu_dong_gui = false`, `submit_enabled = false` và tệp `DUNG-GUI` đều dừng
+**cả bước ký**, không phải chỉ bước gửi. Cụ thể, với **cấu hình mặc định**
+(`import_tu_dong_gui = false`), lệnh **nạp và kiểm** hồ sơ nhưng **không ký và không gửi** hồ sơ
+nào cả.
+
+Đừng đọc bảng phanh ở trên mà tưởng hồ sơ được ký sẵn để chỉ còn bấm nút gửi — **không phải
+vậy.** Khi bấm "Ký và gửi" trên màn chi tiết, hồ sơ mới được ký.
+
+Vì sao: `CtdtXepHangKyGui::xep()` xếp nguyên chuỗi `SignCtdtJob → SubmitCtdtJob` như **một
+khối** — không tách được ở tầng lệnh. Xếp chuỗi rồi trông chờ `SubmitCtdtJob` tự từ chối là dựa
+vào một phép từ chối *không ghi gì cả*, nghĩa là hồ sơ bị nhặt lại và xếp lại mỗi vòng. Đây cũng
+là hành vi **an toàn hơn**: không ký sẵn một đống hồ sơ mà không ai định gửi.
+
+⚠️ **Sửa `import_tu_dong_gui` KHÔNG dừng được tiến trình đang chạy.** Tiến trình sống lâu giữ
+cấu hình trong bộ nhớ; khoá đó chỉ được đọc lại khi dịch vụ khởi động lại. Muốn dừng ngay
+thì **tạo tệp `DUNG-GUI`** trong thư mục inbox:
+
+```bat
+type nul > D:\XML\ChungTuDienTu\inbox\DUNG-GUI
+```
+
+Hồ sơ vẫn được nạp và kiểm bình thường — chỉ bước ký và gửi bị chặn.
+
+### Khoá lượt
+
+Một khoá cache (`ctdt:import:dang-chay`) chặn hai tiến trình chạy chồng lên nhau. Khoá được đặt
+**MỘT LẦN** trước vòng lặp và mở **MỘT LẦN** sau khi vòng lặp kết thúc — không đặt/mở trong từng
+vòng, nếu không vòng thứ hai sẽ tự thấy khoá của chính mình và bỏ qua vĩnh viễn. Thời hạn khoá
+hiện là **1440 phút (24 giờ)** — đủ dư địa cho `--so-vong=1000 × --nghi=5 giây` (~83 phút tối
+thiểu, chưa tính thời gian quét mỗi vòng), nhưng đổi lại cửa sổ "khoá mồ côi" sau một lần bị kill
+cứng cũng dài tới 24 giờ.
+
+Nếu tiến trình bị kill cứng (`finally` không kịp mở khoá), lượt sau sẽ bỏ qua với thông báo *"Mot
+luot ctdt:import khac dang chay"* cho tới khi hết hạn khoá. Gỡ ngay bằng lệnh cấp cứu:
+
+```bash
+php artisan ctdt:import --go-khoa
+```
+
+`--go-khoa` gỡ khoá **VÔ ĐIỀU KIỆN** rồi thoát ngay — không quét, không nạp, không xếp hàng gì
+cả. **CHỈ dùng khi đã tự xác nhận** (bằng `tasklist /FI "IMAGENAME eq php.exe" /V` tìm dòng lệnh
+có `ctdt:import --lien-tuc`, hoặc xem dịch vụ nssm "QLBV CtdtImport" còn sống không) là **KHÔNG
+còn** tiến trình `ctdt:import` nào đang chạy. Lệnh không tự kiểm điều đó — nếu gỡ nhầm lúc một
+tiến trình `--lien-tuc` thật sự còn sống, tiến trình đó không hay biết gì (nó không đọc lại
+khoá), và một lệnh `ctdt:import` khác gọi ngay sau sẽ nhặt khoá thành công rồi quét **cùng thư
+mục** — hai tiến trình cùng nạp một tệp, và vì đây là lệnh POST thật lên cổng BHXH, hậu quả là
+**nạp trùng rồi gửi trùng hồ sơ lên cổng**.
+
+### Mã thoát khác 0 — dấu hiệu sớm của nạp trùng
+
+`ctdt:import` trả về mã thoát khác 0 khi có tệp **đã xử lý xong** (nạp thành công vào CSDL, hoặc
+đã chuyển sang `loi/`) nhưng **không dời được** khỏi thư mục gốc (quyền ghi, tệp bị khoá bởi
+chương trình khác, ổ mạng chập). Tệp đó vẫn nằm ở thư mục gốc, nên vòng quét sau sẽ **nhặt lại
+đúng nó** — với hồ sơ đã nạp thành công, đó là nạp trùng, rồi bị ký/gửi lần nữa. Ở chế độ
+`--lien-tuc`, mã thoát cuối cùng phản ánh **có từng vòng nào** gặp lỗi này trong suốt cả tiến
+trình, không chỉ vòng cuối. Người trực thấy mã thoát khác 0 (hoặc dòng log tổng kết nhắc "tep
+khong doi duoc") phải đọc log để biết tệp nào, rồi kiểm quyền ghi / tệp có bị khoá không trước
+khi khởi động lại dịch vụ.
+
+Chạy thử ngắn, an toàn (không ký, thư mục tạm, ba vòng):
+
+```bash
+php artisan ctdt:import --lien-tuc --so-vong=3 --nghi=2 --khong-ky --duong-dan=storage/app/ctdt-thu
+```
+
+### Cài dịch vụ trên máy chủ Windows
+
+```bat
+%NSSM_PATH%\nssm install "QLBV CtdtImport" %PHP_PATH% "%LARAVEL_PATH%artisan ctdt:import --lien-tuc"
+%NSSM_PATH%\nssm set "QLBV CtdtImport" AppDirectory %LARAVEL_PATH%
+%NSSM_PATH%\nssm set "QLBV CtdtImport" AppExit Default Restart
+%NSSM_PATH%\nssm set "QLBV CtdtImport" AppRestartDelay 10000
+%NSSM_PATH%\nssm start "QLBV CtdtImport"
+```
+
+`AppExit Default Restart` là phần bắt buộc: lệnh **cố ý thoát** sau `--so-vong` vòng, và nssm
+phải dựng lại nó. `AppRestartDelay 10000` chỉ là 10 giây nghỉ giữa hai tiến trình — nhịp thật do
+`--nghi` quyết định.
+
+⚠️ **Ba worker hàng đợi vẫn BẮT BUỘC** (xem mục ngay phía trên). Lệnh này chỉ *xếp hàng*; không
+có worker thì không gì chạy cả. Chính ba worker đó — chứ không phải vòng lặp của lệnh này — mới
+là thứ gửi hồ sơ lên cổng, y như `JobSubmitXml3176` bên XML3176.
+
 ---
 
 ## 10. Kiểm thử
@@ -429,7 +584,7 @@ lại — thao tác tốn thời gian nhất trong chuỗi.
 php vendor/bin/phpunit tests/Unit/Ctdt
 ```
 
-Kỳ vọng `OK (471 tests)` — **trừ một test đỏ CÓ CHỦ ĐÍCH trên máy đã chạy thật**, xem ngay dưới.
+Kỳ vọng `OK (518 tests)` — **trừ một test đỏ CÓ CHỦ ĐÍCH trên máy đã chạy thật**, xem ngay dưới.
 
 ### `MA_YTE` KHÔNG bắt buộc — đừng thêm lại
 
