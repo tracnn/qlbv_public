@@ -45,6 +45,15 @@ return [
         // Thu muc lenh Console quet de nap tu dong (Giai doan 5).
         'import_path' => 'D:\XML\ChungTuDienTu\inbox',
 
+        // Tran so TEP lenh ctdt:import xu ly moi luot. Khong co tran thi mot thu muc do nham
+        // 3000 tep thanh 3000 lan POST that len cong trong MOT luot, khong ai kip dung lai.
+        'import_gioi_han' => 200,
+
+        // Lenh ctdt:import co duoc GUI len cong khong. TACH RIENG khoi submit_enabled: bat
+        // submit_enabled la cho phep NGUOI bam nut gui; bat khoa nay la cho phep MAY gui khi
+        // khong co ai nhin. Hai muc do tin cay khac nhau thi phai hai cong tac khac nhau.
+        'import_tu_dong_gui' => false,
+
         // Ba hang doi RIENG: ky so hong vi ly do cuc bo (USB token bi rut, HSM khong phan
         // hoi) con gui hong vi mang. Gop chung thi mot lan mang chap keo theo ba lan ky lai
         // - thao tac ton thoi gian nhat trong chuoi.
