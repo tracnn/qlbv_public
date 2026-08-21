@@ -292,6 +292,37 @@ class CtdtImportCommandTest extends TestCase
     }
 
     /**
+     * Phan biet duoc voi mutation4 (bo ->limit(self::TRAN_NHAT)) MA khong dua vao doc
+     * nguon: chuoi 'TRAN_NHAT' con nam o khai bao hang so va o cau canh bao warn() ngay ca
+     * khi ->limit() bi xoa khoi cau truy van, nen test doc nguon co the bi "gia mu". Dung
+     * TRAN_NHAT + 5 ho so du dieu kien va kiem dung SO LUONG job duoc xep hang, khong vuot
+     * qua TRAN_NHAT.
+     *
+     * @test
+     */
+    public function nhat_ho_so_khong_vuot_tran_du_co_nhieu_ung_vien_hon()
+    {
+        Bus::fake();
+        config(['organization.chung_tu_dien_tu.import_tu_dong_gui' => true]);
+
+        for ($i = 0; $i < CtdtImport::TRAN_NHAT + 5; $i++) {
+            \App\Models\BHYT\Ctdt\CtdtHoSo::create([
+                'ma_ho_so' => 'YT-TRAN-' . $i, 'dich_vu' => 'CT2025', 'loai_hs' => '39',
+                'macskcb' => '01001', 'imported_at' => now(),
+                'checked_at' => now(), 'so_loi' => 0,
+            ]);
+        }
+
+        $lenh = new CtdtImportLoRa();
+        $lenh->ganInputTest(new ArrayInput([], $lenh->getDefinition()));
+        $lenh->ganOutputTest(new BufferedOutput());
+        $soXep = $lenh->nhatVaXepHangCong(sys_get_temp_dir());
+
+        $this->assertLessThanOrEqual(CtdtImport::TRAN_NHAT, $soXep,
+            'Khong duoc xep hang vuot qua TRAN_NHAT trong mot vong, du co nhieu ung vien hon');
+    }
+
+    /**
      * Phan biet duoc voi mutation2 (xoa nhanh goi CtdtQuyetDinhGui::nenKy() trong
      * nhatVaXepHang()) MA khong dua vao doc nguon: checked_at = '' (chuoi rong, KHAC NULL
      * ve mat SQL) lot qua duoc whereNotNull() o tang loc tho, nhung empty('') === true nen
