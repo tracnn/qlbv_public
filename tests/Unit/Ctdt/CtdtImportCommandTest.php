@@ -620,6 +620,15 @@ class CtdtImportCommandTest extends TestCase
      * proc_get_status() moi 200ms, qua han thi proc_terminate() va bao 'treo' => true thay
      * vi de tien trinh con chay mai lam treo ca tien trinh PHPUnit cha.
      *
+     * STDOUT/STDERR CUA TIEN TRINH CON DUOC DAN VAO TEP, KHONG PHAI ONG (pipe). Da tu kiem
+     * thuc te tren may Windows nay: dat stream_set_blocking(false) roi doc bang
+     * stream_get_contents() (co hoac khong gioi han do dai) van khong thoat khoi lan doc
+     * DAU TIEN khi tien trinh con dang phun du lieu lien tuc khong ngung (dung mutation vong
+     * lap vo han lam) - non-blocking read tren ong cua proc_open tren Windows la mot loi
+     * PHP/Windows da biet tu lau, khong dang tin cay. Dan ra tep thi vong doi chi con
+     * proc_get_status() - khong doc gi ca cho toi khi tien trinh da ket thuc hoac bi giet -
+     * nen khong con phu thuoc hanh vi non-blocking cua ong tren Windows nua.
+     *
      * @param  string[] $thamSo   vi du ['--lien-tuc', '--so-vong=3']
      * @param  int       $hanGiay
      * @return array{treo: bool, ma_thoat: int|null, dau_ra: string, loi: string}
@@ -634,31 +643,29 @@ class CtdtImportCommandTest extends TestCase
         // qua ca cmd.exe lan escapeshellarg().
         $lenh = array_merge([PHP_BINARY, 'artisan', 'ctdt:import'], $thamSo);
 
+        $tepDauRa = tempnam(sys_get_temp_dir(), 'ctdt-test-out-');
+        $tepLoi = tempnam(sys_get_temp_dir(), 'ctdt-test-err-');
+
         $moTaOng = [
             0 => ['pipe', 'r'],
-            1 => ['pipe', 'w'],
-            2 => ['pipe', 'w'],
+            1 => ['file', $tepDauRa, 'w'],
+            2 => ['file', $tepLoi, 'w'],
         ];
 
         $tienTrinh = proc_open($lenh, $moTaOng, $ong, base_path());
 
         if (!is_resource($tienTrinh)) {
+            @unlink($tepDauRa);
+            @unlink($tepLoi);
             $this->fail('Khong khoi dong duoc tien trinh con: ' . implode(' ', $lenh));
         }
 
         fclose($ong[0]);
-        stream_set_blocking($ong[1], false);
-        stream_set_blocking($ong[2], false);
 
         $batDau = microtime(true);
-        $dauRa = '';
-        $loi = '';
         $daTreo = false;
 
         while (true) {
-            $dauRa .= (string) stream_get_contents($ong[1]);
-            $loi .= (string) stream_get_contents($ong[2]);
-
             $trangThai = proc_get_status($tienTrinh);
 
             if (!$trangThai['running']) {
@@ -673,6 +680,7 @@ class CtdtImportCommandTest extends TestCase
                 $choDon = microtime(true);
                 do {
                     $trangThai = proc_get_status($tienTrinh);
+                    usleep(50000);
                 } while ($trangThai['running'] && microtime(true) - $choDon < 3);
                 break;
             }
@@ -680,12 +688,14 @@ class CtdtImportCommandTest extends TestCase
             usleep(200000);
         }
 
-        $dauRa .= (string) stream_get_contents($ong[1]);
-        $loi .= (string) stream_get_contents($ong[2]);
-        fclose($ong[1]);
-        fclose($ong[2]);
-
         $maThoat = proc_close($tienTrinh);
+
+        // Chi giu 65536 byte cuoi cung: mutation vong lap vo han co the phun ra hang chuc MB
+        // trong $hanGiay giay, vua du de doc dong tong ket / thong bao loi cuoi cho assertion.
+        $dauRa = $this->docCuoiTep($tepDauRa, 65536);
+        $loi = $this->docCuoiTep($tepLoi, 65536);
+        @unlink($tepDauRa);
+        @unlink($tepLoi);
 
         return [
             'treo'     => $daTreo,
@@ -693,6 +703,30 @@ class CtdtImportCommandTest extends TestCase
             'dau_ra'   => $dauRa,
             'loi'      => $loi,
         ];
+    }
+
+    /** Doc toi da $soByte byte CUOI CUNG cua mot tep, khong nap ca tep neu no rat lon. */
+    private function docCuoiTep($duongDan, $soByte)
+    {
+        if (!is_file($duongDan)) {
+            return '';
+        }
+
+        $kichThuoc = filesize($duongDan);
+        $tay = fopen($duongDan, 'rb');
+
+        if ($tay === false) {
+            return '';
+        }
+
+        if ($kichThuoc > $soByte) {
+            fseek($tay, -$soByte, SEEK_END);
+        }
+
+        $noiDung = stream_get_contents($tay);
+        fclose($tay);
+
+        return (string) $noiDung;
     }
 
     /** SignCtdtJob::$maHoSo la protected va khong co getter cong khai. */
