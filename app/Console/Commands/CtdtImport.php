@@ -6,13 +6,17 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
 use App\Services\Ctdt\CtdtImporter;
+use App\Models\BHYT\Ctdt\CtdtHoSo;
+use App\Models\BHYT\Ctdt\CtdtLichSuGui;
+use App\Services\Ctdt\CtdtQuyetDinhGui;
+use App\Services\Ctdt\CtdtXepHangKyGui;
 
 /**
- * Quet thu muc inbox, nap moi tep XML tim duoc.
+ * Quet thu muc inbox, nap moi tep XML tim duoc, roi nhat moi ho so du dieu kien de xep
+ * hang ky - gui (xem nhatVaXepHang()).
  *
- * PHAM VI TASK NAY DUNG O NAP: ky so va gui len cong la Task 4, che do chay lien tuc
- * (--lien-tuc) la Task 5. Lenh nay chi co --dry-run, --khong-ky, --khong-gui khai bao san
- * lam cho san cho hai task sau, nhung CHUA doc chung o day.
+ * PHAM VI TASK NAY DUNG O NAP + XEP HANG KY - GUI: che do chay lien tuc (--lien-tuc) la
+ * Task 5, --lien-tuc CHUA duoc doc o day.
  */
 class CtdtImport extends Command
 {
@@ -41,6 +45,9 @@ class CtdtImport extends Command
      * trong finally; truong hop bi kill -9 thi nguoi van hanh xoa tay.
      */
     const KHOA_LUOT_PHUT = 60;
+
+    /** Tran so ho so nhat len xep hang moi vong */
+    const TRAN_NHAT = 200;
 
     /** @var CtdtImporter */
     protected $importer;
@@ -144,6 +151,14 @@ class CtdtImport extends Command
         }
 
         $this->info('Nap xong: ' . count($dsMaHoSo) . ' ho so, ' . $soHong . ' tep hong.');
+
+        // --dry-run khong duoc dong gi ca (ke ca doc/xep hang); --khong-ky la "dung truoc
+        // buoc ky" theo dung mo ta cua chinh tuy chon do khai o $signature.
+        if (!$khoDe && !$this->option('khong-ky')) {
+            // KHONG truyen $dsMaHoSo vao - xem chu thich nhatVaXepHang(). Chi truyen thu muc,
+            // vi Task 5 se dat tep co dung o day.
+            $this->nhatVaXepHang($thuMuc);
+        }
 
         if ($soKhongDoiDuoc > 0) {
             // Ma thoat KHAC 0: day la loai loi ma khong ai duoc phep im lang di qua. nssm va
@@ -302,5 +317,102 @@ class CtdtImport extends Command
         }
 
         return (int) (config('organization.chung_tu_dien_tu.import_gioi_han') ?: 200);
+    }
+
+    /**
+     * Nhat moi ho so DA DU DIEU KIEN ma chua len duoc cong, roi xep hang ky - gui.
+     *
+     * KHONG NHAN danh sach ma ho so vua nap. Ho so vua nap gan nhu LUON o trang thai chua
+     * kiem - bo kiem con nam trong hang doi JobCtdt - nen nhat theo danh sach vua nap se
+     * truot gan het, va phai trong cho vong sau. Truy van thang thi moi vong deu vet dung
+     * nhung ho so VUA MOI du dieu kien, bat ke vong nao nap chung, ke ca ho so nguoi ta sua
+     * tay tren man hinh roi cho bo kiem chay lai.
+     *
+     * VI SAO KHONG cho tat ca vao hang doi roi de job tu loc: job ky da co cua chan cua no,
+     * nhung xep 200 job de 195 cai tu thoat lam nhieu log den muc khong ai doc nua - va ba
+     * hang doi thi dai ra ma khong ai biet vi sao.
+     *
+     * @param  string $thuMuc thu muc inbox - Task 5 dat tep co dung o day
+     * @return int so ho so da xep hang
+     */
+    protected function nhatVaXepHang($thuMuc)
+    {
+        if (!$this->duocGui($thuMuc)) {
+            return 0;
+        }
+
+        // Dieu kien o CSDL chi la BO LOC THO de thu hep tap phai doc len; luat that van do
+        // CtdtQuyetDinhGui::nenKy() quyet dinh o duoi. Khong nhan doi luat o day: mot ban SQL
+        // doc lap se lech voi nenKy() vao ngay ai do sua mot trong hai.
+        $ungVien = CtdtHoSo::whereNotNull('checked_at')
+            ->where('so_loi', '=', 0)
+            ->where(function ($q) {
+                $q->whereNull('ma_ket_qua')->orWhere('ma_ket_qua', '');
+            })
+            // Cu truoc moi truoc: ho so nam lau nhat la ho so nguoi ta doi lau nhat.
+            ->orderBy('imported_at')
+            ->limit(self::TRAN_NHAT)
+            ->get();
+
+        if ($ungVien->isEmpty()) {
+            return 0;
+        }
+
+        $soXep = 0;
+        $soBoQua = 0;
+
+        foreach ($ungVien as $hoSo) {
+            // Hoi lai bang nenKy() du da loc o SQL: day moi la luat that, va no la MOT NOI
+            // duy nhat dung chung voi man hinh va SignCtdtJob.
+            if (CtdtQuyetDinhGui::nenKy($hoSo->checked_at, $hoSo->so_loi) !== CtdtQuyetDinhGui::KY) {
+                $soBoQua++;
+                continue;
+            }
+
+            // Noi ro nguon la CONSOLE: khong duoc de bang nhat ky suy tu $nguoiGui = null,
+            // vi mot cu bam tay khi chua dang nhap cung cho ra null.
+            //
+            // xep() tra false khi ho so dang co luot xu ly khac - o che do lien tuc day la
+            // chuyen THUONG XUYEN, vi vong truoc vua xep chinh no va chuoi con dang chay.
+            if (CtdtXepHangKyGui::xep($hoSo->ma_ho_so, null, CtdtLichSuGui::NGUON_CONSOLE)) {
+                $soXep++;
+            } else {
+                $soBoQua++;
+            }
+        }
+
+        if ($soXep > 0) {
+            $this->info('Da xep hang ky va gui: ' . $soXep . ' ho so; bo qua ' . $soBoQua
+                . ' (dang xu ly o vong truoc).');
+        }
+
+        if ($ungVien->count() >= self::TRAN_NHAT) {
+            $this->warn('Cham tran ' . self::TRAN_NHAT . ' ho so trong mot vong. Con ho so '
+                . 'du dieu kien chua duoc nhat - vong sau nhat tiep.');
+        }
+
+        return $soXep;
+    }
+
+    /**
+     * Co duoc gui len cong khong. Hoi MOI VONG, khong hoi mot lan roi nho.
+     *
+     * @param  string $thuMuc thu muc inbox
+     * @return bool
+     */
+    protected function duocGui($thuMuc)
+    {
+        if ($this->option('khong-gui')) {
+            return false;
+        }
+
+        // Hai cong tac RIENG. submit_enabled la "cho phep NGUOI bam nut gui"; khoa nay la
+        // "cho phep MAY gui khi khong co ai nhin". Hai muc do tin cay khac nhau thi phai hai
+        // cong tac khac nhau.
+        if (!(bool) config('organization.chung_tu_dien_tu.import_tu_dong_gui')) {
+            return false;
+        }
+
+        return true;
     }
 }

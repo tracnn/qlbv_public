@@ -7,6 +7,7 @@ use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\BufferedOutput;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Facades\Bus;
 use Tests\TestCase;
 use Tests\Support\DungBangCtdtSqlite;
 use Tests\Support\GoiCtdtMau;
@@ -237,6 +238,129 @@ class CtdtImportCommandTest extends TestCase
         $this->assertSame(1, \App\Models\BHYT\Ctdt\CtdtHoSo::count());
     }
 
+    /** @test */
+    public function KHONG_gui_khi_import_tu_dong_gui_dang_tat()
+    {
+        // Hai cong tac RIENG: submit_enabled cho phep NGUOI bam nut gui; import_tu_dong_gui
+        // cho phep MAY gui khi khong co ai nhin. Bat cai thu nhat KHONG duoc keo theo cai
+        // thu hai - do la khac biet giua "toi tin cai nut nay" va "toi tin de may tu chay
+        // luc 2 gio sang".
+        $nguon = file_get_contents(base_path('app/Console/Commands/CtdtImport.php'));
+
+        $this->assertContains('import_tu_dong_gui', $nguon,
+            'Lenh phai hoi khoa import_tu_dong_gui rieng, khong duoc chi dua vao submit_enabled');
+    }
+
+    /** @test */
+    public function ho_so_chua_kiem_khong_duoc_xep_hang_ky()
+    {
+        // so_loi = 0 cua mot ho so CHUA KIEM khong co nghia la sach - no co nghia la chua ai
+        // nhin. Lenh chay ngay sau khi nap, luc bo kiem con dang nam trong hang doi, nen day
+        // KHONG phai truong hop hiem: no la truong hop THUONG GAP.
+        $nguon = file_get_contents(base_path('app/Console/Commands/CtdtImport.php'));
+
+        $this->assertContains('CtdtQuyetDinhGui::nenKy', $nguon,
+            'Phai hoi CtdtQuyetDinhGui::nenKy() chu khong tu viet lai luat da-kiem-va-sach');
+    }
+
+    /** @test */
+    public function nhat_ho_so_bang_TRUY_VAN_chu_khong_theo_danh_sach_vua_nap()
+    {
+        // Ho so vua nap gan nhu LUON o trang thai chua kiem - bo kiem con nam trong hang doi
+        // JobCtdt. Nhat theo danh sach vua nap se truot gan het, va phai trong cho vong sau.
+        // Truy van thang thi moi vong deu vet dung nhung ho so VUA MOI du dieu kien, ke ca
+        // ho so nguoi ta sua tay tren man hinh.
+        $nguon = file_get_contents(base_path('app/Console/Commands/CtdtImport.php'));
+
+        $this->assertRegExp(
+            '/function nhatVaXepHang\(\$thuMuc\)/',
+            $nguon,
+            'nhatVaXepHang() chi nhan thu muc, KHONG nhan danh sach ma ho so - no phai tu truy van'
+        );
+    }
+
+    /** @test */
+    public function nhat_ho_so_co_tran()
+    {
+        // Bat gui tren mot CSDL da co san hang nghin ho so sach se xep tat ca vao hang doi
+        // trong MOT vong. Tran o day la thu duy nhat dung giua no va mot dot POST hang loat.
+        $this->assertGreaterThan(0, CtdtImport::TRAN_NHAT);
+
+        $nguon = file_get_contents(base_path('app/Console/Commands/CtdtImport.php'));
+
+        $this->assertContains('TRAN_NHAT', $nguon);
+    }
+
+    /**
+     * Hanh vi that, khong chi doc nguon: ho so CHUA KIEM (checked_at null) khong duoc
+     * xep hang, ho so DA KIEM VA SACH (checked_at co, so_loi = 0) thi duoc.
+     *
+     * @test
+     */
+    public function ho_so_da_kiem_va_sach_duoc_xep_hang_chua_kiem_thi_khong()
+    {
+        Bus::fake();
+        config(['organization.chung_tu_dien_tu.import_tu_dong_gui' => true]);
+
+        $hoSoChuaKiem = \App\Models\BHYT\Ctdt\CtdtHoSo::create([
+            'ma_ho_so' => 'YT-CHUA-KIEM', 'dich_vu' => 'CT2025', 'loai_hs' => '39',
+            'macskcb' => '01001', 'imported_at' => now(),
+            'checked_at' => null, 'so_loi' => 0,
+        ]);
+
+        $hoSoSach = \App\Models\BHYT\Ctdt\CtdtHoSo::create([
+            'ma_ho_so' => 'YT-SACH', 'dich_vu' => 'CT2025', 'loai_hs' => '39',
+            'macskcb' => '01001', 'imported_at' => now(),
+            'checked_at' => now(), 'so_loi' => 0,
+        ]);
+
+        $lenh = new CtdtImportLoRa();
+        $lenh->ganInputTest(new ArrayInput([], $lenh->getDefinition()));
+        $lenh->ganOutputTest(new BufferedOutput());
+        $lenh->nhatVaXepHangCong(sys_get_temp_dir());
+
+        Bus::assertDispatched(\App\Jobs\SignCtdtJob::class, function ($job) {
+            return $this->maHoSoCuaJob($job) === 'YT-SACH';
+        });
+        Bus::assertNotDispatched(\App\Jobs\SignCtdtJob::class, function ($job) {
+            return $this->maHoSoCuaJob($job) === 'YT-CHUA-KIEM';
+        });
+    }
+
+    /**
+     * Hanh vi that: import_tu_dong_gui tat thi khong xep hang bat ke ho so co sach hay
+     * khong - cong tac nay la cua RIENG che do chay nen, khong lien quan submit_enabled.
+     *
+     * @test
+     */
+    public function import_tu_dong_gui_tat_thi_khong_xep_hang_gi_ca()
+    {
+        Bus::fake();
+        config(['organization.chung_tu_dien_tu.import_tu_dong_gui' => false]);
+
+        \App\Models\BHYT\Ctdt\CtdtHoSo::create([
+            'ma_ho_so' => 'YT-SACH-2', 'dich_vu' => 'CT2025', 'loai_hs' => '39',
+            'macskcb' => '01001', 'imported_at' => now(),
+            'checked_at' => now(), 'so_loi' => 0,
+        ]);
+
+        $lenh = new CtdtImportLoRa();
+        $lenh->ganInputTest(new ArrayInput([], $lenh->getDefinition()));
+        $soXep = $lenh->nhatVaXepHangCong(sys_get_temp_dir());
+
+        $this->assertSame(0, $soXep, 'import_tu_dong_gui tat phai khong xep hang gi ca');
+        Bus::assertNotDispatched(\App\Jobs\SignCtdtJob::class);
+    }
+
+    /** SignCtdtJob::$maHoSo la protected va khong co getter cong khai. */
+    private function maHoSoCuaJob($job)
+    {
+        $thuoc = new ReflectionProperty($job, 'maHoSo');
+        $thuoc->setAccessible(true);
+
+        return $thuoc->getValue($job);
+    }
+
     /** Tao mot thu muc tam duoi storage/app, tu don o tearDown(). */
     private function thuMucTam()
     {
@@ -281,12 +405,25 @@ class CtdtImportLoRa extends CtdtImport
         return $this->gioiHanHieuLuc();
     }
 
+    public function nhatVaXepHangCong($thuMuc)
+    {
+        return $this->nhatVaXepHang($thuMuc);
+    }
+
     /** Gan InputInterface ma khong goi run(), de doc option() ma khong kich hoat handle(). */
     public function ganInputTest($input)
     {
         $thuoc = new ReflectionProperty(\Illuminate\Console\Command::class, 'input');
         $thuoc->setAccessible(true);
         $thuoc->setValue($this, $input);
+    }
+
+    /** Gan OutputInterface ma khong goi run(), de goi $this->info()/warn() khong vo. */
+    public function ganOutputTest($output)
+    {
+        $thuoc = new ReflectionProperty(\Illuminate\Console\Command::class, 'output');
+        $thuoc->setAccessible(true);
+        $thuoc->setValue($this, $output);
     }
 }
 
