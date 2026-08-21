@@ -14,13 +14,14 @@
 
 <div class="box box-primary">
   <div class="box-body">
+    {{-- Khoang thoi gian dung partial chung, giong man XML3176 va chung tu dien tu: ba man
+         cung nghiep vu lien thong BHXH thi phai cung dang va cung cach van hanh.
+
+         showExport = false: man nay da co nut "Xuat Excel" rieng o duoi, bat nut cua partial
+         nua la hai nut lam mot viec. --}}
+    @include('partials.date_range', ['showExport' => false])
+
     <div class="row">
-      <div class="col-md-2"><label>Từ ngày</label>
-        <input type="date" id="tu_ngay" class="form-control">
-      </div>
-      <div class="col-md-2"><label>Đến ngày</label>
-        <input type="date" id="den_ngay" class="form-control">
-      </div>
       <div class="col-md-2"><label>Trạng thái</label>
         <select id="trang_thai" class="form-control select2">
           <option value="">Tất cả</option>
@@ -33,6 +34,8 @@
         <input type="text" id="tim" class="form-control" placeholder="mã hồ sơ, số thẻ, họ tên...">
       </div>
     </div>
+    @include('partials.load_data_button')
+
     <div class="row" style="margin-top:10px">
       <div class="col-md-12">
         <a id="btn-xuat" class="btn btn-success"><i class="fa fa-file-excel-o"></i> Xuất Excel</a>
@@ -82,7 +85,14 @@
 
 @push('after-scripts')
 <script type="text/javascript">
+    // KHONG boc trong $(document).ready(...): partials.load_data_button goi ham TOAN CUC
+    // fetchData(startDate, endDate) va tu goi mot lan ngay khi trang tai xong. Ham do phai
+    // nam o pham vi window thi no moi thay duoc.
     var table = null;
+
+    // Khoang ngay cua lan tai HIEN TAI. Phai o pham vi module chu khong phai bien cuc bo cua
+    // fetchData(): closure "data" cua DataTables doc lai no o MOI lan reload sau do.
+    var khoangNgay = { from: null, to: null };
 
     // Cac truong dua vao modal chi tiet. Danh sach cot hien tren bang da du cho viec luot;
     // 17 truong con lai chi can khi soi mot ho so cu the.
@@ -118,8 +128,8 @@
     // quen ben kia se lam tep xuat khac han man hinh.
     function thamSoLoc() {
         return {
-            tu_ngay: $('#tu_ngay').val(),
-            den_ngay: $('#den_ngay').val(),
+            tu_ngay: khoangNgay.from,
+            den_ngay: khoangNgay.to,
             trang_thai: $('#trang_thai').val(),
             ma_cskcb: $('#ma_cskcb').val(),
             tim: $('#tim').val()
@@ -130,7 +140,10 @@
         $.extend(d, thamSoLoc());
     }
 
-    function fetchData() {
+    function fetchData(startDate, endDate) {
+        khoangNgay.from = startDate;
+        khoangNgay.to = endDate;
+
         table = $('#check-hein-card-list').DataTable({
             "processing": true,
             "serverSide": true,
@@ -170,14 +183,29 @@
         // Thieu loi goi nay thi partial chi la mot <select> tho, khong ra select2.
         $('.select2').select2({width: '100%'});
 
-        fetchData();
+        // KHONG goi fetchData() o day: partials.load_data_button da tu goi mot lan khi trang
+        // tai xong, kem theo khoang ngay. Goi them o day la nap bang HAI LAN, va lan cua ta
+        // se khong co khoang ngay.
 
-        $('#tu_ngay, #den_ngay, #trang_thai, #ma_cskcb').on('change', function () {
-            table.ajax.reload();
+        // Doi o loc thi nap lai ngay; rieng khoang ngay phai bam "Tai du lieu" - do la khuon
+        // chung cua partial, va no co chu dich: nguoi dung thuong chinh ca hai dau khoang
+        // truoc khi muon tai.
+        $('#trang_thai, #ma_cskcb').on('change', function () {
+            if (table) {
+                table.ajax.reload();
+            }
         });
 
         // Gui DUNG bo tham so ma DataTables dang dung: tep xuat ra bang thu dang hien tren man.
         $('#btn-xuat').on('click', function () {
+            // Chua tai lan nao thi khoangNgay con rong, va tep xuat se la TOAN BO bang - tren
+            // may chu gioi han PHP 128MB do la mot yeu cau chet giua chung.
+            if (!khoangNgay.from) {
+                alert('Bấm "Tải dữ liệu" trước khi xuất, để tệp xuất khớp đúng khoảng đang xem.');
+
+                return;
+            }
+
             window.location = "{{ route('bhyt.check-hein-card.export') }}?" + $.param(thamSoLoc());
         });
 
@@ -207,4 +235,10 @@
         });
     });
 </script>
+
+{{-- Hai partial tu dat script cua no vao mot stack RIENG. Khong day ra thi chung im lang
+     khong hoat dong: o chon khoang thoi gian se thanh mot o text tron, va nut "Tai du lieu"
+     bam khong ra gi. --}}
+@stack('after-scripts-date-range')
+@stack('after-scripts-load-data-button')
 @endpush

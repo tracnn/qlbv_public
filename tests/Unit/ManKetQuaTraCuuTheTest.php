@@ -158,13 +158,43 @@ class ManKetQuaTraCuuTheTest extends TestCase
     {
         $ma = $this->maBlade();
 
-        foreach (['tu_ngay', 'den_ngay', 'trang_thai', 'tim'] as $id) {
+        foreach (['trang_thai', 'tim'] as $id) {
             $this->assertContains('id="' . $id . '"', $ma, 'Thieu bo loc ' . $id);
         }
 
+        // Khoang thoi gian KHONG con la hai o <input type="date"> rieng - no den tu
+        // partials.date_range, giong man XML3176 va chung tu dien tu. Bo loc van con du,
+        // chi doi hinh dang.
+        $this->assertContains("@include('partials.date_range'", $ma, 'Thieu o chon khoang thoi gian');
         $this->assertContains("@include('partials.ma_cskcb'", $ma, 'Thieu o loc co so');
         $this->assertContains("select2({width: '100%'})", $ma,
             'Thieu khoi tao select2 - o chon se hien ra dang tho');
+    }
+
+    /** @test */
+    public function blade_day_du_hai_stack_cua_hai_partial()
+    {
+        // Hai partial tu dat script cua no vao mot stack RIENG. Khong day ra thi chung im
+        // lang khong hoat dong: o chon khoang thoi gian thanh mot o text tron va nut "Tai
+        // du lieu" bam khong ra gi - khong loi console, khong dau hieu gi.
+        $ma = $this->maBlade();
+
+        $this->assertContains("@include('partials.load_data_button')", $ma, 'Thieu nut Tai du lieu');
+        $this->assertContains("@stack('after-scripts-date-range')", $ma);
+        $this->assertContains("@stack('after-scripts-load-data-button')", $ma);
+    }
+
+    /** @test */
+    public function fetchData_nhan_khoang_ngay_theo_dung_hop_dong_cua_partial()
+    {
+        // partials.load_data_button goi ham TOAN CUC fetchData(startDate, endDate). Khai
+        // fetchData() khong tham so thi khoang ngay roi mat va bang nap TOAN BO thoi gian.
+        $ma = $this->maBlade();
+
+        $this->assertContains('function fetchData(startDate, endDate)', $ma,
+            'fetchData phai nhan khoang ngay - do la hop dong cua partials.load_data_button');
+        $this->assertNotContains("$('#tu_ngay').val()", $ma,
+            'Hai o input ngay da bi go, khong duoc doc lai chung');
     }
 
     /** @test */
