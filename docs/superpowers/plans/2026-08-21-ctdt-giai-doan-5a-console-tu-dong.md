@@ -2,9 +2,13 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Một lệnh Artisan quét thư mục inbox, nạp mọi tệp XML tìm được, rồi xếp hàng ký số và gửi lên cổng BHXH mà không cần người trực — kèm đủ phanh để một thư mục đổ nhầm không biến thành hàng nghìn lần POST thật.
+**Goal:** Một lệnh Artisan chạy **liên tục** như `xml3176import:day`: quét thư mục inbox, nạp mọi tệp XML tìm được, rồi nhặt mọi hồ sơ đã đủ điều kiện mà xếp hàng ký số và gửi lên cổng BHXH — kèm đủ phanh để một thư mục đổ nhầm không biến thành hàng nghìn lần POST thật, và một cái phanh tay dừng được ngay giữa đêm mà không cần khởi động lại dịch vụ.
 
 **Architecture:** Lệnh KHÔNG tự viết lại luồng nào. Nạp thì gọi `CtdtImporter::nhapTuTep()` sẵn có; xếp hàng ký-gửi thì gọi một lớp mới `CtdtXepHangKyGui` được **tách ra từ** `BHYTCtdtController::kyVaGui()` để màn hình và lệnh Console dùng chung đúng một bản (khoá chống bấm trùng, chuỗi `SignCtdtJob → SubmitCtdtJob`, cùng cổng chặn). Vì gửi tự động không có con mắt người, thêm bảng `ctdt_lich_su_gui` ghi từng lần gọi cổng thành bản ghi tra cứu được, thay vì chỉ một cột văn bản tự do.
+
+**Bước nhặt hồ sơ đi bằng TRUY VẤN, không bằng "những mã vừa nạp trong lượt này".** Đây là khác biệt quan trọng nhất so với bản nháp đầu. Hồ sơ vừa nạp gần như luôn ở trạng thái *chưa kiểm* — bộ kiểm còn nằm trong hàng đợi `JobCtdt` — nên nhặt theo danh sách vừa nạp sẽ trượt gần hết, và phải trông chờ lượt sau. Nhặt bằng truy vấn `đã kiểm && sạch && chưa có ma_ket_qua` thì mỗi vòng đều vét đúng những hồ sơ *vừa mới* đủ điều kiện, bất kể lượt nào nạp chúng — kể cả hồ sơ người ta sửa tay trên màn hình.
+
+**Chạy liên tục là chế độ chính**, giống `XML3176Import`. Nhưng khác lệnh đó ở ba chỗ, vì lệnh này POST thật lên cổng BHXH chứ không chỉ ghi tệp ra đĩa: có tệp cờ dừng có hiệu lực ngay, có trần số vòng để tiến trình tự thoát cho nssm dựng lại bản sạch, và vẫn giữ được chế độ một lượt cho chạy tay.
 
 **Tech Stack:** Laravel 5.5, PHP 7.4, PHPUnit 6, MySQL (production) / SQLite (test), hàng đợi driver `database`.
 
@@ -30,7 +34,8 @@
 | `app/Console/Commands/CtdtImport.php` | Quét thư mục, nạp, chuyển tệp, gọi `CtdtXepHangKyGui` |
 | `app/Jobs/SubmitCtdtJob.php` | *(sửa)* ghi thêm một dòng `ctdt_lich_su_gui` mỗi lần gọi cổng |
 | `app/Http/Controllers/BHYT/BHYTCtdtController.php` | *(sửa)* `kyVaGui()` gọi `CtdtXepHangKyGui` thay vì tự làm |
-| `docs/organization.php`, `docs/chung-tu-dien-tu-pl02.md` | Khoá cấu hình mới + mục vận hành |
+| `docs/organization.php` | Khoá cấu hình mới (`import_gioi_han`, `import_tu_dong_gui`) |
+| `docs/chung-tu-dien-tu-pl02.md` | Mục vận hành: năm cái phanh, tệp `DUNG-GUI`, cài dịch vụ nssm |
 
 ---
 
@@ -727,19 +732,30 @@ use App\Services\Ctdt\CtdtImporter;
 /**
  * Quet thu muc inbox, nap moi tep XML tim duoc, roi (o Task 4) xep hang ky so va gui.
  *
- * KHAC XML3176Import: lenh do chay `do { ... sleep(3) } while (true)` - mot vong lap vo tan
- * trong mot tien trinh nssm. Lenh nay chay MOT LUOT roi thoat, de lich chay (nssm hoac
- * Task Scheduler) quyet dinh nhip. Ly do: lenh nay GUI THAT len cong BHXH, va mot tien
- * trinh song mai la thu khong ai nho tat khi can dung gap.
+ * GIONG XML3176Import: chay lien tuc duoi mot dich vu nssm (co --lien-tuc). Do la khuon van
+ * hanh cua du an nay, va no dung: gui phai bam sat luc ho so vua qua bo kiem, chu khong doi
+ * mot lich 15 phut.
+ *
+ * KHAC XML3176Import o BA cho, vi lenh nay POST THAT len cong BHXH chu khong chi ghi tep:
+ *
+ *   1. Co TEP CO DUNG chan buoc gui NGAY vong sau. Mot tien trinh song mai giu config trong
+ *      bo nho, nen sua import_tu_dong_gui thanh false KHONG an thua cho toi khi ai do nssm
+ *      restart - va mot cai phanh chi an sau khi khoi dong lai thi khong phai la phanh.
+ *   2. TU THOAT sau --so-vong. PHP chay dai han o gioi han 128MB se phinh; thoat chu dong de
+ *      nssm dung lai ban sach thi khac han bi OOM giet giua luc dang goi cong.
+ *   3. VAN GIU duoc che do mot luot (khong co --lien-tuc) cho chay tay va --dry-run.
  */
 class CtdtImport extends Command
 {
     protected $signature = 'ctdt:import
         {--duong-dan= : Thu muc quet, mac dinh lay tu organization.chung_tu_dien_tu.import_path}
-        {--gioi-han=200 : Tran so TEP xu ly moi luot}
+        {--gioi-han=200 : Tran so TEP xu ly moi vong}
         {--dry-run : Chi liet ke nhung gi se lam, khong nap khong doi gi}
         {--khong-ky : Nap va kiem, dung truoc buoc ky}
-        {--khong-gui : Ky nhung khong gui len cong}';
+        {--khong-gui : Ky nhung khong gui len cong}
+        {--lien-tuc : Chay lap mai, giong xml3176import:day}
+        {--nghi=5 : So GIAY nghi giua hai vong, chi dung voi --lien-tuc}
+        {--so-vong=1000 : Tu thoat sau bay nhieu vong de nssm dung lai tien trinh sach}';
 
     protected $description = 'Quet thu muc inbox, nap chung tu dien tu PL02, ky va gui len cong BHXH';
 
@@ -752,8 +768,18 @@ class CtdtImport extends Command
     /** Khoa chong hai luot chay chong len nhau */
     const KHOA_LUOT = 'ctdt:import:dang-chay';
 
-    /** Thoi han khoa luot, tinh bang PHUT */
-    const KHOA_LUOT_PHUT = 60;
+    /**
+     * Thoi han khoa luot, tinh bang PHUT.
+     *
+     * MOT NGAY chu khong mot gio: o che do --lien-tuc mot tien trinh song rat lau
+     * (--so-vong=1000 voi --nghi=5 la khoang 83 phut, va con so do co the duoc nang). Khoa
+     * het han giua chung la mo cua cho mot tien trinh thu hai chen vao, va hai tien trinh se
+     * cung nhat mot tep len.
+     *
+     * Khoa mo coi khi tien trinh bi kill cung duoc xu bang Cache::forget() trong finally;
+     * truong hop bi kill -9 thi nguoi van hanh xoa tay - cau lenh chep trong tai lieu.
+     */
+    const KHOA_LUOT_PHUT = 1440;
 
     /** @var CtdtImporter */
     protected $importer;
@@ -986,16 +1012,15 @@ git commit -m "feat(ctdt): lenh ctdt:import quet va nap thu muc inbox"
 
 ---
 
-### Task 4: Nối chuỗi ký và gửi vào lệnh
+### Task 4: Nhặt hồ sơ đủ điều kiện và xếp hàng ký-gửi
 
 **Files:**
 - Modify: `app/Console/Commands/CtdtImport.php`
-- Modify: `docs/chung-tu-dien-tu-pl02.md`
 - Test: `tests/Unit/Ctdt/CtdtImportCommandTest.php` (thêm ca)
 
 **Interfaces:**
-- Consumes: `CtdtXepHangKyGui::xep($maHoSo, $nguoiGui = null)` → `bool` (Task 2); `CtdtQuyetDinhGui::nenKy($daKiem, $soLoi)` → `CHUA_KIEM|CON_LOI|KY`
-- Produces: không có API mới; lệnh có thêm bước 2 sau khi nạp
+- Consumes: `CtdtXepHangKyGui::xep($maHoSo, $nguoiGui = null, $nguon = CtdtLichSuGui::NGUON_MAN_HINH)` → `bool` (Task 2); `CtdtQuyetDinhGui::nenKy($daKiem, $soLoi)` → `CHUA_KIEM|CON_LOI|KY`
+- Produces: `CtdtImport::nhatVaXepHang($thuMuc)` → `int` số hồ sơ đã xếp; `CtdtImport::duocGui($thuMuc)` → `bool`; hằng `CtdtImport::TRAN_NHAT = 200`
 
 - [ ] **Step 1: Viết test đỏ trước**
 
@@ -1026,6 +1051,34 @@ Thêm vào `tests/Unit/Ctdt/CtdtImportCommandTest.php`:
         $this->assertContains('CtdtQuyetDinhGui::nenKy', $nguon,
             'Phai hoi CtdtQuyetDinhGui::nenKy() chu khong tu viet lai luat da-kiem-va-sach');
     }
+
+    /** @test */
+    public function nhat_ho_so_bang_TRUY_VAN_chu_khong_theo_danh_sach_vua_nap()
+    {
+        // Ho so vua nap gan nhu LUON o trang thai chua kiem - bo kiem con nam trong hang doi
+        // JobCtdt. Nhat theo danh sach vua nap se truot gan het, va phai trong cho vong sau.
+        // Truy van thang thi moi vong deu vet dung nhung ho so VUA MOI du dieu kien, ke ca
+        // ho so nguoi ta sua tay tren man hinh.
+        $nguon = file_get_contents(base_path('app/Console/Commands/CtdtImport.php'));
+
+        $this->assertRegExp(
+            '/function nhatVaXepHang\(\$thuMuc\)/',
+            $nguon,
+            'nhatVaXepHang() chi nhan thu muc, KHONG nhan danh sach ma ho so - no phai tu truy van'
+        );
+    }
+
+    /** @test */
+    public function nhat_ho_so_co_tran()
+    {
+        // Bat gui tren mot CSDL da co san hang nghin ho so sach se xep tat ca vao hang doi
+        // trong MOT vong. Tran o day la thu duy nhat dung giua no va mot dot POST hang loat.
+        $this->assertGreaterThan(0, CtdtImport::TRAN_NHAT);
+
+        $nguon = file_get_contents(base_path('app/Console/Commands/CtdtImport.php'));
+
+        $this->assertContains('TRAN_NHAT', $nguon);
+    }
 ```
 
 - [ ] **Step 2: Chạy test cho chắc nó đỏ**
@@ -1044,6 +1097,13 @@ use App\Services\Ctdt\CtdtQuyetDinhGui;
 use App\Services\Ctdt\CtdtXepHangKyGui;
 ```
 
+Thêm hằng vào lớp:
+
+```php
+    /** Tran so ho so nhat len xep hang moi vong */
+    const TRAN_NHAT = 200;
+```
+
 Trong `quet()`, thay dòng `$this->info('Nap xong: ...');` và `return 0;` cuối hàm bằng:
 
 ```php
@@ -1053,84 +1113,118 @@ Trong `quet()`, thay dòng `$this->info('Nap xong: ...');` và `return 0;` cuố
             return 0;
         }
 
-        return $this->kyVaGui($dsMaHoSo);
+        // KHONG truyen $dsMaHoSo vao - xem chu thich nhatVaXepHang(). Chi truyen thu muc,
+        // vi Task 5 se dat tep co dung o day.
+        $this->nhatVaXepHang($thuMuc);
+
+        return 0;
 ```
 
 Thêm hai phương thức mới:
 
 ```php
     /**
-     * Xep hang ky so - gui cho nhung ho so DA KIEM va SACH.
+     * Nhat moi ho so DA DU DIEU KIEN ma chua len duoc cong, roi xep hang ky - gui.
      *
-     * VI SAO KHONG cho vao hang doi het roi de job tu loc: job ky da co cua chan cua no,
+     * KHONG NHAN danh sach ma ho so vua nap. Ho so vua nap gan nhu LUON o trang thai chua
+     * kiem - bo kiem con nam trong hang doi JobCtdt - nen nhat theo danh sach vua nap se
+     * truot gan het, va phai trong cho vong sau. Truy van thang thi moi vong deu vet dung
+     * nhung ho so VUA MOI du dieu kien, bat ke vong nao nap chung, ke ca ho so nguoi ta sua
+     * tay tren man hinh roi cho bo kiem chay lai.
+     *
+     * VI SAO KHONG cho tat ca vao hang doi roi de job tu loc: job ky da co cua chan cua no,
      * nhung xep 200 job de 195 cai tu thoat lam nhieu log den muc khong ai doc nua - va ba
      * hang doi thi dai ra ma khong ai biet vi sao.
      *
-     * @param  array $dsMaHoSo
-     * @return int ma thoat
+     * @param  string $thuMuc thu muc inbox - Task 5 dat tep co dung o day
+     * @return int so ho so da xep hang
      */
-    protected function kyVaGui(array $dsMaHoSo)
+    protected function nhatVaXepHang($thuMuc)
     {
-        if (empty($dsMaHoSo)) {
+        if (!$this->duocGui($thuMuc)) {
             return 0;
         }
 
-        // Hai cong tac RIENG. submit_enabled la "cho phep NGUOI bam nut gui"; khoa nay la
-        // "cho phep MAY gui khi khong co ai nhin". Hai muc do tin cay khac nhau.
-        $duocGui = (bool) config('organization.chung_tu_dien_tu.import_tu_dong_gui')
-            && !$this->option('khong-gui');
+        // Dieu kien o CSDL chi la BO LOC THO de thu hep tap phai doc len; luat that van do
+        // CtdtQuyetDinhGui::nenKy() quyet dinh o duoi. Khong nhan doi luat o day: mot ban SQL
+        // doc lap se lech voi nenKy() vao ngay ai do sua mot trong hai.
+        $ungVien = CtdtHoSo::whereNotNull('checked_at')
+            ->where('so_loi', '=', 0)
+            ->where(function ($q) {
+                $q->whereNull('ma_ket_qua')->orWhere('ma_ket_qua', '');
+            })
+            // Cu truoc moi truoc: ho so nam lau nhat la ho so nguoi ta doi lau nhat.
+            ->orderBy('imported_at')
+            ->limit(self::TRAN_NHAT)
+            ->get();
 
-        if (!$duocGui) {
-            $this->warn('Khong gui: import_tu_dong_gui dang tat hoac co --khong-gui. '
-                . 'Ho so da nap va se duoc kiem, nhung dung lai o do.');
-
+        if ($ungVien->isEmpty()) {
             return 0;
         }
 
         $soXep = 0;
         $soBoQua = 0;
 
-        foreach ($dsMaHoSo as $maHoSo) {
-            $hoSo = CtdtHoSo::where('ma_ho_so', $maHoSo)->first();
-
-            if ($hoSo === null) {
-                continue;
-            }
-
-            // Lenh nay chay NGAY SAU khi nap, luc bo kiem con nam trong hang doi JobCtdt.
-            // Nen "chua kiem" o day khong phai truong hop hiem - no la truong hop THUONG GAP,
-            // va bo qua la dung: luot chay sau se nhat lai.
-            $nenKy = CtdtQuyetDinhGui::nenKy($hoSo->checked_at, $hoSo->so_loi);
-
-            if ($nenKy !== CtdtQuyetDinhGui::KY) {
+        foreach ($ungVien as $hoSo) {
+            // Hoi lai bang nenKy() du da loc o SQL: day moi la luat that, va no la MOT NOI
+            // duy nhat dung chung voi man hinh va SignCtdtJob.
+            if (CtdtQuyetDinhGui::nenKy($hoSo->checked_at, $hoSo->so_loi) !== CtdtQuyetDinhGui::KY) {
                 $soBoQua++;
                 continue;
             }
 
             // Noi ro nguon la CONSOLE: khong duoc de bang nhat ky suy tu $nguoiGui = null,
             // vi mot cu bam tay khi chua dang nhap cung cho ra null.
-            if (CtdtXepHangKyGui::xep($maHoSo, null, CtdtLichSuGui::NGUON_CONSOLE)) {
+            //
+            // xep() tra false khi ho so dang co luot xu ly khac - o che do lien tuc day la
+            // chuyen THUONG XUYEN, vi vong truoc vua xep chinh no va chuoi con dang chay.
+            if (CtdtXepHangKyGui::xep($hoSo->ma_ho_so, null, CtdtLichSuGui::NGUON_CONSOLE)) {
                 $soXep++;
             } else {
                 $soBoQua++;
             }
         }
 
-        $this->info('Da xep hang ky va gui: ' . $soXep . ' ho so; bo qua ' . $soBoQua . '.');
-
-        if ($soBoQua > 0) {
-            $this->line('Ho so bo qua thuong la CHUA KIEM (bo kiem con trong hang doi '
-                . 'JobCtdt) hoac CON LOI. Chay lai lenh o luot sau de nhat tiep.');
+        if ($soXep > 0) {
+            $this->info('Da xep hang ky va gui: ' . $soXep . ' ho so; bo qua ' . $soBoQua
+                . ' (dang xu ly o vong truoc).');
         }
 
-        return 0;
+        if ($ungVien->count() >= self::TRAN_NHAT) {
+            $this->warn('Cham tran ' . self::TRAN_NHAT . ' ho so trong mot vong. Con ho so '
+                . 'du dieu kien chua duoc nhat - vong sau nhat tiep.');
+        }
+
+        return $soXep;
+    }
+
+    /**
+     * Co duoc gui len cong khong. Hoi MOI VONG, khong hoi mot lan roi nho.
+     *
+     * @param  string $thuMuc thu muc inbox
+     * @return bool
+     */
+    protected function duocGui($thuMuc)
+    {
+        if ($this->option('khong-gui')) {
+            return false;
+        }
+
+        // Hai cong tac RIENG. submit_enabled la "cho phep NGUOI bam nut gui"; khoa nay la
+        // "cho phep MAY gui khi khong co ai nhin". Hai muc do tin cay khac nhau thi phai hai
+        // cong tac khac nhau.
+        if (!(bool) config('organization.chung_tu_dien_tu.import_tu_dong_gui')) {
+            return false;
+        }
+
+        return true;
     }
 ```
 
 - [ ] **Step 4: Chạy test cho chắc nó xanh**
 
 Chạy: `php vendor/bin/phpunit tests/Unit/Ctdt/CtdtImportCommandTest.php`
-Kỳ vọng: `OK (6 tests)`.
+Kỳ vọng: `OK (8 tests)`.
 
 - [ ] **Step 5: Chạy cả bộ test của module**
 
@@ -1141,9 +1235,277 @@ Kỳ vọng: đỏ **đúng một** — `CtdtCauHinhTest::gui_len_cong_mac_dinh_
 
 Commit trước, rồi lần lượt (hoàn nguyên bằng `git checkout -- app/Console/Commands/CtdtImport.php` sau mỗi lần):
 1. Đổi `config('organization.chung_tu_dien_tu.import_tu_dong_gui')` thành `config('organization.chung_tu_dien_tu.submit_enabled')` → `KHONG_gui_khi_import_tu_dong_gui_dang_tat` phải ĐỎ.
-2. Xoá nhánh `if ($nenKy !== CtdtQuyetDinhGui::KY)` → `ho_so_chua_kiem_khong_duoc_xep_hang_ky` phải ĐỎ.
+2. Xoá nhánh gọi `CtdtQuyetDinhGui::nenKy()` trong `nhatVaXepHang()` → `ho_so_chua_kiem_khong_duoc_xep_hang_ky` phải ĐỎ.
+3. Đổi `protected function nhatVaXepHang($thuMuc)` thành `protected function nhatVaXepHang(array $dsMaHoSo)` → `nhat_ho_so_bang_TRUY_VAN_chu_khong_theo_danh_sach_vua_nap` phải ĐỎ.
+4. Bỏ `->limit(self::TRAN_NHAT)` → `nhat_ho_so_co_tran` phải ĐỎ.
 
-- [ ] **Step 7: Viết mục vận hành vào tài liệu**
+- [ ] **Step 7: Commit**
+
+```bash
+git add app/Console/Commands/CtdtImport.php tests/Unit/Ctdt/CtdtImportCommandTest.php
+git commit -m "feat(ctdt): ctdt:import nhat ho so du dieu kien bang truy van"
+```
+
+---
+
+### Task 5: Chế độ chạy liên tục + phanh tay
+
+**Vì sao task riêng:** đây là ranh giới mà người duyệt có thể chấp nhận toàn bộ phần trước mà vẫn bác chế độ chạy nền vô hạn. Và ba cái phanh trong task này không phải trang trí — chúng là khác biệt giữa lệnh này với `xml3176import:day`, vì lệnh này POST thật lên cổng BHXH.
+
+**Files:**
+- Modify: `app/Console/Commands/CtdtImport.php`
+- Modify: `docs/chung-tu-dien-tu-pl02.md`
+- Test: `tests/Unit/Ctdt/CtdtImportCommandTest.php` (thêm ca)
+
+**Interfaces:**
+- Consumes: `CtdtImport::quet($thuMuc, $gioiHan, $khoDe)` → `int`; `CtdtImport::duocGui($thuMuc)` → `bool` (Task 4)
+- Produces:
+  - `CtdtImport::TEP_CO_DUNG = 'DUNG-GUI'` — tên tệp cờ đặt trong thư mục inbox
+  - `CtdtImport::coDung($thuMuc)` → `bool`
+  - `CtdtImport::vongLap($thuMuc, $gioiHan)` → `int`
+
+- [ ] **Step 1: Viết test đỏ trước**
+
+Thêm vào `tests/Unit/Ctdt/CtdtImportCommandTest.php`:
+
+```php
+    /** @test */
+    public function tep_co_dung_chan_ngay_buoc_gui()
+    {
+        // Mot tien trinh song mai GIU CONFIG TRONG BO NHO. Sua import_tu_dong_gui thanh
+        // false KHONG an thua cho toi khi ai do nssm restart - va mot cai phanh chi an sau
+        // khi khoi dong lai thi khong phai la phanh. Nguoi truc dem phai dung duoc bang mot
+        // thao tac ho lam duoc: tao mot tep rong.
+        $thuMuc = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'ctdt-thu-' . mt_rand();
+        mkdir($thuMuc);
+
+        $lenh = new CtdtImport();
+
+        $this->assertFalse($lenh->coDung($thuMuc), 'Chua co tep co thi khong duoc dung');
+
+        touch($thuMuc . DIRECTORY_SEPARATOR . CtdtImport::TEP_CO_DUNG);
+
+        $this->assertTrue($lenh->coDung($thuMuc),
+            'Co tep DUNG-GUI thi phai dung ngay, khong cho khoi dong lai dich vu');
+
+        unlink($thuMuc . DIRECTORY_SEPARATOR . CtdtImport::TEP_CO_DUNG);
+        rmdir($thuMuc);
+    }
+
+    /** @test */
+    public function che_do_lien_tuc_co_TRAN_SO_VONG()
+    {
+        // PHP chay dai han o gioi han 128MB se phinh. Thoat chu dong de nssm dung lai ban
+        // sach thi khac han bi OOM giet giua luc dang goi cong BHXH.
+        $macDinh = (new CtdtImport())->getDefinition()->getOption('so-vong')->getDefault();
+
+        $this->assertNotNull($macDinh, 'Phai co tran so vong');
+        $this->assertGreaterThan(0, (int) $macDinh);
+    }
+
+    /** @test */
+    public function che_do_lien_tuc_co_nghi_giua_hai_vong()
+    {
+        // Khong nghi la mot vong lap ban CPU va do log khong ngung.
+        $macDinh = (new CtdtImport())->getDefinition()->getOption('nghi')->getDefault();
+
+        $this->assertGreaterThan(0, (int) $macDinh);
+    }
+
+    /** @test */
+    public function dry_run_KHONG_duoc_chay_lien_tuc()
+    {
+        // --dry-run la de nguoi ta NHIN mot lan roi quyet dinh. Gap voi --lien-tuc thi no do
+        // log mai ma khong lam gi ca - va che mat dong log that.
+        $nguon = file_get_contents(base_path('app/Console/Commands/CtdtImport.php'));
+
+        $this->assertContains('dry-run', $nguon);
+        $this->assertRegExp(
+            '/lien-tuc.{0,400}dry-run|dry-run.{0,400}lien-tuc/s',
+            $nguon,
+            'Phai co cho tu choi ket hop --dry-run voi --lien-tuc'
+        );
+    }
+```
+
+- [ ] **Step 2: Chạy test cho chắc nó đỏ**
+
+Chạy: `php vendor/bin/phpunit tests/Unit/Ctdt/CtdtImportCommandTest.php`
+Kỳ vọng: bốn test mới ĐỎ (`coDung()` chưa tồn tại, `--so-vong`/`--nghi` chưa có).
+
+- [ ] **Step 3: Thêm hằng và tệp cờ dừng**
+
+Trong `app/Console/Commands/CtdtImport.php`, thêm hằng:
+
+```php
+    /**
+     * Tep co dat trong thu muc inbox de DUNG BUOC GUI ngay vong sau.
+     *
+     * VI SAO KHONG dung config: tien trinh chay lien tuc giu config trong bo nho, nen sua
+     * import_tu_dong_gui thanh false khong an thua cho toi khi ai do nssm restart. Mot cai
+     * phanh chi an sau khi khoi dong lai thi khong phai la phanh.
+     *
+     * VI SAO la TEP chu khong phai khoa cache: nguoi truc dem tao duoc mot tep rong. Ho
+     * khong sua duoc PHP, va co the khong vao duoc Redis.
+     */
+    const TEP_CO_DUNG = 'DUNG-GUI';
+```
+
+và phương thức:
+
+```php
+    /**
+     * Co tep co dung trong thu muc inbox khong.
+     *
+     * Cong khai de test goi truc tiep duoc - day la cai phanh tay, no dang duoc kiem ky
+     * hon phan con lai.
+     *
+     * @param  string $thuMuc
+     * @return bool
+     */
+    public function coDung($thuMuc)
+    {
+        return file_exists(rtrim($thuMuc, '\\/') . DIRECTORY_SEPARATOR . self::TEP_CO_DUNG);
+    }
+```
+
+Trong `duocGui($thuMuc)` (Task 4 đã cho nó nhận thư mục sẵn), chèn phép hỏi tệp cờ lên **đầu tiên**:
+
+```php
+    protected function duocGui($thuMuc)
+    {
+        // Hoi tep co TRUOC MOI THU: day la phanh tay, no phai thang moi cau hinh.
+        if ($this->coDung($thuMuc)) {
+            $this->warn('Thay tep ' . self::TEP_CO_DUNG . ' trong thu muc inbox - DUNG GUI. '
+                . 'Van tiep tuc nap va kiem. Xoa tep do di de gui lai.');
+
+            return false;
+        }
+
+        if ($this->option('khong-gui')) {
+            return false;
+        }
+
+        if (!(bool) config('organization.chung_tu_dien_tu.import_tu_dong_gui')) {
+            return false;
+        }
+
+        return true;
+    }
+```
+
+Không đổi chữ ký nào: Task 4 đã cho `nhatVaXepHang($thuMuc)` và `duocGui($thuMuc)` nhận sẵn thư mục, đúng để chỗ này cắm vào.
+
+- [ ] **Step 4: Thêm vòng lặp**
+
+Trong `handle()`, thay `return $this->quet($thuMuc, (int) $this->option('gioi-han'), $khoDe);` bằng:
+
+```php
+            if ($this->option('lien-tuc')) {
+                if ($khoDe) {
+                    // --dry-run la de nguoi ta NHIN mot lan roi quyet dinh. Gap voi
+                    // --lien-tuc thi no do log mai ma khong lam gi ca, va che mat dong log
+                    // that cua nhung lenh khac.
+                    $this->error('Khong ket hop --dry-run voi --lien-tuc duoc.');
+
+                    return 1;
+                }
+
+                return $this->vongLap($thuMuc, (int) $this->option('gioi-han'));
+            }
+
+            return $this->quet($thuMuc, (int) $this->option('gioi-han'), $khoDe);
+```
+
+Thêm phương thức:
+
+```php
+    /**
+     * Chay lien tuc, giong xml3176import:day - nhung TU THOAT sau --so-vong.
+     *
+     * VI SAO tu thoat chu khong `while (true)`: PHP chay dai han o gioi han 128MB se phinh,
+     * va viec du an da phai co lenh jobs:restart-stuck cho thay hang doi tung ket that.
+     * Thoat chu dong de nssm dung lai mot tien trinh sach thi khac han bi OOM giet GIUA LUC
+     * dang goi cong BHXH - luc do khong ai biet cong da nhan hay chua.
+     *
+     * @param  string $thuMuc
+     * @param  int    $gioiHan
+     * @return int ma thoat
+     */
+    protected function vongLap($thuMuc, $gioiHan)
+    {
+        $soVong = max(1, (int) $this->option('so-vong'));
+        $nghi = max(1, (int) $this->option('nghi'));
+
+        $this->info('Chay lien tuc: nghi ' . $nghi . ' giay giua hai vong, tu thoat sau '
+            . $soVong . ' vong.');
+
+        for ($i = 1; $i <= $soVong; $i++) {
+            try {
+                $this->quet($thuMuc, $gioiHan, false);
+            } catch (\Exception $e) {
+                // Mot vong hong KHONG duoc lam chet ca tien trinh: dung o day nghia la khong
+                // ho so nao duoc gui nua cho toi khi co nguoi phat hien ra dich vu da chet.
+                Log::error('ctdt:import vong ' . $i . ' hong: ' . $e->getMessage());
+                $this->error('Vong ' . $i . ' hong: ' . $e->getMessage());
+            }
+
+            if ($i < $soVong) {
+                sleep($nghi);
+            }
+        }
+
+        $this->info('Da chay du ' . $soVong . ' vong, thoat de nssm dung lai tien trinh sach.');
+
+        return 0;
+    }
+```
+
+⚠️ **Khoá lượt của Task 3 phải đặt ngoài vòng lặp, không đặt trong.** Đặt trong thì vòng thứ hai sẽ tự thấy khoá của chính mình và bỏ qua vĩnh viễn. Kiểm lại `handle()`: `Cache::add(self::KHOA_LUOT, ...)` chạy **một lần** trước khi vào `vongLap()`, và `Cache::forget()` chạy trong `finally` **sau khi** vòng lặp kết thúc.
+
+⚠️ **Kiểm lại thời hạn khoá lượt so với vòng đời tiến trình.** Task 3 đặt `KHOA_LUOT_PHUT = 1440`. Nếu ai đó nâng `--so-vong` hay `--nghi` lên tới mức một tiến trình sống quá một ngày, khoá sẽ hết hạn giữa chừng và một tiến trình thứ hai chen vào được — hai tiến trình sẽ cùng nhặt một tệp lên. Tính lại `so-vong × nghi` và xác nhận nó còn cách xa 1440 phút.
+
+- [ ] **Step 5: Chạy test cho chắc nó xanh**
+
+Chạy: `php vendor/bin/phpunit tests/Unit/Ctdt/CtdtImportCommandTest.php`
+Kỳ vọng: `OK (12 tests)`.
+
+- [ ] **Step 6: Chạy cả bộ test của module**
+
+Chạy: `php vendor/bin/phpunit tests/Unit/Ctdt`
+Kỳ vọng: đỏ **đúng một** — `CtdtCauHinhTest::gui_len_cong_mac_dinh_tat`.
+
+- [ ] **Step 7: Chạy thử vòng lặp ngắn bằng tay**
+
+```bash
+php artisan ctdt:import --lien-tuc --so-vong=3 --nghi=2 --khong-ky --duong-dan=storage/app/ctdt-thu
+```
+
+Kỳ vọng: chạy đúng 3 vòng rồi thoát, in dòng "Da chay du 3 vong". Trong lúc chạy, tạo tệp `storage/app/ctdt-thu/DUNG-GUI` và xác nhận vòng sau in cảnh báo dừng gửi.
+
+⚠️ Giữ `--khong-ky` trong mọi lần chạy thử trên máy này.
+
+- [ ] **Step 8: Đột biến bắt buộc**
+
+Commit trước, rồi lần lượt (hoàn nguyên bằng `git checkout -- app/Console/Commands/CtdtImport.php` sau mỗi lần):
+1. Trong `duocGui()`, chuyển lời gọi `$this->coDung($thuMuc)` xuống **sau** phép hỏi config → `tep_co_dung_chan_ngay_buoc_gui` vẫn xanh, nhưng đây là hồi quy thật; **thay bằng** xoá hẳn nhánh `coDung()` → test phải ĐỎ.
+2. Đổi `for ($i = 1; $i <= $soVong; $i++)` thành `while (true)` → `che_do_lien_tuc_co_TRAN_SO_VONG` vẫn xanh (nó chỉ đọc định nghĩa tuỳ chọn). Đây là **lỗ hổng đã biết** của test đó: nó bảo vệ *sự tồn tại* của trần chứ không bảo vệ *việc dùng* trần. Ghi vào báo cáo, đừng lặng lẽ bỏ qua.
+
+- [ ] **Step 9: Commit**
+
+```bash
+git add app/Console/Commands/CtdtImport.php tests/Unit/Ctdt/CtdtImportCommandTest.php
+git commit -m "feat(ctdt): che do chay lien tuc kem tep co dung va tran so vong"
+```
+
+---
+
+### Task 6: Tài liệu vận hành
+
+**Files:**
+- Modify: `docs/chung-tu-dien-tu-pl02.md`
+
+- [ ] **Step 1: Viết mục vận hành**
 
 Thêm vào `docs/chung-tu-dien-tu-pl02.md`, ngay sau mục nói về ba worker hàng đợi:
 
@@ -1151,56 +1513,84 @@ Thêm vào `docs/chung-tu-dien-tu-pl02.md`, ngay sau mục nói về ba worker h
 ## Lệnh `ctdt:import` — chạy tự động không cần người trực
 
 ```bash
-php artisan ctdt:import
+php artisan ctdt:import --lien-tuc
 ```
 
-Quét thư mục `organization.chung_tu_dien_tu.import_path`, nạp mọi tệp `.xml` **ngay trong
-thư mục gốc** (không quét đệ quy), chuyển tệp đã xử lý sang `da-nap/`, tệp hỏng sang `loi/`,
-rồi xếp hàng ký số và gửi cho những hồ sơ **đã kiểm và sạch**.
+Mỗi vòng làm hai việc: **quét** thư mục `organization.chung_tu_dien_tu.import_path`, nạp mọi
+tệp `.xml` **ngay trong thư mục gốc** (không quét đệ quy), chuyển tệp đã xử lý sang `da-nap/`
+và tệp hỏng sang `loi/`; rồi **nhặt** mọi hồ sơ đã kiểm, sạch, chưa có `ma_ket_qua` mà xếp
+hàng ký số và gửi.
 
-**Chạy MỘT LƯỢT rồi thoát**, khác `xml3176import:day` vốn lặp vô tận trong một tiến trình
-nssm. Lý do: lệnh này **gửi thật lên cổng BHXH**, và một tiến trình sống mãi là thứ không ai
-nhớ tắt khi cần dừng gấp. Nhịp chạy do lịch quyết định, không do lệnh.
+Chạy liên tục dưới một dịch vụ nssm, cùng khuôn với `xml3176import:day`. Bỏ `--lien-tuc` thì
+lệnh chạy một lượt rồi thoát — dùng khi chạy tay.
 
-### Bốn cái phanh
+### Vì sao bước nhặt đi bằng truy vấn, không theo "vừa nạp"
+
+Hồ sơ vừa nạp gần như **luôn** ở trạng thái *chưa kiểm* — bộ kiểm còn nằm trong hàng đợi
+`JobCtdt`. Nếu lệnh chỉ xếp hàng cho những mã nó vừa nạp thì gần như lượt nào cũng trượt, và
+hồ sơ phải chờ tới lượt sau mới được nhặt. Truy vấn thẳng thì mỗi vòng vét đúng những hồ sơ
+*vừa mới* đủ điều kiện — kể cả hồ sơ người ta sửa tay trên màn hình rồi cho kiểm lại.
+
+### Năm cái phanh
 
 | Phanh | Tác dụng |
 |---|---|
+| **Tệp `DUNG-GUI`** | Đặt một tệp rỗng tên `DUNG-GUI` trong thư mục inbox là **dừng gửi ngay vòng sau**, vẫn tiếp tục nạp và kiểm. Xoá tệp đi là chạy lại. Đây là phanh tay duy nhất có tác dụng **không cần khởi động lại dịch vụ** — xem khối cảnh báo ngay dưới. |
 | `import_tu_dong_gui` | **Cổng riêng, mặc định TẮT.** `submit_enabled` cho phép *người* bấm nút gửi; khoá này cho phép *máy* gửi khi không ai nhìn. Bật cái thứ nhất không kéo theo cái thứ hai. |
-| `--gioi-han=200` | Trần số **tệp** mỗi lượt. Một thư mục đổ nhầm 3000 tệp không thành 3000 lần POST trong một lượt. Vượt trần thì lệnh **báo to** rồi cắt, không cắt im lặng. |
-| `--dry-run` | Chỉ liệt kê sẽ nạp gì. Không nạp, không chuyển tệp, không đặt khoá. |
-| `--khong-ky` / `--khong-gui` | Dừng chuỗi ở nạp, hoặc ở ký. Dùng khi muốn nạp hàng loạt rồi tự mắt duyệt trước khi gửi. |
+| `--gioi-han=200` | Trần số **tệp** nạp mỗi vòng. Một thư mục đổ nhầm 3000 tệp không thành 3000 lần POST trong một vòng. Vượt trần thì lệnh **báo to** rồi cắt, không cắt im lặng. |
+| `--so-vong=1000` | Tiến trình **tự thoát** sau bấy nhiêu vòng để nssm dựng lại bản sạch. |
+| `--dry-run` / `--khong-ky` / `--khong-gui` | Chỉ liệt kê; hoặc dừng chuỗi ở nạp; hoặc dừng ở ký. `--dry-run` **không** kết hợp được với `--lien-tuc`. |
 
-Thêm một khoá lượt (`ctdt:import:dang-chay`, hạn 60 phút) chặn hai lượt chạy chồng lên nhau —
-hai lượt sẽ cùng nhặt một tệp và nạp hai lần.
-
-### Hồ sơ "chưa kiểm" bị bỏ qua là chuyện BÌNH THƯỜNG
-
-Lệnh xếp hàng ký ngay sau khi nạp, lúc bộ kiểm còn nằm trong hàng đợi `JobCtdt`. Nên phần
-lớn hồ sơ vừa nạp sẽ **chưa kiểm** và bị bỏ qua — lượt chạy sau nhặt tiếp. Đây là lý do lệnh
-nên chạy theo lịch lặp lại (ví dụ 15 phút một lần) chứ không phải mỗi ngày một lần.
-
-⚠️ **Ba worker hàng đợi vẫn BẮT BUỘC.** Lệnh này chỉ *xếp hàng*; không có worker thì không
-gì chạy cả.
-
-### Cài lịch chạy trên máy chủ Windows
+⚠️ **Sửa `import_tu_dong_gui` KHÔNG dừng được tiến trình đang chạy.** Tiến trình sống lâu giữ
+cấu hình trong bộ nhớ; khoá đó chỉ được đọc lại khi dịch vụ khởi động lại. Muốn dừng gửi ngay
+thì **tạo tệp `DUNG-GUI`** trong thư mục inbox:
 
 ```bat
-%NSSM_PATH%\nssm install "QLBV CtdtImport" %PHP_PATH% "%LARAVEL_PATH%artisan ctdt:import"
+type nul > D:\XML\ChungTuDienTu\inbox\DUNG-GUI
+```
+
+Hồ sơ vẫn được nạp và kiểm bình thường — chỉ bước gửi bị chặn.
+
+### Khoá lượt
+
+Một khoá cache (`ctdt:import:dang-chay`) chặn hai tiến trình chạy chồng lên nhau. Nếu tiến
+trình bị kill cứng, khoá còn sót lại và lượt sau sẽ bỏ qua với thông báo *"Mot luot
+ctdt:import khac dang chay"*. Xoá tay:
+
+```bash
+php artisan tinker --execute="Cache::forget('ctdt:import:dang-chay');"
+```
+
+⚠️ **Ba worker hàng đợi vẫn BẮT BUỘC.** Lệnh này chỉ *xếp hàng*; không có worker thì không
+gì chạy cả. Chính ba worker đó — chứ không phải vòng lặp của lệnh này — mới là thứ gửi hồ sơ
+lên cổng, y như `JobSubmitXml3176` bên XML3176.
+
+### Cài dịch vụ trên máy chủ Windows
+
+```bat
+%NSSM_PATH%\nssm install "QLBV CtdtImport" %PHP_PATH% "%LARAVEL_PATH%artisan ctdt:import --lien-tuc"
 %NSSM_PATH%\nssm set "QLBV CtdtImport" AppDirectory %LARAVEL_PATH%
 %NSSM_PATH%\nssm set "QLBV CtdtImport" AppExit Default Restart
-%NSSM_PATH%\nssm set "QLBV CtdtImport" AppRestartDelay 900000
+%NSSM_PATH%\nssm set "QLBV CtdtImport" AppRestartDelay 10000
 %NSSM_PATH%\nssm start "QLBV CtdtImport"
 ```
 
-`AppRestartDelay 900000` = 15 phút giữa hai lượt. Đây là chỗ nhịp chạy được quyết định.
+`AppExit Default Restart` là phần bắt buộc: lệnh **cố ý thoát** sau `--so-vong` vòng, và nssm
+phải dựng lại nó. `AppRestartDelay 10000` chỉ là 10 giây nghỉ giữa hai tiến trình — nhịp thật
+do `--nghi` quyết định.
 ````
 
-- [ ] **Step 8: Commit**
+- [ ] **Step 2: Kiểm bảng phanh khớp mã**
+
+Đọc lại `app/Console/Commands/CtdtImport.php` và đối chiếu từng dòng trong bảng "Năm cái phanh"
+với tuỳ chọn thật trong `$signature`. Một tài liệu vận hành nói sai tên cờ còn tệ hơn không có:
+người trực đêm sẽ gõ theo nó và tưởng mình đã dừng được hệ thống.
+
+- [ ] **Step 3: Commit**
 
 ```bash
-git add app/Console/Commands/CtdtImport.php tests/Unit/Ctdt/CtdtImportCommandTest.php docs/chung-tu-dien-tu-pl02.md
-git commit -m "feat(ctdt): ctdt:import xep hang ky va gui, kem bon cai phanh"
+git add docs/chung-tu-dien-tu-pl02.md
+git commit -m "docs(ctdt): muc van hanh cho ctdt:import chay lien tuc"
 ```
 
 ---
@@ -1211,3 +1601,5 @@ git commit -m "feat(ctdt): ctdt:import xep hang ky va gui, kem bon cai phanh"
 2. **Chạy thật với `--khong-gui`** và **đúng một tệp** trong inbox. Xác nhận: tệp chuyển sang `da-nap/`, hồ sơ xuất hiện trên màn danh sách, và trạng thái là "Chưa kiểm" rồi chuyển sang "Chờ gửi"/"Còn lỗi" sau khi worker `JobCtdt` chạy.
 3. **Bật `import_tu_dong_gui` rồi chạy thật với đúng một hồ sơ sạch.** Đọc `ma_ket_qua`, và kiểm bảng `ctdt_lich_su_gui` có đúng **một** dòng với `nguon = 'console'`. Hai dòng nghĩa là chuỗi chạy hai lần — dừng ngay và đọc lại khoá.
 4. **Thử hai lượt chồng nhau.** Mở hai cửa sổ, chạy `php artisan ctdt:import` gần như đồng thời. Lượt thứ hai phải in `Mot luot ctdt:import khac dang chay`.
+5. **Thử phanh tay giữa lúc đang chạy.** Chạy `--lien-tuc --so-vong=20 --nghi=3`, đợi vài vòng rồi tạo tệp `DUNG-GUI` trong inbox. Vòng kế tiếp phải in cảnh báo và **ngừng xếp hàng gửi** trong khi vẫn tiếp tục nạp. Xoá tệp đi, vòng sau phải gửi lại. Đây là thao tác người trực đêm sẽ phải làm dưới áp lực — nếu nó không chạy đúng ngay lần thử đầu thì đừng bật `import_tu_dong_gui` trên máy thật.
+6. **Để chạy liên tục qua một đêm với `--khong-gui`**, sáng hôm sau đọc bộ nhớ tiến trình trong Task Manager và đếm số vòng trong log. Đây là phép đo duy nhất cho biết PHP có phình tới mức chạm 128MB trước khi hết `--so-vong` hay không.
