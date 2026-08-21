@@ -287,4 +287,139 @@ class CtdtDashboardTest extends TestCase
                 'Bang jobs vang mat van phai tra null, khong duoc nem loi ra ngoai');
         }
     }
+
+    private function ghiLoi(CtdtHoSo $hoSo, array $ghiDe = [])
+    {
+        return \App\Models\BHYT\Ctdt\CtdtLoi::create(array_merge([
+            'ho_so_id' => $hoSo->id,
+            'ma_loi'   => 'L01',
+            'ten_truong' => 'ho_ten',
+            'mo_ta'    => 'Sai ten',
+            'muc_do'   => 'chan',
+        ], $ghiDe));
+    }
+
+    /** @test */
+    public function chat_luong_khong_gop_chan_voi_canh_bao_vao_mot_hang()
+    {
+        // Mot ma loi muc CANH BAO xep tren mot ma loi muc CHAN se dua nguoi ta di sua sai
+        // cho: canh bao khong chan ho so nao ca, con chan thi co.
+        $kq = (new CtdtDashboardService())->chatLuong([]);
+
+        $this->assertArrayHasKey('theo_ma_loi', $kq);
+
+        foreach ($kq['theo_ma_loi'] as $dong) {
+            $this->assertArrayHasKey('muc_do', $dong,
+                'Moi hang phai noi ro muc do, khong duoc gop chung');
+        }
+    }
+
+    /** @test */
+    public function chat_luong_co_tran_so_dong()
+    {
+        // Xep hang khong tran thi mot he thong co 400 ma loi se do het ra bieu do va khong
+        // ai doc duoc gi.
+        $nguon = file_get_contents(base_path('app/Services/Dashboard/CtdtDashboardService.php'));
+
+        $this->assertContains('limit(', $nguon,
+            'Xep hang ma loi phai co tran so dong');
+    }
+
+    /** @test */
+    public function chat_luong_tach_rieng_hang_theo_ma_loi_va_muc_do_dung_so_luong()
+    {
+        // Cham toi tang query() that: ba hang cung ma_loi nhung khac muc_do phai la HAI
+        // hang rieng, khong duoc GROUP BY gop lai thanh mot - dung dieu Buoc 9 doi biet doi.
+        $hoSo1 = $this->hoSo();
+        $hoSo2 = $this->hoSo();
+
+        $this->ghiLoi($hoSo1, ['ma_loi' => 'L01', 'ten_truong' => 'ho_ten', 'muc_do' => 'chan']);
+        $this->ghiLoi($hoSo2, ['ma_loi' => 'L01', 'ten_truong' => 'ho_ten', 'muc_do' => 'chan']);
+        $this->ghiLoi($hoSo1, ['ma_loi' => 'L01', 'ten_truong' => 'ho_ten', 'muc_do' => 'canh_bao']);
+
+        $kq = (new CtdtDashboardService())->chatLuong([]);
+
+        $chan = null;
+        $canhBao = null;
+
+        foreach ($kq['theo_ma_loi'] as $dong) {
+            if ($dong['ma_loi'] === 'L01' && $dong['muc_do'] === 'chan') {
+                $chan = $dong;
+            }
+            if ($dong['ma_loi'] === 'L01' && $dong['muc_do'] === 'canh_bao') {
+                $canhBao = $dong;
+            }
+        }
+
+        $this->assertNotNull($chan, 'Phai co hang L01 muc chan');
+        $this->assertNotNull($canhBao, 'Phai co hang L01 muc canh bao');
+        $this->assertSame(2, $chan['so_luong']);
+        $this->assertSame(1, $canhBao['so_luong']);
+    }
+
+    /** @test */
+    public function chat_luong_theo_cskcb_cong_dung_so_loi_va_so_ho_so()
+    {
+        $hoSo1 = $this->hoSo(['macskcb' => '01001', 'so_loi' => 2]);
+        $hoSo2 = $this->hoSo(['macskcb' => '01001', 'so_loi' => 1]);
+        $this->hoSo(['macskcb' => '02002', 'so_loi' => 0]); // khong loi, khong duoc tinh
+
+        $this->ghiLoi($hoSo1);
+        $this->ghiLoi($hoSo1);
+        $this->ghiLoi($hoSo2);
+
+        $kq = (new CtdtDashboardService())->chatLuong([]);
+
+        $theoCskcb = [];
+        foreach ($kq['theo_cskcb'] as $dong) {
+            $theoCskcb[$dong['macskcb']] = $dong;
+        }
+
+        $this->assertArrayHasKey('01001', $theoCskcb);
+        $this->assertArrayNotHasKey('02002', $theoCskcb,
+            'Co so khong co loi nao thi khong duoc xep hang');
+        $this->assertSame(3, $theoCskcb['01001']['so_loi']);
+        $this->assertSame(2, $theoCskcb['01001']['so_ho_so']);
+    }
+
+    /** @test */
+    public function chat_luong_ap_bo_loc_theo_ho_so_khong_ap_thang_len_bang_loi()
+    {
+        // Bo loc la bo loc theo HO SO (ngay nap, dich vu, co so) - phai loc truoc roi moi
+        // join sang ctdt_loi, khong duoc de mot ho so ngoai khoang ngay lot vao ket qua.
+        $hoSoTrongKhoang = $this->hoSo(['imported_at' => '2026-08-01 08:00:00']);
+        $hoSoNgoaiKhoang = $this->hoSo(['imported_at' => '2026-07-01 08:00:00']);
+
+        $this->ghiLoi($hoSoTrongKhoang, ['ma_loi' => 'TRONG']);
+        $this->ghiLoi($hoSoNgoaiKhoang, ['ma_loi' => 'NGOAI']);
+
+        $kq = (new CtdtDashboardService())->chatLuong([
+            'tu_ngay' => '2026-08-01', 'den_ngay' => '2026-08-01',
+        ]);
+
+        $maLoi = array_column($kq['theo_ma_loi'], 'ma_loi');
+
+        // Dung in_array($..., true) - so sanh CHAT - vi assertContains cua PHPUnit 6 so
+        // sanh LONG va mot mang toan chuoi thi khong dinh bay, nhung tranh thoi quen xau.
+        $this->assertTrue(in_array('TRONG', $maLoi, true), 'Phai co ma loi TRONG khoang ngay');
+        $this->assertFalse(in_array('NGOAI', $maLoi, true), 'Loi cua ho so ngoai khoang ngay khong duoc lot vao');
+    }
+
+    /** @test */
+    public function endpoint_chat_luong_tra_du_hai_khoa_that_su_qua_HTTP_layer()
+    {
+        // Khong dang nhap duoc de kiem bang mat trong phien nay, nen bu lai bang mot test
+        // di qua dung duong Route + Middleware + Controller - cung mau voi cac endpoint
+        // suc_khoe/san_luong o tren.
+        $hoSo = $this->hoSo(['so_loi' => 1]);
+        $this->ghiLoi($hoSo);
+
+        $response = $this->actingAs($this->nguoiDungGia())->getJson('/dashboard/ctdt/chat-luong');
+
+        $response->assertStatus(200)
+            ->assertJsonStructure([
+                'theo_ma_loi' => [['ma_loi', 'ten_truong', 'muc_do', 'so_luong']],
+                'theo_cskcb'  => [['macskcb', 'so_loi', 'so_ho_so']],
+            ]);
+    }
 }

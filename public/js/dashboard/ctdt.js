@@ -80,6 +80,41 @@
         });
     }
 
+    function veChatLuong(kq) {
+        Highcharts.chart('chart-ma-loi', {
+            chart: { type: 'bar' },
+            title: { text: null },
+            xAxis: {
+                categories: $.map(kq.theo_ma_loi, function (d) {
+                    // Ghep muc do vao nhan: mot ma loi CANH BAO xep tren mot ma loi CHAN se
+                    // dua nguoi ta di sua sai cho.
+                    return d.ma_loi + ' · ' + d.ten_truong
+                        + (d.muc_do === 'chan' ? ' (chặn)' : ' (cảnh báo)');
+                })
+            },
+            yAxis: { title: { text: 'Số lỗi' }, allowDecimals: false },
+            legend: { enabled: false },
+            credits: { enabled: false },
+            series: [{
+                name: 'Số lỗi',
+                data: $.map(kq.theo_ma_loi, function (d) { return d.so_luong; })
+            }]
+        });
+
+        Highcharts.chart('chart-cskcb', {
+            chart: { type: 'column' },
+            title: { text: null },
+            xAxis: { categories: $.map(kq.theo_cskcb, function (d) { return d.macskcb; }) },
+            yAxis: { title: { text: 'Số lỗi' }, allowDecimals: false },
+            legend: { enabled: false },
+            credits: { enabled: false },
+            series: [{
+                name: 'Số lỗi',
+                data: $.map(kq.theo_cskcb, function (d) { return d.so_loi; })
+            }]
+        });
+    }
+
     function tai() {
         $.getJSON(R.sucKhoe, thamSo())
             .done(function (kq) {
@@ -92,6 +127,7 @@
             });
 
         $.getJSON(R.sanLuong, thamSo()).done(veSanLuong);
+        $.getJSON(R.chatLuong, thamSo()).done(veChatLuong);
     }
 
     $(function () {

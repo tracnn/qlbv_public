@@ -23,6 +23,13 @@ use App\Services\Ctdt\CtdtTrangThaiGui;
 class CtdtDashboardService
 {
     /**
+     * Tran so id ho so lay ve truoc khi join sang ctdt_loi trong chatLuong(). Vuot tran la
+     * CAT bot ho so cu nhat theo thu tu mac dinh cua truy van, khong duoc cat im lang - so
+     * lieu chat luong khi do chi la mot phan, khong con dai dien cho toan bo bo loc.
+     */
+    const TRAN_ID_HO_SO = 20000;
+
+    /**
      * @param  array $loc cung dinh dang bo loc cua CtdtDanhSach::truyVan()
      * @return array theo_trang_thai, hang_doi, ton_dong
      */
@@ -194,5 +201,76 @@ class CtdtDashboardService
         }
 
         return $ngay;
+    }
+
+    /**
+     * Ma loi hay gap nhat, va co so nao sai nhieu nhat.
+     *
+     * TACH muc chan khoi muc canh bao trong tung hang: mot ma loi muc CANH BAO xep tren mot
+     * ma loi muc CHAN se dua nguoi ta di sua sai cho - canh bao khong chan ho so nao ca,
+     * con chan thi co.
+     *
+     * @param  array $loc
+     * @param  int   $soDong tran so hang, tranh do ca tram ma loi ra bieu do
+     * @return array theo_ma_loi, theo_cskcb
+     */
+    public function chatLuong(array $loc, $soDong = 15)
+    {
+        // Lay danh sach id ho so tu bo loc man hinh roi moi join sang bang loi: bo loc la bo
+        // loc theo HO SO (ngay nap, dich vu, co so), khong ap thang len ctdt_loi duoc.
+        //
+        // Dung pluck('id')->all() chu KHONG dung whereIn voi truy vasn con truc tiep: CtdtHoSo
+        // khong gan select() rieng nen truy van con se tra ve TAT CA cot cua ctdt_ho_so, va
+        // MySQL nem loi voi whereIn nhieu cot. Tran cung TRAN_ID_HO_SO phan tu: vuot tran la
+        // CAT, khong duoc cat im lang - ghi ro o day de nguoi doc sau khong tuong nham la day du.
+        $idHoSo = CtdtDanhSach::truyVan($loc)->limit(self::TRAN_ID_HO_SO)->pluck('id')->all();
+
+        if (empty($idHoSo)) {
+            return ['theo_ma_loi' => [], 'theo_cskcb' => []];
+        }
+
+        $theoMaLoi = DB::table('ctdt_loi')
+            ->whereIn('ho_so_id', $idHoSo)
+            ->select(
+                'ma_loi',
+                'ten_truong',
+                'muc_do',
+                DB::raw('COUNT(*) as so_luong')
+            )
+            ->groupBy('ma_loi', 'ten_truong', 'muc_do')
+            ->orderByDesc('so_luong')
+            ->limit($soDong)
+            ->get();
+
+        $theoCskcb = CtdtDanhSach::truyVan($loc)
+            ->where('so_loi', '>', 0)
+            ->select(
+                'macskcb',
+                DB::raw('SUM(so_loi) as so_loi'),
+                DB::raw('COUNT(*) as so_ho_so')
+            )
+            ->groupBy('macskcb')
+            ->orderByDesc(DB::raw('SUM(so_loi)'))
+            ->limit($soDong)
+            ->get();
+
+        return [
+            'theo_ma_loi' => array_map(function ($d) {
+                return [
+                    'ma_loi'     => (string) $d->ma_loi,
+                    'ten_truong' => (string) $d->ten_truong,
+                    'muc_do'     => (string) $d->muc_do,
+                    'so_luong'   => (int) $d->so_luong,
+                ];
+            }, $theoMaLoi->all()),
+
+            'theo_cskcb' => array_map(function ($d) {
+                return [
+                    'macskcb'  => (string) $d->macskcb,
+                    'so_loi'   => (int) $d->so_loi,
+                    'so_ho_so' => (int) $d->so_ho_so,
+                ];
+            }, $theoCskcb->all()),
+        ];
     }
 }

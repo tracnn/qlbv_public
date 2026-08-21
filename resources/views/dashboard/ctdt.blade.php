@@ -73,6 +73,21 @@
         </div>
     </div>
 </div>
+
+<div class="row">
+    <div class="col-md-7">
+        <div class="box box-danger">
+            <div class="box-header with-border"><h3 class="box-title">Mã lỗi hay gặp</h3></div>
+            <div class="box-body"><div id="chart-ma-loi" class="chart-box"></div></div>
+        </div>
+    </div>
+    <div class="col-md-5">
+        <div class="box box-default">
+            <div class="box-header with-border"><h3 class="box-title">Cơ sở sai nhiều nhất</h3></div>
+            <div class="box-body"><div id="chart-cskcb" class="chart-box"></div></div>
+        </div>
+    </div>
+</div>
 @endsection
 
 @push('after-scripts')
@@ -81,7 +96,8 @@
     window.CTDT_DASHBOARD_CFG = {
         routes: {
             sucKhoe: '{{ route('bhyt.ctdt.dashboard.suc-khoe') }}',
-            sanLuong: '{{ route('bhyt.ctdt.dashboard.san-luong') }}'
+            sanLuong: '{{ route('bhyt.ctdt.dashboard.san-luong') }}',
+            chatLuong: '{{ route('bhyt.ctdt.dashboard.chat-luong') }}'
         }
     };
 </script>
