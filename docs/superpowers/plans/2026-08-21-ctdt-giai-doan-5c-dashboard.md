@@ -80,6 +80,16 @@ class CtdtDashboardTest extends TestCase
     // phat trien. Da xay ra that ngay 2026-08-21.
     use DungBangCtdtSqlite;
 
+    /**
+     * BAT BUOC: trait chi CUNG CAP ham dung bang, no khong tu chay. Quen goi
+     * chuanBiBangCtdt() thi test ghi thang vao CSDL that ma phpunit.xml dang tro toi.
+     */
+    protected function setUp()
+    {
+        parent::setUp();
+        $this->chuanBiBangCtdt();
+    }
+
     private function hoSo(array $ghiDe = [])
     {
         return CtdtHoSo::create(array_merge([
@@ -459,7 +469,7 @@ Tạo `resources/views/dashboard/ctdt.blade.php`:
 </div>
 @endsection
 
-@push('js')
+@push('after-scripts')
 <script src="{{ asset('vendor/highcharts/highcharts.js') }}"></script>
 <script>
     window.CTDT_DASHBOARD_CFG = {
@@ -474,7 +484,7 @@ Tạo `resources/views/dashboard/ctdt.blade.php`:
 
 ⚠️ **Không đặt `@if`, `@foreach` hay `{{ }}` bên trong chú thích JavaScript.** Blade biên dịch trước, không biết gì về chú thích JS — lỗi này đã làm `detail.blade.php` chết suốt từ Giai đoạn 2B mà không ai biết, vì trang chỉ vỡ khi có người mở nó.
 
-⚠️ **Kiểm tên stack đẩy script.** `xml3176.blade.php` dùng `@push('js')` hay `@push('after-scripts')`? Chạy `grep -n "@push" resources/views/dashboard/xml3176.blade.php` và dùng đúng tên đó.
+✅ **Tên stack đã kiểm:** `xml3176.blade.php` dùng `@push('after-styles')` cho CSS và `@push('after-scripts')` cho JS. Dùng đúng hai tên đó.
 
 - [ ] **Step 8: Viết JS**
 
