@@ -16,8 +16,9 @@ use App\Services\Ctdt\CtdtTrangThaiGui;
  * chat rang voi CtdtTrangThaiGui::cua(). Viet ban SQL thu ba o day la tao ra mot man hinh
  * bao so khac voi chinh bo loc ngay ben canh no, va nguoi dung se thoi tin ca hai.
  *
- * Chin truy van dem thay vi mot cau GROUP BY: doi lay viec KHONG chep luat. Ca chin deu
- * chay tren cot co index (checked_at, so_loi, is_signed, ma_ket_qua, submit_error).
+ * Chin truy van dem thay vi mot cau GROUP BY: doi lay viec KHONG chep luat. Cac cot
+ * so_loi, ma_ket_qua, submit_error co index; checked_at va is_signed thi KHONG - doi
+ * schema khong thuoc pham vi task nay, chi ghi dung su that o day.
  */
 class CtdtDashboardService
 {
@@ -96,21 +97,17 @@ class CtdtDashboardService
      */
     protected function tonDong(array $loc)
     {
-        $q = CtdtDanhSach::truyVan($loc)
-            ->where(function ($q2) {
-                $q2->whereNull('ma_ket_qua')->orWhere('ma_ket_qua', '');
-            });
-
-        $soHoSo = (int) $q->count();
+        // "Chua co ket qua tu cong" phai khop CHINH XAC voi dinh nghia duy nhat cua no o
+        // CtdtDanhSach::chuaCoKetQua() (NULL / '' / '0') - khong duoc viet lai o day. Mot
+        // ban sao thu ba tung bo sot chuoi '0' va khien khoi ton dong bao thieu, dung luc
+        // can chinh xac nhat.
+        $soHoSo = (int) CtdtDanhSach::chuaCoKetQua(CtdtDanhSach::truyVan($loc))->count();
 
         if ($soHoSo === 0) {
             return ['so_ho_so' => 0, 'cu_nhat_ngay' => null];
         }
 
-        $cuNhat = CtdtDanhSach::truyVan($loc)
-            ->where(function ($q2) {
-                $q2->whereNull('ma_ket_qua')->orWhere('ma_ket_qua', '');
-            })
+        $cuNhat = CtdtDanhSach::chuaCoKetQua(CtdtDanhSach::truyVan($loc))
             ->min('imported_at');
 
         return [

@@ -137,20 +137,39 @@ class CtdtDanhSach
         if ($trangThai === CtdtTrangThaiGui::GUI_HONG) {
             // Da ky, cong CHUA tra loi, nhung co submit_error: da thu gui va hong truoc khi
             // toi cong.
-            return $q->where(function ($q2) {
-                    $q2->whereNull('ma_ket_qua')->orWhere('ma_ket_qua', '')->orWhere('ma_ket_qua', '0');
-                })
+            return self::chuaCoKetQua($q)
                 ->whereNotNull('submit_error')
                 ->where('submit_error', '<>', '');
         }
 
         // GUI_TAT va CHUA_GUI cung la "da ky, chua co ket qua tu cong VA chua tung gui hong".
-        return $q->where(function ($q2) {
-                $q2->whereNull('ma_ket_qua')->orWhere('ma_ket_qua', '')->orWhere('ma_ket_qua', '0');
-            })
+        return self::chuaCoKetQua($q)
             ->where(function ($q2) {
                 $q2->whereNull('submit_error')->orWhere('submit_error', '');
             });
+    }
+
+    /**
+     * Ap dieu kien "chua co ket qua tu cong BHXH" len mot builder da co san.
+     *
+     * NOI DUY NHAT dinh nghia dieu nay - goi lai o ca locTrangThai() (GUI_HONG, GUI_TAT,
+     * CHUA_GUI) lan tonDong() cua CtdtDashboardService. Viet lai dieu kien nay o noi thu ba
+     * la dung nguyen ly da vi pham mot lan o dashboard: mot ho so ma_ket_qua = '0' bi mot
+     * ban sao quen mat, con ban goc thi nho.
+     *
+     * VI SAO CA '0': cong BHXH la he ngoai, ta khong kiem soat duoc no tra gia tri gi truoc
+     * khi co ket qua that. Chuoi rong VA chuoi '0' deu la "chua co ket qua" - phai khop
+     * CHINH XAC voi !empty($hoSo->ma_ket_qua) cua CtdtTrangThaiGui::cua(), vi PHP coi
+     * empty('0') === true.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder $q
+     * @return \Illuminate\Database\Eloquent\Builder cung $q, de goi noi tiep duoc
+     */
+    public static function chuaCoKetQua($q)
+    {
+        return $q->where(function ($q2) {
+            $q2->whereNull('ma_ket_qua')->orWhere('ma_ket_qua', '')->orWhere('ma_ket_qua', '0');
+        });
     }
 
     /**

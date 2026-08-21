@@ -133,4 +133,88 @@ class CtdtDashboardTest extends TestCase
 
         $this->assertTrue(true, 'compileString() nem thi test do o dong tren');
     }
+
+    /** @test */
+    public function trang_index_render_duoc_that_su_qua_HTTP_layer()
+    {
+        // compileString() chi bat loi CU PHAP. Loi RUNTIME (bien thieu, quan he chua nap,
+        // route() khong ton tai, composer menu cua AppServiceProvider nem loi) chi lo ra
+        // khi thuc su render qua dung duong HTTP - dung bai hoc Giai doan 5B: test chi
+        // cham toi tang gan nhat (map()/compileString()) thi bo sot loi o tang xa hon
+        // (query()/render() that).
+        $response = $this->actingAs($this->nguoiDungGia())->get('/dashboard/ctdt');
+
+        $response->assertStatus(200);
+        $response->assertSee('chart-trang-thai', false);
+    }
+
+    /** @test */
+    public function endpoint_suc_khoe_tra_du_ba_khoa_that_su_qua_HTTP_layer()
+    {
+        // Moi test khac goi thang new CtdtDashboardService(). Test nay di qua ca tang
+        // Route + Middleware + Controller - dung mau hinh da can o Giai doan 5B: hai loi
+        // Critical nam dung o tang khong test nao cham toi.
+        $response = $this->actingAs($this->nguoiDungGia())->getJson('/dashboard/ctdt/suc-khoe');
+
+        $response->assertStatus(200)
+            ->assertJsonStructure([
+                'theo_trang_thai' => [['ma', 'nhan', 'so_luong']],
+                'hang_doi'        => [['ten', 'so_job']],
+                'ton_dong'        => ['so_ho_so', 'cu_nhat_ngay'],
+            ]);
+
+        $kq = $response->json();
+
+        $this->assertCount(count(CtdtTrangThaiGui::NHAN), $kq['theo_trang_thai']);
+        $this->assertCount(3, $kq['hang_doi']);
+    }
+
+    /**
+     * User gia thoa CheckRole middleware ma khong dung bang roles trong DB - cung mau
+     * FakeAdminUser cua tests/Feature/Dashboard/Xml3176DashboardControllerTest.php.
+     */
+    private function nguoiDungGia()
+    {
+        return new class extends \App\User {
+            public function hasRole($role, $team = null, $requireAll = false) { return true; }
+            public function can($permission, $team = null, $requireAll = false) { return true; }
+        };
+    }
+
+    /** @test */
+    public function ton_dong_dem_CA_ho_so_co_ma_ket_qua_la_chuoi_0()
+    {
+        // NGUYEN TAC: "chua co ket qua tu cong" chi co MOT dinh nghia, o
+        // CtdtDanhSach::chuaCoKetQua() - NULL / '' / '0'. Cong BHXH la he ngoai, ta khong
+        // kiem soat duoc no tra gia tri gi. PHP coi empty('0') === true, nen mot ban sao
+        // quen '0' se bao thieu dung luc khoi ton dong can chinh xac nhat.
+        $this->hoSo([
+            'checked_at'  => '2026-08-01 08:00:00',
+            'so_loi'      => 0,
+            'is_signed'   => true,
+            'ma_ket_qua'  => '0',
+            'imported_at' => '2026-08-01 08:00:00',
+        ]);
+
+        $kq = (new CtdtDashboardService())->sucKhoe([]);
+
+        $this->assertSame(1, $kq['ton_dong']['so_ho_so'],
+            "Ho so ma_ket_qua = '0' phai duoc dem la chua co ket qua tu cong");
+    }
+
+    /** @test */
+    public function hang_doi_driver_database_nhung_bang_jobs_chua_migrate_thi_tra_null_khong_nem()
+    {
+        // Nhanh de xay ra that: may chu moi cai chua chay queue:table. SQLite bo nho cua
+        // DungBangCtdtSqlite chi dung 13 bang cua module CTDT, KHONG co bang jobs - dung
+        // that nhanh catch nay ma khong can dung gia lap gi them.
+        config(['queue.default' => 'database']);
+
+        $kq = (new CtdtDashboardService())->sucKhoe([]);
+
+        foreach ($kq['hang_doi'] as $hd) {
+            $this->assertNull($hd['so_job'],
+                'Bang jobs vang mat van phai tra null, khong duoc nem loi ra ngoai');
+        }
+    }
 }
