@@ -152,10 +152,11 @@ class CtdtDanhSach
     /**
      * Ap dieu kien "chua co ket qua tu cong BHXH" len mot builder da co san.
      *
-     * NOI DUY NHAT dinh nghia dieu nay - goi lai o ca locTrangThai() (GUI_HONG, GUI_TAT,
-     * CHUA_GUI) lan tonDong() cua CtdtDashboardService. Viet lai dieu kien nay o noi thu ba
-     * la dung nguyen ly da vi pham mot lan o dashboard: mot ho so ma_ket_qua = '0' bi mot
-     * ban sao quen mat, con ban goc thi nho.
+     * NOI DUY NHAT dinh nghia dieu nay - goi lai o locTrangThai() (GUI_HONG, GUI_TAT,
+     * CHUA_GUI), o CtdtDashboardService::tonDong(), VA o CtdtImport::nhatVaXepHang() (lenh
+     * nen quyet dinh ho so nao duoc TU DONG gui len cong BHXH). Viet lai dieu kien nay o noi
+     * khac la dung dung nguyen ly da vi pham hai lan: mot lan o dashboard (bo sot '0'), va
+     * ban o CtdtImport tung la mot ban sao doc lap truoc khi duoc hop nhat ve day.
      *
      * VI SAO CA '0': cong BHXH la he ngoai, ta khong kiem soat duoc no tra gia tri gi truoc
      * khi co ket qua that. Chuoi rong VA chuoi '0' deu la "chua co ket qua" - phai khop
