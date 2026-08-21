@@ -217,9 +217,10 @@ khi lệch.
 
 | Loại | Trường ICD |
 |---|---|
-| CT03 | `BENHICD10_ID` / `TENBENHNICD10` (không gạch dưới) |
+| CT03 | `BENHICD10_ID` / `TENBENHICD10` (không gạch dưới) |
 | CT04, CT06, CT07, giấy báo tử | `BENH_ICD10_ID` / `BENH_ICD10_TEN` |
-| nội trú, vô sinh, sức khỏe mẹ | `BENH_ICD10_MA` / `BENH_ICD10_TEN` |
+| nội trú | `BENH_ICD10_ID` / `BENH_ICD10_TEN` |
+| vô sinh, sức khỏe mẹ | `BENH_ICD10_MA` / `BENH_ICD10_TEN` — **chưa kiểm chứng**, xem cảnh báo dưới bảng |
 
 Tương tự: CT03 dùng `MA_DANTOC`, nội trú dùng `MA_DAN_TOC`.
 

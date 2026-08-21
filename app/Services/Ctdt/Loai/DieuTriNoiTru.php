@@ -70,7 +70,7 @@ class DieuTriNoiTru implements LoaiChungTu
             'SO_CCCD'                  => 'so_cccd',
             'NGAYCAP_CCCD'             => 'ngaycap_cccd',
             'NOICAP_CCCD'              => 'noicap_cccd',
-            'BENH_ICD10_MA'            => 'benh_icd10_ma',
+            'BENH_ICD10_ID'            => 'benh_icd10_id',
             'BENH_ICD10_TEN'           => 'benh_icd10_ten',
             'MA_CT'                    => 'ma_ct',
             'NGAY_CT'                  => 'ngay_ct',

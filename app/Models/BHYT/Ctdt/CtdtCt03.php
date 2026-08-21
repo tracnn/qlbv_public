@@ -18,7 +18,7 @@ class CtdtCt03 extends Model
         'ngay_chung_tu', 'tekt', 'ho_ten_cha', 'ho_ten_me',
         'ngoaitru_tungay', 'ngoaitru_denngay',
         'loai_giayto', 'so_cccd', 'ngaycap_cccd', 'noicap_cccd',
-        'benhicd10_id', 'tenbenhnicd10',
+        'benhicd10_id', 'tenbenhicd10',
     ];
 
     public function chungTu()

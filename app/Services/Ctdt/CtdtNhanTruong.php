@@ -108,7 +108,7 @@ class CtdtNhanTruong
         'BENH_ICD10_MA'   => 'Mã bệnh ICD10',
         'BENH_ICD10_TEN'  => 'Tên bệnh ICD10',
         'BENHICD10_ID'    => 'Mã bệnh ICD10',
-        'TENBENHNICD10'   => 'Tên bệnh ICD10',
+        'TENBENHICD10'   => 'Tên bệnh ICD10',
 
         // Thai san
         'DINH_CHI_THAI_NGHEN'     => 'Đình chỉ thai nghén',

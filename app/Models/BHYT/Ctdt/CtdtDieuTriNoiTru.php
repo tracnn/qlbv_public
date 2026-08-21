@@ -15,7 +15,7 @@ class CtdtDieuTriNoiTru extends Model
         'ngay_vao', 'ngay_ra',
         'dai_dien_dvi', 'ma_cchn_bs', 'ten_bs',
         'loai_giayto', 'so_cccd', 'ngaycap_cccd', 'noicap_cccd',
-        'benh_icd10_ma', 'ma_ct', 'ngay_ct', 'so_seri', 'tuoi_thai',
+        'benh_icd10_id', 'ma_ct', 'ngay_ct', 'so_seri', 'tuoi_thai',
         'loai_phuong_phap', 'loai_pp_dieu_tri_vosinh',
         'ngay_dinh_chi_thainghen', 'is_nghiduongthai', 'so_ngay_nghiduongthai',
         'dia_chi', 'chan_doan', 'pp_dieutri', 'mo_ta', 'ghi_chu', 'benh_icd10_ten',

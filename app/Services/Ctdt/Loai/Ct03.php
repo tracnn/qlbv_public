@@ -7,7 +7,7 @@ use App\Models\BHYT\Ctdt\CtdtCt03;
 /**
  * CT03 - Giay ra vien (Mau so 02 - TT25).
  *
- * BENHICD10_ID / TENBENHNICD10 dat ten khac cac loai khac. Giu nguyen theo dac ta.
+ * BENHICD10_ID / TENBENHICD10 dat ten khac cac loai khac. Giu nguyen theo dac ta.
  */
 class Ct03 implements LoaiChungTu
 {
@@ -76,7 +76,7 @@ class Ct03 implements LoaiChungTu
             'NGAYCAP_CCCD'        => 'ngaycap_cccd',
             'NOICAP_CCCD'         => 'noicap_cccd',
             'BENHICD10_ID'        => 'benhicd10_id',
-            'TENBENHNICD10'       => 'tenbenhnicd10',
+            'TENBENHICD10'       => 'tenbenhicd10',
         ];
     }
 
