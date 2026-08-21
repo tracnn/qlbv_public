@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
 use App\Services\Ctdt\CtdtImporter;
@@ -36,7 +37,7 @@ class CtdtImport extends Command
         {--gioi-han= : Tran so TEP xu ly moi luot, mac dinh lay tu cau hinh (200 neu khong cau hinh)}
         {--dry-run : Chi liet ke, khong nap khong doi gi. KHONG duoc ket hop voi --lien-tuc}
         {--khong-ky : Nap va kiem, dung truoc buoc ky}
-        {--khong-gui : Ky nhung khong gui len cong}
+        {--khong-gui : Dung CA chuoi ky-gui: khong ky va khong gui ho so nao. Van nap va kiem}
         {--lien-tuc : Chay nen lien tuc giong xml3176import:day, tu thoat sau --so-vong vong}
         {--nghi=5 : So giay nghi giua hai vong khi --lien-tuc}
         {--so-vong=1000 : Tran so vong khi --lien-tuc, lenh tu thoat sau khi chay du}
@@ -514,6 +515,47 @@ class CtdtImport extends Command
             ->where(function ($q) {
                 $q->whereNull('ma_ket_qua')->orWhere('ma_ket_qua', '')->orWhere('ma_ket_qua', '0');
             })
+            // BAT BIEN CUA LENH NEN: chi TU DONG gui ho so ma cong CHUA TUNG duoc goi cho no.
+            // Da goi mot lan roi ma chua co ket qua ro rang thi phai de NGUOI quyet dinh gui
+            // lai - bang nut tren man chi tiet, co mat nguoi doc log va doi soat voi cong.
+            //
+            // VI SAO: cong co the DA NHAN goi roi mang moi chap luc doc phan hoi.
+            // CtdtSubmitService::gui() nem, SubmitCtdtJob co y khong bat (de hang doi thu
+            // lai), het 3 tries thi failed() ghi submit_error va nha khoa - nhung ma_ket_qua
+            // VAN NULL. Khong co hai lop duoi day, vong sau (mac dinh 5 giay) nhat lai dung
+            // ho so do va POST LAI. Khong phanh nao chan: DUNG-GUI/import_tu_dong_gui la
+            // cong tac TOAN CUC, --gioi-han gioi han so TEP chu khong gioi han so lan POST,
+            // con khoa luot chi chan hai TIEN TRINH chu khong chan hai LAN GUI. Body PL02
+            // khong mang ma giao dich phia client nen cong khong khu trung duoc.
+            //
+            // HAI LOP vi moi lop bat mot thoi diem khac nhau cua cung mot cau chuyen:
+            //   - submit_error: bat luc job da ket thuc va kip ghi (failed(), hoac cac nhanh
+            //     ghiLoi() nhu "chua ky so").
+            //   - ctdt_lich_su_gui: bat luc cong DA tra loi mot lan (ke ca tu choi) - dong
+            //     nhat ky duoc ghi ngay trong ghiKetQua(), truoc ca khi ai kip doc ho so.
+            //
+            // "Rong" theo dung quy uoc module (xem CtdtDanhSach.php): NULL hoac chuoi rong.
+            // Rieng submit_error khong can nhanh '0' nhu ma_ket_qua/signed_error dang van
+            // ban: no la thong diep loi, khong bao gio la ma so - nhung neu ai do ghi '0'
+            // vao thi day van la mot loi that va van bi loai, dung y muon.
+            ->where(function ($q) {
+                $q->whereNull('submit_error')->orWhere('submit_error', '');
+            })
+            // KY HONG cung ket y het: SubmitCtdtJob ghi submit_error "chua ky so" nhung
+            // ma_ket_qua van NULL, nen vong sau nhat lai. Mot dem rut nham USB token la hang
+            // chuc nghin job rac. Loai thang o day, khong doi lop submit_error o tren bat -
+            // ho so co the ky hong ma submit_error con trong (chua kip qua job gui lan nao).
+            ->where(function ($q) {
+                $q->whereNull('signed_error')->orWhere('signed_error', '');
+            })
+            // Da co it nhat MOT dong nhat ky gui = cong da tung duoc goi cho ho so nay.
+            // Doi chieu theo ma_ho_so chu khong ho_so_id: ma_ho_so la danh tinh ma ca job ky,
+            // job gui va man hinh deu dung, va no song sot qua mot lan nap de.
+            ->whereNotExists(function ($q) {
+                $q->select(DB::raw(1))
+                    ->from('ctdt_lich_su_gui')
+                    ->whereRaw('ctdt_lich_su_gui.ma_ho_so = ctdt_ho_so.ma_ho_so');
+            })
             // Cu truoc moi truoc: ho so nam lau nhat la ho so nguoi ta doi lau nhat.
             ->orderBy('imported_at')
             ->limit(self::TRAN_NHAT)
@@ -562,6 +604,18 @@ class CtdtImport extends Command
     /**
      * Co duoc gui len cong khong. Hoi MOI VONG, khong hoi mot lan roi nho.
      *
+     * CO Y: tra false o day chan CA BUOC KY, khong chi buoc gui. Ly do la kien truc:
+     * CtdtXepHangKyGui::xep() xep nguyen chuoi SignCtdtJob -> SubmitCtdtJob nhu MOT KHOI,
+     * khong tach duoc o tang nay - xep chuoi roi mong SubmitCtdtJob tu tu choi la dua vao
+     * mot phep tu choi khong ghi gi ca (nhanh KHONG_GUI), tuc ho so se bi nhat lai va xep
+     * lai moi vong. Nen khi CHUA duoc phep gui thi lenh khong xep gi ca: nap va kiem thi
+     * van chay, con ky va gui deu dung. Do cung la hanh vi AN TOAN - khong ky san mot dong
+     * ho so ma khong ai dinh gui.
+     *
+     * Hau qua phai noi ro voi nguoi van hanh (da ghi trong $signature va trong
+     * docs/chung-tu-dien-tu-pl02.md): voi cau hinh mac dinh (import_tu_dong_gui = false),
+     * lenh nay KHONG ky ho so nao ca. Dung tuong ho so duoc ky san de chi con bam nut gui.
+     *
      * @param  string $thuMuc thu muc inbox
      * @return bool
      */
@@ -583,6 +637,20 @@ class CtdtImport extends Command
         // "cho phep MAY gui khi khong co ai nhin". Hai muc do tin cay khac nhau thi phai hai
         // cong tac khac nhau.
         if (!(bool) config('organization.chung_tu_dien_tu.import_tu_dong_gui')) {
+            return false;
+        }
+
+        // ...nhung RIENG chieu TAT thi submit_enabled van thang: no la cong tac "gui that",
+        // va khong con duong nao vong qua no ca. Bo phep hoi nay thi cau hinh
+        // import_tu_dong_gui = true + submit_enabled = false sinh ra mot vong lap chay khong
+        // tai: moi vong xep toi TRAN_NHAT chuoi job, SubmitCtdtJob tra KHONG_GUI va CO Y
+        // khong ghi gi ca (ghi submit_error luc chua he gui la bia), nen ma_ket_qua van NULL
+        // va vong sau nhat lai y nguyen. Nang hon ca ngap hang doi: orderBy('imported_at')
+        // limit(TRAN_NHAT) khien dung 200 ho so ket o dau hang chan VINH VIEN moi ho so moi.
+        if (!(bool) config('organization.chung_tu_dien_tu.submit_enabled')) {
+            $this->warn('submit_enabled dang TAT - khong xep hang ky/gui ho so nao. Bat khoa'
+                . ' organization.chung_tu_dien_tu.submit_enabled neu that su muon gui len cong.');
+
             return false;
         }
 

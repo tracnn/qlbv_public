@@ -436,8 +436,41 @@ nhưng lệnh này **POST thật lên cổng BHXH** chứ không chỉ ghi tệp
 
 Mỗi vòng làm hai việc: **quét** thư mục `organization.chung_tu_dien_tu.import_path`, nạp mọi tệp
 `.xml` **ngay trong thư mục gốc** (không quét đệ quy), chuyển tệp đã xử lý sang `da-nap/` và tệp
-hỏng sang `loi/`; rồi **nhặt** mọi hồ sơ đã kiểm, sạch, chưa có `ma_ket_qua` mà xếp hàng ký số và
-gửi.
+hỏng sang `loi/`; rồi **nhặt** mọi hồ sơ đã kiểm, sạch, chưa có `ma_ket_qua` **và cổng chưa từng
+được gọi cho nó** mà xếp hàng ký số và gửi.
+
+### ⚠️ Lệnh nền CHỈ gửi lần đầu — gửi lại là việc của người
+
+Đây là một **ranh giới ngữ nghĩa**, không phải chi tiết cài đặt:
+
+> Lệnh chạy nền chỉ tự động gửi hồ sơ mà **cổng BHXH chưa từng được gọi** cho nó. Đã gọi một lần
+> rồi mà chưa có kết quả rõ ràng thì phải để **người** quyết định gửi lại — bằng nút "Ký và gửi"
+> trên màn chi tiết, có mắt người đọc log và đối soát với cổng.
+
+Vì sao phải cứng như vậy: cổng có thể **đã nhận gói** rồi mạng mới chập lúc đọc phản hồi.
+`CtdtSubmitService::gui()` ném, `SubmitCtdtJob` cố ý không bắt (để hàng đợi thử lại), hết `tries`
+thì `failed()` ghi `submit_error` và nhả khoá — nhưng `ma_ket_qua` **vẫn NULL**. Nếu lệnh nền cứ
+thấy `ma_ket_qua` trống là gửi, nó sẽ POST lại đúng hồ sơ đó **mỗi vòng, mãi mãi**. Không phanh
+nào chặn được: `DUNG-GUI` / `import_tu_dong_gui` / `submit_enabled` đều là công tắc **toàn cục**;
+`--gioi-han` giới hạn số **tệp** chứ không giới hạn số lần POST; khoá lượt chặn hai *tiến trình*
+chứ không chặn hai *lần gửi*. Body PL02 không mang mã giao dịch phía client nên cổng cũng không
+khử trùng lặp giúp được.
+
+Truy vấn nhặt vì thế loại hai nhóm — **hai lớp, mỗi lớp bắt một thời điểm khác nhau của cùng câu
+chuyện**:
+
+| Điều kiện loại | Bắt lúc nào |
+|---|---|
+| `submit_error` khác rỗng | Job đã kết thúc và **kịp ghi** — `failed()`, hoặc các nhánh `ghiLoi()` như *"Hồ sơ chưa ký số"* |
+| Đã có ít nhất một dòng trong `ctdt_lich_su_gui` | Cổng **đã trả lời** một lần (kể cả từ chối) — dòng nhật ký được ghi ngay trong `ghiKetQua()`, trước cả khi ai kịp đọc hồ sơ |
+| `signed_error` khác rỗng | **Ký hỏng.** Trước đây hồ sơ ký hỏng cũng kẹt y hệt: `SubmitCtdtJob` ghi `submit_error` *"chưa ký số"* mà `ma_ket_qua` vẫn NULL. Một đêm rút nhầm USB token = hàng chục nghìn job rác |
+
+"Rỗng" ở đây theo đúng quy ước chung của module (xem `CtdtDanhSach.php`): `NULL` **hoặc** chuỗi
+rỗng.
+
+Hệ quả vận hành: **hồ sơ gửi hỏng sẽ nằm lại, lệnh nền không tự động thử lại nữa.** Người trực
+phải mở màn danh sách, lọc trạng thái *"Gửi thất bại"*, đọc `submit_error`, đối soát với cổng
+rồi mới bấm gửi lại. Đó là chủ ý — không phải thiếu sót.
 
 ### Vì sao bước nhặt đi bằng truy vấn, không theo "vừa nạp"
 
@@ -446,25 +479,41 @@ Hồ sơ vừa nạp gần như **luôn** ở trạng thái *chưa kiểm* — b
 sơ phải chờ tới lượt sau mới được nhặt. Truy vấn thẳng thì mỗi vòng vét đúng những hồ sơ *vừa
 mới* đủ điều kiện — kể cả hồ sơ người ta sửa tay trên màn hình rồi cho kiểm lại.
 
-### Năm cái phanh
+### Sáu cái phanh
 
 | Phanh | Tác dụng |
 |---|---|
-| **Tệp `DUNG-GUI`** | Đặt một tệp rỗng tên `DUNG-GUI` trong thư mục inbox là **dừng gửi ngay vòng sau**, vẫn tiếp tục nạp và kiểm. Xoá tệp đi là chạy lại. Đây là phanh tay duy nhất có tác dụng **không cần khởi động lại dịch vụ** — xem khối cảnh báo ngay dưới. |
+| **Tệp `DUNG-GUI`** | Đặt một tệp rỗng tên `DUNG-GUI` trong thư mục inbox là **dừng ký và gửi ngay vòng sau**, vẫn tiếp tục nạp và kiểm. Xoá tệp đi là chạy lại. Đây là phanh tay duy nhất có tác dụng **không cần khởi động lại dịch vụ** — xem khối cảnh báo ngay dưới. |
 | `import_tu_dong_gui` | **Cổng riêng, mặc định TẮT.** `submit_enabled` cho phép *người* bấm nút gửi; khoá này cho phép *máy* gửi khi không ai nhìn. Bật cái thứ nhất không kéo theo cái thứ hai. |
-| `--gioi-han` | Trần số **tệp** nạp mỗi vòng. Không truyền thì lấy cấu hình `organization.chung_tu_dien_tu.import_gioi_han`; cấu hình đó cũng trống mới lùi về `200`. Một thư mục đổ nhầm 3000 tệp không thành 3000 lần POST trong một vòng. Vượt trần thì lệnh **báo to** rồi cắt, không cắt im lặng. |
+| `submit_enabled` | **Vẫn thắng ở chiều TẮT.** Đây là công tắc "gửi thật", không có đường nào vòng qua nó: `import_tu_dong_gui = true` mà `submit_enabled = false` thì lệnh nền **không xếp hàng gì cả**, kèm cảnh báo đọc được. Nếu không hỏi khoá này, mỗi vòng sẽ xếp tới 200 chuỗi job mà `SubmitCtdtJob` từ chối *không ghi gì*, nên vòng sau nhặt lại y nguyên — ngập hàng đợi, và 200 hồ sơ kẹt ở đầu `orderBy('imported_at')` chặn vĩnh viễn mọi hồ sơ mới. |
+| `--gioi-han` | Trần số **tệp** nạp mỗi vòng. Không truyền thì lấy cấu hình `organization.chung_tu_dien_tu.import_gioi_han`; cấu hình đó cũng trống mới lùi về `200`. Một thư mục đổ nhầm 3000 tệp không thành 3000 lần POST trong một vòng. Vượt trần thì lệnh **báo to** rồi cắt, không cắt im lặng. ⚠️ Nó giới hạn số **tệp**, KHÔNG giới hạn số lần POST — chống POST lặp là việc của hai lớp ở mục *"Lệnh nền CHỈ gửi lần đầu"* phía trên. |
 | `--so-vong=1000` | Tiến trình **tự thoát** sau bấy nhiêu vòng để nssm dựng lại bản sạch. |
-| `--dry-run` / `--khong-ky` / `--khong-gui` | Chỉ liệt kê; hoặc dừng chuỗi ở nạp; hoặc dừng ở ký. `--dry-run` **không** kết hợp được với `--lien-tuc` — lệnh thoát mã khác 0 kèm thông điệp từ chối, không chạy vòng lặp nào. |
+| `--dry-run` / `--khong-ky` / `--khong-gui` | `--dry-run` chỉ liệt kê, không đụng gì. `--khong-ky` dừng trước bước ký. `--khong-gui` dừng **cả chuỗi ký-gửi** — xem ngay dưới. `--dry-run` **không** kết hợp được với `--lien-tuc` — lệnh thoát mã khác 0 kèm thông điệp từ chối, không chạy vòng lặp nào. |
+
+#### ⚠️ Chưa được phép gửi thì lệnh KHÔNG ký hồ sơ nào
+
+`--khong-gui`, `import_tu_dong_gui = false`, `submit_enabled = false` và tệp `DUNG-GUI` đều dừng
+**cả bước ký**, không phải chỉ bước gửi. Cụ thể, với **cấu hình mặc định**
+(`import_tu_dong_gui = false`), lệnh **nạp và kiểm** hồ sơ nhưng **không ký và không gửi** hồ sơ
+nào cả.
+
+Đừng đọc bảng phanh ở trên mà tưởng hồ sơ được ký sẵn để chỉ còn bấm nút gửi — **không phải
+vậy.** Khi bấm "Ký và gửi" trên màn chi tiết, hồ sơ mới được ký.
+
+Vì sao: `CtdtXepHangKyGui::xep()` xếp nguyên chuỗi `SignCtdtJob → SubmitCtdtJob` như **một
+khối** — không tách được ở tầng lệnh. Xếp chuỗi rồi trông chờ `SubmitCtdtJob` tự từ chối là dựa
+vào một phép từ chối *không ghi gì cả*, nghĩa là hồ sơ bị nhặt lại và xếp lại mỗi vòng. Đây cũng
+là hành vi **an toàn hơn**: không ký sẵn một đống hồ sơ mà không ai định gửi.
 
 ⚠️ **Sửa `import_tu_dong_gui` KHÔNG dừng được tiến trình đang chạy.** Tiến trình sống lâu giữ
-cấu hình trong bộ nhớ; khoá đó chỉ được đọc lại khi dịch vụ khởi động lại. Muốn dừng gửi ngay
+cấu hình trong bộ nhớ; khoá đó chỉ được đọc lại khi dịch vụ khởi động lại. Muốn dừng ngay
 thì **tạo tệp `DUNG-GUI`** trong thư mục inbox:
 
 ```bat
 type nul > D:\XML\ChungTuDienTu\inbox\DUNG-GUI
 ```
 
-Hồ sơ vẫn được nạp và kiểm bình thường — chỉ bước gửi bị chặn.
+Hồ sơ vẫn được nạp và kiểm bình thường — chỉ bước ký và gửi bị chặn.
 
 ### Khoá lượt
 

@@ -32,6 +32,12 @@ class CtdtImportCommandTest extends TestCase
         parent::setUp();
         $this->chuanBiBangCtdt();
         Queue::fake();
+
+        // TUONG MINH, khong dua vao config/organization.php cua may dang chay: duocGui() hoi
+        // CA import_tu_dong_gui LAN submit_enabled, nen mot bo test khong noi ro submit_enabled
+        // se xanh hay do tuy theo may. Cac test rieng ve tung cong tac tu ghi de lai khoa cua
+        // minh.
+        config(['organization.chung_tu_dien_tu.submit_enabled' => true]);
     }
 
     protected function tearDown()
@@ -490,6 +496,250 @@ class CtdtImportCommandTest extends TestCase
         });
     }
 
+    /**
+     * CRITICAL - vong gui lai vo han sau khi cong DA NHAN goi.
+     *
+     * Kich ban that: cong nhan goi roi mang chap luc doc phan hoi.
+     * CtdtSubmitService::gui() nem, SubmitCtdtJob CO Y khong bat (de hang doi thu lai), het
+     * 3 tries thi failed() ghi submit_error va nha khoa - nhung ma_ket_qua VAN NULL. Neu bo
+     * loc cua nhatVaXepHang() khong loai ho so co submit_error, vong sau (mac dinh 5 giay)
+     * nhat lai dung no va POST LAI, mai mai.
+     *
+     * Test nay chay THAT ca hai nua: SubmitCtdtJob::handle() voi FakeCtdtSubmitService nem
+     * (offline, khong cham cong BHXH), roi failed(), roi hoi lai nhatVaXepHang().
+     *
+     * @test
+     */
+    public function job_gui_nem_roi_that_bai_thi_lenh_nen_KHONG_gui_lai_ho_so_do()
+    {
+        config(['organization.chung_tu_dien_tu.import_tu_dong_gui' => true]);
+
+        $hoSo = \App\Models\BHYT\Ctdt\CtdtHoSo::create([
+            'ma_ho_so' => 'YT-MANG-CHAP', 'dich_vu' => 'CT2025', 'loai_hs' => '39',
+            'macskcb' => '01001', 'imported_at' => now(),
+            'checked_at' => now(), 'so_loi' => 0, 'is_signed' => true,
+            'duong_dan_da_ky' => 'da-ky/YT-MANG-CHAP.xml',
+        ]);
+
+        $gia = new \Tests\Support\FakeCtdtSubmitService();
+        $gia->nem = new \RuntimeException('cURL error 28: Operation timed out');
+
+        \Illuminate\Support\Facades\Storage::fake('exportCtdt');
+        \Illuminate\Support\Facades\Storage::disk('exportCtdt')
+            ->put('da-ky/YT-MANG-CHAP.xml', '<GIAMDINHHS/>');
+
+        $job = new \App\Jobs\SubmitCtdtJob('YT-MANG-CHAP', null,
+            \App\Models\BHYT\Ctdt\CtdtLichSuGui::NGUON_CONSOLE);
+        $job->submitServiceGia = $gia;
+
+        $daNem = null;
+
+        try {
+            $job->handle();
+        } catch (\Exception $e) {
+            $daNem = $e;
+        }
+
+        $this->assertNotNull($daNem, 'Job PHAI de ngoai le bay ra cho hang doi thu lai');
+        $this->assertSame(1, $gia->soLanGoi, 'Cong da duoc goi dung mot lan');
+
+        // Het luot thu: hang doi goi failed(). ma_ket_qua VAN NULL - do chinh la cai bay.
+        $job->failed($daNem);
+
+        $hoSo = $hoSo->fresh();
+        $this->assertNull($hoSo->ma_ket_qua, 'Dieu kien cua bay: ma_ket_qua van trong');
+        $this->assertNotEmpty($hoSo->submit_error, 'failed() phai ghi submit_error');
+
+        Bus::fake();
+
+        $lenh = new CtdtImportLoRa();
+        $lenh->ganInputTest(new ArrayInput([], $lenh->getDefinition()));
+        $lenh->ganOutputTest(new BufferedOutput());
+        $soXep = $lenh->nhatVaXepHangCong(sys_get_temp_dir());
+
+        $this->assertSame(0, $soXep, 'Ho so da mot lan goi cong that bai KHONG duoc lenh nen '
+            . 'gui lai tu dong - gui lai la viec cua NGUOI bam nut tren man chi tiet');
+        Bus::assertNotDispatched(\App\Jobs\SignCtdtJob::class);
+    }
+
+    /**
+     * CRITICAL - lop chan thu hai: da co dong trong ctdt_lich_su_gui.
+     *
+     * Lop submit_error bat luc job KIP GHI. Lop nay bat mot thoi diem khac cua cung cau
+     * chuyen: cong DA tra loi mot lan (ke ca tu choi), dong nhat ky duoc ghi ngay trong
+     * ghiKetQua() - truoc ca khi ai kip doc ho so. Test nay chay SubmitCtdtJob::handle()
+     * THAT voi FakeCtdtSubmitService tra ve mot ma tu choi, roi xoa submit_error di de CHI
+     * CON lop nhat ky lam viec.
+     *
+     * @test
+     */
+    public function ho_so_da_co_dong_lich_su_gui_thi_lenh_nen_KHONG_gui_lai()
+    {
+        config(['organization.chung_tu_dien_tu.import_tu_dong_gui' => true]);
+
+        $hoSo = \App\Models\BHYT\Ctdt\CtdtHoSo::create([
+            'ma_ho_so' => 'YT-DA-GOI-CONG', 'dich_vu' => 'CT2025', 'loai_hs' => '39',
+            'macskcb' => '01001', 'imported_at' => now(),
+            'checked_at' => now(), 'so_loi' => 0, 'is_signed' => true,
+            'duong_dan_da_ky' => 'da-ky/YT-DA-GOI-CONG.xml',
+        ]);
+
+        $gia = new \Tests\Support\FakeCtdtSubmitService();
+        // Cong TRA LOI, nhung khong phai 200 va khong co ma_ket_qua ro rang - dung dang lam
+        // ho so o lai voi ma_ket_qua trong.
+        $gia->ketQua = [
+            'ma_ket_qua' => null, 'ma_gd' => null, 'thoi_gian_tiep_nhan' => null,
+            'thong_diep' => 'Cong tra ve khong doc duoc', 'nguyen_van' => '<html>502</html>',
+        ];
+
+        \Illuminate\Support\Facades\Storage::fake('exportCtdt');
+        \Illuminate\Support\Facades\Storage::disk('exportCtdt')
+            ->put('da-ky/YT-DA-GOI-CONG.xml', '<GIAMDINHHS/>');
+
+        $job = new \App\Jobs\SubmitCtdtJob('YT-DA-GOI-CONG', null,
+            \App\Models\BHYT\Ctdt\CtdtLichSuGui::NGUON_CONSOLE);
+        $job->submitServiceGia = $gia;
+        $job->handle();
+
+        $this->assertSame(1, \App\Models\BHYT\Ctdt\CtdtLichSuGui::where(
+            'ma_ho_so', 'YT-DA-GOI-CONG')->count(),
+            'Mot lan goi cong = mot dong nhat ky');
+
+        // Xoa submit_error di: chi con MOT lop chan lam viec, nen neu test nay xanh thi
+        // dung la lop ctdt_lich_su_gui dang chan, khong phai lop kia.
+        $hoSo->fresh()->update(['submit_error' => null]);
+        $this->assertNull(\App\Models\BHYT\Ctdt\CtdtHoSo::where('ma_ho_so', 'YT-DA-GOI-CONG')
+            ->first()->ma_ket_qua, 'Dieu kien cua bay: ma_ket_qua van trong');
+
+        Bus::fake();
+
+        $lenh = new CtdtImportLoRa();
+        $lenh->ganInputTest(new ArrayInput([], $lenh->getDefinition()));
+        $lenh->ganOutputTest(new BufferedOutput());
+        $soXep = $lenh->nhatVaXepHangCong(sys_get_temp_dir());
+
+        $this->assertSame(0, $soXep, 'Ho so cong DA TUNG duoc goi cho no (co dong trong '
+            . 'ctdt_lich_su_gui) KHONG duoc lenh nen gui lai tu dong');
+        Bus::assertNotDispatched(\App\Jobs\SignCtdtJob::class);
+    }
+
+    /**
+     * I5 - ky hong cung ket vong lap y het: SubmitCtdtJob ghi submit_error "chua ky so",
+     * ma_ket_qua van NULL, nen vong sau nhat lai. Mot dem rut nham USB token la hang chuc
+     * nghin job rac.
+     *
+     * Ho so o day co signed_error nhung submit_error CON TRONG - dung tinh huong chua kip
+     * qua job gui lan nao, tuc lop submit_error khong bat duoc.
+     *
+     * @test
+     */
+    public function ho_so_ky_hong_khong_duoc_xep_hang_lai()
+    {
+        Bus::fake();
+        config(['organization.chung_tu_dien_tu.import_tu_dong_gui' => true]);
+
+        \App\Models\BHYT\Ctdt\CtdtHoSo::create([
+            'ma_ho_so' => 'YT-KY-HONG', 'dich_vu' => 'CT2025', 'loai_hs' => '39',
+            'macskcb' => '01001', 'imported_at' => now(),
+            'checked_at' => now(), 'so_loi' => 0,
+            'is_signed' => false, 'signed_error' => 'Khong tim thay USB token',
+        ]);
+
+        $lenh = new CtdtImportLoRa();
+        $lenh->ganInputTest(new ArrayInput([], $lenh->getDefinition()));
+        $lenh->ganOutputTest(new BufferedOutput());
+        $soXep = $lenh->nhatVaXepHangCong(sys_get_temp_dir());
+
+        $this->assertSame(0, $soXep, 'Ho so ky hong phai cho NGUOI xu ly, khong duoc xep lai '
+            . 'moi vong');
+        Bus::assertNotDispatched(\App\Jobs\SignCtdtJob::class);
+    }
+
+    /**
+     * I4 - submit_enabled TAT thi khong xep chuoi nao, du import_tu_dong_gui dang BAT.
+     *
+     * Neu duocGui() khong hoi khoa nay: moi vong xep toi TRAN_NHAT chuoi job,
+     * SubmitCtdtJob tra KHONG_GUI va CO Y khong ghi gi ca, nen ma_ket_qua van NULL va vong
+     * sau nhat lai y nguyen. Ngap hang doi, va 200 ho so ket o dau
+     * orderBy('imported_at')->limit(200) chan vinh vien moi ho so moi.
+     *
+     * @test
+     */
+    public function submit_enabled_tat_thi_khong_xep_hang_gi_ca()
+    {
+        Bus::fake();
+        config([
+            'organization.chung_tu_dien_tu.import_tu_dong_gui' => true,
+            'organization.chung_tu_dien_tu.submit_enabled'     => false,
+        ]);
+
+        \App\Models\BHYT\Ctdt\CtdtHoSo::create([
+            'ma_ho_so' => 'YT-SUBMIT-TAT', 'dich_vu' => 'CT2025', 'loai_hs' => '39',
+            'macskcb' => '01001', 'imported_at' => now(),
+            'checked_at' => now(), 'so_loi' => 0,
+        ]);
+
+        $dauRa = new BufferedOutput();
+        $lenh = new CtdtImportLoRa();
+        $lenh->ganInputTest(new ArrayInput([], $lenh->getDefinition()));
+        $lenh->ganOutputTest($dauRa);
+        $soXep = $lenh->nhatVaXepHangCong(sys_get_temp_dir());
+
+        $this->assertSame(0, $soXep, 'submit_enabled tat phai khong xep hang gi ca');
+        Bus::assertNotDispatched(\App\Jobs\SignCtdtJob::class);
+        $this->assertContains('submit_enabled', $dauRa->fetch(),
+            'Phai canh bao DOC DUOC vi sao khong xep hang, khong im lang bo qua');
+    }
+
+    /**
+     * I2/I3 - HANH VI that cua --khong-gui, khong phai chi "tuy chon co ton tai".
+     *
+     * --khong-gui dung CA chuoi ky-gui chu khong chi buoc gui: CtdtXepHangKyGui::xep() xep
+     * SignCtdtJob -> SubmitCtdtJob nhu MOT KHOI, khong tach duoc o tang nay. Mo ta trong
+     * $signature va tai lieu phai noi dung dieu do, va test nay la thu giu cho no dung.
+     *
+     * @test
+     */
+    public function khong_gui_dung_ca_buoc_KY_chu_khong_chi_buoc_gui()
+    {
+        Bus::fake();
+        config(['organization.chung_tu_dien_tu.import_tu_dong_gui' => true]);
+
+        \App\Models\BHYT\Ctdt\CtdtHoSo::create([
+            'ma_ho_so' => 'YT-KHONG-GUI', 'dich_vu' => 'CT2025', 'loai_hs' => '39',
+            'macskcb' => '01001', 'imported_at' => now(),
+            'checked_at' => now(), 'so_loi' => 0,
+        ]);
+
+        $lenh = new CtdtImportLoRa();
+        $lenh->ganInputTest(new ArrayInput(['--khong-gui' => true], $lenh->getDefinition()));
+        $lenh->ganOutputTest(new BufferedOutput());
+        $soXep = $lenh->nhatVaXepHangCong(sys_get_temp_dir());
+
+        $this->assertSame(0, $soXep, '--khong-gui phai chan ca viec xep chuoi ky');
+        // KHONG co SignCtdtJob nao: day moi la khac biet giua loi van cu ("Ky nhung khong
+        // gui") va hanh vi that.
+        Bus::assertNotDispatched(\App\Jobs\SignCtdtJob::class);
+    }
+
+    /**
+     * Mo ta cua --khong-gui trong $signature phai KHOP hanh vi o test ngay tren.
+     *
+     * Ban cu ghi "Ky nhung khong gui len cong" - sai, va nguoi van hanh doc bang "nam cai
+     * phanh" tuong ho so duoc ky san de chi con bam nut gui.
+     *
+     * @test
+     */
+    public function mo_ta_khong_gui_khong_duoc_hua_la_van_ky()
+    {
+        $mo = (new CtdtImport())->getDefinition()->getOption('khong-gui')->getDescription();
+
+        $this->assertNotContains('Ky nhung khong gui', $mo,
+            'Mo ta cu hua "van ky" - hanh vi that la khong ky ho so nao');
+        $this->assertContains('khong ky', $mo,
+            'Mo ta phai noi ro --khong-gui dung CA buoc ky');
+    }
+
     /** @test */
     public function tep_co_dung_chan_ngay_buoc_gui()
     {
@@ -596,6 +846,15 @@ class CtdtImportCommandTest extends TestCase
     {
         $thuMuc = $this->thuMucTam();
 
+        // Cache::store('file') la cache THAT cua may, khong phai store 'array' ma
+        // phpunit.xml tro CACHE_DRIVER vao. Neu no da co khoa TRUOC khi test chay thi moi
+        // truong khong sach (mot dich vu nssm dang chay, hoac mot khoa mo coi con sot) -
+        // noi ro ra thay vi de assertion cuoi cung do voi thong diep sai nguyen nhan.
+        $this->assertFalse(Cache::store('file')->has(CtdtImport::KHOA_LUOT),
+            'Cache THAT dang giu khoa ' . CtdtImport::KHOA_LUOT . ' TRUOC khi test chay - '
+            . 'co tien trinh ctdt:import khac dang song, hoac con khoa mo coi. Go bang '
+            . '`php artisan ctdt:import --go-khoa` roi chay lai.');
+
         $ketQua = $this->chayTienTrinhConCoHan([
             '--lien-tuc',
             '--so-vong=3',
@@ -603,6 +862,15 @@ class CtdtImportCommandTest extends TestCase
             '--khong-ky',
             '--duong-dan=' . $thuMuc,
         ], 60);
+
+        // Tien trinh con phai chay tren CACHE_DRIVER=array cua rieng no (xem $moiTruong
+        // trong chayTienTrinhConCoHan()). Neu no roi ve .env that (CACHE_DRIVER=file) thi
+        // nhanh "treo" o tren giet no bang tin hieu 9 - finally KHONG chay - va khoa nay o
+        // lai tren cache THAT suot 24 gio, lam dich vu nssm ngung chay im lang ca ngay.
+        $this->assertFalse(Cache::store('file')->has(CtdtImport::KHOA_LUOT),
+            'Tien trinh con da dat khoa len cache THAT cua may - moi truong tuong minh '
+            . 'truyen vao proc_open() khong con tac dung. Xem $moiTruong trong '
+            . 'chayTienTrinhConCoHan().');
 
         $this->assertFalse($ketQua['treo'], 'Lenh phai TU THOAT trong 60 giay - neu vong lap '
             . 'khong tu thoat (vi du bi doi thanh while(true)) tien trinh con bi giet cuong '
@@ -652,7 +920,35 @@ class CtdtImportCommandTest extends TestCase
             2 => ['file', $tepLoi, 'w'],
         ];
 
-        $tienTrinh = proc_open($lenh, $moTaOng, $ong, base_path());
+        // MOI TRUONG TUONG MINH cho tien trinh con. TestCase::setUp() va phpunit.xml chi ap
+        // cho tien trinh PHPUnit NAY - tien trinh con doc thang .env cua du an, tuc
+        // DB_DATABASE=qlbv (CSDL phat trien THAT) va CACHE_DRIVER=file (cache THAT cua may).
+        // Truoc day khong truyen gi ca, va an toan chi nho thu muc tam rong + --khong-ky -
+        // khong assertion nao canh. Nang hon: nhanh "treo" goi proc_terminate(..., 9), bo
+        // lai khoa ctdt:import:dang-chay tren cache THAT voi han 24 gio, lam dich vu nssm
+        // ngung chay im lang ca ngay.
+        //
+        // proc_open($cmd, $ong, $pipes, $cwd, $env): truyen $env la THAY the toan bo moi
+        // truong, khong phai gop them - nen phai mang theo ca PATH/SystemRoot, thieu chung
+        // thi php.exe tren Windows khong khoi dong duoc.
+        $moiTruong = [
+            'DB_CONNECTION' => 'sqlite',
+            'DB_DATABASE'   => ':memory:',
+            'CACHE_DRIVER'  => 'array',
+            'QUEUE_DRIVER'  => 'sync',
+            'SESSION_DRIVER' => 'array',
+            'APP_ENV'       => 'testing',
+        ];
+
+        foreach (['PATH', 'Path', 'SystemRoot', 'windir', 'TEMP', 'TMP', 'COMSPEC', 'ComSpec'] as $giu) {
+            $giaTri = getenv($giu);
+
+            if ($giaTri !== false) {
+                $moiTruong[$giu] = $giaTri;
+            }
+        }
+
+        $tienTrinh = proc_open($lenh, $moTaOng, $ong, base_path(), $moiTruong);
 
         if (!is_resource($tienTrinh)) {
             @unlink($tepDauRa);

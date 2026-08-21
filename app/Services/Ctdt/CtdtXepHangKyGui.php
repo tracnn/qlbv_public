@@ -44,6 +44,20 @@ class CtdtXepHangKyGui
         // Cache::add() tra false khi khoa DA ton tai - do chinh la phep thu "da co ai xep
         // chua". Khoa theo TUNG ma ho so: mot khoa chung se khoa ca he thong lai chi vi mot
         // ho so dang chay, va lenh Console xu 200 ho so mot luot se chi xep duoc dung mot.
+        //
+        // CANH BAO TOCTOU - Cache::add() KHONG nguyen tu tren FileStore cua Laravel 5.5.
+        // Illuminate\Cache\Repository::add() rot ve `if (is_null($this->get($k))) put()` khi
+        // store khong hien thuc Contracts\Cache\Store::add (FileStore la truong hop nay);
+        // giua get() va put() co mot khe cua so cho hai luong cung thay "chua co khoa" va
+        // cung xep hang - hai chuoi ky-gui cho MOT ho so, tuc HAI LAN POST that len cong
+        // BHXH cho cung mot goi. Redis/Memcached co add() nguyen tu that nen khong dinh.
+        //
+        // CUOC DUA NAY GIO DE XAY RA HON TRUOC. Khi khoi khoa nay con nam trong controller
+        // (KHOA_XU_LY), hai luong dua nhau chi co the la mot NGUOI bam nut hai lan trong
+        // vai chuc mili giay. Ke tu Giai doan 5a, ben canh nguoi con co lenh nen
+        // `ctdt:import --lien-tuc` xep hang moi vai giay, nen cuoc dua that su la MAY VA
+        // NGUOI CUNG LUC cham dung mot ho so - khong con phu thuoc vao toc do ngon tay ai.
+        // Neu chuyen sang chay that voi CACHE_DRIVER=file, day la rui ro phai xu ly.
         if (!Cache::add(self::KHOA . $maHoSo, true, self::KHOA_PHUT)) {
             return false;
         }

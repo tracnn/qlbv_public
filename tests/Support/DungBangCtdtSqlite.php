@@ -5,7 +5,7 @@ namespace Tests\Support;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Dung 12 bang cua module chung tu dien tu trong SQLite bo nho.
+ * Dung 13 bang cua module chung tu dien tu trong SQLite bo nho.
  *
  * VI SAO KHONG DUNG RefreshDatabase: .env cua du an tro DB_DATABASE=qlbv - co so du
  * lieu phat trien that. RefreshDatabase se xoa sach no.
@@ -48,8 +48,8 @@ trait DungBangCtdtSqlite
     }
 
     /**
-     * Dung ca 12/12 bang cua module. Tung dung "bo qua tep chua ton tai" de trait
-     * dung duoc tu Task 2 khi chi co 3/12 migration - nay du 12/12 nen dieu kien do
+     * Dung ca 13/13 bang cua module. Tung dung "bo qua tep chua ton tai" de trait
+     * dung duoc tu Task 2 khi chi co 3/13 migration - nay du 13/13 nen dieu kien do
      * thanh diem mu: doi ten mot tep migration ma quen sua danh sach o day se bi
      * trait AM THAM bo qua thay vi bao loi ngay. Nem ngoai le de sai lech lo ra tai
      * cho, thay vi roi vao mot Schema::hasTable() that bai o mot test khac xa.

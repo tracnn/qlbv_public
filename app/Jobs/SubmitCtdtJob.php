@@ -224,10 +224,16 @@ class SubmitCtdtJob implements ShouldQueue
                 // tay thanh "lenh nen". Quy sai mot lan gui khong nguoi truc cho mot con
                 // nguoi la kieu noi doi te nhat mot bang nhat ky co the mac.
                 'nguon'               => $this->nguon,
-                'ma_gd'               => isset($ketQua['ma_gd']) ? $ketQua['ma_gd'] : null,
-                'ma_ket_qua'          => isset($ketQua['ma_ket_qua']) ? $ketQua['ma_ket_qua'] : null,
-                'thoi_gian_tiep_nhan' => isset($ketQua['thoi_gian_tiep_nhan'])
-                    ? $ketQua['thoi_gian_tiep_nhan'] : null,
+                // CAT y het khi ghi vao ctdt_ho_so o tren, va theo DUNG do rong cot cua
+                // migration 2026_08_21_100001 (ma_gd 100, ma_ket_qua 20, thoi_gian_tiep_nhan
+                // 20). Truoc day khong cat o day: mot ma_gd 101 ky tu tu cong lam create()
+                // nem, va tuy try/catch ben duoi khong lam job that bai, ta van MAT NGUYEN
+                // DONG NHAT KY - dung luc can no nhat, vi do la lan gui co phan hoi bat
+                // thuong. thong_diep la cot TEXT nen giu nguyen ven, khong cat.
+                'ma_gd'               => $this->cat(isset($ketQua['ma_gd']) ? $ketQua['ma_gd'] : null, 100),
+                'ma_ket_qua'          => $this->cat(isset($ketQua['ma_ket_qua']) ? $ketQua['ma_ket_qua'] : null, 20),
+                'thoi_gian_tiep_nhan' => $this->cat(isset($ketQua['thoi_gian_tiep_nhan'])
+                    ? $ketQua['thoi_gian_tiep_nhan'] : null, 20),
                 'thanh_cong'          => $thanhCong,
                 'thong_diep'          => isset($ketQua['thong_diep']) ? $ketQua['thong_diep'] : null,
             ]);

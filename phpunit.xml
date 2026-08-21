@@ -40,9 +40,16 @@
              tests/Unit/OrderCheck doc va GHI bang that (medicine_catalogs). Tren sqlite
              rong chung khong chay duoc, va mot bo test tat tieng thi khong bao ve duoc gi.
 
+             force="true" LA BAT BUOC, khong phai trang tri. PHPUnit 6
+             (vendor/phpunit/phpunit/src/Util/Configuration.php, handlePHPConfiguration())
+             chi goi putenv() khi getenv($name) === false - tuc khi bien do CHUA co san. Tren
+             may nao da dat DB_DATABASE o bien moi truong he thong (hoac trong shell dang
+             chay), hai dong duoi day AM THAM khong co tac dung, va bo test tro thang vao
+             CSDL that ma khong bao gi ca. force="true" bat PHPUnit ghi de vo dieu kien.
+
              tests/TestCase.php con mot lop chan thu hai, phong khi tep nay bi sua. -->
-        <env name="DB_CONNECTION" value="mysql"/>
-        <env name="DB_DATABASE" value="qlbv_test"/>
+        <env name="DB_CONNECTION" value="mysql" force="true"/>
+        <env name="DB_DATABASE" value="qlbv_test" force="true"/>
         <env name="CACHE_DRIVER" value="array"/>
         <env name="SESSION_DRIVER" value="array"/>
         <env name="QUEUE_DRIVER" value="sync"/>
