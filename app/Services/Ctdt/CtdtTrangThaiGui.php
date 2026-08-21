@@ -48,16 +48,21 @@ class CtdtTrangThaiGui
      */
     public static function cua($hoSo)
     {
-        // "Chua kiem" KHAC "da kiem va sach", du ca hai deu co so_loi = 0. Ho so vua nap
-        // xong - hay MOI ho so tren may chu chua cai dich vu JobCtdt - roi vao nhanh nay.
-        // Khong tach ra thi cua chan gui chi dong khi hang doi dang chay, va khong co gi
-        // bao cho ai biet khi no khong chay.
-        if (empty($hoSo->checked_at)) {
-            return self::CHUA_KIEM;
-        }
+        // Hai nhanh dau la luat "da kiem va sach chua" - hoi CtdtQuyetDinhGui::nenKy() chu
+        // khong chep lai. "Chua kiem" KHAC "da kiem va sach", du ca hai deu co so_loi = 0:
+        // ho so vua nap xong - hay MOI ho so tren may chu chua cai dich vu JobCtdt - roi vao
+        // nhanh CHUA_KIEM. Khong tach ra thi cua chan gui chi dong khi hang doi dang chay,
+        // va khong co gi bao cho ai biet khi no khong chay.
+        //
+        // Anh xa TUONG MINH sang hang so cua lop nay chu khong tra thang: hai lop tinh co
+        // dung chung chuoi 'chua_kiem'/'con_loi', va dua vao su trung hop do la buoc mot lop
+        // phai xin phep lop kia moi doi duoc gia tri hang so cua chinh minh.
+        switch (CtdtQuyetDinhGui::nenKy($hoSo->checked_at, $hoSo->so_loi)) {
+            case CtdtQuyetDinhGui::CHUA_KIEM:
+                return self::CHUA_KIEM;
 
-        if ((int) $hoSo->so_loi > 0) {
-            return self::CON_LOI;
+            case CtdtQuyetDinhGui::CON_LOI:
+                return self::CON_LOI;
         }
 
         // TRUOC CHUA_KY: ca hai deu is_signed = false, cai CU THE HON phai thang. Khong tach

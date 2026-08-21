@@ -22,6 +22,7 @@ use App\Models\BHYT\Ctdt\CtdtLoi;
 use App\Jobs\SignCtdtJob;
 use App\Jobs\SubmitCtdtJob;
 use App\Services\Ctdt\CtdtQuyetDinhGui;
+use App\Services\Ctdt\CtdtHangDoi;
 
 /**
  * Ba man hinh cua module chung tu dien tu: danh sach, nap tep, chi tiet.
@@ -433,13 +434,10 @@ class BHYTCtdtController extends Controller
         // chinh controller nay, o import(): $request->user()->loginname.
         $nguoiGui = auth()->check() ? auth()->user()->loginname : null;
 
-        // config(..., default) CHI lui ve default khi thieu khoa (Arr::get dung
-        // array_key_exists) - mot config/organization.php ghi de khoa nay thanh null (vd.
-        // ban config:cache cu) van khien config() tra ve null chu KHONG tu lui ve default.
-        // Dung ?: de lui ve ten hang doi mac dinh trong ca hai truong hop thieu khoa LAN
-        // khoa ton tai nhung rong/null.
-        $hangDoiKy  = config('organization.chung_tu_dien_tu.sign_queue_name') ?: 'JobSignCtdt';
-        $hangDoiGui = config('organization.chung_tu_dien_tu.submit_queue_name') ?: 'JobSubmitCtdt';
+        // CtdtHangDoi giu ca ten mac dinh lan phep lui ve mac dinh - xem chu thich trong
+        // lop do ve vi sao khong dung config($khoa, $macDinh).
+        $hangDoiKy  = CtdtHangDoi::ky();
+        $hangDoiGui = CtdtHangDoi::gui();
 
         // Nap lai xoa ma_gd/ma_ket_qua (noi dung da doi thi ket qua cu noi ve mot ban khac),
         // nen mot ho so DA duoc cong nhan that se hien "Chua ky so" va gui lai duoc ma khong
