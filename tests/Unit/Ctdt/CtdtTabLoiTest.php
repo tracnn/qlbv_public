@@ -193,7 +193,10 @@ class CtdtTabLoiTest extends TestCase
         // Va nhan phai la "Loi chan gui" chu khong phai "So loi": so_loi CHI dem loi muc
         // chan, con badge tren tab Loi dem CA canh bao - hai con so khac nhau ma cung mot
         // nhan thi nguoi doc se tuong mot trong hai cho dang hong.
-        $nguon = file_get_contents(base_path('resources/views/bhyt/ctdt/detail.blade.php'));
+        //
+        // Tu Task 1, khoi tom tat nay nam trong partials/than-chi-tiet.blade.php (duoc
+        // detail.blade.php @include vao), khong con nam thang trong detail.blade.php.
+        $nguon = file_get_contents(base_path('resources/views/bhyt/ctdt/partials/than-chi-tiet.blade.php'));
 
         $this->assertContains(
             'Lỗi chặn gửi',
