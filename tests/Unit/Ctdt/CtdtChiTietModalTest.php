@@ -265,7 +265,9 @@ class CtdtChiTietModalTest extends TestCase
         // ma nhanh nay hua chua.
         $nguon = $this->nguon('index.blade.php');
 
-        $this->assertContains('ajax.reload(null, false)', $nguon,
+        // Khang dinh cau LENH chu khong phai chuoi: 'ajax.reload(null, false)' con xuat hien
+        // trong chinh chu thich ngay tren no, nen thieu dau ';' thi test xanh gia.
+        $this->assertContains('ajax.reload(null, false);', $nguon,
             'phai giu bo loc va trang dang xem khi nap lai bang');
     }
 
