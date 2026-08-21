@@ -184,9 +184,9 @@ class CtdtNhanTruong
      * khai rieng 60 dong: cung mot the SO_CCCD xuat hien o ca bon nhom.
      */
     const HAU_TO = [
-        '_CHA_MTH' => ' (cha của mẹ thay thế)',
+        '_CHA_MTH' => ' (cha của mang thai hộ)',
         '_CHA_NND' => ' (cha của người đẻ)',
-        '_MTH'     => ' (mẹ thay thế)',
+        '_MTH'     => ' (mang thai hộ)',
         '_NND'     => ' (người đẻ)',
     ];
 

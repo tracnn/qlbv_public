@@ -223,8 +223,8 @@ khi lệch.
 
 Tương tự: CT03 dùng `MA_DANTOC`, nội trú dùng `MA_DAN_TOC`.
 
-**(3) Giấy chứng sinh có bốn nhóm người phân biệt bằng hậu tố.** `_NND` người đẻ · `_MTH` mẹ
-thay thế (mang thai hộ) · `_CHA_MTH` cha của mẹ thay thế · `_CHA_NND` cha của người đẻ. Gán nhầm
+**(3) Giấy chứng sinh có bốn nhóm người phân biệt bằng hậu tố.** `_NND` người đẻ · `_MTH`
+mang thai hộ · `_CHA_MTH` cha của mang thai hộ · `_CHA_NND` cha của người đẻ. Gán nhầm
 một thẻ sang nhóm khác nghĩa là dữ liệu người này ghi vào chỗ người kia.
 
 **Lưới an toàn:** `tests/Unit/Ctdt/CtdtToanVenTest.php` canh ba nơi khai cột (migration ↔

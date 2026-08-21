@@ -155,7 +155,7 @@ class CtdtDetailTabsTest extends TestCase
         // '_CHA_MTH' PHAI duoc thu TRUOC '_MTH', khong thi 'HO_TEN_CHA_MTH' bi cat sai
         // thanh 'HO_TEN_CHA' va gan nhan cua nhom nguoi khac - du lieu cua nguoi nay hien
         // duoi ten nguoi kia. Day la rang buoc quan trong nhat cua lop nay.
-        $this->assertSame('Họ tên (cha của mẹ thay thế)', CtdtNhanTruong::cua('HO_TEN_CHA_MTH'));
+        $this->assertSame('Họ tên (cha của mang thai hộ)', CtdtNhanTruong::cua('HO_TEN_CHA_MTH'));
         $this->assertSame('Số giấy tờ (cha của người đẻ)', CtdtNhanTruong::cua('SO_CCCD_CHA_NND'));
     }
 
@@ -166,7 +166,7 @@ class CtdtDetailTabsTest extends TestCase
         // (viet lien) deu ton tai. Ho ten nguoi de la truong nguoi dung nhin dau tien tren
         // giay chung sinh, khong the de no roi ve ten the tho.
         $this->assertSame('Họ tên (người đẻ)', CtdtNhanTruong::cua('HOTEN_NND'));
-        $this->assertSame('Họ tên (mẹ thay thế)', CtdtNhanTruong::cua('HOTEN_MTH'));
+        $this->assertSame('Họ tên (mang thai hộ)', CtdtNhanTruong::cua('HOTEN_MTH'));
     }
 
     /** @test */
