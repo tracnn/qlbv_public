@@ -712,6 +712,31 @@ suite `Feature` cho 8 lỗi + 4 đỏ (`Dashboard\*ControllerTest`, `ExampleTest
   trong test. Đừng viết test khẳng định cascade — nó cho cảm giác an tâm giả.
 - PHPUnit 6: `setUp()` **không** có `: void`. PHP 7.4: không dùng cú pháp PHP 8.
 
+### Dashboard `/dashboard/ctdt`
+
+Ba khối, trả lời ba câu hỏi khác nhau:
+
+| Khối | Câu hỏi | Đọc thế nào |
+|---|---|---|
+| Ba hàng đợi | Hệ thống có đang chạy không | Hàng đợi **đầy mà không vơi** = worker của nó chưa chạy. "không đếm được" nghĩa là hàng đợi không dùng driver `database` — **không** phải bằng 0. |
+| Hồ sơ theo trạng thái | Hồ sơ đang kẹt ở đâu | Đủ **9 thanh**, kể cả thanh bằng 0. Tổng phải khớp màn danh sách với cùng bộ lọc. |
+| Tồn đọng | Có gì kẹt lâu không | "Cái cũ nhất đã nằm N ngày" bắt được hàng đợi **chết chậm** — thứ mà biểu đồ sản lượng không chỉ ra, vì số nạp mỗi ngày vẫn bình thường. |
+| Sản lượng theo ngày | Nạp/gửi được bao nhiêu | Ngày không có hồ sơ vẫn có mặt trên trục với giá trị 0. Một ngày hệ thống chết sẽ là một hố trên đường, không phải một đoạn bị nuốt mất. |
+| Mã lỗi hay gặp | Đi sửa dữ liệu ở đâu | Nhãn có ghi **(chặn)** hay **(cảnh báo)**. Chỉ mã mức *chặn* mới thực sự giữ hồ sơ lại. |
+
+Số đếm theo trạng thái dùng lại `CtdtDanhSach::truyVan(['trang_thai_gui' => ...])` — cùng bản
+SQL với bộ lọc trên màn danh sách, nên hai màn hình không bao giờ nói khác nhau.
+
+Khối "Mã lỗi hay gặp" (`CtdtDashboardService::chatLuong()`) lọc hồ sơ theo bộ lọc màn hình
+trước (ngày nạp, dịch vụ, cơ sở), lấy id rồi mới join sang bảng `ctdt_loi` — bộ lọc là bộ lọc
+theo HỒ SƠ, không áp thẳng lên bảng lỗi được. Danh sách id hồ sơ có trần `20000` phần tử
+(`CtdtDashboardService::TRAN_ID_HO_SO`); vượt trần là **cắt bớt**, không phải lỗi — số liệu khi
+đó chỉ còn là một phần, không còn đại diện cho toàn bộ bộ lọc. Xếp hạng mã lỗi và xếp hạng cơ
+sở đều có trần số hàng (mặc định 15) — không trần thì một hệ thống có hàng trăm mã lỗi sẽ đổ
+hết ra biểu đồ và không ai đọc được gì. Mỗi hàng mã lỗi tách riêng theo `muc_do` (`chan` |
+`canh_bao`): một mã lỗi mức cảnh báo xếp trên một mã lỗi mức chặn sẽ đưa người đi tập huấn sửa
+sai chỗ — cảnh báo không giữ hồ sơ nào lại, còn chặn thì có.
+
 ---
 
 ## 11. Tài liệu liên quan

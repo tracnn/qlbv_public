@@ -120,4 +120,43 @@ class CtdtRouteTest extends TestCase
 
         return null;
     }
+
+    /** @test */
+    public function menu_co_loi_vao_man_dashboard_chung_tu()
+    {
+        // Mot man hinh chi vao duoc bang cach GO URL thi khong ai mo - ma day la thu duy
+        // nhat bat duoc worker chet. XML3176 co muc "Dashboard loi XML" trong menu; nhanh
+        // nay quen them muc tuong ung cho chung tu dien tu.
+        $this->assertTrue(
+            $this->coMucMenu(config('adminlte.menu', []), 'bhyt.ctdt.dashboard'),
+            'Menu phai co muc tro toi route bhyt.ctdt.dashboard'
+        );
+    }
+
+    /** De quy vi menu adminlte long nhau nhieu tang. */
+    private function coMucMenu($menu, $tenRoute)
+    {
+        foreach ((array) $menu as $muc) {
+            if (!is_array($muc)) {
+                continue;
+            }
+
+            $route = isset($muc['route']) ? $muc['route'] : null;
+
+            // 'route' co the la chuoi hoac mang [ten, tham so].
+            if (is_array($route)) {
+                $route = isset($route[0]) ? $route[0] : null;
+            }
+
+            if ($route === $tenRoute) {
+                return true;
+            }
+
+            if (isset($muc['submenu']) && $this->coMucMenu($muc['submenu'], $tenRoute)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 }

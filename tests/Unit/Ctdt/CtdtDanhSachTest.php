@@ -385,20 +385,19 @@ class CtdtDanhSachTest extends TestCase
         // test do ngay.
         $moiTrangThai = array_keys(CtdtTrangThaiGui::NHAN);
 
-        $lanBat = array_values(array_diff($moiTrangThai, [CtdtTrangThaiGui::GUI_TAT]));
-        $lanTat = array_values(array_diff($moiTrangThai, [CtdtTrangThaiGui::CHUA_GUI]));
-
-        // De quen la do: moi khoa trong NHAN phai duoc so o it nhat mot trong hai lan chay.
-        $this->assertEmpty(
-            array_diff($moiTrangThai, array_merge($lanBat, $lanTat)),
-            'Co trang thai trong CtdtTrangThaiGui::NHAN khong duoc so o lan chay nao'
-        );
-
+        // So DU CA CHIN trang thai o CA HAI lan chay. Ban truoc cua test nay bo GUI_TAT o
+        // lan BAT va bo CHUA_GUI o lan TAT - tuc chinh no che mat loi: hai bo loc do sinh
+        // Y HET mot cau SQL vi locTrangThai() khong hoi cau hinh submit_enabled, nen bo mot
+        // cai ra khoi moi lan chay thi khong bao gio dem trung. Tren dashboard hai thanh nam
+        // canh nhau, mot ho so bi dem VAO CA HAI va tong chin thanh > tong so ho so.
+        //
+        // GUI_TAT va CHUA_GUI phan biet nhau bang CAU HINH chu khong bang du lieu, nen bo
+        // loc phai hoi cau hinh: nhanh khong khop cau hinh phai tra tap RONG.
         config(['organization.chung_tu_dien_tu.submit_enabled' => true]);
-        $this->soKhopBoLocVoiTrangThai($lanBat, 'submit_enabled = true');
+        $this->soKhopBoLocVoiTrangThai($moiTrangThai, 'submit_enabled = true');
 
         config(['organization.chung_tu_dien_tu.submit_enabled' => false]);
-        $this->soKhopBoLocVoiTrangThai($lanTat, 'submit_enabled = false');
+        $this->soKhopBoLocVoiTrangThai($moiTrangThai, 'submit_enabled = false');
     }
 
     /**

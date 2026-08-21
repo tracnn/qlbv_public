@@ -137,20 +137,60 @@ class CtdtDanhSach
         if ($trangThai === CtdtTrangThaiGui::GUI_HONG) {
             // Da ky, cong CHUA tra loi, nhung co submit_error: da thu gui va hong truoc khi
             // toi cong.
-            return $q->where(function ($q2) {
-                    $q2->whereNull('ma_ket_qua')->orWhere('ma_ket_qua', '')->orWhere('ma_ket_qua', '0');
-                })
+            return self::chuaCoKetQua($q)
                 ->whereNotNull('submit_error')
                 ->where('submit_error', '<>', '');
         }
 
         // GUI_TAT va CHUA_GUI cung la "da ky, chua co ket qua tu cong VA chua tung gui hong".
-        return $q->where(function ($q2) {
-                $q2->whereNull('ma_ket_qua')->orWhere('ma_ket_qua', '')->orWhere('ma_ket_qua', '0');
-            })
+        //
+        // Hai trang thai nay phan biet nhau bang CAU HINH chu khong bang du lieu ban ghi:
+        // CtdtTrangThaiGui::cua() hoi submit_enabled o dung cho nay. Neu o day khong hoi
+        // cung cai co do thi hai bo loc sinh Y HET mot cau SQL, va MOT ho so bi dem VAO CA
+        // HAI - tren man danh sach khong ai thay (moi lan chon mot bo loc), nhung tren
+        // dashboard hai thanh nam canh nhau va tong chin thanh lon hon tong so ho so.
+        //
+        // Nhanh khong khop cau hinh phai tra tap RONG, khong phai tra cung tap: cau hinh
+        // dang BAT thi khong ho so nao mang trang thai "Chuc nang gui dang tat" ca, va bao
+        // mot con so khac 0 o do se day nguoi van hanh di bat mot cau hinh da bat san.
+        $guiBat = (bool) config('organization.chung_tu_dien_tu.submit_enabled', false);
+
+        if ($trangThai === CtdtTrangThaiGui::GUI_TAT && $guiBat) {
+            return $q->whereRaw('1 = 0');
+        }
+
+        if ($trangThai !== CtdtTrangThaiGui::GUI_TAT && !$guiBat) {
+            return $q->whereRaw('1 = 0');
+        }
+
+        return self::chuaCoKetQua($q)
             ->where(function ($q2) {
                 $q2->whereNull('submit_error')->orWhere('submit_error', '');
             });
+    }
+
+    /**
+     * Ap dieu kien "chua co ket qua tu cong BHXH" len mot builder da co san.
+     *
+     * NOI DUY NHAT dinh nghia dieu nay - goi lai o locTrangThai() (GUI_HONG, GUI_TAT,
+     * CHUA_GUI), o CtdtDashboardService::tonDong(), VA o CtdtImport::nhatVaXepHang() (lenh
+     * nen quyet dinh ho so nao duoc TU DONG gui len cong BHXH). Viet lai dieu kien nay o noi
+     * khac la dung dung nguyen ly da vi pham hai lan: mot lan o dashboard (bo sot '0'), va
+     * ban o CtdtImport tung la mot ban sao doc lap truoc khi duoc hop nhat ve day.
+     *
+     * VI SAO CA '0': cong BHXH la he ngoai, ta khong kiem soat duoc no tra gia tri gi truoc
+     * khi co ket qua that. Chuoi rong VA chuoi '0' deu la "chua co ket qua" - phai khop
+     * CHINH XAC voi !empty($hoSo->ma_ket_qua) cua CtdtTrangThaiGui::cua(), vi PHP coi
+     * empty('0') === true.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder $q
+     * @return \Illuminate\Database\Eloquent\Builder cung $q, de goi noi tiep duoc
+     */
+    public static function chuaCoKetQua($q)
+    {
+        return $q->where(function ($q2) {
+            $q2->whereNull('ma_ket_qua')->orWhere('ma_ket_qua', '')->orWhere('ma_ket_qua', '0');
+        });
     }
 
     /**

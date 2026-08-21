@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Cache;
 use App\Services\Ctdt\CtdtImporter;
 use App\Models\BHYT\Ctdt\CtdtHoSo;
 use App\Models\BHYT\Ctdt\CtdtLichSuGui;
+use App\Services\Ctdt\CtdtDanhSach;
 use App\Services\Ctdt\CtdtQuyetDinhGui;
 use App\Services\Ctdt\CtdtXepHangKyGui;
 
@@ -504,17 +505,15 @@ class CtdtImport extends Command
         // doc lap se lech voi nenKy() vao ngay ai do sua mot trong hai.
         //
         // "Chua co ket qua" o day PHAI khop CHINH XAC voi !empty($hoSo->ma_ket_qua) cua
-        // CtdtTrangThaiGui::cua() - va voi dung quy uoc CtdtDanhSach.php da lap: NULL, chuoi
-        // rong VA chuoi '0' deu la "chua co ket qua" (PHP coi empty('0') === true). Bo sot
-        // '0' se khien mot ho so cong BHXH tra ma_ket_qua = '0' bi coi la "da co ket qua" va
-        // VINH VIEN khong duoc lenh nay nhat lai, trong khi man danh sach van hien no la
-        // "Cho gui"/"Gui that bai" - cong BHXH la he ngoai, ta khong kiem soat duoc no tra ve
-        // gi.
-        $ungVien = CtdtHoSo::whereNotNull('checked_at')
-            ->where('so_loi', '=', 0)
-            ->where(function ($q) {
-                $q->whereNull('ma_ket_qua')->orWhere('ma_ket_qua', '')->orWhere('ma_ket_qua', '0');
-            })
+        // CtdtTrangThaiGui::cua(). Goi lai CtdtDanhSach::chuaCoKetQua() - NOI DUY NHAT dinh
+        // nghia dieu nay (NULL, chuoi rong, chuoi '0' deu la "chua co ket qua"; PHP coi
+        // empty('0') === true). Bo sot '0' se khien mot ho so cong BHXH tra ma_ket_qua = '0'
+        // bi coi la "da co ket qua" va VINH VIEN khong duoc lenh nay nhat lai, trong khi man
+        // danh sach van hien no la "Cho gui"/"Gui that bai" - cong BHXH la he ngoai, ta khong
+        // kiem soat duoc no tra ve gi.
+        $ungVien = CtdtDanhSach::chuaCoKetQua(
+                CtdtHoSo::whereNotNull('checked_at')->where('so_loi', '=', 0)
+            )
             // BAT BIEN CUA LENH NEN: chi TU DONG gui ho so ma cong CHUA TUNG duoc goi cho no.
             // Da goi mot lan roi ma chua co ket qua ro rang thi phai de NGUOI quyet dinh gui
             // lai - bang nut tren man chi tiet, co mat nguoi doc log va doi soat voi cong.
