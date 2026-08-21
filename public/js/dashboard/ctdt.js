@@ -24,7 +24,14 @@
                 // Khong dem duoc KHAC voi bang 0. Bao "0 job" o day la noi doi voi nguoi doc.
                 soJob = '<span class="text-muted">không đếm được</span>';
             } else if (hd.so_job > 0) {
+                // TUOI moi la dau hieu worker chet, khong phai SO LUONG: mot hang doi khoe
+                // dang ban cung co job dang cho, nhung no tieu het trong vai giay.
                 soJob = '<span class="hang-doi-chet">' + hd.so_job + ' job đang chờ</span>';
+
+                if (hd.cho_lau_nhat_phut !== null && hd.cho_lau_nhat_phut !== undefined) {
+                    soJob += '<br><span class="hang-doi-chet">job cũ nhất đã chờ '
+                        + hd.cho_lau_nhat_phut + ' phút</span>';
+                }
             } else {
                 soJob = '<span class="text-green">trống</span>';
             }
@@ -68,6 +75,13 @@
     }
 
     function veSanLuong(kq) {
+        $('#canh-bao-san-luong').html(kq.truc_bi_rut_ngan
+            ? '<div class="alert alert-warning" style="padding:6px 10px">'
+                + 'Khoảng ngày dài hơn 366 ngày nên trục đã bị cắt: '
+                + 'biểu đồ chỉ vẽ 366 ngày đầu.'
+                + '</div>'
+            : '');
+
         Highcharts.chart('chart-san-luong', {
             chart: { type: 'line' },
             title: { text: null },
@@ -81,6 +95,16 @@
     }
 
     function veChatLuong(kq) {
+        // NOI RA khi so lieu chi con mot phan: mot bieu do ve tren tap da bi cat ma khong
+        // bao gi thi doc y het mot bieu do day du.
+        $('#canh-bao-chat-luong').html(kq.bi_cat
+            ? '<div class="alert alert-warning" style="padding:6px 10px">'
+                + 'Khoảng ngày này vượt trần hồ sơ của màn này. '
+                + 'Biểu đồ chỉ tính trên những hồ sơ MỚI NHẤT, '
+                + 'không phải toàn bộ. Thu hẹp khoảng ngày để xem đầy đủ.'
+                + '</div>'
+            : '');
+
         Highcharts.chart('chart-ma-loi', {
             chart: { type: 'bar' },
             title: { text: null },
@@ -115,7 +139,27 @@
         });
     }
 
+    // Mot truy van 500 - hoac qua 120 giay tren may chu PHP 128MB - de lai mot div RONG:
+    // khong co ca chu "Dang tai...". Doc y het "khong co ma loi nao", tuc dung nguoc su that.
+    function baoLoi(o) {
+        $(o).html('<div class="text-danger">Không tải được dữ liệu. '
+            + 'Thử thu hẹp khoảng ngày rồi bấm Xem lại.</div>');
+    }
+
+    function dangTai(o) {
+        $(o).html('<div class="text-muted">Đang tải…</div>');
+    }
+
     function tai() {
+        dangTai('#khoi-hang-doi');
+        dangTai('#khoi-ton-dong');
+        dangTai('#chart-trang-thai');
+        dangTai('#chart-san-luong');
+        dangTai('#chart-ma-loi');
+        dangTai('#chart-cskcb');
+        $('#canh-bao-chat-luong').empty();
+        $('#canh-bao-san-luong').empty();
+
         $.getJSON(R.sucKhoe, thamSo())
             .done(function (kq) {
                 veHangDoi(kq.hang_doi);
@@ -123,11 +167,23 @@
                 veTonDong(kq.ton_dong);
             })
             .fail(function () {
-                $('#khoi-hang-doi').html('<div class="text-danger">Không tải được dữ liệu</div>');
+                baoLoi('#khoi-hang-doi');
+                baoLoi('#khoi-ton-dong');
+                baoLoi('#chart-trang-thai');
             });
 
-        $.getJSON(R.sanLuong, thamSo()).done(veSanLuong);
-        $.getJSON(R.chatLuong, thamSo()).done(veChatLuong);
+        $.getJSON(R.sanLuong, thamSo())
+            .done(veSanLuong)
+            .fail(function () {
+                baoLoi('#chart-san-luong');
+            });
+
+        $.getJSON(R.chatLuong, thamSo())
+            .done(veChatLuong)
+            .fail(function () {
+                baoLoi('#chart-ma-loi');
+                baoLoi('#chart-cskcb');
+            });
     }
 
     $(function () {

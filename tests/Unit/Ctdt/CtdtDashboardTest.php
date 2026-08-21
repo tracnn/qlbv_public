@@ -300,29 +300,176 @@ class CtdtDashboardTest extends TestCase
     }
 
     /** @test */
-    public function chat_luong_khong_gop_chan_voi_canh_bao_vao_mot_hang()
-    {
-        // Mot ma loi muc CANH BAO xep tren mot ma loi muc CHAN se dua nguoi ta di sua sai
-        // cho: canh bao khong chan ho so nao ca, con chan thi co.
-        $kq = (new CtdtDashboardService())->chatLuong([]);
-
-        $this->assertArrayHasKey('theo_ma_loi', $kq);
-
-        foreach ($kq['theo_ma_loi'] as $dong) {
-            $this->assertArrayHasKey('muc_do', $dong,
-                'Moi hang phai noi ro muc do, khong duoc gop chung');
-        }
-    }
-
-    /** @test */
     public function chat_luong_co_tran_so_dong()
     {
         // Xep hang khong tran thi mot he thong co 400 ma loi se do het ra bieu do va khong
         // ai doc duoc gi.
-        $nguon = file_get_contents(base_path('app/Services/Dashboard/CtdtDashboardService.php'));
+        //
+        // Ban truoc cua test nay DOC VAN BAN ma nguon roi assertContains('limit(') - mot
+        // test xanh gia: xoa CA HAI ->limit($soDong) di no van xanh, vi chuoi 'limit(' con
+        // khop cai limit cua tran id ho so. Gieo du lieu that va dem so hang tra ve.
+        $hoSo = $this->hoSo(['so_loi' => 20]);
 
-        $this->assertContains('limit(', $nguon,
-            'Xep hang ma loi phai co tran so dong');
+        for ($i = 1; $i <= 20; $i++) {
+            $this->ghiLoi($hoSo, ['ma_loi' => 'L' . str_pad($i, 2, '0', STR_PAD_LEFT)]);
+        }
+
+        $kq = (new CtdtDashboardService())->chatLuong([]);
+
+        $this->assertLessThanOrEqual(15, count($kq['theo_ma_loi']),
+            'Xep hang ma loi phai bi cat con toi da 15 hang');
+    }
+
+    /** @test */
+    public function chat_luong_cham_tran_thi_giu_ho_so_MOI_NHAT_va_NOI_RA_la_da_cat()
+    {
+        // Khong co orderBy thi "lay 20000 ho so nao" la KHONG XAC DINH, va voi InnoDB thuc
+        // te giu cai CU NHAT roi cat cai MOI nhat - nguoc han dieu can. Mot man chat luong
+        // du lieu ma cat mat du lieu moi nhat la cat dung phan nguoi ta can nhin.
+        $cu = $this->hoSo(['imported_at' => '2026-01-01 08:00:00', 'so_loi' => 1]);
+        $giua = $this->hoSo(['imported_at' => '2026-06-01 08:00:00', 'so_loi' => 1]);
+        $moi = $this->hoSo(['imported_at' => '2026-08-20 08:00:00', 'so_loi' => 1]);
+
+        $this->ghiLoi($cu, ['ma_loi' => 'CU']);
+        $this->ghiLoi($giua, ['ma_loi' => 'GIUA']);
+        $this->ghiLoi($moi, ['ma_loi' => 'MOI']);
+
+        // Tran = 2 tren ba ho so: bat buoc phai cat mot cai.
+        $kq = (new CtdtDashboardService())->chatLuong(
+            ['tu_ngay' => '2026-01-01', 'den_ngay' => '2026-08-20'], 15, 2
+        );
+
+        $maLoi = array_column($kq['theo_ma_loi'], 'ma_loi');
+
+        $this->assertTrue(in_array('MOI', $maLoi, true), 'Phai giu ho so MOI nhat');
+        $this->assertTrue(in_array('GIUA', $maLoi, true), 'Phai giu ho so moi thu hai');
+        $this->assertFalse(in_array('CU', $maLoi, true),
+            'Phai cat ho so CU nhat, khong duoc cat cai moi nhat');
+
+        $this->assertTrue($kq['bi_cat'],
+            'Cham tran thi phai NOI RA la so lieu chi con mot phan');
+    }
+
+    /** @test */
+    public function chat_luong_theo_cskcb_cung_di_qua_tran_id_ho_so()
+    {
+        // theo_cskcb tung goi truyVan() LAN THU HAI, tuc khong di qua tran - hai bang xep
+        // hang nam canh nhau dem tren hai tap ho so khac nhau, va nguoi doc khong co cach
+        // nao biet.
+        $cu = $this->hoSo(['imported_at' => '2026-01-01 08:00:00', 'macskcb' => 'CU', 'so_loi' => 1]);
+        $moi = $this->hoSo(['imported_at' => '2026-08-20 08:00:00', 'macskcb' => 'MOI', 'so_loi' => 1]);
+
+        $this->ghiLoi($cu);
+        $this->ghiLoi($moi);
+
+        $kq = (new CtdtDashboardService())->chatLuong(
+            ['tu_ngay' => '2026-01-01', 'den_ngay' => '2026-08-20'], 15, 1
+        );
+
+        $cskcb = array_column($kq['theo_cskcb'], 'macskcb');
+
+        $this->assertSame(['MOI'], $cskcb,
+            'theo_cskcb phai dung dung tap id da qua tran, khong duoc truy van lai tu dau');
+    }
+
+    /** @test */
+    public function chat_luong_khong_cham_tran_thi_bi_cat_la_false()
+    {
+        $hoSo = $this->hoSo(['so_loi' => 1]);
+        $this->ghiLoi($hoSo);
+
+        $kq = (new CtdtDashboardService())->chatLuong([]);
+
+        $this->assertFalse($kq['bi_cat'], 'Chua cham tran thi khong duoc bao la da cat');
+    }
+
+    /** @test */
+    public function hang_doi_bao_TUOI_job_cu_nhat_chu_khong_chi_so_luong()
+    {
+        // Chi mot con so job tai mot thoi diem thi khong phan biet duoc dung cai no sinh ra
+        // de phan biet: worker chet ma chua ai nap ho so moi -> 0 job -> man hinh hien xanh
+        // "trong", giong het mot hang doi khoe dang ranh. "Job cu nhat da cho 40 phut" thi
+        // khong doc nham duoc.
+        \Illuminate\Support\Facades\Schema::create('jobs', function ($bang) {
+            $bang->increments('id');
+            $bang->string('queue');
+            $bang->text('payload');
+            $bang->tinyInteger('attempts');
+            $bang->unsignedInteger('reserved_at')->nullable();
+            $bang->unsignedInteger('available_at');
+            $bang->unsignedInteger('created_at');
+        });
+
+        config(['queue.default' => 'database']);
+
+        $tenHangDoi = \App\Services\Ctdt\CtdtHangDoi::kiem();
+
+        \Illuminate\Support\Facades\DB::table('jobs')->insert([
+            'queue' => $tenHangDoi, 'payload' => '{}', 'attempts' => 0,
+            'reserved_at' => null, 'available_at' => time() - 2400,
+            'created_at' => time() - 2400,
+        ]);
+
+        $kq = (new CtdtDashboardService())->sucKhoe([]);
+
+        $theoTen = [];
+        foreach ($kq['hang_doi'] as $hd) {
+            $theoTen[$hd['ten']] = $hd;
+        }
+
+        $this->assertSame(1, $theoTen[$tenHangDoi]['so_job']);
+        $this->assertGreaterThanOrEqual(39, $theoTen[$tenHangDoi]['cho_lau_nhat_phut'],
+            'Job nam 40 phut phai duoc bao la da cho 40 phut');
+
+        // Hang doi rong: khong co job nao thi khong co tuoi nao ca - phai la null, khong
+        // phai 0, vi "0 phut" doc nhu mot job vua vao.
+        foreach ($kq['hang_doi'] as $hd) {
+            if ($hd['ten'] !== $tenHangDoi) {
+                $this->assertSame(0, $hd['so_job']);
+                $this->assertNull($hd['cho_lau_nhat_phut']);
+            }
+        }
+
+        \Illuminate\Support\Facades\Schema::drop('jobs');
+    }
+
+    /** @test */
+    public function khong_dang_nhap_thi_KHONG_doc_duoc_so_lieu_ho_so_benh_nhan()
+    {
+        // Day la so lieu ho so benh nhan. Chieu CHAN khong can nguoi dung gia gi ca - chi
+        // can khong dang nhap. Ba endpoint deu phai bi chan, khong chi mot cai.
+        // Yeu cau JSON thi middleware auth tra 401 chu khong chuyen huong (no chi
+        // redirect khi trinh duyet xin HTML) - kiem dung ma that, dung doan.
+        foreach (['suc-khoe', 'san-luong', 'chat-luong'] as $duong) {
+            $this->getJson('/dashboard/ctdt/' . $duong)->assertStatus(401);
+        }
+
+        $this->get('/dashboard/ctdt')->assertStatus(302);
+    }
+
+    /** @test */
+    public function khung_ngay_cham_tran_366_thi_NOI_RA_da_rut_ngan()
+    {
+        // Tran 366 ngay cat truc AM THAM: ban ghi sau ngay thu 366 duoc gom vao bang tra
+        // cuu roi ROI MAT o vong to khung, va man hinh khong noi gi - nguoi doc tuong minh
+        // dang nhin ca khoang da chon.
+        $kq = (new CtdtDashboardService())->sanLuong([
+            'tu_ngay' => '2020-01-01', 'den_ngay' => '2026-08-20',
+        ]);
+
+        $this->assertCount(366, $kq['ngay'], 'Truc ngay phai bi cat con 366 diem');
+        $this->assertTrue($kq['truc_bi_rut_ngan'],
+            'Cat truc ngay thi phai noi ra, khong duoc cat im lang');
+    }
+
+    /** @test */
+    public function khung_ngay_trong_tran_thi_khong_bao_rut_ngan()
+    {
+        $kq = (new CtdtDashboardService())->sanLuong([
+            'tu_ngay' => '2026-08-01', 'den_ngay' => '2026-08-03',
+        ]);
+
+        $this->assertFalse($kq['truc_bi_rut_ngan']);
     }
 
     /** @test */

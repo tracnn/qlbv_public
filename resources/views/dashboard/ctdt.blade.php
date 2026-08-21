@@ -73,7 +73,10 @@
     <div class="col-md-12">
         <div class="box box-info">
             <div class="box-header with-border"><h3 class="box-title">Sản lượng theo ngày</h3></div>
-            <div class="box-body"><div id="chart-san-luong" class="chart-box"></div></div>
+            <div class="box-body">
+                <div id="canh-bao-san-luong"></div>
+                <div id="chart-san-luong" class="chart-box"></div>
+            </div>
         </div>
     </div>
 </div>
@@ -82,7 +85,12 @@
     <div class="col-md-7">
         <div class="box box-danger">
             <div class="box-header with-border"><h3 class="box-title">Mã lỗi hay gặp</h3></div>
-            <div class="box-body"><div id="chart-ma-loi" class="chart-box"></div></div>
+            <div class="box-body">
+                {{-- Khoi chung cho ca hai bieu do chat luong: so lieu bi cat thi man hinh
+                     phai NOI RA, khong duoc ve mot phan roi de nguoi doc tuong la day du. --}}
+                <div id="canh-bao-chat-luong"></div>
+                <div id="chart-ma-loi" class="chart-box"></div>
+            </div>
         </div>
     </div>
     <div class="col-md-5">

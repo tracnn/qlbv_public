@@ -543,6 +543,18 @@ return [
                             'route'  => 'bhyt.ctdt.import.index',
                             'active' => ['bhyt/ctdt/import*'],
                         ],
+                        [
+                            // Route dashboard/ctdt dùng middleware checkrole:xml-man, trùng
+                            // quyền với menu cha nên không cần khai checkrole riêng - cùng
+                            // khuôn với mục "Dashboard lỗi XML" của XML3176 ở trên.
+                            //
+                            // Không có mục menu thì màn này chỉ vào được bằng cách gõ URL,
+                            // tức không ai mở - mà đây là thứ duy nhất bắt được worker chết.
+                            'text'   => 'Dashboard chứng từ',
+                            'icon'   => 'dashboard',
+                            'route'  => 'bhyt.ctdt.dashboard',
+                            'active' => ['dashboard/ctdt*'],
+                        ],
                     ],
                 ],
                 [

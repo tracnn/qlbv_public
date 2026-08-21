@@ -511,11 +511,9 @@ class CtdtImport extends Command
         // bi coi la "da co ket qua" va VINH VIEN khong duoc lenh nay nhat lai, trong khi man
         // danh sach van hien no la "Cho gui"/"Gui that bai" - cong BHXH la he ngoai, ta khong
         // kiem soat duoc no tra ve gi.
-        $ungVien = CtdtHoSo::whereNotNull('checked_at')
-            ->where('so_loi', '=', 0)
-            ->where(function ($q) {
-                CtdtDanhSach::chuaCoKetQua($q);
-            })
+        $ungVien = CtdtDanhSach::chuaCoKetQua(
+                CtdtHoSo::whereNotNull('checked_at')->where('so_loi', '=', 0)
+            )
             // BAT BIEN CUA LENH NEN: chi TU DONG gui ho so ma cong CHUA TUNG duoc goi cho no.
             // Da goi mot lan roi ma chua co ket qua ro rang thi phai de NGUOI quyet dinh gui
             // lai - bang nut tren man chi tiet, co mat nguoi doc log va doi soat voi cong.
