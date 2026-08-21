@@ -70,7 +70,8 @@ và gửi):**
 | Gọi cổng BHXH, ghi kết quả gửi | `app/Services/Ctdt/CtdtSubmitService.php` |
 | Job ký số, ghi tệp đã ký lên disk `exportCtdt` | `app/Jobs/SignCtdtJob.php` |
 | Job gửi hồ sơ đã ký lên cổng BHXH | `app/Jobs/SubmitCtdtJob.php` |
-| 471 test đơn vị | `tests/Unit/Ctdt/` |
+| Tên ba hàng đợi, một nguồn duy nhất | `app/Services/Ctdt/CtdtHangDoi.php` |
+| 485 test đơn vị | `tests/Unit/Ctdt/` |
 
 **Chưa có (đúng phạm vi, không phải thiếu sót):** xuất Excel, lệnh Console `ctdt:import` quét
 thư mục, dashboard (Giai đoạn 5).
@@ -87,6 +88,12 @@ lý do có trạng thái riêng **"Chưa kiểm"**: hồ sơ chưa đi qua bộ 
 (cột "Trạng thái gửi" trên màn danh sách, và khối tóm tắt trên màn chi tiết) chứ **không** rơi vào
 "Chờ gửi", nên một worker chết là chuyện nhìn thấy được ngay trên màn hình. Xem mục 9, khối
 "Worker hàng đợi — BẮT BUỘC cả ba".
+
+Luật "đã kiểm và sạch chưa" nằm ở **một nơi duy nhất**: `CtdtQuyetDinhGui::nenKy()`. Cả
+`CtdtQuyetDinhGui::nen()`, `CtdtTrangThaiGui::cua()` lẫn `SignCtdtJob::handle()` đều hỏi hàm đó
+thay vì tự viết lại. Trước đây ba nơi chép tay cùng một luật; nới lỏng một bản mà quên hai bản
+kia thì triệu chứng là một hồ sơ hiện "Chưa ký số" vĩnh viễn trên màn danh sách trong khi job ký
+im lặng bỏ qua nó. `CtdtHangDoiTest` khoá ba nơi lại bằng một ma trận `(checked_at, so_loi)`.
 
 Lộ trình 5 giai đoạn và ghi chú chuyển tiếp: xem
 [docs/superpowers/specs/2026-08-19-chung-tu-dien-tu-pl02-design.md](superpowers/specs/2026-08-19-chung-tu-dien-tu-pl02-design.md)
@@ -112,6 +119,14 @@ Khối `chung_tu_dien_tu`. Đây là thứ **người triển khai chỉnh khi c
 
 Đọc trong mã bằng `config('organization.chung_tu_dien_tu.submit_enabled')` — cùng cách
 `SubmitXml3176Job` đọc `config('organization.BHYT.submit_xml_3176_enabled')`.
+
+⚠️ **Ba khoá tên hàng đợi đừng đọc thẳng bằng `config()`** — dùng `CtdtHangDoi::kiem()`,
+`::ky()`, `::gui()`. Hai lý do. Thứ nhất, tên mặc định phải khớp `install_service.bat`, và
+`CtdtCauHinhTest` khoá hai bên lại với nhau qua chính ba hằng số trong `CtdtHangDoi`. Thứ hai,
+`config($khoá, $mặc_định)` **chỉ** lùi về mặc định khi khoá **không tồn tại**; khoá tồn tại
+nhưng giá trị `null` hay chuỗi rỗng — đúng cảnh một người sao chép khối cấu hình rồi xoá giá
+trị — vẫn trả về chính giá trị rỗng đó, và `->onQueue(null)` đẩy job vào hàng đợi `default`
+mà không worker nào nghe. `CtdtHangDoi` xử cả ba kiểu để trống, kể cả chuỗi toàn khoảng trắng.
 
 ⚠️ **`submit_enabled` phải để `false` ở mọi môi trường thử nghiệm.** Cổng thật của BHXH nhận là
 nhận thật, không có đường rút lại. Chỉ bật sau khi đã chạy thử và đối chiếu tay một hồ sơ.
