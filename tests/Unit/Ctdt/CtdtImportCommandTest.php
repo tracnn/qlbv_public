@@ -8,6 +8,7 @@ use Symfony\Component\Console\Output\BufferedOutput;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Bus;
+use Illuminate\Support\Facades\Cache;
 use Tests\TestCase;
 use Tests\Support\DungBangCtdtSqlite;
 use Tests\Support\GoiCtdtMau;
@@ -548,12 +549,46 @@ class CtdtImportCommandTest extends TestCase
     }
 
     /**
+     * Phanh khoa mo coi: --go-khoa phai go duoc Cache::KHOA_LUOT va THOAT NGAY, khong xep
+     * hang ho so nao ca - du co ho so du dieu kien va import_tu_dong_gui dang bat. Neu
+     * --go-khoa lai chay tiep sang nhat/xep hang thi no khong con la lenh cap cuu don gian
+     * nua, ma la mot luot ctdt:import day du nguy trang bang mot co khac.
+     *
+     * @test
+     */
+    public function go_khoa_go_khoa_mo_coi_va_khong_xep_hang_gi_ca()
+    {
+        Bus::fake();
+        Cache::put(CtdtImport::KHOA_LUOT, true, CtdtImport::KHOA_LUOT_PHUT);
+        config(['organization.chung_tu_dien_tu.import_tu_dong_gui' => true]);
+
+        \App\Models\BHYT\Ctdt\CtdtHoSo::create([
+            'ma_ho_so' => 'YT-GO-KHOA', 'dich_vu' => 'CT2025', 'loai_hs' => '39',
+            'macskcb' => '01001', 'imported_at' => now(),
+            'checked_at' => now(), 'so_loi' => 0,
+        ]);
+
+        $maThoat = Artisan::call('ctdt:import', ['--go-khoa' => true]);
+
+        $this->assertSame(0, $maThoat);
+        $this->assertFalse(Cache::has(CtdtImport::KHOA_LUOT), 'Khoa phai duoc go that');
+        Bus::assertNotDispatched(\App\Jobs\SignCtdtJob::class);
+    }
+
+    /**
      * Bit lo hong da biet cua che_do_lien_tuc_co_TRAN_SO_VONG(): test do CHI doc dinh nghia
      * tuy chon, khong chay lenh, nen mot mutation doi `for` thanh `while (true)` van xanh o
-     * do. Day la test HANH VI thay the: chay that --lien-tuc voi --so-vong=3 tren mot thu
-     * muc tam va khang dinh lenh THOAT (khong treo) dung 3 vong - dem qua so lan mot tep mau
-     * duoc nap lai (moi vong quet lai thu muc tam thoi, nen tep con nguyen do --khong-ky
-     * dung truoc buoc ky/gui, khong bi doi di).
+     * do. Day la test HANH VI thay the.
+     *
+     * SUA THEO CODE REVIEW: ban dau test nay goi Artisan::call() TRONG CUNG tien trinh
+     * PHPUnit - neu mutation lam vong lap that su vo han, test khong FAIL ma TREO VINH VIEN,
+     * va vi no nam trong tests/Unit/Ctdt (thu muc nghiem thu ca module moi lan chay) no keo
+     * theo treo ca bo suite. Sua bang cach chay lenh trong MOT TIEN TRINH CON qua proc_open()
+     * (khong can pcntl - PHPUnit 6 tren PHP 7.4 khong co enforceTimeLimit khi thieu pcntl,
+     * va may nay chay Windows nen khong co pcntl), rồi doi co gioi han bang proc_get_status()
+     * - qua han thi proc_terminate() va coi la TREO, bien "treo ca suite" thanh mot assertion
+     * FAIL co kiem soat sau toi da 60 giay. Thu muc tam RONG nen tien trinh con khong dung
+     * toi CSDL that (dsTep() tra ve mang rong, quet() thoat truoc khi cham CtdtHoSo).
      *
      * @test
      */
@@ -561,20 +596,103 @@ class CtdtImportCommandTest extends TestCase
     {
         $thuMuc = $this->thuMucTam();
 
-        $maThoat = Artisan::call('ctdt:import', [
-            '--lien-tuc'   => true,
-            '--so-vong'    => 3,
-            '--nghi'       => 1,
-            '--khong-ky'   => true,
-            '--duong-dan'  => $thuMuc,
-        ]);
+        $ketQua = $this->chayTienTrinhConCoHan([
+            '--lien-tuc',
+            '--so-vong=3',
+            '--nghi=1',
+            '--khong-ky',
+            '--duong-dan=' . $thuMuc,
+        ], 60);
 
-        $this->assertSame(0, $maThoat, 'Lenh phai tu thoat voi ma 0 sau dung so vong');
+        $this->assertFalse($ketQua['treo'], 'Lenh phai TU THOAT trong 60 giay - neu vong lap '
+            . 'khong tu thoat (vi du bi doi thanh while(true)) tien trinh con bi giet cuong '
+            . 'buc va assertion nay FAIL co kiem soat, thay vi treo ca bo test.'
+            . " Dau ra thu duoc truoc khi giet:\n" . $ketQua['dau_ra'] . $ketQua['loi']);
+        $this->assertSame(0, $ketQua['ma_thoat'],
+            'Lenh phai thoat ma 0 sau dung so vong. Loi: ' . $ketQua['loi']);
+        $this->assertContains('Da chay du 3 vong', $ketQua['dau_ra'],
+            'Phai in dung dong tong ket voi dung so vong da chay');
+    }
 
-        $dauRa = Artisan::output();
-        $this->assertContains('Da chay du 3 vong', $dauRa,
-            'Phai in dung dong tong ket voi dung so vong da chay - neu vong lap khong tu'
-            . ' thoat (vi du bi doi thanh while(true)) thi test nay se TREO thay vi that bai');
+    /**
+     * Chay `php artisan ctdt:import <thamSo>` trong mot TIEN TRINH CON, doi toi da $hanGiay
+     * giay. Khong dung pcntl (PHPUnit 6 / PHP 7.4, may Windows khong co pcntl) - poll bang
+     * proc_get_status() moi 200ms, qua han thi proc_terminate() va bao 'treo' => true thay
+     * vi de tien trinh con chay mai lam treo ca tien trinh PHPUnit cha.
+     *
+     * @param  string[] $thamSo   vi du ['--lien-tuc', '--so-vong=3']
+     * @param  int       $hanGiay
+     * @return array{treo: bool, ma_thoat: int|null, dau_ra: string, loi: string}
+     */
+    private function chayTienTrinhConCoHan(array $thamSo, $hanGiay)
+    {
+        // Dang MANG, KHONG dang chuoi: proc_open() voi chuoi lenh tren Windows di qua
+        // cmd.exe, va escapeshellarg() cua PHP tren Windows chi bao trong dau nhay kep chu
+        // khong xu ly dung moi to hop dau \ - gap gia tri co dau \ (moi duong dan Windows
+        // deu co) se ra loi he dieu hanh "The filename, directory name, or volume label
+        // syntax is incorrect" thay vi chay lenh. Dang mang goi thang CreateProcess(), bo
+        // qua ca cmd.exe lan escapeshellarg().
+        $lenh = array_merge([PHP_BINARY, 'artisan', 'ctdt:import'], $thamSo);
+
+        $moTaOng = [
+            0 => ['pipe', 'r'],
+            1 => ['pipe', 'w'],
+            2 => ['pipe', 'w'],
+        ];
+
+        $tienTrinh = proc_open($lenh, $moTaOng, $ong, base_path());
+
+        if (!is_resource($tienTrinh)) {
+            $this->fail('Khong khoi dong duoc tien trinh con: ' . implode(' ', $lenh));
+        }
+
+        fclose($ong[0]);
+        stream_set_blocking($ong[1], false);
+        stream_set_blocking($ong[2], false);
+
+        $batDau = microtime(true);
+        $dauRa = '';
+        $loi = '';
+        $daTreo = false;
+
+        while (true) {
+            $dauRa .= (string) stream_get_contents($ong[1]);
+            $loi .= (string) stream_get_contents($ong[2]);
+
+            $trangThai = proc_get_status($tienTrinh);
+
+            if (!$trangThai['running']) {
+                break;
+            }
+
+            if (microtime(true) - $batDau > $hanGiay) {
+                $daTreo = true;
+                proc_terminate($tienTrinh, 9);
+                // Cho toi da 3 giay de he dieu hanh don dep tien trinh sau khi giet, tranh
+                // proc_close() khoa cung tien trinh chua kip thoat han.
+                $choDon = microtime(true);
+                do {
+                    $trangThai = proc_get_status($tienTrinh);
+                } while ($trangThai['running'] && microtime(true) - $choDon < 3);
+                break;
+            }
+
+            usleep(200000);
+        }
+
+        $dauRa .= (string) stream_get_contents($ong[1]);
+        $loi .= (string) stream_get_contents($ong[2]);
+        fclose($ong[1]);
+        fclose($ong[2]);
+
+        $maThoat = proc_close($tienTrinh);
+
+        return [
+            'treo'     => $daTreo,
+            'ma_thoat' => $daTreo ? null : $maThoat,
+            'dau_ra'   => $dauRa,
+            'loi'      => $loi,
+        ];
     }
 
     /** SignCtdtJob::$maHoSo la protected va khong co getter cong khai. */

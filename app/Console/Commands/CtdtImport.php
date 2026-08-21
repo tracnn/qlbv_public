@@ -39,7 +39,8 @@ class CtdtImport extends Command
         {--khong-gui : Ky nhung khong gui len cong}
         {--lien-tuc : Chay nen lien tuc giong xml3176import:day, tu thoat sau --so-vong vong}
         {--nghi=5 : So giay nghi giua hai vong khi --lien-tuc}
-        {--so-vong=1000 : Tran so vong khi --lien-tuc, lenh tu thoat sau khi chay du}';
+        {--so-vong=1000 : Tran so vong khi --lien-tuc, lenh tu thoat sau khi chay du}
+        {--go-khoa : Go khoa luot mo coi (tien trinh --lien-tuc bi kill -9), roi thoat NGAY - khong quet/nap/xep hang gi ca}';
 
     protected $description = 'Quet thu muc inbox, nap chung tu dien tu PL02';
 
@@ -56,7 +57,9 @@ class CtdtImport extends Command
      * Thoi han khoa luot, tinh bang PHUT (Cache::add nhan phut o Laravel 5.5).
      *
      * Khoa mo coi khi tien trinh ket thuc binh thuong cung duoc xu bang Cache::forget()
-     * trong finally; truong hop bi kill -9 thi nguoi van hanh xoa tay.
+     * trong finally; truong hop bi kill -9 (finally KHONG chay) thi nguoi truc dem go bang
+     * `php artisan ctdt:import --go-khoa` - mot dong ho go duoc, khong can biet Redis hay
+     * tinker, khong dung `cache:clear` (xoa sach cache ca he thong, anh huong module khac).
      *
      * TASK 5 NANG TU 60 LEN 1440: --lien-tuc giu khoa nay SUOT ca vong doi tien trinh (dat
      * MOT LAN truoc vongLap(), mo MOT LAN sau khi vongLap() ket thuc), khong phai suot mot
@@ -64,7 +67,9 @@ class CtdtImport extends Command
      * (~83 phut) CHI RIENG thoi gian nghi, chua tinh thoi gian quet moi vong - da vuot khoi
      * han cu 60 phut. Neu khoa het han GIUA LUC tien trinh con dang chay, mot tien trinh
      * thu hai se Cache::add() thanh cong va chen vao - hai tien trinh cung nhat mot tep len.
-     * 1440 phut (24 gio) con nhieu du dia tren muc toi thieu ~83 phut cua bo mac dinh.
+     * 1440 phut (24 gio) con nhieu du dia tren muc toi thieu ~83 phut cua bo mac dinh - nhung
+     * doi lai, cua so "khoa mo coi" sau mot lan kill -9 cung dai toi 24 gio, do la ly do
+     * --go-khoa ton tai: khong the bat nguoi truc dem doi toi 24 gio.
      */
     const KHOA_LUOT_PHUT = 1440;
 
@@ -100,6 +105,18 @@ class CtdtImport extends Command
 
     public function handle()
     {
+        // --go-khoa DUNG TRUOC MOI THU KHAC, ke ca truoc khi doc --duong-dan: day la lenh
+        // cap cuu cho nguoi truc dem gap khoa mo coi (tien trinh --lien-tuc truoc bi kill
+        // -9 nen finally() khong chay toi Cache::forget()). Chi go khoa roi thoat NGAY -
+        // KHONG quet, KHONG nap, KHONG xep hang gi ca, du co --duong-dan hop le hay khong.
+        if ($this->option('go-khoa')) {
+            Cache::forget(self::KHOA_LUOT);
+            $this->info('Da go khoa ' . self::KHOA_LUOT . '. Khong quet/nap/xep hang gi ca'
+                . ' - chay lai ctdt:import binh thuong (co hoac khong --lien-tuc) de tiep tuc.');
+
+            return 0;
+        }
+
         $thuMuc = $this->option('duong-dan')
             ?: config('organization.chung_tu_dien_tu.import_path');
 
@@ -236,8 +253,8 @@ class CtdtImport extends Command
      * VI SAO khong vut ma thoat cua quet(): quet() tra ve 1 khi mot tep DA XU LY xong (nap
      * thanh cong hoac chuyen sang loi/) nhung khong doi duoc khoi thu muc goc - day la ket
      * qua cua mot vong sua Critical rieng (xem chuyen()), va no bao hieu nguy co nap trung /
-     * gui trung o vong sau. Nhieu vong hong dang duoc gop lai bang each mode "vong nao con
-     * hong thi nho lai" thay vi "vong cuoi quyet dinh": ma thoat cuoi cung phan anh CO tung
+     * gui trung o vong sau. Nhieu vong hong duoc gop lai bang cach "vong nao con hong thi
+     * nho lai" thay vi "vong cuoi quyet dinh": ma thoat cuoi cung phan anh CO tung
      * vong nao gap loai loi nay hay khong trong suot ca tien trinh, chu khong chi vong cuoi
      * cung. nssm/nguoi van hanh doc log dong tong ket, khong doc lai tung dong log cua tung
      * vong.
