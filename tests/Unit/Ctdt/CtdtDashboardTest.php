@@ -220,6 +220,25 @@ class CtdtDashboardTest extends TestCase
         }
     }
 
+    /** @test */
+    public function endpoint_san_luong_tra_du_hai_khoa_that_su_qua_HTTP_layer()
+    {
+        // Khong dang nhap duoc de kiem bang mat trong phien nay, nen bu lai bang mot test
+        // di qua dung duong Route + Middleware + Controller - cung mau voi
+        // endpoint_suc_khoe_tra_du_ba_khoa_that_su_qua_HTTP_layer() o tren.
+        $this->hoSo(['imported_at' => '2026-08-01 08:00:00']);
+
+        $response = $this->actingAs($this->nguoiDungGia())->getJson(
+            '/dashboard/ctdt/san-luong?tu_ngay=2026-08-01&den_ngay=2026-08-01'
+        );
+
+        $response->assertStatus(200)
+            ->assertJsonStructure([
+                'ngay',
+                'chuoi' => [['ten', 'du_lieu']],
+            ]);
+    }
+
     /**
      * User gia thoa CheckRole middleware ma khong dung bang roles trong DB - cung mau
      * FakeAdminUser cua tests/Feature/Dashboard/Xml3176DashboardControllerTest.php.
