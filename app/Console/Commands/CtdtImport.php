@@ -344,10 +344,18 @@ class CtdtImport extends Command
         // Dieu kien o CSDL chi la BO LOC THO de thu hep tap phai doc len; luat that van do
         // CtdtQuyetDinhGui::nenKy() quyet dinh o duoi. Khong nhan doi luat o day: mot ban SQL
         // doc lap se lech voi nenKy() vao ngay ai do sua mot trong hai.
+        //
+        // "Chua co ket qua" o day PHAI khop CHINH XAC voi !empty($hoSo->ma_ket_qua) cua
+        // CtdtTrangThaiGui::cua() - va voi dung quy uoc CtdtDanhSach.php da lap: NULL, chuoi
+        // rong VA chuoi '0' deu la "chua co ket qua" (PHP coi empty('0') === true). Bo sot
+        // '0' se khien mot ho so cong BHXH tra ma_ket_qua = '0' bi coi la "da co ket qua" va
+        // VINH VIEN khong duoc lenh nay nhat lai, trong khi man danh sach van hien no la
+        // "Cho gui"/"Gui that bai" - cong BHXH la he ngoai, ta khong kiem soat duoc no tra ve
+        // gi.
         $ungVien = CtdtHoSo::whereNotNull('checked_at')
             ->where('so_loi', '=', 0)
             ->where(function ($q) {
-                $q->whereNull('ma_ket_qua')->orWhere('ma_ket_qua', '');
+                $q->whereNull('ma_ket_qua')->orWhere('ma_ket_qua', '')->orWhere('ma_ket_qua', '0');
             })
             // Cu truoc moi truoc: ho so nam lau nhat la ho so nguoi ta doi lau nhat.
             ->orderBy('imported_at')

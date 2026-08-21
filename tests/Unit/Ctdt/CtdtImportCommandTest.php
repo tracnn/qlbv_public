@@ -257,6 +257,14 @@ class CtdtImportCommandTest extends TestCase
         // so_loi = 0 cua mot ho so CHUA KIEM khong co nghia la sach - no co nghia la chua ai
         // nhin. Lenh chay ngay sau khi nap, luc bo kiem con dang nam trong hang doi, nen day
         // KHONG phai truong hop hiem: no la truong hop THUONG GAP.
+        //
+        // CANH BAO cho nguoi doc sau: test doc-nguon nay MOT MINH KHONG DU - chuoi
+        // 'CtdtQuyetDinhGui::nenKy' con xuat hien trong mot chu thich khac cua ham (giai
+        // thich tang loc SQL), nen neu ai do xoa mat nhanh goi nenKy() thuc su, test nay VAN
+        // XANH mot cach gia mu. Phan kiem hanh vi that nam o
+        // ho_so_da_kiem_va_sach_duoc_xep_hang_chua_kiem_thi_khong() va dac biet la
+        // ho_so_checked_at_rong_lot_qua_loc_SQL_van_bi_nenKy_chan_lai() - DUNG XOA hai test
+        // do neu con giu test nay.
         $nguon = file_get_contents(base_path('app/Console/Commands/CtdtImport.php'));
 
         $this->assertContains('CtdtQuyetDinhGui::nenKy', $nguon,
@@ -284,6 +292,13 @@ class CtdtImportCommandTest extends TestCase
     {
         // Bat gui tren mot CSDL da co san hang nghin ho so sach se xep tat ca vao hang doi
         // trong MOT vong. Tran o day la thu duy nhat dung giua no va mot dot POST hang loat.
+        //
+        // CANH BAO cho nguoi doc sau: test doc-nguon nay MOT MINH KHONG DU - chuoi
+        // 'TRAN_NHAT' con xuat hien o khai bao hang so va o cau canh bao warn() cham tran,
+        // nen neu ai do xoa mat ->limit(self::TRAN_NHAT) that su khoi cau truy van, test nay
+        // VAN XANH mot cach gia mu. Phan kiem hanh vi that nam o
+        // nhat_ho_so_khong_vuot_tran_du_co_nhieu_ung_vien_hon() - DUNG XOA test do neu con
+        // giu test nay.
         $this->assertGreaterThan(0, CtdtImport::TRAN_NHAT);
 
         $nguon = file_get_contents(base_path('app/Console/Commands/CtdtImport.php'));
@@ -411,6 +426,37 @@ class CtdtImportCommandTest extends TestCase
 
         $this->assertSame(0, $soXep, 'import_tu_dong_gui tat phai khong xep hang gi ca');
         Bus::assertNotDispatched(\App\Jobs\SignCtdtJob::class);
+    }
+
+    /**
+     * Quy uoc CHUNG cua module (CtdtDanhSach.php, CtdtTrangThaiGui::cua()): ma_ket_qua =
+     * '0' la "chua co ket qua", GIONG NULL va chuoi rong - vi PHP coi empty('0') === true.
+     * Bo loc SQL cua nhatVaXepHang() phai khop dung quy uoc nay: neu thieu nhanh
+     * ->orWhere('ma_ket_qua', '0'), mot ho so cong BHXH tra ve ma_ket_qua = '0' se bi coi la
+     * "da co ket qua" va vinh vien khong duoc nhat lai, trong khi man danh sach van hien no
+     * la "Cho gui"/"Gui that bai".
+     *
+     * @test
+     */
+    public function ho_so_ma_ket_qua_bang_0_van_duoc_coi_la_chua_co_ket_qua_va_duoc_xep_hang()
+    {
+        Bus::fake();
+        config(['organization.chung_tu_dien_tu.import_tu_dong_gui' => true]);
+
+        \App\Models\BHYT\Ctdt\CtdtHoSo::create([
+            'ma_ho_so' => 'YT-MAKETQUA-0', 'dich_vu' => 'CT2025', 'loai_hs' => '39',
+            'macskcb' => '01001', 'imported_at' => now(),
+            'checked_at' => now(), 'so_loi' => 0, 'ma_ket_qua' => '0',
+        ]);
+
+        $lenh = new CtdtImportLoRa();
+        $lenh->ganInputTest(new ArrayInput([], $lenh->getDefinition()));
+        $lenh->ganOutputTest(new BufferedOutput());
+        $lenh->nhatVaXepHangCong(sys_get_temp_dir());
+
+        Bus::assertDispatched(\App\Jobs\SignCtdtJob::class, function ($job) {
+            return $this->maHoSoCuaJob($job) === 'YT-MAKETQUA-0';
+        });
     }
 
     /** SignCtdtJob::$maHoSo la protected va khong co getter cong khai. */
