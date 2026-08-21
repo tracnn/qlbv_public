@@ -17,12 +17,25 @@
 - **`FromQuery` chứ không `FromCollection`.** Bảng này phình theo thời gian; nạp cả bảng vào bộ nhớ là cách chắc chắn để máy chủ mới (PHP 128MB) chết.
 - ⛔ **TUYỆT ĐỐI KHÔNG dùng `RefreshDatabase` hay `DatabaseMigrations`.** Hai trait đó gọi `migrate:fresh` — `DROP` toàn bộ bảng. Ngày 2026-08-21 chuyện này đã xảy ra thật và xoá sạch CSDL phát triển `qlbv`. Dùng `Tests\Support\DungBangCtdtSqlite` thay thế; `ChotAnToanCsdlTest` sẽ đỏ nếu ai dùng lại hai trait đó.
 - **Máy phát triển này đã bật `submit_enabled` và đã gửi thật.** Không chạy `SignCtdtJob`, `SubmitCtdtJob`, không chạy worker hàng đợi.
-- **Baseline test:** `tests/Unit/Ctdt` đỏ **đúng một** — `CtdtCauHinhTest::gui_len_cong_mac_dinh_tat`.
+- **Baseline test:** `tests/Unit/Ctdt` → **545 test, đỏ đúng một** — `CtdtCauHinhTest::gui_len_cong_mac_dinh_tat` (đỏ có chủ đích, đừng đụng).
 - Chú thích trong mã viết **không dấu**, tài liệu Markdown viết **có dấu**.
 
-## Phụ thuộc
+## Phụ thuộc — ĐÃ THOẢ
 
-**Task 3 (nhật ký gửi) cần bảng `ctdt_lich_su_gui` từ Giai đoạn 5A Task 1.** Nếu 5A chưa gộp, làm Task 1–2 của kế hoạch này trước, và để Task 3 lại.
+Bảng `ctdt_lich_su_gui` và model `App\Models\BHYT\Ctdt\CtdtLichSuGui` **đã có trên `main`** (Giai đoạn 5A). Task 3 làm được ngay.
+
+## ⚠️ Bộ lọc ngày KHÔNG đến từ ô nhập
+
+Cập nhật 2026-08-21 sau khi đọc lại `index.blade.php`: khoảng ngày **không** lấy từ `$('#tu_ngay').val()`. Nó đến từ biến `ctdtRange` (`index.blade.php:84`), do partial date-range đặt qua `partials.load_data_button`, dạng `'YYYY-MM-DD HH:mm:ss'`:
+
+```javascript
+d.tu_ngay  = ctdtRange.from;
+d.den_ngay = ctdtRange.to;
+```
+
+**Mọi chỗ trong kế hoạch này nhắc `$('#tu_ngay')` / `$('#den_ngay')` đều SAI — dùng `ctdtRange.from` / `ctdtRange.to`.** Đọc sai chỗ này thì tệp xuất mang khoảng ngày khác hẳn màn hình đang hiện, và không có dấu hiệu gì cho tới lúc ai đó ngồi đối chiếu với bản của BHXH.
+
+Ngoài ra `index.blade.php` đã đổi đáng kể ở Giai đoạn 5A (thêm khung modal chi tiết, `@include` partial JS dùng chung, hai cột `render` dựng thẻ bằng DOM API). **Đọc lại tệp trước khi sửa**, đừng dựa vào số dòng ghi trong kế hoạch này.
 
 ## File Structure
 
@@ -779,12 +792,12 @@ Controller — thêm `use App\Exports\CtdtNhatKyGuiExport;` và:
     $('#btn-xuat-nhat-ky').on('click', function (e) {
         e.preventDefault();
         window.location = '{{ route('bhyt.ctdt.xuat.nhat-ky') }}'
-            + '?tu_ngay=' + encodeURIComponent($('#tu_ngay').val() || '')
-            + '&den_ngay=' + encodeURIComponent($('#den_ngay').val() || '');
+            + '?tu_ngay=' + encodeURIComponent(ctdtRange.from || '')
+            + '&den_ngay=' + encodeURIComponent(ctdtRange.to || '');
     });
 ```
 
-⚠️ **Kiểm `id` thật của hai ô ngày trong tệp blade trước khi viết** — chạy `grep -n "tu_ngay\|den_ngay" resources/views/bhyt/ctdt/index.blade.php` và dùng đúng `id` tìm được.
+⚠️ **Khoảng ngày lấy từ `ctdtRange`, không từ ô nhập** — xem khối cảnh báo ở đầu kế hoạch.
 
 - [ ] **Step 6: Chạy cả bộ test và kiểm blade biên dịch**
 
