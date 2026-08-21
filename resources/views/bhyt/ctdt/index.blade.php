@@ -42,9 +42,28 @@
         </div>
     </div>
 </div>
+
+{{-- Modal chi tiet ho so. Than duoc nap bang AJAX tu bhyt.ctdt.detail.than.
+
+     Chi co MOT than chi tiet tren trang nay - than dung dinh danh (#ctdt-tabs,
+     #noi-dung-tab, #btn-ky-va-gui) nen khong duoc mo hai modal chi tiet cung luc. --}}
+<div class="modal fade" id="modal-ctdt" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-xxl" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Đóng">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <h4 class="modal-title">Chi tiết hồ sơ <small id="modal-ctdt-ma"></small></h4>
+            </div>
+            <div class="modal-body" id="modal-ctdt-than"></div>
+        </div>
+    </div>
+</div>
 @stop
 
 @push('after-scripts')
+@include('bhyt.ctdt.partials.js-chi-tiet')
 <script>
 // Khoi tao select2 cho MOI o chon tren trang, ke ca cac o do partial dung chung sinh ra
 // (ma_cskcb). Cac o deu mang class 'select2' nhung class do chi la danh dau - khong goi
@@ -122,7 +141,10 @@ function fetchData(startDate, endDate) {
                         ? ' <span class="nhan-canh-bao" title="Hồ sơ không có mã y tế — nạp lại sẽ tạo bản ghi mới, không ghi đè">⚠</span>'
                         : '';
 
-                    return '<a href="' + url + '">' + $('<div>').text(data).html() + '</a>' + canhBao;
+                    var an = $('<div>').text(data).html();
+
+                    return '<a class="ctdt-mo-chi-tiet" href="' + url + '" data-ma-ho-so="'
+                        + an + '">' + an + '</a>' + canhBao;
                 }
             },
             {
@@ -165,13 +187,61 @@ function fetchData(startDate, endDate) {
 
                     var url = "{{ route('bhyt.ctdt.detail', ['ma_ho_so' => '__MA__']) }}"
                               .replace('__MA__', encodeURIComponent(data));
+                    var an = $('<div>').text(data).html();
 
-                    return '<a class="btn btn-xs btn-default" href="' + url + '">Chi tiết</a>';
+                    return '<a class="btn btn-xs btn-default ctdt-mo-chi-tiet" href="' + url
+                        + '" data-ma-ho-so="' + an + '">Chi tiết</a>';
                 }
             }
         ],
         columnDefs: [{ targets: '_all', defaultContent: '' }]
     });
 }
+
+$(function () {
+    // Mo modal chi tiet. Chan click THUONG thoi - the <a> van giu href that nen ctrl+click
+    // va chuot giua van mo tab moi nhu cu.
+    $(document).on('click', '.ctdt-mo-chi-tiet', function (e) {
+        if (e.ctrlKey || e.metaKey || e.shiftKey || e.which === 2) {
+            return;
+        }
+
+        e.preventDefault();
+
+        var maHoSo = $(this).data('ma-ho-so');
+
+        // Xoa sach than cu TRUOC khi goi mang: de nguyen la moi nguoi dung doc nham ho so
+        // truoc trong luc cho.
+        $('#modal-ctdt-than').html('<p class="text-muted">Đang tải…</p>');
+        $('#modal-ctdt-ma').text(maHoSo);
+        $('#modal-ctdt').modal('show');
+
+        // href da duoc Blade sinh san (encodeURIComponent da ap dung) va route than la
+        // duong dan chi tiet cong '/than'. Neu duong dan chi tiet doi thi phai sua ca route
+        // ben Task 2 lan cho nay.
+        $.get($(this).attr('href') + '/than')
+            .done(function (html) {
+                $('#modal-ctdt-than').html(html);
+                window.ctdtNapTabDau();
+            })
+            .fail(function (xhr) {
+                var loi = xhr.status === 404
+                    ? 'Không tìm thấy hồ sơ này. Có thể nó vừa bị xóa.'
+                    : 'Không tải được chi tiết hồ sơ. Thử lại sau.';
+
+                $('#modal-ctdt-than').html('<p class="text-danger">' + loi + '</p>');
+            });
+    });
+
+    // Man danh sach tu quyet phan ung - xem chu thich trong js-chi-tiet.
+    // ajax.reload(null, false): GIU nguyen bo loc va trang dang xem. Truyen true (hoac bo
+    // tham so) se nhay ve trang 1, va nguoi xu nhieu ho so lien tiep phai loc lai tu dau.
+    $(document).on('ctdt:da-xep-hang ctdt:da-xoa', function () {
+        $('#modal-ctdt').modal('hide');
+        // Dung lai bien ctdtBang da co san trong tep nay (gan o khoang dong 82). Neu no
+        // khong con trong pham vi thi dung $('#ctdt-list').DataTable() - cung mot doi tuong.
+        ctdtBang.ajax.reload(null, false);
+    });
+});
 </script>
 @endpush
