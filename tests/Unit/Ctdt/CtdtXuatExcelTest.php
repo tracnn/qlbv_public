@@ -98,4 +98,27 @@ class CtdtXuatExcelTest extends TestCase
             new CtdtDanhSachExport(CtdtHoSo::query())
         );
     }
+
+    /** @test */
+    public function bang_loi_xuat_ca_muc_chan_lan_canh_bao()
+    {
+        // Chi xuat muc chan la giau mat nua cong viec cua nguoi nhap lieu: canh bao hom nay
+        // la loi chan cua dot siet sau. Nguoi doc phai thay ca hai va tu quyet uu tien.
+        $nguon = file_get_contents(base_path('app/Exports/CtdtLoiExport.php'));
+
+        $this->assertNotContains("where('muc_do', 'chan')", $nguon,
+            'Khong duoc loc bo canh bao');
+        $this->assertContains('Mức độ', $nguon,
+            'Phai co cot Muc do de nguoi doc tu quyet uu tien');
+    }
+
+    /** @test */
+    public function bang_loi_giu_ma_ho_so_o_moi_dong()
+    {
+        // Mot dong loi khong co ma ho so la mot dong khong ai di sua duoc. Bang nay duoc in
+        // ra dua cho nguoi nhap lieu, tach hoan toan khoi man hinh.
+        $xuat = new \App\Exports\CtdtLoiExport(\App\Models\BHYT\Ctdt\CtdtHoSo::query());
+
+        $this->assertContains('Mã hồ sơ', $xuat->headings());
+    }
 }

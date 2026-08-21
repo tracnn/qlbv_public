@@ -23,6 +23,9 @@
             <button type="button" id="btn-xuat-danh-sach" class="btn btn-success btn-sm">
                 <i class="fa fa-file-excel-o"></i> Xuất danh sách
             </button>
+            <button type="button" id="btn-xuat-loi" class="btn btn-warning btn-sm">
+                <i class="fa fa-file-excel-o"></i> Xuất bảng lỗi
+            </button>
         </div>
         <div class="table-responsive">
             <table class="table display table-hover responsive wrap datatable dtr-inline" width="100%" id="ctdt-list" style="width:100%">
@@ -240,6 +243,10 @@ $(function () {
     // khac han bang dang hien, va nguoi dung se tuong man hinh sai.
     $('#btn-xuat-danh-sach').on('click', function () {
         window.location = '{{ route('bhyt.ctdt.xuat.danh-sach') }}?' + $.param(thamSoLoc());
+    });
+
+    $('#btn-xuat-loi').on('click', function () {
+        window.location = '{{ route('bhyt.ctdt.xuat.loi') }}?' + $.param(thamSoLoc());
     });
 
     // Mo modal chi tiet. Chan click THUONG thoi - the <a> van giu href that nen ctrl+click

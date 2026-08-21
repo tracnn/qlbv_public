@@ -21,6 +21,7 @@ use App\Models\BHYT\Ctdt\CtdtLoi;
 use App\Services\Ctdt\CtdtQuyetDinhGui;
 use App\Services\Ctdt\CtdtXepHangKyGui;
 use App\Exports\CtdtDanhSachExport;
+use App\Exports\CtdtLoiExport;
 use Maatwebsite\Excel\Facades\Excel;
 
 /**
@@ -143,6 +144,17 @@ class BHYTCtdtController extends Controller
 
         return Excel::download(
             new CtdtDanhSachExport(CtdtDanhSach::truyVan($this->locTu($request))),
+            $ten
+        );
+    }
+
+    /** Tai bang loi de dua nguoi nhap lieu di sua */
+    public function xuatLoi(Request $request)
+    {
+        $ten = 'loi-chung-tu-dien-tu-' . now()->format('Ymd-His') . '.xlsx';
+
+        return Excel::download(
+            new CtdtLoiExport(CtdtDanhSach::truyVan($this->locTu($request))),
             $ten
         );
     }
