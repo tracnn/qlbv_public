@@ -64,6 +64,15 @@
         </div>
     </div>
 </div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="box box-info">
+            <div class="box-header with-border"><h3 class="box-title">Sản lượng theo ngày</h3></div>
+            <div class="box-body"><div id="chart-san-luong" class="chart-box"></div></div>
+        </div>
+    </div>
+</div>
 @endsection
 
 @push('after-scripts')
@@ -71,7 +80,8 @@
 <script>
     window.CTDT_DASHBOARD_CFG = {
         routes: {
-            sucKhoe: '{{ route('bhyt.ctdt.dashboard.suc-khoe') }}'
+            sucKhoe: '{{ route('bhyt.ctdt.dashboard.suc-khoe') }}',
+            sanLuong: '{{ route('bhyt.ctdt.dashboard.san-luong') }}'
         }
     };
 </script>

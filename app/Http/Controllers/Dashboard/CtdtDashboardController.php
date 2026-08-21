@@ -30,6 +30,11 @@ class CtdtDashboardController extends Controller
         return response()->json($this->service->sucKhoe($this->locTu($request)));
     }
 
+    public function sanLuong(Request $request)
+    {
+        return response()->json($this->service->sanLuong($this->locTu($request)));
+    }
+
     /**
      * Bo loc dung DUNG dinh dang cua CtdtDanhSach::truyVan(), de man dashboard va man danh
      * sach luon noi cung mot thu.

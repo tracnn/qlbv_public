@@ -117,4 +117,82 @@ class CtdtDashboardService
                 : (int) now()->diffInDays(\Carbon\Carbon::parse($cuNhat)),
         ];
     }
+
+    /**
+     * So ho so nap moi ngay, tach theo dich vu.
+     *
+     * DUNG KHUNG NGAY DAY DU chu khong chi nhung ngay co du lieu: GROUP BY chi tra ve ngay
+     * CO ban ghi, va ve thang len bieu do duong thi mot ngay he thong chet hoan toan se bien
+     * mat khoi truc - duong noi lien tu ngay truoc sang ngay sau, trong y het nhu khong co
+     * gi xay ra.
+     *
+     * @param  array $loc
+     * @return array ngay, chuoi
+     */
+    public function sanLuong(array $loc)
+    {
+        $tuNgay  = !empty($loc['tu_ngay']) ? $loc['tu_ngay'] : now()->subDays(29)->format('Y-m-d');
+        $denNgay = !empty($loc['den_ngay']) ? $loc['den_ngay'] : now()->format('Y-m-d');
+
+        $ngay = $this->khungNgay($tuNgay, $denNgay);
+
+        $tho = CtdtDanhSach::truyVan(array_merge($loc, [
+                'tu_ngay' => $tuNgay, 'den_ngay' => $denNgay,
+            ]))
+            ->select(
+                'dich_vu',
+                DB::raw('DATE(imported_at) as ngay'),
+                DB::raw('COUNT(*) as so_luong')
+            )
+            ->groupBy('dich_vu', DB::raw('DATE(imported_at)'))
+            ->get();
+
+        // Gom ve dang [dich_vu][ngay] => so_luong de tra cuu O(1) khi to khung. Cat chuoi
+        // ve 10 ky tu dau: SQLite co the tra kem gio, MySQL thi khong - dung chung mot cach
+        // cat cho ca hai thay vi doi ham rieng cua tung driver.
+        $bang = [];
+
+        foreach ($tho as $dong) {
+            $bang[(string) $dong->dich_vu][substr((string) $dong->ngay, 0, 10)] = (int) $dong->so_luong;
+        }
+
+        $chuoi = [];
+
+        foreach ($bang as $dichVu => $theoNgay) {
+            $duLieu = [];
+
+            foreach ($ngay as $n) {
+                $duLieu[] = isset($theoNgay[$n]) ? $theoNgay[$n] : 0;
+            }
+
+            $chuoi[] = ['ten' => $dichVu, 'du_lieu' => $duLieu];
+        }
+
+        return ['ngay' => $ngay, 'chuoi' => $chuoi];
+    }
+
+    /**
+     * Moi ngay tu $tuNgay den $denNgay, ke ca ngay khong co du lieu.
+     *
+     * @return array chuoi 'Y-m-d'
+     */
+    protected function khungNgay($tuNgay, $denNgay)
+    {
+        $moc = \Carbon\Carbon::parse($tuNgay)->startOfDay();
+        $het = \Carbon\Carbon::parse($denNgay)->startOfDay();
+        $ngay = [];
+
+        // Tran cung 366 ngay: mot khoang ngay go nham (vd. 2020-2026) se sinh hang nghin
+        // diem va lam trinh duyet dung hinh - tren may chu gioi han PHP 128MB thi con truoc
+        // do nua.
+        $dem = 0;
+
+        while ($moc->lte($het) && $dem < 366) {
+            $ngay[] = $moc->format('Y-m-d');
+            $moc = $moc->copy()->addDay();
+            $dem++;
+        }
+
+        return $ngay;
+    }
 }

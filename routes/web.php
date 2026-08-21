@@ -194,6 +194,8 @@ Route::group(['middleware' => ['auth']], function () {
              ->name('bhyt.ctdt.dashboard');
         Route::get('dashboard/ctdt/suc-khoe', 'Dashboard\CtdtDashboardController@sucKhoe')
              ->name('bhyt.ctdt.dashboard.suc-khoe');
+        Route::get('dashboard/ctdt/san-luong', 'Dashboard\CtdtDashboardController@sanLuong')
+             ->name('bhyt.ctdt.dashboard.san-luong');
     });
 
     Route::get('/', 'HomeController@index')->name('home');

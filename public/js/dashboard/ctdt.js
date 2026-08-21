@@ -67,6 +67,19 @@
         );
     }
 
+    function veSanLuong(kq) {
+        Highcharts.chart('chart-san-luong', {
+            chart: { type: 'line' },
+            title: { text: null },
+            xAxis: { categories: kq.ngay },
+            yAxis: { title: { text: 'Số hồ sơ' }, allowDecimals: false },
+            credits: { enabled: false },
+            series: $.map(kq.chuoi, function (c) {
+                return { name: c.ten, data: c.du_lieu };
+            })
+        });
+    }
+
     function tai() {
         $.getJSON(R.sucKhoe, thamSo())
             .done(function (kq) {
@@ -77,6 +90,8 @@
             .fail(function () {
                 $('#khoi-hang-doi').html('<div class="text-danger">Không tải được dữ liệu</div>');
             });
+
+        $.getJSON(R.sanLuong, thamSo()).done(veSanLuong);
     }
 
     $(function () {

@@ -169,6 +169,57 @@ class CtdtDashboardTest extends TestCase
         $this->assertCount(3, $kq['hang_doi']);
     }
 
+    /** @test */
+    public function san_luong_khong_bo_trong_ngay_khong_co_ho_so()
+    {
+        // GROUP BY chi tra ve ngay CO du lieu. Ve thang len bieu do duong thi mot ngay he
+        // thong chet hoan toan se bien mat khoi truc - duong noi lien tu ngay truoc sang
+        // ngay sau, trong y het nhu khong co gi xay ra.
+        $this->hoSo(['imported_at' => '2026-08-01 08:00:00']);
+        $this->hoSo(['imported_at' => '2026-08-03 08:00:00']);
+
+        $kq = (new CtdtDashboardService())->sanLuong([
+            'tu_ngay' => '2026-08-01', 'den_ngay' => '2026-08-03',
+        ]);
+
+        $this->assertSame(['2026-08-01', '2026-08-02', '2026-08-03'], $kq['ngay'],
+            'Ngay khong co ho so van phai co mat, voi gia tri 0');
+    }
+
+    /** @test */
+    public function san_luong_tach_theo_dich_vu()
+    {
+        // Ba dich vu CT2025 / GBT / GCS di ba duong khac nhau len cong. Gop chung mot duong
+        // thi mot dich vu chet han cung khong nhin ra.
+        $this->hoSo(['dich_vu' => 'CT2025', 'imported_at' => '2026-08-01 08:00:00']);
+        $this->hoSo(['dich_vu' => 'GBT', 'imported_at' => '2026-08-01 09:00:00']);
+
+        $kq = (new CtdtDashboardService())->sanLuong([
+            'tu_ngay' => '2026-08-01', 'den_ngay' => '2026-08-01',
+        ]);
+
+        $ten = array_column($kq['chuoi'], 'ten');
+
+        $this->assertContains('CT2025', $ten);
+        $this->assertContains('GBT', $ten);
+    }
+
+    /** @test */
+    public function san_luong_do_dai_moi_chuoi_bang_so_ngay()
+    {
+        // Lech mot phan tu la moi diem tu do tro di roi sai ngay tren truc - va bieu do van
+        // trong hoan toan binh thuong.
+        $this->hoSo(['imported_at' => '2026-08-02 08:00:00']);
+
+        $kq = (new CtdtDashboardService())->sanLuong([
+            'tu_ngay' => '2026-08-01', 'den_ngay' => '2026-08-05',
+        ]);
+
+        foreach ($kq['chuoi'] as $chuoi) {
+            $this->assertCount(count($kq['ngay']), $chuoi['du_lieu']);
+        }
+    }
+
     /**
      * User gia thoa CheckRole middleware ma khong dung bang roles trong DB - cung mau
      * FakeAdminUser cua tests/Feature/Dashboard/Xml3176DashboardControllerTest.php.
