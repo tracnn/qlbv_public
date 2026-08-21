@@ -18,7 +18,7 @@ class CtdtImport extends Command
 {
     protected $signature = 'ctdt:import
         {--duong-dan= : Thu muc quet, mac dinh lay tu cau hinh}
-        {--gioi-han=200 : Tran so TEP xu ly moi luot}
+        {--gioi-han= : Tran so TEP xu ly moi luot, mac dinh lay tu cau hinh (200 neu khong cau hinh)}
         {--dry-run : Chi liet ke, khong nap khong doi gi}
         {--khong-ky : Nap va kiem, dung truoc buoc ky}
         {--khong-gui : Ky nhung khong gui len cong}';
@@ -85,7 +85,7 @@ class CtdtImport extends Command
         }
 
         try {
-            return $this->quet($thuMuc, (int) $this->option('gioi-han'), $khoDe);
+            return $this->quet($thuMuc, $this->gioiHanHieuLuc(), $khoDe);
         } finally {
             if (!$khoDe) {
                 Cache::forget(self::KHOA_LUOT);
@@ -119,6 +119,7 @@ class CtdtImport extends Command
 
         $dsMaHoSo = [];
         $soHong = 0;
+        $soKhongDoiDuoc = 0;
 
         foreach ($tep as $duongDan) {
             if ($khoDe) {
@@ -128,15 +129,31 @@ class CtdtImport extends Command
 
             $kq = $this->napMotTep($duongDan, $thuMuc);
 
-            if ($kq === null) {
+            if ($kq['ma_ho_so'] === null) {
                 $soHong++;
-                continue;
+            } else {
+                $dsMaHoSo = array_merge($dsMaHoSo, $kq['ma_ho_so']);
             }
 
-            $dsMaHoSo = array_merge($dsMaHoSo, $kq);
+            if (!$kq['da_chuyen']) {
+                // Tep DA duoc xu ly (nap thanh cong hoac chuyen sang loi/) nhung khong doi
+                // duoc khoi thu muc goc. No van nam o goc, nen luot quet sau se NHAT LAI dung
+                // no va xu ly lan nua - voi ho so da nap thanh cong, do la nap trung.
+                $soKhongDoiDuoc++;
+            }
         }
 
         $this->info('Nap xong: ' . count($dsMaHoSo) . ' ho so, ' . $soHong . ' tep hong.');
+
+        if ($soKhongDoiDuoc > 0) {
+            // Ma thoat KHAC 0: day la loai loi ma khong ai duoc phep im lang di qua. nssm va
+            // nguoi van hanh phai thay dieu nay, khong chi log.
+            $this->error($soKhongDoiDuoc . ' tep DA XU LY nhung KHONG DOI duoc khoi thu muc'
+                . ' goc - luot quet sau se gap lai chung. Kiem tra quyen ghi / tep bi khoa,'
+                . ' roi doi tay hoac chay lai.');
+
+            return 1;
+        }
 
         return 0;
     }
@@ -144,7 +161,9 @@ class CtdtImport extends Command
     /**
      * Nap mot tep, chuyen no sang da-nap/ hoac loi/.
      *
-     * @return array|null danh sach ma ho so, hoac null khi tep hong
+     * @return array{ma_ho_so: array|null, da_chuyen: bool}
+     *   ma_ho_so: danh sach ma ho so khi thanh cong, null khi tep hong
+     *   da_chuyen: co doi duoc tep khoi thu muc goc hay khong (du thanh cong hay hong)
      */
     protected function napMotTep($duongDan, $thuMuc)
     {
@@ -155,17 +174,17 @@ class CtdtImport extends Command
             // de luot sau khong vap lai dung no.
             Log::error('ctdt:import loi khi xu ly ' . $duongDan . ': ' . $e->getMessage());
             $this->error(basename($duongDan) . ': ' . $e->getMessage());
-            $this->chuyen($duongDan, $thuMuc, self::THU_MUC_LOI);
+            $daChuyen = $this->chuyen($duongDan, $thuMuc, self::THU_MUC_LOI);
 
-            return null;
+            return ['ma_ho_so' => null, 'da_chuyen' => $daChuyen];
         }
 
         if (!$kq->thanhCong) {
             Log::error('ctdt:import nap that bai ' . $duongDan . ': ' . $kq->lyDoThatBai);
             $this->error(basename($duongDan) . ': ' . $kq->lyDoThatBai);
-            $this->chuyen($duongDan, $thuMuc, self::THU_MUC_LOI);
+            $daChuyen = $this->chuyen($duongDan, $thuMuc, self::THU_MUC_LOI);
 
-            return null;
+            return ['ma_ho_so' => null, 'da_chuyen' => $daChuyen];
         }
 
         if (!empty($kq->dsGhiDeDaGui)) {
@@ -179,9 +198,20 @@ class CtdtImport extends Command
         $this->line(basename($duongDan) . ': ' . $kq->soThanhCong . ' ho so, '
             . $kq->soThatBai . ' hong');
 
-        $this->chuyen($duongDan, $thuMuc, self::THU_MUC_DA_NAP);
+        $daChuyen = $this->chuyen($duongDan, $thuMuc, self::THU_MUC_DA_NAP);
 
-        return $kq->dsMaHoSo;
+        if (!$daChuyen) {
+            // CRITICAL: ho so NAY DA VAO CSDL roi. Neu im lang o day, luot sau se nap lai
+            // dung tep nay - va voi ho so roi se duoc ky/gui (Task 4/5), do la mot lan POST
+            // that THU HAI len cong BHXH cho cung mot ho so.
+            $this->error(basename($duongDan) . ': DA NAP THANH CONG vao CSDL nhung KHONG'
+                . ' DOI duoc khoi thu muc goc. Luot quet sau se nap lai. Kiem tra quyen ghi'
+                . ' / tep bi khoa boi chuong trinh khac.');
+            Log::error('ctdt:import da nap ' . $duongDan . ' nhung khong doi duoc khoi thu'
+                . ' muc goc - nguy co nap trung o luot sau');
+        }
+
+        return ['ma_ho_so' => $kq->dsMaHoSo, 'da_chuyen' => $daChuyen];
     }
 
     /**
@@ -215,7 +245,14 @@ class CtdtImport extends Command
         return array_values($tim);
     }
 
-    /** Chuyen tep sang thu muc con, tao thu muc neu chua co */
+    /**
+     * Chuyen tep sang thu muc con, tao thu muc neu chua co.
+     *
+     * @return bool THANH CONG hay khong. Goi noi CHUA doc gia tri tra ve la mot loi -
+     *   rename() hong (AV khoa tep, thieu quyen ghi, o mang chap) truoc day chi vao
+     *   Log::error roi bi lang quen, va tep van nam nguyen o thu muc goc de luot sau nap
+     *   lai chinh no.
+     */
     protected function chuyen($duongDan, $thuMuc, $thuMucCon)
     {
         $dich = rtrim($thuMuc, '\\/') . DIRECTORY_SEPARATOR . $thuMucCon;
@@ -223,7 +260,7 @@ class CtdtImport extends Command
         if (!is_dir($dich) && !@mkdir($dich, 0775, true) && !is_dir($dich)) {
             Log::error('ctdt:import khong tao duoc thu muc ' . $dich);
 
-            return;
+            return false;
         }
 
         $tepDich = $dich . DIRECTORY_SEPARATOR . basename($duongDan);
@@ -238,6 +275,32 @@ class CtdtImport extends Command
 
         if (!@rename($duongDan, $tepDich)) {
             Log::error('ctdt:import khong chuyen duoc ' . $duongDan . ' sang ' . $tepDich);
+
+            return false;
         }
+
+        return true;
+    }
+
+    /**
+     * Gia tri hieu luc cua --gioi-han: uu tien tuy chon dong lenh, roi den cau hinh
+     * organization.chung_tu_dien_tu.import_gioi_han, roi moi den 200.
+     *
+     * Dung ?: chu KHONG dung config($khoa, $macDinh): dang hai tham so cua config() chi
+     * lui ve macDinh khi KHOA KHONG TON TAI, chu khong lui khi khoa ton tai voi gia tri
+     * null - va organization.php co the co dong 'import_gioi_han' => null trong mot ban
+     * cau hinh loi.
+     *
+     * @return int
+     */
+    protected function gioiHanHieuLuc()
+    {
+        $tuyChon = $this->option('gioi-han');
+
+        if ($tuyChon !== null && $tuyChon !== '') {
+            return (int) $tuyChon;
+        }
+
+        return (int) (config('organization.chung_tu_dien_tu.import_gioi_han') ?: 200);
     }
 }
