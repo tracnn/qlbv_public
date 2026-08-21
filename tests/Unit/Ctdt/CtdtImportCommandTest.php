@@ -429,6 +429,36 @@ class CtdtImportCommandTest extends TestCase
     }
 
     /**
+     * Hanh vi that cua phanh tay: tep DUNG-GUI phai chan duocGui() du import_tu_dong_gui
+     * DANG BAT - day la ly do coDung() phai duoc hoi TRUOC phep hoi config trong duocGui(),
+     * khong phai chi ton tai o dau do trong ham.
+     *
+     * @test
+     */
+    public function tep_co_dung_chan_nhatVaXepHang_du_import_tu_dong_gui_dang_bat()
+    {
+        Bus::fake();
+        config(['organization.chung_tu_dien_tu.import_tu_dong_gui' => true]);
+
+        \App\Models\BHYT\Ctdt\CtdtHoSo::create([
+            'ma_ho_so' => 'YT-CO-DUNG', 'dich_vu' => 'CT2025', 'loai_hs' => '39',
+            'macskcb' => '01001', 'imported_at' => now(),
+            'checked_at' => now(), 'so_loi' => 0,
+        ]);
+
+        $thuMuc = $this->thuMucTam();
+        touch($thuMuc . DIRECTORY_SEPARATOR . CtdtImport::TEP_CO_DUNG);
+
+        $lenh = new CtdtImportLoRa();
+        $lenh->ganInputTest(new ArrayInput([], $lenh->getDefinition()));
+        $lenh->ganOutputTest(new BufferedOutput());
+        $soXep = $lenh->nhatVaXepHangCong($thuMuc);
+
+        $this->assertSame(0, $soXep, 'Co tep DUNG-GUI thi khong duoc xep hang gi ca');
+        Bus::assertNotDispatched(\App\Jobs\SignCtdtJob::class);
+    }
+
+    /**
      * Quy uoc CHUNG cua module (CtdtDanhSach.php, CtdtTrangThaiGui::cua()): ma_ket_qua =
      * '0' la "chua co ket qua", GIONG NULL va chuoi rong - vi PHP coi empty('0') === true.
      * Bo loc SQL cua nhatVaXepHang() phai khop dung quy uoc nay: neu thieu nhanh
@@ -457,6 +487,94 @@ class CtdtImportCommandTest extends TestCase
         Bus::assertDispatched(\App\Jobs\SignCtdtJob::class, function ($job) {
             return $this->maHoSoCuaJob($job) === 'YT-MAKETQUA-0';
         });
+    }
+
+    /** @test */
+    public function tep_co_dung_chan_ngay_buoc_gui()
+    {
+        // Mot tien trinh song mai GIU CONFIG TRONG BO NHO. Sua import_tu_dong_gui thanh
+        // false KHONG an thua cho toi khi ai do nssm restart - va mot cai phanh chi an sau
+        // khi khoi dong lai thi khong phai la phanh. Nguoi truc dem phai dung duoc bang mot
+        // thao tac ho lam duoc: tao mot tep rong.
+        $thuMuc = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'ctdt-thu-' . mt_rand();
+        mkdir($thuMuc);
+
+        $lenh = new CtdtImport();
+
+        $this->assertFalse($lenh->coDung($thuMuc), 'Chua co tep co thi khong duoc dung');
+
+        touch($thuMuc . DIRECTORY_SEPARATOR . CtdtImport::TEP_CO_DUNG);
+
+        $this->assertTrue($lenh->coDung($thuMuc),
+            'Co tep DUNG-GUI thi phai dung ngay, khong cho khoi dong lai dich vu');
+
+        unlink($thuMuc . DIRECTORY_SEPARATOR . CtdtImport::TEP_CO_DUNG);
+        rmdir($thuMuc);
+    }
+
+    /** @test */
+    public function che_do_lien_tuc_co_TRAN_SO_VONG()
+    {
+        // PHP chay dai han o gioi han 128MB se phinh. Thoat chu dong de nssm dung lai ban
+        // sach thi khac han bi OOM giet giua luc dang goi cong BHXH.
+        $macDinh = (new CtdtImport())->getDefinition()->getOption('so-vong')->getDefault();
+
+        $this->assertNotNull($macDinh, 'Phai co tran so vong');
+        $this->assertGreaterThan(0, (int) $macDinh);
+    }
+
+    /** @test */
+    public function che_do_lien_tuc_co_nghi_giua_hai_vong()
+    {
+        // Khong nghi la mot vong lap ban CPU va do log khong ngung.
+        $macDinh = (new CtdtImport())->getDefinition()->getOption('nghi')->getDefault();
+
+        $this->assertGreaterThan(0, (int) $macDinh);
+    }
+
+    /** @test */
+    public function dry_run_KHONG_duoc_chay_lien_tuc()
+    {
+        // --dry-run la de nguoi ta NHIN mot lan roi quyet dinh. Gap voi --lien-tuc thi no do
+        // log mai ma khong lam gi ca - va che mat dong log that.
+        $nguon = file_get_contents(base_path('app/Console/Commands/CtdtImport.php'));
+
+        $this->assertContains('dry-run', $nguon);
+        $this->assertRegExp(
+            '/lien-tuc.{0,400}dry-run|dry-run.{0,400}lien-tuc/s',
+            $nguon,
+            'Phai co cho tu choi ket hop --dry-run voi --lien-tuc'
+        );
+    }
+
+    /**
+     * Bit lo hong da biet cua che_do_lien_tuc_co_TRAN_SO_VONG(): test do CHI doc dinh nghia
+     * tuy chon, khong chay lenh, nen mot mutation doi `for` thanh `while (true)` van xanh o
+     * do. Day la test HANH VI thay the: chay that --lien-tuc voi --so-vong=3 tren mot thu
+     * muc tam va khang dinh lenh THOAT (khong treo) dung 3 vong - dem qua so lan mot tep mau
+     * duoc nap lai (moi vong quet lai thu muc tam thoi, nen tep con nguyen do --khong-ky
+     * dung truoc buoc ky/gui, khong bi doi di).
+     *
+     * @test
+     */
+    public function che_do_lien_tuc_thoat_dung_so_vong_da_dat_khong_treo()
+    {
+        $thuMuc = $this->thuMucTam();
+
+        $maThoat = Artisan::call('ctdt:import', [
+            '--lien-tuc'   => true,
+            '--so-vong'    => 3,
+            '--nghi'       => 1,
+            '--khong-ky'   => true,
+            '--duong-dan'  => $thuMuc,
+        ]);
+
+        $this->assertSame(0, $maThoat, 'Lenh phai tu thoat voi ma 0 sau dung so vong');
+
+        $dauRa = Artisan::output();
+        $this->assertContains('Da chay du 3 vong', $dauRa,
+            'Phai in dung dong tong ket voi dung so vong da chay - neu vong lap khong tu'
+            . ' thoat (vi du bi doi thanh while(true)) thi test nay se TREO thay vi that bai');
     }
 
     /** SignCtdtJob::$maHoSo la protected va khong co getter cong khai. */

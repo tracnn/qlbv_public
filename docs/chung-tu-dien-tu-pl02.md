@@ -4,7 +4,9 @@
 > ban hành kèm công văn BHXH Việt Nam 2025.
 >
 > Mọi `file:line` trích từ mã nguồn thực tế; khi mã thay đổi cần đối chiếu lại.
-> Cập nhật: 2026-08-20 — **Giai đoạn 1 (nền dữ liệu), 2A (nền nạp), 2B (ba màn hình), 3 (bộ kiểm lỗi) và 4 (ký số và gửi) đã hoàn tất.**
+> Cập nhật: 2026-08-21 — **Giai đoạn 1 (nền dữ liệu), 2A (nền nạp), 2B (ba màn hình), 3 (bộ kiểm
+> lỗi), 4 (ký số và gửi) đã hoàn tất; Giai đoạn 5A (lệnh Console `ctdt:import`, kể cả chế độ
+> chạy liên tục) đã hoàn tất.**
 
 ---
 
@@ -71,10 +73,10 @@ và gửi):**
 | Job ký số, ghi tệp đã ký lên disk `exportCtdt` | `app/Jobs/SignCtdtJob.php` |
 | Job gửi hồ sơ đã ký lên cổng BHXH | `app/Jobs/SubmitCtdtJob.php` |
 | Tên ba hàng đợi, một nguồn duy nhất | `app/Services/Ctdt/CtdtHangDoi.php` |
-| 485 test đơn vị | `tests/Unit/Ctdt/` |
+| Lệnh Console quét thư mục + nạp + xếp hàng ký-gửi, chạy một lượt hoặc liên tục | `app/Console/Commands/CtdtImport.php` |
+| 519 test đơn vị | `tests/Unit/Ctdt/` |
 
-**Chưa có (đúng phạm vi, không phải thiếu sót):** xuất Excel, lệnh Console `ctdt:import` quét
-thư mục, dashboard (Giai đoạn 5).
+**Chưa có (đúng phạm vi, không phải thiếu sót):** xuất Excel, dashboard (Giai đoạn 5B trở đi).
 
 **Từ Giai đoạn 4, module đã gọi mạng thật** — `SubmitCtdtJob` gửi hồ sơ đã ký lên cổng BHXH.
 Sự an toàn khi triển khai không nằm ở chỗ module chưa biết gọi mạng, mà ở chỗ
@@ -421,6 +423,40 @@ Ký số và gửi để **hai hàng đợi riêng** là có chủ đích: ký h
 HSM không phản hồi) còn gửi hỏng vì mạng. Gộp chung thì một lần mạng chập sẽ kéo theo ba lần ký
 lại — thao tác tốn thời gian nhất trong chuỗi.
 
+### `ctdt:import --lien-tuc` — chế độ chạy nền, giống `xml3176import:day` nhưng có ba cái phanh
+
+Mặc định `ctdt:import` chạy **một lượt rồi thoát** (dùng cho cron / chạy tay). Với `--lien-tuc`,
+lệnh lặp lại việc quét trong một tiến trình nssm sống lâu, giống `xml3176import:day` — nhưng
+lệnh này **POST thật lên cổng BHXH** chứ không chỉ ghi tệp, nên có thêm ba cái phanh mà
+`xml3176import:day` không có:
+
+1. **Tự thoát sau `--so-vong` vòng** (`xml3176import:day` dùng `while (true)` chạy mãi). PHP
+   chạy dài hạn ở giới hạn 128MB sẽ phình; tự thoát để nssm dựng lại một tiến trình sạch thì
+   khác hẳn bị OOM giết giữa lúc đang gọi cổng — lúc đó không ai biết cổng đã nhận hay chưa.
+   `--so-vong` mặc định `1000`, `--nghi` (giây nghỉ giữa hai vòng) mặc định `5`.
+2. **Tệp cờ dừng `DUNG-GUI`** đặt trong thư mục inbox (`CtdtImport::TEP_CO_DUNG`). Một tiến
+   trình sống mãi giữ cấu hình trong bộ nhớ, nên sửa `import_tu_dong_gui` thành `false` không ăn
+   thua cho tới khi ai đó khởi động lại dịch vụ nssm — một cái phanh chỉ ăn sau khi khởi động
+   lại thì không phải là phanh. Người trực đêm dừng được bằng một thao tác họ làm được: tạo một
+   tệp rỗng tên `DUNG-GUI` trong thư mục inbox. Lệnh vẫn tiếp tục nạp và kiểm bình thường, chỉ
+   dừng bước xếp hàng ký-gửi; xoá tệp đó đi để gửi lại.
+3. **Từ chối kết hợp `--dry-run` với `--lien-tuc`.** `--dry-run` là để nhìn một lần rồi quyết
+   định; ghép với `--lien-tuc` thì nó đọ log mãi mà không làm gì cả, và che mất dòng log thật
+   của các lệnh khác. Lệnh thoát mã khác 0 kèm thông điệp từ chối, không chạy vòng lặp nào.
+
+⚠️ **Khoá chống hai lượt chạy chồng nhau (`KHOA_LUOT`) được đặt MỘT LẦN trước vòng lặp, mở MỘT
+LẦN sau khi vòng lặp kết thúc** — không đặt/mở trong từng vòng, nếu không vòng thứ hai sẽ tự
+thấy khoá của chính mình và bỏ qua vĩnh viễn. Thời hạn khoá (`KHOA_LUOT_PHUT`) phải luôn lớn hơn
+hẳn tổng thời gian sống dự kiến của tiến trình (`--so-vong × --nghi` cộng thời gian quét mỗi
+vòng) — nếu không, khoá hết hạn giữa lúc tiến trình vẫn đang chạy và một tiến trình thứ hai chen
+được vào, hai tiến trình cùng nhặt một tệp lên.
+
+Chạy thử ngắn, an toàn (không ký, thư mục tạm, ba vòng):
+
+```bash
+php artisan ctdt:import --lien-tuc --so-vong=3 --nghi=2 --khong-ky --duong-dan=storage/app/ctdt-thu
+```
+
 ---
 
 ## 10. Kiểm thử
@@ -429,7 +465,7 @@ lại — thao tác tốn thời gian nhất trong chuỗi.
 php vendor/bin/phpunit tests/Unit/Ctdt
 ```
 
-Kỳ vọng `OK (471 tests)` — **trừ một test đỏ CÓ CHỦ ĐÍCH trên máy đã chạy thật**, xem ngay dưới.
+Kỳ vọng `OK (518 tests)` — **trừ một test đỏ CÓ CHỦ ĐÍCH trên máy đã chạy thật**, xem ngay dưới.
 
 ### `MA_YTE` KHÔNG bắt buộc — đừng thêm lại
 

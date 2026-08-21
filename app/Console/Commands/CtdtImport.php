@@ -15,17 +15,31 @@ use App\Services\Ctdt\CtdtXepHangKyGui;
  * Quet thu muc inbox, nap moi tep XML tim duoc, roi nhat moi ho so du dieu kien de xep
  * hang ky - gui (xem nhatVaXepHang()).
  *
- * PHAM VI TASK NAY DUNG O NAP + XEP HANG KY - GUI: che do chay lien tuc (--lien-tuc) la
- * Task 5, --lien-tuc CHUA duoc doc o day.
+ * HAI CHE DO. Mac dinh chay MOT LUOT roi thoat (giong truoc day) - dung cho cron/task
+ * scheduler hoac chay tay. Voi --lien-tuc, lenh chay giong xml3176import:day: lap lai
+ * quet trong mot tien trinh nssm song lau, nghi --nghi giay giua hai vong - nhung KHAC o
+ * ba diem, vi lenh nay POST that len cong BHXH chu khong chi ghi tep:
+ *
+ *   1. TU THOAT sau --so-vong vong (xml3176import:day dung `while (true)` chay mai). PHP
+ *      chay dai han o gioi han 128MB se phinh; thoat chu dong de nssm dung lai mot tien
+ *      trinh SACH thi khac han bi OOM giet GIUA LUC dang goi cong - luc do khong ai biet
+ *      cong da nhan hay chua.
+ *   2. Tep co TEP_CO_DUNG trong thu muc inbox la phanh tay nguoi truc dem tao duoc bang
+ *      tay (xem coDung()) - khong phu thuoc config trong bo nho cua tien trinh dang chay.
+ *   3. --dry-run bi TU CHOI ket hop voi --lien-tuc: --dry-run la de nguoi ta NHIN mot lan
+ *      roi quyet dinh, ghep voi --lien-tuc thi no do log mai ma khong lam gi ca.
  */
 class CtdtImport extends Command
 {
     protected $signature = 'ctdt:import
         {--duong-dan= : Thu muc quet, mac dinh lay tu cau hinh}
         {--gioi-han= : Tran so TEP xu ly moi luot, mac dinh lay tu cau hinh (200 neu khong cau hinh)}
-        {--dry-run : Chi liet ke, khong nap khong doi gi}
+        {--dry-run : Chi liet ke, khong nap khong doi gi. KHONG duoc ket hop voi --lien-tuc}
         {--khong-ky : Nap va kiem, dung truoc buoc ky}
-        {--khong-gui : Ky nhung khong gui len cong}';
+        {--khong-gui : Ky nhung khong gui len cong}
+        {--lien-tuc : Chay nen lien tuc giong xml3176import:day, tu thoat sau --so-vong vong}
+        {--nghi=5 : So giay nghi giua hai vong khi --lien-tuc}
+        {--so-vong=1000 : Tran so vong khi --lien-tuc, lenh tu thoat sau khi chay du}';
 
     protected $description = 'Quet thu muc inbox, nap chung tu dien tu PL02';
 
@@ -43,11 +57,31 @@ class CtdtImport extends Command
      *
      * Khoa mo coi khi tien trinh ket thuc binh thuong cung duoc xu bang Cache::forget()
      * trong finally; truong hop bi kill -9 thi nguoi van hanh xoa tay.
+     *
+     * TASK 5 NANG TU 60 LEN 1440: --lien-tuc giu khoa nay SUOT ca vong doi tien trinh (dat
+     * MOT LAN truoc vongLap(), mo MOT LAN sau khi vongLap() ket thuc), khong phai suot mot
+     * luot quet nhu che do mot lan. Mac dinh --so-vong=1000 x --nghi=5 giay da la 5000 giay
+     * (~83 phut) CHI RIENG thoi gian nghi, chua tinh thoi gian quet moi vong - da vuot khoi
+     * han cu 60 phut. Neu khoa het han GIUA LUC tien trinh con dang chay, mot tien trinh
+     * thu hai se Cache::add() thanh cong va chen vao - hai tien trinh cung nhat mot tep len.
+     * 1440 phut (24 gio) con nhieu du dia tren muc toi thieu ~83 phut cua bo mac dinh.
      */
-    const KHOA_LUOT_PHUT = 60;
+    const KHOA_LUOT_PHUT = 1440;
 
     /** Tran so ho so nhat len xep hang moi vong */
     const TRAN_NHAT = 200;
+
+    /**
+     * Tep dat trong thu muc inbox de DUNG BUOC GUI ngay vong sau.
+     *
+     * VI SAO KHONG dung config: tien trinh chay lien tuc giu config trong bo nho, nen sua
+     * import_tu_dong_gui thanh false khong an thua cho toi khi ai do nssm restart. Mot cai
+     * phanh chi an sau khi khoi dong lai thi khong phai la phanh.
+     *
+     * VI SAO la TEP chu khong phai khoa cache: nguoi truc dem tao duoc mot tep rong. Ho
+     * khong sua duoc PHP, va co the khong vao duoc Redis.
+     */
+    const TEP_CO_DUNG = 'DUNG-GUI';
 
     /** @var CtdtImporter */
     protected $importer;
@@ -92,8 +126,26 @@ class CtdtImport extends Command
         }
 
         try {
+            if ($this->option('lien-tuc')) {
+                if ($khoDe) {
+                    // --dry-run la de nguoi ta NHIN mot lan roi quyet dinh. Gap voi
+                    // --lien-tuc thi no do log mai ma khong lam gi ca, va che mat dong log
+                    // that cua nhung lenh khac.
+                    $this->error('Khong ket hop --dry-run voi --lien-tuc duoc.');
+
+                    return 1;
+                }
+
+                return $this->vongLap($thuMuc, $this->gioiHanHieuLuc());
+            }
+
             return $this->quet($thuMuc, $this->gioiHanHieuLuc(), $khoDe);
         } finally {
+            // Khoa luot dat NGOAI vong lap (Cache::add o tren, chi mot lan) va mo NGOAI
+            // vong lap (o day, sau khi vongLap() da chay het --so-vong vong). Neu mo trong
+            // than vong lap, vong thu hai se tu thay khoa cua chinh minh va bo qua vinh
+            // vien - Cache::add() chi tra true lan dau, tra false moi lan sau vi khoa da
+            // duoc mo lai truoc do.
             if (!$khoDe) {
                 Cache::forget(self::KHOA_LUOT);
             }
@@ -169,6 +221,72 @@ class CtdtImport extends Command
 
             return 1;
         }
+
+        return 0;
+    }
+
+    /**
+     * Chay lien tuc, giong xml3176import:day - nhung TU THOAT sau --so-vong.
+     *
+     * VI SAO tu thoat chu khong `while (true)`: PHP chay dai han o gioi han 128MB se phinh,
+     * va viec du an da phai co lenh jobs:restart-stuck cho thay hang doi tung ket that.
+     * Thoat chu dong de nssm dung lai mot tien trinh sach thi khac han bi OOM giet GIUA LUC
+     * dang goi cong BHXH - luc do khong ai biet cong da nhan hay chua.
+     *
+     * VI SAO khong vut ma thoat cua quet(): quet() tra ve 1 khi mot tep DA XU LY xong (nap
+     * thanh cong hoac chuyen sang loi/) nhung khong doi duoc khoi thu muc goc - day la ket
+     * qua cua mot vong sua Critical rieng (xem chuyen()), va no bao hieu nguy co nap trung /
+     * gui trung o vong sau. Nhieu vong hong dang duoc gop lai bang each mode "vong nao con
+     * hong thi nho lai" thay vi "vong cuoi quyet dinh": ma thoat cuoi cung phan anh CO tung
+     * vong nao gap loai loi nay hay khong trong suot ca tien trinh, chu khong chi vong cuoi
+     * cung. nssm/nguoi van hanh doc log dong tong ket, khong doc lai tung dong log cua tung
+     * vong.
+     *
+     * @param  string $thuMuc
+     * @param  int    $gioiHan
+     * @return int ma thoat: khac 0 neu CO IT NHAT MOT vong gap loai loi "khong doi duoc tep"
+     */
+    protected function vongLap($thuMuc, $gioiHan)
+    {
+        $soVong = max(1, (int) $this->option('so-vong'));
+        $nghi = max(1, (int) $this->option('nghi'));
+
+        $this->info('Chay lien tuc: nghi ' . $nghi . ' giay giua hai vong, tu thoat sau '
+            . $soVong . ' vong.');
+
+        $soVongHong = 0;
+
+        for ($i = 1; $i <= $soVong; $i++) {
+            try {
+                if ($this->quet($thuMuc, $gioiHan, false) !== 0) {
+                    // Khong return ngay: mot vong hong loai nay KHONG duoc lam dung ca
+                    // chuoi - no chi nghia la vong nay co tep khong doi duoc, van con nhieu
+                    // ho so khac can nap va gui o cac vong sau. Chi nho lai de bao o dong
+                    // tong ket cuoi cung.
+                    $soVongHong++;
+                }
+            } catch (\Exception $e) {
+                // Mot vong hong KHONG duoc lam chet ca tien trinh: dung o day nghia la khong
+                // ho so nao duoc gui nua cho toi khi co nguoi phat hien ra dich vu da chet.
+                Log::error('ctdt:import vong ' . $i . ' hong: ' . $e->getMessage());
+                $this->error('Vong ' . $i . ' hong: ' . $e->getMessage());
+                $soVongHong++;
+            }
+
+            if ($i < $soVong) {
+                sleep($nghi);
+            }
+        }
+
+        if ($soVongHong > 0) {
+            $this->error('Da chay du ' . $soVong . ' vong, trong do ' . $soVongHong
+                . ' vong gap tep khong doi duoc / loi - xem log cua tung vong o tren.'
+                . ' Thoat de nssm dung lai tien trinh sach.');
+
+            return 1;
+        }
+
+        $this->info('Da chay du ' . $soVong . ' vong, thoat de nssm dung lai tien trinh sach.');
 
         return 0;
     }
@@ -410,6 +528,14 @@ class CtdtImport extends Command
      */
     protected function duocGui($thuMuc)
     {
+        // Hoi tep co TRUOC MOI THU: day la phanh tay, no phai thang moi cau hinh.
+        if ($this->coDung($thuMuc)) {
+            $this->warn('Thay tep ' . self::TEP_CO_DUNG . ' trong thu muc inbox - DUNG GUI. '
+                . 'Van tiep tuc nap va kiem. Xoa tep do di de gui lai.');
+
+            return false;
+        }
+
         if ($this->option('khong-gui')) {
             return false;
         }
@@ -422,5 +548,19 @@ class CtdtImport extends Command
         }
 
         return true;
+    }
+
+    /**
+     * Co tep co dung trong thu muc inbox khong.
+     *
+     * Cong khai de test goi truc tiep duoc - day la cai phanh tay, no dang duoc kiem ky
+     * hon phan con lai.
+     *
+     * @param  string $thuMuc
+     * @return bool
+     */
+    public function coDung($thuMuc)
+    {
+        return file_exists(rtrim($thuMuc, '\\/') . DIRECTORY_SEPARATOR . self::TEP_CO_DUNG);
     }
 }
