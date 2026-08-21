@@ -94,6 +94,17 @@ var ctdtBang = null;
 // duoc gia tri moi nhat o cac lan tai sau.
 var ctdtRange = { from: null, to: null };
 
+// ANH CHUP bo loc cua lan TAI DU LIEU gan nhat - khac han thamSoLoc(), va hai bien nay
+// KHONG thua.
+//
+// thamSoLoc() doc DOM TAI THOI DIEM GOI. DataTable goi no luc ajax.reload(); nut xuat thi
+// goi luc bam. Nguoi dung doi o "Dich vu" hay "Trang thai gui" ma CHUA bam "Tai du lieu"
+// roi bam "Xuat danh sach" se nhan mot tep mang bo loc MOI trong khi man hinh van la ket
+// qua CU - khong mot canh bao nao, va nguoi doi chieu se khong hieu vi sao hai ben lech.
+//
+// Dung chung mot HAM getter la chua du; phai dung chung mot ANH CHUP.
+var ctdtLocDaTai = null;
+
 function ctdtNhanDichVu(ma) {
     var nhan = @json(collect(config('ctdt.dich_vu'))->map(function ($c) { return $c['ten']; }));
 
@@ -130,6 +141,11 @@ function fetchData(startDate, endDate) {
     ctdtBang = $('#ctdt-list').DataTable({
         processing: true,
         serverSide: true,
+        // TAT o Search mac dinh cua DataTables: yajra ap dieu kien do len truy van phia may
+        // chu, nen go vao do lam MAN HINH thu hep con TEP XUAT thi khong - dung kieu lech
+        // am tham ma ca dot sua nay dang chua. Man loc da co o #tim rieng lam dung viec do
+        // va di kem duoc vao URL xuat.
+        searching: false,
         scrollX: true,
         order: [[11, 'desc']],
         lengthMenu: [[10, 25, 50, 100, 200], [10, 25, 50, 100, 200]],
@@ -139,7 +155,11 @@ function fetchData(startDate, endDate) {
                 // Khoang ngay den tu partials.date_range qua partials.load_data_button,
                 // dang 'YYYY-MM-DD HH:mm:ss'. CtdtDanhSach nhan ca dang co gio lan dang
                 // chi co ngay.
-                $.extend(d, thamSoLoc());
+                // Chup bo loc NGAY TAI DAY: day la thoi diem duy nhat man hinh va tep xuat
+                // chac chan nhin thay cung mot bo loc.
+                ctdtLocDaTai = thamSoLoc();
+
+                $.extend(d, ctdtLocDaTai);
             }
         },
         columns: [
@@ -244,20 +264,25 @@ var luotMoModal = 0;
 $(function () {
     // Ghep DUNG bo loc dang xem vao URL tai: nut tai ma bo qua bo loc se cho ra mot tep
     // khac han bang dang hien, va nguoi dung se tuong man hinh sai.
+    //
+    // Dung ctdtLocDaTai (ANH CHUP luc tai) chu KHONG goi lai thamSoLoc(): goi lai la doc
+    // DOM o mot thoi diem khac, tuc lai lech voi bang dang hien.
     $('#btn-xuat-danh-sach').on('click', function () {
-        window.location = '{{ route('bhyt.ctdt.xuat.danh-sach') }}?' + $.param(thamSoLoc());
+        window.location = '{{ route('bhyt.ctdt.xuat.danh-sach') }}?' + $.param(ctdtLocDaTai || {});
     });
 
     $('#btn-xuat-loi').on('click', function () {
-        window.location = '{{ route('bhyt.ctdt.xuat.loi') }}?' + $.param(thamSoLoc());
+        window.location = '{{ route('bhyt.ctdt.xuat.loi') }}?' + $.param(ctdtLocDaTai || {});
     });
 
     // Nhat ky chi nhan khoang ngay, KHONG nhan cac o loc khac: bang nay khong co cot dich
     // vu / co so, nen truyen chung vao chi tao ao giac da loc.
     $('#btn-xuat-nhat-ky').on('click', function () {
+        var daTai = ctdtLocDaTai || {};
+
         window.location = '{{ route('bhyt.ctdt.xuat.nhat-ky') }}'
-            + '?tu_ngay=' + encodeURIComponent(ctdtRange.from || '')
-            + '&den_ngay=' + encodeURIComponent(ctdtRange.to || '');
+            + '?tu_ngay=' + encodeURIComponent(daTai.tu_ngay || '')
+            + '&den_ngay=' + encodeURIComponent(daTai.den_ngay || '');
     });
 
     // Mo modal chi tiet. Chan click THUONG thoi - the <a> van giu href that nen ctrl+click
