@@ -3,8 +3,12 @@
 namespace Tests\Unit\Ctdt;
 
 use Tests\TestCase;
+use Tests\Support\DungBangCtdtSqlite;
 use App\Exports\CtdtDanhSachExport;
+use App\Exports\CtdtLoiExport;
 use App\Models\BHYT\Ctdt\CtdtHoSo;
+use App\Models\BHYT\Ctdt\CtdtChungTu;
+use App\Models\BHYT\Ctdt\CtdtLoi;
 use App\Services\Ctdt\CtdtTrangThaiGui;
 
 /**
@@ -14,6 +18,50 @@ use App\Services\Ctdt\CtdtTrangThaiGui;
  */
 class CtdtXuatExcelTest extends TestCase
 {
+    use DungBangCtdtSqlite;
+
+    protected function setUp()
+    {
+        parent::setUp();
+        $this->chuanBiBangCtdt();
+    }
+
+    /**
+     * Dung mot ho so THAT trong SQLite bo nho, kem N ban ghi ctdt_loi that su - khong phai
+     * gia lap quan he trong bo nho. Bat bien can kiem (N loi -> N dong) chi lo ra khi map()
+     * chay tren mot Eloquent model duoc nap kem quan he 'loi' dung nhu query() cua
+     * CtdtLoiExport lam, khong phai tren mot object dung tay.
+     *
+     * @return CtdtHoSo da nap kem 'loi' va 'chungTu', dung het cho map()
+     */
+    private function hoSoThatCoLoi(int $soLoi)
+    {
+        $hoSo = CtdtHoSo::create([
+            'ma_ho_so' => 'YT001', 'dich_vu' => 'CT2025', 'loai_hs' => '39',
+            'macskcb' => '01929', 'so_chung_tu' => 1, 'so_loi' => $soLoi,
+        ]);
+
+        $chungTu = CtdtChungTu::create([
+            'ho_so_id' => $hoSo->id, 'loai_ho_so' => 'CT03', 'ma_chung_tu' => 'YT001',
+            'ho_ten' => 'NGUYEN VAN A', 'ma_the' => 'DN4010112345678',
+            'noi_dung_goc' => '<CT03/>',
+        ]);
+
+        for ($i = 1; $i <= $soLoi; $i++) {
+            CtdtLoi::create([
+                'ho_so_id' => $hoSo->id, 'chung_tu_id' => $chungTu->id,
+                'ma_loi' => 'CTDT00' . $i, 'ten_truong' => 'TRUONG_' . $i,
+                'mo_ta' => 'Loi so ' . $i,
+                // Xen ke chan/canh_bao: bat bien phai dung du khong phu thuoc muc do.
+                'muc_do' => $i % 2 === 0 ? 'canh_bao' : 'chan',
+            ]);
+        }
+
+        return CtdtHoSo::with(['loi', 'chungTu' => function ($q) {
+            $q->select('id', 'ho_so_id', 'ma_the', 'ho_ten', 'loai_ho_so')->orderBy('id');
+        }])->find($hoSo->id);
+    }
+
     private function hoSo(array $ghiDe = [])
     {
         $hoSo = new CtdtHoSo();
@@ -120,5 +168,36 @@ class CtdtXuatExcelTest extends TestCase
         $xuat = new \App\Exports\CtdtLoiExport(\App\Models\BHYT\Ctdt\CtdtHoSo::query());
 
         $this->assertContains('Mã hồ sơ', $xuat->headings());
+    }
+
+    /** @test */
+    public function mot_ho_so_ba_loi_sinh_dung_ba_dong()
+    {
+        // Bat bien cot loi cua ca tinh nang: N loi phai ra N dong, khong phai mot dong gop
+        // chung. Neu ai do doi map() thanh gop het loi vao mot dong, day la phep kiem DUY
+        // NHAT bat duoc - hai test tren chi soi ma nguon va headings(), khong goi map().
+        $hoSo = $this->hoSoThatCoLoi(3);
+        $xuat = new CtdtLoiExport(CtdtHoSo::query());
+
+        $dong = $xuat->map($hoSo);
+
+        $this->assertCount(3, $dong, 'Ho so co 3 loi phai ra dung 3 dong, khong duoc gop lai');
+
+        foreach ($dong as $mot) {
+            $this->assertCount(
+                count($xuat->headings()),
+                $mot,
+                'So o moi dong loi phai bang so tieu de'
+            );
+
+            // So sanh NGHIEM NGAT bang tay (khong dung assertContains): $mot co phan tu
+            // int(0)-like o vi tri STT, va PHP7 coi 0 == '<chuoi bat ky>' la true - ban
+            // long se xanh du sai. assertSame tren mot vi tri CU THE khong dinh bay nay.
+            $this->assertSame(
+                'YT001',
+                $mot[1],
+                'Moi dong loi phai giu ma ho so - dong khong co ma ho so la dong khong ai sua duoc'
+            );
+        }
     }
 }
