@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Cache;
 
 use App\Models\BHYT\Ctdt\CtdtHoSo;
 use App\Services\Ctdt\CtdtPhongBi;
+use App\Services\Ctdt\CtdtQuyetDinhGui;
 use App\Services\XMLSignService;
 use App\Http\Controllers\BHYT\BHYTCtdtController;
 
@@ -63,11 +64,15 @@ class SignCtdtJob implements ShouldQueue
             return;
         }
 
-        if (empty($hoSo->checked_at) || (int) $hoSo->so_loi > 0) {
-            // Ky mot ho so chua kiem hoac con loi la ton thao tac dat nhat trong chuoi cho
-            // mot ho so chac chan khong duoc gui.
+        // Hoi CtdtQuyetDinhGui chu khong tu viet lai luat: xem chu thich cua nenKy().
+        // Ky mot ho so chua kiem hoac con loi la ton thao tac dat nhat trong chuoi cho mot
+        // ho so chac chan khong duoc gui.
+        $nenKy = CtdtQuyetDinhGui::nenKy($hoSo->checked_at, $hoSo->so_loi);
+
+        if ($nenKy !== CtdtQuyetDinhGui::KY) {
             Log::info('SignCtdtJob: ho so chua du dieu kien ky', [
                 'ma_ho_so' => $this->maHoSo,
+                'ly_do'    => $nenKy,
                 'da_kiem'  => !empty($hoSo->checked_at),
                 'so_loi'   => (int) $hoSo->so_loi,
             ]);

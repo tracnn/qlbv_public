@@ -5,6 +5,7 @@ namespace App\Services\Ctdt;
 use DB;
 use App\Jobs\CheckCtdtJob;
 use App\Models\BHYT\Ctdt\CtdtHoSo;
+use App\Services\Ctdt\CtdtHangDoi;
 use App\Services\Ctdt\CtdtMacskcb;
 use App\Services\Ctdt\Loi\CtdtLoiNap;
 use App\Services\Ctdt\Loi\ThieuMacskcbException;
@@ -138,7 +139,7 @@ class CtdtImporter
             // Moi ho so MOT job rieng: mot ho so hong khong lam mat ket qua kiem cua cac
             // ho so con lai trong cung mot tep.
             CheckCtdtJob::dispatch($maHoSo)
-                ->onQueue(config('organization.chung_tu_dien_tu.queue_name', 'JobCtdt'));
+                ->onQueue(CtdtHangDoi::kiem());
 
             return CtdtImportResult::thanhCong(
                 $maHoSo,

@@ -39,6 +39,35 @@ class CtdtQuyetDinhGui
     /** Chuc nang gui dang tat: khong lam gi ca, ke ca ghi loi */
     const KHONG_GUI = 'khong_gui';
 
+    /** Da kiem, sach: du dieu kien KY. Chi nenKy() tra ve gia tri nay. */
+    const KY = 'ky';
+
+    /**
+     * Luat "da kiem va sach chua" - MOT noi duy nhat.
+     *
+     * VI SAO TACH RA: luat nay truoc do duoc chep tay o ba noi - nen() ngay duoi day,
+     * CtdtTrangThaiGui::cua(), va SignCtdtJob::handle(). Ba ban chep dang dong bo, nhung
+     * khong gi buoc chung dong bo. Ngay ai do noi long mot ban (vi du coi so_loi = null la
+     * sach) thi hai ban kia van chan - va trieu chung la mot ho so hien "Chua ky so" vinh
+     * vien tren man danh sach trong khi job ky im lang bo qua no.
+     *
+     * Chu y THU TU: so_loi = 0 cua mot ho so CHUA KIEM khong co nghia la sach, no co nghia
+     * la chua ai nhin. Phai hoi da_kiem TRUOC, khong thi may chu chua chay worker JobCtdt se
+     * coi moi ho so la sach.
+     *
+     * @param  mixed $daKiem checked_at - rong nghia la bo kiem chua chay xong
+     * @param  mixed $soLoi  so_loi (chi dem loi muc chan)
+     * @return string CHUA_KIEM / CON_LOI / KY
+     */
+    public static function nenKy($daKiem, $soLoi)
+    {
+        if (empty($daKiem)) {
+            return self::CHUA_KIEM;
+        }
+
+        return (int) $soLoi > 0 ? self::CON_LOI : self::KY;
+    }
+
     /**
      * @param mixed $guiBat  config submit_enabled
      * @param mixed $daKiem  checked_at - rong nghia la bo kiem chua chay xong
@@ -55,15 +84,11 @@ class CtdtQuyetDinhGui
             return self::KHONG_GUI;
         }
 
-        // so_loi = 0 cua mot ho so CHUA KIEM khong co nghia la sach - no co nghia la chua ai
-        // nhin. Phai hoi TRUOC so_loi, khong thi may chu chua chay worker JobCtdt se gui moi
-        // ho so len cong ma khong ai kiem.
-        if (empty($daKiem)) {
-            return self::CHUA_KIEM;
-        }
+        // Luat "da kiem va sach chua" nam trong nenKy() - dung chep lai o day.
+        $ky = self::nenKy($daKiem, $soLoi);
 
-        if ((int) $soLoi > 0) {
-            return self::CON_LOI;
+        if ($ky !== self::KY) {
+            return $ky;
         }
 
         return (bool) $daKy ? self::GUI : self::CHUA_KY;
