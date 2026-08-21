@@ -10,7 +10,7 @@
 
 **Chạy liên tục là chế độ chính**, giống `XML3176Import`. Nhưng khác lệnh đó ở ba chỗ, vì lệnh này POST thật lên cổng BHXH chứ không chỉ ghi tệp ra đĩa: có tệp cờ dừng có hiệu lực ngay, có trần số vòng để tiến trình tự thoát cho nssm dựng lại bản sạch, và vẫn giữ được chế độ một lượt cho chạy tay.
 
-**Tech Stack:** Laravel 5.5, PHP 7.4, PHPUnit 6, MySQL (production) / SQLite (test), hàng đợi driver `database`.
+**Tech Stack:** Laravel 5.5, PHP 7.4, PHPUnit 6, MySQL, hàng đợi driver `database`.
 
 ## Global Constraints
 
@@ -19,6 +19,7 @@
 - **`config($khoá, $mặc_định)` không lùi về mặc định khi khoá tồn tại với giá trị `null`.** Với tên hàng đợi, luôn dùng `CtdtHangDoi::kiem()` / `::ky()` / `::gui()`.
 - **`Cache::add($khoá, $giá_trị, $phút)` nhận PHÚT**, không phải giây, trong Laravel 5.5.
 - **Luật "đã kiểm và sạch chưa" chỉ nằm ở `CtdtQuyetDinhGui::nenKy($daKiem, $soLoi)`.** Không nơi nào được chép lại.
+- ⛔ **TUYỆT ĐỐI KHÔNG dùng `RefreshDatabase` hay `DatabaseMigrations`.** Hai trait đó gọi `migrate:fresh` — `DROP` toàn bộ bảng. Ngày 2026-08-21 chính bản kế hoạch này đã bắt dùng `DatabaseMigrations` và làm **xoá sạch CSDL phát triển `qlbv`**; không có binlog, không có bản dump nào chứa bảng `ctdt`. Muốn dựng bảng thật trong test thì dùng **`Tests\Support\DungBangCtdtSqlite`** — trait sẵn có, dựng 12 bảng của module trên SQLite bộ nhớ. Xem `tests/Unit/Ctdt/CtdtKyVaGuiTest.php` làm mẫu. `ChotAnToanCsdlTest` sẽ đỏ nếu ai dùng lại hai trait đó.
 - **Máy phát triển này đã bật `submit_enabled = true` và đã gửi thật lên cổng BHXH.** Không chạy `SignCtdtJob`, `SubmitCtdtJob`, không chạy `php artisan queue:work`, và không chạy lệnh mới mà thiếu `--dry-run` trong lúc phát triển.
 - **Baseline test:** `php vendor/bin/phpunit tests/Unit/Ctdt` phải đỏ **đúng một** — `CtdtCauHinhTest::gui_len_cong_mac_dinh_tat`, đỏ có chủ đích vì đọc `config/organization.php` của máy. Hai test đỏ trở lên là dấu hiệu vỡ.
 - **`config/organization.php` nằm trong `.gitignore`.** Khoá mới phải thêm vào `docs/organization.php` (bản mẫu có track) và tài liệu, không chỉ tệp máy.
@@ -66,7 +67,7 @@ Tạo `tests/Unit/Ctdt/CtdtLichSuGuiTest.php`:
 namespace Tests\Unit\Ctdt;
 
 use Tests\TestCase;
-use Illuminate\Foundation\Testing\DatabaseMigrations;
+use Tests\Support\DungBangCtdtSqlite;
 use App\Models\BHYT\Ctdt\CtdtHoSo;
 use App\Models\BHYT\Ctdt\CtdtLichSuGui;
 
@@ -77,7 +78,10 @@ use App\Models\BHYT\Ctdt\CtdtLichSuGui;
  */
 class CtdtLichSuGuiTest extends TestCase
 {
-    use DatabaseMigrations;
+    // KHONG DatabaseMigrations: trait do goi migrate:fresh, tuc DROP toan bo bang cua CSDL
+    // phat trien. Da xay ra that ngay 2026-08-21. DungBangCtdtSqlite dung bang tren SQLite
+    // bo nho va khong bao gio cham toi may chu that.
+    use DungBangCtdtSqlite;
 
     private function hoSo()
     {
@@ -259,7 +263,9 @@ class CtdtLichSuGui extends Model
 Chạy: `php vendor/bin/phpunit tests/Unit/Ctdt/CtdtLichSuGuiTest.php`
 Kỳ vọng: `OK (3 tests)`.
 
-Nếu test `xoa_ho_so_thi_nhat_ky_di_theo` đỏ trên SQLite: SQLite **mặc định tắt** khoá ngoại. Kiểm tra `tests/TestCase.php` hoặc `config/database.php` xem đã có `PRAGMA foreign_keys=ON` chưa. Nếu chưa, **đừng bật toàn cục** (đổi hành vi của cả bộ test cũ) — thay vào đó xoá test đó và thay bằng test khẳng định migration có khai khoá ngoại:
+⚠️ **`DungBangCtdtSqlite` nạp từng migration của module rồi gọi `up()`** — bạn phải thêm migration mới vào danh sách `cacMigrationCtdt()` của trait đó, đúng thứ tự (bảng nhật ký tham chiếu `ctdt_ho_so` nên phải đứng sau nó).
+
+Nếu test `xoa_ho_so_thi_nhat_ky_di_theo` đỏ: SQLite **mặc định tắt** khoá ngoại. **Đừng bật toàn cục** (đổi hành vi của cả bộ test cũ) — thay vào đó xoá test đó và thay bằng test khẳng định migration có khai khoá ngoại:
 
 ```php
     /** @test */

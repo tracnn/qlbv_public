@@ -15,6 +15,7 @@
 - **Nhãn trạng thái chỉ lấy từ `CtdtTrangThaiGui::nhan(CtdtTrangThaiGui::cua($hoSo))`.** Không gõ lại chuỗi tiếng Việt trong lớp Export.
 - **Lớp Export nhận truy vấn đã lọc, không tự dựng bộ lọc.** Mỗi bên tự dựng thì thêm một ô lọc mà quên bên kia sẽ làm tệp xuất khác hẳn màn hình, và không có dấu hiệu gì cho tới lúc ai đó ngồi đối chiếu từng dòng.
 - **`FromQuery` chứ không `FromCollection`.** Bảng này phình theo thời gian; nạp cả bảng vào bộ nhớ là cách chắc chắn để máy chủ mới (PHP 128MB) chết.
+- ⛔ **TUYỆT ĐỐI KHÔNG dùng `RefreshDatabase` hay `DatabaseMigrations`.** Hai trait đó gọi `migrate:fresh` — `DROP` toàn bộ bảng. Ngày 2026-08-21 chuyện này đã xảy ra thật và xoá sạch CSDL phát triển `qlbv`. Dùng `Tests\Support\DungBangCtdtSqlite` thay thế; `ChotAnToanCsdlTest` sẽ đỏ nếu ai dùng lại hai trait đó.
 - **Máy phát triển này đã bật `submit_enabled` và đã gửi thật.** Không chạy `SignCtdtJob`, `SubmitCtdtJob`, không chạy worker hàng đợi.
 - **Baseline test:** `tests/Unit/Ctdt` đỏ **đúng một** — `CtdtCauHinhTest::gui_len_cong_mac_dinh_tat`.
 - Chú thích trong mã viết **không dấu**, tài liệu Markdown viết **có dấu**.

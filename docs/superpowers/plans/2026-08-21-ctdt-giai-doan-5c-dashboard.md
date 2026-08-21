@@ -16,6 +16,7 @@
 - **Không viết lại luật "đã kiểm và sạch".** Chỉ `CtdtQuyetDinhGui::nenKy($daKiem, $soLoi)`.
 - **Nhãn tiếng Việt của trạng thái chỉ lấy từ `CtdtTrangThaiGui::nhan()`.** Không gõ lại.
 - **Highcharts nạp từ `asset('vendor/highcharts/highcharts.js')`**, không dùng CDN — máy chủ bệnh viện không ra được Internet.
+- ⛔ **TUYỆT ĐỐI KHÔNG dùng `RefreshDatabase` hay `DatabaseMigrations`.** Hai trait đó gọi `migrate:fresh` — `DROP` toàn bộ bảng. Ngày 2026-08-21 chuyện này đã xảy ra thật và xoá sạch CSDL phát triển `qlbv`. Dùng `Tests\Support\DungBangCtdtSqlite` thay thế; `ChotAnToanCsdlTest` sẽ đỏ nếu ai dùng lại hai trait đó.
 - **Máy phát triển này đã bật `submit_enabled` và đã gửi thật.** Không chạy `SignCtdtJob`, `SubmitCtdtJob`, không chạy worker hàng đợi.
 - **Baseline test:** `tests/Unit/Ctdt` đỏ **đúng một** — `CtdtCauHinhTest::gui_len_cong_mac_dinh_tat`.
 - Chú thích trong mã viết **không dấu**, tài liệu Markdown viết **có dấu**.
