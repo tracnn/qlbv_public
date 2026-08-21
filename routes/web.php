@@ -601,6 +601,8 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('ctdt/import', 'BHYT\BHYTCtdtController@importIndex')->name('bhyt.ctdt.import.index');
         Route::post('ctdt/import/upload', 'BHYT\BHYTCtdtController@uploadData')->name('bhyt.ctdt.upload');
         Route::get('ctdt/detail/{ma_ho_so}', 'BHYT\BHYTCtdtController@detail')->name('bhyt.ctdt.detail');
+        Route::get('ctdt/detail/{ma_ho_so}/than', 'BHYT\BHYTCtdtController@detailThan')
+            ->name('bhyt.ctdt.detail.than');
         Route::get('ctdt/detail/{ma_ho_so}/tab/{loai}', 'BHYT\BHYTCtdtController@detailTab')->name('bhyt.ctdt.detail.tab');
         Route::post('ctdt/{ma_ho_so}/ky-va-gui', 'BHYT\BHYTCtdtController@kyVaGui')
         ->name('bhyt.ctdt.ky-va-gui');

@@ -90,4 +90,27 @@ class CtdtChiTietModalTest extends TestCase
         $this->assertNotContains('location.reload', $nguon,
             'chu nha quyet dieu huong, khong phai JS dung chung');
     }
+
+    /** @test */
+    public function route_than_duoc_khai_bao()
+    {
+        // Route nay la thu duy nhat modal goi. Thieu no thi modal mo ra rong, va loi chi lo
+        // ra trong console cua trinh duyet.
+        $nguon = file_get_contents(base_path('routes/web.php'));
+
+        $this->assertContains("bhyt.ctdt.detail.than", $nguon);
+        $this->assertContains('ctdt/detail/{ma_ho_so}/than', $nguon);
+    }
+
+    /** @test */
+    public function detailThan_tra_ve_than_chi_tiet_chu_khong_phai_ca_trang()
+    {
+        // Tra ca trang thi modal se chua mot ban AdminLTE thu hai - menu long trong menu.
+        $nguon = file_get_contents(
+            base_path('app/Http/Controllers/BHYT/BHYTCtdtController.php')
+        );
+
+        $this->assertContains("bhyt.ctdt.partials.than-chi-tiet", $nguon,
+            'detailThan() phai tra partial, khong tra view bhyt.ctdt.detail');
+    }
 }
