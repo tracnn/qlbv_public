@@ -1101,8 +1101,18 @@ git commit -m "feat(ctdt): dashboard khoi chat luong du lieu"
 
 ---
 
-## Việc phải nghiệm thu bằng tay
+## Việc phải nghiệm thu bằng tay — không test nào thay được
 
-1. **Đối chiếu tổng.** Tổng chín thanh trạng thái phải bằng tổng số hồ sơ màn danh sách báo với cùng bộ lọc. Lệch nghĩa là một trạng thái bị đếm hai lần hoặc bị bỏ sót — và cũng nghĩa là test tính chất ràng `cua()` với `locTrangThai()` đang có lỗ.
-2. **Dừng một worker rồi xem màn hình.** Tắt dịch vụ `QLBV JobCtdt`, nạp một tệp, mở dashboard. Hàng đợi `JobCtdt` phải hiện số job đang chờ và **không vơi**. Đây là kịch bản màn hình này sinh ra để bắt.
-3. **Đo thời gian tải** trên dữ liệu thật. Chín truy vấn đếm cộng ba truy vấn nhóm; máy chủ mới giới hạn 120 giây. Nếu chậm, chỗ phải xử trước là `demTheoTrangThai()` — nhưng **đừng** thay bằng một câu `GROUP BY` tự viết: cách đúng là thêm chỉ mục, hoặc đưa phép đếm vào bộ nhớ đệm ngắn hạn.
+**Không có test JS hay test trình duyệt nào trong dự án này.** Cả ba task đều bỏ bước kiểm bằng mắt vì không đăng nhập được. Làm theo thứ tự dưới đây.
+
+1. **Trang mở được thật.** Đăng nhập tài khoản có `xml-man`, vào `/dashboard/ctdt`. Bốn biểu đồ phải vẽ ra, không ô nào đứng mãi ở "Đang tải…". Console DevTools trống.
+2. **Chặn quyền.** Tài khoản **không** có `xml-man` → 403. Mở `/dashboard/ctdt/chat-luong` ở cửa sổ ẩn danh → bị đá về trang đăng nhập, **không** ra JSON.
+3. **Đối chiếu tổng.** Chọn một khoảng ngày, ghi tổng 9 thanh trạng thái. Mở `/bhyt/ctdt/index` với **đúng** bộ lọc đó, so tổng số hồ sơ. Hai số phải bằng nhau.
+4. **Đối chiếu ba khối.** Cùng khoảng ngày: tổng cột sản lượng phải bằng tổng 9 thanh.
+5. **Thanh "Chức năng gửi đang tắt".** Với `submit_enabled = true` (cấu hình hiện tại) thanh này **phải bằng 0**. Khác 0 nghĩa là lỗi đếm hai lần chưa được sửa hết.
+6. **Ba hàng đợi nói thật.** Dừng riêng worker hàng đợi ký, nạp một hồ sơ, đợi bộ kiểm xong. Hàng đợi ký phải hiện số job đang chờ **và tuổi job cũ nhất tăng dần**. Bật lại worker, số về 0. ⚠️ **Chỉ bước này chứng minh tên hàng đợi trong `CtdtHangDoi` khớp tên worker đang chạy thật** — test dùng SQLite không có bảng `jobs`, nên nhánh "đếm được" chưa bao giờ chạy thật lần nào.
+7. **Không đếm được ≠ 0.** Trên máy chưa chạy `queue:table`, hoặc `QUEUE_DRIVER` khác `database`: cả ba hàng đợi phải hiện chữ xám "không đếm được", tuyệt đối không hiện "trống".
+8. **Thời gian đáp ứng.** Bấm "Xem" với khoảng rộng nhất nghiệp vụ dùng thật (ví dụ cả quý) trên **máy chủ thật**, bấm giờ. Cả ba endpoint phải dưới 120 giây và không dính `memory_limit` 128MB. ⚠️ `checked_at` và `is_signed` **không có index**, và mỗi lần mở là chín `COUNT(*)`.
+9. **Trần 20000 hồ sơ.** Chọn khoảng có hơn 20000 hồ sơ: hai biểu đồ chất lượng phải **cùng phạm vi**, và màn hình phải **nói ra** rằng số liệu đã bị cắt. ⚠️ Con số 20000 chưa ai đo trên dữ liệu thật với PHP 128MB.
+10. **Khoảng ngày gõ nhầm.** Nhập từ 2020 đến nay: trục dừng ở 366 ngày **và có chữ báo** đã rút ngắn, trình duyệt không đứng hình.
+11. **Lối vào.** Tài khoản `xml-man` thấy mục "Dashboard chứng từ" trong submenu; tài khoản khác không thấy.
