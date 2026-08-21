@@ -138,13 +138,40 @@ class BHYTCtdtController extends Controller
         ];
     }
 
+    /**
+     * Bo loc cho MOT LAN XUAT: giong locTu() nhung bat buoc co khoang ngay.
+     *
+     * Goi thang URL xuat khong kem tham so - hoac man hinh chua kip dat ctdtRange - se quet
+     * TOAN BO ctdt_ho_so. Mot cu bam ra mot truy van toan bang tren may chu 128MB/120s la
+     * mot yeu cau chet giua chung, khong phai mot tep xuat lon.
+     *
+     * @return array
+     */
+    private function locXuatTu(Request $request)
+    {
+        return CtdtDanhSach::khoangMacDinh($this->locTu($request));
+    }
+
+    /**
+     * Phan ngay cua mot moc loc, dung dat ten tep.
+     *
+     * Man hinh gui dang 'YYYY-MM-DD HH:mm:ss'. Ghep nguyen van vao ten tep cho ra dau ':' -
+     * ky tu KHONG hop le trong ten tep tren Windows, tuc tep khong luu duoc.
+     *
+     * @return string
+     */
+    private function phanNgay($moc)
+    {
+        return substr(trim((string) $moc), 0, 10);
+    }
+
     /** Tai danh sach ho so theo dung bo loc dang xem */
     public function xuatDanhSach(Request $request)
     {
         $ten = 'chung-tu-dien-tu-' . now()->format('Ymd-His') . '.xlsx';
 
         return Excel::download(
-            new CtdtDanhSachExport(CtdtDanhSach::truyVan($this->locTu($request))),
+            new CtdtDanhSachExport(CtdtDanhSach::truyVan($this->locXuatTu($request))),
             $ten
         );
     }
@@ -155,7 +182,7 @@ class BHYTCtdtController extends Controller
         $ten = 'loi-chung-tu-dien-tu-' . now()->format('Ymd-His') . '.xlsx';
 
         return Excel::download(
-            new CtdtLoiExport(CtdtDanhSach::truyVan($this->locTu($request))),
+            new CtdtLoiExport(CtdtDanhSach::truyVan($this->locXuatTu($request))),
             $ten
         );
     }
@@ -165,12 +192,25 @@ class BHYTCtdtController extends Controller
     {
         // Lui ve 30 ngay gan nhat khi nguoi dung khong chon: bang nay chi tang, khong bao
         // gio giam, nen mac dinh "tat ca" la mot truy van toan bang.
-        $tuNgay  = $request->input('tu_ngay') ?: now()->subDays(30)->format('Y-m-d');
-        $denNgay = $request->input('den_ngay') ?: now()->format('Y-m-d');
+        $khoang = CtdtDanhSach::khoangMacDinh([
+            'tu_ngay'  => $request->input('tu_ngay'),
+            'den_ngay' => $request->input('den_ngay'),
+        ]);
 
-        $ten = 'nhat-ky-gui-ctdt-' . $tuNgay . '-den-' . $denNgay . '.xlsx';
+        // CHI lay phan ngay: moc tu man hinh co dang '2026-08-01 00:00:00', ghep nguyen van
+        // vao ten tep se sinh dau ':' - Windows khong luu duoc tep do.
+        $ten = 'nhat-ky-gui-ctdt-' . $this->phanNgay($khoang['tu_ngay'])
+             . '-den-' . $this->phanNgay($khoang['den_ngay']) . '.xlsx';
 
-        return Excel::download(new CtdtNhatKyGuiExport($tuNgay, $denNgay), $ten);
+        try {
+            $xuat = new CtdtNhatKyGuiExport($khoang['tu_ngay'], $khoang['den_ngay']);
+        } catch (\InvalidArgumentException $e) {
+            // Bao ro thay vi de yeu cau chet giua chung voi mot trang trang: tran khoang
+            // ngay la mot lua chon sai cua nguoi dung, khong phai loi he thong.
+            abort(422, $e->getMessage());
+        }
+
+        return Excel::download($xuat, $ten);
     }
 
     public function importIndex()

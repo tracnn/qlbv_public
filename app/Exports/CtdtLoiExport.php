@@ -17,6 +17,10 @@ use Maatwebsite\Excel\Concerns\WithTitle;
  * cua man hinh la bo loc theo HO SO (ngay nap, dich vu, co so). Loc thang tren ctdt_loi se
  * khong ap dung duoc nhung dieu kien do.
  *
+ * FromQuery giam bo nho HYDRATE Eloquent - va chi the thoi. PhpSpreadsheet van dung toan bo
+ * sheet trong RAM truoc khi ghi, va ShouldAutoSize do be rong tung o. Vi vay query() con
+ * phai noi set_time_limit / memory_limit nhu 15 lop Export con lai.
+ *
  * XUAT CA muc chan LAN canh bao: chi xuat muc chan la giau mat nua cong viec - canh bao hom
  * nay la loi chan cua dot siet sau.
  */
@@ -34,18 +38,24 @@ class CtdtLoiExport implements FromQuery, WithHeadings, ShouldAutoSize, WithMapp
 
     public function query()
     {
+        set_time_limit(1800); // Tang thoi gian thuc thi len 1800 giay (30 phut)
+        ini_set('memory_limit', '4096M'); // Noi gioi han bo nho, giong 15 lop Export con lai
+
         // Chi lay ho so CO loi: mot bang loi day nhung dong "khong loi" la bang khong ai doc.
         return $this->truyVan
             ->where('so_loi', '>', 0)
             ->with(['loi', 'chungTu' => function ($q) {
                 $q->select('id', 'ho_so_id', 'ma_the', 'ho_ten', 'loai_ho_so')->orderBy('id');
             }])
-            ->orderByDesc('imported_at');
+            // orderBy('id') la KHOA PHA HOA - xem chu thich cung cho o CtdtDanhSachExport:
+            // imported_at trung hang loat nen chunk(100) co the lap hoac bo dong.
+            ->orderByDesc('imported_at')
+            ->orderBy('id');
     }
 
     public function title(): string
     {
-        return 'Loi';
+        return 'Lỗi';
     }
 
     public function headings(): array

@@ -218,12 +218,18 @@ class CtdtXuatTruyVanTest extends TestCase
         $this->assertContains('ctdtLocDaTai', $nguon,
             'Phai luu anh chup bo loc cua lan tai gan nhat');
 
-        // Ba nut xuat KHONG duoc goi lai thamSoLoc(): moi lan goi lai la mot lan doc DOM
-        // moi, tuc lai lech voi man hinh.
         $this->assertSame(
             1,
-            substr_count($nguon, 'thamSoLoc()'),
-            'thamSoLoc() chi duoc goi mot lan - trong ajax.data - roi luu vao anh chup'
+            substr_count($nguon, 'ctdtLocDaTai = thamSoLoc()'),
+            'Anh chup phai duoc dat dung mot cho - trong ajax.data cua DataTable'
+        );
+
+        // Nut xuat KHONG duoc goi lai thamSoLoc(): moi lan goi lai la mot lan doc DOM moi,
+        // tuc lai lech voi bang dang hien.
+        $this->assertNotContains(
+            '$.param(thamSoLoc())',
+            $nguon,
+            'Nut xuat phai dung anh chup ctdtLocDaTai, khong duoc doc lai DOM luc bam'
         );
     }
 

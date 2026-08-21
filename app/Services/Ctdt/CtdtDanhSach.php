@@ -160,8 +160,12 @@ class CtdtDanhSach
      * con o ngay tran gui 'YYYY-MM-DD'. Cu noi ' 00:00:00' vao ca hai thi dang co gio
      * thanh '2026-08-19 10:00:00 00:00:00' - MySQL doc khong ra va tra ve rong, man hinh
      * trong tron ma khong bao gi. Nhan dien bang dau hai cham.
+     *
+     * PUBLIC vi cac lop Export cung phai chuan hoa dung mot kieu. Viet ban chuan hoa thu
+     * hai o ben do la tao co hoi cho hai ban lech nhau - dung can benh ma ca nhanh nay
+     * dang chua.
      */
-    private static function mocDau($giaTri)
+    public static function mocDau($giaTri)
     {
         $giaTri = trim((string) $giaTri);
 
@@ -173,12 +177,42 @@ class CtdtDanhSach
      *
      * Voi ngay tran phai la 23:59:59, khong phai '<= ngay'. So sanh chuoi ngay tran tren
      * cot datetime se bo het ho so nap trong chinh ngay do tru dung luc 00:00:00.
+     *
+     * PUBLIC cung mot ly do voi mocDau(): mot ban chuan hoa duy nhat cho ca man hinh lan
+     * cac lop Export.
      */
-    private static function mocCuoi($giaTri)
+    public static function mocCuoi($giaTri)
     {
         $giaTri = trim((string) $giaTri);
 
         return strpos($giaTri, ':') === false ? $giaTri . ' 23:59:59' : $giaTri;
+    }
+
+    /**
+     * Bu khoang ngay mac dinh khi loi goi khong co.
+     *
+     * Goi thang URL xuat ma khong kem tham so - hoac man hinh chua kip dat ctdtRange - se
+     * quet TOAN BO ctdt_ho_so. Tren may chu gioi han PHP 128MB/120s do la mot yeu cau chet
+     * giua chung, khong phai mot tep xuat lon.
+     *
+     * KHONG de len gia tri nguoi dung da chon: mot bo loc bi bo qua am tham te hon han loi
+     * no dang chua.
+     *
+     * @param array $loc
+     * @param int   $soNgayLui
+     * @return array
+     */
+    public static function khoangMacDinh(array $loc, $soNgayLui = 30)
+    {
+        if (!self::coGiaTri($loc, 'tu_ngay')) {
+            $loc['tu_ngay'] = now()->subDays($soNgayLui)->format('Y-m-d');
+        }
+
+        if (!self::coGiaTri($loc, 'den_ngay')) {
+            $loc['den_ngay'] = now()->format('Y-m-d');
+        }
+
+        return $loc;
     }
 
     private static function coGiaTri(array $loc, $khoa)

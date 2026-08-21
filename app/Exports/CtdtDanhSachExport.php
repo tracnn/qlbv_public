@@ -16,8 +16,10 @@ use App\Services\Ctdt\CtdtTrangThaiGui;
  * ben tu dung thi them mot bo loc ma quen ben kia se lam tep xuat khac han man hinh, va
  * khong co dau hieu gi cho toi luc ai do ngoi doi chieu tung dong voi ban cua BHXH.
  *
- * FromQuery de Laravel Excel duyet THEO LO: bang nay phinh theo thoi gian, va may chu moi
- * gioi han PHP 128MB.
+ * FromQuery giam bo nho HYDRATE Eloquent - va chi the thoi. PhpSpreadsheet van dung toan bo
+ * sheet trong RAM truoc khi ghi ra tep, va ShouldAutoSize con do be rong tung o cua 18 cot x
+ * N dong. Vi vay query() con phai noi set_time_limit / memory_limit nhu 15 lop Export con
+ * lai; chi FromQuery khong du de song tren may chu gioi han PHP 128MB/120s.
  */
 class CtdtDanhSachExport implements FromQuery, WithHeadings, ShouldAutoSize, WithMapping, WithTitle
 {
@@ -33,18 +35,26 @@ class CtdtDanhSachExport implements FromQuery, WithHeadings, ShouldAutoSize, Wit
 
     public function query()
     {
+        set_time_limit(1800); // Tang thoi gian thuc thi len 1800 giay (30 phut)
+        ini_set('memory_limit', '4096M'); // Noi gioi han bo nho, giong 15 lop Export con lai
+
         // Nap kem chung tu dau tien: cot Ho ten / So the lay tu do. Khong nap kem thi moi
         // dong la mot truy van rieng - 5000 dong thanh 5001 truy van.
         return $this->truyVan
             ->with(['chungTu' => function ($q) {
                 $q->select('id', 'ho_so_id', 'ma_the', 'ho_ten')->orderBy('id');
             }])
-            ->orderByDesc('imported_at');
+            // orderBy('id') la KHOA PHA HOA: Sheet::fromQuery() duyet bang chunk(100) tuc
+            // LIMIT/OFFSET, ma mot tep nap ra hang tram ho so trung imported_at den tung
+            // giay. Thu tu cac dong trung giua hai trang khong duoc bao dam - dong se lap o
+            // trang sau hoac mat han, ma tep xuat trong van binh thuong.
+            ->orderByDesc('imported_at')
+            ->orderBy('id');
     }
 
     public function title(): string
     {
-        return 'Ho so';
+        return 'Hồ sơ';
     }
 
     public function headings(): array
