@@ -423,39 +423,108 @@ Ký số và gửi để **hai hàng đợi riêng** là có chủ đích: ký h
 HSM không phản hồi) còn gửi hỏng vì mạng. Gộp chung thì một lần mạng chập sẽ kéo theo ba lần ký
 lại — thao tác tốn thời gian nhất trong chuỗi.
 
-### `ctdt:import --lien-tuc` — chế độ chạy nền, giống `xml3176import:day` nhưng có ba cái phanh
+### `ctdt:import --lien-tuc` — chạy tự động không cần người trực
+
+```bash
+php artisan ctdt:import --lien-tuc
+```
 
 Mặc định `ctdt:import` chạy **một lượt rồi thoát** (dùng cho cron / chạy tay). Với `--lien-tuc`,
-lệnh lặp lại việc quét trong một tiến trình nssm sống lâu, giống `xml3176import:day` — nhưng
-lệnh này **POST thật lên cổng BHXH** chứ không chỉ ghi tệp, nên có thêm ba cái phanh mà
-`xml3176import:day` không có:
+lệnh lặp lại việc quét trong một tiến trình nssm sống lâu, cùng khuôn với `xml3176import:day` —
+nhưng lệnh này **POST thật lên cổng BHXH** chứ không chỉ ghi tệp, nên có thêm mấy cái phanh mà
+`xml3176import:day` không cần.
 
-1. **Tự thoát sau `--so-vong` vòng** (`xml3176import:day` dùng `while (true)` chạy mãi). PHP
-   chạy dài hạn ở giới hạn 128MB sẽ phình; tự thoát để nssm dựng lại một tiến trình sạch thì
-   khác hẳn bị OOM giết giữa lúc đang gọi cổng — lúc đó không ai biết cổng đã nhận hay chưa.
-   `--so-vong` mặc định `1000`, `--nghi` (giây nghỉ giữa hai vòng) mặc định `5`.
-2. **Tệp cờ dừng `DUNG-GUI`** đặt trong thư mục inbox (`CtdtImport::TEP_CO_DUNG`). Một tiến
-   trình sống mãi giữ cấu hình trong bộ nhớ, nên sửa `import_tu_dong_gui` thành `false` không ăn
-   thua cho tới khi ai đó khởi động lại dịch vụ nssm — một cái phanh chỉ ăn sau khi khởi động
-   lại thì không phải là phanh. Người trực đêm dừng được bằng một thao tác họ làm được: tạo một
-   tệp rỗng tên `DUNG-GUI` trong thư mục inbox. Lệnh vẫn tiếp tục nạp và kiểm bình thường, chỉ
-   dừng bước xếp hàng ký-gửi; xoá tệp đó đi để gửi lại.
-3. **Từ chối kết hợp `--dry-run` với `--lien-tuc`.** `--dry-run` là để nhìn một lần rồi quyết
-   định; ghép với `--lien-tuc` thì nó đọ log mãi mà không làm gì cả, và che mất dòng log thật
-   của các lệnh khác. Lệnh thoát mã khác 0 kèm thông điệp từ chối, không chạy vòng lặp nào.
+Mỗi vòng làm hai việc: **quét** thư mục `organization.chung_tu_dien_tu.import_path`, nạp mọi tệp
+`.xml` **ngay trong thư mục gốc** (không quét đệ quy), chuyển tệp đã xử lý sang `da-nap/` và tệp
+hỏng sang `loi/`; rồi **nhặt** mọi hồ sơ đã kiểm, sạch, chưa có `ma_ket_qua` mà xếp hàng ký số và
+gửi.
 
-⚠️ **Khoá chống hai lượt chạy chồng nhau (`KHOA_LUOT`) được đặt MỘT LẦN trước vòng lặp, mở MỘT
-LẦN sau khi vòng lặp kết thúc** — không đặt/mở trong từng vòng, nếu không vòng thứ hai sẽ tự
-thấy khoá của chính mình và bỏ qua vĩnh viễn. Thời hạn khoá (`KHOA_LUOT_PHUT`) phải luôn lớn hơn
-hẳn tổng thời gian sống dự kiến của tiến trình (`--so-vong × --nghi` cộng thời gian quét mỗi
-vòng) — nếu không, khoá hết hạn giữa lúc tiến trình vẫn đang chạy và một tiến trình thứ hai chen
-được vào, hai tiến trình cùng nhặt một tệp lên.
+### Vì sao bước nhặt đi bằng truy vấn, không theo "vừa nạp"
+
+Hồ sơ vừa nạp gần như **luôn** ở trạng thái *chưa kiểm* — bộ kiểm còn nằm trong hàng đợi
+`JobCtdt`. Nếu lệnh chỉ xếp hàng cho những mã nó vừa nạp thì gần như lượt nào cũng trượt, và hồ
+sơ phải chờ tới lượt sau mới được nhặt. Truy vấn thẳng thì mỗi vòng vét đúng những hồ sơ *vừa
+mới* đủ điều kiện — kể cả hồ sơ người ta sửa tay trên màn hình rồi cho kiểm lại.
+
+### Năm cái phanh
+
+| Phanh | Tác dụng |
+|---|---|
+| **Tệp `DUNG-GUI`** | Đặt một tệp rỗng tên `DUNG-GUI` trong thư mục inbox là **dừng gửi ngay vòng sau**, vẫn tiếp tục nạp và kiểm. Xoá tệp đi là chạy lại. Đây là phanh tay duy nhất có tác dụng **không cần khởi động lại dịch vụ** — xem khối cảnh báo ngay dưới. |
+| `import_tu_dong_gui` | **Cổng riêng, mặc định TẮT.** `submit_enabled` cho phép *người* bấm nút gửi; khoá này cho phép *máy* gửi khi không ai nhìn. Bật cái thứ nhất không kéo theo cái thứ hai. |
+| `--gioi-han` | Trần số **tệp** nạp mỗi vòng. Không truyền thì lấy cấu hình `organization.chung_tu_dien_tu.import_gioi_han`; cấu hình đó cũng trống mới lùi về `200`. Một thư mục đổ nhầm 3000 tệp không thành 3000 lần POST trong một vòng. Vượt trần thì lệnh **báo to** rồi cắt, không cắt im lặng. |
+| `--so-vong=1000` | Tiến trình **tự thoát** sau bấy nhiêu vòng để nssm dựng lại bản sạch. |
+| `--dry-run` / `--khong-ky` / `--khong-gui` | Chỉ liệt kê; hoặc dừng chuỗi ở nạp; hoặc dừng ở ký. `--dry-run` **không** kết hợp được với `--lien-tuc` — lệnh thoát mã khác 0 kèm thông điệp từ chối, không chạy vòng lặp nào. |
+
+⚠️ **Sửa `import_tu_dong_gui` KHÔNG dừng được tiến trình đang chạy.** Tiến trình sống lâu giữ
+cấu hình trong bộ nhớ; khoá đó chỉ được đọc lại khi dịch vụ khởi động lại. Muốn dừng gửi ngay
+thì **tạo tệp `DUNG-GUI`** trong thư mục inbox:
+
+```bat
+type nul > D:\XML\ChungTuDienTu\inbox\DUNG-GUI
+```
+
+Hồ sơ vẫn được nạp và kiểm bình thường — chỉ bước gửi bị chặn.
+
+### Khoá lượt
+
+Một khoá cache (`ctdt:import:dang-chay`) chặn hai tiến trình chạy chồng lên nhau. Khoá được đặt
+**MỘT LẦN** trước vòng lặp và mở **MỘT LẦN** sau khi vòng lặp kết thúc — không đặt/mở trong từng
+vòng, nếu không vòng thứ hai sẽ tự thấy khoá của chính mình và bỏ qua vĩnh viễn. Thời hạn khoá
+hiện là **1440 phút (24 giờ)** — đủ dư địa cho `--so-vong=1000 × --nghi=5 giây` (~83 phút tối
+thiểu, chưa tính thời gian quét mỗi vòng), nhưng đổi lại cửa sổ "khoá mồ côi" sau một lần bị kill
+cứng cũng dài tới 24 giờ.
+
+Nếu tiến trình bị kill cứng (`finally` không kịp mở khoá), lượt sau sẽ bỏ qua với thông báo *"Mot
+luot ctdt:import khac dang chay"* cho tới khi hết hạn khoá. Gỡ ngay bằng lệnh cấp cứu:
+
+```bash
+php artisan ctdt:import --go-khoa
+```
+
+`--go-khoa` gỡ khoá **VÔ ĐIỀU KIỆN** rồi thoát ngay — không quét, không nạp, không xếp hàng gì
+cả. **CHỈ dùng khi đã tự xác nhận** (bằng `tasklist /FI "IMAGENAME eq php.exe" /V` tìm dòng lệnh
+có `ctdt:import --lien-tuc`, hoặc xem dịch vụ nssm "QLBV CtdtImport" còn sống không) là **KHÔNG
+còn** tiến trình `ctdt:import` nào đang chạy. Lệnh không tự kiểm điều đó — nếu gỡ nhầm lúc một
+tiến trình `--lien-tuc` thật sự còn sống, tiến trình đó không hay biết gì (nó không đọc lại
+khoá), và một lệnh `ctdt:import` khác gọi ngay sau sẽ nhặt khoá thành công rồi quét **cùng thư
+mục** — hai tiến trình cùng nạp một tệp, và vì đây là lệnh POST thật lên cổng BHXH, hậu quả là
+**nạp trùng rồi gửi trùng hồ sơ lên cổng**.
+
+### Mã thoát khác 0 — dấu hiệu sớm của nạp trùng
+
+`ctdt:import` trả về mã thoát khác 0 khi có tệp **đã xử lý xong** (nạp thành công vào CSDL, hoặc
+đã chuyển sang `loi/`) nhưng **không dời được** khỏi thư mục gốc (quyền ghi, tệp bị khoá bởi
+chương trình khác, ổ mạng chập). Tệp đó vẫn nằm ở thư mục gốc, nên vòng quét sau sẽ **nhặt lại
+đúng nó** — với hồ sơ đã nạp thành công, đó là nạp trùng, rồi bị ký/gửi lần nữa. Ở chế độ
+`--lien-tuc`, mã thoát cuối cùng phản ánh **có từng vòng nào** gặp lỗi này trong suốt cả tiến
+trình, không chỉ vòng cuối. Người trực thấy mã thoát khác 0 (hoặc dòng log tổng kết nhắc "tep
+khong doi duoc") phải đọc log để biết tệp nào, rồi kiểm quyền ghi / tệp có bị khoá không trước
+khi khởi động lại dịch vụ.
 
 Chạy thử ngắn, an toàn (không ký, thư mục tạm, ba vòng):
 
 ```bash
 php artisan ctdt:import --lien-tuc --so-vong=3 --nghi=2 --khong-ky --duong-dan=storage/app/ctdt-thu
 ```
+
+### Cài dịch vụ trên máy chủ Windows
+
+```bat
+%NSSM_PATH%\nssm install "QLBV CtdtImport" %PHP_PATH% "%LARAVEL_PATH%artisan ctdt:import --lien-tuc"
+%NSSM_PATH%\nssm set "QLBV CtdtImport" AppDirectory %LARAVEL_PATH%
+%NSSM_PATH%\nssm set "QLBV CtdtImport" AppExit Default Restart
+%NSSM_PATH%\nssm set "QLBV CtdtImport" AppRestartDelay 10000
+%NSSM_PATH%\nssm start "QLBV CtdtImport"
+```
+
+`AppExit Default Restart` là phần bắt buộc: lệnh **cố ý thoát** sau `--so-vong` vòng, và nssm
+phải dựng lại nó. `AppRestartDelay 10000` chỉ là 10 giây nghỉ giữa hai tiến trình — nhịp thật do
+`--nghi` quyết định.
+
+⚠️ **Ba worker hàng đợi vẫn BẮT BUỘC** (xem mục ngay phía trên). Lệnh này chỉ *xếp hàng*; không
+có worker thì không gì chạy cả. Chính ba worker đó — chứ không phải vòng lặp của lệnh này — mới
+là thứ gửi hồ sơ lên cổng, y như `JobSubmitXml3176` bên XML3176.
 
 ---
 
