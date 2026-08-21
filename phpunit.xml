@@ -33,12 +33,16 @@
              that ngay 2026-08-21: toan bo qlbv bi xoa sach, khong co binlog va khong co ban
              dump nao chua bang ctdt de lui ve.
 
-             Ghi de o day khien moi test chay tren SQLite trong bo nho, nen mot trait nhu the
-             chi xoa mot co so du lieu tam roi bien mat cung tien trinh.
+             Ghi de o day tro bo test sang schema VUT DI qlbv_test. Mot trait nhu the gio
+             chi xoa qlbv_test - dung lai duoc bang mot lenh migrate.
+
+             KHONG tro sang sqlite: khoang 55 test trong tests/Unit/Import va
+             tests/Unit/OrderCheck doc va GHI bang that (medicine_catalogs). Tren sqlite
+             rong chung khong chay duoc, va mot bo test tat tieng thi khong bao ve duoc gi.
 
              tests/TestCase.php con mot lop chan thu hai, phong khi tep nay bi sua. -->
-        <env name="DB_CONNECTION" value="sqlite"/>
-        <env name="DB_DATABASE" value=":memory:"/>
+        <env name="DB_CONNECTION" value="mysql"/>
+        <env name="DB_DATABASE" value="qlbv_test"/>
         <env name="CACHE_DRIVER" value="array"/>
         <env name="SESSION_DRIVER" value="array"/>
         <env name="QUEUE_DRIVER" value="sync"/>

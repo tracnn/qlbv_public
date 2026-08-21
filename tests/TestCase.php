@@ -3,17 +3,19 @@
 namespace Tests;
 
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
-use Illuminate\Support\Facades\DB;
 
 abstract class TestCase extends BaseTestCase
 {
     use CreatesApplication;
 
     /**
-     * Ten cac driver duoc phep chay test. Chi driver nao KHONG the cham toi mot may chu
-     * that moi co mat o day.
+     * Ten co so du lieu CAM tuyet doi. Day la CSDL phat trien that cua du an.
+     *
+     * Chan theo TEN chu khong theo driver: mot bo test tro vao sqlite thi an toan nhung lam
+     * tat tieng khoang 55 test doc/ghi bang that (medicine_catalogs). Cai phai chan la
+     * chinh cai ten nay, khong phai ca MySQL.
      */
-    const DRIVER_AN_TOAN = ['sqlite'];
+    const CSDL_CAM = ['qlbv'];
 
     /**
      * Chan ngay neu bo test dang tro vao mot co so du lieu that.
@@ -34,37 +36,22 @@ abstract class TestCase extends BaseTestCase
         parent::setUp();
 
         $macDinh = config('database.default');
-        $driver = config('database.connections.' . $macDinh . '.driver');
+        $ten = config('database.connections.' . $macDinh . '.database');
 
-        if (!in_array($driver, self::DRIVER_AN_TOAN, true)) {
-            $ten = config('database.connections.' . $macDinh . '.database');
-
+        if (in_array($ten, self::CSDL_CAM, true)) {
             $this->fail(
-                'CHAN AN TOAN: bo test dang tro vao ket noi "' . $macDinh . '" (driver '
-                . $driver . ', database "' . $ten . '"). Test CHI duoc chay tren sqlite.'
+                'CHAN AN TOAN: bo test dang tro vao co so du lieu "' . $ten . '" - day la '
+                . 'CSDL PHAT TRIEN THAT.'
                 . PHP_EOL . PHP_EOL
-                . 'Mot trait nhu RefreshDatabase hay DatabaseMigrations se goi migrate:fresh '
-                . 'tren ket noi nay va DROP TOAN BO BANG. Chuyen do da xay ra that ngay '
-                . '2026-08-21 va lam mat sach co so du lieu phat trien.'
+                . 'Nhieu test trong bo nay GHI thang vao bang that (vd. tests/Unit/Import xoa '
+                . 'medicine_catalogs), va mot trait nhu RefreshDatabase se goi migrate:fresh '
+                . 'tuc DROP TOAN BO BANG. Chuyen do da xay ra that ngay 2026-08-21 va lam mat '
+                . 'sach CSDL phat trien.'
                 . PHP_EOL . PHP_EOL
                 . 'Kiem lai hai dong nay trong phpunit.xml:' . PHP_EOL
-                . '  <env name="DB_CONNECTION" value="sqlite"/>' . PHP_EOL
-                . '  <env name="DB_DATABASE" value=":memory:"/>'
+                . '  <env name="DB_CONNECTION" value="mysql"/>' . PHP_EOL
+                . '  <env name="DB_DATABASE" value="qlbv_test"/>'
             );
         }
-    }
-
-    /**
-     * Dong moi ket noi sau MOI test.
-     *
-     * SQLite trong bo nho song theo ket noi: khong dong thi bang cua test truoc con nguyen
-     * o test sau, va mot test co the xanh nho du lieu nguoi khac de lai - kieu phu thuoc
-     * chi lo ra khi ai do chay rieng mot tep.
-     */
-    protected function tearDown()
-    {
-        DB::disconnect();
-
-        parent::tearDown();
     }
 }

@@ -13,8 +13,8 @@ use Tests\TestCase;
  * ctdt - du lieu doi soat voi cong BHXH mat vinh vien.
  *
  * Ba lop chan duoc dung sau su co do, va tep nay canh hai lop dau:
- *   1. phpunit.xml ghi de DB_CONNECTION=sqlite, DB_DATABASE=:memory:
- *   2. TestCase::setUp() nem neu ket noi mac dinh khong phai sqlite
+ *   1. phpunit.xml ghi de DB_DATABASE sang schema vut di qlbv_test
+ *   2. TestCase::setUp() nem neu ket noi mac dinh tro vao mot ten trong CSDL_CAM
  *   3. tep nay: chan viec dung lai trait nguy hiem, va chan viec go mat lop 1
  *
  * Khong lop nao trong ba lop nay du mot minh. Lop 1 la mot tep van ban ai cung sua duoc;
@@ -33,14 +33,15 @@ class ChotAnToanCsdlTest extends TestCase
     const TRAIT_CAM = ['RefreshDatabase', 'DatabaseMigrations'];
 
     /** @test */
-    public function ket_noi_mac_dinh_cua_bo_test_phai_la_sqlite()
+    public function bo_test_KHONG_duoc_tro_vao_csdl_phat_trien()
     {
         // Lop 2 (TestCase::setUp) da nem truoc khi toi duoc day, nen test nay xanh nghia la
         // lop do dang song. Giu lai de mot ai do doc danh sach test cung thay chot ton tai.
         $macDinh = config('database.default');
+        $ten = config('database.connections.' . $macDinh . '.database');
 
-        $this->assertSame('sqlite', config('database.connections.' . $macDinh . '.driver'),
-            'Bo test phai chay tren sqlite - xem chu thich CHOT AN TOAN trong phpunit.xml');
+        $this->assertNotContains($ten, TestCase::CSDL_CAM,
+            'Bo test dang tro vao CSDL phat trien - xem chu thich CHOT AN TOAN trong phpunit.xml');
     }
 
     /** @test */
@@ -51,10 +52,10 @@ class ChotAnToanCsdlTest extends TestCase
         // noi thang ly do, de nguoi sua khong di tim nham cho.
         $xml = file_get_contents(base_path('phpunit.xml'));
 
-        $this->assertContains('<env name="DB_CONNECTION" value="sqlite"/>', $xml,
-            'phpunit.xml phai ghi de DB_CONNECTION - khong thi test tro thang vao qlbv');
-        $this->assertContains('<env name="DB_DATABASE" value=":memory:"/>', $xml,
-            'phpunit.xml phai ghi de DB_DATABASE - khong thi test tro thang vao qlbv');
+        $this->assertContains('<env name="DB_DATABASE"', $xml,
+            'phpunit.xml phai ghi de DB_DATABASE - khong thi test tro thang vao qlbv theo .env');
+        $this->assertNotContains('<env name="DB_DATABASE" value="qlbv"/>', $xml,
+            'phpunit.xml KHONG duoc tro bo test vao CSDL phat trien');
     }
 
     /** @test */
