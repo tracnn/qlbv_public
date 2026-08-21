@@ -12,35 +12,11 @@
 @section('content')
 @include('includes.message')
 
-<div class="box box-primary">
-  <div class="box-body">
-    {{-- Khoang thoi gian dung partial chung, giong man XML3176 va chung tu dien tu: ba man
-         cung nghiep vu lien thong BHXH thi phai cung dang va cung cach van hanh.
+@include('bhyt.check-hein-card.partials.search')
 
-         showExport = false: man nay da co nut "Xuat Excel" rieng o duoi, bat nut cua partial
-         nua la hai nut lam mot viec. --}}
-    @include('partials.date_range', ['showExport' => false])
-
-    <div class="row">
-      <div class="col-md-2"><label>Trạng thái</label>
-        <select id="trang_thai" class="form-control select2">
-          <option value="">Tất cả</option>
-          <option value="loi">Chỉ lỗi</option>
-          <option value="hop_le">Chỉ hợp lệ</option>
-        </select>
-      </div>
-      @include('partials.ma_cskcb', ['colClass' => 'col-md-3', 'formGroup' => false])
-      <div class="col-md-3"><label>Tìm hồ sơ/thẻ/họ tên</label>
-        <input type="text" id="tim" class="form-control" placeholder="mã hồ sơ, số thẻ, họ tên...">
-      </div>
-    </div>
-    @include('partials.load_data_button')
-
-    <div class="row" style="margin-top:10px">
-      <div class="col-md-12">
-        <a id="btn-xuat" class="btn btn-success"><i class="fa fa-file-excel-o"></i> Xuất Excel</a>
-      </div>
-    </div>
+<div class="row" style="margin-bottom:10px">
+  <div class="col-md-12">
+    <a id="btn-xuat" class="btn btn-success"><i class="fa fa-file-excel-o"></i> Xuất Excel</a>
   </div>
 </div>
 
@@ -236,9 +212,4 @@
     });
 </script>
 
-{{-- Hai partial tu dat script cua no vao mot stack RIENG. Khong day ra thi chung im lang
-     khong hoat dong: o chon khoang thoi gian se thanh mot o text tron, va nut "Tai du lieu"
-     bam khong ra gi. --}}
-@stack('after-scripts-date-range')
-@stack('after-scripts-load-data-button')
 @endpush

@@ -15,6 +15,17 @@ class ManKetQuaTraCuuTheTest extends TestCase
     }
 
     /**
+     * Bo loc nam o partial rieng, dung khuon cua ho partial XML3176 va chung tu dien tu.
+     * Khang dinh ve o loc phai doc tep NAY, khong doc index.
+     */
+    protected function maPartialLoc()
+    {
+        return file_get_contents(
+            base_path('resources/views/bhyt/check-hein-card/partials/search.blade.php')
+        );
+    }
+
+    /**
      * chiLoi() va chiHopLe() phai BU NHAU: tong hai ben bang tong so dong. Neu lech thi co
      * dong khong thuoc ben nao - nguoi dung se khong bao gio nhin thay no du chon trang thai
      * gi, ma khong co dau hieu gi.
@@ -156,7 +167,7 @@ class ManKetQuaTraCuuTheTest extends TestCase
     /** @test */
     public function blade_co_du_bon_bo_loc_va_khoi_tao_select2()
     {
-        $ma = $this->maBlade();
+        $ma = $this->maPartialLoc();
 
         foreach (['trang_thai', 'tim'] as $id) {
             $this->assertContains('id="' . $id . '"', $ma, 'Thieu bo loc ' . $id);
@@ -167,7 +178,10 @@ class ManKetQuaTraCuuTheTest extends TestCase
         // chi doi hinh dang.
         $this->assertContains("@include('partials.date_range'", $ma, 'Thieu o chon khoang thoi gian');
         $this->assertContains("@include('partials.ma_cskcb'", $ma, 'Thieu o loc co so');
-        $this->assertContains("select2({width: '100%'})", $ma,
+
+        // Loi goi select2 nam o script cua index, khong o partial - khang dinh dung nguon.
+        // Thieu no thi cac o chon hien ra dang tho, mat o tim kiem ben trong.
+        $this->assertContains("select2({width: '100%'})", $this->maBlade(),
             'Thieu khoi tao select2 - o chon se hien ra dang tho');
     }
 
@@ -177,11 +191,24 @@ class ManKetQuaTraCuuTheTest extends TestCase
         // Hai partial tu dat script cua no vao mot stack RIENG. Khong day ra thi chung im
         // lang khong hoat dong: o chon khoang thoi gian thanh mot o text tron va nut "Tai
         // du lieu" bam khong ra gi - khong loi console, khong dau hieu gi.
-        $ma = $this->maBlade();
+        $ma = $this->maPartialLoc();
 
         $this->assertContains("@include('partials.load_data_button')", $ma, 'Thieu nut Tai du lieu');
         $this->assertContains("@stack('after-scripts-date-range')", $ma);
         $this->assertContains("@stack('after-scripts-load-data-button')", $ma);
+    }
+
+    /** @test */
+    public function index_nap_partial_loc_thay_vi_tu_dung_khoi_loc()
+    {
+        // Khoi loc dung khuon chung: mot partial rieng duoi partials/, giong man XML3176 va
+        // chung tu dien tu. Tu dung lai khoi loc trong index la mot khuon thu hai cho cung
+        // mot viec, va hai khuon se troi xa nhau.
+        $this->assertContains(
+            "@include('bhyt.check-hein-card.partials.search')",
+            $this->maBlade(),
+            'index phai nap partial loc, khong tu dung khoi loc'
+        );
     }
 
     /** @test */
