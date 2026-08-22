@@ -8,13 +8,15 @@ rồi dựng lại — không sửa trực tiếp tệp `.docx`, vì lần dựn
 
 | Tệp | Nội dung |
 |---|---|
+| `version.js` | **Số phiên bản và lịch sử phát hành — nguồn duy nhất.** Trang bìa, bảng lịch sử và chân trang đều đọc từ đây |
 | `lib.js` | Hàm dựng chung: tiêu đề, đoạn văn, gạch đầu dòng, bảng, khối "Lưu ý", khối "Dành cho CNTT" |
-| `front.js` | Trang bìa, mục lục tự động, Chương 0 |
+| `front.js` | Trang bìa, mục lục tự động, bảng Lịch sử cập nhật, Chương 0 |
 | `part1.js` | Phần I — Hồ sơ XML 3176 |
 | `part2.js` | Phần II — Kiểm tra sai sót y lệnh |
 | `part3.js` | Phần III — Thẻ BHYT |
 | `part4.js` | Phần IV — Quản lý danh mục |
 | `part5.js` | Phần V — Tra cứu lỗi hồ sơ theo mã điều trị |
+| `part6.js` | Phần VI — Chứng từ điện tử theo Phụ lục 02 |
 | `appendix.js` | Phụ lục A (tra cứu sự cố) và Phụ lục B (tiến trình nền) |
 | `build.js` | Ghép các phần, khai báo trang, header/footer, đánh số |
 
@@ -24,6 +26,24 @@ rồi dựng lại — không sửa trực tiếp tệp `.docx`, vì lần dựn
 npm install docx
 node build.js ../Huong-dan-su-dung-XML3176-OrderCheck-TheBHYT-DanhMuc.docx
 ```
+
+## Quy trình phát hành một đợt cập nhật
+
+Tài liệu đánh số phiên bản theo từng đợt. Mỗi lần bổ sung hoặc sửa nội dung đáng kể, làm đủ
+bốn bước sau — bỏ bước nào thì tài liệu vẫn dựng ra bình thường, chỉ mang thông tin phiên bản
+sai, và đó là kiểu sai không ai phát hiện cho tới lúc hai người mở hai bản khác nhau mà thấy
+cùng một số:
+
+1. Sửa nội dung trong `part*.js` / `front.js` / `appendix.js`.
+2. Mở `version.js`: thêm **một** mục vào đầu mảng `LICH_SU`, rồi sửa `PHIEN_BAN` và
+   `NGAY_PHAT_HANH` cho khớp mục vừa thêm.
+   - Tăng số phụ (1.1 → 1.2) khi bổ sung một phần mới hoặc cập nhật nội dung một phần.
+   - Tăng số chính (1.x → 2.0) khi đổi cấu trúc tài liệu hoặc đổi phạm vi đối tượng đọc.
+3. Dựng lại tệp `.docx` (lệnh ở mục trên).
+4. Mở bằng Word, `Ctrl+A` rồi `F9` để cập nhật mục lục, và lưu lại.
+
+Cột "Nội dung thay đổi" trong `LICH_SU` viết cho người đọc nghiệp vụ: nói cái gì mới dùng
+được, không nói tệp nào được sửa.
 
 ## Lưu ý khi sửa
 

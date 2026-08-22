@@ -6,28 +6,32 @@ const {
 } = require('docx');
 
 const { FONT } = require('./lib');
-const { cover, toc, chapter0 } = require('./front');
+const { PHIEN_BAN } = require('./version');
+const { cover, toc, history, chapter0 } = require('./front');
 const part1 = require('./part1');
 const part2 = require('./part2');
 const part3 = require('./part3');
 const part4 = require('./part4');
 const part5 = require('./part5');
+const part6 = require('./part6');
 const appendix = require('./appendix');
 
 const children = [
   ...toc(),
+  ...history(),
   ...chapter0(),
   ...part1(),
   ...part2(),
   ...part3(),
   ...part4(),
   ...part5(),
+  ...part6(),
   ...appendix(),
 ];
 
 const doc = new Document({
   creator: 'Phòng Công nghệ thông tin',
-  title: 'Tài liệu hướng dẫn sử dụng — XML 3176, Kiểm tra sai sót y lệnh, Thẻ BHYT, Quản lý danh mục',
+  title: 'Tài liệu hướng dẫn sử dụng — XML 3176, Kiểm tra sai sót y lệnh, Thẻ BHYT, Quản lý danh mục, Chứng từ điện tử',
   description: 'Tài liệu hướng dẫn sử dụng dành cho người dùng nghiệp vụ',
   styles: {
     default: {
@@ -90,7 +94,7 @@ const doc = new Document({
               border: { bottom: { style: BorderStyle.SINGLE, size: 4, color: 'B4C6E7' } },
               children: [
                 new TextRun({
-                  text: 'Hướng dẫn sử dụng — XML 3176 · Kiểm tra y lệnh · Thẻ BHYT · Danh mục',
+                  text: 'Hướng dẫn sử dụng — XML 3176 · Kiểm tra y lệnh · Thẻ BHYT · Danh mục · Chứng từ điện tử',
                   font: FONT, size: 18, color: '808080',
                 }),
               ],
@@ -104,7 +108,7 @@ const doc = new Document({
             new Paragraph({
               alignment: AlignmentType.CENTER,
               children: [
-                new TextRun({ text: 'Trang ', font: FONT, size: 20, color: '808080' }),
+                new TextRun({ text: 'Phiên bản ' + PHIEN_BAN + '   ·   Trang ', font: FONT, size: 20, color: '808080' }),
                 new TextRun({ children: [PageNumber.CURRENT], font: FONT, size: 20, color: '808080' }),
                 new TextRun({ text: ' / ', font: FONT, size: 20, color: '808080' }),
                 new TextRun({ children: [PageNumber.TOTAL_PAGES], font: FONT, size: 20, color: '808080' }),

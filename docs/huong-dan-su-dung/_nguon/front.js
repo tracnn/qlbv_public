@@ -1,5 +1,6 @@
 const { AlignmentType, Paragraph, TextRun, TableOfContents } = require('docx');
 const { h1, h2, h3, p, bullet, note, table, run, FONT, spacer, pageBreak } = require('./lib');
+const { PHIEN_BAN, NGAY_PHAT_HANH, LICH_SU } = require('./version');
 
 function cover() {
   const big = (t, size, bold, color, after) =>
@@ -15,9 +16,34 @@ function cover() {
     big('HƯỚNG DẪN SỬ DỤNG', 44, true, '1F3864', 400),
     big('Hồ sơ XML 3176  •  Kiểm tra sai sót y lệnh', 28, false, '2E5496', 80),
     big('Thẻ BHYT  •  Quản lý danh mục', 28, false, '2E5496', 80),
-    big('Tra cứu lỗi hồ sơ theo mã điều trị', 28, false, '2E5496', 1400),
+    big('Tra cứu lỗi hồ sơ theo mã điều trị', 28, false, '2E5496', 80),
+    big('Chứng từ điện tử theo Phụ lục 02', 28, false, '2E5496', 1400),
     big('Dành cho người dùng nghiệp vụ', 26, false, '555555', 100),
-    big('Phiên bản 1.1 — Tháng 8 năm 2026', 24, false, '777777', 0),
+    // Số phiên bản đọc từ version.js chứ không viết cứng ở đây - xem ghi chú trong tệp đó.
+    big('Phiên bản ' + PHIEN_BAN + ' — ' + NGAY_PHAT_HANH, 24, false, '777777', 0),
+  ];
+}
+
+/**
+ * Bảng lịch sử phát hành.
+ *
+ * Đặt SAU mục lục chứ không trước: là một đề mục cấp 1 nên nó tự vào mục lục, và người cần
+ * biết "bản này khác bản tôi đã đọc ở chỗ nào" tìm được ngay từ trang mục lục.
+ */
+function history() {
+  return [
+    h1('LỊCH SỬ CẬP NHẬT TÀI LIỆU'),
+    p('Tài liệu được cập nhật theo từng đợt bổ sung chức năng của phần mềm. Bảng dưới đây liệt kê các bản đã phát hành, mới nhất ở trên cùng.'),
+    table(
+      ['Phiên bản', 'Ngày', 'Nội dung thay đổi', 'Phần liên quan'],
+      LICH_SU.map((m) => [m.ban, m.ngay, m.noi_dung, m.lien_quan]),
+      [1100, 1200, 4720, 2000],
+    ),
+    p([
+      run('Bản đang đọc: '),
+      run('phiên bản ' + PHIEN_BAN + ' — ' + NGAY_PHAT_HANH + '.', { bold: true }),
+    ]),
+    note('Lưu ý:', 'Trước khi in hoặc gửi tài liệu cho đơn vị khác, hãy đối chiếu số phiên bản ở trang bìa với bản mới nhất do phòng Công nghệ thông tin phát hành. Chức năng của phần mềm thay đổi theo từng đợt, và một bản in cũ có thể mô tả màn hình không còn tồn tại.'),
   ];
 }
 
@@ -38,12 +64,13 @@ function chapter0() {
     h1('CHƯƠNG 0. THÔNG TIN CHUNG'),
 
     h2('0.1. Mục đích và đối tượng sử dụng'),
-    p('Tài liệu này hướng dẫn sử dụng năm nhóm chức năng có liên quan chặt chẽ với nhau trong phần mềm quản lý bệnh viện:'),
+    p('Tài liệu này hướng dẫn sử dụng sáu nhóm chức năng có liên quan chặt chẽ với nhau trong phần mềm quản lý bệnh viện:'),
     bullet('Hồ sơ XML 3176 — nhập khẩu, kiểm tra, ký số và gửi hồ sơ điện tử lên cổng giám định Bảo hiểm xã hội.'),
     bullet('Kiểm tra sai sót y lệnh (order-check) — rà soát tự động các chỉ định, đơn thuốc, dịch vụ kỹ thuật phát sinh trong quá trình khám chữa bệnh.'),
     bullet('Thẻ BHYT — tra cứu thông tin thẻ và lịch sử khám chữa bệnh trên cổng Bảo hiểm xã hội.'),
     bullet('Quản lý danh mục — cập nhật các bộ danh mục do Bảo hiểm xã hội phát hành, làm cơ sở đối chiếu cho hai nhóm chức năng trên.'),
     bullet('Tra cứu lỗi hồ sơ theo mã điều trị — gộp lỗi của cả ba nhóm trên vào một lần tra, phục vụ tra cứu nhanh tại khoa phòng.'),
+    bullet('Chứng từ điện tử theo Phụ lục 02 — nạp, kiểm tra, ký số và gửi giấy chứng sinh, giấy báo tử, giấy chứng nhận nghỉ việc hưởng bảo hiểm xã hội và các chứng từ liên quan lên cổng Bảo hiểm xã hội.'),
     p('Đối tượng sử dụng chính là cán bộ phòng Kế hoạch tổng hợp, cán bộ thống kê và cán bộ phụ trách bảo hiểm y tế. Tài liệu mô tả những gì người dùng nhìn thấy và thao tác trên màn hình.'),
     p('Hai mục 1.10 và 2.9 được viết riêng cho bộ phận công nghệ thông tin, mô tả quy trình bổ sung quy tắc kiểm tra mới. Người dùng nghiệp vụ nên đọc lướt hai mục này để biết cách đặt yêu cầu và ước lượng công sức thực hiện.'),
 
@@ -60,11 +87,13 @@ function chapter0() {
     ),
 
     h2('0.3. Bản đồ menu và quyền truy cập'),
-    p('Các chức năng trong tài liệu này nằm rải ở bốn nhóm menu. Nếu không nhìn thấy một menu nào đó, nguyên nhân gần như luôn là tài khoản chưa được cấp quyền tương ứng; liên hệ quản trị hệ thống để được bổ sung.'),
+    p('Các chức năng trong tài liệu này nằm rải ở năm nhóm menu. Nếu không nhìn thấy một menu nào đó, nguyên nhân gần như luôn là tài khoản chưa được cấp quyền tương ứng; liên hệ quản trị hệ thống để được bổ sung.'),
     table(
       ['Nhóm menu', 'Các mục con', 'Quyền cần có'],
       [
         ['Hồ sơ XML', 'Kết quả tra cứu thẻ; Xml 3176 (Danh sách hồ sơ, Nhập khẩu hồ sơ, Dashboard lỗi XML); Xml 4750', 'xml-man'],
+        ['Hồ sơ XML', 'Chứng từ điện tử (Danh sách hồ sơ, Nạp hồ sơ, Dashboard chứng từ)', 'xml-man'],
+        ['Hồ sơ XML', 'Nút Xóa hồ sơ trong màn chi tiết chứng từ điện tử', 'superadministrator'],
         ['Kiểm tra sai sót y lệnh', 'Danh sách vi phạm', 'order-check'],
         ['Kiểm tra sai sót y lệnh', 'Danh mục giới hạn DV; Quản lý quy tắc kiểm tra', 'superadministrator'],
         ['Thẻ BHYT', 'Tra cứu thẻ BHYT; Tra cứu Thuốc – Thầu', 'Mọi tài khoản đã đăng nhập'],
@@ -87,8 +116,8 @@ function chapter0() {
       ],
       [2400, 6620],
     ),
-    note('Lưu ý:', 'Thứ tự đọc được khuyến nghị cho người mới: Chương 0 → Phần IV (Quản lý danh mục) → Phần I (Hồ sơ XML 3176) → Phần II → Phần III → Phần V. Danh mục là nền tảng đối chiếu; danh mục sai hoặc thiếu sẽ làm hai phần còn lại báo lỗi hàng loạt. Phần V đọc sau cùng vì nó chỉ hiển thị lại kết quả của ba phần trước.'),
+    note('Lưu ý:', 'Thứ tự đọc được khuyến nghị cho người mới: Chương 0 → Phần IV (Quản lý danh mục) → Phần I (Hồ sơ XML 3176) → Phần II → Phần III → Phần V → Phần VI. Danh mục là nền tảng đối chiếu; danh mục sai hoặc thiếu sẽ làm hai phần còn lại báo lỗi hàng loạt. Phần V đọc sau cùng trong nhóm tra cứu vì nó chỉ hiển thị lại kết quả của ba phần trước. Phần VI đứng khá độc lập: người chỉ làm giấy chứng sinh, giấy báo tử có thể đọc thẳng Chương 0 rồi sang Phần VI.'),
   ];
 }
 
-module.exports = { cover, toc, chapter0 };
+module.exports = { cover, toc, history, chapter0 };
