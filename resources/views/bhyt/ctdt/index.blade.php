@@ -187,17 +187,13 @@ function fetchData(startDate, endDate) {
                     // trinh duyet cat tu dau '#' va URL tro sai ho so.
                     var url = "{{ route('bhyt.ctdt.detail', ['ma_ho_so' => '__MA__']) }}"
                               .replace('__MA__', encodeURIComponent(data));
-                    var canhBao = row.khong_co_ma_yte
-                        ? ' <span class="nhan-canh-bao" title="Hồ sơ không có mã y tế — nạp lại sẽ tạo bản ghi mới, không ghi đè">⚠</span>'
-                        : '';
-
                     var the = $('<a>')
                         .addClass('ctdt-mo-chi-tiet')
                         .attr('href', url)
                         .attr('data-ma-ho-so', data)
                         .text(data);
 
-                    return the[0].outerHTML + canhBao;
+                    return the[0].outerHTML;
                 }
             },
             {

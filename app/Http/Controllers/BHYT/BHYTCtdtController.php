@@ -43,7 +43,7 @@ class BHYTCtdtController extends Controller
     const DATATABLE_COLUMNS = [
         'ma_ho_so', 'dich_vu', 'macskcb', 'ho_ten', 'ma_the', 'so_chung_tu', 'so_loi',
         'is_signed', 'trang_thai_gui', 'trang_thai_nhan', 'ma_gd', 'ma_ket_qua',
-        'thoi_gian_tiep_nhan', 'imported_at', 'imported_by', 'khong_co_ma_yte', 'action',
+        'thoi_gian_tiep_nhan', 'imported_at', 'imported_by', 'action',
     ];
 
     public function index()
@@ -98,11 +98,6 @@ class BHYTCtdtController extends Controller
             })
             ->addColumn('trang_thai_nhan', function ($hoSo) {
                 return CtdtTrangThaiGui::nhan(CtdtTrangThaiGui::cua($hoSo));
-            })
-            ->addColumn('khong_co_ma_yte', function ($hoSo) {
-                // Ho so roi vao nhanh lui GUID: nap lai se tao ban ghi MOI chu khong ghi de.
-                // Nguoi van hanh phai biet truoc, khong phai phat hien sau khi da nap hai lan.
-                return strpos((string) $hoSo->ma_ho_so, '#') !== false;
             })
             ->addColumn('action', function ($hoSo) {
                 return $hoSo->ma_ho_so;
