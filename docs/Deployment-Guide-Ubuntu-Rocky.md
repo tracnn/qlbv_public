@@ -299,9 +299,12 @@ cd /var/www/qlbv
 
 # Cài đặt dependencies
 composer install --no-dev --optimize-autoloader
-npm install
-npm run production
 ```
+
+> **Không chạy `npm install` / `npm run production`.** Dự án này không dùng npm:
+> toàn bộ CSS/JS phục vụ người dùng đã nằm sẵn trong `public/` và được commit vào
+> kho mã, không qua bước biên dịch. Chạy hai lệnh đó sẽ báo lỗi thiếu
+> `package.json` — đó là trạng thái đúng, không phải sự cố cài đặt.
 
 ### Bước 2: Cấu hình môi trường
 

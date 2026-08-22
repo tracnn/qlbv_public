@@ -431,10 +431,10 @@ docker-compose exec app php artisan view:clear
 # Update Composer dependencies
 docker-compose exec app composer update
 
-# Update NPM dependencies (nếu có)
-docker-compose exec app npm update
-docker-compose exec app npm run production
 ```
+
+> **Không có bước cập nhật npm.** Dự án không dùng npm; tài nguyên tĩnh trong
+> `public/` được commit thẳng vào kho mã, không qua bước biên dịch.
 
 ## 💾 Backup và Restore
 

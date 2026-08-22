@@ -22,10 +22,30 @@ rồi dựng lại — không sửa trực tiếp tệp `.docx`, vì lần dựn
 
 ## Dựng lại tệp
 
+Chạy ở thư mục gốc dự án:
+
 ```bash
-npm install docx
+npm install docx --no-save --no-package-lock
+```
+
+Rồi ở thư mục này:
+
+```bash
 node build.js ../Huong-dan-su-dung-XML3176-OrderCheck-TheBHYT-DanhMuc.docx
 ```
+
+Dựng xong thì xoá `node_modules` ở thư mục gốc đi.
+
+Hai cờ `--no-save --no-package-lock` là bắt buộc, không phải cho gọn: thiếu chúng thì npm
+tự tạo `package.json` và `package-lock.json` ở thư mục gốc, và hai tệp đó đã được cố ý loại
+bỏ khỏi dự án — xem ghi chú ngay dưới đây.
+
+**Dự án CỐ Ý không có `package.json`.** Toàn bộ CSS/JS phục vụ người dùng nằm sẵn trong
+`public/` và được commit vào kho mã, không qua bước biên dịch — dự án không phụ thuộc npm.
+`docx` chỉ cần cho việc dựng lại tệp `.docx` này, một việc hiếm khi làm, nên cài tại chỗ
+bằng lệnh trên rồi xoá `node_modules` đi sau khi dựng xong. Đừng thêm `package.json` vào
+thư mục gốc chỉ vì một phụ thuộc dùng vài lần một tháng: nó kéo theo `node_modules` 10 MB
+nằm thường trực, và làm người triển khai tưởng dự án cần chạy `npm install` khi cài đặt.
 
 ## Quy trình phát hành một đợt cập nhật
 
