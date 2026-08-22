@@ -73,7 +73,7 @@
                     <div class="form-group row">
                         <label for="tim">Tìm mã hồ sơ / mã thẻ / họ tên / số CCCD / mã BHXH</label>
                         <input class="form-control" type="text" id="tim"
-                               placeholder="Nhập rồi bấm Tải dữ liệu">
+                               placeholder="Nhập rồi nhấn Enter">
                     </div>
                 </div>
             </div>
@@ -90,4 +90,28 @@
     @stack('after-scripts-date-range')
     @stack('after-scripts-imported-by')
     @stack('after-scripts-load-data-button')
+
+    <script type="text/javascript">
+    $(function () {
+        // Enter trong o Tim = bam nut Tai du lieu.
+        //
+        // UY NHIEM sang chinh nut do chu KHONG goi fetchData() thang. Nut chay qua
+        // validateAndFetchData() cua partials.load_data_button - noi kiem khoang ngay va
+        // bat/tat bieu tuong quay. Goi thang fetchData() se bo qua ca hai, va o Tim se
+        // thanh mot duong tai du lieu THU HAI cu xu khac han nut bam: khong canh bao khi
+        // tu-ngay lon hon den-ngay, va khong co dau hieu nao cho biet dang tai.
+        $('#tim').on('keydown', function (e) {
+            // e.which cho trinh duyet cu, e.key cho trinh duyet moi - giu ca hai.
+            if (e.which !== 13 && e.key !== 'Enter') {
+                return;
+            }
+
+            // O nay khong nam trong <form> nen Enter khong gui gi, nhung chan san: dat no
+            // vao mot form o lan sua sau se lam ca trang tai lai va mat het bo loc.
+            e.preventDefault();
+
+            $('#load_data_button').click();
+        });
+    });
+    </script>
 @endpush

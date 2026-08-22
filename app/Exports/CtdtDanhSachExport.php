@@ -42,7 +42,8 @@ class CtdtDanhSachExport implements FromQuery, WithHeadings, ShouldAutoSize, Wit
         // dong la mot truy van rieng - 5000 dong thanh 5001 truy van.
         return $this->truyVan
             ->with(['chungTu' => function ($q) {
-                $q->select('id', 'ho_so_id', 'ma_the', 'ho_ten')->orderBy('id');
+                $q->select('id', 'ho_so_id', 'ma_the', 'so_cccd', 'ma_bhxh', 'ho_ten')
+                    ->orderBy('id');
             }])
             // orderBy('id') la KHOA PHA HOA: Sheet::fromQuery() duyet bang chunk(100) tuc
             // LIMIT/OFFSET, ma mot tep nap ra hang tram ho so trung imported_at den tung
@@ -67,6 +68,8 @@ class CtdtDanhSachExport implements FromQuery, WithHeadings, ShouldAutoSize, Wit
             'Mã CSKCB',
             'Họ tên',
             'Số thẻ',
+            'Số CCCD',
+            'Mã BHXH',
             'Số chứng từ',
             'Số lỗi',
             'Trạng thái gửi',
@@ -95,6 +98,8 @@ class CtdtDanhSachExport implements FromQuery, WithHeadings, ShouldAutoSize, Wit
             (string) $hoSo->macskcb,
             $dau ? (string) $dau->ho_ten : '',
             $dau ? (string) $dau->ma_the : '',
+            $dau ? (string) $dau->so_cccd : '',
+            $dau ? (string) $dau->ma_bhxh : '',
             (int) $hoSo->so_chung_tu,
             (int) $hoSo->so_loi,
             // Nhan lay tu CtdtTrangThaiGui: go lai chuoi o day nghia la doi nhan tren man

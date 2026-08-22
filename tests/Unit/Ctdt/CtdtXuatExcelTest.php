@@ -97,6 +97,40 @@ class CtdtXuatExcelTest extends TestCase
     }
 
     /** @test */
+    public function cccd_va_ma_bhxh_ra_duoc_den_o_excel()
+    {
+        // DI QUA query() THAT chu khong tu goi CtdtHoSo::with(...): map() doc hai gia tri
+        // nay tu quan he chungTu, va quan he do duoc nap bang mot select() liet ke TUNG
+        // COT. Cat mot cot khoi select do se lam o Excel trong hoan toan - tieu de van
+        // dung, so cot van khop, khong test nao do. Chi mot test chay dung query() cua lop
+        // Export moi bat duoc.
+        $hoSo = CtdtHoSo::create([
+            'ma_ho_so' => 'YT777', 'dich_vu' => 'CT2025', 'loai_hs' => '39',
+            'macskcb' => '01929', 'so_chung_tu' => 1, 'so_loi' => 0,
+        ]);
+
+        CtdtChungTu::create([
+            'ho_so_id' => $hoSo->id, 'loai_ho_so' => 'CT03', 'ma_chung_tu' => 'YT777',
+            'ho_ten' => 'NGUYEN VAN A', 'ma_the' => 'DN4010112345678',
+            'so_cccd' => '001095012345', 'ma_bhxh' => '0123456789',
+            'noi_dung_goc' => '<CT03/>',
+        ]);
+
+        $xuat = new CtdtDanhSachExport(CtdtHoSo::where('ma_ho_so', 'YT777'));
+        $dong = $xuat->map($xuat->query()->first());
+
+        // So sanh NGHIEM NGAT - xem chu thich ve loi 0 == chuoi cua PHP7 o test ben duoi.
+        $this->assertContains('001095012345', $dong, 'Thieu so CCCD trong dong xuat', false, false, true);
+        $this->assertContains('0123456789', $dong, 'Thieu ma BHXH trong dong xuat', false, false, true);
+
+        // Dung o duoi dung tieu de: lech mot cot thi hai gia tri tren van "co mat" nhung
+        // nam duoi tieu de khac.
+        $viTri = array_search('Số CCCD', $xuat->headings(), true);
+        $this->assertSame('001095012345', $dong[$viTri], 'So CCCD phai nam dung cot cua no');
+        $this->assertSame('0123456789', $dong[$viTri + 1], 'Ma BHXH phai nam ngay sau So CCCD');
+    }
+
+    /** @test */
     public function nhan_trang_thai_lay_tu_CtdtTrangThaiGui_chu_khong_go_lai()
     {
         // Go lai chuoi tieng Viet o day nghia la doi nhan tren man hinh se khong doi nhan
