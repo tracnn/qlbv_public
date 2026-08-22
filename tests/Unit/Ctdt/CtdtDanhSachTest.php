@@ -158,6 +158,47 @@ class CtdtDanhSachTest extends TestCase
     }
 
     /** @test */
+    public function tim_theo_so_cccd_va_ma_bhxh_cua_chung_tu()
+    {
+        $this->taoHoSo(
+            ['ma_ho_so' => 'YT001'],
+            ['so_cccd' => '001095012345', 'ma_bhxh' => '0111111111']
+        );
+        $this->taoHoSo(
+            ['ma_ho_so' => 'YT002'],
+            ['so_cccd' => '001048067890', 'ma_bhxh' => '0222222222']
+        );
+
+        $this->assertSame('YT002', CtdtDanhSach::truyVan(['tim' => '001048067890'])->first()->ma_ho_so);
+        $this->assertSame('YT002', CtdtDanhSach::truyVan(['tim' => '0222222222'])->first()->ma_ho_so);
+
+        // Tim mot phan cung phai ra: nguoi dung thuong go bon so cuoi cua can cuoc chu
+        // khong go du muoi hai so.
+        $this->assertSame('YT001', CtdtDanhSach::truyVan(['tim' => '012345'])->first()->ma_ho_so);
+    }
+
+    /** @test */
+    public function tim_theo_can_cuoc_khong_lam_lot_ho_so_khac()
+    {
+        // Bon nhanh trong MOT khoi orWhere: viet thieu dau ngoac o CtdtDanhSach se lam ca
+        // bon nhanh thoat ra ngoai va bo loc khoang ngay / dich vu bi vo hieu - luc do moi
+        // lan tim se tra ve CA BANG. Test nay bat dung dieu do.
+        $this->taoHoSo(
+            ['ma_ho_so' => 'YT001', 'dich_vu' => 'CT2025'],
+            ['so_cccd' => '001095012345']
+        );
+        $this->taoHoSo(
+            ['ma_ho_so' => 'YT002', 'dich_vu' => 'GCS'],
+            ['so_cccd' => '001095012345']
+        );
+
+        $kq = CtdtDanhSach::truyVan(['tim' => '001095012345', 'dich_vu' => 'GCS'])->get();
+
+        $this->assertCount(1, $kq, 'Tim theo can cuoc phai VA voi bo loc dich vu, khong phai HOAC');
+        $this->assertSame('YT002', $kq->first()->ma_ho_so);
+    }
+
+    /** @test */
     public function chi_con_loi()
     {
         $this->taoHoSo(['ma_ho_so' => 'YT001', 'so_loi' => 0]);

@@ -80,7 +80,8 @@ class CtdtLoaiTt25Test extends TestCase
         $xml = simplexml_load_string(
             '<CT06><MA_THE>DN456</MA_THE><HO_TEN>Tran Thi Test</HO_TEN>'
             . '<NGAY_SINH>19480826</NGAY_SINH><NGAY_VAO>20251003</NGAY_VAO>'
-            . '<NGAY_RA>20251030</NGAY_RA></CT06>'
+            . '<NGAY_RA>20251030</NGAY_RA>'
+            . '<SO_CCCD>001048067890</SO_CCCD><MA_BHXH>9876543210</MA_BHXH></CT06>'
         );
 
         $this->assertSame([
@@ -89,6 +90,8 @@ class CtdtLoaiTt25Test extends TestCase
             'ngay_sinh' => '19480826',
             'ngay_vao'  => '20251003',
             'ngay_ra'   => '20251030',
+            'so_cccd'   => '001048067890',
+            'ma_bhxh'   => '9876543210',
         ], Ct06::rutGon($xml));
     }
 }

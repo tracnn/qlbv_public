@@ -99,6 +99,8 @@ class GiayBaoTu implements LoaiChungTu
             'ngay_sinh' => DocThe::chuoi($xml, 'NGAY_SINH'),
             'ngay_vao'  => DocThe::chuoi($xml, 'NGAYGIO_VV'),
             'ngay_ra'   => DocThe::chuoi($xml, 'NGAY_TV'),
+            'so_cccd'   => DocThe::chuoi($xml, 'SO_GIAYTO'),
+            'ma_bhxh'   => DocThe::chuoi($xml, 'MA_BHXH'),
         ];
     }
 }

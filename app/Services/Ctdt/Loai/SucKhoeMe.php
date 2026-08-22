@@ -88,6 +88,8 @@ class SucKhoeMe implements LoaiChungTu
             'ngay_sinh' => DocThe::chuoi($xml, 'NGAY_SINH'),
             'ngay_vao'  => DocThe::chuoi($xml, 'NGAY_VAO'),
             'ngay_ra'   => DocThe::chuoi($xml, 'NGAY_RA'),
+            'so_cccd'   => DocThe::chuoi($xml, 'SO_CCCD'),
+            'ma_bhxh'   => DocThe::chuoi($xml, 'MA_BHXH'),
         ];
     }
 }

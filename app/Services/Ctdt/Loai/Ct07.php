@@ -88,6 +88,8 @@ class Ct07 implements LoaiChungTu
             'ngay_sinh' => DocThe::chuoi($xml, 'NGAY_SINH'),
             'ngay_vao'  => DocThe::chuoi($xml, 'TU_NGAY'),
             'ngay_ra'   => DocThe::chuoi($xml, 'DEN_NGAY'),
+            'so_cccd'   => DocThe::chuoi($xml, 'SO_CCCD'),
+            'ma_bhxh'   => DocThe::chuoi($xml, 'MA_BHXH'),
         ];
     }
 }

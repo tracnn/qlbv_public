@@ -37,6 +37,9 @@ interface LoaiChungTu
     /** @return string|null Khoa nghiep vu cua chung tu (MA_YTE / MA_GBT / MA_GCS) */
     public static function maChungTu(\SimpleXMLElement $xml);
 
-    /** @return array Nam cot rut gon: ma_the, ho_ten, ngay_sinh, ngay_vao, ngay_ra */
+    /**
+     * @return array Bay cot rut gon, DUNG THU TU: ma_the, ho_ten, ngay_sinh, ngay_vao,
+     *               ngay_ra, so_cccd, ma_bhxh. CtdtToanVenTest khoa dung bo khoa nay.
+     */
     public static function rutGon(\SimpleXMLElement $xml);
 }

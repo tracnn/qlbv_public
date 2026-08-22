@@ -10,7 +10,8 @@ use App\Models\BHYT\Ctdt\CtdtHoSo;
  * TACH KHOI CONTROLLER co chu dich: bo loc la cho de sai nhat cua mot man danh sach, va
  * kiem duoc no ma khong can dung HTTP thi moi kiem het duoc cac nhanh.
  *
- * Loc theo loai chung tu va tim theo ma the / ho ten phai di qua bang ctdt_chung_tu. Dung
+ * Loc theo loai chung tu va tim theo ma the / ho ten / so can cuoc / ma BHXH phai di qua
+ * bang ctdt_chung_tu. Dung
  * whereHas chu khong join: mot ho so co nhieu chung tu cung loai se sinh nhieu dong khi
  * join, va man danh sach hien mot ho so hai lan la loi de nguoi dung thay nhat.
  */
@@ -60,7 +61,9 @@ class CtdtDanhSach
                 $ngoai->where('ma_ho_so', 'like', '%' . $tim . '%')
                     ->orWhereHas('chungTu', function ($con) use ($tim) {
                         $con->where('ma_the', 'like', '%' . $tim . '%')
-                            ->orWhere('ho_ten', 'like', '%' . $tim . '%');
+                            ->orWhere('ho_ten', 'like', '%' . $tim . '%')
+                            ->orWhere('so_cccd', 'like', '%' . $tim . '%')
+                            ->orWhere('ma_bhxh', 'like', '%' . $tim . '%');
                     });
             });
         }

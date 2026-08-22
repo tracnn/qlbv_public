@@ -41,7 +41,8 @@ class BHYTCtdtController extends Controller
      * doc, va chan noi_dung_goc (XML nguyen van, hang chuc KB moi dong) lot vao.
      */
     const DATATABLE_COLUMNS = [
-        'ma_ho_so', 'dich_vu', 'macskcb', 'ho_ten', 'ma_the', 'so_chung_tu', 'so_loi',
+        'ma_ho_so', 'dich_vu', 'macskcb', 'ho_ten', 'ma_the', 'so_cccd', 'ma_bhxh',
+        'so_chung_tu', 'so_loi',
         'is_signed', 'trang_thai_gui', 'trang_thai_nhan', 'ma_gd', 'ma_ket_qua',
         'thoi_gian_tiep_nhan', 'imported_at', 'imported_by', 'action',
     ];
@@ -79,7 +80,8 @@ class BHYTCtdtController extends Controller
         // Nap kem chung tu: cot ho ten / ma the lay tu chung tu DAU TIEN cua ho so. Khong
         // nap kem thi moi dong la mot truy van rieng - 200 dong thanh 201 truy van.
         $truyVan->with(['chungTu' => function ($q) {
-            $q->select('id', 'ho_so_id', 'ma_the', 'ho_ten')->orderBy('id');
+            $q->select('id', 'ho_so_id', 'ma_the', 'so_cccd', 'ma_bhxh', 'ho_ten')
+                ->orderBy('id');
         }]);
 
         return Datatables::of($truyVan)
@@ -92,6 +94,16 @@ class BHYTCtdtController extends Controller
                 $dau = $hoSo->chungTu->first();
 
                 return $dau ? (string) $dau->ma_the : '';
+            })
+            ->addColumn('so_cccd', function ($hoSo) {
+                $dau = $hoSo->chungTu->first();
+
+                return $dau ? (string) $dau->so_cccd : '';
+            })
+            ->addColumn('ma_bhxh', function ($hoSo) {
+                $dau = $hoSo->chungTu->first();
+
+                return $dau ? (string) $dau->ma_bhxh : '';
             })
             ->addColumn('trang_thai_gui', function ($hoSo) {
                 return CtdtTrangThaiGui::cua($hoSo);

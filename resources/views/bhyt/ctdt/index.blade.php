@@ -39,6 +39,8 @@
                         <th>Mã CSKCB</th>
                         <th>Họ tên</th>
                         <th>Mã thẻ</th>
+                        <th>Số CCCD</th>
+                        <th>Mã BHXH</th>
                         <th>Số CT</th>
                         <th>Số lỗi</th>
                         <th>Ký số</th>
@@ -207,6 +209,8 @@ function fetchData(startDate, endDate) {
             { "data": "macskcb", render: $.fn.dataTable.render.text() },
             { "data": "ho_ten", orderable: false, searchable: false, render: $.fn.dataTable.render.text() },
             { "data": "ma_the", orderable: false, searchable: false, render: $.fn.dataTable.render.text() },
+            { "data": "so_cccd", orderable: false, searchable: false, render: $.fn.dataTable.render.text() },
+            { "data": "ma_bhxh", orderable: false, searchable: false, render: $.fn.dataTable.render.text() },
             { "data": "so_chung_tu", render: $.fn.dataTable.render.text() },
             {
                 "data": "so_loi",

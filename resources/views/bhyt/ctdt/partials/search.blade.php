@@ -71,7 +71,7 @@
             <div class="form-group row">
                 <div class="col-sm-4">
                     <div class="form-group row">
-                        <label for="tim">Tìm mã hồ sơ / mã thẻ / họ tên</label>
+                        <label for="tim">Tìm mã hồ sơ / mã thẻ / họ tên / số CCCD / mã BHXH</label>
                         <input class="form-control" type="text" id="tim"
                                placeholder="Nhập rồi bấm Tải dữ liệu">
                     </div>

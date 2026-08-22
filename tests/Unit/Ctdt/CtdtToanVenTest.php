@@ -143,7 +143,7 @@ class CtdtToanVenTest extends TestCase
     }
 
     /** @test */
-    public function rut_gon_luon_tra_dung_nam_khoa()
+    public function rut_gon_luon_tra_dung_bay_khoa()
     {
         // Man danh sach doc mot bo cot duy nhat cho ca chin loai. Thieu mot khoa la
         // Undefined index luc nap - va chi lo ra voi dung loai chung tu do.
@@ -152,9 +152,9 @@ class CtdtToanVenTest extends TestCase
             $rutGon = $lop::rutGon($xml);
 
             $this->assertSame(
-                ['ma_the', 'ho_ten', 'ngay_sinh', 'ngay_vao', 'ngay_ra'],
+                ['ma_the', 'ho_ten', 'ngay_sinh', 'ngay_vao', 'ngay_ra', 'so_cccd', 'ma_bhxh'],
                 array_keys($rutGon),
-                $loai . ': rutGon() phai tra dung nam khoa theo dung thu tu'
+                $loai . ': rutGon() phai tra dung bay khoa theo dung thu tu'
             );
         }
     }
@@ -162,7 +162,7 @@ class CtdtToanVenTest extends TestCase
     /** @test */
     public function moi_the_ma_rut_gon_doc_deu_phai_co_trong_truong()
     {
-        // rut_gon_luon_tra_dung_nam_khoa() o tren chi canh NAM KHOA tra ve (dua vao XML
+        // rut_gon_luon_tra_dung_bay_khoa() o tren chi canh BAY KHOA tra ve (dua vao XML
         // RONG nen moi gia tri deu null) - no khong canh THE NGUON ma rutGon()/
         // maChungTu() doc. Chin khoi rutGon() duoc CO Y sao chep chin lan (quyet dinh
         // da chot); neu ai do doi ten mot the trong truong() va migration ma quen sua

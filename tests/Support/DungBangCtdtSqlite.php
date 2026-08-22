@@ -44,13 +44,18 @@ trait DungBangCtdtSqlite
             '2026_08_19_100017_create_ctdt_suc_khoe_me_table'        => 'CreateCtdtSucKhoeMeTable',
             '2026_08_19_100018_create_ctdt_giay_bao_tu_table'        => 'CreateCtdtGiayBaoTuTable',
             '2026_08_19_100019_create_ctdt_giay_chung_sinh_table'    => 'CreateCtdtGiayChungSinhTable',
+            '2026_08_22_100001_add_cccd_ma_bhxh_to_ctdt_chung_tu_table' => 'AddCccdMaBhxhToCtdtChungTuTable',
         ];
     }
 
     /**
-     * Dung ca 13/13 bang cua module. Tung dung "bo qua tep chua ton tai" de trait
-     * dung duoc tu Task 2 khi chi co 3/13 migration - nay du 13/13 nen dieu kien do
-     * thanh diem mu: doi ten mot tep migration ma quen sua danh sach o day se bi
+     * Dung ca 13/13 bang cua module, roi chay tiep cac migration SUA BANG (vi du
+     * them cot rut gon) theo dung thu tu khai o tren - danh sach nay khong con la
+     * "13 tep tao 13 bang" nua.
+     *
+     * Tung dung "bo qua tep chua ton tai" de trait dung duoc tu Task 2 khi chi co
+     * 3/13 migration - nay du bo nen dieu kien do thanh diem mu: doi ten mot tep
+     * migration ma quen sua danh sach o day se bi
      * trait AM THAM bo qua thay vi bao loi ngay. Nem ngoai le de sai lech lo ra tai
      * cho, thay vi roi vao mot Schema::hasTable() that bai o mot test khac xa.
      */

@@ -87,12 +87,13 @@ class CtdtLoaiRegistryTest extends TestCase
     }
 
     /** @test */
-    public function ct03_rut_gon_du_nam_cot_danh_sach()
+    public function ct03_rut_gon_du_bay_cot_danh_sach()
     {
         $xml = simplexml_load_string(
             '<CT03><MA_THE>DN123</MA_THE><HO_TEN>Nguyen Van Test</HO_TEN>'
             . '<NGAY_SINH>19950914</NGAY_SINH><NGAY_VAO>201912121200</NGAY_VAO>'
-            . '<NGAY_RA>201912180001</NGAY_RA></CT03>'
+            . '<NGAY_RA>201912180001</NGAY_RA>'
+            . '<SO_CCCD>001095012345</SO_CCCD><MA_BHXH>0123456789</MA_BHXH></CT03>'
         );
 
         $this->assertSame([
@@ -101,6 +102,8 @@ class CtdtLoaiRegistryTest extends TestCase
             'ngay_sinh' => '19950914',
             'ngay_vao'  => '201912121200',
             'ngay_ra'   => '201912180001',
+            'so_cccd'   => '001095012345',
+            'ma_bhxh'   => '0123456789',
         ], Ct03::rutGon($xml));
     }
 

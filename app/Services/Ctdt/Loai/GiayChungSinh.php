@@ -139,6 +139,8 @@ class GiayChungSinh implements LoaiChungTu
             'ngay_sinh' => DocThe::chuoi($xml, 'NGAYSINH_NND'),
             'ngay_vao'  => DocThe::chuoi($xml, 'NGAY_SINH_CON'),
             'ngay_ra'   => DocThe::chuoi($xml, 'NGAY_CT'),
+            'so_cccd'   => DocThe::chuoi($xml, 'SO_CCCD_NND'),
+            'ma_bhxh'   => DocThe::chuoi($xml, 'MA_BHXH_NND'),
         ];
     }
 }
