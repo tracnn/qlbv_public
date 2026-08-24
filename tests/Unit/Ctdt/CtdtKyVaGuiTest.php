@@ -6,7 +6,6 @@ use Tests\TestCase;
 use Tests\Support\DungBangCtdtSqlite;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Cache;
 use App\Http\Controllers\BHYT\BHYTCtdtController;
 use App\Services\Ctdt\CtdtXepHangKyGui;
 use App\Jobs\SignCtdtJob;
@@ -44,7 +43,6 @@ class CtdtKyVaGuiTest extends TestCase
         // phpunit.xml dat CACHE_DRIVER=array cho test, nen khoa cache chong bam trung dung
         // ArrayStore chu khong phai FileStore. ArrayStore van ton tai giua cac test TRONG
         // CUNG mot tien trinh PHPUnit - khoa cua test truoc se chan test sau neu khong xoa.
-        Cache::flush();
     }
 
     private function hoSo(array $ghiDe = [])
@@ -445,16 +443,16 @@ class CtdtKyVaGuiTest extends TestCase
         $this->hoSo();
         $this->controller->kyVaGui('YT001');
 
-        // Dung Cache::has() de tham do, KHONG dung Cache::add(): add() se TU DAT khoa khi
+        // Dung dangXuLy() de tham do, KHONG dung giuKhoa(): giuKhoa() se TU DAT khoa khi
         // no chua ton tai, tuc phep do lam thay doi thu no dang do.
-        $this->assertTrue(Cache::has(CtdtXepHangKyGui::KHOA . 'YT001'),
+        $this->assertTrue(CtdtXepHangKyGui::dangXuLy('YT001'),
             'Khoa phai dang giu sau khi bam');
 
         $job = new \App\Jobs\SubmitCtdtJob('YT001', 'tracnn');
         $job->submitServiceGia = new \Tests\Support\FakeCtdtSubmitService();
         $job->handle();
 
-        $this->assertFalse(Cache::has(CtdtXepHangKyGui::KHOA . 'YT001'),
+        $this->assertFalse(CtdtXepHangKyGui::dangXuLy('YT001'),
             'Job gui xong phai nha khoa');
     }
 
@@ -474,7 +472,7 @@ class CtdtKyVaGuiTest extends TestCase
         $job->submitServiceGia = new \Tests\Support\FakeCtdtSubmitService();
         $job->handle();
 
-        $this->assertFalse(Cache::has(CtdtXepHangKyGui::KHOA . 'YT001'));
+        $this->assertFalse(CtdtXepHangKyGui::dangXuLy('YT001'));
     }
 
     /** @test */
@@ -488,7 +486,7 @@ class CtdtKyVaGuiTest extends TestCase
 
         (new \App\Jobs\SubmitCtdtJob('YT001', 'tracnn'))->handle();
 
-        $this->assertFalse(Cache::has(CtdtXepHangKyGui::KHOA . 'YT001'));
+        $this->assertFalse(CtdtXepHangKyGui::dangXuLy('YT001'));
     }
 
     /** @test */
@@ -498,11 +496,11 @@ class CtdtKyVaGuiTest extends TestCase
         // du lan gui do da chet tu lau.
         foreach ([\App\Jobs\SignCtdtJob::class, \App\Jobs\SubmitCtdtJob::class] as $lop) {
             $this->hoSo();
-            Cache::add(CtdtXepHangKyGui::KHOA . 'YT001', true, CtdtXepHangKyGui::KHOA_PHUT);
+            CtdtXepHangKyGui::giuKhoa('YT001');
 
             (new $lop('YT001'))->failed(new \RuntimeException('mang chap'));
 
-            $this->assertFalse(Cache::has(CtdtXepHangKyGui::KHOA . 'YT001'),
+            $this->assertFalse(CtdtXepHangKyGui::dangXuLy('YT001'),
                 $lop . '::failed() phai nha khoa');
 
             CtdtHoSo::where('ma_ho_so', 'YT001')->delete();

@@ -3,8 +3,11 @@
 namespace Tests\Unit\Ctdt;
 
 use Tests\TestCase;
+use Tests\Support\DungBangCtdtSqlite;
 use Illuminate\Support\Facades\Bus;
-use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+use Carbon\Carbon;
 use App\Jobs\SignCtdtJob;
 use App\Services\Ctdt\CtdtHangDoi;
 use App\Services\Ctdt\CtdtXepHangKyGui;
@@ -15,10 +18,14 @@ use App\Services\Ctdt\CtdtXepHangKyGui;
  */
 class CtdtXepHangKyGuiTest extends TestCase
 {
+    // Khoa nam o bang ctdt_khoa_xu_ly (unique index) chu khong o Cache nua, nen test phai
+    // co bang that. Xem chu thich o migration create_ctdt_khoa_xu_ly_table.
+    use DungBangCtdtSqlite;
+
     protected function setUp()
     {
         parent::setUp();
-        Cache::flush();
+        $this->chuanBiBangCtdt();
     }
 
     /** @test */
@@ -60,7 +67,7 @@ class CtdtXepHangKyGuiTest extends TestCase
     /** @test */
     public function dangXuLy_chi_hoi_chu_KHONG_dat_khoa()
     {
-        // Cache::add() vua hoi vua dat. Dung no lam phep tham do se lam chinh nguoi hoi
+        // giuKhoa() vua hoi vua dat. Dung no lam phep tham do se lam chinh nguoi hoi
         // chiem mat khoa, va lan xep hang that ngay sau do bi tu choi boi chinh minh.
         Bus::fake();
 
@@ -84,10 +91,71 @@ class CtdtXepHangKyGuiTest extends TestCase
     }
 
     /** @test */
-    public function khoa_tinh_bang_PHUT_chu_khong_phai_giay()
+    public function khoa_het_han_dung_30_phut_sau()
     {
-        // Cache::add($khoa, $giaTri, $phut) trong Laravel 5.5 nhan PHUT. Truyen giay vao se
-        // khoa ho so lai 30 tieng thay vi 30 phut.
-        $this->assertSame(30, CtdtXepHangKyGui::KHOA_PHUT);
+        // Test HANH VI chu khong soi hang so: doc thang het_han_luc da ghi vao bang. Nham
+        // don vi (addSeconds thay addMinutes) van lam assertSame(30, KHOA_PHUT) xanh, trong
+        // khi khoa that chi song 30 giay - va lan bam thu hai ngay sau do se xep hang duoc.
+        Bus::fake();
+
+        CtdtXepHangKyGui::xep('YT001');
+
+        $khoa = DB::table('ctdt_khoa_xu_ly')->where('ma_ho_so', 'YT001')->first();
+
+        $this->assertNotNull($khoa, 'Phai co dong khoa trong bang');
+        $this->assertSame(
+            30,
+            (int) round(Carbon::parse($khoa->het_han_luc)->diffInSeconds(Carbon::now()) / 60),
+            'Khoa phai het han 30 PHUT sau, khong phai 30 giay hay 30 gio'
+        );
+    }
+
+    /** @test */
+    public function khoa_HET_HAN_khong_chan_luot_moi()
+    {
+        // Mot tien trinh bi giet giua chuoi ky-gui de lai khoa mo coi. Khong don thi ho so
+        // do khong bao gio gui duoc nua, va trieu chung la mot dong "dang xu ly" vinh vien
+        // ma khong co dong log nao.
+        Bus::fake();
+
+        DB::table('ctdt_khoa_xu_ly')->insert([
+            'ma_ho_so'    => 'YT001',
+            'het_han_luc' => Carbon::now()->subMinute(),
+            'nguon'       => 'man_hinh',
+            'created_at'  => Carbon::now()->subHour(),
+            'updated_at'  => Carbon::now()->subHour(),
+        ]);
+
+        $this->assertFalse(CtdtXepHangKyGui::dangXuLy('YT001'),
+            'Khoa da het han thi khong con tinh la dang xu ly');
+        $this->assertTrue(CtdtXepHangKyGui::xep('YT001'),
+            'Khoa het han phai duoc don, khong duoc chan luot moi');
+    }
+
+    /** @test */
+    public function goKhoa_mo_lai_duong_gui_ngay()
+    {
+        Bus::fake();
+
+        CtdtXepHangKyGui::xep('YT001');
+        $this->assertFalse(CtdtXepHangKyGui::xep('YT001'));
+
+        CtdtXepHangKyGui::goKhoa('YT001');
+
+        $this->assertTrue(CtdtXepHangKyGui::xep('YT001'),
+            'Sau goKhoa() phai xep hang lai duoc ngay, khong phai cho het 30 phut');
+    }
+
+    /** @test */
+    public function loi_CSDL_KHAC_trung_khoa_phai_nem_ra_chu_khong_hoa_thanh_dang_xu_ly()
+    {
+        // Bat QueryException chung chung se bien MOI loi CSDL - thieu bang, mat ket noi -
+        // thanh "ho so dang xu ly": nut bam bao mot cau vo hai, khong dong log nao, va khong
+        // ho so nao gui duoc nua. Chi SQLSTATE 23000 moi la "da co nguoi giu".
+        Schema::drop('ctdt_khoa_xu_ly');
+
+        $this->expectException(\Illuminate\Database\QueryException::class);
+
+        CtdtXepHangKyGui::giuKhoa('YT001');
     }
 }

@@ -213,6 +213,11 @@ class SignCtdtJob implements ShouldQueue
      */
     private function nhaKhoa()
     {
-        Cache::forget(CtdtXepHangKyGui::KHOA . $this->maHoSo);
+        // Go qua CtdtXepHangKyGui chu khong tu cham vao co che khoa: khoa da doi tu
+        // Cache sang mot bang co unique index (Cache::add() KHONG nguyen tu tren
+        // FileStore cua Laravel 5.5). Tu cham vao day nghia la lan doi co che sau se
+        // bo sot mot noi, va trieu chung la khoa khong bao gio duoc nha - ho so do
+        // khong gui lai duoc trong 30 phut ma khong co dong log nao.
+        CtdtXepHangKyGui::goKhoa($this->maHoSo);
     }
 }

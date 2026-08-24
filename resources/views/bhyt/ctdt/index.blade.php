@@ -29,11 +29,22 @@
             <button type="button" id="btn-xuat-nhat-ky" class="btn btn-default btn-sm">
                 <i class="fa fa-history"></i> Xuất nhật ký gửi
             </button>
+            <button type="button" id="btn-gui-nhieu" class="btn btn-primary btn-sm" disabled>
+                <i class="fa fa-paper-plane"></i> Ký và gửi đã chọn (<span id="so-da-chon">0</span>)
+            </button>
         </div>
+        <div id="ket-qua-gui-nhieu" style="display:none; margin-bottom:10px;"></div>
         <div class="table-responsive">
             <table class="table display table-hover responsive wrap datatable dtr-inline" width="100%" id="ctdt-list" style="width:100%">
                 <thead>
                     <tr>
+                        <th style="width:28px">
+                            {{-- Chi chon trong TRANG DANG XEM. Khong lam "chon tat ca ho so
+                                 khop bo loc": nguoi bam se gui nhung ho so minh chua tung
+                                 nhin, va sai bo loc mot chut la gui sai hang loat len cong
+                                 BHXH - noi khong co duong rut lai. --}}
+                            <input type="checkbox" id="chon-het-trang" title="Chọn hết các dòng trong trang này">
+                        </th>
                         <th>Mã hồ sơ</th>
                         <th>Dịch vụ</th>
                         <th>Mã CSKCB</th>
@@ -85,6 +96,120 @@
 $(function () {
     $('.select2').select2({ width: '100%' });
 });
+
+// ---------------------------------------------------------------------------------------
+// Gui hang loat.
+//
+// Uy nhiem su kien tren #ctdt-list chu khong gan truc tiep vao tung o tich: DataTables ve
+// lai toan bo tbody moi lan tai/phan trang/sap xep, nen moi handler gan truc tiep se bien
+// mat im lang sau lan tai dau tien.
+// ---------------------------------------------------------------------------------------
+function ctdtDaChon() {
+    return $('#ctdt-list tbody input.chon-ho-so:checked').map(function () {
+        return this.value;
+    }).get();
+}
+
+function ctdtCapNhatSoDaChon() {
+    var n = ctdtDaChon().length;
+
+    $('#so-da-chon').text(n);
+    $('#btn-gui-nhieu').prop('disabled', n === 0);
+
+    // Dong bo o tich tieu de: chi tich khi CA CAC DONG CHON DUOC cua trang deu da tich.
+    var tong = $('#ctdt-list tbody input.chon-ho-so').length;
+    $('#chon-het-trang').prop('checked', tong > 0 && n === tong);
+}
+
+$(document).on('change', '#ctdt-list tbody input.chon-ho-so', ctdtCapNhatSoDaChon);
+
+$(document).on('change', '#chon-het-trang', function () {
+    $('#ctdt-list tbody input.chon-ho-so').prop('checked', this.checked);
+    ctdtCapNhatSoDaChon();
+});
+
+$(document).on('click', '#btn-gui-nhieu', function () {
+    var ds = ctdtDaChon();
+
+    if (!ds.length) {
+        return;
+    }
+
+    if (ds.length > {{ \App\Http\Controllers\BHYT\BHYTCtdtController::TRAN_GUI_NHIEU }}) {
+        alert('Mỗi lượt chỉ gửi tối đa {{ \App\Http\Controllers\BHYT\BHYTCtdtController::TRAN_GUI_NHIEU }} hồ sơ. Đang chọn ' + ds.length + ' hồ sơ.');
+        return;
+    }
+
+    // Hoi kem CON SO. Cong BHXH nhan la nhan that, khong co duong rut lai, va chung tu PL02
+    // khong mang ma giao dich phia nguoi gui nen cong khong the nhan ra ban trung.
+    if (!confirm('Ký số và gửi ' + ds.length + ' hồ sơ lên cổng BHXH?\n\n'
+                 + 'Cổng đã nhận thì không rút lại được.')) {
+        return;
+    }
+
+    var $nut = $(this);
+    $nut.prop('disabled', true);
+
+    $.ajax({
+        url: "{{ route('bhyt.ctdt.ky-va-gui-nhieu') }}",
+        method: 'POST',
+        data: { _token: "{{ csrf_token() }}", ma_ho_so: ds },
+        dataType: 'json'
+    }).done(function (kq) {
+        ctdtVeKetQuaLo(kq);
+
+        // Tai lai danh sach de trang thai moi hien ra, va de moi o tich duoc xoa - giu o
+        // tich cu lai la moi nguoi dung bam gui lan hai cho cung nhung ho so vua gui.
+        if (ctdtBang) {
+            ctdtBang.ajax.reload(null, false);
+        }
+    }).fail(function (xhr) {
+        var kq = xhr.responseJSON;
+
+        ctdtVeKetQuaLo(kq || {
+            thanh_cong: false,
+            thong_diep: 'Không gửi được yêu cầu. Kiểm tra kết nối rồi thử lại.'
+        });
+    }).always(function () {
+        ctdtCapNhatSoDaChon();
+    });
+});
+
+function ctdtVeKetQuaLo(kq) {
+    var $khoi = $('#ket-qua-gui-nhieu').empty().show();
+
+    $khoi.append(
+        $('<div>')
+            .addClass('alert ' + (kq.thanh_cong ? 'alert-success' : 'alert-warning'))
+            .css('margin-bottom', '6px')
+            .text(kq.thong_diep || '')
+    );
+
+    if (kq.bo_qua && kq.bo_qua.length) {
+        var $bang = $('<table>').addClass('table table-bordered table-condensed');
+
+        $bang.append($('<thead>').append(
+            $('<tr>')
+                .append($('<th>').text('Hồ sơ bị bỏ qua'))
+                .append($('<th>').text('Lý do'))
+        ));
+
+        var $than = $('<tbody>');
+
+        // .text() cho CA HAI o: ma_ho_so den tu XML ben ngoai, va ly_do co the mang nguyen
+        // van phan hoi cua cong.
+        $.each(kq.bo_qua, function (i, dong) {
+            $than.append(
+                $('<tr>')
+                    .append($('<td>').text(dong.ma_ho_so))
+                    .append($('<td>').text(dong.ly_do))
+            );
+        });
+
+        $bang.append($than);
+        $khoi.append($bang);
+    }
+}
 
 // KHONG boc trong $(function(){...}): partials.load_data_button goi ham TOAN CUC
 // fetchData(startDate, endDate) va tu goi mot lan ngay khi trang tai xong. Ham nay phai
@@ -165,6 +290,34 @@ function fetchData(startDate, endDate) {
             }
         },
         columns: [
+            {
+                // Cot o tich. KHONG suy dieu kien gui o day - doc thang row.co_the_gui do
+                // server tinh bang CtdtDuDieuKienGui. Suy lai o trinh duyet la ban chep thu
+                // hai cua cung mot luat, va hai ban se lech.
+                "data": "co_the_gui",
+                orderable: false,
+                searchable: false,
+                className: "text-center",
+                render: function (data, type, row) {
+                    if (type !== 'display') {
+                        return data ? 1 : 0;
+                    }
+
+                    // Ho so khong du dieu kien thi KHONG co o tich. Hien o tich roi vo hieu
+                    // hoa cung duoc, nhung mot bang 25 dong toan o tich mo khien nguoi dung
+                    // di tim xem minh bam sai cho nao.
+                    if (!data) {
+                        return '';
+                    }
+
+                    // DOM API chu khong noi chuoi: ma_ho_so den tu XML ben ngoai va co the
+                    // chua dau nhay kep - xem chu thich dai o cot Ma ho so ben duoi.
+                    return $('<input>')
+                        .attr('type', 'checkbox')
+                        .addClass('chon-ho-so')
+                        .attr('value', row.ma_ho_so)[0].outerHTML;
+                }
+            },
             {
                 // Ho ten, dich vu... deu doc thang tu tep XML ben ngoai (khong qua kiem
                 // duyet). Moi gia tri lot vao chuoi HTML PHAI duoc thoat - khong thi mot ho

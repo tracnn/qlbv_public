@@ -619,6 +619,10 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('ctdt/detail/{ma_ho_so}/than', 'BHYT\BHYTCtdtController@detailThan')
             ->name('bhyt.ctdt.detail.than');
         Route::get('ctdt/detail/{ma_ho_so}/tab/{loai}', 'BHYT\BHYTCtdtController@detailTab')->name('bhyt.ctdt.detail.tab');
+        // Dat TRUOC route co tham so {ma_ho_so}: dat sau thi 'ky-va-gui-nhieu' bi khop
+        // vao {ma_ho_so} cua route tren va roi vao kyVaGui() voi ma ho so la chuoi do.
+        Route::post('ctdt/ky-va-gui-nhieu', 'BHYT\BHYTCtdtController@kyVaGuiNhieu')
+        ->name('bhyt.ctdt.ky-va-gui-nhieu');
         Route::post('ctdt/{ma_ho_so}/ky-va-gui', 'BHYT\BHYTCtdtController@kyVaGui')
         ->name('bhyt.ctdt.ky-va-gui');
         Route::delete('ctdt/{ma_ho_so}', 'BHYT\BHYTCtdtController@delete')

@@ -20,6 +20,7 @@ use App\Models\BHYT\Ctdt\CtdtHoSo;
 use App\Models\BHYT\Ctdt\CtdtLoi;
 use App\Services\Ctdt\CtdtQuyetDinhGui;
 use App\Services\Ctdt\CtdtXepHangKyGui;
+use App\Services\Ctdt\CtdtDuDieuKienGui;
 use App\Exports\CtdtDanhSachExport;
 use App\Exports\CtdtLoiExport;
 use App\Exports\CtdtNhatKyGuiExport;
@@ -41,11 +42,21 @@ class BHYTCtdtController extends Controller
      * doc, va chan noi_dung_goc (XML nguyen van, hang chuc KB moi dong) lot vao.
      */
     const DATATABLE_COLUMNS = [
+        'co_the_gui',
         'ma_ho_so', 'dich_vu', 'macskcb', 'ho_ten', 'ma_the', 'so_cccd', 'ma_bhxh',
         'so_chung_tu', 'so_loi',
         'is_signed', 'trang_thai_gui', 'trang_thai_nhan', 'ma_gd', 'ma_ket_qua',
         'thoi_gian_tiep_nhan', 'imported_at', 'imported_by', 'action',
     ];
+
+    /**
+     * Tran so ho so mot luot gui hang loat.
+     *
+     * Kiem o SERVER chu khong chi o JavaScript: gioi han phia trinh duyet chi la tien nghi
+     * cho nguoi dung, ai goi thang endpoint se lot qua het. Va endpoint nay xep hang GUI
+     * THAT len cong BHXH.
+     */
+    const TRAN_GUI_NHIEU = 50;
 
     public function index()
     {
@@ -104,6 +115,14 @@ class BHYTCtdtController extends Controller
                 $dau = $hoSo->chungTu->first();
 
                 return $dau ? (string) $dau->ma_bhxh : '';
+            })
+            ->addColumn('co_the_gui', function ($hoSo) {
+                // Ai duoc tich chon la do SERVER quyet dinh, khong phai JavaScript suy tu
+                // cot trang_thai_gui. Suy o trinh duyet la chep lai luat cua
+                // CtdtDuDieuKienGui lan thu hai, va hai ban se lech: o tich hien ra cho mot
+                // ho so ma endpoint se tu choi, hoac nguoc lai - o tich BIEN MAT cho ho so
+                // that su gui duoc, va khong ai hieu vi sao.
+                return CtdtDuDieuKienGui::cua($hoSo) === CtdtDuDieuKienGui::DUOC;
             })
             ->addColumn('trang_thai_gui', function ($hoSo) {
                 return CtdtTrangThaiGui::cua($hoSo);
@@ -478,67 +497,43 @@ class BHYTCtdtController extends Controller
 
         $hoSo = CtdtHoSo::where('ma_ho_so', $ma_ho_so)->firstOrFail();
 
-        $quyetDinh = CtdtQuyetDinhGui::nen(
-            config('organization.chung_tu_dien_tu.submit_enabled', false),
-            $hoSo->checked_at,
-            $hoSo->so_loi,
-            // KHONG truyen $hoSo->is_signed: ho so chua ky la binh thuong o day - ta sap ky
-            // no. Truyen gia tri that se lam moi ho so chua ky bi tu choi ngay tai nut.
-            true
-        );
+        $cua = CtdtDuDieuKienGui::cua($hoSo);
 
-        if ($quyetDinh !== CtdtQuyetDinhGui::GUI) {
-            return response()->json([
-                'thanh_cong' => false,
-                'thong_diep' => $this->lyDoKhongGui($quyetDinh),
-            ]);
+        // DA_CO_MA_GD di tiep o duong DON LE, khac han duong hang loat. Nhan nut da doi
+        // thanh "Ky va gui lai" va nguoi bam dang nhin man chi tiet cua dung ho so do, nen
+        // gui lai la thao tac co y - giu nguyen hanh vi von co. Duong hang loat tu choi ma
+        // nay, vi o do khong ai nhin tung ho so.
+        if ($cua !== CtdtDuDieuKienGui::DUOC && $cua !== CtdtDuDieuKienGui::DA_CO_MA_GD) {
+            // Laravel 5.5 KHONG co Request::boolean(), nen dung filter_var().
+            //
+            // Canh bao chu khong chan cung: gui lai sau khi sua noi dung la viec HOP LE. Chi
+            // buoc nguoi bam nhin thay minh dang gui lai mot ho so cong da nhan.
+            $daXacNhan = $cua === CtdtDuDieuKienGui::CAN_XAC_NHAN
+                && filter_var($request->input('xac_nhan_gui_lai'), FILTER_VALIDATE_BOOLEAN);
+
+            if (!$daXacNhan) {
+                $phanHoi = [
+                    'thanh_cong' => false,
+                    'thong_diep' => CtdtDuDieuKienGui::lyDo($cua),
+                ];
+
+                // Chi gan khoa nay khi that su can xac nhan: JS doc `if (kq.can_xac_nhan)`
+                // de quyet dinh hien hop thoai, nen gui kem no o moi nhanh tu choi la hien
+                // hop thoai "gui lai?" cho ca ho so con loi chan.
+                if ($cua === CtdtDuDieuKienGui::CAN_XAC_NHAN) {
+                    $phanHoi['can_xac_nhan'] = true;
+                }
+
+                return response()->json($phanHoi);
+            }
         }
 
-        // Chuc nang ky tat + ho so CHUA ky = bam nut cung khong di den dau. Ho so DA ky roi
-        // thi van gui lai duoc binh thuong: khong can ky lai.
-        $kyBat = (bool) config('organization.chung_tu_dien_tu.sign_enabled', false);
-
-        if (!$kyBat && !(bool) $hoSo->is_signed) {
-            return response()->json([
-                'thanh_cong' => false,
-                'thong_diep' => 'Chức năng ký số đang tắt trong cấu hình, và hồ sơ này chưa ký. Liên hệ quản trị để bật.',
-            ]);
-        }
-
-        // XAU CHUOI chu khong day hai job doc lap: ky xong moi gui duoc. Hai job doc lap thi
-        // job gui co the chay truoc job ky va luon thay is_signed = false.
-        //
         // Model App\User dung cot 'loginname' de dinh danh nguoi dang nhap (khong phai
-        // 'username' - cot nay khong ton tai trong $fillable cua User). Cach dung khac o
-        // chinh controller nay, o import(): $request->user()->loginname.
+        // 'username' - cot nay khong ton tai trong $fillable cua User).
         $nguoiGui = auth()->check() ? auth()->user()->loginname : null;
 
-        // Nap lai xoa ma_gd/ma_ket_qua (noi dung da doi thi ket qua cu noi ve mot ban khac),
-        // nen mot ho so DA duoc cong nhan that se hien "Chua ky so" va gui lai duoc ma khong
-        // co gi canh bao - dau vet chi con o lich_su_gui, von chi hien o man chi tiet.
-        //
-        // Canh bao chu khong chan cung: gui lai sau khi sua noi dung la viec HOP LE. Chi
-        // buoc nguoi bam nhin thay minh dang gui lai mot ho so cong da nhan.
-        //
-        // Laravel 5.5 KHONG co Request::boolean(), nen dung filter_var().
-        //
-        // Loi van phai dung cho CA HAI ca: CtdtLuuHoSo::noiLichSu() ghi mot dong lich su khi
-        // ma_gd HOAC ma_ket_qua khac rong, nen mot ho so tung bi cong TU CHOI (chi co
-        // ma_ket_qua) cung thoa dieu kien nay. Noi "da duoc tiep nhan" o do la noi sai voi
-        // nguoi van hanh.
-        $tungGui = !empty($hoSo->lich_su_gui) && empty($hoSo->ma_gd);
-
-        if ($tungGui && !filter_var($request->input('xac_nhan_gui_lai'), FILTER_VALIDATE_BOOLEAN)) {
-            return response()->json([
-                'thanh_cong' => false,
-                'can_xac_nhan' => true,
-                'thong_diep' => 'Hồ sơ này đã từng được gửi lên cổng BHXH, nhưng dấu vết đã bị '
-                    . 'xoá khi nạp lại. Xem tab lịch sử gửi ở màn chi tiết trước khi gửi lại.',
-            ]);
-        }
-
         // Xep hang qua CtdtXepHangKyGui chu khong tu dat khoa va tu dispatch: lenh Console
-        // ctdt:import can dung mot viec nay, va hai ban se lech nhau.
+        // ctdt:import va nut gui hang loat can dung mot viec nay.
         //
         // Dat khoa NGAY TRUOC dispatch, SAU moi nhanh tu choi phia tren: mot lan bam bi tu
         // choi khong lam gi ca, giu khoa se khoa nguoi dung ra ngoai het thoi han ma khong
@@ -556,23 +551,97 @@ class BHYTCtdtController extends Controller
         ]);
     }
 
-    /** Ly do doc duoc cho nguoi bam nut, khong phai ma trang thai */
-    private function lyDoKhongGui($quyetDinh)
+    /**
+     * Ky so va gui HANG LOAT nhung ho so nguoi dung da tich chon.
+     *
+     * KHONG co duong tat nao rieng: moi ho so di qua dung cua chan CtdtDuDieuKienGui va dung
+     * CtdtXepHangKyGui::xep() ma nut don le dung. Ho so nao khong qua thi bi BO QUA kem ly
+     * do, khong lam ca lo that bai - mot lo 50 ho so ma dung lai o ho so thu ba la buoc
+     * nguoi dung bam lai 47 lan.
+     *
+     * DA_CO_MA_GD va CAN_XAC_NHAN deu bi tu choi o day. Ca hai can nguoi doc lich su gui cua
+     * TUNG ho so truoc khi quyet dinh, va chung tu PL02 khong mang ma giao dich phia nguoi
+     * gui nen cong BHXH KHONG the nhan ra ban trung.
+     */
+    public function kyVaGuiNhieu(Request $request)
     {
-        if ($quyetDinh === CtdtQuyetDinhGui::KHONG_GUI) {
-            return 'Chức năng gửi đang tắt trong cấu hình. Liên hệ quản trị để bật.';
+        $ds = $request->input('ma_ho_so');
+        $ds = is_array($ds) ? $ds : [];
+
+        // Ep ve chuoi roi loai trung: tich cung mot ho so hai lan (hai trang, hai lan bam)
+        // khong duoc thanh hai lan xep hang. Khoa CSDL cung chan, nhung chan o day thi con
+        // so bao ve cho nguoi dung moi dung.
+        $ds = array_values(array_unique(array_filter(array_map(function ($m) {
+            return trim((string) $m);
+        }, $ds), 'strlen')));
+
+        if (empty($ds)) {
+            return response()->json([
+                'thanh_cong' => false,
+                'thong_diep' => 'Chưa chọn hồ sơ nào.',
+            ], 400);
         }
 
-        if ($quyetDinh === CtdtQuyetDinhGui::CHUA_KIEM) {
-            return 'Hồ sơ chưa kiểm — công việc kiểm còn nằm trong hàng đợi. Thử lại sau ít phút.';
+        if (count($ds) > self::TRAN_GUI_NHIEU) {
+            return response()->json([
+                'thanh_cong' => false,
+                'thong_diep' => 'Mỗi lượt chỉ gửi tối đa ' . self::TRAN_GUI_NHIEU
+                    . ' hồ sơ. Đang chọn ' . count($ds) . ' hồ sơ.',
+            ], 422);
         }
 
-        if ($quyetDinh === CtdtQuyetDinhGui::CON_LOI) {
-            return 'Hồ sơ còn lỗi chặn gửi. Xem tab Lỗi, sửa ở phần mềm sinh XML rồi nạp lại.';
+        $nguoiGui = auth()->check() ? auth()->user()->loginname : null;
+
+        $daXep = [];
+        $boQua = [];
+
+        // Doc TUNG ho so trong vong lap chu khong whereIn() mot lan: 50 truy van la khong
+        // dang ke, con doc mot lan roi xep hang dan thi ho so cuoi cung duoc quyet dinh dua
+        // tren trang thai da cu vai giay - trong khi bo kiem hoac lenh nen co the vua doi no.
+        foreach ($ds as $maHoSo) {
+            $hoSo = CtdtHoSo::where('ma_ho_so', $maHoSo)->first();
+
+            if ($hoSo === null) {
+                $boQua[] = ['ma_ho_so' => $maHoSo, 'ly_do' => 'Không tìm thấy hồ sơ này.'];
+                continue;
+            }
+
+            $cua = CtdtDuDieuKienGui::cua($hoSo);
+
+            if ($cua !== CtdtDuDieuKienGui::DUOC) {
+                $boQua[] = [
+                    'ma_ho_so' => $maHoSo,
+                    'ly_do'    => CtdtDuDieuKienGui::lyDo($cua),
+                ];
+                continue;
+            }
+
+            if (!CtdtXepHangKyGui::xep($maHoSo, $nguoiGui)) {
+                $boQua[] = [
+                    'ma_ho_so' => $maHoSo,
+                    'ly_do'    => 'Hồ sơ đang xử lý ở một lượt khác.',
+                ];
+                continue;
+            }
+
+            $daXep[] = $maHoSo;
         }
 
-        return 'Hồ sơ chưa đủ điều kiện gửi.';
+        return response()->json([
+            // thanh_cong = da xep duoc IT NHAT mot ho so. Mot lo toan bo bi bo qua la
+            // that bai - khong thi man hinh bao mau xanh trong khi khong co gi duoc gui.
+            'thanh_cong' => count($daXep) > 0,
+            'so_da_xep'  => count($daXep),
+            'so_bo_qua'  => count($boQua),
+            'da_xep'     => $daXep,
+            'bo_qua'     => $boQua,
+            'thong_diep' => count($daXep) > 0
+                ? 'Đã xếp hàng ký số và gửi ' . count($daXep) . ' hồ sơ. Tải lại danh sách '
+                    . 'sau ít phút để xem kết quả.'
+                : 'Không hồ sơ nào đủ điều kiện gửi. Xem lý do từng hồ sơ bên dưới.',
+        ]);
     }
+
 
     /**
      * Xoa han mot ho so. Route da gioi han checkrole:superadministrator - xoa mot ho so da

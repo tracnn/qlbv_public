@@ -2,7 +2,7 @@
 
 namespace App\Services\Ctdt;
 
-use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use App\Jobs\SignCtdtJob;
 use App\Jobs\SubmitCtdtJob;
 use App\Models\BHYT\Ctdt\CtdtLichSuGui;
@@ -10,21 +10,22 @@ use App\Models\BHYT\Ctdt\CtdtLichSuGui;
 /**
  * Dat khoa chong xu ly trung roi xep chuoi ky so - gui len cong.
  *
- * VI SAO LOP RIENG: man chi tiet (nut "Ky va gui") va lenh Console ctdt:import deu can dung
- * mot viec nay. De moi ben tu viet thi hai ban se lech nhau - dung dieu da xay ra that voi
- * XML3176, va ghi chu trong CtdtImporter::nhapTuTep() da canh bao truoc.
+ * VI SAO LOP RIENG: man chi tiet (nut "Ky va gui"), nut gui HANG LOAT va lenh Console
+ * ctdt:import deu can dung mot viec nay. De moi ben tu viet thi cac ban se lech nhau - dung
+ * dieu da xay ra that voi XML3176, va ghi chu trong CtdtImporter::nhapTuTep() da canh bao
+ * truoc.
  *
- * KHONG kiem dieu kien gui o day: noi goi phai tu hoi CtdtQuyetDinhGui truoc, vi hai noi goi
- * bao loi cho hai doi tuong khac nhau - man hinh tra JSON cho nguoi bam, Console in ra man
- * hinh va ghi log.
+ * KHONG kiem dieu kien gui o day: noi goi phai tu hoi CtdtDuDieuKienGui truoc, vi cac noi
+ * goi bao loi cho nhung doi tuong khac nhau - man hinh tra JSON cho nguoi bam, Console in ra
+ * man hinh va ghi log.
  */
 class CtdtXepHangKyGui
 {
-    /** Tien to khoa cache, ghep them ma ho so */
-    const KHOA = 'ctdt:dang-xu-ly:';
+    /** Ten bang khoa. Xem chu thich dai o migration create_ctdt_khoa_xu_ly_table. */
+    const BANG_KHOA = 'ctdt_khoa_xu_ly';
 
     /**
-     * Thoi han khoa, tinh bang PHUT - Cache::add() cua Laravel 5.5 nhan phut.
+     * Thoi han khoa, tinh bang PHUT.
      *
      * 30 phut phai LON HON tong ngan sach thu lai cua ca chuoi: SignCtdtJob co tries = 2,
      * timeout = 120; SubmitCtdtJob co tries = 3, timeout = 90; queue.connections.database
@@ -41,24 +42,7 @@ class CtdtXepHangKyGui
      */
     public static function xep($maHoSo, $nguoiGui = null, $nguon = CtdtLichSuGui::NGUON_MAN_HINH)
     {
-        // Cache::add() tra false khi khoa DA ton tai - do chinh la phep thu "da co ai xep
-        // chua". Khoa theo TUNG ma ho so: mot khoa chung se khoa ca he thong lai chi vi mot
-        // ho so dang chay, va lenh Console xu 200 ho so mot luot se chi xep duoc dung mot.
-        //
-        // CANH BAO TOCTOU - Cache::add() KHONG nguyen tu tren FileStore cua Laravel 5.5.
-        // Illuminate\Cache\Repository::add() rot ve `if (is_null($this->get($k))) put()` khi
-        // store khong hien thuc Contracts\Cache\Store::add (FileStore la truong hop nay);
-        // giua get() va put() co mot khe cua so cho hai luong cung thay "chua co khoa" va
-        // cung xep hang - hai chuoi ky-gui cho MOT ho so, tuc HAI LAN POST that len cong
-        // BHXH cho cung mot goi. Redis/Memcached co add() nguyen tu that nen khong dinh.
-        //
-        // CUOC DUA NAY GIO DE XAY RA HON TRUOC. Khi khoi khoa nay con nam trong controller
-        // (KHOA_XU_LY), hai luong dua nhau chi co the la mot NGUOI bam nut hai lan trong
-        // vai chuc mili giay. Ke tu Giai doan 5a, ben canh nguoi con co lenh nen
-        // `ctdt:import --lien-tuc` xep hang moi vai giay, nen cuoc dua that su la MAY VA
-        // NGUOI CUNG LUC cham dung mot ho so - khong con phu thuoc vao toc do ngon tay ai.
-        // Neu chuyen sang chay that voi CACHE_DRIVER=file, day la rui ro phai xu ly.
-        if (!Cache::add(self::KHOA . $maHoSo, true, self::KHOA_PHUT)) {
+        if (!self::giuKhoa($maHoSo, $nguon)) {
             return false;
         }
 
@@ -74,16 +58,75 @@ class CtdtXepHangKyGui
     }
 
     /**
+     * Giu khoa cho MOT ho so. Nguyen tu that, khac han Cache::add() tren FileStore.
+     *
+     * @param  string $maHoSo
+     * @param  string $nguon
+     * @return bool false khi ho so da co khoa con hieu luc
+     */
+    public static function giuKhoa($maHoSo, $nguon = CtdtLichSuGui::NGUON_MAN_HINH)
+    {
+        // Don khoa het han TRUOC khi thu chen. Khong don thi mot tien trinh bi giet giua
+        // chuoi de lai khoa mo coi, va ho so do khong bao gio gui duoc nua.
+        //
+        // Don TOAN BANG chu khong chi dong cua $maHoSo: bang nay chi co dong cho nhung ho so
+        // DANG chay nen no rat nho, va don ca bang thi khong can mot tien trinh don rac rieng.
+        self::donKhoaHetHan();
+
+        try {
+            DB::table(self::BANG_KHOA)->insert([
+                'ma_ho_so'    => $maHoSo,
+                'het_han_luc' => now()->addMinutes(self::KHOA_PHUT),
+                'nguon'       => $nguon,
+                'created_at'  => now(),
+                'updated_at'  => now(),
+            ]);
+        } catch (\Illuminate\Database\QueryException $e) {
+            // CHI coi la "da co nguoi giu" khi that su trung rang buoc duy nhat (SQLSTATE
+            // 23000). Bat QueryException chung chung la bien MOI loi CSDL - thieu bang, mat
+            // ket noi - thanh "ho so dang xu ly": nut bam bao mot cau vo hai, khong dong log
+            // nao, va khong ho so nao gui duoc nua.
+            if ((string) $e->getCode() !== '23000') {
+                throw $e;
+            }
+
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
      * Chi HOI, khong dat khoa.
      *
-     * Cache::add() vua hoi vua dat, nen dung no lam phep tham do se lam chinh nguoi hoi
-     * chiem mat khoa - va lan xep hang that ngay sau do bi tu choi boi chinh minh.
+     * giuKhoa() vua hoi vua dat, nen dung no lam phep tham do se lam chinh nguoi hoi chiem
+     * mat khoa - va lan xep hang that ngay sau do bi tu choi boi chinh minh.
      *
      * @param  string $maHoSo
      * @return bool
      */
     public static function dangXuLy($maHoSo)
     {
-        return Cache::has(self::KHOA . $maHoSo);
+        return DB::table(self::BANG_KHOA)
+            ->where('ma_ho_so', $maHoSo)
+            ->where('het_han_luc', '>', now())
+            ->exists();
+    }
+
+    /**
+     * Go khoa cua MOT ho so. Dung khi can mo lai duong gui ma khong doi het 30 phut.
+     *
+     * @param  string $maHoSo
+     * @return int so dong da xoa
+     */
+    public static function goKhoa($maHoSo)
+    {
+        return DB::table(self::BANG_KHOA)->where('ma_ho_so', $maHoSo)->delete();
+    }
+
+    /** @return int so khoa het han da don */
+    public static function donKhoaHetHan()
+    {
+        return DB::table(self::BANG_KHOA)->where('het_han_luc', '<=', now())->delete();
     }
 }
