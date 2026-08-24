@@ -56,6 +56,7 @@ module.exports = function part6() {
 
     h3('6.4.1. Bộ lọc'),
     p('Bộ lọc nằm ở khối trên cùng, dùng chung khuôn với màn XML 3176 nên cách vận hành giống hệt: chọn điều kiện rồi bấm nút Tải dữ liệu, danh sách mới hiện ra. Danh sách không tự tải lại khi đổi ô lọc.'),
+    p('Riêng ô Tìm nhận phím Enter: gõ xong nhấn Enter là danh sách tải lại ngay, không phải di chuột sang nút Tải dữ liệu.'),
     table(
       ['Ô lọc', 'Ý nghĩa'],
       [
@@ -66,7 +67,7 @@ module.exports = function part6() {
         ['Người nạp', 'Tài khoản đã nạp hồ sơ. Hồ sơ do tiến trình tự động nạp thì ô này trống.'],
         ['Trạng thái gửi', 'Một trong chín trạng thái ở mục 6.5.'],
         ['Chỉ hồ sơ còn lỗi', 'Chọn "Có" để chỉ hiện hồ sơ đang có lỗi chặn gửi.'],
-        ['Tìm mã hồ sơ / mã thẻ / họ tên', 'Gõ một trong ba thông tin rồi bấm Tải dữ liệu.'],
+        ['Tìm mã hồ sơ / mã thẻ / họ tên / số CCCD / mã BHXH', 'Gõ một trong năm thông tin rồi nhấn phím Enter. Tìm được cả một phần, ví dụ gõ bốn số cuối của căn cước.'],
       ],
       [2600, 6420],
     ),
@@ -81,6 +82,8 @@ module.exports = function part6() {
         ['Mã CSKCB', 'Mã cơ sở khám chữa bệnh của hồ sơ.'],
         ['Họ tên', 'Họ tên trên chứng từ đầu tiên của hồ sơ.'],
         ['Mã thẻ', 'Số thẻ bảo hiểm y tế ghi trên chứng từ.'],
+        ['Số CCCD', 'Số căn cước công dân. Với giấy báo tử là số giấy tờ tuỳ thân, có thể là hộ chiếu. Với giấy chứng sinh là căn cước của người mẹ.'],
+        ['Mã BHXH', 'Mã số bảo hiểm xã hội. Với giấy chứng sinh là mã của người mẹ.'],
         ['Số CT', 'Số chứng từ chứa trong hồ sơ. Một hồ sơ có thể gồm nhiều chứng từ.'],
         ['Số lỗi', 'Số lỗi mức chặn gửi. Xem giải thích quan trọng ở ngay dưới bảng này.'],
         ['Ký số', 'Đã ký hoặc chưa ký.'],
@@ -182,6 +185,35 @@ module.exports = function part6() {
     p('Nếu bấm gửi một hồ sơ như vậy, phần mềm dừng lại và hỏi xác nhận. Đây không phải lỗi: gửi lại sau khi sửa nội dung là việc hợp lệ. Mục đích của hộp thoại chỉ là để người bấm nhìn thấy rằng mình đang gửi lại một hồ sơ mà cổng có thể đã tiếp nhận trước đó.'),
     note('Lưu ý:', 'Trước khi xác nhận, hãy mở khối Lịch sử gửi để biết lần trước đã gửi khi nào và kết quả ra sao. Xác nhận nhầm sẽ tạo ra một chứng từ trùng trên cổng, và cổng không có cách tự loại bỏ bản trùng đó.'),
 
+    h3('6.7.5. Ký và gửi nhiều hồ sơ cùng lúc'),
+    p('Khi có một loạt hồ sơ cần gửi — thường là sau khi sửa xong lỗi, hoặc sau một đợt ký số thất bại vì thiết bị ký chưa sẵn sàng — không cần mở từng hồ sơ. Cột đầu tiên của bảng có ô tích; tích xong bấm nút Ký và gửi đã chọn.'),
+    steps([
+        ['1', 'Lọc ra nhóm hồ sơ cần gửi, ví dụ chọn Trạng thái gửi là "Ký số thất bại", rồi bấm Tải dữ liệu.', 'Danh sách chỉ còn nhóm cần xử lý.'],
+        ['2', 'Tích vào ô ở đầu từng dòng, hoặc tích ô trên tiêu đề để chọn hết các dòng của trang.', 'Số trên nút đổi theo, ví dụ "Ký và gửi đã chọn (12)".'],
+        ['3', 'Bấm Ký và gửi đã chọn.', 'Hộp thoại hỏi lại kèm số lượng.'],
+        ['4', 'Đọc kỹ con số rồi xác nhận.', 'Bảng kết quả hiện ra bên dưới các nút, và danh sách tự tải lại.'],
+    ]),
+    note('Lưu ý:', 'Ô tích chỉ chọn được trong TRANG ĐANG XEM, không có chức năng chọn tất cả hồ sơ khớp bộ lọc. Đây là chủ ý: chọn cả những trang chưa xem nghĩa là gửi những hồ sơ mình chưa từng nhìn, và chỉ cần sai bộ lọc một chút là gửi sai hàng loạt lên cổng — nơi không có đường rút lại. Muốn xử lý nhiều thì tăng số dòng mỗi trang rồi làm từng trang.'),
+    p('Mỗi lượt gửi tối đa 50 hồ sơ. Chọn quá số này thì cả lượt bị từ chối chứ không gửi 50 cái đầu rồi bỏ phần còn lại — nửa vời sẽ khiến người bấm tưởng đã gửi hết.'),
+
+    p('Bảng kết quả chia hai phần: số hồ sơ đã xếp hàng, và danh sách hồ sơ bị bỏ qua kèm lý do từng cái. Một hồ sơ không đủ điều kiện không làm cả lượt thất bại — những hồ sơ còn lại vẫn được gửi.'),
+
+    h3('6.7.6. Hồ sơ nào tích được, hồ sơ nào không'),
+    p('Chỉ bốn trạng thái có ô tích: Chưa ký số, Ký số thất bại, Gửi thất bại và Chờ gửi. Các dòng còn lại không hiện ô tích — không cho tích cái không gửi được, thay vì hiện ô tích rồi báo lỗi sau khi bấm.'),
+    table(
+        ['Trạng thái không tích được', 'Vì sao'],
+        [
+            ['Chưa kiểm', 'Máy chưa kiểm dữ liệu. Chờ rồi tải lại danh sách.'],
+            ['Còn lỗi chặn', 'Phải sửa dữ liệu ở phần mềm sinh XML rồi nạp lại.'],
+            ['Chức năng gửi đang tắt', 'Cấu hình chặn mọi lượt gửi. Báo quản trị hệ thống.'],
+            ['Đã gửi', 'Cổng đã tiếp nhận và đã cấp mã giao dịch. Muốn gửi lại thì mở màn chi tiết bấm "Ký và gửi lại" — xem giải thích ngay dưới.'],
+            ['Cổng từ chối', 'Hồ sơ này luôn cần xác nhận riêng như mục 6.7.4. Mở màn chi tiết để xử lý.'],
+        ],
+        [2600, 6420],
+    ),
+    note('Lưu ý:', 'Hai trạng thái cuối bảng trên vẫn gửi lại được ở màn chi tiết nhưng KHÔNG gửi hàng loạt được, và đó là chủ ý. Ở màn chi tiết người bấm đang nhìn đúng hồ sơ đó, nhãn nút đã đổi thành "Ký và gửi lại", và với hồ sơ cổng từ chối thì phần mềm còn hỏi xác nhận. Trong một lượt 50 dòng thì không ai nhìn từng cái, nên một lần bấm sẽ gửi lại im lặng những hồ sơ cổng đã nhận — mỗi cái là một chứng từ trùng trên cổng.'),
+    p('Nếu một hồ sơ đang được xử lý ở một lượt khác — chẳng hạn tiến trình nạp tự động vừa xếp hàng chính nó vài giây trước — thì nó cũng bị bỏ qua kèm lý do, không bị gửi thêm lần nữa.'),
+
     h2('6.8. Bảng mã lỗi chứng từ điện tử'),
     p('Các lỗi do phần mềm tự phát hiện trước khi gửi mang mã bắt đầu bằng CTDT. Lỗi mức chặn làm hồ sơ không gửi được; lỗi mức cảnh báo chỉ để lưu ý, không chặn.'),
     table(
@@ -205,7 +237,7 @@ module.exports = function part6() {
     table(
       ['Nút', 'Nội dung tệp', 'Dùng khi nào'],
       [
-        ['Xuất danh sách', 'Mỗi hồ sơ một dòng, gồm mã hồ sơ, dịch vụ, loại, cơ sở, họ tên, số thẻ, số chứng từ, số lỗi, trạng thái gửi, mã giao dịch, mã kết quả, thời gian tiếp nhận, lỗi ký số, lỗi gửi, người nạp, thời điểm nạp và thời điểm gửi.', 'Đối chiếu tổng thể với bảng kê của cơ quan bảo hiểm.'],
+        ['Xuất danh sách', 'Mỗi hồ sơ một dòng, gồm mã hồ sơ, dịch vụ, loại, cơ sở, họ tên, số thẻ, số CCCD, mã BHXH, số chứng từ, số lỗi, trạng thái gửi, mã giao dịch, mã kết quả, thời gian tiếp nhận, lỗi ký số, lỗi gửi, người nạp, thời điểm nạp và thời điểm gửi.', 'Đối chiếu tổng thể với bảng kê của cơ quan bảo hiểm.'],
         ['Xuất bảng lỗi', 'Mỗi lỗi một dòng, gồm mã hồ sơ, cơ sở, họ tên, số thẻ, loại chứng từ, mã lỗi, trường bị lỗi, mức độ và mô tả.', 'Gửi cho bộ phận nhập liệu đi sửa dữ liệu. Một hồ sơ có ba lỗi sẽ thành ba dòng.'],
         ['Xuất nhật ký gửi', 'Mỗi lượt gửi một dòng, gồm thời điểm, mã hồ sơ, nguồn gửi, người gửi, kết quả, mã kết quả, mã giao dịch, thời gian tiếp nhận và phản hồi của cổng.', 'Truy vết khi cần biết ai đã gửi hồ sơ nào, lúc nào, và cổng trả lời ra sao.'],
       ],
@@ -267,6 +299,9 @@ module.exports = function part6() {
       ['Tệp Excel xuất ra khác với bảng đang xem', 'Đã đổi ô lọc nhưng chưa bấm Tải dữ liệu.', 'Bấm Tải dữ liệu rồi xuất lại. Tệp luôn theo bộ lọc của lần tải gần nhất.'],
       ['Nạp lại hồ sơ xong thì mã giao dịch biến mất', 'Nạp đè xoá kết quả của lần gửi trước, vì nội dung đã đổi.', 'Đây là hành vi đúng thiết kế. Dấu vết lần gửi cũ nằm ở khối Lịch sử gửi trong màn chi tiết.'],
       ['Phần mềm hỏi xác nhận khi bấm gửi lại', 'Hồ sơ đã từng được gửi lên cổng.', 'Mở khối Lịch sử gửi kiểm tra lần gửi trước rồi mới quyết định. Xác nhận nhầm sẽ tạo chứng từ trùng trên cổng.'],
+      ['Dòng cần gửi không có ô tích', 'Hồ sơ không thuộc bốn trạng thái gửi hàng loạt được.', 'Đọc cột Trạng thái gửi rồi tra bảng ở mục 6.7.6. Với "Đã gửi" và "Cổng từ chối" thì mở màn chi tiết để xử lý từng hồ sơ.'],
+      ['Bấm Ký và gửi đã chọn nhưng cả lượt bị bỏ qua', 'Không hồ sơ nào trong lượt đủ điều kiện gửi.', 'Đọc cột Lý do trong bảng kết quả — mỗi hồ sơ một dòng, nêu rõ vướng ở đâu.'],
+      ['Báo "Mỗi lượt chỉ gửi tối đa 50 hồ sơ"', 'Đang chọn quá 50 dòng.', 'Bỏ tích bớt, hoặc giảm số dòng mỗi trang rồi làm thành nhiều lượt.'],
       ['Hồ sơ tự động nạp vào nhưng không tự gửi', 'Công tắc tự động gửi đang tắt, hoặc có tệp DUNG-GUI trong thư mục quét.', 'Đây có thể là hành vi đúng thiết kế. Liên hệ bộ phận công nghệ thông tin để xác nhận trước khi coi là lỗi.'],
     ]),
   ];

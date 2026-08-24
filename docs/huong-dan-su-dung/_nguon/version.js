@@ -15,7 +15,7 @@
  * NGAY_PHAT_HANH cho khớp dòng đó.
  */
 
-const PHIEN_BAN = '1.2';
+const PHIEN_BAN = '1.3';
 
 const NGAY_PHAT_HANH = 'Tháng 8 năm 2026';
 
@@ -27,6 +27,13 @@ const NGAY_PHAT_HANH = 'Tháng 8 năm 2026';
  * thay vì đọc lại cả tài liệu.
  */
 const LICH_SU = [
+  {
+    ban: '1.3',
+    ngay: '24/08/2026',
+    noi_dung:
+      'Chứng từ điện tử: tích chọn nhiều hồ sơ rồi ký số và gửi bằng một lần bấm; màn danh sách thêm cột Số CCCD và Mã BHXH, tìm được theo cả hai; ô Tìm nhận phím Enter; tệp xuất Excel danh sách thêm hai cột tương ứng.',
+    lien_quan: 'Phần VI, các mục 6.4.1, 6.4.2, 6.7.5, 6.7.6, 6.9 và 6.13.',
+  },
   {
     ban: '1.2',
     ngay: '22/08/2026',
