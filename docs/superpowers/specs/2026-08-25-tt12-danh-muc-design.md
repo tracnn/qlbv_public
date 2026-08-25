@@ -536,6 +536,28 @@ có chủ đích — chạy toàn bộ trước khi bắt đầu để chốt m�
 vấn đếm trùng trên CSDL thật cho ba bảng nói trên; migration phải **đếm và báo cáo trùng
 trước**, không im lặng xoá.
 
+## 14b. Bước triển khai thủ công trên từng máy
+
+Bốn tệp cấu hình nằm trong `.gitignore` theo thiết kế có sẵn của dự án (`config/auth.php`,
+`config/database.php`, `config/filesystems.php`, `config/organization.php`). Hai trong số
+đó module này phải sửa, nên **thay đổi không đi theo kho mã** — mỗi máy phải khai tay:
+
+| Tệp | Việc phải làm |
+|---|---|
+| `config/filesystems.php` | Thêm đĩa `exportTt12` trỏ `storage_path('app/tt12')`. Thiếu nó thì `SignTt12Job` ném khi ghi tệp đã ký. Đĩa `exportCtdt` của module chứng từ điện tử đã ra sản phẩm theo đúng cách này. |
+| `config/organization.php` | Thêm khối `tt12` với `sign_enabled`, `submit_enabled`, `hang_doi`. **Không** khai `ma_tinh` và **không** khai `ma_cskcb` mặc định — xem mục 9b. Tài khoản cổng của từng cơ sở dùng lại khối `BHYT_CO_SO` đã có. |
+
+`Tt12ManImportTest` có hai phép kiểm chốt việc này: một khẳng định đĩa `exportTt12` tồn tại,
+một khẳng định khối `tt12` đủ khoá. Chúng đỏ trên máy chưa khai — đó là **có chủ ý**, vì
+một cấu hình thiếu phải lộ ra ở bộ test chứ không phải lúc ký hồ sơ thật.
+
+**Không kiểm tài khoản của mọi cơ sở trong `BHYT_CO_SO`.** Một cơ sở đã khai nhưng chưa
+được BHXH cấp tài khoản là trạng thái hợp lệ. `CauHinhCoSo::cua()` đã ném đúng lúc ai đó
+thử gửi từ cơ sở đó — đó là nơi lỗi nên xuất hiện. Bắt mọi cơ sở phải có tài khoản chỉ
+khiến người vận hành điền thông tin bịa để bộ test xanh, và một mật khẩu bịa còn tệ hơn
+một mật khẩu rỗng: rỗng thì bị chặn tại chỗ với thông báo rõ ràng, còn bịa thì lọt ra tới
+cổng và nhận về mã 401 mơ hồ.
+
 ## 15. Rủi ro còn mở
 
 | Rủi ro | Cách xử lý |
