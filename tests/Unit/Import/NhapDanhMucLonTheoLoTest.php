@@ -90,12 +90,9 @@ class NhapDanhMucLonTheoLoTest extends TestCase
      */
     public function chi_con_dung_nhung_truong_bi_bo_da_biet()
     {
-        $ngoaiLe = [
-            // Anh xa khai MA_CSKCB nhung bang medical_staffs khong co cot do, va ma_cskcb cung
-            // khong nam trong required_fields nen khong ai bi bat dien. Gia tri neu co trong tep
-            // van bi bo - chua ro co can luu hay khong, nen de nguyen va ghi nhan o day.
-            'medical_staff' => ['ma_cskcb'],
-        ];
+        // Task 3 (TT12) da them cot medical_staffs.ma_cskcb - ngoai le 'medical_staff' => ['ma_cskcb']
+        // tung o day khong con dung nua, xoa dung nhu ghi chu ben tren yeu cau.
+        $ngoaiLe = [];
 
         $svc = app(CatalogImportService::class);
         $ham = new \ReflectionMethod($svc, 'bangCua');

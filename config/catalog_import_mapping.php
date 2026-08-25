@@ -132,8 +132,11 @@ return [
             'ma_cskcb' => ['MA_CSKCB', 'Mã CSKCB', 'MA CSKCB'],
         ],
         'required_fields' => ['ma_khoa', 'ten_khoa', 'ho_ten', 'chucdanh_nn', 'macchn', 'ngaycap_cchn', 'noicap_cchn', 'thoigian_dk', 'tu_ngay'],
-        'unique_keys' => ['ma_bhxh'],
-        'unique_keys_alt' => ['so_dinh_danh'], // Dùng khi mẫu mới không có MA_BHXH
+        'unique_keys' => ['so_dinh_danh', 'ma_khoa', 'ma_cskcb', 'tu_ngay'],
+        // XOA HAN dong 'unique_keys_alt' => ['so_dinh_danh'] - no ton tai de ne viec khoa
+        // chinh bam theo ma_bhxh (cot ma mau TT12 khong con). Nay khoa chinh da la
+        // so_dinh_danh nen duong ne khong con ly do ton tai, va de lai la de hai duong
+        // chon khoa cung song song.
     ],
 
     'department_bed' => [
@@ -157,7 +160,7 @@ return [
         'required_fields' => ['ma_khoa', 'ten_khoa'],
         // ma_cskcb PHAI nam trong khoa duy nhat: khoa cu chi gom ma_khoa nen co so 01929 va
         // 37470 cung ma khoa K24 se de len nhau.
-        'unique_keys' => ['ma_khoa', 'ma_cskcb'],
+        'unique_keys' => ['ma_khoa', 'ma_cskcb', 'tu_ngay'],
     ],
 
     'equipment' => [
@@ -177,7 +180,7 @@ return [
             'den_ngay' => ['DEN_NGAY', 'Đến ngày', 'DEN NGAY'],
         ],
         'required_fields' => ['ten_tb', 'ky_hieu', 'ma_may', 'congty_sx', 'nuoc_sx', 'nam_sx', 'nam_sd', 'so_luu_hanh'],
-        'unique_keys' => ['ma_may'],
+        'unique_keys' => ['ma_may', 'ma_cskcb', 'tu_ngay'],
     ],
 
     'administrative_unit' => [

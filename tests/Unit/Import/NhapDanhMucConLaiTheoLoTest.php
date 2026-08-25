@@ -13,8 +13,11 @@ use App\Services\CatalogImportService;
  * mat 52,6 giay va ~44 truy van. Bon danh muc con lai deu nho nen chua chet, nhung giu hai
  * duong song song la giu hai bo hanh vi phai sua song song mai mai.
  *
- * medical_staff la cai duy nhat co ngu nghia rieng that: khoa duy nhat linh dong (ma_bhxh,
- * hoac so_dinh_danh khi mau moi khong co MA_BHXH) va NGAYCAP_CCHN phai quy ve chuoi Ymd.
+ * medical_staff tung co ngu nghia khoa duy nhat linh dong (ma_bhxh, hoac so_dinh_danh khi
+ * mau moi khong co MA_BHXH). Tu Task 3 (TT12) khoa da co dinh la composite
+ * (so_dinh_danh, ma_khoa, ma_cskcb, tu_ngay) - xem config/catalog_import_mapping.php - nen
+ * co che unique_keys_alt khong con dung cho danh muc nay nua. NGAYCAP_CCHN van phai quy ve
+ * chuoi Ymd.
  */
 class NhapDanhMucConLaiTheoLoTest extends TestCase
 {
@@ -76,22 +79,25 @@ class NhapDanhMucConLaiTheoLoTest extends TestCase
     /** @test */
     public function khoa_duy_nhat_cua_nhan_vien_y_te_theo_cot_co_that_trong_tep()
     {
-        // Mau moi cua BHXH khong con cot MA_BHXH: bam theo ma_bhxh se coi moi dong la mot ban
-        // ghi moi (khoa rong) va chen trung lap moi lan nhap.
+        // Task 3 (TT12): khoa duy nhat cua medical_staff nay la composite co dinh, khong con
+        // unique_keys_alt nen khoaDungCho() luon tra ve khoa chinh bat ke mapping co gi.
         $cfg = config('catalog_import_mapping.medical_staff');
+        $khoaChinh = ['so_dinh_danh', 'ma_khoa', 'ma_cskcb', 'tu_ngay'];
 
-        $this->assertSame(['ma_bhxh'],
+        $this->assertSame($khoaChinh,
             CatalogImportService::khoaDungCho($cfg, ['ma_bhxh' => 3, 'so_dinh_danh' => 6]));
-        $this->assertSame(['so_dinh_danh'],
+        $this->assertSame($khoaChinh,
             CatalogImportService::khoaDungCho($cfg, ['so_dinh_danh' => 6]));
     }
 
     /** @test */
     public function danh_muc_khong_co_khoa_thay_the_thi_giu_khoa_chinh()
     {
+        // Task 3 (TT12): khoa duy nhat cua equipment noi rong thanh (ma_may, ma_cskcb, tu_ngay).
         $cfg = config('catalog_import_mapping.equipment');
 
-        $this->assertSame(['ma_may'], CatalogImportService::khoaDungCho($cfg, ['ten_tb' => 1]));
+        $this->assertSame(['ma_may', 'ma_cskcb', 'tu_ngay'],
+            CatalogImportService::khoaDungCho($cfg, ['ten_tb' => 1]));
     }
 
     /** @test */
