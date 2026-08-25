@@ -30,6 +30,9 @@
                     Chọn mẫu để hệ thống đối chiếu với nội dung tệp. Nếu tệp không khớp mẫu bạn
                     chọn, tệp sẽ bị từ chối thay vì nạp nhầm danh mục.
                 </small>
+                <button type="button" id="btn-tai-bieu-mau" class="btn btn-default btn-sm" style="margin-top:6px">
+                    <i class="fa fa-download"></i> Tải biểu mẫu
+                </button>
             </div>
             <div class="col-md-6">
                 <label for="ma_cskcb">Cơ sở khám chữa bệnh <span class="text-danger">*</span></label>
@@ -80,6 +83,21 @@
 @push('after-scripts')
 <script src="{{ asset('js/dropzone.min.js') }}"></script>
 <script>
+// Nut tai bieu mau doc gia tri #mau ngay luc bam - khong dinh vao gia tri luc trang tai
+// vi nguoi dung co the doi o chon truoc khi bam.
+$(function () {
+    $('#btn-tai-bieu-mau').on('click', function () {
+        var mau = document.getElementById('mau').value;
+
+        if (!mau) {
+            alert('Chọn mẫu để tải biểu mẫu');
+            return;
+        }
+
+        window.location = "{{ route('bhyt.tt12.bieu-mau') }}?mau=" + encodeURIComponent(mau);
+    });
+});
+
 Dropzone.options.tt12UploadForm = {
     paramName: "tepExcel",
     maxFilesize: 20,
