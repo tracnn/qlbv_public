@@ -6,6 +6,18 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Services\Tt12\Tt12Importer;
 use App\Services\Tt12\Tt12MauRegistry;
+use Illuminate\Support\Facades\Storage;
+use App\Models\BHYT\Tt12\Tt12HoSo;
+use App\Models\BHYT\Tt12\Tt12Dong;
+use App\Models\BHYT\Tt12\Tt12Loi;
+use App\Services\Tt12\Tt12DanhSach;
+use App\Services\Tt12\Tt12DetailTabs;
+use App\Services\Tt12\Tt12QuyetDinhGui;
+use App\Jobs\SignTt12Job;
+use App\Jobs\SubmitTt12Job;
+use App\Exports\Tt12DanhSachExport;
+use App\Exports\Tt12LoiExport;
+use Maatwebsite\Excel\Facades\Excel;
 
 /**
  * Man tai len tep Excel danh muc TT12/2026/BTC.
@@ -136,6 +148,280 @@ class BHYTTt12Controller extends Controller
                 : 'Có tệp nạp không thành công, xem chi tiết bên dưới.',
             'chi_tiet'   => $chiTiet,
         ));
+    }
+
+    public function index()
+    {
+        return view('bhyt.tt12.index', array(
+            'danhSachMau'   => $this->danhSachMau(),
+            'danhSachCoSo'  => \App\Services\BHYT\DanhSachCoSo::danhSach(),
+            'cacTrangThai'  => Tt12DanhSach::cacTrangThai(),
+        ));
+    }
+
+    /** Nguon du lieu cho DataTable phia may chu */
+    public function fetchData(Request $request)
+    {
+        $q = Tt12DanhSach::truyVan($this->loc($request));
+
+        $tong = (clone $q)->count();
+        $batDau = (int) $request->input('start', 0);
+        $soDong = (int) $request->input('length', 25);
+
+        $cac = $q->skip($batDau)->take($soDong > 0 ? $soDong : 25)->get();
+
+        $hang = array();
+
+        foreach ($cac as $hoSo) {
+            $hang[] = $this->dongDanhSach($hoSo);
+        }
+
+        return response()->json(array(
+            'draw'            => (int) $request->input('draw', 1),
+            'recordsTotal'    => $tong,
+            'recordsFiltered' => $tong,
+            'data'            => $hang,
+        ));
+    }
+
+    public function detail($maHoSo)
+    {
+        $hoSo = Tt12HoSo::where('ma_ho_so', $maHoSo)->firstOrFail();
+
+        return view('bhyt.tt12.detail', array(
+            'hoSo'   => $hoSo,
+            'cacTab' => Tt12DetailTabs::cacTab(),
+        ));
+    }
+
+    public function detailTab($maHoSo, $tab)
+    {
+        $hoSo = Tt12HoSo::where('ma_ho_so', $maHoSo)->firstOrFail();
+
+        if (!Tt12DetailTabs::coTab($tab)) {
+            abort(404);
+        }
+
+        if ($tab === 'loi') {
+            return view('bhyt.tt12.tab-loi', array(
+                'hoSo' => $hoSo,
+                'cacLoi' => Tt12Loi::where('ho_so_id', $hoSo->id)
+                    ->orderBy('stt_dong')->orderBy('id')->paginate(200),
+            ));
+        }
+
+        if ($tab === 'xml') {
+            return view('bhyt.tt12.tab-xml', array(
+                'hoSo' => $hoSo,
+                'xml'  => $this->docXml($hoSo),
+            ));
+        }
+
+        return view('bhyt.tt12.tab-dong', array(
+            'hoSo'   => $hoSo,
+            'cotBang' => Tt12DetailTabs::cotBang($hoSo->mau),
+            'cacDong' => Tt12Dong::where('ho_so_id', $hoSo->id)->orderBy('stt')->paginate(200),
+        ));
+    }
+
+    /**
+     * Ky roi gui MOT ho so.
+     *
+     * Chi day job KY - job gui duoc day boi chinh SignTt12Job khi ky xong? KHONG: hai job
+     * doc lap, va nguoi dung bam mot lan thi mong doi ca hai chay. Nen o day: chua ky thi
+     * day job ky, da ky thi day job gui. Bam lan hai sau khi ky xong se day job gui.
+     */
+    public function kyVaGui(Request $request, $maHoSo)
+    {
+        $hoSo = Tt12HoSo::where('ma_ho_so', $maHoSo)->first();
+
+        if ($hoSo === null) {
+            return $this->traLoi($request, false, 'Không tìm thấy hồ sơ ' . $maHoSo);
+        }
+
+        $ketQua = $this->dayJob($hoSo, $request->user() ? $request->user()->loginname : null);
+
+        return $this->traLoi($request, $ketQua['thanh_cong'], $ketQua['thong_diep']);
+    }
+
+    /** Tich chon nhieu ho so roi ky va gui bang mot lan bam */
+    public function kyVaGuiNhieu(Request $request)
+    {
+        $ma = $request->input('ma_ho_so', array());
+        $ma = is_array($ma) ? $ma : array($ma);
+
+        $nguoi = $request->user() ? $request->user()->loginname : null;
+
+        $daKy = 0;
+        $daGui = 0;
+        $boQua = array();
+
+        foreach (Tt12HoSo::whereIn('ma_ho_so', $ma)->get() as $hoSo) {
+            $ketQua = $this->dayJob($hoSo, $nguoi);
+
+            if ($ketQua['hanh_dong'] === 'ky') {
+                $daKy++;
+            } elseif ($ketQua['hanh_dong'] === 'gui') {
+                $daGui++;
+            } else {
+                $boQua[] = $hoSo->ma_ho_so . ': ' . $ketQua['thong_diep'];
+            }
+        }
+
+        return response()->json(array(
+            'thanh_cong' => ($daKy + $daGui) > 0,
+            'thong_diep' => 'Đã đẩy ' . $daKy . ' hồ sơ vào hàng đợi ký và '
+                . $daGui . ' hồ sơ vào hàng đợi gửi.',
+            'bo_qua'     => $boQua,
+        ));
+    }
+
+    public function xuatDanhSach(Request $request)
+    {
+        return Excel::download(
+            new Tt12DanhSachExport($this->loc($request)),
+            'tt12-danh-sach-ho-so.xlsx'
+        );
+    }
+
+    public function xuatLoi(Request $request)
+    {
+        $maHoSo = $request->input('ma_ho_so');
+
+        return Excel::download(
+            new Tt12LoiExport($maHoSo),
+            'tt12-loi-' . ($maHoSo ?: 'tat-ca') . '.xlsx'
+        );
+    }
+
+    public function delete($maHoSo)
+    {
+        $hoSo = Tt12HoSo::where('ma_ho_so', $maHoSo)->first();
+
+        if ($hoSo === null) {
+            return response()->json(array('thanh_cong' => false,
+                'thong_diep' => 'Không tìm thấy hồ sơ'), 404);
+        }
+
+        if (Tt12QuyetDinhGui::daTiepNhan($hoSo->ma_ket_qua)) {
+            // Con dau vet doi soat voi co quan BHXH thi khong duoc xoa khoi he thong.
+            return response()->json(array('thanh_cong' => false,
+                'thong_diep' => 'Hồ sơ đã được cổng tiếp nhận (mã giao dịch '
+                    . $hoSo->ma_gd . '), không xoá được.'), 422);
+        }
+
+        Tt12Dong::where('ho_so_id', $hoSo->id)->delete();
+        Tt12Loi::where('ho_so_id', $hoSo->id)->delete();
+        $hoSo->delete();
+
+        return response()->json(array('thanh_cong' => true, 'thong_diep' => 'Đã xoá hồ sơ'));
+    }
+
+    /** @return array ['thanh_cong' => bool, 'hanh_dong' => 'ky'|'gui'|'bo_qua', 'thong_diep' => string] */
+    private function dayJob(Tt12HoSo $hoSo, $nguoi)
+    {
+        $hangDoi = config('organization.tt12.hang_doi');
+
+        if (!$hoSo->is_signed) {
+            $nenKy = Tt12QuyetDinhGui::nenKy($hoSo->checked_at, $hoSo->so_loi);
+
+            if ($nenKy !== Tt12QuyetDinhGui::KY) {
+                return array('thanh_cong' => false, 'hanh_dong' => 'bo_qua',
+                    'thong_diep' => Tt12QuyetDinhGui::moTa($nenKy));
+            }
+
+            $job = new SignTt12Job($hoSo->ma_ho_so);
+
+            if (!empty($hangDoi)) {
+                $job->onQueue($hangDoi);
+            }
+
+            dispatch($job);
+
+            return array('thanh_cong' => true, 'hanh_dong' => 'ky',
+                'thong_diep' => 'Đã đẩy vào hàng đợi ký');
+        }
+
+        $nenGui = Tt12QuyetDinhGui::nenGui(true, $hoSo->ma_ket_qua);
+
+        if ($nenGui !== Tt12QuyetDinhGui::GUI) {
+            return array('thanh_cong' => false, 'hanh_dong' => 'bo_qua',
+                'thong_diep' => Tt12QuyetDinhGui::moTa($nenGui));
+        }
+
+        $job = new SubmitTt12Job($hoSo->ma_ho_so, $nguoi);
+
+        if (!empty($hangDoi)) {
+            $job->onQueue($hangDoi);
+        }
+
+        dispatch($job);
+
+        return array('thanh_cong' => true, 'hanh_dong' => 'gui',
+            'thong_diep' => 'Đã đẩy vào hàng đợi gửi');
+    }
+
+    /** @return array bo loc doc tu request, dung chung cho man hinh va xuat Excel */
+    private function loc(Request $request)
+    {
+        return array(
+            'mau'        => $request->input('mau'),
+            'ma_cskcb'   => $request->input('ma_cskcb'),
+            'trang_thai' => $request->input('trang_thai'),
+            'tu_ngay'    => $request->input('tu_ngay'),
+            'den_ngay'   => $request->input('den_ngay'),
+            'tim'        => $request->input('tim'),
+        );
+    }
+
+    /** @return array mot dong cho DataTable */
+    private function dongDanhSach(Tt12HoSo $hoSo)
+    {
+        return array(
+            'ma_ho_so'            => $hoSo->ma_ho_so,
+            'mau'                 => $hoSo->mau,
+            'ten_tep'             => $hoSo->ten_tep,
+            'ma_cskcb'            => $hoSo->ma_cskcb,
+            'so_dong'             => (int) $hoSo->so_dong,
+            'so_loi'              => (int) $hoSo->so_loi,
+            'da_kiem'             => $hoSo->checked_at ? 1 : 0,
+            'da_ky'               => $hoSo->is_signed ? 1 : 0,
+            'ma_gd'               => $hoSo->ma_gd,
+            'ma_ket_qua'          => $hoSo->ma_ket_qua,
+            'thoi_gian_tiep_nhan' => $hoSo->thoi_gian_tiep_nhan,
+            'da_dong_bo'          => $hoSo->dong_bo_at ? 1 : 0,
+            'imported_at'         => $hoSo->imported_at ? $hoSo->imported_at->format('d/m/Y H:i') : null,
+        );
+    }
+
+    /** @return string noi dung XML da ky, hoac thong bao neu chua co */
+    private function docXml(Tt12HoSo $hoSo)
+    {
+        if (empty($hoSo->duong_dan_da_ky)) {
+            return 'Hồ sơ chưa được ký.';
+        }
+
+        $dia = Storage::disk('exportTt12');
+
+        if (!$dia->exists($hoSo->duong_dan_da_ky)) {
+            return 'Không tìm thấy tệp đã ký: ' . $hoSo->duong_dan_da_ky;
+        }
+
+        return $dia->get($hoSo->duong_dan_da_ky);
+    }
+
+    /** Tra JSON cho lenh goi AJAX, redirect cho lenh goi thuong */
+    private function traLoi(Request $request, $thanhCong, $thongDiep)
+    {
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json(array(
+                'thanh_cong' => $thanhCong,
+                'thong_diep' => $thongDiep,
+            ), $thanhCong ? 200 : 422);
+        }
+
+        return redirect()->route('bhyt.tt12.index')
+            ->with($thanhCong ? 'success' : 'error', $thongDiep);
     }
 
     /** @return array [ma mau => ten hien thi] */

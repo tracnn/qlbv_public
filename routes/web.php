@@ -635,6 +635,27 @@ Route::group(['middleware' => ['auth']], function () {
         Route::post('tt12/import/upload', 'BHYT\BHYTTt12Controller@uploadData')
             ->name('bhyt.tt12.upload');
 
+        Route::get('tt12/index', 'BHYT\BHYTTt12Controller@index')
+            ->name('bhyt.tt12.index');
+        Route::get('tt12/index/fetch-data', 'BHYT\BHYTTt12Controller@fetchData')
+            ->name('bhyt.tt12.fetch-data');
+        Route::get('tt12/xuat/danh-sach', 'BHYT\BHYTTt12Controller@xuatDanhSach')
+            ->name('bhyt.tt12.xuat.danh-sach');
+        Route::get('tt12/xuat/loi', 'BHYT\BHYTTt12Controller@xuatLoi')
+            ->name('bhyt.tt12.xuat.loi');
+        Route::post('tt12/ky-va-gui-nhieu', 'BHYT\BHYTTt12Controller@kyVaGuiNhieu')
+            ->name('bhyt.tt12.ky-va-gui-nhieu');
+        // Dat TRUOC route co tham so {ma_ho_so}: dat sau thi cac duong dan tinh o tren
+        // (index, xuat/*, ky-va-gui-nhieu) se bi tham so bat-tat-ca nuot mat.
+        Route::post('tt12/{ma_ho_so}/ky-va-gui', 'BHYT\BHYTTt12Controller@kyVaGui')
+            ->name('bhyt.tt12.ky-va-gui');
+        Route::delete('tt12/{ma_ho_so}', 'BHYT\BHYTTt12Controller@delete')
+            ->name('bhyt.tt12.delete');
+        Route::get('tt12/detail/{ma_ho_so}', 'BHYT\BHYTTt12Controller@detail')
+            ->name('bhyt.tt12.detail');
+        Route::get('tt12/detail/{ma_ho_so}/tab/{tab}', 'BHYT\BHYTTt12Controller@detailTab')
+            ->name('bhyt.tt12.detail.tab');
+
         Route::get('reports/bac-si-y-lenh', 'BHYT\ReportBHYTController@indexBacSiYLenh')
         ->name('bhyt.reports.bac-si-y-lenh');
         Route::get('reports/fetch-bac-si-y-lenh', 'BHYT\ReportBHYTController@fetchDataBacSiYLenh')

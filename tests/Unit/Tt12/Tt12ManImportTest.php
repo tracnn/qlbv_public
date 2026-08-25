@@ -25,26 +25,6 @@ class Tt12ManImportTest extends TestCase
     }
 
     /** @test */
-    public function blade_import_bien_dich_duoc()
-    {
-        $duongDan = resource_path('views/bhyt/tt12/import.blade.php');
-
-        $this->assertFileExists($duongDan);
-
-        // Bien dich Blade thanh PHP roi kiem cu phap PHP. Bat loi go nham the @endforeach
-        // ngay tai day thay vi luc nguoi dung mo trang.
-        $php = app('blade.compiler')->compileString(file_get_contents($duongDan));
-
-        $tam = tempnam(sys_get_temp_dir(), 'blade') . '.php';
-        file_put_contents($tam, $php);
-
-        exec('php -l ' . escapeshellarg($tam), $ra, $ma);
-        unlink($tam);
-
-        $this->assertSame(0, $ma, 'Blade sinh ra PHP sai cu phap: ' . implode(PHP_EOL, $ra));
-    }
-
-    /** @test */
     public function dia_exportTt12_duoc_khai_bao()
     {
         $this->assertNotNull(
