@@ -10,7 +10,10 @@
       "mcp__sqlcl__list-connections",
       "mcp__sqlcl__connect",
       "mcp__sqlcl__run-sql",
-      "mcp__Claude_Preview__preview_start"
+      "mcp__Claude_Preview__preview_start",
+      "Bash(vendor/bin/phpunit)",
+      "Bash(grep -c \"Tests\\\\\\\\\\\\\\\\Unit\\\\\\\\\\\\\\\\Tt12\" /tmp_full_test_output.txt)",
+      "Bash(grep -n \"Tt12\" /tmp_full_test_output.txt)"
     ]
   }
 }
