@@ -138,10 +138,20 @@ class SignTt12JobTest extends TestCase
         config(['organization.tt12.sign_enabled' => false]);
 
         $hoSo = $this->hoSo();
+        $ky = $this->dichVuKy(true);
 
-        (new SignTt12Job($hoSo->ma_ho_so))->handle($this->dichVuKy(true));
+        (new SignTt12Job($hoSo->ma_ho_so))->handle($ky);
 
-        $this->assertNull($hoSo->fresh()->signed_error);
+        // Chi kiem signed_error la null thi khong phan biet duoc "job dung dung cho"
+        // voi "job chay het va ky thanh cong" - ca hai deu cho signed_error = null. Phai
+        // kiem them dich vu ky KHONG duoc goi va ho so KHONG bi danh dau da ky.
+        $this->assertNull($ky->xmlNhanDuoc, 'Khong duoc goi dich vu ky');
+
+        $hoSo = $hoSo->fresh();
+        $this->assertFalse((bool) $hoSo->is_signed);
+        $this->assertNull($hoSo->signed_at);
+        $this->assertNull($hoSo->signed_error);
+        $this->assertSame(array(), Storage::disk('exportTt12')->allFiles());
     }
 
     /** @test */
