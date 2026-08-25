@@ -629,6 +629,12 @@ Route::group(['middleware' => ['auth']], function () {
         ->name('bhyt.ctdt.delete')
         ->middleware('checkrole:superadministrator');
 
+        // ── Danh mục TT12/2026/BTC ─────────────────────────────────────────────
+        Route::get('tt12/import', 'BHYT\BHYTTt12Controller@importIndex')
+            ->name('bhyt.tt12.import.index');
+        Route::post('tt12/import/upload', 'BHYT\BHYTTt12Controller@uploadData')
+            ->name('bhyt.tt12.upload');
+
         Route::get('reports/bac-si-y-lenh', 'BHYT\ReportBHYTController@indexBacSiYLenh')
         ->name('bhyt.reports.bac-si-y-lenh');
         Route::get('reports/fetch-bac-si-y-lenh', 'BHYT\ReportBHYTController@fetchDataBacSiYLenh')
