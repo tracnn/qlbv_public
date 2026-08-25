@@ -146,15 +146,42 @@ class Tt12BoLocDungPartialsTest extends TestCase
     }
 
     /** @test */
-    public function index_day_du_ba_stack_script_cua_cac_partial()
+    public function khong_tao_DataTable_truoc_khi_biet_khoang_ngay()
+    {
+        // Tao bang o cap cao nhat thi DataTables ban AJAX NGAY luc parse - luc do
+        // partials.date_range (chay trong document.ready) chua kip gan khoang ngay mac
+        // dinh, nen luot dau di len may chu voi tu_ngay/den_ngay RONG va quet toan bo
+        // bang tt12_ho_so khong gioi han ngay. Ngay sau do load_data_button goi
+        // fetchData() lan nua - thanh hai truy van moi lan mo trang, cai dau vo ich va
+        // nang nhat.
+        //
+        // Khuon CTDT tao bang LUOI ben trong fetchData() kem chot dung lai. Theo dung do.
+        $blade = file_get_contents(resource_path('views/bhyt/tt12/index.blade.php'));
+
+        // Khang dinh CHINH XAC dieu phan biet dung/sai: bien duoc KHAI BAO rong o cap
+        // cao nhat, va phep GAN nam trong fetchData(). Khang dinh theo vi tri
+        // (.DataTable( xuat hien sau function fetchData() khong phan biet duoc gi - mot
+        // loi tao o cap cao nhat dat ngay duoi ham van thoa.
+        $this->assertContains('var tt12Bang = null;', $blade,
+            'tt12Bang phai duoc khai bao rong, chua tao bang');
+        $this->assertNotContains('var tt12Bang = $(', $blade,
+            'Khong duoc tao DataTable o cap cao nhat - no ban AJAX ngay luc parse, '
+            . 'truoc khi biet khoang ngay');
+        $this->assertContains("tt12Bang = $('#tt12-list').DataTable(", $blade,
+            'Phep gan phai nam trong fetchData()');
+    }
+
+    /** @test */
+    public function index_day_du_bon_stack_script_cua_cac_partial()
     {
         // Moi partial tu dat script cua no vao mot stack rieng. Khong day ra thi partial
-        // im lang khong hoat dong - o chon khoang thoi gian se thanh mot o text tron.
+        // im lang khong hoat dong - o chon khoang thoi gian thanh mot o text tron, con
+        // Enter trong o Tim khong lam gi.
         $html = file_get_contents(resource_path('views/bhyt/tt12/index.blade.php'))
             . file_get_contents(resource_path('views/bhyt/tt12/partials/search.blade.php'));
 
         foreach (array('after-scripts-date-range', 'after-scripts-imported-by',
-                       'after-scripts-load-data-button') as $stack) {
+                       'after-scripts-o-tim', 'after-scripts-load-data-button') as $stack) {
             $this->assertContains("@stack('" . $stack . "')", $html, 'Thieu stack ' . $stack);
         }
     }

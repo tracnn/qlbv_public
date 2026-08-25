@@ -184,109 +184,122 @@ function tt12ThamSoLoc() {
     };
 }
 
+// Khai bao RONG. Tao bang o cap cao nhat thi DataTables ban AJAX ngay luc parse - luc do
+// partials.date_range (chay trong document.ready) chua kip gan khoang ngay mac dinh, nen
+// luot dau di len may chu voi tu_ngay/den_ngay RONG va quet toan bo bang tt12_ho_so khong
+// gioi han ngay. Ngay sau do load_data_button goi fetchData() lan nua - thanh hai truy van
+// moi lan mo trang, cai dau vo ich va nang nhat.
+var tt12Bang = null;
+
 // Hop dong cua partials.load_data_button: no goi ham TOAN CUC nay, va tu goi mot lan ngay
 // khi trang tai xong. Dat ten khac (vi du tt12FetchData) la nut bam se khong tim thay ham
 // va man hinh khong bao gio tai du lieu.
+//
+// Tao bang LUOI o lan goi dau, cac lan sau chi reload - dung khuon ctdtBang cua man chung
+// tu dien tu.
 function fetchData(startDate, endDate) {
     tt12TuNgay = startDate;
     tt12DenNgay = endDate;
 
-    tt12Bang.ajax.reload();
+    if (tt12Bang) {
+        tt12Bang.ajax.reload();
+        return;
+    }
+
+    tt12Bang = $('#tt12-list').DataTable({
+        processing: true,
+        serverSide: true,
+        searching: false,
+        scrollX: true,
+        order: [[1, 'desc']],
+        lengthMenu: [[10, 25, 50, 100, 200], [10, 25, 50, 100, 200]],
+        ajax: {
+            url: "{{ route('bhyt.tt12.fetch-data') }}",
+            data: function (d) {
+                tt12LocDaTai = tt12ThamSoLoc();
+                $.extend(d, tt12LocDaTai);
+            }
+        },
+        columns: [
+            {
+                "data": "ma_ho_so",
+                orderable: false,
+                searchable: false,
+                className: "text-center",
+                render: function (data, type, row) {
+                    if (type !== 'display') {
+                        return data ? 1 : 0;
+                    }
+
+                    return $('<input>')
+                        .attr('type', 'checkbox')
+                        .addClass('chon-ho-so')
+                        .attr('value', row.ma_ho_so)[0].outerHTML;
+                }
+            },
+            {
+                "data": "ma_ho_so",
+                render: function (data, type) {
+                    if (type !== 'display') {
+                        return data;
+                    }
+
+                    var url = "{{ route('bhyt.tt12.detail', ['ma_ho_so' => '__MA__']) }}"
+                              .replace('__MA__', encodeURIComponent(data));
+
+                    return $('<a>').attr('href', url).text(data)[0].outerHTML;
+                }
+            },
+            { "data": "mau", render: $.fn.dataTable.render.text() },
+            { "data": "ten_tep", render: $.fn.dataTable.render.text() },
+            { "data": "ma_cskcb", render: $.fn.dataTable.render.text() },
+            { "data": "so_dong", render: $.fn.dataTable.render.text() },
+            {
+                "data": "so_loi",
+                render: function (d, type) {
+                    if (type !== 'display') {
+                        return d;
+                    }
+
+                    var an = $('<div>').text(d).html();
+
+                    return Number(d) > 0 ? '<span class="nhan-canh-bao">' + an + '</span>' : an;
+                }
+            },
+            {
+                // Ho so co import_error nam lai CO Y de nguoi dung nhin thay va xoa. Khong co
+                // cot nay thi ho chi thay mot ho so 0 dong, "Chua kiem", khong ky duoc.
+                "data": "co_loi_nap",
+                render: function (d) {
+                    return Number(d) ? '<span class="nhan-canh-bao">Có</span>' : '—';
+                }
+            },
+            { "data": "da_kiem", render: function (d) { return Number(d) ? 'Đã kiểm' : 'Chưa kiểm'; } },
+            { "data": "da_ky", render: function (d) { return Number(d) ? 'Đã ký' : '—'; } },
+            { "data": "ma_gd", render: $.fn.dataTable.render.text() },
+            { "data": "ma_ket_qua", render: $.fn.dataTable.render.text() },
+            { "data": "thoi_gian_tiep_nhan", render: $.fn.dataTable.render.text() },
+            { "data": "da_dong_bo", render: function (d) { return Number(d) ? 'Đã đồng bộ' : '—'; } },
+            { "data": "imported_at", render: $.fn.dataTable.render.text() },
+            {
+                "data": "ma_ho_so",
+                orderable: false,
+                searchable: false,
+                render: function (data, type) {
+                    if (type !== 'display') {
+                        return data;
+                    }
+
+                    var url = "{{ route('bhyt.tt12.detail', ['ma_ho_so' => '__MA__']) }}"
+                              .replace('__MA__', encodeURIComponent(data));
+
+                    return $('<a>').addClass('btn btn-xs btn-default').attr('href', url).text('Chi tiết')[0].outerHTML;
+                }
+            }
+        ],
+            columnDefs: [{ targets: '_all', defaultContent: '' }]
+    });
 }
-
-var tt12Bang = $('#tt12-list').DataTable({
-    processing: true,
-    serverSide: true,
-    searching: false,
-    scrollX: true,
-    order: [[1, 'desc']],
-    lengthMenu: [[10, 25, 50, 100, 200], [10, 25, 50, 100, 200]],
-    ajax: {
-        url: "{{ route('bhyt.tt12.fetch-data') }}",
-        data: function (d) {
-            tt12LocDaTai = tt12ThamSoLoc();
-            $.extend(d, tt12LocDaTai);
-        }
-    },
-    columns: [
-        {
-            "data": "ma_ho_so",
-            orderable: false,
-            searchable: false,
-            className: "text-center",
-            render: function (data, type, row) {
-                if (type !== 'display') {
-                    return data ? 1 : 0;
-                }
-
-                return $('<input>')
-                    .attr('type', 'checkbox')
-                    .addClass('chon-ho-so')
-                    .attr('value', row.ma_ho_so)[0].outerHTML;
-            }
-        },
-        {
-            "data": "ma_ho_so",
-            render: function (data, type) {
-                if (type !== 'display') {
-                    return data;
-                }
-
-                var url = "{{ route('bhyt.tt12.detail', ['ma_ho_so' => '__MA__']) }}"
-                          .replace('__MA__', encodeURIComponent(data));
-
-                return $('<a>').attr('href', url).text(data)[0].outerHTML;
-            }
-        },
-        { "data": "mau", render: $.fn.dataTable.render.text() },
-        { "data": "ten_tep", render: $.fn.dataTable.render.text() },
-        { "data": "ma_cskcb", render: $.fn.dataTable.render.text() },
-        { "data": "so_dong", render: $.fn.dataTable.render.text() },
-        {
-            "data": "so_loi",
-            render: function (d, type) {
-                if (type !== 'display') {
-                    return d;
-                }
-
-                var an = $('<div>').text(d).html();
-
-                return Number(d) > 0 ? '<span class="nhan-canh-bao">' + an + '</span>' : an;
-            }
-        },
-        {
-            // Ho so co import_error nam lai CO Y de nguoi dung nhin thay va xoa. Khong co
-            // cot nay thi ho chi thay mot ho so 0 dong, "Chua kiem", khong ky duoc.
-            "data": "co_loi_nap",
-            render: function (d) {
-                return Number(d) ? '<span class="nhan-canh-bao">Có</span>' : '—';
-            }
-        },
-        { "data": "da_kiem", render: function (d) { return Number(d) ? 'Đã kiểm' : 'Chưa kiểm'; } },
-        { "data": "da_ky", render: function (d) { return Number(d) ? 'Đã ký' : '—'; } },
-        { "data": "ma_gd", render: $.fn.dataTable.render.text() },
-        { "data": "ma_ket_qua", render: $.fn.dataTable.render.text() },
-        { "data": "thoi_gian_tiep_nhan", render: $.fn.dataTable.render.text() },
-        { "data": "da_dong_bo", render: function (d) { return Number(d) ? 'Đã đồng bộ' : '—'; } },
-        { "data": "imported_at", render: $.fn.dataTable.render.text() },
-        {
-            "data": "ma_ho_so",
-            orderable: false,
-            searchable: false,
-            render: function (data, type) {
-                if (type !== 'display') {
-                    return data;
-                }
-
-                var url = "{{ route('bhyt.tt12.detail', ['ma_ho_so' => '__MA__']) }}"
-                          .replace('__MA__', encodeURIComponent(data));
-
-                return $('<a>').addClass('btn btn-xs btn-default').attr('href', url).text('Chi tiết')[0].outerHTML;
-            }
-        }
-    ],
-    columnDefs: [{ targets: '_all', defaultContent: '' }]
-});
 
 $(function () {
     // Khong con nut "Loc" tu lam o day: partials.load_data_button da lo viec do qua
