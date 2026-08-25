@@ -129,6 +129,34 @@ class Tt12DanhSach
         return strpos($giaTri, ':') === false ? $giaTri . ' 23:59:59' : $giaTri;
     }
 
+    /**
+     * Bu khoang ngay mac dinh khi loi goi khong co.
+     *
+     * Goi thang URL xuat (hoac bam nut truoc khi man hinh kip gan tt12LocDaTai) ma khong
+     * kem tham so se quet TOAN BO tt12_lich_su_gui. Tren may chu gioi han PHP 128MB/120s
+     * do la mot yeu cau chet giua chung, khong phai mot tep xuat lon. Khuon
+     * CtdtDanhSach::khoangMacDinh().
+     *
+     * KHONG de len gia tri nguoi dung da chon: mot bo loc bi bo qua am tham te hon han
+     * loi no dang chua.
+     *
+     * @param array $loc
+     * @param int   $soNgayLui
+     * @return array
+     */
+    public static function khoangMacDinh(array $loc, $soNgayLui = 30)
+    {
+        if (empty(trim((string) ($loc['tu_ngay'] ?? '')))) {
+            $loc['tu_ngay'] = now()->subDays($soNgayLui)->format('Y-m-d');
+        }
+
+        if (empty(trim((string) ($loc['den_ngay'] ?? '')))) {
+            $loc['den_ngay'] = now()->format('Y-m-d');
+        }
+
+        return $loc;
+    }
+
     /** @return array [ma => nhan] cho o chon tren man hinh */
     public static function cacTrangThai()
     {

@@ -120,16 +120,41 @@ class Tt12BladeCompilesTest extends TestCase
 
         $this->assertContains("route('bhyt.tt12.xuat.nhat-ky')", $noiDung,
             'Man danh sach phai co nut xuat nhat ky gui');
-        $this->assertContains('tt12LocDaTai', $noiDung,
-            'Nut xuat nhat ky phai dung lai khoang ngay tu partials.date_range, khong tu tao o ngay rieng');
+    }
+
+    /** @test */
+    public function nut_xuat_nhat_ky_dung_lai_tt12LocDaTai_khong_tu_tao_o_ngay_rieng()
+    {
+        // Truoc day bai nay quet CA TEP: chuoi 'tt12LocDaTai' da co san o hai nut xuat cu
+        // nam NGOAI pham vi thay doi, nen du handler #btn-xuat-nhat-ky bi viet lai de tu
+        // tao mot o ngay rieng - dung dieu yeu cau cam - bai van xanh. Phai trich RIENG
+        // doan handler cua nut nay roi moi khang dinh tren doan do.
+        $noiDung = file_get_contents(resource_path('views/bhyt/tt12/index.blade.php'));
+
+        $khopDuoc = preg_match(
+            "/\#btn-xuat-nhat-ky'\)\.on\('click', function \(\) \{(.*?)\}\);/s",
+            $noiDung,
+            $khop
+        );
+
+        $this->assertSame(1, $khopDuoc, 'Khong tim thay handler cua #btn-xuat-nhat-ky');
+        $this->assertContains('tt12LocDaTai', $khop[1],
+            'Handler nut xuat nhat ky phai dung lai tt12LocDaTai tu partials.date_range, khong tu tao o ngay rieng');
     }
 
     /** @test */
     public function route_bieu_mau_dat_truoc_khoi_tham_so_ma_ho_so()
     {
-        // Laravel khop theo THU TU khai bao. bieu-mau la duong tinh, khai sau khoi
-        // {ma_ho_so} (dong-bo-lai, kiem-lai, ky-va-gui) se khong bao gio toi duoc - request
-        // se bi nuot boi tham so bat-tat-ca truoc do.
+        // Rieng cac route GET, khong co va cham that su hien nay: khong ton tai route GET
+        // dang tran 'tt12/{ma_ho_so}' - moi route GET mang tham so deu nam duoi
+        // 'tt12/detail/{ma_ho_so}...', con 'tt12/{ma_ho_so}' chi khai o POST/DELETE nen
+        // khac method, khong va cham voi GET 'tt12/bieu-mau'.
+        //
+        // Van giu chot nay lam PHONG NGUA: neu sau nay co ai them mot route GET dang
+        // 'tt12/{ma_ho_so}' (giong khuon cua bhyt.ctdt.detail) ma khai TRUOC bieu-mau, thi
+        // request 'tt12/bieu-mau' se bi tham so bat-tat-ca do nuot mat - dung Laravel khop
+        // theo THU TU khai bao. Chot som re hon rat nhieu so voi phat hien qua mot bao loi
+        // "tai bieu mau khong duoc".
         $routes = app('router')->getRoutes()->get('GET');
 
         $viTriBieuMau = null;

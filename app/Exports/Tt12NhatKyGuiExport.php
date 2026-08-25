@@ -49,6 +49,18 @@ class Tt12NhatKyGuiExport implements FromQuery, WithHeadings, ShouldAutoSize, Wi
         $this->tuNgay = Tt12DanhSach::mocDau($tuNgay);
         $this->denNgay = Tt12DanhSach::mocCuoi($denNgay);
 
+        // Tu bao ve tai DIEM DUNG, khong chi cay vao noi goi da dien mac dinh truoc: mocDau
+        // (null)/mocCuoi(null) tra ve ' 00:00:00'/' 23:59:59' - co khoang trang dau, KHONG
+        // co phan ngay - va Carbon::parse() khong nem cho chuoi do, no tu suy ra HOM NAY.
+        // Khong chan o day thi tu_ngay/den_ngay rong lot qua duoc phep kiem tran (hieu so
+        // luon bang 0) roi chay whereBetween voi hai chuoi meo xuong CSDL.
+        if (!preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $this->tuNgay)
+            || !preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $this->denNgay)) {
+            throw new \InvalidArgumentException(
+                'Khoảng ngày của nhật ký gửi không hợp lệ, vui lòng chọn lại tu_ngay/den_ngay.'
+            );
+        }
+
         $soNgay = Carbon::parse($this->tuNgay)->diffInDays(Carbon::parse($this->denNgay));
 
         if ($soNgay > self::TRAN_SO_NGAY) {

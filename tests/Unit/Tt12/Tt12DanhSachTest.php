@@ -178,4 +178,33 @@ class Tt12DanhSachTest extends TestCase
     {
         $this->assertSame('2026-08-22 10:30:00', Tt12DanhSach::mocCuoi('2026-08-22 10:30:00'));
     }
+
+    /** @test */
+    public function khoangMacDinh_bu_ca_hai_moc_khi_thieu()
+    {
+        // xuatNhatKy() co the bi goi thang khong qua man hinh (link dan tay, bookmark,
+        // bam nut truoc khi DataTable kip gan tt12LocDaTai - bien do khoi tao null). Thieu
+        // buoc bu nay thi tu_ngay/den_ngay rong lot xuong toi Tt12DanhSach::mocDau/mocCuoi,
+        // Carbon::parse(' 00:00:00') tu suy ra HOM NAY chu khong nem loi.
+        $daBu = Tt12DanhSach::khoangMacDinh(array('tu_ngay' => null, 'den_ngay' => ''));
+
+        $this->assertNotEmpty($daBu['tu_ngay']);
+        $this->assertNotEmpty($daBu['den_ngay']);
+        $this->assertSame(
+            30,
+            \Carbon\Carbon::parse($daBu['tu_ngay'])->diffInDays(\Carbon\Carbon::parse($daBu['den_ngay'])),
+            'Mac dinh phai lui dung 30 ngay'
+        );
+    }
+
+    /** @test */
+    public function khoangMacDinh_khong_de_len_lua_chon_cua_nguoi_dung()
+    {
+        $daBu = Tt12DanhSach::khoangMacDinh(array(
+            'tu_ngay' => '2026-08-01', 'den_ngay' => '2026-08-05',
+        ));
+
+        $this->assertSame('2026-08-01', $daBu['tu_ngay']);
+        $this->assertSame('2026-08-05', $daBu['den_ngay']);
+    }
 }

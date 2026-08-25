@@ -353,6 +353,23 @@ class Tt12ControllerTest extends TestCase
         $this->assertContains('tối đa', $phanHoi->getSession()->get('error'));
     }
 
+    /** @test */
+    public function xuatNhatKy_khong_truyen_khoang_ngay_thi_tu_dien_mac_dinh()
+    {
+        // Link dan tay, bookmark, hoac bam nut truoc khi DataTable kip gan tt12LocDaTai
+        // (bien do khoi tao null) deu goi toi day voi tu_ngay/den_ngay RONG. Truoc khi co
+        // buoc bu mac dinh, cap RONG lot qua duoc phep kiem tran (Carbon tu suy ra HOM
+        // NAY) va chay whereBetween voi hai chuoi meo - khong bung loi nhung cung khong
+        // dung. Phai co buoc bu truoc khi dung Export, giong xuatNhatKy() cua CTDT.
+        $phanHoi = $this->controller()->xuatNhatKy(Request::create('/x', 'GET'));
+
+        $this->assertInstanceOf(
+            \Symfony\Component\HttpFoundation\BinaryFileResponse::class,
+            $phanHoi,
+            'Khong truyen khoang ngay van phai tai duoc tep, khong duoc quay lai vi loi'
+        );
+    }
+
     // -- co loi nap tren dong danh sach ----------------------------------------------
 
     /** @test */

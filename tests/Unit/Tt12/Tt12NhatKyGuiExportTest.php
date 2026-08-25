@@ -183,4 +183,27 @@ class Tt12NhatKyGuiExportTest extends TestCase
         $this->assertContains('Cổng từ chối', $hang);
         $this->assertContains('Sai dinh dang so 5', $hang);
     }
+
+    // -- bao ve khi khoang ngay khong hop le -------------------------------------------
+
+    /** @test */
+    public function khoang_ngay_rong_bi_tu_choi_ngay_tai_constructor()
+    {
+        // Tt12DanhSach::mocDau(null)/mocCuoi(null) tra ve ' 00:00:00'/' 23:59:59' - CO
+        // khoang trang dau, KHONG co phan ngay. Carbon::parse(' 00:00:00') khong nem ma tu
+        // suy ra HOM NAY, nen hieu so bang 0 va tran 90 ngay luon qua - request lang le
+        // chay whereBetween voi hai chuoi meo. Lop Export phai tu bao ve o day: mot duong
+        // vao thu hai (goi thang, quen goi buoc dien mac dinh) van khong duoc lot qua.
+        $this->expectException(\InvalidArgumentException::class);
+
+        new Tt12NhatKyGuiExport(null, null);
+    }
+
+    /** @test */
+    public function khoang_ngay_chuoi_rong_bi_tu_choi_ngay_tai_constructor()
+    {
+        $this->expectException(\InvalidArgumentException::class);
+
+        new Tt12NhatKyGuiExport('', '');
+    }
 }

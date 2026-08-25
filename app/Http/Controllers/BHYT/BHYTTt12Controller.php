@@ -332,9 +332,18 @@ class BHYTTt12Controller extends Controller
      */
     public function xuatNhatKy(Request $request)
     {
+        // Bu khoang ngay mac dinh TRUOC khi dung Export: link dan tay, bookmark, hoac bam
+        // nut truoc khi DataTable kip gan tt12LocDaTai (bien do khoi tao null) deu toi day
+        // voi tu_ngay/den_ngay rong. Thieu buoc nay thi cap rong lot qua duoc phep kiem
+        // tran cua Export (Carbon tu suy ra hom nay, hieu so bang 0).
+        $loc = Tt12DanhSach::khoangMacDinh(array(
+            'tu_ngay'  => $request->input('tu_ngay'),
+            'den_ngay' => $request->input('den_ngay'),
+        ));
+
         try {
             return Excel::download(
-                new Tt12NhatKyGuiExport($request->input('tu_ngay'), $request->input('den_ngay')),
+                new Tt12NhatKyGuiExport($loc['tu_ngay'], $loc['den_ngay']),
                 'tt12-nhat-ky-gui.xlsx'
             );
         } catch (\InvalidArgumentException $e) {
