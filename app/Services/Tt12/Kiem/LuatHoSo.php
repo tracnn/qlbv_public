@@ -99,8 +99,21 @@ class LuatHoSo
 
             // Sap theo TU_NGAY roi doi chieu tung cap ke nhau. Khoang truoc phai DONG
             // (co DEN_NGAY) va dong TRUOC khi khoang sau bat dau.
+            //
+            // TIE-BREAK THEO STT LA BAT BUOC: usort() cua PHP KHONG on dinh. Hai dong cung
+            // ma cung TU_NGAY thi thu tu sau sap xep khong xac dinh, va HIEU_LUC_CHONG_LAN
+            // bao luc co luc khong - CUNG MOT TEP cho hai ket qua khac nhau. Day khong phai
+            // bien hiem: cap dong cu/moi cung ngay chinh la tep TT12 khuyen khich gui khi
+            // co so sua nham ngay. Ma day la luat CHAN KY, nen hanh vi bap benh la khong
+            // chap nhan duoc.
             usort($cac, function ($a, $b) {
-                return strcmp($a['tu'], $b['tu']);
+                $theo = strcmp($a['tu'], $b['tu']);
+
+                if ($theo !== 0) {
+                    return $theo;
+                }
+
+                return $a['stt'] < $b['stt'] ? -1 : ($a['stt'] > $b['stt'] ? 1 : 0);
             });
 
             for ($i = 0; $i < count($cac) - 1; $i++) {

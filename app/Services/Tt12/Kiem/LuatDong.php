@@ -35,8 +35,12 @@ class LuatDong
         $tuHd  = isset($duLieu['TU_NGAY_HD'])  ? trim((string) $duLieu['TU_NGAY_HD'])  : '';
         $denHd = isset($duLieu['DEN_NGAY_HD']) ? trim((string) $duLieu['DEN_NGAY_HD']) : '';
 
+        // CANH BAO chu khong phai LOI: thoi han hop dong nguoc khong lam XML sai cau truc
+        // va cong khong tu choi vi no - day la loi du lieu dang nghi ngo, khong dang chan
+        // ky. (Cap TU_NGAY/DEN_NGAY o tren thi khac: no la khoang hieu luc cua chinh ban
+        // ghi danh muc, sai la sai ban chat.)
         if (preg_match('/^\d{8}$/', $tuHd) && preg_match('/^\d{8}$/', $denHd) && $denHd < $tuHd) {
-            $loi[] = Tt12Loi::loi(
+            $loi[] = Tt12Loi::canhBao(
                 'DEN_HD_TRUOC_TU_HD',
                 'DEN_NGAY_HD (' . $denHd . ') trước TU_NGAY_HD (' . $tuHd . ')',
                 $sttDong, 'DEN_NGAY_HD'

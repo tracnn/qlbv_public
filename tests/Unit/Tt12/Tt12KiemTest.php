@@ -246,4 +246,84 @@ class Tt12KiemTest extends TestCase
 
         $this->assertSame(array(), $loi);
     }
+
+    /** @test */
+    public function so_am_bi_bat()
+    {
+        // Don gia am di thang ra cong. Chan tai day chu khong doi cong tra 205.
+        $loi = LuatO::kiem($this->lop('MAU_01'), $this->dongMau01(array('GIUONG_PD' => '-5')), 1);
+
+        $this->assertContains('SO_AM', $this->maLoi($loi));
+        $this->assertSame('GIUONG_PD', $loi[0]->cot());
+        $this->assertTrue($loi[0]->laLoi(), 'So am phai CHAN ky, khong phai canh bao');
+    }
+
+    /** @test */
+    public function so_am_khac_voi_sai_kieu_so()
+    {
+        // '-5' la so hop le ve dinh dang; chi mot loi duy nhat, khong duoc bao kem
+        // SAI_KIEU_SO cho cung mot o.
+        $loi = LuatO::kiem($this->lop('MAU_01'), $this->dongMau01(array('GIUONG_PD' => '-5')), 1);
+
+        $this->assertNotContains('SAI_KIEU_SO', $this->maLoi($loi));
+    }
+
+    /** @test */
+    public function den_ngay_hd_truoc_tu_ngay_hd_la_CANH_BAO_chu_khong_chan_ky()
+    {
+        // Thoi han hop dong nguoc khong lam XML sai cau truc va cong khong tu choi vi no.
+        // Chan ky vi mot du lieu dang nghi ngo la chan ca danh muc thuoc cua benh vien.
+        $duLieu = array(
+            'STT' => '1', 'MA_THUOC' => 'T001', 'TEN_THUOC' => 'Paracetamol',
+            'TU_NGAY' => '20260101', 'DEN_NGAY' => '', 'MA_CSKCB' => '01929',
+            'TU_NGAY_HD' => '20260601', 'DEN_NGAY_HD' => '20260101',
+        );
+
+        $loi = LuatDong::kiem($this->lop('MAU_03'), $duLieu, 1, '01929');
+
+        $this->assertSame(array('DEN_HD_TRUOC_TU_HD'), $this->maLoi($loi));
+        $this->assertFalse($loi[0]->laLoi(), 'Phai la canh bao, khong chan ky');
+        $this->assertSame('DEN_NGAY_HD', $loi[0]->cot());
+    }
+
+    /** @test */
+    public function thoi_han_hop_dong_thuan_thi_khong_canh_bao()
+    {
+        $duLieu = array(
+            'STT' => '1', 'MA_THUOC' => 'T001', 'TEN_THUOC' => 'Paracetamol',
+            'TU_NGAY' => '20260101', 'DEN_NGAY' => '', 'MA_CSKCB' => '01929',
+            'TU_NGAY_HD' => '20260101', 'DEN_NGAY_HD' => '20261231',
+        );
+
+        $this->assertSame(array(), LuatDong::kiem($this->lop('MAU_03'), $duLieu, 1, '01929'));
+    }
+
+    /** @test */
+    public function hai_dong_cung_ma_cung_TU_NGAY_cho_ket_qua_ON_DINH()
+    {
+        // usort() cua PHP KHONG on dinh. Hai dong cung ma cung TU_NGAY thi thu tu sau sap
+        // xep khong xac dinh, va HIEU_LUC_CHONG_LAN bao luc co luc khong cho CUNG MOT TEP.
+        // Day khong phai bien hiem: cap dong cu/moi cung ngay chinh la tep TT12 khuyen
+        // khich gui khi co so sua nham ngay. Ma day la luat CHAN KY.
+        $mot = array('stt' => 1, 'du_lieu' => array(
+            'MA_KHOA' => 'K01', 'TU_NGAY' => '20260101', 'DEN_NGAY' => '20260101',
+        ));
+
+        $hai = array('stt' => 2, 'du_lieu' => array(
+            'MA_KHOA' => 'K01', 'TU_NGAY' => '20260101', 'DEN_NGAY' => '',
+        ));
+
+        $xuoi = LuatHoSo::kiem($this->lop('MAU_01'), array($mot, $hai));
+        $nguoc = LuatHoSo::kiem($this->lop('MAU_01'), array($hai, $mot));
+
+        $moTa = function (array $loi) {
+            return array_map(function ($l) { return $l->maLoi() . '|' . $l->moTa(); }, $loi);
+        };
+
+        $this->assertSame(
+            $moTa($xuoi),
+            $moTa($nguoc),
+            'Cung mot tap dong phai cho cung mot ket qua bat ke thu tu doc'
+        );
+    }
 }

@@ -16,11 +16,35 @@ use App\Services\Tt12\Tt12MauRegistry;
  * trung va ma nao co hai dong. Doc theo lo cho luat theo o/theo dong nhung phai gom
  * (stt, ma, tu_ngay, den_ngay) cua moi dong cho luat theo ho so - do la BON truong chu
  * khong phai ca dong, nen mot tep 50.000 dong ton khoang vai MB, khong phai vai chuc.
+ *
+ * VI SAO GHI LOI NGAY TRONG TUNG LO: chunk() chi tiet kiem phan DOC. Ban truoc gom toan
+ * bo doi tuong Tt12Loi vao mot mang roi ghi mot lan sau khi doc het - mot thao tac Excel
+ * sai duy nhat (de trong ca cot TU_NGAY) tren tep 30.000 dong sinh 30.000 doi tuong loi,
+ * moi cai mang mot chuoi mo ta. Tren may chu 128 MB job chet va ho so ket o CHUA_KIEM.
  */
 class Tt12Kiem
 {
     /** Doc bao nhieu dong moi lan. Nho hon co lo doc Excel vi moi dong o day nang hon. */
     const CO_LO = 2000;
+
+    /** Bao nhieu hang moi lan insert xuong tt12_loi */
+    const CO_LO_GHI = 500;
+
+    /**
+     * Tran so ban ghi loi ghi lai cho MOT ho so.
+     *
+     * Qua con so nay thi danh sach loi khong con la thu de doc nua - nguoi dung se sua TEP
+     * chu khong sua tung dong. Ghi tiep chi ton bo nho va lam bang tt12_loi phinh vo ich.
+     */
+    const TOI_DA_GHI_LOI = 10000;
+
+    /** @var int tran thuc dung; nhan qua ham dung de kiem duoc ma khong phai tao 10.001 dong */
+    private $toiDaGhi;
+
+    public function __construct($toiDaGhi = self::TOI_DA_GHI_LOI)
+    {
+        $this->toiDaGhi = (int) $toiDaGhi;
+    }
 
     /**
      * @param Tt12HoSo $hoSo
@@ -28,24 +52,33 @@ class Tt12Kiem
      */
     public function kiem(Tt12HoSo $hoSo)
     {
+        // Xoa loi cu MOT LAN, truoc vong lap. Xoa truoc BAT BUOC: kiem lai mot ho so ma
+        // khong xoa se cong don loi qua tung lan kiem, va so_loi phinh len mai.
+        LoiModel::where('ho_so_id', $hoSo->id)->delete();
+
+        // dem['so_loi'] la TONG THAT muc 'loi', dem ca phan khong ghi xuong - nguoi dung
+        // can biet quy mo that de quyet dinh sua tep hay sua quy trinh.
+        $dem = array('so_loi' => 0, 'da_ghi' => 0, 'bo_qua' => 0);
+
         if (!Tt12MauRegistry::co($hoSo->mau)) {
-            $this->ghi($hoSo, array(Tt12Loi::loi(
+            $this->ghiLo($hoSo, array(Tt12Loi::loi(
                 'MAU_LA',
                 'Hồ sơ mang mẫu không nằm trong đăng ký: ' . $hoSo->mau
-            )));
+            )), $dem);
 
-            return 1;
+            return $this->chot($hoSo, $dem);
         }
 
         $lop = Tt12MauRegistry::cho($hoSo->mau);
 
-        $loi = array();
         $tomTat = array();
 
         Tt12Dong::where('ho_so_id', $hoSo->id)
             ->with('thuocPx')
             ->orderBy('stt')
-            ->chunk(self::CO_LO, function ($cacDong) use ($lop, $hoSo, &$loi, &$tomTat) {
+            ->chunk(self::CO_LO, function ($cacDong) use ($lop, $hoSo, &$dem, &$tomTat) {
+                $loi = array();
+
                 foreach ($cacDong as $dong) {
                     $duLieu = is_array($dong->du_lieu) ? $dong->du_lieu : array();
 
@@ -72,53 +105,86 @@ class Tt12Kiem
                         ),
                     );
                 }
+
+                // GHI NGAY, roi bo $loi. Day la ca diem cua viec doc theo lo.
+                $this->ghiLo($hoSo, $loi, $dem);
             });
 
-        $loi = array_merge($loi, LuatHoSo::kiem($lop, $tomTat));
+        $this->ghiLo($hoSo, LuatHoSo::kiem($lop, $tomTat), $dem);
 
-        return $this->ghi($hoSo, $loi);
+        return $this->chot($hoSo, $dem);
     }
 
     /**
-     * Xoa loi cu roi ghi loi moi, trong mot transaction.
+     * Dem va ghi mot lo loi.
      *
-     * Xoa truoc BAT BUOC: kiem lai mot ho so ma khong xoa se cong don loi qua tung lan
-     * kiem, va so_loi phinh len mai.
-     *
-     * @return int so loi muc 'loi'
+     * DEM TRUOC KHI XET TRAN: so_loi phai la tong that, khong phai so da ghi.
      */
-    private function ghi(Tt12HoSo $hoSo, array $loi)
+    private function ghiLo(Tt12HoSo $hoSo, array $loi, array &$dem)
     {
-        $soLoi = 0;
+        if ($loi === array()) {
+            return;
+        }
+
+        $hang = array();
 
         foreach ($loi as $mot) {
             if ($mot->laLoi()) {
-                $soLoi++;
+                $dem['so_loi']++;
             }
+
+            if ($dem['da_ghi'] >= $this->toiDaGhi) {
+                $dem['bo_qua']++;
+                continue;
+            }
+
+            $hang[] = $this->thanhHang($mot, $hoSo->id);
+            $dem['da_ghi']++;
         }
 
-        DB::transaction(function () use ($hoSo, $loi, $soLoi) {
-            LoiModel::where('ho_so_id', $hoSo->id)->delete();
+        $this->chen($hang);
+    }
 
-            foreach (array_chunk($loi, 500) as $lo) {
-                $hang = array();
+    /** @return int so loi muc 'loi' */
+    private function chot(Tt12HoSo $hoSo, array $dem)
+    {
+        if ($dem['bo_qua'] > 0) {
+            // MOT ban ghi tong ket, o muc canh bao de khong lam phong so_loi. Khong co no
+            // thi danh sach loi bi cat cut ma khong dau hieu nao bao rang no da bi cat.
+            $this->chen(array($this->thanhHang(Tt12Loi::canhBao(
+                'VUOT_TRAN_LOI',
+                'Và ' . $dem['bo_qua'] . ' lỗi khác không được liệt kê (đã đạt giới hạn '
+                . $this->toiDaGhi . ' dòng). Sửa tệp Excel rồi nạp lại thay vì sửa từng dòng.'
+            ), $hoSo->id)));
+        }
 
-                foreach ($lo as $mot) {
-                    $hang[] = array_merge($mot->thanhMang($hoSo->id), array(
-                        'created_at' => Carbon::now(),
-                        'updated_at' => Carbon::now(),
-                    ));
-                }
+        $hoSo->update(array(
+            'checked_at' => Carbon::now(),
+            'so_loi'     => $dem['so_loi'],
+        ));
 
-                LoiModel::insert($hang);
+        return $dem['so_loi'];
+    }
+
+    /** @return array mot hang de insert thang vao tt12_loi */
+    private function thanhHang(Tt12Loi $loi, $hoSoId)
+    {
+        return array_merge($loi->thanhMang($hoSoId), array(
+            'created_at' => Carbon::now(),
+            'updated_at' => Carbon::now(),
+        ));
+    }
+
+    private function chen(array $hang)
+    {
+        if ($hang === array()) {
+            return;
+        }
+
+        DB::transaction(function () use ($hang) {
+            foreach (array_chunk($hang, self::CO_LO_GHI) as $lo) {
+                LoiModel::insert($lo);
             }
-
-            $hoSo->update(array(
-                'checked_at' => Carbon::now(),
-                'so_loi'     => $soLoi,
-            ));
         });
-
-        return $soLoi;
     }
 }
