@@ -14,9 +14,18 @@ use Illuminate\Database\Migrations\Migration;
  * nghia cot cu se lam moi checker dang chay phai sua theo.
  *
  * medical_staffs.ma_cskcb la LOI TIEM AN da co tu truoc: config/catalog_import_mapping.php
- * da anh xa ma_cskcb va CatalogImportService::DANH_MUC_THEO_CO_SO da liet ke
- * medical_staff la danh muc theo tung co so, nhung BANG CHUA HE CO COT NAY. Luong import
- * thu cong dang am tham danh roi ma co so cua nhan vien y te.
+ * da anh xa ma_cskcb cho danh muc medical_staff, nhung BANG CHUA HE CO COT NAY. Luong
+ * import thu cong dang am tham danh roi gia tri ma co so cua nhan vien y te - hien tuong
+ * nay da duoc NhapDanhMucLonTheoLoTest ghi nhan trong danh sach "truong bi bo da biet".
+ *
+ * DINH CHINH: CatalogImportService::DANH_MUC_THEO_CO_SO KHONG liet ke medical_staff
+ * (va cung khong liet ke equipment) - hang so do hien chi gom
+ * ['medicine', 'medical_supply', 'service', 'department_bed'], va mot test da chot no
+ * phai khop voi theo_co_so trong config/danh_muc_bhyt.php nen KHONG duoc sua o day. Nghia
+ * la co che tu gan ma co so tu o chon tren man nhap (ganCoSo()) CHUA ap dung cho
+ * medical_staff/equipment - cot ma_cskcb cua hai danh muc nay chi duoc dien khi chinh
+ * tep nguon da co san cot MA_CSKCB (dung truong hop mau TT12). Mo rong DANH_MUC_THEO_CO_SO
+ * la viec ngoai pham vi Task 3.
  */
 class ThemCotTt12VaoDanhMuc extends Migration
 {
