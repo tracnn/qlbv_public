@@ -385,6 +385,15 @@ class BHYTTt12Controller extends Controller
                 . '), không kiểm lại được.');
         }
 
+        if ((bool) $hoSo->is_signed) {
+            // Tep XML da ky van nam nguyen tren dia va mang con so cua LAN KIEM LUC KY.
+            // Kiem lai co the cho so_loi khac, va khi do hai con so noi hai dieu khac nhau
+            // ve cung mot ho so - nguoi doi soat khong biet tin cai nao.
+            return $this->traLoi($request, false,
+                'Hồ sơ đã được ký số, không kiểm lại được vì tệp XML đã ký vẫn mang '
+                . 'kết quả kiểm lúc ký. Nếu cần kiểm khác đi thì xoá hồ sơ này và nạp lại tệp.');
+        }
+
         $hangDoi = config('organization.tt12.hang_doi');
 
         $job = new \App\Jobs\CheckTt12Job($hoSo->ma_ho_so);

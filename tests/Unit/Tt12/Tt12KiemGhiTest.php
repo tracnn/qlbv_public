@@ -198,6 +198,44 @@ class Tt12KiemGhiTest extends TestCase
     }
 
     /** @test */
+    public function chet_giua_chung_thi_ho_so_ve_CHUA_KIEM_chu_khong_giu_co_kiem_cu()
+    {
+        // Ghi theo lo DANH DOI tinh nguyen tu lay bo nho: loi cu bi xoa truoc, loi moi ghi
+        // dan tung lo, checked_at/so_loi chi ghi o cuoi. Chet giua chung (het bo nho o lo
+        // 20, mat ket noi) ma van giu co kiem CU la man hinh bao "Da kiem, 5 loi" trong khi
+        // tt12_loi rong.
+        //
+        // Cai bay that nam o cho khac: nut "Kiem lai" chi hien khi checked_at rong. Giu co
+        // cu la con loi TU GIAU dung duong cuu cua chinh no - nguoi dung ket hoan toan,
+        // khong thao tac nao tren man hinh go duoc. Nen phai HA CO TRUOC vong lap, khong
+        // phai chi NANG CO SAU.
+        $hoSo = $this->hoSoVoiDong(array($this->dong(array('MA_KHOA' => ''))));
+        $hoSo->update(array('checked_at' => '2026-08-20 08:00:00', 'so_loi' => 5));
+
+        Tt12Loi::create(array(
+            'ho_so_id' => $hoSo->id, 'ma_loi' => 'CU',
+            'muc_do' => 'loi', 'mo_ta' => 'Lỗi của lần kiểm trước',
+        ));
+
+        $daNem = false;
+
+        try {
+            (new Tt12KiemNemGiuaChung())->kiem($hoSo->fresh());
+        } catch (\RuntimeException $e) {
+            $daNem = true;
+        }
+
+        $this->assertTrue($daNem, 'Lop gia phai nem de dung lai kich ban chet giua chung');
+
+        $sau = $hoSo->fresh();
+
+        $this->assertNull($sau->checked_at,
+            'Phai ve "Chua kiem" de nut Kiem lai hien ra, khong duoc giu co kiem cu');
+        $this->assertSame(0, (int) $sau->so_loi,
+            'Giu so_loi cu trong khi tt12_loi da bi xoa la noi doi ve trang thai');
+    }
+
+    /** @test */
     public function khong_vuot_tran_thi_khong_co_ban_ghi_tong_ket()
     {
         $hoSo = $this->hoSoVoiDong(array($this->dong(array('MA_KHOA' => ''))));
@@ -206,5 +244,19 @@ class Tt12KiemGhiTest extends TestCase
 
         $this->assertSame(0, Tt12Loi::where('ho_so_id', $hoSo->id)
             ->where('ma_loi', 'VUOT_TRAN_LOI')->count());
+    }
+}
+
+/**
+ * Tt12Kiem nem ngay o lo dau, dung lai kich ban job chet giua chung.
+ *
+ * Ghi de ghiLo() thay vi gia lap CSDL: cai can dung la mot diem nem NAM GIUA buoc xoa loi
+ * cu va buoc ghi checked_at o cuoi, va do dung la cho ghiLo() duoc goi.
+ */
+class Tt12KiemNemGiuaChung extends Tt12Kiem
+{
+    protected function ghiLo(\App\Models\BHYT\Tt12\Tt12HoSo $hoSo, array $loi, array &$dem)
+    {
+        throw new \RuntimeException('Het bo nho o lo thu 20');
     }
 }

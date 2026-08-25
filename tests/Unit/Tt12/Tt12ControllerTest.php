@@ -407,6 +407,25 @@ class Tt12ControllerTest extends TestCase
     }
 
     /** @test */
+    public function kiem_lai_tu_choi_ho_so_DA_KY_du_chua_gui()
+    {
+        // Tep XML da ky nam nguyen tren dia va mang con so cua lan kiem LUC KY. Kiem lai co
+        // the cho so_loi khac, va khi do hai con so noi hai dieu khac nhau ve cung mot ho
+        // so.
+        $hoSo = $this->hoSoMau01DaTiepNhan(array(
+            'checked_at' => null, 'so_loi' => 0,
+            'is_signed' => true, 'signed_at' => '2026-08-25 10:05:00',
+            'ma_ket_qua' => null, 'ma_gd' => null,
+        ));
+
+        $phanHoi = $this->controller()->kiemLai($this->yeuCauJson(), $hoSo->ma_ho_so);
+
+        $this->assertSame(422, $phanHoi->getStatusCode());
+        $this->assertContains('đã được ký số', $this->than($phanHoi)['thong_diep']);
+        $this->assertNull($hoSo->fresh()->checked_at, 'Khong duoc day job kiem');
+    }
+
+    /** @test */
     public function kiem_lai_tu_choi_ho_so_da_duoc_cong_tiep_nhan()
     {
         // Kiem lai ghi de checked_at va so_loi. Lam viec do sau khi cong da nhan la sua

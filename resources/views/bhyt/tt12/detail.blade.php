@@ -67,7 +67,7 @@
                         data-ma-ho-so="{{ $hoSo->ma_ho_so }}">
                     <i class="fa fa-paper-plane"></i> Ký và gửi
                 </button>
-                @if (empty($hoSo->checked_at) && !\App\Services\Tt12\Tt12QuyetDinhGui::daTiepNhan($hoSo->ma_ket_qua))
+                @if (empty($hoSo->checked_at) && !$hoSo->is_signed && !\App\Services\Tt12\Tt12QuyetDinhGui::daTiepNhan($hoSo->ma_ket_qua))
                 {{-- Hàng đợi tắt lúc nạp hoặc job hết lượt thử thì hồ sơ nằm mãi ở
                      "Chưa kiểm" - không ký được và không có đường nào kiểm lại. --}}
                 <button type="button" id="btn-kiem-lai" class="btn btn-default btn-sm">

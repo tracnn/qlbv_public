@@ -83,6 +83,25 @@ class Tt12BladeCompilesTest extends TestCase
     }
 
     /** @test */
+    public function hai_route_cuu_ho_deu_nam_trong_chot_quyen_xml_man()
+    {
+        // dong-bo-lai GHI DE bang danh muc - chinh bang Xml3176Xml3Checker doc de giam
+        // dinh. Nut bi an tren blade KHONG phai la chot quyen: ai cung goi thang POST
+        // duoc. Khoi route 'bhyt/' da boc san checkrole:xml-man o tang nhom; test nay chot
+        // rang hai route moi that su nam trong khoi do, khong bi ai keo ra ngoai.
+        foreach (array('bhyt.tt12.dong-bo-lai', 'bhyt.tt12.kiem-lai') as $ten) {
+            $route = app('router')->getRoutes()->getByName($ten);
+
+            $this->assertNotNull($route, 'Thieu route ' . $ten);
+            $this->assertContains(
+                'checkrole:xml-man',
+                $route->gatherMiddleware(),
+                $ten . ' phai nam trong chot quyen xml-man'
+            );
+        }
+    }
+
+    /** @test */
     public function route_xoa_phai_co_chot_quyen_superadministrator()
     {
         // Xoa la thao tac khong hoan tac duoc va cham vao ho so cua NGUOI KHAC. Khuon da

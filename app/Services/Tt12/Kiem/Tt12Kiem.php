@@ -56,6 +56,20 @@ class Tt12Kiem
         // khong xoa se cong don loi qua tung lan kiem, va so_loi phinh len mai.
         LoiModel::where('ho_so_id', $hoSo->id)->delete();
 
+        // HA CO NGAY, TRUOC VONG LAP - khong phai chi nang co sau khi xong.
+        //
+        // Ghi theo lo DANH DOI tinh nguyen tu lay bo nho: ban truoc boc ca xoa + chen +
+        // ghi co trong MOT transaction, ban nay khong the. Cai gia do phai tra bang mot
+        // trang thai trung gian TRUNG THUC: tu luc nay den luc chot(), ho so dung la "chua
+        // kiem" - loi cu da mat, loi moi chua du. Chet giua chung (het bo nho o lo 20, mat
+        // ket noi) ma van giu checked_at/so_loi cu la man hinh bao "Da kiem, 5 loi" trong
+        // khi tt12_loi rong.
+        //
+        // VA DAY MOI LA CHO CHET: nut "Kiem lai" tren man chi tiet chi hien khi checked_at
+        // rong. Giu co cu la con loi TU GIAU dung duong cuu cua chinh no - nguoi dung ket
+        // hoan toan, khong thao tac nao tren man hinh go duoc.
+        $hoSo->update(array('checked_at' => null, 'so_loi' => 0));
+
         // dem['so_loi'] la TONG THAT muc 'loi', dem ca phan khong ghi xuong - nguoi dung
         // can biet quy mo that de quyet dinh sua tep hay sua quy trinh.
         $dem = array('so_loi' => 0, 'da_ghi' => 0, 'bo_qua' => 0);
@@ -120,7 +134,7 @@ class Tt12Kiem
      *
      * DEM TRUOC KHI XET TRAN: so_loi phai la tong that, khong phai so da ghi.
      */
-    private function ghiLo(Tt12HoSo $hoSo, array $loi, array &$dem)
+    protected function ghiLo(Tt12HoSo $hoSo, array $loi, array &$dem)
     {
         if ($loi === array()) {
             return;
