@@ -14,6 +14,15 @@ class Tt12DongThuocPx extends Model
         'thanh_tien_thuoc',
     ];
 
+    // dong_id va stt KHONG phai khoa chinh nen Eloquent khong tu ep kieu nhu voi 'id'
+    // (Model::getCasts() chi tu gan kieu cho khoa chinh). Thieu khai bao nay, SQLite tra
+    // ve chuoi cho hai cot INTEGER thuong, con Tt12Dong::id lai la so - so sanh ===
+    // giua $duLieu['dong_id'] va Tt12Dong::id se sai kieu du gia tri bang nhau.
+    protected $casts = [
+        'dong_id' => 'integer',
+        'stt'     => 'integer',
+    ];
+
     public function dong()
     {
         return $this->belongsTo(Tt12Dong::class, 'dong_id');
