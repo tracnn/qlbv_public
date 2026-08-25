@@ -558,6 +558,25 @@ return [
                     ],
                 ],
                 [
+                    'text'      => 'Danh mục TT12',
+                    'icon'      => 'list-alt',
+                    'checkrole' => 'xml-man',
+                    'submenu'   => [
+                        [
+                            'text'   => 'Danh sách hồ sơ',
+                            'icon'   => 'file',
+                            'route'  => 'bhyt.tt12.index',
+                            'active' => ['bhyt/tt12/index*'],
+                        ],
+                        [
+                            'text'   => 'Nạp danh mục',
+                            'icon'   => 'plus',
+                            'route'  => 'bhyt.tt12.import.index',
+                            'active' => ['bhyt/tt12/import*'],
+                        ],
+                    ],
+                ],
+                [
                     'text'    => 'Xml 4750',
                     'icon'    => 'archive',
                     'checkrole'   => 'xml-man',
