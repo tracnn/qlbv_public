@@ -36,11 +36,11 @@ class Tt12DanhSach
         }
 
         if (!empty($loc['tu_ngay'])) {
-            $q->where('imported_at', '>=', $loc['tu_ngay'] . ' 00:00:00');
+            $q->where('imported_at', '>=', self::mocDau($loc['tu_ngay']));
         }
 
         if (!empty($loc['den_ngay'])) {
-            $q->where('imported_at', '<=', $loc['den_ngay'] . ' 23:59:59');
+            $q->where('imported_at', '<=', self::mocCuoi($loc['den_ngay']));
         }
 
         if (!empty($loc['tim'])) {
@@ -94,6 +94,39 @@ class Tt12DanhSach
         }
 
         return $q;
+    }
+
+    /**
+     * Moc dau khoang loc.
+     *
+     * Bo chon khoang thoi gian (partials.date_range) gui len dang 'YYYY-MM-DD HH:mm:ss',
+     * con o ngay tran gui 'YYYY-MM-DD'. Cu noi ' 00:00:00' vo dieu kien vao ca hai thi
+     * dang co gio thanh '2026-08-19 10:00:00 00:00:00' - MySQL doc khong ra va tra ve
+     * rong. Nhan dien bang dau hai cham, giong CtdtDanhSach::mocDau().
+     *
+     * PUBLIC vi Tt12NhatKyGuiExport phai chuan hoa dung mot kieu voi man hinh. Viet ban
+     * chuan hoa thu hai o ben do la tao co hoi cho hai ban lech nhau.
+     */
+    public static function mocDau($giaTri)
+    {
+        $giaTri = trim((string) $giaTri);
+
+        return strpos($giaTri, ':') === false ? $giaTri . ' 00:00:00' : $giaTri;
+    }
+
+    /**
+     * Moc cuoi khoang loc.
+     *
+     * Voi ngay tran phai la 23:59:59, khong phai '<= ngay'. So sanh chuoi ngay tran tren
+     * cot datetime se bo het ho so nap trong chinh ngay do tru dung luc 00:00:00.
+     *
+     * PUBLIC cung mot ly do voi mocDau().
+     */
+    public static function mocCuoi($giaTri)
+    {
+        $giaTri = trim((string) $giaTri);
+
+        return strpos($giaTri, ':') === false ? $giaTri . ' 23:59:59' : $giaTri;
     }
 
     /** @return array [ma => nhan] cho o chon tren man hinh */

@@ -131,4 +131,51 @@ class Tt12DanhSachTest extends TestCase
             $this->maCua(array('tu_ngay' => '2026-08-22', 'den_ngay' => '2026-08-26'))
         );
     }
+
+    /** @test */
+    public function khoang_ngay_da_mang_gio_khong_bi_noi_them_hau_to()
+    {
+        // partials.date_range gui dang 'YYYY-MM-DD HH:mm:ss'. Neu truyVan noi them
+        // ' 00:00:00'/' 23:59:59' vo dieu kien vao chuoi da co gio thi tham so gui xuong
+        // CSDL thanh '...00:00:00 00:00:00' - MySQL doc khong ra va tra ve RONG. Kiem
+        // THANG tham so gui xuong CSDL, khong kiem qua ket qua truy van: SQLite so sanh
+        // chuoi kieu lexical nen mot moc hong van co the "tinh co" cho ra dung dong,
+        // che mat loi ma MySQL that se lo ra.
+        $bindings = Tt12DanhSach::truyVan(array(
+            'tu_ngay'  => '2026-08-22 10:30:00',
+            'den_ngay' => '2026-08-26 10:30:00',
+        ))->getQuery()->getBindings();
+
+        foreach ($bindings as $moc) {
+            $this->assertRegExp(
+                '/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/',
+                (string) $moc,
+                'Moc thoi gian gui xuong CSDL phai la datetime hop le, khong duoc noi doi hau to'
+            );
+        }
+    }
+
+    /** @test */
+    public function mocDau_khong_gio_thi_them_00_00_00()
+    {
+        $this->assertSame('2026-08-22 00:00:00', Tt12DanhSach::mocDau('2026-08-22'));
+    }
+
+    /** @test */
+    public function mocDau_da_co_gio_thi_giu_nguyen()
+    {
+        $this->assertSame('2026-08-22 10:30:00', Tt12DanhSach::mocDau('2026-08-22 10:30:00'));
+    }
+
+    /** @test */
+    public function mocCuoi_khong_gio_thi_them_23_59_59()
+    {
+        $this->assertSame('2026-08-22 23:59:59', Tt12DanhSach::mocCuoi('2026-08-22'));
+    }
+
+    /** @test */
+    public function mocCuoi_da_co_gio_thi_giu_nguyen()
+    {
+        $this->assertSame('2026-08-22 10:30:00', Tt12DanhSach::mocCuoi('2026-08-22 10:30:00'));
+    }
 }
