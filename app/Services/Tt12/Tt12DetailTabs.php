@@ -10,13 +10,14 @@ namespace App\Services\Tt12;
  */
 class Tt12DetailTabs
 {
-    /** @return array ['dong' => nhan, 'loi' => nhan, 'xml' => nhan] */
+    /** @return array ['dong' => nhan, 'loi' => nhan, 'xml' => nhan, 'lich_su' => nhan] */
     public static function cacTab()
     {
         return array(
-            'dong' => 'Dòng dữ liệu',
-            'loi'  => 'Lỗi',
-            'xml'  => 'XML đã ký',
+            'dong'    => 'Dòng dữ liệu',
+            'loi'     => 'Lỗi',
+            'xml'     => 'XML đã ký',
+            'lich_su' => 'Nhật ký gửi',
         );
     }
 

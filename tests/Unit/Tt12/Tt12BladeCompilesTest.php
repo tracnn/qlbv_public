@@ -19,6 +19,7 @@ class Tt12BladeCompilesTest extends TestCase
             array('tab-dong'),
             array('tab-loi'),
             array('tab-xml'),
+            array('tab-lich-su'),
             array('partials/search'),
         );
     }
@@ -53,6 +54,7 @@ class Tt12BladeCompilesTest extends TestCase
             'bhyt.tt12.ky-va-gui', 'bhyt.tt12.ky-va-gui-nhieu',
             'bhyt.tt12.xuat.danh-sach', 'bhyt.tt12.xuat.loi', 'bhyt.tt12.delete',
             'bhyt.tt12.dong-bo-lai', 'bhyt.tt12.kiem-lai',
+            'bhyt.tt12.bieu-mau', 'bhyt.tt12.xuat.nhat-ky',
         );
 
         foreach ($ten as $mot) {
@@ -100,6 +102,52 @@ class Tt12BladeCompilesTest extends TestCase
                 $ten . ' phai nam trong chot quyen xml-man'
             );
         }
+    }
+
+    /** @test */
+    public function man_nap_co_nut_tai_bieu_mau()
+    {
+        $noiDung = file_get_contents(resource_path('views/bhyt/tt12/import.blade.php'));
+
+        $this->assertContains("route('bhyt.tt12.bieu-mau')", $noiDung,
+            'Man nap phai co nut goi den route tai bieu mau');
+    }
+
+    /** @test */
+    public function man_danh_sach_co_nut_xuat_nhat_ky_gui()
+    {
+        $noiDung = file_get_contents(resource_path('views/bhyt/tt12/index.blade.php'));
+
+        $this->assertContains("route('bhyt.tt12.xuat.nhat-ky')", $noiDung,
+            'Man danh sach phai co nut xuat nhat ky gui');
+        $this->assertContains('tt12LocDaTai', $noiDung,
+            'Nut xuat nhat ky phai dung lai khoang ngay tu partials.date_range, khong tu tao o ngay rieng');
+    }
+
+    /** @test */
+    public function route_bieu_mau_dat_truoc_khoi_tham_so_ma_ho_so()
+    {
+        // Laravel khop theo THU TU khai bao. bieu-mau la duong tinh, khai sau khoi
+        // {ma_ho_so} (dong-bo-lai, kiem-lai, ky-va-gui) se khong bao gio toi duoc - request
+        // se bi nuot boi tham so bat-tat-ca truoc do.
+        $routes = app('router')->getRoutes()->get('GET');
+
+        $viTriBieuMau = null;
+        $viTriThamSo = null;
+
+        foreach (array_values($routes) as $i => $route) {
+            if ($route->getName() === 'bhyt.tt12.bieu-mau') {
+                $viTriBieuMau = $i;
+            }
+            if ($route->getName() === 'bhyt.tt12.detail') {
+                $viTriThamSo = $i;
+            }
+        }
+
+        $this->assertNotNull($viTriBieuMau, 'Thieu route bhyt.tt12.bieu-mau');
+        $this->assertNotNull($viTriThamSo, 'Thieu route bhyt.tt12.detail');
+        $this->assertLessThan($viTriThamSo, $viTriBieuMau,
+            'Route bieu-mau phai khai TRUOC cac route mang tham so {ma_ho_so}');
     }
 
     /** @test */

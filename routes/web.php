@@ -643,6 +643,12 @@ Route::group(['middleware' => ['auth']], function () {
             ->name('bhyt.tt12.xuat.danh-sach');
         Route::get('tt12/xuat/loi', 'BHYT\BHYTTt12Controller@xuatLoi')
             ->name('bhyt.tt12.xuat.loi');
+        Route::get('tt12/xuat/nhat-ky', 'BHYT\BHYTTt12Controller@xuatNhatKy')
+            ->name('bhyt.tt12.xuat.nhat-ky');
+        // Duong tinh, phai dat TRUOC khoi tham so {ma_ho_so} ben duoi - dung ly do voi
+        // hai duong cuu ho: Laravel khop theo thu tu khai bao.
+        Route::get('tt12/bieu-mau', 'BHYT\BHYTTt12Controller@bieuMau')
+            ->name('bhyt.tt12.bieu-mau');
         Route::post('tt12/ky-va-gui-nhieu', 'BHYT\BHYTTt12Controller@kyVaGuiNhieu')
             ->name('bhyt.tt12.ky-va-gui-nhieu');
         // Hai duong CUU HO, dat TRUOC route 'tt12/{ma_ho_so}':

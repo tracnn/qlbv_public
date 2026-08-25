@@ -19,6 +19,8 @@ use App\Jobs\SignTt12Job;
 use App\Jobs\SubmitTt12Job;
 use App\Exports\Tt12DanhSachExport;
 use App\Exports\Tt12LoiExport;
+use App\Exports\Tt12BieuMauExport;
+use App\Exports\Tt12NhatKyGuiExport;
 use Maatwebsite\Excel\Facades\Excel;
 
 /**
@@ -219,6 +221,13 @@ class BHYTTt12Controller extends Controller
             ));
         }
 
+        if ($tab === 'lich_su') {
+            return view('bhyt.tt12.tab-lich-su', array(
+                'hoSo'      => $hoSo,
+                'cacLichSu' => $hoSo->lichSuGui()->paginate(200),
+            ));
+        }
+
         return view('bhyt.tt12.tab-dong', array(
             'hoSo'   => $hoSo,
             'cotBang' => Tt12DetailTabs::cotBang($hoSo->mau),
@@ -294,6 +303,43 @@ class BHYTTt12Controller extends Controller
             new Tt12LoiExport($maHoSo),
             'tt12-loi-' . ($maHoSo ?: 'tat-ca') . '.xlsx'
         );
+    }
+
+    /**
+     * Tai bieu mau Excel RONG cho mot mau danh muc - chi hang tieu de, khong dong du lieu.
+     *
+     * abort(404) cho mau la, KHONG tra tep rong: mot tep .xlsx rong voi ten mau sai se
+     * lam nguoi dung tuong da tai dung, roi dien vao mot bieu mau vo nghia.
+     */
+    public function bieuMau(Request $request)
+    {
+        $mau = $request->input('mau');
+
+        if (!Tt12MauRegistry::co($mau)) {
+            abort(404);
+        }
+
+        return Excel::download(new Tt12BieuMauExport($mau), $mau . '_bieu_mau.xlsx');
+    }
+
+    /**
+     * Xuat nhat ky gui theo khoang ngay - dung lai khoang ngay tt12LocDaTai da mang tren
+     * man danh sach, KHONG mo them man chon ngay rieng.
+     *
+     * Nut xuat la window.location (dieu huong GET thuong), nen vuot tran khong duoc bung
+     * 500: bat InvalidArgumentException roi quay lai voi thong bao, giong nhanh khong-ajax
+     * cua traLoi().
+     */
+    public function xuatNhatKy(Request $request)
+    {
+        try {
+            return Excel::download(
+                new Tt12NhatKyGuiExport($request->input('tu_ngay'), $request->input('den_ngay')),
+                'tt12-nhat-ky-gui.xlsx'
+            );
+        } catch (\InvalidArgumentException $e) {
+            return redirect()->back()->with('error', $e->getMessage());
+        }
     }
 
     public function delete($maHoSo)

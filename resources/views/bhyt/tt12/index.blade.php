@@ -27,6 +27,9 @@
             <button type="button" id="btn-xuat-loi" class="btn btn-warning btn-sm">
                 <i class="fa fa-file-excel-o"></i> Xuất bảng lỗi
             </button>
+            <button type="button" id="btn-xuat-nhat-ky" class="btn btn-default btn-sm">
+                <i class="fa fa-file-excel-o"></i> Xuất nhật ký gửi
+            </button>
             <button type="button" id="btn-gui-nhieu" class="btn btn-primary btn-sm" disabled>
                 <i class="fa fa-paper-plane"></i> Ký và gửi đã chọn (<span id="so-da-chon">0</span>)
             </button>
@@ -312,6 +315,13 @@ $(function () {
 
     $('#btn-xuat-loi').on('click', function () {
         window.location = '{{ route('bhyt.tt12.xuat.loi') }}?' + $.param(tt12LocDaTai || {});
+    });
+
+    // Dung lai tt12LocDaTai (tu_ngay/den_ngay cua partials.date_range) thay vi mo them
+    // man chon ngay rieng: man danh sach da co san o do, bat nguoi dung chon lai la bat
+    // ho lam hai lan mot viec.
+    $('#btn-xuat-nhat-ky').on('click', function () {
+        window.location = '{{ route('bhyt.tt12.xuat.nhat-ky') }}?' + $.param(tt12LocDaTai || {});
     });
 });
 </script>

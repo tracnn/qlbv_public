@@ -286,6 +286,73 @@ class Tt12ControllerTest extends TestCase
         $this->assertSame(404, $phanHoi->getStatusCode());
     }
 
+    // -- detailTab lich_su -------------------------------------------------------------
+
+    /** @test */
+    public function detailTab_lich_su_tra_ve_dung_nhat_ky_gui_cua_ho_so()
+    {
+        $hoSo = $this->hoSoDayDu();
+
+        $phanHoi = $this->controller()->detailTab($hoSo->ma_ho_so, 'lich_su');
+
+        $this->assertSame('bhyt.tt12.tab-lich-su', $phanHoi->getName());
+        $this->assertSame($hoSo->id, $phanHoi->getData()['hoSo']->id);
+        $this->assertCount(1, $phanHoi->getData()['cacLichSu']);
+        $this->assertSame('205', $phanHoi->getData()['cacLichSu']->first()->ma_ket_qua);
+    }
+
+    /** @test */
+    public function detailTab_tab_la_tra_404()
+    {
+        $hoSo = $this->hoSoDayDu();
+
+        $this->expectException(\Symfony\Component\HttpKernel\Exception\NotFoundHttpException::class);
+
+        $this->controller()->detailTab($hoSo->ma_ho_so, 'khong_ton_tai');
+    }
+
+    // -- bieuMau -------------------------------------------------------------------
+
+    /** @test */
+    public function bieuMau_mau_khong_hop_le_thi_404_khong_tra_tep_rong()
+    {
+        $this->expectException(\Symfony\Component\HttpKernel\Exception\NotFoundHttpException::class);
+
+        $this->controller()->bieuMau(Request::create('/x', 'GET', array('mau' => 'MAU_KHONG_CO')));
+    }
+
+    /** @test */
+    public function bieuMau_thieu_tham_so_mau_thi_404()
+    {
+        $this->expectException(\Symfony\Component\HttpKernel\Exception\NotFoundHttpException::class);
+
+        $this->controller()->bieuMau(Request::create('/x', 'GET'));
+    }
+
+    /** @test */
+    public function bieuMau_mau_hop_le_tra_ve_tep_tai_ve()
+    {
+        $phanHoi = $this->controller()->bieuMau(Request::create('/x', 'GET', array('mau' => 'MAU_01')));
+
+        $this->assertInstanceOf(
+            \Symfony\Component\HttpFoundation\BinaryFileResponse::class,
+            $phanHoi
+        );
+    }
+
+    // -- xuatNhatKy ------------------------------------------------------------------
+
+    /** @test */
+    public function xuatNhatKy_vuot_tran_thi_quay_lai_khong_bung_500()
+    {
+        $phanHoi = $this->controller()->xuatNhatKy(Request::create('/x', 'GET', array(
+            'tu_ngay' => '2026-01-01', 'den_ngay' => '2026-12-31',
+        )));
+
+        $this->assertSame(302, $phanHoi->getStatusCode());
+        $this->assertContains('tối đa', $phanHoi->getSession()->get('error'));
+    }
+
     // -- co loi nap tren dong danh sach ----------------------------------------------
 
     /** @test */
