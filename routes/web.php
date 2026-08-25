@@ -645,12 +645,26 @@ Route::group(['middleware' => ['auth']], function () {
             ->name('bhyt.tt12.xuat.loi');
         Route::post('tt12/ky-va-gui-nhieu', 'BHYT\BHYTTt12Controller@kyVaGuiNhieu')
             ->name('bhyt.tt12.ky-va-gui-nhieu');
+        // Hai duong CUU HO, dat TRUOC route 'tt12/{ma_ho_so}':
+        // - dong-bo-lai: SubmitTt12Job commit ma_ket_qua = '200' truoc roi moi goi dongBo().
+        //   dongBo() nem giua chung thi lan thu lai cua hang doi return som vi da tiep nhan,
+        //   va ho so ket vinh vien voi dong_bo_at rong.
+        // - kiem-lai: hang doi tat luc nap hoac job het tries thi ho so nam mai o "Chua
+        //   kiem" - khong ky duoc va khong co duong nao kiem lai.
+        Route::post('tt12/{ma_ho_so}/dong-bo-lai', 'BHYT\BHYTTt12Controller@dongBoLai')
+            ->name('bhyt.tt12.dong-bo-lai');
+        Route::post('tt12/{ma_ho_so}/kiem-lai', 'BHYT\BHYTTt12Controller@kiemLai')
+            ->name('bhyt.tt12.kiem-lai');
         // Dat TRUOC route co tham so {ma_ho_so}: dat sau thi cac duong dan tinh o tren
         // (index, xuat/*, ky-va-gui-nhieu) se bi tham so bat-tat-ca nuot mat.
         Route::post('tt12/{ma_ho_so}/ky-va-gui', 'BHYT\BHYTTt12Controller@kyVaGui')
             ->name('bhyt.tt12.ky-va-gui');
+        // CUNG CHOT QUYEN voi bhyt.ctdt.delete. Khong co middleware nay thi bat ky tai
+        // khoan dang nhap nao cung xoa duoc ho so chua tiep nhan cua nguoi khac, ke ca ho
+        // so 30.000 dong vua nap xong.
         Route::delete('tt12/{ma_ho_so}', 'BHYT\BHYTTt12Controller@delete')
-            ->name('bhyt.tt12.delete');
+            ->name('bhyt.tt12.delete')
+            ->middleware('checkrole:superadministrator');
         Route::get('tt12/detail/{ma_ho_so}', 'BHYT\BHYTTt12Controller@detail')
             ->name('bhyt.tt12.detail');
         Route::get('tt12/detail/{ma_ho_so}/tab/{tab}', 'BHYT\BHYTTt12Controller@detailTab')

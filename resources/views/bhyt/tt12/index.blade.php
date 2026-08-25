@@ -96,6 +96,7 @@
                         <th>Mã CSKCB</th>
                         <th>Số dòng</th>
                         <th>Số lỗi</th>
+                        <th>Lỗi nạp</th>
                         <th>Đã kiểm</th>
                         <th>Đã ký</th>
                         <th>Mã giao dịch</th>
@@ -274,6 +275,14 @@ var tt12Bang = $('#tt12-list').DataTable({
                 var an = $('<div>').text(d).html();
 
                 return Number(d) > 0 ? '<span class="nhan-canh-bao">' + an + '</span>' : an;
+            }
+        },
+        {
+            // Ho so co import_error nam lai CO Y de nguoi dung nhin thay va xoa. Khong co
+            // cot nay thi ho chi thay mot ho so 0 dong, "Chua kiem", khong ky duoc.
+            "data": "co_loi_nap",
+            render: function (d) {
+                return Number(d) ? '<span class="nhan-canh-bao">Có</span>' : '—';
             }
         },
         { "data": "da_kiem", render: function (d) { return Number(d) ? 'Đã kiểm' : 'Chưa kiểm'; } },

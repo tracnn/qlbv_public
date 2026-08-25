@@ -274,6 +274,65 @@ class Tt12ImporterTest extends TestCase
     }
 
     /** @test */
+    public function hai_tep_qua_CUNG_MOT_instance_khong_cong_don_so_o_tu_dien()
+    {
+        // BHYTTt12Controller::uploadData() tao MOT importer roi dung lai cho ca vong lap
+        // nhieu tep. Bien dem $soODienThem khong reset se lam tep thu hai bao con so cua
+        // tep thu nhat - he thong noi rang no da ghi vao nhung o cua mot tep no khong cham.
+        $tepA = $this->ghiXlsx('a.xlsx', [
+            $this->headerMau01(),
+            [1, 'K01', 'Khám bệnh', 3, 0, 0, 0, 0, '20260101', '', ''],
+            [2, 'K02', 'Nội tổng hợp', 0, 40, 42, 5, 3, '20260101', '', ''],
+        ]);
+
+        $tepB = $this->ghiXlsx('b.xlsx', [
+            $this->headerMau01(),
+            [1, 'K03', 'Ngoại tổng hợp', 1, 0, 0, 0, 0, '20260101', '', '01929'],
+        ]);
+
+        $importer = new Tt12Importer();
+
+        $a = $importer->nhapTuTep($tepA, ['ma_cskcb' => '01929']);
+        $b = $importer->nhapTuTep($tepB, ['ma_cskcb' => '01929']);
+
+        $this->assertSame(2, $a->soODienThem());
+        $this->assertSame(0, $b->soODienThem(),
+            'Tep thu hai khong co o trong nao, phai bao 0 chu khong cong don cua tep truoc');
+    }
+
+    /** @test */
+    public function header_cua_tep_truoc_khong_dinh_sang_tep_sau()
+    {
+        // $headerDaDoc cung la trang thai giu qua cac tep. Tep thu hai la mau khac phai
+        // doc dung cot cua chinh no.
+        $tepA = $this->ghiXlsx('a.xlsx', [
+            $this->headerMau01(),
+            [1, 'K01', 'Khám bệnh', 3, 0, 0, 0, 0, '20260101', '', '01929'],
+        ]);
+
+        $header06 = ['STT', 'TEN_TB', 'KY_HIEU', 'CONGTY_SX', 'NUOC_SX', 'NAM_SX', 'NAM_SD',
+                     'MA_MAY', 'SO_LUU_HANH', 'HD_TU', 'HD_DEN', 'TU_NGAY', 'DEN_NGAY',
+                     'MA_CSKCB'];
+
+        $tepB = $this->ghiXlsx('b.xlsx', [
+            $header06,
+            [1, 'Máy siêu âm', 'KH1', 'Cty A', 'Việt Nam', 2020, 2021, 'MAY01', 'SLH1',
+             '20260101', '20261231', '20260101', '', '01929'],
+        ]);
+
+        $importer = new Tt12Importer();
+        $importer->nhapTuTep($tepA, ['ma_cskcb' => '01929']);
+        $b = $importer->nhapTuTep($tepB, ['ma_cskcb' => '01929']);
+
+        $this->assertTrue($b->thanhCong(), 'Loi: ' . $b->loi());
+        $this->assertSame('MAU_06', $b->mau());
+
+        $dong = Tt12Dong::whereIn('ho_so_id', Tt12HoSo::where('mau', 'MAU_06')->pluck('id'))->first();
+
+        $this->assertSame('MAY01', $dong->du_lieu['MA_MAY']);
+    }
+
+    /** @test */
     public function ma_co_so_co_khoang_trang_thua_van_duoc_coi_la_trung()
     {
         // Nguoi dung copy tu he thong khac vao Excel rat hay keo theo khoang trang.
@@ -297,7 +356,7 @@ class Tt12ImporterTest extends TestCase
         $hoSo = Tt12HoSo::create([
             'ma_ho_so' => 'TT12_MAU_05_01929_20260825_001',
             'mau'      => 'MAU_05',
-            'loai_hs'  => '72',
+            'loai_hs'  => '12',
             'ma_cskcb' => '01929',
         ]);
 

@@ -13,6 +13,8 @@ use App\Models\BHYT\Tt12\Tt12Loi;
 use App\Services\Tt12\Tt12DanhSach;
 use App\Services\Tt12\Tt12DetailTabs;
 use App\Services\Tt12\Tt12QuyetDinhGui;
+use App\Services\Tt12\Tt12XoaHoSo;
+use App\Services\Tt12\Tt12DongBoDanhMuc;
 use App\Jobs\SignTt12Job;
 use App\Jobs\SubmitTt12Job;
 use App\Exports\Tt12DanhSachExport;
@@ -310,11 +312,90 @@ class BHYTTt12Controller extends Controller
                     . $hoSo->ma_gd . '), không xoá được.'), 422);
         }
 
-        Tt12Dong::where('ho_so_id', $hoSo->id)->delete();
-        Tt12Loi::where('ho_so_id', $hoSo->id)->delete();
-        $hoSo->delete();
+        // Uy thac cho Tt12XoaHoSo, KHONG viet lai doan xoa o day. Truoc day cho nay tu xoa
+        // lay hai bang va bo sot tt12_dong_thuoc_px, tt12_lich_su_gui lan tep XML da ky -
+        // dung lo hong da duoc sua o Tt12Importer::doSach(), tai xuat vi co hai ban cai dat
+        // song song.
+        (new Tt12XoaHoSo())->xoa($hoSo);
 
         return response()->json(array('thanh_cong' => true, 'thong_diep' => 'Đã xoá hồ sơ'));
+    }
+
+    /**
+     * Chay lai buoc dong bo sang bang danh muc cho mot ho so DA DUOC TIEP NHAN.
+     *
+     * VI SAO CAN NUT NAY: SubmitTt12Job commit ma_ket_qua = '200' TRUOC roi moi goi
+     * dongBo(). Neu dongBo() nem giua chung (mot TEN_THUOC vuot do dai cot tren MySQL, mat
+     * ket noi giua lo thu 5...) thi lan thu lai cua hang doi se thay DA_TIEP_NHAN va return
+     * som - khong duong nao chay lai buoc dong bo duoc nua. Hau qua khong nhin thay ngay:
+     * Xml3176Xml3Checker tu do kiem ho so KCB theo mot danh muc thieu mot nua va bao loi
+     * gia cho hang nghin ma.
+     */
+    public function dongBoLai(Request $request, $maHoSo)
+    {
+        // Danh muc thuoc that co the vai nghin dong; may chu dat 128 MB / 120 giay.
+        set_time_limit(600);
+
+        $hoSo = Tt12HoSo::where('ma_ho_so', $maHoSo)->first();
+
+        if ($hoSo === null) {
+            return $this->traLoi($request, false, 'Không tìm thấy hồ sơ ' . $maHoSo);
+        }
+
+        if (!Tt12QuyetDinhGui::daTiepNhan($hoSo->ma_ket_qua)) {
+            // Danh muc la nguon cho buoc kiem XML3176, va giam dinh doi chieu ho so KCB voi
+            // chinh bo danh muc co so DA GUI LEN. Ghi truoc khi cong tiep nhan la kiem theo
+            // mot ban BHXH chua co.
+            return $this->traLoi($request, false,
+                'Hồ sơ chưa được cổng tiếp nhận (mã kết quả: '
+                . ($hoSo->ma_ket_qua ?: 'chưa gửi') . '), chưa đồng bộ được.');
+        }
+
+        try {
+            $soDong = (new Tt12DongBoDanhMuc())->dongBo($hoSo);
+        } catch (\Exception $e) {
+            // Bao NGUYEN VAN ly do: phan lon truong hop la mot o vuot do dai cot, va nguoi
+            // dung chi sua duoc khi biet cot nao.
+            return $this->traLoi($request, false, 'Đồng bộ thất bại: ' . $e->getMessage());
+        }
+
+        return $this->traLoi($request, true,
+            'Đã đồng bộ ' . $soDong . ' dòng sang bảng danh mục.');
+    }
+
+    /**
+     * Day lai CheckTt12Job cho mot ho so con ket o trang thai chua kiem.
+     *
+     * Ho so chua kiem thi khong ky duoc, va neu hang doi bi tat luc nap hoac job da het
+     * tries thi khong con duong nao kiem lai - nguoi dung se tuong chuc nang ky bi hong.
+     */
+    public function kiemLai(Request $request, $maHoSo)
+    {
+        $hoSo = Tt12HoSo::where('ma_ho_so', $maHoSo)->first();
+
+        if ($hoSo === null) {
+            return $this->traLoi($request, false, 'Không tìm thấy hồ sơ ' . $maHoSo);
+        }
+
+        if (Tt12QuyetDinhGui::daTiepNhan($hoSo->ma_ket_qua)) {
+            // Kiem lai ghi de checked_at va so_loi. Lam viec do sau khi cong da nhan la sua
+            // dau vet doi soat cua mot ho so khong con sua duoc nua.
+            return $this->traLoi($request, false,
+                'Hồ sơ đã được cổng tiếp nhận (mã giao dịch ' . $hoSo->ma_gd
+                . '), không kiểm lại được.');
+        }
+
+        $hangDoi = config('organization.tt12.hang_doi');
+
+        $job = new \App\Jobs\CheckTt12Job($hoSo->ma_ho_so);
+
+        if (!empty($hangDoi)) {
+            $job->onQueue($hangDoi);
+        }
+
+        dispatch($job);
+
+        return $this->traLoi($request, true, 'Đã đẩy hồ sơ vào hàng đợi kiểm.');
     }
 
     /** @return array ['thanh_cong' => bool, 'hanh_dong' => 'ky'|'gui'|'bo_qua', 'thong_diep' => string] */
@@ -384,6 +465,9 @@ class BHYTTt12Controller extends Controller
             'ma_cskcb'            => $hoSo->ma_cskcb,
             'so_dong'             => (int) $hoSo->so_dong,
             'so_loi'              => (int) $hoSo->so_loi,
+            // Co CO_LOI_NAP, khong phai noi dung loi: cot danh sach chi can bao "ho so nay
+            // hong, mo ra xem". Noi dung day du in o man chi tiet.
+            'co_loi_nap'          => $hoSo->import_error ? 1 : 0,
             'da_kiem'             => $hoSo->checked_at ? 1 : 0,
             'da_ky'               => $hoSo->is_signed ? 1 : 0,
             'ma_gd'               => $hoSo->ma_gd,

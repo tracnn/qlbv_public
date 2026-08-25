@@ -3,10 +3,7 @@
 namespace App\Services\Tt12;
 
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\DB;
 use App\Models\BHYT\Tt12\Tt12HoSo;
-use App\Models\BHYT\Tt12\Tt12Dong;
-use App\Models\BHYT\Tt12\Tt12DongThuocPx;
 use App\Services\Tt12\Loi\MaCskcbLechException;
 
 /**
@@ -45,6 +42,14 @@ class Tt12Importer
      */
     public function nhapTuTep($duongDan, array $tuyChon = array())
     {
+        // RESET TRANG THAI TRUOC MOI TEP. BHYTTt12Controller::uploadData() tao MOT importer
+        // roi dung lai cho ca vong foreach nhieu tep - nguoi dung keo hai tep vao Dropzone
+        // la mot thao tac binh thuong. Khong reset thi $soODienThem cong don, va man ket
+        // qua bao tep thu hai "da tu dien 10 o" trong khi no khong co o trong nao: he
+        // thong noi doi rang no da ghi vao 10 o cua mot tep no khong cham.
+        $this->soODienThem = 0;
+        $this->headerDaDoc = array();
+
         if (!is_file($duongDan) || !is_readable($duongDan)) {
             return Tt12ImportResult::thatBaiSom('Không đọc được tệp: ' . $duongDan);
         }
@@ -250,43 +255,16 @@ class Tt12Importer
     }
 
     /**
-     * So dong id moi lan lay tu CSDL de xoa bang con, tranh nap hang chuc nghin id vao
-     * mot mang PHP mot luc (may chu san xuat gioi han 128 MB).
-     */
-    const CO_LO_XOA = 1000;
-
-    /**
-     * Xoa sach ho so da tao do dang, gom CA bang con tt12_dong_thuoc_px.
+     * Don sach ho so da tao do dang.
      *
-     * Xoa tu CON len CHA - thu tu NGUOC lai voi thu tu ghi: xoa dong_thuoc_px TRUOC (no
-     * tro toi dong qua dong_id), roi moi xoa dong (tro toi ho so qua ho_so_id), roi moi
-     * xoa ho so. Neu xoa nguoc lai (dong truoc, dong_thuoc_px sau) thi mat duong tim ra
-     * cac ban ghi con - migration khong co khoa ngoai/ON DELETE CASCADE, nen chung se
-     * nam lai mo coi mai mai, tro toi mot dong_id khong con ton tai.
-     *
-     * BOC CA BA BUOC TRONG MOT TRANSACTION: don dep nua voi (vi du xoa duoc dong_thuoc_px
-     * nhung chet giua chung truoc khi xoa duoc dong) con te hon la khong don gi ca - no
-     * de lai trang thai khong nhat quan ma khong co dau hieu nao bao cho nguoi dung biet.
+     * Uy thac cho Tt12XoaHoSo - lop DUY NHAT biet mot ho so treo nhung bang nao. Truoc day
+     * doan xoa duoc viet ngay tai day, va ban thu hai trong BHYTTt12Controller::delete()
+     * da bo sot tt12_dong_thuoc_px dung nhu ban dau tien tung bo sot. Mot ban cai dat thi
+     * khong lech duoc.
      */
     private function doSach($hoSo)
     {
-        if ($hoSo === null) {
-            return;
-        }
-
-        DB::transaction(function () use ($hoSo) {
-            Tt12Dong::where('ho_so_id', $hoSo->id)
-                ->select('id')
-                ->chunkById(self::CO_LO_XOA, function ($dongs) {
-                    $ids = $dongs->pluck('id')->all();
-
-                    Tt12DongThuocPx::whereIn('dong_id', $ids)->delete();
-                });
-
-            Tt12Dong::where('ho_so_id', $hoSo->id)->delete();
-
-            $hoSo->delete();
-        });
+        (new Tt12XoaHoSo())->xoa($hoSo);
     }
 
     /** @return array [TEN_THE => chi so cot] */

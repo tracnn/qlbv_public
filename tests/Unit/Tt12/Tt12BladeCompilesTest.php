@@ -51,6 +51,7 @@ class Tt12BladeCompilesTest extends TestCase
             'bhyt.tt12.fetch-data', 'bhyt.tt12.detail', 'bhyt.tt12.detail.tab',
             'bhyt.tt12.ky-va-gui', 'bhyt.tt12.ky-va-gui-nhieu',
             'bhyt.tt12.xuat.danh-sach', 'bhyt.tt12.xuat.loi', 'bhyt.tt12.delete',
+            'bhyt.tt12.dong-bo-lai', 'bhyt.tt12.kiem-lai',
         );
 
         foreach ($ten as $mot) {
@@ -59,5 +60,40 @@ class Tt12BladeCompilesTest extends TestCase
                 'Thieu route ' . $mot
             );
         }
+    }
+
+    /** @test */
+    public function man_chi_tiet_in_ca_ba_loai_loi_ke_ca_loi_nap()
+    {
+        // import_error tung duoc GHI ma khong man hinh nao in ra. Ba cot loi phai duoc doi
+        // xu nhu nhau, khong thi mot cai lai am tham.
+        $noiDung = file_get_contents(resource_path('views/bhyt/tt12/detail.blade.php'));
+
+        foreach (array('import_error', 'signed_error', 'submit_error') as $cot) {
+            $this->assertContains('$hoSo->' . $cot, $noiDung, 'Man chi tiet khong in ' . $cot);
+        }
+    }
+
+    /** @test */
+    public function man_danh_sach_co_cot_loi_nap()
+    {
+        $noiDung = file_get_contents(resource_path('views/bhyt/tt12/index.blade.php'));
+
+        $this->assertContains('co_loi_nap', $noiDung);
+    }
+
+    /** @test */
+    public function route_xoa_phai_co_chot_quyen_superadministrator()
+    {
+        // Xoa la thao tac khong hoan tac duoc va cham vao ho so cua NGUOI KHAC. Khuon da
+        // co san ngay tren cung tep: bhyt.ctdt.delete mang dung middleware nay.
+        $route = app('router')->getRoutes()->getByName('bhyt.tt12.delete');
+
+        $this->assertNotNull($route);
+        $this->assertContains(
+            'checkrole:superadministrator',
+            $route->gatherMiddleware(),
+            'Route xoa TT12 phai co chot quyen giong bhyt.ctdt.delete'
+        );
     }
 }

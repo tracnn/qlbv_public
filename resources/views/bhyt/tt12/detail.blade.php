@@ -29,6 +29,19 @@
             <div class="col-sm-3"><strong>Tiếp nhận lúc:</strong> {{ $hoSo->thoi_gian_tiep_nhan ?: '—' }}</div>
             <div class="col-sm-3"><strong>Nạp lúc:</strong> {{ $hoSo->imported_at }}</div>
         </div>
+        @if ($hoSo->import_error)
+        <div class="row" style="margin-top:8px">
+            <div class="col-sm-12">
+                {{-- Tt12Importer CO Y giu lai ho so do dang kem ly do "de nguoi dung nhin
+                     thay va xoa". Khong in ra day thi nguoi dung thay mot ho so 0 dong,
+                     "Chua kiem", khong ky duoc, va khong mot chu giai thich. --}}
+                <div class="alert alert-danger" style="margin-bottom:4px">
+                    <strong>Lỗi nạp tệp:</strong> {{ $hoSo->import_error }}
+                    <br><small>Hồ sơ này không sửa được trên màn hình: sửa tệp Excel rồi nạp lại, và xoá hồ sơ này.</small>
+                </div>
+            </div>
+        </div>
+        @endif
         @if ($hoSo->signed_error)
         <div class="row" style="margin-top:8px">
             <div class="col-sm-12">
@@ -54,6 +67,20 @@
                         data-ma-ho-so="{{ $hoSo->ma_ho_so }}">
                     <i class="fa fa-paper-plane"></i> Ký và gửi
                 </button>
+                @if (empty($hoSo->checked_at) && !\App\Services\Tt12\Tt12QuyetDinhGui::daTiepNhan($hoSo->ma_ket_qua))
+                {{-- Hàng đợi tắt lúc nạp hoặc job hết lượt thử thì hồ sơ nằm mãi ở
+                     "Chưa kiểm" - không ký được và không có đường nào kiểm lại. --}}
+                <button type="button" id="btn-kiem-lai" class="btn btn-default btn-sm">
+                    <i class="fa fa-check-square-o"></i> Kiểm lại
+                </button>
+                @endif
+                @if (\App\Services\Tt12\Tt12QuyetDinhGui::daTiepNhan($hoSo->ma_ket_qua) && empty($hoSo->dong_bo_at))
+                {{-- Cổng đã tiếp nhận mà chưa đồng bộ: bước đồng bộ đã hỏng giữa chừng và
+                     lần thử lại của hàng đợi sẽ dừng sớm vì hồ sơ đã tiếp nhận. --}}
+                <button type="button" id="btn-dong-bo-lai" class="btn btn-warning btn-sm">
+                    <i class="fa fa-refresh"></i> Đồng bộ lại danh mục
+                </button>
+                @endif
                 <a href="{{ route('bhyt.tt12.index') }}" class="btn btn-default btn-sm">Quay lại danh sách</a>
             </div>
         </div>
@@ -79,6 +106,8 @@
 $(function () {
     var mauUrlTab = "{{ route('bhyt.tt12.detail.tab', ['ma_ho_so' => '__MA__', 'tab' => '__TAB__']) }}";
     var mauUrlGui = "{{ route('bhyt.tt12.ky-va-gui', ['ma_ho_so' => '__MA__']) }}";
+    var mauUrlDongBoLai = "{{ route('bhyt.tt12.dong-bo-lai', ['ma_ho_so' => '__MA__']) }}";
+    var mauUrlKiemLai = "{{ route('bhyt.tt12.kiem-lai', ['ma_ho_so' => '__MA__']) }}";
     var maHoSo = $('#tt12-chi-tiet').data('ma-ho-so');
     var token = "{{ csrf_token() }}";
 
@@ -125,6 +154,35 @@ $(function () {
             .always(function () {
                 $nut.prop('disabled', false);
             });
+    });
+
+    // Hai nut cuu ho dung chung mot khuon goi: POST, bao thong diep, tai lai trang.
+    function bamCuuHo($nut, mauUrl, hoi) {
+        if (hoi && !confirm(hoi)) {
+            return;
+        }
+
+        $nut.prop('disabled', true);
+
+        $.post(ghepUrl(mauUrl), { _token: token })
+            .done(function (kq) {
+                alert((kq && kq.thong_diep) || '');
+                location.reload();
+            })
+            .fail(function (xhr) {
+                var kq = xhr.responseJSON;
+                alert((kq && kq.thong_diep) || 'Không gọi được máy chủ. Thử lại sau.');
+                $nut.prop('disabled', false);
+            });
+    }
+
+    $('#btn-dong-bo-lai').on('click', function () {
+        bamCuuHo($(this), mauUrlDongBoLai,
+            'Ghi lại toàn bộ dòng của hồ sơ ' + maHoSo + ' sang bảng danh mục?');
+    });
+
+    $('#btn-kiem-lai').on('click', function () {
+        bamCuuHo($(this), mauUrlKiemLai, null);
     });
 });
 </script>
