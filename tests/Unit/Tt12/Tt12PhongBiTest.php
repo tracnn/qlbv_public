@@ -60,7 +60,15 @@ class Tt12PhongBiTest extends TestCase
     /** @test */
     public function the_trong_mot_dong_dung_thu_tu_dac_ta()
     {
-        $doc = $this->doc($this->dung('MAU_01', array($this->dongMau01())));
+        // Du lieu vao phai DAO NGUOC so voi Mau01::tenThe(), khong duoc giu nguyen thu tu
+        // dac ta. dongMau01() vo tinh viet dung y het thu tu do, nen neu dung du lieu goc,
+        // test nay van xanh ke ca khi cai dat sai (vi du lap qua array_keys($du_lieu) thay
+        // vi $lop::tenThe()) - hai thu tu tinh co trung nhau. DAO NGUOC de test chi xanh khi
+        // cai dat that su lay thu tu tu dac ta. DUNG "don gian hoa" lai thanh du lieu thuan -
+        // se lam mat tac dung phat hien cua test.
+        $duLieuDao = array_reverse($this->dongMau01()['du_lieu'], true);
+
+        $doc = $this->doc($this->dung('MAU_01', array(array('du_lieu' => $duLieuDao, 'con' => array()))));
         $dong = $doc->getElementsByTagName('DMBOPHANCHUYENMON')->item(0);
 
         $ten = array();
@@ -74,6 +82,23 @@ class Tt12PhongBiTest extends TestCase
         $lop = Tt12MauRegistry::cho('MAU_01');
 
         $this->assertSame($lop::tenThe(), $ten);
+    }
+
+    /** @test */
+    public function gia_tri_so_0_van_in_ra_noi_dung_con_chuoi_rong_moi_la_the_rong()
+    {
+        // Neu cai dat doi tu "$giaTri !== ''" sang "if ($giaTri)" (falsy check), gia tri
+        // so '0' se bi coi la rong va in ra <GIUONG_PD/> thay vi <GIUONG_PD>0</GIUONG_PD> -
+        // mat du lieu that gui len cong: mot khoa khai 0 giuong khac han mot khoa khong khai
+        // so giuong. Dat ca hai truong hop trong cung mot bai de thay ro su khac biet.
+        $doc = $this->doc($this->dung('MAU_01', array($this->dongMau01(array('GIUONG_PD' => '0', 'DEN_NGAY' => '')))));
+
+        $giuongPd = $doc->getElementsByTagName('GIUONG_PD')->item(0);
+        $denNgay = $doc->getElementsByTagName('DEN_NGAY')->item(0);
+
+        $this->assertSame('0', $giuongPd->textContent, 'Gia tri so 0 phai duoc in ra, khong duoc coi la rong');
+        $this->assertFalse($giuongPd->childNodes->length === 0, 'The mang gia tri 0 khong duoc la the rong');
+        $this->assertTrue($denNgay->childNodes->length === 0, 'The mang chuoi rong moi la the rong');
     }
 
     /** @test */
