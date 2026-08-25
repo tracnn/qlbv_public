@@ -26,24 +26,54 @@ class LuatHoSo
         );
     }
 
+    // QUAN TRONG: dem trung tren du_lieu['STT'] (gia tri NGUOI DUNG go trong Excel, cung
+    // la gia tri se ghi vao the <STT> cua XML gui cong BHYT), KHONG PHAI tren $dong['stt'].
+    //
+    // $dong['stt'] la so thu tu do bo nap TU GAN tuan tu (Tt12LuuHoSo::ghiLo) va co rang
+    // buoc unique(ho_so_id, stt) trong CSDL - no khong bao gio trung, dem tren no la ma
+    // chet. Vai tro cua $dong['stt'] chi la CON TRO chi dong cho nguoi dung, nen van dung
+    // no de bao vi tri loi, khong dung de dem trung.
     private static function kiemSttTrung(array $cacDong)
     {
         $loi = array();
-        $dem = array();
+        // nhom[gia_tri_chuan_hoa] = array('hien_thi' => ..., 'vi_tri' => array(stt_dong,...))
+        $nhom = array();
 
         foreach ($cacDong as $dong) {
-            $stt = (string) $dong['stt'];
-            $dem[$stt] = isset($dem[$stt]) ? $dem[$stt] + 1 : 1;
+            $sttGoc = isset($dong['du_lieu']['STT']) ? $dong['du_lieu']['STT'] : '';
+            $sttGoc = trim((string) $sttGoc);
+
+            // STT rong da duoc LuatO bat qua THIEU_BAT_BUOC, khong gop nhom o day de
+            // tranh sinh them mot loi thu hai chong len loi da co.
+            if ($sttGoc === '') {
+                continue;
+            }
+
+            // So sanh theo gia tri so khi la chuoi so nguyen, de "5" va "05" duoc coi la
+            // trung - nguoi dung hay chep tu he thong khac vao Excel keo theo so 0 dau,
+            // va cong doc chung la cung mot so.
+            $khoa = ctype_digit($sttGoc) ? (string) (int) $sttGoc : $sttGoc;
+
+            if (!isset($nhom[$khoa])) {
+                $nhom[$khoa] = array('hien_thi' => $sttGoc, 'vi_tri' => array());
+            }
+
+            $nhom[$khoa]['vi_tri'][] = $dong['stt'];
         }
 
-        foreach ($dem as $stt => $soLan) {
-            if ($soLan > 1) {
-                $loi[] = Tt12Loi::loi(
-                    'STT_TRUNG',
-                    'Số thứ tự ' . $stt . ' xuất hiện ' . $soLan . ' lần; STT không được trùng',
-                    (int) $stt, 'STT'
-                );
+        foreach ($nhom as $thongTin) {
+            $viTri = $thongTin['vi_tri'];
+
+            if (count($viTri) < 2) {
+                continue;
             }
+
+            $loi[] = Tt12Loi::loi(
+                'STT_TRUNG',
+                'STT = ' . $thongTin['hien_thi'] . ' xuất hiện ở ' . count($viTri) . ' dòng (dòng thứ '
+                    . implode(', ', $viTri) . ')',
+                (int) $viTri[0], 'STT'
+            );
         }
 
         return $loi;

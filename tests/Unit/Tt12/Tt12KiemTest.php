@@ -161,12 +161,36 @@ class Tt12KiemTest extends TestCase
     /** @test */
     public function stt_trung_nhau_trong_mot_ho_so_bi_bat()
     {
+        // $dong['stt'] la con tro dong (khac nhau, dung nhu bo nap gan), $dong['du_lieu']['STT']
+        // moi la gia tri nguoi dung go trong Excel (giong nhau) - luat phai dem tren gia tri nay.
         $loi = LuatHoSo::kiem($this->lop('MAU_01'), array(
-            array('stt' => 1, 'du_lieu' => $this->dongMau01(array('MA_KHOA' => 'K01'))),
-            array('stt' => 1, 'du_lieu' => $this->dongMau01(array('MA_KHOA' => 'K02'))),
+            array('stt' => 1, 'du_lieu' => $this->dongMau01(array('STT' => '5', 'MA_KHOA' => 'K01'))),
+            array('stt' => 2, 'du_lieu' => $this->dongMau01(array('STT' => '5', 'MA_KHOA' => 'K02'))),
         ));
 
         $this->assertContains('STT_TRUNG', $this->maLoi($loi));
+    }
+
+    /** @test */
+    public function stt_5_va_05_bi_coi_la_trung()
+    {
+        $loi = LuatHoSo::kiem($this->lop('MAU_01'), array(
+            array('stt' => 1, 'du_lieu' => $this->dongMau01(array('STT' => '5', 'MA_KHOA' => 'K01'))),
+            array('stt' => 2, 'du_lieu' => $this->dongMau01(array('STT' => '05', 'MA_KHOA' => 'K02'))),
+        ));
+
+        $this->assertContains('STT_TRUNG', $this->maLoi($loi));
+    }
+
+    /** @test */
+    public function hai_dong_cung_de_trong_stt_khong_sinh_stt_trung()
+    {
+        $loi = LuatHoSo::kiem($this->lop('MAU_01'), array(
+            array('stt' => 1, 'du_lieu' => $this->dongMau01(array('STT' => '', 'MA_KHOA' => 'K01'))),
+            array('stt' => 2, 'du_lieu' => $this->dongMau01(array('STT' => '', 'MA_KHOA' => 'K02'))),
+        ));
+
+        $this->assertNotContains('STT_TRUNG', $this->maLoi($loi));
     }
 
     /** @test */
@@ -175,9 +199,9 @@ class Tt12KiemTest extends TestCase
         // Dong cu: co DEN_NGAY. Dong moi: DEN_NGAY rong, TU_NGAY sau DEN_NGAY cua dong cu.
         $loi = LuatHoSo::kiem($this->lop('MAU_01'), array(
             array('stt' => 1, 'du_lieu' => $this->dongMau01(
-                array('MA_KHOA' => 'K01', 'TU_NGAY' => '20250101', 'DEN_NGAY' => '20251231'))),
+                array('STT' => '1', 'MA_KHOA' => 'K01', 'TU_NGAY' => '20250101', 'DEN_NGAY' => '20251231'))),
             array('stt' => 2, 'du_lieu' => $this->dongMau01(
-                array('MA_KHOA' => 'K01', 'TU_NGAY' => '20260101', 'DEN_NGAY' => ''))),
+                array('STT' => '2', 'MA_KHOA' => 'K01', 'TU_NGAY' => '20260101', 'DEN_NGAY' => ''))),
         ));
 
         $this->assertSame(array(), $loi);

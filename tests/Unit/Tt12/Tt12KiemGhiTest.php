@@ -77,7 +77,10 @@ class Tt12KiemGhiTest extends TestCase
     /** @test */
     public function ho_so_sach_co_so_loi_bang_khong_va_da_duoc_danh_dau_kiem()
     {
-        $hoSo = $this->hoSoVoiDong(array($this->dong(), $this->dong(array('MA_KHOA' => 'K02'))));
+        $hoSo = $this->hoSoVoiDong(array(
+            $this->dong(),
+            $this->dong(array('STT' => '2', 'MA_KHOA' => 'K02')),
+        ));
 
         $soLoi = (new Tt12Kiem())->kiem($hoSo);
 
@@ -85,6 +88,29 @@ class Tt12KiemGhiTest extends TestCase
         $this->assertSame(0, (int) $hoSo->fresh()->so_loi);
         $this->assertNotNull($hoSo->fresh()->checked_at);
         $this->assertSame(0, Tt12Loi::count());
+    }
+
+    /**
+     * Day la bai quan trong nhat cua lan sua STT_TRUNG: hai tt12_dong duoc bo nap gan
+     * stt = 1 va 2 nhu that (khong the trung, co unique(ho_so_id, stt)), nhung nguoi
+     * dung go CUNG mot gia tri STT trong Excel (du_lieu['STT']). Duong chay THAT phai
+     * bat duoc truong hop nay - bai LuatHoSoTest cu goi thang LuatHoSo::kiem() voi
+     * 'stt' => 1 trung nhau la mot dau vao khong bao gio xay ra tren thuc te.
+     *
+     * @test
+     */
+    public function hai_dong_co_stt_nguoi_dung_trung_nhau_bi_bat_du_stt_cot_khac_nhau()
+    {
+        $hoSo = $this->hoSoVoiDong(array(
+            $this->dong(array('STT' => '5', 'MA_KHOA' => 'K01')),
+            $this->dong(array('STT' => '5', 'MA_KHOA' => 'K02')),
+        ));
+
+        $soLoi = (new Tt12Kiem())->kiem($hoSo);
+
+        $this->assertGreaterThan(0, $soLoi);
+        $this->assertSame(1, Tt12Loi::where('ho_so_id', $hoSo->id)
+            ->where('ma_loi', 'STT_TRUNG')->count());
     }
 
     /** @test */
@@ -174,7 +200,7 @@ class Tt12KiemGhiTest extends TestCase
         $cacDong = array();
 
         for ($i = 0; $i < 5; $i++) {
-            $cacDong[] = $this->dong(array('MA_KHOA' => '', 'TEN_KHOA' => ''));
+            $cacDong[] = $this->dong(array('STT' => (string) ($i + 1), 'MA_KHOA' => '', 'TEN_KHOA' => ''));
         }
 
         $hoSo = $this->hoSoVoiDong($cacDong);

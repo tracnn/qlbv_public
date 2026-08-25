@@ -116,6 +116,7 @@ class Tt12Kiem
                             $lop::theMa() => isset($duLieu[$lop::theMa()]) ? $duLieu[$lop::theMa()] : '',
                             'TU_NGAY'     => isset($duLieu['TU_NGAY']) ? $duLieu['TU_NGAY'] : '',
                             'DEN_NGAY'    => isset($duLieu['DEN_NGAY']) ? $duLieu['DEN_NGAY'] : '',
+                            'STT'         => isset($duLieu['STT']) ? $duLieu['STT'] : '',
                         ),
                     );
                 }
