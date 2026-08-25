@@ -134,9 +134,9 @@ cả sáu mẫu. Lớp `Mau0x` khai một danh sách cột duy nhất, dùng cho
 |---|---|---|---|---|
 | MAU_01 | `DANHSACH_DMBOPHANCHUYENMON` | `DMBOPHANCHUYENMON` | 11 | `department_bed` |
 | MAU_02 | `DANHSACH_DMNHANLUCKBCB` | `DMNHANLUCKBCB` | 24 | `medical_staff` |
-| MAU_03 | `DANHSACH_DMTHUOCMAUCHEPHAMMAU` | `DMTHUOCMAUCHEPHAMMAU` | 36 | `medicine` |
+| MAU_03 | `DANHSACH_DMTHUOCMAUCHEPHAMMAU` | `DMTHUOCMAUCHEPHAMMAU` | 37 | `medicine` |
 | MAU_04 | `DSACH_TBYT` | `DM_TBYT` | 26 | `medical_supply` |
-| MAU_05 | `DANHSACH_DMDICHVUKBCB` | `DMDICHVUKBCB` | 15 + bảng con | `service` |
+| MAU_05 | `DANHSACH_DMDICHVUKBCB` | `DMDICHVUKBCB` | 16 + bảng con 12 thẻ | `service` |
 | MAU_06 | `DSACH_TBYTTHDV` | `DM_TBYTTHDV` | 14 | `equipment` |
 
 Lưu ý MAU_04 và MAU_06 dùng tiền tố `DSACH_` chứ không phải `DANHSACH_`, và tên thẻ dòng
@@ -144,11 +144,25 @@ có gạch dưới (`DM_TBYT`, `DM_TBYTTHDV`). Bốn mẫu còn lại theo quy �
 `DM...`. Đây là điểm dễ viết nhầm theo quán tính, nên tên thẻ khai tường minh trong từng
 lớp `Mau0x`, không sinh bằng ghép chuỗi.
 
-MAU_05 có bảng con `DS_THUOCPX > TT_THUOCPX` (thuốc phóng xạ) với 11 thẻ; trong Excel các
-cột này mang tiền tố `THUOCPX_`.
+MAU_05 có bảng con `DS_THUOCPX > TT_THUOCPX` (thuốc phóng xạ) với 12 thẻ; trong Excel các
+cột này mang tiền tố `THUOCPX_`. Tệp Excel mẫu MAU_05 có 28 cột = 16 cột dòng cha + 12
+cột bảng con.
 
-Kiểu, độ dài tối đa và tính bắt buộc của từng thẻ lấy từ mục 5 của mỗi phần trong tài liệu
-kỹ thuật và khai thẳng vào lớp `Mau0x`.
+Kiểu dữ liệu và độ dài tối đa của từng thẻ lấy từ mục 5 của mỗi phần trong tài liệu kỹ
+thuật và khai thẳng vào lớp `Mau0x`.
+
+**Tính bắt buộc thì tài liệu không quy định.** Bảng mục 5 của cả sáu mẫu chỉ có bốn cột
+`TT | Chỉ tiêu | Định dạng | Kích thước tối đa | Diễn giải` — không có cột "Bắt buộc"
+(khác với bảng mục 2 đặc tả tham số HTTP, bảng đó có). Suy tính bắt buộc từ việc mẫu XML
+in `<X>XXXX</X>` hay `<X/>` là suy đoán, không phải quy định.
+
+Do đó lớp `Mau0x` chỉ đánh dấu bắt buộc cho tập tối thiểu chắc chắn: `STT`, mã định danh
+chính của dòng (`MA_KHOA`, `SO_DINH_DANH`, `MA_THUOC`, `MA_VAT_TU`, `MA_DICH_VU`,
+`MA_MAY`), tên chính, `TU_NGAY`, `MA_CSKCB`. Mọi thẻ khác coi là không bắt buộc.
+
+Lý do chọn phía này: một cờ "bắt buộc" đặt nhầm sẽ **chặn một hồ sơ hợp lệ** và người dùng
+không có cách nào vượt qua; còn một thẻ thiếu mà đáng lẽ phải có thì cổng trả mã 205, hệ
+thống ghi lại và hiện lên màn hình. Sai về phía chặt hơn tốn kém hơn sai về phía lỏng hơn.
 
 ### 4.5 Lỗi đã biết của tài liệu gốc
 
@@ -245,7 +259,7 @@ Dùng `longText` + cast `array`, **không** dùng `$table->json()`: dự án ch�
 PHP 7.0, chưa migration nào dùng kiểu `json`, và bộ test chạy trên SQLite. `longText` hoạt
 động giống nhau ở mọi nơi.
 
-Vì sao một cột `du_lieu` chứ không sáu bảng riêng: sáu mẫu có 11–36 cột khác nhau hoàn
+Vì sao một cột `du_lieu` chứ không sáu bảng riêng: sáu mẫu có 11–37 cột khác nhau hoàn
 toàn, và bảng danh mục mới là nơi dữ liệu có hình thù để truy vấn. `tt12_dong` chỉ có một
 nhiệm vụ — dựng lại đúng XML đã gửi. Sáu bảng nữa chỉ để phục vụ mỗi việc đó là sáu bảng
 phải sửa mỗi lần BHXH đổi mẫu.
@@ -409,7 +423,7 @@ Nhân đúng khuôn CTĐT (`resources/views/bhyt/ctdt/`), người dùng đã qu
 | `bhyt/tt12/xuat/danh-sach`, `bhyt/tt12/xuat/loi` | Xuất Excel. |
 | `bhyt/tt12/{ma_ho_so}` (DELETE) | Xoá hồ sơ chưa gửi thành công. Đã có `maGiaoDich` thì không cho xoá. |
 
-Tab "Dòng dữ liệu" có **cột động** vì sáu mẫu có 11–36 cột khác nhau: `Tt12DetailTabs` hỏi
+Tab "Dòng dữ liệu" có **cột động** vì sáu mẫu có 11–37 cột khác nhau: `Tt12DetailTabs` hỏi
 `Mau0x::cot()` để dựng đầu bảng, đọc `tt12_dong.du_lieu`. Cùng cơ chế `Xml3176DetailTabs`
 và `CtdtDetailTabs` đang dùng.
 
