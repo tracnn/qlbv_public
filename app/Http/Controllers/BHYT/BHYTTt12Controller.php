@@ -505,6 +505,7 @@ class BHYTTt12Controller extends Controller
         return array(
             'mau'        => $request->input('mau'),
             'ma_cskcb'   => $request->input('ma_cskcb'),
+            'imported_by' => $request->input('imported_by'),
             'trang_thai' => $request->input('trang_thai'),
             'tu_ngay'    => $request->input('tu_ngay'),
             'den_ngay'   => $request->input('den_ngay'),

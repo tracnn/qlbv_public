@@ -54,6 +54,22 @@ class CtdtBoLocDungPartialsTest extends TestCase
     }
 
     /** @test */
+    public function o_tim_lay_hanh_vi_tu_partial_dung_chung_khong_chep_tay()
+    {
+        // O tim mang HANH VI: Enter phai uy nhiem sang #load_data_button chu khong goi
+        // thang fetchData(). Chep doan do vao tung man la nhan ban hanh vi - hai ban se
+        // lech nhau, va ban lech se bo qua phep kiem khoang ngay.
+        $nguon = file_get_contents(resource_path('views/bhyt/ctdt/partials/search.blade.php'));
+
+        $this->assertContains("@include('partials.o_tim'", $nguon,
+            'Phai dung partials.o_tim thay vi tu dung o tim');
+        $this->assertNotContains("\$('#tim').on('keydown'", $nguon,
+            'Hanh vi Enter phai nam trong partial dung chung, khong chep lai o day');
+        $this->assertContains("@stack('after-scripts-o-tim')", $nguon,
+            'Khong day stack thi Enter trong o Tim khong lam gi');
+    }
+
+    /** @test */
     public function khong_con_nut_tai_du_lieu_tu_lam()
     {
         // partials.load_data_button da lo viec do, va no con them hieu ung cho. Giu lai

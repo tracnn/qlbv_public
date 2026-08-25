@@ -16,58 +16,7 @@
 @section('content')
 @include('includes.message')
 
-<div class="panel panel-default">
-    <div class="panel-body">
-        <div class="row">
-            <div class="col-md-3">
-                <label for="mau">Mẫu</label>
-                <select id="mau" class="form-control">
-                    <option value="">-- Tất cả --</option>
-                    @foreach ($danhSachMau as $ma => $ten)
-                        <option value="{{ $ma }}">{{ $ten }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div class="col-md-3">
-                <label for="ma_cskcb">Cơ sở KCB</label>
-                <select id="ma_cskcb" class="form-control">
-                    <option value="">-- Tất cả --</option>
-                    @foreach ($danhSachCoSo as $ma => $nhan)
-                        <option value="{{ $ma }}">{{ $nhan }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div class="col-md-3">
-                <label for="trang_thai">Trạng thái</label>
-                <select id="trang_thai" class="form-control">
-                    <option value="">-- Tất cả --</option>
-                    @foreach ($cacTrangThai as $ma => $nhan)
-                        <option value="{{ $ma }}">{{ $nhan }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div class="col-md-3">
-                <label for="tim">Tìm (mã hồ sơ / tên tệp / mã giao dịch)</label>
-                <input type="text" id="tim" class="form-control">
-            </div>
-        </div>
-        <div class="row" style="margin-top:10px">
-            <div class="col-md-3">
-                <label for="tu_ngay">Nạp từ ngày</label>
-                <input type="date" id="tu_ngay" class="form-control">
-            </div>
-            <div class="col-md-3">
-                <label for="den_ngay">Đến ngày</label>
-                <input type="date" id="den_ngay" class="form-control">
-            </div>
-            <div class="col-md-3" style="margin-top:22px">
-                <button type="button" id="btn-loc" class="btn btn-primary">
-                    <i class="fa fa-search"></i> Lọc
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
+@include('bhyt.tt12.partials.search')
 
 <div class="panel panel-default">
     <div class="panel-body">
@@ -115,6 +64,17 @@
 
 @push('after-scripts')
 <script>
+// Khoi tao select2 cho MOI o chon tren trang, ke ca cac o do partial dung chung sinh ra
+// (default_range, ma_cskcb). Cac o deu mang class 'select2' nhung class do chi la DANH
+// DAU - khong goi .select2() thi chung hien nhu <select> tron: mat o tim kiem trong danh
+// sach, va khac han man CTDT / XML3176.
+//
+// Rieng imported_by tu goi .select2() cua no SAU khi nap xong AJAX - phai vay vi luc
+// trang tai xong o do con rong. Goi hai lan la vo hai.
+$(function () {
+    $('.select2').select2({ width: '100%' });
+});
+
 // ---------------------------------------------------------------------------------------
 // Chon dong va gui hang loat. Uy nhiem su kien tren #tt12-list: DataTables ve lai toan bo
 // tbody moi lan tai/phan trang, nen handler gan truc tiep se mat sau lan tai dau tien.
@@ -203,18 +163,35 @@ $(document).on('click', '#btn-gui-nhieu', function () {
 
 // Bo loc dang xem tren man hinh - dung chung cho ca ajax.data cua DataTable lan nut xuat
 // Excel. ANH CHUP luc tai, khong doc lai DOM luc bam xuat: nguoi dung doi o loc ma chua
-// bam "Loc" roi bam "Xuat danh sach" van nhan tep khop voi bang dang hien.
+// bam "Tai du lieu" roi bam "Xuat danh sach" van nhan tep khop voi bang dang hien.
 var tt12LocDaTai = null;
+
+// Khoang ngay dang chon, do partials.date_range truyen sang qua fetchData(). Giu o bien
+// rieng chu khong doc lai #date_range: o do la mot chuoi da dinh dang cua daterangepicker
+// ("01/09/2026 - 30/09/2026"), khong phai hai gia tri may chu doc duoc.
+var tt12TuNgay = null;
+var tt12DenNgay = null;
 
 function tt12ThamSoLoc() {
     return {
-        mau:        $('#mau').val(),
-        ma_cskcb:   $('#ma_cskcb').val(),
-        trang_thai: $('#trang_thai').val(),
-        tim:        $('#tim').val(),
-        tu_ngay:    $('#tu_ngay').val(),
-        den_ngay:   $('#den_ngay').val()
+        mau:         $('#mau').val(),
+        ma_cskcb:    $('#ma_cskcb').val(),
+        imported_by: $('#imported_by').val(),
+        trang_thai:  $('#trang_thai').val(),
+        tim:         $('#tim').val(),
+        tu_ngay:     tt12TuNgay,
+        den_ngay:    tt12DenNgay
     };
+}
+
+// Hop dong cua partials.load_data_button: no goi ham TOAN CUC nay, va tu goi mot lan ngay
+// khi trang tai xong. Dat ten khac (vi du tt12FetchData) la nut bam se khong tim thay ham
+// va man hinh khong bao gio tai du lieu.
+function fetchData(startDate, endDate) {
+    tt12TuNgay = startDate;
+    tt12DenNgay = endDate;
+
+    tt12Bang.ajax.reload();
 }
 
 var tt12Bang = $('#tt12-list').DataTable({
@@ -312,9 +289,9 @@ var tt12Bang = $('#tt12-list').DataTable({
 });
 
 $(function () {
-    $('#btn-loc').on('click', function () {
-        tt12Bang.ajax.reload();
-    });
+    // Khong con nut "Loc" tu lam o day: partials.load_data_button da lo viec do qua
+    // fetchData(), kem phep kiem khoang ngay va hieu ung cho. Hai nut cung goi mot viec
+    // theo hai duong khac nhau la hai hanh vi phai giu dong bo mai mai.
 
     $('#btn-xuat-danh-sach').on('click', function () {
         window.location = '{{ route('bhyt.tt12.xuat.danh-sach') }}?' + $.param(tt12LocDaTai || {});

@@ -14,7 +14,7 @@ use App\Models\BHYT\Tt12\Tt12HoSo;
 class Tt12DanhSach
 {
     /**
-     * @param array $loc mau, ma_cskcb, trang_thai, tu_ngay, den_ngay, tim
+     * @param array $loc mau, ma_cskcb, imported_by, trang_thai, tu_ngay, den_ngay, tim
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public static function truyVan(array $loc)
@@ -27,6 +27,12 @@ class Tt12DanhSach
 
         if (!empty($loc['ma_cskcb'])) {
             $q->where('ma_cskcb', $loc['ma_cskcb']);
+        }
+
+        // !empty chu khong isset: o chon co muc "Tat ca" mang value RONG, va chuoi rong
+        // phai nghia la "khong loc" chu khong phai "loc theo nguoi co ten rong".
+        if (!empty($loc['imported_by'])) {
+            $q->where('imported_by', $loc['imported_by']);
         }
 
         if (!empty($loc['tu_ngay'])) {

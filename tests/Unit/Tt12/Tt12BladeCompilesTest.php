@@ -19,6 +19,7 @@ class Tt12BladeCompilesTest extends TestCase
             array('tab-dong'),
             array('tab-loi'),
             array('tab-xml'),
+            array('partials/search'),
         );
     }
 

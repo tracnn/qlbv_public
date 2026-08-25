@@ -99,6 +99,28 @@ class Tt12DanhSachTest extends TestCase
     }
 
     /** @test */
+    public function loc_theo_nguoi_nap()
+    {
+        // CTDT va XML3176 deu co bo loc nay; TT12 thieu la lech. Cot imported_by da co
+        // san va da danh index tu Task 2.
+        $this->tao('A', array('imported_by' => 'nvyt01'));
+        $this->tao('B', array('imported_by' => 'nvyt02'));
+
+        $this->assertSame(array('A'), $this->maCua(array('imported_by' => 'nvyt01')));
+    }
+
+    /** @test */
+    public function khong_chon_nguoi_nap_thi_tra_ve_tat_ca()
+    {
+        // Chuoi rong phai duoc coi la "khong loc", khong phai "loc theo nguoi ten rong" -
+        // o chon co muc "Tat ca" mang value rong.
+        $this->tao('A', array('imported_by' => 'nvyt01'));
+        $this->tao('B', array('imported_by' => null));
+
+        $this->assertCount(2, $this->maCua(array('imported_by' => '')));
+    }
+
+    /** @test */
     public function loc_theo_khoang_ngay_nap()
     {
         $this->tao('A', array('imported_at' => '2026-08-20 08:00:00'));
