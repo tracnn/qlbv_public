@@ -195,4 +195,61 @@ class Tt12SubmitServiceTest extends TestCase
 
         $dv->gui('<HSDANHMUC/>', 'MAU_99', '01929');
     }
+
+    /** @test */
+    public function tao_login_nhan_DUNG_ma_co_so_cua_ho_so_dang_gui()
+    {
+        // Bai test nay KHONG tiem $loginService qua constructor - moi test khac o tren
+        // deu tiem san login gia nen chua bao gio di vao nhanh
+        // "$this->loginService ?: $this->taoLogin($maCskcb)". Muc dich chinh la buoc di
+        // dung vao nhanh do va bat lai ma co so ma taoLogin() nhan duoc, de chung minh no
+        // TRUNG voi ma co so nam trong body - khong bi chot cung hoac lech nguon.
+        $mock = new MockHandler(array(
+            new Response(200, array(), '{"maKetQua":"200"}'),
+            new Response(200, array(), '{"maKetQua":"200"}'),
+        ));
+        $stack = HandlerStack::create($mock);
+        $daGui = array();
+        $stack->push(Middleware::history($daGui));
+
+        $loginGia = new class extends BHYTLoginService {
+            public function __construct() {}
+            public function getAccessToken(): string { return 'TOKEN'; }
+            public function getIdToken(): string     { return 'IDTOKEN'; }
+            public function username(): string       { return 'BV'; }
+            public function password(): string       { return 'MD5HASH'; }
+            public function logout(): void           {}
+        };
+
+        $dv = new class($loginGia) extends Tt12SubmitService {
+            public $maCskcbNhanDuoc = array();
+            private $loginGia;
+
+            public function __construct($loginGia)
+            {
+                parent::__construct();
+                $this->loginGia = $loginGia;
+            }
+
+            protected function taoLogin($maCskcb)
+            {
+                $this->maCskcbNhanDuoc[] = $maCskcb;
+
+                return $this->loginGia;
+            }
+        };
+        $dv->dungClient(new Client(array('handler' => $stack)));
+
+        $truong = config('tt12.truong_body');
+
+        $dv->gui('<HSDANHMUC/>', 'MAU_01', '37470');
+        parse_str((string) $daGui[0]['request']->getBody(), $body);
+        $this->assertSame('37470', $dv->maCskcbNhanDuoc[0]);
+        $this->assertSame('37470', $body[$truong['ma_cskcb']]);
+
+        $dv->gui('<HSDANHMUC/>', 'MAU_01', '01929');
+        parse_str((string) $daGui[1]['request']->getBody(), $body);
+        $this->assertSame('01929', $dv->maCskcbNhanDuoc[1]);
+        $this->assertSame('01929', $body[$truong['ma_cskcb']]);
+    }
 }

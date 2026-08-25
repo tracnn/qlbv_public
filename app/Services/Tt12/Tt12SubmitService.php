@@ -50,6 +50,25 @@ class Tt12SubmitService
     }
 
     /**
+     * Tao BHYTLoginService cho DUNG ma co so cua ho so dang gui.
+     *
+     * Tach rieng thanh mot diem noi PROTECTED de kiem duoc bat bien "token va maCSKCB
+     * trong body phai cung mot co so": test khong the tiem $loginService qua constructor
+     * (nhanh do bi bo qua khi tiem) nen phai ghi de dung ham nay de bat lai ma co so nhan
+     * duoc. DUNG tu y gop lai voi gui() coi la tang gian tiep thua - do la diem duy nhat
+     * chung minh duoc token khong bi lay tu mot co so khac voi maCSKCB trong body.
+     *
+     * KHONG khai kieu tra ve: phuong thuc cua service moi thuoc TT12, Mockery vo khi mock
+     * phuong thuc co return type.
+     *
+     * @param string $maCskcb
+     */
+    protected function taoLogin($maCskcb)
+    {
+        return new BHYTLoginService($maCskcb);
+    }
+
+    /**
      * @param string $xmlDaKy noi dung XML da ky
      * @param string $mau     MAU_01..MAU_06
      * @param string $maCskcb ma co so cua CHINH ho so - phai cung co so voi token
@@ -70,7 +89,7 @@ class Tt12SubmitService
         // Dung login service theo dung ma co so cua ho so nay. Neu token va maCSKCB trong
         // body thuoc HAI co so khac nhau thi cong van nhan, va ho so bi ghi sai don vi
         // gui - hong im lang, khong lo ra cho toi luc doi soat.
-        $login = $this->loginService ?: new BHYTLoginService($maCskcb);
+        $login = $this->loginService ?: $this->taoLogin($maCskcb);
 
         $base64 = base64_encode($xmlDaKy);
 
