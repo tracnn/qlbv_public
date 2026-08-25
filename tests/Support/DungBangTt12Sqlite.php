@@ -67,4 +67,33 @@ trait DungBangTt12Sqlite
             (new $lop())->up();
         }
     }
+
+    /**
+     * Dung ba bang danh muc TOI THIEU cho test dong bo.
+     *
+     * Khong nap migration that cua chung: migration goc cua medicine_catalogs va
+     * medical_staffs phu thuoc cu phap MySQL (enum, index dai) va co ca chuoi migration
+     * sua doi phia sau. Dung bang toi gian voi DUNG cac cot ma dac ta TT12 can, cong
+     * dung khoa duy nhat moi - do la thu test nay can kiem.
+     */
+    protected function dungBangDanhMucTt12()
+    {
+        $schema = \Illuminate\Support\Facades\Schema::connection('mysql');
+
+        $schema->create('department_bed_catalogs', function ($t) {
+            $t->increments('id');
+            $t->string('ma_khoa')->nullable();
+            $t->string('ten_khoa')->nullable();
+            $t->string('ban_kham')->nullable();
+            $t->string('giuong_pd')->nullable();
+            $t->string('giuong_tk')->nullable();
+            $t->string('giuong_hstc')->nullable();
+            $t->string('giuong_hscc')->nullable();
+            $t->string('tu_ngay')->nullable();
+            $t->string('den_ngay')->nullable();
+            $t->string('ma_cskcb')->nullable();
+            $t->timestamps();
+            $t->unique(['ma_khoa', 'ma_cskcb', 'tu_ngay'], 'unique_department_bed_catalog');
+        });
+    }
 }
