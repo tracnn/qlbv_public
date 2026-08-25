@@ -288,6 +288,42 @@ class Tt12ImporterTest extends TestCase
     }
 
     /** @test */
+    public function do_sach_xoa_ca_dong_con_thuoc_phong_xa_khong_de_mo_coi()
+    {
+        // Kich ban that: tep MAU_05 dai hon mot lo, lo dau ghi ca Tt12Dong lan
+        // Tt12DongThuocPx, lo sau lech MA_CSKCB nen phai huy toan bo. Dung Reflection goi
+        // thang doSach() thay vi sinh tep 5.001 dong (cham va khong can thiet) - cai can
+        // kiem la BAN THAN ham don dep, khong phai duong di CatalogChunkImport chia lo.
+        $hoSo = Tt12HoSo::create([
+            'ma_ho_so' => 'TT12_MAU_05_01929_20260825_001',
+            'mau'      => 'MAU_05',
+            'loai_hs'  => '72',
+            'ma_cskcb' => '01929',
+        ]);
+
+        $dong = Tt12Dong::create([
+            'ho_so_id' => $hoSo->id,
+            'stt'      => 1,
+            'du_lieu'  => ['MA_DICH_VU' => 'DV01'],
+        ]);
+
+        Tt12DongThuocPx::create([
+            'dong_id'  => $dong->id,
+            'stt'      => 1,
+            'ma_thuoc' => 'TPX01',
+        ]);
+
+        $importer = new Tt12Importer();
+        $doSach = new \ReflectionMethod($importer, 'doSach');
+        $doSach->setAccessible(true);
+        $doSach->invoke($importer, $hoSo);
+
+        $this->assertSame(0, Tt12HoSo::count());
+        $this->assertSame(0, Tt12Dong::count());
+        $this->assertSame(0, Tt12DongThuocPx::count(), 'Dong con thuoc phong xa khong duoc bo lai mo coi');
+    }
+
+    /** @test */
     public function ma_ho_so_gom_mau_ma_co_so_va_ngay()
     {
         $ma = Tt12MaHoSo::sinh('MAU_03', '01929', \Carbon\Carbon::create(2026, 8, 25), 7);

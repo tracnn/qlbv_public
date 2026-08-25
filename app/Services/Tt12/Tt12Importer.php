@@ -3,8 +3,10 @@
 namespace App\Services\Tt12;
 
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 use App\Models\BHYT\Tt12\Tt12HoSo;
 use App\Models\BHYT\Tt12\Tt12Dong;
+use App\Models\BHYT\Tt12\Tt12DongThuocPx;
 use App\Services\Tt12\Loi\MaCskcbLechException;
 
 /**
@@ -235,10 +237,23 @@ class Tt12Importer
     }
 
     /**
-     * Xoa sach ho so da tao do dang.
+     * So dong id moi lan lay tu CSDL de xoa bang con, tranh nap hang chuc nghin id vao
+     * mot mang PHP mot luc (may chu san xuat gioi han 128 MB).
+     */
+    const CO_LO_XOA = 1000;
+
+    /**
+     * Xoa sach ho so da tao do dang, gom CA bang con tt12_dong_thuoc_px.
      *
-     * Xoa dong TRUOC roi moi xoa ho so: nguoc lai se de lai cac dong mo coi tro toi mot
-     * ho so_id khong con ton tai, va man chi tiet cua ho so khac trung id se hien chung.
+     * Xoa tu CON len CHA - thu tu NGUOC lai voi thu tu ghi: xoa dong_thuoc_px TRUOC (no
+     * tro toi dong qua dong_id), roi moi xoa dong (tro toi ho so qua ho_so_id), roi moi
+     * xoa ho so. Neu xoa nguoc lai (dong truoc, dong_thuoc_px sau) thi mat duong tim ra
+     * cac ban ghi con - migration khong co khoa ngoai/ON DELETE CASCADE, nen chung se
+     * nam lai mo coi mai mai, tro toi mot dong_id khong con ton tai.
+     *
+     * BOC CA BA BUOC TRONG MOT TRANSACTION: don dep nua voi (vi du xoa duoc dong_thuoc_px
+     * nhung chet giua chung truoc khi xoa duoc dong) con te hon la khong don gi ca - no
+     * de lai trang thai khong nhat quan ma khong co dau hieu nao bao cho nguoi dung biet.
      */
     private function doSach($hoSo)
     {
@@ -246,9 +261,19 @@ class Tt12Importer
             return;
         }
 
-        Tt12Dong::where('ho_so_id', $hoSo->id)->delete();
+        DB::transaction(function () use ($hoSo) {
+            Tt12Dong::where('ho_so_id', $hoSo->id)
+                ->select('id')
+                ->chunkById(self::CO_LO_XOA, function ($dongs) {
+                    $ids = $dongs->pluck('id')->all();
 
-        $hoSo->delete();
+                    Tt12DongThuocPx::whereIn('dong_id', $ids)->delete();
+                });
+
+            Tt12Dong::where('ho_so_id', $hoSo->id)->delete();
+
+            $hoSo->delete();
+        });
     }
 
     /** @return array [TEN_THE => chi so cot] */
