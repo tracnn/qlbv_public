@@ -174,6 +174,11 @@ return [
             'nam_sd' => ['NAM_SD', 'Năm SD', 'NAM SD'],
             'ma_may' => ['MA_MAY', 'Mã máy', 'MA MAY'],
             'so_luu_hanh' => ['SO_LUU_HANH', 'Số lưu hành', 'SO LUU HANH'],
+            // BAT BUOC vi ma_cskcb nam trong unique_keys ngay ben duoi. Thieu o day thi
+            // luong nhap thu cong luon ghi ma_cskcb = NULL cho thiet bi, va dong nhap tay
+            // voi dong TT12 cua CUNG MOT MAY khong bao gio gap nhau - bang co hai ban ghi
+            // cho mot may ma khong ai biet duong nao tao ra.
+            'ma_cskcb' => ['MA_CSKCB', 'Mã CSKCB', 'MA CSKCB'],
             'hd_tu' => ['HD_TU', 'HD từ', 'HD TU'],
             'hd_den' => ['HD_DEN', 'HD đến', 'HD DEN'],
             'tu_ngay' => ['TU_NGAY', 'Từ ngày', 'TU NGAY'],

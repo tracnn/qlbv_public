@@ -67,4 +67,36 @@ class Tt12CotDanhMucTest extends TestCase
             );
         }
     }
+
+    /** @test */
+    public function moi_cot_khoa_duy_nhat_deu_duoc_khai_trong_mapping()
+    {
+        // unique_keys quyet dinh hai dong co duoc coi la MOT ban ghi hay khong. Mot cot
+        // khoa khong nam trong mapping thi luong nhap thu cong luon ghi NULL vao no, va
+        // dong nhap tay voi dong TT12 cua cung mot doi tuong khong bao gio gap nhau - bang
+        // co hai ban ghi cho mot thu ma khong ai biet duong nao tao ra. Khoi 'equipment'
+        // da o dung trang thai do voi cot ma_cskcb.
+        $cauHinh = config('catalog_import_mapping');
+
+        $daKiem = 0;
+
+        foreach ($cauHinh as $khoa => $khoi) {
+            if (!isset($khoi['unique_keys']) || !isset($khoi['mapping'])) {
+                continue;
+            }
+
+            foreach ($khoi['unique_keys'] as $cot) {
+                $this->assertArrayHasKey(
+                    $cot,
+                    $khoi['mapping'],
+                    $khoa . ': cot khoa duy nhat "' . $cot . '" khong duoc khai trong mapping, '
+                    . 'nen luong nhap thu cong luon ghi NULL vao no'
+                );
+
+                $daKiem++;
+            }
+        }
+
+        $this->assertGreaterThan(5, $daKiem, 'Kiem qua it khoa - co ve cau hinh rong');
+    }
 }

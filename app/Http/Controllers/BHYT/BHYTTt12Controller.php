@@ -53,7 +53,7 @@ class BHYTTt12Controller extends Controller
         // (1,3 MB) tung lam dinh 208 MB khi doc mot lan. Doc theo lo giu duoi nguong nay
         // nhung 128 MB mac dinh van sat.
         set_time_limit(600);
-        ini_set('memory_limit', '512M');
+        $this->noiRongBoNho('512M');
 
         $tep = $request->file('tepExcel');
 
@@ -440,6 +440,54 @@ class BHYTTt12Controller extends Controller
 
         return array('thanh_cong' => true, 'hanh_dong' => 'gui',
             'thong_diep' => 'Đã đẩy vào hàng đợi gửi');
+    }
+
+    /**
+     * NOI RONG gioi han bo nho, khong bao gio thu hep.
+     *
+     * ini_set('memory_limit', '512M') tran la SAI hai duong:
+     * - Tren may chu da dat 1G trong php.ini, no HA xuong 512M - dung cai nguoc lai voi y
+     *   dinh, va chi lo ra khi mot tep lon lam dinh bo nho.
+     * - Khi tien trinh dang dung nhieu hon muc dat, PHP tu choi va phat canh bao. Trong bo
+     *   test (convertWarningsToExceptions="true") canh bao do thanh mot ngoai le va lam
+     *   hong mot ham khong lien quan gi den bo nho.
+     */
+    private function noiRongBoNho($muc)
+    {
+        $hienTai = trim((string) ini_get('memory_limit'));
+
+        // '-1' la khong gioi han - da rong hon moi con so.
+        if ($hienTai === '' || $hienTai === '-1') {
+            return;
+        }
+
+        if ($this->sangByte($hienTai) >= $this->sangByte($muc)) {
+            return;
+        }
+
+        ini_set('memory_limit', $muc);
+    }
+
+    /** @return int doi chuoi kieu '512M' / '1G' cua php.ini sang so byte */
+    private function sangByte($chuoi)
+    {
+        $chuoi = trim((string) $chuoi);
+        $so = (int) $chuoi;
+        $donVi = strtolower(substr($chuoi, -1));
+
+        if ($donVi === 'g') {
+            return $so * 1024 * 1024 * 1024;
+        }
+
+        if ($donVi === 'm') {
+            return $so * 1024 * 1024;
+        }
+
+        if ($donVi === 'k') {
+            return $so * 1024;
+        }
+
+        return $so;
     }
 
     /** @return array bo loc doc tu request, dung chung cho man hinh va xuat Excel */

@@ -6,8 +6,10 @@ use Tests\TestCase;
 use Tests\Support\DungBangTt12Sqlite;
 use Tests\Support\FakeTt12SubmitService;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 use App\Models\BHYT\Tt12\Tt12HoSo;
 use App\Models\BHYT\Tt12\Tt12LichSuGui;
+use App\Models\BHYT\Tt12\Tt12Dong;
 use App\Jobs\SubmitTt12Job;
 
 class SubmitTt12JobTest extends TestCase
@@ -18,6 +20,7 @@ class SubmitTt12JobTest extends TestCase
     {
         parent::setUp();
         $this->dungBangTt12();
+        $this->dungBangDanhMucTt12();
 
         Storage::fake('exportTt12');
 
@@ -38,6 +41,64 @@ class SubmitTt12JobTest extends TestCase
             'is_signed' => true, 'signed_at' => '2026-08-25 10:05:00',
             'duong_dan_da_ky' => $duongDan,
         ), $ghiDe));
+    }
+
+    /** Mot dong MAU_01 that, de buoc dong bo co gi de ghi sang bang danh muc */
+    private function motDong(Tt12HoSo $hoSo)
+    {
+        return Tt12Dong::create(array(
+            'ho_so_id' => $hoSo->id,
+            'stt'      => 1,
+            'du_lieu'  => array(
+                'STT' => '1', 'MA_KHOA' => 'K01', 'TEN_KHOA' => 'Kham benh',
+                'BAN_KHAM' => '3', 'GIUONG_PD' => '0', 'GIUONG_TK' => '0',
+                'GIUONG_HSTC' => '0', 'GIUONG_HSCC' => '0',
+                'TU_NGAY' => '20260101', 'DEN_NGAY' => '', 'MA_CSKCB' => '01929',
+            ),
+        ));
+    }
+
+    /** @test */
+    public function gui_thanh_cong_thi_dong_bo_luon_sang_bang_danh_muc()
+    {
+        // Khop noi SubmitTt12Job -> Tt12DongBoDanhMuc truoc day chua tung chay: ho so mau
+        // cua bo test nay KHONG co dong nao, nen dongBo() di qua mot vong chunk RONG. Xoa
+        // han ba dong goi dongBo() trong job thi ca chin test van xanh - tuc chung khong
+        // kiem gi ca ve buoc dong bo.
+        $hoSo = $this->hoSo();
+        $this->motDong($hoSo);
+
+        (new SubmitTt12Job($hoSo->ma_ho_so))->handle(new FakeTt12SubmitService());
+
+        $this->assertSame(1, DB::table('department_bed_catalogs')->count(),
+            'Cong tiep nhan xong phai day dong sang bang danh muc');
+        $this->assertNotNull($hoSo->fresh()->dong_bo_at);
+        $this->assertSame(1, (int) $hoSo->fresh()->dong_bo_so_dong);
+
+        $ban = DB::table('department_bed_catalogs')->first();
+
+        $this->assertSame('K01', $ban->ma_khoa);
+        $this->assertSame('01929', $ban->ma_cskcb);
+    }
+
+    /** @test */
+    public function cong_tu_choi_thi_KHONG_dong_bo()
+    {
+        // Danh muc la nguon cho buoc kiem XML3176 va giam dinh doi chieu voi chinh ban BHXH
+        // da nhan. Ghi khi cong chua nhan la kiem theo mot ban khong ton tai.
+        $hoSo = $this->hoSo();
+        $this->motDong($hoSo);
+
+        $gui = new FakeTt12SubmitService();
+        $gui->ketQua = array(
+            'ma_ket_qua' => '205', 'ma_gd' => null, 'thoi_gian_tiep_nhan' => null,
+            'thong_diep' => 'Mã 205: Lỗi nội dung file XML', 'nguyen_van' => '{"maKetQua":"205"}',
+        );
+
+        (new SubmitTt12Job($hoSo->ma_ho_so))->handle($gui);
+
+        $this->assertSame(0, DB::table('department_bed_catalogs')->count());
+        $this->assertNull($hoSo->fresh()->dong_bo_at);
     }
 
     /** @test */
