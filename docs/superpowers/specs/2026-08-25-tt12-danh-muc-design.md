@@ -307,6 +307,33 @@ Mã lỗi để làm hằng trong lớp luật, **không** tạo bảng `tt12_er
 lỗi ở XML3176 tồn tại để bật/tắt từng luật khi giám định thay đổi cách bắt lỗi; ở đây luật
 đến từ đặc tả trường cố định của TT12, chưa có nhu cầu đó.
 
+## 6b. Chặn tệp lẫn nhiều cơ sở, ngay lúc nạp
+
+**Luật:** mọi giá trị `MA_CSKCB` trong tệp phải trùng cơ sở đã chọn trên màn hình. Lệch dù
+một dòng thì dừng cả tệp — không tạo hồ sơ, không giữ lại gì.
+
+**Vì sao chặn ở tầng nạp chứ không để bước kiểm bắt:** một hồ sơ TT12 được gửi bằng **một**
+token của **một** cơ sở. Tệp lẫn hai cơ sở là tệp không có cách gửi nào đúng. Để nó nạp vào
+rồi mới báo lỗi ở bước kiểm chỉ tạo ra một hồ sơ chết mà người dùng phải tự đi xoá — và với
+tệp vài nghìn dòng thì còn tốn cả một lượt đọc và một lượt kiểm cho một kết quả đã biết
+trước.
+
+**Vì sao khác màn nhập danh mục thủ công:** bên đó ô cơ sở là *tuỳ chọn* ("Dùng chung cho
+mọi cơ sở") và chỉ điền cho dòng bỏ trống. Khác biệt là có chủ ý: dữ liệu bên đó chỉ nằm
+lại trong CSDL, không gửi đi đâu, nên một tệp trộn nhiều cơ sở vẫn dùng được.
+
+**Ô để trống không phải là lệch.** Dòng bỏ trống `MA_CSKCB` được điền theo ô chọn. Coi nó
+là lệch sẽ chặn những tệp hợp lệ mà người dùng cố ý để trống cột này; còn để trống rồi bắt
+ở bước kiểm thì mỗi dòng sinh một lỗi `THIEU_BAT_BUOC` cho một cột mà họ đã chọn trên màn
+hình.
+
+**Thông báo lỗi nêu số dòng cụ thể** (tối đa 20 dòng, kèm "và N dòng khác"), không phải câu
+"có dòng lệch" — người dùng cần mở Excel đúng dòng đó để sửa.
+
+**Hai tầng, không phải lặp:** tầng nạp chặn sớm để báo lỗi sớm; `LuatDong` giữ lại luật
+`MA_CSKCB_LECH` làm lớp chặn thứ hai, phòng dữ liệu đến từ đường khác về sau (nạp lại từ
+bản sao, sửa tay trong CSDL). Một bất biến quan trọng được canh ở hai tầng là rẻ.
+
 ## 7. Dựng XML — `Tt12PhongBi`
 
 Hàm thuần: không đọc CSDL, không ghi tệp.
@@ -397,12 +424,13 @@ hạ tầng đã có sẵn và đã chạy thật cho CTĐT/XML3176:
 
 | Điểm | Cách xử lý |
 |---|---|
-| Chọn cơ sở khi nạp | Ô chọn lấy từ `DanhSachCoSo::danhSach()` (đọc `his_branch`, gom các cơ sở HIS cùng mã CSKCB thành một lựa chọn). **Không có giá trị mặc định** — mặc định là cái bẫy khiến người dùng nạp danh mục Ninh Bình vào cơ sở Hà Nội. Endpoint tải lên đối chiếu lại giá trị nhận được với danh sách này. |
+| Chọn cơ sở khi nạp | Ô chọn **bắt buộc**, lấy từ `DanhSachCoSo::danhSach()` (đọc `his_branch`, gom các cơ sở HIS cùng mã CSKCB thành một lựa chọn) — cùng khuôn với màn nhập danh mục thủ công. **Không có giá trị mặc định** — mặc định là cái bẫy khiến người dùng nạp danh mục Ninh Bình vào cơ sở Hà Nội. Endpoint tải lên đối chiếu lại giá trị nhận được với danh sách này. |
+| Chặn tệp lẫn cơ sở | **Trước khi ghi bất kỳ dòng nào**, `Tt12MaCskcbTrongTep` đối chiếu cột `MA_CSKCB` của từng dòng với ô chọn. Lệch dù một dòng thì huỷ cả lần nạp, xoá sạch phần đã ghi, và báo lỗi kèm số dòng cùng giá trị sai. Ô để trống được điền theo ô chọn, không tính là lệch. Xem mục 6b. |
 | Tài khoản cổng | `new BHYTLoginService($maCskcb)` → `CauHinhCoSo::cua()` đọc khối `organization.BHYT_CO_SO`. Cơ sở chưa khai thì **ném**, không rơi về tài khoản mặc định. |
 | Token | Cache theo khoá `bhyt_tokens:<ma_cskcb>`, hai cơ sở không dùng nhầm token của nhau. |
 | `maTinh` | `CauHinhCoSo::maTinh($maCskcb)` — hai ký tự đầu. |
 | Mã hồ sơ | `TT12_<MAU>_<MACSKCB>_<YYYYMMDD>_<STT>` đã chứa mã cơ sở, hai cơ sở không tranh số thứ tự của nhau. |
-| Kiểm | `LuatDong` bắt lỗi `MA_CSKCB_LECH` khi một dòng mang mã cơ sở khác mã của hồ sơ. Các cột trỏ sang cơ sở **khác** (`MA_CSKCB_THUOC`, `MA_CSKCB_TBYT`, `CSKCB_CGKT`, `CSKCB_CLS`) **không** bị kiểm — chúng chính là để ghi cơ sở khác. |
+| Kiểm | `LuatDong` bắt lỗi `MA_CSKCB_LECH` — **lớp chặn thứ hai**, không phải lớp chính (xem mục 6b). Các cột trỏ sang cơ sở **khác** (`MA_CSKCB_THUOC`, `MA_CSKCB_TBYT`, `CSKCB_CGKT`, `CSKCB_CLS`) **không** bị kiểm — chúng chính là để ghi cơ sở khác. |
 | Bảng danh mục | Khoá duy nhất của cả sáu bảng đều chứa `ma_cskcb` (mục 5.1), nên hai cơ sở không đè dữ liệu của nhau. Đây cũng là lý do `medical_staffs` và `equipment_catalogs` phải được thêm cột `ma_cskcb`. |
 | Màn danh sách | Có ô lọc theo cơ sở và cột Mã CSKCB. |
 
