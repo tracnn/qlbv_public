@@ -210,10 +210,23 @@ nằm trong khoá.
 
 **Lỗi tiềm ẩn phát hiện khi khảo sát:** `medical_staffs` **chưa hề có cột `ma_cskcb`**,
 trong khi `config/catalog_import_mapping.php` đã ánh xạ `ma_cskcb` cho danh mục
-`medical_staff` và `CatalogImportService::DANH_MUC_THEO_CO_SO` đã liệt kê `medical_staff`
-là danh mục theo từng cơ sở. Nghĩa là luồng import thủ công hiện tại đang **âm thầm đánh
-rơi mã cơ sở của nhân viên y tế**, và chức năng xoá danh mục theo cơ sở không lọc đúng
-được. Migration ở giai đoạn 2 sửa luôn việc này.
+`medical_staff`. Nghĩa là luồng import thủ công hiện tại đang **âm thầm đánh rơi mã cơ sở
+của nhân viên y tế** khi tệp có sẵn cột đó — `NhapDanhMucLonTheoLoTest` đã ghi nhận đúng
+hiện tượng này trong danh sách "trường bị bỏ đã biết", kèm chú thích "chưa rõ có cần lưu
+hay không". Migration ở giai đoạn 2 sửa việc này.
+
+**Đính chính (phát hiện lúc thực thi Task 3):** một bản nháp trước của mục này có nói
+`CatalogImportService::DANH_MUC_THEO_CO_SO` đã liệt kê `medical_staff` — **sai**. Hằng số
+đó thực tế chỉ gồm `['medicine', 'medical_supply', 'service', 'department_bed']`. Hệ quả:
+cơ chế tự gán `ma_cskcb` từ ô chọn cơ sở trên màn nhập thủ công **không** áp cho
+`medical_staff` và `equipment`, và chức năng xoá danh mục theo cơ sở cũng không liệt kê
+hai danh mục này.
+
+Đưa hai danh mục đó vào `DANH_MUC_THEO_CO_SO` **nằm ngoài phạm vi** thiết kế này: hằng số
+đó bị một test chốt phải khớp với `theo_co_so` trong `config/danh_muc_bhyt.php`, nên đổi
+nó là đổi hành vi của luồng nhập thủ công — việc riêng, cần spec riêng. Luồng TT12 không
+phụ thuộc vào nó: mã cơ sở của mọi dòng đã được `Tt12MaCskcbTrongTep` bắt phải trùng ô
+chọn ngay lúc nạp (mục 6b), nên `ma_cskcb` luôn có giá trị đúng khi ghi sang bảng danh mục.
 
 Ba bảng đầu hiện dùng chung `tu_ngay`/`den_ngay` cho cả hợp đồng lẫn hiệu lực danh mục,
 trong khi TT12 tách đôi: `TU_NGAY_HD`/`DEN_NGAY_HD` là hợp đồng, `TU_NGAY`/`DEN_NGAY` là
