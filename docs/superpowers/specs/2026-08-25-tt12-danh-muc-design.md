@@ -362,6 +362,9 @@ Body    username, loaiHs, maTinh, maCSKCB, fileHsBase64
 - **`BHYTLoginService` khởi tạo theo `ma_cskcb` của chính hồ sơ.** Nếu token và `maCSKCB`
   trong body thuộc hai cơ sở khác nhau thì cổng vẫn nhận và hồ sơ bị ghi sai đơn vị gửi —
   hỏng im lặng, không lộ ra cho tới lúc đối soát.
+- **`maTinh` suy từ mã cơ sở**, không đọc từ cấu hình: `CauHinhCoSo::maTinh($maCskcb)` trả
+  về hai ký tự đầu (`01929` → `01`, `37470` → `37`). `config/organization.php` đã ghi rõ
+  "KHÔNG khai ma_tinh". Chốt cứng một mã tỉnh sẽ gửi hồ sơ Ninh Bình với `maTinh=01`.
 - **Đọc `maKetQua` trong THÂN phản hồi**, không phải mã HTTP. Cổng trả `HTTP 200` kèm
   `{"maKetQua":"401"}`. Khuôn retry bắt HTTP 401 của
   `CongDuLieuYTeDienBienXmlSubmitService` chép sang đây là không bao giờ retry.
@@ -385,6 +388,26 @@ Bảng mã kết quả (mục I.4 của tài liệu):
 500                      Lỗi hệ thống
 123,124,125,202,204,205  Lỗi liên quan đến nội dung file XML
 ```
+
+## 9b. Nhiều cơ sở KCB
+
+Hệ thống phục vụ nhiều cơ sở dưới cùng một đơn vị — Bạch Mai có `01929` (Hà Nội) và
+`37470` (Ninh Bình). Toàn bộ luồng TT12 đi theo `ma_cskcb` của **chính hồ sơ**, dùng lại
+hạ tầng đã có sẵn và đã chạy thật cho CTĐT/XML3176:
+
+| Điểm | Cách xử lý |
+|---|---|
+| Chọn cơ sở khi nạp | Ô chọn lấy từ `DanhSachCoSo::danhSach()` (đọc `his_branch`, gom các cơ sở HIS cùng mã CSKCB thành một lựa chọn). **Không có giá trị mặc định** — mặc định là cái bẫy khiến người dùng nạp danh mục Ninh Bình vào cơ sở Hà Nội. Endpoint tải lên đối chiếu lại giá trị nhận được với danh sách này. |
+| Tài khoản cổng | `new BHYTLoginService($maCskcb)` → `CauHinhCoSo::cua()` đọc khối `organization.BHYT_CO_SO`. Cơ sở chưa khai thì **ném**, không rơi về tài khoản mặc định. |
+| Token | Cache theo khoá `bhyt_tokens:<ma_cskcb>`, hai cơ sở không dùng nhầm token của nhau. |
+| `maTinh` | `CauHinhCoSo::maTinh($maCskcb)` — hai ký tự đầu. |
+| Mã hồ sơ | `TT12_<MAU>_<MACSKCB>_<YYYYMMDD>_<STT>` đã chứa mã cơ sở, hai cơ sở không tranh số thứ tự của nhau. |
+| Kiểm | `LuatDong` bắt lỗi `MA_CSKCB_LECH` khi một dòng mang mã cơ sở khác mã của hồ sơ. Các cột trỏ sang cơ sở **khác** (`MA_CSKCB_THUOC`, `MA_CSKCB_TBYT`, `CSKCB_CGKT`, `CSKCB_CLS`) **không** bị kiểm — chúng chính là để ghi cơ sở khác. |
+| Bảng danh mục | Khoá duy nhất của cả sáu bảng đều chứa `ma_cskcb` (mục 5.1), nên hai cơ sở không đè dữ liệu của nhau. Đây cũng là lý do `medical_staffs` và `equipment_catalogs` phải được thêm cột `ma_cskcb`. |
+| Màn danh sách | Có ô lọc theo cơ sở và cột Mã CSKCB. |
+
+Bước nghiệm thu cuối của kế hoạch chạy trọn luồng cho **cả hai** cơ sở và đối chiếu số
+dòng danh mục theo từng mã.
 
 ## 10. Đồng bộ danh mục — `Tt12DongBoDanhMuc`
 
