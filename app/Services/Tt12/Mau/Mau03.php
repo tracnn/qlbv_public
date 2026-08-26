@@ -49,7 +49,7 @@ class Mau03 extends MauCoSo
             array('the' => 'MA_DL_CB',       'kieu' => 'chuoi', 'max' => 3,    'bat_buoc' => false),
             array('the' => 'TLHH_CB',        'kieu' => 'so',    'max' => 4,    'bat_buoc' => false),
             array('the' => 'TLHH_BQ',        'kieu' => 'so',    'max' => 4,    'bat_buoc' => false),
-            array('the' => 'MA_CSKCB_THUOC', 'kieu' => 'chuoi', 'max' => 5,    'bat_buoc' => false),
+            array('the' => 'MA_CSKCB_THUOC', 'kieu' => 'chuoi', 'max' => 7,   'bat_buoc' => false),
             array('the' => 'TU_NGAY',        'kieu' => 'ngay8', 'max' => 8,    'bat_buoc' => true),
             array('the' => 'DEN_NGAY',       'kieu' => 'ngay8', 'max' => 8,    'bat_buoc' => false),
         );

@@ -31,7 +31,7 @@ class Mau06 extends MauCoSo
             array('the' => 'NAM_SX',      'kieu' => 'so',    'max' => 4,    'bat_buoc' => false),
             array('the' => 'NAM_SD',      'kieu' => 'so',    'max' => 4,    'bat_buoc' => false),
             array('the' => 'MA_MAY',      'kieu' => 'chuoi', 'max' => null, 'bat_buoc' => true),
-            array('the' => 'SO_LUU_HANH', 'kieu' => 'chuoi', 'max' => 20,   'bat_buoc' => false),
+            array('the' => 'SO_LUU_HANH', 'kieu' => 'chuoi', 'max' => 100,   'bat_buoc' => false),
             array('the' => 'HD_TU',       'kieu' => 'ngay8', 'max' => 8,    'bat_buoc' => false),
             array('the' => 'HD_DEN',      'kieu' => 'ngay8', 'max' => 8,    'bat_buoc' => false),
             array('the' => 'TU_NGAY',     'kieu' => 'ngay8', 'max' => 8,    'bat_buoc' => true),
