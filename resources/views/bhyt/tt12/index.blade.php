@@ -152,6 +152,18 @@ $(document).on('click', '#btn-gui-nhieu', function () {
         return;
     }
 
+    // Chan som cho de chiu, KHONG phai chot an toan: chot that nam o
+    // BHYTTt12Controller::kyVaGuiNhieu(). Doc thang hang so cua controller de hai lop
+    // khong the lech nhau.
+    if (ds.length > {{ \App\Http\Controllers\BHYT\BHYTTt12Controller::TRAN_GUI_NHIEU }}) {
+        Swal.fire(
+            'Chọn quá nhiều hồ sơ',
+            'Mỗi lượt chỉ gửi tối đa {{ \App\Http\Controllers\BHYT\BHYTTt12Controller::TRAN_GUI_NHIEU }} hồ sơ. Đang chọn ' + ds.length + ' hồ sơ.',
+            'info'
+        );
+        return;
+    }
+
     var $nut = $(this);
 
     // Hoi kem CON SO. Cong BHXH nhan la nhan that, khong co duong rut lai.

@@ -32,6 +32,19 @@ use Maatwebsite\Excel\Facades\Excel;
  */
 class BHYTTt12Controller extends Controller
 {
+    /**
+     * Tran so ho so mot luot gui hang loat.
+     *
+     * Kiem o SERVER chu khong chi o JavaScript: gioi han phia trinh duyet chi la tien nghi
+     * cho nguoi dung, ai goi thang endpoint se lot qua het. Va endpoint nay xep hang KY VA
+     * GUI THAT len cong BHXH.
+     *
+     * Bang con so cua CTDT cho nhat quan. Luu y mot ho so TT12 nang hon mot chung tu CTDT
+     * nhieu lan - no la ca mot tep danh muc, co the toi hang chuc nghin dong - nen neu sau
+     * nay hang doi bi don thi day la con so dau tien nen ha.
+     */
+    const TRAN_GUI_NHIEU = 50;
+
     public function importIndex()
     {
         return view('bhyt.tt12.import', array(
@@ -277,6 +290,30 @@ class BHYTTt12Controller extends Controller
     {
         $ma = $request->input('ma_ho_so', array());
         $ma = is_array($ma) ? $ma : array($ma);
+
+        // Chuan hoa TRUOC khi do tran: dem con so tho thi 60 phan tu trung nhau bi tu choi
+        // oan, trong khi whereIn() phia duoi von da gop trung - tuc chi vai ho so that su
+        // duoc xep hang.
+        $ma = array_values(array_unique(array_filter(array_map(function ($m) {
+            return trim((string) $m);
+        }, $ma), 'strlen')));
+
+        if (empty($ma)) {
+            return response()->json(array(
+                'thanh_cong' => false,
+                'thong_diep' => 'Chưa chọn hồ sơ nào.',
+            ), 400);
+        }
+
+        // Chan CA LO chu khong xep 50 cai dau roi bo phan con lai - nguoi dung se tuong da
+        // gui het.
+        if (count($ma) > self::TRAN_GUI_NHIEU) {
+            return response()->json(array(
+                'thanh_cong' => false,
+                'thong_diep' => 'Mỗi lượt chỉ gửi tối đa ' . self::TRAN_GUI_NHIEU
+                    . ' hồ sơ. Đang chọn ' . count($ma) . ' hồ sơ.',
+            ), 422);
+        }
 
         $nguoi = $request->user() ? $request->user()->loginname : null;
 

@@ -137,6 +137,25 @@ class HopThoaiSwalTest extends TestCase
     }
 
     /** @test */
+    public function ca_hai_man_deu_canh_bao_tran_gui_nhieu_o_trinh_duyet()
+    {
+        // Chot that nam o may chu; canh bao nay chi la tien nghi - nhung thieu no thi nguoi
+        // dung tich 200 dong, bam gui, cho vong quay, roi nhan mot thong bao tu choi ma
+        // khong hieu tai sao. Canh o day de hai man khong lech nhau.
+        $cap = array(
+            'bhyt/tt12/index.blade.php' => 'BHYTTt12Controller::TRAN_GUI_NHIEU',
+            'bhyt/ctdt/index.blade.php' => 'BHYTCtdtController::TRAN_GUI_NHIEU',
+        );
+
+        foreach ($cap as $tep => $hangSo) {
+            $ma = $this->boChuThich($this->nguon($tep));
+
+            $this->assertContains($hangSo, $ma,
+                $tep . ': phai doc tran tu hang so cua controller, khong go cung con so');
+        }
+    }
+
+    /** @test */
     public function tt12_bao_thanh_cong_TRUOC_khi_phat_su_kien()
     {
         // alert() chan luong nen su kien tu nhien phat sau khi nguoi dung bam OK. Swal thi
