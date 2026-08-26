@@ -17,6 +17,7 @@ rồi dựng lại — không sửa trực tiếp tệp `.docx`, vì lần dựn
 | `part4.js` | Phần IV — Quản lý danh mục |
 | `part5.js` | Phần V — Tra cứu lỗi hồ sơ theo mã điều trị |
 | `part6.js` | Phần VI — Chứng từ điện tử theo Phụ lục 02 |
+| `part7.js` | Phần VII — Danh mục theo Thông tư 12/2026 |
 | `appendix.js` | Phụ lục A (tra cứu sự cố) và Phụ lục B (tiến trình nền) |
 | `build.js` | Ghép các phần, khai báo trang, header/footer, đánh số |
 

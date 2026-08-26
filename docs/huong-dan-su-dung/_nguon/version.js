@@ -15,7 +15,7 @@
  * NGAY_PHAT_HANH cho khớp dòng đó.
  */
 
-const PHIEN_BAN = '1.3';
+const PHIEN_BAN = '1.4';
 
 const NGAY_PHAT_HANH = 'Tháng 8 năm 2026';
 
@@ -27,6 +27,13 @@ const NGAY_PHAT_HANH = 'Tháng 8 năm 2026';
  * thay vì đọc lại cả tài liệu.
  */
 const LICH_SU = [
+  {
+    ban: '1.4',
+    ngay: '26/08/2026',
+    noi_dung:
+      'Bổ sung Phần VII — Danh mục theo Thông tư 12/2026: tải biểu mẫu Excel cho sáu mẫu danh mục, nạp và kiểm dữ liệu, ký số và gửi lên cổng Bảo hiểm xã hội, đồng bộ sang bộ danh mục dùng để kiểm hồ sơ XML 3176, kèm hai đường cứu hộ Kiểm lại và Đồng bộ lại danh mục.',
+    lien_quan: 'Phần VII (mới); Chương 0 cập nhật bản đồ menu và thứ tự đọc; Phụ lục A và B bổ sung mục tra cứu sự cố và tiến trình nền.',
+  },
   {
     ban: '1.3',
     ngay: '24/08/2026',
