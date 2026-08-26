@@ -55,9 +55,15 @@ class CtdtSubmitService
     {
         $cauHinh = config('ctdt.dich_vu.' . $dichVu);
 
-        if (empty($cauHinh['url']) || empty($cauHinh['loai_hs'])) {
+        if (empty($cauHinh['duong_dan']) || empty($cauHinh['loai_hs'])) {
             throw new \InvalidArgumentException('Dich vu khong biet: ' . (string) $dichVu);
         }
+
+        // Ghep host luc DOC chu khong go cung trong config/ctdt.php: host doi theo moi
+        // truong (thu nghiem / chinh thuc) va nam o organization.BHYT.base_url, con duong
+        // dan la hang so giao thuc di theo kho ma. CongBhxh NEM khi chua khai base_url -
+        // roi ve host that se lam mot may thu nghiem gui ho so that len cong that.
+        $cauHinh['url'] = \App\Services\BHYT\CongBhxh::url($cauHinh['duong_dan']);
 
         // Dung login service theo dung ma co so cua ho so nay, KHONG dung mot ban khong ma
         // co so. Hai ly do:

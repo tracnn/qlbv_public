@@ -10,28 +10,29 @@
  * rieng cua tung may.
  */
 return [
-    'token_url' => 'https://egw.baohiemxahoi.gov.vn/api/token/take',
-
-    // Ba dich vu gui cua PL02. Khac nhau DUY NHAT o the goc, loai_hs va url.
+    // Ba dich vu gui cua PL02. Khac nhau DUY NHAT o the goc, loai_hs va duong dan.
+    //
+    // DUONG DAN, khong phai URL day du: host cong BHXH doi theo moi truong nen no nam o
+    // config/organization.php khoa BHYT.base_url. Ghep bang App\Services\BHYT\CongBhxh.
     // loai_hs de kieu CHUOI: '39' khac 39 khi so sanh nghiem ngat trong ma.
     'dich_vu' => [
         'CT2025' => [
             'ten'     => 'Chứng từ TT25/2025',
             'the_goc' => 'HSCHUNGTU',
             'loai_hs' => '39',
-            'url'     => 'https://egw.baohiemxahoi.gov.vn/api/chungtugw/GuiHoSoChungTu2025',
+            'duong_dan' => '/api/chungtugw/GuiHoSoChungTu2025',
         ],
         'GBT' => [
             'ten'     => 'Giấy báo tử',
             'the_goc' => 'HSDLGBT',
             'loai_hs' => '60',
-            'url'     => 'https://egw.baohiemxahoi.gov.vn/api/hososuckhoe/guiGiayToDienTu',
+            'duong_dan' => '/api/hososuckhoe/guiGiayToDienTu',
         ],
         'GCS' => [
             'ten'     => 'Giấy chứng sinh',
             'the_goc' => 'HSDLGCS',
             'loai_hs' => '61',
-            'url'     => 'https://egw.baohiemxahoi.gov.vn/api/hososuckhoe/guiGiayToDienTu',
+            'duong_dan' => '/api/hososuckhoe/guiGiayToDienTu',
         ],
     ],
 

@@ -18,9 +18,9 @@ class CtdtCauHinhTest extends TestCase
     public function cacDichVu()
     {
         return [
-            ['CT2025', 'HSCHUNGTU', '39', 'https://egw.baohiemxahoi.gov.vn/api/chungtugw/GuiHoSoChungTu2025'],
-            ['GBT',    'HSDLGBT',   '60', 'https://egw.baohiemxahoi.gov.vn/api/hososuckhoe/guiGiayToDienTu'],
-            ['GCS',    'HSDLGCS',   '61', 'https://egw.baohiemxahoi.gov.vn/api/hososuckhoe/guiGiayToDienTu'],
+            ['CT2025', 'HSCHUNGTU', '39', '/api/chungtugw/GuiHoSoChungTu2025'],
+            ['GBT',    'HSDLGBT',   '60', '/api/hososuckhoe/guiGiayToDienTu'],
+            ['GCS',    'HSDLGCS',   '61', '/api/hososuckhoe/guiGiayToDienTu'],
         ];
     }
 
@@ -36,7 +36,9 @@ class CtdtCauHinhTest extends TestCase
             $this->assertArrayHasKey($ma, $dichVu, 'Thieu dich vu ' . $ma);
             $this->assertSame($theGoc, $dichVu[$ma]['the_goc'], $ma . ': sai the goc');
             $this->assertSame($loaiHs, $dichVu[$ma]['loai_hs'], $ma . ': sai loai_hs');
-            $this->assertSame($url, $dichVu[$ma]['url'], $ma . ': sai url');
+            // Khang dinh DUONG DAN, khong phai URL day du - xem ghi chu cung loai trong
+            // Tt12CauHinhTest. Host o organization.BHYT.base_url, doi theo moi truong.
+            $this->assertSame($url, $dichVu[$ma]['duong_dan'], $ma . ': sai duong dan');
             $this->assertNotEmpty($dichVu[$ma]['ten'], $ma . ': thieu ten hien thi');
         }
     }

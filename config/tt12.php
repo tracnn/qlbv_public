@@ -12,12 +12,12 @@ return [
     // lop Mau0x vi chung di lien voi dac ta cot.
     // loai_hs de kieu CHUOI: '10' khac 10 khi so sanh nghiem ngat trong ma.
     'mau' => [
-        'MAU_01' => ['loai_hs' => '70', 'url' => 'https://egw.baohiemxahoi.gov.vn/api/DanhMucGW/GuiDanhMuc01_BPCMKBCB'],
-        'MAU_02' => ['loai_hs' => '71', 'url' => 'https://egw.baohiemxahoi.gov.vn/api/DanhMucGW/GuiDanhMuc02_NLKCB'],
-        'MAU_03' => ['loai_hs' => '10', 'url' => 'https://egw.baohiemxahoi.gov.vn/api/DanhMucGW/GuiDanhMuc03_DMTHUOC'],
-        'MAU_04' => ['loai_hs' => '11', 'url' => 'https://egw.baohiemxahoi.gov.vn/api/DanhMucGW/GuiDanhMuc04_DMVTYT'],
-        'MAU_05' => ['loai_hs' => '12', 'url' => 'https://egw.baohiemxahoi.gov.vn/api/DanhMucGW/GuiDanhMuc05_DVKT'],
-        'MAU_06' => ['loai_hs' => '72', 'url' => 'https://egw.baohiemxahoi.gov.vn/api/DanhMucGW/GuiDanhMuc06_DMTBYT'],
+        'MAU_01' => ['loai_hs' => '70', 'duong_dan' => '/api/DanhMucGW/GuiDanhMuc01_BPCMKBCB'],
+        'MAU_02' => ['loai_hs' => '71', 'duong_dan' => '/api/DanhMucGW/GuiDanhMuc02_NLKCB'],
+        'MAU_03' => ['loai_hs' => '10', 'duong_dan' => '/api/DanhMucGW/GuiDanhMuc03_DMTHUOC'],
+        'MAU_04' => ['loai_hs' => '11', 'duong_dan' => '/api/DanhMucGW/GuiDanhMuc04_DMVTYT'],
+        'MAU_05' => ['loai_hs' => '12', 'duong_dan' => '/api/DanhMucGW/GuiDanhMuc05_DVKT'],
+        'MAU_06' => ['loai_hs' => '72', 'duong_dan' => '/api/DanhMucGW/GuiDanhMuc06_DMTBYT'],
     ],
 
     // TEN TRUONG BODY nam o day chu khong go cung trong ma. Tep PDF cua BHXH bi loi

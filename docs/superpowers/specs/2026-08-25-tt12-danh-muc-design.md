@@ -546,6 +546,13 @@ Bốn tệp cấu hình nằm trong `.gitignore` theo thiết kế có sẵn c�
 |---|---|
 | `config/filesystems.php` | Thêm đĩa `exportTt12` trỏ `storage_path('app/tt12')`. Thiếu nó thì `SignTt12Job` ném khi ghi tệp đã ký. Đĩa `exportCtdt` của module chứng từ điện tử đã ra sản phẩm theo đúng cách này. |
 | `config/organization.php` | Thêm khối `tt12` với `sign_enabled`, `submit_enabled`, `hang_doi`. **Không** khai `ma_tinh` và **không** khai `ma_cskcb` mặc định — xem mục 9b. Tài khoản cổng của từng cơ sở dùng lại khối `BHYT_CO_SO` đã có. |
+| `config/organization.php` | Khai `$bhxhBaseUrl` ở đầu tệp và `BHYT.base_url` — **host** cổng BHXH. Đổi đúng một dòng đó là chuyển được toàn bộ hệ thống giữa môi trường thử nghiệm và chính thức: năm URL của khối `BHYT` ghép từ nó ngay lúc nạp config, còn ba dịch vụ CTĐT và sáu mẫu TT12 ghép lúc đọc qua `App\Services\BHYT\CongBhxh`. |
+
+**Vì sao host tách khỏi đường dẫn.** Đường dẫn từng dịch vụ (`/api/DanhMucGW/GuiDanhMuc03_DMTHUOC`…) là **hằng số giao thức** do BHXH quy định, giống nhau ở mọi nơi cài đặt nên đi theo kho mã trong `config/tt12.php` và `config/ctdt.php`. Host đổi theo môi trường của từng máy nên nằm ở `config/organization.php` — tệp ngoài kho mã.
+
+**`CongBhxh` ném khi thiếu `base_url`, không rơi về host thật.** Vì `organization.php` nằm ngoài kho mã, một bản sao mới sẽ không có khoá này. Rơi về host thật nghĩa là một máy thử nghiệm quên khai sẽ **gửi hồ sơ thật lên cổng thật** — hỏng theo hướng tệ nhất, và không dấu hiệu gì cho tới lúc đối soát. Ném thì hỏng ngay, ồn ào, đúng chỗ.
+
+`CauHinhCongBhxhTest` chốt việc này: mọi URL của khối `BHYT` phải bắt đầu bằng `base_url` (bắt trường hợp đổi host nhưng bỏ sót một dòng), đổi `base_url` thì cả sáu mẫu TT12 và ba dịch vụ CTĐT đổi theo, và hai tệp config giao thức không được còn chuỗi `https://` nào.
 
 `Tt12ManImportTest` có hai phép kiểm chốt việc này: một khẳng định đĩa `exportTt12` tồn tại,
 một khẳng định khối `tt12` đủ khoá. Chúng đỏ trên máy chưa khai — đó là **có chủ ý**, vì

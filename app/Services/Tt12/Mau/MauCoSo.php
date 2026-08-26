@@ -172,6 +172,12 @@ abstract class MauCoSo
     /** @return string url gui lay tu config */
     public static function url()
     {
-        return (string) config('tt12.mau.' . static::ma() . '.url');
+        return \App\Services\BHYT\CongBhxh::url(static::duongDan());
+    }
+
+    /** @return string duong dan sau host, hang so giao thuc lay tu config/tt12.php */
+    public static function duongDan()
+    {
+        return (string) config('tt12.mau.' . static::ma() . '.duong_dan');
     }
 }

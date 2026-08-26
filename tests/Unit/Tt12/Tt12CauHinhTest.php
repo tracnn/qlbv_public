@@ -46,11 +46,14 @@ class Tt12CauHinhTest extends TestCase
             $cauHinh = config('tt12.mau.' . $ma);
             $this->assertInternalType('array', $cauHinh, $ma . ': thieu config');
             $this->assertSame($loaiHs, $cauHinh['loai_hs'], $ma . ': sai loai_hs');
-            $this->assertStringEndsWith($duoiUrl, $cauHinh['url'], $ma . ': sai url');
+            // Khang dinh DUONG DAN, khong phai URL day du: host nam o
+            // organization.BHYT.base_url va doi theo moi truong. Ghim host o day se lam
+            // bo test do tren may thu nghiem - dung thu ta muon cau hinh duoc.
+            $this->assertStringEndsWith($duoiUrl, $cauHinh['duong_dan'], $ma . ': sai duong dan');
             $this->assertStringStartsWith(
-                'https://egw.baohiemxahoi.gov.vn/api/DanhMucGW/',
-                $cauHinh['url'],
-                $ma . ': url khong tro dung DanhMucGW'
+                '/api/DanhMucGW/',
+                $cauHinh['duong_dan'],
+                $ma . ': duong dan khong tro dung DanhMucGW'
             );
         }
     }

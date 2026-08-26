@@ -74,14 +74,19 @@ class CtdtSubmitServiceTest extends TestCase
 {
     private function dungDichVu()
     {
+        // Host o organization.BHYT.base_url, duong dan o ctdt.dich_vu - CtdtSubmitService
+        // ghep hai thu do luc doc qua CongBhxh. Dat ca hai o day de test khong phu thuoc
+        // cau hinh that cua may dang chay.
+        config(['organization.BHYT.base_url' => 'https://vi-du.test']);
+
         config(['ctdt.dich_vu' => [
             'CT2025' => [
                 'ten' => 'Chứng từ TT25/2025', 'the_goc' => 'HSCHUNGTU', 'loai_hs' => '39',
-                'url' => 'https://vi-du.test/api/chungtugw/GuiHoSoChungTu2025',
+                'duong_dan' => '/api/chungtugw/GuiHoSoChungTu2025',
             ],
             'GBT' => [
                 'ten' => 'Giấy báo tử', 'the_goc' => 'HSDLGBT', 'loai_hs' => '60',
-                'url' => 'https://vi-du.test/api/hososuckhoe/guiGiayToDienTu',
+                'duong_dan' => '/api/hososuckhoe/guiGiayToDienTu',
             ],
         ]]);
     }
