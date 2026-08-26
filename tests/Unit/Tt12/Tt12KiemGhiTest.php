@@ -91,15 +91,16 @@ class Tt12KiemGhiTest extends TestCase
     }
 
     /**
-     * Day la bai quan trong nhat cua lan sua STT_TRUNG: hai tt12_dong duoc bo nap gan
-     * stt = 1 va 2 nhu that (khong the trung, co unique(ho_so_id, stt)), nhung nguoi
-     * dung go CUNG mot gia tri STT trong Excel (du_lieu['STT']). Duong chay THAT phai
-     * bat duoc truong hop nay - bai LuatHoSoTest cu goi thang LuatHoSo::kiem() voi
-     * 'stt' => 1 trung nhau la mot dau vao khong bao gio xay ra tren thuc te.
+     * STT_TRUNG DA DUOC GO ngay 26/08/2026 theo yeu cau chu du an, cung voi ca lop LuatHoSo.
+     *
+     * Giu bai nay va LAT NGUOC khang dinh thay vi xoa han: no ghi lai rang hai dong cung
+     * gia tri STT nay di het duong kiem ma KHONG sinh loi - do la lua chon co y, khong phai
+     * bo sot. Neu sau nay ai do khoi phuc luat, bai nay do va ho se thay ngay day la mot
+     * quyet dinh dang dao nguoc chu khong phai mot bai test loi thoi.
      *
      * @test
      */
-    public function hai_dong_co_stt_nguoi_dung_trung_nhau_bi_bat_du_stt_cot_khac_nhau()
+    public function hai_dong_co_stt_nguoi_dung_trung_nhau_KHONG_con_bi_bat()
     {
         $hoSo = $this->hoSoVoiDong(array(
             $this->dong(array('STT' => '5', 'MA_KHOA' => 'K01')),
@@ -108,8 +109,8 @@ class Tt12KiemGhiTest extends TestCase
 
         $soLoi = (new Tt12Kiem())->kiem($hoSo);
 
-        $this->assertGreaterThan(0, $soLoi);
-        $this->assertSame(1, Tt12Loi::where('ho_so_id', $hoSo->id)
+        $this->assertSame(0, $soLoi, 'STT trung nhau khong con la loi');
+        $this->assertSame(0, Tt12Loi::where('ho_so_id', $hoSo->id)
             ->where('ma_loi', 'STT_TRUNG')->count());
     }
 

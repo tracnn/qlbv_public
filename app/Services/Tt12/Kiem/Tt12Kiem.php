@@ -12,10 +12,12 @@ use App\Services\Tt12\Tt12MauRegistry;
 /**
  * Ghep cac luat lai, chay tren mot ho so, ghi ket qua xuong tt12_loi.
  *
- * VI SAO LUAT HO SO PHAI DOC HET DONG: LuatHoSo can nhin toan bo tep de biet STT nao
- * trung va ma nao co hai dong. Doc theo lo cho luat theo o/theo dong nhung phai gom
- * (stt, ma, tu_ngay, den_ngay) cua moi dong cho luat theo ho so - do la BON truong chu
- * khong phai ca dong, nen mot tep 50.000 dong ton khoang vai MB, khong phai vai chuc.
+ * TU 26/08/2026 KHONG CON LUAT THEO TOAN HO SO. Ba luat cua lop LuatHoSo (STT_TRUNG,
+ * HAI_DONG_CUNG_MO, HIEU_LUC_CHONG_LAN) da duoc go theo yeu cau chu du an va lop do bi
+ * xoa. Nho vay vong lap theo lo khong con phai gom mot mang cho MOI DONG de nuoi luot
+ * kiem cuoi - tep 30.000 dong nay chi giu dung mot lo trong bo nho tai moi thoi diem.
+ *
+ * Ba lop luat con lai deu chi nhin TUNG DONG: LuatO, LuatDong, LuatRiengMau.
  *
  * VI SAO GHI LOI NGAY TRONG TUNG LO: chunk() chi tiet kiem phan DOC. Ban truoc gom toan
  * bo doi tuong Tt12Loi vao mot mang roi ghi mot lan sau khi doc het - mot thao tac Excel
@@ -85,12 +87,10 @@ class Tt12Kiem
 
         $lop = Tt12MauRegistry::cho($hoSo->mau);
 
-        $tomTat = array();
-
         Tt12Dong::where('ho_so_id', $hoSo->id)
             ->with('thuocPx')
             ->orderBy('stt')
-            ->chunk(self::CO_LO, function ($cacDong) use ($lop, $hoSo, &$dem, &$tomTat) {
+            ->chunk(self::CO_LO, function ($cacDong) use ($lop, $hoSo, &$dem) {
                 $loi = array();
 
                 foreach ($cacDong as $dong) {
@@ -108,25 +108,20 @@ class Tt12Kiem
                         LuatDong::kiem($lop, $duLieu, $dong->stt, $hoSo->ma_cskcb),
                         LuatRiengMau::kiem($lop, $duLieu, $dong->stt, $duLieuCon)
                     );
-
-                    // Chi giu BON truong cho luat theo ho so, khong giu ca dong.
-                    $tomTat[] = array(
-                        'stt'    => $dong->stt,
-                        'du_lieu' => array(
-                            $lop::theMa() => isset($duLieu[$lop::theMa()]) ? $duLieu[$lop::theMa()] : '',
-                            'TU_NGAY'     => isset($duLieu['TU_NGAY']) ? $duLieu['TU_NGAY'] : '',
-                            'DEN_NGAY'    => isset($duLieu['DEN_NGAY']) ? $duLieu['DEN_NGAY'] : '',
-                            'STT'         => isset($duLieu['STT']) ? $duLieu['STT'] : '',
-                        ),
-                    );
                 }
 
                 // GHI NGAY, roi bo $loi. Day la ca diem cua viec doc theo lo.
                 $this->ghiLo($hoSo, $loi, $dem);
             });
 
-        $this->ghiLo($hoSo, LuatHoSo::kiem($lop, $tomTat), $dem);
-
+        // KHONG con luot kiem theo TOAN HO SO. Ba luat cua no (STT_TRUNG, HAI_DONG_CUNG_MO,
+        // HIEU_LUC_CHONG_LAN) da duoc go ngay 26/08/2026 theo yeu cau chu du an, va lop
+        // LuatHoSo bi xoa theo.
+        //
+        // Go luon $tomTat chu khong de lai mot lop rong: bien do gom MOT mang cho MOI DONG
+        // cua ca tep va la thu duy nhat song sot qua vong lap theo lo. Voi tep 30.000 dong
+        // tren may 128 MB, do dung la thu ma viec doc theo lo sinh ra de tranh. Giu mot lop
+        // no-op kem bo tich luy la tra ca cai gia ma khong duoc gi.
         return $this->chot($hoSo, $dem);
     }
 

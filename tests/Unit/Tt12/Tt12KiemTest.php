@@ -6,7 +6,6 @@ use Tests\TestCase;
 use App\Services\Tt12\Tt12MauRegistry;
 use App\Services\Tt12\Kiem\LuatO;
 use App\Services\Tt12\Kiem\LuatDong;
-use App\Services\Tt12\Kiem\LuatHoSo;
 use App\Services\Tt12\Kiem\LuatRiengMau;
 
 /**
@@ -159,79 +158,6 @@ class Tt12KiemTest extends TestCase
     }
 
     /** @test */
-    public function stt_trung_nhau_trong_mot_ho_so_bi_bat()
-    {
-        // $dong['stt'] la con tro dong (khac nhau, dung nhu bo nap gan), $dong['du_lieu']['STT']
-        // moi la gia tri nguoi dung go trong Excel (giong nhau) - luat phai dem tren gia tri nay.
-        $loi = LuatHoSo::kiem($this->lop('MAU_01'), array(
-            array('stt' => 1, 'du_lieu' => $this->dongMau01(array('STT' => '5', 'MA_KHOA' => 'K01'))),
-            array('stt' => 2, 'du_lieu' => $this->dongMau01(array('STT' => '5', 'MA_KHOA' => 'K02'))),
-        ));
-
-        $this->assertContains('STT_TRUNG', $this->maLoi($loi));
-    }
-
-    /** @test */
-    public function stt_5_va_05_bi_coi_la_trung()
-    {
-        $loi = LuatHoSo::kiem($this->lop('MAU_01'), array(
-            array('stt' => 1, 'du_lieu' => $this->dongMau01(array('STT' => '5', 'MA_KHOA' => 'K01'))),
-            array('stt' => 2, 'du_lieu' => $this->dongMau01(array('STT' => '05', 'MA_KHOA' => 'K02'))),
-        ));
-
-        $this->assertContains('STT_TRUNG', $this->maLoi($loi));
-    }
-
-    /** @test */
-    public function hai_dong_cung_de_trong_stt_khong_sinh_stt_trung()
-    {
-        $loi = LuatHoSo::kiem($this->lop('MAU_01'), array(
-            array('stt' => 1, 'du_lieu' => $this->dongMau01(array('STT' => '', 'MA_KHOA' => 'K01'))),
-            array('stt' => 2, 'du_lieu' => $this->dongMau01(array('STT' => '', 'MA_KHOA' => 'K02'))),
-        ));
-
-        $this->assertNotContains('STT_TRUNG', $this->maLoi($loi));
-    }
-
-    /** @test */
-    public function cap_dong_cu_moi_hop_le_thi_khong_bao_loi()
-    {
-        // Dong cu: co DEN_NGAY. Dong moi: DEN_NGAY rong, TU_NGAY sau DEN_NGAY cua dong cu.
-        $loi = LuatHoSo::kiem($this->lop('MAU_01'), array(
-            array('stt' => 1, 'du_lieu' => $this->dongMau01(
-                array('STT' => '1', 'MA_KHOA' => 'K01', 'TU_NGAY' => '20250101', 'DEN_NGAY' => '20251231'))),
-            array('stt' => 2, 'du_lieu' => $this->dongMau01(
-                array('STT' => '2', 'MA_KHOA' => 'K01', 'TU_NGAY' => '20260101', 'DEN_NGAY' => ''))),
-        ));
-
-        $this->assertSame(array(), $loi);
-    }
-
-    /** @test */
-    public function hai_dong_cung_ma_cung_de_ngo_den_ngay_bi_bat()
-    {
-        $loi = LuatHoSo::kiem($this->lop('MAU_01'), array(
-            array('stt' => 1, 'du_lieu' => $this->dongMau01(array('MA_KHOA' => 'K01', 'DEN_NGAY' => ''))),
-            array('stt' => 2, 'du_lieu' => $this->dongMau01(array('MA_KHOA' => 'K01', 'DEN_NGAY' => ''))),
-        ));
-
-        $this->assertContains('HAI_DONG_CUNG_MO', $this->maLoi($loi));
-    }
-
-    /** @test */
-    public function dong_moi_bat_dau_truoc_khi_dong_cu_ket_thuc_bi_bat()
-    {
-        $loi = LuatHoSo::kiem($this->lop('MAU_01'), array(
-            array('stt' => 1, 'du_lieu' => $this->dongMau01(
-                array('MA_KHOA' => 'K01', 'TU_NGAY' => '20250101', 'DEN_NGAY' => '20261231'))),
-            array('stt' => 2, 'du_lieu' => $this->dongMau01(
-                array('MA_KHOA' => 'K01', 'TU_NGAY' => '20260101', 'DEN_NGAY' => ''))),
-        ));
-
-        $this->assertContains('HIEU_LUC_CHONG_LAN', $this->maLoi($loi));
-    }
-
-    /** @test */
     public function mau_03_duoc_lieu_thieu_ten_khoa_hoc_bi_bat()
     {
         $duLieu = array('LOAI_THUOC' => '4', 'TEN_KHOA_HOC' => '', 'NGUON_GOC' => 'Việt Nam',
@@ -322,32 +248,4 @@ class Tt12KiemTest extends TestCase
         $this->assertSame(array(), LuatDong::kiem($this->lop('MAU_03'), $duLieu, 1, '01929'));
     }
 
-    /** @test */
-    public function hai_dong_cung_ma_cung_TU_NGAY_cho_ket_qua_ON_DINH()
-    {
-        // usort() cua PHP KHONG on dinh. Hai dong cung ma cung TU_NGAY thi thu tu sau sap
-        // xep khong xac dinh, va HIEU_LUC_CHONG_LAN bao luc co luc khong cho CUNG MOT TEP.
-        // Day khong phai bien hiem: cap dong cu/moi cung ngay chinh la tep TT12 khuyen
-        // khich gui khi co so sua nham ngay. Ma day la luat CHAN KY.
-        $mot = array('stt' => 1, 'du_lieu' => array(
-            'MA_KHOA' => 'K01', 'TU_NGAY' => '20260101', 'DEN_NGAY' => '20260101',
-        ));
-
-        $hai = array('stt' => 2, 'du_lieu' => array(
-            'MA_KHOA' => 'K01', 'TU_NGAY' => '20260101', 'DEN_NGAY' => '',
-        ));
-
-        $xuoi = LuatHoSo::kiem($this->lop('MAU_01'), array($mot, $hai));
-        $nguoc = LuatHoSo::kiem($this->lop('MAU_01'), array($hai, $mot));
-
-        $moTa = function (array $loi) {
-            return array_map(function ($l) { return $l->maLoi() . '|' . $l->moTa(); }, $loi);
-        };
-
-        $this->assertSame(
-            $moTa($xuoi),
-            $moTa($nguoc),
-            'Cung mot tap dong phai cho cung mot ket qua bat ke thu tu doc'
-        );
-    }
 }
