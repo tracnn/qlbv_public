@@ -61,7 +61,17 @@ Cả ba dùng chung khuôn:
 - Mã kết quả: `200` thành công · `205` `fileBase64Str` không hợp lệ · `401` lỗi xác thực ·
   `500` lỗi server · `1001` file size quá dài.
 - Gói XML có thẻ `CHUKYDONVI` chứa chữ ký XMLDSig: canonicalization `xml-c14n-20010315`,
-  `rsa-sha256`, digest `sha256`, hai `Reference` (tới `Object-CHUKYDONVI-Id-*` và tới `Id-*`).
+  `rsa-sha256`, digest `sha256`, **một** `Reference URI=""` với transform
+  `enveloped-signature`.
+
+  > **Đính chính 2026-08-26.** Bản đầu của tài liệu này ghi "hai `Reference` (tới
+  > `Object-CHUKYDONVI-Id-*` và tới `Id-*`)". Điều đó **sai**, và cái sai đã lan sang đặc tả
+  > TT12. Kiểm chứng bằng chính hai hồ sơ cổng BHXH **đã tiếp nhận** (`maKetQua = 200`, mã
+  > giao dịch `HS_CHUNGTU01929_AE6612D6…` và `HS_CHUNGTU37470_8C7A4C84…`): mỗi tệp chỉ có
+  > **một** `<Reference URI="">` dùng `enveloped-signature`, và thuộc tính `Id` của
+  > `THONGTINHOSO` **không** được chữ ký tham chiếu tới. `URI=""` là ký trùm cả tài liệu nên
+  > nội dung vẫn nằm trong phạm vi ký — thuộc tính `Id` chỉ để cổng đối chiếu, không phải để
+  > XMLDSig trỏ vào.
 
 **Điểm khác biệt giao thức quan trọng:** `BHYTXmlSubmitService` hiện có đặt xác thực ở
 **header** (`accessToken`, `tokenId`, `passwordHash`) và body dùng tên trường khác

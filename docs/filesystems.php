@@ -140,12 +140,12 @@ return [
         // bam nut, khong phai luc trien khai.
         'exportCtdt' => [
             'driver' => 'local',
-            'root' => env('CTDT_EXPORT_PATH', 'D:\XML\ChungTuDienTu'),
+            'root' => 'D:\XML\ChungTuDienTu',
         ],
 
         'importCtdt' => [
             'driver' => 'local',
-            'root' => env('CTDT_IMPORT_PATH', 'D:\XML\ChungTuDienTu\inbox'),
+            'root' => 'D:\XML\ChungTuDienTu\inbox',
         ],
 
         // Noi ghi XML danh muc TT12 da ky. Chia theo thang o trong (SignTt12Job) nen thu muc
@@ -153,7 +153,7 @@ return [
         // nut ky, khong phai luc trien khai.
         'exportTt12' => [
             'driver' => 'local',
-            'root' => storage_path('app/tt12'),
+            'root' => 'D:\XML\tt12',
         ],
 
         'congDuLieuYTeDienBien' => [

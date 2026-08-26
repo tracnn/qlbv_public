@@ -385,11 +385,25 @@ một model serialize sẵn sẽ mang theo dữ liệu đã cũ.
 bom: lần gửi sau đọc đúng tệp đó và gửi lên cổng một gói không có chữ ký. Đĩa `exportTt12`
 khai trong `config/filesystems.php`.
 
-**Điểm phải nghiệm thu tay:** chữ ký TT12 có hai `<Reference>` — một trỏ tới
-`#Object-CHUKYDONVI-...`, một trỏ tới `#Id-{id_danh_sach}` của thẻ `DANHSACH_*`. Phần sinh
-`Reference` nằm bên dịch vụ HSM/USB bên ngoài nên **không xác minh được từ mã nguồn**.
-Giai đoạn 5 của kế hoạch triển khai có một bước riêng: ký thử một hồ sơ **một dòng**, mở
-XML kết quả đọc bằng mắt hai thẻ `Reference`, rồi mới gửi thật.
+**Điểm này đã nghiệm thu xong ngày 2026-08-26 — và kết quả khác dự đoán ban đầu.**
+
+Bản đầu của tài liệu ghi rằng chữ ký phải có **hai** `<Reference>` (một trỏ
+`#Object-CHUKYDONVI-...`, một trỏ `#Id-{id_danh_sach}`). Điều đó **sai**; nó thừa hưởng từ
+một khẳng định sai trong đặc tả CTĐT.
+
+Thực tế đo được: ký thử một hồ sơ MAU_01 một dòng qua dịch vụ USB Token
+(`sign_method = USB Token`, chứng thư "BỆNH VIỆN BẠCH MAI" do Viettel-CA SHA2 cấp) cho ra
+**một** `<Reference URI="">` với transform `enveloped-signature`, và thuộc tính
+`Id="Id-{id_danh_sach}"` của thẻ `DANHSACH_*` **không** được tham chiếu.
+
+Đây **không phải lỗi**, đã đối chiếu với hai hồ sơ CTĐT mà cổng BHXH **đã thực sự tiếp
+nhận** (`maKetQua = 200`, tại hai cơ sở 01929 và 37470): chúng có cấu trúc chữ ký y hệt —
+một `Reference URI=""` enveloped, thẻ `THONGTINHOSO` mang `Id` mà chữ ký không trỏ tới. Tức
+đây chính là dạng cổng chấp nhận trong thực tế sản xuất.
+
+`URI=""` là ký trùm cả tài liệu nên nội dung `DANHSACH_*` vẫn nằm trong phạm vi ký. Thuộc
+tính `Id` giữ nguyên giá trị: nó phục vụ việc đối chiếu phía cổng, và vẫn phải sinh **một
+lần lúc import** như mục trên nói.
 
 ## 9. Gửi — `Tt12SubmitService`
 
@@ -527,7 +541,7 @@ có chủ đích — chạy toàn bộ trước khi bắt đầu để chốt m�
 | 2 | Migration: năm bảng mới + cột bổ sung + đổi khoá `medical_staffs`, `department_bed_catalogs`, `equipment_catalogs` | `migrate` chạy được trên bản sao CSDL thật; xử lý trùng trước khi đổi khoá |
 | 3 | `Tt12DocExcel`, `Tt12Importer`, `Tt12LuuHoSo`, màn hình import | Import cả sáu tệp mẫu, xem được số dòng |
 | 4 | `Tt12Kiem`, `CheckTt12Job`, tab Lỗi, xuất Excel lỗi | Cố tình làm hỏng tệp mẫu, thấy đúng lỗi |
-| 5 | `Tt12PhongBi`, `SignTt12Job`, tab XML | Ký thử hồ sơ một dòng, mở XML đọc mắt hai thẻ `Reference` |
+| 5 | `Tt12PhongBi`, `SignTt12Job`, tab XML | ✅ **Xong 2026-08-26**: ký thử hồ sơ một dòng, `sign_method = USB Token`, XML đúng dạng cổng đang chấp nhận |
 | 6 | `Tt12SubmitService`, `SubmitTt12Job`, màn danh sách, ký/gửi hàng loạt | Gửi thật hồ sơ một dòng, xác nhận tên trường body và nhận `maGiaoDich` |
 | 7 | `Tt12DongBoDanhMuc` | Sau khi `200`, dữ liệu vào đúng bảng danh mục và `Xml3176Xml3Checker` tra được |
 
@@ -570,7 +584,7 @@ cổng và nhận về mã 401 mơ hồ.
 | Rủi ro | Cách xử lý |
 |---|---|
 | Tên trường body HTTP (`maCSKCB` hay `maCơ sở KCB`, `loaiHs` hay `loaiHoSo`) chưa chắc chắn do lỗi tìm–thay thế trong PDF | Để trong `config/tt12.php`; nghiệm thu bằng một hồ sơ một dòng ở giai đoạn 6 |
-| Dịch vụ ký HSM/USB có sinh đúng `Reference` trỏ tới `#Id` của thẻ `DANHSACH_*` hay không — không xác minh được từ mã nguồn | Bước đọc mắt XML đã ký ở giai đoạn 5, trước khi gửi thật |
+| ~~Dịch vụ ký HSM/USB có sinh đúng `Reference` trỏ tới `#Id` của thẻ `DANHSACH_*` hay không~~ | **Đã đóng 2026-08-26.** Nó KHÔNG sinh, và không cần: hồ sơ CTĐT cổng đã tiếp nhận cũng chỉ có một `Reference URI=""`. Xem mục 6 |
 | Ngưỡng kích thước gây mã lỗi `1001` không được tài liệu công bố | Ghi log kích thước base64 mỗi lần gửi; khi gặp `1001` thì báo người dùng tách tệp |
 | Dữ liệu trùng cản việc đổi khoá duy nhất trên ba bảng danh mục | Đếm trước khi viết kế hoạch; migration báo cáo, không tự xoá |
 | Máy chủ `qlbv_public` giới hạn PHP 128 MB / 120 giây | Đọc Excel và ghi danh mục đều theo lô; hồ sơ lớn đẩy qua hàng đợi |

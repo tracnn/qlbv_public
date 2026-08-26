@@ -65,6 +65,10 @@ set NSSM_PATH=%~dp0
 %NSSM_PATH%\nssm stop "QLBV JobSubmitCtdt"
 %NSSM_PATH%\nssm remove "QLBV JobSubmitCtdt" confirm
 
+:: Xoa dich vu cho hang doi TT12 (kiem, ky, gui danh muc TT12/2026/BTC)
+%NSSM_PATH%\nssm stop "QLBV JobTt12"
+%NSSM_PATH%\nssm remove "QLBV JobTt12" confirm
+
 :: Xoa dich vu cho ctdt:import (quet inbox chung tu dien tu)
 %NSSM_PATH%\nssm stop "QLBV CtdtImport"
 %NSSM_PATH%\nssm remove "QLBV CtdtImport" confirm

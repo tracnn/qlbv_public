@@ -150,6 +150,26 @@ if errorlevel 1 (
 %NSSM_PATH%\nssm set "QLBV CtdtImport" AppExit Default Restart
 %NSSM_PATH%\nssm set "QLBV CtdtImport" AppRestartDelay 10000
 
+:: Hang doi cua module danh muc TT12/2026/BTC.
+::
+:: CHU Y TEN: hang doi la "tt12" (chu thuong, khong co tien to Job), KHONG phai "JobTt12".
+:: Ten dich vu va ten hang doi o day KHAC nhau - cac dich vu khac trong tep nay thi trung.
+:: Gia tri that lay tu organization.tt12.hang_doi, ma tep do nam trong .gitignore nen moi
+:: may mot ban: doi khoa do thi phai doi ca dong --queue duoi day, khong thi worker nghe
+:: nham hang doi va ho so nam im.
+::
+:: MOT worker cho CA BA viec (kiem, ky, gui) vi ca ba job deu dung chung mot khoa cau hinh.
+:: Khac CTDT dung ba hang doi rieng - xem ly do o khoi JobCtdt ben tren.
+::
+:: Thieu worker nay thi moi ho so TT12 nap len nam im o "Chua kiem", va cot "So loi" tren
+:: man danh sach dung yen o 0 - trong y het nhu moi ho so deu sach.
+%NSSM_PATH%\nssm status "QLBV JobTt12" >nul 2>&1
+if errorlevel 1 (
+    echo Installing service QLBV JobTt12...
+    %NSSM_PATH%\nssm install "QLBV JobTt12" %PHP_PATH% "%LARAVEL_PATH%artisan queue:work --queue=tt12"
+    %NSSM_PATH%\nssm set "QLBV JobTt12" AppDirectory %LARAVEL_PATH%
+)
+
 %NSSM_PATH%\nssm status "QLBV JobExportQd130Xml" >nul 2>&1
 if errorlevel 1 (
     echo Installing service QLBV JobExportQd130Xml...
@@ -199,6 +219,7 @@ if errorlevel 1 (
 %NSSM_PATH%\nssm stop "QLBV JobSignCtdt"
 %NSSM_PATH%\nssm stop "QLBV JobSubmitCtdt"
 %NSSM_PATH%\nssm stop "QLBV CtdtImport"
+%NSSM_PATH%\nssm stop "QLBV JobTt12"
 %NSSM_PATH%\nssm stop "QLBV JobExportQd130Xml"
 %NSSM_PATH%\nssm stop "QLBV JobExportXml3176"
 %NSSM_PATH%\nssm stop "QLBV KiemTraYLenh"
@@ -240,6 +261,7 @@ echo Restarting services...
 %NSSM_PATH%\nssm start "QLBV JobSignCtdt"
 %NSSM_PATH%\nssm start "QLBV JobSubmitCtdt"
 %NSSM_PATH%\nssm start "QLBV CtdtImport"
+%NSSM_PATH%\nssm start "QLBV JobTt12"
 %NSSM_PATH%\nssm start "QLBV JobExportQd130Xml"
 %NSSM_PATH%\nssm start "QLBV JobExportXml3176"
 %NSSM_PATH%\nssm start "QLBV KiemTraYLenh"
