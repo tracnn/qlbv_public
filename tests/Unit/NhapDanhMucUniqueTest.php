@@ -64,7 +64,12 @@ class NhapDanhMucUniqueTest extends TestCase
                 if ($i->Column_name === 'ma_cskcb' && !$i->Non_unique) { $co = true; }
             }
 
-            $this->assertTrue($co, "$bang chua co ma_cskcb trong rang buoc UNIQUE");
+            $this->assertTrue($co, "$bang chua co ma_cskcb trong rang buoc UNIQUE.\n"
+                . "Neu ma nguon van dung thi CSDL test lech schema: chay migration\n"
+                . "  database/migrations/2026_07_28_140000_them_ma_cskcb_vao_unique_danh_muc.php\n"
+                . "tren CSDL " . DB::connection()->getDatabaseName() . ".\n"
+                . "Luu y migration do dropUnique roi tao lai, nen chay nguyen tep tren mot CSDL\n"
+                . "da co san chi muc ten moi se hong o service_catalogs - kiem SHOW INDEX truoc.");
         }
     }
 }
