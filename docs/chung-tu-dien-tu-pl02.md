@@ -27,8 +27,9 @@ chưa ký). Module **không** sinh chứng từ từ HIS.
 | Giấy báo tử | `HSDLGBT` | `60` | `/api/hososuckhoe/guiGiayToDienTu` |
 | Giấy chứng sinh (TT22/2025) | `HSDLGCS` | `61` | `/api/hososuckhoe/guiGiayToDienTu` |
 
-Máy chủ cổng: `https://egw.baohiemxahoi.gov.vn`. Lấy token dùng lại
-`App\Services\BHYTLoginService` sẵn có (`/api/token/take`).
+Máy chủ cổng khai ở `organization.BHYT.base_url` — xem mục 3.2. Ba đường dẫn trên ghép với
+host đó lúc chạy qua `App\Services\BHYT\CongBhxh`. Lấy token dùng lại
+`App\Services\BHYTLoginService` sẵn có (`organization.BHYT.login_url`).
 
 ### Chín loại chứng từ
 
@@ -161,10 +162,15 @@ sẵn có (mỗi mã cơ sở KCB một tài khoản) qua `App\Services\BHYT\Cau
 
 | Khóa | Nội dung |
 |---|---|
-| `token_url` | `https://egw.baohiemxahoi.gov.vn/api/token/take` |
-| `dich_vu` | 3 mục — `the_goc`, `loai_hs`, `url` của ba dịch vụ |
+| `dich_vu` | 3 mục — `the_goc`, `loai_hs`, `duong_dan` của ba dịch vụ |
 | `ma_ket_qua` | 5 mã — `200` · `205` · `401` · `500` · `1001` |
 | `ma_ket_qua_token` | 5 mã của dịch vụ lấy token (mục I của PL02) |
+
+`duong_dan` là **đường dẫn tương đối** (`/api/chungtugw/GuiHoSoChungTu2025`), không phải URL
+đầy đủ: đường dẫn là hằng số giao thức do BHXH quy định nên đi theo kho mã, còn host đổi theo
+môi trường nên nằm ở `organization.BHYT.base_url`. `CtdtSubmitService` ghép hai phần lúc gửi.
+Khoá `token_url` cũ đã bỏ — nó là mã chết, trùng y hệt `organization.BHYT.login_url` mà
+`BHYTLoginService` mới thật sự dùng.
 
 **Không có biến `.env` nào cho module này.** Đường cấu hình duy nhất là hai tệp trên; test
 `CtdtCauHinhTest::config_ctdt_khong_giu_tham_so_theo_co_so` canh không ai vô tình dựng lại nguồn

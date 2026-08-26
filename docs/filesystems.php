@@ -148,6 +148,14 @@ return [
             'root' => env('CTDT_IMPORT_PATH', 'D:\XML\ChungTuDienTu\inbox'),
         ],
 
+        // Noi ghi XML danh muc TT12 da ky. Chia theo thang o trong (SignTt12Job) nen thu muc
+        // goc khong phinh. Thieu dia nay thi Storage::disk('exportTt12') nem luc nguoi ta bam
+        // nut ky, khong phai luc trien khai.
+        'exportTt12' => [
+            'driver' => 'local',
+            'root' => storage_path('app/tt12'),
+        ],
+
         'congDuLieuYTeDienBien' => [
             'driver' => 'local',
             'root' => 'D:\XML\CongDuLieuYTeDienBien',

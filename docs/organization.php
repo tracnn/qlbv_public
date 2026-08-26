@@ -1,25 +1,37 @@
 <?php
 
+// Host cong tiep nhan du lieu BHXH. Doi DUNG dong nay la chuyen ca he thong giua moi
+// truong thu nghiem va chinh thuc: nam URL cua khoi BHYT duoi day ghep tu no, con ba
+// dich vu CTDT (config/ctdt.php) va sau mau TT12 (config/tt12.php) ghep luc doc qua
+// App\Services\BHYT\CongBhxh. Duong dan tung dich vu la hang so giao thuc do BHXH quy
+// dinh nen chung nam trong kho ma; chi host la thu doi theo tung noi cai dat.
+$bhxhBaseUrl = 'https://egw.baohiemxahoi.gov.vn';
+
 return [
     'correct_facility_code' => ['01013'], //Mã nơi đkbd đúng tuyến
     'exclude_department' => ['K02'], //Mã khoa không cần kiểm tra chỉ định giường trong Xml7450
     'BHYT' => [
         'username' => '',
         'password' => '',
-        'login_url' => 'https://egw.baohiemxahoi.gov.vn/api/token/take',
-        'check_card_url' => 'https://egw.baohiemxahoi.gov.vn/api/egw/NhanLichSuKCB2018',
+        // BAT BUOC. Khong khai thi App\Services\BHYT\CongBhxh se NEM - co y the, thay vi
+        // roi ve host that, de mot may thu nghiem quen khai khong gui ho so that len cong
+        // that. Luu y day la organization.BHYT.base_url, KHONG phai khoa 'base_url' o cap
+        // ngoai cung cuoi tep (do la dia chi web cua chinh ung dung, viec khac han).
+        'base_url' => $bhxhBaseUrl,
+        'login_url' => $bhxhBaseUrl . '/api/token/take',
+        'check_card_url' => $bhxhBaseUrl . '/api/egw/NhanLichSuKCB2018',
         'enableCheck' => false, //Bật/tắt kiểm tra thẻ BHXH bởi cổng BHXH
-        'check_card_url_2024' => 'https://egw.baohiemxahoi.gov.vn/api/egw/KQNhanLichSuKCB2024',
+        'check_card_url_2024' => $bhxhBaseUrl . '/api/egw/KQNhanLichSuKCB2024',
         'hoTenCb' => '',
         'cccdCb' => '',
         'check_by_user' => true, //Bật/tắt kiểm tra thẻ BHXH bởi user
         'submit_xml_enabled' => false, //Bật/tắt chức năng gửi XML lên cổng BHXH
-        'submit_xml_url' => 'https://egw.baohiemxahoi.gov.vn/api/qd130/guiHoSoXmlQD4750',
+        'submit_xml_url' => $bhxhBaseUrl . '/api/qd130/guiHoSoXmlQD4750',
         'loai_ho_so_4750' => '130',
         'ma_tinh' => '01', // Mã tỉnh (2 ký tự đầu của mã CSKCB)
         'ma_cskcb' => '01013', // Mã cơ sở khám chữa bệnh (có thể lấy từ correct_facility_code)
         'submit_xml_3176_enabled' => false, //Bật/tắt chức năng gửi XML lên cổng BHXH
-        'submit_xml_3176_url' => 'https://egw.baohiemxahoi.gov.vn/api/qd130/guiHoSoXmlQD3176',
+        'submit_xml_3176_url' => $bhxhBaseUrl . '/api/qd130/guiHoSoXmlQD3176',
         'loai_ho_so_3176' => '130',
     ],
     'BHYT_CO_SO' => [
@@ -30,6 +42,19 @@ return [
             'cccd_cb' => '',
         ],
     ],
+    // Danh muc TT12/2026/BTC (module tt12). Xem docs/superpowers/specs/2026-08-25-tt12-danh-muc-design.md.
+    // Cung ly do tach nhu khoi chung_tu_dien_tu duoi day: day la tham so THEO TUNG CO SO,
+    // con config/tt12.php giu hang so giao thuc TT12 (duong dan, loaiHs, ten the, ma ket qua).
+    'tt12' => [
+        // CA HAI MAC DINH TAT. Cong that cua BHXH nhan la nhan that, khong co duong rut lai.
+        // Chi bat sau khi da ky thu mot ho so mot dong va doi chieu tay ket qua.
+        'sign_enabled'   => false,
+        'submit_enabled' => false,
+
+        // Hang doi rieng cho ba job kiem/ky/gui cua TT12.
+        'hang_doi' => 'tt12',
+    ],
+
     // Chung tu dien tu BHXH theo Phu luc 02 (module ctdt). Xem docs/chung-tu-dien-tu-pl02.md.
     // Dat o day chu khong o config/ctdt.php: day la tham so THEO TUNG CO SO (bat/tat, duong
     // dan thu muc, ten hang doi), con config/ctdt.php chi giu hang so giao thuc PL02 dung
