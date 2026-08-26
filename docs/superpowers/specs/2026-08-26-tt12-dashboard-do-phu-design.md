@@ -114,13 +114,32 @@ app/Http/Controllers/Dashboard/Tt12DashboardController.php   (mới)
     doPhu()   trả JSON lưới + dải
 
 app/Services/Dashboard/Tt12DashboardService.php              (mới)
-    doPhu(array $loc)  -> ['luoi' => [...], 'dang_do_dang' => [...]]
+    doPhu()  -> ['luoi' => [...], 'dang_do_dang' => [...]]
 
 resources/views/dashboard/tt12.blade.php                     (mới)
 ```
 
 Hai route: `dashboard/tt12` trả màn hình, `dashboard/tt12/do-phu` trả JSON. CTĐT có bốn vì
 nó có ba khối nạp riêng; ở đây một khối là đủ.
+
+### 7.1. Màn này KHÔNG có bộ lọc thời gian
+
+Khác hẳn dashboard CTĐT, nơi `locTu()` bắt buộc đi qua `khoangMacDinh()` để tránh quét toàn
+bảng.
+
+**Ở đây bộ lọc ngày là sai về nghiệp vụ, không chỉ thừa.** Câu hỏi "mẫu này đã bao giờ được
+gửi chưa" là câu hỏi trên **toàn bộ thời gian**. Mặc định lùi 30 ngày như CTĐT sẽ làm một mẫu
+gửi ba tháng trước hiện thành "chưa gửi" — sai đúng vào điều màn hình sinh ra để trả lời, và
+sai theo hướng khiến người dùng đi khai lại một thứ đã khai rồi.
+
+Dải "đang dở dang" cũng không lọc ngày: một hồ sơ kẹt hai tháng chính là thứ cần thấy nhất.
+
+**Vì sao bỏ được mà không lo quét bảng:** `tt12_ho_so` có **một dòng cho mỗi TỆP Excel**, không
+phải mỗi dòng dữ liệu. Thực đo trên máy đang chạy: 20 dòng trong `tt12_ho_so` so với 2.076
+dòng trong `tt12_dong`. Kể cả sáu mẫu × ba cơ sở gửi hàng tháng thì cũng chỉ khoảng 216 dòng
+mỗi năm. Nỗi lo quét toàn bảng của CTĐT không áp vào đây.
+
+Nên `doPhu()` **không nhận tham số**.
 
 ## 8. Hình dạng dữ liệu trả về
 
