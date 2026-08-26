@@ -152,34 +152,48 @@ $(document).on('click', '#btn-gui-nhieu', function () {
         return;
     }
 
-    if (!confirm('Ký số và gửi ' + ds.length + ' hồ sơ lên cổng BHXH?\n\n'
-                 + 'Cổng đã nhận thì không rút lại được.')) {
-        return;
-    }
-
     var $nut = $(this);
-    $nut.prop('disabled', true);
 
-    $.ajax({
-        url: "{{ route('bhyt.tt12.ky-va-gui-nhieu') }}",
-        method: 'POST',
-        data: { _token: "{{ csrf_token() }}", ma_ho_so: ds },
-        dataType: 'json'
-    }).done(function (kq) {
-        tt12VeKetQuaLo(kq);
-
-        if (tt12Bang) {
-            tt12Bang.ajax.reload(null, false);
+    // Hoi kem CON SO. Cong BHXH nhan la nhan that, khong co duong rut lai.
+    Swal.fire({
+        title: 'Xác nhận gửi',
+        text: 'Ký số và gửi ' + ds.length + ' hồ sơ lên cổng BHXH? '
+              + 'Cổng đã nhận thì không rút lại được.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Ký và gửi',
+        cancelButtonText: 'Hủy'
+    }).then(function (chon) {
+        if (!chon.value) {
+            return;
         }
-    }).fail(function (xhr) {
-        var kq = xhr.responseJSON;
 
-        tt12VeKetQuaLo(kq || {
-            thanh_cong: false,
-            thong_diep: 'Không gửi được yêu cầu. Kiểm tra kết nối rồi thử lại.'
+        $nut.prop('disabled', true);
+
+        // Ket qua van do vao panel #ket-qua-gui-nhieu chu KHONG vao Swal: no liet ke tung
+        // ho so bi bo qua kem ly do, nhet vao 'text' la ep ca danh sach thanh mot khoi chu
+        // lien - va danh sach do chinh la thu nguoi dung can doc ky nhat.
+        $.ajax({
+            url: "{{ route('bhyt.tt12.ky-va-gui-nhieu') }}",
+            method: 'POST',
+            data: { _token: "{{ csrf_token() }}", ma_ho_so: ds },
+            dataType: 'json'
+        }).done(function (kq) {
+            tt12VeKetQuaLo(kq);
+
+            if (tt12Bang) {
+                tt12Bang.ajax.reload(null, false);
+            }
+        }).fail(function (xhr) {
+            var kq = xhr.responseJSON;
+
+            tt12VeKetQuaLo(kq || {
+                thanh_cong: false,
+                thong_diep: 'Không gửi được yêu cầu. Kiểm tra kết nối rồi thử lại.'
+            });
+        }).always(function () {
+            tt12CapNhatSoDaChon();
         });
-    }).always(function () {
-        tt12CapNhatSoDaChon();
     });
 });
 

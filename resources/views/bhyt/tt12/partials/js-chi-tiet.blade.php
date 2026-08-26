@@ -71,25 +71,49 @@ $(function () {
         var $nut = $(this);
         var maHoSo = maHoSoCua(this);
 
-        if (!confirm('Ký số và gửi hồ sơ ' + maHoSo + ' lên cổng BHXH?\n\n'
-                     + 'Cổng nhận là nhận thật, việc này không hoàn tác được.')) {
-            return;
-        }
+        // Swal 'text' hien thi nhu van ban thuan (khong dien giai HTML), nen maHoSo - von
+        // do Tt12MaHoSo sinh ra tu ten tep nguoi dung tai len - khong the bien thanh the HTML.
+        Swal.fire({
+            title: 'Xác nhận gửi',
+            text: 'Ký số và gửi hồ sơ ' + maHoSo + ' lên cổng BHXH? '
+                  + 'Cổng nhận là nhận thật, việc này không hoàn tác được.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Ký và gửi',
+            cancelButtonText: 'Hủy'
+        }).then(function (chon) {
+            if (!chon.value) {
+                return;
+            }
 
-        $nut.prop('disabled', true);
+            $nut.prop('disabled', true);
 
-        $.post(ghepUrl(mauUrlGui, maHoSo), { _token: token })
-            .done(function (kq) {
-                alert((kq && kq.thong_diep) || '');
-                $(document).trigger('tt12:da-xep-hang', [maHoSo]);
-            })
-            .fail(function (xhr) {
-                var kq = xhr.responseJSON;
-                alert((kq && kq.thong_diep) || 'Không gọi được máy chủ. Thử lại sau.');
-            })
-            .always(function () {
-                $nut.prop('disabled', false);
-            });
+            $.post(ghepUrl(mauUrlGui, maHoSo), { _token: token })
+                .done(function (kq) {
+                    // traLoi() tra 422 khi that bai nen .done() CHI chay khi thanh cong -
+                    // khong can re nhanh theo kq.thanh_cong o day.
+                    Swal.fire({
+                        title: 'Đã xếp hàng',
+                        text: (kq && kq.thong_diep) || '',
+                        icon: 'success'
+                    }).then(function () {
+                        // Phat su kien TRONG .then(): Swal khong chan luong nhu alert() cu.
+                        // Phat ngay se dong modal va nap lai bang trong luc hop thong bao con
+                        // dang hien - man hinh giat sau lung hop thoai.
+                        $(document).trigger('tt12:da-xep-hang', [maHoSo]);
+                    });
+                })
+                .fail(function (xhr) {
+                    var kq = xhr.responseJSON;
+
+                    Swal.fire('Chưa gửi được',
+                        (kq && kq.thong_diep) || 'Không gọi được máy chủ. Thử lại sau.',
+                        'warning');
+                })
+                .always(function () {
+                    $nut.prop('disabled', false);
+                });
+        });
     });
 
     /**
@@ -99,34 +123,62 @@ $(function () {
      * sach dong modal va nap lai bang nhu the vua xong viec, trong khi ho so khong doi gi -
      * nguoi dung mat luon thong diep loi vua hien.
      */
-    function bamCuuHo($nut, mauUrl, maHoSo, hoi) {
-        if (hoi && !confirm(hoi)) {
+    function bamCuuHo($nut, mauUrl, maHoSo, tieuDe, hoi) {
+        // Khong co cau hoi thi lam luon. Swal.fire tra Promise nen ca hai nhanh phai di qua
+        // MOT ham chay(): viet hai ban se lech nhau ngay lan sua dau tien.
+        function chay() {
+            $nut.prop('disabled', true);
+
+            $.post(ghepUrl(mauUrl, maHoSo), { _token: token })
+                .done(function (kq) {
+                    Swal.fire({
+                        title: tieuDe,
+                        text: (kq && kq.thong_diep) || '',
+                        icon: 'success'
+                    }).then(function () {
+                        $(document).trigger('tt12:da-cuu-ho', [maHoSo]);
+                    });
+                })
+                .fail(function (xhr) {
+                    var kq = xhr.responseJSON;
+
+                    Swal.fire('Không thực hiện được',
+                        (kq && kq.thong_diep) || 'Không gọi được máy chủ. Thử lại sau.',
+                        'warning');
+
+                    $nut.prop('disabled', false);
+                });
+        }
+
+        if (!hoi) {
+            chay();
             return;
         }
 
-        $nut.prop('disabled', true);
-
-        $.post(ghepUrl(mauUrl, maHoSo), { _token: token })
-            .done(function (kq) {
-                alert((kq && kq.thong_diep) || '');
-                $(document).trigger('tt12:da-cuu-ho', [maHoSo]);
-            })
-            .fail(function (xhr) {
-                var kq = xhr.responseJSON;
-                alert((kq && kq.thong_diep) || 'Không gọi được máy chủ. Thử lại sau.');
-                $nut.prop('disabled', false);
-            });
+        Swal.fire({
+            title: tieuDe,
+            text: hoi,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Đồng ý',
+            cancelButtonText: 'Hủy'
+        }).then(function (chon) {
+            if (chon.value) {
+                chay();
+            }
+        });
     }
 
     $(document).on('click', '#btn-dong-bo-lai', function () {
         var maHoSo = maHoSoCua(this);
 
-        bamCuuHo($(this), mauUrlDongBoLai, maHoSo,
+        bamCuuHo($(this), mauUrlDongBoLai, maHoSo, 'Đồng bộ lại danh mục',
             'Ghi lại toàn bộ dòng của hồ sơ ' + maHoSo + ' sang bảng danh mục?');
     });
 
     $(document).on('click', '#btn-kiem-lai', function () {
-        bamCuuHo($(this), mauUrlKiemLai, maHoSoCua(this), null);
+        // Khong hoi lai: kiem lai khong ghi gi ra ngoai, chay lai vo hai.
+        bamCuuHo($(this), mauUrlKiemLai, maHoSoCua(this), 'Đã kiểm lại', null);
     });
 });
 </script>

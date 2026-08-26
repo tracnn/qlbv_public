@@ -90,7 +90,7 @@ $(function () {
         var mau = document.getElementById('mau').value;
 
         if (!mau) {
-            alert('Chọn mẫu để tải biểu mẫu');
+            Swal.fire('Chưa chọn mẫu', 'Chọn mẫu rồi mới tải được biểu mẫu.', 'info');
             return;
         }
 
