@@ -68,7 +68,9 @@ class SubmitTt12JobTest extends TestCase
         $hoSo = $this->hoSo();
         $this->motDong($hoSo);
 
-        (new SubmitTt12Job($hoSo->ma_ho_so))->handle(new FakeTt12SubmitService());
+        $job = new SubmitTt12Job($hoSo->ma_ho_so);
+        $job->submitServiceGia = new FakeTt12SubmitService();
+        $job->handle();
 
         $this->assertSame(1, DB::table('department_bed_catalogs')->count(),
             'Cong tiep nhan xong phai day dong sang bang danh muc');
@@ -95,7 +97,9 @@ class SubmitTt12JobTest extends TestCase
             'thong_diep' => 'Mã 205: Lỗi nội dung file XML', 'nguyen_van' => '{"maKetQua":"205"}',
         );
 
-        (new SubmitTt12Job($hoSo->ma_ho_so))->handle($gui);
+        $job = new SubmitTt12Job($hoSo->ma_ho_so);
+        $job->submitServiceGia = $gui;
+        $job->handle();
 
         $this->assertSame(0, DB::table('department_bed_catalogs')->count());
         $this->assertNull($hoSo->fresh()->dong_bo_at);
@@ -107,7 +111,9 @@ class SubmitTt12JobTest extends TestCase
         $hoSo = $this->hoSo();
         $gui = new FakeTt12SubmitService();
 
-        (new SubmitTt12Job($hoSo->ma_ho_so))->handle($gui);
+        $job = new SubmitTt12Job($hoSo->ma_ho_so);
+        $job->submitServiceGia = $gui;
+        $job->handle();
 
         $hoSo = $hoSo->fresh();
 
@@ -126,7 +132,9 @@ class SubmitTt12JobTest extends TestCase
         $hoSo = $this->hoSo();
         $gui = new FakeTt12SubmitService();
 
-        (new SubmitTt12Job($hoSo->ma_ho_so))->handle($gui);
+        $job = new SubmitTt12Job($hoSo->ma_ho_so);
+        $job->submitServiceGia = $gui;
+        $job->handle();
 
         $this->assertContains('<Signature/>', $gui->xmlNhanDuoc, 'Phai gui tep DA KY');
         $this->assertSame('MAU_01', $gui->mauNhanDuoc);
@@ -139,7 +147,9 @@ class SubmitTt12JobTest extends TestCase
         $hoSo = $this->hoSo(array('is_signed' => false));
         $gui = new FakeTt12SubmitService();
 
-        (new SubmitTt12Job($hoSo->ma_ho_so))->handle($gui);
+        $job = new SubmitTt12Job($hoSo->ma_ho_so);
+        $job->submitServiceGia = $gui;
+        $job->handle();
 
         $this->assertSame(0, $gui->soLanGoi);
     }
@@ -151,7 +161,9 @@ class SubmitTt12JobTest extends TestCase
         $hoSo = $this->hoSo(array('ma_ket_qua' => '200', 'ma_gd' => 'GD_CU'));
         $gui = new FakeTt12SubmitService();
 
-        (new SubmitTt12Job($hoSo->ma_ho_so))->handle($gui);
+        $job = new SubmitTt12Job($hoSo->ma_ho_so);
+        $job->submitServiceGia = $gui;
+        $job->handle();
 
         $this->assertSame(0, $gui->soLanGoi);
         $this->assertSame('GD_CU', $hoSo->fresh()->ma_gd);
@@ -163,7 +175,9 @@ class SubmitTt12JobTest extends TestCase
         $hoSo = $this->hoSo(array('ma_ket_qua' => '500'));
         $gui = new FakeTt12SubmitService();
 
-        (new SubmitTt12Job($hoSo->ma_ho_so))->handle($gui);
+        $job = new SubmitTt12Job($hoSo->ma_ho_so);
+        $job->submitServiceGia = $gui;
+        $job->handle();
 
         $this->assertSame(1, $gui->soLanGoi);
         $this->assertSame('200', $hoSo->fresh()->ma_ket_qua);
@@ -179,7 +193,9 @@ class SubmitTt12JobTest extends TestCase
             'thong_diep' => 'Mã 205: Lỗi nội dung file XML', 'nguyen_van' => '{"maKetQua":"205"}',
         );
 
-        (new SubmitTt12Job($hoSo->ma_ho_so))->handle($gui);
+        $job = new SubmitTt12Job($hoSo->ma_ho_so);
+        $job->submitServiceGia = $gui;
+        $job->handle();
 
         $hoSo = $hoSo->fresh();
 
@@ -196,7 +212,9 @@ class SubmitTt12JobTest extends TestCase
 
         $gui = new FakeTt12SubmitService();
 
-        (new SubmitTt12Job($hoSo->ma_ho_so))->handle($gui);
+        $job = new SubmitTt12Job($hoSo->ma_ho_so);
+        $job->submitServiceGia = $gui;
+        $job->handle();
 
         $this->assertSame(0, $gui->soLanGoi);
         $this->assertContains('Không đọc được tệp đã ký', $hoSo->fresh()->submit_error);
@@ -211,7 +229,9 @@ class SubmitTt12JobTest extends TestCase
 
         $this->expectException(\Exception::class);
 
-        (new SubmitTt12Job($hoSo->ma_ho_so))->handle($gui);
+        $job = new SubmitTt12Job($hoSo->ma_ho_so);
+        $job->submitServiceGia = $gui;
+        $job->handle();
     }
 
     /** @test */
@@ -222,7 +242,9 @@ class SubmitTt12JobTest extends TestCase
         $hoSo = $this->hoSo();
         $gui = new FakeTt12SubmitService();
 
-        (new SubmitTt12Job($hoSo->ma_ho_so))->handle($gui);
+        $job = new SubmitTt12Job($hoSo->ma_ho_so);
+        $job->submitServiceGia = $gui;
+        $job->handle();
 
         $hoSo = $hoSo->fresh();
 

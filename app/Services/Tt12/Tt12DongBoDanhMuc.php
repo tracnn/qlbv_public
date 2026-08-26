@@ -93,6 +93,37 @@ class Tt12DongBoDanhMuc
         return $khoa;
     }
 
+    /**
+     * Gia tri dem ghi vao bang danh muc: o TRONG thanh NULL.
+     *
+     * VI SAO CAN: nam cot so cua department_bed_catalogs (ban_kham, giuong_*) va cac cot
+     * tuong tu o nam bang con lai deu la `int(11) NULL`. O Excel trong duoc doc thanh chuoi
+     * rong, ma MySQL che do nghiem ngat tu choi '' cho cot so:
+     *
+     *   SQLSTATE[22007]: Incorrect integer value: '' for column 'ban_kham'
+     *
+     * Do THAT tren cong ngay 2026-08-26: ho so da duoc tiep nhan (maKetQua 200) roi buoc
+     * dong bo ngay sau do no, va ho so nam lai voi dong_bo_at rong.
+     *
+     * Ve nghia: o trong nghia la "khong khai", ma trong bang danh muc "khong khai" la NULL
+     * chu khong phai chuoi rong. CatalogImportService:135 dung cung quy uoc cho luong nhap
+     * thu cong.
+     *
+     * CHI o rong moi thanh NULL. So 0 GIU NGUYEN - "0 giuong" va "khong khai" la hai chuyen
+     * khac nhau voi co quan giam dinh.
+     *
+     * @param mixed $gia
+     * @return mixed
+     */
+    private static function giaTriGhi($gia)
+    {
+        if ($gia === null) {
+            return null;
+        }
+
+        return trim((string) $gia) === '' ? null : $gia;
+    }
+
     private function ghiMotDong($bang, array $anhXa, array $khoa, Tt12Dong $dong)
     {
         $duLieu = is_array($dong->du_lieu) ? $dong->du_lieu : array();
@@ -100,7 +131,9 @@ class Tt12DongBoDanhMuc
         $hang = array();
 
         foreach ($anhXa as $the => $cot) {
-            $hang[$cot] = array_key_exists($the, $duLieu) ? $duLieu[$the] : null;
+            $hang[$cot] = self::giaTriGhi(
+                array_key_exists($the, $duLieu) ? $duLieu[$the] : null
+            );
         }
 
         $dieuKien = array();

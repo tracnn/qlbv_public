@@ -158,4 +158,60 @@ class Tt12DongBoDanhMucTest extends TestCase
         $this->assertSame(0, DB::table('department_bed_catalogs')->count());
         $this->assertNull($hoSo->fresh()->dong_bo_at);
     }
+
+    /** @test */
+    public function o_excel_trong_ghi_thanh_NULL_chu_khong_phai_chuoi_rong()
+    {
+        // Do THAT tren cong ngay 2026-08-26: ho so duoc cong tiep nhan (maKetQua 200) nhung
+        // buoc dong bo ngay sau do nem
+        //   SQLSTATE[22007]: Incorrect integer value: '' for column 'ban_kham'
+        // vi ban_kham/giuong_* deu la int(11) NULL, ma o Excel trong duoc chep thang sang
+        // dang chuoi rong. MySQL che do nghiem ngat tu choi '' cho cot so.
+        //
+        // KHANG DINH GIA TRI, khong khang dinh "khong nem": bo test chay tren SQLite von de
+        // dai voi kieu du lieu nen no se nhan '' ma khong keu gi - test kieu do se xanh gia
+        // tren chinh cai loi da xay ra that.
+        $hoSo = $this->hoSo(array($this->dong(array(
+            'BAN_KHAM' => '', 'GIUONG_PD' => '', 'GIUONG_TK' => '',
+            'GIUONG_HSTC' => '', 'GIUONG_HSCC' => '', 'DEN_NGAY' => '',
+        ))));
+
+        (new Tt12DongBoDanhMuc())->dongBo($hoSo);
+
+        $dong = DB::table('department_bed_catalogs')->where('ma_khoa', 'K01')->first();
+
+        $this->assertNotNull($dong, 'khong ghi duoc dong nao');
+
+        foreach (array('ban_kham', 'giuong_pd', 'giuong_tk', 'giuong_hstc', 'giuong_hscc', 'den_ngay') as $cot) {
+            $this->assertNull($dong->$cot, $cot . ': o trong phai thanh NULL, khong phai chuoi rong');
+        }
+    }
+
+    /** @test */
+    public function o_co_gia_tri_van_giu_nguyen_khong_bi_bien_thanh_NULL()
+    {
+        // Mat khac cua phep sua tren: chi o RONG moi thanh NULL. Bien ca so 0 thanh NULL la
+        // mat du lieu - "0 giuong" va "khong khai" la hai chuyen khac nhau voi co quan giam
+        // dinh.
+        $hoSo = $this->hoSo(array($this->dong(array('BAN_KHAM' => '3', 'GIUONG_PD' => '0'))));
+
+        (new Tt12DongBoDanhMuc())->dongBo($hoSo);
+
+        $dong = DB::table('department_bed_catalogs')->where('ma_khoa', 'K01')->first();
+
+        $this->assertSame('3', (string) $dong->ban_kham);
+        $this->assertSame('0', (string) $dong->giuong_pd, 'so 0 KHONG duoc bien thanh NULL');
+    }
+
+    /** @test */
+    public function o_chi_co_khoang_trang_cung_thanh_NULL()
+    {
+        $hoSo = $this->hoSo(array($this->dong(array('BAN_KHAM' => '   '))));
+
+        (new Tt12DongBoDanhMuc())->dongBo($hoSo);
+
+        $this->assertNull(
+            DB::table('department_bed_catalogs')->where('ma_khoa', 'K01')->first()->ban_kham
+        );
+    }
 }

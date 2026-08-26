@@ -34,14 +34,37 @@ class SubmitTt12Job implements ShouldQueue
     /** @var string|null nguoi bam gui, de ghi vao lich su */
     protected $guiBoi;
 
+    /**
+     * @var Tt12SubmitService|null Chi TEST moi dat. KHONG dua vao tham so co type-hint cua
+     *      handle(): container Laravel 5.5 tiem theo getClass() TRUOC khi xet gia tri mac
+     *      dinh (Illuminate\Container\BoundMethod::addDependencyForCallParameter(), dong
+     *      getClass() truoc isDefaultValueAvailable()), nen mot tham so `= null` van luon bi
+     *      tiem - va ban container dung ra mang BHYTLoginService RONG ma co so.
+     *
+     *      Hau qua trong Tt12SubmitService::gui():
+     *          $login = $this->loginService ?: $this->taoLogin($maCskcb);
+     *      ve trai truthy nen taoLogin($maCskcb) KHONG BAO GIO chay, token lay voi ma co so
+     *      rong, va CauHinhCoSo::cua('') nem 'Thieu ma co so KCB' o MOI lan gui.
+     *
+     *      Day dung la bay ma SubmitCtdtJob da tranh tu truoc va SubmitXml3176Job:70-73 da
+     *      dinh mot lan. SubmitTt12JobContainerTest canh no.
+     */
+    public $submitServiceGia = null;
+
     public function __construct($maHoSo, $guiBoi = null)
     {
         $this->maHoSo = $maHoSo;
         $this->guiBoi = $guiBoi;
     }
 
-    public function handle(Tt12SubmitService $submitService)
+    public function handle()
     {
+        // Tu dung service, KHONG nhan qua tham so co type-hint - xem chu thich tren
+        // $submitServiceGia. Khong can dung rieng BHYTLoginService(maCskcb) o day:
+        // Tt12SubmitService::gui() da tu dung dung theo $maCskcb duoc truyen vao, de MOT noi
+        // duy nhat chiu trach nhiem noi ma co so voi token.
+        $submitService = $this->submitServiceGia ?: new Tt12SubmitService();
+
         // Co tat thi KHONG ghi submit_error - ghi la bia, nguoi doc se tuong da thu gui
         // va that bai.
         if (!(bool) config('organization.tt12.submit_enabled', false)) {
