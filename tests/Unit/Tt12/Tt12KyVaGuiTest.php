@@ -174,6 +174,44 @@ class Tt12KyVaGuiTest extends TestCase
     }
 
     /** @test */
+    public function ma_khong_ton_tai_duoc_bao_trong_bo_qua()
+    {
+        // whereIn() chi tra ve nhung ho so TIM THAY, nen ma go sai bi bo IM LANG: nguoi dung
+        // chon 5 ho so, thay bao "da day 4", va khong biet cai thu 5 di dau.
+        $this->tao('A');
+
+        $phanHoi = (new BHYTTt12Controller())->kyVaGuiNhieu(
+            Request::create('/', 'POST', array('ma_ho_so' => array('A', 'KHONG_CO')))
+        );
+
+        $than = json_decode($phanHoi->getContent(), true);
+
+        $this->assertCount(1, $than['bo_qua'], 'ma khong tim thay phai duoc bao lai');
+        $this->assertContains('KHONG_CO', $than['bo_qua'][0]);
+    }
+
+    /** @test */
+    public function bo_qua_giu_dung_thu_tu_nguoi_dung_chon()
+    {
+        // Duyet theo danh sach NGUOI DUNG GUI chu khong theo thu tu CSDL tra ve: danh sach
+        // bo qua doc de doi chieu voi cac o vua tich, khong phai mot thu tu ngau nhien.
+        $this->tao('HS_C', array('so_loi' => 1));
+        $this->tao('HS_B', array('so_loi' => 1));
+        $this->tao('HS_A', array('so_loi' => 1));
+
+        $phanHoi = (new BHYTTt12Controller())->kyVaGuiNhieu(
+            Request::create('/', 'POST', array('ma_ho_so' => array('HS_C', 'HS_B', 'HS_A')))
+        );
+
+        $than = json_decode($phanHoi->getContent(), true);
+
+        $this->assertCount(3, $than['bo_qua']);
+        $this->assertStringStartsWith('HS_C', $than['bo_qua'][0]);
+        $this->assertStringStartsWith('HS_B', $than['bo_qua'][1]);
+        $this->assertStringStartsWith('HS_A', $than['bo_qua'][2]);
+    }
+
+    /** @test */
     public function danh_sach_rong_bi_tu_choi()
     {
         // Truoc day tra 200 kem "Da day 0 ho so vao hang doi ky va 0 ho so vao hang doi gui"

@@ -321,7 +321,22 @@ class BHYTTt12Controller extends Controller
         $daGui = 0;
         $boQua = array();
 
-        foreach (Tt12HoSo::whereIn('ma_ho_so', $ma)->get() as $hoSo) {
+        // Doc TUNG ho so trong vong lap chu khong whereIn() mot lan: toi da 50 truy van la
+        // khong dang ke, con doc mot lan roi xep hang dan thi ho so cuoi cung duoc quyet
+        // dinh dua tren trang thai da cu vai giay - trong khi CheckTt12Job hoac SignTt12Job
+        // chay nen co the vua doi no.
+        //
+        // Duyet theo $ma (danh sach NGUOI DUNG GUI) chu khong theo thu tu CSDL tra ve, nen
+        // ma go sai cung duoc bao lai. whereIn() chi tra ve nhung ho so TIM THAY: nguoi dung
+        // chon 5, thay bao "da day 4", va khong biet cai thu 5 di dau.
+        foreach ($ma as $maHoSo) {
+            $hoSo = Tt12HoSo::where('ma_ho_so', $maHoSo)->first();
+
+            if ($hoSo === null) {
+                $boQua[] = $maHoSo . ': Không tìm thấy hồ sơ này.';
+                continue;
+            }
+
             $ketQua = $this->dayJob($hoSo, $nguoi);
 
             if ($ketQua['hanh_dong'] === 'ky') {
