@@ -53,6 +53,13 @@ return [
 
         // Hang doi rieng cho ba job kiem/ky/gui cua TT12.
         'hang_doi' => 'tt12',
+
+        // BA hang doi RIENG: ky so hong vi ly do CUC BO (rut USB token, HSM khong phan hoi)
+        // con gui hong vi MANG. Gop chung thi mot lan mang chap keo theo ky lai - thao tac
+        // ton thoi gian nhat trong chuoi, va mot ho so TT12 co the la hang nghin dong.
+        // Ten phai KHOP dong --queue trong update.bat / install_service.bat.
+        'hang_doi_ky'  => 'tt12-ky',
+        'hang_doi_gui' => 'tt12-gui',
     ],
 
     // Chung tu dien tu BHXH theo Phu luc 02 (module ctdt). Xem docs/chung-tu-dien-tu-pl02.md.

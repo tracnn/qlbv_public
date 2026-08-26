@@ -69,6 +69,12 @@ set NSSM_PATH=%~dp0
 %NSSM_PATH%\nssm stop "QLBV JobTt12"
 %NSSM_PATH%\nssm remove "QLBV JobTt12" confirm
 
+%NSSM_PATH%\nssm stop "QLBV JobSignTt12"
+%NSSM_PATH%\nssm remove "QLBV JobSignTt12" confirm
+
+%NSSM_PATH%\nssm stop "QLBV JobSubmitTt12"
+%NSSM_PATH%\nssm remove "QLBV JobSubmitTt12" confirm
+
 :: Xoa dich vu cho ctdt:import (quet inbox chung tu dien tu)
 %NSSM_PATH%\nssm stop "QLBV CtdtImport"
 %NSSM_PATH%\nssm remove "QLBV CtdtImport" confirm

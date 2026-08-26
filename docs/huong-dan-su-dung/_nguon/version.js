@@ -15,7 +15,7 @@
  * NGAY_PHAT_HANH cho khớp dòng đó.
  */
 
-const PHIEN_BAN = '1.4';
+const PHIEN_BAN = '1.5';
 
 const NGAY_PHAT_HANH = 'Tháng 8 năm 2026';
 
@@ -27,6 +27,13 @@ const NGAY_PHAT_HANH = 'Tháng 8 năm 2026';
  * thay vì đọc lại cả tài liệu.
  */
 const LICH_SU = [
+  {
+    ban: '1.5',
+    ngay: '26/08/2026',
+    noi_dung:
+      'Danh mục TT12: nút Ký và gửi nay chỉ cần bấm MỘT lần cho cả hai bước ký số và gửi lên cổng, thay vì hai lần như trước. Kèm theo là chốt chống gửi trùng khi lượt trước còn đang chạy.',
+    lien_quan: 'Phần VII, các mục 7.7.1, 7.7.2 và 7.11; Phụ lục B tách ba hàng đợi của module.',
+  },
   {
     ban: '1.4',
     ngay: '26/08/2026',

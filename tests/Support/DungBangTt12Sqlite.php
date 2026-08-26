@@ -34,6 +34,7 @@ trait DungBangTt12Sqlite
             '2026_08_25_100003_create_tt12_dong_thuoc_px_table' => 'CreateTt12DongThuocPxTable',
             '2026_08_25_100004_create_tt12_loi_table'           => 'CreateTt12LoiTable',
             '2026_08_25_100005_create_tt12_lich_su_gui_table'   => 'CreateTt12LichSuGuiTable',
+            '2026_08_26_100001_create_tt12_khoa_xu_ly_table'    => 'CreateTt12KhoaXuLyTable',
         ];
     }
 

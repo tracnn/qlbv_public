@@ -174,15 +174,9 @@ class Tt12Importer
         // Kiem NGAY sau khi nap: nguoi dung mo man danh sach la thay so loi. Doi ho bam
         // mot nut "kiem" nua la them mot buoc de quen, va ho so chua kiem thi khong ky
         // duoc - nguoi dung se tuong chuc nang ky bi hong.
-        $hangDoi = config('organization.tt12.hang_doi');
-
-        $job = new \App\Jobs\CheckTt12Job($hoSo->ma_ho_so);
-
-        if (!empty($hangDoi)) {
-            $job->onQueue($hangDoi);
-        }
-
-        dispatch($job);
+        dispatch(
+            (new \App\Jobs\CheckTt12Job($hoSo->ma_ho_so))->onQueue(Tt12HangDoi::kiem())
+        );
 
         return Tt12ImportResult::tot($hoSo->ma_ho_so, $mau, $tongDong, $this->soODienThem);
     }

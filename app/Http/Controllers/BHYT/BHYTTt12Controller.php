@@ -13,6 +13,7 @@ use App\Models\BHYT\Tt12\Tt12Loi;
 use App\Services\Tt12\Tt12DanhSach;
 use App\Services\Tt12\Tt12DetailTabs;
 use App\Services\Tt12\Tt12QuyetDinhGui;
+use App\Services\Tt12\Tt12XepHangKyGui;
 use App\Services\Tt12\Tt12XoaHoSo;
 use App\Services\Tt12\Tt12DongBoDanhMuc;
 use App\Jobs\SignTt12Job;
@@ -317,8 +318,7 @@ class BHYTTt12Controller extends Controller
 
         $nguoi = $request->user() ? $request->user()->loginname : null;
 
-        $daKy = 0;
-        $daGui = 0;
+        $daXep = 0;
         $boQua = array();
 
         // Doc TUNG ho so trong vong lap chu khong whereIn() mot lan: toi da 50 truy van la
@@ -337,21 +337,23 @@ class BHYTTt12Controller extends Controller
                 continue;
             }
 
-            $ketQua = $this->dayJob($hoSo, $nguoi);
+            $ketQua = $this->dayJob($hoSo, $nguoi, Tt12XepHangKyGui::NGUON_HANG_LOAT);
 
-            if ($ketQua['hanh_dong'] === 'ky') {
-                $daKy++;
-            } elseif ($ketQua['hanh_dong'] === 'gui') {
-                $daGui++;
+            if ($ketQua['thanh_cong']) {
+                $daXep++;
             } else {
                 $boQua[] = $hoSo->ma_ho_so . ': ' . $ketQua['thong_diep'];
             }
         }
 
+        // MOT con so, khong tach "day vao hang doi ky" va "day vao hang doi gui" nua: tu khi
+        // mot lan bam xep ca chuoi thi moi ho so du dieu kien deu di het ca hai buoc, va cau
+        // cu ("Da day 30 ho so vao hang doi ky va 0 ho so vao hang doi gui") rat de doc luot
+        // thanh "chi co 0 ho so duoc gui".
         return response()->json(array(
-            'thanh_cong' => ($daKy + $daGui) > 0,
-            'thong_diep' => 'Đã đẩy ' . $daKy . ' hồ sơ vào hàng đợi ký và '
-                . $daGui . ' hồ sơ vào hàng đợi gửi.',
+            'thanh_cong' => $daXep > 0,
+            'thong_diep' => 'Đã xếp ' . $daXep . ' hồ sơ vào hàng đợi ký và gửi.'
+                . ($boQua ? ' Bỏ qua ' . count($boQua) . ' hồ sơ, xem chi tiết bên dưới.' : ''),
             'bo_qua'     => $boQua,
         ));
     }
@@ -532,10 +534,10 @@ class BHYTTt12Controller extends Controller
     }
 
     /** @return array ['thanh_cong' => bool, 'hanh_dong' => 'ky'|'gui'|'bo_qua', 'thong_diep' => string] */
-    private function dayJob(Tt12HoSo $hoSo, $nguoi)
+    private function dayJob(Tt12HoSo $hoSo, $nguoi, $nguon = Tt12XepHangKyGui::NGUON_MAN_HINH)
     {
-        $hangDoi = config('organization.tt12.hang_doi');
-
+        // Hoi dieu kien TRUOC khi dat khoa: dat khoa roi moi phat hien ho so khong du dieu
+        // kien la chan chinh no trong 40 phut ma khong lam gi ca.
         if (!$hoSo->is_signed) {
             $nenKy = Tt12QuyetDinhGui::nenKy($hoSo->checked_at, $hoSo->so_loi);
 
@@ -543,36 +545,26 @@ class BHYTTt12Controller extends Controller
                 return array('thanh_cong' => false, 'hanh_dong' => 'bo_qua',
                     'thong_diep' => Tt12QuyetDinhGui::moTa($nenKy));
             }
+        } else {
+            // Da ky roi ma van bam: chuoi se bo qua buoc ky va di thang toi buoc gui.
+            $nenGui = Tt12QuyetDinhGui::nenGui(true, $hoSo->ma_ket_qua);
 
-            $job = new SignTt12Job($hoSo->ma_ho_so);
-
-            if (!empty($hangDoi)) {
-                $job->onQueue($hangDoi);
+            if ($nenGui !== Tt12QuyetDinhGui::GUI) {
+                return array('thanh_cong' => false, 'hanh_dong' => 'bo_qua',
+                    'thong_diep' => Tt12QuyetDinhGui::moTa($nenGui));
             }
-
-            dispatch($job);
-
-            return array('thanh_cong' => true, 'hanh_dong' => 'ky',
-                'thong_diep' => 'Đã đẩy vào hàng đợi ký');
         }
 
-        $nenGui = Tt12QuyetDinhGui::nenGui(true, $hoSo->ma_ket_qua);
-
-        if ($nenGui !== Tt12QuyetDinhGui::GUI) {
+        // MOT lan bam xep CA CHUOI ky - gui. Truoc day moi lan bam chi lam mot buoc, nen
+        // nguoi dung phai bam hai lan dung thu tu moi gui duoc that; ten nut noi mot dang
+        // ma hanh vi mot neo.
+        if (!Tt12XepHangKyGui::xep($hoSo->ma_ho_so, $nguoi, $nguon)) {
             return array('thanh_cong' => false, 'hanh_dong' => 'bo_qua',
-                'thong_diep' => Tt12QuyetDinhGui::moTa($nenGui));
+                'thong_diep' => 'Hồ sơ đang được xử lý ở một lượt khác, thử lại sau.');
         }
 
-        $job = new SubmitTt12Job($hoSo->ma_ho_so, $nguoi);
-
-        if (!empty($hangDoi)) {
-            $job->onQueue($hangDoi);
-        }
-
-        dispatch($job);
-
-        return array('thanh_cong' => true, 'hanh_dong' => 'gui',
-            'thong_diep' => 'Đã đẩy vào hàng đợi gửi');
+        return array('thanh_cong' => true, 'hanh_dong' => $hoSo->is_signed ? 'gui' : 'ky',
+            'thong_diep' => 'Đã đẩy vào hàng đợi ký và gửi');
     }
 
     /**

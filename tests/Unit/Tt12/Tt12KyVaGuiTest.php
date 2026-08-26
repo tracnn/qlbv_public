@@ -62,15 +62,25 @@ class Tt12KyVaGuiTest extends TestCase
     }
 
     /** @test */
-    public function ho_so_da_ky_roi_thi_day_thang_job_gui()
+    public function ho_so_da_ky_roi_van_di_qua_ca_chuoi()
     {
+        // Tu 2026-08-26 mot lan bam xep CA CHUOI ky-gui, nen ho so da ky cung di qua job ky
+        // mot lan nua. Ky lai la vo hai ve noi dung: id_danh_sach giu nguyen tu luc nap nen
+        // XML dung y ban cu, chi ton them mot luot goi thiet bi ky.
+        //
+        // Day dung la hanh vi cua SignCtdtJob - no cung khong xet is_signed. Giu hai module
+        // cung khuon quan trong hon viec tiet kiem mot luot ky.
         $this->tao('A', array('is_signed' => true, 'duong_dan_da_ky' => 'x.xml'));
 
         $ct = new BHYTTt12Controller();
         $ct->kyVaGui(Request::create('/', 'POST'), 'A');
 
-        Queue::assertNotPushed(SignTt12Job::class);
-        Queue::assertPushed(SubmitTt12Job::class, 1);
+        Queue::assertPushed(SignTt12Job::class, function ($job) {
+            return count($job->chained) === 1;
+        });
+
+        // Job gui nam TRONG chuoi, chua duoc day rieng ra hang doi
+        Queue::assertNotPushed(SubmitTt12Job::class);
     }
 
     /** @test */
@@ -98,8 +108,10 @@ class Tt12KyVaGuiTest extends TestCase
             'ma_ho_so' => array('A', 'B', 'C', 'D'),
         )));
 
-        Queue::assertPushed(SignTt12Job::class, 1);
-        Queue::assertPushed(SubmitTt12Job::class, 1);
+        // Hai ho so du dieu kien (A chua ky, C da ky) deu duoc xep CA CHUOI; B con loi va D
+        // da duoc tiep nhan thi bi bo qua.
+        Queue::assertPushed(SignTt12Job::class, 2);
+        Queue::assertNotPushed(SubmitTt12Job::class);
     }
 
     // -- Tran gui nhieu --------------------------------------------------------------

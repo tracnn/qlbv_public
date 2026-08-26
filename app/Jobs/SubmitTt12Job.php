@@ -15,6 +15,7 @@ use App\Models\BHYT\Tt12\Tt12LichSuGui;
 use App\Services\Tt12\Tt12SubmitService;
 use App\Services\Tt12\Tt12QuyetDinhGui;
 use App\Services\Tt12\Tt12DongBoDanhMuc;
+use App\Services\Tt12\Tt12XepHangKyGui;
 
 /**
  * Gui mot ho so da ky len cong, ghi ket qua, va dong bo sang danh muc khi duoc tiep nhan.
@@ -69,6 +70,7 @@ class SubmitTt12Job implements ShouldQueue
         // va that bai.
         if (!(bool) config('organization.tt12.submit_enabled', false)) {
             Log::info('SubmitTt12Job: chuc nang gui dang tat, bo qua ' . $this->maHoSo);
+            $this->nhaKhoa();
 
             return;
         }
@@ -77,6 +79,7 @@ class SubmitTt12Job implements ShouldQueue
 
         if ($hoSo === null) {
             Log::info('SubmitTt12Job: khong tim thay ho so ' . $this->maHoSo);
+            $this->nhaKhoa();
 
             return;
         }
@@ -88,6 +91,7 @@ class SubmitTt12Job implements ShouldQueue
                 'ma_ho_so' => $this->maHoSo,
                 'ly_do'    => $nenGui,
             ));
+            $this->nhaKhoa();
 
             return;
         }
@@ -100,6 +104,7 @@ class SubmitTt12Job implements ShouldQueue
             $hoSo->update(array(
                 'submit_error' => 'Không đọc được tệp đã ký: ' . $hoSo->duong_dan_da_ky,
             ));
+            $this->nhaKhoa();
 
             return;
         }
@@ -114,6 +119,35 @@ class SubmitTt12Job implements ShouldQueue
             // bang thu BHXH da nhan, vi giam dinh se so voi chinh ban do.
             (new Tt12DongBoDanhMuc())->dongBo($hoSo->fresh());
         }
+
+        // Nha khoa o CUOI duong thanh cong. Dat truoc buoc dong bo thi mot lan bam thu hai
+        // co the chen vao giua luc dong bo con dang chay.
+        $this->nhaKhoa();
+    }
+
+    /**
+     * Hang doi goi khi job het luot thu lai.
+     *
+     * KHONG nha khoa o cac lan thu GIUA CHUNG: nem la de hang doi thu lai, va lan thu sau
+     * van thuoc cung mot luot xu ly. Chi khi het luot moi mo duong cho nguoi bam lai.
+     */
+    public function failed(\Throwable $e)
+    {
+        Log::error('SubmitTt12Job that bai het luot: ' . $this->maHoSo, array(
+            'loi' => $e->getMessage(),
+        ));
+
+        $this->nhaKhoa();
+    }
+
+    /**
+     * Go qua Tt12XepHangKyGui chu khong tu cham vao co che khoa: tu cham vao day nghia la
+     * lan doi co che sau se bo sot mot noi, va trieu chung la khoa khong bao gio duoc nha -
+     * ho so do khong gui lai duoc cho toi khi khoa het han, ma khong co dong log nao.
+     */
+    private function nhaKhoa()
+    {
+        Tt12XepHangKyGui::goKhoa($this->maHoSo);
     }
 
     /** @return string|null */

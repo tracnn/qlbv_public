@@ -70,9 +70,17 @@ set LARAVEL_PATH=%~dp0
 :: Gia tri that lay tu organization.tt12.hang_doi, ma tep do nam trong .gitignore nen moi
 :: may mot ban: doi khoa do thi phai doi ca dong --queue duoi day.
 ::
-:: MOT worker cho CA BA viec (kiem, ky, gui) vi ca ba job deu dung chung mot khoa cau hinh.
+:: BA hang doi RIENG chu khong mot (doi tu 26/08/2026): ky so hong vi ly do CUC BO (rut USB
+:: token, HSM khong phan hoi) con gui hong vi MANG. Ba khoa cau hinh tuong ung:
+:: hang_doi / hang_doi_ky / hang_doi_gui.
 %NSSM_PATH%\nssm install "QLBV JobTt12" %PHP_PATH% "%LARAVEL_PATH%artisan queue:work --queue=tt12"
 %NSSM_PATH%\nssm set "QLBV JobTt12" AppDirectory %LARAVEL_PATH%
+
+%NSSM_PATH%\nssm install "QLBV JobSignTt12" %PHP_PATH% "%LARAVEL_PATH%artisan queue:work --queue=tt12-ky"
+%NSSM_PATH%\nssm set "QLBV JobSignTt12" AppDirectory %LARAVEL_PATH%
+
+%NSSM_PATH%\nssm install "QLBV JobSubmitTt12" %PHP_PATH% "%LARAVEL_PATH%artisan queue:work --queue=tt12-gui"
+%NSSM_PATH%\nssm set "QLBV JobSubmitTt12" AppDirectory %LARAVEL_PATH%
 
 :: Tạo dịch vụ cho JobExportQd130Xml
 %NSSM_PATH%\nssm install "QLBV JobExportQd130Xml" %PHP_PATH% "%LARAVEL_PATH%artisan queue:work --queue=JobExportQd130Xml"
@@ -124,6 +132,8 @@ set LARAVEL_PATH=%~dp0
 %NSSM_PATH%\nssm start "QLBV JobSubmitCtdt"
 %NSSM_PATH%\nssm start "QLBV CtdtImport"
 %NSSM_PATH%\nssm start "QLBV JobTt12"
+%NSSM_PATH%\nssm start "QLBV JobSignTt12"
+%NSSM_PATH%\nssm start "QLBV JobSubmitTt12"
 %NSSM_PATH%\nssm start "QLBV JobExportQd130Xml"
 %NSSM_PATH%\nssm start "QLBV JobExportXml3176"
 %NSSM_PATH%\nssm start "QLBV KiemTraYLenh"

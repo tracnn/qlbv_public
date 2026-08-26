@@ -122,18 +122,18 @@ module.exports = function part7() {
 
     h2('7.7. Ký số và gửi lên cổng'),
 
-    h3('7.7.1. Nút Ký và gửi phải bấm hai lần'),
-    p('Đây là điểm dễ nhầm nhất của chức năng này. Nút Ký và gửi mỗi lần bấm chỉ thực hiện một bước:'),
-    bullet('Lần bấm thứ nhất, khi hồ sơ chưa ký: phần mềm đưa hồ sơ vào hàng đợi ký số. Chưa có gì được gửi lên cổng.'),
-    bullet('Lần bấm thứ hai, sau khi cột Đã ký chuyển sang đã ký: phần mềm đưa hồ sơ vào hàng đợi gửi. Lần này hồ sơ thật sự đi lên cổng Bảo hiểm xã hội.'),
-    p('Giữa hai lần bấm cần chờ bước ký số chạy xong ở hàng đợi nền, thường vài giây. Nếu bấm lần thứ hai khi cột Đã ký còn trống, phần mềm chỉ xếp hàng ký lại chứ không gửi.'),
-    note('Lưu ý:', 'Cổng Bảo hiểm xã hội nhận là nhận thật, không có đường rút lại. Trước lần bấm thứ hai, hãy mở thẻ Dòng dữ liệu đối chiếu lại nội dung và xác nhận cột Số lỗi bằng 0.'),
+    h3('7.7.1. Một lần bấm chạy trọn cả hai bước'),
+    p('Bấm Ký và gửi một lần là phần mềm xếp cả chuỗi: ký số trước, ký xong tự động gửi lên cổng Bảo hiểm xã hội. Không phải bấm lần thứ hai.'),
+    p('Hai bước vẫn chạy ở hàng đợi nền và ở hai hàng đợi riêng, nên kết quả xuất hiện dần: cột Đã ký chuyển trạng thái trước, một lát sau mới có Mã giao dịch và Mã kết quả. Bấm xong không thấy gì đổi ngay là bình thường, hãy bấm Tải dữ liệu lại sau vài giây.'),
+    note('Lưu ý:', 'Cổng Bảo hiểm xã hội nhận là nhận thật, không có đường rút lại. Vì một lần bấm nay đi thẳng tới cổng, hãy đối chiếu nội dung ở thẻ Dòng dữ liệu và xác nhận cột Số lỗi bằng 0 TRƯỚC khi bấm.'),
     p('Hồ sơ không đủ điều kiện sẽ bị từ chối kèm lý do, thường gặp là chưa được kiểm, còn lỗi ở mức chặn, hoặc đã được cổng tiếp nhận rồi.'),
+    p('Bấm lại trong khi lượt trước còn đang chạy thì phần mềm báo hồ sơ đang được xử lý ở một lượt khác và không làm gì thêm. Đây là chốt chống gửi trùng: một hồ sơ chỉ có một lượt ký và gửi tại một thời điểm.'),
+    p('Hồ sơ đã ký rồi mà bấm lại thì vẫn đi qua bước ký một lần nữa trước khi gửi. Điều này vô hại về nội dung, vì mã định danh của bộ danh mục được sinh một lần lúc nạp và giữ nguyên, nên tệp XML dựng lại đúng y bản cũ.'),
 
     h3('7.7.2. Ký và gửi nhiều hồ sơ cùng lúc'),
     p('Trên màn Danh sách hồ sơ, tích chọn ở cột đầu tiên rồi bấm Ký và gửi đã chọn. Số hồ sơ đang chọn hiển thị ngay trên nút.'),
     p('Mỗi lượt gửi tối đa 50 hồ sơ. Chọn quá số này thì phần mềm từ chối cả lượt chứ không gửi 50 hồ sơ đầu rồi bỏ phần còn lại, để tránh tình huống người dùng tưởng đã gửi hết.'),
-    p('Sau khi chạy xong, một bảng kết quả hiện ngay dưới thanh nút: số hồ sơ đã vào hàng đợi ký, số đã vào hàng đợi gửi, và danh sách hồ sơ bị bỏ qua kèm lý do từng cái. Hãy đọc kỹ danh sách bỏ qua này, vì nó chính là những hồ sơ chưa đi.'),
+    p('Sau khi chạy xong, một bảng kết quả hiện ngay dưới thanh nút: số hồ sơ đã được xếp vào hàng đợi ký và gửi, kèm danh sách hồ sơ bị bỏ qua và lý do từng cái. Hãy đọc kỹ danh sách bỏ qua này, vì nó chính là những hồ sơ chưa đi.'),
 
     h3('7.7.3. Mã kết quả cổng Bảo hiểm xã hội trả về'),
     table(
@@ -183,13 +183,15 @@ module.exports = function part7() {
         ['Nạp tệp báo không nhận diện được mẫu', 'Dòng tiêu đề bị sửa tên cột, chèn thêm cột, hoặc có dòng trống phía trên tiêu đề.', 'Tải lại biểu mẫu ở mục 7.4.1 và chép dữ liệu sang.'],
         ['Nạp tệp báo lệch mã cơ sở', 'Cột MA_CSKCB trong tệp có ít nhất một dòng khác mã cơ sở đã chọn ở ô phía trên.', 'Sửa cột MA_CSKCB trong tệp cho thống nhất, hoặc chọn lại đúng cơ sở rồi nạp lại.'],
         ['Hồ sơ nằm mãi ở Chưa kiểm', 'Tiến trình nền xử lý hàng đợi đã dừng.', 'Báo bộ phận công nghệ thông tin. Sau khi tiến trình chạy lại, dùng nút Kiểm lại ở mục 7.9.'],
-        ['Bấm Ký và gửi nhưng hồ sơ không lên cổng', 'Đây là lần bấm thứ nhất, mới chỉ ký số; xem mục 7.7.1.', 'Chờ cột Đã ký chuyển trạng thái rồi bấm lần thứ hai.'],
+        ['Bấm Ký và gửi nhưng chưa thấy Mã giao dịch', 'Hai bước chạy ở hàng đợi nền nên kết quả xuất hiện dần.', 'Chờ vài giây rồi bấm Tải dữ liệu. Nếu cột Đã ký có mà Mã kết quả vẫn trống thì xem dòng tiếp theo.'],
+        ['Hồ sơ đã ký nhưng không bao giờ được gửi', 'Thiếu dịch vụ chạy hàng đợi gửi trên máy chủ.', 'Báo bộ phận công nghệ thông tin: cần cả ba dịch vụ hàng đợi, xem Phụ lục B.'],
+        ['Báo "Hồ sơ đang được xử lý ở một lượt khác"', 'Lượt ký và gửi trước còn đang chạy, hoặc vừa bị gián đoạn.', 'Chờ rồi thử lại. Chốt này tự mở sau một khoảng; nếu kẹt lâu thì báo bộ phận công nghệ thông tin.'],
         ['Dải Lỗi ký số màu đỏ trong màn chi tiết', 'Không kết nối được thiết bị ký số, hoặc chứng thư hết hạn.', 'Báo bộ phận công nghệ thông tin kèm nguyên văn thông điệp trên dải đỏ.'],
         ['Cổng đã tiếp nhận nhưng Đã đồng bộ vẫn trống', 'Bước ghi sang danh mục hỏng giữa chừng.', 'Dùng nút Đồng bộ lại danh mục ở mục 7.9. Không bấm gửi lại.'],
         ['Ô chọn Cơ sở KCB thiếu cơ sở vừa thêm', 'Danh sách cơ sở được nhớ tạm khoảng một giờ.', 'Báo bộ phận công nghệ thông tin xoá bộ nhớ tạm.'],
       ],
       [2600, 3400, 3020],
     ),
-    forIt('Chức năng này cần khai hai tệp cấu hình nằm ngoài kho mã: khối tt12 trong config/organization.php (bật tắt ký, bật tắt gửi, tên hàng đợi) và đĩa exportTt12 trong config/filesystems.php (nơi ghi tệp XML đã ký). Ngoài ra cần một dịch vụ chạy hàng đợi của module. Thiếu đĩa thì phần mềm báo lỗi đúng lúc người dùng bấm nút ký; thiếu dịch vụ hàng đợi thì hồ sơ nằm im ở Chưa kiểm mà không có thông báo nào.'),
+    forIt('Chức năng này cần khai hai tệp cấu hình nằm ngoài kho mã: khối tt12 trong config/organization.php (bật tắt ký, bật tắt gửi, và BA tên hàng đợi) và đĩa exportTt12 trong config/filesystems.php (nơi ghi tệp XML đã ký). Ngoài ra cần BA dịch vụ chạy hàng đợi: kiểm, ký và gửi. Thiếu đĩa thì phần mềm báo lỗi đúng lúc người dùng bấm nút ký; thiếu dịch vụ kiểm thì hồ sơ nằm im ở Chưa kiểm; thiếu dịch vụ gửi thì hồ sơ ký xong không bao giờ đi. Cả ba đều hỏng lặng lẽ, không có thông báo nào trên màn hình.'),
   ];
 };

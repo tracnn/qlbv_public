@@ -158,16 +158,32 @@ if errorlevel 1 (
 :: may mot ban: doi khoa do thi phai doi ca dong --queue duoi day, khong thi worker nghe
 :: nham hang doi va ho so nam im.
 ::
-:: MOT worker cho CA BA viec (kiem, ky, gui) vi ca ba job deu dung chung mot khoa cau hinh.
-:: Khac CTDT dung ba hang doi rieng - xem ly do o khoi JobCtdt ben tren.
+:: BA hang doi RIENG chu khong mot (doi tu 26/08/2026): ky so hong vi ly do CUC BO (rut USB
+:: token, HSM khong phan hoi) con gui hong vi MANG. Gop chung thi mot lan mang chap keo theo
+:: ky lai - thao tac ton thoi gian nhat trong chuoi, va mot ho so TT12 co the la hang nghin
+:: dong. Ba khoa cau hinh: hang_doi / hang_doi_ky / hang_doi_gui.
 ::
-:: Thieu worker nay thi moi ho so TT12 nap len nam im o "Chua kiem", va cot "So loi" tren
-:: man danh sach dung yen o 0 - trong y het nhu moi ho so deu sach.
+:: Thieu worker nao thi ho so dung khung o buoc do: thieu tt12 thi nam im o "Chua kiem" voi
+:: cot "So loi" bang 0 - trong y het nhu moi ho so deu sach.
 %NSSM_PATH%\nssm status "QLBV JobTt12" >nul 2>&1
 if errorlevel 1 (
     echo Installing service QLBV JobTt12...
     %NSSM_PATH%\nssm install "QLBV JobTt12" %PHP_PATH% "%LARAVEL_PATH%artisan queue:work --queue=tt12"
     %NSSM_PATH%\nssm set "QLBV JobTt12" AppDirectory %LARAVEL_PATH%
+)
+
+%NSSM_PATH%\nssm status "QLBV JobSignTt12" >nul 2>&1
+if errorlevel 1 (
+    echo Installing service QLBV JobSignTt12...
+    %NSSM_PATH%\nssm install "QLBV JobSignTt12" %PHP_PATH% "%LARAVEL_PATH%artisan queue:work --queue=tt12-ky"
+    %NSSM_PATH%\nssm set "QLBV JobSignTt12" AppDirectory %LARAVEL_PATH%
+)
+
+%NSSM_PATH%\nssm status "QLBV JobSubmitTt12" >nul 2>&1
+if errorlevel 1 (
+    echo Installing service QLBV JobSubmitTt12...
+    %NSSM_PATH%\nssm install "QLBV JobSubmitTt12" %PHP_PATH% "%LARAVEL_PATH%artisan queue:work --queue=tt12-gui"
+    %NSSM_PATH%\nssm set "QLBV JobSubmitTt12" AppDirectory %LARAVEL_PATH%
 )
 
 %NSSM_PATH%\nssm status "QLBV JobExportQd130Xml" >nul 2>&1
@@ -220,6 +236,8 @@ if errorlevel 1 (
 %NSSM_PATH%\nssm stop "QLBV JobSubmitCtdt"
 %NSSM_PATH%\nssm stop "QLBV CtdtImport"
 %NSSM_PATH%\nssm stop "QLBV JobTt12"
+%NSSM_PATH%\nssm stop "QLBV JobSignTt12"
+%NSSM_PATH%\nssm stop "QLBV JobSubmitTt12"
 %NSSM_PATH%\nssm stop "QLBV JobExportQd130Xml"
 %NSSM_PATH%\nssm stop "QLBV JobExportXml3176"
 %NSSM_PATH%\nssm stop "QLBV KiemTraYLenh"
@@ -262,6 +280,8 @@ echo Restarting services...
 %NSSM_PATH%\nssm start "QLBV JobSubmitCtdt"
 %NSSM_PATH%\nssm start "QLBV CtdtImport"
 %NSSM_PATH%\nssm start "QLBV JobTt12"
+%NSSM_PATH%\nssm start "QLBV JobSignTt12"
+%NSSM_PATH%\nssm start "QLBV JobSubmitTt12"
 %NSSM_PATH%\nssm start "QLBV JobExportQd130Xml"
 %NSSM_PATH%\nssm start "QLBV JobExportXml3176"
 %NSSM_PATH%\nssm start "QLBV KiemTraYLenh"

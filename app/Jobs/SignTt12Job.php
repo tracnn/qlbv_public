@@ -16,6 +16,7 @@ use App\Services\Tt12\Tt12DocDong;
 use App\Services\Tt12\Tt12PhongBi;
 use App\Services\Tt12\Tt12MauRegistry;
 use App\Services\Tt12\Tt12QuyetDinhGui;
+use App\Services\Tt12\Tt12XepHangKyGui;
 
 /**
  * Dung phong bi mot ho so, ky so, luu tep da ky.
@@ -115,6 +116,22 @@ class SignTt12Job implements ShouldQueue
         ));
 
         Log::info('SignTt12Job: da ky ' . $this->maHoSo, array('duong_dan' => $duongDan));
+    }
+
+    /**
+     * Hang doi goi khi job het luot thu lai.
+     *
+     * PHAI co: khi ky that bai dut diem thi CHUOI DUNG LAI, SubmitTt12Job khong bao gio chay
+     * - ma no moi la noi nha khoa o duong binh thuong. Thieu ham nay thi ho so do bi chan
+     * gui lai cho toi khi khoa het han, va khong co dong log nao noi vi sao.
+     */
+    public function failed(\Throwable $e)
+    {
+        Log::error('SignTt12Job that bai het luot: ' . $this->maHoSo, array(
+            'loi' => $e->getMessage(),
+        ));
+
+        Tt12XepHangKyGui::goKhoa($this->maHoSo);
     }
 
     /** Duong dan tuong doi trong dia exportTt12, chia theo thang de thu muc khong phinh */

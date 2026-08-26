@@ -150,4 +150,65 @@ class Tt12CauHinhTest extends TestCase
 
         Tt12MauRegistry::cho('MAU_99');
     }
+
+    /** @test */
+    public function ba_hang_doi_deu_co_worker_trong_ca_ba_tep_bat()
+    {
+        // Cac tep .bat khong doc duoc PHP nen ten hang doi phai go tay o do. Lech mot ky tu
+        // la worker nghe MOT hang doi con job vao hang doi KHAC: khong nem, khong log,
+        // khong dau hieu gi - ho so nam mai trong hang doi. Test nay khoa hai ben lai.
+        $hangDoi = array(
+            \App\Services\Tt12\Tt12HangDoi::kiem(),
+            \App\Services\Tt12\Tt12HangDoi::ky(),
+            \App\Services\Tt12\Tt12HangDoi::gui(),
+        );
+
+        foreach (array('update.bat', 'install_service.bat') as $tep) {
+            $noiDung = file_get_contents(base_path($tep));
+
+            foreach ($hangDoi as $ten) {
+                $this->assertContains('--queue=' . $ten, $noiDung,
+                    $tep . ': thieu worker cho hang doi "' . $ten . '"');
+            }
+        }
+    }
+
+    /** @test */
+    public function ba_hang_doi_phai_KHAC_nhau()
+    {
+        // Gop chung thi mot lan mang chap keo theo ky lai - thao tac ton thoi gian nhat
+        // trong chuoi, va mot ho so TT12 co the la hang nghin dong.
+        $ba = array(
+            \App\Services\Tt12\Tt12HangDoi::kiem(),
+            \App\Services\Tt12\Tt12HangDoi::ky(),
+            \App\Services\Tt12\Tt12HangDoi::gui(),
+        );
+
+        $this->assertCount(3, array_unique($ba), 'ba hang doi khong duoc trung ten');
+
+        // Khang dinh ca ba HANG SO, khong chi ba gia tri da phan giai: may nay co khai ba
+        // khoa trong organization.php nen config ghi de hang so - doi hang so thanh trung
+        // nhau van khong lo ra o phep kiem tren. May trien khai MOI thi khong khai khoa nao
+        // va rot thang ve hang so, luc do ba job se don ve cung mot hang doi.
+        $hangSo = array(
+            \App\Services\Tt12\Tt12HangDoi::KIEM,
+            \App\Services\Tt12\Tt12HangDoi::KY,
+            \App\Services\Tt12\Tt12HangDoi::GUI,
+        );
+
+        $this->assertCount(3, array_unique($hangSo),
+            'ba hang so mac dinh khong duoc trung ten - may chua khai cau hinh se dung chung');
+    }
+
+    /** @test */
+    public function ten_hang_doi_rong_thi_lui_ve_mac_dinh()
+    {
+        // config('x', $macDinh) CHI dung $macDinh khi khoa KHONG TON TAI. Khoa ton tai nhung
+        // gia tri rong - dung canh mot nguoi sao chep khoi cau hinh roi xoa gia tri - se cho
+        // ra null, va ->onQueue(null) day job vao hang doi 'default' ma khong ai nghe.
+        config(array('organization.tt12.hang_doi_ky' => '   '));
+
+        $this->assertSame(\App\Services\Tt12\Tt12HangDoi::KY,
+            \App\Services\Tt12\Tt12HangDoi::ky());
+    }
 }
