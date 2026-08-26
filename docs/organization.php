@@ -186,6 +186,6 @@ return [
     ],
     'dashboard' => [
         // patient_type_code KHÔNG tính vào thống kê KCB của dashboard Home (KSK đoàn/từ thiện...)
-        'exclude_patient_type_codes' => ['03'], // 03 = KSK
+        'exclude_patient_type_codes' => [], // 03 = KSK
     ],
 ];
