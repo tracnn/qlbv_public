@@ -21,6 +21,8 @@ class Tt12BladeCompilesTest extends TestCase
             array('tab-xml'),
             array('tab-lich-su'),
             array('partials/search'),
+            array('partials/than-chi-tiet'),
+            array('partials/js-chi-tiet'),
         );
     }
 
@@ -70,7 +72,12 @@ class Tt12BladeCompilesTest extends TestCase
     {
         // import_error tung duoc GHI ma khong man hinh nao in ra. Ba cot loi phai duoc doi
         // xu nhu nhau, khong thi mot cai lai am tham.
-        $noiDung = file_get_contents(resource_path('views/bhyt/tt12/detail.blade.php'));
+        //
+        // Doc THAN chu khong doc detail.blade.php: than gio la ban dung chung cho ca trang
+        // rieng lan modal, nen day moi la cho duy nhat ba cot do duoc in.
+        $noiDung = file_get_contents(
+            resource_path('views/bhyt/tt12/partials/than-chi-tiet.blade.php')
+        );
 
         foreach (array('import_error', 'signed_error', 'submit_error') as $cot) {
             $this->assertContains('$hoSo->' . $cot, $noiDung, 'Man chi tiet khong in ' . $cot);

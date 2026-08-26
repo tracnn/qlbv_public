@@ -63,9 +63,28 @@
         </div>
     </div>
 </div>
+
+{{-- Modal chi tiet ho so. Than duoc nap bang AJAX tu bhyt.tt12.detail.than.
+
+     Chi co MOT than chi tiet tren trang nay - than dung dinh danh (#tt12-tabs,
+     #noi-dung-tab, #btn-ky-va-gui) nen khong duoc mo hai modal chi tiet cung luc. --}}
+<div class="modal fade" id="modal-tt12" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-xxl" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Đóng">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <h4 class="modal-title">Chi tiết hồ sơ <small id="modal-tt12-ma"></small></h4>
+            </div>
+            <div class="modal-body" id="modal-tt12-than"></div>
+        </div>
+    </div>
+</div>
 @stop
 
 @push('after-scripts')
+@include('bhyt.tt12.partials.js-chi-tiet')
 <script>
 // Khoi tao select2 cho MOI o chon tren trang, ke ca cac o do partial dung chung sinh ra
 // (default_range, ma_cskcb). Cac o deu mang class 'select2' nhung class do chi la DANH
@@ -194,6 +213,10 @@ function tt12ThamSoLoc() {
 // moi lan mo trang, cai dau vo ich va nang nhat.
 var tt12Bang = null;
 
+// So the he cua lan mo modal. Tang moi lan bam; phan hoi cua mot luot CU quay ve muon thi
+// bi bo qua. Xem chu thich trong .done() de biet vi sao phep kiem nay la bat buoc.
+var luotMoModal = 0;
+
 // Hop dong cua partials.load_data_button: no goi ham TOAN CUC nay, va tu goi mot lan ngay
 // khi trang tai xong. Dat ten khac (vi du tt12FetchData) la nut bam se khong tim thay ham
 // va man hinh khong bao gio tai du lieu.
@@ -250,7 +273,15 @@ function fetchData(startDate, endDate) {
                     var url = "{{ route('bhyt.tt12.detail', ['ma_ho_so' => '__MA__']) }}"
                               .replace('__MA__', encodeURIComponent(data));
 
-                    return $('<a>').attr('href', url).text(data)[0].outerHTML;
+                    // .attr() chu KHONG noi chuoi: $('<div>').text(x).html() chi thoat '&',
+                    // '<', '>' - khong thoat dau nhay kep, nen mot ma ho so dang
+                    // 'A" onmouseover=... x="' se thoat ra khoi thuoc tinh va chay ngay khi
+                    // mo man danh sach, voi phien cua chinh nguoi co quyen bam "Ky va gui".
+                    return $('<a>')
+                        .addClass('tt12-mo-chi-tiet')
+                        .attr('href', url)
+                        .attr('data-ma-ho-so', data)
+                        .text(data)[0].outerHTML;
                 }
             },
             { "data": "mau", render: $.fn.dataTable.render.text() },
@@ -296,7 +327,11 @@ function fetchData(startDate, endDate) {
                     var url = "{{ route('bhyt.tt12.detail', ['ma_ho_so' => '__MA__']) }}"
                               .replace('__MA__', encodeURIComponent(data));
 
-                    return $('<a>').addClass('btn btn-xs btn-default').attr('href', url).text('Chi tiết')[0].outerHTML;
+                    return $('<a>')
+                        .addClass('btn btn-xs btn-default tt12-mo-chi-tiet')
+                        .attr('href', url)
+                        .attr('data-ma-ho-so', data)
+                        .text('Chi tiết')[0].outerHTML;
                 }
             }
         ],
@@ -322,6 +357,66 @@ $(function () {
     // ho lam hai lan mot viec.
     $('#btn-xuat-nhat-ky').on('click', function () {
         window.location = '{{ route('bhyt.tt12.xuat.nhat-ky') }}?' + $.param(tt12LocDaTai || {});
+    });
+
+    // Mo modal chi tiet. Chan click THUONG thoi - the <a> van giu href that nen ctrl+click
+    // van mo tab moi nhu cu.
+    $(document).on('click', '.tt12-mo-chi-tiet', function (e) {
+        if (e.ctrlKey || e.metaKey || e.shiftKey) {
+            return;
+        }
+
+        e.preventDefault();
+
+        var luot = ++luotMoModal;
+        var maHoSo = $(this).data('ma-ho-so');
+
+        // Xoa sach than cu TRUOC khi goi mang: de nguyen la moi nguoi dung doc nham ho so
+        // truoc trong luc cho.
+        $('#modal-tt12-than').html('<p class="text-muted">Đang tải…</p>');
+        $('#modal-tt12-ma').text(maHoSo);
+        $('#modal-tt12').modal('show');
+
+        // href da duoc sinh san kem encodeURIComponent, va route than la duong dan chi tiet
+        // cong '/than'. Neu duong dan chi tiet doi thi phai sua ca route lan cho nay -
+        // Tt12ChiTietModalTest canh phep ghep do.
+        $.get($(this).attr('href') + '/than')
+            .done(function (html) {
+                // Phan hoi cua mot luot CU ve muon: bo qua. Khong co phep kiem nay thi than
+                // ho so A co the de len khung dang mang ten ho so B - va nut "Ky va gui"
+                // trong than do se POST HO SO A len cong BHXH. Khoa phia may chu khong do
+                // duoc vi A la ho so khac, hoan toan chua bi khoa.
+                if (luot !== luotMoModal) {
+                    return;
+                }
+
+                $('#modal-tt12-than').html(html);
+                window.tt12NapTabDau();
+            })
+            .fail(function (xhr) {
+                if (luot !== luotMoModal) {
+                    return;
+                }
+
+                var loi = xhr.status === 404
+                    ? 'Không tìm thấy hồ sơ này. Có thể nó vừa bị xóa.'
+                    : 'Không tải được chi tiết hồ sơ. Thử lại sau.';
+
+                $('#modal-tt12-than').html('<p class="text-danger">' + loi + '</p>');
+            });
+    });
+
+    // Man danh sach tu quyet phan ung - xem chu thich trong js-chi-tiet.
+    // ajax.reload(null, false): GIU nguyen bo loc va trang dang xem. Truyen true (hoac bo
+    // tham so) se nhay ve trang 1, va nguoi xu nhieu ho so lien tiep phai loc lai tu dau.
+    $(document).on('tt12:da-xep-hang tt12:da-cuu-ho', function () {
+        $('#modal-tt12').modal('hide');
+
+        // tt12Bang duoc tao LUOI trong fetchData(), nen no con null cho toi khi nguoi dung
+        // bam Loc lan dau. Phep kiem nay theo dung khuon o khoi gui nhieu ben tren.
+        if (tt12Bang) {
+            tt12Bang.ajax.reload(null, false);
+        }
     });
 });
 </script>

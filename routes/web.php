@@ -673,6 +673,12 @@ Route::group(['middleware' => ['auth']], function () {
             ->middleware('checkrole:superadministrator');
         Route::get('tt12/detail/{ma_ho_so}', 'BHYT\BHYTTt12Controller@detail')
             ->name('bhyt.tt12.detail');
+        // Than tran (khong layout) cho modal tren man danh sach nap bang AJAX. Duong dan
+        // PHAI dung bang duong dan chi tiet cong '/than': index.blade.php dung
+        // $(this).attr('href') + '/than' de dung URL. Doi mot ben ma quen ben kia thi modal
+        // 404 va chi lo ra khi co nguoi bam.
+        Route::get('tt12/detail/{ma_ho_so}/than', 'BHYT\BHYTTt12Controller@detailThan')
+            ->name('bhyt.tt12.detail.than');
         Route::get('tt12/detail/{ma_ho_so}/tab/{tab}', 'BHYT\BHYTTt12Controller@detailTab')
             ->name('bhyt.tt12.detail.tab');
 

@@ -198,6 +198,23 @@ class BHYTTt12Controller extends Controller
         ));
     }
 
+    /**
+     * Chi THAN cua man chi tiet, khong layout - de modal tren man danh sach nap bang AJAX.
+     *
+     * VI SAO KHONG dung lai detail(): detail() tra view co @extends('adminlte::page'), nap
+     * vao modal se long mot ban AdminLTE thu hai vao trong ban dang chay - menu trong menu,
+     * va hai bo JS cua cung mot thu vien chay song song.
+     */
+    public function detailThan($maHoSo)
+    {
+        $hoSo = Tt12HoSo::where('ma_ho_so', $maHoSo)->firstOrFail();
+
+        return view('bhyt.tt12.partials.than-chi-tiet', array(
+            'hoSo'   => $hoSo,
+            'cacTab' => Tt12DetailTabs::cacTab(),
+        ));
+    }
+
     public function detailTab($maHoSo, $tab)
     {
         $hoSo = Tt12HoSo::where('ma_ho_so', $maHoSo)->firstOrFail();
