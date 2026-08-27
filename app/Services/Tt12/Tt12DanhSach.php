@@ -15,7 +15,12 @@ class Tt12DanhSach
 {
     /**
      * @param array $loc mau, ma_cskcb, imported_by, trang_thai, tu_ngay, den_ngay, tim
-     * @param bool $coOrderIdDesc co them orderBy('id', 'desc') hay khong
+     * @param bool $coOrderIdDesc co them orderBy('id', 'desc') hay khong. Ham nay ket thuc bang
+     *            orderBy('id','desc') nen khi goi them orderBy sau do (vi du theo thoi_gian) chi
+     *            thanh khoa SAP PHU chung, khong ghi de. Dashboard TT12 can chon ho so co
+     *            thoi_gian_tiep_nhan moi nhat, nen phai bo tham $coOrderIdDesc = false de xoa
+     *            orderBy('id','desc'), roi them orderBy('thoi_gian_tiep_nhan','desc') de ghi de.
+     *            Laravel 5.5 khong co reorder() nen dung tham so nay thay the.
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public static function truyVan(array $loc, $coOrderIdDesc = true)
