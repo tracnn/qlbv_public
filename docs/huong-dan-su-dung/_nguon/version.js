@@ -15,7 +15,7 @@
  * NGAY_PHAT_HANH cho khớp dòng đó.
  */
 
-const PHIEN_BAN = '1.6';
+const PHIEN_BAN = '1.7';
 
 const NGAY_PHAT_HANH = 'Tháng 8 năm 2026';
 
@@ -27,6 +27,13 @@ const NGAY_PHAT_HANH = 'Tháng 8 năm 2026';
  * thay vì đọc lại cả tài liệu.
  */
 const LICH_SU = [
+  {
+    ban: '1.7',
+    ngay: '27/08/2026',
+    noi_dung:
+      'Danh mục TT12: nói rõ hai điểm ở màn hình Dashboard danh mục mà bản trước chưa mô tả — vì sao khoảng ngày tự nới rộng khi bấm từ Dashboard sang màn Danh sách hồ sơ, và dấu hiệu đánh dấu cơ sở không còn trong danh sách hiện hành.',
+    lien_quan: 'Phần VII, mục 7.12.',
+  },
   {
     ban: '1.6',
     ngay: '26/08/2026',
