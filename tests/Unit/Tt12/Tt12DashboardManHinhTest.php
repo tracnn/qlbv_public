@@ -89,9 +89,27 @@ class Tt12DashboardManHinhTest extends TestCase
         // DanhSachCoSo tra mang RONG khi HIS hong. Hien mot luoi trong nhu the moi thu chua
         // khai la noi doi: "khong biet" va "chua khai" la hai chuyen khac han nhau ma cung
         // trong giong nhau.
+        //
+        // Chi assertContains tren toan tep la khang dinh YEU: no khong bat duoc neu ai do
+        // xoa han @if, hoac dao thanh @if (!empty($tenCoSo)) - nguoc han y do. Phai khang
+        // dinh VI TRI TUONG DOI: chuoi canh bao nam SAU @if (empty($tenCoSo)) va TRUOC
+        // @endif ke tiep.
         $noiDung = file_get_contents(resource_path('views/dashboard/tt12.blade.php'));
 
-        $this->assertContains('Không đọc được danh sách cơ sở', $noiDung);
+        $viTriIf = strpos($noiDung, '@if (empty($tenCoSo))');
+        $this->assertNotFalse($viTriIf, 'Khong tim thay @if (empty($tenCoSo)) trong view');
+
+        $viTriCanhBao = strpos($noiDung, 'Không đọc được danh sách cơ sở');
+        $this->assertNotFalse($viTriCanhBao, 'Khong tim thay chuoi canh bao trong view');
+
+        $this->assertGreaterThan($viTriIf, $viTriCanhBao,
+            'Chuoi canh bao phai nam SAU @if (empty($tenCoSo))');
+
+        $viTriEndif = strpos($noiDung, '@endif', $viTriIf);
+        $this->assertNotFalse($viTriEndif, 'Khong tim thay @endif sau @if (empty($tenCoSo))');
+
+        $this->assertLessThan($viTriEndif, $viTriCanhBao,
+            'Chuoi canh bao phai nam TRUOC @endif ke tiep sau @if (empty($tenCoSo))');
     }
 
     /** @test */
