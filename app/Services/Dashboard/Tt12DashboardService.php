@@ -65,8 +65,9 @@ class Tt12DashboardService
             'mau'        => $maMau,
             'ma_cskcb'   => $maCs,
             'trang_thai' => 'da_gui',
-        ))
+        ), false)
         ->orderBy('thoi_gian_tiep_nhan', 'desc')
+        ->orderBy('id', 'desc')
         ->first();
 
         if ($hoSo === null) {

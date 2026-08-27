@@ -94,13 +94,13 @@ class Tt12DashboardServiceTest extends TestCase
     {
         // Lan gui sau THAY THE lan truoc chu khong them vao. Cong don la dem trung, va con
         // so do se lon dan mai theo so lan gui lai chu khong theo quy mo danh muc that.
-        $this->tao('MOI', array(
-            'is_signed' => true, 'ma_ket_qua' => '200', 'so_dong' => 10,
-            'thoi_gian_tiep_nhan' => '20260801080000',
-        ));
         $this->tao('CU', array(
             'is_signed' => true, 'ma_ket_qua' => '200', 'so_dong' => 25,
             'thoi_gian_tiep_nhan' => '20260826104112',
+        ));
+        $this->tao('MOI', array(
+            'is_signed' => true, 'ma_ket_qua' => '200', 'so_dong' => 10,
+            'thoi_gian_tiep_nhan' => '20260801080000',
         ));
 
         $o = (new Tt12DashboardService())->doPhu()['luoi']['MAU_01']['01929'];

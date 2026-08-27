@@ -15,9 +15,10 @@ class Tt12DanhSach
 {
     /**
      * @param array $loc mau, ma_cskcb, imported_by, trang_thai, tu_ngay, den_ngay, tim
+     * @param bool $coOrderIdDesc co them orderBy('id', 'desc') hay khong
      * @return \Illuminate\Database\Eloquent\Builder
      */
-    public static function truyVan(array $loc)
+    public static function truyVan(array $loc, $coOrderIdDesc = true)
     {
         $q = Tt12HoSo::query();
 
@@ -57,7 +58,10 @@ class Tt12DanhSach
             self::locTrangThai($q, $loc['trang_thai']);
         }
 
-        return $q->orderBy('id', 'desc');
+        if ($coOrderIdDesc) {
+            $q->orderBy('id', 'desc');
+        }
+        return $q;
     }
 
     /**
