@@ -5,6 +5,7 @@ namespace App\Services\Dashboard;
 use App\Services\Tt12\Tt12DanhSach;
 use App\Services\Tt12\Tt12MauRegistry;
 use App\Services\BHYT\DanhSachCoSo;
+use App\Models\BHYT\Tt12\Tt12HoSo;
 
 /**
  * Truy van cho man dashboard do phu danh muc TT12.
@@ -31,7 +32,7 @@ class Tt12DashboardService
     {
         return array(
             'luoi'         => $this->luoi(),
-            'dang_do_dang' => array(),
+            'dang_do_dang' => $this->dangDoDang(),
         );
     }
 
@@ -43,12 +44,41 @@ class Tt12DashboardService
      */
     private function luoi()
     {
+        $trongHis = array_keys(DanhSachCoSo::danhSach());
+
+        // Co so co du lieu ma khong con trong HIS van phai hien - xem chu thich o motO().
+        $coDuLieu = Tt12HoSo::distinct()->pluck('ma_cskcb')->all();
+
+        $tatCaCoSo = array_values(array_unique(array_merge($trongHis, $coDuLieu)));
+        sort($tatCaCoSo);
+
         $ra = array();
 
         foreach (array_keys(Tt12MauRegistry::tatCa()) as $maMau) {
-            foreach (array_keys(DanhSachCoSo::danhSach()) as $maCs) {
-                $ra[$maMau][$maCs] = $this->motO($maMau, $maCs);
+            foreach ($tatCaCoSo as $maCs) {
+                $ra[$maMau][$maCs] = $this->motO($maMau, $maCs, !in_array($maCs, $trongHis, true));
             }
+        }
+
+        return $ra;
+    }
+
+    /**
+     * Dem ho so CHUA duoc tiep nhan, tach theo tung trang thai.
+     *
+     * Bo 'da_gui' ra khoi dai nay: no la trang thai DA XONG, va luoi ben tren da noi ve no
+     * roi. De lai la mot con so bi doc hai lan o hai cho voi hai y nghia khac nhau.
+     */
+    private function dangDoDang()
+    {
+        $ra = array();
+
+        foreach (array_keys(Tt12DanhSach::cacTrangThai()) as $ma) {
+            if ($ma === 'da_gui') {
+                continue;
+            }
+
+            $ra[$ma] = (int) Tt12DanhSach::truyVan(array('trang_thai' => $ma))->count();
         }
 
         return $ra;
@@ -57,9 +87,10 @@ class Tt12DashboardService
     /**
      * @param string $maMau
      * @param string $maCs
+     * @param bool   $ngoaiDanhSach co so khong con trong danh sach HIS hien hanh
      * @return array
      */
-    private function motO($maMau, $maCs)
+    private function motO($maMau, $maCs, $ngoaiDanhSach = false)
     {
         $hoSo = Tt12DanhSach::truyVan(array(
             'mau'        => $maMau,
@@ -71,13 +102,19 @@ class Tt12DashboardService
         ->first();
 
         if ($hoSo === null) {
-            return array('da_tiep_nhan' => false, 'tiep_nhan_luc' => null, 'so_dong' => 0);
+            return array(
+                'da_tiep_nhan'    => false,
+                'tiep_nhan_luc'   => null,
+                'so_dong'         => 0,
+                'ngoai_danh_sach' => $ngoaiDanhSach,
+            );
         }
 
         return array(
-            'da_tiep_nhan'  => true,
-            'tiep_nhan_luc' => $hoSo->thoi_gian_tiep_nhan,
-            'so_dong'       => (int) $hoSo->so_dong,
+            'da_tiep_nhan'    => true,
+            'tiep_nhan_luc'   => $hoSo->thoi_gian_tiep_nhan,
+            'so_dong'         => (int) $hoSo->so_dong,
+            'ngoai_danh_sach' => $ngoaiDanhSach,
         );
     }
 }

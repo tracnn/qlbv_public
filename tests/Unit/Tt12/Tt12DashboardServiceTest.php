@@ -57,6 +57,7 @@ class Tt12DashboardServiceTest extends TestCase
                 $this->assertFalse($o['da_tiep_nhan'], $maMau . '/' . $maCs);
                 $this->assertNull($o['tiep_nhan_luc']);
                 $this->assertSame(0, $o['so_dong']);
+                $this->assertFalse($o['ngoai_danh_sach']);
             }
         }
     }
@@ -107,5 +108,55 @@ class Tt12DashboardServiceTest extends TestCase
 
         $this->assertSame(25, $o['so_dong'], 'phai lay ho so moi nhat, khong cong 10 + 25');
         $this->assertSame('20260826104112', $o['tiep_nhan_luc']);
+    }
+
+    /** @test */
+    public function dai_do_dang_dem_ho_so_CHUA_duoc_tiep_nhan_theo_tung_trang_thai()
+    {
+        // Luoi chi noi ve thu DA XONG. Khong co dai nay thi mot ho so ket o "Gui loi" hoan
+        // toan vo hinh - o van xam nhu the chua ai lam gi, trong khi thuc ra co nguoi da lam
+        // va dang hong.
+        $this->tao('A', array('checked_at' => null));                        // chua kiem
+        $this->tao('B', array('so_loi' => 3));                               // con loi
+        $this->tao('C');                                                      // san sang ky
+        $this->tao('D', array('is_signed' => true));                          // da ky chua gui
+        // ma_gd luon di cung ma_ket_qua trong thuc te (xem Tt12SubmitService::guiMotHoSo) -
+        // thieu no thi bo loc 'da_ky' (is_signed=true VA ma_gd rong) se dem nham ca hai
+        // ho so nay vao "da ky chua gui".
+        $this->tao('E', array('is_signed' => true, 'ma_ket_qua' => '500', 'ma_gd' => 'GD-E')); // gui loi
+        $this->tao('F', array('is_signed' => true, 'ma_ket_qua' => '200', 'ma_gd' => 'GD-F')); // da gui
+
+        $dai = (new Tt12DashboardService())->doPhu()['dang_do_dang'];
+
+        $this->assertSame(1, $dai['chua_kiem']);
+        $this->assertSame(1, $dai['con_loi']);
+        $this->assertSame(1, $dai['san_sang']);
+        $this->assertSame(1, $dai['da_ky']);
+        $this->assertSame(1, $dai['loi_gui']);
+
+        $this->assertArrayNotHasKey('da_gui', $dai,
+            'da_gui khong thuoc dai DO DANG - no da xong, va luoi ben tren da noi roi');
+    }
+
+    /** @test */
+    public function co_so_co_ho_so_ma_khong_con_trong_HIS_van_hien_trong_luoi()
+    {
+        // Xay ra khi mot co so ngung hoat dong sau khi da gui danh muc. Giau di la mat dau
+        // vet mot bo danh muc DA THUC SU gui len cong BHXH.
+        $this->tao('A', array(
+            'ma_cskcb' => '99999', 'is_signed' => true, 'ma_ket_qua' => '200',
+            'thoi_gian_tiep_nhan' => '20260801080000',
+        ));
+
+        $luoi = (new Tt12DashboardService())->doPhu()['luoi'];
+
+        $this->assertArrayHasKey('99999', $luoi['MAU_01'],
+            'co so ngoai danh sach HIS van phai hien');
+        $this->assertTrue($luoi['MAU_01']['99999']['da_tiep_nhan']);
+        $this->assertTrue($luoi['MAU_01']['99999']['ngoai_danh_sach'],
+            'phai danh dau de nguoi doc biet co so nay khong con trong HIS');
+
+        // Co so con trong HIS thi co la false, khong phai vang mat
+        $this->assertFalse($luoi['MAU_01']['01929']['ngoai_danh_sach']);
     }
 }
