@@ -60,4 +60,52 @@ class Tt12DashboardServiceTest extends TestCase
             }
         }
     }
+
+    /** @test */
+    public function o_chi_xanh_khi_cong_DA_TIEP_NHAN_chu_khong_phai_chi_da_ky()
+    {
+        // Day la nham lan de xay ra nhat, va no noi doi theo huong nguy hiem: bao la xong
+        // trong khi ho so chua he roi khoi may.
+        $this->tao('A', array('is_signed' => true));                       // da ky, chua gui
+        $this->tao('B', array('is_signed' => true, 'ma_ket_qua' => '500')); // gui loi
+
+        $kq = (new Tt12DashboardService())->doPhu();
+
+        $this->assertFalse($kq['luoi']['MAU_01']['01929']['da_tiep_nhan']);
+    }
+
+    /** @test */
+    public function o_xanh_khi_co_ho_so_duoc_tiep_nhan()
+    {
+        $this->tao('A', array(
+            'is_signed' => true, 'ma_ket_qua' => '200', 'ma_gd' => 'GD1',
+            'thoi_gian_tiep_nhan' => '20260826104112',
+        ));
+
+        $o = (new Tt12DashboardService())->doPhu()['luoi']['MAU_01']['01929'];
+
+        $this->assertTrue($o['da_tiep_nhan']);
+        $this->assertSame('20260826104112', $o['tiep_nhan_luc']);
+        $this->assertSame(10, $o['so_dong']);
+    }
+
+    /** @test */
+    public function so_dong_lay_tu_ho_so_GAN_NHAT_chu_khong_cong_don()
+    {
+        // Lan gui sau THAY THE lan truoc chu khong them vao. Cong don la dem trung, va con
+        // so do se lon dan mai theo so lan gui lai chu khong theo quy mo danh muc that.
+        $this->tao('MOI', array(
+            'is_signed' => true, 'ma_ket_qua' => '200', 'so_dong' => 10,
+            'thoi_gian_tiep_nhan' => '20260801080000',
+        ));
+        $this->tao('CU', array(
+            'is_signed' => true, 'ma_ket_qua' => '200', 'so_dong' => 25,
+            'thoi_gian_tiep_nhan' => '20260826104112',
+        ));
+
+        $o = (new Tt12DashboardService())->doPhu()['luoi']['MAU_01']['01929'];
+
+        $this->assertSame(25, $o['so_dong'], 'phai lay ho so moi nhat, khong cong 10 + 25');
+        $this->assertSame('20260826104112', $o['tiep_nhan_luc']);
+    }
 }
