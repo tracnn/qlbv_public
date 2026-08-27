@@ -574,6 +574,12 @@ return [
                             'route'  => 'bhyt.tt12.import.index',
                             'active' => ['bhyt/tt12/import*'],
                         ],
+                        [
+                            'text'   => 'Dashboard danh mục',
+                            'icon'   => 'dashboard',
+                            'route'  => 'bhyt.tt12.dashboard',
+                            'active' => ['bhyt/tt12/dashboard*'],
+                        ],
                     ],
                 ],
                 [

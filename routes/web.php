@@ -671,6 +671,12 @@ Route::group(['middleware' => ['auth']], function () {
         Route::delete('tt12/{ma_ho_so}', 'BHYT\BHYTTt12Controller@delete')
             ->name('bhyt.tt12.delete')
             ->middleware('checkrole:superadministrator');
+        // Dashboard do phu danh muc. Dat TRUOC khoi 'tt12/detail/{ma_ho_so}' cho de doc;
+        // hai duong dan khong dam nhau nen thu tu o day khong bat buoc.
+        Route::get('tt12/dashboard', 'Dashboard\Tt12DashboardController@index')
+            ->name('bhyt.tt12.dashboard');
+        Route::get('tt12/dashboard/do-phu', 'Dashboard\Tt12DashboardController@doPhu')
+            ->name('bhyt.tt12.dashboard.do-phu');
         Route::get('tt12/detail/{ma_ho_so}', 'BHYT\BHYTTt12Controller@detail')
             ->name('bhyt.tt12.detail');
         // Than tran (khong layout) cho modal tren man danh sach nap bang AJAX. Duong dan

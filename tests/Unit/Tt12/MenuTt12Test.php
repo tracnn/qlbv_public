@@ -53,11 +53,12 @@ class MenuTt12Test extends TestCase
 
         $this->assertNotNull($khoi);
         $this->assertArrayHasKey('submenu', $khoi);
-        $this->assertCount(2, $khoi['submenu']);
+        $this->assertCount(3, $khoi['submenu']);
 
         $mong = [
             'Danh sách hồ sơ' => 'bhyt.tt12.index',
             'Nạp danh mục' => 'bhyt.tt12.import.index',
+            'Dashboard danh mục' => 'bhyt.tt12.dashboard',
         ];
 
         $router = app('router');
