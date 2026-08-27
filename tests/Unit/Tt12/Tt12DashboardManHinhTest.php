@@ -64,4 +64,41 @@ class Tt12DashboardManHinhTest extends TestCase
                 . ') thay vi goi Tt12DanhSach::truyVan()');
         }
     }
+
+    /** @test */
+    public function view_bien_dich_duoc()
+    {
+        $duongDan = resource_path('views/dashboard/tt12.blade.php');
+
+        $this->assertFileExists($duongDan);
+
+        $php = app('blade.compiler')->compileString(file_get_contents($duongDan));
+
+        $tam = tempnam(sys_get_temp_dir(), 'blade') . '.php';
+        file_put_contents($tam, $php);
+
+        exec('php -l ' . escapeshellarg($tam), $ra, $ma);
+        unlink($tam);
+
+        $this->assertSame(0, $ma, implode(PHP_EOL, $ra));
+    }
+
+    /** @test */
+    public function view_bao_ro_khi_khong_doc_duoc_danh_sach_co_so()
+    {
+        // DanhSachCoSo tra mang RONG khi HIS hong. Hien mot luoi trong nhu the moi thu chua
+        // khai la noi doi: "khong biet" va "chua khai" la hai chuyen khac han nhau ma cung
+        // trong giong nhau.
+        $noiDung = file_get_contents(resource_path('views/dashboard/tt12.blade.php'));
+
+        $this->assertContains('Không đọc được danh sách cơ sở', $noiDung);
+    }
+
+    /** @test */
+    public function view_nap_du_lieu_qua_route_do_phu()
+    {
+        $noiDung = file_get_contents(resource_path('views/dashboard/tt12.blade.php'));
+
+        $this->assertContains("route('bhyt.tt12.dashboard.do-phu')", $noiDung);
+    }
 }
