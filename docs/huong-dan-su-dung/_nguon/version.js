@@ -31,7 +31,7 @@ const LICH_SU = [
     ban: '1.6',
     ngay: '26/08/2026',
     noi_dung:
-      'Danh mục TT12: thêm màn hình Dashboard danh mục cho biết sáu mẫu của từng cơ sở, cái nào đã được cổng Bảo hiểm xã hội tiếp nhận và cái nào chưa bao giờ gửi, kèm khối hồ sơ đang dở dang.',
+      'Danh mục TT12: thêm màn hình Dashboard danh mục cho biết sáu mẫu của từng cơ sở, cái nào đã được cổng Bảo hiểm xã hội tiếp nhận và cái nào chưa được cổng tiếp nhận, kèm khối hồ sơ đang dở dang.',
     lien_quan: 'Phần VII, mục 7.12 (mới); Chương 0 cập nhật bản đồ menu.',
   },
   {
