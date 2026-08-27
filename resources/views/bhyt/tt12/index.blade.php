@@ -220,6 +220,19 @@ var tt12LocDaTai = null;
 var tt12TuNgay = null;
 var tt12DenNgay = null;
 
+// ── Bo loc tu URL (phuc vu bam o tren dashboard TT12) ───────────────────────
+// Cung khuon voi bhyt.xml3176.index: lan goi fetchData() DAU TIEN den tu
+// partials.load_data_button (tu goi ngay khi trang tai xong), truoc ca
+// $(document).ready cua chinh tep nay (khoi select2 ben tren). Doc query string
+// NGAY LUC SCRIPT NAY DUOC PARSE (khong doi ready), roi ap dung THAT SU o lan goi
+// dau tien ben trong fetchData() - nhu vay dung bat ke fetchData() duoc goi tu dau
+// truoc, va khong phu thuoc thu tu cac handler ready.
+var tt12UrlFilters = (function () {
+    if (!window.URLSearchParams) { return null; }
+    var qs = new URLSearchParams(window.location.search);
+    return qs.toString() ? qs : null;
+})();
+
 function tt12ThamSoLoc() {
     return {
         mau:         $('#mau').val(),
@@ -250,6 +263,44 @@ var luotMoModal = 0;
 // Tao bang LUOI o lan goi dau, cac lan sau chi reload - dung khuon ctdtBang cua man chung
 // tu dien tu.
 function fetchData(startDate, endDate) {
+    // Ap dung bo loc tu URL (neu co) - chi ap dung DUNG MOT LAN, cho lan goi dau
+    // tien cua fetchData() sau khi trang tai xong.
+    if (tt12UrlFilters) {
+        var qs = tt12UrlFilters;
+        tt12UrlFilters = null; // dam bao khong ap dung lai o cac lan sau
+
+        // Cac o chon don gian: ten tham so trung id element. .trigger('change') de
+        // select2 (neu da khoi tao) ve lai chu hien thi cho khop - o chon van dung
+        // gia tri that ngay ca khi select2 chua kip khoi tao, vi .val() ghi thang
+        // vao <select> goc, con select2 khi khoi tao sau se doc lai gia tri do.
+        ['mau', 'ma_cskcb', 'trang_thai'].forEach(function (key) {
+            if (qs.has(key)) {
+                $('#' + key).val(qs.get(key)).trigger('change');
+            }
+        });
+
+        // Khoang ngay: dashboard gui 'YYYY-MM-DD'. Man danh sach nay loc theo
+        // IMPORTED_AT (thoi diem nap), khac voi THOI_GIAN_TIEP_NHAN ma o luoi tren
+        // dashboard hien thi - dashboard da gui san mot khoang du rong (xem
+        // TU_NGAY_VO_HAN/DEN_NGAY_VO_HAN trong dashboard.tt12) de bam mot o xanh
+        // luon ra it nhat ho so cua chinh o do, bat ke ho so duoc nap tu bao gio.
+        if (qs.has('tu_ngay') && qs.has('den_ngay')) {
+            var urlStart = moment(qs.get('tu_ngay'), 'YYYY-MM-DD').startOf('day');
+            var urlEnd = moment(qs.get('den_ngay'), 'YYYY-MM-DD').endOf('day');
+
+            var picker = $('#date_range').data('daterangepicker');
+            if (picker) {
+                picker.setStartDate(urlStart);
+                picker.setEndDate(urlEnd);
+            }
+
+            // Ghi de truc tiep tham so dung cho lan tai NAY, khong phu thuoc viec
+            // picker co san sang dung luc hay khong.
+            startDate = urlStart.format('YYYY-MM-DD HH:mm:ss');
+            endDate = urlEnd.format('YYYY-MM-DD HH:mm:ss');
+        }
+    }
+
     tt12TuNgay = startDate;
     tt12DenNgay = endDate;
 

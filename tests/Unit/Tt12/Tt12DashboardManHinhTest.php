@@ -3,12 +3,31 @@
 namespace Tests\Unit\Tt12;
 
 use Tests\TestCase;
+use Tests\Support\DungBangTt12Sqlite;
+use Illuminate\Support\Facades\Cache;
+use App\Services\BHYT\DanhSachCoSo;
 
 /**
  * Chot canh cho man dashboard do phu: route, menu, va nguyen tac khong tu viet SQL.
  */
 class Tt12DashboardManHinhTest extends TestCase
 {
+    use DungBangTt12Sqlite;
+
+    /**
+     * Chi test controller_qua_container_... thuc su dung DB/cache, nhung dung chung setUp
+     * cho ca lop la vo hai: cac test con lai chi doc file nguon, khong dung DB.
+     */
+    protected function setUp()
+    {
+        parent::setUp();
+        $this->dungBangTt12();
+
+        Cache::put(DanhSachCoSo::KHOA_CACHE, array(
+            '01929' => '01929 - Bach Mai',
+        ), 60);
+    }
+
     /** @test */
     public function hai_route_dashboard_duoc_khai_bao()
     {
@@ -20,22 +39,46 @@ class Tt12DashboardManHinhTest extends TestCase
     }
 
     /** @test */
-    public function route_dashboard_nam_trong_chot_quyen_xml_man()
+    public function ca_hai_route_dashboard_deu_nam_trong_chot_quyen_xml_man()
     {
         // Cung quyen voi hai man TT12 kia. Thieu chot nay thi bat ky tai khoan dang nhap nao
-        // cung doc duoc do phu danh muc cua don vi.
-        $duong = parse_url(route('bhyt.tt12.dashboard'), PHP_URL_PATH);
-        $duong = ltrim($duong, '/');
+        // cung doc duoc do phu danh muc cua don vi. bhyt.tt12.dashboard.do-phu la duong tra
+        // TOAN BO du lieu, dang o dung nhom hien tai nhung khong co chot rieng nao giu no lai
+        // neu sau nay ai do tach route ra ngoai nhom 'bhyt/' - test nay canh chinh dieu do
+        // bang cach kiem TUNG route mot, khong chi mot trong hai.
+        foreach (array('bhyt.tt12.dashboard', 'bhyt.tt12.dashboard.do-phu') as $tenRoute) {
+            $duong = ltrim(parse_url(route($tenRoute), PHP_URL_PATH), '/');
+            $timThay = false;
 
-        foreach (app('router')->getRoutes() as $r) {
-            if ($r->uri() === $duong) {
-                $this->assertContains('checkrole:xml-man', $r->gatherMiddleware());
+            foreach (app('router')->getRoutes() as $r) {
+                if ($r->uri() === $duong) {
+                    $timThay = true;
+                    $this->assertContains('checkrole:xml-man', $r->gatherMiddleware(),
+                        $tenRoute . ' phai nam trong chot quyen checkrole:xml-man');
 
-                return;
+                    break;
+                }
             }
-        }
 
-        $this->fail('khong tim thay route ' . $duong);
+            $this->assertTrue($timThay, 'khong tim thay route ' . $duong);
+        }
+    }
+
+    /** @test */
+    public function controller_qua_container_tra_ve_du_hai_khoa_luoi_va_dang_do_dang()
+    {
+        // Moi test khac goi thang new Tt12DashboardService() - khong test nao di qua
+        // container cua Laravel. Du an nay da ba lan dinh bay tiem phu thuoc cua container
+        // tren PHP 7.4/Laravel 5.5 (xem memory bay-tiem-container-handle), nen mot test di
+        // qua app() la dang co de bat truong hop constructor cua controller khong duoc
+        // container giai quyet dung.
+        $controller = app(\App\Http\Controllers\Dashboard\Tt12DashboardController::class);
+
+        $phanHoi = $controller->doPhu();
+        $kq = json_decode($phanHoi->getContent(), true);
+
+        $this->assertArrayHasKey('luoi', $kq);
+        $this->assertArrayHasKey('dang_do_dang', $kq);
     }
 
     /** @test */
@@ -86,30 +129,55 @@ class Tt12DashboardManHinhTest extends TestCase
     /** @test */
     public function view_bao_ro_khi_khong_doc_duoc_danh_sach_co_so()
     {
-        // DanhSachCoSo tra mang RONG khi HIS hong. Hien mot luoi trong nhu the moi thu chua
-        // khai la noi doi: "khong biet" va "chua khai" la hai chuyen khac han nhau ma cung
-        // trong giong nhau.
+        // Canh bao nay gio phai lay tu CHINH phan hoi cua bhyt.tt12.dashboard.do-phu
+        // (kq.doc_duoc_his), khong con la mot lan goi rieng DanhSachCoSo::danhSach() luc
+        // render trang: hai lan goi doc lap co the roi vao hai phia cua mot lan cache 60
+        // phut het han, sinh ra hai cau tra loi khac nhau cho cung mot cau hoi trong cung
+        // mot lan tai trang - xem Tt12DashboardService::doPhu() va
+        // his_hong_khong_duoc_danh_dau_ngoai_danh_sach_cho_bat_ky_co_so_nao().
         //
-        // Chi assertContains tren toan tep la khang dinh YEU: no khong bat duoc neu ai do
-        // xoa han @if, hoac dao thanh @if (!empty($tenCoSo)) - nguoc han y do. Phai khang
-        // dinh VI TRI TUONG DOI: chuoi canh bao nam SAU @if (empty($tenCoSo)) va TRUOC
-        // @endif ke tiep.
+        // Khang dinh CA HAI: container canh bao ton tai (rong, an san) VA script doc
+        // kq.doc_duoc_his de bat/tat no - thieu mot trong hai la mat het y nghia cua canh
+        // bao.
         $noiDung = file_get_contents(resource_path('views/dashboard/tt12.blade.php'));
 
-        $viTriIf = strpos($noiDung, '@if (empty($tenCoSo))');
-        $this->assertNotFalse($viTriIf, 'Khong tim thay @if (empty($tenCoSo)) trong view');
+        $this->assertContains('id="canh-bao-his"', $noiDung,
+            'Thieu container canh bao HIS trong view');
+        $this->assertContains('style="display:none;"', $noiDung,
+            'Container canh bao HIS phai an san, chi JS moi duoc mo no');
+        $this->assertContains('Không đọc được danh sách cơ sở', $noiDung,
+            'Thieu noi dung canh bao HIS trong view');
 
-        $viTriCanhBao = strpos($noiDung, 'Không đọc được danh sách cơ sở');
-        $this->assertNotFalse($viTriCanhBao, 'Khong tim thay chuoi canh bao trong view');
+        $this->assertContains("kq.doc_duoc_his", $noiDung,
+            'Script phai doc kq.doc_duoc_his tu phan hoi cua route do-phu de quyet dinh bat/tat canh bao');
+    }
 
-        $this->assertGreaterThan($viTriIf, $viTriCanhBao,
-            'Chuoi canh bao phai nam SAU @if (empty($tenCoSo))');
+    /** @test */
+    public function man_danh_sach_doc_bo_loc_tu_query_string()
+    {
+        // Dac ta muc 5.3: bam mot o tren luoi phai mo man Danh sach da LOC SAN theo mau va
+        // co so. Dashboard sinh dung link '...index?mau=...&ma_cskcb=...' (va
+        // '...?trang_thai=...' cho dai do dang), nhung neu man danh sach khong doc lai cac
+        // tham so nay tu URL thi bo loc chi song trong thanh dia chi, khong he tac dong len
+        // du lieu hien thi - nguoi dung bam vao o "Đã tiếp nhận" van thay mot bang RONG.
+        $noiDung = file_get_contents(resource_path('views/bhyt/tt12/index.blade.php'));
 
-        $viTriEndif = strpos($noiDung, '@endif', $viTriIf);
-        $this->assertNotFalse($viTriEndif, 'Khong tim thay @endif sau @if (empty($tenCoSo))');
+        $this->assertContains('URLSearchParams', $noiDung,
+            'View danh sach phai doc query string de ap bo loc tu dashboard');
 
-        $this->assertLessThan($viTriEndif, $viTriCanhBao,
-            'Chuoi canh bao phai nam TRUOC @endif ke tiep sau @if (empty($tenCoSo))');
+        foreach (array('mau', 'ma_cskcb', 'trang_thai') as $thamSo) {
+            $this->assertContains("'" . $thamSo . "'", $noiDung,
+                'Thieu doc tham so "' . $thamSo . '" tu query string');
+        }
+
+        // Van de khoang ngay: man danh sach loc theo imported_at, con o luoi tren dashboard
+        // hien thi thoi_gian_tiep_nhan - hai moc thoi gian khac nhau. Neu view khong doc
+        // ca tu_ngay/den_ngay tu URL thi ket qua van co the RONG du da loc dung mau/co so,
+        // vi bo loc ngay mac dinh cua partials.date_range la "Hom nay".
+        $this->assertContains('tu_ngay', $noiDung,
+            'View danh sach phai doc tu_ngay tu query string, khong chi mau/ma_cskcb/trang_thai');
+        $this->assertContains('den_ngay', $noiDung,
+            'View danh sach phai doc den_ngay tu query string, khong chi mau/ma_cskcb/trang_thai');
     }
 
     /** @test */

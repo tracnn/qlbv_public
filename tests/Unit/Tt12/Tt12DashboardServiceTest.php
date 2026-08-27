@@ -159,4 +159,63 @@ class Tt12DashboardServiceTest extends TestCase
         // Co so con trong HIS thi co la false, khong phai vang mat
         $this->assertFalse($luoi['MAU_01']['01929']['ngoai_danh_sach']);
     }
+
+    /** @test */
+    public function his_hong_khong_duoc_danh_dau_ngoai_danh_sach_cho_bat_ky_co_so_nao()
+    {
+        // HIS hong (DanhSachCoSo::danhSach() tra mang RONG) khac han "HIS noi khong con co
+        // so nao": khi khong hoi duoc HIS thi KHONG BIET co so nao con hanh, nen khong duoc
+        // danh dau nhu the DA BIET la chung ngung hoat dong. "Khong biet" khac han "biet la
+        // khong con" - xem chu thich Tt12DashboardService::luoi().
+        Cache::put(DanhSachCoSo::KHOA_CACHE, array(), 60);
+
+        $this->tao('A', array(
+            'is_signed' => true, 'ma_ket_qua' => '200', 'ma_gd' => 'GD1',
+            'thoi_gian_tiep_nhan' => '20260826104112',
+        ));
+
+        $kq = (new Tt12DashboardService())->doPhu();
+
+        $this->assertFalse($kq['doc_duoc_his'], 'phai bao ro la khong doc duoc HIS');
+
+        foreach ($kq['luoi'] as $maMau => $theoCoSo) {
+            foreach ($theoCoSo as $maCs => $o) {
+                $this->assertFalse($o['ngoai_danh_sach'],
+                    $maMau . '/' . $maCs . ': HIS hong khong duoc suy ra la co so da ngung hoat dong');
+            }
+        }
+    }
+
+    /** @test */
+    public function doc_duoc_his_dung_khi_HIS_tra_ve_danh_sach_binh_thuong()
+    {
+        $kq = (new Tt12DashboardService())->doPhu();
+
+        $this->assertTrue($kq['doc_duoc_his']);
+    }
+
+    /** @test */
+    public function ho_so_moi_nhat_van_duoc_chon_ke_ca_khi_thoi_gian_tiep_nhan_rong()
+    {
+        // Cong co the tra ve JSON khong co khoa thoiGianTiepNhan (xem
+        // Tt12SubmitService::docPhanHoi) ke ca khi ma_ket_qua = '200'. Sap xep chinh theo
+        // thoi_gian_tiep_nhan se day ho so MOI (nhung thieu khoa nay) xuong duoi vi NULL xep
+        // cuoi tren ca MySQL lan SQLite - dung sai vao dung quyet dinh "lay ho so gan nhat"
+        // ma o nay sinh ra de bao ve.
+        $this->tao('CU', array(
+            'is_signed' => true, 'ma_ket_qua' => '200', 'ma_gd' => 'GD-CU', 'so_dong' => 10,
+            'thoi_gian_tiep_nhan' => '20260801080000',
+            'submitted_at' => '2026-08-01 08:00:00',
+        ));
+        $this->tao('MOI', array(
+            'is_signed' => true, 'ma_ket_qua' => '200', 'ma_gd' => 'GD-MOI', 'so_dong' => 25,
+            'thoi_gian_tiep_nhan' => null,
+            'submitted_at' => '2026-08-26 09:00:00',
+        ));
+
+        $o = (new Tt12DashboardService())->doPhu()['luoi']['MAU_01']['01929'];
+
+        $this->assertSame(25, $o['so_dong'], 'phai lay ho so gui GAN DAY NHAT (MOI), khong phai CU');
+        $this->assertNull($o['tiep_nhan_luc']);
+    }
 }

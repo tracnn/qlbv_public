@@ -19,14 +19,17 @@
     $tenCoSo = \App\Services\BHYT\DanhSachCoSo::danhSach();
 @endphp
 
-@if (empty($tenCoSo))
-{{-- DanhSachCoSo tra mang rong khi HIS hong. Phai noi ro thay vi hien luoi trong: "khong
-     biet" va "chua khai" la hai chuyen khac han nhau ma cung trong giong nhau. --}}
-<div class="alert alert-warning">
+{{-- Canh bao "khong doc duoc HIS" phai lay tu CHINH phan hoi cua
+     bhyt.tt12.dashboard.do-phu (kq.doc_duoc_his), khong tu mot lan goi
+     DanhSachCoSo::danhSach() rieng luc render trang: cache 60 phut co the het han
+     giua hai lan doc, sinh ra HAI cau tra loi khac nhau cho cung mot cau hoi trong
+     cung mot lan tai trang - banner noi "HIS on" trong khi luoi ben duoi lai danh
+     dau moi o la "ngoai danh sach". Container nay rong luc render, JS ben duoi to
+     no khi va chi khi kq.doc_duoc_his === false. --}}
+<div class="alert alert-warning" id="canh-bao-his" style="display:none;">
     <strong>Không đọc được danh sách cơ sở</strong> từ phần mềm quản lý bệnh viện.
     Lưới bên dưới có thể thiếu cột. Báo bộ phận công nghệ thông tin kiểm tra kết nối HIS.
 </div>
-@endif
 
 <div class="box box-primary">
     <div class="box-header with-border">
@@ -60,6 +63,7 @@ $(function () {
 
     $.get("{{ route('bhyt.tt12.dashboard.do-phu') }}")
         .done(function (kq) {
+            $('#canh-bao-his').toggle(kq.doc_duoc_his === false);
             veLuoi(kq.luoi);
             veDai(kq.dang_do_dang);
         })
@@ -103,6 +107,14 @@ $(function () {
         $('#bang-do-phu tbody').replaceWith($tb);
     }
 
+    // Danh sach loc theo IMPORTED_AT (thoi diem NAP tep), con o luoi noi ve
+    // THOI_GIAN_TIEP_NHAN (thoi diem CONG nhan) - hai moc khac nhau. Bam mot o phai
+    // ra danh sach co chua ho so cua o do bat ke ho so duoc nap luc nao, nen keo theo
+    // ca khoang ngay RONG het muc thay vi de man danh sach tu dat "Hom nay" (mac dinh
+    // cua partials.date_range) - "hom nay" se loc mat moi ho so nap tu truoc.
+    var TU_NGAY_VO_HAN = '2000-01-01';
+    var DEN_NGAY_VO_HAN = '2099-12-31';
+
     function veO(o, mau, cs) {
         var $td = $('<td>');
 
@@ -110,12 +122,18 @@ $(function () {
         // tuc du lieu ngoai.
         var $a = $('<a>')
             .attr('href', urlDanhSach + '?mau=' + encodeURIComponent(mau)
-                          + '&ma_cskcb=' + encodeURIComponent(cs));
+                          + '&ma_cskcb=' + encodeURIComponent(cs)
+                          + '&tu_ngay=' + TU_NGAY_VO_HAN + '&den_ngay=' + DEN_NGAY_VO_HAN);
 
         if (o.da_tiep_nhan) {
             $a.append($('<span>').addClass('label label-success').text('Đã tiếp nhận'));
-            $a.append($('<div>').addClass('small').text(
-                doiNgay(o.tiep_nhan_luc) + ' · ' + o.so_dong + ' dòng'));
+
+            // thoi_gian_tiep_nhan co the RONG (cong khong tra khoa nay trong phan hoi -
+            // xem Tt12SubmitService::docPhanHoi) ngay ca khi ma_ket_qua = '200'. Bo dau
+            // "·" khi khong co ngay, thay vi in mot chuoi cut nhu " · 10 dòng".
+            var ngay = doiNgay(o.tiep_nhan_luc);
+            var dong = o.so_dong + ' dòng';
+            $a.append($('<div>').addClass('small').text(ngay ? (ngay + ' · ' + dong) : dong));
         } else {
             $a.append($('<span>').addClass('label label-default').text('Chưa gửi'));
         }
@@ -147,7 +165,8 @@ $(function () {
             tong += so;
 
             $ul.append($('<li>').append(
-                $('<a>').attr('href', urlDanhSach + '?trang_thai=' + encodeURIComponent(ma))
+                $('<a>').attr('href', urlDanhSach + '?trang_thai=' + encodeURIComponent(ma)
+                              + '&tu_ngay=' + TU_NGAY_VO_HAN + '&den_ngay=' + DEN_NGAY_VO_HAN)
                     .text((nhanTrangThai[ma] || ma) + ': ' + so)
             ));
         });
