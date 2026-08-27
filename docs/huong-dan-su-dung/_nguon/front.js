@@ -95,7 +95,7 @@ function chapter0() {
         ['Hồ sơ XML', 'Kết quả tra cứu thẻ; Xml 3176 (Danh sách hồ sơ, Nhập khẩu hồ sơ, Dashboard lỗi XML); Xml 4750', 'xml-man'],
         ['Hồ sơ XML', 'Chứng từ điện tử (Danh sách hồ sơ, Nạp hồ sơ, Dashboard chứng từ)', 'xml-man'],
         ['Hồ sơ XML', 'Nút Xóa hồ sơ trong màn chi tiết chứng từ điện tử', 'superadministrator'],
-        ['Hồ sơ XML', 'Danh mục TT12 (Danh sách hồ sơ, Nạp danh mục)', 'xml-man'],
+        ['Hồ sơ XML', 'Danh mục TT12 (Danh sách hồ sơ, Nạp danh mục, Dashboard danh mục)', 'xml-man'],
         ['Hồ sơ XML', 'Nút Xoá hồ sơ, Kiểm lại và Đồng bộ lại danh mục trong màn chi tiết danh mục TT12', 'superadministrator'],
         ['Kiểm tra sai sót y lệnh', 'Danh sách vi phạm', 'order-check'],
         ['Kiểm tra sai sót y lệnh', 'Danh mục giới hạn DV; Quản lý quy tắc kiểm tra', 'superadministrator'],
