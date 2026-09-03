@@ -116,4 +116,17 @@ class McctValidateTest extends TestCase
         $this->assertSame('DN4010100000001',
             McctRequest::chuanHoaMaThe('  dn4 0101 000 00001 '));
     }
+
+    /**
+     * Bo test goi thang rules() nen khong di qua prepareForValidation() cua FormRequest.
+     * Day la cach kiem gan nhat ma khong can dung request HTTP: tu chuan hoa truoc, roi dua
+     * ket qua da chuan hoa vao rules() - dung dung thu tu ma prepareForValidation() tao ra.
+     */
+    /** @test */
+    public function ma_the_da_chuan_hoa_thi_qua_luat()
+    {
+        $daChuanHoa = McctRequest::chuanHoaMaThe('  dn4 0101 000 00001 ');
+
+        $this->assertTrue($this->kiem($this->hopLe(['ma_the' => $daChuanHoa]))->passes());
+    }
 }

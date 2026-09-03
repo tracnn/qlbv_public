@@ -25,6 +25,12 @@ class McctTraCuuService
     /** @var BHYTLoginService */
     private $loginService;
 
+    // Giu lai ma co so de ghi vao log: he thong phuc vu nhieu co so voi nhieu tai khoan cong
+    // khac nhau, thieu ma co so thi khi cong chan mot tai khoan, log khong noi duoc tai
+    // khoan nao dang bi chan.
+    /** @var string */
+    private $maCskcb;
+
     /**
      * @param string $maCskcb ma co so KCB, quyet dinh dung tai khoan cong BHXH nao
      * @param Client|null $httpClient chi de kiem tiem vao; san xuat de null
@@ -32,6 +38,7 @@ class McctTraCuuService
      */
     public function __construct($maCskcb, Client $httpClient = null, BHYTLoginService $loginService = null)
     {
+        $this->maCskcb = trim((string) $maCskcb);
         $this->loginService = $loginService ?: new BHYTLoginService($maCskcb);
         $this->httpClient = $httpClient ?: new Client();
     }
@@ -67,6 +74,7 @@ class McctTraCuuService
 
         // KHONG ghi accessToken hay passwordHash vao log.
         Log::info('MCCT tra cuu', [
+            'ma_cskcb' => $this->maCskcb,
             'ma_the' => $maThe,
             'ma_ket_qua' => $kq->maKetQua,
             'ma_http' => $phanHoi['ma_http'],
@@ -78,6 +86,7 @@ class McctTraCuuService
         // (accessToken/passwordHash di o HEADER, khong o day).
         if ($phanHoi['ma_http'] === 400) {
             Log::warning('MCCT bi cong tu choi 400 du da kiem dau vao', [
+                'ma_cskcb' => $this->maCskcb,
                 'ma_the' => $maThe,
                 'ho_ten' => $hoTen,
                 'ngay_sinh' => $ngaySinh,

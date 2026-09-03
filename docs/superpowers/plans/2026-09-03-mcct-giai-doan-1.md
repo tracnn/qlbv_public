@@ -738,8 +738,6 @@ class McctXacThucTest extends TestCase
                 '01929' => [
                     'username' => '01929_BV',
                     'password' => 'bam-mat-khau-01929',
-                    'ho_ten_cb' => 'Le Thanh Dao',
-                    'cccd_cb' => '001083023215',
                 ],
             ],
             'mcct.duong_dan' => '/api/TraCuuCCT/TraCuuTienMCCT',

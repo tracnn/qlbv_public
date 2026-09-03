@@ -32,7 +32,9 @@ class McctController extends Controller
     {
         $params = [
             'ma_cskcb' => trim((string) $request->get('ma_cskcb')),
-            'ma_the' => McctRequest::chuanHoaMaThe($request->get('ma_the')),
+            // Da chuan hoa trong McctRequest::prepareForValidation() TRUOC khi validate,
+            // nen lay thang gia tri da merge, khong goi lai chuanHoaMaThe() o day.
+            'ma_the' => $request->get('ma_the'),
             'ho_ten' => mb_strtoupper(trim((string) $request->get('ho_ten'))),
             'ngay_sinh' => trim((string) $request->get('ngay_sinh')),
         ];
@@ -64,8 +66,17 @@ class McctController extends Controller
                 . 'config/organization.php, khối BHYT_CO_SO.')->error();
 
             return view('insurance.manager.mcct.index', $duLieu);
-        } catch (\Exception $e) {
+        } catch (\GuzzleHttp\Exception\ConnectException $e) {
+            // Rieng loi mang: dat TRUOC nhanh \Exception de bat truoc, tranh bi nhanh do
+            // "nuot" mat va gan nham tien to cau hinh cho loi mang.
             flash('Không kết nối được cổng BHXH: ' . $e->getMessage())->error();
+
+            return view('insurance.manager.mcct.index', $duLieu);
+        } catch (\Exception $e) {
+            // Tien to trung lap: CongBhxh::baseUrl() va BHYTLoginService::login() nem loi
+            // CAU HINH (thieu base_url, thieu tai khoan...), khong phai loi mang. Gan cung
+            // mot cau "khong ket noi duoc" se day nguoi doc di do nham huong mang.
+            flash('Lỗi khi gọi cổng BHXH: ' . $e->getMessage())->error();
 
             return view('insurance.manager.mcct.index', $duLieu);
         }
@@ -80,21 +91,38 @@ class McctController extends Controller
             ? NguongMienCungChiTra::duDieuKien($kq->luyKeLonNhat(), $nguong)
             : null;
 
-        McctLuuTraCuu::luu($kq, array_merge($params, [
-            'nguon' => 'thu_cong',
-            'tra_boi' => \Auth::check() ? \Auth::user()->username : null,
-            'nguong' => $nguong,
-            'du_dieu_kien' => $duDieuKien,
-        ]));
+        // Luu hong thi VAN hien ket qua: luot goi len cong da tieu roi, va cong co danh sach
+        // tai khoan bi han che tra cuu nen khong duoc de mot loi ghi CSDL nuot mat ca ket qua.
+        // Mat dau vet con hon mat ca ket qua lan dau vet.
+        try {
+            McctLuuTraCuu::luu($kq, array_merge($params, [
+                'nguon' => 'thu_cong',
+                'tra_boi' => \Auth::check() ? \Auth::user()->username : null,
+                'nguong' => $nguong,
+                'du_dieu_kien' => $duDieuKien,
+            ]));
+        } catch (\Exception $e) {
+            \Log::error('MCCT khong luu duoc lich su tra cuu: ' . $e->getMessage());
+            flash('Đã tra cứu được nhưng không lưu được lịch sử tra cứu.')->warning();
+        }
 
-        $this->baoTrangThai($kq);
+        $this->baoTrangThai($kq, $params['ma_cskcb']);
+
+        // Doc lich su cung co the hong vi cung ly do (bang chua duoc migrate) - khong duoc
+        // de trang trang xoa mat ket qua vua tra cuu duoc.
+        try {
+            $lichSu = McctTraCuu::where('ma_the', $params['ma_the'])
+                ->orderBy('id', 'desc')->take(5)->get();
+        } catch (\Exception $e) {
+            \Log::error('MCCT khong doc duoc lich su tra cuu: ' . $e->getMessage());
+            $lichSu = [];
+        }
 
         return view('insurance.manager.mcct.index', array_merge($duLieu, [
             'ketQua' => $kq,
             'nguong' => $nguong,
             'duDieuKien' => $duDieuKien,
-            'lichSu' => McctTraCuu::where('ma_the', $params['ma_the'])
-                ->orderBy('id', 'desc')->take(5)->get(),
+            'lichSu' => $lichSu,
         ]));
     }
 
@@ -105,7 +133,7 @@ class McctController extends Controller
      * tai khoan bi han che tra cuu - van de tai khoan, khong phai loi he thong. Gop chung se
      * day nguoi doc di do nham huong hang gio.
      */
-    private function baoTrangThai($kq)
+    private function baoTrangThai($kq, $maCskcb = null)
     {
         if ($kq->maKetQua === '200') {
             return;
@@ -119,8 +147,10 @@ class McctController extends Controller
         }
 
         if ($kq->maKetQua === '500' && mb_strpos($kq->ghiChu, 'quá trình tra cứu') !== false) {
-            flash('Tài khoản cổng BHXH của cơ sở đang bị hạn chế tra cứu. Liên hệ BHXH tỉnh '
-                . 'để được mở.')->error();
+            // Dac ta doi ro noi bi han che la co so nao: chinh dieu do la ly do thong bao
+            // nay dang duoc tach rieng khoi nhanh loi 500 chung.
+            flash('Tài khoản của cơ sở ' . $maCskcb . ' đang bị cổng hạn chế tra cứu. Liên hệ '
+                . 'BHXH tỉnh để được mở.')->error();
 
             return;
         }

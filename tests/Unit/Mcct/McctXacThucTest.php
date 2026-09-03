@@ -83,8 +83,6 @@ class McctXacThucTest extends TestCase
                 '01929' => [
                     'username' => '01929_BV',
                     'password' => 'bam-mat-khau-01929',
-                    'ho_ten_cb' => 'Le Thanh Dao',
-                    'cccd_cb' => '001083023215',
                 ],
             ],
             'mcct.duong_dan' => '/api/TraCuuCCT/TraCuuTienMCCT',
@@ -228,6 +226,25 @@ class McctXacThucTest extends TestCase
 
         $this->assertSame('500', $kq->maKetQua);
         $this->assertCount(1, $this->daGui, 'Ma 500 khong duoc sinh lan goi thu hai');
+    }
+
+    /**
+     * Ma 400 cung khong duoc goi lai - cung ly do voi ma 500: doi luot goi la tu chuoc lay no.
+     */
+    /** @test */
+    public function ma_400_khong_goi_lai()
+    {
+        $sv = new McctTraCuuService('01929', $this->client([
+            new Response(400, [], json_encode([
+                'MaKetQua' => '400',
+                'GhiChu' => 'Các tham số đầu vào không chính xác!',
+            ])),
+        ]), new LoginServiceGiaLap());
+
+        $kq = $sv->traCuu('DN4010100000001', 'Nguyen Van A', '01/01/1990');
+
+        $this->assertSame('400', $kq->maKetQua);
+        $this->assertCount(1, $this->daGui, 'Ma 400 khong duoc sinh lan goi thu hai');
     }
 
     /** Loi mang cung khong duoc goi lai - cung ly do voi ma 500 */

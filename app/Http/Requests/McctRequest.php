@@ -69,6 +69,18 @@ class McctRequest extends FormRequest
     }
 
     /**
+     * Chuan hoa ma the TRUOC khi kiem.
+     *
+     * Cong tu bo khoang trang truoc khi do do dai, nen mot ma go co dau cach van hop le voi
+     * cong. Neu khong chuan hoa o day thi luat regex se chan oan va bao "phai co 10, 12 hoac
+     * 15 ky tu" - mot cau sai su that, va nguoi dung khong biet phai sua gi.
+     */
+    protected function prepareForValidation()
+    {
+        $this->merge(['ma_the' => self::chuanHoaMaThe($this->get('ma_the'))]);
+    }
+
+    /**
      * Bo MOI khoang trang va viet hoa.
      *
      * Cong tu bo khoang trang truoc khi do do dai, nen mot ma go co dau cach van hop le voi
