@@ -131,8 +131,34 @@ class KetQuaMcct
         return $p[2] . '-' . $p[1] . '-' . $p[0];
     }
 
+    /**
+     * Doi truong tien cua cong thanh so.
+     *
+     * CONG TRA TIEN DUOI DANG CHUOI CO DAU PHAY NGAN NGHIN: "893,973", "3,862,166" - da xac
+     * nhan bang du lieu that ngay 2026-09-03, du dac ta ghi kieu "So thuc".
+     *
+     * Ep thang (float) la SAI VA IM LANG: PHP dung lai o dau phay, nen (float) '3,862,166'
+     * bang 3.0. Mot nguoi benh co luy ke 3.862.166 d se bi doc thanh 3 d, va ket luan "du
+     * dieu kien mien cung chi tra" luon luon sai - sai theo huong khong ai nhin ra tu man hinh.
+     *
+     * Chi bo dau PHAY va khoang trang, GIU dau cham lam dau thap phan. Khong doan dau cham la
+     * ngan nghin: '1.120' khi do vua co the la 1,12 vua co the la 1120, va doan sai o day cung
+     * im lang y het loi cu.
+     */
     private static function tien(array $m, $khoa)
     {
-        return isset($m[$khoa]) ? (float) $m[$khoa] : 0.0;
+        if (!isset($m[$khoa])) {
+            return 0.0;
+        }
+
+        $v = $m[$khoa];
+
+        if (is_int($v) || is_float($v)) {
+            return (float) $v;
+        }
+
+        $v = str_replace([',', ' ', "\xc2\xa0"], '', trim((string) $v));
+
+        return is_numeric($v) ? (float) $v : 0.0;
     }
 }

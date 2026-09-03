@@ -97,6 +97,76 @@ class McctPhanTichKetQuaTest extends TestCase
         $this->assertNull($kq->dong[0]['ngay_ra']);
     }
 
+    /**
+     * DU LIEU THAT tu cong ngay 2026-09-03: tien tra ve la CHUOI CO DAU PHAY NGAN NGHIN.
+     *
+     * (float) '3,862,166' trong PHP bang 3.0 - no dung lai o dau phay. Truoc khi sua, mot
+     * nguoi benh co luy ke 3.862.166 d bi doc thanh 3 d, va ket luan "du dieu kien mien cung
+     * chi tra" LUON LUON sai. Day la truong hop that, khong phai gia dinh.
+     */
+    /** @test */
+    public function tien_co_dau_phay_ngan_nghin_doc_dung()
+    {
+        $json = $this->jsonThanhCong();
+        $json['DataCCT'][0]['tBNCCTMCCT'] = '893,973';
+        $json['DataCCT'][0]['tBNCCTLuyKe'] = '3,862,166';
+
+        $kq = KetQuaMcct::tuMang($json);
+
+        $this->assertSame(893973.0, $kq->dong[0]['t_bn_cct_mcct']);
+        $this->assertSame(3862166.0, $kq->dong[0]['t_bn_cct_luy_ke']);
+        $this->assertSame(3862166.0, $kq->luyKeLonNhat());
+    }
+
+    /** @test */
+    public function tien_co_dau_phay_va_khoang_trang_van_doc_dung()
+    {
+        $json = $this->jsonThanhCong();
+        $json['DataCCT'][0]['tBNCCTLuyKe'] = ' 1,120,157 ';
+
+        $kq = KetQuaMcct::tuMang($json);
+
+        $this->assertSame(1120157.0, $kq->dong[0]['t_bn_cct_luy_ke']);
+    }
+
+    /** Chuoi '0' phai ra 0.0 chu khong phai null hay chuoi rong */
+    /** @test */
+    public function tien_bang_khong_doc_dung()
+    {
+        $json = $this->jsonThanhCong();
+        $json['DataCCT'][0]['tBNCCTMCCT'] = '0';
+
+        $kq = KetQuaMcct::tuMang($json);
+
+        $this->assertSame(0.0, $kq->dong[0]['t_bn_cct_mcct']);
+    }
+
+    /** Truong rong hoac thieu -> 0.0, khong duoc nem loi */
+    /** @test */
+    public function tien_rong_thanh_khong()
+    {
+        $json = $this->jsonThanhCong();
+        $json['DataCCT'][0]['tBNCCTMCCT'] = '';
+        unset($json['DataCCT'][0]['tBNCCTLuyKe']);
+
+        $kq = KetQuaMcct::tuMang($json);
+
+        $this->assertSame(0.0, $kq->dong[0]['t_bn_cct_mcct']);
+        $this->assertSame(0.0, $kq->dong[0]['t_bn_cct_luy_ke']);
+    }
+
+    /** Dau cham van la dau THAP PHAN, khong duoc coi la ngan nghin */
+    /** @test */
+    public function dau_cham_van_la_thap_phan()
+    {
+        $json = $this->jsonThanhCong();
+        $json['DataCCT'][0]['tBNCCTLuyKe'] = '1,250,000.50';
+
+        $kq = KetQuaMcct::tuMang($json);
+
+        $this->assertSame(1250000.5, $kq->dong[0]['t_bn_cct_luy_ke']);
+    }
+
     /** Cong co the tra so duoi dang chuoi - khong duoc de lot xuong CSDL thanh chuoi */
     /** @test */
     public function tien_dang_chuoi_van_thanh_so()
