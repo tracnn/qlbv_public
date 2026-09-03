@@ -14,6 +14,7 @@
         <div class="col-sm-12">
             <div class="form-group row">
                 @include('partials.treatment_type_fillter')
+                @include('partials.xml3176_ma_khoa_filter')
                 @include('partials.ma_cskcb')
                 @include('partials.xml_filter_status')
                 @include('partials.xml3176_error_catalog')
@@ -28,6 +29,7 @@
 
 @push('after-scripts')
     @stack('after-scripts-xml3176-error-catalog')
+    @stack('after-scripts-xml3176-ma-khoa')
     @stack('after-scripts-date-range')
     @stack('after-scripts-treatment-code')
     @stack('after-scripts-imported-by')

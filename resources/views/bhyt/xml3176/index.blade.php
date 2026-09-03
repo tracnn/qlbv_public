@@ -266,6 +266,7 @@
                     d.hein_card_filter = $('#hein_card_filter').val();
                     d.payment_date_filter = $('#payment_date_filter').val();
                     d.treatment_type_fillter = $('#treatment_type_fillter').val();
+                    d.ma_khoa = $('#ma_khoa').val();
                     d.xml_export_status = $('#xml_export_status').val();
                     d.patient_code = $('#patient_code').val();
                     d.imported_by = $('#imported_by').val();

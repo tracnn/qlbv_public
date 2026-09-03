@@ -10,6 +10,7 @@ use App\Models\BHYT\Xml3176Xml1;
 
 use App\Models\BHYT\Xml3176ErrorResult;
 use App\Models\BHYT\Xml3176ErrorCatalog;
+use App\Models\BHYT\DepartmentBedCatalog;
 use App\Services\Xml3176Service;
 use App\Services\XmlStructures;
 use App\Services\Xml3176\Xml3176ErrorIndex;
@@ -77,8 +78,20 @@ class BHYTXml3176Controller extends Controller
     }
 
     public function importIndex()
-    {   
+    {
         return view('bhyt.xml3176.import');
+    }
+
+    /**
+     * Danh sach khoa (ma_khoa, ten_khoa) cho dropdown loc theo khoa tren man danh sach.
+     *
+     * Nguon: danh muc department_bed_catalogs (ma_khoa chuan BHXH, khop
+     * xml3176_xml1s.ma_khoa). Endpoint nam trong nhom checkrole:xml-man cung quyen
+     * voi man hinh nen AJAX khong bi 403.
+     */
+    public function departmentOptions()
+    {
+        return response()->json(DepartmentBedCatalog::danhSachChonKhoa());
     }
 
     public function fetchData(Request $request)
@@ -97,6 +110,7 @@ class BHYTXml3176Controller extends Controller
         $hein_card_filter = $request->input('hein_card_filter');
         $payment_date_filter = $request->input('payment_date_filter');
         $treatment_type_fillter = $request->input('treatment_type_fillter');
+        $ma_khoa = $request->input('ma_khoa');
         $xml_export_status = $request->input('xml_export_status');
         $xml_submit_status = $request->input('xml_submit_status');
         $xml_sign_status = $request->input('xml_sign_status');
@@ -308,6 +322,11 @@ class BHYTXml3176Controller extends Controller
                 // Apply filter based on treatment_type_fillter
                 if ($treatment_type_fillter) {
                     $result = $result->where('ma_loai_kcb', $treatment_type_fillter);
+                }
+
+                // Apply filter based on ma_khoa (khoa cua ho so, cot xml3176_xml1s.ma_khoa co index)
+                if (!empty($ma_khoa)) {
+                    $result = $result->where('ma_khoa', $ma_khoa);
                 }
 
                 //Apply filter based on xml_export_status

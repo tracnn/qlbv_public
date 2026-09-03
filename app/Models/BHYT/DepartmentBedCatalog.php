@@ -3,6 +3,7 @@
 namespace App\Models\BHYT;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 class DepartmentBedCatalog extends Model
 {
@@ -50,5 +51,25 @@ class DepartmentBedCatalog extends Model
               ->orWhere('ma_cskcb', '')
               ->orWhere('ma_cskcb', $maCskcb);
         });
+    }
+
+    /**
+     * Danh sach khoa cho dropdown loc XML3176.
+     *
+     * Gom nhom theo ma_khoa (bang co the co nhieu dong cung ma_khoa, khac ma_loai_kcb
+     * hoac ky hieu luc) va bo cac dong ma_khoa rong/null. Tra ve {ma_khoa, ten_khoa}
+     * sap xep tang dan theo ma_khoa. MAX(ten_khoa) de hop le voi ONLY_FULL_GROUP_BY.
+     *
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public static function danhSachChonKhoa()
+    {
+        return static::query()
+            ->select('ma_khoa', DB::raw('MAX(ten_khoa) as ten_khoa'))
+            ->whereNotNull('ma_khoa')
+            ->where('ma_khoa', '<>', '')
+            ->groupBy('ma_khoa')
+            ->orderBy('ma_khoa')
+            ->get();
     }
 }

@@ -586,6 +586,7 @@ Route::group(['middleware' => ['auth']], function () {
 
         Route::get('xml3176/index', 'BHYT\BHYTXml3176Controller@index')->name('bhyt.xml3176.index');
         Route::get('xml3176/index/fetch-data', 'BHYT\BHYTXml3176Controller@fetchData')->name('bhyt.xml3176.fetch-data');
+        Route::get('xml3176/index/department-options', 'BHYT\BHYTXml3176Controller@departmentOptions')->name('bhyt.xml3176.department-options');
         Route::get('xml3176/import/index', 'BHYT\BHYTXml3176Controller@importIndex')->name('bhyt.xml3176.import.index');
         Route::post('xml3176/index/upload-data', 'BHYT\BHYTXml3176Controller@uploadData')->name('bhyt.xml3176.upload-data');
         Route::get('xml3176/index/detail-xml/{ma_lk}', 'BHYT\BHYTXml3176Controller@detailXml')->name('bhyt.xml3176.detail-xml');
