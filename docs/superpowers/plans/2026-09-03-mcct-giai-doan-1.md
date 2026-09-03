@@ -677,6 +677,19 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 - Create: `app/Services/Mcct/McctTraCuuService.php`
 - Test: `tests/Unit/Mcct/McctXacThucTest.php`
 
+> **Sửa kế hoạch (2026-09-03, trong lúc thực thi).** Bộ test dưới đây mồi token vào cache rồi
+> đưa một `BHYTLoginService` **thật** vào service. Cách đó hỏng: luồng 401 gọi `logout()` xoá
+> cache, nên `getAccessToken()` lần hai kích hoạt **đăng nhập thật lên cổng BHXH sản xuất** —
+> đã xảy ra một lần khi chạy test. `BHYTLoginService` tự tạo `Client` trong constructor nên
+> không tiêm mock vào được.
+>
+> Thay bằng một lớp giả `LoginServiceGiaLap` kế thừa `BHYTLoginService`, khai ngay trong tệp
+> test, ghi đè năm phương thức mà `McctTraCuuService` gọi (`getAccessToken`, `getIdToken`,
+> `passwordHash`, `username`, `logout`). Không đụng `BHYTLoginService` ngoài việc thêm
+> `passwordHash()`. Lớp giả đổi token `TOKEN-A` → `TOKEN-B` khi `logout()` được gọi, nhờ đó
+> test 401 kiểm được thêm một điều test cũ không kiểm được: lần gọi thứ hai có thật sự mang
+> token mới hay không.
+
 **Interfaces:**
 - Consumes: `KetQuaMcct::tuMang()` (Task 2); `BHYTLoginService::getAccessToken()`,
   `getIdToken()`, `username()`, `logout()` (đã có)
@@ -725,8 +738,6 @@ class McctXacThucTest extends TestCase
                 '01929' => [
                     'username' => '01929_BV',
                     'password' => 'bam-mat-khau-01929',
-                    'ho_ten_cb' => 'Le Thanh Dao',
-                    'cccd_cb' => '001083023215',
                 ],
             ],
             'mcct.duong_dan' => '/api/TraCuuCCT/TraCuuTienMCCT',

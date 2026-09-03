@@ -472,6 +472,11 @@ Route::group(['middleware' => ['auth']], function () {
     	Route::get('check-card/search', 'Insurance\Manager\InsuranceController@search')->name('insurance.check-card.search');
     	Route::get('check-card/getqrcode', 'Insurance\Manager\InsuranceController@getqrcode')->name('insurance.check-card.getqrcode');
 
+        // Tra cuu tien cung chi tra (MCCT). Nam trong dung nhom insurance/ de cung muc
+        // quyen voi man tra cuu the BHYT ngay canh no.
+        Route::get('mcct', 'Insurance\Manager\McctController@index')->name('insurance.mcct');
+        Route::get('mcct/search', 'Insurance\Manager\McctController@search')->name('insurance.mcct.search');
+
         Route::get('medicine-search', 'Insurance\Manager\MedicineSearchController@index')->name('insurance.medicine-search');
         Route::get('insurance.medicine-search.get-data', 'Insurance\Manager\MedicineSearchController@getdata')->name('insurance.medicine-search.get-data');
 

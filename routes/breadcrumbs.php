@@ -122,3 +122,7 @@ Breadcrumbs::register('queue.manage', function ($breadcrumbs) {
     $breadcrumbs->parent('home');
     $breadcrumbs->push('Quản lý xếp hàng', route('queue.manage'));
 });
+Breadcrumbs::register('insurance.mcct', function ($breadcrumbs) {
+    $breadcrumbs->parent('home');
+    $breadcrumbs->push('Tra cứu tiền cùng chi trả', route('insurance.mcct'));
+});
