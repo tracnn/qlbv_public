@@ -43,6 +43,9 @@ class KetQuaMcct
         if ($the !== []) {
             $kq->thongTinThe = [
                 'ho_ten' => self::chuoi($the, 'hoTen'),
+                // Giu nguyen dinh dang dd/MM/yyyy hoac MM/yyyy hoac yyyy: cot CSDL the_ngay_sinh
+                // la string(10), khong phai date; cong tra co the chi co thang/nam hoac chi nam
+                // nen khong the doi sang Y-m-d. Ngay_ket_thuc duoi day la date nen phai doi.
                 'ngay_sinh' => self::chuoi($the, 'ngaySinh'),
                 'ngay_ket_thuc' => self::ngay($the, 'ngayKetThuc'),
                 'ma_bhxh' => self::chuoi($the, 'maBhxh'),
