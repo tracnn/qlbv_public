@@ -288,7 +288,13 @@ luôn là chuỗi rỗng.
 ## 8. Giao diện
 
 Màn riêng: route `insurance.mcct` (GET, form rỗng) và `insurance.mcct.search` (GET, tra
-cứu), cùng nhóm `checkrole` như các màn BHYT khác.
+cứu), đặt trong **đúng nhóm `insurance/` đang có** ở `routes/web.php`.
+
+Nhóm đó **không** khai `checkrole` — dòng khai báo đã bị comment sẵn tại chỗ, nên quyền
+thực tế chỉ là `auth` của nhóm ngoài cùng, giống hệt màn tra cứu thẻ BHYT. Thiết kế theo
+đúng hiện trạng: siết quyền riêng cho MCCT trong khi màn tra cứu thẻ ngay cạnh vẫn mở là
+một sự bất nhất khó giải thích, và siết quyền cho cả cụm là việc khác, không thuộc phạm vi
+giai đoạn này.
 
 Bố cục từ trên xuống:
 
@@ -341,7 +347,7 @@ Viết test trước (TDD). Sáu bộ; bốn bộ đầu không chạm mạng v�
 | `McctXacThucTest` | Dùng **Guzzle `MockHandler`**: gửi đúng ba header đúng tên; body JSON đúng bốn trường; `401` lần đầu → làm mới token và gọi lại lần hai; `401` lần hai → ném lỗi phân biệt được; lỗi mạng **không** sinh lần gọi thứ hai |
 | `McctValidateTest` | Mã thẻ 9/11/13 ký tự bị chặn, 10/12/15 qua; ba định dạng ngày sinh qua, `1/1/1990` bị chặn; mã cơ sở ngoài `BHYT_CO_SO` bị chặn |
 | `McctLuuTraCuuTest` | Lưu đủ dòng chi phí; **lưu cả khi `204`** (có phiên, không có dòng nào); `nguong_ap_dung` được ghi vào bảng chứ không tính lại khi đọc |
-| `RouteMcctTest`, `MenuMcctTest` | Route tồn tại và có `checkrole`; menu hiện — theo mẫu `RouteOrderCheckTest` / `MenuOrderCheckTest` sẵn có |
+| `RouteMcctTest`, `MenuMcctTest` | Hai route tồn tại, URL không đổi, **nằm trong nhóm `auth`**; mục menu "Tra cứu tiền cùng chi trả" nằm trong nhóm "Thẻ BHYT" và chỉ xuất hiện một lần — theo mẫu `RouteOrderCheckTest` / `MenuOrderCheckTest` sẵn có |
 
 Ràng buộc bám chốt an toàn CSDL của dự án: **không dùng `RefreshDatabase`**, không trỏ vào
 CSDL `qlbv`. Chỉ đúng một bộ (`McctLuuTraCuuTest`) chạm CSDL.
