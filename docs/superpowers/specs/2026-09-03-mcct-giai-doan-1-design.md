@@ -46,7 +46,7 @@ lại thì phải viết tầng gọi cổng hai lần.
 
 | Mục | Nội dung |
 |---|---|
-| URL | `POST http://egw.baohiemxahoi.gov.vn/api/TraCuuCCT/TraCuuTienMCCT` |
+| URL | `POST {base_url}/api/TraCuuCCT/TraCuuTienMCCT` — phụ lục ghi `http://egw.baohiemxahoi.gov.vn`, xem ghi chú về giao thức bên dưới |
 | Content-Type | `application/json`, charset `utf-8` |
 | Xác thực | Ba **HTTP header**: `accessToken`, `tokenId`, `passwordHash` |
 | Body | `{ username, maThe, hoTen, ngaySinh }` |
@@ -107,11 +107,15 @@ trả HTTP 200):
    từ `config('organization.BHYT_CO_SO')` theo mã cơ sở. `passwordHash` chính là mật khẩu
    MD5 đã khai ở đó — thêm accessor `passwordHash()` vào `BHYTLoginService`, không sửa
    luồng đăng nhập.
-3. **Hằng số giao thức tách khỏi tham số cơ sở**, theo đúng tiền lệ `config/tt12.php`: URL,
-   số tháng lương cơ sở và bảng lương cơ sở nằm ở `config/mcct.php`; tài khoản nằm ở
-   `config/organization.php`.
-4. **Chạy thẳng trên môi trường chính thức** (`egw.baohiemxahoi.gov.vn`). URL vẫn đọc từ
-   config để đổi sang `daotaoegw` được khi cần dò lỗi.
+3. **Hằng số giao thức tách khỏi host**, theo đúng tiền lệ `config/tt12.php` và
+   `config/ctdt.php`: `config/mcct.php` khai **đường dẫn** `/api/TraCuuCCT/TraCuuTienMCCT`
+   (hằng số giao thức do BHXH quy định, đi theo kho mã), còn host lấy từ
+   `organization.BHYT.base_url` — chính là `$bhxhBaseUrl` ở đầu `config/organization.php`.
+   Ghép bằng **`App\Services\BHYT\CongBhxh::url()`**, điểm ghép URL duy nhất đã có sẵn.
+   Không khai URL đầy đủ ở bất kỳ đâu: khai đầy đủ nghĩa là một máy thử nghiệm đổi
+   `$bhxhBaseUrl` sang `daotaoegw` nhưng MCCT vẫn lặng lẽ gọi cổng thật.
+4. **Chạy thẳng trên môi trường chính thức.** Đổi môi trường bằng **đúng một dòng**
+   `$bhxhBaseUrl` như mọi module khác, không có công tắc riêng cho MCCT.
 5. **Retry đúng một lần, chỉ với 401.** Phiên 10 phút và khoá theo IP nên 401 dễ gặp hơn
    hẳn luồng cũ. Lỗi mạng/timeout **không** retry: cổng có danh sách tài khoản bị hạn chế
    tra cứu, tự nhân đôi lượt gọi là tự chuốc lấy nó.
@@ -139,6 +143,13 @@ của cơ sở trong hệ thống này là dạng `01929_BV`.
 Thiết kế chọn gửi `$loginService->username()` (tài khoản đăng nhập thật), vì cổng đối chiếu
 tài khoản với token. **Nếu cổng từ chối thì đổi sang mã CSKCB** — sửa một dòng. Đây là mục
 nghiệm thu bắt buộc ở mục 10, không mock được và không được coi test xanh là xong.
+
+**Giao thức `http` hay `https`.** Phụ lục viết URL dạng `http://egw.baohiemxahoi.gov.vn`,
+còn `organization.BHYT.base_url` của dự án đang là `https://egw.baohiemxahoi.gov.vn` và mọi
+module khác (tra cứu thẻ, gửi XML 4750/3176, TT12) đang chạy tốt qua `https`. Thiết kế
+**dùng chung `base_url`** — không hạ xuống `http` chỉ vì phụ lục viết vậy, gần như chắc
+chắn đó là cách viết tắt trong tài liệu. Nếu cổng từ chối `https` ở riêng đường dẫn này thì
+đó là ngoại lệ thật và phải xử lý riêng, ghi vào mục nghiệm thu 10.
 
 ## 6. Kiến trúc
 
@@ -174,9 +185,12 @@ database/migrations/…_create_mcct_chi_phi_table.php
 
 ### `config/mcct.php`
 
+Chỉ chứa hằng số giao thức và tham số nghiệp vụ. **Không chứa host** — host ở
+`organization.BHYT.base_url`, ghép bằng `CongBhxh::url(config('mcct.duong_dan'))`.
+
 ```php
 return [
-    'tra_cuu_url' => 'http://egw.baohiemxahoi.gov.vn/api/TraCuuCCT/TraCuuTienMCCT',
+    'duong_dan' => '/api/TraCuuCCT/TraCuuTienMCCT',
     'so_thang_luong_co_so' => 6,
     // Mốc hiệu lực => mức lương cơ sở. Sắp tăng dần theo ngày.
     'luong_co_so' => [
@@ -340,7 +354,8 @@ vỡ với các lớp có khai báo kiểu trả về trong dự án này.
 1. Gọi thật một thẻ **có phát sinh chi phí** trên môi trường chính thức.
 2. Xác nhận cổng chấp nhận `username` là tài khoản đăng nhập (`01929_BV`) chứ không đòi mã
    CSKCB (mục 5). Nếu bị từ chối thì đổi sang mã CSKCB và gọi lại.
-3. Xác nhận IP máy chủ qlbv không bị cổng từ chối (`401`).
+3. Xác nhận IP máy chủ qlbv không bị cổng từ chối (`401`), và cổng chấp nhận `https` từ
+   `base_url` chung (mục 5).
 4. Ghi lại nguyên văn `GhiChu` cổng trả về, đối chiếu với số lũy kế hiển thị trên màn.
 
 Chỉ khi bốn bước này xong mới coi Giai đoạn 1 là hoàn thành.
