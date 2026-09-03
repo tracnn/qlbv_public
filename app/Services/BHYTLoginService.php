@@ -300,5 +300,18 @@ class BHYTLoginService
     {
         return $this->taiKhoan()['password'];
     }
+
+    /**
+     * Chuoi bam mat khau, gui qua header `passwordHash` cua ham TraCuuTienMCCT.
+     *
+     * Chinh la gia tri `password` trong BHYT_CO_SO - cau hinh von da luu mat khau o dang da
+     * bam MD5. Khong bam lai o day: bam lan hai se ra mot chuoi khac va cong tu choi.
+     *
+     * @return string
+     */
+    public function passwordHash(): string
+    {
+        return $this->taiKhoan()['password'];
+    }
 }
 
