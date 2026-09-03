@@ -476,6 +476,8 @@ Route::group(['middleware' => ['auth']], function () {
         // quyen voi man tra cuu the BHYT ngay canh no.
         Route::get('mcct', 'Insurance\Manager\McctController@index')->name('insurance.mcct');
         Route::get('mcct/search', 'Insurance\Manager\McctController@search')->name('insurance.mcct.search');
+        // Endpoint JSON cho modal tra cuu tren man tra cuu the BHYT.
+        Route::get('mcct/api', 'Insurance\Manager\McctController@api')->name('insurance.mcct.api');
 
         Route::get('medicine-search', 'Insurance\Manager\MedicineSearchController@index')->name('insurance.medicine-search');
         Route::get('insurance.medicine-search.get-data', 'Insurance\Manager\MedicineSearchController@getdata')->name('insurance.medicine-search.get-data');

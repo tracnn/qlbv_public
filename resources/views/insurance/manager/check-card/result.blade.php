@@ -21,21 +21,7 @@
         </div>
     </div>
 </div>
-{{-- Chi mot the <a>, KHONG them form: form cua man nay co rang buoc - o chon co so phai nam
-     trong form vi luong quet QR tu goi $('#target').submit(). Them form thu hai la cach
-     chac chan lam hong luong quet QR dang chay. --}}
-{{-- Chi hien khi tra the THANH CONG: tra sai/khong thay thi $params['birthday'] co the rong,
-     sang man MCCT se truot luat required cua ngay_sinh. --}}
-@if($result_insurance['maKetQua'] == '000')
-<div class="form-group">
-    <a class="btn btn-default" href="{{ route('insurance.mcct.search', [
-        'ma_cskcb' => $params['ma_cskcb'],
-        'ma_the' => $params['card-number'],
-        'ho_ten' => $params['name'],
-        'ngay_sinh' => $params['birthday'],
-    ]) }}">Tra tiền cùng chi trả</a>
-</div>
-@endif
+{{-- Nut "Tra tien cung chi tra" nam o search.blade.php, cung hang voi nut Tra cuu. --}}
 @include('insurance.manager.check-card.includes.detail_history_medical')
 @include('insurance.manager.check-card.includes.detail_history_check')
 @endif
