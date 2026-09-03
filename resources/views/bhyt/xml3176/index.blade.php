@@ -199,8 +199,10 @@
             var qs = xml3176UrlFilters;
             xml3176UrlFilters = null; // đảm bảo không áp dụng lại ở các lần sau
 
-            // Các select đơn giản: tên param trùng id element
-            ['date_type', 'xml_filter_status', 'xml3176_error_catalog', 'xml_export_status',
+            // Các select đơn giản: tên param trùng id element.
+            // ma_khoa nạp bất đồng bộ nên lần này có thể im lặng thất bại (chưa có option);
+            // partial xml3176_ma_khoa_filter sẽ áp lại sau khi options về.
+            ['date_type', 'xml_filter_status', 'xml3176_error_catalog', 'ma_khoa', 'xml_export_status',
              'xml_submit_status', 'xml_sign_status', 'imported_by', 'treatment_type_fillter',
              'hein_card_filter', 'payment_date_filter'].forEach(function (key) {
                 if (qs.has(key)) {

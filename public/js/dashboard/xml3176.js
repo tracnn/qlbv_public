@@ -250,6 +250,24 @@
                     title: { text: null },
                     xAxis: { categories: data.map(function (d) { return d.ten_khoa; }) },
                     yAxis: { title: { text: 'Số hồ sơ lỗi nghiêm trọng' }, allowDecimals: false },
+                    plotOptions: {
+                        bar: {
+                            cursor: 'pointer',
+                            point: {
+                                events: {
+                                    click: function () {
+                                        var maKhoa = data[this.index].ma_khoa;
+                                        // Cột "Không xác định" (ma_khoa rỗng) không lọc chính xác được
+                                        // trên màn danh sách → không điều hướng, giữ nguyên tắc số click khớp.
+                                        if (!maKhoa) { return; }
+                                        // Cột đếm hồ sơ CÓ LỖI NGHIÊM TRỌNG theo khoa, nên drill-down phải
+                                        // kèm cả has_error_critical + khoảng ngày (openList tự thêm) mới khớp.
+                                        openList({ xml_filter_status: 'has_error_critical', ma_khoa: maKhoa });
+                                    }
+                                }
+                            }
+                        }
+                    },
                     series: [{
                         name: 'Hồ sơ lỗi nghiêm trọng',
                         data: data.map(function (d) { return d.total; }),
