@@ -444,6 +444,12 @@ return [
                     'active'=> ['insurance/check-card*'],
                 ],
                 [
+                    'text'  => 'Tra cứu tiền cùng chi trả',
+                    'icon'  => 'money',
+                    'route'   => 'insurance.mcct',
+                    'active'=> ['insurance/mcct*'],
+                ],
+                [
                     'text'  => 'Tra cứu Thuốc - Thầu',
                     'icon'  => 'list',
                     'route'   => 'insurance.medicine-search',

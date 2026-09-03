@@ -21,6 +21,17 @@
         </div>
     </div>
 </div>
+{{-- Chi mot the <a>, KHONG them form: form cua man nay co rang buoc - o chon co so phai nam
+     trong form vi luong quet QR tu goi $('#target').submit(). Them form thu hai la cach
+     chac chan lam hong luong quet QR dang chay. --}}
+<div class="form-group">
+    <a class="btn btn-default" href="{{ route('insurance.mcct.search', [
+        'ma_cskcb' => $params['ma_cskcb'],
+        'ma_the' => $params['card-number'],
+        'ho_ten' => $params['name'],
+        'ngay_sinh' => $params['birthday'],
+    ]) }}">Tra tiền cùng chi trả</a>
+</div>
 @include('insurance.manager.check-card.includes.detail_history_medical')
 @include('insurance.manager.check-card.includes.detail_history_check')
 @endif
