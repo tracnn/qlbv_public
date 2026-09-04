@@ -94,4 +94,9 @@ return [
     'bed_days_tt39' => [
         'tolerance' => 0.5, // Dung sai (ngày) bỏ qua nhiễu làm tròn ½ ngày; chỉ cảnh báo khi thiếu rõ rệt
     ],
+    'examination' => [
+        // TT39/2024/TT-BYT: tổng tiền khám không quá 2 lần mức giá của 1 lần khám bệnh
+        'cap_multiplier' => 2.0,
+        'cap_epsilon'    => 0.01, // Dung sai số học khi so tổng tiền với trần
+    ],
 ];

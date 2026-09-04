@@ -18,6 +18,7 @@ use App\Services\Xml3176\Support\Xml3176DateHelper;
 use App\Models\BHYT\MedicalOrganization;
 use App\Services\Xml3176\Support\MucHuongCalculator;
 use App\Services\Xml3176\Support\BedDaysTT39Calculator;
+use App\Services\Xml3176\Support\ExaminationFeeCalculator;
 use App\Services\Mcct\NguongMienCungChiTra;
 use Illuminate\Support\Collection;
 
@@ -114,6 +115,40 @@ class Xml3176CompleteChecker
                 'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
                 'description' => 'Chỉ cho phép có một lần công khám, số lượng hiện tại: ' . $records->count()
             ]);
+        }
+
+        // Hồ sơ KHÔNG phải nội trú: theo TT39/2024/TT-BYT, khám nhiều chuyên khoa KHÁC nhau
+        // trong cùng một lần đến khám là hợp lệ (từ lần 2 tính 30% mức giá), nên chỉ bắt:
+        //  (1) cùng MỘT mã dịch vụ khám bị lặp > 1 lần;
+        //  (2) tổng tiền khám vượt trần 2 lần mức giá của 1 lần khám.
+        if (!in_array($data->ma_loai_kcb, $this->treatmentTypeInpatient) && $records->count() > 0) {
+            $maTrung = ExaminationFeeCalculator::maTrung($records->pluck('ma_dich_vu')->all());
+            if (!empty($maTrung)) {
+                $errorCode = $this->generateErrorCode('DUPLICATE_EXAMINATION_SERVICE');
+                $errors->push((object)[
+                    'error_code' => $errorCode,
+                    'error_name' => 'Trùng dịch vụ khám bệnh',
+                    'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+                    'description' => 'Mỗi dịch vụ khám chỉ được tính 1 lần. Dịch vụ khám bị lặp: '
+                        . implode(', ', $maTrung)
+                ]);
+            }
+
+            $tongThanhTien = (float) $records->sum('thanh_tien_bh');
+            $donGiaMax     = (float) $records->max('don_gia_bh');
+            $heSo          = (float) config('xml3176.examination.cap_multiplier', 2.0);
+            $eps           = (float) config('xml3176.examination.cap_epsilon', 0.01);
+
+            if (ExaminationFeeCalculator::vuotTran($tongThanhTien, $donGiaMax, $heSo, $eps)) {
+                $errorCode = $this->generateErrorCode('EXAMINATION_FEE_EXCEEDS_CAP');
+                $errors->push((object)[
+                    'error_code' => $errorCode,
+                    'error_name' => 'Tiền khám vượt trần 2 lần mức giá một lần khám',
+                    'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+                    'description' => 'Tổng tiền khám ' . $tongThanhTien . ' vượt trần ' . ($heSo * $donGiaMax)
+                        . ' (= ' . $heSo . ' x mức giá một lần khám ' . $donGiaMax . ').'
+                ]);
+            }
         }
 
         return $errors;
