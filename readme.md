@@ -1,3 +1,42 @@
+# 04/09/2026
+
+- **Bổ sung tám quy tắc kiểm hồ sơ XML 3176, bám theo danh sách lỗi tự động do Bảo hiểm xã hội gửi về.** Nguồn là các tệp giám định tháng 08 và 09/2026 của cơ sở 01929 — hơn 4.300 dòng chi phí bị xuất toán, cùng một bảng tổng hợp 60 loại lỗi. Đối chiếu từng loại với quy tắc sẵn có cho thấy khoảng 50 loại phần mềm đã bắt từ trước; tám quy tắc thêm lần này nhắm đúng phần còn thiếu, ưu tiên theo số tiền chứ không theo số dòng.
+
+- **Mức hưởng khai sai — nhóm lớn nhất, 1.044 dòng bị xuất toán.** Phần mềm nay tự tính mức hưởng đúng rồi so với mức cơ sở khai. Hai trường hợp: vào viện **đúng tuyến** mà chi phí một lần khám chữa bệnh từ 15% lương cơ sở trở lên thì phải hưởng theo **quyền lợi ghi trên thẻ** (ký tự thứ ba của mã thẻ), không được khai 100%; vào viện **trái tuyến điều trị nội trú tuyến trung ương** thì mức hưởng là 40%. Thực tế cơ sở khai 100% cho cả hai, nên bị trừ 20% và 60% tương ứng. Bảng quy đổi ký tự quyền lợi sang phần trăm để trong tệp cấu hình, sửa được mà không cần đụng mã.
+
+- **Quy tắc trái tuyến chỉ chạy khi biết chắc cơ sở thuộc tuyến trung ương.** Nếu danh mục cơ sở khám chữa bệnh chưa ghi tuyến chuyên môn kỹ thuật thì quy tắc **im lặng** thay vì đoán. Bỏ sót còn hơn báo oan hàng loạt trên một nhóm hồ sơ lớn — nhưng nghĩa là **phải rà lại danh mục cơ sở**, bằng không 241 dòng trái tuyến sẽ không được cảnh báo trước khi gửi.
+
+- **Vật tư y tế thanh toán sai tỷ lệ — 47 dòng.** Danh mục vật tư của cơ sở vốn đã có sẵn cột tỷ lệ thanh toán bảo hiểm, chỉ là trước nay phần mềm không đối chiếu. Nay so tỷ lệ khai trong hồ sơ với tỷ lệ đã duyệt trong danh mục. Không phải thêm cột nào.
+
+- **Tổng ngày giường thấp hơn hướng dẫn của Bộ Y tế (Thông tư 39) — 166 lỗi trên 27 hồ sơ.** Đây là lỗi **thiếu** ngày giường chứ không phải thừa, nên các quy tắc ngày giường cũ (vốn chỉ bắt thừa) không thấy. Phần mềm tính lại số ngày điều trị theo đúng cách của Thông tư 39 — đếm theo **ngày dương lịch**, cộng thêm một ngày cho các trường hợp tử vong, chuyển viện, nặng xin về, và bỏ qua ca lưu trú dưới 4 giờ — rồi so với tổng ngày giường đã khai.
+
+- **Riêng quy tắc ngày giường này là CẢNH BÁO, không chặn xuất hồ sơ**, đúng bản chất mà cơ quan bảo hiểm xếp loại: đây là dấu hiệu dữ liệu bất nhất, không phải khoản trừ tiền. **Nhưng nó chỉ là cảnh báo nếu danh mục mã lỗi đã được nạp** — chưa nạp thì phần mềm mặc định coi mọi mã lỗi lạ là lỗi nghiêm trọng và sẽ **chặn xuất XML**. Xem mục cài đặt cuối bài.
+
+- **Ba quy tắc về công khám cho hồ sơ ngoại trú.** Trước nay phần mềm chỉ kiểm thừa công khám với hồ sơ nội trú, nên hồ sơ loại "Khám bệnh" lọt lưới. Nay bắt: **một dịch vụ khám bị tính quá một lần**; **tổng tiền khám vượt quá hai lần mức giá một lần khám**; và **từ lần khám thứ hai trở đi chưa hạ xuống 30% mức giá**. Ba quy tắc bổ trợ nhau chứ không trùng — khai hai lần khám cùng giá đầy đủ thì tổng đúng bằng trần nên quy tắc trần không thấy, phải quy tắc 30% mới bắt được.
+
+- **Khám nhiều chuyên khoa khác nhau vẫn hoàn toàn hợp lệ và không bị bắt.** Thông tư 39 cho phép rõ điều này, chỉ hạ giá từ lần thứ hai. Quy tắc chỉ soi **cùng một mã dịch vụ** lặp lại, và soi trên **số tiền thực đề nghị** chứ không soi đơn giá — để đúng dù cơ sở ghi phần giảm ở đơn giá hay ở tỷ lệ.
+
+- **Hai dịch vụ phẫu thuật, thủ thuật chồng thời gian thực hiện trong cùng một hồ sơ.** Một người bệnh không thể trải qua hai ca cùng lúc. Cố ý chỉ soi nhóm phẫu thuật, thủ thuật: xét nghiệm hay chẩn đoán hình ảnh của một đợt thường được ghi cùng một khung giờ, soi rộng ra sẽ báo oan hàng loạt. Hai dịch vụ nối tiếp nhau — ca này kết thúc đúng lúc ca kia bắt đầu — không bị coi là chồng.
+
+- **Phần việc bằng mã đã gần cạn; phần còn lại vướng dữ liệu chứ không vướng phần mềm.** Rà hết 60 loại lỗi, những loại chưa bắt được đều thiếu **nguồn dữ liệu đối chiếu**, không phải thiếu quy tắc:
+  - **Mã bác sĩ chưa phải trưởng khoa, phó khoa được ủy quyền — 48 lỗi.** Biểu mẫu 02 của Thông tư 12 **có** trường Vị trí và đường nạp danh mục đã nhận trường này, nhưng quy định để trường đó **không bắt buộc** nên bộ phận lập danh mục đang bỏ trống — kiểm tra hai tệp Mẫu 02 gần nhất và cả cơ sở dữ liệu đều trống 100%. **Điền trường Vị trí rồi nạp lại danh mục là mở khoá được 48 lỗi này**, không cần sửa phần mềm. Đây là việc đáng làm nhất hiện nay.
+  - **Thuốc thanh toán sai tỷ lệ.** Không làm được qua danh mục: bản thân **Biểu mẫu 03 không có trường tỷ lệ thanh toán** — khác với biểu mẫu vật tư vốn có. Tỷ lệ thanh toán thuốc thuộc danh mục quốc gia theo Thông tư 20/2022 của Bộ Y tế, muốn kiểm phải nạp một bảng tham chiếu riêng.
+  - **Dịch vụ trẻ em chỉ định cho người lớn, thời gian tối thiểu của chẩn đoán hình ảnh, thuốc cản quang, và các cờ mã bệnh.** Cùng lý do — biểu mẫu 05 và danh mục mã bệnh hiện hành không mang các thông tin này.
+
+- **Cài đặt: phải chạy năm lệnh nạp danh mục mã lỗi thì các quy tắc mới có hiệu lực.**
+
+```bash
+php artisan db:seed --class=Xml3176ErrorCatalogTyLeVtytSeeder
+php artisan db:seed --class=Xml3176ErrorCatalogMucHuongSeeder
+php artisan db:seed --class=Xml3176ErrorCatalogBedDaysTT39Seeder
+php artisan db:seed --class=Xml3176ErrorCatalogExaminationSeeder
+php artisan db:seed --class=Xml3176ErrorCatalogOverlapServiceSeeder
+```
+
+  Lệnh thứ ba là **bắt buộc**, không phải tuỳ chọn: bỏ qua thì quy tắc ngày giường vốn là cảnh báo mềm sẽ bị hiểu thành lỗi nghiêm trọng và chặn xuất XML. Cả năm lệnh chạy lại nhiều lần đều an toàn.
+
+- **Sau khi bật, nên chạy thử một lô hồ sơ thật rồi xem tỷ lệ cảnh báo trước khi tin.** Các ngưỡng đều nằm trong tệp cấu hình — dung sai ngày giường, hệ số trần tiền khám, nhóm dịch vụ xét chồng giờ, bảng quyền lợi thẻ — chỉnh được mà không phải sửa mã.
+
 # 27/08/2026
 
 - **Danh mục TT12: màn Dashboard độ phủ danh mục.** Menu **Hồ sơ XML → Danh mục TT12 → Dashboard danh mục**. Lưới sáu hàng là sáu mẫu, mỗi cột một cơ sở khám chữa bệnh; ô xanh ghi "Đã tiếp nhận" kèm ngày và số dòng của lần gửi gần nhất, ô xám ghi "Chưa gửi". Màn Danh sách hồ sơ trả lời được "hồ sơ này đang ở đâu", nhưng không trả lời được câu hỏi mà người phụ trách danh mục thực sự cần: **trong sáu mẫu của từng cơ sở, cái nào cổng đã nhận và cái nào chưa**. Không có màn này thì để sót cả một mẫu chưa gửi bao giờ mà không ai biết, vì thứ không tồn tại thì không hiện ra ở bất kỳ danh sách nào.
