@@ -46,6 +46,8 @@ class Xml3176Xml4Checker
 
         $errors = $errors->merge($this->infoChecker($data));
 
+        $errors = $errors->merge($this->checkChiSo($data));
+
         $additionalData = [
             'ngay_yl' => $data->ngay_yl
         ];
@@ -56,6 +58,45 @@ class Xml3176Xml4Checker
 
         // Save errors to xml_error_checks table
         $this->xmlErrorService->saveErrors($this->xmlType, $data->ma_lk, $data->stt, $errors, $additionalData);
+    }
+
+    /**
+     * #1274 mã chỉ số trống, #1276 tên chỉ số trống, #2521 XN không nhập giá trị+kết quả.
+     */
+    private function checkChiSo(Xml3176Xml4 $data): Collection
+    {
+        $errors = collect();
+
+        $coGiaTriDo = (trim((string) $data->gia_tri) !== '') || (trim((string) $data->don_vi_do) !== '');
+        if ($coGiaTriDo && empty($data->ma_chi_so)) {
+            $code = $this->generateErrorCode('MA_CHI_SO_EMPTY');
+            $errors->push((object) [
+                'error_code' => $code, 'error_name' => 'Mã chỉ số để trống',
+                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($code),
+                'description' => 'Dòng có giá trị/đơn vị đo nhưng thiếu mã chỉ số. Dịch vụ: ' . $data->ma_dich_vu,
+            ]);
+        }
+        if ($coGiaTriDo && empty($data->ten_chi_so)) {
+            $code = $this->generateErrorCode('TEN_CHI_SO_EMPTY');
+            $errors->push((object) [
+                'error_code' => $code, 'error_name' => 'Tên chỉ số để trống',
+                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($code),
+                'description' => 'Dòng có giá trị/đơn vị đo nhưng thiếu tên chỉ số. Dịch vụ: ' . $data->ma_dich_vu,
+            ]);
+        }
+
+        $laChiSo = (trim((string) $data->ma_chi_so) !== '') || (trim((string) $data->ten_chi_so) !== '');
+        $rongHet = empty($data->gia_tri) && empty($data->mo_ta) && empty($data->ket_luan);
+        if ($laChiSo && $rongHet) {
+            $code = $this->generateErrorCode('XN_MISSING_VALUE_RESULT');
+            $errors->push((object) [
+                'error_code' => $code, 'error_name' => 'Xét nghiệm không nhập giá trị và kết quả',
+                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($code),
+                'description' => 'Chỉ số ' . ($data->ten_chi_so ?: $data->ma_chi_so) . ' không có giá trị/mô tả/kết luận. Dịch vụ: ' . $data->ma_dich_vu,
+            ]);
+        }
+
+        return $errors;
     }
 
     /**
