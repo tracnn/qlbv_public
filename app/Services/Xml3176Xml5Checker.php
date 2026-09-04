@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\BHYT\Xml3176Xml5;
+use App\Services\Xml3176\Support\TextNormalizer;
 use Illuminate\Support\Collection;
 
 class Xml3176Xml5Checker
@@ -43,6 +44,8 @@ class Xml3176Xml5Checker
         $errors = collect();
 
         $errors = $errors->merge($this->infoChecker($data));
+
+        $errors = $errors->merge($this->checkDienBienDuplicate($data));
 
         $additionalData = [
             'ngay_yl' => $data->ngay_yl
@@ -120,6 +123,38 @@ class Xml3176Xml5Checker
                     'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
                     'description' => 'Người thực hiện chưa được duyệt danh mục NVYT: ' . $data->nguoi_thuc_hien
                 ]);
+            }
+        }
+
+        return $errors;
+    }
+
+    /**
+     * #436 — Diễn biến điều trị trùng nhau trong cùng hồ sơ.
+     * Chỉ báo ở dòng có stt LỚN HƠN để lỗi một chiều, không nhân đôi.
+     */
+    private function checkDienBienDuplicate(Xml3176Xml5 $data): Collection
+    {
+        $errors = collect();
+        if (empty($data->dien_bien_ls)) {
+            return $errors;
+        }
+        $chuan = TextNormalizer::chuan($data->dien_bien_ls);
+
+        $truoc = Xml3176Xml5::where('ma_lk', $data->ma_lk)
+            ->where('id', '!=', $data->id)
+            ->where('stt', '<', $data->stt)
+            ->get();
+
+        foreach ($truoc as $sib) {
+            if (TextNormalizer::chuan($sib->dien_bien_ls) === $chuan) {
+                $code = $this->generateErrorCode('DIEN_BIEN_DUPLICATE');
+                $errors->push((object) [
+                    'error_code' => $code, 'error_name' => 'Diễn biến điều trị trùng nhau',
+                    'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($code),
+                    'description' => 'Diễn biến lâm sàng trùng với dòng STT ' . $sib->stt . ': "' . mb_substr((string) $data->dien_bien_ls, 0, 100) . '"',
+                ]);
+                break;
             }
         }
 
