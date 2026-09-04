@@ -91,4 +91,7 @@ return [
         'trai_tuyen_noi_tru_tw_rate' => 40,   // % mức hưởng trái tuyến nội trú tuyến TW
         'tuyen_tw_values'            => ['1'], // Giá trị medical_organizations.tuyen_cmkt coi là tuyến TW
     ],
+    'bed_days_tt39' => [
+        'tolerance' => 0.5, // Dung sai (ngày) bỏ qua nhiễu làm tròn ½ ngày; chỉ cảnh báo khi thiếu rõ rệt
+    ],
 ];
