@@ -11,6 +11,8 @@ use App\Models\BHYT\MedicineCatalog;
 use App\Models\BHYT\ServiceCatalog;
 
 use Illuminate\Support\Collection;
+use App\Services\Xml3176\Support\LieuDungParser;
+use App\Services\Xml3176\Support\TextNormalizer;
 
 class Xml3176Xml2Checker
 {
@@ -70,13 +72,15 @@ class Xml3176Xml2Checker
         $errors = $errors->merge($this->checkMedicalStaff($data));
         $errors = $errors->merge($this->checkDrugCatalog($data));
         //$errors = $errors->merge($this->checkValidPhamVi($data));
-        
+
         if (config('xml3176.general.check_valid_department_req')) {
             $errors = $errors->merge($this->checkValidMakhoaReq($data)); // Kiểm tra tính hợp lệ của khoa chỉ định
         }
         $additionalData = [
             'ngay_yl' => $data->ngay_yl
         ];
+
+        $errors = $errors->merge($this->checkLieuDung($data));
 
         // Save errors to xml_error_checks table
         $this->xmlErrorService->saveErrors($this->xmlType, $data->ma_lk, $data->stt, $errors, $additionalData);
@@ -418,7 +422,7 @@ class Xml3176Xml2Checker
     {
         // Lấy các tiền tố CBCS từ cấu hình
         $theBhytCbcsPatterns = config('xml3176.xml1.the_bhyt_cbcs_pattern');
-        
+
         // Nếu không có cấu hình hoặc không có giá trị trong cấu hình, trả về false
         if (empty($theBhytCbcsPatterns)) {
             return false;
@@ -436,5 +440,67 @@ class Xml3176Xml2Checker
         return false; // Phạm vi hợp lệ
     }
 
-    // Thêm các phương thức kiểm tra khác ở đây
+    /**
+     * Họ quy tắc liều dùng (#2345 định dạng, #1638 kê>30 ngày,
+     * #1636/#887 tổng liều≠SL, #2394/#2395 ĐVT liều).
+     */
+    private function checkLieuDung(Xml3176Xml2 $data): Collection
+    {
+        $errors = collect();
+        if (empty($data->lieu_dung)) {
+            return $errors;
+        }
+
+        $p = LieuDungParser::parse($data->lieu_dung);
+
+        if (!$p['hop_le']) {
+            $code = $this->generateErrorCode('LIEU_DUNG_INVALID_FORMAT');
+            $errors->push((object) [
+                'error_code'     => $code,
+                'error_name'     => 'Liều dùng không đúng định dạng 130',
+                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($code),
+                'description'    => 'Liều dùng "' . $data->lieu_dung . '" của thuốc ' . $data->ten_thuoc
+                    . ' không đúng định dạng 130 (SL/lần * số lần/ngày * số ngày)',
+            ]);
+            return $errors; // parse fail → các kiểm tra dựa trên số phía sau vô nghĩa
+        }
+
+        $maxDays = (int) config('xml3176.xml2.max_prescription_days', 30);
+        if ($p['so_ngay'] > $maxDays) {
+            $code = $this->generateErrorCode('PRESCRIPTION_EXCEEDS_30_DAYS');
+            $errors->push((object) [
+                'error_code'     => $code,
+                'error_name'     => 'Kê thuốc quá số ngày cho phép',
+                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($code),
+                'description'    => 'Kê ' . $p['so_ngay'] . ' ngày (> ' . $maxDays . '). Thuốc: ' . $data->ten_thuoc,
+            ]);
+        }
+
+        $eps = (float) config('xml3176.xml2.lieu_dung_quantity_epsilon', 0.001);
+        if ($data->so_luong !== null && $data->so_luong !== ''
+            && abs($p['tong_luong'] - (float) $data->so_luong) > $eps) {
+            $code  = $this->generateErrorCode('LIEU_DUNG_QUANTITY_MISMATCH');
+            $chieu = $p['tong_luong'] > (float) $data->so_luong ? 'cao hơn' : 'thấp hơn';
+            $errors->push((object) [
+                'error_code'     => $code,
+                'error_name'     => 'Tổng lượng theo liều khác số lượng thanh toán',
+                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($code),
+                'description'    => 'Tổng lượng theo liều (' . $p['tong_luong'] . ') ' . $chieu
+                    . ' số lượng thanh toán (' . $data->so_luong . '). Thuốc: ' . $data->ten_thuoc,
+            ]);
+        }
+
+        if ($p['don_vi'] !== '' && !empty($data->don_vi_tinh)
+            && TextNormalizer::chuan($p['don_vi']) !== TextNormalizer::chuan($data->don_vi_tinh)) {
+            $code = $this->generateErrorCode('LIEU_DUNG_UNIT_INVALID');
+            $errors->push((object) [
+                'error_code'     => $code,
+                'error_name'     => 'Đơn vị trong liều dùng khác đơn vị tính của thuốc',
+                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($code),
+                'description'    => 'Đơn vị trong liều dùng (' . $p['don_vi'] . ') khác đơn vị tính của thuốc (' . $data->don_vi_tinh . ')',
+            ]);
+        }
+
+        return $errors;
+    }
 }
