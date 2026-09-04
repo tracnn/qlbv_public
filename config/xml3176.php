@@ -60,6 +60,8 @@ return [
             'nhom_thau_pattern' => '/^N([1-9]|[1-9][0-9])$/', // Nhóm thầu N1 đến N99
             'nam_thau_pattern' => '/^\d{4}$/',   // Định dạng năm 4 ký tự
         ],
+        'max_prescription_days'      => 30, // Số ngày kê thuốc tối đa cho phép
+        'lieu_dung_quantity_epsilon' => 0.001, // Sai số cho phép khi so sánh tổng lượng theo liều với số lượng thanh toán
     ],
     'xml3' => [
         'tt_thau' => [ // Bổ sung quy tắc định dạng tt_thau
@@ -69,6 +71,13 @@ return [
         ],
         'service_groups_requiring_machine' => [1,2,3], //Bổ sung mã nhóm bắt buộc phải có máy
         'service_groups_pttt' => [8,18], //Bổ sung mã nhóm là pttt
+        'execution_min_minutes'       => 3, // Số phút thực hiện dịch vụ tối thiểu
+        'execution_time_check_groups' => [1, 3], // Mã nhóm cần kiểm tra thời gian thực hiện tối thiểu
+        'same_doctor_check_groups'    => [1, 2, 3], // Mã nhóm cần kiểm tra bác sĩ ra y lệnh trùng người thực hiện
+        'surgery_full_payment_rate'   => '100', // Tỷ lệ thanh toán PTTT lần 2 trong ngày
+    ],
+    'xml8' => [
+        'tomtat_kq_min_length' => 20, // Độ dài tối thiểu của tóm tắt kết quả điều trị
     ],
     'general' => [
         'check_valid_department_req' => true, //Kiểm tra tính hợp lệ của khoa chỉ định; Tuyến TW/Tỉnh => true
