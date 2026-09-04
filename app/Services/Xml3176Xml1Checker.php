@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\BHYT\Xml3176Xml1;
+use App\Services\Xml3176\Support\Xml3176DateHelper;
 use Illuminate\Support\Collection;
 
 class Xml3176Xml1Checker
@@ -69,6 +70,7 @@ class Xml3176Xml1Checker
         $errors = $errors->merge($this->checkDiseaseIcdCodes($data));
         $errors = $errors->merge($this->checkWarningDiseaseCodes($data));
         $errors = $errors->merge($this->checkMaLoaiKcbKhongTinhNgayDieuTri($data));
+        $errors = $errors->merge($this->checkNgaySinhVsNgayVao($data));
 
         // Save errors to xml_error_checks table
         $this->xmlErrorService->saveErrors($this->xmlType, $data->ma_lk, $data->stt, $errors);
@@ -881,7 +883,7 @@ class Xml3176Xml1Checker
     private function checkMaLoaiKcbKhongTinhNgayDieuTri(Xml3176Xml1 $data): Collection
     {
         $errors = collect();
-        
+
         if (in_array($data->ma_loai_kcb, config('xml3176.xml1.ma_loai_kcb_khong_tinh_ngay_dieu_tri'))
         && ($data->so_ngay_dtri > 0)) {
             $errorCode = $this->generateErrorCode('MA_LOAI_KCB_KHONG_TINH_NGAY_DIEU_TRI');
@@ -890,6 +892,28 @@ class Xml3176Xml1Checker
                 'error_name' => 'Loại KCB không tính ngày điều trị',
                 'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
                 'description' => 'Mã loại KCB không tính ngày điều trị: ' . $data->ma_loai_kcb . ' và số ngày điều trị: ' . $data->so_ngay_dtri
+            ]);
+        }
+
+        return $errors;
+    }
+
+    /**
+     * #140 — Ngày sinh không được lớn hơn ngày vào viện.
+     */
+    private function checkNgaySinhVsNgayVao(Xml3176Xml1 $data): \Illuminate\Support\Collection
+    {
+        $errors = collect();
+
+        $ns = Xml3176DateHelper::datePart($data->ngay_sinh);
+        $nv = Xml3176DateHelper::datePart($data->ngay_vao);
+        if ($ns !== null && $nv !== null && $ns > $nv) {
+            $errorCode = $this->generateErrorCode('NGAY_SINH_GREATER_NGAY_VAO');
+            $errors->push((object) [
+                'error_code'     => $errorCode,
+                'error_name'     => 'Ngày sinh lớn hơn ngày vào viện',
+                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+                'description'    => 'Ngày sinh (' . strtodatetime($data->ngay_sinh) . ') lớn hơn ngày vào viện (' . strtodatetime($data->ngay_vao) . ')',
             ]);
         }
 
