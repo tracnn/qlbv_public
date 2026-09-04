@@ -9,6 +9,7 @@ use App\Models\BHYT\IcdYhctCategory;
 use App\Models\BHYT\ServiceCatalog;
 use App\Models\BHYT\EquipmentCatalog;
 use App\Services\Xml3176\Support\Xml3176DateHelper;
+use App\Services\Xml3176\Support\TyLeComparator;
 use Illuminate\Support\Collection;
 
 class Xml3176Xml3Checker
@@ -781,6 +782,18 @@ class Xml3176Xml3Checker
                                     'error_name' => 'Tên vật tư không khớp với danh mục phê duyệt',
                                     'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
                                     'description' => 'Mã VTYT: ' . $data->ma_vat_tu . ' có tên: ' . formatDescription($data->ten_vat_tu) . '; Tên phê duyệt: ' . $supply->ten_vat_tu
+                                ]);
+                            }
+
+                            // Đối chiếu tỷ lệ thanh toán BHYT với tỷ lệ duyệt trong danh mục (Thay đổi tỷ lệ TT)
+                            $tyleEps = (float) config('xml3176.xml3.tyle_epsilon', 0.01);
+                            if (TyLeComparator::lech($data->tyle_tt_bh, $supply->tyle_tt_bh, $tyleEps)) {
+                                $errorCode = $this->generateErrorCode('INVALID_APPROVED_TYLE_TT_BH');
+                                $errors->push((object)[
+                                    'error_code' => $errorCode,
+                                    'error_name' => 'Tỷ lệ thanh toán BHYT của VTYT không khớp tỷ lệ duyệt',
+                                    'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+                                    'description' => 'Mã VTYT: ' . $data->ma_vat_tu . '; Tỷ lệ TT BH trong hồ sơ: ' . $data->tyle_tt_bh . '; Tỷ lệ duyệt: ' . $supply->tyle_tt_bh
                                 ]);
                             }
 

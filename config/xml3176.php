@@ -75,6 +75,7 @@ return [
         'execution_time_check_groups' => [1, 3], // Mã nhóm cần kiểm tra thời gian thực hiện tối thiểu
         'same_doctor_check_groups'    => [1, 2, 3], // Mã nhóm cần kiểm tra bác sĩ ra y lệnh trùng người thực hiện
         'surgery_full_payment_rate'   => '100', // Tỷ lệ thanh toán PTTT lần 2 trong ngày
+        'tyle_epsilon'                => 0.01, // Dung sai đối chiếu tỷ lệ thanh toán BH của VTYT với danh mục
     ],
     'xml8' => [
         'tomtat_kq_min_length' => 20, // Độ dài tối thiểu của tóm tắt kết quả điều trị
