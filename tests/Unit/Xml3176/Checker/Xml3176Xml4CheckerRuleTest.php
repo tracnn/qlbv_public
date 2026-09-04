@@ -49,4 +49,11 @@ class Xml3176Xml4CheckerRuleTest extends TestCase
         $this->assertNotContains('XML4_MA_CHI_SO_EMPTY', $codes);
         $this->assertNotContains('XML4_XN_MISSING_VALUE_RESULT', $codes);
     }
+
+    /** @test */
+    public function gia_tri_zero_khong_bao_thieu_chi_so()
+    {
+        $codes = $this->chay(['ma_chi_so' => 'GLU', 'ten_chi_so' => 'Glucose', 'gia_tri' => '0', 'mo_ta' => '', 'ket_luan' => '']);
+        $this->assertNotContains('XML4_XN_MISSING_VALUE_RESULT', $codes);
+    }
 }

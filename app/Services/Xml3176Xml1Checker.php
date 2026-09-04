@@ -901,7 +901,7 @@ class Xml3176Xml1Checker
     /**
      * #140 — Ngày sinh không được lớn hơn ngày vào viện.
      */
-    private function checkNgaySinhVsNgayVao(Xml3176Xml1 $data): \Illuminate\Support\Collection
+    private function checkNgaySinhVsNgayVao(Xml3176Xml1 $data): Collection
     {
         $errors = collect();
 

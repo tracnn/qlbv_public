@@ -86,7 +86,9 @@ class Xml3176Xml4Checker
         }
 
         $laChiSo = (trim((string) $data->ma_chi_so) !== '') || (trim((string) $data->ten_chi_so) !== '');
-        $rongHet = empty($data->gia_tri) && empty($data->mo_ta) && empty($data->ket_luan);
+        $rongHet = trim((string) $data->gia_tri) === ''
+            && trim((string) $data->mo_ta) === ''
+            && trim((string) $data->ket_luan) === '';
         if ($laChiSo && $rongHet) {
             $code = $this->generateErrorCode('XN_MISSING_VALUE_RESULT');
             $errors->push((object) [
