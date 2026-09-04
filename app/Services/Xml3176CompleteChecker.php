@@ -15,6 +15,9 @@ use App\Models\BHYT\Xml3176Xml12;
 use App\Models\BHYT\Xml3176Xml13;
 use App\Models\BHYT\Xml3176Xml14;
 use App\Services\Xml3176\Support\Xml3176DateHelper;
+use App\Models\BHYT\MedicalOrganization;
+use App\Services\Xml3176\Support\MucHuongCalculator;
+use App\Services\Mcct\NguongMienCungChiTra;
 use Illuminate\Support\Collection;
 
 use DateTime;
@@ -78,6 +81,7 @@ class Xml3176CompleteChecker
             $errors = $errors->merge($this->checkMissingTransferOrAppointment($data));
             $errors = $errors->merge($this->checkXml4NgayKqMismatchXml3($ma_lk));
             $errors = $errors->merge($this->checkSecondSurgeryFullPayment($ma_lk));
+            $errors = $errors->merge($this->checkMucHuong($data));
 
             // Save errors to xml_error_checks table
             $this->xmlErrorService->saveErrors($this->xmlType, $data->ma_lk, $data->stt, $errors);
@@ -224,6 +228,91 @@ class Xml3176CompleteChecker
                     'description' => 'Tổng ngày giường: ' . $totalBedDays . ' lớn hơn hoặc bằng số ngày điều trị + 1: ' . $data->so_ngay_dtri
                 ]);
             }
+        }
+
+        return $errors;
+    }
+
+    /**
+     * Kiểm tra mức hưởng khai (muc_huong) có vượt trần cho phép không.
+     *  - Đúng tuyến, chi phí >= 15% lương cơ sở -> trần = quyền lợi thẻ.
+     *  - Trái tuyến nội trú tuyến TW -> trần = 40%.
+     * Guard "thiếu căn cứ thì im lặng" (xem spec §7). Phát tối đa 1 lỗi/hồ sơ.
+     *
+     * @param Xml3176Xml1 $data
+     * @return Collection
+     */
+    private function checkMucHuong(Xml3176Xml1 $data): Collection
+    {
+        $errors = collect();
+        $cfg = config('xml3176.muc_huong');
+
+        $qlChar = MucHuongCalculator::quyenLoiChar($data->ma_the_bhyt);
+        if ($qlChar === null) {
+            return $errors; // guard: quyền lợi mơ hồ
+        }
+        $entitlement = MucHuongCalculator::entitlement($qlChar, (array) $cfg['quyen_loi_map']);
+        if ($entitlement === null) {
+            return $errors; // guard: không map được quyền lợi
+        }
+
+        $traiTuyenPrefixes = (array) config('xml3176.xml1.ma_doituong_kcb_trai_tuyen', []);
+        $maDoiTuong = (string) $data->ma_doituong_kcb;
+        $traiTuyen = false;
+        foreach ($traiTuyenPrefixes as $prefix) {
+            if ($prefix !== '' && strpos($maDoiTuong, (string) $prefix) === 0) {
+                $traiTuyen = true;
+                break;
+            }
+        }
+        $noiTru = in_array($data->ma_loai_kcb, (array) config('xml3176.treatment_type_inpatient', []));
+
+        if ($traiTuyen) {
+            if (!$noiTru) {
+                return $errors; // ngoài phạm vi: trái tuyến ngoại trú
+            }
+            $tuyen = MedicalOrganization::where('ma_cskcb', $data->ma_cskcb)->value('tuyen_cmkt');
+            if (!in_array($tuyen, (array) $cfg['tuyen_tw_values'], true)) {
+                return $errors; // GUARD: không xác định được tuyến TW
+            }
+            $tran = (int) $cfg['trai_tuyen_noi_tru_tw_rate'];
+            $errorKey = 'MUC_HUONG_TRAI_TUYEN_TW';
+            $loaiMo = 'trái tuyến nội trú tuyến TW';
+        } else {
+            $dt = Xml3176DateHelper::toDateTime($data->ngay_vao);
+            if ($dt === null) {
+                return $errors; // guard: ngày vào không hợp lệ
+            }
+            $lcs = NguongMienCungChiTra::luongCoSoTaiNgay($dt->format('Y-m-d'), (array) config('mcct.luong_co_so', []));
+            $tran = MucHuongCalculator::tranDungTuyen(
+                $entitlement,
+                (float) $data->t_tongchi_bh,
+                $lcs ?: null,
+                (float) $cfg['nguong_luong_co_so_rate']
+            );
+            if ($tran === null) {
+                return $errors; // guard: chưa có mốc lương cơ sở
+            }
+            $errorKey = 'MUC_HUONG_EXCEEDS_ENTITLEMENT';
+            $loaiMo = 'đúng tuyến';
+        }
+
+        $maxXml2 = $data->Xml3176Xml2()->whereNotNull('muc_huong')->max('muc_huong');
+        $maxXml3 = $data->Xml3176Xml3()->whereNotNull('muc_huong')->max('muc_huong');
+        if ($maxXml2 === null && $maxXml3 === null) {
+            return $errors; // guard: không dòng nào khai mức hưởng
+        }
+        $maxDeclared = max((float) $maxXml2, (float) $maxXml3);
+
+        if ($maxDeclared > $tran + 0.01) {
+            $errorCode = $this->generateErrorCode($errorKey);
+            $errors->push((object)[
+                'error_code'     => $errorCode,
+                'error_name'     => 'Mức hưởng khai vượt trần cho phép',
+                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+                'description'    => 'Hồ sơ ' . $loaiMo . ': mức hưởng khai tối đa ' . $maxDeclared
+                                  . '%, trần cho phép ' . $tran . '% (quyền lợi thẻ ' . $entitlement . '%).',
+            ]);
         }
 
         return $errors;
