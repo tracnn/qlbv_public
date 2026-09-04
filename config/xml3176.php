@@ -84,4 +84,11 @@ return [
         'check_valid_department_req' => true, //Kiểm tra tính hợp lệ của khoa chỉ định; Tuyến TW/Tỉnh => true
         'ma_khoa_kkb' => ['K01'], //Bổ sung mã khoa khám bệnh
     ],
+    'muc_huong' => [
+        // Ký tự quyền lợi (vị trí 3 mã thẻ) -> % mức hưởng. Chỉnh được không cần sửa code.
+        'quyen_loi_map'              => ['1' => 100, '2' => 100, '3' => 95, '4' => 80, '5' => 100],
+        'nguong_luong_co_so_rate'    => 0.15, // Ngưỡng 15% lương cơ sở (miễn cùng chi trả)
+        'trai_tuyen_noi_tru_tw_rate' => 40,   // % mức hưởng trái tuyến nội trú tuyến TW
+        'tuyen_tw_values'            => ['1'], // Giá trị medical_organizations.tuyen_cmkt coi là tuyến TW
+    ],
 ];
