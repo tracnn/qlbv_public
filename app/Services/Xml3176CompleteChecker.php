@@ -14,6 +14,7 @@ use App\Models\BHYT\Xml3176Xml11;
 use App\Models\BHYT\Xml3176Xml12;
 use App\Models\BHYT\Xml3176Xml13;
 use App\Models\BHYT\Xml3176Xml14;
+use App\Services\Xml3176\Support\Xml3176DateHelper;
 use Illuminate\Support\Collection;
 
 use DateTime;
@@ -74,6 +75,9 @@ class Xml3176CompleteChecker
             $errors = $errors->merge($this->checkInvalidBedDays($data));
             $errors = $errors->merge($this->checkExpenseErrors($data));
             $errors = $errors->merge($this->checkExaminationErrors($data));
+            $errors = $errors->merge($this->checkMissingTransferOrAppointment($data));
+            $errors = $errors->merge($this->checkXml4NgayKqMismatchXml3($ma_lk));
+            $errors = $errors->merge($this->checkSecondSurgeryFullPayment($ma_lk));
 
             // Save errors to xml_error_checks table
             $this->xmlErrorService->saveErrors($this->xmlType, $data->ma_lk, $data->stt, $errors);
@@ -374,6 +378,99 @@ class Xml3176CompleteChecker
             }
         }
 
+        return $errors;
+    }
+
+    /**
+     * #2498 — Có mã nơi đi nhưng thiếu CẢ giấy chuyển tuyến (XML13) LẪN giấy hẹn khám lại (XML14).
+     */
+    private function checkMissingTransferOrAppointment(Xml3176Xml1 $data): Collection
+    {
+        $errors = collect();
+        if (empty($data->ma_noi_di)) {
+            return $errors;
+        }
+        $hasXml13 = Xml3176Xml13::where('ma_lk', $data->ma_lk)->exists();
+        $hasXml14 = Xml3176Xml14::where('ma_lk', $data->ma_lk)->exists();
+        if (!$hasXml13 && !$hasXml14) {
+            $code = $this->generateErrorCode('MISSING_TRANSFER_OR_APPOINTMENT');
+            $errors->push((object) [
+                'error_code' => $code, 'error_name' => 'Có nơi đi nhưng thiếu giấy chuyển tuyến hoặc hẹn khám lại',
+                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($code),
+                'description' => 'Mã nơi đi ' . $data->ma_noi_di . ' nhưng không có XML13 (chuyển tuyến) lẫn XML14 (hẹn khám lại)',
+            ]);
+        }
+        return $errors;
+    }
+
+    /**
+     * #2098 — Ngày KQ tại XML4 không khớp ngày KQ tại XML3 (cùng ma_dich_vu).
+     */
+    private function checkXml4NgayKqMismatchXml3($ma_lk): Collection
+    {
+        $errors = collect();
+
+        $xml3 = Xml3176Xml3::where('ma_lk', $ma_lk)
+            ->whereNotNull('ngay_kq')->where('ngay_kq', '<>', '')->get()->groupBy('ma_dich_vu');
+        $xml4 = Xml3176Xml4::where('ma_lk', $ma_lk)
+            ->whereNotNull('ngay_kq')->where('ngay_kq', '<>', '')->get();
+
+        foreach ($xml4 as $r4) {
+            if (!isset($xml3[$r4->ma_dich_vu])) {
+                continue;
+            }
+            $days3 = $xml3[$r4->ma_dich_vu]
+                ->map(function ($r) { return Xml3176DateHelper::datePart($r->ngay_kq); })
+                ->filter()->unique();
+            $day4 = Xml3176DateHelper::datePart($r4->ngay_kq);
+            if ($day4 !== null && $days3->isNotEmpty() && !$days3->contains($day4)) {
+                $code = $this->generateErrorCode('XML4_NGAY_KQ_MISMATCH_XML3');
+                $errors->push((object) [
+                    'error_code' => $code, 'error_name' => 'Ngày KQ XML4 khác ngày KQ XML3',
+                    'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($code),
+                    'description' => 'Dịch vụ ' . $r4->ma_dich_vu . ': ngày KQ XML4 (' . strtodatetime($r4->ngay_kq) . ') khác ngày KQ XML3',
+                ]);
+            }
+        }
+        return $errors;
+    }
+
+    /**
+     * #891 — PTTT lần 2 trở đi trong cùng ngày có tỷ lệ thanh toán = 100% (CV824/QĐ3176).
+     */
+    private function checkSecondSurgeryFullPayment($ma_lk): Collection
+    {
+        $errors = collect();
+        $rate = (float) config('xml3176.xml3.surgery_full_payment_rate', '100');
+
+        $rows = Xml3176Xml3::where('ma_lk', $ma_lk)
+            ->whereNotNull('ma_pttt')->where('ma_pttt', '<>', '')
+            ->orderBy('ngay_yl')->get();
+
+        $byDay = [];
+        foreach ($rows as $r) {
+            $day = Xml3176DateHelper::datePart($r->ngay_yl);
+            if ($day === null) {
+                continue;
+            }
+            $byDay[$day][] = $r;
+        }
+
+        foreach ($byDay as $day => $list) {
+            if (count($list) < 2) {
+                continue;
+            }
+            for ($i = 1; $i < count($list); $i++) {
+                if ((float) $list[$i]->tyle_tt_dv === $rate) {
+                    $code = $this->generateErrorCode('SECOND_SURGERY_FULL_PAYMENT');
+                    $errors->push((object) [
+                        'error_code' => $code, 'error_name' => 'PTTT lần 2 trong ngày thanh toán 100%',
+                        'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($code),
+                        'description' => 'PTTT lần ' . ($i + 1) . ' ngày ' . $day . ' (dịch vụ ' . $list[$i]->ma_dich_vu . ') thanh toán ' . $rate . '%',
+                    ]);
+                }
+            }
+        }
         return $errors;
     }
 
