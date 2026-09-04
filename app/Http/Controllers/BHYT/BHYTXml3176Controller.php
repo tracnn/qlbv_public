@@ -310,6 +310,9 @@ class BHYTXml3176Controller extends Controller
                     $result = $result->where('ma_the_bhyt', '<>', '');
                 } elseif ($hein_card_filter === 'no_hein_card') {
                     $result = $result->where('ma_the_bhyt', '=', '');
+                } elseif ($hein_card_filter === 'has_hein_cards') {
+                    // Nhieu the tren mot ho so duoc luu thanh danh sach ngan boi ';'
+                    $result = $result->where('ma_the_bhyt', 'LIKE', '%;%');
                 }
 
                 // Apply filter based on payment_date_filter
