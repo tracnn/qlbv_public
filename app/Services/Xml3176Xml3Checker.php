@@ -8,6 +8,7 @@ use App\Models\BHYT\Icd10Category;
 use App\Models\BHYT\IcdYhctCategory;
 use App\Models\BHYT\ServiceCatalog;
 use App\Models\BHYT\EquipmentCatalog;
+use App\Services\Xml3176\Support\Xml3176DateHelper;
 use Illuminate\Support\Collection;
 
 class Xml3176Xml3Checker
@@ -152,6 +153,8 @@ class Xml3176Xml3Checker
         if (config('xml3176.general.check_valid_department_req')) {
             $errors = $errors->merge($this->checkValidMakhoaReq($data)); // Kiểm tra tính hợp lệ của khoa chỉ định
         }
+
+        $errors = $errors->merge($this->checkTimingAndExecutor($data));
 
         $additionalData = [
             'ngay_yl' => $data->ngay_yl
@@ -983,7 +986,7 @@ class Xml3176Xml3Checker
                     $ngayYl = strtodatetime($item->ngay_yl);
                     $ngayThYl = strtodatetime($item->ngay_th_yl);
                     $ngayKq = strtodatetime($item->ngay_kq);
-                    
+
                     return "- Mã điều trị={$item->ma_lk}; stt={$item->stt}; Bác sĩ={$item->ma_bac_si}; Ngày yl={$ngayYl}; Ngày th={$ngayThYl}; Ngày kq={$ngayKq}";
                 })->implode("\n");
 
@@ -996,6 +999,70 @@ class Xml3176Xml3Checker
                 ]);
             }
         }
+        return $errors;
+    }
+
+    /**
+     * #2391 TG th YL trùng TG KQ; #199 ngày KQ > ngày ra;
+     * #2452/2453 thực hiện < 3 phút (nhóm XN/TDCN); #2486 BS vừa YL vừa thực hiện.
+     */
+    private function checkTimingAndExecutor(Xml3176Xml3 $data): Collection
+    {
+        $errors = collect();
+        $data->loadMissing('Xml3176Xml1');
+
+        // #2391
+        if (!empty($data->ngay_th_yl) && !empty($data->ngay_kq) && $data->ngay_th_yl === $data->ngay_kq) {
+            $code = $this->generateErrorCode('NGAY_TH_YL_EQUALS_NGAY_KQ');
+            $errors->push((object) [
+                'error_code' => $code, 'error_name' => 'Thời gian thực hiện y lệnh trùng thời gian kết quả',
+                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($code),
+                'description' => 'NGAY_TH_YL = NGAY_KQ = ' . strtodatetime($data->ngay_kq) . '. Dịch vụ: ' . $data->ten_dich_vu,
+            ]);
+        }
+
+        // #199
+        if (!empty($data->ngay_kq) && $data->Xml3176Xml1 && !empty($data->Xml3176Xml1->ngay_ra)) {
+            $kq = Xml3176DateHelper::datePart($data->ngay_kq);
+            $ra = Xml3176DateHelper::datePart($data->Xml3176Xml1->ngay_ra);
+            if ($kq !== null && $ra !== null && $kq > $ra) {
+                $code = $this->generateErrorCode('NGAY_KQ_GREATER_NGAY_RA');
+                $errors->push((object) [
+                    'error_code' => $code, 'error_name' => 'Ngày kết quả dịch vụ lớn hơn ngày ra viện',
+                    'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($code),
+                    'description' => 'Ngày KQ (' . strtodatetime($data->ngay_kq) . ') > ngày ra (' . strtodatetime($data->Xml3176Xml1->ngay_ra) . '). Dịch vụ: ' . $data->ten_dich_vu,
+                ]);
+            }
+        }
+
+        // #2452/2453
+        $groups = array_map('intval', (array) config('xml3176.xml3.execution_time_check_groups', [1, 3]));
+        $minMin = (int) config('xml3176.xml3.execution_min_minutes', 3);
+        if (in_array((int) $data->ma_nhom, $groups, true)) {
+            $d = Xml3176DateHelper::diffMinutes($data->ngay_th_yl, $data->ngay_kq);
+            if ($d !== null && $d < $minMin) {
+                $code = $this->generateErrorCode('EXECUTION_TIME_UNDER_3MIN');
+                $errors->push((object) [
+                    'error_code' => $code, 'error_name' => 'Thời gian thực hiện nhỏ hơn quy định',
+                    'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($code),
+                    'description' => 'Nhóm ' . $data->ma_nhom . ': thực hiện ' . $d . ' phút (< ' . $minMin . '). Dịch vụ: ' . $data->ten_dich_vu,
+                ]);
+            }
+        }
+
+        // #2486
+        $sameGroups = array_map('intval', (array) config('xml3176.xml3.same_doctor_check_groups', [1, 2, 3]));
+        if (in_array((int) $data->ma_nhom, $sameGroups, true)
+            && !empty($data->ma_bac_si) && !empty($data->nguoi_thuc_hien)
+            && $data->ma_bac_si === $data->nguoi_thuc_hien) {
+            $code = $this->generateErrorCode('SAME_DOCTOR_ORDER_AND_EXECUTE');
+            $errors->push((object) [
+                'error_code' => $code, 'error_name' => 'Bác sĩ vừa ra y lệnh vừa thực hiện',
+                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($code),
+                'description' => 'Mã bác sĩ = người thực hiện = ' . $data->ma_bac_si . '. Dịch vụ: ' . $data->ten_dich_vu,
+            ]);
+        }
+
         return $errors;
     }
 }
