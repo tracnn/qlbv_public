@@ -27,6 +27,14 @@ class BedDaysTT39CalculatorTest extends TestCase
     }
 
     /** @test */
+    public function duoi_4h_qua_nua_dem_van_tinh_0()
+    {
+        // vào 23:30 ra 00:30 hôm sau: calendarDays=1 nhưng chỉ 1h -> không tính giường
+        $this->assertSame(0, BedDaysTT39Calculator::expected(1, 1.0, false));
+        $this->assertSame(0, BedDaysTT39Calculator::expected(1, 3.9, true));
+    }
+
+    /** @test */
     public function nhieu_ngay_dac_biet_cong_1()
     {
         // tử vong/chuyển viện/nặng xin về -> +1

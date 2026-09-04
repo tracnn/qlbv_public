@@ -251,6 +251,10 @@ class Xml3176CompleteChecker
             return $errors; // chỉ hồ sơ nội trú
         }
 
+        if (in_array($data->ma_loai_kcb, (array) config('xml3176.xml1.ma_loai_kcb_khong_tinh_ngay_dieu_tri', []))) {
+            return $errors; // loại KCB không tính ngày điều trị (vd '09') -> không đòi ngày giường tối thiểu
+        }
+
         $dtVao = Xml3176DateHelper::toDateTime($data->ngay_vao);
         $dtRa  = Xml3176DateHelper::toDateTime($data->ngay_ra);
         if ($dtVao === null || $dtRa === null) {

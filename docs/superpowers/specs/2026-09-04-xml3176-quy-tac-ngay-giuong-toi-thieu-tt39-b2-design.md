@@ -118,8 +118,9 @@ Seeder mới `database/seeds/Xml3176ErrorCatalogBedDaysTT39Seeder.php` (idempote
 ## 5. Xử lý biên / guard (im lặng)
 
 1. Không phải hồ sơ nội trú.
-2. Ngày vào/ra không hợp lệ (toDateTime null) hoặc ra trước vào.
-3. `expected < 1` (lưu trú <4h hợp lệ — không cần giường).
+2. `ma_loai_kcb` thuộc `xml3176.xml1.ma_loai_kcb_khong_tinh_ngay_dieu_tri` (vd '09') — loại KCB không tính ngày điều trị, không đòi ngày giường tối thiểu (tránh cảnh báo oan cả cụm).
+3. Ngày vào/ra không hợp lệ (toDateTime null) hoặc ra trước vào.
+4. `expected < 1` — bao gồm **mọi lưu trú < 4h (kể cả vắt qua nửa đêm)**: `expected()` trả 0 khi elapsedHours < 4 bất kể dương lịch, thống nhất với `SHORT_INPATIENT_STAY`.
 
 **Cảnh báo cả khi Σ ngày giường = 0** (nội trú mà không khai giường nào là bất thường — đúng tinh thần 440, đã chốt).
 

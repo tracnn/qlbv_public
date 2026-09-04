@@ -113,7 +113,9 @@ if ($traiTuyen) {
     $errorKey = 'MUC_HUONG_TRAI_TUYEN_TW';
     $loaiMo   = 'trái tuyến nội trú tuyến TW';
 } else {
-    $ngay = Xml3176DateHelper::datePart($data->ngay_vao);   // 'Y-m-d'
+    $dt   = Xml3176DateHelper::toDateTime($data->ngay_vao); // ngay_vao dạng 'YmdHi'
+    if ($dt === null) return $errors;                       // guard: ngày vào không hợp lệ
+    $ngay = $dt->format('Y-m-d');                           // khớp key config mcct.luong_co_so
     $lcs  = NguongMienCungChiTra::luongCoSoTaiNgay($ngay, (array) config('mcct.luong_co_so', []));
     $chiPhi = (float) $data->t_tongchi_bh;
     $tran = MucHuongCalculator::tranDungTuyen($entitlement, $chiPhi, $lcs ?: null,

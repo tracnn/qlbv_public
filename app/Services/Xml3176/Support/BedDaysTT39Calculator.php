@@ -10,7 +10,8 @@ class BedDaysTT39Calculator
 {
     /**
      * Số ngày giường đúng theo TT39.
-     *  - Cùng ngày (calendarDays == 0): elapsedHours >= 4 -> 1, ngược lại 0.
+     *  - Lưu trú < 4h -> 0 (không tính giường, kể cả khi vắt qua nửa đêm).
+     *  - Cùng ngày (calendarDays == 0) và >= 4h -> 1.
      *  - Nhiều ngày: calendarDays + (special ? 1 : 0).
      *
      * @param int   $calendarDays số ngày dương lịch giữa ngày vào và ngày ra (>= 0)
@@ -19,8 +20,12 @@ class BedDaysTT39Calculator
      */
     public static function expected(int $calendarDays, float $elapsedHours, bool $special): int
     {
+        if ($elapsedHours < 4) {
+            return 0; // lưu trú < 4h không tính giường, kể cả vắt qua nửa đêm (calendarDays >= 1)
+        }
+
         if ($calendarDays <= 0) {
-            return $elapsedHours >= 4 ? 1 : 0;
+            return 1; // cùng ngày, >= 4h
         }
 
         return $calendarDays + ($special ? 1 : 0);
