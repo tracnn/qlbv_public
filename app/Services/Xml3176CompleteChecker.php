@@ -120,7 +120,8 @@ class Xml3176CompleteChecker
         // Hồ sơ KHÔNG phải nội trú: theo TT39/2024/TT-BYT, khám nhiều chuyên khoa KHÁC nhau
         // trong cùng một lần đến khám là hợp lệ (từ lần 2 tính 30% mức giá), nên chỉ bắt:
         //  (1) cùng MỘT mã dịch vụ khám bị lặp > 1 lần;
-        //  (2) tổng tiền khám vượt trần 2 lần mức giá của 1 lần khám.
+        //  (2) tổng tiền khám vượt trần 2 lần mức giá của 1 lần khám;
+        //  (3) có nhiều hơn 1 dòng khám ở mức giá đầy đủ (lần 2+ chưa tính 30%).
         if (!in_array($data->ma_loai_kcb, $this->treatmentTypeInpatient) && $records->count() > 0) {
             $maTrung = ExaminationFeeCalculator::maTrung($records->pluck('ma_dich_vu')->all());
             if (!empty($maTrung)) {
@@ -147,6 +148,22 @@ class Xml3176CompleteChecker
                     'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
                     'description' => 'Tổng tiền khám ' . $tongThanhTien . ' vượt trần ' . ($heSo * $donGiaMax)
                         . ' (= ' . $heSo . ' x mức giá một lần khám ' . $donGiaMax . ').'
+                ]);
+            }
+
+            // Từ lần khám thứ 2 trở đi chỉ được tính 30% mức giá: chỉ 1 dòng khám được ở
+            // mức giá đầy đủ. Soi thành tiền để đúng dù cơ sở ghi phần giảm ở đơn giá hay tỷ lệ.
+            $tyLeLan2 = (float) config('xml3176.examination.second_visit_rate', 0.30);
+            $thanhTiens = $records->pluck('thanh_tien_bh')->all();
+            $soChuaGiam = ExaminationFeeCalculator::soDongChuaGiam($thanhTiens, $tyLeLan2, $eps);
+            if ($soChuaGiam > 1) {
+                $errorCode = $this->generateErrorCode('EXAMINATION_SECOND_VISIT_RATE');
+                $errors->push((object)[
+                    'error_code' => $errorCode,
+                    'error_name' => 'Lần khám thứ 2 trở đi chưa tính 30% mức giá',
+                    'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+                    'description' => 'Từ lần khám thứ 2 chỉ được tính ' . ($tyLeLan2 * 100)
+                        . '% mức giá một lần khám; có ' . $soChuaGiam . ' dòng khám ở mức giá đầy đủ.'
                 ]);
             }
         }

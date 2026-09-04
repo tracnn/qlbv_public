@@ -57,4 +57,48 @@ class ExaminationFeeCalculator
 
         return $tongThanhTien > ($heSo * $donGiaMax) + $eps;
     }
+
+    /**
+     * Đếm số dòng khám còn ở mức giá "chưa giảm" — tức lớn hơn $tyLe lần mức giá
+     * của lần khám đầy đủ (dòng có thành tiền cao nhất).
+     * Soi THÀNH TIỀN (không phải đơn giá) để đúng dù cơ sở ghi phần giảm ở đâu.
+     * Guard: dưới 2 dòng, hoặc mức giá gốc <= 0 -> 0.
+     *
+     * @param array $thanhTiens thanh_tien_bh của các dòng khám trong hồ sơ
+     */
+    public static function soDongChuaGiam(array $thanhTiens, float $tyLe = 0.30, float $eps = 0.01): int
+    {
+        $ds = [];
+        foreach ($thanhTiens as $t) {
+            $ds[] = is_numeric($t) ? (float) $t : 0.0;
+        }
+
+        if (count($ds) < 2) {
+            return 0;
+        }
+
+        $base = max($ds);
+        if ($base <= 0) {
+            return 0;
+        }
+
+        $nguong = $tyLe * $base + $eps;
+        $n = 0;
+        foreach ($ds as $t) {
+            if ($t > $nguong) {
+                $n++;
+            }
+        }
+
+        return $n;
+    }
+
+    /**
+     * Vi phạm quy tắc "từ lần khám thứ 2 chỉ tính 30% mức giá": chỉ được PHÉP
+     * tối đa 1 dòng khám ở mức giá đầy đủ, các dòng còn lại phải <= 30%.
+     */
+    public static function viPham30(array $thanhTiens, float $tyLe = 0.30, float $eps = 0.01): bool
+    {
+        return self::soDongChuaGiam($thanhTiens, $tyLe, $eps) > 1;
+    }
 }

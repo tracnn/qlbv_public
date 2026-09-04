@@ -62,4 +62,52 @@ class ExaminationFeeCalculatorTest extends TestCase
         $this->assertFalse(ExaminationFeeCalculator::vuotTran(500000, 0, 2.0));
         $this->assertFalse(ExaminationFeeCalculator::vuotTran(500000, -100, 2.0));
     }
+
+    /** @test */
+    public function vi_pham_30_false_khi_lan_2_da_giam()
+    {
+        // 100k full + 30k (đúng 30%) -> hợp lệ
+        $this->assertFalse(ExaminationFeeCalculator::viPham30([100000, 30000], 0.30));
+    }
+
+    /** @test */
+    public function vi_pham_30_true_khi_hai_dong_full_gia()
+    {
+        // 2 dòng đều full giá -> lần khám thứ 2 chưa giảm (trần 2x KHÔNG bắt được ca này)
+        $this->assertTrue(ExaminationFeeCalculator::viPham30([100000, 100000], 0.30));
+    }
+
+    /** @test */
+    public function vi_pham_30_true_khi_lan_2_giam_chua_du()
+    {
+        // 100k + 50k (50% > 30%) -> vi phạm
+        $this->assertTrue(ExaminationFeeCalculator::viPham30([100000, 50000], 0.30));
+    }
+
+    /** @test */
+    public function vi_pham_30_false_khi_duoi_2_dong()
+    {
+        $this->assertFalse(ExaminationFeeCalculator::viPham30([100000], 0.30));
+        $this->assertFalse(ExaminationFeeCalculator::viPham30([], 0.30));
+    }
+
+    /** @test */
+    public function vi_pham_30_false_khi_thieu_can_cu()
+    {
+        $this->assertFalse(ExaminationFeeCalculator::viPham30([0, 0], 0.30));
+    }
+
+    /** @test */
+    public function vi_pham_30_false_khi_nhieu_dong_deu_giam_dung()
+    {
+        // 100k + 30k*3 -> phân bổ đúng (vượt trần hay không là việc của rule trần)
+        $this->assertFalse(ExaminationFeeCalculator::viPham30([100000, 30000, 30000, 30000], 0.30));
+    }
+
+    /** @test */
+    public function so_dong_chua_giam_dem_dung()
+    {
+        $this->assertSame(2, ExaminationFeeCalculator::soDongChuaGiam([100000, 100000, 30000], 0.30));
+        $this->assertSame(1, ExaminationFeeCalculator::soDongChuaGiam([100000, 30000], 0.30));
+    }
 }

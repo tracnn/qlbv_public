@@ -98,5 +98,7 @@ return [
         // TT39/2024/TT-BYT: tổng tiền khám không quá 2 lần mức giá của 1 lần khám bệnh
         'cap_multiplier' => 2.0,
         'cap_epsilon'    => 0.01, // Dung sai số học khi so tổng tiền với trần
+        // Từ lần khám thứ 2 trở đi chỉ được tính 30% mức giá của 1 lần khám
+        'second_visit_rate' => 0.30,
     ],
 ];

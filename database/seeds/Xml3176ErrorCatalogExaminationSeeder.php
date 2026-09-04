@@ -23,6 +23,11 @@ class Xml3176ErrorCatalogExaminationSeeder extends Seeder
                 'Tiền khám vượt trần 2 lần mức giá một lần khám',
                 'Tổng tiền khám vượt quá 2 lần mức giá của 1 lần khám bệnh (TT39/2024/TT-BYT)',
             ],
+            [
+                'XMLComplete_EXAMINATION_SECOND_VISIT_RATE',
+                'Lần khám thứ 2 trở đi chưa tính 30% mức giá',
+                'Từ lần khám thứ 2 trở đi chỉ được tính 30% mức giá của 1 lần khám (TT39/2024/TT-BYT)',
+            ],
         ];
 
         foreach ($rules as $r) {
