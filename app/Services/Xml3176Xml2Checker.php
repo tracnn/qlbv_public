@@ -13,6 +13,7 @@ use App\Models\BHYT\ServiceCatalog;
 use Illuminate\Support\Collection;
 use App\Services\Xml3176\Support\LieuDungParser;
 use App\Services\Xml3176\Support\TextNormalizer;
+use App\Services\Xml3176\Support\DrugCatalogAttrChecker;
 
 class Xml3176Xml2Checker
 {
@@ -362,7 +363,37 @@ class Xml3176Xml2Checker
                                 'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
                                 'description' => 'Mã thuốc: ' . $data->ma_thuoc . '; Giá cao hơn giá được duyệt: ' . $data->don_gia . ' > ' . $medicine->don_gia
                             ]);
-                        }  
+                        }
+
+                        // #170/#2053/#2351 — đối chiếu đường dùng / dạng bào chế / ĐVT với danh mục
+                        $lech = DrugCatalogAttrChecker::lech(
+                            [
+                                'duong_dung'   => $data->duong_dung,
+                                'dang_bao_che' => $data->dang_bao_che,
+                                'don_vi_tinh'  => $data->don_vi_tinh,
+                            ],
+                            [
+                                'ma_duong_dung' => $medicine->ma_duong_dung,
+                                'duong_dung'    => $medicine->duong_dung,
+                                'dang_bao_che'  => $medicine->dang_bao_che,
+                                'don_vi_tinh'   => $medicine->don_vi_tinh,
+                            ]
+                        );
+                        $attrMap = [
+                            'DUONG_DUNG'   => ['INVALID_DUONG_DUNG', 'Đường dùng không khớp danh mục', $data->duong_dung, $medicine->duong_dung . ' / ' . $medicine->ma_duong_dung],
+                            'DANG_BAO_CHE' => ['INVALID_DANG_BAO_CHE', 'Dạng bào chế không khớp danh mục', $data->dang_bao_che, $medicine->dang_bao_che],
+                            'DON_VI_TINH'  => ['INVALID_DON_VI_TINH', 'Đơn vị tính không khớp danh mục', $data->don_vi_tinh, $medicine->don_vi_tinh],
+                        ];
+                        foreach ($lech as $key) {
+                            list($errKey, $errName, $xmlVal, $dmVal) = $attrMap[$key];
+                            $errorCode = $this->generateErrorCode($errKey);
+                            $errors->push((object)[
+                                'error_code'     => $errorCode,
+                                'error_name'     => $errName,
+                                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+                                'description'    => 'Mã thuốc: ' . $data->ma_thuoc . '; ' . $errName . ': "' . $xmlVal . '" # danh mục: "' . $dmVal . '"',
+                            ]);
+                        }
                     }
                 }
             }
