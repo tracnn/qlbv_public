@@ -46,6 +46,8 @@ class Xml3176Xml8Checker
 
         $errors = $errors->merge($this->infoChecker($data));
 
+        $errors = $errors->merge($this->checkTomTatQuaNgan($data));
+
         // Save errors to xml_error_checks table
         $this->xmlErrorService->saveErrors($this->xmlType, $data->ma_lk, 1, $errors);
     }
@@ -118,6 +120,24 @@ class Xml3176Xml8Checker
             }
         }
 
+        return $errors;
+    }
+
+    /**
+     * #2342 — Tóm tắt kết quả quá ngắn.
+     */
+    private function checkTomTatQuaNgan(Xml3176Xml8 $data): Collection
+    {
+        $errors = collect();
+        $min = (int) config('xml3176.xml8.tomtat_kq_min_length', 20);
+        if (!empty($data->tomtat_kq) && mb_strlen(trim($data->tomtat_kq)) < $min) {
+            $code = $this->generateErrorCode('TOMTAT_KQ_TOO_SHORT');
+            $errors->push((object) [
+                'error_code' => $code, 'error_name' => 'Tóm tắt kết quả quá ngắn',
+                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($code),
+                'description' => 'Tóm tắt kết quả chỉ ' . mb_strlen(trim($data->tomtat_kq)) . ' ký tự (< ' . $min . '): "' . trim($data->tomtat_kq) . '"',
+            ]);
+        }
         return $errors;
     }
 
