@@ -76,6 +76,8 @@ return [
         'same_doctor_check_groups'    => [1, 2, 3], // Mã nhóm cần kiểm tra bác sĩ ra y lệnh trùng người thực hiện
         'surgery_full_payment_rate'   => '100', // Tỷ lệ thanh toán PTTT lần 2 trong ngày
         'tyle_epsilon'                => 0.01, // Dung sai đối chiếu tỷ lệ thanh toán BH của VTYT với danh mục
+        // Nhóm dịch vụ mà một bệnh nhân KHÔNG thể trải qua hai dịch vụ chồng thời gian
+        'overlap_execution_groups'    => [8, 18],
     ],
     'xml8' => [
         'tomtat_kq_min_length' => 20, // Độ dài tối thiểu của tóm tắt kết quả điều trị

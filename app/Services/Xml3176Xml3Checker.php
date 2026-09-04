@@ -10,6 +10,7 @@ use App\Models\BHYT\ServiceCatalog;
 use App\Models\BHYT\EquipmentCatalog;
 use App\Services\Xml3176\Support\Xml3176DateHelper;
 use App\Services\Xml3176\Support\TyLeComparator;
+use App\Services\Xml3176\Support\ServiceOverlapChecker;
 use Illuminate\Support\Collection;
 
 class Xml3176Xml3Checker
@@ -150,6 +151,7 @@ class Xml3176Xml3Checker
         $errors = $errors->merge($this->checkMedicalSupplyCatalog($data)); // Thêm kiểm tra VTYT
         $errors = $errors->merge($this->checkMedicalService($data)); // Kiểm tra dịch vụ kỹ thuật
         $errors = $errors->merge($this->checkServiceGroupPtttDuplicate($data)); // Kiểm tra dịch vụ kỹ thuật
+        $errors = $errors->merge($this->checkOverlappingServiceExecution($data));
 
         if (config('xml3176.general.check_valid_department_req')) {
             $errors = $errors->merge($this->checkValidMakhoaReq($data)); // Kiểm tra tính hợp lệ của khoa chỉ định
@@ -969,6 +971,53 @@ class Xml3176Xml3Checker
                     'description' => 'Khoa khám bệnh: ' . implode(',', config('xml3176.general.ma_khoa_kkb')) . '; không được chỉ định: ' . $this->serviceDisplay . '; Đối với BN Nội trú - Trái tuyến'
                 ]);
             }
+        }
+
+        return $errors;
+    }
+
+    /**
+     * Một BỆNH NHÂN không thể trải qua hai dịch vụ PTTT chồng thời gian thực hiện.
+     * Chỉ soi trong CÙNG hồ sơ (ma_lk) và chỉ các nhóm cấu hình (mặc định PTTT 8,18) —
+     * xét nghiệm/CĐHA ghi cùng khung giờ là bình thường nên không xét.
+     *
+     * Mỗi cặp chồng nhau chỉ báo MỘT lần (chỉ so với dòng có id lớn hơn).
+     */
+    private function checkOverlappingServiceExecution(Xml3176Xml3 $data): Collection
+    {
+        $errors = collect();
+
+        $groups = (array) config('xml3176.xml3.overlap_execution_groups', []);
+        if (empty($groups) || !in_array($data->ma_nhom, $groups)) {
+            return $errors;
+        }
+
+        if (empty($data->ngay_th_yl) || empty($data->ngay_kq)) {
+            return $errors; // guard: thiếu mốc thời gian
+        }
+
+        $others = Xml3176Xml3::where('ma_lk', $data->ma_lk)
+            ->whereIn('ma_nhom', $groups)
+            ->where('id', '>', $data->id)
+            ->whereNotNull('ngay_th_yl')
+            ->whereNotNull('ngay_kq')
+            ->get();
+
+        foreach ($others as $other) {
+            if (!ServiceOverlapChecker::chongNhau($data->ngay_th_yl, $data->ngay_kq, $other->ngay_th_yl, $other->ngay_kq)) {
+                continue;
+            }
+
+            $errorCode = $this->generateErrorCode('OVERLAPPING_SERVICE_EXECUTION');
+            $errors->push((object)[
+                'error_code' => $errorCode,
+                'error_name' => 'Thời gian thực hiện trùng với dịch vụ khác',
+                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+                'description' => 'Dịch vụ ' . $data->ma_dich_vu . ' (' . strtodatetime($data->ngay_th_yl)
+                    . ' - ' . strtodatetime($data->ngay_kq) . ') chồng thời gian thực hiện với dịch vụ '
+                    . $other->ma_dich_vu . ' (' . strtodatetime($other->ngay_th_yl) . ' - '
+                    . strtodatetime($other->ngay_kq) . ') trong cùng hồ sơ.'
+            ]);
         }
 
         return $errors;
