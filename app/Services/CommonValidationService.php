@@ -82,6 +82,18 @@ class CommonValidationService
         ->exists();
     }
 
+    /**
+     * Xa co thuoc tinh khong. Sau khi bo cap huyen day la quan he long nhau duy nhat
+     * con lai giua hai cap.
+     */
+    public function isAdministrativeUnitWardInProvinceValid($province_code, $commune_code)
+    {
+        return AdministrativeUnit::where('province_code', $province_code)
+        ->where('commune_code', $commune_code)
+        ->where('is_active', true)
+        ->exists();
+    }
+
     public function isJobCategoryValid($value)
     {
         return JobCategory::where('job_code', $value)
