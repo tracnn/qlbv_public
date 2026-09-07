@@ -122,7 +122,7 @@
                         <div class="progress-bar progress-bar-info" style="width: 100%"></div>
                     </div>
                     <p class="text-muted" style="margin-top: 10px;">
-                        Đã chờ <b id="mcct-giay">0</b> giây. Cổng thường trả lời trong 5–20 giây.
+                        Đã chờ <b id="mcct-giay">0</b> giây. Cổng thường trả lời trong 5–30 giây.
                     </p>
                 </div>
 
@@ -220,13 +220,18 @@
         var $modal = $('#modal-mcct');
         var URL = $nut.data('url');
 
-        // Dai hon timeout tong 30 giay cua may chu. Neu javascript bo cuoc TRUOC thi nguoi
-        // dung nhan thong bao chung chung cua trinh duyet thay vi thong bao that cua may chu
-        // ("cong bao loi", "tai khoan bi han che tra cuu"...).
-        var TIMEOUT_MS = 40000;
+        // Suy ra TU cau hinh may chu, cong them 10 giay dem. Neu javascript bo cuoc TRUOC thi
+        // nguoi dung nhan thong bao chung chung cua trinh duyet thay vi thong bao that cua may
+        // chu ("cong bao loi", "tai khoan bi han che tra cuu"...).
+        //
+        // KHONG go cung so o day: truoc day no la 40000 canh mot timeout may chu 30 giay, va
+        // hai con so o hai tep khac nhau chac chan se lech nhau o lan sua sau.
+        var TIMEOUT_MS = {{ ((int) config('mcct.timeout_tong', 60) + 10) * 1000 }};
 
         // Sau moc nay thi doi cau chu: nguoi dung can biet CHAM la binh thuong, khong phai hong.
-        var MOC_CHAM_GIAY = 15;
+        // De 25 chu khong 15: cong da tung mat hon 30 giay, noi "cham" tu giay thu 15 la bao
+        // dong gia - nghe mai thanh quen roi khong ai tin nua.
+        var MOC_CHAM_GIAY = 25;
 
         var demGio = null;
         var yeuCau = null;
@@ -235,6 +240,13 @@
             var n = Math.round(Number(x) || 0);
 
             return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+        }
+
+        /* Y-m-d (may chu tra ve) -> dd/mm/yyyy cho nguoi doc */
+        function ngayVn(s) {
+            var p = String(s || '').split('-');
+
+            return p.length === 3 ? p[2] + '/' + p[1] + '/' + p[0] : String(s || '');
         }
 
         function thoat(s) {
@@ -327,18 +339,54 @@
                     + '</tr></table>';
             }
 
-            var thieu = Math.max(0, (Number(kq.nguong) || 0) - (Number(kq.luy_ke) || 0));
+            // Muc mien tinh theo diem c khoan 2 Dieu 18 ND 188/2025. May chu luon gui khoi
+            // nay khi tra cuu thanh cong; van phong ho de mot phan hoi cu con trong cache
+            // trinh duyet khong lam vo man hinh.
+            var muc = kq.muc || {};
+            var conPhaiDong = Number(muc.so_tien_con_phai_dong) || 0;
+            var tongNguong = Number(muc.tong_nguong_ca_nam) || 0;
+            var thieu = Number(muc.con_thieu) || 0;
+
             var nhan = kq.du_dieu_kien
-                ? '<span class="label label-success">ĐỦ ĐIỀU KIỆN MIỄN CÙNG CHI TRẢ</span>'
+                ? '<span class="label label-success">ĐỦ NGƯỠNG 6 THÁNG LƯƠNG CƠ SỞ</span>'
                 : '<span class="label label-warning">CÒN THIẾU ' + tien(thieu) + ' đ</span>';
 
+            // Hien TONG NGUONG CA NAM chu khong phai so con phai dong: chi con so nay moi so
+            // sanh duoc truc tiep voi luy ke ben canh, vi ca hai cung tinh tu 01/01.
             h += '<div class="well well-sm"><table class="table table-condensed"><tr>'
                 + '<td>Lũy kế cùng chi trả: <b>' + tien(kq.luy_ke) + ' đ</b></td>'
-                + '<td>Ngưỡng: <b>' + tien(kq.nguong) + ' đ</b></td>'
-                + '<td>' + nhan + '</td></tr></table>'
-                // GhiChu NGUYEN VAN: no ghi du lieu cong "tinh den" thoi diem nao. So lieu
-                // cong co do tre, nguoi dung phai thay moc do TRUOC khi ket luan voi nguoi benh.
-                + '<small class="text-muted">' + thoat(kq.ghi_chu) + '</small></div>';
+                + '<td>Ngưỡng cả năm: <b>' + tien(tongNguong) + ' đ</b></td>'
+                + '<td>' + nhan + '</td></tr></table>';
+
+            // API MCCT khong tra ve du kien 5 nam lien tuc, nen man hinh KHONG duoc ket luan
+            // thay ca dieu kien do. Nhan o tren chi ghi "du nguong"; ve con lai phai co nguoi kiem.
+            if (kq.du_dieu_kien) {
+                h += '<div class="alert alert-info" style="padding: 6px 10px; margin-bottom: 8px;">'
+                    + 'Mới chỉ đạt <b>ngưỡng tiền</b>. Cần kiểm tra thêm điều kiện <b>tham gia BHYT '
+                    + 'đủ 5 năm liên tục</b> mới đủ điều kiện miễn cùng chi trả — dữ kiện này cổng '
+                    + 'không trả về.</div>';
+            }
+
+            // Chi hien khi trong nam CO moc doi luong co so. Khong co dong nay, nguoi dung se
+            // tu tinh 6 x luong hien hanh tru luy ke roi tuong phan mem sai.
+            if (muc.co_doi_luong) {
+                var thangCu = Number(muc.luong_truoc_moc) > 0
+                    ? Number(muc.da_dong_truoc_moc) / Number(muc.luong_truoc_moc) : 0;
+
+                h += '<div class="text-muted" style="margin-bottom: 6px;">Lương cơ sở đổi ngày '
+                    + thoat(ngayVn(muc.moc_doi_luong)) + '. Đã cùng chi trả '
+                    + tien(muc.da_dong_truoc_moc) + ' đ trước mốc, tương đương '
+                    + thangCu.toFixed(2).replace('.', ',') + ' tháng lương cũ ('
+                    + tien(muc.luong_truoc_moc) + ' đ); còn phải cùng chi trả '
+                    + (Number(muc.so_thang_con_lai) || 0).toFixed(2).replace('.', ',')
+                    + ' tháng × ' + tien(muc.luong_hien_tai) + ' đ = <b>'
+                    + tien(conPhaiDong) + ' đ</b>; cộng phần đã đóng trước mốc thành ngưỡng cả năm <b>'
+                    + tien(tongNguong) + ' đ</b>.</div>';
+            }
+
+            // GhiChu NGUYEN VAN: no ghi du lieu cong "tinh den" thoi diem nao. So lieu
+            // cong co do tre, nguoi dung phai thay moc do TRUOC khi ket luan voi nguoi benh.
+            h += '<small class="text-muted">' + thoat(kq.ghi_chu) + '</small></div>';
 
             h += dungBangChiPhi(kq.dong);
 

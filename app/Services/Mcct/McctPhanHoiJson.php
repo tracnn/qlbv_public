@@ -20,9 +20,10 @@ class McctPhanHoiJson
      * @param float $nguong nguong mien cung chi tra tai thoi diem tra
      * @param bool|null $duDieuKien null khi tra cuu khong thanh cong
      * @param string|null $maCskcb co so da dung tai khoan de tra
+     * @param array|null $muc ket qua NguongMienCungChiTra::tinhTheoQuyDinh(); null khi khong tinh duoc
      * @return array
      */
-    public static function tuKetQua(KetQuaMcct $kq, $nguong, $duDieuKien, $maCskcb = null)
+    public static function tuKetQua(KetQuaMcct $kq, $nguong, $duDieuKien, $maCskcb = null, array $muc = null)
     {
         $tb = self::thongBao($kq, $maCskcb);
 
@@ -37,6 +38,10 @@ class McctPhanHoiJson
             'luy_ke' => $kq->luyKeLonNhat(),
             'nguong' => (float) $nguong,
             'du_dieu_kien' => $duDieuKien,
+            // Cach tinh theo diem c khoan 2 Dieu 18 ND 188/2025 - long nguyen khoi thay vi
+            // trai phang tung khoa: them mot khoa moi o day la them mot khoa phai nho bo sung
+            // vao ca nhanh loi() ben duoi, va quen mot khoa se thanh 'undefined' tren man hinh.
+            'muc' => $muc,
             'thong_bao' => $tb['thong_bao'],
             'muc_do' => $tb['muc_do'],
         ];
@@ -63,6 +68,7 @@ class McctPhanHoiJson
             'luy_ke' => 0.0,
             'nguong' => 0.0,
             'du_dieu_kien' => null,
+            'muc' => null,
             'thong_bao' => (string) $thongBao,
             'muc_do' => 'danger',
         ];

@@ -19,18 +19,47 @@
             <tr>
                 <td class="col-md-4">Lũy kế cùng chi trả:
                     <b>{{ number_format($ketQua->luyKeLonNhat(), 0, ',', '.') }} đ</b></td>
-                <td class="col-md-4">Ngưỡng {{ config('mcct.so_thang_luong_co_so') }} tháng lương cơ sở:
-                    <b>{{ number_format($nguong, 0, ',', '.') }} đ</b></td>
+                {{-- Tong nguong CA NAM chu khong phai so tien con phai dong: chi con so nay moi
+                     so sanh duoc truc tiep voi luy ke ben canh, vi ca hai cung tinh tu 01/01. --}}
+                <td class="col-md-4">Ngưỡng cả năm:
+                    <b>{{ number_format($muc['tong_nguong_ca_nam'], 0, ',', '.') }} đ</b></td>
                 <td class="col-md-4">
                     @if ($duDieuKien)
-                        <span class="label label-success">ĐỦ ĐIỀU KIỆN MIỄN CÙNG CHI TRẢ</span>
+                        <span class="label label-success">ĐỦ NGƯỠNG 6 THÁNG LƯƠNG CƠ SỞ</span>
                     @else
                         <span class="label label-warning">CÒN THIẾU
-                            {{ number_format(max(0, $nguong - $ketQua->luyKeLonNhat()), 0, ',', '.') }} đ</span>
+                            {{ number_format($muc['con_thieu'], 0, ',', '.') }} đ</span>
                     @endif
                 </td>
             </tr>
         </table>
+
+        {{-- Chi hien khi DAT nguong: API MCCT khong tra ve du kien 5 nam lien tuc, nen man
+             hinh nay KHONG duoc phep ket luan thay ca dieu kien do. Nhan o tren vi vay chi ghi
+             "du nguong", con ve con lai phai co nguoi kiem. --}}
+        @if ($duDieuKien)
+        <div class="alert alert-info" style="padding: 6px 10px; margin-bottom: 8px;">
+            Mới chỉ đạt <b>ngưỡng tiền</b>. Cần kiểm tra thêm điều kiện <b>tham gia BHYT đủ 5 năm
+            liên tục</b> mới đủ điều kiện miễn cùng chi trả — dữ kiện này cổng không trả về.
+        </div>
+        @endif
+
+        {{-- Chi hien khi trong nam CO moc doi luong co so. Khong co dong nay, nguoi dung se tu
+             tinh 6 x luong hien hanh tru luy ke roi tuong phan mem sai - con so cua ta khac,
+             va khac la DUNG theo diem c khoan 2 Dieu 18 ND 188/2025. --}}
+        @if ($muc['co_doi_luong'])
+        <div class="text-muted" style="margin-bottom: 6px;">
+            Lương cơ sở đổi ngày {{ date('d/m/Y', strtotime($muc['moc_doi_luong'])) }}. Đã cùng chi
+            trả {{ number_format($muc['da_dong_truoc_moc'], 0, ',', '.') }} đ trước mốc, tương đương
+            {{ number_format($muc['luong_truoc_moc'] > 0 ? $muc['da_dong_truoc_moc'] / $muc['luong_truoc_moc'] : 0, 2, ',', '.') }}
+            tháng lương cũ ({{ number_format($muc['luong_truoc_moc'], 0, ',', '.') }} đ); còn phải
+            cùng chi trả {{ number_format($muc['so_thang_con_lai'], 2, ',', '.') }} tháng ×
+            {{ number_format($muc['luong_hien_tai'], 0, ',', '.') }} đ =
+            <b>{{ number_format($muc['so_tien_con_phai_dong'], 0, ',', '.') }} đ</b>; cộng phần đã
+            đóng trước mốc thành ngưỡng cả năm
+            <b>{{ number_format($muc['tong_nguong_ca_nam'], 0, ',', '.') }} đ</b>.
+        </div>
+        @endif
 
         {{-- GhiChu NGUYEN VAN: no ghi du lieu cong "tinh den" thoi diem nao. So lieu cong co
              do tre, nguoi dung phai thay moc do TRUOC khi ket luan voi nguoi benh. --}}

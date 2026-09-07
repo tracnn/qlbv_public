@@ -26,6 +26,20 @@ return [
         '2026-07-01' => 2530000,
     ],
 
-    'timeout_ket_noi' => 10,
-    'timeout_tong' => 30,
+    /*
+     * Timeout goi cong, tinh bang giay.
+     *
+     * timeout_tong nang tu 30 len 60 ngay 07/9/2026: cong that su tra ve "cURL error 28:
+     * Operation timed out after 30006 ms with 0 bytes received" - tuc het 30 giay ma chua
+     * nhan duoc byte nao, khong phai loi mang.
+     *
+     * TRAN CUNG la max_execution_time cua PHP (dang la 120 giay). Nang timeout_tong vuot qua
+     * nua so do la tu chuoc lay rui ro: luong 401 co the goi cong HAI lan, va PHP se chet
+     * giua chung voi mot loi khong noi duoc gi ve nguyen nhan that.
+     *
+     * Doi so o day thi javascript cua modal tu bam theo - xem TIMEOUT_MS trong
+     * check-card/search.blade.php.
+     */
+    'timeout_ket_noi' => 15,
+    'timeout_tong' => 60,
 ];

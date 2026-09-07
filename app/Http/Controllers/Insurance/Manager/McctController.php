@@ -56,7 +56,7 @@ class McctController extends Controller
 
         // Thong bao lay tu CUNG mot cho voi endpoint JSON, de mot cau chu chi ton tai o mot noi.
         $phanHoi = McctPhanHoiJson::tuKetQua($ra['kq'], $ra['nguong'], $ra['du_dieu_kien'],
-            $params['ma_cskcb']);
+            $params['ma_cskcb'], $ra['muc']);
 
         if ($phanHoi['thong_bao'] !== null) {
             $thongBao = flash($phanHoi['thong_bao']);
@@ -81,6 +81,7 @@ class McctController extends Controller
             'ketQua' => $ra['kq'],
             'nguong' => $ra['nguong'],
             'duDieuKien' => $ra['du_dieu_kien'],
+            'muc' => $ra['muc'],
             'lichSu' => $lichSu,
         ]));
     }
@@ -109,7 +110,7 @@ class McctController extends Controller
         }
 
         $phanHoi = McctPhanHoiJson::tuKetQua($ra['kq'], $ra['nguong'], $ra['du_dieu_kien'],
-            $params['ma_cskcb']);
+            $params['ma_cskcb'], $ra['muc']);
         $phanHoi['loi_luu'] = $ra['loi_luu'];
 
         return response()->json($phanHoi);
@@ -123,13 +124,14 @@ class McctController extends Controller
      *
      * @param array $params bon khoa ma_cskcb, ma_the, ho_ten, ngay_sinh
      * @return array ['loi' => string|null, 'kq' => KetQuaMcct|null, 'nguong' => float,
-     *                'du_dieu_kien' => bool|null, 'loi_luu' => string|null]
+     *                'du_dieu_kien' => bool|null, 'muc' => array|null (ket qua
+     *                NguongMienCungChiTra::tinhTheoQuyDinh), 'loi_luu' => string|null]
      */
     private function thucHien(array $params)
     {
         $hong = function ($loi) {
             return ['loi' => $loi, 'kq' => null, 'nguong' => 0.0, 'du_dieu_kien' => null,
-                'loi_luu' => null];
+                'muc' => null, 'loi_luu' => null];
         };
 
         try {
@@ -145,6 +147,18 @@ class McctController extends Controller
         } catch (\GuzzleHttp\Exception\ConnectException $e) {
             // Rieng loi mang: dat TRUOC nhanh \Exception de bat truoc, tranh bi nhanh do
             // "nuot" mat va gan nham tien to cau hinh cho loi mang.
+            //
+            // Tach rieng HET GIO khoi "khong ket noi duoc": hai chuyen khac han nhau. Het gio
+            // nghia la cong CO song nhung tra loi qua cham - nguoi dung chi can thu lai, chu
+            // khong phai di goi bo phan mang. Cau goc cua cURL ("Operation timed out after
+            // 30006 milliseconds with 0 bytes received") khong noi duoc dieu do voi ho.
+            if (mb_stripos($e->getMessage(), 'timed out') !== false
+                || mb_stripos($e->getMessage(), 'timeout') !== false) {
+                return $hong('Cổng BHXH không trả lời sau '
+                    . (int) config('mcct.timeout_tong', 60) . ' giây. Cổng đang quá tải; '
+                    . 'chờ ít phút rồi tra lại.');
+            }
+
             return $hong('Không kết nối được cổng BHXH: ' . $e->getMessage());
         } catch (\Exception $e) {
             // Tien to trung lap: CongBhxh::baseUrl() va BHYTLoginService::login() nem loi
@@ -153,15 +167,17 @@ class McctController extends Controller
             return $hong('Lỗi khi gọi cổng BHXH: ' . $e->getMessage());
         }
 
-        $nguong = NguongMienCungChiTra::nguong(
-            date('Y-m-d'),
-            (array) config('mcct.luong_co_so', []),
-            (int) config('mcct.so_thang_luong_co_so', 6)
-        );
+        $bangLuong = (array) config('mcct.luong_co_so', []);
+        $soThang = (int) config('mcct.so_thang_luong_co_so', 6);
 
-        $duDieuKien = $kq->thanhCong()
-            ? NguongMienCungChiTra::duDieuKien($kq->luyKeLonNhat(), $nguong)
-            : null;
+        $nguong = NguongMienCungChiTra::nguong(date('Y-m-d'), $bangLuong, $soThang);
+
+        // Muc mien tinh THEO DUNG diem c khoan 2 Dieu 18 ND 188/2025: khi luong co so doi
+        // giua nam, khong duoc lay thang 6 x luong hien hanh lam nguong. $nguong o tren van
+        // duoc luu lai de doi chieu voi cac ban ghi cu, nhung KET LUAN lay tu day.
+        $muc = NguongMienCungChiTra::tinhTheoQuyDinh($kq->dong, date('Y-m-d'), $bangLuong, $soThang);
+
+        $duDieuKien = $kq->thanhCong() ? $muc['du_dieu_kien'] : null;
 
         // Luu hong thi VAN tra ket qua: luot goi len cong da tieu roi, va cong co danh sach
         // tai khoan bi han che tra cuu nen khong duoc de mot loi ghi CSDL nuot mat ca ket qua.
@@ -174,6 +190,8 @@ class McctController extends Controller
                 'tra_boi' => \Auth::check() ? \Auth::user()->username : null,
                 'nguong' => $nguong,
                 'du_dieu_kien' => $duDieuKien,
+                'so_tien_con_phai_dong' => $muc['so_tien_con_phai_dong'],
+                'da_dong_truoc_moc' => $muc['da_dong_truoc_moc'],
             ]));
         } catch (\Exception $e) {
             \Log::error('MCCT khong luu duoc lich su tra cuu: ' . $e->getMessage());
@@ -181,7 +199,7 @@ class McctController extends Controller
         }
 
         return ['loi' => null, 'kq' => $kq, 'nguong' => $nguong, 'du_dieu_kien' => $duDieuKien,
-            'loi_luu' => $loiLuu];
+            'muc' => $muc, 'loi_luu' => $loiLuu];
     }
 
     /**

@@ -44,6 +44,13 @@ class McctLuuTraCuu
             'nguong_ap_dung' => isset($thamSo['nguong']) ? $thamSo['nguong'] : null,
             'du_dieu_kien_mien' => isset($thamSo['du_dieu_kien']) ? $thamSo['du_dieu_kien'] : null,
 
+            // Cach tinh theo diem c khoan 2 Dieu 18 ND 188/2025: khac nguong_ap_dung khi
+            // luong co so doi giua nam. Xem NguongMienCungChiTra::tinhTheoQuyDinh().
+            'so_tien_con_phai_dong' => isset($thamSo['so_tien_con_phai_dong'])
+                ? $thamSo['so_tien_con_phai_dong'] : null,
+            'da_dong_truoc_moc' => isset($thamSo['da_dong_truoc_moc'])
+                ? $thamSo['da_dong_truoc_moc'] : null,
+
             'nguon' => isset($thamSo['nguon']) ? $thamSo['nguon'] : 'thu_cong',
             'tra_boi' => isset($thamSo['tra_boi']) ? $thamSo['tra_boi'] : null,
             'tra_luc' => date('Y-m-d H:i:s'),
