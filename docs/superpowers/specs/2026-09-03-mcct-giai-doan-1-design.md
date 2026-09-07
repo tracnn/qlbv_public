@@ -1,7 +1,7 @@
 # Thiết kế: Tra cứu tiền cùng chi trả / miễn cùng chi trả (MCCT) — Giai đoạn 1
 
-Ngày: 2026-09-03
-Trạng thái: đã thống nhất, chờ lập kế hoạch thực thi
+Ngày: 2026-09-03 (cập nhật kết quả nghiệm thu 2026-09-07)
+Trạng thái: **đã nghiệm thu trên môi trường chính thức — Giai đoạn 1 hoàn thành**
 
 ## 1. Mục tiêu
 
@@ -77,10 +77,20 @@ rỗng:
 | `maThe`, `maCskcb` | Mã thẻ; mã CSKCB nơi phát sinh đợt KCB |
 | `ngayVao`, `ngayRa` | Ngày vào viện, ngày ra viện |
 | `maDoiTuongKCB` | Mã đối tượng khi đi KCB |
-| `tBNCCTMCCT` | Số tiền cùng chi trả thuộc diện được miễn trong đợt KCB |
-| `tBNCCTLuyKe` | **Số tiền người bệnh cùng chi trả lũy kế** — dùng để xét ngưỡng |
+| `tBNCCTMCCT` | Số tiền cùng chi trả thuộc diện được miễn trong đợt KCB. ⚠ **Chuỗi có dấu phẩy ngăn nghìn** — xem cảnh báo dưới bảng |
+| `tBNCCTLuyKe` | **Số tiền người bệnh cùng chi trả lũy kế** — dùng để xét ngưỡng. ⚠ Cùng dạng chuỗi |
 | `ngayNhanCong`, `ngayNhan` | Ngày nhận hồ sơ qua Cổng tiếp nhận; ngày nhận hồ sơ |
 | `duPhong1`…`duPhong5` | Dự phòng, luôn là chuỗi rỗng — **bỏ qua, không lưu** |
+
+⚠ **Phụ lục ghi hai trường tiền là "Số thực" — sai.** Dữ liệu thật ngày 03/9/2026 cho thấy
+cổng trả về **chuỗi có dấu phẩy ngăn nghìn**: `"tBNCCTMCCT":"893,973"`,
+`"tBNCCTLuyKe":"3,862,166"`. Ép thẳng `(float)` trong PHP sẽ dừng lại ở dấu phẩy —
+`(float) '3,862,166'` bằng **`3.0`**. Bắt buộc bỏ dấu phẩy trước khi ép kiểu; giữ dấu chấm
+làm dấu thập phân. Xem `KetQuaMcct::tien()`.
+
+Hai trường khác cũng khác với hình dung ban đầu: `Id` là số nguyên **vượt phạm vi 32 bit**
+(ví dụ `3131600192`) nên cột phải là `bigInteger`; `maDoiTuongKCB` là chuỗi dạng `"1.5"`,
+`"1.15"`, `"2"` chứ không phải mã hai ký tự.
 
 `ThongTinSoThe`: `hoTen`, `ngaySinh`, `ngayKetThuc` (ngày hết hạn thẻ), `maBhxh`, kèm năm
 trường dự phòng luôn rỗng.
@@ -123,9 +133,13 @@ trả HTTP 200):
    là mất đúng thứ cần khi đi hỏi cổng.
 7. **Ngưỡng dùng dấu `>`**, không phải `≥`. NĐ 188/2025 dùng câu chữ "lớn hơn 6 tháng lương
    cơ sở": lũy kế **bằng đúng** ngưỡng là *chưa* đủ điều kiện.
-8. **Lương cơ sở khai theo mốc hiệu lực**, không phải một số. Ngưỡng = 6 × giá trị có hiệu
-   lực tại ngày tra. Khai một số trần thì lần tăng lương tiếp theo sẽ lặng lẽ tính sai
-   ngưỡng cho toàn bộ dữ liệu cũ.
+8. **Lương cơ sở khai theo mốc hiệu lực**, không phải một số. Khai một số trần thì lần tăng
+   lương tiếp theo sẽ lặng lẽ tính sai ngưỡng cho toàn bộ dữ liệu cũ.
+
+   ⚠ **Vế "Ngưỡng = 6 × giá trị có hiệu lực tại ngày tra" của quyết định này đã bị vượt
+   qua.** Khi lương cơ sở đổi **giữa năm**, điểm c khoản 2 Điều 18 NĐ 188/2025 quy định phần
+   đã đóng ở giai đoạn lương cũ phải quy đổi ra **số tháng** theo lương cũ. Xem mục 11 và
+   `NguongMienCungChiTra::tinhTheoQuyDinh()`.
 9. **`nguong_ap_dung` lưu vào bảng**, không tính lại lúc đọc. Tính lại nghĩa là mọi bản ghi
    cũ đột ngột đổi kết luận "đủ / chưa đủ" mỗi khi lương cơ sở tăng — dữ liệu đối soát năm
    trước tự viết lại chính nó.
@@ -134,22 +148,23 @@ trả HTTP 200):
     `$('#target').submit()`. Thêm form thứ hai vào đó là cách chắc chắn làm hỏng luồng quét
     QR đang chạy.
 
-## 5. Điểm chưa chắc chắn — phải nghiệm thu thật
+## 5. Điểm chưa chắc chắn — ✅ đã nghiệm thu xong
 
-**Trường `username` trong body.** Phụ lục nêu ví dụ `"username": "01001"`, trông như **mã
-CSKCB**; nhưng phần đặc tả lại mô tả là "tài khoản người dùng thực hiện tra cứu". Tài khoản
-của cơ sở trong hệ thống này là dạng `01929_BV`.
+**Trường `username` trong body — ✅ ĐÃ XÁC NHẬN.** Phụ lục nêu ví dụ `"username": "01001"`,
+trông như **mã CSKCB**; nhưng phần đặc tả lại mô tả là "tài khoản người dùng thực hiện tra
+cứu". Tài khoản của cơ sở trong hệ thống này là dạng `01929_BV`.
 
-Thiết kế chọn gửi `$loginService->username()` (tài khoản đăng nhập thật), vì cổng đối chiếu
-tài khoản với token. **Nếu cổng từ chối thì đổi sang mã CSKCB** — sửa một dòng. Đây là mục
-nghiệm thu bắt buộc ở mục 10, không mock được và không được coi test xanh là xong.
+Thiết kế chọn gửi `$loginService->username()` (tài khoản đăng nhập thật). **Gọi thật ngày
+03/9/2026 với `username = "01929_BV"` — cổng chấp nhận, trả `HTTP 200` / `MaKetQua 200` kèm
+14 đợt KCB.** Không phải đổi sang mã CSKCB. Chốt lại: gửi tài khoản đăng nhập.
 
-**Giao thức `http` hay `https`.** Phụ lục viết URL dạng `http://egw.baohiemxahoi.gov.vn`,
+**Giao thức `http` hay `https` — ✅ ĐÃ XÁC NHẬN dùng `https`.** Phụ lục viết URL dạng `http://egw.baohiemxahoi.gov.vn`,
 còn `organization.BHYT.base_url` của dự án đang là `https://egw.baohiemxahoi.gov.vn` và mọi
 module khác (tra cứu thẻ, gửi XML 4750/3176, TT12) đang chạy tốt qua `https`. Thiết kế
 **dùng chung `base_url`** — không hạ xuống `http` chỉ vì phụ lục viết vậy, gần như chắc
-chắn đó là cách viết tắt trong tài liệu. Nếu cổng từ chối `https` ở riêng đường dẫn này thì
-đó là ngoại lệ thật và phải xử lý riêng, ghi vào mục nghiệm thu 10.
+chắn đó là cách viết tắt trong tài liệu. **Lần gọi thật ngày 03/9/2026 qua
+`https://egw.baohiemxahoi.gov.vn/api/TraCuuCCT/TraCuuTienMCCT` thành công** — giữ nguyên
+`base_url` chung, không có ngoại lệ nào cần xử lý riêng.
 
 ## 6. Kiến trúc
 
@@ -287,6 +302,11 @@ luôn là chuỗi rỗng.
 
 ## 8. Giao diện
 
+> ⚠ **Mục này mô tả bản đầu.** Giao diện đã đổi ba chỗ sau nghiệm thu, xem mục 11: hiện
+> **"Ngưỡng cả năm"** thay cho "Ngưỡng 6 tháng lương cơ sở"; nhãn kết luận là **"ĐỦ NGƯỠNG 6
+> THÁNG LƯƠNG CƠ SỞ"** kèm khung nhắc điều kiện 5 năm liên tục; và cả hai màn đều gọi bằng
+> AJAX, hiện kết quả lần trước trước rồi mới để người dùng bấm Tra cứu lại.
+
 Màn riêng: route `insurance.mcct` (GET, form rỗng) và `insurance.mcct.search` (GET, tra
 cứu), đặt trong **đúng nhóm `insurance/` đang có** ở `routes/web.php`.
 
@@ -355,13 +375,54 @@ CSDL `qlbv`. Chỉ đúng một bộ (`McctLuuTraCuuTest`) chạm CSDL.
 Dùng `MockHandler` của Guzzle chứ không dùng Mockery cho tầng HTTP — Mockery đã nhiều lần
 vỡ với các lớp có khai báo kiểu trả về trong dự án này.
 
-**Nghiệm thu tay — không test nào thay được:**
+## 11. Kết quả nghiệm thu trên môi trường chính thức
 
-1. Gọi thật một thẻ **có phát sinh chi phí** trên môi trường chính thức.
-2. Xác nhận cổng chấp nhận `username` là tài khoản đăng nhập (`01929_BV`) chứ không đòi mã
-   CSKCB (mục 5). Nếu bị từ chối thì đổi sang mã CSKCB và gọi lại.
-3. Xác nhận IP máy chủ qlbv không bị cổng từ chối (`401`), và cổng chấp nhận `https` từ
-   `base_url` chung (mục 5).
-4. Ghi lại nguyên văn `GhiChu` cổng trả về, đối chiếu với số lũy kế hiển thị trên màn.
+Nghiệm thu ngày **03/9/2026**, thẻ `HT3382797052765`, cơ sở `01929`, gọi thật lên
+`https://egw.baohiemxahoi.gov.vn/api/TraCuuCCT/TraCuuTienMCCT`.
 
-Chỉ khi bốn bước này xong mới coi Giai đoạn 1 là hoàn thành.
+| Việc cần xác nhận | Kết quả |
+|---|---|
+| Gọi thật một thẻ có phát sinh chi phí | ✅ `HTTP 200` / `MaKetQua 200`, trả về **14 đợt KCB** |
+| Cổng chấp nhận `username` = tài khoản đăng nhập `01929_BV` | ✅ Chấp nhận. **Không** phải đổi sang mã CSKCB |
+| IP máy chủ qlbv không bị từ chối (`401`) | ✅ Không gặp `401` lần nào |
+| Cổng chấp nhận `https` từ `base_url` chung | ✅ Chạy tốt, không cần ngoại lệ |
+| Mã `204` lưu được phiên tra không có dòng chi phí | ✅ Xác nhận trên 9 bản ghi thật trong `mcct_tra_cuu` |
+| Migration trên CSDL `qlbv` | ✅ Đã chạy |
+
+`GhiChu` nguyên văn cổng trả về:
+
+> Nguồn DL lấy từ các CSKCB đề nghị thanh toán KCB BHYT trên HTTTGĐ BHYT tính đến:
+> 14/08/2026 14:41
+
+### Ba điều nghiệm thu phát hiện mà test không bắt được
+
+**1. Tiền là chuỗi có dấu phẩy, không phải số.** Bước đối chiếu số liệu (bước 4) đã lộ ra
+lỗi nghiêm trọng nhất của cả giai đoạn: `(float) "3,862,166"` bằng `3.0`. Người bệnh có lũy
+kế 3.862.166 đ bị đọc thành 3 đ, và kết luận "đủ điều kiện miễn" **luôn luôn sai**. Hai phiên
+tra và 28 dòng chi phí hỏng trong CSDL đã được xoá. Xem cảnh báo ở mục 3.
+
+Đây chính là lý do bước "đối chiếu số liệu" phải là một bước nghiệm thu riêng chứ không phải
+"nhìn thấy màn hình hiện ra là xong".
+
+**2. Ngưỡng không phải `6 × lương cơ sở hiện hành`** khi lương cơ sở đổi giữa năm. Điểm c
+khoản 2 Điều 18 NĐ 188/2025 quy định phần đã đóng ở giai đoạn lương cũ phải quy đổi ra **số
+tháng** theo lương cũ. Mục 4 quyết định 7 và 8 của tài liệu này mô tả **chưa đủ** — xem
+`NguongMienCungChiTra::tinhTheoQuyDinh()` và ví dụ có lời giải trong Thông báo của Bệnh viện
+ngày 02/7/2026.
+
+**3. Điều kiện miễn gồm hai vế, API chỉ trả về một.** Ngoài ngưỡng tiền còn cần **tham gia
+BHYT đủ 5 năm liên tục** — hàm MCCT không trả về dữ kiện này. Nhãn kết luận vì vậy chỉ ghi
+"ĐỦ NGƯỠNG 6 THÁNG LƯƠNG CƠ SỞ", kèm khung nhắc kiểm tra vế còn lại.
+
+### Thay đổi sau nghiệm thu
+
+| Ngày | Việc |
+|---|---|
+| 07/9/2026 | Sửa `KetQuaMcct::tien()` đọc đúng chuỗi có dấu phẩy ngăn nghìn |
+| 07/9/2026 | Thêm `tinhTheoQuyDinh()` theo điểm c khoản 2 Điều 18; hai cột `so_tien_con_phai_dong`, `da_dong_truoc_moc` |
+| 07/9/2026 | Nâng `timeout_tong` 30 → 60 giây (cổng trả `cURL error 28` sau 30 giây) |
+| 07/9/2026 | Modal tra cứu trên màn tra thẻ; màn riêng chuyển sang AJAX |
+| 07/9/2026 | Hiện kết quả lần trước từ CSDL, có nút Tra cứu lại (`insurance.mcct.gan-nhat`) |
+
+**Giai đoạn 1 hoàn thành.** Giai đoạn 2 (tra hàng loạt, báo cáo đối soát) và Giai đoạn 3
+(API cho HIS gọi lúc tiếp đón) chưa bắt đầu — xem mục 2.
