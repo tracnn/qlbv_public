@@ -25,7 +25,8 @@
                     @if ($duDieuKien)
                         <span class="label label-success">ĐỦ ĐIỀU KIỆN MIỄN CÙNG CHI TRẢ</span>
                     @else
-                        <span class="label label-warning">CHƯA ĐỦ ĐIỀU KIỆN MIỄN CÙNG CHI TRẢ</span>
+                        <span class="label label-warning">CÒN THIẾU
+                            {{ number_format(max(0, $nguong - $ketQua->luyKeLonNhat()), 0, ',', '.') }} đ</span>
                     @endif
                 </td>
             </tr>
@@ -78,6 +79,7 @@
                 <th>Kết quả</th>
                 <th class="text-right">Lũy kế</th>
                 <th class="text-right">Ngưỡng khi tra</th>
+                <th>Người tra</th>
             </tr>
             @foreach ($lichSu as $ls)
             <tr>
@@ -86,6 +88,7 @@
                 <td>{{ $ls->ma_ket_qua }}</td>
                 <td class="text-right">{{ number_format($ls->luy_ke_lon_nhat, 0, ',', '.') }}</td>
                 <td class="text-right">{{ number_format($ls->nguong_ap_dung, 0, ',', '.') }}</td>
+                <td>{{ $ls->tra_boi }}</td>
             </tr>
             @endforeach
         </table>

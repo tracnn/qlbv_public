@@ -327,9 +327,10 @@
                     + '</tr></table>';
             }
 
+            var thieu = Math.max(0, (Number(kq.nguong) || 0) - (Number(kq.luy_ke) || 0));
             var nhan = kq.du_dieu_kien
                 ? '<span class="label label-success">ĐỦ ĐIỀU KIỆN MIỄN CÙNG CHI TRẢ</span>'
-                : '<span class="label label-warning">CHƯA ĐỦ ĐIỀU KIỆN MIỄN CÙNG CHI TRẢ</span>';
+                : '<span class="label label-warning">CÒN THIẾU ' + tien(thieu) + ' đ</span>';
 
             h += '<div class="well well-sm"><table class="table table-condensed"><tr>'
                 + '<td>Lũy kế cùng chi trả: <b>' + tien(kq.luy_ke) + ' đ</b></td>'
