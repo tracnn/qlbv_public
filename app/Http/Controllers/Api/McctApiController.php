@@ -36,6 +36,19 @@ class McctApiController extends Controller
         'KHAC' => ['INTERNAL_ERROR', 500],
     ];
 
+    /**
+     * Cau bao cho BEN GOI, soan san theo ma loi - khong bao gio noi chuoi ngoai le vao day.
+     * Thong diep that cua McctTraCuuChung (hostname, duong dan tep cau hinh, chan doan mang)
+     * chi phu hop cho man web noi bo, khong duoc lo ra API cho he thong ngoai.
+     */
+    private static $cauBaoLoi = [
+        'XAC_THUC' => 'Không xác thực được với cổng BHXH. Liên hệ quản trị hệ thống qlbv.',
+        'MANG' => 'Không kết nối được cổng BHXH. Thử lại sau ít phút.',
+        'HET_GIO' => 'Cổng BHXH không trả lời kịp. Thử lại sau ít phút.',
+        'CAU_HINH' => 'Cơ sở khám chữa bệnh chưa được cấu hình trên qlbv. Liên hệ quản trị hệ thống qlbv.',
+        'KHAC' => 'Lỗi khi gọi cổng BHXH. Thử lại sau ít phút.',
+    ];
+
     public function traCuu(Request $request)
     {
         $maThe = McctRequest::chuanHoaMaThe($request->get('ma_the'));
@@ -115,12 +128,23 @@ class McctApiController extends Controller
         $ra = McctTraCuuChung::goiVaLuu($params, 'api_his');
 
         if ($ra['loi'] !== null) {
+            // Chi tiet that chi ghi vao LOG phia may chu. Thong diep goc noi chuoi
+            // $e->getMessage() cua cURL va cua CauHinhCoSo - no chua hostname, duong dan tep
+            // cau hinh va chan doan mang. Mot he thong ben ngoai khong duoc nhin thay nhung
+            // thu do, ke ca khi da qua duoc xac thuc.
+            \Log::warning('MCCT API loi goi cong', [
+                'ma_the' => $params['ma_the'],
+                'ma_loi' => $ra['ma_loi'],
+                'chi_tiet' => $ra['loi'],
+            ]);
+
             $ban = isset(self::$banDoLoi[$ra['ma_loi']])
                 ? self::$banDoLoi[$ra['ma_loi']] : ['INTERNAL_ERROR', 500];
 
-            // Thong diep cua McctTraCuuChung noi ro nguyen nhan va khong chua bi mat nao
-            // (accessToken/passwordHash di o header, khong o day), nen dua thang ra details.
-            return $this->loiApi($ban[0], 'Không tra cứu được', $ra['loi'], $ban[1]);
+            $cau = isset(self::$cauBaoLoi[$ra['ma_loi']])
+                ? self::$cauBaoLoi[$ra['ma_loi']] : 'Thử lại sau ít phút.';
+
+            return $this->loiApi($ban[0], 'Không tra cứu được', $cau, $ban[1]);
         }
 
         $kq = $ra['kq'];
