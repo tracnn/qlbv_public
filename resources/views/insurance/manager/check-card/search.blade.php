@@ -16,58 +16,47 @@
         </div>
 
         <form type="GET" action="{{route('insurance.check-card.search')}}" id="target">
+            {{-- Bon o nhap tren MOT hang, nhan nam TREN o - giong man tra cuu tien cung chi
+                 tra. Bo cuc cu dat nhan ben trai o nen moi o chi con 3/4 be rong, va o chon
+                 co so bi day rieng xuong mot hang bang mot the <div class="col-sm-12"> rong. --}}
             {{-- O chon co so PHAI nam trong form: luong quet QR tu goi $('#target').submit(),
                  o nam ngoai form se khong duoc gui kem. --}}
-            <div class="col-sm-4">
-                <div class="form-group row">
-                    <div class="col-sm-3">
-                        <label for="ma_cskcb">{{ __('insurance.backend.labels.ma_cskcb') }}</label>
-                    </div>
-                    <div class="col-sm-9">
-                        <select class="form-control" name="ma_cskcb" id="ma_cskcb">
-                            <option value="">-- Chọn cơ sở --</option>
-                            @foreach ($danhSachCoSo as $ma => $nhan)
-                                <option value="{{ $ma }}" {{ (string) (old('ma_cskcb') ? old('ma_cskcb') : $params['ma_cskcb']) === (string) $ma ? 'selected' : '' }}>{{ $nhan }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                </div>
-            </div>
-            <div class="col-sm-12"></div>
-
-            <div class="col-sm-4">
-                <div class="form-group row">
-                    <div class="col-sm-3">
-                        <label for="card-number">{{ __('insurance.backend.labels.card-number') }}</label>
-                    </div>
-                    <div class="col-sm-9">
-                        <input class="form-control card-number" type="text" name="card-number" placeholder="{{ __('insurance.backend.labels.card-number') }}" value="{{ old('card-number') ? old('card-number') : $params['card-number'] }}">
-                    </div>
+            <div class="col-sm-3">
+                <div class="form-group">
+                    <label for="ma_cskcb">{{ __('insurance.backend.labels.ma_cskcb') }}</label>
+                    <select class="form-control" name="ma_cskcb" id="ma_cskcb">
+                        <option value="">-- Chọn cơ sở --</option>
+                        @foreach ($danhSachCoSo as $ma => $nhan)
+                            <option value="{{ $ma }}" {{ (string) (old('ma_cskcb') ? old('ma_cskcb') : $params['ma_cskcb']) === (string) $ma ? 'selected' : '' }}>{{ $nhan }}</option>
+                        @endforeach
+                    </select>
                 </div>
             </div>
 
-            <div class="col-sm-4">
-                <div class="form-group row">
-                    <div class="col-sm-3">
-                        <label for="name">{{ __('insurance.backend.labels.name') }}</label>
-                    </div>
-                    <div class="col-sm-9">
-                        <input class="form-control card-number" type="text" name="name" placeholder="{{ __('insurance.backend.labels.name') }}" value="{{ old('name') ?  old('name') : $params['name'] }}">
-                    </div>
+            <div class="col-sm-3">
+                <div class="form-group">
+                    <label for="card-number">{{ __('insurance.backend.labels.card-number') }}</label>
+                    <input class="form-control card-number" type="text" name="card-number" placeholder="{{ __('insurance.backend.labels.card-number') }}" value="{{ old('card-number') ? old('card-number') : $params['card-number'] }}">
                 </div>
             </div>
 
-            <div class="col-sm-4">
-                <div class="form-group row">
-                    <div class="col-sm-3">
-                        <label for="birthday">{{ __('insurance.backend.labels.birthday') }}</label>
-                    </div>
-                    <div class="col-sm-9">
-                        <input class="form-control" type="text" name="birthday" placeholder="{{ __('insurance.backend.labels.type-birthday') }}" value="{{ old('birthday') ? old('birthday') : $params['birthday'] }}">
-                    </div>
+            <div class="col-sm-3">
+                <div class="form-group">
+                    <label for="name">{{ __('insurance.backend.labels.name') }}</label>
+                    <input class="form-control card-number" type="text" name="name" placeholder="{{ __('insurance.backend.labels.name') }}" value="{{ old('name') ?  old('name') : $params['name'] }}">
                 </div>
             </div>
 
+            <div class="col-sm-3">
+                <div class="form-group">
+                    <label for="birthday">{{ __('insurance.backend.labels.birthday') }}</label>
+                    <input class="form-control" type="text" name="birthday" placeholder="{{ __('insurance.backend.labels.type-birthday') }}" value="{{ old('birthday') ? old('birthday') : $params['birthday'] }}">
+                </div>
+            </div>
+
+            {{-- Hai nut xuong hang rieng: nut "Tra tien cung chi tra" chi hien khi tra the
+                 thanh cong, nhet no vao cung hang voi cac o nhap se lam hang co gian moi lan
+                 no xuat hien. --}}
             <div class="col-sm-12">
                 <button class="btn btn-info">
                 <i class="glyphicon glyphicon-search"></i>
