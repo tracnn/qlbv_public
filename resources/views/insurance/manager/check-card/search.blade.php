@@ -149,6 +149,7 @@
 @endif
 
 @push('after-scripts')
+<script src="{{ asset('js/mcct-tra-cuu.js') }}"></script>
 <script type="text/javascript">
     // Nho co so da chon giua cac lan vao man. Chi nho LUA CHON, khong nho tai khoan hay
     // bat ky thu gi nhay cam.
@@ -205,10 +206,8 @@
     /*
      * Tra cuu tien cung chi tra (MCCT) trong modal.
      *
-     * API cong BHXH CHAM (thuong 5-20 giay, co khi hon) va cong co danh sach tai khoan bi han
-     * che tra cuu - nen moi luot goi la tai nguyen co han. Toan bo phan duoi day xoay quanh
-     * mot muc tieu: nguoi dung khong bao gio phai DOAN xem he thong con dang chay hay da hong,
-     * vi doan sai thi ho bam lai va tieu them mot luot.
+     * Toan bo phan dung ket qua va xu ly cho nam o public/js/mcct-tra-cuu.js - DUNG CHUNG voi
+     * man tra cuu MCCT rieng. O day chi con phan rieng cua modal: mo/dong va khoa cai gi.
      */
     function khoiTaoMcct() {
         var $nut = $('#btn-mcct');
@@ -218,261 +217,50 @@
         }
 
         var $modal = $('#modal-mcct');
-        var URL = $nut.data('url');
 
-        // Suy ra TU cau hinh may chu, cong them 10 giay dem. Neu javascript bo cuoc TRUOC thi
-        // nguoi dung nhan thong bao chung chung cua trinh duyet thay vi thong bao that cua may
-        // chu ("cong bao loi", "tai khoan bi han che tra cuu"...).
-        //
-        // KHONG go cung so o day: truoc day no la 40000 canh mot timeout may chu 30 giay, va
-        // hai con so o hai tep khac nhau chac chan se lech nhau o lan sua sau.
-        var TIMEOUT_MS = {{ ((int) config('mcct.timeout_tong', 60) + 10) * 1000 }};
+        var mcct = McctTraCuu.tao({
+            url: $nut.data('url'),
 
-        // Sau moc nay thi doi cau chu: nguoi dung can biet CHAM la binh thuong, khong phai hong.
-        // De 25 chu khong 15: cong da tung mat hon 30 giay, noi "cham" tu giay thu 15 la bao
-        // dong gia - nghe mai thanh quen roi khong ai tin nua.
-        var MOC_CHAM_GIAY = 25;
+            // Suy ra TU cau hinh may chu, cong them 10 giay dem. Neu javascript bo cuoc TRUOC
+            // thi nguoi dung nhan thong bao chung chung cua trinh duyet thay vi thong bao that
+            // cua may chu ("cong bao loi", "tai khoan bi han che tra cuu"...).
+            timeoutMs: {{ ((int) config('mcct.timeout_tong', 60) + 10) * 1000 }},
 
-        var demGio = null;
-        var yeuCau = null;
+            o: {
+                dangTai: '#mcct-dang-tai',
+                giay: '#mcct-giay',
+                cauCho: '#mcct-cau-cho',
+                loi: '#mcct-loi',
+                loiNoiDung: '#mcct-loi-noi-dung',
+                ketQua: '#mcct-ket-qua'
+            },
 
-        function tien(x) {
-            var n = Math.round(Number(x) || 0);
+            /* Khoa trong luc goi: bam hai lan la tieu HAI luot goi cong. */
+            khoa: function (dangKhoa) {
+                $nut.prop('disabled', dangKhoa);
+                $('#target').find('input, select, button').prop('disabled', dangKhoa);
+                $('#mcct-dong').prop('disabled', dangKhoa);
+                $('#mcct-dong-x').prop('disabled', dangKhoa);
 
-            return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-        }
-
-        /* Y-m-d (may chu tra ve) -> dd/mm/yyyy cho nguoi doc */
-        function ngayVn(s) {
-            var p = String(s || '').split('-');
-
-            return p.length === 3 ? p[2] + '/' + p[1] + '/' + p[0] : String(s || '');
-        }
-
-        function thoat(s) {
-            return $('<div>').text(s === null || s === undefined ? '' : s).html();
-        }
-
-        function batDauDemGio() {
-            var batDau = Date.now();
-
-            $('#mcct-giay').text('0');
-            $('#mcct-cau-cho').text('Đang hỏi cổng BHXH…');
-
-            demGio = setInterval(function () {
-                var giay = Math.floor((Date.now() - batDau) / 1000);
-
-                $('#mcct-giay').text(giay);
-
-                if (giay === MOC_CHAM_GIAY) {
-                    $('#mcct-cau-cho').text('Cổng BHXH đang phản hồi chậm, vẫn đang chờ…');
-                }
-            }, 1000);
-        }
-
-        function dungDemGio() {
-            if (demGio !== null) {
-                clearInterval(demGio);
-                demGio = null;
+                // static: khong dong nham modal giua chung roi mat luot goi da tieu.
+                $modal.data('bs.modal').options.backdrop = dangKhoa ? 'static' : true;
+                $modal.data('bs.modal').options.keyboard = !dangKhoa;
             }
-        }
-
-        /* Khoa trong luc goi: bam hai lan la tieu HAI luot goi cong. */
-        function khoa(dangKhoa) {
-            $nut.prop('disabled', dangKhoa);
-            $('#target').find('input, select, button').prop('disabled', dangKhoa);
-            $('#mcct-dong').prop('disabled', dangKhoa);
-            $('#mcct-dong-x').prop('disabled', dangKhoa);
-
-            // static: khong dong nham modal giua chung roi mat luot goi da tieu.
-            $modal.data('bs.modal').options.backdrop = dangKhoa ? 'static' : true;
-            $modal.data('bs.modal').options.keyboard = !dangKhoa;
-        }
-
-        function hienKhoi(ten) {
-            $('#mcct-dang-tai').toggle(ten === 'tai');
-            $('#mcct-loi').toggle(ten === 'loi');
-            $('#mcct-ket-qua').toggle(ten === 'ket-qua');
-        }
-
-        function hienLoi(thongBao) {
-            $('#mcct-loi-noi-dung').text(thongBao);
-            hienKhoi('loi');
-        }
-
-        function dungBangChiPhi(dong) {
-            if (!dong || dong.length === 0) {
-                return '';
-            }
-
-            var h = '<div class="table-responsive"><table class="table table-condensed table-hover">'
-                + '<tr><th>Mã CSKCB</th><th>Ngày vào</th><th>Ngày ra</th><th>Đối tượng</th>'
-                + '<th class="text-right">Tiền CCT thuộc diện miễn</th>'
-                + '<th class="text-right">Lũy kế</th><th>Ngày nhận</th></tr>';
-
-            // Giu NGUYEN thu tu cong tra (da giam dan theo ngay ra vien), khong sap lai.
-            for (var i = 0; i < dong.length; i++) {
-                var d = dong[i];
-
-                h += '<tr><td>' + thoat(d.ma_cskcb) + '</td>'
-                    + '<td>' + thoat(d.ngay_vao) + '</td>'
-                    + '<td>' + thoat(d.ngay_ra) + '</td>'
-                    + '<td>' + thoat(d.ma_doi_tuong_kcb) + '</td>'
-                    + '<td class="text-right">' + tien(d.t_bn_cct_mcct) + '</td>'
-                    + '<td class="text-right">' + tien(d.t_bn_cct_luy_ke) + '</td>'
-                    + '<td>' + thoat(d.ngay_nhan) + '</td></tr>';
-            }
-
-            return h + '</table></div>';
-        }
-
-        function hienKetQua(kq) {
-            var the = kq.thong_tin_the || {};
-            var h = '';
-
-            if (the.ho_ten) {
-                h += '<table class="table table-condensed"><tr>'
-                    + '<td>Họ tên: <b>' + thoat(the.ho_ten) + '</b></td>'
-                    + '<td>Ngày sinh: ' + thoat(the.ngay_sinh) + '</td>'
-                    + '<td>Mã số BHXH: ' + thoat(the.ma_bhxh) + '</td>'
-                    + '<td>Thẻ hết hạn: ' + thoat(the.ngay_ket_thuc) + '</td>'
-                    + '</tr></table>';
-            }
-
-            // Muc mien tinh theo diem c khoan 2 Dieu 18 ND 188/2025. May chu luon gui khoi
-            // nay khi tra cuu thanh cong; van phong ho de mot phan hoi cu con trong cache
-            // trinh duyet khong lam vo man hinh.
-            var muc = kq.muc || {};
-            var conPhaiDong = Number(muc.so_tien_con_phai_dong) || 0;
-            var tongNguong = Number(muc.tong_nguong_ca_nam) || 0;
-            var thieu = Number(muc.con_thieu) || 0;
-
-            var nhan = kq.du_dieu_kien
-                ? '<span class="label label-success">ĐỦ NGƯỠNG 6 THÁNG LƯƠNG CƠ SỞ</span>'
-                : '<span class="label label-warning">CÒN THIẾU ' + tien(thieu) + ' đ</span>';
-
-            // Hien TONG NGUONG CA NAM chu khong phai so con phai dong: chi con so nay moi so
-            // sanh duoc truc tiep voi luy ke ben canh, vi ca hai cung tinh tu 01/01.
-            h += '<div class="well well-sm"><table class="table table-condensed"><tr>'
-                + '<td>Lũy kế cùng chi trả: <b>' + tien(kq.luy_ke) + ' đ</b></td>'
-                + '<td>Ngưỡng cả năm: <b>' + tien(tongNguong) + ' đ</b></td>'
-                + '<td>' + nhan + '</td></tr></table>';
-
-            // API MCCT khong tra ve du kien 5 nam lien tuc, nen man hinh KHONG duoc ket luan
-            // thay ca dieu kien do. Nhan o tren chi ghi "du nguong"; ve con lai phai co nguoi kiem.
-            if (kq.du_dieu_kien) {
-                h += '<div class="alert alert-info" style="padding: 6px 10px; margin-bottom: 8px;">'
-                    + 'Mới chỉ đạt <b>ngưỡng tiền</b>. Cần kiểm tra thêm điều kiện <b>tham gia BHYT '
-                    + 'đủ 5 năm liên tục</b> mới đủ điều kiện miễn cùng chi trả — dữ kiện này cổng '
-                    + 'không trả về.</div>';
-            }
-
-            // Chi hien khi trong nam CO moc doi luong co so. Khong co dong nay, nguoi dung se
-            // tu tinh 6 x luong hien hanh tru luy ke roi tuong phan mem sai.
-            if (muc.co_doi_luong) {
-                var thangCu = Number(muc.luong_truoc_moc) > 0
-                    ? Number(muc.da_dong_truoc_moc) / Number(muc.luong_truoc_moc) : 0;
-
-                h += '<div class="text-muted" style="margin-bottom: 6px;">Lương cơ sở đổi ngày '
-                    + thoat(ngayVn(muc.moc_doi_luong)) + '. Đã cùng chi trả '
-                    + tien(muc.da_dong_truoc_moc) + ' đ trước mốc, tương đương '
-                    + thangCu.toFixed(2).replace('.', ',') + ' tháng lương cũ ('
-                    + tien(muc.luong_truoc_moc) + ' đ); còn phải cùng chi trả '
-                    + (Number(muc.so_thang_con_lai) || 0).toFixed(2).replace('.', ',')
-                    + ' tháng × ' + tien(muc.luong_hien_tai) + ' đ = <b>'
-                    + tien(conPhaiDong) + ' đ</b>; cộng phần đã đóng trước mốc thành ngưỡng cả năm <b>'
-                    + tien(tongNguong) + ' đ</b>.</div>';
-            }
-
-            // GhiChu NGUYEN VAN: no ghi du lieu cong "tinh den" thoi diem nao. So lieu
-            // cong co do tre, nguoi dung phai thay moc do TRUOC khi ket luan voi nguoi benh.
-            h += '<small class="text-muted">' + thoat(kq.ghi_chu) + '</small></div>';
-
-            h += dungBangChiPhi(kq.dong);
-
-            if (kq.loi_luu) {
-                h += '<div class="alert alert-warning">' + thoat(kq.loi_luu) + '</div>';
-            }
-
-            $('#mcct-ket-qua').html(h);
-            hienKhoi('ket-qua');
-        }
-
-        function goi() {
-            hienKhoi('tai');
-            khoa(true);
-            batDauDemGio();
-
-            yeuCau = $.ajax({
-                type: 'GET',
-                url: URL,
-                dataType: 'json',
-                timeout: TIMEOUT_MS
-            }).done(function (kq) {
-                if (!kq || typeof kq.ok === 'undefined') {
-                    hienLoi('Máy chủ trả về dữ liệu không đọc được.');
-
-                    return;
-                }
-
-                // Ma 204/400/500 KHONG phai loi he thong: hien dung thong bao cua may chu.
-                if (!kq.ok) {
-                    hienLoi(kq.thong_bao || 'Tra cứu không thành công.');
-
-                    return;
-                }
-
-                hienKetQua(kq);
-            }).fail(function (xhr, trangThai) {
-                if (trangThai === 'abort') {
-                    return;
-                }
-
-                if (trangThai === 'timeout') {
-                    hienLoi('Cổng BHXH không trả lời sau ' + (TIMEOUT_MS / 1000)
-                        + ' giây. Thử lại sau ít phút.');
-
-                    return;
-                }
-
-                // 422: McctRequest chan dau vao. Hien dung cau bao loi cua no.
-                if (xhr.status === 422 && xhr.responseJSON) {
-                    var ds = [];
-
-                    $.each(xhr.responseJSON.errors || xhr.responseJSON, function (k, v) {
-                        ds.push($.isArray(v) ? v.join(' ') : v);
-                    });
-
-                    hienLoi(ds.join(' ') || 'Thông tin tra cứu không hợp lệ.');
-
-                    return;
-                }
-
-                hienLoi('Lỗi khi gọi máy chủ (' + xhr.status + ').');
-            }).always(function () {
-                dungDemGio();
-                khoa(false);
-                yeuCau = null;
-            });
-        }
+        });
 
         $nut.on('click', function () {
             // Mo modal NGAY, khong doi phan hoi: nguoi dung phai thay he thong da nhan lenh.
             $modal.modal('show');
-            goi();
+            mcct.goi();
         });
 
-        $('#mcct-thu-lai').on('click', goi);
+        $('#mcct-thu-lai').on('click', function () {
+            mcct.goi();
+        });
 
+        // Dong modal khi dang goi: huy yeu cau de khong con mot callback ban vao modal da dong.
         $modal.on('hidden.bs.modal', function () {
-            // Dong modal khi dang goi (chi xay ra neu khoa bi go bang cach nao do): huy yeu cau
-            // de khong con mot callback ban vao mot modal da dong.
-            if (yeuCau !== null) {
-                yeuCau.abort();
-            }
-
-            dungDemGio();
-            khoa(false);
+            mcct.huy();
         });
     }
 </script>

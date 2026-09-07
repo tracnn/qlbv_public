@@ -21,69 +21,36 @@ use Illuminate\Http\Request;
  */
 class McctController extends Controller
 {
+    /**
+     * Man tra cuu MCCT.
+     *
+     * CHI dung khung va dien san o nhap - KHONG goi cong. Cong tra ve cham (5-60 giay), nen
+     * goi ngay trong lan nap trang se chan ca trang: trinh duyet trang, nguoi dung khong biet
+     * chuyen gi dang xay ra va bam lai - moi lan bam la mot luot goi cong. Javascript goi
+     * endpoint JSON roi dung ket qua tai cho.
+     *
+     * Duong dan /insurance/mcct/search?ma_the=... VAN dung duoc de gui cho nhau: trang nap len
+     * voi tham so co san thi javascript tu tra ngay, khong phai bam lai.
+     */
     public function index(Request $request)
     {
-        return view('insurance.manager.mcct.index', [
-            'params' => $this->thamSoRong(),
-            'danhSachCoSo' => CoSoTraCuu::tuCauHinh(),
-        ]);
-    }
-
-    public function search(McctRequest $request)
-    {
-        $params = $this->thamSo($request);
-
-        $duLieu = [
-            'params' => $params,
-            'danhSachCoSo' => CoSoTraCuu::tuCauHinh(),
+        $params = [
+            'ma_cskcb' => trim((string) $request->get('ma_cskcb')),
+            'ma_the' => McctRequest::chuanHoaMaThe($request->get('ma_the')),
+            'ho_ten' => mb_strtoupper(trim((string) $request->get('ho_ten'))),
+            'ngay_sinh' => trim((string) $request->get('ngay_sinh')),
         ];
 
-        // Thieu ma co so thi DUNG LAI o man da dien san chu khong bao loi: nguoi dung khong
-        // lam gi sai, va cung chua biet dung tai khoan cua co so nao de goi.
-        if ($params['ma_cskcb'] === '') {
-            flash('Chọn cơ sở khám chữa bệnh rồi bấm Tra cứu')->warning();
+        // Du bon truong thi tra ngay khi nap trang - do la truong hop di tu duong dan chia se
+        // hoac tu man tra cuu the sang.
+        $traNgay = $params['ma_cskcb'] !== '' && $params['ma_the'] !== ''
+            && $params['ho_ten'] !== '' && $params['ngay_sinh'] !== '';
 
-            return view('insurance.manager.mcct.index', $duLieu);
-        }
-
-        $ra = $this->thucHien($params);
-
-        if ($ra['loi'] !== null) {
-            flash($ra['loi'])->error();
-
-            return view('insurance.manager.mcct.index', $duLieu);
-        }
-
-        // Thong bao lay tu CUNG mot cho voi endpoint JSON, de mot cau chu chi ton tai o mot noi.
-        $phanHoi = McctPhanHoiJson::tuKetQua($ra['kq'], $ra['nguong'], $ra['du_dieu_kien'],
-            $params['ma_cskcb'], $ra['muc']);
-
-        if ($phanHoi['thong_bao'] !== null) {
-            $thongBao = flash($phanHoi['thong_bao']);
-            $phanHoi['muc_do'] === 'warning' ? $thongBao->warning() : $thongBao->error();
-        }
-
-        if ($ra['loi_luu'] !== null) {
-            flash($ra['loi_luu'])->warning();
-        }
-
-        // Doc lich su cung co the hong vi cung ly do (bang chua duoc migrate) - khong duoc
-        // de trang trang xoa mat ket qua vua tra cuu duoc.
-        try {
-            $lichSu = McctTraCuu::where('ma_the', $params['ma_the'])
-                ->orderBy('id', 'desc')->take(5)->get();
-        } catch (\Exception $e) {
-            \Log::error('MCCT khong doc duoc lich su tra cuu: ' . $e->getMessage());
-            $lichSu = [];
-        }
-
-        return view('insurance.manager.mcct.index', array_merge($duLieu, [
-            'ketQua' => $ra['kq'],
-            'nguong' => $ra['nguong'],
-            'duDieuKien' => $ra['du_dieu_kien'],
-            'muc' => $ra['muc'],
-            'lichSu' => $lichSu,
-        ]));
+        return view('insurance.manager.mcct.index', [
+            'params' => $params,
+            'danhSachCoSo' => CoSoTraCuu::tuCauHinh(),
+            'traNgay' => $traNgay,
+        ]);
     }
 
     /**
@@ -112,6 +79,7 @@ class McctController extends Controller
         $phanHoi = McctPhanHoiJson::tuKetQua($ra['kq'], $ra['nguong'], $ra['du_dieu_kien'],
             $params['ma_cskcb'], $ra['muc']);
         $phanHoi['loi_luu'] = $ra['loi_luu'];
+        $phanHoi['lich_su'] = $this->lichSu($params['ma_the']);
 
         return response()->json($phanHoi);
     }
@@ -203,6 +171,30 @@ class McctController extends Controller
     }
 
     /**
+     * Vai lan tra gan nhat cua chinh the do.
+     *
+     * Doc CSDL cung co the hong (bang chua duoc migrate) - khong duoc de mot loi doc lich su
+     * xoa mat ket qua vua ton mot luot goi cong de lay ve.
+     *
+     * @param string $maThe
+     * @return array
+     */
+    private function lichSu($maThe)
+    {
+        try {
+            return McctTraCuu::where('ma_the', $maThe)
+                ->orderBy('id', 'desc')->take(5)
+                ->get(['tra_luc', 'ma_cskcb', 'ma_ket_qua', 'luy_ke_lon_nhat', 'nguong_ap_dung',
+                    'tra_boi'])
+                ->toArray();
+        } catch (\Exception $e) {
+            \Log::error('MCCT khong doc duoc lich su tra cuu: ' . $e->getMessage());
+
+            return [];
+        }
+    }
+
+    /**
      * @return array bon khoa dau vao da chuan hoa
      */
     private function thamSo(McctRequest $request)
@@ -217,13 +209,4 @@ class McctController extends Controller
         ];
     }
 
-    private function thamSoRong()
-    {
-        return [
-            'ma_cskcb' => '',
-            'ma_the' => '',
-            'ho_ten' => '',
-            'ngay_sinh' => '',
-        ];
-    }
 }

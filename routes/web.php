@@ -475,7 +475,9 @@ Route::group(['middleware' => ['auth']], function () {
         // Tra cuu tien cung chi tra (MCCT). Nam trong dung nhom insurance/ de cung muc
         // quyen voi man tra cuu the BHYT ngay canh no.
         Route::get('mcct', 'Insurance\Manager\McctController@index')->name('insurance.mcct');
-        Route::get('mcct/search', 'Insurance\Manager\McctController@search')->name('insurance.mcct.search');
+        // Cung mot man voi insurance.mcct. Giu route nay de cac duong dan da gui cho nhau va
+        // lien ket tu man tra cuu the van dung duoc; javascript tu tra khi co du tham so.
+        Route::get('mcct/search', 'Insurance\Manager\McctController@index')->name('insurance.mcct.search');
         // Endpoint JSON cho modal tra cuu tren man tra cuu the BHYT.
         Route::get('mcct/api', 'Insurance\Manager\McctController@api')->name('insurance.mcct.api');
 
