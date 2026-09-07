@@ -54,4 +54,8 @@ Route::middleware(['throttle:60,1', 'api.auth'])->group(function () {
 
     // Tra cứu vi phạm y lệnh theo đợt điều trị (cho HIS/màn hình khác)
     Route::get('order-check/violations', 'KHTH\OrderCheckController@apiViolations');
+
+    // Tra cuu tien cung chi tra (MCCT) cho he thong ngoai. Mac dinh doc du lieu da luu
+    // (<100ms); lam_moi=1 moi goi cong BHXH va co the mat toi 60 giay.
+    Route::get('mcct/tra-cuu', 'Api\McctApiController@traCuu')->name('api.mcct.tra-cuu');
 });
