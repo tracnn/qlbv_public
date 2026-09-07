@@ -15,7 +15,7 @@
  * NGAY_PHAT_HANH cho khớp dòng đó.
  */
 
-const PHIEN_BAN = '1.8';
+const PHIEN_BAN = '1.9';
 
 const NGAY_PHAT_HANH = 'Tháng 9 năm 2026';
 
@@ -27,6 +27,13 @@ const NGAY_PHAT_HANH = 'Tháng 9 năm 2026';
  * thay vì đọc lại cả tài liệu.
  */
 const LICH_SU = [
+  {
+    ban: '1.9',
+    ngay: '07/09/2026',
+    noi_dung:
+      'Đơn vị hành chính chuyển từ ba cấp sang hai cấp Tỉnh và Xã: bổ sung mục hướng dẫn chuyển danh mục, cập nhật danh sách cột bắt buộc của tệp Đơn vị hành chính (hai cột Quận Huyện và Mã QH không còn bắt buộc), và thêm mã lỗi mới "mã xã không thuộc tỉnh cư trú" — mã này nạp ở trạng thái tắt sẵn, người vận hành tự bật sau khi đã chuyển danh mục.',
+    lien_quan: 'Phần I mục 1.8; Phần IV mục 4.4.2 và 4.4.3.',
+  },
   {
     ban: '1.8',
     ngay: '04/09/2026',

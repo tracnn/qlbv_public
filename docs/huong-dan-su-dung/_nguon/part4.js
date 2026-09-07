@@ -1,4 +1,4 @@
-const { h1, h2, h3, p, bullet, num, note, table, steps, errors } = require('./lib');
+const { h1, h2, h3, p, bullet, num, note, forIt, table, steps, errors } = require('./lib');
 
 module.exports = function part4() {
   return [
@@ -18,7 +18,7 @@ module.exports = function part4() {
         ['DM ICD-YHCT', 'Danh mục mã bệnh y học cổ truyền.', 'Không'],
         ['DM Nhân viên y tế', 'Danh sách nhân viên y tế kèm chứng chỉ hành nghề, thời gian đăng ký hành nghề.', 'Không'],
         ['DM Trang thiết bị', 'Danh mục máy móc, thiết bị y tế đã đăng ký.', 'Không'],
-        ['DM Đơn vị hành chính', 'Danh mục tỉnh, huyện, xã.', 'Không'],
+        ['DM Đơn vị hành chính', 'Danh mục tỉnh và phường xã. Từ năm 2025 không còn cấp huyện.', 'Không'],
         ['DM Cơ sở KCB', 'Danh mục toàn bộ cơ sở khám chữa bệnh trên cả nước.', 'Không'],
         ['DM Nghề nghiệp', 'Danh mục nghề nghiệp.', 'Không'],
       ],
@@ -93,14 +93,20 @@ module.exports = function part4() {
         ['ICD-YHCT', 'MA_ICD_YHCT, TEN_ICD_YHCT, TEN_BENH_YHCT', 'Chống trùng theo mã bệnh.'],
         ['Nhân viên y tế', 'MA_KHOA, TEN_KHOA, HO_TEN, CHUCDANH_NN, MACCHN, NGAYCAP_CCHN, NOICAP_CCHN, THOIGIAN_DK, TU_NGAY', 'Chống trùng theo mã bảo hiểm xã hội; mẫu mới không có cột này thì dùng số định danh.'],
         ['Trang thiết bị', 'TEN_TB, KY_HIEU, MA_MAY, CONGTY_SX, NUOC_SX, NAM_SX, NAM_SD, SO_LUU_HANH', 'Chống trùng theo mã máy.'],
-        ['Đơn vị hành chính', 'Tỉnh Thành Phố, Mã TP, Quận Huyện, Mã QH, Phường Xã, Mã PX', 'Chống trùng theo mã phường xã. Đây là bộ thay thế trọn bộ, xem cảnh báo bên dưới.'],
+        ['Đơn vị hành chính', 'Tỉnh Thành Phố, Mã TP, Phường Xã, Mã PX', 'Hai cột Quận Huyện và Mã QH không còn bắt buộc; tệp hai cấp không cần có. Chống trùng theo mã phường xã. Đây là bộ thay thế trọn bộ, xem cảnh báo bên dưới.'],
         ['Cơ sở KCB', 'Mã, Tên, Địa chỉ', 'Cột Tuyến CMKT và Hạng BV không bắt buộc. Đây là bộ thay thế trọn bộ.'],
         ['Nghề nghiệp', 'MA_NGHE_NGHIEP, TEN_NGHE_NGHIEP', 'Chống trùng theo mã nghề nghiệp.'],
       ],
       [1900, 3600, 3520],
     ),
     note('Cảnh báo — thay thế trọn bộ:', 'Hai bộ Đơn vị hành chính và Cơ sở KCB được nhập theo kiểu thay thế trọn bộ: toàn bộ dữ liệu cũ bị vô hiệu hoá, sau đó chỉ các dòng có trong tệp mới được kích hoạt lại. Nếu nhập một tệp thiếu dữ liệu, những đơn vị không có trong tệp sẽ biến mất khỏi hệ thống. Luôn nhập tệp đầy đủ của toàn quốc, không nhập tệp đã cắt bớt.'),
-    h3('4.4.3. Quy tắc về dữ liệu trong ô'),
+    h3('4.4.3. Chuyển danh mục đơn vị hành chính sang hai cấp'),
+    p('Từ năm 2025 đơn vị hành chính chỉ còn hai cấp Tỉnh và Xã. Danh mục cũ có 10.542 xã thuộc 699 huyện của 63 tỉnh; danh mục mới có 3.321 xã thuộc 34 tỉnh và không còn cấp huyện. Việc chuyển đổi làm MỘT LẦN, bằng một lệnh riêng chứ không nhập qua màn hình này.'),
+    bullet('Tệp nhập chỉ cần bốn cột: Tỉnh Thành Phố, Mã TP, Phường Xã, Mã PX.'),
+    bullet('Dòng của danh mục cũ không bị xoá mà chuyển sang trạng thái ngừng dùng, nên nếu chuyển nhầm thì vẫn còn đường lùi.'),
+    bullet('Hồ sơ của kỳ trước thời điểm sáp nhập, nếu nhập lại sau khi đã chuyển danh mục, sẽ báo sai mã tỉnh và mã xã. Đây là đánh đổi có chủ ý; hồ sơ cũ đã quyết toán thì không cần nhập lại.'),
+    forIt('Chuyển đổi bằng lệnh php artisan hanh-chinh:chuyen-2-cap <đường dẫn tệp Excel>. TRƯỚC KHI CHẠY phải chạy php artisan migrate để nới hai cột mã và tên huyện thành để trống được, và nên sao lưu bảng administrative_units. Lệnh chạy trọn trong một giao dịch, tự dừng và hoàn tác nếu tệp có bất kỳ dòng hỏng nào. Sau khi chạy, đối chiếu số liệu lệnh in ra và kiểm thêm một câu: số dòng đang dùng mà vẫn còn mã huyện phải bằng 0.'),
+    h3('4.4.4. Quy tắc về dữ liệu trong ô'),
     bullet('Ô số để trống được hiểu là không có giá trị. Ô số chứa chữ hoặc ký tự lạ sẽ gây lỗi ở mức dòng.'),
     bullet('Khoảng trắng và ký tự TAB thừa ở đầu và cuối ô được tự động cắt bỏ.'),
     bullet('Các cột TU_NGAY và DEN_NGAY giữ nguyên dạng như trong tệp của Bảo hiểm xã hội.'),

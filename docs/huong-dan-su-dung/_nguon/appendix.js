@@ -16,7 +16,7 @@ module.exports = function appendix() {
         ['Danh sách vi phạm y lệnh trống trơn cả ngày', 'Bộ lọc mặc định chỉ lấy ngày hôm nay; hoặc bộ quét nền đã dừng.', '2.2.3 và 2.8'],
         ['Vi phạm y lệnh đã sửa trên HIS nhưng vẫn còn trong danh sách', 'Con trỏ quét chỉ tiến, phiếu đã quét không được đánh giá lại.', '2.2.2'],
         ['Bật một quy tắc xong thì vi phạm tăng vọt hàng chục nghìn', 'Bật quy tắc đối chiếu danh mục trong khi danh mục chưa được nhập.', '2.5.3 và 4.7'],
-        ['Mọi mã thuốc, mã dịch vụ đều báo không có trong danh mục', 'Danh mục đã bị xoá mà chưa nhập lại; hoặc ngày hiệu lực trong tệp danh mục sai.', '4.4.3 và 4.7'],
+        ['Mọi mã thuốc, mã dịch vụ đều báo không có trong danh mục', 'Danh mục đã bị xoá mà chưa nhập lại; hoặc ngày hiệu lực trong tệp danh mục sai.', '4.4.4 và 4.7'],
         ['Thẻ BHYT hợp lệ nhưng hồ sơ vẫn báo lỗi thẻ', 'Mã kiểm tra khác 00 do lệch giới tính hoặc lệch nơi đăng ký ban đầu giữa HIS và cổng.', '3.3.5 và 3.6'],
         ['Tra cứu thẻ báo lỗi xác thực tài khoản', 'Tài khoản cổng của cơ sở sai, hết hạn, hoặc thiếu thông tin cán bộ tra cứu.', '3.7'],
         ['Giá dịch vụ của cơ sở này bị áp cho cơ sở khác', 'Nhập danh mục theo cơ sở mà quên chọn Cơ sở khám chữa bệnh, dữ liệu vào dạng dùng chung.', '4.5'],
