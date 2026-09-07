@@ -213,7 +213,23 @@ class Xml3176Xml1Checker
                 ]);
             }
         }
-        
+
+        // Xa phai thuoc tinh - quan he long nhau duy nhat con lai sau khi bo cap huyen.
+        // CHI chay khi ca hai ma da hop le rieng le: neu mot ma sai thi loi do da duoc bao
+        // roi, bao them loi long nhau chi la nhieu tren cung mot nguyen nhan.
+        if (!empty($data->matinh_cu_tru) && !empty($data->maxa_cu_tru)
+            && $this->commonValidationService->isAdministrativeUnitProvinceValid($data->matinh_cu_tru)
+            && $this->commonValidationService->isAdministrativeUnitCommuneValid($data->maxa_cu_tru)
+            && !$this->commonValidationService->isAdministrativeUnitWardInProvinceValid($data->matinh_cu_tru, $data->maxa_cu_tru)) {
+            $errorCode = $this->generateErrorCode('ADMIN_INFO_ERROR_MAXA_NOT_IN_MATINH');
+            $errors->push((object)[
+                'error_code' => $errorCode,
+                'error_name' => 'Mã xã không thuộc tỉnh cư trú',
+                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+                'description' => 'Mã xã ' . $data->maxa_cu_tru . ' không thuộc tỉnh ' . $data->matinh_cu_tru
+            ]);
+        }
+
         if (empty($data->ma_quoctich)) {
             $errorCode = $this->generateErrorCode('ADMIN_INFO_ERROR_MA_QUOCTICH');
             $errors->push((object)[
