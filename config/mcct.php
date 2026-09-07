@@ -15,6 +15,16 @@ return [
     'so_thang_luong_co_so' => 6,
 
     /*
+     * Khau do chan goi lai cong cho CUNG mot ma the, tinh bang giay.
+     *
+     * Cong co danh sach tai khoan bi han che tra cuu, nen so luot goi la tai nguyen co han.
+     * Mot vong lap hong o he thong goi API co the lam tai khoan cua ca benh vien bi khoa.
+     *
+     * De 0 la TAT chan - moi lan lam_moi=1 deu goi cong that.
+     */
+    'khoang_cho_lam_moi' => 900,
+
+    /*
      * Luong co so theo MOC HIEU LUC, khong phai mot so.
      *
      * Khai mot so tran thi lan tang luong tiep theo se lang le tinh sai nguong cho toan bo
