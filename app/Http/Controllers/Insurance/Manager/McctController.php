@@ -8,11 +8,8 @@ use App\Models\Mcct\McctTraCuu;
 use App\Services\BHYT\CoSoTraCuu;
 use App\Models\Mcct\McctChiPhi;
 use App\Services\Mcct\McctDungLaiKetQua;
-use App\Services\Mcct\McctLuuTraCuu;
 use App\Services\Mcct\McctPhanHoiJson;
-use App\Services\Mcct\McctTraCuuService;
-use App\Services\Mcct\McctXacThucException;
-use App\Services\Mcct\NguongMienCungChiTra;
+use App\Services\Mcct\McctTraCuuChung;
 use Illuminate\Http\Request;
 
 /**
@@ -120,7 +117,7 @@ class McctController extends Controller
             );
         }
 
-        $ra = $this->thucHien($params);
+        $ra = McctTraCuuChung::goiVaLuu($params, 'thu_cong');
 
         if ($ra['loi'] !== null) {
             return response()->json(McctPhanHoiJson::loi($ra['loi']));
@@ -135,92 +132,6 @@ class McctController extends Controller
         $phanHoi['co_du_lieu'] = true;
 
         return response()->json($phanHoi);
-    }
-
-    /**
-     * Loi tra cuu, dung chung cho ca man HTML lan endpoint JSON.
-     *
-     * VI SAO TACH RA: hai duong vao cung goi cong, cung tinh nguong, cung luu vet. Chep doi
-     * nghia la moi lan sua phai nho sua ca hai cho - va cho bi quen se lech am tham.
-     *
-     * @param array $params bon khoa ma_cskcb, ma_the, ho_ten, ngay_sinh
-     * @return array ['loi' => string|null, 'kq' => KetQuaMcct|null, 'nguong' => float,
-     *                'du_dieu_kien' => bool|null, 'muc' => array|null (ket qua
-     *                NguongMienCungChiTra::tinhTheoQuyDinh), 'loi_luu' => string|null]
-     */
-    private function thucHien(array $params)
-    {
-        $hong = function ($loi) {
-            return ['loi' => $loi, 'kq' => null, 'nguong' => 0.0, 'du_dieu_kien' => null,
-                'muc' => null, 'loi_luu' => null];
-        };
-
-        try {
-            $kq = (new McctTraCuuService($params['ma_cskcb']))
-                ->traCuu($params['ma_the'], $params['ho_ten'], $params['ngay_sinh']);
-        } catch (McctXacThucException $e) {
-            return $hong($e->getMessage());
-        } catch (\InvalidArgumentException $e) {
-            // CauHinhCoSo nem khi co so chua khai tai khoan. Noi ro khai o dau - thong bao
-            // chung chung khien nguoi dung di do nham sang phia cong.
-            return $hong('Cơ sở ' . $params['ma_cskcb'] . ' chưa khai tài khoản cổng BHXH trong '
-                . 'config/organization.php, khối BHYT_CO_SO.');
-        } catch (\GuzzleHttp\Exception\ConnectException $e) {
-            // Rieng loi mang: dat TRUOC nhanh \Exception de bat truoc, tranh bi nhanh do
-            // "nuot" mat va gan nham tien to cau hinh cho loi mang.
-            //
-            // Tach rieng HET GIO khoi "khong ket noi duoc": hai chuyen khac han nhau. Het gio
-            // nghia la cong CO song nhung tra loi qua cham - nguoi dung chi can thu lai, chu
-            // khong phai di goi bo phan mang. Cau goc cua cURL ("Operation timed out after
-            // 30006 milliseconds with 0 bytes received") khong noi duoc dieu do voi ho.
-            if (mb_stripos($e->getMessage(), 'timed out') !== false
-                || mb_stripos($e->getMessage(), 'timeout') !== false) {
-                return $hong('Cổng BHXH không trả lời sau '
-                    . (int) config('mcct.timeout_tong', 60) . ' giây. Cổng đang quá tải; '
-                    . 'chờ ít phút rồi tra lại.');
-            }
-
-            return $hong('Không kết nối được cổng BHXH: ' . $e->getMessage());
-        } catch (\Exception $e) {
-            // Tien to trung lap: CongBhxh::baseUrl() va BHYTLoginService::login() nem loi
-            // CAU HINH (thieu base_url, thieu tai khoan...), khong phai loi mang. Gan cung
-            // mot cau "khong ket noi duoc" se day nguoi doc di do nham huong mang.
-            return $hong('Lỗi khi gọi cổng BHXH: ' . $e->getMessage());
-        }
-
-        $bangLuong = (array) config('mcct.luong_co_so', []);
-        $soThang = (int) config('mcct.so_thang_luong_co_so', 6);
-
-        $nguong = NguongMienCungChiTra::nguong(date('Y-m-d'), $bangLuong, $soThang);
-
-        // Muc mien tinh THEO DUNG diem c khoan 2 Dieu 18 ND 188/2025: khi luong co so doi
-        // giua nam, khong duoc lay thang 6 x luong hien hanh lam nguong. $nguong o tren van
-        // duoc luu lai de doi chieu voi cac ban ghi cu, nhung KET LUAN lay tu day.
-        $muc = NguongMienCungChiTra::tinhTheoQuyDinh($kq->dong, date('Y-m-d'), $bangLuong, $soThang);
-
-        $duDieuKien = $kq->thanhCong() ? $muc['du_dieu_kien'] : null;
-
-        // Luu hong thi VAN tra ket qua: luot goi len cong da tieu roi, va cong co danh sach
-        // tai khoan bi han che tra cuu nen khong duoc de mot loi ghi CSDL nuot mat ca ket qua.
-        // Mat dau vet con hon mat ca ket qua lan dau vet.
-        $loiLuu = null;
-
-        try {
-            McctLuuTraCuu::luu($kq, array_merge($params, [
-                'nguon' => 'thu_cong',
-                'tra_boi' => \Auth::check() ? \Auth::user()->username : null,
-                'nguong' => $nguong,
-                'du_dieu_kien' => $duDieuKien,
-                'so_tien_con_phai_dong' => $muc['so_tien_con_phai_dong'],
-                'da_dong_truoc_moc' => $muc['da_dong_truoc_moc'],
-            ]));
-        } catch (\Exception $e) {
-            \Log::error('MCCT khong luu duoc lich su tra cuu: ' . $e->getMessage());
-            $loiLuu = 'Đã tra cứu được nhưng không lưu được lịch sử tra cứu.';
-        }
-
-        return ['loi' => null, 'kq' => $kq, 'nguong' => $nguong, 'du_dieu_kien' => $duDieuKien,
-            'muc' => $muc, 'loi_luu' => $loiLuu];
     }
 
     /**
