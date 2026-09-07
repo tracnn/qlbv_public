@@ -15,9 +15,9 @@
  * NGAY_PHAT_HANH cho khớp dòng đó.
  */
 
-const PHIEN_BAN = '1.7';
+const PHIEN_BAN = '1.8';
 
-const NGAY_PHAT_HANH = 'Tháng 8 năm 2026';
+const NGAY_PHAT_HANH = 'Tháng 9 năm 2026';
 
 /**
  * Lịch sử phát hành, MỚI NHẤT LÊN ĐẦU.
@@ -27,6 +27,13 @@ const NGAY_PHAT_HANH = 'Tháng 8 năm 2026';
  * thay vì đọc lại cả tài liệu.
  */
 const LICH_SU = [
+  {
+    ban: '1.8',
+    ngay: '04/09/2026',
+    noi_dung:
+      'Bổ sung tám quy tắc kiểm hồ sơ XML 3176 theo danh sách lỗi tự động do cơ quan Bảo hiểm xã hội gửi về: mức hưởng khai sai, tỷ lệ thanh toán vật tư y tế, tổng ngày giường theo Thông tư 39, ba quy tắc về công khám ngoại trú, và hai dịch vụ phẫu thuật chồng thời gian thực hiện. Sửa bộ lọc "Có thẻ BHYT (nhiều)" ở màn Danh sách hồ sơ — trước đây chọn mục này không lọc gì mà trả về toàn bộ hồ sơ; đồng thời đổi nhãn "Có thẻ (một)" thành "Có thẻ (bất kỳ)" cho đúng với cách lọc thực tế.',
+    lien_quan: 'Phần I, mục 1.4.2 và 1.8.',
+  },
   {
     ban: '1.7',
     ngay: '27/08/2026',

@@ -81,7 +81,7 @@ module.exports = function part1() {
         ['Cơ sở KCB', 'Tất cả cơ sở / từng cơ sở', 'Bắt buộc chọn đúng khi chuẩn bị số liệu của một cơ sở cụ thể.'],
         ['Lọc hồ sơ', 'Tất cả / Hồ sơ không lỗi / Hồ sơ có lỗi / Lỗi thẻ (Chung) / Lỗi thẻ (Riêng) / Lỗi warning / Lỗi critical / Không critical', 'Lọc nhanh theo mức độ lỗi. Dùng "Lỗi critical" để ưu tiên xử lý hồ sơ đang bị chặn.'],
         ['Lỗi XML', 'Danh sách mã lỗi, hiển thị dạng "XMLn / Tên lỗi"', 'Truy một mã lỗi cụ thể. Mã lỗi nghiêm trọng có biểu tượng tam giác đỏ.'],
-        ['Thẻ BHYT', 'Có thẻ (một) / Có thẻ (nhiều) / Không có thẻ', 'Soát hồ sơ thiếu thông tin thẻ hoặc có nhiều thẻ.'],
+        ['Thẻ BHYT', 'Có thẻ (bất kỳ) / Có thẻ (nhiều) / Không có thẻ', 'Soát hồ sơ thiếu thông tin thẻ hoặc có nhiều thẻ. "Bất kỳ" gồm cả hồ sơ nhiều thẻ; "nhiều" chỉ lấy hồ sơ ghi từ hai thẻ trở lên.'],
         ['Ngày t.toán', 'Có ngày thanh toán / Không có ngày thanh toán', 'Soát hồ sơ chưa hoàn tất thanh toán.'],
         ['Trạng thái', 'Đã Export 4750 / Chưa Export 4750', 'Lọc hồ sơ đã xuất hay chưa xuất tệp XML.'],
       ],
@@ -210,6 +210,7 @@ module.exports = function part1() {
     ),
     p('Mỗi lần thay đổi một ô tích, hệ thống hỏi xác nhận "Bạn có chắc chắn?" rồi lưu ngay. Thay đổi có hiệu lực với các lần kiểm tra sau, không hồi tố lên các lỗi đã ghi nhận — muốn xoá lỗi cũ phải nạp lại hồ sơ.'),
     note('Lưu ý:', 'Mã lỗi mới phát sinh mà chưa có trong danh mục sẽ được hệ thống mặc định coi là NGHIÊM TRỌNG. Sau mỗi lần nâng cấp phần mềm, nên rà lại màn hình này để đặt đúng mức độ cho các mã lỗi mới, tránh việc hồ sơ bị chặn xuất hàng loạt mà không rõ nguyên nhân.'),
+    forIt('Đợt cập nhật tháng 9 năm 2026 bổ sung tám mã lỗi mới, và chúng chỉ có hiệu lực sau khi nạp vào danh mục bằng năm lệnh php artisan db:seed với các lớp Xml3176ErrorCatalogTyLeVtytSeeder, Xml3176ErrorCatalogMucHuongSeeder, Xml3176ErrorCatalogBedDaysTT39Seeder, Xml3176ErrorCatalogExaminationSeeder và Xml3176ErrorCatalogOverlapServiceSeeder. Chạy lại nhiều lần đều an toàn. Riêng lệnh thứ ba là BẮT BUỘC: mã lỗi ngày giường theo Thông tư 39 vốn chỉ là cảnh báo, nhưng nếu chưa nạp thì phần mềm mặc định coi mọi mã lỗi lạ là nghiêm trọng và sẽ chặn xuất hồ sơ.'),
 
     h2('1.9. Xử lý sự cố thường gặp'),
     h3('1.9.1. Lỗi khi nhập khẩu hồ sơ'),
