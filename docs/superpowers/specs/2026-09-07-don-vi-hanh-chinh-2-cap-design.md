@@ -52,18 +52,36 @@ Trong `config/catalog_import_mapping.php`, khoá `administrative_unit`:
 
 `php artisan hanh-chinh:chuyen-2-cap {tep} [--force]`
 
-Toàn bộ trong **một giao dịch**, theo đúng thứ tự sau (thứ tự này là điểm mấu chốt về tính đúng):
+**ĐÍNH CHÍNH (07/09/2026, sau review toàn nhánh):** bản đầu của mục này mô tả một quy trình
+ba bước nghỉ-hưu → nạp → kích hoạt lại, với lý do "`is_active` không nằm trong mapping nên
+dòng trùng mã xã sẽ giữ nguyên giá trị 0". **Lý do đó sai về mặt sự kiện.**
+`CatalogImportService::LAM_MOI_TRON_BO` đã bao gồm `administrative_unit` từ trước nhánh này:
+`nhanDienTuLoDau()` tự tắt `is_active` toàn bộ sau khi nhận diện được loại tệp, và
+`ganDangDung()` tự đặt `is_active = 1` cho mọi dòng nó ghi. Cơ chế nghỉ hưu **đã có sẵn**.
 
-1. Đọc tệp, thu tập hợp `commune_code` có trong tệp; in số liệu: số dòng đang có trong bảng, số dòng trong tệp.
+Tệ hơn, bản làm tay còn sinh lỗi: kích hoạt lại theo danh sách mã đọc từ tệp sẽ bật cả
+những dòng mà import **bỏ qua** vì thiếu trường bắt buộc — đó là dòng cũ trước sáp nhập,
+mang mã tỉnh cũ, và sau khi bị xoá mã huyện thì trở thành một dòng 2 cấp sai tỉnh không
+phân biệt được với dòng thật. Chính nó sẽ làm quy tắc xã∉tỉnh báo sai.
+
+**Quy trình đúng của lệnh:**
+
+1. Đếm số dòng đang hoạt động, in ra.
 2. Hỏi xác nhận (bỏ qua nếu có `--force`).
-3. `is_active = 0` cho **toàn bộ** dòng đang có.
-4. Nạp tệp qua `CatalogImportService` (upsert theo `commune_code`).
-5. Với các `commune_code` có trong tệp: `is_active = 1`, đồng thời `district_code = NULL`, `district_name = NULL`.
-6. In số liệu sau: số dòng đang hoạt động, số tỉnh, số xã.
+3. Trong một giao dịch: gọi `CatalogImportService::import($tep)` — tự lo nghỉ hưu và kích
+   hoạt lại.
+4. **Đọc kết quả nhập và ném lỗi để hoàn tác** nếu có dòng lỗi/bỏ qua, hoặc nếu không ghi
+   được dòng nào. Đây là chốt sống còn: `GhiTheoLo::chenTheoLo()` **nuốt** lỗi mức dòng vào
+   đối tượng kết quả thay vì ném ra, nên không tự kiểm thì một lần nhập hỏng hoàn toàn vẫn
+   COMMIT — mà lúc đó `is_active` của toàn bộ danh mục cũ đã bị tắt, kết quả là **bảng rỗng
+   sạch trong khi lệnh báo thành công**.
+5. Việc duy nhất còn phải làm tay: `district_code = NULL`, `district_name = NULL` cho các
+   dòng đang hoạt động. Tệp 2 cấp không mang hai cột này nên import không ghi đè, dòng trùng
+   mã xã sẽ giữ lại giá trị huyện cũ.
+6. In số liệu sau: tổng dòng, đang hoạt động, số tỉnh, đã nghỉ hưu.
 
-**Vì sao phải có bước 5 mà không dựa vào giá trị mặc định:** dòng nào trùng `commune_code` với danh mục cũ sẽ bị **cập nhật** chứ không chèn mới, mà `is_active` không nằm trong mapping nên nó **giữ nguyên giá trị 0** vừa đặt ở bước 3 — không có bước 5 thì đúng những xã trùng mã sẽ nằm im ở trạng thái nghỉ hưu và bị báo "không tồn tại". Cùng lý do, district của dòng trùng vẫn còn giá trị cũ nên phải xoá tường minh.
-
-**Vì sao không xoá dòng cũ:** dữ liệu danh mục là thứ người vận hành phải nhìn thấy trước khi mất. Nghỉ hưu đảo ngược được; xoá thì không.
+**Vì sao không xoá dòng cũ:** dữ liệu danh mục là thứ người vận hành phải nhìn thấy trước
+khi mất. Nghỉ hưu đảo ngược được; xoá thì không.
 
 ### 4.4 Quy tắc mới — xã thuộc tỉnh
 

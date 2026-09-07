@@ -217,9 +217,11 @@ class Xml3176Xml1Checker
         // Xa phai thuoc tinh - quan he long nhau duy nhat con lai sau khi bo cap huyen.
         // CHI chay khi ca hai ma da hop le rieng le: neu mot ma sai thi loi do da duoc bao
         // roi, bao them loi long nhau chi la nhieu tren cung mot nguyen nhan.
+        // Dung lai $provinceExists/$wardExists da tinh o hai khoi tren thay vi truy van lai:
+        // PHP pham vi bien theo HAM, va guard !empty(...) dung truoc bao dam hai bien do da
+        // duoc gan. Goi lai la +2 truy van moi ho so, tra ve dung thu vua co.
         if (!empty($data->matinh_cu_tru) && !empty($data->maxa_cu_tru)
-            && $this->commonValidationService->isAdministrativeUnitProvinceValid($data->matinh_cu_tru)
-            && $this->commonValidationService->isAdministrativeUnitCommuneValid($data->maxa_cu_tru)
+            && $provinceExists && $wardExists
             && !$this->commonValidationService->isAdministrativeUnitWardInProvinceValid($data->matinh_cu_tru, $data->maxa_cu_tru)) {
             $errorCode = $this->generateErrorCode('ADMIN_INFO_ERROR_MAXA_NOT_IN_MATINH');
             $errors->push((object)[

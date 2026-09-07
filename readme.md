@@ -1,3 +1,27 @@
+# 07/09/2026
+
+- **Đơn vị hành chính chuyển từ ba cấp sang hai cấp Tỉnh/Xã.** Danh mục cũ có 10.542 xã thuộc 699 huyện của 63 tỉnh; danh mục mới có **3.321 xã thuộc 34 tỉnh**, không còn cấp huyện. Phần mềm nay kiểm cư trú theo hai cấp, và **thêm một quy tắc mới: mã xã phải thuộc mã tỉnh đã khai** — quan hệ lồng nhau duy nhất còn lại sau khi bỏ cấp huyện. Trước đây phần mềm chỉ kiểm hai mã tồn tại rời rạc, nên hồ sơ khai tỉnh Hà Nội kèm xã của Cà Mau vẫn lọt.
+
+- **Có lệnh riêng để thay danh mục: `php artisan hanh-chinh:chuyen-2-cap <tệp Excel>`.** Lệnh hỏi xác nhận, chạy trọn trong một giao dịch, và in số liệu trước/sau để đối chiếu. Dòng của danh mục cũ **không bị xoá** mà chuyển sang trạng thái ngừng dùng — sai thì còn đường lùi, còn xoá thì không.
+
+- **Lệnh dừng và hoàn tác nếu tệp có bất kỳ dòng hỏng nào.** Đây là chỗ suýt sai nguy hiểm: khung nhập danh mục vốn *nuốt* lỗi từng dòng vào bản báo cáo thay vì ném ra ngoài, nên nếu lệnh không tự kiểm thì một lần nhập hỏng hoàn toàn vẫn được ghi nhận thành công — trong khi toàn bộ danh mục đang dùng đã bị tắt từ đầu quy trình. Kết quả sẽ là **danh mục rỗng mà màn hình báo chạy xong**. Nay lệnh đọc kết quả nhập và ném lỗi để hoàn tác.
+
+- **Trước khi chạy lệnh phải chạy migration.** Hai cột mã/tên huyện được nới thành để trống được; chưa nới thì mọi dòng mới đều chèn hỏng — đúng kịch bản vừa nói ở trên. Nên **sao lưu bảng danh mục** trước khi chạy lệnh, và sau khi chạy hãy kiểm một số liệu: số dòng đang dùng mà vẫn còn mã huyện phải bằng **0**.
+
+- **Quy tắc mới được nạp ở trạng thái TẮT, cố ý.** Nó chỉ đúng khi danh mục đã là hai cấp thuần; bật lúc danh mục còn cũ sẽ báo sai hàng loạt vì cặp tỉnh–xã của hai danh mục khác hẳn nhau. Sau khi đổi danh mục xong và rà thử một lô hồ sơ, người vận hành tự bật bằng ô tích **"Có kiểm tra"** ở màn *Danh mục mã lỗi XML 3176*.
+
+- **Module theo Quyết định 130 cố ý không sửa** (đã dừng dùng). Sau khi đổi danh mục, nếu ai đó nhập hồ sơ vào màn đó sẽ thấy báo lỗi cấp huyện hàng loạt — đó là hệ quả đã biết và chấp nhận, không phải hỏng hóc mới.
+
+- **Hồ sơ trước thời điểm sáp nhập sẽ báo sai nếu nhập lại.** Đây là đánh đổi có chủ ý để khỏi phải làm cơ chế danh mục có hiệu lực theo từng mốc thời gian. Dòng cũ vẫn nằm trong bảng ở trạng thái ngừng dùng, nên nếu về sau phát sinh nhu cầu quyết toán bổ sung kỳ cũ thì vẫn còn đường làm tiếp.
+
+- **Cài đặt: nay là SÁU lệnh nạp danh mục mã lỗi, không phải năm.**
+
+```bash
+php artisan db:seed --class=Xml3176ErrorCatalogHanhChinhSeeder
+```
+
+  Bổ sung vào năm lệnh đã liệt kê ở mục 04/09/2026. Quên lệnh này thì mã lỗi mới **tự bật ở mức nghiêm trọng và chặn xuất hồ sơ** — vì mã lỗi lạ chưa có trong danh mục luôn được mặc định coi là nghiêm trọng.
+
 # 04/09/2026
 
 - **Bổ sung tám quy tắc kiểm hồ sơ XML 3176, bám theo danh sách lỗi tự động do Bảo hiểm xã hội gửi về.** Nguồn là các tệp giám định tháng 08 và 09/2026 của cơ sở 01929 — hơn 4.300 dòng chi phí bị xuất toán, cùng một bảng tổng hợp 60 loại lỗi. Đối chiếu từng loại với quy tắc sẵn có cho thấy khoảng 50 loại phần mềm đã bắt từ trước; tám quy tắc thêm lần này nhắm đúng phần còn thiếu, ưu tiên theo số tiền chứ không theo số dòng.

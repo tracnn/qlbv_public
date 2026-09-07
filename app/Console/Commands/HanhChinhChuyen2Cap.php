@@ -4,27 +4,29 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
-use Maatwebsite\Excel\Facades\Excel;
-use App\Imports\CatalogChunkImport;
 use App\Services\CatalogImportService;
 
 /**
  * Chuyen danh muc don vi hanh chinh sang 2 cap Tinh/Xa.
  *
- * THU TU la van de dung/sai chu khong phai phong cach: dong trung ma xa giua danh muc cu
- * va moi se bi CAP NHAT chu khong chen moi, ma is_active KHONG nam trong mapping nen no
- * giu nguyen gia tri 0 vua dat. Khong co buoc kich hoat lai thi dung nhung xa trung ma se
- * nam im o trang thai nghi huu va bi bao "khong ton tai".
+ * KHONG tu nghi huu va tu kich hoat lai: CatalogImportService da lo viec do san.
+ * 'administrative_unit' nam trong CatalogImportService::LAM_MOI_TRON_BO, nen
+ * nhanDienTuLoDau() tat is_active cua TOAN BO ban ghi (sau khi da chac tep dung dinh
+ * dang), roi ganDangDung() bat lai dung nhung dong co trong tep.
  *
- * Doc ma xa THEO LO (CatalogChunkImport) chu khong dung Excel::toCollection: tep 10.000
- * dong tung lam dinh bo nho 208 MB tren may chu 128 MB.
+ * Lam tay them mot lan nua khong chi thua ma con SAI: kich hoat lai theo danh sach ma doc
+ * tu tep se bat ca nhung dong bi bo qua vi thieu truong bat buoc - do la dong CU truoc sap
+ * nhap, mang ma tinh cu, va se song day thanh mot dong 2 cap sai tinh khong phan biet duoc.
+ *
+ * Viec duy nhat con lai phai lam tay: xoa ma/ten huyen. Tep 2 cap khong mang hai cot do
+ * nen import khong ghi de, dong trung ma xa se giu lai gia tri huyen cu.
  */
 class HanhChinhChuyen2Cap extends Command
 {
     protected $signature = 'hanh-chinh:chuyen-2-cap {tep : Duong dan tep Excel danh muc 2 cap}
                             {--force : Khong hoi xac nhan}';
 
-    protected $description = 'Chuyen danh muc don vi hanh chinh sang 2 cap Tinh/Xa (nghi huu dong cu, nap tep moi)';
+    protected $description = 'Chuyen danh muc don vi hanh chinh sang 2 cap Tinh/Xa';
 
     public function handle(CatalogImportService $importService)
     {
@@ -35,87 +37,57 @@ class HanhChinhChuyen2Cap extends Command
             return 1;
         }
 
-        $maXa = $this->docMaXa($tep);
-        if (empty($maXa)) {
-            $this->error('Khong doc duoc ma xa nao tu tep. Kiem tra tep co cot "Ma PX" khong.');
-            return 1;
-        }
+        $truoc = DB::table('administrative_units')->where('is_active', 1)->count();
+        $this->info('Dang hoat dong truoc : ' . $truoc . ' dong');
 
-        $truoc = DB::table('administrative_units')->count();
-        $this->info('Dang co trong bang : ' . $truoc . ' dong');
-        $this->info('Ma xa trong tep    : ' . count($maXa));
-
-        if (!$this->option('force') && !$this->confirm('Nghi huu toan bo dong hien co roi nap tep moi?')) {
+        if (!$this->option('force')
+            && !$this->confirm('Thay toan bo danh muc don vi hanh chinh dang dung bang tep nay?')) {
             $this->warn('Da huy, khong thay doi gi.');
             return 0;
         }
 
-        DB::transaction(function () use ($importService, $tep, $maXa) {
-            // 1. Nghi huu toan bo
-            DB::table('administrative_units')->update(['is_active' => 0]);
+        try {
+            DB::transaction(function () use ($importService, $tep) {
+                $ketQua = $importService->import($tep);
+                $so = $ketQua->toArray();
 
-            // 2. Nap tep moi (upsert theo commune_code)
-            $importService->import($tep);
+                // GhiTheoLo NUOT loi muc dong vao ket qua thay vi nem ra. Khong tu kiem thi
+                // mot lan nhap hong hoan toan van COMMIT - va vi import da tat is_active cua
+                // toan bo ban ghi truoc do, ket qua la bang rong sach ma lenh van bao thanh cong.
+                if ($so['so_loi'] > 0 || $so['so_bo_qua'] > 0) {
+                    throw new \RuntimeException(
+                        'Tep co dong hong nen KHONG doi danh muc. ' . $ketQua->tomTat()
+                    );
+                }
 
-            // 3. Kich hoat lai dung cac ma xa co trong tep, va xoa du lieu huyen con sot
-            //    o cac dong bi cap nhat (tep 2 cap khong mang cot huyen nen import khong ghi de).
-            foreach (array_chunk($maXa, 1000) as $lo) {
+                if (!$ketQua->coGhi()) {
+                    throw new \RuntimeException(
+                        'Khong ghi duoc dong nao nen KHONG doi danh muc. ' . $ketQua->tomTat()
+                    );
+                }
+
+                // Chi con viec nay phai lam tay - xem chu thich dau lop.
                 DB::table('administrative_units')
-                    ->whereIn('commune_code', $lo)
-                    ->update(['is_active' => 1, 'district_code' => null, 'district_name' => null]);
-            }
-        });
+                    ->where('is_active', 1)
+                    ->update(['district_code' => null, 'district_name' => null]);
 
-        $sauTong   = DB::table('administrative_units')->count();
-        $sauActive = DB::table('administrative_units')->where('is_active', 1)->count();
-        $soTinh    = DB::table('administrative_units')->where('is_active', 1)->distinct()->count('province_code');
+                $this->info($ketQua->tomTat());
+            });
+        } catch (\Exception $e) {
+            $this->error('Da huy va hoan tac toan bo. ' . $e->getMessage());
+            return 1;
+        }
+
+        $tong   = DB::table('administrative_units')->count();
+        $active = DB::table('administrative_units')->where('is_active', 1)->count();
+        $soTinh = DB::table('administrative_units')->where('is_active', 1)->distinct()->count('province_code');
 
         $this->info('---');
-        $this->info('Tong dong sau     : ' . $sauTong);
-        $this->info('Dang hoat dong    : ' . $sauActive);
-        $this->info('So tinh hoat dong : ' . $soTinh);
-        $this->info('Da nghi huu       : ' . ($sauTong - $sauActive));
+        $this->info('Tong dong trong bang : ' . $tong);
+        $this->info('Dang hoat dong       : ' . $active);
+        $this->info('So tinh hoat dong    : ' . $soTinh);
+        $this->info('Da nghi huu          : ' . ($tong - $active));
 
         return 0;
-    }
-
-    /**
-     * Doc tap hop ma xa tu tep, theo lo. Tim cot bang chinh danh sach bi danh trong
-     * mapping - mot nguon su that, khong khai lai o day.
-     *
-     * @return string[]
-     */
-    private function docMaXa($tep): array
-    {
-        $biDanh = (array) config('catalog_import_mapping.administrative_unit.mapping.commune_code', []);
-        $viTri = null;
-        $ma = [];
-
-        $doc = new CatalogChunkImport(function ($rows, $dongDau, $laLoDau) use (&$viTri, &$ma, $biDanh) {
-            if ($laLoDau) {
-                foreach ($rows->first() as $i => $ten) {
-                    if (in_array(trim((string) $ten), $biDanh, true)) {
-                        $viTri = $i;
-                        break;
-                    }
-                }
-                $rows = $rows->slice(1);
-            }
-
-            if ($viTri === null) {
-                return;
-            }
-
-            foreach ($rows as $dong) {
-                $gt = trim((string) ($dong[$viTri] ?? ''));
-                if ($gt !== '') {
-                    $ma[$gt] = true;
-                }
-            }
-        });
-
-        Excel::import($doc, $tep);
-
-        return array_keys($ma);
     }
 }
