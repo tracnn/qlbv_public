@@ -43,46 +43,55 @@
             }
         });
 
-        function duongDan() {
-            return '{{ route('insurance.mcct.api') }}?' + $.param({
+        function thamSo() {
+            return {
                 ma_cskcb: $('#ma_cskcb').val(),
                 ma_the: $('#ma_the').val(),
                 ho_ten: $('#ho_ten').val(),
                 ngay_sinh: $('#ngay_sinh').val()
-            });
+            };
         }
 
-        function tra() {
+        function tra(dungLaiKetQuaCu) {
             // Doi duong dan tren thanh dia chi de trang nay VAN gui cho nhau duoc, va bam F5
             // ra dung ket qua do. replaceState chu khong pushState: mot lan tra khong dang
             // mot buoc lui trong lich su trinh duyet.
             if (window.history && window.history.replaceState) {
-                window.history.replaceState({}, '', '{{ route('insurance.mcct.search') }}?' + $.param({
-                    ma_cskcb: $('#ma_cskcb').val(),
-                    ma_the: $('#ma_the').val(),
-                    ho_ten: $('#ho_ten').val(),
-                    ngay_sinh: $('#ngay_sinh').val()
-                }));
+                window.history.replaceState({}, '',
+                    '{{ route('insurance.mcct.search') }}?' + $.param(thamSo()));
             }
 
-            mcct.goi(duongDan());
+            mcct.capNhat({
+                url: '{{ route('insurance.mcct.api') }}?' + $.param(thamSo()),
+                urlGanNhat: '{{ route('insurance.mcct.gan-nhat') }}?'
+                    + $.param({ ma_the: $('#ma_the').val() })
+            });
+
+            // Bam nut Tra cuu = hoi ket qua da luu truoc cho nhanh; chi khi vao thang bang
+            // duong dan moi tu goi cong neu chua co du lieu cu.
+            dungLaiKetQuaCu ? mcct.moDau() : mcct.goi();
         }
 
-        $nut.on('click', tra);
-        $('#mcct-thu-lai').on('click', tra);
+        // Bam Tra cuu: uu tien hien ngay ket qua lan truoc, nguoi dung tu bam Tra cuu lai.
+        $nut.on('click', function () { tra(true); });
+
+        // Nut Thu lai o khoi bao loi: goi thang cong, vi vua that bai chu khong phai chua tra.
+        $('#mcct-thu-lai').on('click', function () { tra(false); });
 
         // Enter trong o nhap = bam Tra cuu. Khong con <form> nen phai tu noi lai hanh vi nay.
+        // Truyen true de giong HET nut Tra cuu: thieu tham so o day se lam Enter goi thang
+        // cong trong khi nut thi khong - hai duong vao cung mot viec ma xu su khac nhau.
         $('.mcct-nhap').on('keydown', function (e) {
             if (e.which === 13) {
                 e.preventDefault();
-                tra();
+                tra(true);
             }
         });
 
         @if ($traNgay)
         // Vao trang bang duong dan da co du tham so (chia se, hoac tu man tra cuu the sang):
-        // tra ngay, khong bat nguoi dung bam lai mot lan nua.
-        tra();
+        // hien ngay ket qua lan truoc neu co, chua co thi goi cong.
+        tra(true);
         @endif
     });
 </script>

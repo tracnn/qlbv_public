@@ -14,11 +14,12 @@ class RouteMcctTest extends TestCase
             'insurance.mcct' => 'insurance/mcct',
             'insurance.mcct.search' => 'insurance/mcct/search',
             'insurance.mcct.api' => 'insurance/mcct/api',
+            'insurance.mcct.gan-nhat' => 'insurance/mcct/gan-nhat',
         ];
     }
 
     /** @test */
-    public function du_ba_route_va_url_khong_doi()
+    public function du_bon_route_va_url_khong_doi()
     {
         foreach ($this->banDo() as $ten => $uri) {
             $r = Route::getRoutes()->getByName($ten);
