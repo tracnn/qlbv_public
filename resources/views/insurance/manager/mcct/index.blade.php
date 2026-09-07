@@ -88,6 +88,116 @@
             }
         });
 
+        /* ---- Ho ten luon viet hoa ---- */
+
+        // Viet hoa NGAY KHI GO chu khong doi luc gui: nguoi dung phai thay dung cai se duoc
+        // gui di. May chu van mb_strtoupper nhu cu, day chi la phan hien thi.
+        $('#ho_ten').on('input', function () {
+            var o = this;
+            var viTri = o.selectionStart;
+            var hoa = o.value.toUpperCase();
+
+            if (o.value === hoa) {
+                return;
+            }
+
+            o.value = hoa;
+
+            // Dat lai con tro: khong lam thi no nhay ve cuoi o moi lan go, va nguoi dung
+            // khong sua duoc mot chu o giua ten.
+            try { o.setSelectionRange(viTri, viTri); } catch (e) {}
+        });
+
+        /* ---- Nho co so da chon ---- */
+
+        // DUNG CHUNG khoa voi man tra cuu the BHYT: cung mot nguoi dung, cung mot co so. Khoa
+        // rieng chi tao ra tinh huong hai man hien hai co so khac nhau ma khong ai giai thich
+        // duoc vi sao. Chi nho LUA CHON, khong nho tai khoan hay bat ky thu gi nhay cam.
+        var KHOA_CO_SO = 'bhyt_tra_cuu_ma_cskcb';
+        var $coSo = $('#ma_cskcb');
+
+        // Gia tri may chu vua tra ve THANG gia tri nho: ket qua dang hien tren man phai khop
+        // voi o chon. Chi lay tu localStorage khi o dang trong.
+        if ($coSo.val() === '') {
+            var daNho = null;
+
+            try { daNho = localStorage.getItem(KHOA_CO_SO); } catch (e) { daNho = null; }
+
+            // Chi chon neu ma do CON trong danh sach. Co so bi go khoi cau hinh thi bo qua gia
+            // tri cu va de trong - khong chon bua mot co so khac, vi tra nham co so la dung
+            // thu ma viec chon co so sinh ra de chan.
+            if (daNho && $coSo.find('option[value="' + daNho + '"]').length > 0) {
+                $coSo.val(daNho);
+            }
+        }
+
+        // Chi co mot co so thi chon san.
+        if ($coSo.val() === '' && $coSo.find('option[value!=""]').length === 1) {
+            $coSo.val($coSo.find('option[value!=""]').first().val());
+        }
+
+        // Ghi ngay khi doi, khong doi bam tra cuu: nguoi dung doi co so roi bo di thi lan sau
+        // van nho.
+        $coSo.on('change', function () {
+            try { localStorage.setItem(KHOA_CO_SO, $(this).val()); } catch (e) {}
+        });
+
+        /* ---- Quet ma QR ---- */
+
+        /*
+         * Chuan hoa ngay sinh tu ma QR.
+         *
+         * VI SAO CAN: man tra cuu the KHONG kiem dinh dang ngay sinh (InsuranceRequest chi doi
+         * `required`), con man nay co regex chat chi nhan dd/mm/yyyy, mm/yyyy hoac yyyy. Truong
+         * thu ba trong ma QR the BHYT thuong la 8 chu so lien (01011980), nen quet QR o day se
+         * bi chan ngay o luat kiem trong khi man tra the van chay - dung kieu loi khien nguoi
+         * dung nghi chuc nang hong.
+         *
+         * Chiu duoc CA HAI dang thay vi doan mot: khong co the that de quet thi khong xac minh
+         * duoc dinh dang nao moi la dinh dang that.
+         */
+        function chuanHoaNgaySinh(s) {
+            s = String(s || '').trim();
+
+            if (s.indexOf('/') !== -1) {
+                return s;
+            }
+
+            if (/^\d{8}$/.test(s)) {
+                return s.substring(0, 2) + '/' + s.substring(2, 4) + '/' + s.substring(4);
+            }
+
+            if (/^\d{6}$/.test(s)) {
+                return s.substring(0, 2) + '/' + s.substring(2);
+            }
+
+            return s;
+        }
+
+        $('#qrcode').on('change', function (event) {
+            event.preventDefault();
+
+            $.ajax({
+                type: 'GET',
+                data: { qrcode: $('#qrcode').val() },
+                // Dung lai endpoint cua man tra cuu the - KHONG viet bo giai ma QR thu hai.
+                url: '{{ route('insurance.check-card.getqrcode') }}',
+                success: function (kq) {
+                    if (!kq) {
+                        return;
+                    }
+
+                    $('#ma_the').val(kq['card-number'] || '');
+                    $('#ho_ten').val(String(kq['name'] || '').toUpperCase());
+                    $('#ngay_sinh').val(chuanHoaNgaySinh(kq['birthday']));
+
+                    // Tra luon, khong bat bam them: uu tien du lieu da luu nen thao tac nay
+                    // khong ton luot goi cong.
+                    tra(true);
+                }
+            });
+        });
+
         @if ($traNgay)
         // Vao trang bang duong dan da co du tham so (chia se, hoac tu man tra cuu the sang):
         // hien ngay ket qua lan truoc neu co, chua co thi goi cong.
