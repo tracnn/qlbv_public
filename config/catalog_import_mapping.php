@@ -189,7 +189,9 @@ return [
     ],
 
     'administrative_unit' => [
-        'detect_keys' => ['Tỉnh Thành Phố', 'Mã TP', 'Quận Huyện'],
+        // Bo 'Quan Huyen': danh muc 2 cap khong con cot nay. Nhan dien bang cot chac chan
+        // co o CA tep 3 cap cu lan tep 2 cap moi.
+        'detect_keys' => ['Tỉnh Thành Phố', 'Mã TP', 'Phường Xã'],
         'mapping' => [
             'province_name' => ['Tỉnh Thành Phố', 'Tỉnh/Thành phố'],
             'province_code' => ['Mã TP', 'Mã tỉnh', 'Mã TP'],
@@ -198,7 +200,7 @@ return [
             'commune_name' => ['Phường Xã', 'Phường/Xã'],
             'commune_code' => ['Mã PX', 'Mã phường xã', 'Mã PX'],
         ],
-        'required_fields' => ['province_name', 'province_code', 'district_name', 'district_code', 'commune_name', 'commune_code'],
+        'required_fields' => ['province_name', 'province_code', 'commune_name', 'commune_code'],
         'unique_keys' => ['commune_code'],
     ],
 
