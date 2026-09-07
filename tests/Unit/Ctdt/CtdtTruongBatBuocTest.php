@@ -204,6 +204,32 @@ class CtdtTruongBatBuocTest extends TestCase
         }
     }
     /** @test */
+    public function PP_DIEUTRI_CHAN_o_CT03_nhung_chi_CANH_BAO_o_CT04()
+    {
+        // SU KHONG NHAT QUAN NAY LA CO Y - dung "sua cho nhat quan".
+        //
+        // Cong BHXH da TU CHOI mot giay ra vien (CT03) vi thieu PP_DIEUTRI. Do la can cu de
+        // chan NGAY, du truong nay con rong 78/1050 CT03 that - 78 ho so do bi khoa lai la
+        // ket qua mong muon, vi chung la nhung ho so cong se tu choi.
+        //
+        // CT04 la tom tat ho so benh an, mot bieu mau KHAC, va chua co bang chung nao ve
+        // viec cong tu choi vi truong nay. Nang CT04 len chan se khoa them 78 ho so ma khong
+        // co can cu gi - dung kieu "siet rong tay" ma docblock cua lop nay canh bao.
+        //
+        // Cong van 2076 khong danh dau PP_DIEUTRI bat buoc o CT03. Neu chi doc cong van thi
+        // luat nay khong ton tai; no ton tai vi phan hoi that cua cong.
+        $this->assertContains('PP_DIEUTRI', CtdtTruongBatBuoc::cua('CT03'),
+            'CT03: cong da tu choi vi thieu truong nay - phai CHAN');
+        $this->assertNotContains('PP_DIEUTRI', CtdtTruongBatBuoc::khuyenNghi('CT03'),
+            'CT03: da o muc chan thi khong con o muc canh bao');
+
+        $this->assertNotContains('PP_DIEUTRI', CtdtTruongBatBuoc::cua('CT04'),
+            'CT04: chua co bang chung cong tu choi - chua duoc chan');
+        $this->assertContains('PP_DIEUTRI', CtdtTruongBatBuoc::khuyenNghi('CT04'),
+            'CT04: van phai canh bao');
+    }
+
+    /** @test */
     public function danh_sach_chan_cua_ba_loai_da_do_la_DONG_KHONG_duoc_them_tu_do()
     {
         // Chieu nguy hiem KHONG phai "quen mot truong" ma la "them mot truong CHUA DO":
@@ -218,7 +244,11 @@ class CtdtTruongBatBuocTest extends TestCase
         // ghi_loi_kem_ho_so_id_va_chung_tu_id phu thuoc MA_KHOA dung truoc HO_TEN.
         $this->assertSame(
             ['MA_BHXH', 'MA_KHOA', 'HO_TEN', 'NGAY_SINH', 'GIOI_TINH', 'DIA_CHI',
-             'NGAY_VAO', 'NGAY_RA'],
+             'NGAY_VAO', 'NGAY_RA',
+             // Dot 2026-09-07, do tren 1050 CT03 that - xem docblock cua lop.
+             'PP_DIEUTRI', 'CHAN_DOAN', 'BENHICD10_ID', 'TENBENHICD10', 'NGAY_CHUNG_TU',
+             'THU_TRUONG_DVI', 'TEN_TRUONGKHOA', 'MA_CCHN_TRUONGKHOA', 'LOAI_GIAYTO',
+             'NGHE_NGHIEP'],
             CtdtTruongBatBuoc::cua('CT03'));
 
         $this->assertSame(

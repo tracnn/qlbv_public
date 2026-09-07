@@ -46,13 +46,53 @@ namespace App\Services\Ctdt\Kiem;
  *
  * LUON DO TRUOC khi them mot truong bat buoc. MA_YTE tung duoc them ma khong do, va no chan
  * 97% ho so trong nhieu ngay.
+ *
+ * ---------------------------------------------------------------------------------------
+ * GIAY RA VIEN (CT03) - dot siet 2026-09-07
+ *
+ * CAN CU KHAC HAN cac dot truoc: khong phai doc cong van, ma la CONG BHXH DA TU CHOI mot ho
+ * so vi thieu PP_DIEUTRI. Cong van 2076 KHONG danh dau truong nay bat buoc o CT03 - neu chi
+ * doc cong van thi khong bao gio them no. Cong tu choi la can cu manh hon cong van.
+ *
+ * PP_DIEUTRI CHAN NGAY du do duoc RONG 78/1050 (7.4%). Day la lan dau mot truong duoc dua
+ * thang len muc chan trong khi du lieu that con thieu, va la CO Y: 78 ho so do se chuyen
+ * sang "Con loi chan" va khong gui duoc nua cho toi khi phan mem sinh XML dien du roi nap
+ * lai. Do chinh la ket qua mong muon - chung la nhung ho so cong se tu choi.
+ *
+ * VI SAO CT04 CUNG TRUONG DO VAN CHI CANH BAO: cong tu choi GIAY RA VIEN (CT03), khong phai
+ * tom tat ho so benh an (CT04) - hai bieu mau khac nhau, va CT04 chua co bang chung nao. Su
+ * khong nhat quan nay la CO Y. Dung "sua cho nhat quan" o lan ra soat sau: nang CT04 len
+ * chan se khoa them 78 ho so ma khong co can cu gi.
+ *
+ * MUOI TRUONG THEM, do 2026-09-07 tren 1050 CT03 that:
+ *   PP_DIEUTRI          rong  78 (7.4%)  <- chan ngay, cong da tu choi
+ *   CHAN_DOAN           rong   0 (0%)
+ *   BENHICD10_ID        rong   0 (0%)
+ *   TENBENHICD10        rong   0 (0%)
+ *   NGAY_CHUNG_TU       rong   0 (0%)
+ *   THU_TRUONG_DVI      rong   0 (0%)
+ *   TEN_TRUONGKHOA      rong   0 (0%)
+ *   MA_CCHN_TRUONGKHOA  rong   0 (0%)
+ *   LOAI_GIAYTO         rong   0 (0%)
+ *   NGHE_NGHIEP         rong   0 (0%)
+ *
+ * Chin truong sau do duoc 0% nen chan khong khoa them ho so nao. LOAI_GIAYTO truoc do da co
+ * CTDT004 kiem GIA TRI co hop le khong, nhung khong ai kiem no RONG - day la bit not ke ho.
+ *
+ * LUU Y VAN HANH: module nay KHONG co duong kiem lai. CheckCtdtJob chi duoc day tu
+ * CtdtImporter luc nap, nen luat moi CHI bam vao ho so nap tu day tro di. 78 ho so cu van
+ * giu so_loi cu va van gui duoc, cho toi khi duoc nap lai.
  */
 class CtdtTruongBatBuoc
 {
     /** @var array LOAIHOSO => danh sach the bat buoc (muc chan) */
     const BAT_BUOC = [
         'CT03'              => ['MA_BHXH', 'MA_KHOA', 'HO_TEN', 'NGAY_SINH', 'GIOI_TINH',
-                                'DIA_CHI', 'NGAY_VAO', 'NGAY_RA'],
+                                'DIA_CHI', 'NGAY_VAO', 'NGAY_RA',
+                                // Dot 2026-09-07 - xem docblock muc "Giay ra vien".
+                                'PP_DIEUTRI', 'CHAN_DOAN', 'BENHICD10_ID', 'TENBENHICD10',
+                                'NGAY_CHUNG_TU', 'THU_TRUONG_DVI', 'TEN_TRUONGKHOA',
+                                'MA_CCHN_TRUONGKHOA', 'LOAI_GIAYTO', 'NGHE_NGHIEP'],
         'CT04'              => ['MA_BHXH', 'HO_TEN', 'NGAY_SINH', 'GIOI_TINH', 'DIA_CHI',
                                 'NGAY_VAO', 'NGAY_RA', 'CHAN_DOAN_VAO', 'CHAN_DOAN_RA',
                                 'QT_BENHLY', 'TOMTAT_KQ', 'TT_RAVIEN', 'NGAY_CT'],

@@ -47,12 +47,7 @@ class CtdtGuiToanLuongTest extends TestCase
     private function goiHopLe()
     {
         return $this->goiCt2025([[
-            $this->chungTu('CT03', [
-                'MA_YTE' => 'YT001', 'MA_BHXH' => '0123456789', 'MA_KHOA' => 'K01',
-                'HO_TEN' => 'Nguyen Van Test', 'NGAY_SINH' => '19950914', 'GIOI_TINH' => '1',
-                'DIA_CHI' => 'Ha Noi', 'NGAY_VAO' => '201912121200',
-                'NGAY_RA' => '201912180001', 'MA_THE' => 'DN1234567890',
-            ]),
+            $this->chungTu('CT03', $this->truongCt03HopLe()),
         ]]);
     }
 

@@ -21,10 +21,45 @@ class CheckCtdtJobTest extends TestCase
     }
 
     /**
-     * Dung mot ho so CT03 voi cac gia tri truyen vao, tra ban ghi ho so.
+     * Dung mot ho so CT03 HOP LE, roi de $chiTiet ghi de len.
+     *
+     * NEN DAY DU 18 TRUONG BAT BUOC: cac test o day khang dinh SO LOI CHINH XAC (1 loi, 3
+     * loi...), tuc y cua chung la "ho so hop le TRU dung mot truong". Neu nen thieu san vai
+     * truong thi moi lan siet danh sach bat buoc, con so do nhay len va ca loat test do -
+     * dot 2026-09-07 them muoi truong da lam do bon test o day cung mot luc.
+     *
+     * Muon mot truong THIEU thi truyen '' cho no: hoSoCt03(['ho_ten' => '']).
+     *
+     * Ten khoa la TEN COT (chu thuong) chu khong phai ten the XML - ham nay ghi thang vao
+     * bang ctdt_ct03, khong di qua duong nap.
      */
     private function hoSoCt03(array $chiTiet, array $ghiDeHoSo = [])
     {
+        $chiTiet = array_merge([
+            'ma_yte'    => 'YT001',
+            'ma_bhxh'   => '0123456789',
+            'ma_khoa'   => 'K01',
+            'ho_ten'    => 'Nguyen Van Test',
+            'ngay_sinh' => '19950914',
+            'gioi_tinh' => '1',
+            'dia_chi'   => 'Ha Noi',
+            'ngay_vao'  => '201912121200',
+            'ngay_ra'   => '201912180001',
+            'ma_the'    => 'DN1',
+
+            // Muoi truong them o dot 2026-09-07 - xem docblock CtdtTruongBatBuoc.
+            'pp_dieutri'         => 'Dieu tri noi khoa',
+            'chan_doan'          => 'U ac tinh o dai trang(C18.9)',
+            'benhicd10_id'       => 'C18.9',
+            'tenbenhicd10'       => 'U ac tinh o dai trang',
+            'ngay_chung_tu'      => '20260907',
+            'thu_truong_dvi'     => 'Pham Cam Phuong',
+            'ten_truongkhoa'     => 'Pham Van Dung',
+            'ma_cchn_truongkhoa' => '004929/HNO-GPHN',
+            'loai_giayto'        => '1',
+            'nghe_nghiep'        => 'Khong xac dinh',
+        ], $chiTiet);
+
         $hoSo = CtdtHoSo::create(array_merge([
             'ma_ho_so' => 'YT001', 'dich_vu' => 'CT2025', 'loai_hs' => '39',
             'macskcb' => '01929', 'so_chung_tu' => 1,

@@ -1,5 +1,12 @@
 # 07/09/2026
 
+- **Giấy ra viện: siết mười trường bắt buộc.** Trong đó **Phương pháp điều trị** được đưa lên mức chặn sau khi cổng Bảo hiểm xã hội **từ chối một hồ sơ** vì thiếu trường này. Đây là lần đầu một trường được đưa thẳng lên mức chặn trong khi dữ liệu thật còn thiếu, và là có chủ đích: đo trên 1.050 giấy ra viện đã nạp thì **78 hồ sơ (7,4%) đang bỏ trống** trường này — chúng chính là những hồ sơ cổng sẽ từ chối, nên khoá lại là kết quả mong muốn.
+- Chín trường còn lại — Chẩn đoán, Mã bệnh ICD-10, Tên bệnh ICD-10, Ngày chứng từ, Thủ trưởng đơn vị, Tên trưởng khoa, Mã chứng chỉ hành nghề trưởng khoa, Loại giấy tờ, Nghề nghiệp — **đo được rỗng 0%** nên chặn mà không khoá thêm hồ sơ nào. Chạy lại bộ kiểm trên toàn bộ 3.048 chứng từ thật xác nhận: đúng 78 hồ sơ bị chặn, và chỉ do Phương pháp điều trị.
+- Riêng **Loại giấy tờ** trước đó đã có luật kiểm giá trị có hợp lệ không, nhưng không ai kiểm nó rỗng — nay bịt nốt kẽ hở đó.
+- **Trường này ở Tóm tắt hồ sơ bệnh án vẫn chỉ cảnh báo, không chặn.** Cổng từ chối *giấy ra viện*, không phải tóm tắt bệnh án — hai biểu mẫu khác nhau, và loại kia chưa có bằng chứng nào. Nâng cả hai sẽ khoá thêm 78 hồ sơ mà không có căn cứ. Sự không nhất quán này là có chủ đích và đã được ghi rõ trong mã lẫn tài liệu.
+- **Lưu ý vận hành: luật mới không tự áp lên hồ sơ cũ.** Module chứng từ điện tử không có chức năng kiểm lại — bộ kiểm chỉ chạy lúc nạp. Nên 78 hồ sơ nói trên vẫn giữ kết quả kiểm cũ và vẫn gửi được, cho tới khi được **nạp lại**.
+- Tài liệu hướng dẫn sử dụng lên phiên bản 1.10, bổ sung mục liệt kê đầy đủ trường bắt buộc của giấy ra viện.
+
 - **Đơn vị hành chính chuyển từ ba cấp sang hai cấp Tỉnh/Xã.** Danh mục cũ có 10.542 xã thuộc 699 huyện của 63 tỉnh; danh mục mới có **3.321 xã thuộc 34 tỉnh**, không còn cấp huyện. Phần mềm nay kiểm cư trú theo hai cấp, và **thêm một quy tắc mới: mã xã phải thuộc mã tỉnh đã khai** — quan hệ lồng nhau duy nhất còn lại sau khi bỏ cấp huyện. Trước đây phần mềm chỉ kiểm hai mã tồn tại rời rạc, nên hồ sơ khai tỉnh Hà Nội kèm xã của Cà Mau vẫn lọt.
 
 - **Có lệnh riêng để thay danh mục: `php artisan hanh-chinh:chuyen-2-cap <tệp Excel>`.** Lệnh hỏi xác nhận, chạy trọn trong một giao dịch, và in số liệu trước/sau để đối chiếu. Dòng của danh mục cũ **không bị xoá** mà chuyển sang trạng thái ngừng dùng — sai thì còn đường lùi, còn xoá thì không.

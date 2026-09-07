@@ -15,6 +15,46 @@ use App\Services\Ctdt\CtdtLoaiRegistry;
 trait GoiCtdtMau
 {
     /**
+     * Bo truong CT03 DU 18 TRUONG BAT BUOC - dung cho test can mot ho so HOP LE.
+     *
+     * VI SAO TAP TRUNG MOT CHO: truoc day moi test tu go danh sach truong cua no. Dot siet
+     * 2026-09-07 them muoi truong bat buoc, va 14 test do cung mot luc - moi test deu "dung"
+     * vao ngay hom truoc. Gom ve mot ham thi lan siet sau chi phai sua o day.
+     *
+     * Test nao CO Y dung mot ho so THIEU truong thi dung tu go danh sach nhu cu, dung goi
+     * ham nay - de doc len thay ngay no thieu gi.
+     *
+     * @param array $ghiDe De trong mot truong: truyen ['PP_DIEUTRI' => '']
+     */
+    protected function truongCt03HopLe(array $ghiDe = [])
+    {
+        return array_merge([
+            'MA_YTE'    => 'YT001',
+            'MA_BHXH'   => '0123456789',
+            'MA_KHOA'   => 'K01',
+            'HO_TEN'    => 'Nguyen Van Test',
+            'NGAY_SINH' => '19950914',
+            'GIOI_TINH' => '1',
+            'DIA_CHI'   => 'Ha Noi',
+            'NGAY_VAO'  => '201912121200',
+            'NGAY_RA'   => '201912180001',
+            'MA_THE'    => 'DN1234567890',
+
+            // Muoi truong them o dot 2026-09-07 - xem docblock CtdtTruongBatBuoc.
+            'PP_DIEUTRI'         => 'Dieu tri noi khoa',
+            'CHAN_DOAN'          => 'U ac tinh o dai trang(C18.9)',
+            'BENHICD10_ID'       => 'C18.9',
+            'TENBENHICD10'       => 'U ac tinh o dai trang',
+            'NGAY_CHUNG_TU'      => '20260907',
+            'THU_TRUONG_DVI'     => 'Pham Cam Phuong',
+            'TEN_TRUONGKHOA'     => 'Pham Van Dung',
+            'MA_CCHN_TRUONGKHOA' => '004929/HNO-GPHN',
+            'LOAI_GIAYTO'        => '1',
+            'NGHE_NGHIEP'        => 'Khong xac dinh',
+        ], $ghiDe);
+    }
+
+    /**
      * Mot chung tu de dua vao goiCt2025().
      *
      * @param string $loaiHoSo gia tri LOAIHOSO, vd 'CT03'

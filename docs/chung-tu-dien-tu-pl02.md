@@ -681,6 +681,48 @@ không đo từng chặn 97% hồ sơ trong nhiều ngày.
 không phát sinh cảnh báo mới), 1074 hồ sơ sẵn sàng gửi. Việc siết mức chặn ở bảng đầu không khóa
 lại hồ sơ nào, đúng như đo trước đã dự kiến.
 
+### Giấy ra viện (CT03) — siết 10 trường ngày 07/09/2026
+
+**Căn cứ khác hẳn các đợt trước.** Không phải đọc công văn, mà là **cổng BHXH đã từ chối** một
+hồ sơ vì thiếu `PP_DIEUTRI`. Công văn 2076 **không** đánh dấu trường này bắt buộc ở CT03 — chỉ
+đọc công văn thì không bao giờ thêm nó. Phản hồi thật của cổng là căn cứ mạnh hơn công văn.
+
+`PP_DIEUTRI` **chặn ngay** dù đo được rỗng **78/1050 (7,4%)**. Đây là lần đầu một trường được
+đưa thẳng lên mức chặn trong khi dữ liệu thật còn thiếu, và là **có ý**: 78 hồ sơ đó chuyển sang
+"Còn lỗi chặn" và không gửi được cho tới khi phần mềm sinh XML điền đủ rồi nạp lại. Đó chính là
+kết quả mong muốn — chúng là những hồ sơ cổng sẽ từ chối.
+
+**Chín trường còn lại đo được 0% rỗng**, nên chặn không khoá thêm hồ sơ nào:
+
+| Trường | Rỗng /1050 |
+|---|---|
+| `PP_DIEUTRI` | 78 (7,4%) — chặn ngay, cổng đã từ chối |
+| `CHAN_DOAN`, `BENHICD10_ID`, `TENBENHICD10`, `NGAY_CHUNG_TU` | 0 |
+| `THU_TRUONG_DVI`, `TEN_TRUONGKHOA`, `MA_CCHN_TRUONGKHOA` | 0 |
+| `LOAI_GIAYTO`, `NGHE_NGHIEP` | 0 |
+
+`LOAI_GIAYTO` trước đó đã có `CTDT004` kiểm **giá trị** có hợp lệ không, nhưng không ai kiểm nó
+**rỗng** — đây là bịt nốt kẽ hở đó.
+
+**Kết quả đo sau khi siết, chạy bộ kiểm mới trên toàn bộ 3048 chứng từ thật (07/09/2026):**
+đúng **78 hồ sơ** bị chặn, và **chỉ** do `PP_DIEUTRI` — chín trường kia không sinh một lỗi nào,
+khớp đúng con số đo trước.
+
+#### ⚠️ CT04 cùng trường vẫn chỉ cảnh báo — đừng "sửa cho nhất quán"
+
+Cổng từ chối **giấy ra viện (CT03)**, không phải **tóm tắt hồ sơ bệnh án (CT04)** — hai biểu mẫu
+khác nhau, và CT04 chưa có bằng chứng nào. Nâng CT04 lên chặn sẽ khoá thêm 78 hồ sơ mà không có
+căn cứ gì. Sự không nhất quán này là **có ý**, và `CtdtTruongBatBuocTest::PP_DIEUTRI_CHAN_o_CT03_nhung_chi_CANH_BAO_o_CT04`
+canh đúng điều đó.
+
+#### Lưu ý vận hành: luật mới KHÔNG áp lên hồ sơ cũ
+
+Module này **không có đường kiểm lại**. `CheckCtdtJob` chỉ được đẩy từ `CtdtImporter` lúc nạp
+(module TT12 có nút "Kiểm lại", CTĐT thì không). Nên luật mới **chỉ bám vào hồ sơ nạp từ nay trở
+đi**: 78 hồ sơ cũ vẫn giữ `so_loi` cũ và vẫn gửi được, cho tới khi được **nạp lại**.
+
+Muốn luật bám vào chúng thì nạp đè lại đúng những hồ sơ đó.
+
 ### Trường ngày sinh chấp nhận dạng chỉ có năm (`yyyy`)
 
 Cùng công văn 2076, bảng trường CT03/CT04/CT07 ghi: *"`NGAY_SINH` … định dạng **`yyyyMMdd`

@@ -52,12 +52,7 @@ class CtdtKiemToanLuongTest extends TestCase
         // Bat bien: mot ho so hop le phai di het qua bo kiem ma khong bi bat loi oan -
         // bo kiem khong duoc "qua tay" bao loi cho ho so dung.
         $this->napVaKiem($this->goiCt2025([[
-            $this->chungTu('CT03', [
-                'MA_YTE' => 'YT001', 'MA_BHXH' => '0123456789', 'MA_KHOA' => 'K01',
-                'HO_TEN' => 'Nguyen Van Test', 'NGAY_SINH' => '19950914', 'GIOI_TINH' => '1',
-                'DIA_CHI' => 'Ha Noi', 'NGAY_VAO' => '201912121200',
-                'NGAY_RA' => '201912180001', 'MA_THE' => 'DN1234567890',
-            ]),
+            $this->chungTu('CT03', $this->truongCt03HopLe()),
         ]]));
 
         $this->assertSame(0, (int) CtdtHoSo::first()->so_loi);
@@ -107,12 +102,7 @@ class CtdtKiemToanLuongTest extends TestCase
         $this->assertGreaterThan(0, (int) CtdtHoSo::first()->so_loi);
 
         $xmlDaSua = $this->goiCt2025([[
-            $this->chungTu('CT03', [
-                'MA_YTE' => 'YT001', 'MA_BHXH' => '0123456789', 'MA_KHOA' => 'K01',
-                'HO_TEN' => 'Nguyen Van Test', 'NGAY_SINH' => '19950914', 'GIOI_TINH' => '1',
-                'DIA_CHI' => 'Ha Noi', 'NGAY_VAO' => '201912121200',
-                'NGAY_RA' => '201912180001', 'MA_THE' => 'DN1',
-            ]),
+            $this->chungTu('CT03', $this->truongCt03HopLe(['MA_THE' => 'DN1'])),
         ]]);
 
         // Nap lai KHONG chay job - mo phong luc worker chet. CtdtImporter::nhapTuChuoi() tu

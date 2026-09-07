@@ -25,6 +25,19 @@ class CtdtCheckerTest extends TestCase
             'MA_THE'    => 'DN1234567890',
             'GIOI_TINH' => '1',
             'DIA_CHI'   => 'Ha Noi',
+
+            // Muoi truong them o dot 2026-09-07. Gia tri lay tu mot giay ra vien THAT de
+            // bo mau khong troi xa du lieu san xuat.
+            'PP_DIEUTRI'         => 'Dieu tri noi khoa',
+            'CHAN_DOAN'          => 'U ac tinh o dai trang, khong xac dinh(C18.9)',
+            'BENHICD10_ID'       => 'C18.9',
+            'TENBENHICD10'       => 'U ac tinh o dai trang, khong xac dinh',
+            'NGAY_CHUNG_TU'      => '20260907',
+            'THU_TRUONG_DVI'     => 'Pham Cam Phuong',
+            'TEN_TRUONGKHOA'     => 'Pham Van Dung',
+            'MA_CCHN_TRUONGKHOA' => '004929/HNO-GPHN',
+            'LOAI_GIAYTO'        => '1',
+            'NGHE_NGHIEP'        => 'Khong xac dinh',
         ], $ghiDe);
     }
 
@@ -48,6 +61,39 @@ class CtdtCheckerTest extends TestCase
         $this->assertSame('HO_TEN', $loi[0]['ten_truong']);
         $this->assertSame('chan', $loi[0]['muc_do']);
         $this->assertContains('HO_TEN', $loi[0]['mo_ta'], 'Mo ta phai neu ten truong');
+    }
+
+    /** @test */
+    public function giay_ra_vien_thieu_PP_DIEUTRI_bi_CHAN()
+    {
+        // Cong BHXH da tu choi mot giay ra vien vi thieu truong nay. Tren tep that, the CO
+        // MAT nhung noi dung rong: <PP_DIEUTRI><![CDATA[]]></PP_DIEUTRI> - SimpleXML doc ra
+        // chuoi rong, khong phai null. Kiem dung hinh thai do chu khong go the di, vi mot
+        // quy tac chi bat duoc "the vang han" se de lot dung cai da bi cong tu choi.
+        $loi = CtdtChecker::kiem('CT03', $this->ct03HopLe(['PP_DIEUTRI' => '']), '01929');
+
+        $this->assertContains('CTDT001', $this->maLoi($loi));
+        $this->assertSame('PP_DIEUTRI', $loi[0]['ten_truong']);
+        $this->assertSame('chan', $loi[0]['muc_do'], 'Phai la muc CHAN, khong phai canh bao');
+    }
+
+    /** @test */
+    public function chin_truong_them_o_dot_2026_09_07_deu_CHAN_khi_rong()
+    {
+        // Chin truong nay deu do duoc RONG 0% tren 1050 CT03 that, nen chan khong khoa them
+        // ho so nao. Test di qua tung cai: them mot truong vao danh sach ma bo kiem khong
+        // thuc su chan no thi assertSame o CtdtTruongBatBuocTest van xanh.
+        $cac = ['CHAN_DOAN', 'BENHICD10_ID', 'TENBENHICD10', 'NGAY_CHUNG_TU',
+                'THU_TRUONG_DVI', 'TEN_TRUONGKHOA', 'MA_CCHN_TRUONGKHOA', 'LOAI_GIAYTO',
+                'NGHE_NGHIEP'];
+
+        foreach ($cac as $the) {
+            $loi = CtdtChecker::kiem('CT03', $this->ct03HopLe([$the => '']), '01929');
+
+            $this->assertContains('CTDT001', $this->maLoi($loi), $the . ' phai sinh CTDT001');
+            $this->assertSame($the, $loi[0]['ten_truong'], $the . ': sai ten truong bao loi');
+            $this->assertSame('chan', $loi[0]['muc_do'], $the . ' phai o muc chan');
+        }
     }
 
     /** @test */

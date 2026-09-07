@@ -15,7 +15,7 @@
  * NGAY_PHAT_HANH cho khớp dòng đó.
  */
 
-const PHIEN_BAN = '1.9';
+const PHIEN_BAN = '1.10';
 
 const NGAY_PHAT_HANH = 'Tháng 9 năm 2026';
 
@@ -27,6 +27,13 @@ const NGAY_PHAT_HANH = 'Tháng 9 năm 2026';
  * thay vì đọc lại cả tài liệu.
  */
 const LICH_SU = [
+  {
+    ban: '1.10',
+    ngay: '07/09/2026',
+    noi_dung:
+      'Chứng từ điện tử: siết mười trường bắt buộc của giấy ra viện, trong đó Phương pháp điều trị được đưa lên mức chặn sau khi cổng Bảo hiểm xã hội từ chối một hồ sơ vì thiếu trường này. Bổ sung mục liệt kê đầy đủ trường bắt buộc của giấy ra viện.',
+    lien_quan: 'Phần VI, mục 6.8.1 (mới).',
+  },
   {
     ban: '1.9',
     ngay: '07/09/2026',

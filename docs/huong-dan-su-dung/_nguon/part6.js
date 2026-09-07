@@ -230,6 +230,20 @@ module.exports = function part6() {
       ],
       [1400, 6120, 1500],
     ),
+    h3('6.8.1. Trường bắt buộc của giấy ra viện'),
+    p('Mã lỗi CTDT001 nói "thiếu trường bắt buộc" nhưng không nói trường nào bắt buộc. Với giấy ra viện — loại chứng từ phát sinh nhiều nhất — danh sách là:'),
+    table(
+        ['Nhóm', 'Các trường'],
+        [
+            ['Người bệnh', 'Mã BHXH, Họ tên, Ngày sinh, Giới tính, Địa chỉ, Nghề nghiệp, Loại giấy tờ.'],
+            ['Đợt điều trị', 'Mã khoa, Ngày vào, Ngày ra, Chẩn đoán, Mã bệnh ICD-10, Tên bệnh ICD-10, Phương pháp điều trị.'],
+            ['Chứng từ', 'Ngày chứng từ, Thủ trưởng đơn vị, Tên trưởng khoa, Mã chứng chỉ hành nghề của trưởng khoa.'],
+        ],
+        [1800, 7220],
+    ),
+    note('Lưu ý:', 'Phương pháp điều trị (PP_DIEUTRI) được đưa vào nhóm bắt buộc từ ngày 07/09/2026, sau khi cổng Bảo hiểm xã hội từ chối một hồ sơ vì thiếu trường này. Trên dữ liệu hiện có, khoảng 7% giấy ra viện đang bỏ trống trường này — những hồ sơ đó sẽ chuyển sang "Còn lỗi chặn" sau khi được nạp lại, và phải bổ sung ở phần mềm nguồn rồi nạp lại thì mới gửi được.'),
+    p('Luật mới chỉ áp cho hồ sơ nạp từ thời điểm nâng cấp trở đi. Hồ sơ đã nạp trước đó giữ nguyên kết quả kiểm cũ cho tới khi được nạp lại — nghĩa là một hồ sơ thiếu phương pháp điều trị nạp từ trước vẫn có thể gửi được. Muốn rà lại toàn bộ thì nạp đè lại các hồ sơ đó.'),
+
     p('Mọi lỗi trong bảng trên đều phải sửa ở phần mềm sinh ra tệp XML rồi nạp lại hồ sơ. Không có chức năng sửa dữ liệu chứng từ trực tiếp trên màn hình này — sửa tại đây sẽ làm nội dung lệch với chữ ký số và với bản gốc lưu tại đơn vị.'),
 
     h2('6.9. Xuất dữ liệu ra Excel'),
