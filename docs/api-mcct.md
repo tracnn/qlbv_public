@@ -65,15 +65,17 @@ Không có dữ liệu không phải lỗi. Gọi lại với `lam_moi=1` để 
 
 ## Lỗi
 
+Luôn kiểm mã HTTP trước; chỉ phân tích thân phản hồi khi mã nằm trong bảng dưới.
+
 ```json
 { "success": false, "error": { "code": "...", "message": "...", "details": "..." }, "meta": {} }
 ```
 
 | HTTP | `code` | Nghĩa |
 |---|---|---|
-| 401 | | Thiếu hoặc sai token |
+| 401 | `UNAUTHORIZED` | Thiếu hoặc sai token |
 | 422 | `VALIDATION_ERROR` | Thiếu tham số hoặc mã thẻ sai độ dài |
-| 429 | | Vượt hạn mức 60 request/phút |
+| 429 | | Vượt hạn mức 60 request/phút. Do tầng hạ tầng trả về, KHÔNG theo khuôn `{success, error, meta}` — thân phản hồi có thể là JSON `{message}` hoặc HTML. Phản hồi kèm header `Retry-After` |
 | 502 | `GATEWAY_ERROR` | Cổng BHXH báo lỗi hoặc không kết nối được |
 | 504 | `GATEWAY_TIMEOUT` | Cổng BHXH không trả lời kịp |
 | 500 | `INTERNAL_ERROR` | Lỗi phía qlbv |

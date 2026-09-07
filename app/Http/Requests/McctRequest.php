@@ -8,6 +8,15 @@ use Illuminate\Foundation\Http\FormRequest;
 class McctRequest extends FormRequest
 {
     /**
+     * Ba dinh dang ngay sinh cong chap nhan: dd/mm/yyyy, mm/yyyy, yyyy.
+     *
+     * MOT CHO DUY NHAT dinh nghia chuoi nay: man web (rules() ben duoi) va API
+     * (McctApiController::thieuThamSoLamMoi()) phai doc CUNG mot regex - du an nay da bi
+     * chep doi can ba lan (xem qlbv-test-infra-gotchas / bay-tiem-container).
+     */
+    const REGEX_NGAY_SINH = '#^((0[1-9]|[12]\d|3[01])/(0[1-9]|1[0-2])/\d{4}|(0[1-9]|1[0-2])/\d{4}|\d{4})$#';
+
+    /**
      * Determine if the user is authorized to make this request.
      *
      * @return bool
@@ -47,7 +56,7 @@ class McctRequest extends FormRequest
             // 1/1/1990, 1990-01-01, 01-01-1990, 32/01/1990 deu bi chan.
             // Danh doi co chu dich: 31/02/1990 (ngay khong ton tai nhung dung mien 01-31/01-12)
             // van lot qua luat nay - kiem tra ngay thuc (checkdate) khong thuoc pham vi rules().
-            'ngay_sinh' => ['required', 'regex:#^((0[1-9]|[12]\d|3[01])/(0[1-9]|1[0-2])/\d{4}|(0[1-9]|1[0-2])/\d{4}|\d{4})$#'],
+            'ngay_sinh' => ['required', 'regex:' . self::REGEX_NGAY_SINH],
         ];
     }
 

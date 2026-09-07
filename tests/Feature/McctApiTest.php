@@ -20,6 +20,11 @@ class McctApiTest extends TestCase
 
         config(['organization.api.access_token' => hash('sha256', self::TOKEN)]);
         config(['mcct.khoang_cho_lam_moi' => 900]);
+
+        // phpunit.xml dat CACHE_DRIVER=array: khoa Cache::add cua chot dua (finding 3) khong
+        // dinh giua cac tien trinh test khac nhau, nhung an toan hon la don sach o day de
+        // khong phu thuoc thu tu chay.
+        \Cache::flush();
     }
 
     /**
@@ -229,5 +234,64 @@ class McctApiTest extends TestCase
         ]);
 
         $this->assertGreaterThan(0, array_get($ra->json(), 'meta.lam_moi_duoc_sau'));
+    }
+
+    /**
+     * Finding 2: mot ban ghi 204 (khong phai loi, nhung van tieu mot luot goi cong) van phai
+     * chan lam_moi trong khau do - VA van phai bao ro bo_qua_lam_moi/lam_moi_duoc_sau, khong
+     * duoc roi vao nhanh "chua tra lan nao" chi vi tuDuLieuDaLuu() loc rieng ma_ket_qua='200'.
+     *
+     * Test nay KHONG cham cong: QuyetDinhGoiCong::nen() da chan truoc ca khi toi doan
+     * Cache::add(), vi ban ghi 204 vua tao co tra_luc = bay gio, con trong khau do 900 giay.
+     */
+    /** @test */
+    public function lam_moi_bi_chan_khau_do_nhung_chua_co_ban_ghi_200_thi_van_bao_ro()
+    {
+        $ban = McctTraCuu::create([
+            'ma_cskcb' => '01929',
+            'ma_the' => self::MA_THE,
+            'ho_ten' => 'NGUYEN VAN TEST',
+            'ngay_sinh' => '01/01/1980',
+            'ma_ket_qua' => '204',
+            'ghi_chu' => 'Không tìm thấy dữ liệu',
+            'nguon' => 'api_his',
+            'tra_boi' => null,
+            'tra_luc' => date('Y-m-d H:i:s'),
+        ]);
+        $this->daTao[] = $ban->id;
+
+        $ra = $this->goi([
+            'ma_the' => self::MA_THE,
+            'lam_moi' => 1,
+            'ho_ten' => 'NGUYEN VAN TEST',
+            'ngay_sinh' => '01/01/1980',
+            'ma_cskcb' => '01929',
+        ])->assertStatus(200);
+
+        $ra->assertJson(['success' => true]);
+
+        $this->assertTrue(array_get($ra->json(), 'meta.bo_qua_lam_moi'));
+        $this->assertGreaterThan(0, array_get($ra->json(), 'meta.lam_moi_duoc_sau'));
+    }
+
+    /**
+     * Finding 4: ngay_sinh dinh dang ISO (rat de xay ra tu mot HIS) phai bi chan o day, TRUOC
+     * khi cham cong - neu khong mot lam_moi=1 sai dinh dang se tieu mot luot goi chi de nhan
+     * lai 400 tu cong.
+     *
+     * Test nay KHONG cham cong: thieuThamSoLamMoi() chan bang preg_match truoc ca doan doc
+     * ban ghi cu / Cache::add.
+     */
+    /** @test */
+    public function lam_moi_ngay_sinh_sai_dinh_dang_thi_tra_422()
+    {
+        $this->goi([
+            'ma_the' => self::MA_THE,
+            'lam_moi' => 1,
+            'ho_ten' => 'NGUYEN VAN TEST',
+            'ngay_sinh' => '1980-01-01',
+            'ma_cskcb' => '01929',
+        ])->assertStatus(422)
+          ->assertJson(['success' => false, 'error' => ['code' => 'VALIDATION_ERROR']]);
     }
 }

@@ -51,6 +51,26 @@ class McctApiController extends Controller
 
     public function traCuu(Request $request)
     {
+        // Boc TOAN THAN trong try/catch(\Throwable): Handler.php mac dinh cua Laravel voi
+        // APP_DEBUG=true se tra {message, exception, file, line, trace} cho MOI ngoai le
+        // khong bat duoc - duong dan tep va stack trace lo ra cho he thong ngoai. Cac try
+        // rieng le ben duoi (doc CSDL, goi cong) khong phu het: CoSoTraCuu::tuCauHinh(),
+        // McctDungLaiKetQua::tuBanGhi() va response()->json() (json_encode co the nem neu
+        // ghi_chu tho tu cong khong phai UTF-8 hop le) deu nam ngoai chung.
+        try {
+            return $this->traCuuAnToan($request);
+        } catch (\Throwable $e) {
+            \Log::error('MCCT API loi khong bat duoc: ' . $e->getMessage(), [
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
+
+            return $this->loiApi('INTERNAL_ERROR', 'Lỗi hệ thống', 'Vui lòng thử lại sau', 500);
+        }
+    }
+
+    private function traCuuAnToan(Request $request)
+    {
         $maThe = McctRequest::chuanHoaMaThe($request->get('ma_the'));
         $lamMoi = (string) $request->get('lam_moi') === '1';
 
@@ -99,6 +119,16 @@ class McctApiController extends Controller
         );
 
         if ($quyetDinh['goi']) {
+            // Cache::add() la NGUYEN TU: tra false neu khoa da ton tai. Doc-roi-hanh-dong
+            // khong co khoa se de hai request cung mot ma the den cung luc CUNG goi cong -
+            // cua so dua rong toi ca phut vi cong tra loi 5-60 giay.
+            $khoa = 'mcct:lam_moi:' . $maThe;
+            $phut = (int) ceil(((int) config('mcct.khoang_cho_lam_moi', 900)) / 60);
+
+            if (!\Cache::add($khoa, 1, max(1, $phut))) {
+                return $this->tuDuLieuDaLuu($maThe, ['goi' => false, 'con_lai' => 0], $lamMoi);
+            }
+
             return $this->goiCong($params);
         }
 
@@ -115,6 +145,12 @@ class McctApiController extends Controller
             }
         }
 
+        // Doc CUNG mot regex voi man web (McctRequest::rules()): mot HIS gui dinh dang ISO
+        // (1980-01-01) se lot qua kiem '!== ""' va tieu mot luot goi cong chi de nhan lai 400.
+        if (!preg_match(McctRequest::REGEX_NGAY_SINH, $params['ngay_sinh'])) {
+            return 'ngay_sinh phải theo dd/mm/yyyy, mm/yyyy hoặc yyyy';
+        }
+
         if (!in_array($params['ma_cskcb'],
             CoSoTraCuu::maDangChuoi(CoSoTraCuu::tuCauHinh()), true)) {
             return 'ma_cskcb không thuộc danh sách cơ sở đã khai tài khoản cổng BHXH';
@@ -125,6 +161,12 @@ class McctApiController extends Controller
 
     private function goiCong(array $params)
     {
+        // Lay moc TRUOC khi goi cong: McctLuuTraCuu (ben trong goiVaLuu) tu ghi moc rieng cua
+        // no ngay sau khi cong tra loi. Lay o day thay vi SAU goiVaLuu bot duoc phan lech do
+        // cho ket qua cua goiVaLuu roi moi doc dong ho - phan lech con lai (thoi gian ghi
+        // CSDL) la khong dang ke va khong dang doi chu ky de trieu tieu not.
+        $traLuc = date('Y-m-d H:i:s');
+
         $ra = McctTraCuuChung::goiVaLuu($params, 'api_his');
 
         if ($ra['loi'] !== null) {
@@ -150,30 +192,52 @@ class McctApiController extends Controller
         $kq = $ra['kq'];
         $muc = $ra['muc'];
 
-        return $this->traData([
-            'ma_the' => $params['ma_the'],
-            'nguon' => 'cong_bhxh',
-            'tra_luc' => date('Y-m-d H:i:s'),
-            'ghi_chu' => $kq->ghiChu,
-            'thong_tin_the' => $kq->thongTinThe,
-            'luy_ke_cung_chi_tra' => $muc['luy_ke_tong'],
-            'nguong_ca_nam' => $muc['tong_nguong_ca_nam'],
-            'con_thieu' => $muc['con_thieu'],
-            'du_nguong_6_thang_luong' => (bool) $muc['du_dieu_kien'],
-            'can_kiem_5_nam_lien_tuc' => true,
-            'chi_tiet' => $kq->dong,
-        ], ['ma_ket_qua_cong' => $kq->maKetQua]);
+        // goiVaLuu() KHONG nem khi cong tra ma ung dung 400/500 - no tra ve mot KetQuaMcct
+        // binh thuong voi maKetQua = '400'/'500'. Phai tu kiem o day, neu khong mot cong hong
+        // se bi doc thanh "luy ke = 0, da tra cuu thanh cong" (HTTP 200) thay vi 502. Ma 500
+        // kem GhiChu nhac "qua trinh tra cuu" chinh la tin hieu tai khoan co so dang bi cong
+        // han che tra cuu - rui ro trung tam ca thiet ke nay dang phong.
+        if ($kq->maKetQua !== '200' && $kq->maKetQua !== '204') {
+            \Log::warning('MCCT API cong tra ma loi ung dung', [
+                'ma_the' => $params['ma_the'],
+                'ma_ket_qua' => $kq->maKetQua,
+                'ghi_chu' => $kq->ghiChu,
+            ]);
+
+            // KHONG dua $kq->ghiChu (chuoi tho tu cong) ra details - noi dung khong kiem
+            // soat duoc, chi ghi log phia may chu.
+            return $this->loiApi('GATEWAY_ERROR', 'Không tra cứu được',
+                'Cổng BHXH báo lỗi khi tra cứu. Thử lại sau ít phút.', 502);
+        }
+
+        return $this->traData(
+            $this->duLieu($params['ma_the'], 'cong_bhxh', $traLuc, $kq->ghiChu,
+                $kq->thongTinThe, $muc, $kq->dong),
+            ['ma_ket_qua_cong' => $kq->maKetQua]
+        );
     }
 
     private function tuDuLieuDaLuu($maThe, array $quyetDinh, $lamMoi)
     {
+        $meta = [];
+
+        // Dung TRUOC nhanh "chua tra lan nao" ben duoi va ap dung cho CA HAI duong tra ve:
+        // mot ban ghi 204 (khong phai loi) van chan lam_moi qua QuyetDinhGoiCong, nhung
+        // truy van ben duoi chi loc ma_ket_qua='200' nen se khong thay no va roi vao nhanh
+        // "chua tra lan nao" - neu bao ro nam SAU nhanh do thi bi mat, va HIS doc tai lieu
+        // "goi lai voi lam_moi=1 de tra that" se lap lai vo han suot ca khau do.
+        if ($lamMoi) {
+            $meta['bo_qua_lam_moi'] = true;
+            $meta['lam_moi_duoc_sau'] = $quyetDinh['con_lai'];
+        }
+
         try {
             $phien = McctTraCuu::where('ma_the', $maThe)
                 ->where('ma_ket_qua', '200')
                 ->orderBy('id', 'desc')->first();
 
             if ($phien === null) {
-                return $this->traData(null, ['trang_thai' => 'chua_tra_lan_nao']);
+                return $this->traData(null, array_merge(['trang_thai' => 'chua_tra_lan_nao'], $meta));
             }
 
             $dong = McctChiPhi::where('tra_cuu_id', $phien->id)->orderBy('id')->get()->toArray();
@@ -187,30 +251,36 @@ class McctApiController extends Controller
             (array) config('mcct.luong_co_so', []),
             (int) config('mcct.so_thang_luong_co_so', 6));
 
-        $muc = $cache['muc'];
+        $meta['ma_ket_qua_cong'] = $cache['ma_ket_qua'];
 
-        $meta = ['ma_ket_qua_cong' => $cache['ma_ket_qua']];
+        return $this->traData(
+            $this->duLieu($maThe, 'da_luu', $cache['tra_luc'], $cache['ghi_chu'],
+                $cache['thong_tin_the'], $cache['muc'], $cache['dong']),
+            $meta
+        );
+    }
 
-        // Bo qua lam_moi vi con trong khau do: bao ro chu khong im lang. Tra DU LIEU chu
-        // khong tra 429 - mot vong lap hong ben goi se khong sinh them vong thu lai.
-        if ($lamMoi) {
-            $meta['bo_qua_lam_moi'] = true;
-            $meta['lam_moi_duoc_sau'] = $quyetDinh['con_lai'];
-        }
-
-        return $this->traData([
+    /**
+     * Dung mang `data` cua phan hoi thanh cong.
+     *
+     * MOT CHO DUY NHAT dung 11 khoa nay: hai duong (goi cong va du lieu da luu) phai tra ve
+     * CUNG mot hinh dang, neu khong ben goi se nhan hai kieu du lieu khac nhau tuy luc.
+     */
+    private function duLieu($maThe, $nguon, $traLuc, $ghiChu, array $the, array $muc, array $chiTiet)
+    {
+        return [
             'ma_the' => $maThe,
-            'nguon' => 'da_luu',
-            'tra_luc' => $cache['tra_luc'],
-            'ghi_chu' => $cache['ghi_chu'],
-            'thong_tin_the' => $cache['thong_tin_the'],
+            'nguon' => $nguon,
+            'tra_luc' => $traLuc,
+            'ghi_chu' => $ghiChu,
+            'thong_tin_the' => $the,
             'luy_ke_cung_chi_tra' => $muc['luy_ke_tong'],
             'nguong_ca_nam' => $muc['tong_nguong_ca_nam'],
             'con_thieu' => $muc['con_thieu'],
             'du_nguong_6_thang_luong' => (bool) $muc['du_dieu_kien'],
             'can_kiem_5_nam_lien_tuc' => true,
-            'chi_tiet' => $cache['dong'],
-        ], $meta);
+            'chi_tiet' => $chiTiet,
+        ];
     }
 
     private function traData($data, array $themMeta = [])
