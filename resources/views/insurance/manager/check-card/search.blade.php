@@ -152,7 +152,7 @@
 @endif
 
 @push('after-scripts')
-<script src="{{ asset('js/mcct-tra-cuu.js') }}"></script>
+@include('insurance.manager.mcct._script')
 <script type="text/javascript">
     // Nho co so da chon giua cac lan vao man. Chi nho LUA CHON, khong nho tai khoan hay
     // bat ky thu gi nhay cam.

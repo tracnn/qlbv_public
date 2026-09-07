@@ -16,7 +16,7 @@
 @stop
 
 @push('after-scripts')
-<script src="{{ asset('js/mcct-tra-cuu.js') }}"></script>
+@include('insurance.manager.mcct._script')
 <script type="text/javascript">
     $(document).ready(function () {
         var $nut = $('#mcct-tra');
