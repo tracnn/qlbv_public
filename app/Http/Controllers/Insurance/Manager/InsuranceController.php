@@ -9,6 +9,7 @@ use App\Http\Requests\InsuranceRequest;
 use App\BHYT;
 use App\Services\BHYTLoginService;
 use App\Services\BHYT\CoSoTraCuu;
+use App\Services\BHYT\LichSuKcb;
 
 class InsuranceController extends Controller
 {
@@ -91,16 +92,28 @@ class InsuranceController extends Controller
         $result_insurance = BHYT::checkInsuranceCard($params['card-number'],$params['name'],$params['birthday'],
             $accessToken, $idToken, $loginService);
 
+        // Lich su KCB: tu 2025 cong tach sang ham RIENG (Lskcb2025), khoi dsLichSuKCB2018
+        // trong ket qua tra the luon la null. Goi bo sung de bang lich su tren man co nguon
+        // lai. Mac dinh mang rong: tra the hong thi khong hoi tiep.
+        $lichSuKcb = [];
+
         if ($result_insurance['maKetQua'] == '000') {
-           $params = $this->__setSearchParam($result_insurance['maThe'], 
+           $params = $this->__setSearchParam($result_insurance['maThe'],
             $result_insurance['hoTen'], $result_insurance['ngaySinh'], $request);
+
+            // Lay tham so TU KET QUA cong vua tra ve chu khong tu o nguoi dung go: cong vua
+            // cho ta ma the va ngay sinh chuan, dung chung thi khong sai mot ky tu nao.
+            // LichSuKcb khong bao gio nem, nen mot lan goi hong chi lam mat bang lich su
+            // chu khong lam hong ket qua tra the dang cam chac trong tay.
+            $lichSuKcb = (new LichSuKcb($params['ma_cskcb']))->tra(
+                $result_insurance['maThe'], $result_insurance['hoTen'], $result_insurance['ngaySinh']);
         }
 
         $insurance_code = config('__tech.insurance_error_code');
         $ket_qua_dtri = config('__tech.ket_qua_dtri');
         $tinh_trang_rv = config('__tech.tinh_trang_rv');
 
-		return view('insurance.manager.check-card.index', compact('params','result_insurance','ket_qua_dtri','tinh_trang_rv','insurance_code','danhSachCoSo'));
+		return view('insurance.manager.check-card.index', compact('params','result_insurance','ket_qua_dtri','tinh_trang_rv','insurance_code','danhSachCoSo','lichSuKcb'));
     }
 
     private function __setSearchParam($maThe, $hoTen, $ngaySinh, Request $request)
