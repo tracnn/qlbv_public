@@ -12,6 +12,7 @@ use App\Services\Xml3176\Support\Xml3176DateHelper;
 use App\Services\Xml3176\Support\TyLeComparator;
 use App\Services\Xml3176\Support\ServiceOverlapChecker;
 use App\Services\Xml3176\Support\MaDvktStructure;
+use App\Services\Xml3176\Support\TienTeCalculator;
 use Illuminate\Support\Collection;
 
 class Xml3176Xml3Checker
@@ -154,6 +155,7 @@ class Xml3176Xml3Checker
         $errors = $errors->merge($this->checkServiceGroupPtttDuplicate($data)); // Kiểm tra dịch vụ kỹ thuật
         $errors = $errors->merge($this->checkOverlappingServiceExecution($data));
         $errors = $errors->merge($this->checkCauTrucMaDichVu($data));
+        $errors = $errors->merge($this->checkCongThucTien($data));
 
         if (config('xml3176.general.check_valid_department_req')) {
             $errors = $errors->merge($this->checkValidMakhoaReq($data)); // Kiểm tra tính hợp lệ của khoa chỉ định
@@ -1129,6 +1131,111 @@ class Xml3176Xml3Checker
                 'description' => 'Mã ' . $ma . ' chỉ tới cơ sở KBCB ' . $maChuyenMau
                     . ' nhưng mã này không có trong danh mục cơ sở KBCB',
             ]);
+        }
+
+        return $errors;
+    }
+
+    /**
+     * Cong thuc tien TUNG DONG theo chuan (QD 4750). Tong cap ho so da co
+     * Xml3176CompleteChecker::checkExpenseErrors() lo, nhung tong khop khong suy ra
+     * tung dong dung: hai dong sai nguoc chieu nhau van cho tong dung.
+     *
+     * Thieu can cu thi im lang - toan hang null/khong phai so, hoac ty le ngoai khoang
+     * (0,100], deu khong ket luan.
+     */
+    private function checkCongThucTien(Xml3176Xml3 $data): Collection
+    {
+        $errors = collect();
+        $saiSo = (float) config('xml3176.tien.sai_so', 1.0);
+
+        $tyLeHopLe = TienTeCalculator::tyLeHopLe($data->tyle_tt_dv)
+            && TienTeCalculator::tyLeHopLe($data->tyle_tt_bh);
+
+        if ($tyLeHopLe
+            && TienTeCalculator::laSo($data->so_luong)
+            && TienTeCalculator::laSo($data->don_gia_bv)
+            && TienTeCalculator::laSo($data->thanh_tien_bv)) {
+            $kyVong = TienTeCalculator::thanhTienBvXml3(
+                $data->so_luong, $data->don_gia_bv, $data->tyle_tt_dv
+            );
+
+            if (TienTeCalculator::lech($data->thanh_tien_bv, $kyVong, $saiSo)) {
+                $errorCode = $this->generateErrorCode('THANH_TIEN_BV_SAI_CONG_THUC');
+                $errors->push((object)[
+                    'error_code' => $errorCode,
+                    'error_name' => 'Thành tiền BV không đúng công thức',
+                    'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+                    'description' => 'THANH_TIEN_BV = SO_LUONG x DON_GIA_BV x TYLE_TT_DV/100 = '
+                        . number_format($kyVong, 2) . ', hiện khai: '
+                        . number_format((float) $data->thanh_tien_bv, 2),
+                ]);
+            }
+        }
+
+        if ($tyLeHopLe
+            && TienTeCalculator::laSo($data->so_luong)
+            && TienTeCalculator::laSo($data->don_gia_bh)
+            && TienTeCalculator::laSo($data->thanh_tien_bh)) {
+            $kyVong = TienTeCalculator::thanhTienBhXml3(
+                $data->so_luong, $data->don_gia_bh, $data->tyle_tt_dv, $data->tyle_tt_bh
+            );
+
+            if (TienTeCalculator::lech($data->thanh_tien_bh, $kyVong, $saiSo)) {
+                $errorCode = $this->generateErrorCode('THANH_TIEN_BH_SAI_CONG_THUC');
+                $errors->push((object)[
+                    'error_code' => $errorCode,
+                    'error_name' => 'Thành tiền BH không đúng công thức',
+                    'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+                    'description' => 'THANH_TIEN_BH = SO_LUONG x DON_GIA_BH x TYLE_TT_DV/100 '
+                        . 'x TYLE_TT_BH/100 = ' . number_format($kyVong, 2) . ', hiện khai: '
+                        . number_format((float) $data->thanh_tien_bh, 2),
+                ]);
+            }
+        }
+
+        if (TienTeCalculator::laSo($data->t_nguonkhac)) {
+            $kyVong = TienTeCalculator::tongNguonKhac(
+                $data->t_nguonkhac_nsnn, $data->t_nguonkhac_vtnn,
+                $data->t_nguonkhac_vttn, $data->t_nguonkhac_cl
+            );
+
+            if (TienTeCalculator::lech($data->t_nguonkhac, $kyVong, $saiSo)) {
+                $errorCode = $this->generateErrorCode('T_NGUONKHAC_SAI_TONG');
+                $errors->push((object)[
+                    'error_code' => $errorCode,
+                    'error_name' => 'Tiền nguồn khác không bằng tổng bốn nguồn thành phần',
+                    'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+                    'description' => 'T_NGUONKHAC = NSNN + VTNN + VTTN + CL = '
+                        . number_format($kyVong, 2) . ', hiện khai: '
+                        . number_format((float) $data->t_nguonkhac, 2),
+                ]);
+            }
+        }
+
+        // T_BHTT chi ket luan duoc khi khong co nguon khac (cong thuc co nhanh giam tru
+        // phu thuoc loai nguon ma du lieu khong phan biet) va khong co tran thanh toan
+        // (da co INVALID_T_TRANTT_T_BHTT lo).
+        $coNguonKhac = TienTeCalculator::laSo($data->t_nguonkhac) && (float) $data->t_nguonkhac != 0;
+        $coTran = TienTeCalculator::laSo($data->t_trantt) && (float) $data->t_trantt != 0;
+
+        if (!$coNguonKhac && !$coTran
+            && TienTeCalculator::tyLeHopLe($data->muc_huong)
+            && TienTeCalculator::laSo($data->thanh_tien_bh)
+            && TienTeCalculator::laSo($data->t_bhtt)) {
+            $kyVong = TienTeCalculator::tBhtt($data->thanh_tien_bh, $data->muc_huong);
+
+            if (TienTeCalculator::lech($data->t_bhtt, $kyVong, $saiSo)) {
+                $errorCode = $this->generateErrorCode('T_BHTT_SAI_CONG_THUC');
+                $errors->push((object)[
+                    'error_code' => $errorCode,
+                    'error_name' => 'Tiền BHYT thanh toán không đúng công thức',
+                    'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+                    'description' => 'T_BHTT = THANH_TIEN_BH x MUC_HUONG/100 = '
+                        . number_format($kyVong, 2) . ', hiện khai: '
+                        . number_format((float) $data->t_bhtt, 2),
+                ]);
+            }
         }
 
         return $errors;
