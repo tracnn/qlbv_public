@@ -484,7 +484,14 @@ class Xml3176Xml2Checker
             }
         }
 
-        if (TienTeCalculator::laSo($data->t_nguonkhac)) {
+        // MO RONG guard: importer (Xml3176Service) quy 0 ve NULL, nen ca T_NGUONKHAC_NSNN
+        // = 100000 ma T_NGUONKHAC = 0 (luu NULL) truoc day im lang du tong lech dung
+        // 100.000d. Vao than khi BAT KY thanh phan nao la so, khong chi rieng t_nguonkhac.
+        if (TienTeCalculator::laSo($data->t_nguonkhac)
+            || TienTeCalculator::laSo($data->t_nguonkhac_nsnn)
+            || TienTeCalculator::laSo($data->t_nguonkhac_vtnn)
+            || TienTeCalculator::laSo($data->t_nguonkhac_vttn)
+            || TienTeCalculator::laSo($data->t_nguonkhac_cl)) {
             $kyVong = TienTeCalculator::tongNguonKhac(
                 $data->t_nguonkhac_nsnn, $data->t_nguonkhac_vtnn,
                 $data->t_nguonkhac_vttn, $data->t_nguonkhac_cl

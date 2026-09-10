@@ -117,6 +117,17 @@ class Xml3176CompleteLienBangTest extends TestCase
     }
 
     /** @test */
+    public function xml14_co_nhung_ngay_hen_kl_rong_thi_van_bao()
+    {
+        // NGAY_HEN_KL rong khong duoc im lang: vua mu truoc ho so thieu du lieu, vua la
+        // duong ne (tao mot dong XML14 rong la tat duoc quy tac).
+        $x1 = Xml3176Xml1::create(['ma_lk' => 'G2', 'stt' => 1, 'ngay_tai_kham' => '20260910']);
+        Xml3176Xml14::create(['ma_lk' => 'G2', 'ngay_hen_kl' => '']);
+
+        $this->assertContains('XMLComplete_NGAY_TAI_KHAM_KHONG_KHOP_XML14', $this->taiKham($x1));
+    }
+
+    /** @test */
     public function can_nang_con_ma_khong_co_giay_chung_sinh()
     {
         $x1 = Xml3176Xml1::create(['ma_lk' => 'H', 'stt' => 1, 'can_nang_con' => '3200']);

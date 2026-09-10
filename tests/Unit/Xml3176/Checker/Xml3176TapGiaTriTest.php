@@ -70,7 +70,10 @@ class Xml3176TapGiaTriTest extends TestCase
     public function pham_vi_2_la_nguoi_benh_tu_tra_nen_quy_khong_duoc_tra()
     {
         // QD 4750 sua toan bo dien giai: ma 2 = do nguoi benh tu tra.
-        $this->assertContains('XML3_PHAM_VI_TU_TRA_MA_BH_TRA',
+        // THANH_TIEN_BH don thuan la so tien theo gia BH, bo xuat khai cho moi dong co ma
+        // BH la hop le - day la hinh dang hop le, KHONG phai loi. Chi T_BHTT ("de nghi quy
+        // thanh toan") moi la can cu bao loi.
+        $this->assertNotContains('XML3_PHAM_VI_TU_TRA_MA_BH_TRA',
             $this->x3(['pham_vi' => '2', 'thanh_tien_bh' => 50000]));
 
         $this->assertContains('XML3_PHAM_VI_TU_TRA_MA_BH_TRA',

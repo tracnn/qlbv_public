@@ -68,6 +68,15 @@ class MaDvktStructureTest extends TestCase
     }
 
     /** @test */
+    public function bo_hau_to_truoc_khi_tach_ma_co_so()
+    {
+        // VC.01234_TB la dich vu van chuyen da chi dinh nhung khong thuc hien duoc.
+        // Khong bo hau to thi tra danh muc voi '01234_TB' va bao oan.
+        $this->assertSame('01234', MaDvktStructure::maCoSoVanChuyen('VC.01234_TB'));
+        $this->assertSame('01234', MaDvktStructure::maCoSoChuyenMau('02.0261.0319.K.01234_TB'));
+    }
+
+    /** @test */
     public function chuoi_rong_khong_lam_no_ham_nao()
     {
         $this->assertFalse(MaDvktStructure::laKhongThucHien(''));

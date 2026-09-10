@@ -68,6 +68,19 @@ class Xml3176Xml2CongThucTienTest extends TestCase
     }
 
     /** @test */
+    public function thanh_phan_nguon_khac_co_ma_tong_null_van_bao()
+    {
+        // Importer (Xml3176Service) quy 0 ve NULL: T_NGUONKHAC = NULL (rong) nhung
+        // T_NGUONKHAC_NSNN = 100000 la bat nhat that, phai bao du t_nguonkhac rong.
+        $codes = $this->codes([
+            't_nguonkhac' => null,
+            't_nguonkhac_nsnn' => 100000,
+        ]);
+
+        $this->assertContains('XML2_T_NGUONKHAC_SAI_TONG', $codes);
+    }
+
+    /** @test */
     public function t_bhtt_sai_cong_thuc()
     {
         $this->assertContains('XML2_T_BHTT_SAI_CONG_THUC', $this->codes(['t_bhtt' => 30000]));

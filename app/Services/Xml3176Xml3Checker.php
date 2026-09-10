@@ -1150,10 +1150,14 @@ class Xml3176Xml3Checker
         $errors = collect();
         $saiSo = (float) config('xml3176.tien.sai_so', 1.0);
 
-        $tyLeHopLe = TienTeCalculator::tyLeHopLe($data->tyle_tt_dv)
-            && TienTeCalculator::tyLeHopLe($data->tyle_tt_bh);
+        // Guard ty le tach theo tung quy tac: THANH_TIEN_BV chi phu thuoc TYLE_TT_DV, khong
+        // lien quan TYLE_TT_BH - gac ca hai se khoa mieng no bang mot ty le no khong dung.
+        // THANH_TIEN_BH dung ca hai ty le nen can ca hai hop le. Khop voi XML2 (nhanh BV
+        // khong gac ty le nao vi XML2 khong co TYLE_TT_DV).
+        $tyLeDvHopLe = TienTeCalculator::tyLeHopLe($data->tyle_tt_dv);
+        $tyLeHopLe = $tyLeDvHopLe && TienTeCalculator::tyLeHopLe($data->tyle_tt_bh);
 
-        if ($tyLeHopLe
+        if ($tyLeDvHopLe
             && TienTeCalculator::laSo($data->so_luong)
             && TienTeCalculator::laSo($data->don_gia_bv)
             && TienTeCalculator::laSo($data->thanh_tien_bv)) {
@@ -1202,7 +1206,17 @@ class Xml3176Xml3Checker
         // phai im lang. Neu HIS khai T_NGUONKHAC > 0 ma bo trong ca bon thanh phan thi
         // do la bat nhat that, quy tac phai bat chu khong duoc im lang truoc chinh
         // khiem khuyet ma no sinh ra de bat.
-        if (TienTeCalculator::laSo($data->t_nguonkhac)) {
+        //
+        // MO RONG (khong dao ruling tren): importer (Xml3176Service) quy 0 ve NULL, nen ca
+        // T_NGUONKHAC_NSNN = 100000 ma T_NGUONKHAC = 0 (luu NULL) truoc day im lang du tong
+        // lech dung 100.000d - dung loai bat nhat quy tac nay sinh ra de bat. Vao than khi
+        // BAT KY thanh phan nao (tong hoac mot trong bon nguon con) la so, khong chi rieng
+        // t_nguonkhac.
+        if (TienTeCalculator::laSo($data->t_nguonkhac)
+            || TienTeCalculator::laSo($data->t_nguonkhac_nsnn)
+            || TienTeCalculator::laSo($data->t_nguonkhac_vtnn)
+            || TienTeCalculator::laSo($data->t_nguonkhac_vttn)
+            || TienTeCalculator::laSo($data->t_nguonkhac_cl)) {
             $kyVong = TienTeCalculator::tongNguonKhac(
                 $data->t_nguonkhac_nsnn, $data->t_nguonkhac_vtnn,
                 $data->t_nguonkhac_vttn, $data->t_nguonkhac_cl
@@ -1274,15 +1288,18 @@ class Xml3176Xml3Checker
             }
 
             // QD 4750 sua toan bo dien giai: ma 2 = VTYT/DVKT do NGUOI BENH TU TRA.
-            if ($phamVi === '2'
-                && ((float) $data->thanh_tien_bh > 0 || (float) $data->t_bhtt > 0)) {
+            // CHI xet T_BHTT, KHONG xet THANH_TIEN_BH: THANH_TIEN_BH chi la so tien theo
+            // gia BH, bo xuat khai cho moi dong co ma BH la hop le du pham_vi la gi; T_BHTT
+            // moi la "de nghi quy thanh toan" - dung dieu kien rong hon se no tren moi dong
+            // co tien (761/762 dong xml3 that dang mang pham_vi = 2). Khop voi quy tac anh
+            // em NGUON_CTRA_NGOAI_QUY_MA_BH_TRA ben XML2, cung chi xet t_bhtt.
+            if ($phamVi === '2' && (float) $data->t_bhtt > 0) {
                 $errorCode = $this->generateErrorCode('PHAM_VI_TU_TRA_MA_BH_TRA');
                 $errors->push((object)[
                     'error_code' => $errorCode,
                     'error_name' => 'Người bệnh tự trả nhưng quỹ BHYT vẫn thanh toán',
                     'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
-                    'description' => 'PHAM_VI = 2 (người bệnh tự trả) nhưng THANH_TIEN_BH = '
-                        . number_format((float) $data->thanh_tien_bh, 2) . ' và T_BHTT = '
+                    'description' => 'PHAM_VI = 2 (người bệnh tự trả) nhưng T_BHTT = '
                         . number_format((float) $data->t_bhtt, 2),
                 ]);
             }

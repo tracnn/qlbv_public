@@ -153,7 +153,7 @@ Guard chung: `MA_DICH_VU` rỗng thì cả sáu quy tắc im lặng — đã có
 **Guard bắt buộc — thiếu căn cứ thì im lặng.** Mỗi quy tắc chỉ chạy khi mọi toán hạng của nó có mặt và hợp lệ:
 
 1. Bất kỳ toán hạng nào `null` hoặc không phải số ⇒ im lặng. Đã có quy tắc riêng bắt trường rỗng.
-2. `TYLE_TT_DV` hoặc `TYLE_TT_BH` ngoài khoảng `(0, 100]` ⇒ im lặng. Đã có `INFO_ERROR_TYLE_TT_DV` / `INFO_ERROR_TYLE_TT_BH`; nếu tỷ lệ sai thì mọi công thức dẫn xuất đều sai theo, báo thêm chỉ là nhiễu.
+2. Guard tỷ lệ áp theo TỪNG quy tắc, không dùng chung một biến cho cả nhóm: `THANH_TIEN_BV` chỉ phụ thuộc `TYLE_TT_DV` (XML3 không có `TYLE_TT_BH` trong công thức của nó) nên chỉ gác bởi `TYLE_TT_DV` ngoài khoảng `(0, 100]`; `THANH_TIEN_BH` dùng cả hai tỷ lệ trong công thức nên gác bởi cả `TYLE_TT_DV` lẫn `TYLE_TT_BH` ngoài khoảng `(0, 100]`. Đã có `INFO_ERROR_TYLE_TT_DV` / `INFO_ERROR_TYLE_TT_BH`; nếu tỷ lệ sai thì mọi công thức dẫn xuất từ nó đều sai theo, báo thêm chỉ là nhiễu — nhưng không được lấy một tỷ lệ mà quy tắc không dùng để khoá miệng nó (XML2 đã làm đúng: nhánh `THANH_TIEN_BV` của XML2 không gác tỷ lệ nào).
 3. Riêng `T_BHTT_SAI_CONG_THUC` thêm ba điều kiện, vì công thức gốc có nhánh:
    - `T_NGUONKHAC = 0`. Khi có nguồn khác, chuẩn quy định giảm trừ lần lượt vào `T_BNTT`, `T_BNCCT`, `T_BHTT` — kết quả phụ thuộc loại nguồn (hỗ trợ cá nhân hay hỗ trợ chung cho cơ sở), mà dữ liệu không phân biệt được. Không đủ căn cứ để kết luận.
    - `T_TRANTT` rỗng. Khi có trần thanh toán, `T_BHTT` bị chặn trên; đã có `INVALID_T_TRANTT_T_BHTT` lo việc đó.
@@ -166,7 +166,7 @@ Cố ý **không** làm `T_BNCCT` và `T_BNTT` từng dòng: cả hai đều là
 | Checker | Mã | Điều kiện | Căn cứ |
 |---|---|---|---|
 | XML3 | `PHAM_VI_NGOAI_TAP_GIA_TRI` | `PHAM_VI` khác rỗng và không thuộc `{1,2,3}` | Trường `PHAM_VI` |
-| XML3 | `PHAM_VI_TU_TRA_MA_BH_TRA` | `PHAM_VI = '2'` và (`THANH_TIEN_BH > 0` hoặc `T_BHTT > 0`) | QĐ 4750 sửa toàn bộ diễn giải: mã 2 = *do người bệnh tự trả* |
+| XML3 | `PHAM_VI_TU_TRA_MA_BH_TRA` | `PHAM_VI = '2'` và `T_BHTT > 0` | QĐ 4750 sửa toàn bộ diễn giải: mã 2 = *do người bệnh tự trả*. Bỏ nhánh `THANH_TIEN_BH`: trường này chỉ là số tiền theo giá BH, bộ xuất khai cho mọi dòng có mã BH là hợp lệ; `T_BHTT` ("đề nghị quỹ thanh toán") mới là căn cứ đúng — điều kiện rộng hơn sẽ báo oan trên hầu hết dòng có tiền (761/762 dòng thật mang `pham_vi = 2`) |
 | XML3 | `TAI_SU_DUNG_INVALID` | `TAI_SU_DUNG` khác rỗng và khác `'1'` | Trường `TAI_SU_DUNG`: chỉ ghi `1`, không tái sử dụng thì để trống |
 | XML3 | `TAI_SU_DUNG_DON_GIA_LECH` | `TAI_SU_DUNG = '1'` và `lech(DON_GIA_BV, DON_GIA_BH)` | Trường `DON_GIA_BV`: "VTYT tái sử dụng: `DON_GIA_BV = DON_GIA_BH`" |
 | XML2 | `NGUON_CTRA_INVALID` | `NGUON_CTRA` khác rỗng và không thuộc `{1,2,3,4}` | Trường `NGUON_CTRA` |
@@ -218,7 +218,7 @@ Seeder `Xml3176ErrorCatalogChuan3176Dot1Seeder` ghi cả 24 mã với `is_check 
 - Mỗi quy tắc nhóm A, B: một ca sinh lỗi, một ca không sinh lỗi, và một ca **guard im lặng** (toán hạng thiếu).
 - Nhóm C: có XML14 khớp ⇒ im; thiếu XML14 ⇒ lỗi; XML14 có nhưng lệch ngày ⇒ lỗi; nhiều ngày ngăn bởi `;` khớp đủ ⇒ im.
 
-**Ca hồi quy bắt buộc (từ số đo thật):** dựng 15 dòng `_TB` với đơn giá khác 0 như dữ liệu thật ⇒ phải sinh đúng 15 lỗi `MA_DICH_VU_TB_CO_DON_GIA`.
+**Ca `_TB` từ số đo thật:** §2.1 đã rút nền dữ liệu của con số 15 (cả 15 dòng `_TB` đo được đều thuộc hồ sơ đối tượng 9, nay không còn thuộc diện được rà) nên không còn ca hồi quy 15 dòng để dựng. Hành vi của mã `_TB` (hậu tố `_TB` + đơn giá khác 0 ⇒ lỗi) đã được phủ đầy đủ bởi test đơn vị của quy tắc `MA_DICH_VU_TB_CO_DON_GIA`.
 
 **Hồi quy:** toàn bộ `tests/Unit/Xml3176` (215 test) và `tests/Unit/Import` (63 test) phải xanh.
 

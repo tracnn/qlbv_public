@@ -62,24 +62,31 @@ class MaDvktStructure
         return strpos(trim((string) $ma), 'VC.') === 0;
     }
 
+    /**
+     * Bo hau to (vd '_TB') TRUOC khi tach ma co so: 'VC.01234_TB' la dich vu van chuyen
+     * da chi dinh nhung khong thuc hien duoc - khong bo hau to thi tra danh muc voi
+     * '01234_TB' va bao oan MA_DICH_VU_VAN_CHUYEN_CSKCB_NOT_FOUND tren ho so dung.
+     */
     public static function maCoSoVanChuyen($ma): string
     {
         if (!self::laVanChuyen($ma)) {
             return '';
         }
 
-        return trim(substr(trim((string) $ma), 3));
+        return trim(substr(self::than($ma), 3));
     }
 
     /**
      * Chuyen mau benh pham hoac chuyen nguoi benh den co so khac de thuc hien dich vu
      * can lam sang (TT 09/2019/TT-BYT): XX.YYYY.ZZZZ.K.WWWWW.
+     *
+     * Bo hau to truoc khi tach, cung ly do nhu maCoSoVanChuyen().
      */
     public static function maCoSoChuyenMau($ma): string
     {
-        $ma = trim((string) $ma);
+        $than = self::than($ma);
 
-        if (!preg_match('/\.K\.([^.]+)$/', $ma, $khop)) {
+        if (!preg_match('/\.K\.([^.]+)$/', $than, $khop)) {
             return '';
         }
 

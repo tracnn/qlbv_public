@@ -676,7 +676,23 @@ class Xml3176CompleteChecker
 
         $ngayHen = trim((string) $xml14->ngay_hen_kl);
 
-        if ($ngayHen !== '' && !in_array($ngayHen, $hopLe, true)) {
+        // NGAY_HEN_KL rong: khong duoc im lang. Ho so co NGAY_TAI_KHAM hop le va co dong
+        // XML14 nhung giay hen khong ghi ngay hen la vua mu truoc ho so thieu du lieu, vua
+        // la duong ne - tao mot dong XML14 rong la tat duoc quy tac.
+        if ($ngayHen === '') {
+            $errorCode = $this->generateErrorCode('NGAY_TAI_KHAM_KHONG_KHOP_XML14');
+            $errors->push((object)[
+                'error_code' => $errorCode,
+                'error_name' => 'Ngày tái khám không có giấy hẹn khám lại tương ứng',
+                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+                'description' => 'Hồ sơ hẹn tái khám ngày ' . implode(', ', $hopLe)
+                    . ' nhưng giấy hẹn khám lại (XML14) không ghi ngày hẹn (NGAY_HEN_KL rỗng)',
+            ]);
+
+            return $errors;
+        }
+
+        if (!in_array($ngayHen, $hopLe, true)) {
             $errorCode = $this->generateErrorCode('NGAY_TAI_KHAM_KHONG_KHOP_XML14');
             $errors->push((object)[
                 'error_code' => $errorCode,

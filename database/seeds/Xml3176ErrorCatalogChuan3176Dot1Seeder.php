@@ -41,7 +41,7 @@ class Xml3176ErrorCatalogChuan3176Dot1Seeder extends Seeder
 
             // Nhom B-b - tap gia tri hop le
             ['XML3', 'XML3_PHAM_VI_NGOAI_TAP_GIA_TRI', 'Phạm vi ngoài tập giá trị hợp lệ', 'PHAM_VI chỉ được là 1, 2 hoặc 3'],
-            ['XML3', 'XML3_PHAM_VI_TU_TRA_MA_BH_TRA', 'Người bệnh tự trả nhưng quỹ BHYT vẫn thanh toán', 'PHAM_VI = 2 nghĩa là người bệnh tự trả (QĐ 4750) nên THANH_TIEN_BH và T_BHTT phải bằng 0'],
+            ['XML3', 'XML3_PHAM_VI_TU_TRA_MA_BH_TRA', 'Người bệnh tự trả nhưng quỹ BHYT vẫn thanh toán', 'PHAM_VI = 2 nghĩa là người bệnh tự trả (QĐ 4750) nên T_BHTT phải bằng 0'],
             ['XML3', 'XML3_TAI_SU_DUNG_INVALID', 'Mã tái sử dụng không hợp lệ', 'TAI_SU_DUNG chỉ được ghi 1, không tái sử dụng thì để trống'],
             ['XML3', 'XML3_TAI_SU_DUNG_DON_GIA_LECH', 'VTYT tái sử dụng nhưng hai đơn giá lệch nhau', 'VTYT tái sử dụng phải có DON_GIA_BV = DON_GIA_BH'],
             ['XML2', 'XML2_NGUON_CTRA_INVALID', 'Nguồn chi trả thuốc không hợp lệ', 'NGUON_CTRA chỉ được là 1, 2, 3 hoặc 4'],
@@ -50,7 +50,7 @@ class Xml3176ErrorCatalogChuan3176Dot1Seeder extends Seeder
 
             // Nhom C - lien bang
             ['XMLComplete', 'XMLComplete_NGAY_TAI_KHAM_SAI_DINH_DANG', 'Ngày tái khám sai định dạng', 'Mỗi ngày tái khám gồm 8 ký tự yyyymmdd, nhiều ngày ngăn bởi dấu chấm phẩy'],
-            ['XMLComplete', 'XMLComplete_NGAY_TAI_KHAM_KHONG_KHOP_XML14', 'Ngày tái khám không có giấy hẹn khám lại tương ứng', 'Mỗi ngày trong NGAY_TAI_KHAM phải có một dòng XML14 cùng MA_LK có NGAY_HEN_KL trùng khớp'],
+            ['XMLComplete', 'XMLComplete_NGAY_TAI_KHAM_KHONG_KHOP_XML14', 'Ngày tái khám không có giấy hẹn khám lại tương ứng', 'Hồ sơ có ngày tái khám thì phải có giấy hẹn khám lại (XML14), và ngày trên giấy hẹn phải nằm trong tập NGAY_TAI_KHAM'],
             ['XMLComplete', 'XMLComplete_CAN_NANG_CON_THIEU_XML9', 'Có cân nặng con nhưng thiếu giấy chứng sinh', 'CAN_NANG_CON chỉ ghi khi sinh con nên hồ sơ phải có XML9'],
         ];
 

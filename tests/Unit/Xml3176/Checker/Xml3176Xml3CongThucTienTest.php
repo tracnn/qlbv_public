@@ -117,6 +117,16 @@ class Xml3176Xml3CongThucTienTest extends TestCase
     }
 
     /** @test */
+    public function thanh_tien_bv_khong_bi_khoa_mieng_boi_ty_le_bh_sai()
+    {
+        // THANH_TIEN_BV chi phu thuoc TYLE_TT_DV, khong dung TYLE_TT_BH. tyle_tt_bh
+        // ngoai khoang hop le KHONG duoc gac quy tac THANH_TIEN_BV.
+        $codes = $this->codes(['tyle_tt_bh' => 0, 'thanh_tien_bv' => 250000]);
+
+        $this->assertContains('XML3_THANH_TIEN_BV_SAI_CONG_THUC', $codes);
+    }
+
+    /** @test */
     public function thieu_toan_hang_thi_im_lang()
     {
         $codes = $this->codes([
@@ -131,6 +141,19 @@ class Xml3176Xml3CongThucTienTest extends TestCase
     public function chenh_trong_sai_so_thi_khong_bao()
     {
         $this->assertSame([], $this->codes(['thanh_tien_bv' => 200000.5]));
+    }
+
+    /** @test */
+    public function thanh_phan_nguon_khac_co_ma_tong_null_van_bao()
+    {
+        // Importer (Xml3176Service) quy 0 ve NULL: T_NGUONKHAC = NULL (rong) nhung
+        // T_NGUONKHAC_NSNN = 100000 la bat nhat that, phai bao du t_nguonkhac rong.
+        $codes = $this->codes([
+            't_nguonkhac' => null,
+            't_nguonkhac_nsnn' => 100000,
+        ]);
+
+        $this->assertContains('XML3_T_NGUONKHAC_SAI_TONG', $codes);
     }
 
     /** @test */
