@@ -1,3 +1,57 @@
+# 10/09/2026
+
+- **Bổ sung 24 quy tắc kiểm hồ sơ XML 3176, lấy căn cứ từ chuẩn dữ liệu đầu ra của Bộ Y tế** (Quyết định 130/QĐ-BYT, phần đính chính và sửa đổi theo Quyết định 4750/QĐ-BYT). Đây là lần đầu bộ quy tắc được đối chiếu với *toàn văn chuẩn dữ liệu* thay vì với danh sách lỗi Bảo hiểm xã hội gửi về. Đối chiếu từng trường của 15 bảng với 266 quy tắc sẵn có cho thấy chỗ thiếu tập trung ở ba nhóm.
+
+- **Nhóm một — cấu trúc mã dịch vụ (6 quy tắc).** Chuẩn quy định mã dịch vụ mang thông tin trong chính hình dạng của nó, nhưng trước nay phần mềm chưa đọc: hậu tố `_TB` nghĩa là *đã chỉ định nhưng không thực hiện được* nên đơn giá bảo hiểm lẫn đơn giá bệnh viện phải bằng 0; mã kết thúc `0000` nghĩa là *chưa được quy định mức giá* nên đơn giá bảo hiểm phải bằng 0; `VC.XXXXX` là vận chuyển người bệnh nên phải kèm mã xăng dầu và XXXXX phải là mã cơ sở có thật; dạng `XX.YYYY.ZZZZ.K.WWWWW` là chuyển mẫu bệnh phẩm sang cơ sở khác. Chuẩn cũng chỉ định nghĩa đúng hai hậu tố `_TB` và `_GT`, nên hậu tố lạ nay bị bắt.
+
+- **Nhóm hai — công thức tiền của TỪNG DÒNG (15 quy tắc).** Phần mềm vốn đã kiểm tổng cấp hồ sơ (tiền thuốc, tiền vật tư, tổng chi, tiền bảo hiểm thanh toán trong bảng tổng hợp có khớp tổng của bảng thuốc và bảng dịch vụ không). Nhưng **tổng khớp không suy ra từng dòng đúng**: hai dòng sai ngược chiều nhau vẫn cho tổng đúng, và người vận hành thấy báo tổng lệch mà không lần ra được dòng nào hỏng. Nay mỗi dòng thuốc và mỗi dòng dịch vụ được kiểm theo đúng công thức của chuẩn, cộng các tập giá trị hợp lệ: phạm vi chỉ được 1/2/3, mã tái sử dụng chỉ được để trống hoặc bằng 1, nguồn chi trả thuốc chỉ được 1/2/3/4, mã khu vực chỉ được K1/K2/K3.
+
+- **Nhóm ba — ràng buộc liên bảng (3 quy tắc).** Hồ sơ có ngày tái khám thì phải có giấy hẹn khám lại, và ngày trên giấy hẹn phải nằm trong tập ngày tái khám. Hồ sơ có cân nặng con thì phải có giấy chứng sinh.
+
+- **CẢNH BÁO QUAN TRỌNG: chưa quy tắc nào trong 24 quy tắc này được kiểm chứng trên dữ liệu thật.** Cơ sở dữ liệu thử nghiệm chỉ còn 4 hồ sơ được rà sau khi loại hồ sơ dịch vụ, và **chỉ 1 dòng có tiền**. Cả 24 quy tắc vì vậy được xây trên căn cứ văn bản, không trên số đo. Chúng được nạp ở mức **cảnh báo, không chặn xuất hồ sơ** — kể cả quy tắc hậu tố `_TB` từng đo được vi phạm 15 trên 15 dòng, vì một quy tắc báo oan mà chặn xuất thì làm tê liệt việc gửi hồ sơ.
+
+- **Trước khi tin bất kỳ quy tắc nào, phải nạp một lô hồ sơ bảo hiểm y tế thật có phần tiền rồi đo lại.** Hai mốc để nhìn: quy tắc nào báo trên **20% số dòng** thì dừng lại xem xét — gần như chắc chắn là báo oan hoặc bộ xuất sai hệ thống, chứ không phải 20% hồ sơ sai; và hãy đếm cả **số dòng lọt qua được vào tới thân quy tắc**, không chỉ đếm số lỗi, vì phần mềm quy giá trị 0 về rỗng nên "0 lỗi" có thể nghĩa là quy tắc chưa từng chạy chứ không phải dữ liệu sạch.
+
+- **Một điều cần cơ sở tự xác minh, không phải lỗi phần mềm: 761 trên 762 dòng dịch vụ đang khai phạm vi bằng 2.** Theo diễn giải sửa đổi của Quyết định 4750, mã 2 nghĩa là *dịch vụ do người bệnh tự trả*. Nếu bộ xuất đang gán mặc định như vậy cho mọi dòng thì khi hồ sơ có tiền thật, quy tắc sẽ báo hàng loạt — và chỗ cần sửa là bộ xuất, không phải quy tắc.
+
+- **Sai số so tiền là 1 đồng, nới được mà không cần sửa mã.** Chuẩn bắt làm tròn hai chữ số thập phân ở từng phép nhân nên chênh lệch hợp lệ chỉ ở mức xu. Nếu bộ xuất làm tròn ở bước khác chuẩn (ví dụ làm tròn đơn giá trước khi nhân), biểu hiện sẽ là một quy tắc thành tiền báo gần như toàn bộ dòng — khi đó nới khoá `xml3176.tien.sai_so` trong tệp cấu hình.
+
+- **Có những thứ cố ý KHÔNG làm, kèm lý do.** Kiểm kích thước tối đa và kiểm định dạng ngày: đo trên toàn bộ trường của mọi bảng có dữ liệu đều cho **0 vi phạm**, nên dựng một bộ kiểm định dạng lái bằng danh mục sẽ tốn công mà trả về 0 lỗi. Mã tai nạn thương tích, vị trí thực hiện thủ thuật, mã hiệu sản phẩm vật tư: đều cần danh mục mà hệ thống chưa có, hoặc chính chuẩn ghi rõ là chưa ban hành — thiếu căn cứ thì im lặng còn hơn đoán.
+
+- **Cài đặt: KHÔNG có lệnh nạp danh mục mã lỗi thứ bảy.** Khác với các đợt trước, lần này danh mục 24 mã lỗi được nạp tự động bằng migration, nên chỉ cần:
+
+```bash
+php artisan migrate && php artisan config:clear
+```
+
+  Việc đổi cách làm là có chủ đích: điều kiện "phải chạy lệnh nạp danh mục trước" trước nay chỉ tồn tại trong trí nhớ người triển khai, mà hậu quả khi quên thì không lùi lại được — mã lỗi lạ chưa có trong danh mục được mặc định coi là nghiêm trọng, nên quy tắc nổ lần đầu sẽ **tự ghi dòng danh mục ở mức nghiêm trọng** và chặn xuất cả lô; chạy lệnh nạp sau đó cũng không gỡ được các hồ sơ đã bị đánh dấu.
+
+- **Hồ sơ không phải bảo hiểm y tế (mã đối tượng khám chữa bệnh bằng 9) nay không bị rà lỗi nữa.** Module nhận cả hồ sơ dịch vụ, trong khi toàn bộ bộ quy tắc được viết cho hồ sơ bảo hiểm — áp lên hồ sơ dịch vụ chỉ sinh nhiễu. Số đo lúc thiết kế: **49 trên 51 hồ sơ** trong cơ sở dữ liệu thử nghiệm là đối tượng 9, và chúng sinh **6.136 trên 6.331 lỗi — 97% toàn bộ lỗi của hệ thống**.
+
+- **Việc xuất hồ sơ, ký số và gửi cổng Bảo hiểm xã hội KHÔNG bị ảnh hưởng** — cổng chặn chỉ bọc phần rà lỗi. Hồ sơ dịch vụ vẫn đi trọn dây chuyền như cũ.
+
+- **Lỗi cũ không tự biến mất.** Cổng chặn chỉ ngăn sinh lỗi mới; những lỗi đã ghi vẫn nằm nguyên và — nếu chúng ở mức nghiêm trọng — vẫn chặn xuất hồ sơ. Dọn bằng câu lệnh sau, nhớ sao lưu trước:
+
+```bash
+DELETE e FROM xml3176_error_results e JOIN xml3176_xml1s a ON a.ma_lk = e.ma_lk WHERE a.ma_doituong_kcb = '9' OR a.ma_doituong_kcb LIKE '9.%';
+```
+
+- **Danh sách mã đối tượng được loại trừ nằm trong tệp cấu hình**, thêm mã khác về sau không phải sửa mã nguồn. Mã 9 bao cả nhánh con 9.1, 9.2… nhưng không nuốt nhầm mã 91. Nếu hồ sơ không đọc được mã đối tượng thì **vẫn rà bình thường** — bỏ sót là mất bảo vệ trong im lặng, còn rà thừa chỉ là nhiễu nhìn thấy được.
+
+- **Quy tắc "thiếu mã máy" đổi căn cứ: từ nhóm dịch vụ sang danh mục do Bảo hiểm xã hội ban hành.** Trước nay phần mềm bắt lỗi khi dịch vụ thuộc nhóm 1, 2 hoặc 3 mà không khai mã máy — một phép suy đoán từ nhóm sang tính chất dịch vụ. Nay căn cứ vào danh mục liệt kê đích danh từng mã dịch vụ bắt buộc có mã máy. Đo trên 762 dòng thật: **355 lỗi giảm còn 307**, trong đó **64 báo oan biến mất** (nhiều nhất là 56 dòng xét nghiệm "Đo hoạt độ" AST/ALT/GGT/Lipase thuộc nhóm 1) và **16 lỗi bỏ sót được bắt thêm** — toàn bộ thuộc nhóm 18 nội soi, vốn lọt lưới vì không nằm trong nhóm 1, 2, 3.
+
+- **Đã kiểm chứng khác biệt là thật, không phải lỗi khớp mã**: danh mục *có* 168 mã xét nghiệm khác nhưng cố ý *không có* các mã "Đo hoạt độ" — nó phân biệt có chủ đích. Quy tắc cũng khớp cả mã đã bỏ hậu tố, nếu không sẽ mất 11 trên 307 lỗi đo được.
+
+- **Chưa nạp danh mục thì quy tắc tự lùi về cách cũ.** Không có khoảng trống mất bảo vệ: bảng rỗng thì phần mềm dùng lại quy tắc theo nhóm, nạp danh mục xong thì tự chuyển sang quy tắc mới. Danh mục nạp qua màn *Nhập danh mục* sẵn có, chọn thẳng tệp Bảo hiểm xã hội gửi, không cần chuyển đổi. Đối chiếu sau khi nạp: phải có **3.471 dòng đang dùng**. Nếu số lỗi "thiếu mã máy" **không đổi** so với trước thì gần như chắc chắn danh mục chưa nạp được.
+
+- **Có khu màn hình mới "Danh mục tra cứu", tách khỏi Danh mục BHYT.** Đây là chỗ xem các danh mục nội bộ mà trước nay không có màn hình nào — danh mục đầu tiên là *DVKT cần mã máy* vừa nói ở trên. Màn hình lái bằng cấu hình: thêm một danh mục mới về sau chỉ là thêm một mục khai báo, không phải dựng thêm màn hình, đường dẫn hay mục menu.
+
+- **Các danh mục ở khu này CHỈ XEM, không sửa** — có chủ đích. Chúng được nạp từ tệp theo kiểu *thay trọn bộ*, nên sửa tay trên màn hình sẽ bị lần nạp sau xoá sạch; cho sửa là dựng sẵn một cái bẫy.
+
+- **Danh mục Khoa phòng chuyển vào khu này.** Kèm theo một thay đổi cần biết: quyền truy cập **nới từ quản trị hệ thống xuống quản lý danh mục** — đó là hệ quả của việc chuyển khu, không phải sơ suất. Hai mục *DVKT có điều kiện* và *Thuốc có điều kiện* được bỏ khỏi menu nhưng vẫn giữ nguyên đường dẫn và chức năng sửa, vì khu mới cố ý không có chức năng sửa.
+
+- **Lưu ý vận hành: khu này đọc cấu hình, nên sau khi cài đặt phải chạy `php artisan config:clear`**, bằng không menu sẽ rỗng mà không báo lỗi gì.
+
 # 07/09/2026
 
 - **Giấy ra viện: siết mười trường bắt buộc.** Trong đó **Phương pháp điều trị** được đưa lên mức chặn sau khi cổng Bảo hiểm xã hội **từ chối một hồ sơ** vì thiếu trường này. Đây là lần đầu một trường được đưa thẳng lên mức chặn trong khi dữ liệu thật còn thiếu, và là có chủ đích: đo trên 1.050 giấy ra viện đã nạp thì **78 hồ sơ (7,4%) đang bỏ trống** trường này — chúng chính là những hồ sơ cổng sẽ từ chối, nên khoá lại là kết quả mong muốn.
