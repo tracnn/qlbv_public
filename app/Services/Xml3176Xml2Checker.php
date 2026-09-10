@@ -74,6 +74,7 @@ class Xml3176Xml2Checker
         $errors = $errors->merge($this->checkMedicalStaff($data));
         $errors = $errors->merge($this->checkDrugCatalog($data));
         $errors = $errors->merge($this->checkCongThucTien($data));
+        $errors = $errors->merge($this->checkNguonChiTra($data));
         //$errors = $errors->merge($this->checkValidPhamVi($data));
 
         if (config('xml3176.general.check_valid_department_req')) {
@@ -521,6 +522,46 @@ class Xml3176Xml2Checker
                         . number_format((float) $data->t_bhtt, 2),
                 ]);
             }
+        }
+
+        return $errors;
+    }
+
+    /**
+     * NGUON_CTRA xac dinh nguon chi tra thuoc: 1 = quy BHYT, 2 = du an/vien tro,
+     * 3 = chuong trinh muc tieu Quoc gia, 4 = nguon khac.
+     */
+    private function checkNguonChiTra(Xml3176Xml2 $data): Collection
+    {
+        $errors = collect();
+        $nguon = trim((string) $data->nguon_ctra);
+
+        if ($nguon === '') {
+            return $errors;
+        }
+
+        if (!in_array($nguon, ['1', '2', '3', '4'], true)) {
+            $errorCode = $this->generateErrorCode('NGUON_CTRA_INVALID');
+            $errors->push((object)[
+                'error_code' => $errorCode,
+                'error_name' => 'Nguồn chi trả thuốc không hợp lệ',
+                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+                'description' => 'NGUON_CTRA = ' . $nguon . '. Chuẩn chỉ quy định 1, 2, 3 hoặc 4',
+            ]);
+
+            return $errors;
+        }
+
+        if ($nguon !== '1' && (float) $data->t_bhtt > 0) {
+            $errorCode = $this->generateErrorCode('NGUON_CTRA_NGOAI_QUY_MA_BH_TRA');
+            $errors->push((object)[
+                'error_code' => $errorCode,
+                'error_name' => 'Thuốc không do quỹ BHYT chi trả nhưng vẫn đề nghị BHYT thanh toán',
+                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+                'description' => 'NGUON_CTRA = ' . $nguon
+                    . ' (không phải quỹ BHYT) nhưng T_BHTT = '
+                    . number_format((float) $data->t_bhtt, 2),
+            ]);
         }
 
         return $errors;

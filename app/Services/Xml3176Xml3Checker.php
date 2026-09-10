@@ -156,6 +156,7 @@ class Xml3176Xml3Checker
         $errors = $errors->merge($this->checkOverlappingServiceExecution($data));
         $errors = $errors->merge($this->checkCauTrucMaDichVu($data));
         $errors = $errors->merge($this->checkCongThucTien($data));
+        $errors = $errors->merge($this->checkTapGiaTri($data));
 
         if (config('xml3176.general.check_valid_department_req')) {
             $errors = $errors->merge($this->checkValidMakhoaReq($data)); // Kiểm tra tính hợp lệ của khoa chỉ định
@@ -1241,6 +1242,78 @@ class Xml3176Xml3Checker
                     'description' => 'T_BHTT = THANH_TIEN_BH x MUC_HUONG/100 = '
                         . number_format($kyVong, 2) . ', hiện khai: '
                         . number_format((float) $data->t_bhtt, 2),
+                ]);
+            }
+        }
+
+        return $errors;
+    }
+
+    /**
+     * Tap gia tri hop le cua PHAM_VI va TAI_SU_DUNG theo chuan du lieu dau ra.
+     *
+     * Ten ma la PHAM_VI_NGOAI_TAP_GIA_TRI chu khong phai PHAM_VI_INVALID: XML2 da co
+     * XML2_PHAM_VI_INVALID mang nghia hoan toan khac (pham vi phai la 3 voi the CBCS).
+     */
+    private function checkTapGiaTri(Xml3176Xml3 $data): Collection
+    {
+        $errors = collect();
+
+        $phamVi = trim((string) $data->pham_vi);
+
+        // Truong nay khong bat buoc theo chuan nen rong thi im lang.
+        if ($phamVi !== '') {
+            if (!in_array($phamVi, ['1', '2', '3'], true)) {
+                $errorCode = $this->generateErrorCode('PHAM_VI_NGOAI_TAP_GIA_TRI');
+                $errors->push((object)[
+                    'error_code' => $errorCode,
+                    'error_name' => 'Phạm vi ngoài tập giá trị hợp lệ',
+                    'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+                    'description' => 'PHAM_VI = ' . $phamVi . '. Chuẩn chỉ quy định 1, 2 hoặc 3',
+                ]);
+            }
+
+            // QD 4750 sua toan bo dien giai: ma 2 = VTYT/DVKT do NGUOI BENH TU TRA.
+            if ($phamVi === '2'
+                && ((float) $data->thanh_tien_bh > 0 || (float) $data->t_bhtt > 0)) {
+                $errorCode = $this->generateErrorCode('PHAM_VI_TU_TRA_MA_BH_TRA');
+                $errors->push((object)[
+                    'error_code' => $errorCode,
+                    'error_name' => 'Người bệnh tự trả nhưng quỹ BHYT vẫn thanh toán',
+                    'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+                    'description' => 'PHAM_VI = 2 (người bệnh tự trả) nhưng THANH_TIEN_BH = '
+                        . number_format((float) $data->thanh_tien_bh, 2) . ' và T_BHTT = '
+                        . number_format((float) $data->t_bhtt, 2),
+                ]);
+            }
+        }
+
+        $taiSuDung = trim((string) $data->tai_su_dung);
+
+        if ($taiSuDung !== '') {
+            if ($taiSuDung !== '1') {
+                $errorCode = $this->generateErrorCode('TAI_SU_DUNG_INVALID');
+                $errors->push((object)[
+                    'error_code' => $errorCode,
+                    'error_name' => 'Mã tái sử dụng không hợp lệ',
+                    'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+                    'description' => 'TAI_SU_DUNG = ' . $taiSuDung
+                        . '. Chuẩn chỉ cho ghi 1, không tái sử dụng thì để trống',
+                ]);
+            } elseif (TienTeCalculator::laSo($data->don_gia_bv)
+                && TienTeCalculator::laSo($data->don_gia_bh)
+                && TienTeCalculator::lech(
+                    $data->don_gia_bv, $data->don_gia_bh,
+                    (float) config('xml3176.tien.sai_so', 1.0)
+                )) {
+                $errorCode = $this->generateErrorCode('TAI_SU_DUNG_DON_GIA_LECH');
+                $errors->push((object)[
+                    'error_code' => $errorCode,
+                    'error_name' => 'VTYT tái sử dụng nhưng hai đơn giá lệch nhau',
+                    'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+                    'description' => 'VTYT tái sử dụng phải có DON_GIA_BV = DON_GIA_BH. Hiện BV: '
+                        . number_format((float) $data->don_gia_bv, 2) . ', BH: '
+                        . number_format((float) $data->don_gia_bh, 2),
                 ]);
             }
         }
