@@ -8,6 +8,8 @@ use App\Models\BHYT\Icd10Category;
 use App\Models\BHYT\IcdYhctCategory;
 use App\Models\BHYT\AdministrativeUnit;
 use App\Models\BHYT\JobCategory;
+use App\Models\BHYT\DvktCanMaMay;
+use App\Services\Xml3176\Support\MaDvktMatcher;
 
 class CommonValidationService
 {
@@ -90,6 +92,40 @@ class CommonValidationService
     {
         return AdministrativeUnit::where('province_code', $province_code)
         ->where('commune_code', $commune_code)
+        ->where('is_active', true)
+        ->exists();
+    }
+
+    /**
+     * Danh muc DVKT can ma may da duoc nap chua (co dong nao dang dung khong).
+     *
+     * Quy tac ma may dung ket qua nay de quyet dinh co lui ve cach loc theo nhom cu
+     * hay khong - danh muc rong ma van doi theo danh muc thi khong ho so nao bi bao
+     * thieu ma may nua, tuc mat sach canh bao ma khong ai biet.
+     */
+    public function coDanhMucDvktCanMaMay()
+    {
+        return DvktCanMaMay::where('is_active', true)->exists();
+    }
+
+    /**
+     * DVKT nay co bat buoc phai gui kem ma may khong.
+     *
+     * Thu ca ma khai lan ma goc: co so dat hau to sau dau gach duoi de phan biet bien
+     * the (02.0261.0319_TB) trong khi danh muc chi liet ke ma goc.
+     */
+    public function isDvktCanMaMay($maDvkt)
+    {
+        $ma = trim((string) $maDvkt);
+
+        if ($ma === '') {
+            return false;
+        }
+
+        $goc = MaDvktMatcher::maGoc($ma);
+        $ung = $goc !== '' && $goc !== $ma ? [$ma, $goc] : [$ma];
+
+        return DvktCanMaMay::whereIn('ma_dvkt', $ung)
         ->where('is_active', true)
         ->exists();
     }
