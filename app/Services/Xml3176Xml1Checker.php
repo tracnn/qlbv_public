@@ -71,6 +71,7 @@ class Xml3176Xml1Checker
         $errors = $errors->merge($this->checkWarningDiseaseCodes($data));
         $errors = $errors->merge($this->checkMaLoaiKcbKhongTinhNgayDieuTri($data));
         $errors = $errors->merge($this->checkNgaySinhVsNgayVao($data));
+        $errors = $errors->merge($this->checkMaKhuVuc($data));
 
         // Save errors to xml_error_checks table
         $this->xmlErrorService->saveErrors($this->xmlType, $data->ma_lk, $data->stt, $errors);
@@ -932,6 +933,31 @@ class Xml3176Xml1Checker
                 'error_name'     => 'Ngày sinh lớn hơn ngày vào viện',
                 'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
                 'description'    => 'Ngày sinh (' . strtodatetime($data->ngay_sinh) . ') lớn hơn ngày vào viện (' . strtodatetime($data->ngay_vao) . ')',
+            ]);
+        }
+
+        return $errors;
+    }
+
+    /**
+     * MA_KHUVUC ghi noi sinh song cua nguoi benh theo the BHYT: K1, K2 hoac K3.
+     */
+    private function checkMaKhuVuc(Xml3176Xml1 $data): Collection
+    {
+        $errors = collect();
+        $ma = strtoupper(trim((string) $data->ma_khuvuc));
+
+        if ($ma === '') {
+            return $errors;
+        }
+
+        if (!in_array($ma, ['K1', 'K2', 'K3'], true)) {
+            $errorCode = $this->generateErrorCode('ADMIN_INFO_ERROR_MA_KHUVUC');
+            $errors->push((object)[
+                'error_code' => $errorCode,
+                'error_name' => 'Mã khu vực không hợp lệ',
+                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+                'description' => 'MA_KHUVUC = ' . $data->ma_khuvuc . '. Chuẩn chỉ quy định K1, K2 hoặc K3',
             ]);
         }
 

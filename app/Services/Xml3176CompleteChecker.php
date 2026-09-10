@@ -14,6 +14,7 @@ use App\Models\BHYT\Xml3176Xml11;
 use App\Models\BHYT\Xml3176Xml12;
 use App\Models\BHYT\Xml3176Xml13;
 use App\Models\BHYT\Xml3176Xml14;
+use App\Services\Xml3176\Support\DanhSachPhanCachParser;
 use App\Services\Xml3176\Support\Xml3176DateHelper;
 use App\Models\BHYT\MedicalOrganization;
 use App\Services\Xml3176\Support\MucHuongCalculator;
@@ -81,6 +82,8 @@ class Xml3176CompleteChecker
             $errors = $errors->merge($this->checkExpenseErrors($data));
             $errors = $errors->merge($this->checkExaminationErrors($data));
             $errors = $errors->merge($this->checkMissingTransferOrAppointment($data));
+            $errors = $errors->merge($this->checkNgayTaiKham($data));
+            $errors = $errors->merge($this->checkCanNangCon($data));
             $errors = $errors->merge($this->checkXml4NgayKqMismatchXml3($ma_lk));
             $errors = $errors->merge($this->checkSecondSurgeryFullPayment($ma_lk));
             $errors = $errors->merge($this->checkMucHuong($data));
@@ -604,6 +607,131 @@ class Xml3176CompleteChecker
                 'description' => 'Mã nơi đi ' . $data->ma_noi_di . ' nhưng không có XML13 (chuyển tuyến) lẫn XML14 (hẹn khám lại)',
             ]);
         }
+        return $errors;
+    }
+
+    /**
+     * NGAY_TAI_KHAM (XML1) phai co giay hen kham lai (XML14) tuong ung.
+     *
+     * Gop "thieu XML14" va "lech ngay" vao MOT ma: ca hai la cung mot sai - ngay hen
+     * trong XML1 khong co giay hen tuong ung. Tach hai ma buoc nguoi van hanh cau hinh
+     * hai lan cho mot van de.
+     *
+     * HUONG SO SANH: xml3176_xml14s.ma_lk la UNIQUE nen moi ho so chi co MOT dong XML14,
+     * trong khi NGAY_TAI_KHAM co the khai nhieu ngay ngan boi ';'. Doi hoi moi ngay phai
+     * co mot dong XML14 rieng la dieu luoc do khong cho phep - se bao loi hang loat ma
+     * khong do du lieu sai. Nen kiem theo hai chieu kha thi: phai CO dong XML14, va ngay
+     * tren dong do phai NAM TRONG tap NGAY_TAI_KHAM.
+     */
+    private function checkNgayTaiKham(Xml3176Xml1 $data): Collection
+    {
+        $errors = collect();
+        $ngays = DanhSachPhanCachParser::tach($data->ngay_tai_kham);
+
+        if (empty($ngays)) {
+            return $errors;
+        }
+
+        $sai = [];
+        $hopLe = [];
+
+        foreach ($ngays as $ngay) {
+            if (preg_match('/^\d{8}$/', $ngay)
+                && checkdate((int) substr($ngay, 4, 2), (int) substr($ngay, 6, 2), (int) substr($ngay, 0, 4))) {
+                $hopLe[] = $ngay;
+            } else {
+                $sai[] = $ngay;
+            }
+        }
+
+        if (!empty($sai)) {
+            $errorCode = $this->generateErrorCode('NGAY_TAI_KHAM_SAI_DINH_DANG');
+            $errors->push((object)[
+                'error_code' => $errorCode,
+                'error_name' => 'Ngày tái khám sai định dạng',
+                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+                'description' => 'Ngày tái khám phải gồm 8 ký tự yyyymmdd và là ngày có thật. '
+                    . 'Giá trị sai: ' . implode(', ', $sai),
+            ]);
+        }
+
+        if (empty($hopLe)) {
+            return $errors;
+        }
+
+        $xml14 = Xml3176Xml14::where('ma_lk', $data->ma_lk)->first();
+
+        if (!$xml14) {
+            $errorCode = $this->generateErrorCode('NGAY_TAI_KHAM_KHONG_KHOP_XML14');
+            $errors->push((object)[
+                'error_code' => $errorCode,
+                'error_name' => 'Ngày tái khám không có giấy hẹn khám lại tương ứng',
+                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+                'description' => 'Hồ sơ hẹn tái khám ngày ' . implode(', ', $hopLe)
+                    . ' nhưng không có giấy hẹn khám lại (XML14)',
+            ]);
+
+            return $errors;
+        }
+
+        $ngayHen = trim((string) $xml14->ngay_hen_kl);
+
+        // NGAY_HEN_KL rong: khong duoc im lang. Ho so co NGAY_TAI_KHAM hop le va co dong
+        // XML14 nhung giay hen khong ghi ngay hen la vua mu truoc ho so thieu du lieu, vua
+        // la duong ne - tao mot dong XML14 rong la tat duoc quy tac.
+        if ($ngayHen === '') {
+            $errorCode = $this->generateErrorCode('NGAY_TAI_KHAM_KHONG_KHOP_XML14');
+            $errors->push((object)[
+                'error_code' => $errorCode,
+                'error_name' => 'Ngày tái khám không có giấy hẹn khám lại tương ứng',
+                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+                'description' => 'Hồ sơ hẹn tái khám ngày ' . implode(', ', $hopLe)
+                    . ' nhưng giấy hẹn khám lại (XML14) không ghi ngày hẹn (NGAY_HEN_KL rỗng)',
+            ]);
+
+            return $errors;
+        }
+
+        if (!in_array($ngayHen, $hopLe, true)) {
+            $errorCode = $this->generateErrorCode('NGAY_TAI_KHAM_KHONG_KHOP_XML14');
+            $errors->push((object)[
+                'error_code' => $errorCode,
+                'error_name' => 'Ngày tái khám không có giấy hẹn khám lại tương ứng',
+                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+                'description' => 'Giấy hẹn khám lại ghi ngày ' . $ngayHen
+                    . ' nhưng NGAY_TAI_KHAM của hồ sơ là ' . implode(', ', $hopLe),
+            ]);
+        }
+
+        return $errors;
+    }
+
+    /**
+     * CAN_NANG_CON chi ghi trong truong hop sinh con, nen phai co giay chung sinh (XML9).
+     *
+     * KHONG so so phan tu voi SO_CON cua XML9: chuan khong noi ro CAN_NANG_CON ghi con
+     * con song hay ghi ca con chet. Thieu can cu.
+     */
+    private function checkCanNangCon(Xml3176Xml1 $data): Collection
+    {
+        $errors = collect();
+        $canNang = DanhSachPhanCachParser::tach($data->can_nang_con);
+
+        if (empty($canNang)) {
+            return $errors;
+        }
+
+        if (!Xml3176Xml9::where('ma_lk', $data->ma_lk)->exists()) {
+            $errorCode = $this->generateErrorCode('CAN_NANG_CON_THIEU_XML9');
+            $errors->push((object)[
+                'error_code' => $errorCode,
+                'error_name' => 'Có cân nặng con nhưng thiếu giấy chứng sinh',
+                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+                'description' => 'CAN_NANG_CON = ' . $data->can_nang_con
+                    . ' (chỉ ghi khi sinh con) nhưng hồ sơ không có dòng XML9 nào',
+            ]);
+        }
+
         return $errors;
     }
 

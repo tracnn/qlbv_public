@@ -11,6 +11,8 @@ use App\Models\BHYT\EquipmentCatalog;
 use App\Services\Xml3176\Support\Xml3176DateHelper;
 use App\Services\Xml3176\Support\TyLeComparator;
 use App\Services\Xml3176\Support\ServiceOverlapChecker;
+use App\Services\Xml3176\Support\MaDvktStructure;
+use App\Services\Xml3176\Support\TienTeCalculator;
 use Illuminate\Support\Collection;
 
 class Xml3176Xml3Checker
@@ -152,6 +154,9 @@ class Xml3176Xml3Checker
         $errors = $errors->merge($this->checkMedicalService($data)); // Kiểm tra dịch vụ kỹ thuật
         $errors = $errors->merge($this->checkServiceGroupPtttDuplicate($data)); // Kiểm tra dịch vụ kỹ thuật
         $errors = $errors->merge($this->checkOverlappingServiceExecution($data));
+        $errors = $errors->merge($this->checkCauTrucMaDichVu($data));
+        $errors = $errors->merge($this->checkCongThucTien($data));
+        $errors = $errors->merge($this->checkTapGiaTri($data));
 
         if (config('xml3176.general.check_valid_department_req')) {
             $errors = $errors->merge($this->checkValidMakhoaReq($data)); // Kiểm tra tính hợp lệ của khoa chỉ định
@@ -1029,6 +1034,305 @@ class Xml3176Xml3Checker
                     . $other->ma_dich_vu . ' (' . strtodatetime($other->ngay_th_yl) . ' - '
                     . strtodatetime($other->ngay_kq) . ') trong cùng hồ sơ.'
             ]);
+        }
+
+        return $errors;
+    }
+
+    /**
+     * Cau truc ma dich vu theo truong MA_PTTT_QT cua chuan du lieu dau ra (QD 130,
+     * sua doi theo QD 4750).
+     *
+     * Ma dich vu rong thi im lang: da co MISSING_SERVICE_OR_MATERIAL lo viec do.
+     */
+    private function checkCauTrucMaDichVu(Xml3176Xml3 $data): Collection
+    {
+        $errors = collect();
+        $ma = trim((string) $data->ma_dich_vu);
+
+        if ($ma === '') {
+            return $errors;
+        }
+
+        // Hau to '_TB': DVKT da chi dinh nhung khong the tiep tuc thuc hien
+        // (khoan 3 Dieu 7 TT 39/2018/TT-BYT) => DON_GIA_BH = 0 va DON_GIA_BV = 0.
+        if (MaDvktStructure::laKhongThucHien($ma)
+            && ((float) $data->don_gia_bh != 0 || (float) $data->don_gia_bv != 0)) {
+            $errorCode = $this->generateErrorCode('MA_DICH_VU_TB_CO_DON_GIA');
+            $errors->push((object)[
+                'error_code' => $errorCode,
+                'error_name' => 'DVKT không thực hiện được nhưng vẫn có đơn giá',
+                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+                'description' => 'Mã ' . $ma . ' có hậu tố _TB (chỉ định nhưng không thực hiện được) '
+                    . 'nên đơn giá BH và đơn giá BV phải bằng 0. Hiện đơn giá BH: '
+                    . number_format((float) $data->don_gia_bh)
+                    . ', đơn giá BV: ' . number_format((float) $data->don_gia_bv),
+            ]);
+        }
+
+        // 04 ky tu cuoi la '0000': DVKT chua duoc quy dinh muc gia => DON_GIA_BH = 0.
+        if (MaDvktStructure::laChuaCoGia($ma) && (float) $data->don_gia_bh != 0) {
+            $errorCode = $this->generateErrorCode('MA_DICH_VU_CHUA_CO_GIA_CO_DON_GIA_BH');
+            $errors->push((object)[
+                'error_code' => $errorCode,
+                'error_name' => 'DVKT chưa có mức giá nhưng vẫn có đơn giá BH',
+                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+                'description' => 'Mã ' . $ma . ' kết thúc bằng 0000 (chưa được quy định mức giá) '
+                    . 'nên đơn giá BH phải bằng 0. Hiện là: ' . number_format((float) $data->don_gia_bh),
+            ]);
+        }
+
+        // Chuan chi dinh nghia hai hau to: '_TB' va '_GT' (gay te).
+        $hauTo = MaDvktStructure::hauTo($ma);
+        if ($hauTo !== '' && !in_array($hauTo, ['TB', 'GT'], true)) {
+            $errorCode = $this->generateErrorCode('MA_DICH_VU_HAU_TO_LA');
+            $errors->push((object)[
+                'error_code' => $errorCode,
+                'error_name' => 'Hậu tố mã dịch vụ không hợp lệ',
+                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+                'description' => 'Mã ' . $ma . ' có hậu tố _' . $hauTo
+                    . '. Chuẩn chỉ quy định hai hậu tố: _TB và _GT',
+            ]);
+        }
+
+        // Van chuyen nguoi benh: VC.XXXXX.
+        if (MaDvktStructure::laVanChuyen($ma)) {
+            if (empty($data->ma_xang_dau)) {
+                $errorCode = $this->generateErrorCode('MA_DICH_VU_VAN_CHUYEN_THIEU_XANG_DAU');
+                $errors->push((object)[
+                    'error_code' => $errorCode,
+                    'error_name' => 'Vận chuyển người bệnh nhưng thiếu mã xăng dầu',
+                    'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+                    'description' => 'Mã ' . $ma . ' là dịch vụ vận chuyển nhưng MA_XANG_DAU để trống',
+                ]);
+            }
+
+            $maCoSo = MaDvktStructure::maCoSoVanChuyen($ma);
+            if ($maCoSo !== '' && !$this->commonValidationService->isMedicalOrganizationValid($maCoSo)) {
+                $errorCode = $this->generateErrorCode('MA_DICH_VU_VAN_CHUYEN_CSKCB_NOT_FOUND');
+                $errors->push((object)[
+                    'error_code' => $errorCode,
+                    'error_name' => 'Mã cơ sở nơi chuyển đến không có trong danh mục',
+                    'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+                    'description' => 'Mã ' . $ma . ' chỉ tới cơ sở KBCB ' . $maCoSo
+                        . ' nhưng mã này không có trong danh mục cơ sở KBCB',
+                ]);
+            }
+        }
+
+        // Chuyen mau benh pham: XX.YYYY.ZZZZ.K.WWWWW (TT 09/2019/TT-BYT).
+        $maChuyenMau = MaDvktStructure::maCoSoChuyenMau($ma);
+        if ($maChuyenMau !== ''
+            && !$this->commonValidationService->isMedicalOrganizationValid($maChuyenMau)) {
+            $errorCode = $this->generateErrorCode('MA_DICH_VU_CHUYEN_MAU_CSKCB_NOT_FOUND');
+            $errors->push((object)[
+                'error_code' => $errorCode,
+                'error_name' => 'Mã cơ sở nơi thực hiện cận lâm sàng không có trong danh mục',
+                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+                'description' => 'Mã ' . $ma . ' chỉ tới cơ sở KBCB ' . $maChuyenMau
+                    . ' nhưng mã này không có trong danh mục cơ sở KBCB',
+            ]);
+        }
+
+        return $errors;
+    }
+
+    /**
+     * Cong thuc tien TUNG DONG theo chuan (QD 4750). Tong cap ho so da co
+     * Xml3176CompleteChecker::checkExpenseErrors() lo, nhung tong khop khong suy ra
+     * tung dong dung: hai dong sai nguoc chieu nhau van cho tong dung.
+     *
+     * Thieu can cu thi im lang - toan hang null/khong phai so, hoac ty le ngoai khoang
+     * (0,100], deu khong ket luan.
+     */
+    private function checkCongThucTien(Xml3176Xml3 $data): Collection
+    {
+        $errors = collect();
+        $saiSo = (float) config('xml3176.tien.sai_so', 1.0);
+
+        // Guard ty le tach theo tung quy tac: THANH_TIEN_BV chi phu thuoc TYLE_TT_DV, khong
+        // lien quan TYLE_TT_BH - gac ca hai se khoa mieng no bang mot ty le no khong dung.
+        // THANH_TIEN_BH dung ca hai ty le nen can ca hai hop le. Khop voi XML2 (nhanh BV
+        // khong gac ty le nao vi XML2 khong co TYLE_TT_DV).
+        $tyLeDvHopLe = TienTeCalculator::tyLeHopLe($data->tyle_tt_dv);
+        $tyLeHopLe = $tyLeDvHopLe && TienTeCalculator::tyLeHopLe($data->tyle_tt_bh);
+
+        if ($tyLeDvHopLe
+            && TienTeCalculator::laSo($data->so_luong)
+            && TienTeCalculator::laSo($data->don_gia_bv)
+            && TienTeCalculator::laSo($data->thanh_tien_bv)) {
+            $kyVong = TienTeCalculator::thanhTienBvXml3(
+                $data->so_luong, $data->don_gia_bv, $data->tyle_tt_dv
+            );
+
+            if (TienTeCalculator::lech($data->thanh_tien_bv, $kyVong, $saiSo)) {
+                $errorCode = $this->generateErrorCode('THANH_TIEN_BV_SAI_CONG_THUC');
+                $errors->push((object)[
+                    'error_code' => $errorCode,
+                    'error_name' => 'Thành tiền BV không đúng công thức',
+                    'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+                    'description' => 'THANH_TIEN_BV = SO_LUONG x DON_GIA_BV x TYLE_TT_DV/100 = '
+                        . number_format($kyVong, 2) . ', hiện khai: '
+                        . number_format((float) $data->thanh_tien_bv, 2),
+                ]);
+            }
+        }
+
+        if ($tyLeHopLe
+            && TienTeCalculator::laSo($data->so_luong)
+            && TienTeCalculator::laSo($data->don_gia_bh)
+            && TienTeCalculator::laSo($data->thanh_tien_bh)) {
+            $kyVong = TienTeCalculator::thanhTienBhXml3(
+                $data->so_luong, $data->don_gia_bh, $data->tyle_tt_dv, $data->tyle_tt_bh
+            );
+
+            if (TienTeCalculator::lech($data->thanh_tien_bh, $kyVong, $saiSo)) {
+                $errorCode = $this->generateErrorCode('THANH_TIEN_BH_SAI_CONG_THUC');
+                $errors->push((object)[
+                    'error_code' => $errorCode,
+                    'error_name' => 'Thành tiền BH không đúng công thức',
+                    'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+                    'description' => 'THANH_TIEN_BH = SO_LUONG x DON_GIA_BH x TYLE_TT_DV/100 '
+                        . 'x TYLE_TT_BH/100 = ' . number_format($kyVong, 2) . ', hiện khai: '
+                        . number_format((float) $data->thanh_tien_bh, 2),
+                ]);
+            }
+        }
+
+        // CO Y: khong guard laSo() rieng cho bon thanh phan con (t_nguonkhac_nsnn,
+        // t_nguonkhac_vtnn, t_nguonkhac_vttn, t_nguonkhac_cl). Day la truong TIEN, thanh
+        // phan vang nghia la "nguon do khong chi tra" nen quy ve 0 la cach doc dung -
+        // khac han so_luong/don_gia, thanh phan vang o do nghia la "khong biet" nen moi
+        // phai im lang. Neu HIS khai T_NGUONKHAC > 0 ma bo trong ca bon thanh phan thi
+        // do la bat nhat that, quy tac phai bat chu khong duoc im lang truoc chinh
+        // khiem khuyet ma no sinh ra de bat.
+        //
+        // MO RONG (khong dao ruling tren): importer (Xml3176Service) quy 0 ve NULL, nen ca
+        // T_NGUONKHAC_NSNN = 100000 ma T_NGUONKHAC = 0 (luu NULL) truoc day im lang du tong
+        // lech dung 100.000d - dung loai bat nhat quy tac nay sinh ra de bat. Vao than khi
+        // BAT KY thanh phan nao (tong hoac mot trong bon nguon con) la so, khong chi rieng
+        // t_nguonkhac.
+        if (TienTeCalculator::laSo($data->t_nguonkhac)
+            || TienTeCalculator::laSo($data->t_nguonkhac_nsnn)
+            || TienTeCalculator::laSo($data->t_nguonkhac_vtnn)
+            || TienTeCalculator::laSo($data->t_nguonkhac_vttn)
+            || TienTeCalculator::laSo($data->t_nguonkhac_cl)) {
+            $kyVong = TienTeCalculator::tongNguonKhac(
+                $data->t_nguonkhac_nsnn, $data->t_nguonkhac_vtnn,
+                $data->t_nguonkhac_vttn, $data->t_nguonkhac_cl
+            );
+
+            if (TienTeCalculator::lech($data->t_nguonkhac, $kyVong, $saiSo)) {
+                $errorCode = $this->generateErrorCode('T_NGUONKHAC_SAI_TONG');
+                $errors->push((object)[
+                    'error_code' => $errorCode,
+                    'error_name' => 'Tiền nguồn khác không bằng tổng bốn nguồn thành phần',
+                    'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+                    'description' => 'T_NGUONKHAC = NSNN + VTNN + VTTN + CL = '
+                        . number_format($kyVong, 2) . ', hiện khai: '
+                        . number_format((float) $data->t_nguonkhac, 2),
+                ]);
+            }
+        }
+
+        // T_BHTT chi ket luan duoc khi khong co nguon khac (cong thuc co nhanh giam tru
+        // phu thuoc loai nguon ma du lieu khong phan biet) va khong co tran thanh toan
+        // (da co INVALID_T_TRANTT_T_BHTT lo).
+        $coNguonKhac = TienTeCalculator::laSo($data->t_nguonkhac) && (float) $data->t_nguonkhac != 0;
+        $coTran = TienTeCalculator::laSo($data->t_trantt) && (float) $data->t_trantt != 0;
+
+        if (!$coNguonKhac && !$coTran
+            && TienTeCalculator::tyLeHopLe($data->muc_huong)
+            && TienTeCalculator::laSo($data->thanh_tien_bh)
+            && TienTeCalculator::laSo($data->t_bhtt)) {
+            $kyVong = TienTeCalculator::tBhtt($data->thanh_tien_bh, $data->muc_huong);
+
+            if (TienTeCalculator::lech($data->t_bhtt, $kyVong, $saiSo)) {
+                $errorCode = $this->generateErrorCode('T_BHTT_SAI_CONG_THUC');
+                $errors->push((object)[
+                    'error_code' => $errorCode,
+                    'error_name' => 'Tiền BHYT thanh toán không đúng công thức',
+                    'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+                    'description' => 'T_BHTT = THANH_TIEN_BH x MUC_HUONG/100 = '
+                        . number_format($kyVong, 2) . ', hiện khai: '
+                        . number_format((float) $data->t_bhtt, 2),
+                ]);
+            }
+        }
+
+        return $errors;
+    }
+
+    /**
+     * Tap gia tri hop le cua PHAM_VI va TAI_SU_DUNG theo chuan du lieu dau ra.
+     *
+     * Ten ma la PHAM_VI_NGOAI_TAP_GIA_TRI chu khong phai PHAM_VI_INVALID: XML2 da co
+     * XML2_PHAM_VI_INVALID mang nghia hoan toan khac (pham vi phai la 3 voi the CBCS).
+     */
+    private function checkTapGiaTri(Xml3176Xml3 $data): Collection
+    {
+        $errors = collect();
+
+        $phamVi = trim((string) $data->pham_vi);
+
+        // Truong nay khong bat buoc theo chuan nen rong thi im lang.
+        if ($phamVi !== '') {
+            if (!in_array($phamVi, ['1', '2', '3'], true)) {
+                $errorCode = $this->generateErrorCode('PHAM_VI_NGOAI_TAP_GIA_TRI');
+                $errors->push((object)[
+                    'error_code' => $errorCode,
+                    'error_name' => 'Phạm vi ngoài tập giá trị hợp lệ',
+                    'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+                    'description' => 'PHAM_VI = ' . $phamVi . '. Chuẩn chỉ quy định 1, 2 hoặc 3',
+                ]);
+            }
+
+            // QD 4750 sua toan bo dien giai: ma 2 = VTYT/DVKT do NGUOI BENH TU TRA.
+            // CHI xet T_BHTT, KHONG xet THANH_TIEN_BH: THANH_TIEN_BH chi la so tien theo
+            // gia BH, bo xuat khai cho moi dong co ma BH la hop le du pham_vi la gi; T_BHTT
+            // moi la "de nghi quy thanh toan" - dung dieu kien rong hon se no tren moi dong
+            // co tien (761/762 dong xml3 that dang mang pham_vi = 2). Khop voi quy tac anh
+            // em NGUON_CTRA_NGOAI_QUY_MA_BH_TRA ben XML2, cung chi xet t_bhtt.
+            if ($phamVi === '2' && (float) $data->t_bhtt > 0) {
+                $errorCode = $this->generateErrorCode('PHAM_VI_TU_TRA_MA_BH_TRA');
+                $errors->push((object)[
+                    'error_code' => $errorCode,
+                    'error_name' => 'Người bệnh tự trả nhưng quỹ BHYT vẫn thanh toán',
+                    'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+                    'description' => 'PHAM_VI = 2 (người bệnh tự trả) nhưng T_BHTT = '
+                        . number_format((float) $data->t_bhtt, 2),
+                ]);
+            }
+        }
+
+        $taiSuDung = trim((string) $data->tai_su_dung);
+
+        if ($taiSuDung !== '') {
+            if ($taiSuDung !== '1') {
+                $errorCode = $this->generateErrorCode('TAI_SU_DUNG_INVALID');
+                $errors->push((object)[
+                    'error_code' => $errorCode,
+                    'error_name' => 'Mã tái sử dụng không hợp lệ',
+                    'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+                    'description' => 'TAI_SU_DUNG = ' . $taiSuDung
+                        . '. Chuẩn chỉ cho ghi 1, không tái sử dụng thì để trống',
+                ]);
+            } elseif (TienTeCalculator::laSo($data->don_gia_bv)
+                && TienTeCalculator::laSo($data->don_gia_bh)
+                && TienTeCalculator::lech(
+                    $data->don_gia_bv, $data->don_gia_bh,
+                    (float) config('xml3176.tien.sai_so', 1.0)
+                )) {
+                $errorCode = $this->generateErrorCode('TAI_SU_DUNG_DON_GIA_LECH');
+                $errors->push((object)[
+                    'error_code' => $errorCode,
+                    'error_name' => 'VTYT tái sử dụng nhưng hai đơn giá lệch nhau',
+                    'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+                    'description' => 'VTYT tái sử dụng phải có DON_GIA_BV = DON_GIA_BH. Hiện BV: '
+                        . number_format((float) $data->don_gia_bv, 2) . ', BH: '
+                        . number_format((float) $data->don_gia_bh, 2),
+                ]);
+            }
         }
 
         return $errors;
