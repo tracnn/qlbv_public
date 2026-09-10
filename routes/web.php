@@ -719,7 +719,17 @@ Route::group(['middleware' => ['auth']], function () {
         ->name('danh-muc.dm-thuoc-co-dieu-kien');
         Route::post('dm-thuoc-co-dieu-kien','Category\Manager\CategoryController@updateDmtCoDieuKien')
             ->name('danh-muc.update-dm-thuoc-co-dieu-kien');
-        Route::get('dm-khoa-phong','Category\Manager\CategoryController@dmKhoaphong')->name('danh-muc.dm-khoa-phong');       
+        Route::get('dm-khoa-phong','Category\Manager\CategoryController@dmKhoaphong')->name('danh-muc.dm-khoa-phong');
+    });
+
+    /*
+        Danh muc tra cuu - man hinh lai bang cau hinh (config/danh_muc_tra_cuu.php).
+        CO Y khong dat vao prefix 'category/': o do co route bat-tat {category} se nuot
+        moi route mot doan. Cung khong dung prefix 'danh-muc/' vi khu do quyen superadmin.
+    */
+    Route::group(['prefix' => 'danh-muc-tra-cuu/', 'middleware' => ['checkrole:category-manager']], function () {
+        Route::get('{khoa}', 'Category\DanhMucTraCuuController@index')->name('danh-muc-tra-cuu.index');
+        Route::get('{khoa}/du-lieu', 'Category\DanhMucTraCuuController@fetch')->name('danh-muc-tra-cuu.fetch');
     });
 
     Route::get('get-user-id', 'System\SystemController@getUserId')->name('system.get-user-id');
