@@ -132,4 +132,20 @@ class Xml3176Xml3CongThucTienTest extends TestCase
     {
         $this->assertSame([], $this->codes(['thanh_tien_bv' => 200000.5]));
     }
+
+    /** @test */
+    public function khai_tong_nguon_khac_ma_bo_trong_bon_thanh_phan_thi_van_bao()
+    {
+        // CO Y: thanh phan tien vang = nguon do khong chi tra = 0. Khai tong 5000 ma bo
+        // trong ca bon thanh phan la bat nhat that, quy tac phai bat chu khong im lang.
+        $codes = $this->codes([
+            't_nguonkhac' => 5000,
+            't_nguonkhac_nsnn' => null,
+            't_nguonkhac_vtnn' => null,
+            't_nguonkhac_vttn' => null,
+            't_nguonkhac_cl' => null,
+        ]);
+
+        $this->assertContains('XML3_T_NGUONKHAC_SAI_TONG', $codes);
+    }
 }

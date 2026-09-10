@@ -1194,6 +1194,13 @@ class Xml3176Xml3Checker
             }
         }
 
+        // CO Y: khong guard laSo() rieng cho bon thanh phan con (t_nguonkhac_nsnn,
+        // t_nguonkhac_vtnn, t_nguonkhac_vttn, t_nguonkhac_cl). Day la truong TIEN, thanh
+        // phan vang nghia la "nguon do khong chi tra" nen quy ve 0 la cach doc dung -
+        // khac han so_luong/don_gia, thanh phan vang o do nghia la "khong biet" nen moi
+        // phai im lang. Neu HIS khai T_NGUONKHAC > 0 ma bo trong ca bon thanh phan thi
+        // do la bat nhat that, quy tac phai bat chu khong duoc im lang truoc chinh
+        // khiem khuyet ma no sinh ra de bat.
         if (TienTeCalculator::laSo($data->t_nguonkhac)) {
             $kyVong = TienTeCalculator::tongNguonKhac(
                 $data->t_nguonkhac_nsnn, $data->t_nguonkhac_vtnn,
