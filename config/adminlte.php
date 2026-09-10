@@ -11,6 +11,24 @@
 // ai phat hien, vi mac dinh trong van dung.
 $logoImg = '<img src="/images/logo.png" alt="GĐBHYT" style="height: 50px;">';
 
+// Menu khu "Danh muc tra cuu" sinh tu so dang ky, de them danh muc moi chi phai sua MOT
+// cho (config/danh_muc_tra_cuu.php).
+//
+// PHAI dung require chu KHONG duoc dung config('danh_muc_tra_cuu'): Laravel nap cac tep
+// config theo thu tu chu cai, 'adminlte' chay TRUOC nen khoa do chua ton tai va se tra ve
+// null - submenu se RONG ma khong ai phat hien. Cung ly do da ghi cho 'organization' o tren.
+$danhMucTraCuu = require __DIR__ . '/danh_muc_tra_cuu.php';
+
+$menuDanhMucTraCuu = [];
+foreach ($danhMucTraCuu as $khoaDanhMuc => $dmTraCuu) {
+    $menuDanhMucTraCuu[] = [
+        'text'   => $dmTraCuu['ten'],
+        'icon'   => 'book',
+        'url'    => 'danh-muc-tra-cuu/' . $khoaDanhMuc,
+        'active' => ['danh-muc-tra-cuu/' . $khoaDanhMuc . '*'],
+    ];
+}
+
 return [
 
     /*
@@ -755,6 +773,11 @@ return [
                             'active'=> ['category/bhyt/xml3176-error-catalog*'],
                         ],
                     ],
+                ],
+                [
+                    'text'    => 'Danh mục tra cứu',
+                    'icon'    => 'book',
+                    'submenu' => $menuDanhMucTraCuu,
                 ],
                 
                 [
