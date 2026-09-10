@@ -47,6 +47,13 @@ return [
         'xml3_ma_nhom_require_ket_luan' => [2], //Bổ sung mã nhóm bắt buộc phải có kết luận
     ],
     'exportable_tt' => true, //Sau khi import từ thư mục xml thông tuyến thì có xuất Xml hay không (true: có xuất; false: không xuất)
+    'tien' => [
+        // Sai so khi so tien tung dong, don vi DONG. Chuan bat lam tron 2 chu so thap
+        // phan o tung phep nhan nen chenh lech hop le chi o muc xu; lay 1 dong la bien
+        // rong rai ma van bat duoc sai that. Noi ra day neu bo xuat HIS lam tron o buoc
+        // khac chuan (vi du lam tron don gia truoc khi nhan).
+        'sai_so' => 1.0,
+    ],
     // Hồ sơ có MA_DOITUONG_KCB thuộc danh sách này thì KHÔNG rà lỗi (hồ sơ dịch vụ, không
     // phải BHYT). Bao cả nhánh con ngăn bởi dấu chấm: '9' loại trừ cả '9.1', nhưng không
     // nuốt '91'. Xuất/ký số/gửi cổng KHÔNG đi qua cổng này, vẫn chạy như cũ.
