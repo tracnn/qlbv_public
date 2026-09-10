@@ -71,7 +71,17 @@ return [
             'nhom_thau_pattern' => '/^N([1-9]|[1-9][0-9])$/', // Nhóm thầu N1 đến N99
             'nam_thau_pattern' => '/^\d{4}$/',   // Định dạng năm 4 ký tự
         ],
-        'max_prescription_days'      => 30, // Số ngày kê thuốc tối đa cho phép
+        // Số ngày kê thuốc tối đa cho phép.
+        // Thông tư 26/2025/TT-BYT (hiệu lực 01/7/2025, thay thế TT 52/2017, 18/2018,
+        // 04/2022, 27/2021): mặc định tối đa 30 ngày mỗi thuốc, NHƯNG 252 bệnh/nhóm bệnh
+        // mạn tính tại Phụ lục VII được kê tới 90 ngày. Đo trên 1.609 dòng kê quá 30 ngày
+        // của dữ liệu thật: 99,5% là hồ sơ ngoại trú và mã bệnh chính toàn bệnh mạn tính
+        // (I25.* tim thiếu máu cục bộ, Z95.5 đặt stent, M32.* lupus, I50.* suy tim,
+        // E11.7 đái tháo đường, I10 tăng huyết áp) — tức kê hợp lệ, không phải lỗi.
+        // Đặt 90 là giải pháp tạm: nới cho MỌI bệnh, kể cả bệnh cấp tính lẽ ra chỉ 30
+        // ngày. Cách đúng là nạp danh mục 252 mã ICD của Phụ lục VII rồi cho quy tắc
+        // dùng 30 ngày mặc định, 90 ngày khi MA_BENH_CHINH thuộc danh mục đó.
+        'max_prescription_days'      => 90,
         'lieu_dung_quantity_epsilon' => 0.001, // Sai số cho phép khi so sánh tổng lượng theo liều với số lượng thanh toán
     ],
     'xml3' => [

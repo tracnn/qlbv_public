@@ -29,10 +29,22 @@ class Xml3176Xml2CheckerRuleTest extends TestCase
     }
 
     /** @test */
-    public function ke_qua_30_ngay()
+    public function ke_qua_nguong_so_ngay_cho_phep()
     {
+        // Nguong lay tu config max_prescription_days, nay la 90 theo TT 26/2025/TT-BYT
+        // (252 benh man tinh tai Phu luc VII duoc ke toi 90 ngay). Ma loi giu ten cu
+        // PRESCRIPTION_EXCEEDS_30_DAYS de khong mat lich su loi da ghi.
         $this->assertContains('XML2_PRESCRIPTION_EXCEEDS_30_DAYS',
-            $this->chay(['lieu_dung' => '1*1*45', 'so_luong' => 45]));
+            $this->chay(['lieu_dung' => '1*1*120', 'so_luong' => 120]));
+    }
+
+    /** @test */
+    public function ke_60_ngay_cho_benh_man_tinh_khong_bi_bao()
+    {
+        // 1.416/1.609 dong ke qua 30 ngay tren du lieu that la ke dung 60 ngay, ma benh
+        // chinh toan benh man tinh - hop le theo TT 26/2025.
+        $this->assertNotContains('XML2_PRESCRIPTION_EXCEEDS_30_DAYS',
+            $this->chay(['lieu_dung' => '1*1*60', 'so_luong' => 60]));
     }
 
     /** @test */
