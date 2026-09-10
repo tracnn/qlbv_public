@@ -255,14 +255,25 @@ class Xml3176Xml3Checker
             }
         }
 
-        // Bổ sung kiểm tra bắt buộc phải có mã máy đối với những nhóm
-        if (in_array($data->ma_nhom, config('xml3176.xml3.service_groups_requiring_machine')) && empty($data->ma_may)) {
+        // Bat buoc co ma may: can cu DANH MUC DVKT do BHXH ban hanh, khong con loc theo nhom.
+        //
+        // Danh muc chua nap -> LUI ve cach loc theo nhom cu. Neu doi thang theo danh muc ma
+        // bang con rong thi khong ho so nao bi bao thieu ma may nua - mat sach canh bao ma
+        // khong co dau hieu gi. Nap danh muc xong thi tu chuyen sang quy tac moi.
+        if ($this->commonValidationService->coDanhMucDvktCanMaMay()) {
+            $canMaMay = $this->commonValidationService->isDvktCanMaMay($data->ma_dich_vu);
+        } else {
+            $canMaMay = in_array($data->ma_nhom, config('xml3176.xml3.service_groups_requiring_machine'));
+        }
+
+        if ($canMaMay && empty($data->ma_may)) {
             $errorCode = $this->generateErrorCode('INFO_ERROR_GROUP_CODE_MA_MAY');
             $errors->push((object)[
                 'error_code' => $errorCode,
                 'error_name' => 'Thiếu mã máy',
                 'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
                 'description' => 'Mã máy không được để trống đối với DVKT: ' . $this->serviceDisplay
+                    . ' (mã ' . $data->ma_dich_vu . ')'
             ]);
         }
 
