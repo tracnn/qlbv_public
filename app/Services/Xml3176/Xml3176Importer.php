@@ -4,7 +4,9 @@ namespace App\Services\Xml3176;
 
 use DB;
 use App\Jobs\CheckXml3176TypeJob;
+use App\Models\BHYT\Xml3176Xml1;
 use App\Services\Xml3176Service;
+use App\Services\Xml3176\Support\DoiTuongKcbMatcher;
 use App\Services\XmlStructures;
 
 /**
@@ -260,20 +262,25 @@ class Xml3176Importer
             return Xml3176ImportResult::thatBai($e->getMessage());
         }
 
-        // Mot job cho moi loai da xu ly, thay vi mot job moi dong. Dat sau commit de job
-        // khong tro toi du lieu chua ton tai. Dispatch TRUOC checkXml3176Complete de giu
-        // dung thu tu FIFO hien nay: kiem tung loai truoc, kiem tong the sau.
-        foreach (array_unique($processedFileTypes) as $loai) {
-            if (Xml3176CheckTypes::coChecker($loai)) {
-                CheckXml3176TypeJob::dispatch($ma_lk, $loai)
-                    ->onQueue(config('xml3176.queue_name'));
+        // Ho so khong phai BHYT (ho so dich vu) khong ra loi. Chan o DIEM PHAT JOB chu
+        // khong ben trong job, vi CheckXml3176TypeJob::handle() xoa loi cu cua loai minh
+        // TRUOC khi kiem - chan ben trong job se xoa mat loi da ghi truoc do.
+        if ($this->canKiemLoi($ma_lk)) {
+            // Mot job cho moi loai da xu ly, thay vi mot job moi dong. Dat sau commit de
+            // job khong tro toi du lieu chua ton tai. Dispatch TRUOC checkXml3176Complete
+            // de giu dung thu tu FIFO hien nay: kiem tung loai truoc, kiem tong the sau.
+            foreach (array_unique($processedFileTypes) as $loai) {
+                if (Xml3176CheckTypes::coChecker($loai)) {
+                    CheckXml3176TypeJob::dispatch($ma_lk, $loai)
+                        ->onQueue(config('xml3176.queue_name'));
+                }
             }
-        }
 
-        // Sau commit: hai ham nay chi day job, dat o day de rollback khong de lai
-        // job mo coi tro toi du lieu khong ton tai.
-        if (!config('organization.xml_3176_not_check', false)) {
-            $this->xml3176Service->checkXml3176Complete($ma_lk);
+            // Sau commit: ham nay chi day job, dat o day de rollback khong de lai
+            // job mo coi tro toi du lieu khong ton tai.
+            if (!config('organization.xml_3176_not_check', false)) {
+                $this->xml3176Service->checkXml3176Complete($ma_lk);
+            }
         }
 
         if ($choPhepXuat && config('xml3176.export_xml3176_enabled')) {
@@ -281,5 +288,24 @@ class Xml3176Importer
         }
 
         return Xml3176ImportResult::thanhCong($ma_lk, $processedFileTypes);
+    }
+
+    /**
+     * Ho so nay co thuoc dien ra loi khong?
+     *
+     * Xuat/ky so/gui cong KHONG di qua cong nay - chung chay nhu cu cho moi ho so.
+     *
+     * Doc duoc MA_DOITUONG_KCB va no nam trong danh sach loai tru thi bo qua; moi truong
+     * hop con lai (khong co dong XML1, ma rong, danh sach rong) deu VAN ra loi: bo nham
+     * la mat bao ve trong im lang, con ra nham chi la nhieu nhin thay duoc.
+     */
+    private function canKiemLoi($ma_lk): bool
+    {
+        $maDoiTuong = Xml3176Xml1::where('ma_lk', $ma_lk)->value('ma_doituong_kcb');
+
+        return !DoiTuongKcbMatcher::khongCanKiem(
+            $maDoiTuong,
+            config('xml3176.ma_doituong_kcb_khong_kiem', [])
+        );
     }
 }

@@ -47,6 +47,10 @@ return [
         'xml3_ma_nhom_require_ket_luan' => [2], //Bổ sung mã nhóm bắt buộc phải có kết luận
     ],
     'exportable_tt' => true, //Sau khi import từ thư mục xml thông tuyến thì có xuất Xml hay không (true: có xuất; false: không xuất)
+    // Hồ sơ có MA_DOITUONG_KCB thuộc danh sách này thì KHÔNG rà lỗi (hồ sơ dịch vụ, không
+    // phải BHYT). Bao cả nhánh con ngăn bởi dấu chấm: '9' loại trừ cả '9.1', nhưng không
+    // nuốt '91'. Xuất/ký số/gửi cổng KHÔNG đi qua cổng này, vẫn chạy như cũ.
+    'ma_doituong_kcb_khong_kiem' => ['9'],
     /* Bổ sung key 2024.08.23 */
     'xml1' => [
         'ma_doituong_kcb_trai_tuyen' => ['3'], //Bổ sung mã đối tượng khám bệnh chỉ định trái tuyến
