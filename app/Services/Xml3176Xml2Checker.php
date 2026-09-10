@@ -639,8 +639,9 @@ class Xml3176Xml2Checker
             return $errors; // parse fail → các kiểm tra dựa trên số phía sau vô nghĩa
         }
 
+        // Dang "theo buoi" khong ma hoa so ngay (so_ngay = 0) nen khong ket luan duoc.
         $maxDays = (int) config('xml3176.xml2.max_prescription_days', 30);
-        if ($p['so_ngay'] > $maxDays) {
+        if ($p['so_ngay'] > 0 && $p['so_ngay'] > $maxDays) {
             $code = $this->generateErrorCode('PRESCRIPTION_EXCEEDS_30_DAYS');
             $errors->push((object) [
                 'error_code'     => $code,
@@ -650,8 +651,10 @@ class Xml3176Xml2Checker
             ]);
         }
 
+        // Chi doi chieu khi suy ra duoc tong luong ca dot. Dang hai phan khong co phan
+        // [tong/ngay], va dang theo buoi khong co so ngay - ca hai deu thieu can cu.
         $eps = (float) config('xml3176.xml2.lieu_dung_quantity_epsilon', 0.001);
-        if ($data->so_luong !== null && $data->so_luong !== ''
+        if ($p['co_tong_luong'] && $data->so_luong !== null && $data->so_luong !== ''
             && abs($p['tong_luong'] - (float) $data->so_luong) > $eps) {
             $code  = $this->generateErrorCode('LIEU_DUNG_QUANTITY_MISMATCH');
             $chieu = $p['tong_luong'] > (float) $data->so_luong ? 'cao hơn' : 'thấp hơn';
