@@ -779,25 +779,6 @@ return [
                     'icon'    => 'book',
                     'submenu' => $menuDanhMucTraCuu,
                 ],
-                
-                [
-                    'text'  => 'DVKT có điều kiện',
-                    'icon'  => 'book',
-                    'route'   => 'danh-muc.dvkt-co-dieu-kien',
-                    'active'=> ['danh-muc/dvkt-co-dieu-kien*'],
-                ],
-                [
-                    'text'  => 'Thuốc có điều kiện',
-                    'icon'  => 'book',
-                    'route'   => 'danh-muc.dm-thuoc-co-dieu-kien',
-                    'active'=> ['danh-muc/dm-thuoc-co-dieu-kien*'],
-                ],
-                [
-                    'text'  => 'Danh mục Khoa phòng',
-                    'icon'  => 'book',
-                    'route'   => 'danh-muc.dm-khoa-phong',
-                    'active'=> ['danh-muc/dm-khoa-phong*'],
-                ],
                 [
                     'text'  => 'Nhập khẩu danh mục',
                     'icon'  => 'book',

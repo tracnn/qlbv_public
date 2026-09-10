@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Category;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
 use Yajra\Datatables\Datatables;
 
 /**
@@ -13,19 +14,28 @@ use Yajra\Datatables\Datatables;
  *
  * CHI XEM. Cac danh muc o day nap tu tep theo kieu thay tron bo, nen sua tay tren man
  * hinh se bi lan nap sau xoa sach - vi vay khong co duong ghi nao o day.
+ *
+ * Cot ngoai danh sach 'cot' duoc chan bang whitelist() cua Yajra chu KHONG phai bang
+ * select(): xem chu thich trong fetch().
  */
 class DanhMucTraCuuController extends Controller
 {
-    /** Cau hinh cua mot danh muc; khoa la thi 404. */
+    /**
+     * Cau hinh cua mot danh muc; khoa la thi 404.
+     *
+     * Tra bang array_key_exists chu KHONG noi chuoi vao config('danh_muc_tra_cuu.'.$khoa):
+     * slug dang 'dvkt_can_ma_may.model' se di xuyen qua dot-notation, khong khop nhanh
+     * abort() va lam vo o cho khac (500 thay vi 404).
+     */
     private function cauHinh($khoa)
     {
-        $dm = config('danh_muc_tra_cuu.' . $khoa);
+        $so = config('danh_muc_tra_cuu', []);
 
-        if (empty($dm)) {
+        if (!array_key_exists($khoa, $so)) {
             abort(404, 'Không có danh mục: ' . $khoa);
         }
 
-        return $dm;
+        return $so[$khoa];
     }
 
     public function index($khoa)
@@ -38,20 +48,33 @@ class DanhMucTraCuuController extends Controller
         ]);
     }
 
-    public function fetch($khoa)
+    public function fetch(Request $request, $khoa)
     {
         $dm = $this->cauHinh($khoa);
-
-        // CHI select cac cot da khai (cong id de DataTables co khoa on dinh): danh muc ve
-        // sau co cot nhay cam se khong bi lo chi vi nguoi khai quen giau.
         $cot = array_keys($dm['cot']);
-        $model = $dm['model'];
-        $query = $model::query()->select(array_merge(['id'], $cot));
 
-        if (!empty($dm['sap_xep'])) {
+        $model = $dm['model'];
+        $bang = new $model();
+
+        // Khoa chinh lay tu model chu khong hard-code 'id': bang danh muc co the dung
+        // khoa khac (departments dung 'ID' viet hoa) hoac khong co cot ten 'id' nao.
+        $khoaChinh = isset($dm['khoa_chinh']) ? $dm['khoa_chinh'] : $bang->getKeyName();
+
+        $query = $model::query()->select(array_unique(array_merge([$khoaChinh], $cot)));
+
+        // CHI ap sap xep mac dinh khi client CHUA yeu cau sap xep. Yajra chi NOI THEM menh
+        // de order, nen gan orderBy vo dieu kien se cho 'order by <mac dinh>, <cua client>'
+        // - cot mac dinh gan nhu duy nhat thi bam tieu de cot khong doi gi.
+        if (!empty($dm['sap_xep']) && !$request->has('order')) {
             $query->orderBy($dm['sap_xep'][0], $dm['sap_xep'][1]);
         }
 
-        return Datatables::of($query)->make(true);
+        // whitelist la chot an toan THAT SU, khong phai select.
+        //
+        // Yajra lay ten cot tu REQUEST cua client, con config/datatables.php dat
+        // whitelist='*'. Chi select cot da khai KHONG chan duoc client sap xep/tim kiem
+        // theo cot AN: dieu do sinh ra mot oracle mu doc duoc noi dung moi cot trong bang
+        // qua so ban ghi khop. Gioi han whitelist ve dung cac cot da khai moi dong duoc.
+        return Datatables::of($query)->whitelist($cot)->make(true);
     }
 }

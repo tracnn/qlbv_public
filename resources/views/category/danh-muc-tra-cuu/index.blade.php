@@ -35,14 +35,14 @@
             "serverSide": true,
             "destroy": true,
             "responsive": true,
-            "scrollX": true,
             "ajax": { url: "{{ route('danh-muc-tra-cuu.fetch', ['khoa' => $khoa]) }}" },
             "columns": [
+                @php $coKhong = isset($dm['cot_co_khong']) ? $dm['cot_co_khong'] : []; @endphp
                 @foreach (array_keys($dm['cot']) as $ten)
-                    @if ($ten === 'is_active')
-                        { "data": "{{ $ten }}", "render": function (d) { return Number(d) === 1 ? 'Đang dùng' : 'Ngừng'; } },
+                    @if (in_array($ten, $coKhong))
+                        { "data": {!! json_encode($ten) !!}, "render": function (d) { return Number(d) === 1 ? 'Có' : 'Không'; } },
                     @else
-                        { "data": "{{ $ten }}" },
+                        { "data": {!! json_encode($ten) !!} },
                     @endif
                 @endforeach
             ],

@@ -12,7 +12,6 @@ use App\Models\System\Symptom;
 use App\Models\System\Ward;
 
 use App\Models\BHYT\cat_cond_service;
-use App\Models\BHYT\department;
 use App\Models\BHYT\cat_cond_pharma;
 
 class CategoryController extends Controller
@@ -102,12 +101,6 @@ class CategoryController extends Controller
     public function dmtCoDieuKien() {
         $models = cat_cond_pharma::all();
         return view('category.manager.dm-thuoc-co-dieu-kien.index',
-            compact('models'));
-    }
-
-    public function dmKhoaphong() {
-        $models = department::all();
-        return view('category.manager.dm-khoa-phong.index', 
             compact('models'));
     }
 

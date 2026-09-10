@@ -25,7 +25,7 @@ class DanhMucTraCuuSoDangKyTest extends TestCase
     public function moi_muc_khai_du_bon_khoa_bat_buoc()
     {
         foreach ($this->so() as $khoa => $dm) {
-            foreach (['ten', 'model', 'cot', 'cot_tim'] as $bb) {
+            foreach (['ten', 'model', 'cot'] as $bb) {
                 $this->assertArrayHasKey($bb, $dm, "Muc '$khoa' thieu khoa '$bb'");
             }
             $this->assertNotEmpty($dm['cot'], "Muc '$khoa' khong khai cot nao");
@@ -42,16 +42,6 @@ class DanhMucTraCuuSoDangKyTest extends TestCase
         }
     }
 
-    /** @test */
-    public function cot_tim_phai_nam_trong_danh_sach_cot()
-    {
-        foreach ($this->so() as $khoa => $dm) {
-            foreach ($dm['cot_tim'] as $c) {
-                $this->assertArrayHasKey($c, $dm['cot'],
-                    "Muc '$khoa': cot tim '$c' khong co trong danh sach cot hien thi");
-            }
-        }
-    }
 
     /** @test */
     public function co_danh_muc_dvkt_can_ma_may()
@@ -60,5 +50,19 @@ class DanhMucTraCuuSoDangKyTest extends TestCase
 
         $this->assertArrayHasKey('dvkt_can_ma_may', $so);
         $this->assertSame(\App\Models\BHYT\DvktCanMaMay::class, $so['dvkt_can_ma_may']['model']);
+    }
+
+    /** @test */
+    public function model_dang_ky_khong_duoc_co_appends()
+    {
+        // Accessor trong $appends lot vao JSON bat ke select() -> lo cot khong khai.
+        foreach ($this->so() as $khoa => $dm) {
+            $m = new $dm['model']();
+            // Laravel 5.5 chua co getAppends(); doc thang thuoc tinh protected.
+            $ref = new \ReflectionProperty($dm['model'], 'appends');
+            $ref->setAccessible(true);
+            $this->assertSame([], $ref->getValue($m),
+                "Muc '$khoa': model {$dm['model']} co \$appends nen se lo cot khong khai");
+        }
     }
 }

@@ -719,7 +719,6 @@ Route::group(['middleware' => ['auth']], function () {
         ->name('danh-muc.dm-thuoc-co-dieu-kien');
         Route::post('dm-thuoc-co-dieu-kien','Category\Manager\CategoryController@updateDmtCoDieuKien')
             ->name('danh-muc.update-dm-thuoc-co-dieu-kien');
-        Route::get('dm-khoa-phong','Category\Manager\CategoryController@dmKhoaphong')->name('danh-muc.dm-khoa-phong');
     });
 
     /*
