@@ -27,13 +27,30 @@ Bổ sung các quy tắc rà soát mà chuẩn dữ liệu quy định rõ nhưn
 
 **Giới hạn phải nói rõ:** nhóm B được thiết kế từ văn bản chứ không từ số đo. Con số 0 hôm nay không phải bằng chứng dữ liệu đúng — nó là bằng chứng dữ liệu trống. Trước khi bật `critical_error` cho bất kỳ quy tắc nhóm B nào, phải nạp một lô hồ sơ có tiền và đo lại.
 
+### 2.1 ĐÍNH CHÍNH (2026-09-10, sau khi loại trừ hồ sơ dịch vụ)
+
+Bảng số đo ở trên được lấy **trước** khi commit `598e0ec` loại hồ sơ không phải BHYT (`MA_DOITUONG_KCB` = 9) ra khỏi diện rà lỗi. Đo lại trên đúng tập sẽ được rà:
+
+| | Trước loại trừ | Sau loại trừ |
+|---|---|---|
+| Hồ sơ được rà | 64 | **4** |
+| Dòng XML3 được rà | 838 | **76** |
+| **Dòng `_TB`** | 15 | **0** |
+| Dòng XML3 có `THANH_TIEN_BH > 0` | 1 | 1 |
+
+**Cả 15 dòng `_TB` đều thuộc hồ sơ đối tượng 9.** Nghĩa là `MA_DICH_VU_TB_CO_DON_GIA` — quy tắc duy nhất của đợt này đo được vi phạm thật — **không còn dữ liệu nào để chạy trên tập hiện tại**. Lập luận "15 lỗi thật, vi phạm 100%" ở §2 không còn đỡ được cho quy tắc đó.
+
+Đo lại từng quy tắc nhóm B trên 76 dòng XML3 và 17 dòng XML2 còn lại: **tất cả đều 0**, vì chỉ 1 dòng có tiền.
+
+**Hệ quả:** toàn bộ 24 quy tắc của Đợt 1 hiện **không có quy tắc nào được kiểm chứng trên dữ liệu thật**. Spec vẫn đúng về mặt căn cứ văn bản, và các quy tắc vẫn đáng làm — hồ sơ BHYT thật trên máy chủ sẽ có `_TB`, có tiền, có `PHAM_VI`. Nhưng phải hiểu rõ: đợt này được xây trên văn bản, không trên số đo. Bước 3 của §10 (nạp lô hồ sơ BHYT có tiền rồi đo lại) từ chỗ "nên làm" trở thành **điều kiện bắt buộc trước khi tin bất kỳ quy tắc nào**.
+
 ## 3. Khoảng trống đã kiểm chứng trên mã nguồn
 
 Trước khi thiết kế, đã đối chiếu từng quy tắc hiện có để không làm trùng:
 
 **Đã có, KHÔNG làm lại:**
 - `Xml3176CompleteChecker::checkExpenseErrors()` đã kiểm đủ **tổng cấp hồ sơ**: `T_THUOC`, `T_VTYT`, `T_TONGCHI_BV`, `T_TONGCHI_BH`, `T_BNTT`, `T_BNCCT`, `T_NGUONKHAC` (XML1 = tổng XML2+XML3) và `T_BHTT = T_TONGCHI_BH − T_BNCCT`.
-- `Xml3176Xml2Checker` đã có `PHAM_VI_INVALID`.
+- `Xml3176Xml2Checker` có `PHAM_VI_INVALID` — **nhưng ĐÍNH CHÍNH**: đó là một quy tắc *khác hẳn* ("phạm vi phải là 3 đối với mã thẻ CBCS"), **và nó đang bị vô hiệu hoá** — dòng gọi `checkValidPhamVi()` trong `checkErrors()` đã bị chú thích. Nó không kiểm tập giá trị `{1,2,3}`. Đợt này **không** bật lại nó: ai đó đã tắt có chủ đích, bật lại là việc riêng.
 - `Xml3176Xml3Checker` đã có `INFO_ERROR_TYLE_TT_DV`, `INFO_ERROR_TYLE_TT_BH`, `INVALID_T_TRANTT_T_BHTT`.
 - `Xml3176CompleteChecker` đã có `MISSING_TRANSFER_OR_APPOINTMENT` (có `MA_NOI_DI` mà thiếu cả XML13 lẫn XML14).
 
@@ -148,7 +165,7 @@ Cố ý **không** làm `T_BNCCT` và `T_BNTT` từng dòng: cả hai đều là
 
 | Checker | Mã | Điều kiện | Căn cứ |
 |---|---|---|---|
-| XML3 | `PHAM_VI_INVALID` | `PHAM_VI` khác rỗng và không thuộc `{1,2,3}` | Trường `PHAM_VI` |
+| XML3 | `PHAM_VI_NGOAI_TAP_GIA_TRI` | `PHAM_VI` khác rỗng và không thuộc `{1,2,3}` | Trường `PHAM_VI` |
 | XML3 | `PHAM_VI_TU_TRA_MA_BH_TRA` | `PHAM_VI = '2'` và (`THANH_TIEN_BH > 0` hoặc `T_BHTT > 0`) | QĐ 4750 sửa toàn bộ diễn giải: mã 2 = *do người bệnh tự trả* |
 | XML3 | `TAI_SU_DUNG_INVALID` | `TAI_SU_DUNG` khác rỗng và khác `'1'` | Trường `TAI_SU_DUNG`: chỉ ghi `1`, không tái sử dụng thì để trống |
 | XML3 | `TAI_SU_DUNG_DON_GIA_LECH` | `TAI_SU_DUNG = '1'` và `lech(DON_GIA_BV, DON_GIA_BH)` | Trường `DON_GIA_BV`: "VTYT tái sử dụng: `DON_GIA_BV = DON_GIA_BH`" |
@@ -156,19 +173,23 @@ Cố ý **không** làm `T_BNCCT` và `T_BNTT` từng dòng: cả hai đều là
 | XML2 | `NGUON_CTRA_NGOAI_QUY_MA_BH_TRA` | `NGUON_CTRA` thuộc `{2,3,4}` và `T_BHTT > 0` | Mã 2/3/4 = thuốc dự án, chương trình mục tiêu, nguồn khác — không phải quỹ BHYT chi trả |
 | XML1 | `ADMIN_INFO_ERROR_MA_KHUVUC` | `MA_KHUVUC` khác rỗng và không thuộc `{K1,K2,K3}` | Trường `MA_KHUVUC` |
 
-`PHAM_VI` rỗng ở XML3 không sinh lỗi mới: chuẩn không đánh dấu trường này bắt buộc, và XML2 hiện cũng chỉ kiểm khi có giá trị. Giữ hai bảng hành xử giống nhau.
+`PHAM_VI` rỗng ở XML3 không sinh lỗi mới: chuẩn không đánh dấu trường này bắt buộc.
+
+Tên mã cố ý là `PHAM_VI_NGOAI_TAP_GIA_TRI` chứ không phải `PHAM_VI_INVALID`: XML2 đã có `XML2_PHAM_VI_INVALID` mang nghĩa hoàn toàn khác (phạm vi phải là 3 với thẻ CBCS). Hai mã gần giống tên mà khác nghĩa là bẫy cho người đọc sau.
 
 ### 6.3 Nhóm C — liên bảng (`Xml3176CompleteChecker`, 3 quy tắc)
 
 | Mã | Điều kiện | Căn cứ |
 |---|---|---|
 | `NGAY_TAI_KHAM_SAI_DINH_DANG` | `NGAY_TAI_KHAM` khác rỗng và có phần tử không phải 8 chữ số hoặc không phải ngày có thật | Trường `NGAY_TAI_KHAM`: mỗi ngày 8 ký tự `yyyymmdd`, ngăn bởi `;` |
-| `NGAY_TAI_KHAM_KHONG_KHOP_XML14` | Có phần tử `NGAY_TAI_KHAM` hợp lệ không tìm được dòng XML14 cùng `MA_LK` có `NGAY_HEN_KL` bằng nó (kể cả khi hồ sơ không có dòng XML14 nào) | Hẹn tái khám phải có giấy hẹn khám lại tương ứng |
+| `NGAY_TAI_KHAM_KHONG_KHOP_XML14` | Có `NGAY_TAI_KHAM` hợp lệ mà hồ sơ không có dòng XML14 nào; hoặc có dòng XML14 mà `NGAY_HEN_KL` của nó không nằm trong tập `NGAY_TAI_KHAM` | Hẹn tái khám phải có giấy hẹn khám lại tương ứng |
 | `CAN_NANG_CON_THIEU_XML9` | `CAN_NANG_CON` khác rỗng và không có dòng XML9 nào cùng `MA_LK` | Trường `CAN_NANG_CON`: "chỉ ghi trong trường hợp sinh con" ⇒ phải có giấy chứng sinh |
 
 Gộp "thiếu XML14" và "lệch ngày" vào **một** mã: cả hai là cùng một sai — ngày hẹn trong XML1 không có giấy hẹn tương ứng. Tách hai mã buộc người vận hành cấu hình hai lần cho một vấn đề. Mô tả lỗi nêu rõ những ngày nào không khớp.
 
 `NGAY_TAI_KHAM_KHONG_KHOP_XML14` chỉ xét các phần tử đã hợp lệ về định dạng; phần tử sai định dạng do `NGAY_TAI_KHAM_SAI_DINH_DANG` lo, không báo hai lần cho một giá trị.
+
+**ĐÍNH CHÍNH hướng so sánh (2026-09-10, phát hiện khi lập plan):** `xml3176_xml14s.ma_lk` là **UNIQUE** — mỗi hồ sơ nhiều nhất **một** dòng XML14, trong khi `NGAY_TAI_KHAM` có thể khai nhiều ngày ngăn bởi `;`. Cách phát biểu ban đầu ("mỗi ngày phải khớp một dòng XML14") là **bất khả thi theo lược đồ**: hồ sơ khai hai ngày sẽ luôn báo lỗi dù dữ liệu đúng. Quy tắc đổi thành hai chiều khả thi: phải **có** dòng XML14, và `NGAY_HEN_KL` của dòng đó phải **nằm trong** tập `NGAY_TAI_KHAM`. (Trên dữ liệu thật, 24/24 hồ sơ chỉ khai một ngày nên hai cách phát biểu cho cùng kết quả — nhưng cách cũ là quả mìn hẹn giờ.)
 
 **Không** làm `MA_PTTT_QT` (XML1) rỗng khi XML3 có dòng phẫu thuật/thủ thuật: xác định "dòng nào là phẫu thuật thủ thuật" hiện dựa vào `ma_nhom`, mà chính giả định "nhóm ⇒ tính chất dịch vụ" là thứ đợt trước đã chứng minh sai (bỏ 64 báo oan khi chuyển quy tắc mã máy từ nhóm sang danh mục). Lặp lại giả định đó là đi ngược bài học vừa học.
 
