@@ -9,6 +9,12 @@ namespace App\Services\Xml3176\Support;
  * Khac MaDvktMatcher: lop do CHUAN HOA ma (bo hau to de tra danh muc), lop nay tra ve
  * THANH PHAN cua ma. Gop lai se lam mot lop mang hai trach nhiem.
  *
+ * LUU Y: MaDvktMatcher::maGoc() cat tai dau '_' DAU TIEN (strpos), con lop nay cat tai
+ * dau '_' CUOI CUNG (strrpos). Tren ma co tu hai dau '_' tro len (vd: 02.0261.0319_A_B),
+ * hai lop se cho ket qua KHAC NHAU. Du lieu that hien khong co ma nao nhu vay (0/1235 dong),
+ * nen su khac biet nay chua bao gio lo ra. Ai dung ca hai lop tren cung mot ma phai biet
+ * dieu nay.
+ *
  * Helper thuan - khong cham DB/model/config.
  */
 class MaDvktStructure
