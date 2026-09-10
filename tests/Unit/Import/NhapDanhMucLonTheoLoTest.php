@@ -37,14 +37,20 @@ class NhapDanhMucLonTheoLoTest extends TestCase
 
         $this->assertSame('administrative_units', $ham->invoke($svc, 'administrative_unit'));
         $this->assertSame('medical_organizations', $ham->invoke($svc, 'medical_organization'));
+        $this->assertSame('dvkt_can_ma_may', $ham->invoke($svc, 'dvkt_can_ma_may'));
     }
 
     /** @test */
-    public function chi_hai_danh_muc_nay_lam_moi_tron_bo()
+    public function chi_ba_danh_muc_nay_lam_moi_tron_bo()
     {
         // Danh muc khac chi cap nhat THEM: dua nham vao day se tat is_active cua du lieu cu
-        // ma khong bat lai.
-        $this->assertSame(['administrative_unit', 'medical_organization'],
+        // ma khong bat lai. Dieu kien de duoc vao day: danh muc DUNG CHUNG TOAN QUOC va bang
+        // CO cot is_active.
+        //
+        // 10/09/2026 them 'dvkt_can_ma_may' (DVKT bat buoc co ma may, BHXH ban hanh): dung
+        // chung toan quoc, bang co is_active, va nap lai phai thay tron bo vi BHXH co the
+        // BO mot ma khoi danh muc - cap nhat them se giu lai ma da bi bo.
+        $this->assertSame(['administrative_unit', 'medical_organization', 'dvkt_can_ma_may'],
             CatalogImportService::LAM_MOI_TRON_BO);
     }
 
@@ -55,6 +61,9 @@ class NhapDanhMucLonTheoLoTest extends TestCase
         $this->assertSame(1, $ra['is_active']);
 
         $ra = CatalogImportService::ganDangDung(['ma_cskcb' => '01929'], 'medical_organization');
+        $this->assertSame(1, $ra['is_active']);
+
+        $ra = CatalogImportService::ganDangDung(['ma_dvkt' => '02.0261.0319'], 'dvkt_can_ma_may');
         $this->assertSame(1, $ra['is_active']);
     }
 
