@@ -81,4 +81,10 @@ return [
         'bang' => 'job_categories',
         'theo_co_so' => false,
     ],
+    'dvkt_can_ma_may' => [
+        'ten' => 'DM DVKT cần mã máy',
+        'model' => App\Models\BHYT\DvktCanMaMay::class,
+        'bang' => 'dvkt_can_ma_may',
+        'theo_co_so' => false,
+    ],
 ];

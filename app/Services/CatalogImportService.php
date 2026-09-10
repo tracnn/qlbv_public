@@ -53,7 +53,7 @@ class CatalogImportService
      */
     const GHI_THEO_LO = ['medicine', 'medical_supply', 'service', 'icd10', 'icd_yhct',
                          'administrative_unit', 'medical_organization', 'medical_staff',
-                         'department_bed', 'equipment', 'job_categories'];
+                         'department_bed', 'equipment', 'job_categories', 'dvkt_can_ma_may'];
 
     /**
      * Danh muc LAM MOI TRON BO: tat is_active cua toan bo ban ghi cu roi bat lai cho dong co
@@ -62,7 +62,7 @@ class CatalogImportService
      * Chi hai danh muc dung chung toan quoc nay theo ngu nghia do. Dua danh muc khac vao day
      * la tat is_active cua du lieu cu ma khong bat lai.
      */
-    const LAM_MOI_TRON_BO = ['administrative_unit', 'medical_organization'];
+    const LAM_MOI_TRON_BO = ['administrative_unit', 'medical_organization', 'dvkt_can_ma_may'];
 
     /**
      * Bat lai trang thai dang dung cho dong co trong tep.
@@ -357,6 +357,7 @@ class CatalogImportService
             'department_bed' => 'department_bed_catalogs',
             'equipment' => 'equipment_catalogs',
             'job_categories' => 'job_categories',
+            'dvkt_can_ma_may' => 'dvkt_can_ma_may',
         ];
 
         return $map[$type];

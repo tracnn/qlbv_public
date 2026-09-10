@@ -228,5 +228,15 @@ return [
         'required_fields' => ['job_code', 'job_name'],
         'unique_keys' => ['job_code'],
     ],
+
+    'dvkt_can_ma_may' => [
+        'detect_keys' => ['MA_DVKT', 'TEN_DVKT_TT23'],
+        'mapping' => [
+            'ma_dvkt'  => ['MA_DVKT', 'Mã DVKT'],
+            'ten_dvkt' => ['TEN_DVKT_TT23', 'TEN_DVKT_PHE_DUYET', 'Tên DVKT'],
+        ],
+        'required_fields' => ['ma_dvkt'],
+        'unique_keys' => ['ma_dvkt'],
+    ],
 ];
 
