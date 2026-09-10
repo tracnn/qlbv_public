@@ -11,6 +11,7 @@ use App\Models\BHYT\EquipmentCatalog;
 use App\Services\Xml3176\Support\Xml3176DateHelper;
 use App\Services\Xml3176\Support\TyLeComparator;
 use App\Services\Xml3176\Support\ServiceOverlapChecker;
+use App\Services\Xml3176\Support\MaDvktStructure;
 use Illuminate\Support\Collection;
 
 class Xml3176Xml3Checker
@@ -152,6 +153,7 @@ class Xml3176Xml3Checker
         $errors = $errors->merge($this->checkMedicalService($data)); // Kiểm tra dịch vụ kỹ thuật
         $errors = $errors->merge($this->checkServiceGroupPtttDuplicate($data)); // Kiểm tra dịch vụ kỹ thuật
         $errors = $errors->merge($this->checkOverlappingServiceExecution($data));
+        $errors = $errors->merge($this->checkCauTrucMaDichVu($data));
 
         if (config('xml3176.general.check_valid_department_req')) {
             $errors = $errors->merge($this->checkValidMakhoaReq($data)); // Kiểm tra tính hợp lệ của khoa chỉ định
@@ -1028,6 +1030,104 @@ class Xml3176Xml3Checker
                     . ' - ' . strtodatetime($data->ngay_kq) . ') chồng thời gian thực hiện với dịch vụ '
                     . $other->ma_dich_vu . ' (' . strtodatetime($other->ngay_th_yl) . ' - '
                     . strtodatetime($other->ngay_kq) . ') trong cùng hồ sơ.'
+            ]);
+        }
+
+        return $errors;
+    }
+
+    /**
+     * Cau truc ma dich vu theo truong MA_PTTT_QT cua chuan du lieu dau ra (QD 130,
+     * sua doi theo QD 4750).
+     *
+     * Ma dich vu rong thi im lang: da co MISSING_SERVICE_OR_MATERIAL lo viec do.
+     */
+    private function checkCauTrucMaDichVu(Xml3176Xml3 $data): Collection
+    {
+        $errors = collect();
+        $ma = trim((string) $data->ma_dich_vu);
+
+        if ($ma === '') {
+            return $errors;
+        }
+
+        // Hau to '_TB': DVKT da chi dinh nhung khong the tiep tuc thuc hien
+        // (khoan 3 Dieu 7 TT 39/2018/TT-BYT) => DON_GIA_BH = 0 va DON_GIA_BV = 0.
+        if (MaDvktStructure::laKhongThucHien($ma)
+            && ((float) $data->don_gia_bh != 0 || (float) $data->don_gia_bv != 0)) {
+            $errorCode = $this->generateErrorCode('MA_DICH_VU_TB_CO_DON_GIA');
+            $errors->push((object)[
+                'error_code' => $errorCode,
+                'error_name' => 'DVKT không thực hiện được nhưng vẫn có đơn giá',
+                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+                'description' => 'Mã ' . $ma . ' có hậu tố _TB (chỉ định nhưng không thực hiện được) '
+                    . 'nên đơn giá BH và đơn giá BV phải bằng 0. Hiện đơn giá BH: '
+                    . number_format((float) $data->don_gia_bh)
+                    . ', đơn giá BV: ' . number_format((float) $data->don_gia_bv),
+            ]);
+        }
+
+        // 04 ky tu cuoi la '0000': DVKT chua duoc quy dinh muc gia => DON_GIA_BH = 0.
+        if (MaDvktStructure::laChuaCoGia($ma) && (float) $data->don_gia_bh != 0) {
+            $errorCode = $this->generateErrorCode('MA_DICH_VU_CHUA_CO_GIA_CO_DON_GIA_BH');
+            $errors->push((object)[
+                'error_code' => $errorCode,
+                'error_name' => 'DVKT chưa có mức giá nhưng vẫn có đơn giá BH',
+                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+                'description' => 'Mã ' . $ma . ' kết thúc bằng 0000 (chưa được quy định mức giá) '
+                    . 'nên đơn giá BH phải bằng 0. Hiện là: ' . number_format((float) $data->don_gia_bh),
+            ]);
+        }
+
+        // Chuan chi dinh nghia hai hau to: '_TB' va '_GT' (gay te).
+        $hauTo = MaDvktStructure::hauTo($ma);
+        if ($hauTo !== '' && !in_array($hauTo, ['TB', 'GT'], true)) {
+            $errorCode = $this->generateErrorCode('MA_DICH_VU_HAU_TO_LA');
+            $errors->push((object)[
+                'error_code' => $errorCode,
+                'error_name' => 'Hậu tố mã dịch vụ không hợp lệ',
+                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+                'description' => 'Mã ' . $ma . ' có hậu tố _' . $hauTo
+                    . '. Chuẩn chỉ quy định hai hậu tố: _TB và _GT',
+            ]);
+        }
+
+        // Van chuyen nguoi benh: VC.XXXXX.
+        if (MaDvktStructure::laVanChuyen($ma)) {
+            if (empty($data->ma_xang_dau)) {
+                $errorCode = $this->generateErrorCode('MA_DICH_VU_VAN_CHUYEN_THIEU_XANG_DAU');
+                $errors->push((object)[
+                    'error_code' => $errorCode,
+                    'error_name' => 'Vận chuyển người bệnh nhưng thiếu mã xăng dầu',
+                    'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+                    'description' => 'Mã ' . $ma . ' là dịch vụ vận chuyển nhưng MA_XANG_DAU để trống',
+                ]);
+            }
+
+            $maCoSo = MaDvktStructure::maCoSoVanChuyen($ma);
+            if ($maCoSo !== '' && !$this->commonValidationService->isMedicalOrganizationValid($maCoSo)) {
+                $errorCode = $this->generateErrorCode('MA_DICH_VU_VAN_CHUYEN_CSKCB_NOT_FOUND');
+                $errors->push((object)[
+                    'error_code' => $errorCode,
+                    'error_name' => 'Mã cơ sở nơi chuyển đến không có trong danh mục',
+                    'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+                    'description' => 'Mã ' . $ma . ' chỉ tới cơ sở KBCB ' . $maCoSo
+                        . ' nhưng mã này không có trong danh mục cơ sở KBCB',
+                ]);
+            }
+        }
+
+        // Chuyen mau benh pham: XX.YYYY.ZZZZ.K.WWWWW (TT 09/2019/TT-BYT).
+        $maChuyenMau = MaDvktStructure::maCoSoChuyenMau($ma);
+        if ($maChuyenMau !== ''
+            && !$this->commonValidationService->isMedicalOrganizationValid($maChuyenMau)) {
+            $errorCode = $this->generateErrorCode('MA_DICH_VU_CHUYEN_MAU_CSKCB_NOT_FOUND');
+            $errors->push((object)[
+                'error_code' => $errorCode,
+                'error_name' => 'Mã cơ sở nơi thực hiện cận lâm sàng không có trong danh mục',
+                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+                'description' => 'Mã ' . $ma . ' chỉ tới cơ sở KBCB ' . $maChuyenMau
+                    . ' nhưng mã này không có trong danh mục cơ sở KBCB',
             ]);
         }
 
