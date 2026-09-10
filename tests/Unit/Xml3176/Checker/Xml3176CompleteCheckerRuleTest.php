@@ -53,9 +53,40 @@ class Xml3176CompleteCheckerRuleTest extends TestCase
     public function pt_lan_2_thanh_toan_100()
     {
         Xml3176Xml1::create(['ma_lk' => 'C', 'stt' => 1]);
-        Xml3176Xml3::create(['ma_lk' => 'C', 'stt' => 1, 'ma_dich_vu' => 'PT', 'ma_pttt' => 'PT01', 'ngay_yl' => '202607010800', 'tyle_tt_dv' => '100']);
-        Xml3176Xml3::create(['ma_lk' => 'C', 'stt' => 2, 'ma_dich_vu' => 'PT', 'ma_pttt' => 'PT02', 'ngay_yl' => '202607011000', 'tyle_tt_dv' => '100']);
+        Xml3176Xml3::create(['ma_lk' => 'C', 'stt' => 1, 'ma_dich_vu' => 'PT', 'ma_nhom' => 8, 'ma_pttt' => 'PT01', 'ngay_yl' => '202607010800', 'tyle_tt_dv' => '100']);
+        Xml3176Xml3::create(['ma_lk' => 'C', 'stt' => 2, 'ma_dich_vu' => 'PT', 'ma_nhom' => 18, 'ma_pttt' => 'PT02', 'ngay_yl' => '202607011000', 'tyle_tt_dv' => '100']);
         $codes = $this->errorCodes($this->invokePrivate($this->checker(), 'checkSecondSurgeryFullPayment', 'C'));
         $this->assertContains('XMLComplete_SECOND_SURGERY_FULL_PAYMENT', $codes);
+    }
+
+    /** @test */
+    public function dong_ngoai_nhom_pttt_khong_bi_coi_la_pttt_du_co_ma_pttt()
+    {
+        // Bo xuat HIS dien MA_PTTT cho gan nhu moi dong: do tren du lieu that, 28.169
+        // dong co MA_PTTT nhung chi 2.487 (8,8%) thuoc nhom 8/18. Can cu theo MA_PTTT
+        // lam quy tac bao "PTTT lan 2..100 trong ngay" cho ca xet nghiem, VTYT, giuong -
+        // 24.954 loi tren 914/1153 ho so, gan het la bao oan.
+        Xml3176Xml1::create(['ma_lk' => 'XN', 'stt' => 1]);
+        Xml3176Xml3::create(['ma_lk' => 'XN', 'stt' => 1, 'ma_dich_vu' => 'XN1', 'ma_nhom' => 1, 'ma_pttt' => 'PT01', 'ngay_yl' => '202607010800', 'tyle_tt_dv' => '100']);
+        Xml3176Xml3::create(['ma_lk' => 'XN', 'stt' => 2, 'ma_dich_vu' => 'XN2', 'ma_nhom' => 1, 'ma_pttt' => 'PT02', 'ngay_yl' => '202607011000', 'tyle_tt_dv' => '100']);
+        Xml3176Xml3::create(['ma_lk' => 'XN', 'stt' => 3, 'ma_dich_vu' => 'VT1', 'ma_nhom' => 10, 'ma_pttt' => 'PT03', 'ngay_yl' => '202607011200', 'tyle_tt_dv' => '100']);
+
+        $codes = $this->errorCodes($this->invokePrivate($this->checker(), 'checkSecondSurgeryFullPayment', 'XN'));
+
+        $this->assertNotContains('XMLComplete_SECOND_SURGERY_FULL_PAYMENT', $codes);
+    }
+
+    /** @test */
+    public function chi_dem_dong_thuoc_nhom_pttt_khi_xep_thu_tu_trong_ngay()
+    {
+        // Dong xet nghiem xen giua khong duoc lam dong PTTT thu hai bi tinh thanh thu ba,
+        // va mot minh dong PTTT duy nhat trong ngay thi khong co "lan 2" nao.
+        Xml3176Xml1::create(['ma_lk' => 'MOT', 'stt' => 1]);
+        Xml3176Xml3::create(['ma_lk' => 'MOT', 'stt' => 1, 'ma_dich_vu' => 'XN1', 'ma_nhom' => 1, 'ma_pttt' => 'PT01', 'ngay_yl' => '202607010800', 'tyle_tt_dv' => '100']);
+        Xml3176Xml3::create(['ma_lk' => 'MOT', 'stt' => 2, 'ma_dich_vu' => 'PT1', 'ma_nhom' => 8, 'ma_pttt' => 'PT02', 'ngay_yl' => '202607011000', 'tyle_tt_dv' => '100']);
+
+        $codes = $this->errorCodes($this->invokePrivate($this->checker(), 'checkSecondSurgeryFullPayment', 'MOT'));
+
+        $this->assertNotContains('XMLComplete_SECOND_SURGERY_FULL_PAYMENT', $codes);
     }
 }

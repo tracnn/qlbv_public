@@ -769,14 +769,24 @@ class Xml3176CompleteChecker
 
     /**
      * #891 — PTTT lần 2 trở đi trong cùng ngày có tỷ lệ thanh toán = 100% (CV824/QĐ3176).
+     *
+     * Can cu la NHOM DICH VU (8, 18), khong phai truong MA_PTTT.
+     *
+     * Ban dau quy tac gom dong theo "MA_PTTT khac rong". Do tren du lieu that: 28.169
+     * dong co MA_PTTT nhung chi 2.487 dong (8,8%) thuoc nhom PTTT - bo xuat HIS dien
+     * truong nay cho ca xet nghiem (14.401 dong), VTYT (6.874), giuong (1.750), kham
+     * (1.147). Hau qua: mot ho so 100 dong trong ngay bi bao "PTTT lan 2..100 thanh toan
+     * 100%", tong 24.954 loi tren 914/1153 ho so - 79%, gan het la bao oan. Doi sang
+     * nhom dua so loi ve khoang 1.772 tren 79 ho so.
      */
     private function checkSecondSurgeryFullPayment($ma_lk): Collection
     {
         $errors = collect();
         $rate = (float) config('xml3176.xml3.surgery_full_payment_rate', '100');
+        $nhomPttt = config('xml3176.xml3.service_groups_pttt', [8, 18]);
 
         $rows = Xml3176Xml3::where('ma_lk', $ma_lk)
-            ->whereNotNull('ma_pttt')->where('ma_pttt', '<>', '')
+            ->whereIn('ma_nhom', $nhomPttt)
             ->orderBy('ngay_yl')->get();
 
         $byDay = [];
