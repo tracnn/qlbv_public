@@ -17,15 +17,17 @@
  *   ngoai_tru_khong_huong  - ngoai tru thi khong duoc huong BHYT
  *   muc_huong_theo_moc     - muc huong doi theo moc thoi gian
  *   linh_thuoc_khong_kham  - chi linh thuoc, khong kham benh
+ *   can_giay_chuyen_tuyen  - phai ghi so phieu o truong GIAY_CHUYEN_TUYEN
  *
  * Sua tep nay phai chay lai 'php artisan config:clear'.
  */
 return [
     '1.1'  => ['ten' => 'Đến KCB đúng cơ sở nơi đăng ký KCB BHYT ban đầu', 'dung_dkbd' => true],
     '1.2'  => ['ten' => 'Đi KCB tại cơ sở KCB cấp ban đầu', 'dung_dkbd' => true, 'muc_huong_co_dinh' => 100],
-    '1.3'  => ['ten' => 'Đến KCB có phiếu chuyển cơ sở KCB', 'can_noi_di' => true],
+    '1.3'  => ['ten' => 'Đến KCB có phiếu chuyển cơ sở KCB', 'can_noi_di' => true,
+               'can_giay_chuyen_tuyen' => true],
     '1.4'  => ['ten' => 'KCB khi thay đổi nơi lưu trú, nơi cư trú'],
-    '1.5'  => ['ten' => 'Đến KCB theo phiếu hẹn khám lại'],
+    '1.5'  => ['ten' => 'Đến KCB theo phiếu hẹn khám lại', 'can_giay_chuyen_tuyen' => true],
     '1.6'  => ['ten' => 'Người đã hiến bộ phận cơ thể phải điều trị ngay sau khi hiến'],
     '1.7'  => ['ten' => 'Trẻ sơ sinh phải điều trị ngay sau khi sinh ra'],
     '1.11' => ['ten' => 'Tự đến KCB tại cơ sở KCB cấp ban đầu còn lại', 'tu_den' => true],

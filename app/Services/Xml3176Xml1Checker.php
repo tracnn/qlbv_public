@@ -1012,6 +1012,30 @@ class Xml3176Xml1Checker
             ]);
         }
 
+        // Ma khai san rang nguoi benh den kem mot to phieu (1.3 phieu chuyen co so KCB,
+        // 1.5 phieu hen kham lai) thi so phieu phai duoc ghi. Chuan du lieu dau ra (QD 130
+        // sua doi theo QD 4750), truong 38 GIAY_CHUYEN_TUYEN: "Ghi so giay chuyen tuyen
+        // cua co so KBCB/So giay chuyen co so KBCB noi chuyen nguoi benh di (trong truong
+        // hop nguoi benh co giay chuyen tuyen) hoac so giay hen kham lai (neu co)."
+        // Cum "(neu co)" noi ve truong hop chung; voi hai ma nay to phieu ton tai theo
+        // dinh nghia cua chinh ma do, nen khong mien tru.
+        //
+        // Do tren du lieu that (1.213 ho so): 758/761 ma 1.5 va 180/184 ma 1.3 bo trong
+        // truong nay, va 7 ho so co gia tri deu do nhap tay. Tuc bo xuat HIS chua map
+        // truong nay - do CHINH LA thu quy tac can chi ra. Ma loi duoc nap voi
+        // critical_error = false nen khong chan xuat/ky so/gui cong.
+        if (DoiTuongKcbCatalog::thuocTinh($ma, $danhMuc, 'can_giay_chuyen_tuyen', false)
+            && trim((string) $data->giay_chuyen_tuyen) === '') {
+            $errorCode = $this->generateErrorCode('DOI_TUONG_KCB_THIEU_GIAY_CHUYEN_TUYEN');
+            $errors->push((object)[
+                'error_code' => $errorCode,
+                'error_name' => 'Thiếu số phiếu chuyển cơ sở KCB hoặc số phiếu hẹn khám lại',
+                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+                'description' => 'Mã đối tượng ' . $ma . ' (' . DoiTuongKcbCatalog::thuocTinh($ma, $danhMuc, 'ten')
+                    . ') nhưng GIAY_CHUYEN_TUYEN để trống',
+            ]);
+        }
+
         // Tu den thi khong the co co so chuyen di.
         if (DoiTuongKcbCatalog::laTuDen($ma, $danhMuc) && $coNoiDi) {
             $errorCode = $this->generateErrorCode('DOI_TUONG_KCB_TU_DEN_CO_NOI_DI');

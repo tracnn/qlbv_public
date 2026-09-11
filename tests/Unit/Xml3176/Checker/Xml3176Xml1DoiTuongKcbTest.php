@@ -160,11 +160,52 @@ class Xml3176Xml1DoiTuongKcbTest extends TestCase
     }
 
     /** @test */
+    public function ma_13_va_15_phai_co_so_giay_chuyen_tuyen()
+    {
+        // Chuan du lieu dau ra (QD 130 sua doi theo QD 4750), truong 38 GIAY_CHUYEN_TUYEN:
+        // "Ghi so giay chuyen tuyen cua co so KBCB/So giay chuyen co so KBCB noi chuyen
+        // nguoi benh di (trong truong hop nguoi benh co giay chuyen tuyen) HOAC so giay
+        // hen kham lai (neu co)."
+        //
+        // Ma 1.3 la "den KCB co phieu chuyen co so KCB" va ma 1.5 la "den KCB theo phieu
+        // hen kham lai": voi hai ma nay to phieu TON TAI theo dinh nghia cua chinh ma do,
+        // nen so phieu phai duoc ghi. Cum "(neu co)" noi ve truong hop chung, khong mien
+        // tru hai ma nay.
+        $this->assertContains('XML1_DOI_TUONG_KCB_THIEU_GIAY_CHUYEN_TUYEN',
+            $this->codes(['ma_doituong_kcb' => '1.5', 'giay_chuyen_tuyen' => null]));
+
+        $this->assertContains('XML1_DOI_TUONG_KCB_THIEU_GIAY_CHUYEN_TUYEN',
+            $this->codes(['ma_doituong_kcb' => '1.5', 'giay_chuyen_tuyen' => '   ']));
+
+        $this->assertNotContains('XML1_DOI_TUONG_KCB_THIEU_GIAY_CHUYEN_TUYEN',
+            $this->codes(['ma_doituong_kcb' => '1.5', 'giay_chuyen_tuyen' => '127/2025/GCT']));
+
+        $this->assertContains('XML1_DOI_TUONG_KCB_THIEU_GIAY_CHUYEN_TUYEN',
+            $this->codes(['ma_doituong_kcb' => '1.3', 'ma_noi_di' => '36001', 'giay_chuyen_tuyen' => '']));
+
+        $this->assertNotContains('XML1_DOI_TUONG_KCB_THIEU_GIAY_CHUYEN_TUYEN',
+            $this->codes(['ma_doituong_kcb' => '1.3', 'ma_noi_di' => '36001', 'giay_chuyen_tuyen' => '26097500']));
+    }
+
+    /** @test */
+    public function ma_khac_khong_bi_doi_giay_chuyen_tuyen()
+    {
+        // Chi hai ma khai san to phieu moi bi doi. Cac ma tu den / dung DKBD khong co
+        // phieu nao ca - doi so phieu o day la bao oan.
+        foreach (['1.1', '1.4', '1.11', '2', '3.1'] as $ma) {
+            $this->assertNotContains('XML1_DOI_TUONG_KCB_THIEU_GIAY_CHUYEN_TUYEN',
+                $this->codes(['ma_doituong_kcb' => $ma, 'giay_chuyen_tuyen' => null]),
+                'ma ' . $ma . ' khong duoc doi GIAY_CHUYEN_TUYEN');
+        }
+    }
+
+    /** @test */
     public function ho_so_dung_hoan_toan_khong_sinh_loi_nao()
     {
         $this->assertSame([], $this->codes([
             'ma_doituong_kcb' => '1.3', 'ma_noi_di' => '36001',
             'ma_dkbd' => '36001', 'ma_cskcb' => '01929', 't_bhtt' => 500000,
+            'giay_chuyen_tuyen' => '26097500',
         ]));
     }
 }
