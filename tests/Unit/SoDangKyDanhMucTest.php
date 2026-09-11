@@ -12,12 +12,20 @@ class SoDangKyDanhMucTest extends TestCase
         return config('danh_muc_bhyt');
     }
 
+    /**
+     * So bo duoc CHOT CUNG, khong doc tu count(config): day la mot cai bay co chu dich -
+     * them mot danh muc vao config/danh_muc_bhyt.php phai lam test nay do, buoc nguoi
+     * them di kiem lai ca catalog_import_mapping lan man nhap khau.
+     *
+     * 11 -> 12 tu 04/09/2026: commit bfa14da them 'dvkt_can_ma_may' (danh muc DVKT can
+     * ma may) vao ca hai cau hinh nhung khong nang con so nay len.
+     */
     /** @test */
-    public function du_11_bo_va_trung_khoa_voi_cau_hinh_nhap_khau()
+    public function du_12_bo_va_trung_khoa_voi_cau_hinh_nhap_khau()
     {
         $so = $this->so();
 
-        $this->assertCount(11, $so);
+        $this->assertCount(12, $so);
 
         $khoaSo = array_keys($so);
         $khoaNhap = array_keys(config('catalog_import_mapping'));
