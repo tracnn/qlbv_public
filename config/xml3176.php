@@ -60,7 +60,12 @@ return [
     'ma_doituong_kcb_khong_kiem' => ['9'],
     /* Bổ sung key 2024.08.23 */
     'xml1' => [
-        'ma_doituong_kcb_trai_tuyen' => ['3'], //Bổ sung mã đối tượng khám bệnh chỉ định trái tuyến
+        // Ma doi tuong bi giam muc huong (trai tuyen). Theo danh muc ma doi tuong KCB do
+        // Bo Y te ban hanh, CHI ma '3.1' bi giam (40% noi tru, 0% ngoai tru); cac ma
+        // '3.2', '3.3', '3.6' deu huong 100%.
+        // Khai DAY DU ma va khop DUNG BANG, khong khop tien to: gia tri cu la ['3'] va
+        // hai noi dung no deu dung strpos()===0 nen gom ca bon ma 3.x.
+        'ma_doituong_kcb_trai_tuyen' => ['3.1'],
         'the_bhyt_cbcs_pattern' => ['CA', 'QN', 'CY'], //Bổ sung mã thẻ BHYT CBCS
         'ma_loai_kcb_khong_tinh_ngay_dieu_tri' => ['01', '07', '09'], //Bổ sung mã loại khám bệnh không tính ngày điều trị
         'ma_benh_canh_bao' => ['Z00', 'R53'], //Danh sách mã ICD cần cảnh báo khi xuất hiện ở ma_benh_chinh hoặc ma_benh_kt

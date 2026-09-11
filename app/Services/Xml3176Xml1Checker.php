@@ -327,14 +327,14 @@ class Xml3176Xml1Checker
                 'description' => 'Mã đối tượng KCB không được để trống'
             ]);
         } else {
-            $is_ma_doituong_kcb_invalid = false;
-
-            foreach (config('xml3176.xml1.ma_doituong_kcb_trai_tuyen') as $ma_doituong) {
-                if (strpos($data->ma_doituong_kcb, (string)$ma_doituong) === 0) {
-                    $is_ma_doituong_kcb_invalid = true;
-                    break;
-                }
-            }
+            // Khop DUNG BANG, khong khop tien to: ma doi tuong dung dang phan cap co dau
+            // cham nen strpos()===0 lam '3' nuot ca 3.1, 3.2, 3.3, 3.6 - trong khi danh
+            // muc chi giam muc huong cho 3.1, ba ma kia huong 100%.
+            $is_ma_doituong_kcb_invalid = in_array(
+                trim((string) $data->ma_doituong_kcb),
+                (array) config('xml3176.xml1.ma_doituong_kcb_trai_tuyen', []),
+                true
+            );
 
             if ($is_ma_doituong_kcb_invalid && in_array($data->ma_dkbd, $this->specialDKBD)) {
                 $errorCode = $this->generateErrorCode('ADMIN_INFO_ERROR_MA_DOITUONG_KCB_INVALID');

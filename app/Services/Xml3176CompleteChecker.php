@@ -374,15 +374,13 @@ class Xml3176CompleteChecker
             return $errors; // guard: không map được quyền lợi
         }
 
-        $traiTuyenPrefixes = (array) config('xml3176.xml1.ma_doituong_kcb_trai_tuyen', []);
-        $maDoiTuong = (string) $data->ma_doituong_kcb;
-        $traiTuyen = false;
-        foreach ($traiTuyenPrefixes as $prefix) {
-            if ($prefix !== '' && strpos($maDoiTuong, (string) $prefix) === 0) {
-                $traiTuyen = true;
-                break;
-            }
-        }
+        // Khop DUNG BANG, khong khop tien to - xem chu thich tai khoa cau hinh.
+        $maDoiTuong = trim((string) $data->ma_doituong_kcb);
+        $traiTuyen = in_array(
+            $maDoiTuong,
+            (array) config('xml3176.xml1.ma_doituong_kcb_trai_tuyen', []),
+            true
+        );
         $noiTru = in_array($data->ma_loai_kcb, (array) config('xml3176.treatment_type_inpatient', []));
 
         if ($traiTuyen) {

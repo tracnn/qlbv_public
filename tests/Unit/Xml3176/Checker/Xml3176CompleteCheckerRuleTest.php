@@ -19,6 +19,7 @@ class Xml3176CompleteCheckerRuleTest extends TestCase
         parent::setUp();
         $this->bootXml3176Sqlite([
             '2026_01_09_152817_create_xml3176_xml1s_table.php',
+            '2026_01_09_152826_create_xml3176_xml2s_table.php',
             '2026_01_09_152832_create_xml3176_xml3s_table.php',
             '2026_01_09_152838_create_xml3176_xml4s_table.php',
             '2026_01_09_152930_create_xml3176_xml13s_table.php',
@@ -88,5 +89,42 @@ class Xml3176CompleteCheckerRuleTest extends TestCase
         $codes = $this->errorCodes($this->invokePrivate($this->checker(), 'checkSecondSurgeryFullPayment', 'MOT'));
 
         $this->assertNotContains('XMLComplete_SECOND_SURGERY_FULL_PAYMENT', $codes);
+    }
+
+    /** @test */
+    public function ma_36_huong_100_khong_bi_coi_la_trai_tuyen()
+    {
+        // Danh muc: chi 3.1 bi giam muc huong. 3.2/3.3/3.6 deu huong 100%.
+        // Config cu khai ['3'] va khop TIEN TO nen gom ca bon ma.
+        config(['xml3176.xml1.ma_doituong_kcb_trai_tuyen' => ['3.1']]);
+
+        $x1 = Xml3176Xml1::create([
+            'ma_lk' => 'M36', 'stt' => 1,
+            'ma_doituong_kcb' => '3.6',
+            'ma_loai_kcb' => '03',
+            'ma_the_bhyt' => 'DN4010112345678',
+            'ma_cskcb' => '01929',
+            'ngay_vao' => '202609010800',
+            't_tongchi_bh' => 5000000,
+        ]);
+
+        $codes = $this->errorCodes($this->invokePrivate($this->checker(), 'checkMucHuong', $x1));
+
+        $this->assertNotContains('XMLComplete_MUC_HUONG_TRAI_TUYEN_TW', $codes);
+    }
+
+    /** @test */
+    public function ma_31_van_duoc_coi_la_trai_tuyen()
+    {
+        // Ca doi xung: ban va khong duoc lam 3.1 lot luoi.
+        config(['xml3176.xml1.ma_doituong_kcb_trai_tuyen' => ['3.1']]);
+
+        $src = file_get_contents(app_path('Services/Xml3176CompleteChecker.php'));
+        $this->assertNotContains('strpos($maDoiTuong', $src,
+            'checkMucHuong van con khop tien to - phai doi sang khop dung bang');
+
+        $src1 = file_get_contents(app_path('Services/Xml3176Xml1Checker.php'));
+        $this->assertNotContains("strpos(\$data->ma_doituong_kcb", $src1,
+            'Xml3176Xml1Checker van con khop tien to - phai doi sang khop dung bang');
     }
 }
