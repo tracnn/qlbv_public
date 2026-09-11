@@ -15,6 +15,7 @@ use App\Models\BHYT\Xml3176Xml12;
 use App\Models\BHYT\Xml3176Xml13;
 use App\Models\BHYT\Xml3176Xml14;
 use App\Services\Xml3176\Support\DanhSachPhanCachParser;
+use App\Services\Xml3176\Support\DoiTuongKcbCatalog;
 use App\Services\Xml3176\Support\Xml3176DateHelper;
 use App\Models\BHYT\MedicalOrganization;
 use App\Services\Xml3176\Support\MucHuongCalculator;
@@ -84,6 +85,7 @@ class Xml3176CompleteChecker
             $errors = $errors->merge($this->checkMissingTransferOrAppointment($data));
             $errors = $errors->merge($this->checkNgayTaiKham($data));
             $errors = $errors->merge($this->checkCanNangCon($data));
+            $errors = $errors->merge($this->checkDoiTuongKcbMucHuong($data));
             $errors = $errors->merge($this->checkXml4NgayKqMismatchXml3($ma_lk));
             $errors = $errors->merge($this->checkSecondSurgeryFullPayment($ma_lk));
             $errors = $errors->merge($this->checkMucHuong($data));
@@ -731,6 +733,127 @@ class Xml3176CompleteChecker
         }
 
         return $errors;
+    }
+
+    /**
+     * Muc huong bat buoc theo ma doi tuong KCB.
+     *
+     * Nam o checker tong the vi MUC_HUONG chi co o tung dong XML2/XML3 - bang
+     * xml3176_xml1s khong co cot do.
+     *
+     * Can cu la cot MUC_HUONG cua danh muc ma doi tuong. Ba quy tac nay chua co ho so
+     * nao de chay tren du lieu hien tai (khong ma nao trong 1.2, 1.13, 1.14, 1.18, 7,
+     * 7.2, 7.3, 7.4, 10 xuat hien), nen chua duoc kiem chung thuc te.
+     */
+    private function checkDoiTuongKcbMucHuong(Xml3176Xml1 $data): Collection
+    {
+        $errors = collect();
+        $ma = DoiTuongKcbCatalog::chuanHoa($data->ma_doituong_kcb);
+        $danhMuc = (array) config('doi_tuong_kcb', []);
+
+        if ($ma === '' || !DoiTuongKcbCatalog::coTrongDanhMuc($ma, $danhMuc)) {
+            return $errors; // ma rong hoac la: da co quy tac rieng o XML1 lo
+        }
+
+        $ten = DoiTuongKcbCatalog::thuocTinh($ma, $danhMuc, 'ten');
+
+        // 1) Muc huong co dinh, khong phu thuoc muc huong tren the (ma 1.2 = 100).
+        $coDinh = DoiTuongKcbCatalog::thuocTinh($ma, $danhMuc, 'muc_huong_co_dinh');
+
+        if ($coDinh !== null) {
+            $lech = $this->mucHuongKhacVoi($data->ma_lk, (float) $coDinh);
+
+            if ($lech !== null) {
+                $code = $this->generateErrorCode('DOI_TUONG_KCB_MUC_HUONG_CO_DINH');
+                $errors->push((object)[
+                    'error_code' => $code,
+                    'error_name' => 'Mức hưởng không đúng quy định của mã đối tượng',
+                    'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($code),
+                    'description' => 'Mã đối tượng ' . $ma . ' (' . $ten . ') phải có mức hưởng '
+                        . $coDinh . '% không phụ thuộc thẻ BHYT, nhưng có dòng khai ' . $lech . '%',
+                ]);
+            }
+        }
+
+        // 2) Muc huong doi theo moc thoi gian (ma 1.13, 1.14, 1.18).
+        $theoMoc = DoiTuongKcbCatalog::thuocTinh($ma, $danhMuc, 'muc_huong_theo_moc');
+
+        if (is_array($theoMoc)) {
+            $vao = Xml3176DateHelper::toDateTime($data->ngay_vao);
+
+            if ($vao !== null) {
+                $tuMoc = $vao->format('Y-m-d') >= $theoMoc['moc'];
+
+                if ($tuMoc) {
+                    $lech = $this->mucHuongKhacVoi($data->ma_lk, (float) $theoMoc['tu_moc']);
+
+                    if ($lech !== null) {
+                        $code = $this->generateErrorCode('DOI_TUONG_KCB_MUC_HUONG_THEO_MOC');
+                        $errors->push((object)[
+                            'error_code' => $code,
+                            'error_name' => 'Mức hưởng không đúng mốc thời gian của mã đối tượng',
+                            'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($code),
+                            'description' => 'Mã đối tượng ' . $ma . ' (' . $ten . ') từ ngày '
+                                . $theoMoc['moc'] . ' có mức hưởng ' . $theoMoc['tu_moc']
+                                . '%, nhưng có dòng khai ' . $lech . '%',
+                        ]);
+                    }
+                } elseif ((float) $data->t_bhtt > 0) {
+                    $code = $this->generateErrorCode('DOI_TUONG_KCB_MUC_HUONG_THEO_MOC');
+                    $errors->push((object)[
+                        'error_code' => $code,
+                        'error_name' => 'Mức hưởng không đúng mốc thời gian của mã đối tượng',
+                        'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($code),
+                        'description' => 'Mã đối tượng ' . $ma . ' (' . $ten . ') trước ngày '
+                            . $theoMoc['moc'] . ' không được hưởng BHYT, nhưng T_BHTT = '
+                            . number_format((float) $data->t_bhtt) . ' đồng',
+                    ]);
+                }
+            }
+        }
+
+        // 3) Chi linh thuoc, khong kham benh (ma 7, 7.2, 7.3, 7.4, 10).
+        if (DoiTuongKcbCatalog::thuocTinh($ma, $danhMuc, 'linh_thuoc_khong_kham', false)) {
+            $nhomKham = (array) config('xml3176.examination_group_code', []);
+
+            $soDongKham = Xml3176Xml3::where('ma_lk', $data->ma_lk)
+                ->whereIn('ma_nhom', $nhomKham)
+                ->count();
+
+            if ($soDongKham > 0) {
+                $code = $this->generateErrorCode('DOI_TUONG_KCB_LINH_THUOC_CO_TIEN_KHAM');
+                $errors->push((object)[
+                    'error_code' => $code,
+                    'error_name' => 'Chỉ lĩnh thuốc nhưng vẫn có tiền công khám',
+                    'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($code),
+                    'description' => 'Mã đối tượng ' . $ma . ' (' . $ten . ') là trường hợp chỉ lĩnh thuốc, '
+                        . 'không khám bệnh, nhưng XML3 có ' . $soDongKham . ' dòng thuộc nhóm dịch vụ khám',
+                ]);
+            }
+        }
+
+        return $errors;
+    }
+
+    /**
+     * Tra ve muc huong dau tien khac $mong doi trong cac dong XML2/XML3 cua ho so, hoac
+     * null neu khong dong nao lech. Dong khong khai MUC_HUONG thi bo qua - thieu can cu.
+     */
+    private function mucHuongKhacVoi($ma_lk, float $mongDoi)
+    {
+        foreach ([Xml3176Xml2::class, Xml3176Xml3::class] as $model) {
+            $gt = $model::where('ma_lk', $ma_lk)
+                ->whereNotNull('muc_huong')
+                ->where('muc_huong', '<>', '')
+                ->where('muc_huong', '<>', $mongDoi)
+                ->value('muc_huong');
+
+            if ($gt !== null) {
+                return $gt;
+            }
+        }
+
+        return null;
     }
 
     /**
