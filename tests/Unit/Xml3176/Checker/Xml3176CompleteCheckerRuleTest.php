@@ -36,11 +36,17 @@ class Xml3176CompleteCheckerRuleTest extends TestCase
     }
 
     /** @test */
-    public function thieu_chuyen_tuyen_va_hen_kham_lai()
+    public function quy_tac_thieu_chuyen_tuyen_hen_kham_lai_da_bi_go()
     {
-        $x1 = Xml3176Xml1::create(['ma_lk' => 'A', 'stt' => 1, 'ma_noi_di' => '01001']);
-        $codes = $this->errorCodes($this->invokePrivate($this->checker(), 'checkMissingTransferOrAppointment', $x1));
-        $this->assertContains('XMLComplete_MISSING_TRANSFER_OR_APPOINTMENT', $codes);
+        // MA_NOI_DI la truong DAU VAO, XML13/XML14 la chung tu DAU RA - co cai nay khong
+        // keo theo phai co cai kia. Do tren du lieu that: 81/81 loi deu la bao oan.
+        $this->assertFalse(
+            method_exists(Xml3176CompleteChecker::class, 'checkMissingTransferOrAppointment'),
+            'Quy tac checkMissingTransferOrAppointment da bi go, khong duoc dung lai'
+        );
+
+        $src = file_get_contents(app_path('Services/Xml3176CompleteChecker.php'));
+        $this->assertNotContains("generateErrorCode('MISSING_TRANSFER_OR_APPOINTMENT')", $src);
     }
 
     /** @test */

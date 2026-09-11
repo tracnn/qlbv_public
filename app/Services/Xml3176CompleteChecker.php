@@ -82,7 +82,6 @@ class Xml3176CompleteChecker
             $errors = $errors->merge($this->checkInvalidBedDays($data));
             $errors = $errors->merge($this->checkExpenseErrors($data));
             $errors = $errors->merge($this->checkExaminationErrors($data));
-            $errors = $errors->merge($this->checkMissingTransferOrAppointment($data));
             $errors = $errors->merge($this->checkNgayTaiKham($data));
             $errors = $errors->merge($this->checkCanNangCon($data));
             $errors = $errors->merge($this->checkDoiTuongKcbMucHuong($data));
@@ -598,27 +597,27 @@ class Xml3176CompleteChecker
         return $errors;
     }
 
-    /**
-     * #2498 — Có mã nơi đi nhưng thiếu CẢ giấy chuyển tuyến (XML13) LẪN giấy hẹn khám lại (XML14).
+    /*
+     * DA GO (#2498): checkMissingTransferOrAppointment() - "Co noi di nhung thieu giay
+     * chuyen tuyen hoac hen kham lai".
+     *
+     * Quy tac SAI ve nghiep vu. MA_NOI_DI la truong DAU VAO: ma co so noi nguoi benh
+     * duoc chuyen DEN TU DO, ghi tai co so NHAN. Chuan QD 130 noi thang o vi du 2 cua
+     * truong nay: "BN chuyen tuyen tu BV A den BV B, tai BV B ghi MA_NOI_DI = ma BV A,
+     * de trong MA_NOI_DEN". Con XML13 (chuyen tuyen) va XML14 (hen kham lai) la chung tu
+     * DAU RA do chinh co so nay cap khi ket thuc dieu tri. Co MA_NOI_DI khong keo theo
+     * nghia vu phai sinh XML13/XML14.
+     *
+     * Do tren 1.213 ho so that: quy tac sinh 81 loi, trong do 81/81 (100%) co MA_NOI_DI
+     * tro toi co so KHAC - dung nhom nguoi benh den tu noi khac ma truong do sinh ra de
+     * mo ta. Toan bo la ma doi tuong 1.5 (den theo phieu hen kham lai, 58 ho so) va 1.3
+     * (den co phieu chuyen, 23 ho so). Khong mot ca nao dung.
+     *
+     * Nang hon: ma loi nay o muc nghiem trong nen no CHAN XUAT XML ca 81 ho so do.
+     *
+     * Cung loai sai lam da ghi tai §4.1 spec 2026-09-11-xml3176-quy-tac-ma-doi-tuong-kcb:
+     * lan chung tu nguoi benh MANG DEN voi chung tu co so CAP DI.
      */
-    private function checkMissingTransferOrAppointment(Xml3176Xml1 $data): Collection
-    {
-        $errors = collect();
-        if (empty($data->ma_noi_di)) {
-            return $errors;
-        }
-        $hasXml13 = Xml3176Xml13::where('ma_lk', $data->ma_lk)->exists();
-        $hasXml14 = Xml3176Xml14::where('ma_lk', $data->ma_lk)->exists();
-        if (!$hasXml13 && !$hasXml14) {
-            $code = $this->generateErrorCode('MISSING_TRANSFER_OR_APPOINTMENT');
-            $errors->push((object) [
-                'error_code' => $code, 'error_name' => 'Có nơi đi nhưng thiếu giấy chuyển tuyến hoặc hẹn khám lại',
-                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($code),
-                'description' => 'Mã nơi đi ' . $data->ma_noi_di . ' nhưng không có XML13 (chuyển tuyến) lẫn XML14 (hẹn khám lại)',
-            ]);
-        }
-        return $errors;
-    }
 
     /**
      * NGAY_TAI_KHAM (XML1) phai co giay hen kham lai (XML14) tuong ung.
