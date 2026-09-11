@@ -46,6 +46,7 @@ trait DungBangCtdtSqlite
             '2026_08_19_100019_create_ctdt_giay_chung_sinh_table'    => 'CreateCtdtGiayChungSinhTable',
             '2026_08_22_100001_add_cccd_ma_bhxh_to_ctdt_chung_tu_table' => 'AddCccdMaBhxhToCtdtChungTuTable',
             '2026_08_22_100002_create_ctdt_khoa_xu_ly_table'         => 'CreateCtdtKhoaXuLyTable',
+            '2026_09_11_100002_create_ctdt_lich_su_sua_table'        => 'CreateCtdtLichSuSuaTable',
         ];
     }
 

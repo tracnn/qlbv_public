@@ -15,7 +15,7 @@
  * NGAY_PHAT_HANH cho khớp dòng đó.
  */
 
-const PHIEN_BAN = '1.10';
+const PHIEN_BAN = '1.11';
 
 const NGAY_PHAT_HANH = 'Tháng 9 năm 2026';
 
@@ -27,6 +27,13 @@ const NGAY_PHAT_HANH = 'Tháng 9 năm 2026';
  * thay vì đọc lại cả tài liệu.
  */
 const LICH_SU = [
+  {
+    ban: '1.11',
+    ngay: '11/09/2026',
+    noi_dung:
+      'Chứng từ điện tử: sửa được XML gốc của chứng từ ngay trong màn chi tiết để kịp ký số và gửi cổng, dành cho tài khoản có quyền riêng ctdt-sua-xml. Kèm danh sách những trường hợp phần mềm không cho sửa và lý do.',
+    lien_quan: 'Phần VI, mục 6.7bis (mới).',
+  },
   {
     ban: '1.10',
     ngay: '07/09/2026',

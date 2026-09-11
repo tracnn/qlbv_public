@@ -21,6 +21,7 @@ use App\Models\BHYT\Ctdt\CtdtLoi;
 use App\Services\Ctdt\CtdtQuyetDinhGui;
 use App\Services\Ctdt\CtdtXepHangKyGui;
 use App\Services\Ctdt\CtdtDuDieuKienGui;
+use App\Services\Ctdt\CtdtSuaXml;
 use App\Exports\CtdtDanhSachExport;
 use App\Exports\CtdtLoiExport;
 use App\Exports\CtdtNhatKyGuiExport;
@@ -424,6 +425,10 @@ class BHYTCtdtController extends Controller
             return view('bhyt.ctdt.tab-xml-goc', [
                 'hoSo'    => $hoSo,
                 'chungTu' => $hoSo->chungTu->values(),
+                // Quyen quyet dinh o SERVER va truyen xuong view. Khong de JavaScript tu
+                // hoi: an nut bang JS chi la trang tri, ai cung goi thang endpoint duoc -
+                // endpoint co middleware checkrole rieng, va day chi la phan hien thi.
+                'coQuyenSuaXml' => self::duocSuaXml(),
             ]);
         }
 
@@ -667,4 +672,84 @@ class BHYTCtdtController extends Controller
 
         return response()->json(['thanh_cong' => true]);
     }
+    /** @return bool Nguoi dang dang nhap co quyen sua XML goc khong */
+    private static function duocSuaXml()
+    {
+        return auth()->check() && auth()->user()->hasRole('ctdt-sua-xml');
+    }
+
+    /**
+     * Sua VAN BAN THO cua XML goc mot chung tu.
+     *
+     * Route da co middleware checkrole:ctdt-sua-xml - quyen nay TACH KHOI xml-man vi noi
+     * dung sua o day duoc ky so va gui len cong BHXH.
+     *
+     * Cac chot ve NOI DUNG nam o CtdtSuaXml::kiem(). O day chi ba chot ve TRANG THAI ho so,
+     * thu ma mot ham thuan khong biet duoc.
+     */
+    public function suaXml(Request $request, $ma_ho_so, $chung_tu_id)
+    {
+        $hoSo = CtdtHoSo::where('ma_ho_so', $ma_ho_so)->firstOrFail();
+
+        // Doi chieu chung tu voi HO SO tren duong dan, khong chi tim theo id. Thieu buoc nay
+        // thi mot nguoi co quyen sua ho so A co the sua chung tu cua ho so B chi bang cach
+        // doi so id tren URL.
+        $chungTu = CtdtChungTu::where('id', $chung_tu_id)
+            ->where('ho_so_id', $hoSo->id)
+            ->firstOrFail();
+
+        // Dang chay chuoi ky - gui thi KHONG duoc doi noi dung: job ky co the da doc ban cu
+        // va dang gui ban do, trong khi CSDL hien ban moi. Luc doi soat se khong ai biet ban
+        // nao that su len cong.
+        if (CtdtXepHangKyGui::dangXuLy($ma_ho_so)) {
+            return response()->json([
+                'thanh_cong' => false,
+                'thong_diep' => 'Hồ sơ đang trong lượt ký và gửi. Chờ xong rồi sửa, '
+                    . 'không sửa nội dung giữa lúc đang gửi.',
+            ]);
+        }
+
+        // Laravel 5.5 KHONG co Request::boolean().
+        $daXacNhan = filter_var($request->input('xac_nhan_da_gui'), FILTER_VALIDATE_BOOLEAN);
+
+        if (!empty($hoSo->ma_gd) && !$daXacNhan) {
+            return response()->json([
+                'thanh_cong'   => false,
+                'can_xac_nhan' => true,
+                'thong_diep'   => 'Cổng BHXH đã tiếp nhận hồ sơ này (mã giao dịch '
+                    . $hoSo->ma_gd . '). Sửa bản trong phần mềm KHÔNG sửa được chứng từ đã '
+                    . 'nằm trên cổng — muốn sửa thật thì phải theo quy trình nghiệp vụ với '
+                    . 'cơ quan bảo hiểm. Vẫn sửa?',
+            ]);
+        }
+
+        $kiem = CtdtSuaXml::kiem($request->input('noi_dung'), $chungTu);
+
+        if ($kiem['ma'] !== CtdtSuaXml::OK) {
+            return response()->json([
+                'thanh_cong' => false,
+                'thong_diep' => CtdtSuaXml::lyDo($kiem['ma'], $kiem['chi_tiet']),
+            ], 422);
+        }
+
+        $nguoiSua = auth()->check() ? auth()->user()->loginname : null;
+
+        CtdtSuaXml::ap($chungTu, $kiem['xml'], $request->input('noi_dung'), $nguoiSua);
+
+        // Chay lai bo kiem NGAY, khong day vao hang doi: nguoi vua sua can thay so loi moi
+        // lien de biet minh da sua dung chua. Day vao hang doi thi ho phai doi va tai lai,
+        // va neu worker chet thi ho so nam mai o so loi CU - tuc so loi cua noi dung da
+        // khong con ton tai.
+        (new \App\Jobs\CheckCtdtJob($ma_ho_so))->handle();
+
+        $moi = $hoSo->fresh();
+
+        return response()->json([
+            'thanh_cong' => true,
+            'so_loi'     => (int) $moi->so_loi,
+            'thong_diep' => 'Đã lưu XML gốc và kiểm lại. Chữ ký cũ đã bị vô hiệu, hồ sơ cần '
+                . 'ký và gửi lại. Số lỗi chặn hiện tại: ' . (int) $moi->so_loi . '.',
+        ]);
+    }
+
 }

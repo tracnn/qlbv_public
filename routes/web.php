@@ -635,6 +635,12 @@ Route::group(['middleware' => ['auth']], function () {
         // vao {ma_ho_so} cua route tren va roi vao kyVaGui() voi ma ho so la chuoi do.
         Route::post('ctdt/ky-va-gui-nhieu', 'BHYT\BHYTCtdtController@kyVaGuiNhieu')
         ->name('bhyt.ctdt.ky-va-gui-nhieu');
+        // Quyen RIENG, khong phai xml-man: noi dung sua o day duoc ky so va gui len cong
+        // BHXH, nen khong phai ai xem duoc danh sach cung sua duoc.
+        Route::post('ctdt/detail/{ma_ho_so}/chung-tu/{chung_tu_id}/sua-xml',
+            'BHYT\BHYTCtdtController@suaXml')
+            ->name('bhyt.ctdt.sua-xml')
+            ->middleware('checkrole:ctdt-sua-xml');
         Route::post('ctdt/{ma_ho_so}/ky-va-gui', 'BHYT\BHYTCtdtController@kyVaGui')
         ->name('bhyt.ctdt.ky-va-gui');
         Route::delete('ctdt/{ma_ho_so}', 'BHYT\BHYTCtdtController@delete')

@@ -681,6 +681,46 @@ không đo từng chặn 97% hồ sơ trong nhiều ngày.
 không phát sinh cảnh báo mới), 1074 hồ sơ sẵn sàng gửi. Việc siết mức chặn ở bảng đầu không khóa
 lại hồ sơ nào, đúng như đo trước đã dự kiến.
 
+### Sửa XML gốc — đường nguy hiểm nhất của module
+
+`noi_dung_goc` được base64 **thẳng** vào phong bì ở `CtdtPhongBi` rồi ký số và POST lên cổng.
+Người sửa đang sửa chính văn bản pháp lý sẽ nằm trên cổng. Khác đường nạp (nội dung do phần mềm
+HIS sinh ra), ở đây nội dung do **người gõ**, nên trình duyệt không đỡ được gì và **mọi chốt phải
+nằm ở server**.
+
+Quyền `ctdt-sua-xml` **tách khỏi** `xml-man` và **không tự cấp cho ai** — khác các migration role
+trước vốn nới rộng một quyền sẵn có. Quản trị cấp tay sau khi triển khai.
+
+**Sáu chốt nội dung** ở `CtdtSuaXml::kiem()`, theo đúng thứ tự: không rỗng → không vượt 256 KB →
+**không chứa DOCTYPE** → parse được → thẻ gốc khớp loại → khoá nghiệp vụ không đổi.
+
+Hai chốt đáng giải thích:
+
+- **DOCTYPE là chốt an toàn, không phải kiểm tra hình thức.** Một khai báo
+  `<!DOCTYPE x [<!ENTITY e SYSTEM "file:///...">]>` làm bộ phân giải đọc tệp của máy chủ, nhét vào
+  chứng từ, rồi phần mềm **ký số và gửi nội dung đó lên cổng BHXH** — rò rỉ dữ liệu ra ngoài chứ
+  không chỉ là lỗi cục bộ. Chặn ở **mức văn bản** chứ không dựa vào `libxml_disable_entity_loader()`:
+  hàm đó lạc hậu từ PHP 8.0 và hành vi mặc định khác nhau giữa các bản libxml. Chặn luôn được
+  "billion laughs". Không truyền `LIBXML_NOENT` — cờ đó *bật* việc thay thế entity.
+- **Khoá nghiệp vụ không được đổi.** `ma_ho_so` suy từ khoá này **lúc nạp** và không đổi theo. Cho
+  sửa thì hồ sơ mang mã cũ trong khi chứng từ bên trong mang mã mới — lần nạp gói sau **không ghi
+  đè được** mà tạo ra hồ sơ thứ hai. Không thông báo nào, chỉ lộ ra lúc đối chiếu.
+
+**Hai chốt trạng thái** ở controller: hồ sơ đang có khoá xử lý thì từ chối (job ký có thể đã đọc bản
+cũ và đang gửi bản đó), và hồ sơ đã có `ma_gd` thì hỏi xác nhận.
+
+**Sau khi ghi**, trong một transaction: cập nhật `noi_dung_goc` + cột rút gọn + `ma_chung_tu`, dựng
+lại bản ghi chi tiết, **vô hiệu chữ ký cũ**, ghi `ctdt_lich_su_sua`. Bộ kiểm chạy lại **ngay** sau
+đó (không đẩy vào hàng đợi) để người vừa sửa thấy số lỗi mới liền.
+
+**Giữ nguyên `ma_gd`**, không xoá như đường nạp lại. Nạp lại xoá nó và tạo ra đúng cái bẫy module
+đang phải cảnh báo bằng hộp thoại: hồ sơ cổng đã nhận lại hiện "Chưa ký số". Giữ lại thì trạng thái
+vẫn là "Đã gửi" — đúng sự thật — và nút hiện "Ký và gửi lại".
+
+`ctdt_lich_su_sua` lưu **cả bản trước**: người dùng sửa văn bản thô, một lần dán đè là mất hẳn bản
+gốc do HIS sinh ra, và `noi_dung_goc` là bản duy nhất trong cơ sở dữ liệu. Bảng **không có khoá
+ngoại** tới `ctdt_chung_tu` — nhật ký phải sống sót qua việc xoá hồ sơ.
+
 ### Giấy ra viện (CT03) — siết 10 trường ngày 07/09/2026
 
 **Căn cứ khác hẳn các đợt trước.** Không phải đọc công văn, mà là **cổng BHXH đã từ chối** một

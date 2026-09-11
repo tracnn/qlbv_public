@@ -19,6 +19,7 @@ $(function () {
     var mauUrlTab = "{{ route('bhyt.ctdt.detail.tab', ['ma_ho_so' => '__MA__', 'loai' => '__LOAI__']) }}";
     var mauUrlGui = "{{ route('bhyt.ctdt.ky-va-gui', ['ma_ho_so' => '__MA__']) }}";
     var mauUrlXoa = "{{ route('bhyt.ctdt.delete', ['ma_ho_so' => '__MA__']) }}";
+    var mauUrlSuaXml = "{{ route('bhyt.ctdt.sua-xml', ['ma_ho_so' => '__MA__', 'chung_tu_id' => '__CTID__']) }}";
     var token = "{{ csrf_token() }}";
 
     /** Ma ho so doc tu DOM, khong nhung vao JS: luc gan handler chua biet ho so nao se mo. */
@@ -191,5 +192,121 @@ $(function () {
             });
         });
     });
+
+    // ----------------------------------------------------------------- sua XML goc
+    //
+    // Cac nut nay CHI ton tai khi tab XML goc duoc render cho tai khoan co quyen
+    // ctdt-sua-xml (xem tab-xml-goc.blade.php). Uy nhiem tren document nen van chay voi
+    // than chi tiet nap bang AJAX.
+    //
+    // An nut o day chi la trang tri - endpoint co middleware checkrole rieng.
+
+    function khoiXml(phanTu) {
+        return $(phanTu).closest('.ctdt-khoi-xml');
+    }
+
+    function doiCheDoSua($khoi, dangSua) {
+        $khoi.find('.ctdt-xml-xem').toggle(!dangSua);
+        $khoi.find('.ctdt-xml-sua').toggle(dangSua);
+        $khoi.find('.ctdt-mo-sua-xml').toggle(!dangSua);
+        $khoi.find('.ctdt-luu-xml, .ctdt-huy-sua-xml').toggle(dangSua);
+    }
+
+    $(document).on('click', '.ctdt-mo-sua-xml', function () {
+        var $khoi = khoiXml(this);
+
+        // Nap lai o nhap tu ban DANG HIEN THI moi lan mo: lan sua truoc co the da bi huy
+        // giua chung, va o nhap con giu van ban do do.
+        $khoi.find('.ctdt-xml-sua').val($khoi.find('.ctdt-xml-xem').text());
+        $khoi.find('.ctdt-xml-thong-bao').empty();
+
+        doiCheDoSua($khoi, true);
+    });
+
+    $(document).on('click', '.ctdt-huy-sua-xml', function () {
+        var $khoi = khoiXml(this);
+
+        $khoi.find('.ctdt-xml-thong-bao').empty();
+        doiCheDoSua($khoi, false);
+    });
+
+    $(document).on('click', '.ctdt-luu-xml', function () {
+        var $nut = $(this);
+        var $khoi = khoiXml(this);
+        var maHoSo = maHoSoCua(this);
+        var chungTuId = $khoi.data('chung-tu-id');
+        var noiDung = $khoi.find('.ctdt-xml-sua').val();
+
+        luuXml($nut, $khoi, maHoSo, chungTuId, noiDung, false);
+    });
+
+    function luuXml($nut, $khoi, maHoSo, chungTuId, noiDung, daXacNhan) {
+        var url = ghepUrl(mauUrlSuaXml, maHoSo).replace('__CTID__', encodeURIComponent(chungTuId));
+
+        $nut.prop('disabled', true);
+
+        $.ajax({
+            url: url,
+            method: 'POST',
+            data: {
+                _token: token,
+                noi_dung: noiDung,
+                xac_nhan_da_gui: daXacNhan ? 1 : 0
+            },
+            dataType: 'json'
+        }).done(function (kq) {
+            if (kq.thanh_cong) {
+                // Ban chi doc phai doi theo NGAY, khong cho tai lai tab: nguoi vua sua can
+                // thay ban moi de biet minh sua dung chua. .text() chu khong .html() - noi
+                // dung nay do nguoi dung go.
+                $khoi.find('.ctdt-xml-xem').text(noiDung);
+                doiCheDoSua($khoi, false);
+                $khoi.find('.ctdt-xml-thong-bao').empty();
+
+                Swal.fire('Đã lưu', kq.thong_diep, 'success');
+
+                // Chu ky cu da bi vo hieu va so loi co the doi - man danh sach phia sau
+                // dang hien so cu. Dung chinh su kien ma nut Ky va gui dang dung.
+                $(document).trigger('ctdt:da-xep-hang', [maHoSo]);
+
+                return;
+            }
+
+            if (kq.can_xac_nhan) {
+                Swal.fire({
+                    title: 'Cổng đã tiếp nhận hồ sơ này',
+                    text: kq.thong_diep,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Vẫn sửa',
+                    cancelButtonText: 'Huỷ'
+                }).then(function (kq2) {
+                    if (kq2.value) {
+                        luuXml($nut, $khoi, maHoSo, chungTuId, noiDung, true);
+                    }
+                });
+
+                return;
+            }
+
+            veLoiXml($khoi, kq.thong_diep);
+        }).fail(function (xhr) {
+            var kq = xhr.responseJSON;
+
+            veLoiXml($khoi, (kq && kq.thong_diep)
+                ? kq.thong_diep
+                : 'Không lưu được. Kiểm tra kết nối rồi thử lại.');
+        }).always(function () {
+            $nut.prop('disabled', false);
+        });
+    }
+
+    // .text() chu khong .html(): thong diep co the mang nguyen van thong bao cua bo phan
+    // giai XML, trong do co ca doan van ban nguoi dung vua go.
+    function veLoiXml($khoi, thongDiep) {
+        $khoi.find('.ctdt-xml-thong-bao').empty().append(
+            $('<div>').addClass('alert alert-danger').css('margin-bottom', 0).text(thongDiep)
+        );
+    }
 });
 </script>

@@ -214,6 +214,33 @@ module.exports = function part6() {
     note('Lưu ý:', 'Hai trạng thái cuối bảng trên vẫn gửi lại được ở màn chi tiết nhưng KHÔNG gửi hàng loạt được, và đó là chủ ý. Ở màn chi tiết người bấm đang nhìn đúng hồ sơ đó, nhãn nút đã đổi thành "Ký và gửi lại", và với hồ sơ cổng từ chối thì phần mềm còn hỏi xác nhận. Trong một lượt 50 dòng thì không ai nhìn từng cái, nên một lần bấm sẽ gửi lại im lặng những hồ sơ cổng đã nhận — mỗi cái là một chứng từ trùng trên cổng.'),
     p('Nếu một hồ sơ đang được xử lý ở một lượt khác — chẳng hạn tiến trình nạp tự động vừa xếp hàng chính nó vài giây trước — thì nó cũng bị bỏ qua kèm lý do, không bị gửi thêm lần nữa.'),
 
+    h2('6.7bis. Sửa XML gốc của chứng từ'),
+    p('Khi hồ sơ còn lỗi chặn mà phần mềm sinh XML chưa kịp sửa nguồn, có thể sửa thẳng nội dung XML của chứng từ ngay trong phần mềm để kịp ký số và gửi cổng. Chức năng nằm ở thẻ XML gốc trong màn chi tiết.'),
+    note('Lưu ý:', 'Nội dung XML này được ký số và gửi thẳng lên cổng Bảo hiểm xã hội — sửa nó là sửa chính văn bản pháp lý sẽ nằm trên cổng. Chỉ sửa khi đã đối chiếu với hồ sơ giấy, và hiểu rằng bản trong phần mềm sẽ khác bản do phần mềm nguồn sinh ra.'),
+    p('Chức năng này cần quyền riêng là ctdt-sua-xml, tách khỏi quyền xml-man. Tài khoản không có quyền vẫn xem được XML gốc nhưng không thấy nút Sửa. Quyền này nên cấp cho vài người, không cấp cho cả nhóm dùng module.'),
+    steps([
+        ['1', 'Mở chi tiết hồ sơ, chuyển sang thẻ XML gốc.', 'Nội dung XML của từng chứng từ hiện ra.'],
+        ['2', 'Bấm Sửa ở góc phải khối chứng từ cần sửa.', 'Nội dung chuyển thành ô nhập sửa được.'],
+        ['3', 'Sửa nội dung rồi bấm Lưu.', 'Phần mềm kiểm tra, lưu lại và kiểm lỗi lại ngay; thông báo nêu số lỗi chặn mới.'],
+    ]),
+    p('Sau khi lưu, chữ ký số cũ bị vô hiệu — nội dung đã đổi thì chữ ký cũ không còn nói về nội dung này nữa. Hồ sơ cần ký và gửi lại.'),
+
+    h3('6.7bis.1. Những gì phần mềm không cho sửa'),
+    table(
+        ['Trường hợp', 'Vì sao'],
+        [
+            ['Nội dung chứa khai báo DOCTYPE', 'Lý do an toàn. Khai báo đó có thể khiến máy chủ đọc tệp nội bộ rồi gửi lên cổng. Chứng từ không cần tới nó — xoá đi là lưu được.'],
+            ['XML sai cú pháp', 'Thông báo nêu dòng bị lỗi để tìm cho nhanh.'],
+            ['Đổi thẻ gốc sang loại chứng từ khác', 'Loại chứng từ quyết định cách phần mềm đọc và hiển thị. Muốn đổi loại thì nạp lại hồ sơ.'],
+            ['Đổi mã định danh của chứng từ', 'Đổi mã sẽ làm lần nạp sau tạo ra một hồ sơ thứ hai thay vì ghi đè hồ sơ này — hai bản cùng tồn tại mà không có cảnh báo nào.'],
+            ['Hồ sơ đang trong lượt ký và gửi', 'Không sửa nội dung giữa lúc đang gửi, vì sẽ không ai biết bản nào thật sự lên cổng.'],
+            ['Nội dung quá lớn', 'Trần 256 KB, rộng gấp nhiều lần chứng từ thật lớn nhất.'],
+        ],
+        [2800, 6220],
+    ),
+    note('Lưu ý:', 'Hồ sơ cổng ĐÃ tiếp nhận vẫn sửa được nhưng phần mềm hỏi xác nhận trước. Cần hiểu rõ: sửa bản trong phần mềm KHÔNG sửa được chứng từ đã nằm trên cổng. Muốn sửa thật thì phải theo quy trình nghiệp vụ với cơ quan bảo hiểm.'),
+    p('Mỗi lần sửa đều được ghi nhật ký kèm nội dung trước và sau, cùng tên người sửa — phục vụ việc đối chiếu về sau khi bản trên cổng và bản tại đơn vị khác nhau.'),
+
     h2('6.8. Bảng mã lỗi chứng từ điện tử'),
     p('Các lỗi do phần mềm tự phát hiện trước khi gửi mang mã bắt đầu bằng CTDT. Lỗi mức chặn làm hồ sơ không gửi được; lỗi mức cảnh báo chỉ để lưu ý, không chặn.'),
     table(

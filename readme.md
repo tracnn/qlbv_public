@@ -1,5 +1,12 @@
 # 11/09/2026
 
+- **Chứng từ điện tử: sửa được XML gốc ngay trong phần mềm.** Khi hồ sơ còn lỗi chặn mà phần mềm sinh XML chưa kịp sửa nguồn, người có quyền sửa thẳng nội dung XML ở thẻ **XML gốc** trong màn chi tiết để kịp ký số và gửi cổng. Sửa xong phần mềm **kiểm lỗi lại ngay** và báo số lỗi mới.
+- Chức năng cần **quyền riêng `ctdt-sua-xml`**, tách khỏi `xml-man` và **không tự cấp cho ai** — quản trị cấp tay cho vài người. Nội dung sửa ở đây được ký số và gửi thẳng lên cổng, nên không phải ai xem được danh sách cũng sửa được.
+- **Sửa xong thì chữ ký cũ bị vô hiệu**, hồ sơ cần ký và gửi lại. Nhưng **mã giao dịch được giữ nguyên**, khác đường nạp lại vốn xoá nó — giữ lại thì trạng thái vẫn là "Đã gửi", đúng sự thật, thay vì hiện "Chưa ký số" cho một hồ sơ cổng đã nhận.
+- **Sáu điều phần mềm không cho sửa**, mỗi điều chặn một cách hỏng riêng: khai báo DOCTYPE (có thể khiến máy chủ đọc tệp nội bộ rồi **gửi nội dung đó lên cổng**), XML sai cú pháp, đổi thẻ gốc sang loại khác, **đổi mã định danh chứng từ** (sẽ làm lần nạp sau tạo ra hồ sơ thứ hai thay vì ghi đè), hồ sơ đang trong lượt ký và gửi, và nội dung vượt 256 KB.
+- **Mỗi lần sửa đều được ghi nhật ký kèm nội dung trước và sau.** Người dùng sửa văn bản thô, một lần dán đè là mất hẳn bản gốc do phần mềm nguồn sinh ra — và đây là chứng từ pháp lý, khi bản trên cổng và bản tại đơn vị lệch nhau thì câu hỏi đầu tiên là lệch ở chỗ nào.
+- Tài liệu hướng dẫn sử dụng lên phiên bản 1.11.
+
 - **Bộ quy tắc mới dựa trên Danh mục mã đối tượng khám chữa bệnh do Bộ Y tế ban hành (10 mã lỗi).** Trước nay phần mềm gần như không dùng tới trường *mã đối tượng khám chữa bệnh*, dù đó là trường khai **người bệnh đến bằng đường nào** — đúng cơ sở đăng ký ban đầu, có phiếu chuyển, theo phiếu hẹn khám lại, hay tự đến. Danh mục gồm **27 mã**, và mỗi mã tự nó khẳng định một số điều mà phần còn lại của hồ sơ phải nhất quán theo.
 
 - **Danh mục là 27 mã, không phải 28.** Số thứ tự trong văn bản chạy từ 1 đến 28 nhưng **nhảy qua số 22**. Đã kiểm bằng cả trích văn bản lẫn trích bảng. Bản thiết kế đầu tiên ghi nhầm 28 mã và tự bịa ra một mã `7.1` không tồn tại — đã sửa trước khi viết mã nguồn.
