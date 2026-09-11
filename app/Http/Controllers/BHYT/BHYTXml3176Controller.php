@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 
 use Yajra\Datatables\Datatables;
 use App\Models\BHYT\Xml3176Xml1;
+use App\Services\BHYT\Xml3176LocDanhSach;
 
 use App\Models\BHYT\Xml3176ErrorResult;
 use App\Models\BHYT\Xml3176ErrorCatalog;
@@ -100,289 +101,35 @@ class BHYTXml3176Controller extends Controller
         //     return redirect()->route('home');
         // }
         
-        $treatment_code = $request->input('treatment_code');
-        $patient_code = $request->input('patient_code');
-        $date_type = $request->input('date_type');
-        $xml_filter_status = $request->input('xml_filter_status');
-
-        $xml3176_error_catalog_id = $request->input('xml3176_error_catalog');
-
-        $hein_card_filter = $request->input('hein_card_filter');
-        $payment_date_filter = $request->input('payment_date_filter');
-        $treatment_type_fillter = $request->input('treatment_type_fillter');
-        $ma_khoa = $request->input('ma_khoa');
-        $xml_export_status = $request->input('xml_export_status');
-        $xml_submit_status = $request->input('xml_submit_status');
-        $xml_sign_status = $request->input('xml_sign_status');
-        $imported_by = $request->input('imported_by');
-        $ma_cskcb = $request->input('ma_cskcb');
+        // MOT nguon duy nhat cho bo loc: Xml3176LocDanhSach. Truoc day khoi loc o day
+        // duoc chep lai (thieu) sang ba lop Export, nen file xuat ra khong khop bang
+        // dang hien thi - im lang, van ra file, chi la sai pham vi.
+        $loc          = Xml3176LocDanhSach::tuRequest($request);
         $danhSachCoSo = \App\Services\BHYT\DanhSachCoSo::danhSach();
 
-        $dateFrom = $request->input('date_from');
-        $dateTo = $request->input('date_to');
+        $result = Xml3176Xml1::select('xml3176_xml1s.ma_lk', 'xml3176_xml1s.ma_bn',
+            'xml3176_xml1s.ho_ten', 'xml3176_xml1s.ma_the_bhyt', 'xml3176_xml1s.ngay_sinh',
+            'xml3176_xml1s.ngay_vao', 'xml3176_xml1s.ngay_ra', 'xml3176_xml1s.ngay_ttoan',
+            'xml3176_xml1s.created_at', 'xml3176_xml1s.updated_at')
+            // Chi can biet CO loi hay khong (setRowClass), khong can noi dung loi.
+            // Eager-load ca tap loi keo ve cot description kieu TEXT cho tung dong.
+            ->withCount('Xml3176ErrorResult')
+            ->with(['check_hein_card' => function($query) {
+                $query->select('ma_lk', 'ma_kiemtra', 'ma_tracuu', 'ghi_chu');
+            }, 'Xml3176Information' => function($query) {
+                $query->select('ma_lk',
+                'exported_at',
+                'export_error',
+                'imported_by',
+                'is_signed',
+                'sign_method',
+                'submitted_at',
+                'submit_error',
+                'signed_error',
+                'submitted_message');
+            }]);
 
-        if ($treatment_code) {
-            $result = Xml3176Xml1::select('ma_lk', 'ma_bn', 'ho_ten', 'ma_the_bhyt', 'ngay_sinh', 
-                'ngay_vao', 'ngay_ra', 'ngay_ttoan', 'created_at', 'updated_at')
-                ->where('ma_lk', $treatment_code)
-                // Chi can biet CO loi hay khong (setRowClass), khong can noi dung loi.
-                // Eager-load ca tap loi keo ve cot description kieu TEXT cho tung dong.
-                ->withCount('Xml3176ErrorResult')
-                ->with(['check_hein_card' => function($query) {
-                    $query->select('ma_lk', 'ma_kiemtra', 'ma_tracuu', 'ghi_chu');
-                }, 'Xml3176Information' => function($query) {
-                    $query->select('ma_lk', 
-                    'exported_at', 
-                    'imported_by', 
-                    'is_signed', 
-                    'sign_method',
-                    'submitted_at', 
-                    'submit_error', 
-                    'signed_error', 
-                    'submitted_message');
-                }]);
-
-                // Kiểm tra role của user
-                if (!\Auth::user()->hasRole(['superadministrator', 'administrator'])) {
-                    $result = $result->whereHas('Xml3176Information', function($query) {
-                        $query->where('imported_by', \Auth::user()->loginname);
-                    });
-                }
-                \App\Services\BHYT\LocCoSo::ap($result, $ma_cskcb, $danhSachCoSo);
-        } else {
-            if ($patient_code) {
-                $result = Xml3176Xml1::select('ma_lk', 'ma_bn', 'ho_ten', 'ma_the_bhyt', 'ngay_sinh', 
-                    'ngay_vao', 'ngay_ra', 'ngay_ttoan', 'created_at', 'updated_at')
-                    ->where('ma_bn', $patient_code)
-                    // Chi can biet CO loi hay khong (setRowClass), khong can noi dung loi.
-                    ->withCount('Xml3176ErrorResult')
-                    ->with(['check_hein_card' => function($query) {
-                        $query->select('ma_lk', 'ma_kiemtra', 'ma_tracuu', 'ghi_chu');
-                    }, 'Xml3176Information' => function($query) {
-                        $query->select('ma_lk', 
-                        'exported_at', 
-                        'imported_by', 
-                        'is_signed', 
-                        'sign_method',
-                        'submitted_at', 
-                        'submit_error', 
-                        'signed_error', 
-                        'submitted_message');
-                    }]);
-                    // Kiểm tra role của user
-                    if (!\Auth::user()->hasRole(['superadministrator', 'administrator'])) {
-                        $result = $result->whereHas('Xml3176Information', function($query) {
-                            $query->where('imported_by', \Auth::user()->loginname);
-                        });
-                    }
-                    \App\Services\BHYT\LocCoSo::ap($result, $ma_cskcb, $danhSachCoSo);
-            } else {
-                // Check and convert date format
-                if (strlen($dateFrom) == 10) {
-                    $dateFrom = Carbon::createFromFormat('Y-m-d', $dateFrom)->startOfDay()->format('Y-m-d H:i:s');
-                }
-
-                if (strlen($dateTo) == 10) {
-                    $dateTo = Carbon::createFromFormat('Y-m-d', $dateTo)->endOfDay()->format('Y-m-d H:i:s');
-                }
-
-                // Convert date format from 'YYYY-MM-DD HH:mm:ss' to 'YYYYMMDDHHI' for specific fields
-                $formattedDateFromForFields = Carbon::createFromFormat('Y-m-d H:i:s', $dateFrom)->format('YmdHi');
-                $formattedDateToForFields = Carbon::createFromFormat('Y-m-d H:i:s', $dateTo)->format('YmdHi');
-
-                // Convert date format to 'Y-m-d H:i:s' for created_at and updated_at
-                $formattedDateFromForTimestamp = Carbon::createFromFormat('Y-m-d H:i:s', $dateFrom)->format('Y-m-d H:i:s');
-                $formattedDateToForTimestamp = Carbon::createFromFormat('Y-m-d H:i:s', $dateTo)->format('Y-m-d H:i:s');
-
-                // Define the date field based on date_type
-                switch ($date_type) {
-                    case 'date_in':
-                        $dateField = 'ngay_vao';
-                        $formattedDateFrom = $formattedDateFromForFields;
-                        $formattedDateTo = $formattedDateToForFields;
-                        break;
-                    case 'date_out':
-                        $dateField = 'ngay_ra';
-                        $formattedDateFrom = $formattedDateFromForFields;
-                        $formattedDateTo = $formattedDateToForFields;
-                        break;
-                    case 'date_payment':
-                        $dateField = 'ngay_ttoan';
-                        $formattedDateFrom = $formattedDateFromForFields;
-                        $formattedDateTo = $formattedDateToForFields;
-                        break;
-                    case 'date_create':
-                        $dateField = 'created_at';
-                        $formattedDateFrom = $formattedDateFromForTimestamp;
-                        $formattedDateTo = $formattedDateToForTimestamp;
-                        break;
-                    case 'date_update':
-                        $dateField = 'updated_at';
-                        $formattedDateFrom = $formattedDateFromForTimestamp;
-                        $formattedDateTo = $formattedDateToForTimestamp;
-                        break;
-                    default:
-                        $dateField = 'ngay_ttoan';
-                        $formattedDateFrom = $formattedDateFromForFields;
-                        $formattedDateTo = $formattedDateToForFields;
-                        break;
-                }
-
-                $result = Xml3176Xml1::select('ma_lk', 'ma_bn', 'ho_ten', 'ma_the_bhyt', 'ngay_sinh', 
-                    'ngay_vao', 'ngay_ra', 'ngay_ttoan', 'created_at', 'updated_at')
-                // Ap dung cho CA hai nhanh ben duoi, ke ca nhanh loc theo ma loi von
-                // khong eager-load - khien setRowClass() lazy-load mot truy van MOI dong.
-                ->withCount('Xml3176ErrorResult')
-                ->whereBetween($dateField, [$formattedDateFrom, $formattedDateTo]);
-
-                // Apply relationships
-                $result = $result->with(['check_hein_card' => function($query) {
-                    $query->select('ma_lk', 'ma_kiemtra', 'ma_tracuu', 'ghi_chu');
-                }]);
-
-                $result = $result->with(['Xml3176Information' => function($query) {
-                    $query->select('ma_lk', 
-                    'exported_at', 
-                    'export_error', 
-                    'imported_by', 
-                    'is_signed', 
-                    'sign_method',
-                    'submitted_at', 
-                    'submit_error', 
-                    'signed_error', 
-                    'submitted_message');
-                }]);
-
-                if ($xml3176_error_catalog_id) {
-                    $xml3176ErrorCatalog = Xml3176ErrorCatalog::find($xml3176_error_catalog_id);
-                    if ($xml3176ErrorCatalog) {
-                        $result = $result->whereHas('Xml3176ErrorResult', function($query) use ($xml3176ErrorCatalog) {
-                            $query->where('xml', $xml3176ErrorCatalog->xml)
-                                  ->where('error_code', $xml3176ErrorCatalog->error_code);
-                        });
-                    }
-                }
-
-                
-                // Apply filter based on xml_filter_status
-                if ($xml_filter_status === 'has_error') {
-                    $result = $result->where(function ($query) {
-                        $query->whereHas('Xml3176ErrorResult')
-                        ->orWhereHas('check_hein_card', function ($subQuery) {
-                            $subQuery->whereIn('ma_kiemtra', config('xml3176.hein_card_invalid.check_code', []))
-                                    ->orWhereIn('ma_tracuu', config('xml3176.hein_card_invalid.result_code', []));
-                        });
-                    });
-                } elseif ($xml_filter_status === 'no_error') {
-                    $result = $result->whereDoesntHave('Xml3176ErrorResult')
-                    ->whereDoesntHave('check_hein_card', function ($subQuery) {
-                        $subQuery->whereIn('ma_kiemtra', config('xml3176.hein_card_invalid.check_code', []))
-                                ->orWhereIn('ma_tracuu', config('xml3176.hein_card_invalid.result_code', []));
-                    });
-                } elseif ($xml_filter_status === 'has_error_critical') {
-                    $result = $result->whereHas('Xml3176ErrorResult', function ($query) {
-                        $query->where('critical_error', true);
-                    });
-                } elseif ($xml_filter_status === 'has_error_warning') {
-                    $result = $result->whereHas('Xml3176ErrorResult', function ($query) {
-                        $query->where('critical_error', false);
-                    })->whereDoesntHave('Xml3176ErrorResult', function ($query) {
-                        $query->where('critical_error', true);
-                    });
-                } elseif ($xml_filter_status === 'has_error_hein_card') {
-                    $result = $result->whereHas('check_hein_card', function ($query) {
-                        $query->whereIn('ma_kiemtra', config('xml3176.hein_card_invalid.check_code'))
-                              ->orWhereIn('ma_tracuu', config('xml3176.hein_card_invalid.result_code'));
-                    });
-                } elseif ($xml_filter_status === 'has_error_hein_card_without_xml') {
-                    $result = $result->whereHas('check_hein_card', function ($query) {
-                        $query->whereIn('ma_kiemtra', config('xml3176.hein_card_invalid.check_code'))
-                              ->orWhereIn('ma_tracuu', config('xml3176.hein_card_invalid.result_code'));
-                    })->whereDoesntHave('Xml3176ErrorResult');
-                } elseif ($xml_filter_status === 'no_error_critical') {
-                    $result = $result->whereDoesntHave('Xml3176ErrorResult', function ($query) {
-                        $query->where('critical_error', true);
-                    });
-                }
-
-                // Apply filter based on has_hein_card
-                if ($hein_card_filter === 'has_hein_card') {
-                    $result = $result->where('ma_the_bhyt', '<>', '');
-                } elseif ($hein_card_filter === 'no_hein_card') {
-                    $result = $result->where('ma_the_bhyt', '=', '');
-                } elseif ($hein_card_filter === 'has_hein_cards') {
-                    // Nhieu the tren mot ho so duoc luu thanh danh sach ngan boi ';'
-                    $result = $result->where('ma_the_bhyt', 'LIKE', '%;%');
-                }
-
-                // Apply filter based on payment_date_filter
-                if ($payment_date_filter === 'has_payment_date') {
-                    $result = $result->where('ngay_ttoan', '<>', '');
-                } elseif ($payment_date_filter === 'no_payment_date') {
-                    $result = $result->where('ngay_ttoan', '=', '');
-                }
-
-                // Apply filter based on treatment_type_fillter
-                if ($treatment_type_fillter) {
-                    $result = $result->where('ma_loai_kcb', $treatment_type_fillter);
-                }
-
-                // Apply filter based on ma_khoa (khoa cua ho so, cot xml3176_xml1s.ma_khoa co index)
-                if (!empty($ma_khoa)) {
-                    $result = $result->where('ma_khoa', $ma_khoa);
-                }
-
-                //Apply filter based on xml_export_status
-                if ($xml_export_status === 'has_export') {
-                    $result = $result->whereHas('Xml3176Information', function ($query) {
-                        $query->whereNotNull('exported_at');
-                    });
-                } elseif ($xml_export_status === 'no_export') {
-                    $result = $result->whereHas('Xml3176Information', function ($query) {
-                        $query->whereNull('exported_at');
-                    });
-                }
-
-                //Apply filter based on xml_submit_status
-                if ($xml_submit_status === 'has_submit') {
-                    $result = $result->whereHas('Xml3176Information', function ($query) {
-                        $query->whereNotNull('submitted_at');
-                    });
-                } elseif ($xml_submit_status === 'not_submit') {
-                    $result = $result->whereHas('Xml3176Information', function ($query) {
-                        $query->whereNull('submitted_at');
-                    });
-                }  elseif ($xml_submit_status === 'has_submit_error') {
-                    $result = $result->whereHas('Xml3176Information', function ($query) {
-                        $query->whereNotNull('submit_error');
-                    });
-                }
-
-                //Apply filter based on xml_sign_status
-                if ($xml_sign_status === 'has_sign') {
-                    $result = $result->whereHas('Xml3176Information', function ($query) {
-                        $query->where('is_signed', true);
-                    });
-                } elseif ($xml_sign_status === 'not_sign') {
-                    $result = $result->whereHas('Xml3176Information', function ($query) {
-                        $query->where('is_signed', false);
-                    });
-                } elseif ($xml_sign_status === 'has_sign_error') {
-                    $result = $result->whereHas('Xml3176Information', function ($query) {
-                        $query->whereNotNull('signed_error');
-                    });
-                }
-
-                // Apply filter based on imported_by
-                if (!empty($imported_by)) {
-                    $result = $result->whereHas('Xml3176Information', function ($query) use ($imported_by) {
-                        $query->where('imported_by', $imported_by);
-                    });
-                }
-
-                \App\Services\BHYT\LocCoSo::ap($result, $ma_cskcb, $danhSachCoSo);
-            }
-        }
+        Xml3176LocDanhSach::apBoLoc($result, $loc, $danhSachCoSo);
 
         return Datatables::of($result)
         ->editColumn('ngay_sinh', function($result) {
@@ -706,32 +453,27 @@ class BHYTXml3176Controller extends Controller
         return response()->json(['success' => true, 'file' => asset('storage/xml3176/' . $zipFileName)]);
     }
 
+    /**
+     * Ba nut xuat deu doc bo loc bang MOT ham: Xml3176LocDanhSach::tuRequest().
+     *
+     * Truoc day moi nut tu doc lay mot tap tham so khac nhau va truyen vao lop Export
+     * theo thu tu vi tri - de sot, va sot thi im lang: van ra file, chi la sai pham vi.
+     */
+    private function boLocDanhSach(Request $request): array
+    {
+        return [
+            Xml3176LocDanhSach::tuRequest($request),
+            \App\Services\BHYT\DanhSachCoSo::danhSach(),
+        ];
+    }
+
     public function exportXml3176XmlErrors(Request $request)
     {
-        $date_from = $request->input('date_from');
-        $date_to = $request->input('date_to');
-        $xml_filter_status = $request->input('xml_filter_status');
-        $date_type = $request->input('date_type');
-        $xml3176_error_catalog_id = $request->input('xml3176_error_catalog');
-        $payment_date_filter = $request->input('payment_date_filter');
-        $imported_by = $request->input('imported_by');
-        $xml_submit_status = $request->input('xml_submit_status');
-        $xml_sign_status = $request->input('xml_sign_status');
-        // Nut xuat phai tra ve dung pham vi co so nguoi dung dang loc tren man, khong thi
-        // file xuat ra tron ca cac co so khac - im lang, khong bao loi.
-        $ma_cskcb = $request->input('ma_cskcb');
-        $danhSachCoSo = \App\Services\BHYT\DanhSachCoSo::danhSach();
+        list($loc, $danhSachCoSo) = $this->boLocDanhSach($request);
 
         $fileName = 'xml3176_error_data_' . Carbon::now()->format('YmdHis') . '.xlsx';
-        return Excel::download(new Xml3176ErrorMultiSheetExport($date_from, $date_to, $xml_filter_status,
-            $date_type,
-            $xml3176_error_catalog_id,
-            $payment_date_filter,
-            $imported_by,
-            $xml_submit_status,
-            $xml_sign_status,
-            $ma_cskcb,
-            $danhSachCoSo), $fileName);
+
+        return Excel::download(new Xml3176ErrorMultiSheetExport($loc, $danhSachCoSo), $fileName);
     }
 
     public function export7980aData(Request $request)
@@ -742,32 +484,11 @@ class BHYTXml3176Controller extends Controller
 
     public function exportXml3176XmlXlsx(Request $request)
     {
-        $date_from = $request->input('date_from');
-        $date_to = $request->input('date_to');
-        $xml_filter_status = $request->input('xml_filter_status');
-        $date_type = $request->input('date_type');
-        $xml3176_error_catalog_id = $request->input('xml3176_error_catalog');
-        $xml_export_status = $request->input('xml_export_status');
-        $payment_date_filter = $request->input('payment_date_filter');
-        $imported_by = $request->input('imported_by');
-        $xml_submit_status = $request->input('xml_submit_status');
-        $xml_sign_status = $request->input('xml_sign_status');
-        // Xem chu thich o exportXml3176XmlErrors(): thieu tham so nay thi file xuat tron
-        // ca cac co so khac du bang tren man da loc dung mot co so.
-        $ma_cskcb = $request->input('ma_cskcb');
-        $danhSachCoSo = \App\Services\BHYT\DanhSachCoSo::danhSach();
+        list($loc, $danhSachCoSo) = $this->boLocDanhSach($request);
 
         $fileName = 'xml3176_xml_data_' . Carbon::now()->format('YmdHis') . '.xlsx';
-        return Excel::download(new Xml3176XmlExport($date_from, $date_to, $xml_filter_status,
-            $date_type,
-            $xml3176_error_catalog_id,
-            $xml_export_status,
-            $payment_date_filter,
-            $imported_by,
-            $xml_submit_status,
-            $xml_sign_status,
-            $ma_cskcb,
-            $danhSachCoSo), $fileName);
+
+        return Excel::download(new Xml3176XmlExport($loc, $danhSachCoSo), $fileName);
     }
 
     public function deleteXml($ma_lk)

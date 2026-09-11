@@ -79,42 +79,57 @@ class Xml3176ExportLocCoSoTest extends TestCase
         $this->assertContains($ma, $query->getBindings(), 'Khong co gia tri ' . $ma . ' trong bindings');
     }
 
+    /** Bo loc day du, chi ghi de nhung khoa can thiet cho tung ca. */
+    protected function loc(array $ghiDe = [])
+    {
+        return array_merge(
+            array_fill_keys(\App\Services\BHYT\Xml3176LocDanhSach::KHOA, null),
+            [
+                'date_from' => '2026-01-01 00:00:00',
+                'date_to'   => '2026-01-31 23:59:59',
+                'date_type' => 'date_payment',
+                'imported_by' => 'admin',
+            ],
+            $ghiDe
+        );
+    }
+
+    /**
+     * Voi Xml3176ErrorExport, dieu kien ma_cskcb nam trong TRUY VAN CON cat theo ma_lk
+     * (xem Xml3176LocDanhSach::truyVanMaLk) chu khong o WHERE muc ngoai, nen phai soi
+     * chuoi SQL. Van khong dung assertContains tren toan bo SQL mot cach mu quang: bang
+     * xml3176_error_results khong co cot ma_cskcb nao trong select, nen chuoi nay chi co
+     * the den tu dieu kien loc.
+     */
+    protected function khangDinhCoLocTrongTruyVanCon($query, $ma)
+    {
+        $this->assertContains('ma_cskcb', $query->toSql(),
+            'Truy van con khong co dieu kien tren ma_cskcb');
+        $this->assertContains($ma, $query->getBindings(),
+            'Khong co gia tri ' . $ma . ' trong bindings');
+    }
+
     /** @test */
     public function xml3176_error_export_ap_bo_loc_co_so_khi_ma_hop_le()
     {
-        $export = new Xml3176ErrorExport(
-            '2026-01-01 00:00:00', '2026-01-31 23:59:59', null,
-            'date_payment', null, null,
-            'admin', null, null,
-            '01929', $this->danhSach()
-        );
+        $export = new Xml3176ErrorExport($this->loc(['ma_cskcb' => '01929']), $this->danhSach());
 
-        $this->khangDinhCoLoc($export->query(), '01929');
+        $this->khangDinhCoLocTrongTruyVanCon($export->query(), '01929');
     }
 
     /** @test */
     public function xml3176_error_export_khong_loc_khi_ma_khong_hop_le()
     {
-        $export = new Xml3176ErrorExport(
-            '2026-01-01 00:00:00', '2026-01-31 23:59:59', null,
-            'date_payment', null, null,
-            'admin', null, null,
-            '99999', $this->danhSach()
-        );
+        $export = new Xml3176ErrorExport($this->loc(['ma_cskcb' => '99999']), $this->danhSach());
 
-        $this->assertNotContains('ma_cskcb', $this->cotTrongWhere($export->query()));
+        $this->assertNotContains('ma_cskcb', $export->query()->toSql());
         $this->assertNotContains('99999', $export->query()->getBindings());
     }
 
     /** @test */
     public function xml3176_xml_export_ap_bo_loc_co_so_khi_ma_hop_le()
     {
-        $export = new Xml3176XmlExport(
-            '2026-01-01 00:00:00', '2026-01-31 23:59:59', null,
-            'date_payment', null, null, null,
-            'admin', null, null,
-            '01929', $this->danhSach()
-        );
+        $export = new Xml3176XmlExport($this->loc(['ma_cskcb' => '01929']), $this->danhSach());
 
         $this->khangDinhCoLoc($export->query(), '01929');
     }
@@ -122,12 +137,7 @@ class Xml3176ExportLocCoSoTest extends TestCase
     /** @test */
     public function xml3176_xml_export_khong_loc_khi_ma_khong_hop_le()
     {
-        $export = new Xml3176XmlExport(
-            '2026-01-01 00:00:00', '2026-01-31 23:59:59', null,
-            'date_payment', null, null, null,
-            'admin', null, null,
-            '', $this->danhSach()
-        );
+        $export = new Xml3176XmlExport($this->loc(['ma_cskcb' => '']), $this->danhSach());
 
         $this->assertNotContains('ma_cskcb', $this->cotTrongWhere($export->query()));
     }

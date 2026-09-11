@@ -2,66 +2,41 @@
 
 namespace App\Exports;
 
+use App\Services\BHYT\Xml3176LocDanhSach;
 use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 
+/**
+ * Bo xuat "danh sach loi" cua man XML3176: mot sheet loi XML, mot sheet loi tra cuu the.
+ *
+ * CA HAI sheet deu cat theo dung tap ho so ma man danh sach dang hien thi. Truoc day
+ * sheet loi the chi nhan khoang ngay, bo qua toan bo bo loc con lai - ke ca ma co so,
+ * nen file xuat tron ca cac co so khac du bang tren man da loc dung mot co so.
+ */
 class Xml3176ErrorMultiSheetExport implements WithMultipleSheets
 {
-    protected $fromDate;
-    protected $toDate;
-    protected $xml_filter_status;
-    protected $date_type;
-    protected $xml3176_error_catalog_id;
-    protected $payment_date_filter;
-    protected $imported_by;
-    protected $xml_submit_status;
-    protected $xml_sign_status;
-    protected $ma_cskcb;
+    /** @var array bo loc doc tu man danh sach (Xml3176LocDanhSach::tuRequest()) */
+    protected $loc;
+    /** @var array ma co so => nhan */
     protected $danhSachCoSo;
 
-    public function __construct(
-        $fromDate,
-        $toDate,
-        $xml_filter_status,
-        $date_type,
-        $xml3176_error_catalog_id,
-        $payment_date_filter,
-        $imported_by,
-        $xml_submit_status,
-        $xml_sign_status,
-        $ma_cskcb = null,
-        array $danhSachCoSo = [])
+    public function __construct(array $loc, array $danhSachCoSo = [])
     {
-        $this->fromDate = $fromDate;
-        $this->toDate = $toDate;
-        $this->xml_filter_status = $xml_filter_status;
-        $this->date_type = $date_type;
-        $this->xml3176_error_catalog_id = $xml3176_error_catalog_id;
-        $this->payment_date_filter = $payment_date_filter;
-        $this->imported_by = $imported_by;
-        $this->xml_submit_status = $xml_submit_status;
-        $this->xml_sign_status = $xml_sign_status;
-        $this->ma_cskcb = $ma_cskcb;
+        $this->loc = $loc;
         $this->danhSachCoSo = $danhSachCoSo;
     }
 
     public function sheets(): array
     {
         return [
-            new Xml3176ErrorExport(
-                $this->fromDate,
-                $this->toDate,
-                $this->xml_filter_status,
-                $this->date_type,
-                $this->xml3176_error_catalog_id,
-                $this->payment_date_filter,
-                $this->imported_by,
-                $this->xml_submit_status,
-                $this->xml_sign_status,
-                $this->ma_cskcb,
-                $this->danhSachCoSo),
-            // check_hein_card KHONG co cot ma_cskcb (khong join sang xml3176_xml1s) nen
-            // KHONG ap bo loc co so o day - xem bao cao nghiem thu, phan "lo ngai".
-            new HeinCardErrorExport($this->fromDate, $this->toDate),
+            new Xml3176ErrorExport($this->loc, $this->danhSachCoSo),
+            // Bang check_hein_card khong co cot ma_cskcb nen khong ap truc tiep duoc bo
+            // loc co so; cat theo tap ma_lk cua man danh sach thi ap duoc CA 15 bo loc.
+            new HeinCardErrorExport(
+                array_get($this->loc, 'date_from'),
+                array_get($this->loc, 'date_to'),
+                Xml3176LocDanhSach::truyVanMaLk($this->loc, $this->danhSachCoSo),
+                'xml3176'
+            ),
         ];
     }
 }

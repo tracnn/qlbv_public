@@ -6,6 +6,7 @@ use Maatwebsite\Excel\Concerns\WithTitle;
 use App\Models\BHYT\Xml3176ErrorResult;
 use App\Models\BHYT\Xml3176ErrorCatalog;
 use App\Models\BHYT\Xml3176Xml1;
+use App\Services\BHYT\Xml3176LocDanhSach;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
@@ -18,168 +19,50 @@ use Carbon\Carbon;
 
 class Xml3176ErrorExport implements FromQuery, WithHeadings, ShouldAutoSize, WithStyles, WithEvents, WithMapping, WithTitle
 {
-    protected $fromDate;
-    protected $toDate;
-    protected $xml_filter_status;
-    protected $date_type;
-    protected $xml3176_error_catalog_id;
-    protected $payment_date_filter;
-    protected $rowNumber = 0;
-    protected $imported_by;
-    protected $xml_submit_status;
-    protected $xml_sign_status;
-    protected $ma_cskcb;
+    /** @var array bo loc doc tu man danh sach (Xml3176LocDanhSach::tuRequest()) */
+    protected $loc;
+    /** @var array ma co so => nhan */
     protected $danhSachCoSo;
+    protected $rowNumber = 0;
 
-    public function __construct($fromDate = null, $toDate = null, $xml_filter_status = null,
-        $date_type,
-        $xml3176_error_catalog_id = null,
-        $payment_date_filter = null,
-        $imported_by = null,
-        $xml_submit_status = null,
-        $xml_sign_status = null,
-        $ma_cskcb = null,
-        array $danhSachCoSo = [])
+    public function __construct(array $loc, array $danhSachCoSo = [])
     {
-        $this->fromDate = $fromDate;
-        $this->toDate = $toDate;
-        $this->xml_filter_status = $xml_filter_status;
-        $this->date_type = $date_type;
-        $this->xml3176_error_catalog_id = $xml3176_error_catalog_id;
-        $this->payment_date_filter = $payment_date_filter;
-        $this->imported_by = $imported_by;
-        $this->xml_submit_status = $xml_submit_status;
-        $this->xml_sign_status = $xml_sign_status;
-        $this->ma_cskcb = $ma_cskcb;
+        $this->loc = $loc;
         $this->danhSachCoSo = $danhSachCoSo;
     }
 
     /**
-    * @return \Illuminate\Support\Collection
-    */
+     * Xuat MOI dong loi cua DUNG tap ho so ma man danh sach dang hien thi.
+     *
+     * Quy tac da chot: "xuat ra dung cai nhin thay". Tap ho so cat theo Xml3176LocDanhSach
+     * (tron ven 15 bo loc), con trong tung ho so thi lay het cac dong loi - KHONG cat
+     * them o muc dong. Vi du loc "ho so co loi nghiem trong": file chua moi dong loi cua
+     * nhung ho so do, ke ca dong muc canh bao, dung nhu khi mo tung ho so tren man hinh.
+     *
+     * Ban cu tu dung truy van va chi hieu xml_filter_status o HAI trong bay gia tri
+     * (has_error_critical, has_error_warning); nam gia tri con lai - has_error, no_error,
+     * has_error_hein_card, has_error_hein_card_without_xml, no_error_critical - bi bo qua
+     * im lang. Sau bo loc khac thi phia JavaScript khong gui.
+     *
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
     public function query()
     {
-        set_time_limit(1800); // Tăng thời gian thực thi lên 1800 giây (30 phút)
-        ini_set('memory_limit', '4096M'); // Tăng giới hạn bộ nhớ nếu cần thiết
+        set_time_limit(1800);
+        ini_set('memory_limit', '4096M');
 
-        $dateFrom = $this->fromDate;
-        $dateTo = $this->toDate;
-        $xml_filter_status = $this->xml_filter_status;
-        $date_type = $this->date_type;
-        $xml3176_error_catalog_id = $this->xml3176_error_catalog_id;
-        $payment_date_filter = $this->payment_date_filter;
-        $imported_by = $this->imported_by;
-        $xml_submit_status = $this->xml_submit_status;
-        $xml_sign_status = $this->xml_sign_status;
-
-        // Convert date format from 'YYYY-MM-DD HH:mm:ss' to 'YYYYMMDDHHI' for specific fields
-        $formattedDateFromForFields = Carbon::createFromFormat('Y-m-d H:i:s', $dateFrom)->format('YmdHi');
-        $formattedDateToForFields = Carbon::createFromFormat('Y-m-d H:i:s', $dateTo)->format('YmdHi');
-
-        // Convert date format to 'Y-m-d H:i:s' for created_at and updated_at
-        $formattedDateFromForTimestamp = Carbon::createFromFormat('Y-m-d H:i:s', $dateFrom)->format('Y-m-d H:i:s');
-        $formattedDateToForTimestamp = Carbon::createFromFormat('Y-m-d H:i:s', $dateTo)->format('Y-m-d H:i:s');
-
-        // Define the date field based on date_type
-        switch ($date_type) {
-            case 'date_in':
-                $dateField = 'xml3176_xml1s.ngay_vao';
-                $formattedDateFrom = $formattedDateFromForFields;
-                $formattedDateTo = $formattedDateToForFields;
-                break;
-            case 'date_out':
-                $dateField = 'xml3176_xml1s.ngay_ra';
-                $formattedDateFrom = $formattedDateFromForFields;
-                $formattedDateTo = $formattedDateToForFields;
-                break;
-            case 'date_payment':
-                $dateField = 'xml3176_xml1s.ngay_ttoan';
-                $formattedDateFrom = $formattedDateFromForFields;
-                $formattedDateTo = $formattedDateToForFields;
-                break;
-            case 'date_create':
-                $dateField = 'xml3176_xml1s.created_at';
-                $formattedDateFrom = $formattedDateFromForTimestamp;
-                $formattedDateTo = $formattedDateToForTimestamp;
-                break;
-            case 'date_update':
-                $dateField = 'xml3176_xml1s.updated_at';
-                $formattedDateFrom = $formattedDateFromForTimestamp;
-                $formattedDateTo = $formattedDateToForTimestamp;
-                break;
-            default:
-                $dateField = 'xml3176_xml1s.ngay_ttoan';
-                $formattedDateFrom = $formattedDateFromForFields;
-                $formattedDateTo = $formattedDateToForFields;
-                break;
-        }
-
-        $query = Xml3176Xml1::whereBetween($dateField, [$formattedDateFrom, $formattedDateTo])
+        return Xml3176Xml1::whereIn('xml3176_xml1s.ma_lk',
+                Xml3176LocDanhSach::truyVanMaLk($this->loc, $this->danhSachCoSo))
             ->join('xml3176_error_results', 'xml3176_error_results.ma_lk', '=', 'xml3176_xml1s.ma_lk')
             ->join('xml3176_error_catalogs', 'xml3176_error_results.error_code', '=', 'xml3176_error_catalogs.error_code')
             ->join('xml3176_informations', 'xml3176_informations.ma_lk', '=', 'xml3176_xml1s.ma_lk')
             ->select('xml3176_error_results.*', 'xml3176_error_catalogs.error_name as catalog_error_name',
                 'xml3176_xml1s.ngay_vao', 'xml3176_xml1s.ngay_ra', 'xml3176_xml1s.ma_bn', 'xml3176_xml1s.ho_ten',
-                'xml3176_xml1s.ngay_sinh', 'xml3176_xml1s.ma_the_bhyt', 'xml3176_xml1s.ngay_ttoan', 
+                'xml3176_xml1s.ngay_sinh', 'xml3176_xml1s.ma_the_bhyt', 'xml3176_xml1s.ngay_ttoan',
                 'xml3176_informations.imported_by' , 'xml3176_informations.exported_by')
             ->orderBy('xml3176_error_results.ma_lk')
             ->orderBy('xml3176_error_results.xml')
             ->orderBy('xml3176_error_results.stt');
-
-        if ($xml_filter_status === 'has_error_critical') {
-            $query->where('xml3176_error_results.critical_error', true);
-        } elseif ($xml_filter_status === 'has_error_warning') {
-            $query->where('xml3176_error_results.critical_error', false);
-        }
-
-        // Apply filter based on xml_submit_status
-        if ($xml_submit_status === 'has_submit') {
-            $query->whereNotNull('xml3176_informations.submitted_at');
-        } elseif ($xml_submit_status === 'not_submit') {
-            $query->whereNull('xml3176_informations.submitted_at');
-        } elseif ($xml_submit_status === 'has_submit_error') {
-            $query->whereNotNull('xml3176_informations.submit_error');
-        }
-
-        if (!empty($xml3176_error_catalog_id)) {
-            $query->where('xml3176_error_catalogs.id', $xml3176_error_catalog_id);
-        }
-
-        if ($payment_date_filter === 'has_payment_date') {
-            $query->where('xml3176_xml1s.ngay_ttoan', '!=', '');
-        } elseif ($payment_date_filter === 'no_payment_date') {
-            $query->where('xml3176_xml1s.ngay_ttoan', '=', '');
-        }
-
-        // Apply filter based on xml_sign_status
-        if ($xml_sign_status === 'has_sign') {
-            $query->where('xml3176_informations.is_signed', true);
-        } elseif ($xml_sign_status === 'not_sign') {
-            $query->where('xml3176_informations.is_signed', false);
-        } elseif ($xml_sign_status === 'has_sign_error') {
-            $query->whereNotNull('xml3176_informations.signed_error');
-        }
-
-        // Apply filter based on imported_by
-        if (!empty($imported_by)) {
-            $query = $query->whereHas('Xml3176Information', function ($query) use ($imported_by) {
-                $query->where('imported_by', $imported_by);
-            });
-        } else {
-            // Kiểm tra role của user
-            if (!\Auth::user()->hasRole(['superadministrator', 'administrator'])) {
-                // Nếu không có vai trò superadministrator hoặc administrator thì lọc theo người import
-                // $query = $query->whereHas('Xml3176Information', function($query) {
-                //     $query->where('imported_by', \Auth::user()->loginname); // Lọc theo loginname của user hiện tại
-                // });
-            }
-        }
-
-        // xml3176_xml1s.ma_cskcb: khong ghi ro bang vi truy van khong join bang nao khac
-        // co cot trung ten (giong cach ap dung o BHYTXml3176Controller::fetchData).
-        \App\Services\BHYT\LocCoSo::ap($query, $this->ma_cskcb, $this->danhSachCoSo);
-
-        return $query;
     }
 
     public function headings(): array
