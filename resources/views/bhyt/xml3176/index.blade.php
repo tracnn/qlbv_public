@@ -527,109 +527,51 @@
             }
         });
 
-        $('#bulk-7980a-btn').on('click', function(){
+        // MOT ham dung tham so cho CA BA nut xuat.
+        //
+        // Truoc day moi nut tu liet ke lay mot tap tham so, va tap nao cung thieu: nut
+        // "danh sach ho so" gui 11/15, nut "danh sach loi" gui 10/15. Bo loc thieu bi bo
+        // qua IM LANG - van tai ve duoc file, chi la sai pham vi. Loi nay da duoc va ba
+        // lan theo kieu them tung tham so mot va lan nao cung sot tiep, nen gio gom lai:
+        // them bo loc moi chi sua DUY NHAT ham nay.
+        //
+        // Phai khop voi App\Services\BHYT\Xml3176LocDanhSach::KHOA phia may chu.
+        function xml3176ThamSoLoc() {
             var dateRange = $('#date_range').data('daterangepicker');
 
-            var startDate = dateRange.startDate.format('YYYY-MM-DD HH:mm:ss');
-            var endDate = dateRange.endDate.format('YYYY-MM-DD HH:mm:ss');
-            var xml_filter_status = $('#xml_filter_status').val();
-            var date_type = $('#date_type').val();
-            var xml3176_error_catalog = $('#xml3176_error_catalog').val();
-            var payment_date_filter = $('#payment_date_filter').val();
-            var treatment_code = $('#treatment_code').val();
-            var imported_by = $('#imported_by').val();
-            var xml_submit_status = $('#xml_submit_status').val();
-            var xml_sign_status = $('#xml_sign_status').val();
-            // Xml3176Xml7980aExport CO doc tham so nay. Truoc day nut khong gui, nen
-            // loc "Da xuat XML" tren man hinh xong tai 79/80a van nhan ca ho so chua
-            // xuat - sai am tham, khong bao loi.
-            var xml_export_status = $('#xml_export_status').val();
-            // Cung ly do voi xml_export_status o tren: thieu tham so nay thi file xuat
-            // se tron ca cac co so khac, du bang tren man da loc dung mot co so.
-            var ma_cskcb = $('#ma_cskcb').val();
+            return {
+                'date_from': dateRange.startDate.format('YYYY-MM-DD HH:mm:ss'),
+                'date_to': dateRange.endDate.format('YYYY-MM-DD HH:mm:ss'),
+                'date_type': $('#date_type').val(),
+                'treatment_code': $('#treatment_code').val(),
+                'patient_code': $('#patient_code').val(),
+                'xml_filter_status': $('#xml_filter_status').val(),
+                'xml3176_error_catalog': $('#xml3176_error_catalog').val(),
+                'hein_card_filter': $('#hein_card_filter').val(),
+                'payment_date_filter': $('#payment_date_filter').val(),
+                'treatment_type_fillter': $('#treatment_type_fillter').val(),
+                'ma_khoa': $('#ma_khoa').val(),
+                'xml_export_status': $('#xml_export_status').val(),
+                'xml_submit_status': $('#xml_submit_status').val(),
+                'xml_sign_status': $('#xml_sign_status').val(),
+                'imported_by': $('#imported_by').val(),
+                'ma_cskcb': $('#ma_cskcb').val()
+            };
+        }
 
-            // Tạo URL với các tham số query
-            var href = '{{ route("bhyt.xml3176.export-7980a-data") }}?' + $.param({
-                'date_from': startDate,
-                'date_to': endDate,
-                'xml_filter_status': xml_filter_status,
-                'date_type': date_type,
-                'xml3176_error_catalog': xml3176_error_catalog,
-                'payment_date_filter': payment_date_filter,
-                'xml_export_status': xml_export_status,
-                'treatment_code': treatment_code,
-                'imported_by': imported_by,
-                'xml_submit_status': xml_submit_status,
-                'xml_sign_status': xml_sign_status,
-                'ma_cskcb': ma_cskcb
-            });
-
-            // Chuyển hướng tới URL với các tham số
-            window.location.href = href;
+        $('#bulk-7980a-btn').on('click', function(){
+            window.location.href = '{{ route("bhyt.xml3176.export-7980a-data") }}?'
+                + $.param(xml3176ThamSoLoc());
         });
 
         $('#export_xml3176_xml_error').click(function() {
-            var dateRange = $('#date_range').data('daterangepicker');
-
-            var startDate = dateRange.startDate.format('YYYY-MM-DD HH:mm:ss');
-            var endDate = dateRange.endDate.format('YYYY-MM-DD HH:mm:ss');
-            var xml_filter_status = $('#xml_filter_status').val();
-            var date_type = $('#date_type').val();
-            var xml3176_error_catalog = $('#xml3176_error_catalog').val();
-            var payment_date_filter = $('#payment_date_filter').val();
-            var imported_by = $('#imported_by').val();
-            var xml_submit_status = $('#xml_submit_status').val();
-            var xml_sign_status = $('#xml_sign_status').val();
-            var ma_cskcb = $('#ma_cskcb').val();
-            // Tạo URL với các tham số query
-            var href = '{{ route("bhyt.xml3176.export-xml3176-xml-errors") }}?' + $.param({
-                'date_from': startDate,
-                'date_to': endDate,
-                'xml_filter_status': xml_filter_status,
-                'date_type': date_type,
-                'xml3176_error_catalog': xml3176_error_catalog,
-                'payment_date_filter': payment_date_filter,
-                'imported_by': imported_by,
-                'xml_submit_status': xml_submit_status,
-                'xml_sign_status': xml_sign_status,
-                'ma_cskcb': ma_cskcb
-            });
-
-            // Chuyển hướng tới URL với các tham số
-            window.location.href = href;
+            window.location.href = '{{ route("bhyt.xml3176.export-xml3176-xml-errors") }}?'
+                + $.param(xml3176ThamSoLoc());
         });
 
         $('#export_xlsx').click(function() {
-            var dateRange = $('#date_range').data('daterangepicker');
-
-            var startDate = dateRange.startDate.format('YYYY-MM-DD HH:mm:ss');
-            var endDate = dateRange.endDate.format('YYYY-MM-DD HH:mm:ss');
-            var xml_filter_status = $('#xml_filter_status').val();
-            var date_type = $('#date_type').val();
-            var xml3176_error_catalog = $('#xml3176_error_catalog').val();
-            var xml_export_status = $('#xml_export_status').val();
-            var payment_date_filter = $('#payment_date_filter').val();
-            var imported_by = $('#imported_by').val();
-            var xml_submit_status = $('#xml_submit_status').val();
-            var xml_sign_status = $('#xml_sign_status').val();
-            var ma_cskcb = $('#ma_cskcb').val();
-            // Tạo URL với các tham số query
-            var href = '{{ route("bhyt.xml3176.export-xml3176-xml-xlsx") }}?' + $.param({
-                'date_from': startDate,
-                'date_to': endDate,
-                'xml_filter_status': xml_filter_status,
-                'date_type': date_type,
-                'xml3176_error_catalog': xml3176_error_catalog,
-                'xml_export_status': xml_export_status,
-                'payment_date_filter': payment_date_filter,
-                'imported_by': imported_by,
-                'xml_submit_status': xml_submit_status,
-                'xml_sign_status': xml_sign_status,
-                'ma_cskcb': ma_cskcb
-            });
-
-            // Chuyển hướng tới URL với các tham số
-            window.location.href = href;
+            window.location.href = '{{ route("bhyt.xml3176.export-xml3176-xml-xlsx") }}?'
+                + $.param(xml3176ThamSoLoc());
         });
     });
 
