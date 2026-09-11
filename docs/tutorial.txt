@@ -18,8 +18,7 @@ I. Những phần mềm cần thiết
 			. Import CSDL từ file qlbv_public/docs/qlbv.sql
 		+ copy thư mục /docs/storage/ ra thư mục gốc chứa phần mềm
 		+ copy file /docs/.env_example ra thư mục gốc thành .env
-		+ copy 4 file: 
-			auth.php (Cấu hình đăng nhập)
+		+ copy 3 file: 
 			organization.php (Cấu hình đơn vị)
 			database.php (Cấu hình database)
 			filesystems.php (Cấu hình file local)

@@ -18,7 +18,6 @@
 /node_modules/
 
 # Ignore config files
-/config/auth.php
 /config/database.php
 /config/filesystems.php
 /config/organization.php
