@@ -1,3 +1,33 @@
+# 11/09/2026
+
+- **Bộ quy tắc mới dựa trên Danh mục mã đối tượng khám chữa bệnh do Bộ Y tế ban hành (10 mã lỗi).** Trước nay phần mềm gần như không dùng tới trường *mã đối tượng khám chữa bệnh*, dù đó là trường khai **người bệnh đến bằng đường nào** — đúng cơ sở đăng ký ban đầu, có phiếu chuyển, theo phiếu hẹn khám lại, hay tự đến. Danh mục gồm **27 mã**, và mỗi mã tự nó khẳng định một số điều mà phần còn lại của hồ sơ phải nhất quán theo.
+
+- **Danh mục là 27 mã, không phải 28.** Số thứ tự trong văn bản chạy từ 1 đến 28 nhưng **nhảy qua số 22**. Đã kiểm bằng cả trích văn bản lẫn trích bảng. Bản thiết kế đầu tiên ghi nhầm 28 mã và tự bịa ra một mã `7.1` không tồn tại — đã sửa trước khi viết mã nguồn.
+
+- **Sáu quy tắc trên bảng hành chính:** mã ngoài danh mục; mã 1.3 (có phiếu chuyển cơ sở) mà bỏ trống nơi chuyển đi; mã tự đến mà lại khai có nơi chuyển đi; đề nghị quỹ bảo hiểm thanh toán nhưng không có mã thẻ; đến đúng nơi đăng ký ban đầu nhưng khai mã khẳng định đến từ nơi khác; và mã 3.1 khám ngoại trú mà vẫn có tiền bảo hiểm thanh toán. **Ba quy tắc mức hưởng** trên bảng tổng hợp: mã có mức hưởng cố định, mã đổi mức hưởng theo mốc thời gian, và mã chỉ lĩnh thuốc mà vẫn có tiền công khám.
+
+- **Sửa một lỗi cũ phát hiện trong lúc làm: mã trái tuyến khớp tiền tố thay vì khớp đúng bằng.** Cấu hình cũ khai `'3'` và hai chỗ dùng nó đều so tiền tố, nên gom nhầm cả bốn mã 3.1, 3.2, 3.3, 3.6. Theo danh mục, **chỉ mã 3.1** bị giảm mức hưởng — ba mã còn lại hưởng 100%. Nay khai đủ mã và khớp đúng bằng.
+
+- **Gỡ bỏ quy tắc "có nơi đi nhưng thiếu giấy chuyển tuyến hoặc hẹn khám lại".** Quy tắc này sai từ gốc: nó suy ra *giấy tờ đầu vào* từ **mã loại ra viện**, vốn là kết quả khi **kết thúc** điều trị. Hai thứ không liên quan nhau.
+
+- **Thêm quy tắc: mã 1.3 và 1.5 phải ghi số ở trường Giấy chuyển tuyến.** Chuẩn dữ liệu quy định trường này mang *số giấy chuyển cơ sở khám chữa bệnh* **hoặc** *số giấy hẹn khám lại*. Mã 1.3 là "đến khám có phiếu chuyển cơ sở" và mã 1.5 là "đến khám theo phiếu hẹn khám lại" — với hai mã này tờ phiếu tồn tại theo đúng định nghĩa của chính mã đó, nên số phiếu phải được ghi.
+
+- **Quy tắc này sẽ báo khoảng 938 lỗi, và đó là kết quả mong muốn.** Đo trên 1.213 hồ sơ thật: **758 trên 761 hồ sơ mã 1.5 (99,6%)** và **180 trên 184 hồ sơ mã 1.3 (97,8%)** đang bỏ trống trường này; 7 hồ sơ có giá trị đều do nhập tay trong cùng một ngày. Tức **bộ xuất của phần mềm bệnh viện chưa ghép trường này** — đó chính là thứ quy tắc cần chỉ ra, không phải lý do bỏ quy tắc. Mã lỗi được nạp ở mức **cảnh báo, không chặn xuất hồ sơ, không chặn ký số, không chặn gửi cổng**.
+
+- **Đây là một quyết định bị đảo ngược, ghi lại để khỏi đảo lần nữa.** Bản thiết kế ban đầu đã *bỏ* trường này với lý do "chỉ 0,6% hồ sơ có giá trị nên không đủ căn cứ". Lập luận đó sai: nếu quy định thật sự bắt buộc thì 99,4% hồ sơ thiếu nghĩa là **bộ xuất sai một cách hệ thống**, chứ không phải quy tắc sai. Tỷ lệ thiếu cao là bằng chứng ủng hộ quy tắc, không phải bằng chứng chống lại nó.
+
+- **Sửa một test đỏ có sẵn trên nhánh chính.** Bộ danh mục bảo hiểm y tế đã tăng từ 11 lên 12 khi thêm *DVKT cần mã máy*, nhưng con số chốt cứng trong test không được nâng theo. Hai cấu hình vẫn khớp khoá hoàn toàn, chỉ con số bị bỏ quên. Con số này **cố ý chốt cứng chứ không đọc từ cấu hình**: nó là cái bẫy buộc người thêm danh mục mới phải kiểm lại cả cấu hình nhập khẩu — đổi thành đếm tự động thì test luôn xanh và mất sạch tác dụng.
+
+- **Cài đặt:**
+
+```bash
+php artisan migrate && php artisan config:clear && php artisan queue:restart
+```
+
+  Cả ba lệnh đều bắt buộc. Thiếu `migrate` thì mã lỗi mới chưa có trong danh mục sẽ được **mặc định coi là nghiêm trọng** và chặn xuất khoảng 938 hồ sơ — chạy lệnh sau đó cũng không gỡ được các hồ sơ đã bị đánh dấu. Thiếu `queue:restart` thì tiến trình hàng đợi vẫn chạy mã cũ và mọi thay đổi trong đợt này **không có tác dụng gì**, trong im lặng.
+
+- **Việc còn treo, không phải lỗi phần mềm: 1.153 trên 1.213 hồ sơ đang bị chặn xuất vì bốn danh mục gần như rỗng** — nhân viên y tế (18 dòng), dịch vụ kỹ thuật (49 dòng), vật tư y tế (0 dòng), thiết bị (0 dòng). Nạp đủ bốn danh mục này là việc cần làm trước khi đánh giá bất cứ con số lỗi nào khác.
+
 # 10/09/2026
 
 - **Bổ sung 24 quy tắc kiểm hồ sơ XML 3176, lấy căn cứ từ chuẩn dữ liệu đầu ra của Bộ Y tế** (Quyết định 130/QĐ-BYT, phần đính chính và sửa đổi theo Quyết định 4750/QĐ-BYT). Đây là lần đầu bộ quy tắc được đối chiếu với *toàn văn chuẩn dữ liệu* thay vì với danh sách lỗi Bảo hiểm xã hội gửi về. Đối chiếu từng trường của 15 bảng với 266 quy tắc sẵn có cho thấy chỗ thiếu tập trung ở ba nhóm.
@@ -51,6 +81,20 @@ DELETE e FROM xml3176_error_results e JOIN xml3176_xml1s a ON a.ma_lk = e.ma_lk 
 - **Danh mục Khoa phòng chuyển vào khu này.** Kèm theo một thay đổi cần biết: quyền truy cập **nới từ quản trị hệ thống xuống quản lý danh mục** — đó là hệ quả của việc chuyển khu, không phải sơ suất. Hai mục *DVKT có điều kiện* và *Thuốc có điều kiện* được bỏ khỏi menu nhưng vẫn giữ nguyên đường dẫn và chức năng sửa, vì khu mới cố ý không có chức năng sửa.
 
 - **Lưu ý vận hành: khu này đọc cấu hình, nên sau khi cài đặt phải chạy `php artisan config:clear`**, bằng không menu sẽ rỗng mà không báo lỗi gì.
+
+- **Ba quy tắc báo oan bị bắt tại chỗ ngay khi có dữ liệu thật, xoá khoảng 40.300 lỗi giả.** Lô hồ sơ bảo hiểm thật được nạp cuối ngày đã làm đúng việc mà mục cảnh báo phía trên kêu gọi: đo lại. Kết quả là ba quy tắc lộ ra sai căn cứ chứ không phải dữ liệu sai.
+
+- **Thanh toán toàn bộ cho phẫu thuật thủ thuật lần hai trong ngày: 24.954 lỗi còn 1.773.** Quy tắc cũ coi *mọi dòng có khai mã phẫu thuật thủ thuật* là một ca phẫu thuật thủ thuật, trong khi trường đó được khai cả ở những dòng không phải. Nay căn cứ vào **nhóm dịch vụ 8 và 18** — định nghĩa chính thức của phẫu thuật thủ thuật theo chuẩn.
+
+- **Định dạng liều dùng: 15.585 lỗi còn 0, và ba quy tắc câm lâu nay được đánh thức.** Bộ đọc liều dùng cũ chỉ biết một hình dạng `số * số * số` — một dạng mà **chuẩn không hề nêu ra**; nó bác bỏ cả ba ví dụ in trong chính chuẩn và báo lỗi 100% số dòng thuốc. Chuẩn định nghĩa **ba** hình dạng hợp lệ: ba phần, hai phần (thuốc dùng ngoài không xác định được liều lượng), và theo buổi. Nghiêm trọng hơn con số 15.585: đọc hỏng làm quy tắc thoát sớm, nên ba quy tắc phía sau — đối chiếu số lượng, đơn vị tính, số ngày kê — **chưa từng chạy lần nào**.
+
+- **Một lần tự sửa giữa chừng đáng ghi lại.** Bản viết lại đầu tiên có suy ra tổng lượng cả đợt từ phần trong ngoặc vuông nhân số ngày, sinh 506 khác biệt. Đo lại thì **457 trên 506 (90%) là ảo**: 187 do đơn vị trong ngoặc khác đơn vị thanh toán (`80 Ml` thanh toán theo ml nhưng ngoặc ghi `0,80 Chai/ngày`), 270 do giá trị trong ngoặc đã bị làm tròn rồi nhân lên nhiều ngày (`[1,3 Viên/ngày]` × 30 = 39 trong khi số thật là 40). Ngoặc là **giá trị hiển thị đã làm tròn**, không phải căn cứ đối chiếu — nên quy tắc đối chiếu số lượng được cho im lặng ở dạng này.
+
+- **Ngưỡng kê thuốc nâng từ 30 lên 90 ngày theo Thông tư 26/2025/TT-BYT: 1.609 lỗi còn 1.** Thông tư này hiệu lực 01/7/2025, thay thế Thông tư 52/2017 và 18/2018: mặc định vẫn 30 ngày, nhưng **252 bệnh mạn tính tại Phụ lục VII được kê tới 90 ngày**. Đo trên 1.609 dòng vượt 30 ngày: 99,5% là hồ sơ ngoại trú với mã bệnh chính toàn bệnh mạn tính — tim thiếu máu cục bộ, đặt stent, lupus, suy tim, đái tháo đường, tăng huyết áp — tức kê hợp lệ. **Đây là giải pháp tạm và cần biết rõ:** đặt 90 là nới cho *mọi* bệnh, kể cả bệnh cấp tính lẽ ra chỉ được 30 ngày. Cách đúng là nạp danh mục 252 mã bệnh của Phụ lục VII rồi cho quy tắc dùng 30 ngày mặc định, 90 ngày khi bệnh chính thuộc danh mục đó.
+
+- **Bài học chung của ba ca: một quy tắc báo trên 20% số dòng thì gần như chắc chắn quy tắc sai, không phải dữ liệu sai** — đúng mốc đã ghi trong mục cảnh báo phía trên. Cả ba đều vượt xa mốc đó.
+
+- **Lưu ý vận hành đã cắn một lần trong ngày:** sửa mã xong mà không chạy `php artisan queue:restart` thì tiến trình xử lý hàng đợi vẫn chạy mã cũ, và số lỗi **không đổi chút nào** sau khi nạp lại hồ sơ. Triệu chứng này rất dễ bị đọc nhầm thành "bản sửa không ăn thua".
 
 # 07/09/2026
 
