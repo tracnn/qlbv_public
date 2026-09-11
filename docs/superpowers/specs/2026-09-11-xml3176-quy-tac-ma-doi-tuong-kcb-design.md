@@ -11,7 +11,9 @@ Dựng bộ quy tắc kiểm `MA_DOITUONG_KCB` của bảng XML1 dựa trên dan
 
 ## 2. Danh mục có gì
 
-28 mã: `1.1`–`1.7`, `1.11`–`1.18`, `2`, `3.1`, `3.2`, `3.3`, `3.6`, `7`, `7.1`–`7.4`, `8`, `9`, `10`. Không có `1.8`–`1.10`, không có `3.4`, `3.5`, không có mã `4`/`5`/`6`.
+**27 mã**: `1.1`–`1.7`, `1.11`–`1.18`, `2`, `3.1`, `3.2`, `3.3`, `3.6`, `7`, `7.2`, `7.3`, `7.4`, `8`, `9`, `10`. Không có `1.8`–`1.10`, không có `3.4`, `3.5`, không có mã `4`/`5`/`6`, **không có `7.1`**.
+
+Số thứ tự trong văn bản chạy 1→28 nhưng **nhảy qua STT 22** — đã kiểm bằng cả trích văn bản lẫn trích bảng: dòng 21 là mã `7`, dòng kế tiếp là 23 với mã `7.2`. Đây là lỗi đánh số của chính văn bản nguồn, nên danh mục chỉ có 27 mã.
 
 Danh mục không chỉ liệt kê mã hợp lệ mà **gắn mức hưởng vào từng mã**:
 
@@ -123,7 +125,7 @@ return [
 ];
 ```
 
-Khoá vắng mặt nghĩa là thuộc tính đó không áp dụng. Mã không có trong tệp là mã ngoài danh mục (R1).
+Khoá vắng mặt nghĩa là thuộc tính đó không áp dụng. Mã không có trong tệp là mã ngoài danh mục (R1). Tệp khai đúng **27** mã của §2 — không tự thêm `7.1` dù số thứ tự văn bản nhảy qua 22.
 
 ### 5.2 Helper thuần `DoiTuongKcbCatalog`
 
@@ -177,11 +179,11 @@ Ghi chú cho `DOI_TUONG_KCB_THIEU_THE_BHYT`: **cấp cứu là ngoại lệ đã
 |---|---|---|
 | `DOI_TUONG_KCB_MUC_HUONG_CO_DINH` | Mã có `muc_huong_co_dinh` (mã `1.2` = 100) mà có dòng XML2/XML3 khai `MUC_HUONG` khác giá trị đó | 0 hồ sơ |
 | `DOI_TUONG_KCB_MUC_HUONG_THEO_MOC` | Mã `1.13`/`1.14`/`1.18`: `NGAY_VAO` từ 01/7/2026 trở đi mà `MUC_HUONG` khác 50; trước mốc đó mà `T_BHTT > 0` | 0 hồ sơ |
-| `DOI_TUONG_KCB_LINH_THUOC_CO_TIEN_KHAM` | Mã `7`, `7.1`–`7.4`, `10` mà XML3 có dòng thuộc `examination_group_code` (= `[13]`) | 0 hồ sơ |
+| `DOI_TUONG_KCB_LINH_THUOC_CO_TIEN_KHAM` | Mã `7`, `7.2`, `7.3`, `7.4`, `10` mà XML3 có dòng thuộc `examination_group_code` (= `[13]`) | 0 hồ sơ |
 
 Mốc 01/7/2026 khai trong config, không viết cứng trong mã.
 
-**Ba quy tắc này chưa có hồ sơ nào để chạy** — không mã nào trong `1.2`, `1.13`, `1.14`, `1.18`, `7*`, `10` xuất hiện trong 1.213 hồ sơ. Chúng là lưới chặn cho tương lai, và căn cứ của chúng lấy từ **cột `MUC_HUONG` của danh mục**, chưa đối chiếu văn bản gốc (Nghị định 188/2025/NĐ-CP cho mốc 50%, Phụ lục I/II TT 01/2025 cho phạm vi các mã `1.1x`). Nếu về sau có hồ sơ dùng các mã này, **phải đối chiếu văn bản gốc trước khi tin kết quả**.
+**Ba quy tắc này chưa có hồ sơ nào để chạy** — không mã nào trong `1.2`, `1.13`, `1.14`, `1.18`, `7`, `7.2`, `7.3`, `7.4`, `10` xuất hiện trong 1.213 hồ sơ. Chúng là lưới chặn cho tương lai, và căn cứ của chúng lấy từ **cột `MUC_HUONG` của danh mục**, chưa đối chiếu văn bản gốc (Nghị định 188/2025/NĐ-CP cho mốc 50%, Phụ lục I/II TT 01/2025 cho phạm vi các mã `1.1x`). Nếu về sau có hồ sơ dùng các mã này, **phải đối chiếu văn bản gốc trước khi tin kết quả**.
 
 ### 6.3 Cố ý không làm
 
