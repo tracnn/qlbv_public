@@ -1024,18 +1024,13 @@ class Xml3176Xml1Checker
             ]);
         }
 
+        // $khongBhyt van giu vi nhanh THIEU_THE_BHYT ben duoi con dung.
+        //
+        // Da bo quy tac DOI_TUONG_KCB_KHONG_BHYT_CO_THE (ma 9 co the BHYT): ho so ma 9
+        // bi chan tu DIEM PHAT JOB boi cong xml3176.ma_doituong_kcb_khong_kiem trong
+        // Xml3176Importer::canKiemLoi(), nen checker nay khong bao gio chay tren chung -
+        // quy tac o day la ma chet.
         $khongBhyt = (bool) DoiTuongKcbCatalog::thuocTinh($ma, $danhMuc, 'khong_bhyt', false);
-
-        if ($khongBhyt && $coThe) {
-            $errorCode = $this->generateErrorCode('DOI_TUONG_KCB_KHONG_BHYT_CO_THE');
-            $errors->push((object)[
-                'error_code' => $errorCode,
-                'error_name' => 'Khai không KCB BHYT nhưng vẫn có mã thẻ',
-                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
-                'description' => 'Mã đối tượng ' . $ma . ' là người bệnh không KCB BHYT '
-                    . 'nhưng MA_THE_BHYT = ' . $data->ma_the_bhyt,
-            ]);
-        }
 
         // Doi quy thanh toan ma khong co the moi la mau thuan. Cap cuu chua xuat trinh
         // the la ngoai le da biet - chuan cho phep tra cuu the truoc khi nguoi benh ra
@@ -1056,22 +1051,39 @@ class Xml3176Xml1Checker
         $dkbd = DanhSachPhanCachParser::tach($data->ma_dkbd);
         $cskcb = trim((string) $data->ma_cskcb);
 
-        if ($cskcb !== '' && in_array($cskcb, $dkbd, true) && !in_array($ma, ['1.1', '1.2'], true)) {
+        // Dung noi dang ky ban dau (MA_CSKCB trong MA_DKBD) khong tu no la vi pham: nhieu
+        // ma hop le cho phep dung noi DKBD (vd ma 2 cap cuu, ma 1.4/1.5/1.6/1.7/8/10 - do
+        // lai tren du lieu that cho thay day la BAO OAN, khong phai vi pham that). Chi bao
+        // khi ma khai KHANG DINH nguoi benh den tu noi khac: co thuoc tinh 'tu_den' (tu
+        // den KHONG qua co so DKBD nay) hoac 'can_noi_di' (co phieu chuyen tu co so khac).
+        // Doc 'dung_dkbd' qua config thay vi mang cung de tranh doi hanh vi trong im lang
+        // khi co ai "don dep" bang cach doc config (mã 1.2 da duoc them 'dung_dkbd' o T5).
+        $dungDkbd = (bool) DoiTuongKcbCatalog::thuocTinh($ma, $danhMuc, 'dung_dkbd', false);
+        $khangDinhTuNoiKhac = DoiTuongKcbCatalog::laTuDen($ma, $danhMuc)
+            || (bool) DoiTuongKcbCatalog::thuocTinh($ma, $danhMuc, 'can_noi_di', false);
+
+        if ($cskcb !== '' && in_array($cskcb, $dkbd, true) && !$dungDkbd && $khangDinhTuNoiKhac) {
             $errorCode = $this->generateErrorCode('DOI_TUONG_KCB_DUNG_DKBD_SAI_MA');
             $errors->push((object)[
                 'error_code' => $errorCode,
-                'error_name' => 'Đến đúng nơi đăng ký ban đầu nhưng khai mã đối tượng khác',
+                'error_name' => 'Đến đúng nơi đăng ký ban đầu nhưng khai mã đối tượng khẳng định đến từ nơi khác',
                 'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
                 'description' => 'MA_CSKCB ' . $cskcb . ' nằm trong MA_DKBD (' . $data->ma_dkbd
-                    . ') nhưng mã đối tượng khai là ' . $ma . ', không phải 1.1 hoặc 1.2',
+                    . ') nhưng mã đối tượng khai là ' . $ma
+                    . ', vốn khẳng định người bệnh đến từ nơi khác (tự đến hoặc có phiếu chuyển)',
             ]);
         }
 
         // Ma 3.1: 40% noi tru, 0% ngoai tru. Nhanh noi tru da co
         // Xml3176CompleteChecker::checkMucHuong() lo, o day chi bu nhanh ngoai tru.
-        $noiTru = in_array($data->ma_loai_kcb, (array) config('xml3176.treatment_type_inpatient', []));
+        // MA_LOAI_KCB rong thi im lang: khong co can cu de ket luan "ngoai tru" tu du
+        // lieu vang - truoc day in_array('', [...]) tra false nen coi rong la ngoai tru,
+        // vi pham chinh nguyen tac cua spec la khong suy dien tu du lieu thieu.
+        $maLoaiKcb = trim((string) $data->ma_loai_kcb);
+        $noiTru = in_array($maLoaiKcb, (array) config('xml3176.treatment_type_inpatient', []));
 
-        if (DoiTuongKcbCatalog::thuocTinh($ma, $danhMuc, 'ngoai_tru_khong_huong', false)
+        if ($maLoaiKcb !== ''
+            && DoiTuongKcbCatalog::thuocTinh($ma, $danhMuc, 'ngoai_tru_khong_huong', false)
             && !$noiTru && $tBhtt > 0) {
             $errorCode = $this->generateErrorCode('DOI_TUONG_KCB_31_NGOAI_TRU_CO_BHTT');
             $errors->push((object)[

@@ -378,6 +378,16 @@ class Xml3176CompleteChecker
 
         // Khop DUNG BANG, khong khop tien to - xem chu thich tai khoa cau hinh.
         $maDoiTuong = trim((string) $data->ma_doituong_kcb);
+
+        // Ma co muc_huong_co_dinh (vd 1.2 = 100%) khong phu thuoc quyen loi tren the -
+        // nhuong han cho DOI_TUONG_KCB_MUC_HUONG_CO_DINH, quy tac chat hon va dung dung
+        // tran co dinh cua ma thay vi tran suy tu the. Khong nhuong se ra hai yeu cau
+        // loai tru nhau: khai 100 bi bao vuot tran o day, khai bang the (vd 80) bi bao
+        // sai muc co dinh o quy tac kia - khong gia tri nao thoat ca hai.
+        if (DoiTuongKcbCatalog::thuocTinh($maDoiTuong, (array) config('doi_tuong_kcb', []), 'muc_huong_co_dinh') !== null) {
+            return $errors;
+        }
+
         $traiTuyen = in_array(
             $maDoiTuong,
             (array) config('xml3176.xml1.ma_doituong_kcb_trai_tuyen', []),
@@ -842,9 +852,11 @@ class Xml3176CompleteChecker
     private function mucHuongKhacVoi($ma_lk, float $mongDoi)
     {
         foreach ([Xml3176Xml2::class, Xml3176Xml3::class] as $model) {
+            // Bo dieu kien <> '' : cot muc_huong la double, MySQL ep '' ve 0.0 nen dieu
+            // kien do loai luon moi dong khai muc huong = 0 - dung loai dong quy tac can
+            // bat. whereNotNull() da lo dung ca "chua khai" (NULL).
             $gt = $model::where('ma_lk', $ma_lk)
                 ->whereNotNull('muc_huong')
-                ->where('muc_huong', '<>', '')
                 ->where('muc_huong', '<>', $mongDoi)
                 ->value('muc_huong');
 

@@ -97,15 +97,12 @@ class Xml3176Xml1DoiTuongKcbTest extends TestCase
     }
 
     /** @test */
-    public function ma_9_khong_KCB_BHYT_thi_khong_duoc_co_the()
+    public function ma_9_khong_bi_bao_thieu_the_bhyt()
     {
-        $this->assertContains('XML1_DOI_TUONG_KCB_KHONG_BHYT_CO_THE',
-            $this->codes(['ma_doituong_kcb' => '9', 'ma_the_bhyt' => 'DN4010112345678']));
-
-        $this->assertNotContains('XML1_DOI_TUONG_KCB_KHONG_BHYT_CO_THE',
-            $this->codes(['ma_doituong_kcb' => '9', 'ma_the_bhyt' => '']));
-
-        // Ma 9 khong the dong thoi bi bao THIEU_THE_BHYT
+        // Quy tac DOI_TUONG_KCB_KHONG_BHYT_CO_THE da bo han: ho so ma 9 bi chan tu diem
+        // phat job (xml3176.ma_doituong_kcb_khong_kiem) nen checker nay khong bao gio
+        // chay tren chung - dong danh muc cua no la dong rac. Chi con giu lai assert nay:
+        // ma 9 khong the dong thoi bi bao THIEU_THE_BHYT.
         $this->assertNotContains('XML1_DOI_TUONG_KCB_THIEU_THE_BHYT',
             $this->codes(['ma_doituong_kcb' => '9', 'ma_the_bhyt' => '', 't_bhtt' => 500000]));
     }
@@ -113,23 +110,32 @@ class Xml3176Xml1DoiTuongKcbTest extends TestCase
     /** @test */
     public function dung_noi_dang_ky_ban_dau_ma_khai_sai_ma()
     {
+        // Ma 1.3 co 'can_noi_di' -> khang dinh den tu noi khac -> dung DKBD ma khai 1.3
+        // la mau thuan that.
         $this->assertContains('XML1_DOI_TUONG_KCB_DUNG_DKBD_SAI_MA',
-            $this->codes(['ma_doituong_kcb' => '1.5', 'ma_dkbd' => '01929', 'ma_cskcb' => '01929']));
+            $this->codes(['ma_doituong_kcb' => '1.3', 'ma_dkbd' => '01929', 'ma_cskcb' => '01929']));
 
         $this->assertNotContains('XML1_DOI_TUONG_KCB_DUNG_DKBD_SAI_MA',
             $this->codes(['ma_doituong_kcb' => '1.1', 'ma_dkbd' => '01929', 'ma_cskcb' => '01929']));
 
         $this->assertNotContains('XML1_DOI_TUONG_KCB_DUNG_DKBD_SAI_MA',
             $this->codes(['ma_doituong_kcb' => '1.2', 'ma_dkbd' => '01929', 'ma_cskcb' => '01929']));
+
+        // Ma 2 (cap cuu) khong co 'tu_den' hoac 'can_noi_di' -> khong khang dinh den tu
+        // noi khac -> nguoi dang ky ban dau tai chinh co so nay vao cap cuu la hop le,
+        // khong phai vi pham. Do lai tren du lieu that: day tung la 1 trong 2 "vi pham"
+        // spec bao cao, thuc ra la bao oan.
+        $this->assertNotContains('XML1_DOI_TUONG_KCB_DUNG_DKBD_SAI_MA',
+            $this->codes(['ma_doituong_kcb' => '2', 'ma_dkbd' => '01929', 'ma_cskcb' => '01929']));
     }
 
     /** @test */
     public function ma_dkbd_nhieu_ma_ngan_boi_dau_cham_phay()
     {
         // Chuan cho phep MA_DKBD chua nhieu ma khi nguoi benh doi the giua dot.
-        // So chuoi tho se bo sot ca nay.
+        // So chuoi tho se bo sot ca nay. Dung ma 1.3 (co 'can_noi_di') de vi pham that.
         $this->assertContains('XML1_DOI_TUONG_KCB_DUNG_DKBD_SAI_MA',
-            $this->codes(['ma_doituong_kcb' => '1.5', 'ma_dkbd' => '36001;01929', 'ma_cskcb' => '01929']));
+            $this->codes(['ma_doituong_kcb' => '1.3', 'ma_noi_di' => '36001', 'ma_dkbd' => '36001;01929', 'ma_cskcb' => '01929']));
     }
 
     /** @test */
@@ -146,6 +152,11 @@ class Xml3176Xml1DoiTuongKcbTest extends TestCase
         // Ngoai tru ma khong de nghi quy tra thi khong sai.
         $this->assertNotContains('XML1_DOI_TUONG_KCB_31_NGOAI_TRU_CO_BHTT',
             $this->codes(['ma_doituong_kcb' => '3.1', 'ma_loai_kcb' => '01', 't_bhtt' => 0]));
+
+        // MA_LOAI_KCB rong thi khong co can cu ket luan "ngoai tru" - im lang, khong
+        // duoc suy dien tu du lieu vang.
+        $this->assertNotContains('XML1_DOI_TUONG_KCB_31_NGOAI_TRU_CO_BHTT',
+            $this->codes(['ma_doituong_kcb' => '3.1', 'ma_loai_kcb' => '', 't_bhtt' => 300000]));
     }
 
     /** @test */

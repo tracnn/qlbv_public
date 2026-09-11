@@ -2,6 +2,7 @@
 
 namespace Tests\Unit\Xml3176\Checker;
 
+use App\Models\BHYT\MedicalOrganization;
 use App\Models\BHYT\Xml3176Xml1;
 use App\Models\BHYT\Xml3176Xml3;
 use App\Models\BHYT\Xml3176Xml4;
@@ -24,6 +25,8 @@ class Xml3176CompleteCheckerRuleTest extends TestCase
             '2026_01_09_152838_create_xml3176_xml4s_table.php',
             '2026_01_09_152930_create_xml3176_xml13s_table.php',
             '2026_01_09_152936_create_xml3176_xml14s_table.php',
+            '2024_07_05_113054_create_medical_organizations_table.php',
+            '2026_07_30_090000_add_tuyen_cmkt_hang_benh_vien_to_medical_organizations.php',
         ]);
     }
 
@@ -92,6 +95,30 @@ class Xml3176CompleteCheckerRuleTest extends TestCase
     }
 
     /** @test */
+    public function ma_12_muc_huong_co_dinh_thi_khong_bi_soi_tran_theo_the()
+    {
+        // Ma 1.2: muc_huong_co_dinh = 100, khong phu thuoc quyen loi tren the. Truoc khi
+        // sua, checkMucHuong xep 1.2 vao nhanh "dung tuyen" va lay tran bang quyen loi
+        // the (DN4... -> 80): khai MUC_HUONG = 100 se bi bao vuot tran, du day chinh la
+        // muc huong dung theo danh muc. Sau khi sua, checkMucHuong phai nhuong han cho
+        // DOI_TUONG_KCB_MUC_HUONG_CO_DINH va im lang o day.
+        $x1 = Xml3176Xml1::create([
+            'ma_lk' => 'M12', 'stt' => 1,
+            'ma_doituong_kcb' => '1.2',
+            'ma_loai_kcb' => '03',
+            'ma_the_bhyt' => 'DN4010112345678', // quyen loi 80%
+            'ma_cskcb' => '01929',
+            'ngay_vao' => '202609010800',
+            't_tongchi_bh' => 5000000,
+        ]);
+        Xml3176Xml3::create(['ma_lk' => 'M12', 'stt' => 1, 'ma_dich_vu' => 'DV1', 'muc_huong' => 100]);
+
+        $codes = $this->errorCodes($this->invokePrivate($this->checker(), 'checkMucHuong', $x1));
+
+        $this->assertNotContains('XMLComplete_MUC_HUONG_EXCEEDS_ENTITLEMENT', $codes);
+    }
+
+    /** @test */
     public function ma_36_huong_100_khong_bi_coi_la_trai_tuyen()
     {
         // Danh muc: chi 3.1 bi giam muc huong. 3.2/3.3/3.6 deu huong 100%.
@@ -114,9 +141,9 @@ class Xml3176CompleteCheckerRuleTest extends TestCase
     }
 
     /** @test */
-    public function ma_31_van_duoc_coi_la_trai_tuyen()
+    public function khong_con_khop_tien_to_trong_ma_nguon()
     {
-        // Ca doi xung: ban va khong duoc lam 3.1 lot luoi.
+        // Ca chong hoi quy grep ma nguon - gia tri rieng, giu nguyen.
         config(['xml3176.xml1.ma_doituong_kcb_trai_tuyen' => ['3.1']]);
 
         $src = file_get_contents(app_path('Services/Xml3176CompleteChecker.php'));
@@ -126,5 +153,36 @@ class Xml3176CompleteCheckerRuleTest extends TestCase
         $src1 = file_get_contents(app_path('Services/Xml3176Xml1Checker.php'));
         $this->assertNotContains("strpos(\$data->ma_doituong_kcb", $src1,
             'Xml3176Xml1Checker van con khop tien to - phai doi sang khop dung bang');
+    }
+
+    /** @test */
+    public function ma_31_van_duoc_coi_la_trai_tuyen()
+    {
+        // Ca hanh vi that: ca grep o tren khong dung sinh ho so nao, nen neu ai doi cau
+        // hinh trai tuyen thanh [] thi mã 3.1 het bi soi tran 40% ma toan bo test van
+        // xanh. Dung phai dung ho so 3.1 thuc su de khoa hanh vi.
+        config(['xml3176.xml1.ma_doituong_kcb_trai_tuyen' => ['3.1']]);
+
+        MedicalOrganization::create([
+            'ma_cskcb' => '01929',
+            'ten_cskcb' => 'BV test',
+            'dia_chi_cskcb' => 'dia chi test',
+            'tuyen_cmkt' => '1', // config('xml3176.muc_huong.tuyen_tw_values') = ['1']
+        ]);
+
+        $x1 = Xml3176Xml1::create([
+            'ma_lk' => 'M31', 'stt' => 1,
+            'ma_doituong_kcb' => '3.1',
+            'ma_loai_kcb' => '03', // noi tru
+            'ma_the_bhyt' => 'DN4010112345678', // quyen loi 80%
+            'ma_cskcb' => '01929',
+            'ngay_vao' => '202609010800',
+            't_tongchi_bh' => 5000000,
+        ]);
+        Xml3176Xml3::create(['ma_lk' => 'M31', 'stt' => 1, 'ma_dich_vu' => 'DV1', 'muc_huong' => 100]);
+
+        $codes = $this->errorCodes($this->invokePrivate($this->checker(), 'checkMucHuong', $x1));
+
+        $this->assertContains('XMLComplete_MUC_HUONG_TRAI_TUYEN_TW', $codes);
     }
 }

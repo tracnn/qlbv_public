@@ -22,7 +22,7 @@
  */
 return [
     '1.1'  => ['ten' => 'Đến KCB đúng cơ sở nơi đăng ký KCB BHYT ban đầu', 'dung_dkbd' => true],
-    '1.2'  => ['ten' => 'Đi KCB tại cơ sở KCB cấp ban đầu', 'muc_huong_co_dinh' => 100],
+    '1.2'  => ['ten' => 'Đi KCB tại cơ sở KCB cấp ban đầu', 'dung_dkbd' => true, 'muc_huong_co_dinh' => 100],
     '1.3'  => ['ten' => 'Đến KCB có phiếu chuyển cơ sở KCB', 'can_noi_di' => true],
     '1.4'  => ['ten' => 'KCB khi thay đổi nơi lưu trú, nơi cư trú'],
     '1.5'  => ['ten' => 'Đến KCB theo phiếu hẹn khám lại'],
