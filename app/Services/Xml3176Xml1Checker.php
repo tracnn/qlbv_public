@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Models\BHYT\Xml3176Xml1;
+use App\Services\Xml3176\Support\DanhSachPhanCachParser;
+use App\Services\Xml3176\Support\DoiTuongKcbCatalog;
 use App\Services\Xml3176\Support\Xml3176DateHelper;
 use Illuminate\Support\Collection;
 
@@ -72,6 +74,7 @@ class Xml3176Xml1Checker
         $errors = $errors->merge($this->checkMaLoaiKcbKhongTinhNgayDieuTri($data));
         $errors = $errors->merge($this->checkNgaySinhVsNgayVao($data));
         $errors = $errors->merge($this->checkMaKhuVuc($data));
+        $errors = $errors->merge($this->checkDoiTuongKcb($data));
 
         // Save errors to xml_error_checks table
         $this->xmlErrorService->saveErrors($this->xmlType, $data->ma_lk, $data->stt, $errors);
@@ -958,6 +961,126 @@ class Xml3176Xml1Checker
                 'error_name' => 'Mã khu vực không hợp lệ',
                 'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
                 'description' => 'MA_KHUVUC = ' . $data->ma_khuvuc . '. Chuẩn chỉ quy định K1, K2 hoặc K3',
+            ]);
+        }
+
+        return $errors;
+    }
+
+    /**
+     * Kiem MA_DOITUONG_KCB theo danh muc ma doi tuong den KCB do Bo Y te ban hanh.
+     *
+     * Ma rong thi im lang - da co ADMIN_INFO_ERROR_MA_DOITUONG_KCB lo viec do.
+     */
+    private function checkDoiTuongKcb(Xml3176Xml1 $data): Collection
+    {
+        $errors = collect();
+        $ma = DoiTuongKcbCatalog::chuanHoa($data->ma_doituong_kcb);
+
+        if ($ma === '') {
+            return $errors;
+        }
+
+        $danhMuc = (array) config('doi_tuong_kcb', []);
+
+        if (!DoiTuongKcbCatalog::coTrongDanhMuc($ma, $danhMuc)) {
+            $errorCode = $this->generateErrorCode('DOI_TUONG_KCB_NGOAI_DANH_MUC');
+            $errors->push((object)[
+                'error_code' => $errorCode,
+                'error_name' => 'Mã đối tượng KCB ngoài danh mục',
+                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+                'description' => 'Mã đối tượng KCB "' . $ma . '" không có trong danh mục mã đối tượng '
+                    . 'đến khám bệnh, chữa bệnh do Bộ Y tế ban hành',
+            ]);
+
+            return $errors; // ma la thi moi kiem tra dua tren thuoc tinh deu vo nghia
+        }
+
+        $coNoiDi = !empty($data->ma_noi_di);
+        $coThe   = !empty($data->ma_the_bhyt);
+        $tBhtt   = (float) $data->t_bhtt;
+
+        // Ma doi hoi phai co co so noi chuyen nguoi benh di (hien chi ma 1.3).
+        if (DoiTuongKcbCatalog::thuocTinh($ma, $danhMuc, 'can_noi_di', false) && !$coNoiDi) {
+            $errorCode = $this->generateErrorCode('DOI_TUONG_KCB_THIEU_NOI_DI');
+            $errors->push((object)[
+                'error_code' => $errorCode,
+                'error_name' => 'Đến KCB có phiếu chuyển nhưng thiếu mã nơi chuyển đi',
+                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+                'description' => 'Mã đối tượng ' . $ma . ' (' . DoiTuongKcbCatalog::thuocTinh($ma, $danhMuc, 'ten')
+                    . ') nhưng MA_NOI_DI để trống',
+            ]);
+        }
+
+        // Tu den thi khong the co co so chuyen di.
+        if (DoiTuongKcbCatalog::laTuDen($ma, $danhMuc) && $coNoiDi) {
+            $errorCode = $this->generateErrorCode('DOI_TUONG_KCB_TU_DEN_CO_NOI_DI');
+            $errors->push((object)[
+                'error_code' => $errorCode,
+                'error_name' => 'Người bệnh tự đến nhưng lại có mã nơi chuyển đi',
+                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+                'description' => 'Mã đối tượng ' . $ma . ' (' . DoiTuongKcbCatalog::thuocTinh($ma, $danhMuc, 'ten')
+                    . ') nhưng MA_NOI_DI = ' . $data->ma_noi_di,
+            ]);
+        }
+
+        $khongBhyt = (bool) DoiTuongKcbCatalog::thuocTinh($ma, $danhMuc, 'khong_bhyt', false);
+
+        if ($khongBhyt && $coThe) {
+            $errorCode = $this->generateErrorCode('DOI_TUONG_KCB_KHONG_BHYT_CO_THE');
+            $errors->push((object)[
+                'error_code' => $errorCode,
+                'error_name' => 'Khai không KCB BHYT nhưng vẫn có mã thẻ',
+                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+                'description' => 'Mã đối tượng ' . $ma . ' là người bệnh không KCB BHYT '
+                    . 'nhưng MA_THE_BHYT = ' . $data->ma_the_bhyt,
+            ]);
+        }
+
+        // Doi quy thanh toan ma khong co the moi la mau thuan. Cap cuu chua xuat trinh
+        // the la ngoai le da biet - chuan cho phep tra cuu the truoc khi nguoi benh ra
+        // vien - nen chi bao khi T_BHTT > 0.
+        if (!$khongBhyt && !$coThe && $tBhtt > 0) {
+            $errorCode = $this->generateErrorCode('DOI_TUONG_KCB_THIEU_THE_BHYT');
+            $errors->push((object)[
+                'error_code' => $errorCode,
+                'error_name' => 'Đề nghị quỹ BHYT thanh toán nhưng không có mã thẻ',
+                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+                'description' => 'Mã đối tượng ' . $ma . ' đề nghị quỹ thanh toán '
+                    . number_format($tBhtt) . ' đồng nhưng MA_THE_BHYT để trống',
+            ]);
+        }
+
+        // MA_DKBD co the chua nhieu ma ngan boi ';' khi nguoi benh doi the giua dot, nen
+        // phai tach roi moi so - so chuoi tho se bo sot.
+        $dkbd = DanhSachPhanCachParser::tach($data->ma_dkbd);
+        $cskcb = trim((string) $data->ma_cskcb);
+
+        if ($cskcb !== '' && in_array($cskcb, $dkbd, true) && !in_array($ma, ['1.1', '1.2'], true)) {
+            $errorCode = $this->generateErrorCode('DOI_TUONG_KCB_DUNG_DKBD_SAI_MA');
+            $errors->push((object)[
+                'error_code' => $errorCode,
+                'error_name' => 'Đến đúng nơi đăng ký ban đầu nhưng khai mã đối tượng khác',
+                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+                'description' => 'MA_CSKCB ' . $cskcb . ' nằm trong MA_DKBD (' . $data->ma_dkbd
+                    . ') nhưng mã đối tượng khai là ' . $ma . ', không phải 1.1 hoặc 1.2',
+            ]);
+        }
+
+        // Ma 3.1: 40% noi tru, 0% ngoai tru. Nhanh noi tru da co
+        // Xml3176CompleteChecker::checkMucHuong() lo, o day chi bu nhanh ngoai tru.
+        $noiTru = in_array($data->ma_loai_kcb, (array) config('xml3176.treatment_type_inpatient', []));
+
+        if (DoiTuongKcbCatalog::thuocTinh($ma, $danhMuc, 'ngoai_tru_khong_huong', false)
+            && !$noiTru && $tBhtt > 0) {
+            $errorCode = $this->generateErrorCode('DOI_TUONG_KCB_31_NGOAI_TRU_CO_BHTT');
+            $errors->push((object)[
+                'error_code' => $errorCode,
+                'error_name' => 'Đối tượng này khám ngoại trú không được quỹ BHYT thanh toán',
+                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+                'description' => 'Mã đối tượng ' . $ma . ' khám ngoại trú (MA_LOAI_KCB = '
+                    . $data->ma_loai_kcb . ') thì mức hưởng là 0% nhưng T_BHTT = '
+                    . number_format($tBhtt) . ' đồng',
             ]);
         }
 
