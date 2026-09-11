@@ -31,7 +31,6 @@ class Xml3176ErrorCatalogNhomASeeder extends Seeder
             ['XML8', 'XML8_TOMTAT_KQ_TOO_SHORT', 'Tóm tắt kết quả quá ngắn'],
             ['XMLComplete', 'XMLComplete_SECOND_SURGERY_FULL_PAYMENT', 'PTTT lần 2 trong ngày thanh toán 100%'],
             ['XMLComplete', 'XMLComplete_XML4_NGAY_KQ_MISMATCH_XML3', 'Ngày KQ XML4 khác ngày KQ XML3'],
-            ['XMLComplete', 'XMLComplete_MISSING_TRANSFER_OR_APPOINTMENT', 'Có nơi đi nhưng thiếu giấy chuyển tuyến hoặc hẹn khám lại'],
         ];
 
         foreach ($rules as $r) {

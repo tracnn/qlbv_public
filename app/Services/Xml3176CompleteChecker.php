@@ -15,6 +15,7 @@ use App\Models\BHYT\Xml3176Xml12;
 use App\Models\BHYT\Xml3176Xml13;
 use App\Models\BHYT\Xml3176Xml14;
 use App\Services\Xml3176\Support\DanhSachPhanCachParser;
+use App\Services\Xml3176\Support\DoiTuongKcbCatalog;
 use App\Services\Xml3176\Support\Xml3176DateHelper;
 use App\Models\BHYT\MedicalOrganization;
 use App\Services\Xml3176\Support\MucHuongCalculator;
@@ -81,9 +82,9 @@ class Xml3176CompleteChecker
             $errors = $errors->merge($this->checkInvalidBedDays($data));
             $errors = $errors->merge($this->checkExpenseErrors($data));
             $errors = $errors->merge($this->checkExaminationErrors($data));
-            $errors = $errors->merge($this->checkMissingTransferOrAppointment($data));
             $errors = $errors->merge($this->checkNgayTaiKham($data));
             $errors = $errors->merge($this->checkCanNangCon($data));
+            $errors = $errors->merge($this->checkDoiTuongKcbMucHuong($data));
             $errors = $errors->merge($this->checkXml4NgayKqMismatchXml3($ma_lk));
             $errors = $errors->merge($this->checkSecondSurgeryFullPayment($ma_lk));
             $errors = $errors->merge($this->checkMucHuong($data));
@@ -374,15 +375,23 @@ class Xml3176CompleteChecker
             return $errors; // guard: không map được quyền lợi
         }
 
-        $traiTuyenPrefixes = (array) config('xml3176.xml1.ma_doituong_kcb_trai_tuyen', []);
-        $maDoiTuong = (string) $data->ma_doituong_kcb;
-        $traiTuyen = false;
-        foreach ($traiTuyenPrefixes as $prefix) {
-            if ($prefix !== '' && strpos($maDoiTuong, (string) $prefix) === 0) {
-                $traiTuyen = true;
-                break;
-            }
+        // Khop DUNG BANG, khong khop tien to - xem chu thich tai khoa cau hinh.
+        $maDoiTuong = trim((string) $data->ma_doituong_kcb);
+
+        // Ma co muc_huong_co_dinh (vd 1.2 = 100%) khong phu thuoc quyen loi tren the -
+        // nhuong han cho DOI_TUONG_KCB_MUC_HUONG_CO_DINH, quy tac chat hon va dung dung
+        // tran co dinh cua ma thay vi tran suy tu the. Khong nhuong se ra hai yeu cau
+        // loai tru nhau: khai 100 bi bao vuot tran o day, khai bang the (vd 80) bi bao
+        // sai muc co dinh o quy tac kia - khong gia tri nao thoat ca hai.
+        if (DoiTuongKcbCatalog::thuocTinh($maDoiTuong, (array) config('doi_tuong_kcb', []), 'muc_huong_co_dinh') !== null) {
+            return $errors;
         }
+
+        $traiTuyen = in_array(
+            $maDoiTuong,
+            (array) config('xml3176.xml1.ma_doituong_kcb_trai_tuyen', []),
+            true
+        );
         $noiTru = in_array($data->ma_loai_kcb, (array) config('xml3176.treatment_type_inpatient', []));
 
         if ($traiTuyen) {
@@ -588,27 +597,27 @@ class Xml3176CompleteChecker
         return $errors;
     }
 
-    /**
-     * #2498 — Có mã nơi đi nhưng thiếu CẢ giấy chuyển tuyến (XML13) LẪN giấy hẹn khám lại (XML14).
+    /*
+     * DA GO (#2498): checkMissingTransferOrAppointment() - "Co noi di nhung thieu giay
+     * chuyen tuyen hoac hen kham lai".
+     *
+     * Quy tac SAI ve nghiep vu. MA_NOI_DI la truong DAU VAO: ma co so noi nguoi benh
+     * duoc chuyen DEN TU DO, ghi tai co so NHAN. Chuan QD 130 noi thang o vi du 2 cua
+     * truong nay: "BN chuyen tuyen tu BV A den BV B, tai BV B ghi MA_NOI_DI = ma BV A,
+     * de trong MA_NOI_DEN". Con XML13 (chuyen tuyen) va XML14 (hen kham lai) la chung tu
+     * DAU RA do chinh co so nay cap khi ket thuc dieu tri. Co MA_NOI_DI khong keo theo
+     * nghia vu phai sinh XML13/XML14.
+     *
+     * Do tren 1.213 ho so that: quy tac sinh 81 loi, trong do 81/81 (100%) co MA_NOI_DI
+     * tro toi co so KHAC - dung nhom nguoi benh den tu noi khac ma truong do sinh ra de
+     * mo ta. Toan bo la ma doi tuong 1.5 (den theo phieu hen kham lai, 58 ho so) va 1.3
+     * (den co phieu chuyen, 23 ho so). Khong mot ca nao dung.
+     *
+     * Nang hon: ma loi nay o muc nghiem trong nen no CHAN XUAT XML ca 81 ho so do.
+     *
+     * Cung loai sai lam da ghi tai §4.1 spec 2026-09-11-xml3176-quy-tac-ma-doi-tuong-kcb:
+     * lan chung tu nguoi benh MANG DEN voi chung tu co so CAP DI.
      */
-    private function checkMissingTransferOrAppointment(Xml3176Xml1 $data): Collection
-    {
-        $errors = collect();
-        if (empty($data->ma_noi_di)) {
-            return $errors;
-        }
-        $hasXml13 = Xml3176Xml13::where('ma_lk', $data->ma_lk)->exists();
-        $hasXml14 = Xml3176Xml14::where('ma_lk', $data->ma_lk)->exists();
-        if (!$hasXml13 && !$hasXml14) {
-            $code = $this->generateErrorCode('MISSING_TRANSFER_OR_APPOINTMENT');
-            $errors->push((object) [
-                'error_code' => $code, 'error_name' => 'Có nơi đi nhưng thiếu giấy chuyển tuyến hoặc hẹn khám lại',
-                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($code),
-                'description' => 'Mã nơi đi ' . $data->ma_noi_di . ' nhưng không có XML13 (chuyển tuyến) lẫn XML14 (hẹn khám lại)',
-            ]);
-        }
-        return $errors;
-    }
 
     /**
      * NGAY_TAI_KHAM (XML1) phai co giay hen kham lai (XML14) tuong ung.
@@ -733,6 +742,129 @@ class Xml3176CompleteChecker
         }
 
         return $errors;
+    }
+
+    /**
+     * Muc huong bat buoc theo ma doi tuong KCB.
+     *
+     * Nam o checker tong the vi MUC_HUONG chi co o tung dong XML2/XML3 - bang
+     * xml3176_xml1s khong co cot do.
+     *
+     * Can cu la cot MUC_HUONG cua danh muc ma doi tuong. Ba quy tac nay chua co ho so
+     * nao de chay tren du lieu hien tai (khong ma nao trong 1.2, 1.13, 1.14, 1.18, 7,
+     * 7.2, 7.3, 7.4, 10 xuat hien), nen chua duoc kiem chung thuc te.
+     */
+    private function checkDoiTuongKcbMucHuong(Xml3176Xml1 $data): Collection
+    {
+        $errors = collect();
+        $ma = DoiTuongKcbCatalog::chuanHoa($data->ma_doituong_kcb);
+        $danhMuc = (array) config('doi_tuong_kcb', []);
+
+        if ($ma === '' || !DoiTuongKcbCatalog::coTrongDanhMuc($ma, $danhMuc)) {
+            return $errors; // ma rong hoac la: da co quy tac rieng o XML1 lo
+        }
+
+        $ten = DoiTuongKcbCatalog::thuocTinh($ma, $danhMuc, 'ten');
+
+        // 1) Muc huong co dinh, khong phu thuoc muc huong tren the (ma 1.2 = 100).
+        $coDinh = DoiTuongKcbCatalog::thuocTinh($ma, $danhMuc, 'muc_huong_co_dinh');
+
+        if ($coDinh !== null) {
+            $lech = $this->mucHuongKhacVoi($data->ma_lk, (float) $coDinh);
+
+            if ($lech !== null) {
+                $code = $this->generateErrorCode('DOI_TUONG_KCB_MUC_HUONG_CO_DINH');
+                $errors->push((object)[
+                    'error_code' => $code,
+                    'error_name' => 'Mức hưởng không đúng quy định của mã đối tượng',
+                    'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($code),
+                    'description' => 'Mã đối tượng ' . $ma . ' (' . $ten . ') phải có mức hưởng '
+                        . $coDinh . '% không phụ thuộc thẻ BHYT, nhưng có dòng khai ' . $lech . '%',
+                ]);
+            }
+        }
+
+        // 2) Muc huong doi theo moc thoi gian (ma 1.13, 1.14, 1.18).
+        $theoMoc = DoiTuongKcbCatalog::thuocTinh($ma, $danhMuc, 'muc_huong_theo_moc');
+
+        if (is_array($theoMoc)) {
+            $vao = Xml3176DateHelper::toDateTime($data->ngay_vao);
+
+            if ($vao !== null) {
+                $tuMoc = $vao->format('Y-m-d') >= $theoMoc['moc'];
+
+                if ($tuMoc) {
+                    $lech = $this->mucHuongKhacVoi($data->ma_lk, (float) $theoMoc['tu_moc']);
+
+                    if ($lech !== null) {
+                        $code = $this->generateErrorCode('DOI_TUONG_KCB_MUC_HUONG_THEO_MOC');
+                        $errors->push((object)[
+                            'error_code' => $code,
+                            'error_name' => 'Mức hưởng không đúng mốc thời gian của mã đối tượng',
+                            'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($code),
+                            'description' => 'Mã đối tượng ' . $ma . ' (' . $ten . ') từ ngày '
+                                . $theoMoc['moc'] . ' có mức hưởng ' . $theoMoc['tu_moc']
+                                . '%, nhưng có dòng khai ' . $lech . '%',
+                        ]);
+                    }
+                } elseif ((float) $data->t_bhtt > 0) {
+                    $code = $this->generateErrorCode('DOI_TUONG_KCB_MUC_HUONG_THEO_MOC');
+                    $errors->push((object)[
+                        'error_code' => $code,
+                        'error_name' => 'Mức hưởng không đúng mốc thời gian của mã đối tượng',
+                        'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($code),
+                        'description' => 'Mã đối tượng ' . $ma . ' (' . $ten . ') trước ngày '
+                            . $theoMoc['moc'] . ' không được hưởng BHYT, nhưng T_BHTT = '
+                            . number_format((float) $data->t_bhtt) . ' đồng',
+                    ]);
+                }
+            }
+        }
+
+        // 3) Chi linh thuoc, khong kham benh (ma 7, 7.2, 7.3, 7.4, 10).
+        if (DoiTuongKcbCatalog::thuocTinh($ma, $danhMuc, 'linh_thuoc_khong_kham', false)) {
+            $nhomKham = (array) config('xml3176.examination_group_code', []);
+
+            $soDongKham = Xml3176Xml3::where('ma_lk', $data->ma_lk)
+                ->whereIn('ma_nhom', $nhomKham)
+                ->count();
+
+            if ($soDongKham > 0) {
+                $code = $this->generateErrorCode('DOI_TUONG_KCB_LINH_THUOC_CO_TIEN_KHAM');
+                $errors->push((object)[
+                    'error_code' => $code,
+                    'error_name' => 'Chỉ lĩnh thuốc nhưng vẫn có tiền công khám',
+                    'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($code),
+                    'description' => 'Mã đối tượng ' . $ma . ' (' . $ten . ') là trường hợp chỉ lĩnh thuốc, '
+                        . 'không khám bệnh, nhưng XML3 có ' . $soDongKham . ' dòng thuộc nhóm dịch vụ khám',
+                ]);
+            }
+        }
+
+        return $errors;
+    }
+
+    /**
+     * Tra ve muc huong dau tien khac $mong doi trong cac dong XML2/XML3 cua ho so, hoac
+     * null neu khong dong nao lech. Dong khong khai MUC_HUONG thi bo qua - thieu can cu.
+     */
+    private function mucHuongKhacVoi($ma_lk, float $mongDoi)
+    {
+        foreach ([Xml3176Xml2::class, Xml3176Xml3::class] as $model) {
+            // Bo dieu kien <> '' : cot muc_huong la double, MySQL ep '' ve 0.0 nen dieu
+            // kien do loai luon moi dong khai muc huong = 0 - dung loai dong quy tac can
+            // bat. whereNotNull() da lo dung ca "chua khai" (NULL).
+            $gt = $model::where('ma_lk', $ma_lk)
+                ->whereNotNull('muc_huong')
+                ->where('muc_huong', '<>', $mongDoi)
+                ->value('muc_huong');
+
+            if ($gt !== null) {
+                return $gt;
+            }
+        }
+
+        return null;
     }
 
     /**

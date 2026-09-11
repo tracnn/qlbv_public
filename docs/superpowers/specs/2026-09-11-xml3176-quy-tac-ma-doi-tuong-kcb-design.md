@@ -46,7 +46,7 @@ Ghi chú cuối danh mục: *"Trường hợp một người bệnh có thể á
 - 251/251 hồ sơ nhóm "tự đến", cấp cứu và không BHYT (`1.17`, `3.1`, `3.6`, `2`, `9`) **đều bỏ trống `MA_NOI_DI`**.
 - 3/3 hồ sơ mã `1.1` (đúng nơi đăng ký ban đầu) **đều có `MA_DKBD` chứa `MA_CSKCB`**.
 
-**Vi phạm đo được:** tổng cộng **5 hồ sơ** trên 1.213 — 3 hồ sơ mã `1.3` thiếu `MA_NOI_DI`, 2 hồ sơ đúng nơi đăng ký ban đầu mà khai sai mã. Đây là một đợt thiên về lưới chặn, không phải đợt thu hoạch lỗi. Giá trị lớn nhất nằm ở bản vá §7.
+**Vi phạm đo được:** tổng cộng **3 hồ sơ** trên 1.213 — 3 hồ sơ mã `1.3` thiếu `MA_NOI_DI`. Hai hồ sơ "đúng nơi đăng ký ban đầu mà khai sai mã" mà bản đo đầu tiên báo cáo đã được đo lại: chúng là mã `2` (cấp cứu) và mã `1.5` (hẹn khám lại), cả hai đều hợp lệ khi đến đúng nơi đăng ký ban đầu — tức là **báo oan**, không phải vi phạm thật. Vì vậy quy tắc `DOI_TUONG_KCB_DUNG_DKBD_SAI_MA` đã được thu hẹp (xem §6.1). Đây là một đợt thiên về lưới chặn, không phải đợt thu hoạch lỗi. Giá trị lớn nhất nằm ở bản vá §7.
 
 (Con số này đã trừ 3 hồ sơ không có thẻ BHYT: chúng bị loại bởi chính điều kiện `T_BHTT > 0` mà §6.1 đặt thêm để tránh bắt oan ca cấp cứu chưa xuất trình thẻ.)
 
@@ -110,7 +110,7 @@ Khớp đúng ví dụ nguyên văn của QĐ 130: tại cơ sở **chuyển đi
 
 Tệp cấu hình mới `config/doi_tuong_kcb.php` — không phải bảng CSDL.
 
-Lý do: 28 mã, thay đổi bằng quyết định của Bộ Y tế chứ không phải theo từng cơ sở, và không có tệp Excel nguồn để nhập. Dựng bảng + đường nhập + màn hình cho 28 dòng tĩnh là thừa. Khác hẳn `dvkt_can_ma_may` (3.471 dòng, có tệp nguồn, thay theo đợt).
+Lý do: 27 mã, thay đổi bằng quyết định của Bộ Y tế chứ không phải theo từng cơ sở, và không có tệp Excel nguồn để nhập. Dựng bảng + đường nhập + màn hình cho 27 dòng tĩnh là thừa. Khác hẳn `dvkt_can_ma_may` (3.471 dòng, có tệp nguồn, thay theo đợt).
 
 Cấu trúc mỗi mục khai đủ thứ quy tắc cần, không hơn:
 
@@ -121,7 +121,7 @@ return [
     '1.3' => ['ten' => 'Đến KCB có phiếu chuyển cơ sở KCB', 'tu_den' => false, 'can_noi_di' => true],
     '3.1' => ['ten' => '...', 'tu_den' => true, 'ngoai_tru_khong_huong' => true],
     '9'   => ['ten' => 'Người bệnh không KCB BHYT', 'tu_den' => false, 'khong_bhyt' => true],
-    // ... đủ 28 mã
+    // ... đủ 27 mã
 ];
 ```
 
@@ -157,17 +157,20 @@ Mọi quy tắc dùng khuôn sẵn có: `generateErrorCode($key)` + đối tư�
 
 **Guard chung cho tất cả:** `MA_DOITUONG_KCB` rỗng thì im lặng — đã có `ADMIN_INFO_ERROR_MA_DOITUONG_KCB` lo việc đó.
 
-### 6.1 Nhóm ở `Xml3176Xml1Checker` (7 quy tắc)
+### 6.1 Nhóm ở `Xml3176Xml1Checker` (6 quy tắc)
 
 | Mã lỗi (sau `XML1_`) | Điều kiện sinh lỗi | Vi phạm đo được |
 |---|---|---|
-| `DOI_TUONG_KCB_NGOAI_DANH_MUC` | Mã khác rỗng và không có trong danh mục 28 mã | 0 |
+| `DOI_TUONG_KCB_NGOAI_DANH_MUC` | Mã khác rỗng và không có trong danh mục 27 mã | 0 |
 | `DOI_TUONG_KCB_THIEU_NOI_DI` | Mã có `can_noi_di` (hiện chỉ `1.3`) mà `MA_NOI_DI` rỗng | **3/184** |
 | `DOI_TUONG_KCB_TU_DEN_CO_NOI_DI` | Mã có `tu_den` (`1.11`–`1.18`, `3.1`, `3.2`, `3.3`, `3.6`) mà `MA_NOI_DI` khác rỗng | 0/100 |
 | `DOI_TUONG_KCB_THIEU_THE_BHYT` | Mã **không** có `khong_bhyt`, `MA_THE_BHYT` rỗng, **và** `T_BHTT > 0` | 0 (xem ghi chú) |
-| `DOI_TUONG_KCB_KHONG_BHYT_CO_THE` | Mã có `khong_bhyt` (mã `9`) mà `MA_THE_BHYT` khác rỗng | 0/60 |
-| `DOI_TUONG_KCB_DUNG_DKBD_SAI_MA` | `MA_DKBD` chứa `MA_CSKCB` mà mã khai không phải `1.1` hoặc `1.2` | **2** |
-| `DOI_TUONG_KCB_31_NGOAI_TRU_CO_BHTT` | Mã có `ngoai_tru_khong_huong` (mã `3.1`), hồ sơ **không** thuộc `treatment_type_inpatient`, và `T_BHTT > 0` | 0 |
+| `DOI_TUONG_KCB_DUNG_DKBD_SAI_MA` | `MA_DKBD` chứa `MA_CSKCB`, mã khai **không** có `dung_dkbd`, **và** mã khai có `tu_den` hoặc `can_noi_di` (tức khẳng định người bệnh đến từ nơi khác) | 0 (xem ghi chú thu hẹp) |
+| `DOI_TUONG_KCB_31_NGOAI_TRU_CO_BHTT` | Mã có `ngoai_tru_khong_huong` (mã `3.1`), `MA_LOAI_KCB` khác rỗng, hồ sơ **không** thuộc `treatment_type_inpatient`, và `T_BHTT > 0` | 0 |
+
+Đã bỏ hẳn quy tắc `DOI_TUONG_KCB_KHONG_BHYT_CO_THE` (mã chết): hồ sơ mã `9` bị chặn từ điểm phát job bởi cấu hình `xml3176.ma_doituong_kcb_khong_kiem`, nên `Xml3176Xml1Checker` không bao giờ chạy trên chúng.
+
+Ghi chú thu hẹp cho `DOI_TUONG_KCB_DUNG_DKBD_SAI_MA`: đo lại 2 "vi phạm" §3 báo cáo cho thấy chúng là mã `2` (cấp cứu) và mã `1.5` (hẹn khám lại) — cả hai đều hợp lệ khi người bệnh đến đúng nơi đăng ký ban đầu, tức là **báo oan**, không phải vi phạm thật. Quy tắc vì vậy chỉ báo khi mã khai khẳng định người bệnh đến từ nơi khác (`tu_den` hoặc `can_noi_di`), không còn báo cho `1.4`, `1.5`, `1.6`, `1.7`, `2`, `8`, `10`.
 
 Ghi chú cho `DOI_TUONG_KCB_DUNG_DKBD_SAI_MA`: `MA_DKBD` có thể chứa nhiều mã ngăn bởi `;` (chuẩn cho phép khi người bệnh đổi thẻ giữa đợt), nên phải tách bằng `DanhSachPhanCachParser::tach()` rồi mới so, không so chuỗi thô.
 
@@ -205,11 +208,11 @@ Theo danh mục, **chỉ `3.1`** bị giảm mức hưởng. `3.2`, `3.3`, `3.6`
 
 ## 8. Danh mục mã lỗi
 
-10 mã mới phải có dòng trong `xml3176_error_catalogs`. **Thiếu dòng thì `getCriticalErrorStatus()` trả mặc định `true`**, quy tắc nổ lần đầu sẽ tự ghi dòng danh mục ở mức nghiêm trọng và **chặn xuất XML** — bẫy đã cắn ở các đợt trước.
+9 mã mới phải có dòng trong `xml3176_error_catalogs`. **Thiếu dòng thì `getCriticalErrorStatus()` trả mặc định `true`**, quy tắc nổ lần đầu sẽ tự ghi dòng danh mục ở mức nghiêm trọng và **chặn xuất XML** — bẫy đã cắn ở các đợt trước.
 
 Nạp bằng **migration gọi seeder** như đợt trước, không phải lệnh chạy tay: điều kiện "nhớ chạy seeder" không được phép chỉ tồn tại trong trí nhớ người triển khai.
 
-Cả 10 mã đặt `is_check = true`, `critical_error = false`.
+Cả 9 mã đặt `is_check = true`, `critical_error = false`.
 
 ## 9. Kế hoạch kiểm thử
 
@@ -227,7 +230,7 @@ Cả 10 mã đặt `is_check = true`, `critical_error = false`.
 
 ## 10. Thứ tự triển khai
 
-1. `php artisan migrate` — migration tự nạp danh mục 10 mã lỗi.
+1. `php artisan migrate` — migration tự nạp danh mục 9 mã lỗi.
 2. `php artisan config:clear` — có tệp config mới và một khoá đổi giá trị.
 3. **`php artisan queue:restart`** — worker là tiến trình thường trú, giữ cả mã lẫn cấu hình trong bộ nhớ. Bỏ bước này thì quy tắc mới im lặng chạy bằng mã cũ, không dấu hiệu gì. Đã mất một vòng vì đúng chỗ này ở đợt trước.
 4. Rà lại một lô hồ sơ. Đối chiếu: `DOI_TUONG_KCB_THIEU_NOI_DI` khoảng 3 hồ sơ, `DOI_TUONG_KCB_DUNG_DKBD_SAI_MA` khoảng 2, các mã còn lại 0.
@@ -238,5 +241,5 @@ Cả 10 mã đặt `is_check = true`, `critical_error = false`.
 - **Đợt này bắt được 5 hồ sơ trên 1.213.** Giá trị chủ yếu là lưới chặn và bản vá §7, không phải thu hoạch lỗi. Cần hiểu đúng kỳ vọng trước khi triển khai.
 - **Ba quy tắc ở §6.2 chưa có hồ sơ nào để chạy**, và căn cứ lấy từ cột `MUC_HUONG` của danh mục chứ chưa từ văn bản gốc. Rủi ro sai ngữ nghĩa là có thật; giảm thiểu bằng `critical_error = false` và bằng bước 5 của §10.
 - **Danh mục có thể là bản dự thảo.** Tệp PDF ghi "Quyết định số ___/QĐ-BYT ngày ___ tháng ___ năm 2025" với số và ngày để trống. Người dùng xác nhận đã ban hành và đang áp dụng; nếu sau này phát hiện ngược lại thì `DOI_TUONG_KCB_NGOAI_DANH_MUC` là quy tắc chịu ảnh hưởng đầu tiên.
-- **Danh mục khai trong config** nên sửa phải qua triển khai mã, không sửa được trên màn hình. Đánh đổi có chủ đích cho 28 mã tĩnh; nếu Bộ Y tế bổ sung mã thường xuyên thì nên chuyển sang bảng danh mục.
+- **Danh mục khai trong config** nên sửa phải qua triển khai mã, không sửa được trên màn hình. Đánh đổi có chủ đích cho 27 mã tĩnh; nếu Bộ Y tế bổ sung mã thường xuyên thì nên chuyển sang bảng danh mục.
 - **`MA_DKBD` nhiều mã ngăn bởi `;`** — không tách đúng sẽ làm `DOI_TUONG_KCB_DUNG_DKBD_SAI_MA` bỏ sót. Đã có `DanhSachPhanCachParser` từ đợt trước.
