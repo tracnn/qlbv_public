@@ -14,6 +14,14 @@ class McctRequest extends FormRequest
      * (McctApiController::thieuThamSoLamMoi()) phai doc CUNG mot regex - du an nay da bi
      * chep doi can ba lan (xem qlbv-test-infra-gotchas / bay-tiem-container).
      */
+    /**
+     * Do dai ma the hop le sau khi bo khoang trang: 10, 12, 15 hoac 17.
+     *
+     * 17 la ma the dang moi (cong van 2746/BHXH-CNTT). Cung ly do voi REGEX_NGAY_SINH: man
+     * web va API phai doc CUNG mot chuoi.
+     */
+    const REGEX_MA_THE = '/^[A-Za-z0-9]{10}$|^[A-Za-z0-9]{12}$|^[A-Za-z0-9]{15}$|^[A-Za-z0-9]{17}$/';
+
     const REGEX_NGAY_SINH = '#^((0[1-9]|[12]\d|3[01])/(0[1-9]|1[0-2])/\d{4}|(0[1-9]|1[0-2])/\d{4}|\d{4})$#';
 
     /**
@@ -43,10 +51,11 @@ class McctRequest extends FormRequest
             // Con ma SAI thi van bi chan o day.
             'ma_cskcb' => 'nullable|in:' . implode(',', $maHopLe),
 
-            // Phu luc: do dai hop le sau khi bo khoang trang la 10, 12 hoac 15.
+            // Phu luc: do dai hop le sau khi bo khoang trang la 10, 12 hoac 15; cong van 2746
+            // them ma the 17 ky tu.
             // Khai bang MANG chu khong phai chuoi: luat regex chua dau '|' se bi Laravel
             // cat nham thanh nhieu luat neu viet dang chuoi 'required|regex:...'.
-            'ma_the' => ['required', 'regex:/^[A-Za-z0-9]{10}$|^[A-Za-z0-9]{12}$|^[A-Za-z0-9]{15}$/'],
+            'ma_the' => ['required', 'regex:' . self::REGEX_MA_THE],
 
             'ho_ten' => 'required',
 
@@ -70,7 +79,7 @@ class McctRequest extends FormRequest
         return [
             'ma_cskcb.in' => 'Cơ sở khám chữa bệnh không hợp lệ.',
             'ma_the.required' => 'Chưa nhập mã thẻ BHYT.',
-            'ma_the.regex' => 'Mã thẻ BHYT phải có 10, 12 hoặc 15 ký tự.',
+            'ma_the.regex' => 'Mã thẻ BHYT/CCCD phải có 10, 12, 15 hoặc 17 ký tự.',
             'ho_ten.required' => 'Chưa nhập họ và tên.',
             'ngay_sinh.required' => 'Chưa nhập ngày sinh.',
             'ngay_sinh.regex' => 'Ngày sinh phải theo dd/mm/yyyy, mm/yyyy hoặc yyyy.',

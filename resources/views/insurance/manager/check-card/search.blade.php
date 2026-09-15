@@ -35,8 +35,8 @@
 
             <div class="col-sm-3">
                 <div class="form-group">
-                    <label for="card-number">{{ __('insurance.backend.labels.card-number') }}</label>
-                    <input class="form-control card-number" type="text" name="card-number" placeholder="{{ __('insurance.backend.labels.card-number') }}" value="{{ old('card-number') ? old('card-number') : $params['card-number'] }}">
+                    <label for="card-number">Mã thẻ BHYT/CCCD</label>
+                    <input class="form-control card-number" type="text" name="card-number" placeholder="10, 12, 15 hoặc 17 ký tự" value="{{ old('card-number') ? old('card-number') : $params['card-number'] }}">
                 </div>
             </div>
 

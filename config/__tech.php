@@ -894,7 +894,9 @@ $techAppConfig = [
 
     'card-number' => [
         'min' => 10,
-        'max' => 15,
+        // 17: ma the dang moi. Cong van 2746/BHXH-CNTT - he thong giam dinh nhan ma the 17 va
+        // 15 ky tu, ma so BHXH/CCCD 12 va 10 ky tu.
+        'max' => 17,
     ],
 
     'ket_qua_dtri' => [

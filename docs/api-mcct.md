@@ -10,7 +10,7 @@ Header `Authorization: Bearer {token}`. Token do quản trị qlbv cấp.
 
 | Tham số | Bắt buộc | Ghi chú |
 |---|---|---|
-| `ma_the` | luôn | 10, 12 hoặc 15 ký tự sau khi bỏ khoảng trắng |
+| `ma_the` | luôn | 10, 12, 15 hoặc 17 ký tự sau khi bỏ khoảng trắng |
 | `lam_moi` | không | `1` = gọi cổng BHXH. Mặc định `0` = đọc dữ liệu đã lưu |
 | `ho_ten` | khi `lam_moi=1` | |
 | `ngay_sinh` | khi `lam_moi=1` | `dd/mm/yyyy`, `mm/yyyy` hoặc `yyyy` |

@@ -79,9 +79,9 @@ class McctApiController extends Controller
                 'Cần truyền ma_the', 422);
         }
 
-        if (!preg_match('/^[A-Za-z0-9]{10}$|^[A-Za-z0-9]{12}$|^[A-Za-z0-9]{15}$/', $maThe)) {
+        if (!preg_match(McctRequest::REGEX_MA_THE, $maThe)) {
             return $this->loiApi('VALIDATION_ERROR', 'Mã thẻ không hợp lệ',
-                'ma_the phải có 10, 12 hoặc 15 ký tự sau khi bỏ khoảng trắng', 422);
+                'ma_the phải có 10, 12, 15 hoặc 17 ký tự sau khi bỏ khoảng trắng', 422);
         }
 
         $params = [

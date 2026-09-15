@@ -31,9 +31,9 @@
 
         <div class="col-sm-3">
             <div class="form-group">
-                <label for="ma_the">Mã thẻ BHYT</label>
+                <label for="ma_the">Mã thẻ BHYT/CCCD</label>
                 <input class="form-control mcct-nhap" type="text" name="ma_the" id="ma_the"
-                    value="{{ $params['ma_the'] }}" placeholder="10, 12 hoặc 15 ký tự">
+                    value="{{ $params['ma_the'] }}" placeholder="10, 12, 15 hoặc 17 ký tự">
             </div>
         </div>
 

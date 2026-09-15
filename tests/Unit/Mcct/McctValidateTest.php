@@ -40,14 +40,15 @@ class McctValidateTest extends TestCase
     }
 
     /**
-     * Phu luc ghi ro: sau khi bo khoang trang, do dai hop le la 10, 12 hoac 15.
+     * Phu luc ghi ro: sau khi bo khoang trang, do dai hop le la 10, 12 hoac 15; cong van
+     * 2746/BHXH-CNTT them ma the 17 ky tu.
      * Chan tai day chu khong de cong tra 400 - vua tiet kiem luot goi (cong co danh sach
      * tai khoan bi han che), vua bao loi dung cho sai.
      */
     /** @test */
-    public function ma_the_dung_do_dai_10_12_15_thi_qua()
+    public function ma_the_dung_do_dai_10_12_15_17_thi_qua()
     {
-        foreach ([10, 12, 15] as $doDai) {
+        foreach ([10, 12, 15, 17] as $doDai) {
             $ma = str_repeat('A', $doDai);
 
             $this->assertTrue($this->kiem($this->hopLe(['ma_the' => $ma]))->passes(),
@@ -58,7 +59,7 @@ class McctValidateTest extends TestCase
     /** @test */
     public function ma_the_sai_do_dai_thi_bi_chan()
     {
-        foreach ([9, 11, 13, 14, 16] as $doDai) {
+        foreach ([9, 11, 13, 14, 16, 18] as $doDai) {
             $ma = str_repeat('A', $doDai);
 
             $this->assertTrue($this->kiem($this->hopLe(['ma_the' => $ma]))->fails(),
