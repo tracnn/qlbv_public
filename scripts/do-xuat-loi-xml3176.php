@@ -7,6 +7,10 @@
  * luong xau nhat. Khong chay khi dang dang nhap nen Xml3176LocDanhSach khong ap pham vi
  * nguoi nap - tuc la lay het.
  *
+ * KHONG CHAY tren may chu san xuat (qlbv_public): xuat TOAN BO ho so co the ton hon
+ * 25 phut va hon 3 GB RAM, se choan tai nguyen may chu dang phuc vu nguoi dung that.
+ * Chi chay tren may dev/CSDL doc de do dac.
+ *
  * Chay: php scripts/do-xuat-loi-xml3176.php truoc.xlsx
  * Tep ra: storage/app/do-xuat-loi/<ten-tep>
  */
