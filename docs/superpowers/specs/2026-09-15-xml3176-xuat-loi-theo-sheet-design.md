@@ -79,8 +79,8 @@ Tức phép nối không nhân đôi dòng lỗi trên dữ liệu hiện có. �
 |---|---|---|
 | 1–15 | `XML1` … `XML15` | Dòng lỗi có `xml = 'XMLn'` |
 | 16 | `XMLComplete` | Dòng lỗi có `xml = 'XMLComplete'` |
-| 17 | `Lỗi tra cứu thẻ` | Như hiện nay, thêm cột mã khoa |
-| 18 | `DM khoa-giường` | `department_bed_catalogs` |
+| 17 | `Lỗi thẻ BHYT` | Như hiện nay (giữ tên sheet hiện có), thêm cột mã khoa |
+| 18 | `DM khoa-giường` | `department_bed_catalogs` — phải đứng sau mọi sheet lỗi, xem §7 |
 | 19 | `DM NVYT` | `medical_staffs` |
 
 Tên sheet đều dưới giới hạn 31 ký tự của Excel và không chứa ký tự cấm (`: \ / ? * [ ]`).
@@ -117,7 +117,7 @@ Sắp xếp: DM khoa-giường theo `ma_cskcb, ma_khoa, tu_ngay`; DM NVYT theo `
 | XML3 | `COALESCE(NULLIF(xml3.ma_khoa, ''), xml1.ma_khoa)` | `ma_lk` + `stt` |
 | XML7 | `COALESCE(NULLIF(xml7.ma_khoa_rv, ''), xml1.ma_khoa)` | `ma_lk` |
 | XML4, XML5, XML6, XML8–XML15, XMLComplete | `xml1.ma_khoa` | `ma_lk` |
-| Lỗi tra cứu thẻ | `xml1.ma_khoa` | `ma_lk` |
+| Lỗi thẻ BHYT | `xml1.ma_khoa` | `ma_lk` |
 
 XML4 **cố ý không** suy khoa từ XML3 theo mã dịch vụ: một mã dịch vụ có thể xuất hiện nhiều lần ở các khoa khác nhau trong cùng hồ sơ, nên phép suy đó nhập nhằng. Theo Q1, dùng khoa hồ sơ.
 
@@ -126,7 +126,9 @@ Mọi truy vấn đều **LEFT JOIN** bảng nguồn và bảng XML1: thiếu d�
 ## 6. Bộ lọc
 
 - **Sheet 1–17** cắt theo `Xml3176LocDanhSach::truyVanMaLk($loc, $danhSachCoSo)` — cùng một nguồn với màn danh sách, như bản sửa ngày 11/09/2026.
-- **Sheet 18–19** xuất **toàn bộ** dòng, **không lọc theo ngày**, chỉ lọc theo mã cơ sở khi người dùng đang chọn một cơ sở hợp lệ (`LocCoSo::ap`, cột `ma_cskcb`). Giữ các dòng đã hết hiệu lực; cột `tu_ngay`/`den_ngay` cho thấy hiệu lực.
+- **Sheet 18–19** xuất **toàn bộ** dòng, **không lọc theo ngày**, chỉ lọc theo mã cơ sở khi người dùng đang chọn một cơ sở hợp lệ (`LocCoSo::maHopLe`). Giữ các dòng đã hết hiệu lực; cột `tu_ngay`/`den_ngay` cho thấy hiệu lực.
+- **Quy ước lọc cơ sở cho sheet danh mục** *(đính chính khi lập plan)*: dòng có `ma_cskcb` rỗng là **dùng chung** cho mọi cơ sở, nên được giữ lại — đúng quy ước `DepartmentBedCatalog::scopeCuaCoSo()` đã có. Bản đầu của spec ghi `LocCoSo::ap` (khớp đúng bằng), cách đó làm mất các dòng dùng chung. `medical_staffs` không có scope này nên lớp sheet NVYT áp cùng điều kiện.
+- **Hai sheet danh mục ghi mọi ô dưới dạng chuỗi** *(đính chính khi lập plan)*: mã cơ sở `01929`, số định danh, mã BHXH có số 0 đứng đầu; bộ gắn giá trị mặc định đổi chúng thành số và mất số 0.
 
 Lý do sheet danh mục không lọc theo hồ sơ: chúng là bảng tra cứu để người dùng dò tên khoa, tên nhân viên từ mã trong các sheet lỗi. Chỉ giữ những mã có mặt trong sheet lỗi thì không dò ra được mã **sai** — mà mã sai chính là thứ người dùng cần tìm.
 
@@ -138,6 +140,8 @@ Lý do sheet danh mục không lọc theo hồ sơ: chúng là bảng tra cứu 
 | `App\Exports\Xml3176ErrorSheetExport` | mới | Một sheet lỗi cho **một** loại XML. Nhận `($loai, array $loc, array $danhSachCoSo)`. `title()` = `$loai`. Thay thế `Xml3176ErrorExport`. |
 | `App\Exports\DmKhoaGiuongSheetExport` | mới | Sheet 18. Nhận `($maCskcb, array $danhSachCoSo)`. |
 | `App\Exports\DmNvytSheetExport` | mới | Sheet 19. Nhận `($maCskcb, array $danhSachCoSo)`. |
+
+**Thứ tự sheet là ràng buộc kỹ thuật, không chỉ là trình bày:** hai lớp sheet danh mục dùng `StringValueBinder`, mà Laravel Excel 3.1.25 đặt bộ gắn giá trị bằng một biến tĩnh toàn cục khi mở sheet và không trả lại khi đóng. Sheet nào đứng sau sheet danh mục sẽ ghi ô dưới dạng chuỗi.
 | `App\Exports\Xml3176ErrorMultiSheetExport` | sửa | Dựng đúng 19 sheet theo thứ tự mục 4. |
 | `App\Exports\HeinCardErrorExport` | sửa | Thêm tham số tuỳ chọn `$coMaKhoa = false`. **Mặc định tắt**: `Qd130ErrorMultiSheetExport` dùng chung lớp này và file QĐ130 phải giữ nguyên. |
 | `App\Exports\Xml3176ErrorExport` | xoá | Chỉ còn được dùng ở `Xml3176ErrorMultiSheetExport` và hai test; thay bằng `Xml3176ErrorSheetExport`. |
@@ -173,6 +177,7 @@ Giữ nguyên: cắt theo `truyVanMaLk`, sắp xếp `ma_lk, xml, stt`, đánh s
 - `Xml3176ErrorSheetExport::headings()`: 19 cột, `Mã Khoa` ở vị trí thứ 5.
 - Truy vấn sheet lỗi có điều kiện `xml = ?` và nối danh mục theo cả `xml` lẫn `error_code`.
 - `HeinCardErrorExport` giữ nguyên hành vi khi không truyền tham số mới.
+- Hai sheet danh mục giữ dòng có `ma_cskcb` rỗng khi lọc theo cơ sở.
 - Hai sheet danh mục: có lọc `ma_cskcb` khi mã hợp lệ, không lọc khi mã không hợp lệ hoặc rỗng, không có điều kiện ngày.
 
 **Kiểm trên dữ liệu thật (CSDL dev):**
