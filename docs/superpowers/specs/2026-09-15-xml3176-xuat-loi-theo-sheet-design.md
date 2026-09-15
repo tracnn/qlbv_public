@@ -196,3 +196,27 @@ Giữ nguyên: cắt theo `truyVanMaLk`, sắp xếp `ma_lk, xml, stt`, đánh s
 - Thêm tên khoa hoặc tên nhân viên vào sheet lỗi — người dùng dò qua hai sheet danh mục.
 - Suy khoa cho XML4 từ XML3.
 - Bật cache ô của Laravel Excel. Chỉ xem xét nếu phép đo ở mục 8 cho thấy cần, và phải hỏi trước.
+
+## 11. Đính chính khi thực thi (rà soát cuối, 15/09/2026)
+
+- **§5 — nối bảng XML1**: mọi biểu thức mã khoa đều JOIN với `xml3176_xml1s` (không phải chỉ
+  LEFT JOIN như câu chữ mục 5 gợi ý), vì mọi `ma_lk` trong truy vấn con `truyVanMaLk` đều lấy
+  từ chính `xml3176_xml1s` — phép nối này là INNER trên thực tế và không làm mất dòng lỗi.
+  Bất biến đã kiểm lại bằng `scripts/kiem-xuat-loi-xml3176.php`: tổng 16 sheet = tổng dòng
+  `xml3176_error_results` cùng tập hồ sơ, khớp **318446 = 318446** (không lọc) và
+  **61928 = 61928** (`ma_khoa=K01`).
+- **§7 — hằng số `LOAI_XML`**: nằm ở `App\Services\Xml3176\Xml3176KhoaNguon::LOAI_XML`, không
+  phải ở `Xml3176ErrorMultiSheetExport` như bảng thành phần mục 7 ghi — đặt cùng nơi với
+  `Xml3176KhoaNguon::nguon()` để một lớp thuần giữ trọn danh sách 15 loại XML.
+- **§7.1 — thứ tự sắp xếp**: truy vấn `Xml3176ErrorSheetExport::query()` sắp theo
+  `ma_lk, stt, id` (ba cột), không phải `ma_lk, xml, stt` như mục 7.1 ghi — cột `xml` đã cố
+  định bằng `where()` nên không cần trong ORDER BY; `id` được thêm làm khoá phụ để thứ tự
+  hoàn toàn xác định, vì Laravel Excel phân trang `FromQuery` bằng các đợt `offset/limit` và
+  một thứ tự không xác định (khi `ma_lk, stt` trùng giữa nhiều dòng) có thể làm lệch trang.
+- **§8 — đo bộ nhớ/thời gian, phạm vi lọc thực tế**: phép đo trên **toàn bộ** hồ sơ (không
+  lọc, 318.446 dòng lỗi) không hoàn tất cả ở bản cũ lẫn bản mới trong lần đo trước. Đo bổ
+  sung ngày 15/09/2026 trên một phạm vi lọc thực tế hơn — `date_type = date_in`, hồ sơ có
+  `ngay_vao` từ 2026-08-05 đến 2026-08-21 (54.037 dòng lỗi) — **hoàn tất**: 98,3 giây, đỉnh
+  bộ nhớ 584 MB (`memory_get_peak_usage(true)`), không chạm giới hạn 4096M. Chưa có phép đo
+  hoàn tất nào trên toàn bộ 318.446 dòng; nếu cần con số đó thì phải đo riêng, ngoài phạm vi
+  đợt rà soát này.
