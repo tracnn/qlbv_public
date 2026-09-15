@@ -52,7 +52,8 @@
             };
         }
 
-        function tra(dungLaiKetQuaCu) {
+        // Moi lan tra la mot lan goi cong THAT - khong hien ket qua da luu (15/9/2026).
+        function tra() {
             // Doi duong dan tren thanh dia chi de trang nay VAN gui cho nhau duoc, va bam F5
             // ra dung ket qua do. replaceState chu khong pushState: mot lan tra khong dang
             // mot buoc lui trong lich su trinh duyet.
@@ -62,29 +63,30 @@
             }
 
             mcct.capNhat({
-                url: '{{ route('insurance.mcct.api') }}?' + $.param(thamSo()),
-                urlGanNhat: '{{ route('insurance.mcct.gan-nhat') }}?'
-                    + $.param({ ma_the: $('#ma_the').val() })
+                url: '{{ route('insurance.mcct.api') }}?' + $.param(thamSo())
             });
 
-            // Bam nut Tra cuu = hoi ket qua da luu truoc cho nhanh; chi khi vao thang bang
-            // duong dan moi tu goi cong neu chua co du lieu cu.
-            dungLaiKetQuaCu ? mcct.moDau() : mcct.goi();
+            mcct.goi();
         }
 
-        // Bam Tra cuu: uu tien hien ngay ket qua lan truoc, nguoi dung tu bam Tra cuu lai.
-        $nut.on('click', function () { tra(true); });
+        $nut.on('click', function () { tra(); });
 
-        // Nut Thu lai o khoi bao loi: goi thang cong, vi vua that bai chu khong phai chua tra.
-        $('#mcct-thu-lai').on('click', function () { tra(false); });
+        // Nut Thu lai o khoi bao loi.
+        $('#mcct-thu-lai').on('click', function () { tra(); });
 
         // Enter trong o nhap = bam Tra cuu. Khong con <form> nen phai tu noi lai hanh vi nay.
-        // Truyen true de giong HET nut Tra cuu: thieu tham so o day se lam Enter goi thang
-        // cong trong khi nut thi khong - hai duong vao cung mot viec ma xu su khac nhau.
         $('.mcct-nhap').on('keydown', function (e) {
             if (e.which === 13) {
                 e.preventDefault();
-                tra(true);
+
+                // Nut dang khoa = dang cho cong. Enter luc do KHONG duoc sinh them mot luot
+                // goi: o nhap bi khoa thi khong nhan phim, nhung phim Enter giu lau van co the
+                // lot vao truoc khi khoa kip ap dung.
+                if (mcct.dangGoi()) {
+                    return;
+                }
+
+                tra();
             }
         });
 
@@ -191,17 +193,16 @@
                     $('#ho_ten').val(String(kq['name'] || '').toUpperCase());
                     $('#ngay_sinh').val(chuanHoaNgaySinh(kq['birthday']));
 
-                    // Tra luon, khong bat bam them: uu tien du lieu da luu nen thao tac nay
-                    // khong ton luot goi cong.
-                    tra(true);
+                    // Tra luon, khong bat bam them.
+                    tra();
                 }
             });
         });
 
         @if ($traNgay)
         // Vao trang bang duong dan da co du tham so (chia se, hoac tu man tra cuu the sang):
-        // hien ngay ket qua lan truoc neu co, chua co thi goi cong.
-        tra(true);
+        // goi cong ngay. Bam F5 tren trang nay cung la mot lan goi cong.
+        tra();
         @endif
     });
 </script>

@@ -15,6 +15,26 @@ namespace App\Services\Mcct;
 class McctTraCuuChung
 {
     /**
+     * Tran thoi gian PHP (giay) du cho mot lan tra cuu cham nhat.
+     *
+     * VI SAO CAN: may chu chinh thuc dat max_execution_time = 120 giay, bang dung timeout_tong.
+     * Luong 401 cua McctTraCuuService goi cong HAI lan (kem mot lan dang nhap lai), nen voi
+     * tran mac dinh PHP se chet giua chung: nguoi dung nhan trang loi 500 khong noi gi, trong
+     * khi luot goi cong da tieu va ket qua khong duoc luu.
+     *
+     * Suy ra tu cau hinh chu khong chot cung: doi timeout thi tran tu doi theo.
+     *
+     * @return int
+     */
+    public static function gioiHanThoiGianPhp()
+    {
+        $moiLan = (int) config('mcct.timeout_ket_noi', 15) + (int) config('mcct.timeout_tong', 120);
+
+        // Hai lan goi + 60 giay cho dang nhap lai, doc/ghi CSDL va dung phan hoi.
+        return 2 * $moiLan + 60;
+    }
+
+    /**
      * @param array $params bon khoa ma_cskcb, ma_the, ho_ten, ngay_sinh (da chuan hoa)
      * @param string $nguon ghi vao cot nguon: 'thu_cong' | 'hang_loat' | 'api_his'
      * @return array ['loi' => string|null, 'ma_loi' => string|null, 'kq' => KetQuaMcct|null,
@@ -27,6 +47,10 @@ class McctTraCuuChung
             return ['loi' => $loi, 'ma_loi' => $maLoi, 'kq' => null, 'nguong' => 0.0,
                 'du_dieu_kien' => null, 'muc' => null, 'loi_luu' => null];
         };
+
+        // Nang tran PHP TRUOC khi cham cong - xem gioiHanThoiGianPhp(). Dat o day chu khong
+        // o controller: man web lan API cho he thong ngoai deu di qua day.
+        @set_time_limit(self::gioiHanThoiGianPhp());
 
         try {
             $kq = (new McctTraCuuService($params['ma_cskcb']))

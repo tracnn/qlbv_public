@@ -112,7 +112,7 @@ noiDung.push(new Paragraph({
   })],
 }));
 noiDung.push(P('Phần mềm quản lý bệnh viện qlbv', { align: AlignmentType.CENTER, size: 28 }));
-noiDung.push(P('Phiên bản tài liệu: 2.1 — Ngày 15/9/2026',
+noiDung.push(P('Phiên bản tài liệu: 2.2 — Ngày 15/9/2026',
   { align: AlignmentType.CENTER, italics: true, size: 24 }));
 
 noiDung.push(new Paragraph({ children: [new PageBreak()] }));
@@ -184,13 +184,14 @@ noiDung.push(Step('Cách nhanh: con trỏ đã nằm sẵn ở ô Quét QR, ch�
   + 'cứu luôn, không phải bấm thêm.', 3));
 noiDung.push(Step('Cách thủ công: nhập mã thẻ BHYT/CCCD, họ tên, ngày sinh rồi bấm Tra cứu (hoặc '
   + 'nhấn Enter ở bất kỳ ô nào).', 3));
-noiDung.push(Step('Kết quả hiện ra ngay bên dưới, trang không tải lại. Nếu thẻ đã từng được tra '
-  + 'thành công, phần mềm hiện kết quả lần trước — xem mục 3.3.', 3));
+noiDung.push(Step('Chờ cổng BHXH trả lời (xem mục 6). Kết quả hiện ra ngay bên dưới, trang không '
+  + 'tải lại.', 3));
 noiDung.push(Rich([
   { t: 'Trang không bị tải lại khi tra cứu. ', b: true },
   { t: 'Trong lúc chờ cổng trả lời, phần tìm kiếm vẫn hiển thị và đồng hồ đếm giây chạy ngay trên '
     + 'trang (xem mục 6). Thanh địa chỉ của trình duyệt tự cập nhật theo thẻ đang tra, nên có thể '
-    + 'sao chép đường dẫn gửi cho người khác, hoặc nhấn F5 để mở lại đúng thẻ đó.' },
+    + 'sao chép đường dẫn gửi cho người khác, hoặc nhấn F5 để mở lại đúng thẻ đó. Mở đường dẫn '
+    + 'hoặc nhấn F5 cũng là một lần tra mới trên cổng BHXH.' },
 ]));
 noiDung.push(Rich([
   { t: 'Về ngày sinh khi quét QR: ', b: true },
@@ -198,32 +199,14 @@ noiDung.push(Rich([
     + 'chuyển sang dạng 20/10/1964 trước khi tra, nên không bị báo sai định dạng.' },
 ]));
 
-noiDung.push(H('3.3. Kết quả lần tra trước và nút Tra cứu lại', HeadingLevel.HEADING_2));
-noiDung.push(P('Cổng BHXH trả lời chậm và giới hạn số lượt tra của mỗi tài khoản. Vì vậy, khi bấm '
-  + 'Tra cứu (trên màn hình riêng) hoặc bấm Tra tiền cùng chi trả (trên màn tra cứu thẻ), phần '
-  + 'mềm KHÔNG gọi cổng ngay mà làm như sau:'));
-noiDung.push(Bullet('Nếu thẻ này đã từng được tra cứu thành công, phần mềm hiện ngay kết quả của '
-  + 'lần tra thành công gần nhất — gần như tức thì và không tốn lượt tra của cổng.'));
-noiDung.push(Bullet('Nếu thẻ chưa từng được tra cứu thành công lần nào, phần mềm gọi cổng BHXH như '
-  + 'bình thường.'));
-noiDung.push(P('Khi đang xem kết quả lần trước, phía trên kết quả có một khung màu vàng ghi: '
-  + '“Số liệu này lấy từ lần tra trước, tra lúc …. Cổng có thể đã cập nhật thêm.” kèm nút '
-  + 'Tra cứu lại ở bên phải.'));
-noiDung.push(Step('Đọc thời điểm “tra lúc” trong khung vàng để biết số liệu cũ đến mức nào.', 4));
-noiDung.push(Step('Nếu cần số liệu mới nhất — ví dụ người bệnh vừa ra viện ở cơ sở khác, hoặc '
-  + 'sắp trả lời kết luận miễn cùng chi trả — bấm Tra cứu lại.', 4));
-noiDung.push(Step('Phần mềm gọi cổng BHXH thật; chờ như mục 6. Kết quả mới thay thế kết quả cũ và '
-  + 'khung vàng biến mất.', 4));
+noiDung.push(H('3.3. Mỗi lần tra đều lấy số liệu mới nhất', HeadingLevel.HEADING_2));
+noiDung.push(P('Mỗi lần bấm Tra cứu (trên màn hình riêng), bấm Tra tiền cùng chi trả (trên màn tra '
+  + 'cứu thẻ), quét mã QR, hoặc mở trang bằng đường dẫn, phần mềm đều hỏi thẳng cổng BHXH. Số liệu '
+  + 'hiển thị luôn là số liệu cổng vừa trả về, không phải số liệu đã lưu từ lần tra trước.'));
 noiDung.push(Rich([
-  { t: 'Phân biệt hai mốc thời gian. ', b: true, c: 'C00000' },
-  { t: '“Tra lúc” trong khung vàng là thời điểm phần mềm hỏi cổng. “Tính đến” ở dòng chữ nhỏ dưới '
-    + 'khối kết luận (mục 5.2) là mốc dữ liệu của chính cổng BHXH. Hai mốc này khác nhau; kết '
-    + 'luận với người bệnh phải căn cứ vào mốc “tính đến”.' },
+  { t: 'Đổi lại, lần nào cũng phải chờ cổng trả lời. ', b: true },
+  { t: 'Các lần tra trước đây của thẻ vẫn xem được ở bảng Lịch sử tra cứu cuối kết quả (mục 5.5).' },
 ]));
-noiDung.push(P('Kết quả lần trước được tính lại ngưỡng theo đúng ngày của lần tra đó, nên kết luận '
-  + 'hiển thị khớp với kết luận tại thời điểm tra. Chỉ những lần tra THÀNH CÔNG mới được dùng lại; '
-  + 'lần tra báo lỗi không bao giờ được hiển thị như kết quả. Nút Thử lại ở khung báo lỗi luôn gọi '
-  + 'thẳng cổng.', { italics: true }));
 
 noiDung.push(H('3.4. Phần mềm tự ghi nhớ cơ sở và tự viết hoa họ tên', HeadingLevel.HEADING_2));
 noiDung.push(P('Ghi nhớ cơ sở khám chữa bệnh:', { bold: true }));
@@ -338,9 +321,9 @@ noiDung.push(Rich([
     + 'chế tra cứu. Mỗi lần bấm là một lượt gọi thật. Vì vậy trong lúc đang chờ, phần mềm tự khóa '
     + 'nút và các ô nhập liệu.' },
 ]));
-noiDung.push(P('Để tiết kiệm lượt tra, hãy dùng kết quả lần trước (mục 3.3) khi số liệu vẫn còn đủ '
-  + 'mới, và chỉ bấm Tra cứu lại khi thực sự cần số liệu cập nhật.'));
-noiDung.push(P('Phần mềm chờ cổng tối đa 60 giây. Quá thời gian đó mà cổng không trả lời thì '
+noiDung.push(P('Mỗi lần tra là một lượt hỏi cổng thật, kể cả khi mở lại đúng thẻ vừa tra. Chỉ tra '
+  + 'khi cần, không mở đi mở lại cùng một thẻ.'));
+noiDung.push(P('Phần mềm chờ cổng tối đa 120 giây. Quá thời gian đó mà cổng không trả lời thì '
   + 'dừng chờ và báo lỗi; hãy đợi vài phút rồi bấm Thử lại.'));
 
 // 7
@@ -362,7 +345,7 @@ noiDung.push(Tbl([3400, 5626],
       'Đây là vấn đề tài khoản, không phải lỗi phần mềm. Liên hệ cơ quan BHXH tỉnh để được mở lại.'],
     ['Cơ sở … chưa khai tài khoản cổng BHXH…',
       'Cơ sở chưa được cấu hình. Báo bộ phận công nghệ thông tin khai tài khoản trong config/organization.php.'],
-    ['Cổng BHXH không trả lời sau 60 giây…',
+    ['Cổng BHXH không trả lời sau 120 giây…',
       'Cổng vẫn hoạt động nhưng trả lời quá chậm. Không phải sự cố đường truyền của bệnh viện — đợi vài phút rồi bấm Thử lại.'],
     ['Không kết nối được cổng BHXH',
       'Sự cố đường truyền hoặc cổng đang bảo trì. Chờ vài phút rồi thử lại.'],
@@ -382,8 +365,8 @@ noiDung.push(Bullet('Lũy kế tính theo năm tài chính và bao gồm cả c�
   + 'khác, không chỉ riêng cơ sở đang tra.'));
 noiDung.push(Bullet('Mọi lần tra cứu đều được ghi lại, kể cả lần không thành công, phục vụ đối chiếu '
   + 'về sau.'));
-noiDung.push(Bullet('Khi thấy khung vàng “Số liệu này lấy từ lần tra trước”, đó là số liệu đã lưu, '
-  + 'không phải số liệu vừa hỏi cổng. Cân nhắc bấm Tra cứu lại trước khi trả lời người bệnh.'));
+noiDung.push(Bullet('Mỗi lần tra đều hỏi thẳng cổng BHXH, nên kết quả trên màn hình là số liệu mới '
+  + 'nhất cổng có tại thời điểm tra.'));
 noiDung.push(Bullet('Việc xác định người bệnh đủ điều kiện miễn cùng chi trả và cấp giấy chứng nhận '
   + 'thực hiện theo quy định hiện hành; kết quả tra cứu là căn cứ tham khảo, không thay thế thủ tục.'));
 

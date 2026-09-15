@@ -119,18 +119,6 @@ window.McctTraCuu = (function ($) {
         var the = kq.thong_tin_the || {};
         var h = '';
 
-        // Bang canh bao ket qua CU. Phai noi duoc HAI moc thoi gian khac nhau: "tra luc" la
-        // luc minh hoi cong, con dong "tinh den" duoi khoi ket luan la moc du lieu CUA CONG.
-        // Gop hai cai lam mot la cach chac chan khien nguoi dung hieu sai do tuoi cua so lieu.
-        if (kq.tu_cache) {
-            h += '<div class="alert alert-warning" style="margin-bottom: 10px;">'
-                + '<button type="button" class="btn btn-primary pull-right mcct-tra-lai">'
-                + '<i class="fa fa-refresh"></i>&nbsp;Tra cứu lại</button>'
-                + '<i class="fa fa-history"></i>&nbsp;Số liệu này lấy từ <b>lần tra trước</b>, '
-                + 'tra lúc <b>' + thoat(gioVn(kq.tra_luc)) + '</b>. Cổng có thể đã cập nhật thêm.'
-                + '<div class="clearfix"></div></div>';
-        }
-
         if (the.ho_ten) {
             h += '<table class="table table-condensed"><tr>'
                 + '<td>Họ tên: <b>' + thoat(the.ho_ten) + '</b></td>'
@@ -274,12 +262,6 @@ window.McctTraCuu = (function ($) {
 
                 $ketQua.html(dungKetQua(kq));
                 hienKhoi('ket-qua');
-
-                // Nut nam TRONG khoi vua dung nen phai noi lai moi lan. Bam vao la goi cong
-                // that - dung ham goi() binh thuong, co day du dong ho cho va khoa nut.
-                $ketQua.find('.mcct-tra-lai').on('click', function () {
-                    goi(caiDat.url);
-                });
             }).fail(function (xhr, trangThai) {
                 if (trangThai === 'abort') {
                     return;
@@ -313,59 +295,14 @@ window.McctTraCuu = (function ($) {
             });
         }
 
-        /*
-         * Mo dau: hoi ket qua DA LUU truoc (chi doc CSDL, vai chuc mili-giay), co thi hien
-         * ngay. Chua tung tra lan nao thi goi thang cong.
-         *
-         * Khong bat nguoi dung bam them mot lan cho truong hop lan dau: luot goi do dang nao
-         * cung phai xay ra, bat bam chi lam cham them.
-         */
-        function moDau() {
-            if (!caiDat.urlGanNhat) {
-                goi(caiDat.url);
-
-                return;
-            }
-
-            hienKhoi('tai');
-            khoa(true);
-            batDauDemGio();
-
-            $.ajax({ type: 'GET', url: caiDat.urlGanNhat, dataType: 'json', timeout: 15000 })
-                .done(function (kq) {
-                    dungDemGio();
-                    khoa(false);
-
-                    if (kq && kq.co_du_lieu) {
-                        $ketQua.html(dungKetQua(kq));
-                        hienKhoi('ket-qua');
-
-                        $ketQua.find('.mcct-tra-lai').on('click', function () {
-                            goi(caiDat.url);
-                        });
-
-                        return;
-                    }
-
-                    goi(caiDat.url);
-                })
-                .fail(function () {
-                    // Doc CSDL hong thi coi nhu chua co du lieu cu - van tra duoc binh thuong,
-                    // chi la mat phan hien nhanh.
-                    dungDemGio();
-                    khoa(false);
-                    goi(caiDat.url);
-                });
-        }
+        // KHONG con buoc hien ket qua da luu truoc (moDau) tu 15/9/2026: moi lan tra deu goi
+        // cong de so lieu luon moi nhat. Dung them lai thi nguoi dung se doc so lieu cu ma
+        // tuong la vua tra.
 
         /* Doi duong dan giua cac lan tra - man rieng doc lai o nhap moi lan bam */
         function capNhat(moi) {
             if (moi.url) {
                 caiDat.url = moi.url;
-            }
-
-            if (moi.urlGanNhat) {
-                caiDat.urlGanNhat = moi.urlGanNhat;
             }
         }
 
@@ -378,7 +315,7 @@ window.McctTraCuu = (function ($) {
             khoa(false);
         }
 
-        return { goi: goi, moDau: moDau, capNhat: capNhat, huy: huy, dangGoi: function () { return yeuCau !== null; } };
+        return { goi: goi, capNhat: capNhat, huy: huy, dangGoi: function () { return yeuCau !== null; } };
     }
 
     return { tao: tao, tien: tien, thoat: thoat };

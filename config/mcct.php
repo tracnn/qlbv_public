@@ -43,13 +43,16 @@ return [
      * Operation timed out after 30006 ms with 0 bytes received" - tuc het 30 giay ma chua
      * nhan duoc byte nao, khong phai loi mang.
      *
-     * TRAN CUNG la max_execution_time cua PHP (dang la 120 giay). Nang timeout_tong vuot qua
-     * nua so do la tu chuoc lay rui ro: luong 401 co the goi cong HAI lan, va PHP se chet
-     * giua chung voi mot loi khong noi duoc gi ve nguyen nhan that.
+     * Nang tiep len 120 ngay 15/9/2026, cung dot bo hien ket qua da luu: moi lan tra deu goi
+     * cong nen phai cho duoc lau hon thay vi bao loi roi bat nguoi dung tra lai.
+     *
+     * max_execution_time cua PHP tren may chinh thuc dang la 120 giay - BANG DUNG so nay, va
+     * luong 401 goi cong HAI lan. McctTraCuuChung::gioiHanThoiGianPhp() nang tran PHP cho
+     * rieng lan tra MCCT, suy ra tu hai so duoi day, nen doi so o day thi tran tu doi theo.
      *
      * Doi so o day thi javascript cua modal tu bam theo - xem TIMEOUT_MS trong
      * check-card/search.blade.php.
      */
     'timeout_ket_noi' => 15,
-    'timeout_tong' => 60,
+    'timeout_tong' => 120,
 ];

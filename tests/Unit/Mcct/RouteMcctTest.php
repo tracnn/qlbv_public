@@ -14,12 +14,21 @@ class RouteMcctTest extends TestCase
             'insurance.mcct' => 'insurance/mcct',
             'insurance.mcct.search' => 'insurance/mcct/search',
             'insurance.mcct.api' => 'insurance/mcct/api',
-            'insurance.mcct.gan-nhat' => 'insurance/mcct/gan-nhat',
         ];
     }
 
+    /**
+     * Man web LUON goi cong tu 15/9/2026: endpoint doc ket qua da luu da bi go. Chan viec vo
+     * tinh them lai - no se dua man hinh ve hien so lieu cu ma nguoi dung khong hay biet.
+     */
     /** @test */
-    public function du_bon_route_va_url_khong_doi()
+    public function khong_con_route_doc_ket_qua_da_luu()
+    {
+        $this->assertNull(Route::getRoutes()->getByName('insurance.mcct.gan-nhat'));
+    }
+
+    /** @test */
+    public function du_ba_route_va_url_khong_doi()
     {
         foreach ($this->banDo() as $ten => $uri) {
             $r = Route::getRoutes()->getByName($ten);

@@ -74,9 +74,6 @@
                         'ma_the' => $params['card-number'],
                         'ho_ten' => $params['name'],
                         'ngay_sinh' => $params['birthday'],
-                    ]) }}"
-                    data-url-gan-nhat="{{ route('insurance.mcct.gan-nhat', [
-                        'ma_the' => $params['card-number'],
                     ]) }}"><i class="fa fa-money"></i>&nbsp;Tra tiền cùng chi trả</button>
                 @endif
             </div>
@@ -212,7 +209,6 @@
 
         var mcct = McctTraCuu.tao({
             url: $nut.data('url'),
-            urlGanNhat: $nut.data('url-gan-nhat'),
 
             // Suy ra TU cau hinh may chu, cong them 10 giay dem. Neu javascript bo cuoc TRUOC
             // thi nguoi dung nhan thong bao chung chung cua trinh duyet thay vi thong bao that
@@ -245,8 +241,8 @@
             // Mo modal NGAY, khong doi phan hoi: nguoi dung phai thay he thong da nhan lenh.
             $modal.modal('show');
 
-            // Hien ket qua lan truoc truoc da (chi doc CSDL, rat nhanh); chua co thi goi cong.
-            mcct.moDau();
+            // Moi lan mo la mot lan goi cong: so lieu luon moi nhat, khong hien ket qua da luu.
+            mcct.goi();
         });
 
         // Nut Thu lai o khoi bao loi: goi thang cong, vi vua that bai chu khong phai chua tra.
