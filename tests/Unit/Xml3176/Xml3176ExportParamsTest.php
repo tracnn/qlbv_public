@@ -94,7 +94,7 @@ class Xml3176ExportParamsTest extends TestCase
     {
         // Hai lop nay gio nhan mang bo loc da doc san; con tu doc request nghia la co
         // ai do chep lai mot ban rieng - dung cai da gay ra bug nay.
-        foreach (['Xml3176XmlExport', 'Xml3176ErrorExport', 'Xml3176ErrorMultiSheetExport'] as $lop) {
+        foreach (['Xml3176XmlExport', 'Xml3176ErrorSheetExport', 'Xml3176ErrorMultiSheetExport', 'DmKhoaGiuongSheetExport', 'DmNvytSheetExport'] as $lop) {
             $src = file_get_contents(app_path("Exports/$lop.php"));
             $this->assertNotContains('request->input(', $src, "$lop khong duoc tu doc request");
         }
