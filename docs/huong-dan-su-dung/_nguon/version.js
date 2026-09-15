@@ -15,7 +15,7 @@
  * NGAY_PHAT_HANH cho khớp dòng đó.
  */
 
-const PHIEN_BAN = '1.11';
+const PHIEN_BAN = '1.12';
 
 const NGAY_PHAT_HANH = 'Tháng 9 năm 2026';
 
@@ -27,6 +27,13 @@ const NGAY_PHAT_HANH = 'Tháng 9 năm 2026';
  * thay vì đọc lại cả tài liệu.
  */
 const LICH_SU = [
+  {
+    ban: '1.12',
+    ngay: '15/09/2026',
+    noi_dung:
+      'Tra cứu thẻ BHYT: ô nhập đổi tên thành Mã thẻ BHYT/CCCD và nhận thêm mã thẻ 17 ký tự theo Công văn 2746/BHXH-CNTT. Bảng Lịch sử KCB lấy lại được dữ liệu qua chức năng tra cứu lịch sử khám chữa bệnh mới của cơ quan Bảo hiểm xã hội, hiển thị ngay khi tra thẻ.',
+    lien_quan: 'Phần III, mục 3.2 và 3.7.',
+  },
   {
     ban: '1.11',
     ngay: '11/09/2026',
