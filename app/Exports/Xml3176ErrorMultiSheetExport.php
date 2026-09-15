@@ -33,6 +33,11 @@ class Xml3176ErrorMultiSheetExport implements WithMultipleSheets
 
     public function sheets(): array
     {
+        // Dat MOT LAN cho ca 19 sheet o day; neu de trong Xml3176ErrorSheetExport::query()
+        // thi moi sheet goi lai se dat lai gio 16 lan (mot lan moi loai XML).
+        set_time_limit(1800);
+        ini_set('memory_limit', '4096M');
+
         $sheets = [];
 
         foreach (Xml3176KhoaNguon::LOAI_XML as $loai) {
@@ -41,8 +46,8 @@ class Xml3176ErrorMultiSheetExport implements WithMultipleSheets
 
         $sheets[] = new Xml3176ErrorSheetExport('XMLComplete', $this->loc, $this->danhSachCoSo);
 
-        // Bang check_hein_card khong co cot ma_cskcb nen khong ap truc tiep duoc bo loc co
-        // so; cat theo tap ma_lk cua man danh sach thi ap duoc CA bo loc.
+        // Cat theo tap ma_lk cua man danh sach (Xml3176LocDanhSach::truyVanMaLk) de sheet
+        // nay ap duoc TAT CA bo loc cua man danh sach, khong chi rieng ma co so.
         $sheets[] = new HeinCardErrorExport(
             array_get($this->loc, 'date_from'),
             array_get($this->loc, 'date_to'),
@@ -54,6 +59,13 @@ class Xml3176ErrorMultiSheetExport implements WithMultipleSheets
         // Hai sheet danh muc PHAI dung cuoi. Chung cai StringValueBinder, ma Laravel Excel
         // dat bo gan gia tri bang bien TINH toan cuc khi mo sheet va khong tra lai khi dong
         // (vendor/maatwebsite/excel/src/Sheet.php) - sheet nao dung sau se thua huong.
+        //
+        // Bien tinh nay con SONG suot doi tien trinh PHP, khong rieng file xuat nay. Voi
+        // request web (moi request mot tien trinh PHP rieng) thi vo hai. Neu sau nay bo
+        // xuat nay chay trong queue worker (mot tien trinh xu ly nhieu job), cac lan xuat
+        // KHAC sau do trong CUNG worker se bi ghi MOI o thanh chuoi cho den khi worker do
+        // duoc khoi dong lai - phai tu dat lai Cell::setValueBinder() ve mac dinh sau khi
+        // hai sheet danh muc nay dong.
         $sheets[] = new DmKhoaGiuongSheetExport(array_get($this->loc, 'ma_cskcb'), $this->danhSachCoSo);
         $sheets[] = new DmNvytSheetExport(array_get($this->loc, 'ma_cskcb'), $this->danhSachCoSo);
 

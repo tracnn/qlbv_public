@@ -55,7 +55,7 @@ class Xml3176KhoaNguonTest extends TestCase
     }
 
     /** @test */
-    public function loai_la_dung_khoa_ho_so()
+    public function loai_khong_biet_dung_khoa_ho_so()
     {
         $this->assertNull(Xml3176KhoaNguon::nguon('XML99'));
         $this->assertNull(Xml3176KhoaNguon::nguon(''));

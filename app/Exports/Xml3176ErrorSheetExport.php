@@ -64,9 +64,8 @@ class Xml3176ErrorSheetExport implements FromQuery, WithHeadings, WithStyles, Wi
      */
     public function query()
     {
-        set_time_limit(1800);
-        ini_set('memory_limit', '4096M');
-
+        // set_time_limit/memory_limit dat MOT LAN o Xml3176ErrorMultiSheetExport::sheets(),
+        // truoc khi dung sheet nay - goi lai o day se dat lai gio 16 lan, mot lan moi sheet.
         $query = Xml3176ErrorResult::query()
             ->whereIn('xml3176_error_results.ma_lk',
                 Xml3176LocDanhSach::truyVanMaLk($this->loc, $this->danhSachCoSo))

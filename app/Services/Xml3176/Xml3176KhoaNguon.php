@@ -9,10 +9,11 @@ namespace App\Services\Xml3176;
  * Quy tac nguoi dung da chot: lay khoa cua CHINH DONG khi bang co cot khoa, khong co
  * hoac rong thi lay khoa ho so (xml3176_xml1s.ma_khoa).
  *
- * Do tren du lieu that 15/09/2026: dong loi noi ve dong goc bang (ma_lk, stt) khop 100%
- * o XML2/XML3/XML4, va cap (ma_lk, stt) khong trung - tuc phep noi khong nhan doi dong
- * loi. Day la so do tren DU LIEU, luoc do khong bao dam; scripts/kiem-xuat-loi-xml3176.php
- * kiem lai bat bien nay.
+ * Luoc do DA bao dam khong nhan doi dong cho XML2/XML3 (unique (ma_lk, stt)) va XML7
+ * (ma_lk unique). Rieng join voi xml3176_xml1s (dung cho moi loai, ke ca sheet khong co
+ * khoa rieng) la theo ma_lk MOT MINH trong khi xml3176_xml1s chi unique (ma_lk, stt) -
+ * phep noi nay phu thuoc DU LIEU (moi ma_lk chi co mot dong xml1 tren du lieu that);
+ * scripts/kiem-xuat-loi-xml3176.php kiem lai bat bien nay.
  *
  * Lop thuan: khong cham DB, khong doc config.
  */

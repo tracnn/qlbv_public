@@ -27,7 +27,8 @@ class HeinCardErrorExport implements FromQuery, WithHeadings, ShouldAutoSize, Wi
      * dung dang nhin thay, vi truoc day sheet nay chi nhan khoang ngay va bo QUA moi bo
      * loc khac - ke ca ma co so, nen file xuat tron ca co so khac.
      *
-     * Bang check_hein_card khong co cot ma_cskcb, nen cat theo ma_lk la cach duy nhat.
+     * Cat theo tap ma_lk (thay vi chi ma co so) de ap duoc TAT CA bo loc cua man danh
+     * sach, khong chi rieng ma co so.
      */
     protected $maLkChoPhep;
     /** Khoa config chua danh sach ma kiem tra / ma ket qua duoc coi la loi. */
