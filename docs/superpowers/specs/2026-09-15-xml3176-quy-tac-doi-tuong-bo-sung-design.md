@@ -103,7 +103,7 @@ Giá trị `LOAI` trong tệp nhập là `BAO_GOM` / `TRU` (viết hoa, dễ gõ
 
 ### 5.4. Tệp mẫu
 
-`docs/danh-muc/PL1_TT01_2025.xlsx`, một sheet, tiêu đề đúng các cột ở 5.3, đủ 186 dòng Phụ lục A. Người dùng nhập tệp này qua màn Nhập danh mục. Không có migration nạp sẵn dữ liệu (Q6).
+`docs/0000 - Danh muc/PL1_TT01_2025.xlsx`, một sheet, tiêu đề đúng các cột ở 5.3, đủ 186 dòng Phụ lục A. Người dùng nhập tệp này qua màn Nhập danh mục. Không có migration nạp sẵn dữ liệu (Q6).
 
 ## 6. So khớp mã bệnh — `App\Services\Xml3176\Support\BenhPl1Matcher`
 
@@ -192,7 +192,7 @@ Phải chạy migration **trước** khi quy tắc nổ lần đầu: thiếu d�
 
 **Danh mục:** test ánh xạ nhập (`detect_keys`, chuẩn hoá `LOAI`/`MA_ICD`), `SoDangKyDanhMucTest` 13 bộ, `DanhMucTraCuuSoDangKyTest`, seeder 13 mã.
 
-**Tệp mẫu:** test đọc `docs/danh-muc/PL1_TT01_2025.xlsx` và khẳng định: 186 dòng dữ liệu; 62 STT phân biệt; đúng 4 dòng `TRU` là `C38.4`/16, `C83.5`/23, `D61.9`/25, `G04.2`/38; STT 22 có 98 dòng; STT 44 có `I51.2` và `L51.2`; `TUOI_DUOI = 18` đúng ở STT 22, 30, 31, 32, 58.
+**Tệp mẫu:** test đọc `docs/0000 - Danh muc/PL1_TT01_2025.xlsx` và khẳng định: 186 dòng dữ liệu; 62 STT phân biệt; đúng 4 dòng `TRU` là `C38.4`/16, `C83.5`/23, `D61.9`/25, `G04.2`/38; STT 22 có 98 dòng; STT 44 có `I51.2` và `L51.2`; `TUOI_DUOI = 18` đúng ở STT 22, 30, 31, 32, 58.
 
 **Dữ liệu thật (sau khi nạp tệp mẫu vào CSDL dev, chỉ đọc hồ sơ):** chạy checker trên 10 hồ sơ mã 1.17 → đúng 3 lỗi `BENH_NGOAI_PL1` (`G44.0`, `N18.5`, `B44.9`).
 
@@ -212,6 +212,13 @@ Phải chạy migration **trước** khi quy tắc nổ lần đầu: thiếu d�
 - Phụ lục II (mã 1.16) và Phụ lục III.
 - Kiểm `MA_BENH_KT`.
 - Kiểm các điều kiện lâm sàng ngoài tuổi.
+
+## Đính chính khi lập plan
+
+- Tệp mẫu đặt ở `docs/0000 - Danh muc/PL1_TT01_2025.xlsx` (thư mục repo đang dùng cho tệp danh mục mẫu), không phải `docs/danh-muc/`.
+- Tệp mẫu sinh bằng script `scripts/tao-mau-danh-muc-pl1-tt01-2025.php`; dữ liệu 62 dòng Phụ lục I nằm trong script, script và tệp cùng được commit.
+- `detect_keys` của danh mục là `['MA_ICD', 'LOAI', 'TUOI_DUOI']`: cột `STT` có trong rất nhiều tệp Excel và `ExcelColumnMapper` so khớp mờ.
+- Danh mục tra cứu sắp xếp mặc định theo `stt` (một cột), vì `config/danh_muc_tra_cuu.php` chỉ nhận một cặp `[cột, hướng]`.
 
 ## Phụ lục A — 186 dòng danh mục
 
