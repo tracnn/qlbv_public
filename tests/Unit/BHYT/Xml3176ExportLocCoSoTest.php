@@ -5,7 +5,7 @@ namespace Tests\Unit\BHYT;
 use Cache;
 use Tests\TestCase;
 use Illuminate\Http\Request;
-use App\Exports\Xml3176ErrorExport;
+use App\Exports\Xml3176ErrorSheetExport;
 use App\Exports\Xml3176XmlExport;
 use App\Exports\Xml3176Xml7980aExport;
 use App\Services\BHYT\DanhSachCoSo;
@@ -95,7 +95,7 @@ class Xml3176ExportLocCoSoTest extends TestCase
     }
 
     /**
-     * Voi Xml3176ErrorExport, dieu kien ma_cskcb nam trong TRUY VAN CON cat theo ma_lk
+     * Voi Xml3176ErrorSheetExport, dieu kien ma_cskcb nam trong TRUY VAN CON cat theo ma_lk
      * (xem Xml3176LocDanhSach::truyVanMaLk) chu khong o WHERE muc ngoai, nen phai soi
      * chuoi SQL. Van khong dung assertContains tren toan bo SQL mot cach mu quang: bang
      * xml3176_error_results khong co cot ma_cskcb nao trong select, nen chuoi nay chi co
@@ -112,7 +112,7 @@ class Xml3176ExportLocCoSoTest extends TestCase
     /** @test */
     public function xml3176_error_export_ap_bo_loc_co_so_khi_ma_hop_le()
     {
-        $export = new Xml3176ErrorExport($this->loc(['ma_cskcb' => '01929']), $this->danhSach());
+        $export = new Xml3176ErrorSheetExport('XML3', $this->loc(['ma_cskcb' => '01929']), $this->danhSach());
 
         $this->khangDinhCoLocTrongTruyVanCon($export->query(), '01929');
     }
@@ -120,7 +120,7 @@ class Xml3176ExportLocCoSoTest extends TestCase
     /** @test */
     public function xml3176_error_export_khong_loc_khi_ma_khong_hop_le()
     {
-        $export = new Xml3176ErrorExport($this->loc(['ma_cskcb' => '99999']), $this->danhSach());
+        $export = new Xml3176ErrorSheetExport('XML3', $this->loc(['ma_cskcb' => '99999']), $this->danhSach());
 
         $this->assertNotContains('ma_cskcb', $export->query()->toSql());
         $this->assertNotContains('99999', $export->query()->getBindings());
