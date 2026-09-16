@@ -1,5 +1,17 @@
 # 15/09/2026
 
+- **File xuất danh sách lỗi tách thành 19 sheet, thay cho 2 sheet như trước.** Mười lăm sheet `XML1`…`XML15` theo đúng loại XML, một sheet `XMLComplete` cho lỗi liên bảng, sheet `Lỗi thẻ BHYT` giữ như cũ, và hai sheet danh mục tra cứu ở cuối: `DM khoa-giường`, `DM NVYT`. Thứ tự sheet cố định, và **luôn đủ 15 sheet XML kể cả khi sheet đó không có lỗi nào** — sheet trống chỉ có dòng tiêu đề, để vị trí sheet không đổi giữa các lần xuất.
+
+- **Mỗi sheet lỗi có thêm cột Mã Khoa**, nằm ngay sau Mã Liên Kết. Lấy khoa của **chính dòng lỗi** khi bảng XML có lưu khoa: XML2 và XML3 lấy theo dòng thuốc / dòng dịch vụ, XML7 lấy khoa ra viện. Các bảng còn lại không lưu khoa nên lấy khoa của hồ sơ. Sheet lỗi thẻ cũng có cột này. Riêng XML4 **cố ý không** suy khoa từ dòng dịch vụ tương ứng: một mã dịch vụ có thể xuất hiện ở nhiều khoa trong cùng hồ sơ nên suy như vậy là đoán.
+
+- **Hai sheet danh mục để dò tên khoa, tên nhân viên từ mã trên sheet lỗi.** Chúng xuất **toàn bộ** danh mục, không cắt theo khoảng ngày hay theo hồ sơ đang lọc — vì nếu chỉ giữ những mã có mặt trong sheet lỗi thì không dò ra được **mã sai**, mà mã sai mới là thứ cần tìm. Mọi ô của hai sheet này ghi dạng chữ để mã cơ sở `01929` và số định danh không bị Excel cắt mất số 0 đứng đầu.
+
+- **Đã kiểm trên dữ liệu thật:** tổng số dòng của 16 sheet lỗi khớp đúng **318.446** dòng lỗi gốc, kể cả khi lọc theo khoa. Xuất theo khoảng ngày vào viện 05–21/08 (**54.037 dòng lỗi**) chạy xong trong **98 giây**, bộ nhớ đỉnh **584 MB**.
+
+- **Giới hạn cần biết: xuất toàn bộ mà không lọc gì thì không xong.** Với 318 nghìn dòng lỗi, cả bản cũ lẫn bản mới đều chưa kết thúc sau 25 phút. Đây là hạn chế có sẵn từ trước, không phải do đợt này. **Nên lọc khoảng ngày trước khi bấm xuất.**
+
+- **Phần xuất lỗi này không cần cài đặt gì** — không có migration, không đổi cấu hình.
+
 - **Ba quy tắc mới theo mã đối tượng khám chữa bệnh, đều ở mức cảnh báo, không chặn xuất hồ sơ.** Mã 1.1: mọi mã trong `MA_DKBD` (tách theo `;`) phải bằng `MA_CSKCB` — đến đúng nơi đăng ký ban đầu mà lại khai khác đi thì bị bắt. Mã 3.6: `MA_KHUVUC` không được để trống. Mã 1.17: `MA_BENH_CHINH` phải thuộc Phụ lục I Thông tư 01/2025/TT-BYT — 62 dòng bệnh được tự đến khám ở cơ sở cấp chuyên sâu mà không cần giấy chuyển tuyến, trong đó 5 dòng chỉ được tự đến khi người bệnh **dưới 18 tuổi**, quy tắc có kiểm cả điều kiện tuổi này.
 
 - **Bước vận hành mới, riêng của đợt này và bắt buộc: phải tự nhập tệp `docs/0000 - Danh muc/PL1_TT01_2025.xlsx` (186 dòng) qua màn *Nhập danh mục*.** Khác hai quy tắc kia không cần thêm gì, quy tắc 1.17 sống nhờ danh mục này. **Chưa nhập thì quy tắc im lặng hoàn toàn** — không báo lỗi hồ sơ nào và cũng không có dấu hiệu gì trên màn hình cho biết nó đang không chạy, vì danh mục rỗng được coi là "không đủ căn cứ nên không báo" giống hệt trạng thái "đã kiểm và không có bệnh nào ngoài phụ lục". Sau khi nhập, xem lại được ở khu *Danh mục tra cứu*.
