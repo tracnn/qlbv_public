@@ -7,7 +7,7 @@ use Tests\TestCase;
 use App\Services\CatalogImportService;
 
 /**
- * Hai danh mục dùng chung toàn quốc cũng phải ghi theo lô.
+ * administrative_unit va medical_organization dung chung toan quoc cung phai ghi theo lo.
  *
  * Do trong CSDL: medical_organizations 13.348 dong, administrative_units 10.542 dong - cung
  * co voi nguong "10.000 dong lam dinh bo nho 208 MB" da do duoc truoc day, va van di duong
@@ -15,7 +15,9 @@ use App\Services\CatalogImportService;
  *
  * Hai danh muc nay co ngu nghia LAM MOI TRON BO: tat is_active cua toan bo ban ghi cu roi
  * bat lai cho dong co trong tep, tuc dong khong con trong tep se nam lai o trang thai tat.
- * Chuyen sang ghi theo lo phai giu nguyen ngu nghia do.
+ * Chuyen sang ghi theo lo phai giu nguyen ngu nghia do. Tu 10/09/2026 va 15/09/2026 co them
+ * dvkt_can_ma_may va benh_pl1_cap_chuyen_sau cung ngu nghia nay - xem
+ * CatalogImportService::LAM_MOI_TRON_BO, gio la BON danh muc chu khong con la hai.
  */
 class NhapDanhMucLonTheoLoTest extends TestCase
 {
@@ -41,7 +43,7 @@ class NhapDanhMucLonTheoLoTest extends TestCase
     }
 
     /** @test */
-    public function chi_ba_danh_muc_nay_lam_moi_tron_bo()
+    public function chi_bon_danh_muc_nay_lam_moi_tron_bo()
     {
         // Danh muc khac chi cap nhat THEM: dua nham vao day se tat is_active cua du lieu cu
         // ma khong bat lai. Dieu kien de duoc vao day: danh muc DUNG CHUNG TOAN QUOC va bang

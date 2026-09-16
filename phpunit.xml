@@ -40,6 +40,21 @@
              tests/Unit/OrderCheck doc va GHI bang that (medicine_catalogs). Tren sqlite
              rong chung khong chay duoc, va mot bo test tat tieng thi khong bao ve duoc gi.
 
+             qlbv_test LECH SCHEMA so voi migration va bang migrations cua no khong dang tin
+             (dung tu dump, khong phai chay migrate that) - `php artisan migrate` day du se co
+             tao lai hang tram bang da co, DUNG CHAY. Khi them mot bang moi (vi du migration
+             2026_09_15_100000_create_benh_pl1_cap_chuyen_sau_table) ma test doc thang bang do
+             (SHOW COLUMNS, Schema::hasTable...), phai tao rieng bang ay trong qlbv_test:
+               1. Copy DUY NHAT tep migration can thiet sang mot thu muc tam ngoai
+                  database/migrations/ (vi du tmp_migrate/).
+               2. Chay artisan migrate voi bien moi truong DB_DATABASE tro sang qlbv_test,
+                  cong hai tuy chon: duong dan toi thu muc tam, va bo qua hoi xac nhan. Cu
+                  phap day du (hai gach ngang khong go duoc trong comment XML) nam trong
+                  docblock dau tep database/migrations/2026_09_15_100000_create_benh_pl1_cap_chuyen_sau_table.php.
+                  Migrator chi glob dung thu muc tam nay nen chi CREATE dung mot bang.
+               3. Xoa thu muc tam. KHONG commit no.
+             Ve lau dai nen dung lai qlbv_test tu schema that cua qlbv (con treo, chua lam).
+
              force="true" LA BAT BUOC, khong phai trang tri. PHPUnit 6
              (vendor/phpunit/phpunit/src/Util/Configuration.php, handlePHPConfiguration())
              chi goi putenv() khi getenv($name) === false - tuc khi bien do CHUA co san. Tren

@@ -60,8 +60,9 @@ class CatalogImportService
      * Danh muc LAM MOI TRON BO: tat is_active cua toan bo ban ghi cu roi bat lai cho dong co
      * trong tep, tuc dong khong con trong tep nam lai o trang thai tat.
      *
-     * Chi hai danh muc dung chung toan quoc nay theo ngu nghia do. Dua danh muc khac vao day
-     * la tat is_active cua du lieu cu ma khong bat lai.
+     * Chi bon danh muc dung chung toan quoc nay theo ngu nghia do (them dvkt_can_ma_may
+     * 10/09/2026, benh_pl1_cap_chuyen_sau 15/09/2026). Dua danh muc khac vao day la tat
+     * is_active cua du lieu cu ma khong bat lai.
      */
     const LAM_MOI_TRON_BO = ['administrative_unit', 'medical_organization', 'dvkt_can_ma_may', 'benh_pl1_cap_chuyen_sau'];
 
