@@ -15,6 +15,7 @@ use App\Services\Tt12\Tt12DetailTabs;
 use App\Services\Tt12\Tt12QuyetDinhGui;
 use App\Services\Tt12\Tt12XepHangKyGui;
 use App\Services\Tt12\Tt12XoaHoSo;
+use App\Services\Tt12\Tt12XuatXml;
 use App\Services\Tt12\Tt12DongBoDanhMuc;
 use App\Jobs\SignTt12Job;
 use App\Jobs\SubmitTt12Job;
@@ -45,6 +46,15 @@ class BHYTTt12Controller extends Controller
      * nay hang doi bi don thi day la con so dau tien nen ha.
      */
     const TRAN_GUI_NHIEU = 50;
+
+    /**
+     * Tran so ho so mot luot XUAT XML.
+     *
+     * Bang tran gui de nguoi dung khong phai nho hai con so cho cung mot o tich. Xuat la
+     * thao tac CHI DOC nen tran o day chi de giu bo nho va thoi gian dung ZIP trong tam -
+     * may chu gioi han PHP 128MB - chu khong phai de chan mot hanh dong nguy hiem.
+     */
+    const TRAN_XUAT_XML = 50;
 
     public function importIndex()
     {
@@ -653,6 +663,139 @@ class BHYTTt12Controller extends Controller
     }
 
     /** @return string noi dung XML da ky, hoac thong bao neu chua co */
+    /**
+     * Xuat XML cua cac ho so da tich chon, kem chu ky so neu co.
+     *
+     * MOT ho so -> tai thang .xml. NHIEU ho so -> dong ZIP kem tep ke.
+     *
+     * Thao tac CHI DOC: khong sua gi, khong goi cong. Vi vay dung quyen cua man danh sach,
+     * khong tach quyen rieng.
+     */
+    public function xuatXml(Request $request)
+    {
+        $ma = $request->input('ma_ho_so');
+        $ma = is_array($ma) ? $ma : array();
+
+        $ma = array_values(array_unique(array_filter(array_map(function ($m) {
+            return trim((string) $m);
+        }, $ma), 'strlen')));
+
+        if (empty($ma)) {
+            return $this->traLoi($request, false, 'Chưa chọn hồ sơ nào.');
+        }
+
+        if (count($ma) > self::TRAN_XUAT_XML) {
+            return $this->traLoi($request, false, 'Mỗi lượt chỉ xuất tối đa '
+                . self::TRAN_XUAT_XML . ' hồ sơ. Đang chọn ' . count($ma) . ' hồ sơ.');
+        }
+
+        $cacTep = array();
+        $dongKe = array();
+
+        foreach ($ma as $maHoSo) {
+            $hoSo = Tt12HoSo::where('ma_ho_so', $maHoSo)->first();
+
+            if ($hoSo === null) {
+                $dongKe[] = array($maHoSo, '', 'Không tìm thấy', 'Hồ sơ không còn trong phần mềm');
+                continue;
+            }
+
+            $kq = Tt12XuatXml::cua($hoSo);
+
+            $dongKe[] = array(
+                $maHoSo,
+                (string) $hoSo->mau,
+                Tt12XuatXml::nhan($kq['trang_thai']),
+                $kq['ly_do'],
+            );
+
+            if ($kq['trang_thai'] === Tt12XuatXml::HONG) {
+                continue;
+            }
+
+            $cacTep[$kq['ten_tep']] = $kq['noi_dung'];
+        }
+
+        if (empty($cacTep)) {
+            return $this->traLoi($request, false,
+                'Không hồ sơ nào xuất được XML. Kiểm tra lại danh sách đã chọn.');
+        }
+
+        // MOT tep thi tai thang, khong boc ZIP: bat nguoi dung giai nen mot tep la them mot
+        // buoc vo ich cho truong hop thuong gap nhat.
+        if (count($cacTep) === 1 && count($dongKe) === 1) {
+            $ten = key($cacTep);
+
+            return response($cacTep[$ten], 200, array(
+                'Content-Type'        => 'application/xml; charset=UTF-8',
+                'Content-Disposition' => 'attachment; filename="' . $ten . '"',
+            ));
+        }
+
+        return $this->dongZip($cacTep, $dongKe);
+    }
+
+    /**
+     * Dong ZIP trong thu muc tam roi tra ve, xoa tep tam sau khi gui.
+     *
+     * TEP KE luon co mat: khong co no thi nguoi mo ZIP thay thieu vai tep ma khong biet vi
+     * sao - va se tuong phan mem lam mat, thay vi biet rang ho so do khong co dong nao.
+     */
+    private function dongZip(array $cacTep, array $dongKe)
+    {
+        $duongDan = tempnam(sys_get_temp_dir(), 'tt12xml');
+
+        $zip = new \ZipArchive();
+
+        if ($zip->open($duongDan, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) !== true) {
+            @unlink($duongDan);
+
+            return response()->json(array(
+                'thanh_cong' => false,
+                'thong_diep' => 'Không tạo được tệp ZIP trên máy chủ.',
+            ), 500);
+        }
+
+        foreach ($cacTep as $ten => $noiDung) {
+            $zip->addFromString($ten, $noiDung);
+        }
+
+        $zip->addFromString('_ke-khai.csv', $this->tepKe($dongKe));
+        $zip->close();
+
+        $tenZip = 'tt12-xml-' . date('Ymd-His') . '.zip';
+
+        return response()->download($duongDan, $tenZip, array(
+            'Content-Type' => 'application/zip',
+        ))->deleteFileAfterSend(true);
+    }
+
+    /**
+     * Tep ke dang CSV, co BOM UTF-8.
+     *
+     * BOM la BAT BUOC: khong co no thi Excel tren Windows doc CSV theo bang ma he thong va
+     * moi dau tieng Viet thanh ky tu la - dung loi da gap o cac tep xuat truoc.
+     */
+    private function tepKe(array $dongKe)
+    {
+        $noi = "\xEF\xBB\xBF";
+        $noi .= "Mã hồ sơ,Mẫu,Tình trạng,Ghi chú\r\n";
+
+        foreach ($dongKe as $dong) {
+            $o = array();
+
+            foreach ($dong as $gt) {
+                // Boc dau nhay kep va nhan doi dau nhay ben trong - quy tac CSV. Ly do loi
+                // co the chua dau phay va xuong dong.
+                $o[] = '"' . str_replace('"', '""', (string) $gt) . '"';
+            }
+
+            $noi .= implode(',', $o) . "\r\n";
+        }
+
+        return $noi;
+    }
+
     private function docXml(Tt12HoSo $hoSo)
     {
         if (empty($hoSo->duong_dan_da_ky)) {

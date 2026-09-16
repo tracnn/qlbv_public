@@ -660,6 +660,9 @@ Route::group(['middleware' => ['auth']], function () {
             ->name('bhyt.tt12.xuat.danh-sach');
         Route::get('tt12/xuat/loi', 'BHYT\BHYTTt12Controller@xuatLoi')
             ->name('bhyt.tt12.xuat.loi');
+        // Thao tac CHI DOC - dung quyen cua man danh sach, khong tach quyen rieng.
+        Route::post('tt12/xuat/xml', 'BHYT\BHYTTt12Controller@xuatXml')
+            ->name('bhyt.tt12.xuat.xml');
         Route::get('tt12/xuat/nhat-ky', 'BHYT\BHYTTt12Controller@xuatNhatKy')
             ->name('bhyt.tt12.xuat.nhat-ky');
         // Duong tinh, phai dat TRUOC khoi tham so {ma_ho_so} ben duoi - dung ly do voi

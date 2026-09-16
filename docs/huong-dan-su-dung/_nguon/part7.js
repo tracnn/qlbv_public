@@ -176,6 +176,32 @@ module.exports = function part7() {
     ),
     p('Ba tệp xuất đều áp đúng bộ lọc đang hiển thị trên màn hình, nên tệp tải về khớp với bảng đang xem.'),
 
+    h2('7.10bis. Xuất XML kèm chữ ký số'),
+    p('Ngoài ba tệp Excel ở mục trên, màn danh sách còn xuất được chính tệp XML đã gửi hoặc sắp gửi lên cổng Bảo hiểm xã hội. Dùng khi cần lưu hồ sơ, đối chiếu với cơ quan bảo hiểm, hoặc gửi cho bên thứ ba kiểm tra.'),
+    steps([
+        ['1', 'Tích chọn các hồ sơ cần xuất — dùng chung ô tích với nút Ký và gửi đã chọn.', 'Số trên nút Xuất XML đổi theo.'],
+        ['2', 'Bấm Xuất XML đã chọn.', 'Một hồ sơ thì tải thẳng tệp .xml; nhiều hồ sơ thì tải về một tệp ZIP.'],
+    ]),
+    p('Mỗi lượt tối đa 50 hồ sơ, bằng trần của nút Ký và gửi để không phải nhớ hai con số cho cùng một ô tích.'),
+
+    h3('7.10bis.1. Hai loại bản xuất — đọc tên tệp để phân biệt'),
+    p('Tên tệp luôn nói rõ bản nào, vì hai bản khác nhau về giá trị pháp lý:'),
+    table(
+        ['Tên tệp', 'Là bản gì'],
+        [
+            ['…-da-ky.xml', 'Bản THẬT đã ký số và đã gửi lên cổng, chữ ký nằm sẵn bên trong. Đây là bản dùng để đối chiếu với cơ quan bảo hiểm.'],
+            ['…-chua-ky.xml', 'Bản dựng lại từ dữ liệu trong phần mềm, thẻ chữ ký để trống. Dùng để xem trước nội dung sẽ gửi.'],
+        ],
+        [2400, 6620],
+    ),
+    note('Lưu ý:', 'Bản chưa ký được dựng tại đúng thời điểm bấm xuất. Nếu sau đó dữ liệu thay đổi rồi mới ký thì bản đã ký sẽ khác bản này. Với bản đã ký thì không có chuyện đó — tệp đó là bản thật đã gửi, không dựng lại.'),
+    p('Có một trường hợp đặc biệt: hồ sơ hiển thị đã ký nhưng tệp trên máy chủ không còn. Khi đó phần mềm vẫn dựng lại nội dung nhưng đặt tên là bản chưa ký, và ghi rõ lý do trong tệp kê — để không ai cầm một bản không có chữ ký mà tưởng là bản đã ký.'),
+
+    h3('7.10bis.2. Tệp kê trong ZIP'),
+    p('Mỗi tệp ZIP luôn kèm một tệp _ke-khai.csv liệt kê từng hồ sơ đã chọn: mã hồ sơ, mẫu, tình trạng (Đã ký / Chưa ký / Không xuất được) và ghi chú lý do.'),
+    p('Hồ sơ không xuất được — thường vì không có dòng dữ liệu nào — sẽ không có tệp XML trong ZIP nhưng vẫn có dòng trong tệp kê. Nhờ vậy khi thấy thiếu tệp, mở tệp kê là biết ngay vì sao, thay vì tưởng phần mềm làm mất.'),
+    note('Lưu ý:', 'Một hồ sơ hỏng không làm hỏng cả lượt xuất — các hồ sơ còn lại vẫn ra tệp bình thường.'),
+
     h2('7.11. Xử lý sự cố thường gặp'),
     table(
       ['Hiện tượng', 'Nguyên nhân thường gặp', 'Cách xử lý'],

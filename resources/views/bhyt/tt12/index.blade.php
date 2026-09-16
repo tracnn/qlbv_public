@@ -30,6 +30,9 @@
             <button type="button" id="btn-xuat-nhat-ky" class="btn btn-default btn-sm">
                 <i class="fa fa-file-excel-o"></i> Xuất nhật ký gửi
             </button>
+            <button type="button" id="btn-xuat-xml" class="btn btn-info btn-sm" disabled>
+                <i class="fa fa-file-code-o"></i> Xuất XML đã chọn (<span id="so-da-chon-xml">0</span>)
+            </button>
             <button type="button" id="btn-gui-nhieu" class="btn btn-primary btn-sm" disabled>
                 <i class="fa fa-paper-plane"></i> Ký và gửi đã chọn (<span id="so-da-chon">0</span>)
             </button>
@@ -111,7 +114,9 @@ function tt12CapNhatSoDaChon() {
     var n = tt12DaChon().length;
 
     $('#so-da-chon').text(n);
+    $('#so-da-chon-xml').text(n);
     $('#btn-gui-nhieu').prop('disabled', n === 0);
+    $('#btn-xuat-xml').prop('disabled', n === 0);
 
     var tong = $('#tt12-list tbody input.chon-ho-so').length;
     $('#chon-het-trang').prop('checked', tong > 0 && n === tong);
@@ -420,6 +425,40 @@ $(function () {
     // Khong con nut "Loc" tu lam o day: partials.load_data_button da lo viec do qua
     // fetchData(), kem phep kiem khoang ngay va hieu ung cho. Hai nut cung goi mot viec
     // theo hai duong khac nhau la hai hanh vi phai giu dong bo mai mai.
+
+    // Xuat XML cua cac dong da tich, kem chu ky so neu ho so da ky.
+    //
+    // POST bang FORM AN chu khong $.ajax: phan hoi la mot TEP tai ve (.xml hoac .zip), ma
+    // XMLHttpRequest khong lam trinh duyet hien hop thoai luu tep. Ba nut xuat Excel ben
+    // duoi dung window.location duoc vi chung la GET; o day danh sach ma ho so co the dai
+    // hon gioi han do dai URL nen phai POST.
+    $('#btn-xuat-xml').on('click', function () {
+        var ds = tt12DaChon();
+
+        if (!ds.length) {
+            return;
+        }
+
+        if (ds.length > {{ \App\Http\Controllers\BHYT\BHYTTt12Controller::TRAN_XUAT_XML }}) {
+            alert('Mỗi lượt chỉ xuất tối đa {{ \App\Http\Controllers\BHYT\BHYTTt12Controller::TRAN_XUAT_XML }} hồ sơ. Đang chọn ' + ds.length + ' hồ sơ.');
+            return;
+        }
+
+        var $form = $('<form>')
+            .attr('method', 'POST')
+            .attr('action', '{{ route('bhyt.tt12.xuat.xml') }}')
+            .css('display', 'none');
+
+        $form.append($('<input>').attr({ type: 'hidden', name: '_token', value: '{{ csrf_token() }}' }));
+
+        // .attr('value', ...) chu khong noi chuoi HTML: ma ho so den tu ten tep nguoi dung
+        // tai len, co the chua dau nhay kep.
+        $.each(ds, function (i, ma) {
+            $form.append($('<input>').attr({ type: 'hidden', name: 'ma_ho_so[]', value: ma }));
+        });
+
+        $form.appendTo('body').submit().remove();
+    });
 
     $('#btn-xuat-danh-sach').on('click', function () {
         window.location = '{{ route('bhyt.tt12.xuat.danh-sach') }}?' + $.param(tt12LocDaTai || {});

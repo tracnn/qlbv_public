@@ -15,7 +15,7 @@
  * NGAY_PHAT_HANH cho khớp dòng đó.
  */
 
-const PHIEN_BAN = '1.12';
+const PHIEN_BAN = '1.13';
 
 const NGAY_PHAT_HANH = 'Tháng 9 năm 2026';
 
@@ -27,6 +27,13 @@ const NGAY_PHAT_HANH = 'Tháng 9 năm 2026';
  * thay vì đọc lại cả tài liệu.
  */
 const LICH_SU = [
+  {
+    ban: '1.13',
+    ngay: '16/09/2026',
+    noi_dung:
+      'Danh mục TT12: màn Danh sách hồ sơ xuất được tệp XML kèm chữ ký số. Hồ sơ đã ký lấy đúng bản thật đã gửi lên cổng; hồ sơ chưa ký được dựng lại để xem trước. Tên tệp phân biệt rõ hai loại, và tệp ZIP luôn kèm tệp kê nêu tình trạng từng hồ sơ.',
+    lien_quan: 'Phần VII, mục 7.10bis (mới).',
+  },
   {
     ban: '1.12',
     ngay: '15/09/2026',

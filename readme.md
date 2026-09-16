@@ -1,3 +1,12 @@
+# 16/09/2026
+
+- **Danh mục TT12: xuất được tệp XML kèm chữ ký số từ màn Danh sách hồ sơ.** Tích chọn hồ sơ rồi bấm **Xuất XML đã chọn** — một hồ sơ thì tải thẳng tệp `.xml`, nhiều hồ sơ thì tải về một tệp ZIP. Dùng chung ô tích với nút Ký và gửi, trần 50 hồ sơ mỗi lượt.
+- **"Kèm chữ ký số nếu có" hoá ra là hai nguồn khác nhau.** Hồ sơ **đã ký** lấy đúng tệp trên đĩa — bản thật đã gửi lên cổng, chữ ký nằm sẵn bên trong. Hồ sơ **chưa ký** thì chưa hề có XML nào tồn tại, phải dựng lại từ dữ liệu và bản đó có thẻ chữ ký để trống. **Tên tệp nói rõ bản nào** (`-da-ky` / `-chua-ky`), vì hai bản khác nhau về giá trị pháp lý và người mở ZIP phải phân biệt được mà không cần mở từng tệp.
+- Bản dựng lại dùng **đúng ba dòng mà bộ ký số đang dùng**, nên nó khớp từng byte với bản sắp được ký — miễn dữ liệu không đổi. Viết lại cách dựng lần hai là mở đường cho hai bản lệch nhau mà không ai giải thích được.
+- **Trường hợp hồ sơ ghi đã ký nhưng tệp không còn trên máy chủ** được xử lý riêng: vẫn dựng lại nội dung nhưng đặt tên là bản **chưa ký** và ghi rõ lý do. Nếu lặng lẽ đặt tên `-da-ky`, người dùng cầm một bản không có chữ ký mà tưởng là bản đã ký.
+- **Tệp ZIP luôn kèm `_ke-khai.csv`** nêu tình trạng từng hồ sơ và lý do nếu không xuất được. Không có nó thì người mở ZIP thấy thiếu tệp và tưởng phần mềm làm mất, thay vì biết rằng hồ sơ đó không có dòng dữ liệu nào. Một hồ sơ hỏng không làm hỏng cả lượt xuất.
+- Tài liệu hướng dẫn sử dụng lên phiên bản 1.13.
+
 # 15/09/2026
 
 - **File xuất danh sách lỗi tách thành 19 sheet, thay cho 2 sheet như trước.** Mười lăm sheet `XML1`…`XML15` theo đúng loại XML, một sheet `XMLComplete` cho lỗi liên bảng, sheet `Lỗi thẻ BHYT` giữ như cũ, và hai sheet danh mục tra cứu ở cuối: `DM khoa-giường`, `DM NVYT`. Thứ tự sheet cố định, và **luôn đủ 15 sheet XML kể cả khi sheet đó không có lỗi nào** — sheet trống chỉ có dòng tiêu đề, để vị trí sheet không đổi giữa các lần xuất.
