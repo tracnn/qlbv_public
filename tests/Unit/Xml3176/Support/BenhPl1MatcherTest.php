@@ -118,4 +118,17 @@ class BenhPl1MatcherTest extends TestCase
     {
         $this->assertFalse(BenhPl1Matcher::kiemTra('C25', [], 40)['khop']);
     }
+
+    /** @test */
+    public function loai_viet_hoa_van_chuan_hoa_duoc()
+    {
+        // Dong loai='TRU' viet hoa (SQL tay, seeder khac) khong duoc mat hieu luc loai tru.
+        $danhMuc = [
+            $this->dong(16, 'C38'),
+            $this->dong(16, 'C38.4', 'TRU'),
+        ];
+
+        $kq = BenhPl1Matcher::kiemTra('C38.4', $danhMuc, 40);
+        $this->assertFalse($kq['khop'], 'C38.4 phai bi tru du loai ghi hoa hay thuong');
+    }
 }

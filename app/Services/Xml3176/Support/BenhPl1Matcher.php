@@ -62,10 +62,11 @@ class BenhPl1Matcher
             }
 
             $stt = (int) $d['stt'];
+            $loai = mb_strtolower(trim((string) $d['loai']));
 
-            if ($d['loai'] === self::TRU) {
+            if ($loai === self::TRU) {
                 $theoStt[$stt]['tru'] = true;
-            } elseif ($d['loai'] === self::BAO_GOM) {
+            } elseif ($loai === self::BAO_GOM) {
                 $tuoiDuoi = ($d['tuoi_duoi'] === null || $d['tuoi_duoi'] === '') ? null : (int) $d['tuoi_duoi'];
                 $theoStt[$stt]['bao_gom'][] = $tuoiDuoi;
             }
