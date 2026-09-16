@@ -67,13 +67,25 @@ class Xml3176ErrorCatalogDoiTuongKcbSeederTest extends TestCase
     }
 
     /** @test */
-    public function migration_bo_sung_goi_seeder()
+    public function migration_bo_sung_chi_tao_ba_ma_moi()
     {
         $files = glob(database_path('migrations/*nap_ma_loi_doi_tuong_kcb_bo_sung.php'));
         $this->assertCount(1, $files, 'Khong tim thay migration nap ma loi bo sung');
 
         $src = file_get_contents($files[0]);
-        $this->assertContains('Xml3176ErrorCatalogDoiTuongKcbSeeder', $src);
+
+        $ma = [
+            'XML1_DOI_TUONG_KCB_DKBD_KHAC_CSKCB',
+            'XML1_DOI_TUONG_KCB_THIEU_MA_KHUVUC',
+            'XML1_DOI_TUONG_KCB_BENH_NGOAI_PL1',
+        ];
+
+        foreach ($ma as $m) {
+            $this->assertContains($m, $src, "Migration bo sung thieu ma $m");
+        }
+
+        $this->assertContains('firstOrCreate', $src);
+        $this->assertNotContains('Xml3176ErrorCatalogDoiTuongKcbSeeder', $src, 'Khong duoc goi lai seeder: se ghi de cau hinh 10 ma cu nguoi van hanh da tu chinh');
         $this->assertNotContains('->change()', $src, 'Du an khong co doctrine/dbal');
     }
 }
