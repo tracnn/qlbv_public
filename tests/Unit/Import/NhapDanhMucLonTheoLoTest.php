@@ -50,7 +50,9 @@ class NhapDanhMucLonTheoLoTest extends TestCase
         // 10/09/2026 them 'dvkt_can_ma_may' (DVKT bat buoc co ma may, BHXH ban hanh): dung
         // chung toan quoc, bang co is_active, va nap lai phai thay tron bo vi BHXH co the
         // BO mot ma khoi danh muc - cap nhat them se giu lai ma da bi bo.
-        $this->assertSame(['administrative_unit', 'medical_organization', 'dvkt_can_ma_may'],
+        // 15/09/2026 them 'benh_pl1_cap_chuyen_sau': danh muc quoc gia, bang co is_active, Bo
+        // Y te sua doi Phu luc I thi phai thay tron bo.
+        $this->assertSame(['administrative_unit', 'medical_organization', 'dvkt_can_ma_may', 'benh_pl1_cap_chuyen_sau'],
             CatalogImportService::LAM_MOI_TRON_BO);
     }
 

@@ -19,13 +19,15 @@ class SoDangKyDanhMucTest extends TestCase
      *
      * 11 -> 12 tu 04/09/2026: commit bfa14da them 'dvkt_can_ma_may' (danh muc DVKT can
      * ma may) vao ca hai cau hinh nhung khong nang con so nay len.
+     * 12 -> 13 tu 15/09/2026: them 'benh_pl1_cap_chuyen_sau' (danh muc benh Phu luc I TT
+     * 01/2025).
      */
     /** @test */
-    public function du_12_bo_va_trung_khoa_voi_cau_hinh_nhap_khau()
+    public function du_13_bo_va_trung_khoa_voi_cau_hinh_nhap_khau()
     {
         $so = $this->so();
 
-        $this->assertCount(12, $so);
+        $this->assertCount(13, $so);
 
         $khoaSo = array_keys($so);
         $khoaNhap = array_keys(config('catalog_import_mapping'));

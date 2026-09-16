@@ -238,5 +238,22 @@ return [
         'required_fields' => ['ma_dvkt'],
         'unique_keys' => ['ma_dvkt'],
     ],
+
+    // Danh muc benh Phu luc I Thong tu 01/2025/TT-BYT (ma doi tuong 1.17). Tep mau:
+    // docs/0000 - Danh muc/PL1_TT01_2025.xlsx. KHONG dung 'STT' lam detect_keys: cot STT co
+    // trong rat nhieu tep Excel va ExcelColumnMapper so khop mo.
+    'benh_pl1_cap_chuyen_sau' => [
+        'detect_keys' => ['MA_ICD', 'LOAI', 'TUOI_DUOI'],
+        'mapping' => [
+            'stt'       => ['STT'],
+            'ten_benh'  => ['TEN_BENH'],
+            'ma_icd'    => ['MA_ICD'],
+            'loai'      => ['LOAI'],
+            'tuoi_duoi' => ['TUOI_DUOI'],
+            'dieu_kien' => ['DIEU_KIEN'],
+        ],
+        'required_fields' => ['stt', 'ma_icd', 'loai'],
+        'unique_keys' => ['stt', 'ma_icd', 'loai'],
+    ],
 ];
 

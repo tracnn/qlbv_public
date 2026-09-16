@@ -53,7 +53,8 @@ class CatalogImportService
      */
     const GHI_THEO_LO = ['medicine', 'medical_supply', 'service', 'icd10', 'icd_yhct',
                          'administrative_unit', 'medical_organization', 'medical_staff',
-                         'department_bed', 'equipment', 'job_categories', 'dvkt_can_ma_may'];
+                         'department_bed', 'equipment', 'job_categories', 'dvkt_can_ma_may',
+                         'benh_pl1_cap_chuyen_sau'];
 
     /**
      * Danh muc LAM MOI TRON BO: tat is_active cua toan bo ban ghi cu roi bat lai cho dong co
@@ -62,7 +63,7 @@ class CatalogImportService
      * Chi hai danh muc dung chung toan quoc nay theo ngu nghia do. Dua danh muc khac vao day
      * la tat is_active cua du lieu cu ma khong bat lai.
      */
-    const LAM_MOI_TRON_BO = ['administrative_unit', 'medical_organization', 'dvkt_can_ma_may'];
+    const LAM_MOI_TRON_BO = ['administrative_unit', 'medical_organization', 'dvkt_can_ma_may', 'benh_pl1_cap_chuyen_sau'];
 
     /**
      * Bat lai trang thai dang dung cho dong co trong tep.
@@ -241,6 +242,36 @@ class CatalogImportService
     }
 
     /**
+     * Chuan hoa mot dong danh muc benh Phu luc I truoc khi ghi.
+     *
+     * LOAI trong tep viet hoa BAO_GOM / TRU cho de go; cot loai luu chu thuong. MA_ICD bo ky
+     * hieu phan loai kep († *) va viet hoa - dung CUNG ham chuan hoa ma ma quy tac 1.17 dung
+     * khi so khop, de hai ben khong lech nhau.
+     *
+     * Tra null khi LOAI khong hop le: dong do phai bi bo qua va bao ra, khong duoc ghi -
+     * mot dong mau ma sai loai se lam quy tac bao oan hoac bo sot im lang.
+     *
+     * Ham THUAN de kiem duoc.
+     */
+    public static function chuanHoaBenhPl1(array $duLieu)
+    {
+        $loai = mb_strtolower(trim((string) (isset($duLieu['loai']) ? $duLieu['loai'] : '')));
+
+        if (!in_array($loai, [\App\Services\Xml3176\Support\BenhPl1Matcher::BAO_GOM,
+                              \App\Services\Xml3176\Support\BenhPl1Matcher::TRU], true)) {
+            return null;
+        }
+
+        $duLieu['loai'] = $loai;
+
+        if (array_key_exists('ma_icd', $duLieu)) {
+            $duLieu['ma_icd'] = \App\Services\Xml3176\Support\BenhPl1Matcher::chuanHoaMa($duLieu['ma_icd']);
+        }
+
+        return $duLieu;
+    }
+
+    /**
      * Gan ma co so cho khoa duy nhat khi dong khong tu khai.
      *
      * Ham thuan de kiem duoc. Gia tri trong TEP luon thang: mot tep co the chua nhieu co
@@ -358,6 +389,7 @@ class CatalogImportService
             'equipment' => 'equipment_catalogs',
             'job_categories' => 'job_categories',
             'dvkt_can_ma_may' => 'dvkt_can_ma_may',
+            'benh_pl1_cap_chuyen_sau' => 'benh_pl1_cap_chuyen_sau',
         ];
 
         return $map[$type];
@@ -410,6 +442,16 @@ class CatalogImportService
             // SAU chuanHoaSo: is_chronic la cot tinyint nen chuanHoaSo quy o de trong ve null,
             // ma cot do NOT NULL. Dao thu tu se lam chinh gia tri false bi quy ve null.
             $duLieu = self::chuanHoaManTinh($duLieu);
+
+            if ($tt['type'] === 'benh_pl1_cap_chuyen_sau') {
+                $duLieu = self::chuanHoaBenhPl1($duLieu);
+
+                if ($duLieu === null) {
+                    $this->ketQua->themBoQua($dongExcel, 'LOAI phải là BAO_GOM hoặc TRU');
+                    continue;
+                }
+            }
+
             $duLieu = self::ganDangDung($duLieu, $tt['type']);
             // Cuoi cung: mot truong khong phai cot that la loi "Unknown column" cho CA lo.
             $duLieu = self::giuCotCoThat($duLieu, $this->cotCua($bang));
