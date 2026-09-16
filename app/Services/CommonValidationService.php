@@ -9,6 +9,7 @@ use App\Models\BHYT\IcdYhctCategory;
 use App\Models\BHYT\AdministrativeUnit;
 use App\Models\BHYT\JobCategory;
 use App\Models\BHYT\DvktCanMaMay;
+use App\Models\BHYT\BenhPl1CapChuyenSau;
 use App\Services\Xml3176\Support\MaDvktMatcher;
 
 class CommonValidationService
@@ -106,6 +107,29 @@ class CommonValidationService
     public function coDanhMucDvktCanMaMay()
     {
         return DvktCanMaMay::where('is_active', true)->exists();
+    }
+
+    /**
+     * Cac dong dang dung cua danh muc benh Phu luc I Thong tu 01/2025/TT-BYT.
+     *
+     * KHONG luu dem: queue worker song lau, dem se giu danh muc cu sau khi nguoi dung nap lai.
+     * Chi ho so ma doi tuong 1.17 moi goi ham nay nen mot truy van moi ho so la khong dang ke.
+     *
+     * @return array cac dong ['stt' => int, 'ma_icd' => string, 'loai' => string, 'tuoi_duoi' => int|null]
+     */
+    public function danhMucBenhPl1()
+    {
+        return BenhPl1CapChuyenSau::where('is_active', true)
+            ->get(['stt', 'ma_icd', 'loai', 'tuoi_duoi'])
+            ->map(function ($d) {
+                return [
+                    'stt'       => (int) $d->stt,
+                    'ma_icd'    => (string) $d->ma_icd,
+                    'loai'      => (string) $d->loai,
+                    'tuoi_duoi' => $d->tuoi_duoi === null ? null : (int) $d->tuoi_duoi,
+                ];
+            })
+            ->all();
     }
 
     /**
