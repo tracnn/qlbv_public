@@ -4,14 +4,14 @@ use Illuminate\Database\Seeder;
 use App\Models\BHYT\Xml3176ErrorCatalog;
 
 /**
- * Nap 10 error_code cua bo quy tac ma doi tuong den KCB (Phu luc 1 do Bo Y te ban hanh).
+ * Nap 13 error_code cua bo quy tac ma doi tuong den KCB (Phu luc 1 do Bo Y te ban hanh).
  *
  * BAT BUOC chay TRUOC khi bat quy tac: thieu dong danh muc thi
  * getCriticalErrorStatus() tra mac dinh TRUE, quy tac no lan dau se TU GHI dong danh muc
  * o muc nghiem trong va chan xuat XML ca lo - chay seeder sau do cung khong go duoc cac
  * dong loi da ghi. Vi vay co mot migration goi seeder nay.
  *
- * Muc nghiem trong duoc dat khong chan xuat XML cho ca 10 ma: dot nay do duoc 3 ho so vi
+ * Muc nghiem trong duoc dat khong chan xuat XML cho ca 13 ma: dot nay do duoc 3 ho so vi
  * pham tren 1.213, ba quy tac o XMLComplete chua co ho so nao de chay. Nguoi van hanh tu
  * bat len qua man danh muc ma loi sau khi quan sat.
  *
@@ -32,6 +32,9 @@ class Xml3176ErrorCatalogDoiTuongKcbSeeder extends Seeder
             ['XML1', 'XML1_DOI_TUONG_KCB_TU_DEN_CO_NOI_DI', 'Người bệnh tự đến nhưng lại có mã nơi chuyển đi', 'Các mã tự đến (1.11-1.18, 3.1, 3.2, 3.3, 3.6) thì MA_NOI_DI phải để trống'],
             ['XML1', 'XML1_DOI_TUONG_KCB_THIEU_THE_BHYT', 'Đề nghị quỹ BHYT thanh toán nhưng không có mã thẻ', 'Chỉ báo khi T_BHTT > 0; cấp cứu chưa xuất trình thẻ là ngoại lệ đã biết'],
             ['XML1', 'XML1_DOI_TUONG_KCB_THIEU_GIAY_CHUYEN_TUYEN', 'Thiếu số phiếu chuyển cơ sở KCB hoặc số phiếu hẹn khám lại', 'Mã 1.3 và 1.5 khai sẵn là đến kèm một tờ phiếu nên GIAY_CHUYEN_TUYEN phải ghi số phiếu đó'],
+            ['XML1', 'XML1_DOI_TUONG_KCB_DKBD_KHAC_CSKCB', 'Đến đúng nơi đăng ký ban đầu nhưng MA_DKBD khác MA_CSKCB', 'Mã 1.1: mọi mã trong MA_DKBD phải bằng MA_CSKCB'],
+            ['XML1', 'XML1_DOI_TUONG_KCB_THIEU_MA_KHUVUC', 'Thiếu mã khu vực', 'Mã 3.6: MA_KHUVUC không được để trống'],
+            ['XML1', 'XML1_DOI_TUONG_KCB_BENH_NGOAI_PL1', 'Tự đến cơ sở cấp chuyên sâu nhưng bệnh không thuộc Phụ lục I TT 01/2025', 'Mã 1.17: MA_BENH_CHINH phải thuộc danh mục bệnh Phụ lục I Thông tư 01/2025/TT-BYT, kể cả điều kiện người dưới 18 tuổi'],
             ['XML1', 'XML1_DOI_TUONG_KCB_DUNG_DKBD_SAI_MA', 'Đến đúng nơi đăng ký ban đầu nhưng khai mã đối tượng khẳng định đến từ nơi khác', 'MA_CSKCB nằm trong MA_DKBD, mã không có dung_dkbd, và mã có tu_den hoặc can_noi_di'],
             ['XML1', 'XML1_DOI_TUONG_KCB_31_NGOAI_TRU_CO_BHTT', 'Đối tượng này khám ngoại trú không được quỹ BHYT thanh toán', 'Mã 3.1 hưởng 40% nội trú và 0% ngoại trú, và MA_LOAI_KCB khác rỗng'],
             ['XMLComplete', 'XMLComplete_DOI_TUONG_KCB_MUC_HUONG_CO_DINH', 'Mức hưởng không đúng quy định của mã đối tượng', 'Mã 1.2 hưởng 100% không phụ thuộc mức hưởng trên thẻ BHYT'],

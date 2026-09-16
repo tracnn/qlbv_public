@@ -12,7 +12,7 @@ class Xml3176ErrorCatalogDoiTuongKcbSeederTest extends TestCase
     }
 
     /** @test */
-    public function seeder_khai_du_10_ma_loi()
+    public function seeder_khai_du_13_ma_loi()
     {
         $src = $this->nguon();
 
@@ -24,6 +24,9 @@ class Xml3176ErrorCatalogDoiTuongKcbSeederTest extends TestCase
             'XML1_DOI_TUONG_KCB_TU_DEN_CO_NOI_DI',
             'XML1_DOI_TUONG_KCB_THIEU_THE_BHYT',
             'XML1_DOI_TUONG_KCB_THIEU_GIAY_CHUYEN_TUYEN',
+            'XML1_DOI_TUONG_KCB_DKBD_KHAC_CSKCB',
+            'XML1_DOI_TUONG_KCB_THIEU_MA_KHUVUC',
+            'XML1_DOI_TUONG_KCB_BENH_NGOAI_PL1',
             'XML1_DOI_TUONG_KCB_DUNG_DKBD_SAI_MA',
             'XML1_DOI_TUONG_KCB_31_NGOAI_TRU_CO_BHTT',
             'XMLComplete_DOI_TUONG_KCB_MUC_HUONG_CO_DINH',
@@ -31,7 +34,7 @@ class Xml3176ErrorCatalogDoiTuongKcbSeederTest extends TestCase
             'XMLComplete_DOI_TUONG_KCB_LINH_THUOC_CO_TIEN_KHAM',
         ];
 
-        $this->assertCount(10, $ma);
+        $this->assertCount(13, $ma);
 
         foreach ($ma as $m) {
             $this->assertContains($m, $src, "Seeder thieu ma $m");
@@ -57,6 +60,17 @@ class Xml3176ErrorCatalogDoiTuongKcbSeederTest extends TestCase
     {
         $files = glob(database_path('migrations/*nap_danh_muc_ma_loi_doi_tuong_kcb.php'));
         $this->assertCount(1, $files, 'Khong tim thay migration nap danh muc');
+
+        $src = file_get_contents($files[0]);
+        $this->assertContains('Xml3176ErrorCatalogDoiTuongKcbSeeder', $src);
+        $this->assertNotContains('->change()', $src, 'Du an khong co doctrine/dbal');
+    }
+
+    /** @test */
+    public function migration_bo_sung_goi_seeder()
+    {
+        $files = glob(database_path('migrations/*nap_ma_loi_doi_tuong_kcb_bo_sung.php'));
+        $this->assertCount(1, $files, 'Khong tim thay migration nap ma loi bo sung');
 
         $src = file_get_contents($files[0]);
         $this->assertContains('Xml3176ErrorCatalogDoiTuongKcbSeeder', $src);
