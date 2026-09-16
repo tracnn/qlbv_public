@@ -1,3 +1,21 @@
+# 15/09/2026
+
+- **Ba quy tắc mới theo mã đối tượng khám chữa bệnh, đều ở mức cảnh báo, không chặn xuất hồ sơ.** Mã 1.1: mọi mã trong `MA_DKBD` (tách theo `;`) phải bằng `MA_CSKCB` — đến đúng nơi đăng ký ban đầu mà lại khai khác đi thì bị bắt. Mã 3.6: `MA_KHUVUC` không được để trống. Mã 1.17: `MA_BENH_CHINH` phải thuộc Phụ lục I Thông tư 01/2025/TT-BYT — 62 dòng bệnh được tự đến khám ở cơ sở cấp chuyên sâu mà không cần giấy chuyển tuyến, trong đó 5 dòng chỉ được tự đến khi người bệnh **dưới 18 tuổi**, quy tắc có kiểm cả điều kiện tuổi này.
+
+- **Bước vận hành mới, riêng của đợt này và bắt buộc: phải tự nhập tệp `docs/0000 - Danh muc/PL1_TT01_2025.xlsx` (186 dòng) qua màn *Nhập danh mục*.** Khác hai quy tắc kia không cần thêm gì, quy tắc 1.17 sống nhờ danh mục này. **Chưa nhập thì quy tắc im lặng hoàn toàn** — không báo lỗi hồ sơ nào và cũng không có dấu hiệu gì trên màn hình cho biết nó đang không chạy, vì danh mục rỗng được coi là "không đủ căn cứ nên không báo" giống hệt trạng thái "đã kiểm và không có bệnh nào ngoài phụ lục". Sau khi nhập, xem lại được ở khu *Danh mục tra cứu*.
+
+- **Số đo trên dữ liệu thật, và phải đọc kèm lời cảnh báo.** Trên 1.213 hồ sơ: 3 hồ sơ mã 1.1, 3 hồ sơ mã 3.6, 10 hồ sơ mã 1.17 — nhưng đó là đếm hồ sơ *có khai* mã đối tượng liên quan, không phải tổng 1.213. Chạy thử quy tắc 1.17 sau khi nạp danh mục cho ra đúng 3 lỗi (`G44.0`, `N18.5`, `B44.9`), hai quy tắc còn lại 0 lỗi. Số hồ sơ quá ít để kết luận gì chắc chắn — nhắc lại mốc đã ghi ở mục 10/09: **một quy tắc báo trên 20% số dòng thì gần như chắc chắn quy tắc sai**, còn ở đây thì ngược lại, số quá nhỏ để tự tin là quy tắc đúng.
+
+- **Một điểm sai chính tả trong văn bản cần biết để khỏi báo oan.** Thông tư in mã `I51.2` cho hội chứng Lyell/Steven Johnson, nhưng mã ICD-10 đúng là `L51.2` (chữ L, không phải chữ I hoa dễ nhầm với số 1). Danh mục ghi cả hai mã để không bỏ sót hồ sơ ghi đúng chuẩn ICD-10.
+
+- **Cài đặt:**
+
+```bash
+php artisan migrate && php artisan config:clear && php artisan queue:restart
+```
+
+  Rồi mới nhập tệp `PL1_TT01_2025.xlsx` qua màn *Nhập danh mục*, và cuối cùng nạp lại hồ sơ để ba quy tắc chạy trên dữ liệu đã nạp. Cần `config:clear` vì đợt này đổi ba tệp cấu hình (`dkbd_phai_la_cskcb`, `can_ma_khuvuc`, `benh_pl1`); cần `queue:restart` vì tiến trình hàng đợi sống lâu, không tự đọc lại cấu hình mới — thiếu bước này thì worker vẫn chạy mã cũ và quy tắc coi như chưa từng thêm, trong im lặng.
+
 # 11/09/2026
 
 - **Chứng từ điện tử: sửa được XML gốc ngay trong phần mềm.** Khi hồ sơ còn lỗi chặn mà phần mềm sinh XML chưa kịp sửa nguồn, người có quyền sửa thẳng nội dung XML ở thẻ **XML gốc** trong màn chi tiết để kịp ký số và gửi cổng. Sửa xong phần mềm **kiểm lỗi lại ngay** và báo số lỗi mới.
