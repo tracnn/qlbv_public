@@ -37,7 +37,7 @@ return [
     ],
 
     'benh_pl1_cap_chuyen_sau' => [
-        'ten'          => 'Bệnh PL1 TT01 cấp chuyên sâu',
+        'ten'          => 'Bệnh PL1 TT01',
         'model'        => App\Models\BHYT\BenhPl1CapChuyenSau::class,
         'cot'          => [
             'stt'       => 'STT',
