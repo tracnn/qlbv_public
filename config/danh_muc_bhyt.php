@@ -87,4 +87,10 @@ return [
         'bang' => 'dvkt_can_ma_may',
         'theo_co_so' => false,
     ],
+    'benh_pl1_cap_chuyen_sau' => [
+        'ten' => 'DM bệnh PL1 TT01 cấp chuyên sâu',
+        'model' => App\Models\BHYT\BenhPl1CapChuyenSau::class,
+        'bang' => 'benh_pl1_cap_chuyen_sau',
+        'theo_co_so' => false,
+    ],
 ];

@@ -36,6 +36,22 @@ return [
         'sap_xep'      => ['ma_dvkt', 'asc'],
     ],
 
+    'benh_pl1_cap_chuyen_sau' => [
+        'ten'          => 'Bệnh PL1 TT01 cấp chuyên sâu',
+        'model'        => App\Models\BHYT\BenhPl1CapChuyenSau::class,
+        'cot'          => [
+            'stt'       => 'STT',
+            'ma_icd'    => 'Mã ICD',
+            'loai'      => 'Loại',
+            'tuoi_duoi' => 'Dưới tuổi',
+            'ten_benh'  => 'Tên bệnh',
+            'dieu_kien' => 'Điều kiện',
+            'is_active' => 'Đang dùng',
+        ],
+        'cot_co_khong' => ['is_active'],
+        'sap_xep'      => ['stt', 'asc'],
+    ],
+
     'khoa_phong' => [
         'ten'          => 'DM Khoa phòng',
         'model'        => App\Models\BHYT\department::class,

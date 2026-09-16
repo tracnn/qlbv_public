@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\BHYT\Xml3176Xml1;
+use App\Services\Xml3176\Support\BenhPl1Matcher;
 use App\Services\Xml3176\Support\DanhSachPhanCachParser;
 use App\Services\Xml3176\Support\DoiTuongKcbCatalog;
 use App\Services\Xml3176\Support\Xml3176DateHelper;
@@ -1034,6 +1035,73 @@ class Xml3176Xml1Checker
                 'description' => 'Mã đối tượng ' . $ma . ' (' . DoiTuongKcbCatalog::thuocTinh($ma, $danhMuc, 'ten')
                     . ') nhưng GIAY_CHUYEN_TUYEN để trống',
             ]);
+        }
+
+        // Ma 1.1 (den dung noi DKBD): MOI ma trong MA_DKBD phai bang MA_CSKCB. Nguoi dung chot
+        // nghia CHAT - ho so doi the giua dot sang noi DKBD khac cung bi bao (muc canh bao).
+        // MA_DKBD hoac MA_CSKCB rong thi im lang: thieu can cu.
+        if (DoiTuongKcbCatalog::thuocTinh($ma, $danhMuc, 'dkbd_phai_la_cskcb', false)) {
+            $maCoSoKcb = trim((string) $data->ma_cskcb);
+            $dkbdLech = array_values(array_filter(
+                DanhSachPhanCachParser::tach($data->ma_dkbd),
+                function ($m) use ($maCoSoKcb) {
+                    return $m !== $maCoSoKcb;
+                }
+            ));
+
+            if ($maCoSoKcb !== '' && !empty($dkbdLech)) {
+                $errorCode = $this->generateErrorCode('DOI_TUONG_KCB_DKBD_KHAC_CSKCB');
+                $errors->push((object)[
+                    'error_code' => $errorCode,
+                    'error_name' => 'Đến đúng nơi đăng ký ban đầu nhưng MA_DKBD khác MA_CSKCB',
+                    'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+                    'description' => 'Mã đối tượng ' . $ma . ' (' . DoiTuongKcbCatalog::thuocTinh($ma, $danhMuc, 'ten')
+                        . ') nhưng MA_DKBD có mã khác MA_CSKCB ' . $maCoSoKcb . ': ' . implode(', ', $dkbdLech),
+                ]);
+            }
+        }
+
+        // Ma 3.6: MA_KHUVUC bat buoc. Gia tri khac K1/K2/K3 van do ADMIN_INFO_ERROR_MA_KHUVUC lo.
+        if (DoiTuongKcbCatalog::thuocTinh($ma, $danhMuc, 'can_ma_khuvuc', false)
+            && trim((string) $data->ma_khuvuc) === '') {
+            $errorCode = $this->generateErrorCode('DOI_TUONG_KCB_THIEU_MA_KHUVUC');
+            $errors->push((object)[
+                'error_code' => $errorCode,
+                'error_name' => 'Thiếu mã khu vực',
+                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+                'description' => 'Mã đối tượng ' . $ma . ' (' . DoiTuongKcbCatalog::thuocTinh($ma, $danhMuc, 'ten')
+                    . ') nhưng MA_KHUVUC để trống',
+            ]);
+        }
+
+        // Ma 1.17: MA_BENH_CHINH phai thuoc danh muc benh Phu luc I Thong tu 01/2025/TT-BYT.
+        // Chua nap danh muc hoac thieu ma benh chinh thi im lang - khong co can cu ket luan.
+        if (DoiTuongKcbCatalog::thuocTinh($ma, $danhMuc, 'benh_pl1', false)) {
+            $maBenh = trim((string) $data->ma_benh_chinh);
+            $dmPl1 = $maBenh === '' ? [] : $this->commonValidationService->danhMucBenhPl1();
+
+            if (!empty($dmPl1)) {
+                $tuoi = Xml3176DateHelper::tuoiDuNam($data->ngay_sinh, $data->ngay_vao);
+                $kq = BenhPl1Matcher::kiemTra($maBenh, $dmPl1, $tuoi);
+
+                if (!$kq['khop']) {
+                    $moTa = 'Mã đối tượng ' . $ma . ' nhưng MA_BENH_CHINH = ' . $maBenh
+                        . ' không thuộc Phụ lục I Thông tư 01/2025/TT-BYT';
+
+                    if (!empty($kq['stt_sai_tuoi'])) {
+                        $moTa .= ' (thuộc dòng ' . implode(', ', $kq['stt_sai_tuoi'])
+                            . ' nhưng người bệnh ' . $tuoi . ' tuổi, dòng này chỉ áp dụng người dưới 18 tuổi)';
+                    }
+
+                    $errorCode = $this->generateErrorCode('DOI_TUONG_KCB_BENH_NGOAI_PL1');
+                    $errors->push((object)[
+                        'error_code' => $errorCode,
+                        'error_name' => 'Tự đến cơ sở cấp chuyên sâu nhưng bệnh không thuộc Phụ lục I TT 01/2025',
+                        'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+                        'description' => $moTa,
+                    ]);
+                }
+            }
         }
 
         // Tu den thi khong the co co so chuyen di.

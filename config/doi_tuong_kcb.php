@@ -18,11 +18,15 @@
  *   muc_huong_theo_moc     - muc huong doi theo moc thoi gian
  *   linh_thuoc_khong_kham  - chi linh thuoc, khong kham benh
  *   can_giay_chuyen_tuyen  - phai ghi so phieu o truong GIAY_CHUYEN_TUYEN
+ *   dkbd_phai_la_cskcb     - moi ma trong MA_DKBD phai bang MA_CSKCB
+ *   can_ma_khuvuc          - MA_KHUVUC khong duoc de trong
+ *   benh_pl1               - MA_BENH_CHINH phai thuoc danh muc benh Phu luc I TT 01/2025
  *
  * Sua tep nay phai chay lai 'php artisan config:clear'.
  */
 return [
-    '1.1'  => ['ten' => 'Đến KCB đúng cơ sở nơi đăng ký KCB BHYT ban đầu', 'dung_dkbd' => true],
+    '1.1'  => ['ten' => 'Đến KCB đúng cơ sở nơi đăng ký KCB BHYT ban đầu', 'dung_dkbd' => true,
+               'dkbd_phai_la_cskcb' => true],
     '1.2'  => ['ten' => 'Đi KCB tại cơ sở KCB cấp ban đầu', 'dung_dkbd' => true, 'muc_huong_co_dinh' => 100],
     '1.3'  => ['ten' => 'Đến KCB có phiếu chuyển cơ sở KCB', 'can_noi_di' => true,
                'can_giay_chuyen_tuyen' => true],
@@ -38,7 +42,8 @@ return [
                'muc_huong_theo_moc' => ['moc' => '2026-07-01', 'truoc_moc' => 0, 'tu_moc' => 50]],
     '1.15' => ['ten' => 'Tự đến KCB nội trú tại cơ sở KCB cấp cơ bản', 'tu_den' => true],
     '1.16' => ['ten' => 'Tự đến KCB tại cơ sở cấp cơ bản với bệnh thuộc Phụ lục II TT 01/2025', 'tu_den' => true],
-    '1.17' => ['ten' => 'Tự đến KCB tại cơ sở cấp chuyên sâu với bệnh thuộc Phụ lục I TT 01/2025', 'tu_den' => true],
+    '1.17' => ['ten' => 'Tự đến KCB tại cơ sở cấp chuyên sâu với bệnh thuộc Phụ lục I TT 01/2025', 'tu_den' => true,
+               'benh_pl1' => true],
     '1.18' => ['ten' => 'Tự đến KCB ngoại trú tại cơ sở cấp chuyên sâu trước đây là tuyến tỉnh', 'tu_den' => true,
                'muc_huong_theo_moc' => ['moc' => '2026-07-01', 'truoc_moc' => 0, 'tu_moc' => 50]],
     '2'    => ['ten' => 'Cấp cứu'],
@@ -46,7 +51,8 @@ return [
                'ngoai_tru_khong_huong' => true],
     '3.2'  => ['ten' => 'Tự đến KCB nội trú tại cơ sở cấp chuyên sâu trước đây là tuyến tỉnh', 'tu_den' => true],
     '3.3'  => ['ten' => 'Tự đến KCB tại cơ sở cấp cơ bản, cấp chuyên sâu trước đây là tuyến huyện', 'tu_den' => true],
-    '3.6'  => ['ten' => 'Dân tộc thiểu số, hộ nghèo vùng khó khăn đến KCB nội trú tại cơ sở cấp chuyên sâu', 'tu_den' => true],
+    '3.6'  => ['ten' => 'Dân tộc thiểu số, hộ nghèo vùng khó khăn đến KCB nội trú tại cơ sở cấp chuyên sâu', 'tu_den' => true,
+               'can_ma_khuvuc' => true],
     '7'    => ['ten' => 'Lĩnh thuốc theo giấy hẹn trong dịch bệnh nhóm A hoặc bất khả kháng', 'linh_thuoc_khong_kham' => true],
     '7.2'  => ['ten' => 'Người bệnh uỷ quyền cho người khác đến lĩnh thuốc', 'linh_thuoc_khong_kham' => true],
     '7.3'  => ['ten' => 'Người bệnh lĩnh thuốc tại cơ sở KCB khác', 'linh_thuoc_khong_kham' => true],

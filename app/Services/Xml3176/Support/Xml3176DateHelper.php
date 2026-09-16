@@ -58,4 +58,23 @@ class Xml3176DateHelper
         $db = DateTime::createFromFormat('!Ymd', $pb);
         return intdiv($db->getTimestamp() - $da->getTimestamp(), 86400);
     }
+
+    /**
+     * Tuoi du nam tai ngay moc, chi doc 8 ky tu dau (Ymd) cua moi chuoi.
+     *
+     * Mot trong hai ngay khong doc duoc - rong, thang/ngay 00 (XML3176 ghi ngay sinh khong
+     * ro ngay bang 00), ngay khong ton tai - hoac ngay sinh sau ngay moc thi tra null: quy
+     * tac dung tuoi phai im lang khi thieu can cu, khong duoc doan.
+     */
+    public static function tuoiDuNam($ngaySinh, $ngayMoc): ?int
+    {
+        $sinh = self::toDateTime(substr(trim((string) $ngaySinh), 0, 8));
+        $moc  = self::toDateTime(substr(trim((string) $ngayMoc), 0, 8));
+
+        if ($sinh === null || $moc === null || $sinh > $moc) {
+            return null;
+        }
+
+        return (int) $sinh->diff($moc)->y;
+    }
 }
