@@ -139,6 +139,33 @@ class Xml3176Xml3Checker
     }
 
     /**
+     * Bon phan TT_THAU cua VTYT (quyet dinh; goi thau; nhom; nam) co khop danh muc khong.
+     *
+     * Bo phan biet hoa thuong qua TextNormalizer, thong nhat voi TT_THAU cua THUOC o XML2
+     * (so bang SQL LIKE, von khong phan biet).
+     *
+     * So LONG (==) sau chuan hoa, CO CHU DICH: ban cu so == nen '01' va '1' la khop. Yeu
+     * cau chi la bo phan biet hoa thuong - khong duoc am tham doi luon ngu nghia do.
+     *
+     * @param array $danhMuc 4 phan tach tu tt_thau cua dong danh muc
+     * @param array $hoSo 4 phan tach tu tt_thau cua ho so
+     */
+    public static function ttThauKhop(array $danhMuc, array $hoSo): bool
+    {
+        for ($i = 0; $i < 4; $i++) {
+            if (!array_key_exists($i, $danhMuc) || !array_key_exists($i, $hoSo)) {
+                return false;
+            }
+
+            if (TextNormalizer::chuan($danhMuc[$i]) != TextNormalizer::chuan($hoSo[$i])) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
      * Check Xml3176Xml3 Errors
      *
      * @param Xml3176Xml3 $data
@@ -794,7 +821,10 @@ class Xml3176Xml3Checker
                         $supplyGroup = $supplyParts[2];
                         $supplyYear = $supplyParts[3];
 
-                        if ($supplyDecision == $dataDecision && $supplyPackage == $dataPackage && $supplyGroup == $dataGroup && $supplyYear == $dataYear) {
+                        if (self::ttThauKhop(
+                            [$supplyDecision, $supplyPackage, $supplyGroup, $supplyYear],
+                            [$dataDecision, $dataPackage, $dataGroup, $dataYear]
+                        )) {
                             $found = true;
 
                             if ($data->don_gia_bh > $supply->don_gia_bh) {
@@ -807,7 +837,8 @@ class Xml3176Xml3Checker
                                 ]);
                             }
 
-                            if ($data->ten_vat_tu != $supply->ten_vat_tu) {
+                            // So dang chuan hoa (hoa thuong, khoang trang); mo ta loi van giu chu goc.
+                            if (!TextNormalizer::bang($data->ten_vat_tu, $supply->ten_vat_tu)) {
                                 $errorCode = $this->generateErrorCode('INVALID_MATERIAL_NAME');
                                 $errors->push((object)[
                                     'error_code' => $errorCode,
