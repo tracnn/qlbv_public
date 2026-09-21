@@ -167,7 +167,15 @@ Không thêm lọc cơ sở. Được hưởng so mã không phân biệt hoa th
 | `INVALID_DRUG_NAME` | `!TextNormalizer::bang($data->ten_thuoc, $medicine->ten_thuoc)` |
 | `INVALID_MATERIAL_NAME` | `!TextNormalizer::bang($data->ten_vat_tu, $supply->ten_vat_tu)` |
 | `INVALID_TEN_DICH_VU` | `tenLechDanhMuc()` so dạng chuẩn hoá; `tenPheDuyet()` bỏ trùng theo dạng chuẩn hoá, giữ chữ gốc của lần xuất hiện đầu để hiển thị |
-| `MEDICAL_SUPPLY_NOT_IN_CATALOG` | 4 phần `TT_THAU` so bằng `TextNormalizer::bang()` |
+| `MEDICAL_SUPPLY_NOT_IN_CATALOG` | Tách hàm tĩnh `ttThauKhop(array $danhMuc, array $hoSo)`; 4 phần so **lỏng `==` sau chuẩn hoá** — xem dưới |
+
+**`TT_THAU` giữ phép so lỏng, có chủ đích.** Bản cũ so `==` nên `'01' == '1'` là khớp (PHP so
+như số). Đổi sang `===` sẽ âm thầm biến các cặp đó thành lệch và sinh lỗi
+`MEDICAL_SUPPLY_NOT_IN_CATALOG` mới cho hồ sơ trước đây vẫn qua. Yêu cầu chỉ là bỏ phân
+biệt hoa thường, nên chỉ thêm chuẩn hoá, giữ nguyên kiểu so.
+
+Tên thì dùng `bang()` (nghiêm ngặt) được: `!=` lỏng và `===` chỉ khác nhau khi **cả hai**
+chuỗi trông như số, tên thuốc/VTYT không rơi vào trường hợp đó.
 
 `Xml3176Xml3Checker` phải thêm `use App\Services\Xml3176\Support\TextNormalizer;` —
 `Xml3176Xml2Checker` đã có sẵn.
@@ -185,6 +193,11 @@ Thông điệp lỗi giữ nguyên chữ gốc ở cả hai phía.
 | `BhytNameRuleTest` | đảo 2 ca; thông điệp giữ chữ gốc |
 | `StaffCertRuleTest` | 4 tình huống ở 4.4 + CCHN khác hoa thường + truyền đúng mã cơ sở xuống `sanSang()` |
 | `Xml3TenDichVuTest` | đảo 1 ca; thêm khoảng trắng giữa; bỏ trùng theo dạng chuẩn hoá |
+| `Xml3176Xml3Checker::ttThauKhop` | khác hoa thường thì khớp; `'01'` với `'1'` **vẫn khớp** (giữ ngữ nghĩa cũ); khác nội dung thật thì không khớp; thiếu phần thì không khớp |
+
+`INVALID_DRUG_NAME` và `INVALID_MATERIAL_NAME` nằm lọt trong `checkErrors()` cần CSDL đầy
+đủ nên không có test cấp checker; chúng chỉ gọi `TextNormalizer::bang()` đã có test riêng,
+và được nghiệm thu tay ở 5.2.
 
 Mốc toàn bộ bộ test **phải lấy lại khi bắt đầu** — không dùng số của đợt trước.
 
