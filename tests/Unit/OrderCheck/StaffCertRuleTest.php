@@ -147,4 +147,102 @@ class StaffCertRuleTest extends TestCase
                 'Loai phieu ' . var_export($loai, true) . ' phai xet ca hai vai tro');
         }
     }
+
+    /** Ngu canh co ma co so; $cs = null nghia la ho so khong xac dinh duoc co so */
+    private function ctxCs($cs, $cchnBacSi, $cchnNguoiTh = '')
+    {
+        $c = $this->ctx($cchnBacSi, $cchnNguoiTh);
+        $c->maCskcb = $cs;
+
+        return $c;
+    }
+
+    /** @param array $macchn ma => [ ['tu'=>, 'den'=>, 'cs'=>], ... ] */
+    private function traCoSo(array $macchn)
+    {
+        $lkCchn = new CatalogLookup('medical_staffs', 'macchn', null, 'tu_ngay', 'den_ngay', [], 'ma_cskcb');
+        $lkCchn->datSanChoTest([], $macchn);
+
+        $lkBhxh = new CatalogLookup('medical_staffs', 'ma_bhxh', null, 'tu_ngay', 'den_ngay', [], 'ma_cskcb');
+        $lkBhxh->datSanChoTest([], []);
+
+        return new StaffCertNotInCatalogRule($lkCchn, $lkBhxh);
+    }
+
+    /** @test */
+    public function cchn_o_dung_co_so_thi_khong_vi_pham()
+    {
+        $r = $this->traCoSo(['C1' => [['tu' => '', 'den' => '', 'cs' => '01929']]]);
+
+        $this->assertCount(0, $r->check($this->ctxCs('01929', 'C1')));
+    }
+
+    /**
+     * CCHN phai dang ky tai CHINH co so phat sinh ho so - nguoi dung chot 2026-09-21.
+     *
+     * @test
+     */
+    public function cchn_chi_o_co_so_khac_thi_vi_pham()
+    {
+        $r = $this->traCoSo(['C1' => [['tu' => '', 'den' => '', 'cs' => '01929']]]);
+
+        $vi = $r->check($this->ctxCs('37470', 'C1'));
+
+        $this->assertCount(1, $vi);
+        $this->assertEquals('A_STAFF_CERT_NOT_IN_CATALOG', $vi[0]->ruleCode);
+    }
+
+    /** @test */
+    public function dong_bo_trong_ma_co_so_dung_chung_moi_co_so()
+    {
+        $r = $this->traCoSo(['C1' => [['tu' => '', 'den' => '', 'cs' => '']]]);
+
+        $this->assertCount(0, $r->check($this->ctxCs('37470', 'C1')));
+        $this->assertCount(0, $r->check($this->ctxCs('01929', 'C1')));
+    }
+
+    /**
+     * Co so chua nhap danh muc nhan vien thi quy tac IM LANG - khong duoc bao oan toan bo
+     * chi vi bang co du lieu cua co so khac. Kiem luon rang ma co so duoc TRUYEN xuong
+     * sanSang(): neu quy tac goi sanSang() khong doi so thi ca 01929 cung im lang.
+     *
+     * @test
+     */
+    public function co_so_chua_nhap_danh_muc_thi_im_lang()
+    {
+        $chiSanSang01929 = new class('medical_staffs', 'macchn', null, 'tu_ngay', 'den_ngay', [], 'ma_cskcb') extends CatalogLookup {
+            public function sanSang($maCskcb = null)
+            {
+                return trim((string) $maCskcb) === '01929';
+            }
+        };
+
+        $bhxh = new CatalogLookup('medical_staffs', 'ma_bhxh', null, 'tu_ngay', 'den_ngay', [], 'ma_cskcb');
+        $bhxh->datRongChoTest();
+
+        $r = new StaffCertNotInCatalogRule($chiSanSang01929, $bhxh);
+
+        $this->assertCount(0, $r->check($this->ctxCs('01283', 'X9')), 'Co so chua co danh muc phai im lang');
+        $this->assertCount(1, $r->check($this->ctxCs('01929', 'X9')), 'Co so da co danh muc phai xet');
+    }
+
+    /**
+     * Ho so khong xac dinh duoc co so -> khong loc co so (spec 2026-07-28 muc 4.7).
+     *
+     * @test
+     */
+    public function khong_xac_dinh_co_so_thi_khong_loc()
+    {
+        $r = $this->traCoSo(['C1' => [['tu' => '', 'den' => '', 'cs' => '01929']]]);
+
+        $this->assertCount(0, $r->check($this->ctxCs(null, 'C1')));
+    }
+
+    /** @test */
+    public function cchn_khac_hoa_thuong_thi_khong_vi_pham()
+    {
+        $r = $this->traCoSo(['cchn-001/hno' => [['tu' => '', 'den' => '', 'cs' => '01929']]]);
+
+        $this->assertCount(0, $r->check($this->ctxCs('01929', 'CCHN-001/HNO')));
+    }
 }

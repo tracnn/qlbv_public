@@ -34,8 +34,14 @@ class StaffCertNotInCatalogRule implements RuleHandler
 
     public function __construct(CatalogLookup $traCchn = null, CatalogLookup $traMaBhxh = null)
     {
-        $this->traCchn = $traCchn ?: new CatalogLookup('medical_staffs', 'macchn');
-        $this->traMaBhxh = $traMaBhxh ?: new CatalogLookup('medical_staffs', 'ma_bhxh');
+        // Danh muc nhan vien cap theo CO SO: CCHN phai dang ky tai chinh co so phat sinh ho
+        // so (nguoi dung chot 2026-09-21). Dong bo trong ma_cskcb dung chung moi co so.
+        $this->traCchn = $traCchn ?: new CatalogLookup(
+            'medical_staffs', 'macchn', null, 'tu_ngay', 'den_ngay', [], 'ma_cskcb'
+        );
+        $this->traMaBhxh = $traMaBhxh ?: new CatalogLookup(
+            'medical_staffs', 'ma_bhxh', null, 'tu_ngay', 'den_ngay', [], 'ma_cskcb'
+        );
     }
 
     public function code()
@@ -45,7 +51,8 @@ class StaffCertNotInCatalogRule implements RuleHandler
 
     public function check(OrderContext $c)
     {
-        if (!$this->traCchn->sanSang()) {
+        // Tinh RIENG theo co so: co so chua nhap danh muc nhan vien thi im lang.
+        if (!$this->traCchn->sanSang($c->maCskcb)) {
             return [];   // danh muc chua nap - im lang thay vi bao oan toan bo
         }
 
@@ -85,8 +92,8 @@ class StaffCertNotInCatalogRule implements RuleHandler
                 continue;
             }
 
-            if ($this->traCchn->coTrongDanhMuc($v['cchn'], $ngay)
-                || $this->traMaBhxh->coTrongDanhMuc($v['cchn'], $ngay)) {
+            if ($this->traCchn->coTrongDanhMuc($v['cchn'], $ngay, $c->maCskcb)
+                || $this->traMaBhxh->coTrongDanhMuc($v['cchn'], $ngay, $c->maCskcb)) {
                 continue;
             }
 
