@@ -50,10 +50,41 @@ class Xml3TenDichVuTest extends TestCase
     }
 
     /** @test */
-    public function lech_hoa_thuong_van_tinh_la_lech()
+    public function lech_hoa_thuong_khong_tinh_la_lech()
     {
-        // So TUYET DOI, thong nhat voi INVALID_DRUG_NAME va INVALID_MATERIAL_NAME.
-        $this->assertTrue(Xml3176Xml3Checker::tenLechDanhMuc('a', ['A']));
+        // So da chuan hoa, thong nhat voi INVALID_DRUG_NAME, INVALID_MATERIAL_NAME va
+        // A_BHYT_SERVICE_NAME_MISMATCH ben order-check. Truoc 2026-09-21 ca bon so TUYET DOI.
+        $this->assertFalse(Xml3176Xml3Checker::tenLechDanhMuc('a', ['A']));
+    }
+
+    /** @test */
+    public function khoang_trang_giua_khong_tinh_la_lech()
+    {
+        $this->assertFalse(Xml3176Xml3Checker::tenLechDanhMuc('Do  dien   tim', ['Do dien tim']));
+    }
+
+    /** @test */
+    public function chu_viet_co_dau_khac_hoa_thuong_khong_lech()
+    {
+        $this->assertFalse(Xml3176Xml3Checker::tenLechDanhMuc('ĐO ĐIỆN TIM', ['Đo điện tim']));
+    }
+
+    /** @test */
+    public function khac_noi_dung_van_la_lech()
+    {
+        $this->assertTrue(Xml3176Xml3Checker::tenLechDanhMuc('Sieu am', ['Do dien tim']));
+    }
+
+    /**
+     * Bo trung theo dang chuan hoa nhung GIU chu goc cua lan dau de hien trong mo ta loi.
+     *
+     * @test
+     */
+    public function gom_ten_bo_trung_theo_dang_chuan_hoa_giu_chu_goc()
+    {
+        $ra = Xml3176Xml3Checker::tenPheDuyet($this->danhMuc(['Đo A', 'đo a', 'ĐO  A', 'B']));
+
+        $this->assertSame(['Đo A', 'B'], $ra);
     }
 
     /** @test */

@@ -347,7 +347,8 @@ class Xml3176Xml2Checker
                         }
                     } else {
                         // Kiểm tra tên thuốc
-                        if ($data->ten_thuoc != $medicine->ten_thuoc) {
+                        // So dang chuan hoa (hoa thuong, khoang trang); mo ta loi van giu chu goc.
+                        if (!TextNormalizer::bang($data->ten_thuoc, $medicine->ten_thuoc)) {
                             $errorCode = $this->generateErrorCode('INVALID_DRUG_NAME');
                             $errors->push((object)[
                                 'error_code' => $errorCode,
