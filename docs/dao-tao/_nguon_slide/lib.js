@@ -466,6 +466,7 @@ function newDeck(PptxGenJS, { title, subject, deck }) {
 
 module.exports = {
   FONT, C, W, H, M, BODY_W, BODY_TOP,
+  header, footer, notes, calloutAt,
   newDeck, titleSlide, sectionSlide, bulletSlide, stepSlide, tableSlide,
   shotSlide, cardSlide, flowSlide, splitSlide, caseSlide, closingSlide,
 };

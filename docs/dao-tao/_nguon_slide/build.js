@@ -1,6 +1,6 @@
-// Dựng ba bộ slide đào tạo ra tệp .pptx.
+// Dựng bốn bộ slide đào tạo ra tệp .pptx.
 //
-//   node build.js            -> dựng cả ba deck vào ../
+//   node build.js            -> dựng cả bốn deck vào ../
 //   node build.js a          -> chỉ dựng deck A
 //   node build.js b c        -> dựng deck B và C
 //
@@ -21,6 +21,7 @@ const DECKS = {
   a: { build: require('./deck-a'), file: 'Slide-dao-tao-A-Khoa-lam-sang.pptx' },
   b: { build: require('./deck-b'), file: 'Slide-dao-tao-B-Phong-ban-nghiep-vu.pptx' },
   c: { build: require('./deck-c'), file: 'Slide-dao-tao-C-Tiep-don-Vien-phi.pptx' },
+  d: { build: require('./deck-d'), file: 'Slide-dao-tao-D-Bao-cao-giao-ban.pptx' },
 };
 
 const OUT_DIR = path.resolve(__dirname, '..');

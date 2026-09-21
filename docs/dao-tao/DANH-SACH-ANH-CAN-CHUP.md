@@ -1,7 +1,7 @@
 # Danh sách ảnh màn hình cần chụp cho bộ slide đào tạo
 
-Sáu ảnh dưới đây tương ứng với sáu khung viền đứt ghi `[Ảnh n]` trong ba tệp slide. Chụp
-đủ sáu ảnh này là dùng được cả ba deck.
+Ảnh 1–6 tương ứng với sáu khung viền đứt ghi `[Ảnh n]` trong deck A, B, C — còn phải chụp tay.
+Ảnh 7 trở đi thuộc deck D và **đã chụp, nhúng sẵn** từ thư mục `anh/`.
 
 ## Nguyên tắc chung khi chụp
 
@@ -92,6 +92,31 @@ Sáu ảnh dưới đây tương ứng với sáu khung viền đứt ghi `[Ản
   - Lấy đủ ngữ cảnh xung quanh để người xem định vị được nút nằm ở đâu trên màn hình
 - **Chuẩn bị trước khi chụp:** nút chỉ hiện khi tra thẻ thành công, nên phải tra một thẻ hợp
   lệ trước.
+
+## Ảnh 7, 8, 9, 11 — Màn giao ban (ĐÃ CHỤP, đã nhúng sẵn)
+
+- **Deck:** D — Báo cáo giao ban
+- **Tệp trong `anh/`:**
+  - `anh-07a-bao-cao-giao-ban.png` — đầu màn Báo cáo giao ban
+  - `anh-07b-o-thieu-lech-can-doi.png` — ô bắt buộc trống, ô sửa tay (nút ↺), cảnh báo lệch cân đối
+  - `anh-07c-kip-truc-ghi-chu.png` — Kíp trực lãnh đạo và Ghi chú chung
+  - `anh-08a…08d` — màn Trình chiếu: Tổng quan, Hoạt động điều trị, slide một khoa, Công suất giường
+  - `anh-09-khai-bao-tieu-chi.png` — cửa sổ khai báo tiêu chí
+  - `anh-11-cau-hinh-giao-ban.png` — màn Cấu hình báo cáo giao ban
+- Chụp trên môi trường local với cấu hình mẫu (7 khoa), số liệu người bệnh lấy từ HIS ngày
+  21/09/2026. Tên người trực, ghi chú, ô nhập tay là **dữ liệu giả** dựng để minh hoạ; tên tài
+  khoản đăng nhập đã thay bằng "Quản trị viên".
+- Chụp bằng html2canvas nên ô `<input type="date">` hiện dạng `2026-09-21` thay vì `09/21/2026`
+  như trên trình duyệt. Muốn thay ảnh khác thì giữ nguyên tên tệp và dựng lại deck.
+
+## Ảnh 10a, 10b, 10c — Phân quyền và vai trò (ĐÃ CHỤP, đã nhúng sẵn)
+
+- **Deck:** D — Báo cáo giao ban (Phần 4 — Phân quyền và vai trò)
+- **Tệp:** `anh/anh-10a-quan-ly-nguoi-dung.png`, `anh/anh-10b-modal-vai-tro.png`,
+  `anh/anh-10c-modal-quyen.png`
+- **Đường dẫn trên phần mềm:** Thiết lập hệ thống → Quyền và Vai trò; nút Roles / Permissions
+- Ba ảnh này **được nhúng thẳng khi dựng** (`deck-d.js` đọc từ thư mục `anh/`), nên dựng lại
+  không mất. Tên và email nhân viên trong ảnh 10a đã được thay bằng dữ liệu giả trước khi chụp.
 
 ---
 
