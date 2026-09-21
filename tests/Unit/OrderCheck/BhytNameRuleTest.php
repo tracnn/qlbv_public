@@ -87,12 +87,13 @@ class BhytNameRuleTest extends TestCase
     }
 
     /** @test */
-    public function lech_hoa_thuong_van_bao_vi_pham()
+    public function lech_hoa_thuong_khong_bao_vi_pham()
     {
-        // So TUYET DOI, thong nhat voi Xml3176Xml2Checker.
+        // So da chuan hoa, thong nhat voi INVALID_DRUG_NAME ben Xml3176Xml2Checker.
+        // Truoc 2026-09-21 hai ben cung so TUYET DOI; nguoi dung chot bo phan biet hoa thuong.
         $r = $this->traThuoc(['BH1' => [['ten' => 'Thuoc A', 'tu' => '', 'den' => '']]]);
 
-        $this->assertCount(1, $r->check($this->ctx([$this->dv(1, 'BH1', 6, 'THUOC A')])));
+        $this->assertCount(0, $r->check($this->ctx([$this->dv(1, 'BH1', 6, 'THUOC A')])));
     }
 
     /** @test */
@@ -105,11 +106,20 @@ class BhytNameRuleTest extends TestCase
     }
 
     /** @test */
-    public function lech_khoang_trang_giua_chu_thi_van_bao()
+    public function lech_khoang_trang_giua_chu_khong_bao()
     {
+        // TextNormalizer gop khoang trang - nguoi dung chot dung lai bo chuan hoa co san.
         $r = $this->traThuoc(['BH1' => [['ten' => 'Thuoc A', 'tu' => '', 'den' => '']]]);
 
-        $this->assertCount(1, $r->check($this->ctx([$this->dv(1, 'BH1', 6, 'Thuoc  A')])));
+        $this->assertCount(0, $r->check($this->ctx([$this->dv(1, 'BH1', 6, 'Thuoc  A')])));
+    }
+
+    /** @test */
+    public function chu_viet_co_dau_khac_hoa_thuong_khong_bao()
+    {
+        $r = $this->traThuoc(['BH1' => [['ten' => 'Đường huyết mao mạch', 'tu' => '', 'den' => '']]]);
+
+        $this->assertCount(0, $r->check($this->ctx([$this->dv(1, 'BH1', 6, 'ĐƯỜNG HUYẾT MAO MẠCH')])));
     }
 
     /** @test */

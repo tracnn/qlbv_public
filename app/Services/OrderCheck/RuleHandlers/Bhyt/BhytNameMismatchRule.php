@@ -61,7 +61,9 @@ abstract class BhytNameMismatchRule extends BhytCatalogRule
                 continue;   // ma khong co hoac het hieu luc - quy tac MA lo, khong bao chong
             }
 
-            if (in_array($tenKhai, $tenDanhMuc, true)) {
+            // So dang CHUAN HOA (hoa thuong, khoang trang), thong nhat voi INVALID_DRUG_NAME
+            // ben XML3176. $tenDanhMuc van giu chu goc de hien trong thong diep ben duoi.
+            if ($this->danhMuc->coTen($ma, $tenKhai, $ngay, $c->maCskcb)) {
                 continue;
             }
 
