@@ -310,4 +310,93 @@ class CatalogLookupTest extends TestCase
         $this->assertTrue($lk->coTrongDanhMuc('B2', 20240601));
         $this->assertSame(['Ten B'], $lk->tenTheoMa('B2', 20240601));
     }
+
+    /** @test */
+    public function tra_ma_khong_phan_biet_hoa_thuong()
+    {
+        $lk = new CatalogLookup('service_catalogs', 'ma_dich_vu');
+        $lk->datSanChoTest(['ABC01']);
+
+        $this->assertTrue($lk->coTrongDanhMuc('abc01'));
+        $this->assertTrue($lk->coTrongDanhMuc('Abc01'));
+    }
+
+    /**
+     * Duong THAT cua loi: SQL (utf8_general_ci) keo ve dong 'ZZ3' khi hoi 'zz3', nhung ban
+     * cu luu khoa mang theo NGUYEN chu trong DB roi tra bang NGUYEN chu cua y lenh - nen
+     * 'zz3' khong bao gio thay 'ZZ3'. datSanChoTest khong di qua nap() nen khong bat duoc.
+     *
+     * @test
+     */
+    public function nap_tu_csdl_tra_duoc_bang_chu_khac_hoa_thuong()
+    {
+        DB::table('icd10_categories')->insert([
+            ['icd_code' => 'ZZ3', 'icd_name' => 'Thu hoa thuong', 'is_active' => 1],
+        ]);
+
+        try {
+            $lk = new CatalogLookup('icd10_categories', 'icd_code', null, null, null, ['is_active' => 1]);
+            $lk->nap(['zz3']);
+
+            $this->assertTrue($lk->coTrongDanhMuc('zz3'), 'SQL tim thay nhung PHP tra truot');
+            $this->assertTrue($lk->coTrongDanhMuc('ZZ3'));
+        } finally {
+            DB::table('icd10_categories')->where('icd_code', 'ZZ3')->delete();
+        }
+    }
+
+    /** @test */
+    public function co_ten_khong_phan_biet_hoa_thuong_va_khoang_trang()
+    {
+        $lk = $this->traThuoc(['BH1' => [['ten' => 'Paracetamol 500mg', 'tu' => '', 'den' => '']]]);
+
+        $this->assertTrue($lk->coTen('BH1', 'PARACETAMOL 500MG'));
+        $this->assertTrue($lk->coTen('bh1', '  paracetamol   500mg '));
+    }
+
+    /** @test */
+    public function co_ten_dung_voi_chu_viet_co_dau()
+    {
+        $lk = $this->traThuoc(['BH1' => [['ten' => 'Đường huyết mao mạch', 'tu' => '', 'den' => '']]]);
+
+        $this->assertTrue($lk->coTen('BH1', 'ĐƯỜNG HUYẾT MAO MẠCH'));
+    }
+
+    /** @test */
+    public function co_ten_khac_noi_dung_thi_false()
+    {
+        $lk = $this->traThuoc(['BH1' => [['ten' => 'Thuoc A', 'tu' => '', 'den' => '']]]);
+
+        $this->assertFalse($lk->coTen('BH1', 'Thuoc B'));
+    }
+
+    /** @test */
+    public function co_ten_rong_thi_false()
+    {
+        $lk = $this->traThuoc(['BH1' => [['ten' => 'Thuoc A', 'tu' => '', 'den' => '']]]);
+
+        $this->assertFalse($lk->coTen('BH1', '   '));
+        $this->assertFalse($lk->coTen('BH1', null));
+    }
+
+    /** @test */
+    public function co_ten_ton_trong_loc_co_so()
+    {
+        $lk = $this->traCoSo(['A1' => [['ten' => 'Ten A', 'tu' => '', 'den' => '', 'cs' => '01929']]]);
+
+        $this->assertTrue($lk->coTen('A1', 'TEN A', null, '01929'));
+        $this->assertFalse($lk->coTen('A1', 'TEN A', null, '37470'));
+    }
+
+    /**
+     * Chi phep SO duoc chuan hoa - ten tra ra de hien trong thong diep phai la chu goc.
+     *
+     * @test
+     */
+    public function ten_theo_ma_van_tra_chu_goc()
+    {
+        $lk = $this->traThuoc(['BH1' => [['ten' => 'Paracetamol 500MG', 'tu' => '', 'den' => '']]]);
+
+        $this->assertSame(['Paracetamol 500MG'], $lk->tenTheoMa('bh1'));
+    }
 }

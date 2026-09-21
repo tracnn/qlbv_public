@@ -3,6 +3,7 @@
 namespace App\Services\OrderCheck\Support;
 
 use DB;
+use App\Services\Xml3176\Support\TextNormalizer;
 
 /**
  * Tra danh muc BHXH theo LO cho mot phieu.
@@ -149,7 +150,7 @@ class CatalogLookup
 
         foreach ($thay as $d) {
             $d = (array) $d;
-            $khoa = trim((string) $d[$this->cot]);
+            $khoa = $this->khoa($d[$this->cot]);
 
             if ($khoa === '') {
                 continue;
@@ -194,9 +195,45 @@ class CatalogLookup
         return $ten;
     }
 
+    /**
+     * Ten khai co trung MOT dong danh muc con hieu luc cua ma nay khong.
+     *
+     * So dang CHUAN HOA (hoa thuong, khoang trang) qua TextNormalizer - thong nhat voi
+     * INVALID_DRUG_NAME / INVALID_MATERIAL_NAME / INVALID_TEN_DICH_VU ben XML3176.
+     * Muon ten goc de hien thong diep thi dung tenTheoMa().
+     */
+    public function coTen($ma, $ten, $ngayYmd = null, $maCskcb = null)
+    {
+        $can = $this->khoa($ten);
+
+        if ($can === '') {
+            return false;
+        }
+
+        foreach ($this->dongConHieuLuc($ma, $ngayYmd, $maCskcb) as $d) {
+            if ($this->khoa($d['ten']) === $can) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Khoa so khop: trim, gop khoang trang, ha chu thuong (UTF-8).
+     *
+     * SQL da khong phan biet hoa thuong (utf8_general_ci) nen whereIn keo ve dung dong.
+     * Nhung neu luu khoa theo NGUYEN chu trong DB roi tra bang NGUYEN chu cua y lenh thi
+     * 'abc01' khong bao gio thay 'ABC01'. MOI khoa mang phai di qua ham nay.
+     */
+    protected function khoa($s)
+    {
+        return TextNormalizer::chuan($s);
+    }
+
     protected function dongConHieuLuc($ma, $ngayYmd, $maCskcb = null)
     {
-        $ma = trim((string) $ma);
+        $ma = $this->khoa($ma);
 
         if ($ma === '' || !isset($this->dong[$ma])) {
             return [];
@@ -229,12 +266,12 @@ class CatalogLookup
     public function datSanChoTest(array $ma, array $dong = [])
     {
         foreach ($ma as $m) {
-            $this->dong[trim((string) $m)][] = ['ten' => null, 'tu' => null, 'den' => null, 'cs' => null];
+            $this->dong[$this->khoa($m)][] = ['ten' => null, 'tu' => null, 'den' => null, 'cs' => null];
         }
 
         foreach ($dong as $m => $ds) {
             foreach ($ds as $d) {
-                $this->dong[trim((string) $m)][] = [
+                $this->dong[$this->khoa($m)][] = [
                     'ten' => isset($d['ten']) ? trim((string) $d['ten']) : null,
                     'tu' => isset($d['tu']) ? $d['tu'] : null,
                     'den' => isset($d['den']) ? $d['den'] : null,
