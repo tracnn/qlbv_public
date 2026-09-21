@@ -13,6 +13,7 @@ use App\Services\Xml3176\Support\TyLeComparator;
 use App\Services\Xml3176\Support\ServiceOverlapChecker;
 use App\Services\Xml3176\Support\MaDvktStructure;
 use App\Services\Xml3176\Support\TienTeCalculator;
+use App\Services\Xml3176\Support\TextNormalizer;
 use Illuminate\Support\Collection;
 
 class Xml3176Xml3Checker
@@ -69,17 +70,23 @@ class Xml3176Xml3Checker
     /**
      * Gom ten phe duyet tu cac dong danh muc con hieu luc.
      *
+     * Bo trung theo dang CHUAN HOA (hoa thuong, khoang trang) nhung giu chu GOC cua lan
+     * xuat hien dau tien - de mo ta loi hien dung chu trong danh muc.
+     *
      * @param \Illuminate\Support\Collection|array $dsDanhMuc cac dong ServiceCatalog
      * @return string[] da trim, bo rong, bo trung, giu thu tu
      */
     public static function tenPheDuyet($dsDanhMuc): array
     {
         $ten = [];
+        $daCo = [];
 
         foreach ($dsDanhMuc as $d) {
             $t = trim((string) (is_object($d) ? $d->ten_dich_vu : $d));
+            $khoa = TextNormalizer::chuan($t);
 
-            if ($t !== '' && !in_array($t, $ten, true)) {
+            if ($khoa !== '' && !isset($daCo[$khoa])) {
+                $daCo[$khoa] = true;
                 $ten[] = $t;
             }
         }
@@ -99,17 +106,24 @@ class Xml3176Xml3Checker
      * Ngu nghia nay thong nhat voi quy tac A_BHYT_SERVICE_NAME_MISMATCH ben order-check,
      * de hai noi khong cho hai ket luan khac nhau tren cung mot ho so.
      *
-     * So TUYET DOI, chi trim - giong INVALID_DRUG_NAME va INVALID_MATERIAL_NAME.
+     * So dang CHUAN HOA qua TextNormalizer::chuan() (hoa thuong, khoang trang) - giong
+     * INVALID_DRUG_NAME, INVALID_MATERIAL_NAME va A_BHYT_*_NAME_MISMATCH ben order-check.
      */
     public static function tenLechDanhMuc($tenKhai, array $tenPheDuyet): bool
     {
-        $tenKhai = trim((string) $tenKhai);
+        $tenKhai = TextNormalizer::chuan($tenKhai);
 
         if ($tenKhai === '' || empty($tenPheDuyet)) {
             return false;   // thieu ten la viec cua quy tac khac; danh muc khong co ten thi khong co gi de so
         }
 
-        return !in_array($tenKhai, $tenPheDuyet, true);
+        foreach ($tenPheDuyet as $t) {
+            if (TextNormalizer::chuan($t) === $tenKhai) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /** Liet ke ten phe duyet trong mo ta, cat bot khi qua dai */
