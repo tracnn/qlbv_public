@@ -116,6 +116,9 @@ class HisOrderSource
                 $r->active_ingr_bhyt_name,
                 $r->hein_service_bhyt_name
             );
+            // Ten hoat chat THUAN, khong roi ve ten dich vu: quy tac ten thuoc doi chieu voi
+            // ten_hoat_chat cua danh muc, dem ten thuong mai ra so se bao lech oan.
+            $s->activeIngrName = trim((string) $r->active_ingr_bhyt_name);
             // Quyet dinh quy tac doi chieu voi bang danh muc nao: 6 Thuoc, 7 Vat tu, con
             // lai la DVKT.
             $s->serviceTypeId = $r->service_type_id !== null ? (int) $r->service_type_id : null;

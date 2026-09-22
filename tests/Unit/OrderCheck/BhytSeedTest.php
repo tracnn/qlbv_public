@@ -137,4 +137,38 @@ class BhytSeedTest extends TestCase
         $this->assertTrue(property_exists($s, 'serviceTypeId'));
         $this->assertTrue(property_exists($s, 'bhytName'));
     }
+
+    private function nguonDoiTenHoatChat()
+    {
+        $file = glob(database_path('migrations/*doi_ten_quy_tac_ten_thuoc_theo_hoat_chat.php'));
+        $this->assertNotEmpty($file, 'Chua co migration doi ten quy tac ten thuoc');
+
+        return $this->maKhongComment($file[0]);
+    }
+
+    /**
+     * Quy tac ten thuoc nay doi chieu TEN HOAT CHAT - ten hien tren man Quan ly quy tac
+     * phai noi dung dieu do. Ma quy tac giu nguyen de khong vo lich su vi pham.
+     *
+     * @test
+     */
+    public function doi_ten_hien_thi_quy_tac_ten_thuoc_sang_hoat_chat()
+    {
+        $ma = $this->nguonDoiTenHoatChat();
+
+        $this->assertContains("'A_BHYT_DRUG_NAME_MISMATCH'", $ma);
+        $this->assertContains('Tên hoạt chất lệch danh mục BHYT', $ma);
+        $this->assertContains('Tên thuốc lệch danh mục BHYT', $ma, 'down() phai tra lai ten cu');
+    }
+
+    /**
+     * Chi doi TEN. Dong vao is_active se tat/bat lai quy tac nguoi dung da chinh tren man
+     * Quan ly quy tac.
+     *
+     * @test
+     */
+    public function doi_ten_khong_dung_toi_trang_thai_bat_tat()
+    {
+        $this->assertNotContains('is_active', $this->nguonDoiTenHoatChat());
+    }
 }
