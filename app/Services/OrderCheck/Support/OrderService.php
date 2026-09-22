@@ -27,6 +27,13 @@ class OrderService
      */
     public $bhytName;
 
+    /**
+     * @var string Ten hoat chat BHYT THUAN tu HIS (his_medicine_type.active_ingr_bhyt_name),
+     * chuoi rong neu HIS de trong. KHAC bhytName: bhytName roi ve ten dich vu khi ten hoat
+     * chat rong, nen khong dung duoc de doi chieu voi ten hoat chat cua danh muc thuoc.
+     */
+    public $activeIngrName = '';
+
     /** @var int|null Loai dich vu (his_service.service_type_id): 6 Thuoc, 7 Vat tu */
     public $serviceTypeId;
 }

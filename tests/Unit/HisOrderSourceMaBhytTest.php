@@ -51,4 +51,16 @@ class HisOrderSourceMaBhytTest extends TestCase
         $this->assertContains('active_ingr_bhyt_name', $ma,
             'Truy van khong con chon cot ten hoat chat BHYT - ten se lech nguon voi ma');
     }
+
+    /**
+     * Quy tac ten thuoc can ten hoat chat THUAN tu HIS - bhytName da tron ten dich vu vao
+     * khi ten hoat chat rong, dung no se so ten thuong mai voi ten hoat chat.
+     *
+     * @test
+     */
+    public function gan_ten_hoat_chat_thuan_rieng_cho_quy_tac_ten_thuoc()
+    {
+        $this->assertRegExp('/->activeIngrName\s*=\s*trim\(\s*\(string\)\s*\$r->active_ingr_bhyt_name\s*\)/', $this->ma(),
+            'HisOrderSource khong con gan activeIngrName tu active_ingr_bhyt_name');
+    }
 }

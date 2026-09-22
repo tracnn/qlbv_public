@@ -26,6 +26,9 @@ class BhytNameRuleTest extends TestCase
         $s->patientTypeId = 1;
         $s->bhytCode = $maBhyt;
         $s->bhytName = $ten;
+        // Dong thuoc: HIS khai ten hoat chat (active_ingr_bhyt_name) - quy tac ten thuoc
+        // doc truong nay. DVKT/VTYT khong dung toi.
+        $s->activeIngrName = $ten;
         $s->serviceTypeId = $loai;
         $s->tdlIntructionTime = $moc;
 
@@ -44,7 +47,7 @@ class BhytNameRuleTest extends TestCase
 
     private function traThuoc(array $dong)
     {
-        $lk = new CatalogLookup('medicine_catalogs', 'ma_thuoc', 'ten_thuoc');
+        $lk = new CatalogLookup('medicine_catalogs', 'ma_thuoc', 'ten_hoat_chat');
         $lk->datSanChoTest([], $dong);
 
         return new BhytDrugNameRule($lk);
@@ -242,6 +245,82 @@ class BhytNameRuleTest extends TestCase
         $this->assertCount(1, $vi);
         $this->assertNotContains("\t", $vi[0]->message, 'Thong diep vi pham con ky tu tab');
         $this->assertSame('40.1021', $vi[0]->detail['bhyt_code']);
+    }
+
+    /**
+     * Loi goc: HIS khai TEN HOAT CHAT (active_ingr_bhyt_name) nhung quy tac tung so voi
+     * cot ten_thuoc (ten thuong mai) cua danh muc - ma 40.220 bi bao "Clarithromycin" lech
+     * "Klacid MR". Ca nay di duong THAT: quy tac tu dung CatalogLookup mac dinh va nap tu
+     * CSDL, nen no chung minh cot duoc doc la ten_hoat_chat.
+     *
+     * @test
+     */
+    public function doi_chieu_voi_ten_hoat_chat_cua_danh_muc_chu_khong_phai_ten_thuoc()
+    {
+        \DB::table('medicine_catalogs')->insert([
+            'ma_thuoc' => 'ZZHC1', 'ten_hoat_chat' => 'Clarithromycin', 'ten_thuoc' => 'Klacid MR',
+            'don_vi_tinh' => 'Vien', 'ham_luong' => '500mg', 'duong_dung' => 'Uong',
+            'ma_duong_dung' => '1', 'dang_bao_che' => 'Vien', 'so_dang_ky' => 'SDK',
+            'ma_cskcb' => null,
+        ]);
+
+        try {
+            $r = new BhytDrugNameRule();
+
+            $this->assertCount(0, $r->check($this->ctx([$this->dv(1, 'ZZHC1', 6, 'Clarithromycin')])),
+                'Ten hoat chat khop danh muc ma van bi bao lech');
+
+            $vi = $r->check($this->ctx([$this->dv(2, 'ZZHC1', 6, 'Klacid MR')]));
+
+            $this->assertCount(1, $vi, 'Khai ten thuong mai thay cho ten hoat chat phai bi bao');
+            $this->assertContains('Clarithromycin', $vi[0]->message);
+        } finally {
+            \DB::table('medicine_catalogs')->where('ma_thuoc', 'ZZHC1')->delete();
+        }
+    }
+
+    /**
+     * 38/8.544 loai thuoc tren HIS co ma hoat chat nhung de trong TEN hoat chat. Khi do
+     * bhytName roi ve ten dich vu (thuong la ten thuong mai) - dem no so voi ten hoat
+     * chat se bao lech oan. Nguoi dung chot 2026-09-22: im lang.
+     *
+     * @test
+     */
+    public function thieu_ten_hoat_chat_thi_im_lang_du_co_ten_thay_the()
+    {
+        $r = $this->traThuoc(['BH1' => [['ten' => 'Clarithromycin', 'tu' => '', 'den' => '']]]);
+
+        $s = $this->dv(1, 'BH1', 6, 'Klacid MR');
+        $s->activeIngrName = '';
+
+        $this->assertCount(0, $r->check($this->ctx([$s])));
+    }
+
+    /** @test */
+    public function thong_diep_ghi_ten_hoat_chat()
+    {
+        $r = $this->traThuoc(['BH1' => [['ten' => 'Clarithromycin', 'tu' => '', 'den' => '']]]);
+
+        $vi = $r->check($this->ctx([$this->dv(1, 'BH1', 6, 'Azithromycin')]));
+
+        $this->assertCount(1, $vi);
+        $this->assertContains('Tên hoạt chất', $vi[0]->message);
+    }
+
+    /**
+     * Quy tac ten DVKT van doc bhytName (ten dich vu BHYT), KHONG doc ten hoat chat.
+     *
+     * @test
+     */
+    public function quy_tac_ten_dich_vu_van_doc_ten_bhyt_cua_dong()
+    {
+        $lk = new CatalogLookup('service_catalogs', 'ma_dich_vu', 'ten_dich_vu');
+        $lk->datSanChoTest([], ['BH1' => [['ten' => 'Ten dung', 'tu' => '', 'den' => '']]]);
+
+        $s = $this->dv(1, 'BH1', 2, 'Sai ten');
+        $s->activeIngrName = '';
+
+        $this->assertCount(1, (new BhytServiceNameRule($lk))->check($this->ctx([$s])));
     }
 
     /** @test */

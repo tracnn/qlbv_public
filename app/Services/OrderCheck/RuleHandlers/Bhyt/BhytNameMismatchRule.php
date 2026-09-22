@@ -49,7 +49,7 @@ abstract class BhytNameMismatchRule extends BhytCatalogRule
         foreach ($dong as $d) {
             list($s, $ngay, $ma) = $d;
 
-            $tenKhai = trim((string) $s->bhytName);
+            $tenKhai = trim((string) $this->tenKhai($s));
 
             if ($tenKhai === '') {
                 continue;   // do duoc 0 dong thieu ten, khong lam quy tac "thieu ten"
@@ -85,6 +85,18 @@ abstract class BhytNameMismatchRule extends BhytCatalogRule
         }
 
         return $vi;
+    }
+
+    /**
+     * Ten HIS khai cho dong, de doi chieu voi cotTen() cua danh muc. Mac dinh la ten BHYT
+     * cua dong (ten dich vu); quy tac thuoc ghi de de dung ten hoat chat.
+     *
+     * @param \App\Services\OrderCheck\Support\OrderService $s
+     * @return string|null rong/null -> quy tac im lang cho dong do
+     */
+    protected function tenKhai($s)
+    {
+        return $s->bhytName;
     }
 
     protected function neuTen(array $ten)
