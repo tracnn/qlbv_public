@@ -1,75 +1,30 @@
-// DECK B — Phòng ban nghiệp vụ (BHYT/Giám định, KHTH, TCKT, đầu mối CNTT)
-// Nguồn: Phần I (XML 3176), Phần III (tra thẻ hàng loạt), Phần IV (danh mục),
-// Phần VI (chứng từ điện tử PL02), Phần VII (danh mục TT12/2026).
-
+// Nội dung phần dành cho các phòng ban chức năng — các chương được deck-tgd.js gọi theo thứ tự.
+// Nguồn: docs/huong-dan-su-dung/_nguon/part1.js (XML 3176), part3.js (tra thẻ hàng loạt),
+// part4.js (danh mục), part6.js (chứng từ điện tử), part7.js (danh mục TT12/2026).
+// Hàm nào có sectionSlide thì tự mở chương với số `no`; hàm không có thì deck-tgd.js mở.
 const L = require('./lib');
 
-module.exports = function deckB(PptxGenJS) {
-  const { pptx, ctx } = L.newDeck(PptxGenJS, {
-    title: 'Đào tạo phòng ban nghiệp vụ — Liên thông dữ liệu với cổng BHXH',
-    subject: 'Hướng dẫn sử dụng phần mềm qlbv cho khối phòng ban',
-    deck: 'Deck B — Phòng ban nghiệp vụ',
-  });
-
-  L.titleSlide(pptx, {
-    title: 'Liên thông dữ liệu\nvới cổng Bảo hiểm xã hội',
-    subtitle: 'Phần mềm quản lý bệnh viện qlbv',
-    audience: 'Dành cho khối phòng ban: BHYT/Giám định, Kế hoạch tổng hợp, Tài chính kế toán, đầu mối CNTT',
-    meta: 'Thời lượng: 45–60 phút\nTài liệu gốc: Hướng dẫn sử dụng XML3176 – OrderCheck – Thẻ BHYT – Danh mục, Phần I, III, IV, VI và VII',
-  });
-
-  L.bulletSlide(pptx, ctx, {
-    kicker: 'Mục tiêu',
-    title: 'Sau buổi này, anh/chị làm được gì',
-    bullets: [
-      { t: 'Theo dõi được vòng đời một hồ sơ XML 3176 từ lúc nạp tới lúc cổng tiếp nhận', b: true,
-        sub: 'Và giải thích được vì sao một hồ sơ cụ thể chưa được gửi' },
-      { t: 'Dùng được Dashboard lỗi XML để chọn ưu tiên xử lý và làm số liệu báo cáo', b: true },
-      { t: 'Nhập khẩu đúng một bộ danh mục BHYT và đọc được kết quả nhập', b: true,
-        sub: 'Kể cả bốn bộ danh mục theo cơ sở — nơi dễ sai nhất' },
-      { t: 'Ký và gửi chứng từ điện tử theo Phụ lục 02 mà không tạo ra chứng từ trùng trên cổng', b: true },
-      { t: 'Nạp và gửi sáu mẫu danh mục theo Thông tư 12/2026, đọc được Dashboard độ phủ', b: true },
-      { t: 'Phân biệt rõ: việc nào phòng ban tự làm, việc nào phải báo công nghệ thông tin', b: true },
-    ],
-    speaker: 'Buổi này nặng hơn Deck A. Nói trước: sẽ không đi hết mọi ô lọc, chỉ đi những chỗ sai là mất tiền hoặc mất thời gian. Chi tiết còn lại tra tài liệu.',
-  });
-
-  L.flowSlide(pptx, ctx, {
-    kicker: 'Bối cảnh',
-    title: 'Ba luồng dữ liệu đi lên cổng BHXH',
-    intro: 'Cùng một cổng nhưng ba đầu mối tiếp nhận khác nhau, ba màn hình khác nhau, ba mức rủi ro khác nhau.',
-    nodes: [
-      { head: 'XML 3176', body: 'Hồ sơ giám định chi phí KCB.\nGửi lại được, có mã giao dịch chống trùng.\n\nPhần I', tone: 'primary' },
-      { head: 'Chứng từ điện tử\n(Phụ lục 02)', body: 'Giấy ra viện, chứng sinh, báo tử, nghỉ hưởng BHXH.\nKHÔNG có cơ chế chống trùng ở cổng.\n\nPhần VI', tone: 'accent' },
-      { head: 'Danh mục TT12/2026', body: 'Sáu bộ danh mục cơ sở tự khai về năng lực của mình.\nGửi khi có thay đổi.\n\nPhần VII' },
-    ],
-    legend: [
-      'Điểm chung: cổng nhận là nhận thật, không có đường rút lại. Mọi việc sửa sau đó phải làm theo quy trình nghiệp vụ với cơ quan bảo hiểm.',
-      'Điểm khác nhau lớn nhất: chứng từ Phụ lục 02 gửi hai lần thì cổng ghi nhận thành hai chứng từ — không tự nhận ra bản trùng.',
-      'Danh mục ở Phần IV là bản BHXH ban hành (nhập vào để đối chiếu); danh mục ở Phần VII là bản cơ sở tự khai (phải gửi lên và được chấp nhận).',
-    ],
-    speaker: 'Slide định hướng cả buổi. Nhấn ngay sự khác biệt về chống trùng — đó là lý do toàn bộ màn chứng từ điện tử được thiết kế theo hướng "thà không gửi còn hơn gửi trùng".',
-  });
-
-  // ------------------------------------------------------------ Chương 1: XML 3176
+// Hồ sơ XML 3176 (Phần I).
+function xml3176(pptx, ctx, no) {
   L.sectionSlide(pptx, ctx, {
-    no: 1,
+    no,
     title: 'Hồ sơ XML 3176',
     sub: 'Sáu bước vòng đời · Màn Danh sách hồ sơ · Điều kiện xuất và gửi · Dashboard lỗi · Danh mục mã lỗi',
   });
 
   L.tableSlide(pptx, ctx, {
     kicker: 'Mục 1.1',
-    title: 'Vòng đời một hồ sơ XML 3176 — sáu bước',
-    head: ['Bước', 'Tên bước', 'Ai thực hiện', 'Mô tả'],
-    colW: [0.7, 2.0, 2.0, 5.3],
+    title: 'Vòng đời một hồ sơ XML 3176 — sáu bước chi tiết',
+    intro: 'Tài liệu gốc chia sáu bước. Cột cuối cho biết mỗi bước thuộc bước nào trong quy trình năm bước ở phần 01.',
+    head: ['Bước', 'Tên bước', 'Ai thực hiện', 'Mô tả', 'Thuộc bước'],
+    colW: [0.6, 1.9, 1.9, 4.6, 1.5],
     rows: [
-      ['1', 'Nạp hồ sơ', 'Người dùng hoặc hệ thống', 'Tải tệp XML lên bằng tay, hoặc để hệ thống tự quét thư mục và nhập khẩu'],
-      ['2', 'Tách hồ sơ', 'Hệ thống', 'Giải mã gói FILEHOSO, tách thành các bảng XML1 đến XML15 theo từng mã điều trị'],
-      ['3', 'Kiểm tra tự động', 'Hệ thống (chạy nền)', 'Chạy bộ kiểm lỗi cho từng loại XML, tra cứu thẻ BHYT, đối chiếu chéo giữa các bảng'],
-      ['4', { t: 'Xem và xử lý lỗi', b: true }, { t: 'Người dùng', b: true }, { t: 'Lọc hồ sơ có lỗi, xem chi tiết, phối hợp khoa phòng sửa dữ liệu gốc trên HIS', b: true }],
-      ['5', 'Ký số – Xuất – Gửi', 'Hệ thống (chạy nền)', 'Hồ sơ hết lỗi nghiêm trọng được ký số, xuất tệp XML và gửi lên cổng'],
-      ['6', 'Tra cứu kết quả', 'Người dùng', 'Xem cột Exp, Sub, Ký XML và thông điệp phản hồi của cổng'],
+      ['1', 'Nạp hồ sơ', 'Người dùng hoặc hệ thống', 'Tải tệp XML lên bằng tay, hoặc để hệ thống tự quét thư mục và nhập khẩu', '01 Nạp hồ sơ'],
+      ['2', 'Tách hồ sơ', 'Hệ thống', 'Giải mã gói FILEHOSO, tách thành các bảng XML1 đến XML15 theo từng mã điều trị', '01 Nạp hồ sơ'],
+      ['3', 'Kiểm tra tự động', 'Hệ thống (chạy nền)', 'Chạy bộ kiểm lỗi cho từng loại XML, tra cứu thẻ BHYT, đối chiếu chéo giữa các bảng', '02 Kiểm tra dữ liệu'],
+      ['4', { t: 'Xem và xử lý lỗi', b: true }, { t: 'Người dùng', b: true }, { t: 'Lọc hồ sơ có lỗi, xem chi tiết, phối hợp khoa phòng sửa dữ liệu gốc trên HIS', b: true }, { t: '02 Kiểm tra dữ liệu', b: true }],
+      ['5', 'Ký số – Xuất – Gửi', 'Hệ thống (chạy nền)', 'Hồ sơ hết lỗi nghiêm trọng được ký số, xuất tệp XML và gửi lên cổng', '03 Ký số, 04 Gửi cổng'],
+      ['6', 'Tra cứu kết quả', 'Người dùng', 'Xem cột Exp, Sub, Ký XML và thông điệp phản hồi của cổng', '05 Theo dõi kết quả'],
     ],
     note: { label: 'Rất quan trọng:', text: 'Bước 5 diễn ra HOÀN TOÀN TỰ ĐỘNG. Nút "Xuất XML3176" trên màn danh sách CHỈ tải tệp ZIP về máy để đối chiếu, KHÔNG gửi hồ sơ lên cổng. Đừng nhầm hai việc này.', kind: 'danger' },
     speaker: 'Hiểu nhầm về nút Xuất XML3176 là hiểu nhầm phổ biến nhất của cả module. Hỏi lại cả phòng để chắc chắn ai cũng nghe rõ.',
@@ -112,7 +67,7 @@ module.exports = function deckB(PptxGenJS) {
     caption: 'Toàn màn Hồ sơ XML → Xml 3176 → Danh sách hồ sơ.\nChụp đủ: hàng bộ lọc, thanh nút, vài dòng bảng có dòng tô đỏ, và biểu tượng tiến độ ở góc dưới phải.',
     points: [
       'Nháy ĐÚP vào một dòng để mở Chi tiết hồ sơ (các tab XML1–XML15, Thẻ BHYT, Lỗi XML)',
-      'Dòng có lỗi được tô nền đỏ',
+      'Dòng có lỗi hiện chữ đỏ',
       'Góc dưới phải: biểu tượng quay tròn kèm con số = số việc còn trong hàng đợi kiểm tra, tự cập nhật mỗi 5 giây',
       'Con số về 0 = đã kiểm xong. Đứng yên rất lâu = báo công nghệ thông tin',
       'Cột Sub có biểu tượng sao chép để chép nguyên văn thông điệp lỗi gửi cho bộ phận hỗ trợ',
@@ -189,14 +144,10 @@ module.exports = function deckB(PptxGenJS) {
     note: { label: 'Việc phải làm sau mỗi lần nâng cấp phần mềm:', text: 'Rà lại màn hình này để đặt đúng mức độ cho các mã lỗi mới. Riêng mã lỗi "mã xã không thuộc tỉnh" được nạp ở trạng thái TẮT sẵn — chỉ bật sau khi danh mục đơn vị hành chính đã chuyển sang hai cấp và đã rà thử một lô hồ sơ.', kind: 'danger' },
     speaker: 'Đây là màn hình quyền lực nhất của module — một ô tích sai có thể chặn hàng nghìn hồ sơ. Đề nghị đơn vị quy định ai được đụng vào.',
   });
+}
 
-  // ------------------------------------------------------------ Chương 2: Thẻ BHYT
-  L.sectionSlide(pptx, ctx, {
-    no: 2,
-    title: 'Thẻ BHYT ở quy mô phòng ban',
-    sub: 'Kết quả tra cứu tự động hằng ngày · Tra cứu hàng loạt trước kỳ quyết toán',
-  });
-
+// Thẻ BHYT ở quy mô phòng ban (mục 3.3 – 3.5). Không mở chương.
+function theBhytPhongBan(pptx, ctx, no) {
   L.bulletSlide(pptx, ctx, {
     kicker: 'Mục 3.3',
     title: 'Kết quả tra cứu thẻ tự động',
@@ -245,10 +196,12 @@ module.exports = function deckB(PptxGenJS) {
     fontSize: 11.5,
     speaker: 'Chia nhóm: 000 là xong; 003/004/060/070 là sửa trên HIS; 010/110 là làm việc với người bệnh; 054/055/401 là việc của CNTT. Bốn nhóm, dễ nhớ hơn 23 mã.',
   });
+}
 
-  // ------------------------------------------------------------ Chương 3: Danh mục
+// Quản lý danh mục BHYT (Phần IV).
+function danhMuc(pptx, ctx, no) {
   L.sectionSlide(pptx, ctx, {
-    no: 3,
+    no,
     title: 'Quản lý danh mục BHYT',
     sub: 'Mười một bộ danh mục · Nguyên tắc chỉ đọc · Nhập khẩu và đọc kết quả · Bốn bộ theo cơ sở',
   });
@@ -338,10 +291,12 @@ module.exports = function deckB(PptxGenJS) {
     },
     speaker: 'Hai việc này nên có quy trình nội bộ: ai được làm, làm lúc nào (ngoài giờ), ai xác nhận. Đề nghị đơn vị ghi thành quy định.',
   });
+}
 
-  // ------------------------------------------------------------ Chương 4: Chứng từ điện tử
+// Chứng từ điện tử theo Phụ lục 02 (Phần VI).
+function ctdt(pptx, ctx, no) {
   L.sectionSlide(pptx, ctx, {
-    no: 4,
+    no,
     title: 'Chứng từ điện tử theo Phụ lục 02',
     sub: 'Giấy ra viện, chứng sinh, báo tử, nghỉ hưởng BHXH · Chín trạng thái gửi · Chống gửi trùng',
   });
@@ -449,10 +404,12 @@ module.exports = function deckB(PptxGenJS) {
     note: { label: 'Giấy ra viện — trường bắt buộc:', text: 'Người bệnh: Mã BHXH, Họ tên, Ngày sinh, Giới tính, Địa chỉ, Nghề nghiệp, Loại giấy tờ. Đợt điều trị: Mã khoa, Ngày vào, Ngày ra, Chẩn đoán, Mã và Tên bệnh ICD-10, Phương pháp điều trị. Chứng từ: Ngày chứng từ, Thủ trưởng đơn vị, Tên trưởng khoa, Mã chứng chỉ hành nghề của trưởng khoa.' },
     speaker: 'Nhấn: Phương pháp điều trị (PP_DIEUTRI) mới thành bắt buộc từ 07/09/2026 sau khi cổng từ chối một hồ sơ. Khoảng 7% giấy ra viện đang bỏ trống trường này — sẽ chuyển sang "Còn lỗi chặn" sau khi nạp lại. Luật mới chỉ áp cho hồ sơ nạp từ thời điểm nâng cấp trở đi.',
   });
+}
 
-  // ------------------------------------------------------------ Chương 5: TT12
+// Danh mục theo Thông tư 12/2026 (Phần VII).
+function tt12(pptx, ctx, no) {
   L.sectionSlide(pptx, ctx, {
-    no: 5,
+    no,
     title: 'Danh mục theo Thông tư 12/2026',
     sub: 'Sáu mẫu cơ sở tự khai · Nạp và gửi · Đồng bộ sang bộ danh mục · Dashboard độ phủ',
   });
@@ -525,39 +482,13 @@ module.exports = function deckB(PptxGenJS) {
     note: { label: 'Dashboard không có bộ lọc thời gian — đó là cố ý:', text: 'Câu hỏi "đã được cổng tiếp nhận hay chưa" là câu hỏi trên toàn bộ thời gian; giới hạn theo khoảng ngày sẽ làm một mẫu gửi từ lâu hiện thành chưa gửi. Thông tư 12 cũng không quy định chu kỳ gửi cố định — danh mục chỉ gửi khi có thay đổi.' },
     speaker: 'Dashboard độ phủ là màn hình để trả lời lãnh đạo "đã khai đủ chưa". Bấm vào ô nào sẽ mở Danh sách hồ sơ đã lọc sẵn theo mẫu và cơ sở.',
   });
+}
 
-  // ------------------------------------------------------------ Kết
-  L.splitSlide(pptx, ctx, {
-    kicker: 'Ranh giới trách nhiệm',
-    title: 'Việc của phòng ban và việc phải báo công nghệ thông tin',
-    left: {
-      head: 'PHÒNG BAN NGHIỆP VỤ tự làm',
-      items: [
-        'Nạp hồ sơ XML, theo dõi Danh sách hồ sơ, lọc "Lỗi critical" và giao việc cho khoa',
-        'Nhập khẩu danh mục BHYT, đọc năm con số kết quả, sửa tệp nguồn và nhập lại',
-        'Đặt mức Nghiêm trọng / Có kiểm tra cho từng mã lỗi ở DM lỗi Xml 3176',
-        'Ký và gửi chứng từ điện tử, xử lý hồ sơ "Còn lỗi chặn" và "Cổng từ chối"',
-        'Nạp, ký và gửi sáu mẫu danh mục TT12; theo dõi Dashboard độ phủ',
-        'Xuất Excel gửi khoa phòng đối chiếu; giữ mã giao dịch để đối soát với cơ quan bảo hiểm',
-      ],
-    },
-    right: {
-      head: 'BÁO CÔNG NGHỆ THÔNG TIN',
-      items: [
-        'Hàng đợi đứng: con số ở góc dưới phải không giảm, hoặc khối Ba hàng đợi báo chờ nhiều phút',
-        'Cả loạt hồ sơ đứng ở "Chưa kiểm" · hồ sơ đã ký nhưng không bao giờ được gửi',
-        'Lỗi ký số: HSM/USB Token, chứng thư số hết hạn',
-        'Mã 401 / 403 từ cổng · "Thiếu mã cơ sở KCB" · "Mã tỉnh không được cấu hình"',
-        'Bật/tắt cấu hình gửi tự động; đặt tệp DUNG-GUI để dừng khẩn cấp luồng chứng từ',
-        'Nạp mã lỗi mới sau nâng cấp; lùi mốc quét để kiểm lại một giai đoạn',
-      ],
-    },
-    speaker: 'In slide này ra dán ở phòng. Mục tiêu: giảm số cuộc gọi sai địa chỉ theo cả hai chiều.',
-  });
-
+// Tình huống thường gặp ở phòng ban. Không mở chương.
+function tinhHuongPhongBan(pptx, ctx, no) {
   L.caseSlide(pptx, ctx, {
     kicker: 'Tổng hợp mục 1.9, 4.9, 6.13, 7.11',
-    title: 'Năm tình huống gặp nhiều nhất',
+    title: 'Tình huống thường gặp ở các phòng ban chức năng',
     cases: [
       { what: 'Không thể xác định loại danh mục. Vui lòng kiểm tra lại cấu trúc file.', why: 'Dòng 1 không phải dòng tiêu đề cột — phổ biến nhất với tệp tải trực tiếp từ cổng', fix: 'Xoá các dòng phía trên để tiêu đề về dòng 1. Hoặc tải biểu mẫu và dán dữ liệu vào' },
       { what: 'Số lỗi hiện 0 nhưng hồ sơ vẫn không gửi được', why: 'Hồ sơ chưa được kiểm; số 0 chỉ có nghĩa là chưa ai nhìn', fix: 'Đọc cột Trạng thái gửi. Nếu là "Chưa kiểm" thì chờ, không phải hồ sơ đã sạch' },
@@ -567,18 +498,6 @@ module.exports = function deckB(PptxGenJS) {
     ],
     speaker: 'Mỗi tình huống 30 giây. Bảng xử lý sự cố đầy đủ nằm ở cuối mỗi phần và ở Phụ lục A.',
   });
+}
 
-  L.closingSlide(pptx, ctx, {
-    title: 'Tóm lại — năm việc cần nhớ',
-    points: [
-      'Nút "Xuất XML3176" chỉ tải ZIP về máy. Việc gửi lên cổng là tự động, không có nút bấm.',
-      'Danh mục sai là gốc của mọi lỗi hàng loạt. Chọn đúng Cơ sở KCB TRƯỚC khi kéo tệp vào.',
-      'Chứng từ Phụ lục 02 gửi hai lần là hai chứng từ trên cổng. Đọc Lịch sử gửi trước khi xác nhận.',
-      'Số lỗi = 0 chỉ có nghĩa khi trạng thái khác "Chưa kiểm". Luôn đọc hai cột cùng nhau.',
-      'Danh mục TT12 chỉ có hiệu lực khi cổng trả mã 200 và cột Đã đồng bộ đã chuyển.',
-    ],
-    contact: 'Tra cứu chi tiết: Hướng dẫn sử dụng XML3176 – OrderCheck – Thẻ BHYT – Danh mục\nPhần I (XML 3176) · Phần III (thẻ BHYT) · Phần IV (danh mục) · Phần VI (chứng từ điện tử) · Phần VII (TT12/2026)\nPhụ lục A (tra cứu sự cố) · Phụ lục B (tiến trình nền)\nHỗ trợ: Phòng Công nghệ thông tin — số máy lẻ: ………',
-  });
-
-  return pptx;
-};
+module.exports = { xml3176, theBhytPhongBan, danhMuc, ctdt, tt12, tinhHuongPhongBan };

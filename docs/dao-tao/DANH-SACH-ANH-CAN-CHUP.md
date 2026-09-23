@@ -1,7 +1,24 @@
 # Danh sách ảnh màn hình cần chụp cho bộ slide đào tạo
 
-Ảnh 1–6 tương ứng với sáu khung viền đứt ghi `[Ảnh n]` trong deck A, B, C — còn phải chụp tay.
-Ảnh 7 trở đi thuộc deck D và **đã chụp, nhúng sẵn** từ thư mục `anh/`.
+Ảnh 1–6 thuộc deck gộp `Slide-dao-tao-Tien-giam-dinh.pptx`. **Cả sáu ảnh đã chụp ngày
+23/09/2026 và được nhúng tự động** mỗi lần dựng: `shotSlide` trong `lib.js` thấy tệp đúng tên
+trong `anh/` thì đặt ảnh, chưa có thì vẽ khung chờ `[Ảnh n]`. Muốn thay ảnh, ghi đè tệp cùng
+tên rồi dựng lại.
+Ảnh 7 trở đi thuộc deck D và cũng đã chụp, nhúng sẵn từ thư mục `anh/`.
+
+Cách chụp ngày 23/09/2026 (để lần sau làm lại cho khớp):
+
+- Chụp trên qlbv local chạy `artisan serve`, khung trình duyệt 1600 × 900, bằng html2canvas
+  gửi ảnh về một bộ nhận chạy ở 127.0.0.1.
+- Mọi dữ liệu cá nhân (họ tên, số thẻ, ngày sinh, CCCD, mã BHXH, mã điều trị, số CCHN, địa chỉ,
+  tên tài khoản đăng nhập) đã được thay bằng dữ liệu giả **trên trang** trước khi chụp.
+- Ảnh 1: 8 vi phạm trong ảnh là **dữ liệu minh hoạ** chèn tạm vào CSDL local, chụp xong đã xoá.
+- Ảnh 2: hồ sơ thật (đọc HIS), đã che thông tin người bệnh; cắt từ khối Thông tin hồ sơ tới
+  tiêu đề bảng lỗi XML3176 cho đủ lớn trên slide.
+- Ảnh 4: một hồ sơ chưa từng gửi cổng được tạm đặt về "Chưa kiểm" để chụp, rồi trả lại đúng
+  giá trị cũ; ảnh chỉ lấy phần bảng.
+- Ảnh 5, 6: người dùng tự tra một thẻ thật trên cổng BHXH; ảnh 5 là cửa sổ kết quả mở từ màn
+  Tra cứu thẻ BHYT (cách 1), không phải màn riêng.
 
 ## Nguyên tắc chung khi chụp
 
@@ -18,7 +35,7 @@
 
 ## Ảnh 1 — Màn Danh sách vi phạm
 
-- **Deck:** A — Khoa lâm sàng (slide "Màn hình Danh sách vi phạm")
+- **Vị trí:** deck Tiền giám định, slide 12 — phần 02 ("Màn hình Danh sách vi phạm")
 - **Tên tệp:** `anh-01-danh-sach-vi-pham.png`
 - **Đường dẫn trên phần mềm:** Kiểm tra sai sót y lệnh → Danh sách vi phạm
 - **Phải thấy trong ảnh:**
@@ -30,7 +47,7 @@
 
 ## Ảnh 2 — Màn Tra cứu lỗi hồ sơ, sau khi tra một mã có lỗi
 
-- **Deck:** A — Khoa lâm sàng (slide "Màn hình kết quả tra cứu")
+- **Vị trí:** deck Tiền giám định, slide 52 — phần 06 ("Màn hình kết quả tra cứu")
 - **Tên tệp:** `anh-02-tra-cuu-loi-ho-so.png`
 - **Đường dẫn trên phần mềm:** Tra cứu lỗi hồ sơ (menu ngoài cùng bên trái)
 - **Phải thấy trong ảnh:**
@@ -44,19 +61,19 @@
 
 ## Ảnh 3 — Màn Danh sách hồ sơ XML 3176
 
-- **Deck:** B — Phòng ban nghiệp vụ (slide "Màn hình Danh sách hồ sơ — màn làm việc chính")
+- **Vị trí:** deck Tiền giám định, slide 23 — phần 03 ("Màn hình Danh sách hồ sơ — màn làm việc chính")
 - **Tên tệp:** `anh-03-danh-sach-ho-so-xml3176.png`
 - **Đường dẫn trên phần mềm:** Hồ sơ XML → Xml 3176 → Danh sách hồ sơ
 - **Phải thấy trong ảnh:**
   - Hàng bộ lọc và thanh nút (nút tải dữ liệu, XLS, Export lỗi, Xuất XML3176…)
-  - Vài dòng bảng, trong đó **có ít nhất một dòng tô nền đỏ** (hồ sơ có lỗi)
+  - Vài dòng bảng, trong đó **có ít nhất một dòng chữ đỏ** (hồ sơ có lỗi)
   - Các cột Exp, Sub, Ký XML
   - **Biểu tượng tiến độ quay tròn kèm con số ở góc dưới bên phải**
 - **Chuẩn bị trước khi chụp:** chụp lúc vừa nạp xong một lô hồ sơ, để con số hàng đợi khác 0.
 
 ## Ảnh 4 — Bẫy cột Số lỗi bằng 0 (chứng từ điện tử)
 
-- **Deck:** B — Phòng ban nghiệp vụ (slide "Bẫy lớn nhất: cột Số lỗi bằng 0")
+- **Vị trí:** deck Tiền giám định, slide 65 — phần 08 ("Bẫy lớn nhất: cột Số lỗi bằng 0")
 - **Tên tệp:** `anh-04-ctdt-so-loi-bang-0.png`
 - **Đường dẫn trên phần mềm:** Hồ sơ XML → Chứng từ điện tử → Danh sách hồ sơ
 - **Phải thấy trong ảnh:**
@@ -69,7 +86,7 @@
 
 ## Ảnh 5 — Kết quả tra cứu tiền cùng chi trả
 
-- **Deck:** C — Tiếp đón & Viện phí (slide "Đọc kết quả — khối kết luận")
+- **Vị trí:** deck Tiền giám định, slide 41 — phần 05 ("Đọc kết quả — khối kết luận")
 - **Tên tệp:** `anh-05-ket-qua-mcct.png`
 - **Đường dẫn trên phần mềm:** Thẻ BHYT → Tra cứu tiền cùng chi trả
 - **Phải thấy trong ảnh:**
@@ -84,7 +101,7 @@
 
 ## Ảnh 6 — Nút "Tra tiền cùng chi trả" trên màn Tra cứu thẻ BHYT
 
-- **Deck:** C — Tiếp đón & Viện phí (slide "Nút Tra tiền cùng chi trả nằm ở đâu")
+- **Vị trí:** deck Tiền giám định, slide 38 — phần 05 ("Nút Tra tiền cùng chi trả nằm ở đâu")
 - **Tên tệp:** `anh-06-nut-tra-tien-cung-chi-tra.png`
 - **Đường dẫn trên phần mềm:** Thẻ BHYT → Tra cứu thẻ BHYT, **sau khi tra thẻ thành công**
 - **Phải thấy trong ảnh:**
@@ -120,14 +137,10 @@
 
 ---
 
-## Sau khi chụp xong
+## Khi cần thay ảnh
 
-1. Mở tệp `.pptx` tương ứng bằng PowerPoint.
-2. Tìm slide có khung viền đứt ghi `[Ảnh n]`.
-3. Dán ảnh vào, kéo cho vừa khung.
-4. Xoá khung viền đứt và dòng chữ chú thích bên trong.
-5. Lưu lại.
+1. Chụp lại theo yêu cầu ở mục tương ứng bên trên, che dữ liệu cá nhân trước khi chụp.
+2. Lưu đè vào `anh/` với **đúng tên tệp** ghi ở mục đó.
+3. Dựng lại: `node build.js tgd` trong `_nguon_slide/` (xem README ở đó).
 
-**Lưu ý:** nếu sau này dựng lại tệp `.pptx` từ nguồn (`_nguon_slide/build.js`) thì ảnh đã dán
-sẽ mất, vì lệnh dựng ghi đè toàn bộ tệp. Muốn ảnh được nhúng sẵn mỗi lần dựng, xem mục "Ảnh
-chụp màn hình" trong `_nguon_slide/README.md`.
+Đừng dán ảnh thẳng vào tệp `.pptx`: lần dựng sau ghi đè toàn bộ tệp và ảnh dán tay sẽ mất.

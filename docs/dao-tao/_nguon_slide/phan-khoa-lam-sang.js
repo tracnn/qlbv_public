@@ -1,75 +1,13 @@
-// DECK A — Khoa lâm sàng (bác sĩ, điều dưỡng, điều dưỡng trưởng khoa)
-// Nguồn: Phần II (kiểm tra sai sót y lệnh), Phần V (tra cứu lỗi theo mã điều trị),
-// trích Phần III (đọc kết quả tra thẻ BHYT).
-
+// Nội dung phần dành cho khoa lâm sàng — các chương được deck-tgd.js gọi theo thứ tự.
+// Nguồn: docs/huong-dan-su-dung/_nguon/part2.js (sai sót y lệnh), part5.js (tra cứu lỗi hồ
+// sơ), part3.js (thẻ BHYT — phần đọc kết quả).
+// Hàm nào có sectionSlide thì tự mở chương với số `no`; hàm không có thì deck-tgd.js mở.
 const L = require('./lib');
 
-module.exports = function deckA(PptxGenJS) {
-  const { pptx, ctx } = L.newDeck(PptxGenJS, {
-    title: 'Đào tạo khoa lâm sàng — Sai sót y lệnh và Tra cứu lỗi hồ sơ',
-    subject: 'Hướng dẫn sử dụng phần mềm qlbv cho khoa lâm sàng',
-    deck: 'Deck A — Khoa lâm sàng',
-  });
-
-  L.titleSlide(pptx, {
-    title: 'Rà soát sai sót y lệnh\nvà tra cứu lỗi hồ sơ',
-    subtitle: 'Phần mềm quản lý bệnh viện qlbv',
-    audience: 'Dành cho khoa lâm sàng: bác sĩ, điều dưỡng, điều dưỡng trưởng khoa',
-    meta: 'Thời lượng: 45–60 phút\nTài liệu gốc: Hướng dẫn sử dụng XML3176 – OrderCheck – Thẻ BHYT – Danh mục, Phần II, Phần III và Phần V',
-  });
-
-  L.bulletSlide(pptx, ctx, {
-    kicker: 'Mục tiêu',
-    title: 'Sau buổi này, anh/chị làm được gì',
-    bullets: [
-      { t: 'Mở được màn Danh sách vi phạm và lọc ra đúng phần việc của khoa mình', b: true,
-        sub: 'Lọc theo Khoa thực hiện + Trạng thái "Mới" + Mức độ "Nghiêm trọng"' },
-      { t: 'Đọc được một dòng vi phạm và biết phải sửa gì trên HIS', b: true,
-        sub: 'Từ cột Nội dung, số Phiếu và Mã điều trị truy ngược về đúng y lệnh' },
-      { t: 'Đánh dấu đúng "Đã xử lý" hay "Bỏ qua", kèm ghi chú giải trình', b: true },
-      { t: 'Tra được toàn bộ lỗi của một hồ sơ chỉ bằng một lần quét mã vạch', b: true },
-      { t: 'In được phiếu lỗi để kẹp bệnh án hoặc gửi lại khoa', b: true },
-      { t: 'Biết việc nào là của khoa, việc nào phải báo phòng ban / công nghệ thông tin', b: true },
-    ],
-    speaker: 'Mở đầu bằng cam kết cụ thể, không nói chung chung. Nhấn: buổi này không dạy cách dùng phần mềm nói chung, mà dạy 6 việc rất hẹp mà khoa phải làm hằng ngày. Hỏi nhanh cả phòng: ai đã từng nhận email danh sách lỗi từ phòng BHYT?',
-  });
-
-  L.flowSlide(pptx, ctx, {
-    kicker: 'Bối cảnh',
-    title: 'Phần mềm này đứng ở đâu',
-    intro: 'Phần mềm không thay thế HIS. Nó đọc dữ liệu HIS, soi lỗi, rồi báo lại để khoa sửa trên chính HIS.',
-    nodes: [
-      { head: 'HIS', body: 'Bác sĩ ra y lệnh, điều dưỡng thực hiện, dữ liệu phát sinh tại khoa' },
-      { head: 'qlbv rà soát', body: 'Máy đọc dữ liệu HIS mỗi ~60 giây, đối chiếu quy tắc, ghi nhận vi phạm', tone: 'primary' },
-      { head: 'Khoa sửa trên HIS', body: 'Khoa nhận thông báo, sửa đúng dữ liệu gốc trên HIS', tone: 'accent' },
-      { head: 'Cổng BHXH', body: 'Hồ sơ sạch mới được xuất, ký số và gửi lên cổng giám định' },
-    ],
-    legend: [
-      'Phần mềm CHỈ ĐỌC dữ liệu HIS. Không bao giờ ghi, sửa hay xoá dữ liệu HIS.',
-      'Vì vậy mọi việc sửa sai đều phải làm trên HIS — bấm nút trên phần mềm này không sửa được y lệnh.',
-      'Sửa trên HIS xong, lượt quét kế tiếp mới nhìn thấy; nhưng vi phạm cũ KHÔNG tự biến mất.',
-    ],
-    speaker: 'Đây là slide quan trọng nhất về tư duy. Câu phải lặp lại nhiều lần trong buổi: phần mềm chỉ đọc, không ghi. Nhiều khoa hiểu nhầm rằng bấm "Đã xử lý" là đã sửa xong — không phải, bấm nút chỉ là đánh dấu đã xử lý, dữ liệu vẫn sai nếu chưa sửa trên HIS.',
-  });
-
-  L.cardSlide(pptx, ctx, {
-    kicker: 'Nội dung buổi học',
-    title: 'Ba màn hình khoa lâm sàng sẽ dùng',
-    cards: [
-      { head: 'Kiểm tra sai sót y lệnh', tone: 'danger',
-        body: 'Danh sách vi phạm phát sinh từ y lệnh của khoa. Dùng hằng ngày, lọc theo khoa mình.\n\nMenu: Kiểm tra sai sót y lệnh → Danh sách vi phạm' },
-      { head: 'Tra cứu lỗi hồ sơ', tone: 'ok',
-        body: 'Quét mã điều trị trên phiếu, xem ngay toàn bộ lỗi của một hồ sơ từ cả ba nguồn.\n\nMenu: Tra cứu lỗi hồ sơ (ở ngoài cùng thanh menu trái)' },
-      { head: 'Thẻ BHYT', tone: 'warn',
-        body: 'Biết đọc mã lỗi thẻ để hiểu vì sao hồ sơ bị treo, và biết cái nào khoa sửa được.\n\nMenu: Thẻ BHYT → Tra cứu thẻ BHYT' },
-    ],
-    note: { label: 'Phạm vi buổi học:', text: 'Những màn hình còn lại (nạp hồ sơ XML, nhập danh mục, chứng từ điện tử, ký số) là việc của phòng ban nghiệp vụ, có buổi đào tạo riêng. Hôm nay không đề cập.' },
-    speaker: 'Nói rõ ngay phạm vi để không ai ngồi chờ phần không liên quan. Nhấn menu "Tra cứu lỗi hồ sơ" nằm NGOÀI nhóm Kiểm tra sai sót y lệnh — rất nhiều người tìm không ra.',
-  });
-
-  // ------------------------------------------------------------ Chương 1
+// Kiểm tra sai sót y lệnh (mục 2.1 – 2.6).
+function yLenh(pptx, ctx, no) {
   L.sectionSlide(pptx, ctx, {
-    no: 1,
+    no,
     title: 'Kiểm tra sai sót y lệnh',
     sub: 'Máy rà soát cái gì · Đọc một dòng vi phạm · Xử lý dứt điểm · Các quy tắc hay gặp',
   });
@@ -113,7 +51,7 @@ module.exports = function deckA(PptxGenJS) {
     rows: [
       ['Y lệnh sau giờ ra viện', 'Lúc quét, bệnh nhân còn nằm viện nên chưa có giờ ra viện; khi ra viện các phiếu cũ không được quét lại', 'Không cần làm gì. Phòng BHYT sẽ đối chiếu lại bằng kiểm tra hồ sơ XML 3176 sau khi hồ sơ kết thúc'],
       ['Chẩn đoán nhập bổ sung sau', 'Phiếu lúc quét chưa có mã ICD bị ghi vi phạm "thiếu chẩn đoán"; bổ sung ICD sau thì vi phạm cũ vẫn còn', 'Đánh dấu "Bỏ qua", ghi chú rõ: đã bổ sung ICD ngày …'],
-      ['Danh mục BHYT cập nhật sau', 'Phiếu bị báo "mã không có trong danh mục" do lúc quét danh mục chưa nhập', 'Đánh dấu "Bỏ qua". Việc nhập danh mục là của phòng ban nghiệp vụ'],
+      ['Danh mục BHYT cập nhật sau', 'Phiếu bị báo "mã không có trong danh mục" do lúc quét danh mục chưa nhập', 'Đánh dấu "Bỏ qua". Việc nhập danh mục là của phòng ban chức năng'],
     ],
     note: { label: 'Đừng kết luận vội:', text: 'Thấy một vi phạm mà biết chắc mình đã sửa rồi — hãy đối chiếu ba tình huống trên trước khi báo là lỗi phần mềm. Đa số trường hợp rơi vào dòng thứ hai.' },
     speaker: 'Đây là nguồn gây tranh cãi lớn nhất giữa khoa và phòng BHYT. Dạy khoa cách ghi chú đúng, vì ghi chú chính là căn cứ giải trình khi giám định hỏi lại.',
@@ -240,10 +178,12 @@ module.exports = function deckA(PptxGenJS) {
     ],
     speaker: 'Slide này để trả lời câu hỏi kinh điển "sao ca kia sai mà máy không báo". Không cần học thuộc, chỉ cần biết là có bảng này trong tài liệu, mục 2.6.',
   });
+}
 
-  // ------------------------------------------------------------ Chương 2
+// Tra cứu lỗi hồ sơ theo mã điều trị (Phần V).
+function traCuuLoi(pptx, ctx, no) {
   L.sectionSlide(pptx, ctx, {
-    no: 2,
+    no,
     title: 'Tra cứu lỗi hồ sơ theo mã điều trị',
     sub: 'Một lần quét mã vạch — thấy toàn bộ lỗi của hồ sơ từ cả ba nguồn',
   });
@@ -338,14 +278,10 @@ module.exports = function deckA(PptxGenJS) {
     note: { label: 'Không nhìn thấy menu Tra cứu lỗi hồ sơ?', text: 'Tài khoản chưa được cấp quyền tra-cuu-loi-ho-so. Đề nghị quản trị hệ thống cấp quyền, sau đó đăng xuất rồi đăng nhập lại.' },
     speaker: 'Giải thích vì sao tách quyền: để nhân viên khoa tra cứu được hồ sơ của mình mà không phải mở quyền quản trị toàn bộ danh sách vi phạm.',
   });
+}
 
-  // ------------------------------------------------------------ Chương 3
-  L.sectionSlide(pptx, ctx, {
-    no: 3,
-    title: 'Thẻ BHYT — phần khoa lâm sàng cần biết',
-    sub: 'Đọc hai mã kết quả · Biết lỗi nào khoa sửa được trên HIS',
-  });
-
+// Thẻ BHYT — hai mã kết quả và các mã khoa sửa được. Không mở chương.
+function theBhytKhoa(pptx, ctx, no) {
   L.cardSlide(pptx, ctx, {
     kicker: 'Mục 3.3.5',
     title: 'Hai mã hoàn toàn khác nhau — đừng nhầm',
@@ -377,57 +313,22 @@ module.exports = function deckA(PptxGenJS) {
     note: { label: 'Ảnh hưởng tới mức hưởng:', text: 'Trường "Ngày đủ 5 năm liên tục" và "Mã khu vực" khi lệch với cổng phải sửa theo dữ liệu cổng TRƯỚC khi kết xuất hồ sơ XML, nếu không hồ sơ sẽ bị giám định từ chối.' },
     speaker: 'Nhấn mã 08 và 09: hai mã này nhỏ nhưng hậu quả lớn. Giới tính sai nghe rất vô lý nhưng thực tế phát sinh nhiều, chủ yếu do nhập nhanh lúc tiếp đón.',
   });
+}
 
-  // ------------------------------------------------------------ Kết
-  L.splitSlide(pptx, ctx, {
-    kicker: 'Ranh giới trách nhiệm',
-    title: 'Việc của khoa và việc phải báo lên',
-    left: {
-      head: 'KHOA LÂM SÀNG tự làm',
-      items: [
-        'Sửa dữ liệu gốc trên HIS: y lệnh, chẩn đoán ICD, giờ y lệnh, người thực hiện',
-        'Khai bổ sung chứng chỉ hành nghề cho người thực hiện dịch vụ',
-        'Sửa thông tin hành chính lệch với cổng: họ tên, ngày sinh, giới tính, nơi ĐKBĐ',
-        'Đánh dấu Đã xử lý / Bỏ qua kèm ghi chú giải trình',
-        'In phiếu lỗi kẹp bệnh án, tra cứu hồ sơ bằng mã điều trị',
-      ],
-    },
-    right: {
-      head: 'BÁO PHÒNG BAN / CÔNG NGHỆ THÔNG TIN',
-      items: [
-        'Bộ quét dừng: hộp Thống kê quét có cột "Chạy gần nhất" cách hiện tại quá vài phút, hoặc cột "Lỗi" khác 0',
-        'Không nhìn thấy menu hoặc thiếu cột Xử lý → xin cấp quyền',
-        '"Không lấy được thông tin từ HIS" → mất kết nối cơ sở dữ liệu HIS',
-        'Cần bật/tắt một quy tắc kiểm tra, hoặc cần quét lại một giai đoạn',
-        'Mã báo "không có trong danh mục" hàng loạt → danh mục BHYT chưa nhập',
-      ],
-    },
-    speaker: 'Slide này nên để lâu nhất. Mục tiêu: khoa không mất thời gian với việc không phải của mình, và phòng ban không nhận về những việc khoa tự làm được.',
-  });
-
+// Tình huống thường gặp tại khoa (mục 2.8, 5.9). Không mở chương.
+function tinhHuongKhoa(pptx, ctx, no) {
   L.caseSlide(pptx, ctx, {
     kicker: 'Mục 2.8 và 5.9',
-    title: 'Năm tình huống gặp nhiều nhất',
+    title: 'Tình huống thường gặp tại khoa lâm sàng',
     cases: [
       { what: 'Bảng trống, không có dòng nào', why: 'Bộ lọc quá hẹp (mặc định chỉ ngày hôm nay), hoặc bộ quét đang dừng', fix: 'Mở rộng khoảng ngày rồi bấm Tải dữ liệu. Vẫn trống thì mở hộp Thống kê quét, xem cột Chạy gần nhất' },
       { what: 'Ba bảng lỗi đều trống nhưng biết chắc hồ sơ có lỗi', why: 'Lỗi chưa được ghi nhận: bộ quét chưa chạy tới, hoặc hồ sơ chưa kiểm XML, hoặc chưa tra thẻ', fix: 'Chờ khoảng một phút cho bộ quét y lệnh. Lỗi XML chỉ có sau khi hồ sơ đã gửi và cổng trả kết quả' },
       { what: 'Không tìm thấy hồ sơ với mã này trên HIS', why: 'Gõ sai mã điều trị, hoặc hồ sơ thuộc cơ sở khác', fix: 'Kiểm tra lại mã. Nếu ba bảng lỗi bên dưới vẫn có dữ liệu thì mã đúng, chỉ là hồ sơ không còn trên HIS' },
       { what: 'Bấm Tra lại thẻ BHYT nhưng kết quả không đổi', why: 'Yêu cầu chạy ở hàng đợi nền, chưa xong', fix: 'Chờ vài giây rồi bấm Tra cứu lại. Sau vài phút vẫn không đổi thì báo công nghệ thông tin' },
-      { what: 'Số liệu trên màn hình khác số liệu HIS', why: 'Độ trễ của bộ quét, hoặc quy tắc liên quan đang tắt', fix: 'Chờ vài phút rồi tải lại. Nếu nghi ngờ quy tắc bị tắt thì báo phòng ban nghiệp vụ' },
+      { what: 'Số liệu trên màn hình khác số liệu HIS', why: 'Độ trễ của bộ quét, hoặc quy tắc liên quan đang tắt', fix: 'Chờ vài phút rồi tải lại. Nếu nghi ngờ quy tắc bị tắt thì báo phòng ban chức năng' },
     ],
     speaker: 'Đi nhanh, mỗi tình huống 30 giây. Nhấn rằng toàn bộ bảng xử lý sự cố đầy đủ nằm ở mục 2.8, 5.9 và Phụ lục A của tài liệu.',
   });
+}
 
-  L.closingSlide(pptx, ctx, {
-    title: 'Tóm lại — bốn việc cần nhớ',
-    points: [
-      'Phần mềm chỉ ĐỌC dữ liệu HIS. Mọi việc sửa sai đều làm trên HIS, sửa xong mới đánh dấu.',
-      'Đầu giờ sáng: lọc Khoa mình + Trạng thái "Mới" + Mức độ "Nghiêm trọng" → Tải dữ liệu.',
-      '"Bỏ qua" là vĩnh viễn và luôn phải có ghi chú lý do — đó là căn cứ giải trình với giám định.',
-      'Cần biết một hồ sơ có lỗi gì: quét mã vạch trên phiếu ở màn Tra cứu lỗi hồ sơ, một lần là đủ.',
-    ],
-    contact: 'Tra cứu chi tiết: Hướng dẫn sử dụng XML3176 – OrderCheck – Thẻ BHYT – Danh mục\nPhần II (sai sót y lệnh) · Phần III (thẻ BHYT) · Phần V (tra cứu lỗi hồ sơ) · Phụ lục A (tra cứu sự cố)\nHỗ trợ: Phòng Công nghệ thông tin — số máy lẻ: ………',
-  });
-
-  return pptx;
-};
+module.exports = { yLenh, traCuuLoi, theBhytKhoa, tinhHuongKhoa };

@@ -1,8 +1,8 @@
-// Dựng bốn bộ slide đào tạo ra tệp .pptx.
+// Dựng các bộ slide đào tạo ra tệp .pptx.
 //
-//   node build.js            -> dựng cả bốn deck vào ../
-//   node build.js a          -> chỉ dựng deck A
-//   node build.js b c        -> dựng deck B và C
+//   node build.js            -> dựng cả hai deck vào ../
+//   node build.js tgd        -> chỉ dựng deck gộp Tiền giám định
+//   node build.js d          -> chỉ dựng deck D (báo cáo giao ban)
 //
 // Yêu cầu: pptxgenjs cài tạm ở thư mục gốc dự án, xem README.md.
 
@@ -18,9 +18,7 @@ try {
 }
 
 const DECKS = {
-  a: { build: require('./deck-a'), file: 'Slide-dao-tao-A-Khoa-lam-sang.pptx' },
-  b: { build: require('./deck-b'), file: 'Slide-dao-tao-B-Phong-ban-nghiep-vu.pptx' },
-  c: { build: require('./deck-c'), file: 'Slide-dao-tao-C-Tiep-don-Vien-phi.pptx' },
+  tgd: { build: require('./deck-tgd'), file: 'Slide-dao-tao-Tien-giam-dinh.pptx' },
   d: { build: require('./deck-d'), file: 'Slide-dao-tao-D-Bao-cao-giao-ban.pptx' },
 };
 
