@@ -36,6 +36,7 @@
                     <th>Đơn vị tính</th>
                     <th>Hàm lượng</th>
                     <th>Đường dùng</th>
+                    <th>Mã đường dùng</th>
                     <th>Số đăng ký</th>
                     <th>TT thầu</th>
                     <th>Đơn giá</th>
@@ -92,6 +93,9 @@
                 { "data": "don_vi_tinh" },
                 { "data": "ham_luong" },
                 { "data": "duong_dung" },
+                // Luat XML2 doi chieu duong dung theo MA hoac ten; loi hien "ten / ma" nen can
+                // thay ma de tra cuu (vi du HIS ghi 2.15, danh muc duyet 2.05).
+                { "data": "ma_duong_dung" },
                 { "data": "so_dang_ky" },
                 { "data": "tt_thau" },
                 { "data": "don_gia" },
