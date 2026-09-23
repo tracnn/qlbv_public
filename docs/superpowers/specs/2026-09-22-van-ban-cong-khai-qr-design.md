@@ -33,7 +33,7 @@ chính các chữ ký số trong PDF (kiểm bằng Adobe hoặc công cụ "Ki�
 | URL trong QR | `{public_base_url}{token}.pdf`, `token` ngẫu nhiên 128-bit; URL **bất biến vĩnh viễn** |
 | Đẩy file | Một chiều nội bộ → DMZ qua disk Laravel `vbck_public`, **driver `local` trỏ share SMB/UNC** (không thêm package composer) |
 | Thu hồi | Thay file bằng **PDF tĩnh "Văn bản đã bị thu hồi"** (tên, ngày, lý do) ở đúng URL đó |
-| Đăng nhập qlbv | **Xác thực qua ACS**, lưu `TokenCode` trong session để ký không phải nhập lại mật khẩu; bật/tắt bằng cờ `auth.acs_enabled` |
+| Đăng nhập qlbv | User qlbv vốn là `ACS_RS.acs_user`; khi đăng nhập **gọi thêm API ACS** lấy `TokenCode`, lưu trong session để ký không phải nhập lại mật khẩu. ACS API không phản hồi → **fallback** so hash như hiện nay (đăng nhập được, không ký được). Bật/tắt bằng cờ `auth.acs_enabled` |
 | Phân quyền | Giữ Laratrust/`CheckRole`; không tự tạo user từ ACS; `vbck.cau-hinh` chỉ cấp cho lãnh đạo |
 | Dữ liệu cá nhân | Cảnh báo bắt buộc xác nhận khi bật một loại văn bản công khai |
 
@@ -240,51 +240,49 @@ Không CSDL. Thư mục `vb/` chứa `{token}.pdf`. Cấu hình web server bắt
 
 ## 5. Đăng nhập qlbv bằng ACS
 
-0. **Cờ `auth.acs_enabled`** (mặc định `false` cho tới khi triển khai): `false` → toàn bộ qlbv đăng nhập
-   như hiện nay (module VBCK không ký được vì không có token); `true` → luồng dưới đây. Khi ACS có sự cố
-   kéo dài, quản trị tắt cờ để mọi người quay về mật khẩu qlbv — đây là đường lui duy nhất, không có
-   fallback tự động.
-1. Màn login giữ nguyên (input `email` chứa loginname, `password`).
-   - **Chống dò mật khẩu**: dùng `ThrottlesLogins` theo khóa `loginname|IP`, tối đa 5 lần sai mỗi phút,
-     áp dụng **trước** khi gọi ACS (tránh lợi dụng màn login qlbv để dò hoặc làm khóa tài khoản HIS).
-     Áp dụng cho cả nhánh `local_accounts`.
-2. `loginname` thuộc `auth.local_accounts` → giữ nguyên logic `customLogin()` hiện tại (sha512 + salt,
-   `is_active = 1`). Tài khoản này **không ký được**.
-3. Ngược lại → `AcsAuthenticator::login()`:
-   - sai thông tin → báo sai tài khoản/mật khẩu;
-   - ACS lỗi/timeout → báo "Không kết nối được hệ thống xác thực", **không fallback**;
-   - thành công nhưng không có `CustomUser` cùng `loginname` (so không phân biệt hoa thường) hoặc
-     `is_active != 1` → báo "Tài khoản chưa được cấp quyền trên qlbv";
-   - thành công → `Auth::login($user)`, **`$request->session()->regenerate()`** (chống session
-     fixation — luồng cũ đang thiếu), xóa bộ đếm throttle, `AcsSessionToken::store(TokenCode, ExpireTime)`
-     và đặt mốc `vbck_last_activity = now`.
+**Bối cảnh quyết định** (đối chiếu code 2026-09-23): qlbv **không có bảng user riêng** — `App\CustomUser` là
+bảng `acs_user` trên connection `ACS_RS`, và `customLogin()` so `sha512(password + salt)` với cột `password`
+của chính bảng ACS. Tức người dùng **đã** đăng nhập qlbv bằng tài khoản/mật khẩu HIS. Thay đổi ở đây chỉ là
+gọi thêm API ACS `Token/Login` để lấy `TokenCode`; người dùng không thấy khác biệt.
+
+0. **Cờ `auth.acs_enabled`** (mặc định `false`): `false` → không gọi API ACS, không có `TokenCode`, module
+   VBCK không ký được; `true` → luồng dưới đây. Cờ chỉ để bật/tắt tính năng, không còn là đường lui sự cố
+   (đường lui là fallback ở bước 3).
+1. Màn login giữ nguyên (input `email` chứa loginname, `password`). Áp dụng **bất kể cờ**:
+   - **Chống dò mật khẩu**: `ThrottlesLogins` theo khóa `loginname|IP`, tối đa 5 lần sai mỗi phút, kiểm
+     **trước** mọi truy vấn/lời gọi ACS (tránh lợi dụng màn login qlbv để dò hoặc làm khóa tài khoản HIS).
+   - Thành công → **`$request->session()->regenerate()`** (chống session fixation — luồng cũ đang thiếu) và
+     xóa bộ đếm throttle.
+2. Tìm `CustomUser` theo `LOWER(loginname)` và `is_active = 1` (như hiện nay). Không có → báo sai tài khoản
+   hoặc mật khẩu (thông báo chung, không lộ tài khoản có tồn tại hay không).
+3. `acs_enabled = false` → so hash sha512 như hiện nay. `acs_enabled = true` → `AcsAuthenticator::login()`:
+   - **thành công** → `Auth::login($user)`, `AcsSessionToken::store(TokenCode, ExpireTime)`, đặt mốc
+     `vbck_last_activity = now`;
+   - **ACS trả sai thông tin** (`Success = false` hoặc HTTP 4xx) → báo sai tài khoản hoặc mật khẩu,
+     **không** so hash (ACS là nguồn quyết định);
+   - **ACS không phản hồi** (lỗi kết nối, timeout, HTTP 5xx, JSON hỏng) → **fallback**: so hash sha512 như
+     hiện nay. Đúng → `Auth::login($user)` **không có token**, flash thông báo "Hệ thống xác thực ký số tạm
+     thời không phản hồi. Các chức năng khác dùng bình thường; chức năng ký công khai tạm chưa dùng được."
+     Log mức warning (không kèm mật khẩu). Fallback không mở lối vào mới vì dùng đúng tài khoản/mật khẩu trong
+     cùng bảng `acs_user`.
    - Không ghi mật khẩu, header Basic hay `TokenCode` vào log (kể cả trong exception của Guzzle).
 4. Đăng xuất: xóa session.
-5. **Khóa phiên ký**: mốc `vbck_last_activity` được **khởi tạo lúc đăng nhập ACS (hoặc reauth)** và chỉ
-   được làm mới bởi request thuộc nhóm route `vbck/*`. `AcsSessionToken::current()` trả null khi
-   `now - vbck_last_activity > vbck.sign_idle_minutes` (mặc định 15). Các màn khác không bị ảnh hưởng và
-   không làm mới mốc.
+5. **Khóa phiên ký**: mốc `vbck_last_activity` được **khởi tạo lúc lấy được token (đăng nhập hoặc reauth)** và
+   chỉ được làm mới bởi request thuộc nhóm route `vbck/*`. `AcsSessionToken::current()` trả null khi thiếu
+   token, token còn dưới 5 phút là hết hạn, hoặc `now - vbck_last_activity > vbck.sign_idle_minutes`
+   (mặc định 15). Các màn khác không bị ảnh hưởng và không làm mới mốc.
 6. **Nhập lại mật khẩu** (modal trên màn VBCK): `POST vbck/reauth` gọi ACS với `loginname` của user đang
-   đăng nhập (không cho đổi tài khoản), lưu token mới.
+   đăng nhập (không cho đổi tài khoản), lưu token mới. Reauth **không fallback** — mục đích duy nhất là lấy
+   token; ACS không phản hồi → báo "Hệ thống xác thực ký số chưa phản hồi, thử lại sau". Reauth cũng qua
+   throttle như bước 1.
 
-Token dịch vụ (đổi ảnh ký) dùng tài khoản riêng trong `.env` (`VBCK_SERVICE_ACS_USER/PASS`), đăng
-nhập và cache như `ACSLoginService` nhưng key cache riêng.
+Token dịch vụ (đổi ảnh ký, chỉ khi `swap`) dùng tài khoản riêng trong `.env` (`VBCK_SERVICE_ACS_USER/PASS`),
+đăng nhập và cache như `ACSLoginService` nhưng key cache riêng.
 
-7. **Màn Đổi mật khẩu** (`user/changepass`, `ChangePasswordController`): khi `acs_enabled=true`, chỉ
-   `local_accounts` được dùng; user ACS vào màn này thấy thông báo "Mật khẩu đăng nhập là mật khẩu HIS,
-   vui lòng đổi trên HIS" và **không** có form đổi (tránh tưởng đã đổi mà không có tác dụng). Ẩn mục menu
-   tương ứng với user ACS. `acs_enabled=false` → giữ nguyên như hiện nay.
+Màn Đổi mật khẩu (`user/changepass`) hiện chỉ hiển thị "Chức năng đang xây dựng..." — **không đổi**.
 
-📌 Mọi người dùng qlbv chuyển sang đăng nhập bằng mật khẩu HIS — phải thông báo trước khi triển khai.
-
-**Checklist trước khi bật `acs_enabled`:**
-1. Đối chiếu toàn bộ user qlbv đang `is_active = 1` với tài khoản ACS (theo `loginname`, không phân biệt hoa
-   thường). Xuất danh sách user **không có** tài khoản ACS: mỗi người hoặc được tạo tài khoản HIS, hoặc đưa
-   vào `local_accounts`, hoặc chấp nhận khóa — có người chịu trách nhiệm duyệt danh sách.
-2. Hỏi nhà cung cấp chính sách khóa tài khoản của ACS khi sai mật khẩu nhiều lần.
-3. Thông báo người dùng; ghi sẵn quy trình tắt cờ khi ACS sự cố.
-Công cụ hỗ trợ: lệnh `vbck:acs-user-audit` (chỉ đọc) — với mỗi user active, gọi ACS kiểm tra tồn tại tài
-khoản nếu nhà cung cấp có API tra cứu; nếu không có thì đối chiếu với `ACS_RS.acs_user` (connection đã có).
+**Trước khi bật `acs_enabled`:** hỏi nhà cung cấp chính sách khóa tài khoản ACS khi sai mật khẩu nhiều lần
+(để đặt ngưỡng throttle thấp hơn ngưỡng khóa).
 
 ---
 
@@ -423,7 +421,7 @@ lệch → ghi `last_error`, hiện cảnh báo đỏ trên màn quản lý (kh�
 của Laravel 5.5. Tài khoản Windows chạy PHP/worker (NSSM) cần quyền ghi/xóa trên share, chỉ trong thư mục `vb/`.
 `vbck.forbidden_document_type_ids` — mặc định `[1, 17, 28, 41, 42]`, hợp thêm
 `organization.patient.emr_document_type_result_ids` lúc chạy.
-`config/auth.php`: `acs_enabled` (mặc định `false`), `local_accounts` (mảng loginname),
+`config/auth.php`: `acs_enabled` (mặc định `false`), `acs_timeout` (10 giây),
 `login_max_attempts` (5), `login_decay_minutes` (1).
 Bảng `vbck_runtime` (key/value) cho mốc chạy của daemon.
 Permission mới (Laratrust): `vbck.ky`, `vbck.quan-ly`, `vbck.thu-hoi`, `vbck.cau-hinh` (chỉ lãnh đạo).
@@ -434,7 +432,8 @@ Permission mới (Laratrust): `vbck.ky`, `vbck.quan-ly`, `vbck.thu-hoi`, `vbck.c
 
 | Tình huống | Xử lý |
 |---|---|
-| ACS không phản hồi khi đăng nhập | Báo lỗi, không fallback (trừ `local_accounts`) |
+| ACS không phản hồi khi đăng nhập | Fallback so hash sha512 → đăng nhập không có token, thông báo chức năng ký tạm không dùng được |
+| ACS trả sai thông tin | Báo sai tài khoản/mật khẩu, không so hash |
 | Token hết hạn / EMR trả lỗi token | `need_reauth` → modal nhập lại mật khẩu, ký tiếp cùng publication |
 | Văn bản nguồn chưa hoàn thành ký / bị mở lại luồng / bị xóa | Chặn ở bước 3, báo rõ |
 | Hai request ký cùng văn bản | `lockForUpdate` + `signing` còn mới → từ chối request sau |
@@ -448,7 +447,6 @@ Permission mới (Laratrust): `vbck.ky`, `vbck.quan-ly`, `vbck.thu-hoi`, `vbck.c
 | Không lấy được khóa người ký | Báo thử lại sau vài giây |
 | Khôi phục ảnh ký thất bại / bản ghi người ký sau khôi phục lệch trường | Log critical, guard thử lại mỗi phút, cảnh báo đỏ; người ký bị chặn ký công khai tới khi sạch |
 | Người ký chưa có ảnh chữ ký trong EMR (`swap`) | `sign_failed`, báo cần cập nhật ảnh chữ ký trên EMR |
-| ACS sự cố kéo dài | Quản trị tắt `auth.acs_enabled`, người dùng quay về mật khẩu qlbv (không ký được) |
 | Đăng nhập sai quá 5 lần/phút | Throttle, báo thử lại sau; không gọi ACS |
 | Đẩy file lỗi | Retry 3 lần → `publish_failed`, nút Đẩy lại |
 | File trên cổng lệch/mất | Verify hằng ngày cảnh báo đỏ |
@@ -462,7 +460,8 @@ Permission mới (Laratrust): `vbck.ky`, `vbck.quan-ly`, `vbck.thu-hoi`, `vbck.c
   vào mạng nội bộ.
 - `TokenCode` ACS chỉ trong session phía server, mã hóa; không ghi log, không trả về frontend.
 - Đăng nhập: throttle 5 lần sai/phút theo `loginname|IP` trước khi gọi ACS; `session()->regenerate()` sau
-  khi đăng nhập thành công; cờ `auth.acs_enabled` làm đường lui khi ACS sự cố.
+  khi đăng nhập thành công; ACS không phản hồi thì fallback so hash trên cùng bảng `acs_user` (không mở lối
+  vào mới), reauth thì không fallback.
 - `swap`: không bao giờ ký khi người ký đang "bẩn"; bản lưu ảnh chỉ thêm, không ghi đè; `EmrSigner/Update`
   luôn gửi nguyên bản ghi và kiểm lại các trường sau khôi phục.
 - Ký: hộp xác nhận bắt buộc, khóa phiên ký sau 15 phút không thao tác, CSRF, permission kiểm ở route và
@@ -481,9 +480,9 @@ Permission mới (Laratrust): `vbck.ky`, `vbck.quan-ly`, `vbck.thu-hoi`, `vbck.c
   - `QLBV JobVbck` → `artisan queue:work --queue=vbck`
   - `QLBV VbckDaemon` → `artisan vbck:daemon --lien-tuc`
 - Web server DMZ theo mục 4.5; share/SFTP với quyền hạn chế.
-- Tạo permission, gán `vbck.cau-hinh` cho lãnh đạo; khai báo `local_accounts`.
-- Thông báo người dùng về việc đăng nhập bằng mật khẩu HIS, rồi mới bật `AUTH_ACS_ENABLED=true`; ghi
-  sẵn quy trình tắt cờ khi ACS sự cố.
+- Tạo permission, gán `vbck.cau-hinh` cho lãnh đạo.
+- Bật `AUTH_ACS_ENABLED=true` sau khi đã biết ngưỡng khóa tài khoản của ACS (mục 5). Người dùng không
+  cần thông báo: tài khoản/mật khẩu không đổi.
 - `QLBV VbckDaemon` vẫn cài khi dùng `per_call` (verify hằng ngày); guard tự bỏ qua khi không có `swap`.
 - `.env`: `VBCK_*`, credential dịch vụ ACS, disk công khai.
 
@@ -515,14 +514,14 @@ interface/fake.
   dòng mới; khôi phục dùng backup mới nhất có trước `swapped_at`; `updateSignerImage` gửi đủ mọi trường
   của bản ghi; sau khôi phục lệch `PCA_SERIAL` → giữ trạng thái bẩn, cảnh báo; người ký không có ảnh gốc →
   `sign_failed`.
-- **Đăng nhập ACS**: `acs_enabled=false` → luồng cũ nguyên vẹn; có ACS + user active → vào, session được
-  regenerate, mốc `vbck_last_activity` được đặt; có ACS + không user / user inactive → từ chối;
-  `local_accounts` → logic sha512 cũ; ACS lỗi → không fallback; sai quá 5 lần/phút → bị throttle và
-  **không gọi ACS**; token hết hạn/idle → `need_reauth`; request ngoài `vbck/*` không làm mới mốc idle;
-  reauth không cho đổi tài khoản. Rà lại test đăng nhập hiện có.
+- **Đăng nhập ACS**: `acs_enabled=false` → so hash như cũ, không gọi ACS; ACS thành công → vào, có token,
+  session được regenerate, mốc `vbck_last_activity` được đặt; ACS sai thông tin → từ chối, không so hash
+  (kể cả khi hash khớp); ACS không phản hồi + hash đúng → vào, **không có token**, có flash thông báo; ACS
+  không phản hồi + hash sai → từ chối; user không tồn tại / `is_active != 1` → từ chối, **không gọi ACS**;
+  sai quá 5 lần/phút → bị throttle và **không gọi ACS**; token hết hạn/idle → `need_reauth`; request ngoài
+  `vbck/*` không làm mới mốc idle; reauth không cho đổi tài khoản, không fallback. Rà lại test đăng nhập
+  hiện có.
 - **Daemon**: khởi động lại không chạy lặp verify trong cùng ngày (mốc trong `vbck_runtime`).
-- **Đổi mật khẩu**: `acs_enabled=true` + user ACS → không có form, POST bị từ chối; `local_accounts` → đổi
-  được như cũ; `acs_enabled=false` → hành vi cũ nguyên vẹn.
 - **Cấu hình loại văn bản**: bật loại nằm trong danh sách cấm (kể cả loại lấy từ
   `organization.patient.emr_document_type_result_ids`) → bị từ chối ở cả form và service.
 - **Hồi quy**: test hiện có của đăng nhập, `CheckEmrService`, màn tra cứu người bệnh vẫn xanh với
@@ -576,8 +575,9 @@ interface/fake.
 
   **Điều kiện dừng**: A3 cần bí mật HSM cá nhân; B1 hoặc B2 không đạt; hoặc (khi phải dùng `swap`) một
   trong B6, B8, B9 không đạt.
-- **Pha 1** — Đăng nhập ACS sau cờ `auth.acs_enabled` (mặc định tắt), throttle, regenerate session,
-  `AcsSessionToken`, reauth, `local_accounts`, xử lý màn Đổi mật khẩu, lệnh `vbck:acs-user-audit`.
+- **Pha 1** — Throttle + regenerate session (áp dụng ngay, bất kể cờ); đăng nhập gọi ACS sau cờ
+  `auth.acs_enabled` (mặc định tắt) với fallback so hash; `AcsSessionToken`. (Reauth thuộc Pha 2 vì gắn với
+  màn VBCK.)
 - **Pha 2** — Cấu hình loại văn bản, danh sách chờ ký, chiến lược cho file đã ký (`PerCallImageStrategy`,
   hoặc `SwapSignerImageStrategy` + khóa + guard + backup), `vbck:daemon`, ký, publish, thu hồi (PDF thông báo),
   khung kết quả sau ký.
@@ -592,8 +592,7 @@ Rà soát 2026-09-23 trên code hiện tại.
 
 | Hạng mục | Mức | Ảnh hưởng | Biện pháp trong spec |
 |---|---|---|---|
-| Đăng nhập toàn qlbv | **Lớn** | Khi bật `acs_enabled`, mọi user đăng nhập bằng mật khẩu HIS; user không có tài khoản ACS bị khóa ngoài; ACS sập thì cả qlbv không đăng nhập được; sai mật khẩu nhiều lần có thể khóa tài khoản HIS | Cờ mặc định tắt; checklist + `vbck:acs-user-audit` trước khi bật; `local_accounts`; throttle; quy trình tắt cờ (mục 5) |
-| Màn Đổi mật khẩu (`ChangePasswordController`) | Trung bình | Đổi mật khẩu local không còn tác dụng với user ACS | Khóa form, hướng dẫn đổi trên HIS (mục 5.7) |
+| Đăng nhập toàn qlbv | Thấp | User qlbv vốn là user ACS, tài khoản/mật khẩu không đổi. Thêm một lời gọi API ACS khi đăng nhập (timeout 10 giây); ACS không phản hồi thì fallback so hash như cũ. Thêm throttle và regenerate session — người gõ sai quá 5 lần/phút phải chờ | Cờ mặc định tắt; fallback (mục 5 bước 3); ngưỡng throttle thấp hơn ngưỡng khóa của ACS |
 | Đăng nhập API (`api.auth`, JWT) | Không | Không nơi nào khác dùng mật khẩu user để đăng nhập | — |
 | Các màn đọc `emr_document` theo hồ sơ (`PatientController` tra cứu của người bệnh, `KHTHController@viewEmr`, `EmrController` xem/gộp PDF, `BhxhController`, `KskController`, `PdfFlipController`, `CheckEmrService`) | Trung bình, **phụ thuộc Pha 0 B13** | Bản `[Công khai]` cùng hồ sơ, cùng loại sẽ xuất hiện thêm / bị đếm thêm nếu văn bản hành chính nằm trong hồ sơ người bệnh thật | Danh sách loại cấm (mục 3, màn 3); Pha 0 B13; nếu cần thì loại trừ `his_code LIKE 'VBCK-%'` ở các màn trên (việc riêng, lập kế hoạch sau Pha 0) |
 | Người ký trên EMR client | Trung bình, **chỉ khi `swap`** | Trong vài giây ký công khai, văn bản khác ký song song trên EMR client có thể mang ảnh QR | Khóa, cửa sổ ngắn, hướng dẫn người ký; hết hẳn nếu có `per_call` |
