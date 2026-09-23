@@ -31,7 +31,7 @@ chính các chữ ký số trong PDF (kiểm bằng Adobe hoặc công cụ "Ki�
 | Ai được ký công khai văn bản nào | **Không giới hạn** theo khoa/phòng hay người ký văn bản nguồn: mọi user có `vbck.ky` ký được mọi văn bản thuộc loại đã bật (quyết định có chủ đích) |
 | Cổng công khai | Máy chủ riêng trong DMZ, **chỉ là thư mục file tĩnh**, không ứng dụng, không CSDL |
 | URL trong QR | `{public_base_url}{token}.pdf`, `token` ngẫu nhiên 128-bit; URL **bất biến vĩnh viễn** |
-| Đẩy file | Một chiều nội bộ → DMZ qua disk Laravel `vbck_public` (SMB/UNC hoặc SFTP) |
+| Đẩy file | Một chiều nội bộ → DMZ qua disk Laravel `vbck_public`, **driver `local` trỏ share SMB/UNC** (không thêm package composer) |
 | Thu hồi | Thay file bằng **PDF tĩnh "Văn bản đã bị thu hồi"** (tên, ngày, lý do) ở đúng URL đó |
 | Đăng nhập qlbv | **Xác thực qua ACS**, lưu `TokenCode` trong session để ký không phải nhập lại mật khẩu; bật/tắt bằng cờ `auth.acs_enabled` |
 | Phân quyền | Giữ Laratrust/`CheckRole`; không tự tạo user từ ACS; `vbck.cau-hinh` chỉ cấp cho lãnh đạo |
@@ -144,6 +144,10 @@ xây** `SwapSignerImageStrategy`, `SignerImageLock`, guard và các bảng `vbck
 3. **Cấu hình loại văn bản công khai** — chọn loại EMR, bật/tắt, khung ký. Khi bật một loại phải tích
    xác nhận: "Tôi xác nhận văn bản thuộc loại này không chứa dữ liệu cá nhân cần bảo vệ (số CCCD, ngày
    sinh, địa chỉ, thông tin sức khỏe…) và được phép công khai". Lưu người và thời điểm xác nhận.
+   **Chặn bật** (không chỉ cảnh báo) các loại văn bản y tế mà module khác đang dựa vào: danh sách cấm
+   `vbck.forbidden_document_type_ids` mặc định gồm `1, 17, 28, 41, 42` (dùng trong `CheckEmrService`) hợp
+   với `organization.patient.emr_document_type_result_ids` (màn tra cứu kết quả của người bệnh). Lý do:
+   bản `[Công khai]` cùng loại sẽ lọt vào các màn và phép kiểm đó (mục 14).
 
 ---
 
@@ -266,7 +270,21 @@ Không CSDL. Thư mục `vb/` chứa `{token}.pdf`. Cấu hình web server bắt
 Token dịch vụ (đổi ảnh ký) dùng tài khoản riêng trong `.env` (`VBCK_SERVICE_ACS_USER/PASS`), đăng
 nhập và cache như `ACSLoginService` nhưng key cache riêng.
 
+7. **Màn Đổi mật khẩu** (`user/changepass`, `ChangePasswordController`): khi `acs_enabled=true`, chỉ
+   `local_accounts` được dùng; user ACS vào màn này thấy thông báo "Mật khẩu đăng nhập là mật khẩu HIS,
+   vui lòng đổi trên HIS" và **không** có form đổi (tránh tưởng đã đổi mà không có tác dụng). Ẩn mục menu
+   tương ứng với user ACS. `acs_enabled=false` → giữ nguyên như hiện nay.
+
 📌 Mọi người dùng qlbv chuyển sang đăng nhập bằng mật khẩu HIS — phải thông báo trước khi triển khai.
+
+**Checklist trước khi bật `acs_enabled`:**
+1. Đối chiếu toàn bộ user qlbv đang `is_active = 1` với tài khoản ACS (theo `loginname`, không phân biệt hoa
+   thường). Xuất danh sách user **không có** tài khoản ACS: mỗi người hoặc được tạo tài khoản HIS, hoặc đưa
+   vào `local_accounts`, hoặc chấp nhận khóa — có người chịu trách nhiệm duyệt danh sách.
+2. Hỏi nhà cung cấp chính sách khóa tài khoản của ACS khi sai mật khẩu nhiều lần.
+3. Thông báo người dùng; ghi sẵn quy trình tắt cờ khi ACS sự cố.
+Công cụ hỗ trợ: lệnh `vbck:acs-user-audit` (chỉ đọc) — với mỗi user active, gọi ACS kiểm tra tồn tại tài
+khoản nếu nhà cung cấp có API tra cứu; nếu không có thì đối chiếu với `ACS_RS.acs_user` (connection đã có).
 
 ---
 
@@ -400,8 +418,11 @@ lệch → ghi `last_error`, hiện cảnh báo đỏ trên màn quản lý (kh�
 - `service_acs.username`, `service_acs.password`
 - `signing_stale_minutes` (5), `guard_after_minutes` (2)
 
-`config/filesystems.php`: disk `vbck_public` (driver `local` trỏ UNC share DMZ, hoặc `sftp` qua
-`league/flysystem-sftp` bản tương thích Flysystem 1).
+`config/filesystems.php`: disk `vbck_public` — **driver `local`, `root` là đường dẫn UNC share trên máy DMZ**
+(ví dụ `\\<dmz-host>\vbck$`). Không dùng SFTP để không phải thêm `league/flysystem-sftp` vào `composer.lock`
+của Laravel 5.5. Tài khoản Windows chạy PHP/worker (NSSM) cần quyền ghi/xóa trên share, chỉ trong thư mục `vb/`.
+`vbck.forbidden_document_type_ids` — mặc định `[1, 17, 28, 41, 42]`, hợp thêm
+`organization.patient.emr_document_type_result_ids` lúc chạy.
 `config/auth.php`: `acs_enabled` (mặc định `false`), `local_accounts` (mảng loginname),
 `login_max_attempts` (5), `login_decay_minutes` (1).
 Bảng `vbck_runtime` (key/value) cho mốc chạy của daemon.
@@ -500,6 +521,12 @@ interface/fake.
   **không gọi ACS**; token hết hạn/idle → `need_reauth`; request ngoài `vbck/*` không làm mới mốc idle;
   reauth không cho đổi tài khoản. Rà lại test đăng nhập hiện có.
 - **Daemon**: khởi động lại không chạy lặp verify trong cùng ngày (mốc trong `vbck_runtime`).
+- **Đổi mật khẩu**: `acs_enabled=true` + user ACS → không có form, POST bị từ chối; `local_accounts` → đổi
+  được như cũ; `acs_enabled=false` → hành vi cũ nguyên vẹn.
+- **Cấu hình loại văn bản**: bật loại nằm trong danh sách cấm (kể cả loại lấy từ
+  `organization.patient.emr_document_type_result_ids`) → bị từ chối ở cả form và service.
+- **Hồi quy**: test hiện có của đăng nhập, `CheckEmrService`, màn tra cứu người bệnh vẫn xanh với
+  `acs_enabled=false`.
 - **Publish/Revoke/Verify**: `Storage::fake('vbck_public')` — ghi `.tmp` rồi đổi tên; retry →
   `publish_failed`; thu hồi ghi đè PDF thông báo và cập nhật hash; verify phát hiện thiếu/lệch.
 - **Job**: `PublishVbckJob::handle()` không tham số (test quét mã nguồn, bỏ comment trước khi quét —
@@ -541,13 +568,39 @@ interface/fake.
       có giữ `stamp` trong v1 không); FPDI miễn phí đọc được các file đó không.
   11. Thời hạn token ACS; có endpoint renew/logout không.
   12. Tên cột `rejecter`, `count_resign_wait` trên `EMR_RS`.
+  13. **Văn bản hành chính nằm trong hồ sơ nào**: thống kê `treatment_code` của các văn bản thuộc loại dự
+      kiến công khai. Hồ sơ "hành chính" dành riêng → bản `[Công khai]` không ảnh hưởng module khác. Hồ sơ
+      người bệnh thật → phải xem lại (mục 14): ít nhất loại trừ `his_code LIKE 'VBCK-%'` ở các màn liệt kê
+      văn bản theo hồ sơ, hoặc dùng loại văn bản đích riêng.
+  14. Tài khoản chạy worker ghi/đổi tên/xóa được trên share UNC của DMZ.
 
   **Điều kiện dừng**: A3 cần bí mật HSM cá nhân; B1 hoặc B2 không đạt; hoặc (khi phải dùng `swap`) một
   trong B6, B8, B9 không đạt.
 - **Pha 1** — Đăng nhập ACS sau cờ `auth.acs_enabled` (mặc định tắt), throttle, regenerate session,
-  `AcsSessionToken`, reauth, `local_accounts`.
+  `AcsSessionToken`, reauth, `local_accounts`, xử lý màn Đổi mật khẩu, lệnh `vbck:acs-user-audit`.
 - **Pha 2** — Cấu hình loại văn bản, danh sách chờ ký, chiến lược cho file đã ký (`PerCallImageStrategy`,
   hoặc `SwapSignerImageStrategy` + khóa + guard + backup), `vbck:daemon`, ký, publish, thu hồi (PDF thông báo),
   khung kết quả sau ký.
 - **Pha 3** — `StampQrStrategy` (chỉ nếu Pha 0 B10 cho thấy cần).
 - **Pha 4** — Verify file công khai, màn quản lý hoàn chỉnh, cảnh báo.
+
+---
+
+## 14. Ảnh hưởng tới các module đang chạy
+
+Rà soát 2026-09-23 trên code hiện tại.
+
+| Hạng mục | Mức | Ảnh hưởng | Biện pháp trong spec |
+|---|---|---|---|
+| Đăng nhập toàn qlbv | **Lớn** | Khi bật `acs_enabled`, mọi user đăng nhập bằng mật khẩu HIS; user không có tài khoản ACS bị khóa ngoài; ACS sập thì cả qlbv không đăng nhập được; sai mật khẩu nhiều lần có thể khóa tài khoản HIS | Cờ mặc định tắt; checklist + `vbck:acs-user-audit` trước khi bật; `local_accounts`; throttle; quy trình tắt cờ (mục 5) |
+| Màn Đổi mật khẩu (`ChangePasswordController`) | Trung bình | Đổi mật khẩu local không còn tác dụng với user ACS | Khóa form, hướng dẫn đổi trên HIS (mục 5.7) |
+| Đăng nhập API (`api.auth`, JWT) | Không | Không nơi nào khác dùng mật khẩu user để đăng nhập | — |
+| Các màn đọc `emr_document` theo hồ sơ (`PatientController` tra cứu của người bệnh, `KHTHController@viewEmr`, `EmrController` xem/gộp PDF, `BhxhController`, `KskController`, `PdfFlipController`, `CheckEmrService`) | Trung bình, **phụ thuộc Pha 0 B13** | Bản `[Công khai]` cùng hồ sơ, cùng loại sẽ xuất hiện thêm / bị đếm thêm nếu văn bản hành chính nằm trong hồ sơ người bệnh thật | Danh sách loại cấm (mục 3, màn 3); Pha 0 B13; nếu cần thì loại trừ `his_code LIKE 'VBCK-%'` ở các màn trên (việc riêng, lập kế hoạch sau Pha 0) |
+| Người ký trên EMR client | Trung bình, **chỉ khi `swap`** | Trong vài giây ký công khai, văn bản khác ký song song trên EMR client có thể mang ảnh QR | Khóa, cửa sổ ngắn, hướng dẫn người ký; hết hẳn nếu có `per_call` |
+| Ký XML (QD130, XML3176, CTĐT, TT12 — `XMLSignService`) | Không | Dùng chứng thư đơn vị qua `ConfigData`, không đụng `EMR_SIGNER`; token dịch vụ VBCK dùng key cache riêng | — |
+| CSDL qlbv | Không | Chỉ thêm bảng `vbck_*` | — |
+| Queue / NSSM | Thấp | Thêm queue `vbck` và 2 service; dùng chung bảng `jobs` | Deploy theo quy trình: rút cạn queue, không làm gián đoạn worker đang chạy |
+| `config/*` | Không | Chỉ thêm khóa mới | — |
+| Composer | Không | Dùng driver `local` + UNC, không thêm package | — |
+| Route public hiện có | Không | Không đụng tới | — |
+| Tải EMR server | Không đáng kể | Mỗi lần ký thêm một lời gọi `CreateAndSignHsm` | — |
