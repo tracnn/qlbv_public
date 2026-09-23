@@ -241,7 +241,6 @@ class Xml3176CompleteChecker
         // Calculate the difference in hours
         $interval = $ngayRa->diff($ngayVao);
         $hoursDifference = ($interval->days * 24) + $interval->h + ($interval->i / 60);
-        $hoursExcludeDaysDifference = $interval->h + ($interval->i / 60);
 
         if (in_array($data->ma_loai_kcb, $this->treatmentTypeInpatient) && $data->so_ngay_dtri <= 2) {
             $totalBedDays = $data->Xml3176Xml3()->whereIn('ma_nhom', $this->bedGroupCodes)->sum('so_luong');
@@ -271,19 +270,26 @@ class Xml3176CompleteChecker
             }
         }
 
-        if (in_array($data->ma_loai_kcb, $this->treatmentTypeInpatient) && $data->so_ngay_dtri >= 2 &&
-            (!in_array($data->ket_qua_dtri, $this->invalidKetQuaDtri) ||
-            !in_array($data->ma_loai_rv, $this->invalidMaLoaiRV))) {
+        // Lưu trú nhiều ngày (> 24h): so tổng ngày giường với số ngày đúng theo TT39, dùng CHUNG
+        // bộ tính với luật "thiếu ngày giường" (checkBedDaysBelowTT39). Bản cũ chỉ báo khi giờ
+        // lẻ < 4 và so với so_ngay_dtri của HIS, nên bỏ sót hồ sơ BHXH đã trừ (000007093453:
+        // lẻ 9,93h, khai 9, đúng 8); điều kiện đặc biệt viết || nên báo nhầm hồ sơ chuyển viện.
+        if (in_array($data->ma_loai_kcb, $this->treatmentTypeInpatient)) {
+            $special = BedDaysTT39Calculator::laDacBiet(
+                $data->ket_qua_dtri, $data->ma_loai_rv, (array) $this->invalidKetQuaDtri, (array) $this->invalidMaLoaiRV
+            );
+            $totalBedDays = (float) $data->Xml3176Xml3()->whereIn('ma_nhom', $this->bedGroupCodes)->sum('so_luong');
+            $thua = BedDaysTT39Calculator::thua($data->ngay_vao, $data->ngay_ra, $special, $totalBedDays);
 
-            $totalBedDays = $data->Xml3176Xml3()->whereIn('ma_nhom', $this->bedGroupCodes)->sum('so_luong');
-
-            if ($totalBedDays >= $data->so_ngay_dtri && $hoursExcludeDaysDifference < 4) {
+            if ($thua !== null) {
                 $errorCode = $this->generateErrorCode('INVALID_BED_DAYS');
                 $errors->push((object)[
                     'error_code' => $errorCode,
                     'error_name' => 'Thanh toán ngày giường sai quy định (trừ trường hợp đặc biệt)',
                     'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
-                    'description' => 'Tổng ngày giường: ' . $totalBedDays . ' lớn hơn hoặc bằng số ngày điều trị + 1: ' . $data->so_ngay_dtri
+                    'description' => 'Tổng ngày giường khai ' . $thua['total'] . ' lớn hơn số ngày giường đúng theo TT39 '
+                                   . $thua['expected'] . ($special ? ' (đã cộng 1 ngày trường hợp đặc biệt)' : '')
+                                   . ', thừa ' . $thua['excess'] . '.',
                 ]);
             }
         }
@@ -325,8 +331,11 @@ class Xml3176CompleteChecker
         $calendarDays = (int) (new DateTime($dtVao->format('Y-m-d')))
             ->diff(new DateTime($dtRa->format('Y-m-d')))->days;
 
-        $special = in_array($data->ket_qua_dtri, (array) config('xml3176.invalid_treatment_result', []))
-                || in_array($data->ma_loai_rv, (array) config('xml3176.invalid_end_type_treatment', []));
+        $special = BedDaysTT39Calculator::laDacBiet(
+            $data->ket_qua_dtri, $data->ma_loai_rv,
+            (array) config('xml3176.invalid_treatment_result', []),
+            (array) config('xml3176.invalid_end_type_treatment', [])
+        );
 
         $expected = BedDaysTT39Calculator::expected($calendarDays, $elapsedHours, $special);
         if ($expected < 1) {

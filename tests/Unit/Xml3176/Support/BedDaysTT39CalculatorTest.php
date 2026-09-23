@@ -73,4 +73,95 @@ class BedDaysTT39CalculatorTest extends TestCase
     {
         $this->assertTrue(BedDaysTT39Calculator::isBelow(0.0, 3, 0.5));
     }
+
+    // ---- Trường hợp đặc biệt: CHỈ CẦN MỘT trong hai trường thuộc diện đặc biệt ----
+
+    /** @test */
+    public function dac_biet_khi_ket_qua_dieu_tri_dac_biet_du_loai_ra_vien_thuong()
+    {
+        // Kết quả 3 + loại ra viện 5. Luật cũ viết || nên coi là hồ sơ thường -> báo nhầm.
+        $this->assertTrue(BedDaysTT39Calculator::laDacBiet(3, 5, [3, 4, 5, 6], [2, 3, 4]));
+    }
+
+    /** @test */
+    public function dac_biet_khi_chuyen_vien_du_ket_qua_thuong()
+    {
+        $this->assertTrue(BedDaysTT39Calculator::laDacBiet(2, 2, [3, 4, 5, 6], [2, 3, 4]));
+    }
+
+    /** @test */
+    public function khong_dac_biet_khi_ca_hai_deu_thuong()
+    {
+        $this->assertFalse(BedDaysTT39Calculator::laDacBiet(2, 1, [3, 4, 5, 6], [2, 3, 4]));
+    }
+
+    // ---- Thừa ngày giường, lưu trú nhiều ngày. Số liệu lấy từ hồ sơ thật đã đối chiếu. ----
+
+    /** @test */
+    public function thua_1_ngay_khi_gio_le_tren_4h_ho_so_bhxh_da_tru()
+    {
+        // 000007093453: vào 24/08 02:01, ra 01/09 11:57 (lẻ 9,93h), ra viện thường, khai 9.
+        // BHXH trừ đúng 1 ngày. Luật cũ bỏ sót vì chỉ báo khi giờ lẻ < 4.
+        $kq = BedDaysTT39Calculator::thua('202608240201', '202609011157', false, 9.0);
+
+        $this->assertNotNull($kq);
+        $this->assertSame(8, $kq['expected']);
+        $this->assertEquals(1.0, $kq['excess']);
+    }
+
+    /** @test */
+    public function khong_thua_khi_khai_dung_so_ngay_duong_lich()
+    {
+        $this->assertNull(BedDaysTT39Calculator::thua('202608240201', '202609011157', false, 8.0));
+    }
+
+    /** @test */
+    public function khong_thua_khi_chuyen_vien_duoc_cong_1_ngay()
+    {
+        // 000006913722: 36 ngày dương lịch, chuyển viện -> đúng 37, khai 37. Luật cũ báo nhầm.
+        $this->assertNull(BedDaysTT39Calculator::thua('202607301317', '202609041700', true, 37.0));
+    }
+
+    /** @test */
+    public function khong_thua_khi_ket_qua_dac_biet_duoc_cong_1_ngay()
+    {
+        // 000007170492: 2 ngày dương lịch, kết quả điều trị 3 -> đúng 3, khai 3. Luật cũ báo nhầm.
+        $this->assertNull(BedDaysTT39Calculator::thua('202609061242', '202609081457', true, 3.0));
+    }
+
+    /** @test */
+    public function thua_khi_gio_le_duoi_4h()
+    {
+        // 3 ngày dương lịch, lẻ 1,5h, ra viện thường, khai 4 -> thừa 1 (luật cũ cũng bắt ca này).
+        $kq = BedDaysTT39Calculator::thua('202609031210', '202609061342', false, 4.0);
+
+        $this->assertNotNull($kq);
+        $this->assertSame(3, $kq['expected']);
+        $this->assertEquals(1.0, $kq['excess']);
+    }
+
+    /** @test */
+    public function thua_nua_ngay_cung_bao()
+    {
+        $kq = BedDaysTT39Calculator::thua('202608240201', '202609011157', false, 8.5);
+
+        $this->assertNotNull($kq);
+        $this->assertEquals(0.5, $kq['excess']);
+    }
+
+    /** @test */
+    public function khong_xet_luu_tru_tu_24h_tro_xuong()
+    {
+        // Lưu trú <= 24h do hai nhánh riêng (SHORT_INPATIENT_STAY, EXCESS_BED_DAYS) lo.
+        $this->assertNull(BedDaysTT39Calculator::thua('202609010800', '202609011800', false, 2.0));
+        $this->assertNull(BedDaysTT39Calculator::thua('202609012000', '202609021900', false, 2.0));
+    }
+
+    /** @test */
+    public function khong_xet_khi_ngay_khong_hop_le()
+    {
+        $this->assertNull(BedDaysTT39Calculator::thua(null, '202609011157', false, 9.0));
+        $this->assertNull(BedDaysTT39Calculator::thua('abc', '202609011157', false, 9.0));
+        $this->assertNull(BedDaysTT39Calculator::thua('202609011157', '202608240201', false, 9.0));
+    }
 }

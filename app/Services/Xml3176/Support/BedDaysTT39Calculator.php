@@ -32,6 +32,57 @@ class BedDaysTT39Calculator
     }
 
     /**
+     * Hồ sơ thuộc trường hợp đặc biệt được cộng thêm 1 ngày giường (tử vong, chuyển viện,
+     * nặng xin về...) khi KẾT QUẢ điều trị HOẶC LOẠI ra viện thuộc diện đặc biệt — chỉ cần
+     * một trong hai. Luật "thừa ngày giường" cũ viết điều kiện ngược bằng ||, nên hồ sơ
+     * chuyển viện có kết quả thường vẫn bị coi là hồ sơ thường và bị báo nhầm.
+     *
+     * @param mixed $ketQua   ket_qua_dtri
+     * @param mixed $loaiRv   ma_loai_rv
+     * @param array $kqDacBiet config xml3176.invalid_treatment_result
+     * @param array $rvDacBiet config xml3176.invalid_end_type_treatment
+     */
+    public static function laDacBiet($ketQua, $loaiRv, array $kqDacBiet, array $rvDacBiet): bool
+    {
+        return in_array($ketQua, $kqDacBiet) || in_array($loaiRv, $rvDacBiet);
+    }
+
+    /**
+     * Thừa ngày giường với lưu trú NHIỀU NGÀY (trên 24 giờ): tổng khai lớn hơn số ngày đúng
+     * theo TT39 = số ngày dương lịch (+1 nếu đặc biệt). Giờ lẻ ngoài ngày tròn KHÔNG cho cộng
+     * thêm ngày — BHXH trừ đúng như vậy (hồ sơ 000007093453: lẻ 9,93h, khai 9, đúng 8, bị
+     * trừ 1). Lưu trú từ 24 giờ trở xuống do hai nhánh riêng trong checker xử lý.
+     *
+     * @param string|null $ngayVao 'YmdHi'
+     * @param string|null $ngayRa  'YmdHi'
+     * @return array|null ['expected' => int, 'total' => float, 'excess' => float]; null khi
+     *                    không thừa hoặc thiếu căn cứ (ngày hỏng, ra trước vào, <= 24 giờ).
+     */
+    public static function thua($ngayVao, $ngayRa, bool $special, float $total)
+    {
+        $vao = $ngayVao ? \DateTime::createFromFormat('YmdHi', (string) $ngayVao) : false;
+        $ra = $ngayRa ? \DateTime::createFromFormat('YmdHi', (string) $ngayRa) : false;
+        if (!$vao || !$ra) {
+            return null;
+        }
+
+        $elapsedHours = ($ra->getTimestamp() - $vao->getTimestamp()) / 3600;
+        if ($elapsedHours <= 24) {
+            return null;
+        }
+
+        $calendarDays = (int) (new \DateTime($vao->format('Y-m-d')))
+            ->diff(new \DateTime($ra->format('Y-m-d')))->days;
+        $expected = self::expected($calendarDays, $elapsedHours, $special);
+
+        if ($total <= $expected) {
+            return null;
+        }
+
+        return ['expected' => $expected, 'total' => $total, 'excess' => round($total - $expected, 2)];
+    }
+
+    /**
      * Có thiếu ngày giường không: chỉ xét khi expected >= 1; thiếu khi
      * totalBedDays < expected - tolerance.
      */
