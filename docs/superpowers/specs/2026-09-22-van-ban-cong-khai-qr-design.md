@@ -1,6 +1,6 @@
 # Thiết kế module Văn bản công khai có QR (VBCK)
 
-Ngày: 2026-09-22 (cập nhật sau review cùng ngày)
+Ngày: 2026-09-22 (cập nhật sau review 2026-09-22 và 2026-09-23)
 Trạng thái: đã thống nhất, chờ lập kế hoạch triển khai
 Nguồn yêu cầu: người dùng đăng nhập qlbv, ký số văn bản hành chính; ảnh ký là mã QR trỏ tới bản
 văn bản đã ký được đẩy ra cổng công khai để người dân quét và truy cập.
@@ -27,12 +27,13 @@ chính các chữ ký số trong PDF (kiểm bằng Adobe hoặc công cụ "Ki�
 | Cơ chế ký | **`CreateAndSignHsm`** — tạo văn bản EMR mới cùng hồ sơ với văn bản nguồn và ký luôn; không dùng luồng `EMR_SIGN`/`NEXT_SIGNER` |
 | Tên bản mới trong EMR | `"[Công khai] " + tên văn bản nguồn`, cùng loại/nhóm văn bản với nguồn, `HisCode = VBCK-{id}` |
 | Chứng thư | HSM của EMR (`192.168.7.239:1415`) |
-| Gắn QR | **Đường chính `swap`**: đổi tạm ảnh ký của người ký thành QR rồi khôi phục. Nhánh phụ `stamp` (vẽ QR vào PDF) chỉ cho file nguồn không có chữ ký số |
+| Gắn QR | Ưu tiên **`per_call`** nếu API EMR hiện hành nhận ảnh ký theo từng lần gọi (xác minh đầu tiên ở Pha 0). Nếu không: **`swap`** — đổi tạm ảnh ký của người ký thành QR rồi khôi phục. Nhánh phụ `stamp` (vẽ QR vào PDF) chỉ cho file nguồn không có chữ ký số |
+| Ai được ký công khai văn bản nào | **Không giới hạn** theo khoa/phòng hay người ký văn bản nguồn: mọi user có `vbck.ky` ký được mọi văn bản thuộc loại đã bật (quyết định có chủ đích) |
 | Cổng công khai | Máy chủ riêng trong DMZ, **chỉ là thư mục file tĩnh**, không ứng dụng, không CSDL |
 | URL trong QR | `{public_base_url}{token}.pdf`, `token` ngẫu nhiên 128-bit; URL **bất biến vĩnh viễn** |
 | Đẩy file | Một chiều nội bộ → DMZ qua disk Laravel `vbck_public` (SMB/UNC hoặc SFTP) |
 | Thu hồi | Thay file bằng **PDF tĩnh "Văn bản đã bị thu hồi"** (tên, ngày, lý do) ở đúng URL đó |
-| Đăng nhập qlbv | **Xác thực qua ACS**, lưu `TokenCode` trong session để ký không phải nhập lại mật khẩu |
+| Đăng nhập qlbv | **Xác thực qua ACS**, lưu `TokenCode` trong session để ký không phải nhập lại mật khẩu; bật/tắt bằng cờ `auth.acs_enabled` |
 | Phân quyền | Giữ Laratrust/`CheckRole`; không tự tạo user từ ACS; `vbck.cau-hinh` chỉ cấp cho lãnh đạo |
 | Dữ liệu cá nhân | Cảnh báo bắt buộc xác nhận khi bật một loại văn bản công khai |
 
@@ -58,7 +59,18 @@ chính các chữ ký số trong PDF (kiểm bằng Adobe hoặc công cụ "Ki�
 - `ACSLoginService`: một tài khoản dịch vụ cố định, token trong cache, `isTokenExpired()` trừ hao 5 phút,
   `renewToken()` chưa có API thật (fallback login), `logout()` chỉ xóa cache.
 - Đăng nhập hiện tại: `LoginController::customLogin()` — input tên `email` chứa loginname, so
-  `sha512(password + salt)` với `CustomUser.password`, bắt buộc `is_active = 1`.
+  `sha512(password + salt)` với `CustomUser.password`, bắt buộc `is_active = 1`. Vì override `login()`,
+  luồng này **bỏ qua `ThrottlesLogins` và `session()->regenerate()`** của `AuthenticatesUsers`.
+- **Server EMR đang chạy bản API mới hơn tài liệu 2023**: `XMLSignService` gọi `EmrSign/SignXmlBhyt`
+  (không có trong tài liệu) và truyền **thông tin HSM tường minh mỗi lần gọi** (`ConfigData`: `HsmType`,
+  `HsmUserCode`, `Password`, `SecretKey`, `IdentityNumber`, `HsmSerialNumber` — chứng thư đơn vị).
+  Chưa rõ `CreateAndSignHsm` bản hiện hành có cần `ConfigData` của từng người ký, hay có tham số ảnh ký
+  theo lần gọi hay không → xác minh đầu tiên ở Pha 0.
+- `TokenCode` lấy từ ACS với `application_code = HIS` dùng được cho EMR API với header
+  `ApplicationCode: EMR` (đang chạy thật trong `XMLSignService`).
+- `EmrSigner/Update` nhận **toàn bộ bản ghi** `EmrSigner` (ID, TITLE, DEPARTMENT_*, `PCA_SERIAL`,
+  `SIGN_IMAGE`…) kèm `ImgBase64Data`; `EmrSigner/Get` trả `SIGN_IMAGE` (chưa rõ là đường dẫn hay dữ liệu)
+  và `ImgBase64Data: null` trong ví dụ.
 - Session driver `file`, lifetime 1440 phút. Queue driver `database`, **mỗi queue một service NSSM**
   trong `install_service.bat`.
 - **Không dùng Laravel scheduler** (`Kernel::schedule()` rỗng); tác vụ định kỳ chạy dạng service NSSM
@@ -68,7 +80,8 @@ chính các chữ ký số trong PDF (kiểm bằng Adobe hoặc công cụ "Ki�
 - API EMR: header `TokenCode` + `ApplicationCode`; GET dùng `?param=<base64 JSON {ApiData, CommonParam}>`;
   kết quả `{Data, Success, Param{Messages, BugCodes}}`.
 - `CreateAndSignHsm` bắt buộc `TreatmentCode` — lấy từ văn bản nguồn.
-- `SignPdfHsm`/`CreateAndSignHsm` **không có tham số ảnh ký theo lần ký**; ảnh ký lấy từ
+- Theo tài liệu 2023, `SignPdfHsm`/`CreateAndSignHsm` **không có tham số ảnh ký theo lần ký** (bản hiện
+  hành chưa rõ — Pha 0 bước A); ảnh ký lấy từ
   `EMR_SIGNER.SIGN_IMAGE`, sửa được qua `EmrSigner/Update` (`ImgBase64Data`).
 - Bài học repo phải tuân thủ: không nhận service qua type-hint của `Job::handle()` (khuôn `SubmitCtdtJob`);
   không `RefreshDatabase`; test không phụ thuộc Oracle HIS.
@@ -99,29 +112,33 @@ Namespace `App\Services\Vbck` (trừ phần đăng nhập ACS).
 |---|---|
 | `Auth\AcsAuthenticator` | Gọi ACS `Token/Login` bằng tài khoản người dùng; trả `TokenCode`, `ExpireTime` hoặc ném lỗi phân loại (sai thông tin / ACS lỗi) |
 | `Auth\AcsSessionToken` | Lưu/đọc token trong session (mã hóa `Crypt`); `current()` trả null nếu thiếu, còn dưới 5 phút là hết hạn, hoặc phiên ký bị khóa do không thao tác; `touch()` gia hạn mốc hoạt động |
-| `EmrApiClientInterface` + `EmrApiClient` | Bọc EMR API: mã hóa `param`, header, phân tích `Success/Messages`, timeout 60 giây; các hàm `createAndSignHsm`, `findDocumentByHisCode`, `findSignerByLoginname`, `getSigner`, `updateSignerImage` |
+| `EmrApiClientInterface` + `EmrApiClient` | Bọc EMR API: mã hóa `param`, header, phân tích `Success/Messages`, timeout 60 giây; các hàm `createAndSignHsm`, `findDocumentByHisCode`, `findSignerByLoginname`, `getSigner`, `readSignerImage`, `updateSignerImage`. `updateSignerImage` **luôn gửi lại nguyên bản ghi vừa `getSigner`**, chỉ thay ảnh — không bao giờ gửi bản ghi thiếu trường |
 | `VbckInboxQuery` | Danh sách văn bản nguồn chờ ký công khai (mục 6.1) |
 | `SourceDocumentGuard` | Kiểm một văn bản nguồn đủ điều kiện (đã hoàn thành ký, loại đang bật, chưa công khai) |
 | `PublicTokenService` | Sinh `token` 26 ký tự base32 từ `random_bytes(16)`, bảo đảm unique |
 | `QrImageBuilder` | Dựng PNG: QR (mức sửa lỗi M, lề 4 module) + dòng chữ "Quét để xem văn bản gốc" |
 | `PdfSignatureInspector` | Phân loại PDF: `unsigned` / `signed` / `certified` (có `/DocMDP` hoặc `/Perms`) |
 | `QrPlacementStrategy` (interface) | Bọc quanh lời gọi ký: chuẩn bị PDF + `TypeDisplay` + `PointSign`, dọn dẹp sau ký |
-| `SwapSignerImageStrategy` | **Đường chính.** Giữ nguyên byte PDF; khóa người ký, sao lưu và đổi `SIGN_IMAGE` thành QR, `TypeDisplay=4`, khôi phục trong `finally` |
+| `PerCallImageStrategy` | **Ưu tiên nếu API hỗ trợ.** Giữ nguyên byte PDF, truyền ảnh QR trong chính lời gọi ký, `TypeDisplay=4`; không đụng `EMR_SIGNER`, không khóa, không guard |
+| `SwapSignerImageStrategy` | Dùng khi không có `per_call`. Giữ nguyên byte PDF; khóa người ký, sao lưu và đổi `SIGN_IMAGE` thành QR, `TypeDisplay=4`, khôi phục trong `finally` (mục 6.3) |
 | `StampQrStrategy` | Nhánh phụ cho PDF `unsigned`: FPDI vẽ QR vào `qr_box`; `TypeDisplay=1` đặt ở `text_box` |
 | `SignerImageLock` | MySQL `GET_LOCK('vbck_signer_{signerId}', 15)` / `RELEASE_LOCK` |
 | `VbckSignService` | Điều phối luồng ký (mục 6.2) |
 | `PublishVbckJob` | Lấy bản đã ký, tính SHA-256, ghi atomically lên disk `vbck_public` |
 | `RevokedNoticeBuilder` | Sinh PDF thông báo thu hồi bằng dompdf (hỗ trợ UTF-8 tiếng Việt) |
 | `VbckRevokeService` | Thu hồi: ghi đè file công khai bằng PDF thông báo, cập nhật trạng thái |
-| Command `vbck:daemon --lien-tuc` | Vòng lặp chạy dưới NSSM: mỗi 60 giây chạy guard ảnh ký; mỗi ngày một lần (sau 01:00) chạy verify file công khai |
+| Command `vbck:daemon --lien-tuc` | Vòng lặp chạy dưới NSSM: mỗi 60 giây chạy guard ảnh ký (chỉ khi dùng `swap`); mỗi ngày một lần (sau 01:00) chạy verify file công khai. Mốc "lần verify gần nhất" lưu bền trong bảng `vbck_runtime` (key/value), để NSSM khởi động lại service không làm chạy lặp |
 | Command `vbck:guard-signer-images`, `vbck:verify-public` | Chạy một lần (daemon gọi lại; dùng tay khi cần) |
 
-Khi nhà cung cấp EMR bổ sung tham số ảnh ký theo từng lần ký (đề nghị song song), thêm
-`PerCallImageStrategy` thay cho `SwapSignerImageStrategy`, không đổi `VbckSignService`.
+`VbckSignService` chỉ phụ thuộc interface `QrPlacementStrategy`; chọn `per_call` hay `swap` bằng cấu hình
+`vbck.signed_source_strategy`, không đổi luồng nghiệp vụ. Nếu Pha 0 xác nhận có `per_call` thì **không
+xây** `SwapSignerImageStrategy`, `SignerImageLock`, guard và các bảng `vbck_signer_images*`.
 
 ### Màn hình mới
 
 1. **Văn bản chờ ký công khai** — danh sách, lọc, xem trước PDF kèm ô ký dự kiến, nút Ký (hộp xác nhận).
+   Ký xong hiện ngay khung kết quả: mã văn bản EMR mới, `public_url` (nút sao chép, nút mở), ảnh QR, và
+   trạng thái đẩy file tự cập nhật (poll 5 giây/lần tới khi `published` hoặc `publish_failed`).
 2. **Văn bản đã công khai** — tra cứu, trạng thái, mở link công khai, Đẩy lại, Thu hồi (bắt buộc lý do),
    cảnh báo đỏ khi có ảnh ký chưa khôi phục hoặc file lệch hash.
 3. **Cấu hình loại văn bản công khai** — chọn loại EMR, bật/tắt, khung ký. Khi bật một loại phải tích
@@ -157,7 +174,7 @@ Khi nhà cung cấp EMR bổ sung tham số ảnh ký theo từng lần ký (đ�
 | `token` | char(26) **unique** | Cấp một lần, không tái sử dụng |
 | `public_url` | string | URL đầy đủ đã in vào QR (lưu vĩnh viễn, không suy lại từ cấu hình) |
 | `his_code` | string **unique** | `VBCK-{id}` |
-| `qr_strategy` | enum `swap`,`stamp` nullable | |
+| `qr_strategy` | enum `per_call`,`swap`,`stamp` nullable | |
 | `status` | enum | Xem 4.4 |
 | `signing_started_at` | nullable | Phát hiện `signing` bị kẹt |
 | `emr_document_id`, `emr_document_code` | nullable | Văn bản EMR **mới tạo** |
@@ -168,14 +185,32 @@ Khi nhà cung cấp EMR bổ sung tham số ảnh ký theo từng lần ký (đ�
 | `revoked_at`, `revoked_by`, `revoke_reason` | nullable | |
 | `timestamps` | | |
 
-### 4.3 `vbck_signer_images` — bản lưu ảnh ký gốc (dùng cho `swap`)
+### 4.3 Ảnh ký gốc — chỉ khi dùng `swap`
+
+**`vbck_signer_images`** — trạng thái đổi ảnh của từng người ký
 
 | Cột | Ghi chú |
 |---|---|
 | `emr_signer_id` PK, `loginname` | |
-| `original_image_base64` (longtext), `original_image_sha256` | Sao lưu trước lần đổi đầu tiên. Cập nhật lại khi hash ảnh hiện tại khác bản lưu **và** khác `swapped_qr_sha256` gần nhất (người dùng tự đổi ảnh gốc trên EMR) |
-| `swapped_at`, `swapped_publication_id`, `swapped_qr_sha256` | Khác null nghĩa là EMR đang mang ảnh QR |
+| `swapped_at`, `swapped_publication_id` | Khác null nghĩa là EMR **có thể** đang mang ảnh QR ("bẩn") |
 | `restored_at`, `timestamps` | |
+
+**`vbck_signer_image_backups`** — lịch sử bản lưu, **chỉ thêm, không sửa, không xóa**
+
+| Cột | Ghi chú |
+|---|---|
+| `id` PK, `emr_signer_id`, `loginname` | |
+| `signer_record_json` (longtext) | Nguyên bản ghi `EmrSigner` đọc được lúc sao lưu |
+| `image_base64` (longtext), `image_sha256` | Ảnh gốc đọc được qua `readSignerImage` |
+| `created_at` | |
+
+Quy tắc bất biến:
+1. **Chỉ sao lưu khi người ký đang "sạch"** (`swapped_at` null). Khi "bẩn", tuyệt đối không đọc ảnh hiện tại
+   làm bản lưu — ảnh đó có thể là QR đã bị EMR nén lại, hash không khớp gì cả.
+2. Mỗi lần ký `swap` ở trạng thái sạch: đọc ảnh hiện tại; nếu hash khác bản lưu mới nhất (hoặc chưa có bản
+   lưu) thì **thêm** một dòng backup mới. Không so với hash ảnh QR (không tin được sau khi EMR nén).
+3. Khôi phục luôn dùng **dòng backup mới nhất có trước `swapped_at`**.
+4. Người ký **không có ảnh gốc** (`readSignerImage` rỗng) → không được dùng `swap` (xem 6.3).
 
 ### 4.4 Máy trạng thái `vbck_publications.status`
 
@@ -201,7 +236,14 @@ Không CSDL. Thư mục `vb/` chứa `{token}.pdf`. Cấu hình web server bắt
 
 ## 5. Đăng nhập qlbv bằng ACS
 
+0. **Cờ `auth.acs_enabled`** (mặc định `false` cho tới khi triển khai): `false` → toàn bộ qlbv đăng nhập
+   như hiện nay (module VBCK không ký được vì không có token); `true` → luồng dưới đây. Khi ACS có sự cố
+   kéo dài, quản trị tắt cờ để mọi người quay về mật khẩu qlbv — đây là đường lui duy nhất, không có
+   fallback tự động.
 1. Màn login giữ nguyên (input `email` chứa loginname, `password`).
+   - **Chống dò mật khẩu**: dùng `ThrottlesLogins` theo khóa `loginname|IP`, tối đa 5 lần sai mỗi phút,
+     áp dụng **trước** khi gọi ACS (tránh lợi dụng màn login qlbv để dò hoặc làm khóa tài khoản HIS).
+     Áp dụng cho cả nhánh `local_accounts`.
 2. `loginname` thuộc `auth.local_accounts` → giữ nguyên logic `customLogin()` hiện tại (sha512 + salt,
    `is_active = 1`). Tài khoản này **không ký được**.
 3. Ngược lại → `AcsAuthenticator::login()`:
@@ -209,10 +251,15 @@ Không CSDL. Thư mục `vb/` chứa `{token}.pdf`. Cấu hình web server bắt
    - ACS lỗi/timeout → báo "Không kết nối được hệ thống xác thực", **không fallback**;
    - thành công nhưng không có `CustomUser` cùng `loginname` (so không phân biệt hoa thường) hoặc
      `is_active != 1` → báo "Tài khoản chưa được cấp quyền trên qlbv";
-   - thành công → `Auth::login($user)`, `AcsSessionToken::store(TokenCode, ExpireTime)`.
+   - thành công → `Auth::login($user)`, **`$request->session()->regenerate()`** (chống session
+     fixation — luồng cũ đang thiếu), xóa bộ đếm throttle, `AcsSessionToken::store(TokenCode, ExpireTime)`
+     và đặt mốc `vbck_last_activity = now`.
+   - Không ghi mật khẩu, header Basic hay `TokenCode` vào log (kể cả trong exception của Guzzle).
 4. Đăng xuất: xóa session.
-5. **Khóa phiên ký**: `AcsSessionToken::current()` trả null khi lần thao tác gần nhất trên màn VBCK
-   quá `vbck.sign_idle_minutes` (mặc định 15). Các màn khác không bị ảnh hưởng.
+5. **Khóa phiên ký**: mốc `vbck_last_activity` được **khởi tạo lúc đăng nhập ACS (hoặc reauth)** và chỉ
+   được làm mới bởi request thuộc nhóm route `vbck/*`. `AcsSessionToken::current()` trả null khi
+   `now - vbck_last_activity > vbck.sign_idle_minutes` (mặc định 15). Các màn khác không bị ảnh hưởng và
+   không làm mới mốc.
 6. **Nhập lại mật khẩu** (modal trên màn VBCK): `POST vbck/reauth` gọi ACS với `loginname` của user đang
    đăng nhập (không cho đổi tài khoản), lưu token mới.
 
@@ -230,7 +277,9 @@ nhập và cache như `ACSLoginService` nhưng key cache riêng.
 `VbckInboxQuery` trên `EMR_RS`, điều kiện văn bản nguồn (theo ghi chú trạng thái tr.25 tài liệu EMR):
 - `is_delete = 0` (hoặc null), `is_active = 1`;
 - **đã hoàn thành ký**: `next_signer` null/rỗng, `rejecter` null/rỗng, `count_resign_wait` null/0,
-  `count_resign_failed` null/0;
+  `count_resign_failed` null/0 (tên cột `rejecter`, `count_resign_wait` lấy từ tài liệu, repo mới dùng
+  `next_signer` và `count_resign_failed` — **đối chiếu với `EMR_RS` thật khi lập kế hoạch**, sai tên thì
+  query lỗi ngay chứ không âm thầm lọc sai);
 - `document_type_id` thuộc `vbck_document_types` đang `is_enabled`;
 - không có `his_code` bắt đầu bằng `VBCK-` (không lấy chính bản công khai làm nguồn);
 - loại trừ id đã có publication ở `signing`, `signed`, `publishing`, `published`, `publish_failed`,
@@ -255,8 +304,8 @@ Xem trước: `emr_version` mới nhất theo `document_id`, tải qua `PdfFetch
    quả → nhận văn bản đó, sang bước 10.
 6. **Tải file nguồn** và `PdfSignatureInspector`:
    - `certified` → `sign_failed`, báo "Văn bản được khóa chứng thực, không thể ký thêm";
-   - `signed` → `swap`; `unsigned` → `stamp` (nếu FPDI không đọc được và `stamp_fallback_to_swap`
-     bật → `swap`).
+   - `signed` → `vbck.signed_source_strategy` (`per_call` hoặc `swap`); `unsigned` → `stamp` (nếu FPDI
+     không đọc được và `stamp_fallback_to_swap` bật → chiến lược của `signed`).
 7. **Dựng ảnh QR** từ `public_url`.
 8. **Người ký**: `findSignerByLoginname(loginname)` → `SignerId`; không có → `sign_failed`, báo
    "Tài khoản chưa được khai báo người ký trong EMR".
@@ -276,18 +325,25 @@ Xem trước: `emr_version` mới nhất theo `document_id`, tải qua `PdfFetch
 Giới hạn thời gian: timeout EMR 60 giây < `max_execution_time` của request ký (đặt `set_time_limit(110)`
 trong action) < ngưỡng guard 2 phút < ngưỡng `signing` kẹt 5 phút.
 
-### 6.3 `SwapSignerImageStrategy`
+### 6.3 `SwapSignerImageStrategy` (chỉ khi không có `per_call`)
 
 1. `SignerImageLock::acquire(signerId, 15s)`; thất bại → "Đang ký văn bản khác, thử lại sau".
-2. `getSigner()` lấy ảnh hiện tại; cập nhật bản lưu theo quy tắc 4.3.
-3. Ghi `swapped_at`, `swapped_publication_id`, `swapped_qr_sha256` **trước** khi gọi EMR.
-4. `updateSignerImage(signer, qrPng)` bằng **token dịch vụ**.
-5. (Ký — bước 9 của 6.2, token người ký, `TypeDisplay=4`.)
-6. `finally`: `updateSignerImage(signer, original)` bằng token dịch vụ → thành công thì xóa `swapped_*`,
-   ghi `restored_at`; thất bại thì giữ nguyên, log critical. `RELEASE_LOCK` trong mọi trường hợp.
+2. **Người ký đang "bẩn"** (`swapped_at` khác null) → **thử khôi phục ngay** (như guard); vẫn thất bại →
+   `sign_failed` "Ảnh ký đang chờ khôi phục, liên hệ quản trị". **Không bao giờ ký tiếp khi đang bẩn.**
+3. `getSigner()` + `readSignerImage()`:
+   - không có ảnh gốc → `sign_failed` "Tài khoản chưa có ảnh chữ ký trong EMR, không thể gắn QR" (không
+     có cách đưa EMR về trạng thái "không ảnh");
+   - có ảnh → sao lưu theo quy tắc 4.3 (thêm dòng nếu khác bản mới nhất).
+4. Ghi `swapped_at = now`, `swapped_publication_id` **trước** khi gọi EMR.
+5. `updateSignerImage(signerRecord, qrPng)` bằng **token dịch vụ** — gửi lại nguyên bản ghi vừa đọc.
+6. (Ký — bước 9 của 6.2, token người ký, `TypeDisplay=4`.)
+7. `finally`: `updateSignerImage(signerRecordTừBackup, originalImage)` bằng token dịch vụ, dùng dòng backup
+   mới nhất có trước `swapped_at`; sau đó `getSigner()` kiểm các trường ngoài ảnh (đặc biệt `PCA_SERIAL`,
+   `TITLE`, `DEPARTMENT_*`) khớp `signer_record_json`. Khớp → xóa `swapped_*`, ghi `restored_at`; không khớp
+   hoặc lỗi → giữ nguyên, log critical. `RELEASE_LOCK` trong mọi trường hợp.
 
 Guard (daemon, mỗi 60 giây): mỗi bản ghi `swapped_at` cũ hơn 2 phút → lấy khóa người ký (không lấy được
-thì bỏ qua lượt này), khôi phục ảnh gốc, xóa `swapped_*`.
+thì bỏ qua lượt này), khôi phục theo bước 7, xóa `swapped_*` khi kiểm khớp.
 
 **Rủi ro còn lại đã chấp nhận**: khóa chỉ có hiệu lực trong qlbv. Nếu đúng trong vài giây ký, chính người
 ký đó ký một văn bản khác trên **EMR client**, văn bản kia sẽ mang ảnh QR. Giảm thiểu: cửa sổ đổi ảnh chỉ
@@ -336,7 +392,8 @@ lệch → ghi `last_error`, hiện cảnh báo đỏ trên màn quản lý (kh�
 - `public_base_url` — ví dụ `https://congkhai.<bv>.vn/vb/` (**bất biến sau khi vận hành**)
 - `public_disk` — mặc định `vbck_public`
 - `sign_idle_minutes` — 15
-- `stamp_fallback_to_swap` — true
+- `signed_source_strategy` — `per_call` hoặc `swap` (chốt sau Pha 0 bước A)
+- `stamp_fallback_to_swap` — true (dự phòng bằng chiến lược của `signed_source_strategy`)
 - `qr_caption` — "Quét để xem văn bản gốc"
 - `document_name_prefix` — "[Công khai] "
 - `emr_api.base_url`, `emr_api.application_code`, `emr_api.timeout` (60)
@@ -345,7 +402,9 @@ lệch → ghi `last_error`, hiện cảnh báo đỏ trên màn quản lý (kh�
 
 `config/filesystems.php`: disk `vbck_public` (driver `local` trỏ UNC share DMZ, hoặc `sftp` qua
 `league/flysystem-sftp` bản tương thích Flysystem 1).
-`config/auth.php`: `local_accounts` (mảng loginname).
+`config/auth.php`: `acs_enabled` (mặc định `false`), `local_accounts` (mảng loginname),
+`login_max_attempts` (5), `login_decay_minutes` (1).
+Bảng `vbck_runtime` (key/value) cho mốc chạy của daemon.
 Permission mới (Laratrust): `vbck.ky`, `vbck.quan-ly`, `vbck.thu-hoi`, `vbck.cau-hinh` (chỉ lãnh đạo).
 
 ---
@@ -366,7 +425,10 @@ Permission mới (Laratrust): `vbck.ky`, `vbck.quan-ly`, `vbck.thu-hoi`, `vbck.c
 | `CreateAndSignHsm` `Success=false` | `sign_failed`, hiện `Messages`, cho ký lại |
 | Lỗi mạng/timeout khi ký | `sign_failed`; lần ký lại đối soát `HIS_CODE` trước |
 | Không lấy được khóa người ký | Báo thử lại sau vài giây |
-| Khôi phục ảnh ký thất bại | Log critical, guard thử lại mỗi phút, cảnh báo đỏ |
+| Khôi phục ảnh ký thất bại / bản ghi người ký sau khôi phục lệch trường | Log critical, guard thử lại mỗi phút, cảnh báo đỏ; người ký bị chặn ký công khai tới khi sạch |
+| Người ký chưa có ảnh chữ ký trong EMR (`swap`) | `sign_failed`, báo cần cập nhật ảnh chữ ký trên EMR |
+| ACS sự cố kéo dài | Quản trị tắt `auth.acs_enabled`, người dùng quay về mật khẩu qlbv (không ký được) |
+| Đăng nhập sai quá 5 lần/phút | Throttle, báo thử lại sau; không gọi ACS |
 | Đẩy file lỗi | Retry 3 lần → `publish_failed`, nút Đẩy lại |
 | File trên cổng lệch/mất | Verify hằng ngày cảnh báo đỏ |
 
@@ -378,6 +440,10 @@ Permission mới (Laratrust): `vbck.ky`, `vbck.quan-ly`, `vbck.thu-hoi`, `vbck.c
 - Kênh đẩy file một chiều; tài khoản SMB/SFTP chỉ có quyền ghi/xóa trong `vb/`; DMZ không giữ credential
   vào mạng nội bộ.
 - `TokenCode` ACS chỉ trong session phía server, mã hóa; không ghi log, không trả về frontend.
+- Đăng nhập: throttle 5 lần sai/phút theo `loginname|IP` trước khi gọi ACS; `session()->regenerate()` sau
+  khi đăng nhập thành công; cờ `auth.acs_enabled` làm đường lui khi ACS sự cố.
+- `swap`: không bao giờ ký khi người ký đang "bẩn"; bản lưu ảnh chỉ thêm, không ghi đè; `EmrSigner/Update`
+  luôn gửi nguyên bản ghi và kiểm lại các trường sau khôi phục.
 - Ký: hộp xác nhận bắt buộc, khóa phiên ký sau 15 phút không thao tác, CSRF, permission kiểm ở route và
   service.
 - Nhật ký (activitylog): đăng nhập ACS, ký (IP, user-agent), đổi/khôi phục ảnh ký, đẩy file, thu hồi, bật
@@ -395,7 +461,9 @@ Permission mới (Laratrust): `vbck.ky`, `vbck.quan-ly`, `vbck.thu-hoi`, `vbck.c
   - `QLBV VbckDaemon` → `artisan vbck:daemon --lien-tuc`
 - Web server DMZ theo mục 4.5; share/SFTP với quyền hạn chế.
 - Tạo permission, gán `vbck.cau-hinh` cho lãnh đạo; khai báo `local_accounts`.
-- Thông báo người dùng về việc đăng nhập bằng mật khẩu HIS.
+- Thông báo người dùng về việc đăng nhập bằng mật khẩu HIS, rồi mới bật `AUTH_ACS_ENABLED=true`; ghi
+  sẵn quy trình tắt cờ khi ACS sự cố.
+- `QLBV VbckDaemon` vẫn cài khi dùng `per_call` (verify hằng ngày); guard tự bỏ qua khi không có `swap`.
 - `.env`: `VBCK_*`, credential dịch vụ ACS, disk công khai.
 
 ---
@@ -417,13 +485,21 @@ interface/fake.
   có ảnh trên đúng trang); kiểm khung ký trong trang; máy trạng thái publication; `RevokedNoticeBuilder`
   (PDF hợp lệ, chứa lý do tiếng Việt).
 - **Service với fake** (`FakeEmrApiClient`; HTTP thật của `EmrApiClient` test bằng Guzzle `MockHandler`):
-  ký `swap` thành công; `stamp` thành công; nguồn chưa hoàn thành ký bị chặn; `certified` bị chặn;
-  `Success=false`; lỗi mạng rồi ký lại tìm thấy theo `HIS_CODE`; `signing` kẹt quá 5 phút cho ký lại;
-  `signing` còn mới bị từ chối; khôi phục ảnh thất bại → guard khôi phục; khóa bận; loginname không có
-  trong `EMR_SIGNER`.
-- **Đăng nhập ACS**: có ACS + user active → vào; có ACS + không user / user inactive → từ chối;
-  `local_accounts` → logic sha512 cũ; ACS lỗi → không fallback; token hết hạn/idle → `need_reauth`;
+  ký `per_call` thành công (ảnh QR có trong payload); ký `swap` thành công; `stamp` thành công; nguồn chưa
+  hoàn thành ký bị chặn; `certified` bị chặn; `Success=false`; lỗi mạng rồi ký lại tìm thấy theo
+  `HIS_CODE`; `signing` kẹt quá 5 phút cho ký lại; `signing` còn mới bị từ chối; loginname không có trong
+  `EMR_SIGNER`.
+- **Riêng `swap`**: khôi phục thất bại → guard khôi phục; khóa bận; **người ký đang bẩn → không ký, không
+  đọc ảnh hiện tại làm backup** (kịch bản ảnh QR bị EMR nén lại, hash khác mọi giá trị); backup chỉ thêm
+  dòng mới; khôi phục dùng backup mới nhất có trước `swapped_at`; `updateSignerImage` gửi đủ mọi trường
+  của bản ghi; sau khôi phục lệch `PCA_SERIAL` → giữ trạng thái bẩn, cảnh báo; người ký không có ảnh gốc →
+  `sign_failed`.
+- **Đăng nhập ACS**: `acs_enabled=false` → luồng cũ nguyên vẹn; có ACS + user active → vào, session được
+  regenerate, mốc `vbck_last_activity` được đặt; có ACS + không user / user inactive → từ chối;
+  `local_accounts` → logic sha512 cũ; ACS lỗi → không fallback; sai quá 5 lần/phút → bị throttle và
+  **không gọi ACS**; token hết hạn/idle → `need_reauth`; request ngoài `vbck/*` không làm mới mốc idle;
   reauth không cho đổi tài khoản. Rà lại test đăng nhập hiện có.
+- **Daemon**: khởi động lại không chạy lặp verify trong cùng ngày (mốc trong `vbck_runtime`).
 - **Publish/Revoke/Verify**: `Storage::fake('vbck_public')` — ghi `.tmp` rồi đổi tên; retry →
   `publish_failed`; thu hồi ghi đè PDF thông báo và cập nhật hash; verify phát hiện thiếu/lệch.
 - **Job**: `PublishVbckJob::handle()` không tham số (test quét mã nguồn, bỏ comment trước khi quét —
@@ -436,26 +512,42 @@ interface/fake.
 
 ## 13. Phân pha
 
-- **Pha 0 — Spike xác minh với EMR test (code vứt đi)**:
+- **Pha 0 — Xác minh với nhà cung cấp và EMR test (code vứt đi)**. Thứ tự bắt buộc:
+
+  **Bước A — hỏi nhà cung cấp (trước mọi thử nghiệm):**
+  1. Xin **tài liệu API EMR bản hiện hành** (server đang chạy bản mới hơn tài liệu 07/2023).
+  2. `CreateAndSignHsm`/`SignPdfHsm` bản hiện hành **có nhận ảnh ký theo từng lần gọi** không?
+     Có → `signed_source_strategy = per_call`, **bỏ toàn bộ `swap`** (bảng `vbck_signer_images*`, khóa,
+     guard, các điểm B6–B9 bên dưới).
+  3. Thông tin HSM của người ký lấy từ đâu: EMR tự tra theo user của `TokenCode`, hay phải truyền
+     `ConfigData` (như `SignXmlBhyt`)? Nếu phải truyền và là thông tin riêng từng người → **dừng, thiết kế
+     lại** phần quản lý bí mật HSM cá nhân (ngoài phạm vi spec này).
+
+  **Bước B — thử trên EMR test:**
   1. `CreateAndSignHsm` ký incremental — mọi chữ ký có sẵn trong file nguồn vẫn hợp lệ (Adobe + NEAC).
   2. Chữ ký EMR hiện tại có phải certification (`/DocMDP`) không; nếu có thì P bằng bao nhiêu.
-  3. `CreateAndSignHsm` bằng token người ký dùng đúng HSM người đó; có cần PIN/serial không.
-  4. `SignerId` tra theo `LOGINNAME` hợp lệ khi ký bằng token chính người đó.
-  5. Ảnh cập nhật qua `EmrSigner/Update` được dùng **ngay** ở lần ký kế tiếp (không cache).
-  6. Tài khoản dịch vụ được sửa `EMR_SIGNER` của người khác.
-  7. Hệ toạ độ `PointSign` (đơn vị, gốc), cách EMR co ảnh ở `TypeDisplay=4`/`TextPosition`; QR sau khi
+  3. `SignerId` tra theo `LOGINNAME` hợp lệ khi ký bằng token chính người đó.
+  4. Hệ toạ độ `PointSign` (đơn vị, gốc), cách EMR co ảnh ở `TypeDisplay=4`/`TextPosition`; QR sau khi
      EMR vẽ vào PDF, in ra giấy, còn quét được ở kích thước khung dự kiến.
-  8. Phản hồi `CreateAndSignHsm` có trả file đã ký trong `Base64Data` không.
-  9. Tỉ lệ văn bản hoàn thành ký nhưng không có chữ ký số thuộc các loại dự kiến công khai (quyết định
-     có giữ `stamp` trong v1 không); FPDI miễn phí đọc được các file đó không.
-  10. Thời hạn token ACS; có endpoint renew/logout không.
-  Nếu (1), (2) hoặc (5) không đạt → dừng, quay lại thiết kế (phương án C: nhà cung cấp thêm tham số ảnh ký
-  theo lần ký).
-- **Pha 1** — Đăng nhập ACS, `AcsSessionToken`, reauth, `local_accounts`.
-- **Pha 2** — Cấu hình loại văn bản, danh sách chờ ký, `SwapSignerImageStrategy` + khóa + guard,
-  `vbck:daemon`, ký, publish, thu hồi (PDF thông báo).
-- **Pha 3** — `StampQrStrategy` (chỉ nếu Pha 0 mục 9 cho thấy cần).
-- **Pha 4** — Verify file công khai, màn quản lý hoàn chỉnh, cảnh báo.
+  5. Phản hồi `CreateAndSignHsm` có trả file đã ký trong `Base64Data` không.
+  6. *(chỉ khi `swap`)* Ảnh cập nhật qua `EmrSigner/Update` được dùng **ngay** ở lần ký kế tiếp (không cache).
+  7. *(chỉ khi `swap`)* Tài khoản dịch vụ được sửa `EMR_SIGNER` của người khác.
+  8. *(chỉ khi `swap`)* `EmrSigner/Get` trả ảnh ký dưới dạng nào, và **đọc lại được đúng byte ảnh gốc**
+     để khôi phục.
+  9. *(chỉ khi `swap`)* `EmrSigner/Update` gửi thiếu trường có ghi null đè không; gửi nguyên bản ghi rồi
+     đọc lại có giữ nguyên `PCA_SERIAL`, `TITLE`, `DEPARTMENT_*` không; người ký sau khi đổi-khôi phục
+     vẫn ký bình thường trên EMR client.
+  10. Tỉ lệ văn bản hoàn thành ký nhưng không có chữ ký số thuộc các loại dự kiến công khai (quyết định
+      có giữ `stamp` trong v1 không); FPDI miễn phí đọc được các file đó không.
+  11. Thời hạn token ACS; có endpoint renew/logout không.
+  12. Tên cột `rejecter`, `count_resign_wait` trên `EMR_RS`.
 
-Song song: gửi nhà cung cấp EMR đề nghị bổ sung tham số ảnh ký theo từng lần gọi
-(`PointSign.ImgBase64Data`) để thay `swap` bằng `PerCallImageStrategy`.
+  **Điều kiện dừng**: A3 cần bí mật HSM cá nhân; B1 hoặc B2 không đạt; hoặc (khi phải dùng `swap`) một
+  trong B6, B8, B9 không đạt.
+- **Pha 1** — Đăng nhập ACS sau cờ `auth.acs_enabled` (mặc định tắt), throttle, regenerate session,
+  `AcsSessionToken`, reauth, `local_accounts`.
+- **Pha 2** — Cấu hình loại văn bản, danh sách chờ ký, chiến lược cho file đã ký (`PerCallImageStrategy`,
+  hoặc `SwapSignerImageStrategy` + khóa + guard + backup), `vbck:daemon`, ký, publish, thu hồi (PDF thông báo),
+  khung kết quả sau ký.
+- **Pha 3** — `StampQrStrategy` (chỉ nếu Pha 0 B10 cho thấy cần).
+- **Pha 4** — Verify file công khai, màn quản lý hoàn chỉnh, cảnh báo.
