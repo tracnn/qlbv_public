@@ -274,20 +274,21 @@ module.exports = function deckTgd(PptxGenJS) {
   // ------------------------------------------------------------ 01 — Tổng quan
   ctx.chap = '01';
 
-  // Thời lượng một buổi 120 phút. [phần, nội dung, khoa, phòng ban, lý thuyết, thực hành]
-  // Hai trọng tâm (02, 03) nhiều thời gian nhất; màn dùng hằng ngày (02, 06) nhiều thực hành;
-  // 05 MCCT nhiều slide nhưng đối tượng hẹp nên rút gọn. Tổng phải bằng 120 — xem kiểm tra dưới.
+  // Thời lượng một buổi 120 phút: ~30 phút lý thuyết, còn lại thực hành trên Cổng.
+  // [phần, nội dung, khoa, phòng ban, lý thuyết, thực hành]. Lý thuyết mỗi phần chỉ nêu ý
+  // chính; hai trọng tâm (02, 03) nhiều thực hành nhất; 01 thực hành = đăng nhập Cổng;
+  // 10 dành cho giải tình huống và hỏi đáp. Tổng phải bằng 120 — xem kiểm tra dưới.
   const LO_TRINH = [
-    ['01', 'Tổng quan: vị trí Tiền giám định, quy trình 5 bước, 7 nhóm chức năng', '●', '●', 10, 0],
-    ['02', 'Kiểm tra sai sót y lệnh', '●', '○', 10, 10],
-    ['03', 'Hồ sơ XML 3176: nạp, kiểm tra, ký số, gửi, theo dõi', '○', '●', 12, 8],
-    ['04', 'Thẻ BHYT: đọc mã kết quả, tra hàng loạt', '●', '●', 6, 4],
-    ['05', 'Tra cứu tiền cùng chi trả (MCCT) — Phòng TCKT, Phòng BHYT', '●', '●', 7, 3],
-    ['06', 'Tra cứu lỗi hồ sơ theo mã điều trị', '●', '●', 4, 8],
-    ['07', 'Quản lý danh mục BHYT', '', '●', 5, 3],
-    ['08', 'Chứng từ điện tử theo Phụ lục 02', '', '●', 7, 3],
-    ['09', 'Danh mục theo Thông tư 12/2026', '', '●', 5, 3],
-    ['10', 'Phân công, tình huống thường gặp, giới hạn · Hỏi đáp', '●', '●', 5, 7],
+    ['01', 'Tổng quan: vị trí Tiền giám định, quy trình 5 bước, 7 nhóm chức năng', '●', '●', 5, 5],
+    ['02', 'Kiểm tra sai sót y lệnh', '●', '○', 4, 14],
+    ['03', 'Hồ sơ XML 3176: nạp, kiểm tra, ký số, gửi, theo dõi', '○', '●', 4, 16],
+    ['04', 'Thẻ BHYT: đọc mã kết quả, tra hàng loạt', '●', '●', 2, 8],
+    ['05', 'Tra cứu tiền cùng chi trả (MCCT) — Phòng TCKT, Phòng BHYT', '●', '●', 2, 6],
+    ['06', 'Tra cứu lỗi hồ sơ theo mã điều trị', '●', '●', 2, 10],
+    ['07', 'Quản lý danh mục BHYT', '', '●', 2, 6],
+    ['08', 'Chứng từ điện tử theo Phụ lục 02', '', '●', 3, 7],
+    ['09', 'Danh mục theo Thông tư 12/2026', '', '●', 2, 6],
+    ['10', 'Phân công, tình huống thường gặp, giới hạn · Hỏi đáp', '●', '●', 4, 12],
   ];
   const tongLT = LO_TRINH.reduce((t, r) => t + r[4], 0);
   const tongTH = LO_TRINH.reduce((t, r) => t + r[5], 0);
@@ -320,7 +321,7 @@ module.exports = function deckTgd(PptxGenJS) {
       ],
     ],
     fontSize: 12.5,
-    speaker: `Buổi chung 120 phút đi hết 10 phần theo bảng. Nếu tách buổi theo khối: các khoa lâm sàng học phần ● mất khoảng ${phutKhoi(2, '●')} phút (thêm phần ○ thì khoảng ${phutKhoi(2, '●') + phutKhoi(2, '○')} phút); các phòng ban chức năng học phần ● mất khoảng ${phutKhoi(3, '●')} phút. Thực hành cần: mỗi học viên một máy, tài khoản đã cấp quyền, và vài mã điều trị mẫu có lỗi để quét. Phần 02 thực hành lọc vi phạm theo khoa và đánh dấu Đã xử lý / Bỏ qua; phần 03 lọc "Lỗi critical", mở chi tiết, đọc tab Lỗi XML; phần 06 quét mã vạch trên phiếu và in phiếu lỗi; phần 10 giải tình huống và hỏi đáp. Phần 01 không có thực hành. Phần 05 chỉ cần cho Phòng TCKT (viện phí) và Phòng BHYT.`,
+    speaker: `Buổi chung 120 phút đi hết 10 phần theo bảng. Nếu tách buổi theo khối: các khoa lâm sàng học phần ● mất khoảng ${phutKhoi(2, '●')} phút (thêm phần ○ thì khoảng ${phutKhoi(2, '●') + phutKhoi(2, '○')} phút); các phòng ban chức năng học phần ● mất khoảng ${phutKhoi(3, '●')} phút. Thực hành cần: mỗi học viên một máy, tài khoản đã cấp quyền, và vài mã điều trị mẫu có lỗi để quét. Phần 02 thực hành lọc vi phạm theo khoa và đánh dấu Đã xử lý / Bỏ qua; phần 03 lọc "Lỗi critical", mở chi tiết, đọc tab Lỗi XML; phần 06 quét mã vạch trên phiếu và in phiếu lỗi; phần 10 giải tình huống và hỏi đáp. Phần 01 thực hành là đăng nhập Cổng bằng tài khoản đào tạo (slide 3). Phần 05 chỉ cần cho Phòng TCKT (viện phí) và Phòng BHYT.`,
   });
 
   truyCapSlide(pptx, ctx, {
