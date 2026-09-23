@@ -350,7 +350,9 @@ function tableSlide(pptx, ctx, { title, kicker, intro, head, rows, colW, note, f
         text: o.t,
         options: {
           color: o.color || C.ink, bold: !!o.b, fontSize: fs, valign: 'middle',
-          fill: { color: i % 2 ? C.white : C.soft },
+          // Chỉ gắn align khi ô khai báo: gắn mặc định sẽ đổi XML của deck D dù nhìn như cũ.
+          ...(o.align ? { align: o.align } : {}),
+          fill: { color: o.fill || (i % 2 ? C.white : C.soft) },
         },
       };
     })),

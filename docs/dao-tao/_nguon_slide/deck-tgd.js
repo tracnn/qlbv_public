@@ -174,32 +174,59 @@ module.exports = function deckTgd(PptxGenJS) {
       { label: 'Tài liệu gốc', value: 'HDSD XML3176 – OrderCheck\nHDSD tra cứu MCCT' },
     ],
     message: 'Phần lớn lỗi có thể phát hiện ngay từ thời điểm bác sĩ ra y lệnh — trước khi hồ sơ rời bệnh viện hàng tuần lễ.',
-    meta: 'Bệnh viện Bạch Mai  |  Phần mềm quản lý bệnh viện qlbv  |  Tài liệu đào tạo tháng 9/2026',
+    meta: 'Bệnh viện Bạch Mai  |  Phần mềm Tiền giám định BHYT  |  Tài liệu đào tạo tháng 9/2026',
   });
 
   // ------------------------------------------------------------ 01 — Tổng quan
   ctx.chap = '01';
 
+  // Thời lượng một buổi 120 phút. [phần, nội dung, khoa, phòng ban, lý thuyết, thực hành]
+  // Hai trọng tâm (02, 03) nhiều thời gian nhất; màn dùng hằng ngày (02, 06) nhiều thực hành;
+  // 05 MCCT nhiều slide nhưng đối tượng hẹp nên rút gọn. Tổng phải bằng 120 — xem kiểm tra dưới.
+  const LO_TRINH = [
+    ['01', 'Tổng quan: vị trí Tiền giám định, quy trình 5 bước, 7 nhóm chức năng', '●', '●', 10, 0],
+    ['02', 'Kiểm tra sai sót y lệnh', '●', '○', 10, 10],
+    ['03', 'Hồ sơ XML 3176: nạp, kiểm tra, ký số, gửi, theo dõi', '○', '●', 12, 8],
+    ['04', 'Thẻ BHYT: đọc mã kết quả, tra hàng loạt', '●', '●', 6, 4],
+    ['05', 'Tra cứu tiền cùng chi trả (MCCT) — Phòng TCKT, Phòng BHYT', '●', '●', 7, 3],
+    ['06', 'Tra cứu lỗi hồ sơ theo mã điều trị', '●', '●', 4, 8],
+    ['07', 'Quản lý danh mục BHYT', '', '●', 5, 3],
+    ['08', 'Chứng từ điện tử theo Phụ lục 02', '', '●', 7, 3],
+    ['09', 'Danh mục theo Thông tư 12/2026', '', '●', 5, 3],
+    ['10', 'Phân công, tình huống thường gặp, giới hạn · Hỏi đáp', '●', '●', 5, 7],
+  ];
+  const tongLT = LO_TRINH.reduce((t, r) => t + r[4], 0);
+  const tongTH = LO_TRINH.reduce((t, r) => t + r[5], 0);
+  if (tongLT + tongTH !== 120) throw new Error(`Lộ trình phải đủ 120 phút, đang là ${tongLT + tongTH}`);
+  const phutKhoi = (cot, dau) => LO_TRINH.filter((r) => r[cot] === dau).reduce((t, r) => t + r[4] + r[5], 0);
+
   L.tableSlide(pptx, ctx, {
     kicker: 'Lộ trình',
-    title: 'Ai học phần nào',
-    intro: 'Bộ slide dùng chung cho hai khối. Mỗi khối chỉ cần học phần đánh dấu ●; phần ○ nên biết để phối hợp.',
-    head: ['Phần', 'Nội dung', 'Các khoa lâm sàng', 'Các phòng ban chức năng'],
-    colW: [0.8, 5.6, 2.2, 2.4],
+    title: 'Ai học phần nào, trong bao lâu',
+    intro: `Một buổi 120 phút: ${tongLT} phút lý thuyết, ${tongTH} phút thực hành trên phần mềm. ● bắt buộc với khối đó · ○ nên biết để phối hợp.`,
+    head: ['Phần', 'Nội dung', 'Khoa lâm sàng', 'Phòng ban', 'Lý thuyết', 'Thực hành', 'Tổng'],
+    colW: [0.6, 4.9, 1.3, 1.2, 1.05, 1.1, 0.85],
     rows: [
-      ['01', 'Tổng quan: vị trí Tiền giám định, quy trình 5 bước, 7 nhóm chức năng', '●', '●'],
-      ['02', 'Kiểm tra sai sót y lệnh', '●', '○'],
-      ['03', 'Hồ sơ XML 3176: nạp, kiểm tra, ký số, gửi, theo dõi', '○', '●'],
-      ['04', 'Thẻ BHYT: đọc mã kết quả, tra hàng loạt', '●', '●'],
-      ['05', 'Tra cứu tiền cùng chi trả (MCCT) — Phòng TCKT, Phòng BHYT', '', '●'],
-      ['06', 'Tra cứu lỗi hồ sơ theo mã điều trị', '●', '●'],
-      ['07', 'Quản lý danh mục BHYT', '', '●'],
-      ['08', 'Chứng từ điện tử theo Phụ lục 02', '○', '●'],
-      ['09', 'Danh mục theo Thông tư 12/2026', '', '●'],
-      ['10', 'Phân công, tình huống thường gặp, giới hạn', '●', '●'],
-    ].map((r) => r.map((c, i) => (i >= 2 ? { t: c, b: c === '●', color: c === '●' ? C.primary : C.muted } : c))),
-    fontSize: 14,
-    speaker: 'Nếu tổ chức một buổi chung: đi phần 01 cho cả phòng, rồi tách nhóm. Nếu tổ chức theo khối: các khoa lâm sàng khoảng 45–60 phút (01, 02, 04, 06, 10); các phòng ban chức năng khoảng 120 phút, có thể tách hai buổi (01, 03, 04, 05, 06 rồi 07, 08, 09, 10). Phần 05 chỉ cần cho Phòng TCKT (viện phí) và Phòng BHYT.',
+      ...LO_TRINH.map(([no, nd, khoa, pb, lt, th]) => [
+        { t: no, align: 'center' },
+        nd,
+        ...[khoa, pb].map((c) => ({ t: c, b: c === '●', color: c === '●' ? C.primary : C.muted, align: 'center' })),
+        { t: lt ? `${lt}'` : '—', align: 'center' },
+        { t: th ? `${th}'` : '—', align: 'center' },
+        { t: `${lt + th}'`, b: true, align: 'center' },
+      ]),
+      [
+        { t: '', fill: C.softAccent },
+        { t: 'TỔNG', b: true, fill: C.softAccent },
+        { t: '', fill: C.softAccent },
+        { t: '', fill: C.softAccent },
+        { t: `${tongLT}'`, b: true, align: 'center', fill: C.softAccent },
+        { t: `${tongTH}'`, b: true, align: 'center', fill: C.softAccent },
+        { t: `${tongLT + tongTH}'`, b: true, color: C.primary, align: 'center', fill: C.softAccent },
+      ],
+    ],
+    fontSize: 12.5,
+    speaker: `Buổi chung 120 phút đi hết 10 phần theo bảng. Nếu tách buổi theo khối: các khoa lâm sàng học phần ● mất khoảng ${phutKhoi(2, '●')} phút (thêm phần ○ thì khoảng ${phutKhoi(2, '●') + phutKhoi(2, '○')} phút); các phòng ban chức năng học phần ● mất khoảng ${phutKhoi(3, '●')} phút. Thực hành cần: mỗi học viên một máy, tài khoản đã cấp quyền, và vài mã điều trị mẫu có lỗi để quét. Phần 02 thực hành lọc vi phạm theo khoa và đánh dấu Đã xử lý / Bỏ qua; phần 03 lọc "Lỗi critical", mở chi tiết, đọc tab Lỗi XML; phần 06 quét mã vạch trên phiếu và in phiếu lỗi; phần 10 giải tình huống và hỏi đáp. Phần 01 không có thực hành. Phần 05 chỉ cần cho Phòng TCKT (viện phí) và Phòng BHYT.`,
   });
 
   viTriSlide(pptx, ctx, 'Slide lấy từ báo cáo Hội đồng KHCN (trang 2). Nhấn hai điểm kiểm soát: điểm sớm ở y lệnh (phần 02) và điểm chính trước khi ký số (phần 03). Vòng màu cam là điều quan trọng nhất với người dùng: lỗi được sửa ở nơi phát sinh, trên HIS, rồi nạp lại — phần mềm không sửa hộ.');
