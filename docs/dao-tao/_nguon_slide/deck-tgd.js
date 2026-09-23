@@ -154,6 +154,100 @@ function quyTrinhSlide(pptx, ctx, { steps, strip, speaker }) {
   return s;
 }
 
+// Truy cập Cổng Tiền giám định bằng tài khoản đào tạo. Khung đăng nhập vẽ lại theo đúng nhãn
+// của trang thật (resources/lang/vendor/adminlte/vi/adminlte.php): trang https của Cổng không
+// gửi được ảnh chụp về máy nội bộ nên không nhúng ảnh.
+function truyCapSlide(pptx, ctx, { url, taiKhoan, matKhau, speaker }) {
+  const s = pptx.addSlide();
+  L.header(s, 'Truy cập Cổng Tiền giám định', 'Chuẩn bị thực hành', ctx);
+  s.addText('Mỗi học viên đăng nhập trước khi vào phần thực hành. Dùng tài khoản đào tạo dưới đây.', {
+    x: M, y: 1.18, w: BODY_W, h: 0.3, fontFace: FONT, fontSize: 13, color: C.muted,
+  });
+
+  // --- Khung đăng nhập (bên trái)
+  const fx = M;
+  const fy = 1.7;
+  const fw = 5.3;
+  const fh = 3.35;
+  s.addShape('roundRect', { x: fx, y: fy, w: fw, h: fh, rectRadius: 0.06, fill: { color: 'ECF0F5' }, line: { color: C.line } });
+  s.addText('GĐBHYT', {
+    x: fx, y: fy + 0.18, w: fw, h: 0.45, fontFace: FONT, fontSize: 20, bold: true, color: C.title, align: 'center',
+  });
+  s.addShape('rect', { x: fx + 0.45, y: fy + 0.72, w: fw - 0.9, h: fh - 0.95, fill: { color: C.white }, line: { color: 'D2D6DE' } });
+  s.addText('Đăng nhập để bắt đầu phiên làm việc', {
+    x: fx + 0.45, y: fy + 0.8, w: fw - 0.9, h: 0.35, fontFace: FONT, fontSize: 11, color: C.muted, align: 'center',
+  });
+  const oNhap = (y, nhan, giaTri) => {
+    s.addShape('rect', { x: fx + 0.7, y, w: fw - 1.4, h: 0.44, fill: { color: C.white }, line: { color: 'C9CFD8' } });
+    s.addText([
+      { text: nhan + ':  ', options: { color: C.muted, fontSize: 11 } },
+      { text: giaTri, options: { color: C.ink, fontSize: 14, bold: true, fontFace: 'Consolas' } },
+    ], { x: fx + 0.82, y, w: fw - 1.6, h: 0.44, fontFace: FONT, valign: 'middle' });
+  };
+  oNhap(fy + 1.25, 'Tên đăng nhập', taiKhoan);
+  oNhap(fy + 1.82, 'Mật khẩu', matKhau);
+  s.addShape('rect', { x: fx + 0.72, y: fy + 2.48, w: 0.17, h: 0.17, fill: { color: C.white }, line: { color: C.muted } });
+  s.addText('Ghi nhớ thông tin', { x: fx + 0.95, y: fy + 2.4, w: 2.2, h: 0.32, fontFace: FONT, fontSize: 11, color: C.ink });
+  s.addShape('rect', { x: fx + fw - 2.05, y: fy + 2.38, w: 1.35, h: 0.4, fill: { color: '3C8DBC' }, line: { color: '367FA9' } });
+  s.addText('Đăng nhập', {
+    x: fx + fw - 2.05, y: fy + 2.38, w: 1.35, h: 0.4, fontFace: FONT, fontSize: 12, bold: true, color: C.white, align: 'center', valign: 'middle',
+  });
+  s.addText('Hình vẽ lại trang đăng nhập — trên màn hình thật, mật khẩu hiện dạng ••••••••', {
+    x: fx, y: fy + fh + 0.05, w: fw, h: 0.28, fontFace: FONT, fontSize: 9.5, italic: true, color: C.muted, align: 'center',
+  });
+
+  // --- Địa chỉ + tài khoản + các bước (bên phải)
+  const rx = M + fw + 0.4;
+  const rw = BODY_W - fw - 0.4;
+  s.addShape('roundRect', { x: rx, y: fy, w: rw, h: 0.95, rectRadius: 0.06, fill: { color: C.navy }, line: { color: C.navy } });
+  s.addText([
+    { text: 'ĐỊA CHỈ CỔNG', options: { fontSize: 9.5, bold: true, color: '8FC8EC', breakLine: true } },
+    { text: url, options: { fontSize: 19, bold: true, color: C.white } },
+  ], { x: rx + 0.25, y: fy, w: rw - 0.4, h: 0.95, fontFace: FONT, valign: 'middle' });
+
+  const cw = (rw - 0.2) / 2;
+  [['TÊN ĐĂNG NHẬP', taiKhoan], ['MẬT KHẨU', matKhau]].forEach(([nhan, v], i) => {
+    const x = rx + i * (cw + 0.2);
+    s.addShape('roundRect', { x, y: fy + 1.1, w: cw, h: 0.8, rectRadius: 0.06, fill: { color: C.softAccent }, line: { color: C.accent } });
+    s.addText([
+      { text: nhan, options: { fontSize: 9.5, bold: true, color: C.primary, breakLine: true } },
+      { text: v, options: { fontSize: 20, bold: true, color: C.title, fontFace: 'Consolas' } },
+    ], { x: x + 0.2, y: fy + 1.1, w: cw - 0.3, h: 0.8, fontFace: FONT, valign: 'middle' });
+  });
+
+  const buoc = [
+    ['Mở Chrome hoặc Edge, gõ địa chỉ Cổng vào thanh địa chỉ', 'Trang đăng nhập GĐBHYT hiện ra'],
+    [`Nhập Tên đăng nhập: ${taiKhoan}`, 'Không phân biệt chữ hoa, chữ thường'],
+    [`Nhập Mật khẩu: ${matKhau}, bấm Đăng nhập`, 'Không tích "Ghi nhớ thông tin" trên máy dùng chung'],
+    ['Vào được: menu chức năng hiện ở cột bên trái', 'Chỉ thấy những menu tài khoản được cấp quyền'],
+  ];
+  const by = fy + 2.02;
+  const bh = 0.4;
+  buoc.forEach(([viec, kq], i) => {
+    const y = by + i * (bh + 0.04);
+    s.addShape('ellipse', { x: rx, y: y + 0.05, w: 0.34, h: 0.34, fill: { color: C.primary }, line: { color: C.primary } });
+    s.addText(String(i + 1), {
+      x: rx, y: y + 0.05, w: 0.34, h: 0.34, fontFace: FONT, fontSize: 11, bold: true, color: C.white, align: 'center', valign: 'middle',
+    });
+    s.addText([
+      { text: viec, options: { fontSize: 12.5, color: C.ink, bold: true, breakLine: true } },
+      { text: kq, options: { fontSize: 10.5, color: C.muted } },
+    ], { x: rx + 0.45, y, w: rw - 0.45, h: bh, fontFace: FONT, valign: 'middle', lineSpacing: 15 });
+  });
+
+  L.calloutAt(s, {
+    label: 'Tài khoản đào tạo dùng chung:',
+    text: 'không đổi mật khẩu (sẽ khoá cả lớp); không bấm Ký và gửi, Xoá hay nhập danh mục trong lúc thực hành; '
+        + 'dữ liệu trên Cổng là dữ liệu người bệnh thật — không chụp, không chia sẻ ra ngoài; đăng xuất khi kết thúc buổi học. '
+        + 'Không vào được trang thì báo Phòng Công nghệ thông tin.',
+    kind: 'danger',
+  }, H - 1.95);
+  L.footer(s, ctx.deck, ctx.page);
+  L.notes(s, speaker);
+  ctx.page += 1;
+  return s;
+}
+
 // ------------------------------------------------------------------ deck
 
 module.exports = function deckTgd(PptxGenJS) {
@@ -227,6 +321,13 @@ module.exports = function deckTgd(PptxGenJS) {
     ],
     fontSize: 12.5,
     speaker: `Buổi chung 120 phút đi hết 10 phần theo bảng. Nếu tách buổi theo khối: các khoa lâm sàng học phần ● mất khoảng ${phutKhoi(2, '●')} phút (thêm phần ○ thì khoảng ${phutKhoi(2, '●') + phutKhoi(2, '○')} phút); các phòng ban chức năng học phần ● mất khoảng ${phutKhoi(3, '●')} phút. Thực hành cần: mỗi học viên một máy, tài khoản đã cấp quyền, và vài mã điều trị mẫu có lỗi để quét. Phần 02 thực hành lọc vi phạm theo khoa và đánh dấu Đã xử lý / Bỏ qua; phần 03 lọc "Lỗi critical", mở chi tiết, đọc tab Lỗi XML; phần 06 quét mã vạch trên phiếu và in phiếu lỗi; phần 10 giải tình huống và hỏi đáp. Phần 01 không có thực hành. Phần 05 chỉ cần cho Phòng TCKT (viện phí) và Phòng BHYT.`,
+  });
+
+  truyCapSlide(pptx, ctx, {
+    url: 'https://tgdbhyt.bachmai.edu.vn',
+    taiKhoan: 'tndaotao',
+    matKhau: 'tndaotao',
+    speaker: 'Cho cả lớp đăng nhập NGAY lúc này, trước khi giảng, để xử lý sớm máy nào không vào được — đừng để tới phần thực hành. Nhấn: tài khoản dùng chung, không ai đổi mật khẩu; Cổng chạy trên dữ liệu người bệnh thật nên không chụp màn hình, không chia sẻ; trong lúc thực hành chỉ xem và lọc, không bấm Ký và gửi, Xoá hay nhập danh mục. Tài khoản này chỉ thấy những menu đã được cấp quyền — học viên không thấy một menu nào đó là bình thường.',
   });
 
   viTriSlide(pptx, ctx, 'Slide lấy từ báo cáo Hội đồng KHCN (trang 2). Nhấn hai điểm kiểm soát: điểm sớm ở y lệnh (phần 02) và điểm chính trước khi ký số (phần 03). Vòng màu cam là điều quan trọng nhất với người dùng: lỗi được sửa ở nơi phát sinh, trên HIS, rồi nạp lại — phần mềm không sửa hộ.');

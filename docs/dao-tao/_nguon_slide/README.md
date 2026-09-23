@@ -7,7 +7,7 @@ sẽ ghi đè.
 
 | Tệp ra | Nội dung |
 |---|---|
-| `Slide-dao-tao-Tien-giam-dinh.pptx` | Deck gộp — Giải pháp Tiền giám định, đào tạo các khoa lâm sàng và các phòng ban chức năng (79 slide) |
+| `Slide-dao-tao-Tien-giam-dinh.pptx` | Deck gộp — Giải pháp Tiền giám định, đào tạo các khoa lâm sàng và các phòng ban chức năng (80 slide) |
 | `Slide-dao-tao-D-Bao-cao-giao-ban.pptx` | Deck D — Báo cáo giao ban (42 slide) |
 
 Deck gộp thay cho ba deck A (khoa lâm sàng), B (phòng ban), C (tra cứu tiền cùng chi trả)
@@ -22,7 +22,7 @@ bản, slide bám theo tài liệu, nên có nguồn thì lần sau chỉ sửa 
 | Tệp | Nội dung |
 |---|---|
 | `lib.js` | Hai bộ giao diện (`classic`, `tgd`), phông, và các hàm dựng slide dùng chung |
-| `deck-tgd.js` | Deck gộp: phần mở đầu (vị trí Tiền giám định, quy trình 5 bước, 5 bước × 3 luồng, 7 nhóm chức năng), gọi các chương theo thứ tự, phần kết |
+| `deck-tgd.js` | Deck gộp: phần mở đầu (truy cập Cổng, vị trí Tiền giám định, quy trình 5 bước, 5 bước × 3 luồng, 7 nhóm chức năng), gọi các chương theo thứ tự, phần kết |
 | `phan-khoa-lam-sang.js` | Chương 02 sai sót y lệnh, 06 tra cứu lỗi hồ sơ, phần thẻ BHYT của khoa, tình huống tại khoa |
 | `phan-phong-ban.js` | Chương 03 XML 3176, 07 danh mục, 08 chứng từ điện tử, 09 TT12, phần thẻ BHYT của phòng ban, tình huống ở phòng ban |
 | `phan-mcct.js` | Chương 05 tra cứu tiền cùng chi trả |

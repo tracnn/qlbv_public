@@ -35,7 +35,7 @@ Cách chụp ngày 23/09/2026 (để lần sau làm lại cho khớp):
 
 ## Ảnh 1 — Màn Danh sách vi phạm
 
-- **Vị trí:** deck Tiền giám định, slide 12 — phần 02 ("Màn hình Danh sách vi phạm")
+- **Vị trí:** deck Tiền giám định, slide 13 — phần 02 ("Màn hình Danh sách vi phạm")
 - **Tên tệp:** `anh-01-danh-sach-vi-pham.png`
 - **Đường dẫn trên phần mềm:** Kiểm tra sai sót y lệnh → Danh sách vi phạm
 - **Phải thấy trong ảnh:**
@@ -47,7 +47,7 @@ Cách chụp ngày 23/09/2026 (để lần sau làm lại cho khớp):
 
 ## Ảnh 2 — Màn Tra cứu lỗi hồ sơ, sau khi tra một mã có lỗi
 
-- **Vị trí:** deck Tiền giám định, slide 52 — phần 06 ("Màn hình kết quả tra cứu")
+- **Vị trí:** deck Tiền giám định, slide 53 — phần 06 ("Màn hình kết quả tra cứu")
 - **Tên tệp:** `anh-02-tra-cuu-loi-ho-so.png`
 - **Đường dẫn trên phần mềm:** Tra cứu lỗi hồ sơ (menu ngoài cùng bên trái)
 - **Phải thấy trong ảnh:**
@@ -61,7 +61,7 @@ Cách chụp ngày 23/09/2026 (để lần sau làm lại cho khớp):
 
 ## Ảnh 3 — Màn Danh sách hồ sơ XML 3176
 
-- **Vị trí:** deck Tiền giám định, slide 23 — phần 03 ("Màn hình Danh sách hồ sơ — màn làm việc chính")
+- **Vị trí:** deck Tiền giám định, slide 24 — phần 03 ("Màn hình Danh sách hồ sơ — màn làm việc chính")
 - **Tên tệp:** `anh-03-danh-sach-ho-so-xml3176.png`
 - **Đường dẫn trên phần mềm:** Hồ sơ XML → Xml 3176 → Danh sách hồ sơ
 - **Phải thấy trong ảnh:**
@@ -73,7 +73,7 @@ Cách chụp ngày 23/09/2026 (để lần sau làm lại cho khớp):
 
 ## Ảnh 4 — Bẫy cột Số lỗi bằng 0 (chứng từ điện tử)
 
-- **Vị trí:** deck Tiền giám định, slide 65 — phần 08 ("Bẫy lớn nhất: cột Số lỗi bằng 0")
+- **Vị trí:** deck Tiền giám định, slide 66 — phần 08 ("Bẫy lớn nhất: cột Số lỗi bằng 0")
 - **Tên tệp:** `anh-04-ctdt-so-loi-bang-0.png`
 - **Đường dẫn trên phần mềm:** Hồ sơ XML → Chứng từ điện tử → Danh sách hồ sơ
 - **Phải thấy trong ảnh:**
@@ -86,7 +86,7 @@ Cách chụp ngày 23/09/2026 (để lần sau làm lại cho khớp):
 
 ## Ảnh 5 — Kết quả tra cứu tiền cùng chi trả
 
-- **Vị trí:** deck Tiền giám định, slide 41 — phần 05 ("Đọc kết quả — khối kết luận")
+- **Vị trí:** deck Tiền giám định, slide 42 — phần 05 ("Đọc kết quả — khối kết luận")
 - **Tên tệp:** `anh-05-ket-qua-mcct.png`
 - **Đường dẫn trên phần mềm:** Thẻ BHYT → Tra cứu tiền cùng chi trả
 - **Phải thấy trong ảnh:**
@@ -101,7 +101,7 @@ Cách chụp ngày 23/09/2026 (để lần sau làm lại cho khớp):
 
 ## Ảnh 6 — Nút "Tra tiền cùng chi trả" trên màn Tra cứu thẻ BHYT
 
-- **Vị trí:** deck Tiền giám định, slide 38 — phần 05 ("Nút Tra tiền cùng chi trả nằm ở đâu")
+- **Vị trí:** deck Tiền giám định, slide 39 — phần 05 ("Nút Tra tiền cùng chi trả nằm ở đâu")
 - **Tên tệp:** `anh-06-nut-tra-tien-cung-chi-tra.png`
 - **Đường dẫn trên phần mềm:** Thẻ BHYT → Tra cứu thẻ BHYT, **sau khi tra thẻ thành công**
 - **Phải thấy trong ảnh:**
