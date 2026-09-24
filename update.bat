@@ -27,15 +27,26 @@ git pull origin main
 echo Running migrations...
 php artisan migrate --force
 
+:: Go dich vu cu cua module Qd130 (XML4750) - he thong chi con giu module XML3176.
+::
+:: Idempotent: chi stop + remove khi dich vu con ton tai, nen chay lai bao nhieu lan cung
+:: duoc. May chu tu cap nhat (auto-updater.ps1) se tu don o lan chay dau tien; cac khoi cai
+:: dat tuong ung da bo khoi tep nay nen khong bi cai lai.
+::
+:: "QLBV XMLImport" la dich vu chay xml130import:day (KHONG phai XMLImport3176 - giu nguyen).
+:: Module XML4210 khong co dich vu NSSM rieng nen khong co gi de go o day.
+echo Removing legacy Qd130 services...
+for %%S in ("QLBV JobQd130Xml" "QLBV JobSubmitQd130Xml" "QLBV JobExportQd130Xml" "QLBV XMLImport") do (
+    %NSSM_PATH%\nssm status %%S >nul 2>&1
+    if not errorlevel 1 (
+        echo Removing service %%~S...
+        %NSSM_PATH%\nssm stop %%S >nul 2>&1
+        %NSSM_PATH%\nssm remove %%S confirm
+    )
+)
+
 :: Tự cài các service (idempotent - chỉ cài nếu chưa tồn tại)
 echo Ensuring services are installed...
-
-%NSSM_PATH%\nssm status "QLBV JobQd130Xml" >nul 2>&1
-if errorlevel 1 (
-    echo Installing service QLBV JobQd130Xml...
-    %NSSM_PATH%\nssm install "QLBV JobQd130Xml" %PHP_PATH% "%LARAVEL_PATH%artisan queue:work --queue=JobQd130Xml"
-    %NSSM_PATH%\nssm set "QLBV JobQd130Xml" AppDirectory %LARAVEL_PATH%
-)
 
 %NSSM_PATH%\nssm status "QLBV JobXml3176" >nul 2>&1
 if errorlevel 1 (
@@ -58,13 +69,6 @@ if errorlevel 1 (
     %NSSM_PATH%\nssm set "QLBV ImportCatalog" AppDirectory %LARAVEL_PATH%
 )
 
-%NSSM_PATH%\nssm status "QLBV XMLImport" >nul 2>&1
-if errorlevel 1 (
-    echo Installing service QLBV XMLImport...
-    %NSSM_PATH%\nssm install "QLBV XMLImport" %PHP_PATH% "%LARAVEL_PATH%artisan xml130import:day"
-    %NSSM_PATH%\nssm set "QLBV XMLImport" AppDirectory %LARAVEL_PATH%
-)
-
 %NSSM_PATH%\nssm status "QLBV XMLImport3176" >nul 2>&1
 if errorlevel 1 (
     echo Installing service QLBV XMLImport3176...
@@ -84,13 +88,6 @@ if errorlevel 1 (
     echo Installing service QLBV CongDuLieuYTeDienBienXmlScan...
     %NSSM_PATH%\nssm install "QLBV CongDuLieuYTeDienBienXmlScan" %PHP_PATH% "%LARAVEL_PATH%artisan cong-du-lieu-y-te-dien-bien:scan"
     %NSSM_PATH%\nssm set "QLBV CongDuLieuYTeDienBienXmlScan" AppDirectory %LARAVEL_PATH%
-)
-
-%NSSM_PATH%\nssm status "QLBV JobSubmitQd130Xml" >nul 2>&1
-if errorlevel 1 (
-    echo Installing service QLBV JobSubmitQd130Xml...
-    %NSSM_PATH%\nssm install "QLBV JobSubmitQd130Xml" %PHP_PATH% "%LARAVEL_PATH%artisan queue:work --queue=JobSubmitQd130Xml"
-    %NSSM_PATH%\nssm set "QLBV JobSubmitQd130Xml" AppDirectory %LARAVEL_PATH%
 )
 
 %NSSM_PATH%\nssm status "QLBV JobSubmitXml3176" >nul 2>&1
@@ -186,13 +183,6 @@ if errorlevel 1 (
     %NSSM_PATH%\nssm set "QLBV JobSubmitTt12" AppDirectory %LARAVEL_PATH%
 )
 
-%NSSM_PATH%\nssm status "QLBV JobExportQd130Xml" >nul 2>&1
-if errorlevel 1 (
-    echo Installing service QLBV JobExportQd130Xml...
-    %NSSM_PATH%\nssm install "QLBV JobExportQd130Xml" %PHP_PATH% "%LARAVEL_PATH%artisan queue:work --queue=JobExportQd130Xml"
-    %NSSM_PATH%\nssm set "QLBV JobExportQd130Xml" AppDirectory %LARAVEL_PATH%
-)
-
 %NSSM_PATH%\nssm status "QLBV JobExportXml3176" >nul 2>&1
 if errorlevel 1 (
     echo Installing service QLBV JobExportXml3176...
@@ -221,15 +211,12 @@ if errorlevel 1 (
 %NSSM_PATH%\nssm set "QLBV KiemTraYLenhNotify" AppDirectory %LARAVEL_PATH%
 
 :: Stop từng dịch vụ
-%NSSM_PATH%\nssm stop "QLBV JobQd130Xml"
 %NSSM_PATH%\nssm stop "QLBV JobXml3176"
 %NSSM_PATH%\nssm stop "QLBV JobKtTheBHYT"
 %NSSM_PATH%\nssm stop "QLBV ImportCatalog"
-%NSSM_PATH%\nssm stop "QLBV XMLImport"
 %NSSM_PATH%\nssm stop "QLBV XMLImport3176"
 %NSSM_PATH%\nssm stop "QLBV TrucDuLieuYTeXmlScan"
 %NSSM_PATH%\nssm stop "QLBV CongDuLieuYTeDienBienXmlScan"
-%NSSM_PATH%\nssm stop "QLBV JobSubmitQd130Xml"
 %NSSM_PATH%\nssm stop "QLBV JobSubmitXml3176"
 %NSSM_PATH%\nssm stop "QLBV JobCtdt"
 %NSSM_PATH%\nssm stop "QLBV JobSignCtdt"
@@ -238,7 +225,6 @@ if errorlevel 1 (
 %NSSM_PATH%\nssm stop "QLBV JobTt12"
 %NSSM_PATH%\nssm stop "QLBV JobSignTt12"
 %NSSM_PATH%\nssm stop "QLBV JobSubmitTt12"
-%NSSM_PATH%\nssm stop "QLBV JobExportQd130Xml"
 %NSSM_PATH%\nssm stop "QLBV JobExportXml3176"
 %NSSM_PATH%\nssm stop "QLBV KiemTraYLenh"
 %NSSM_PATH%\nssm stop "QLBV KiemTraYLenhNotify"
@@ -265,15 +251,12 @@ php artisan route:cache
 
 :: Restart các dịch vụ đã cài đặt
 echo Restarting services...
-%NSSM_PATH%\nssm start "QLBV JobQd130Xml"
 %NSSM_PATH%\nssm start "QLBV JobKtTheBHYT"
 %NSSM_PATH%\nssm start "QLBV ImportCatalog"
-%NSSM_PATH%\nssm start "QLBV XMLImport"
 %NSSM_PATH%\nssm start "QLBV JobXml3176"
 %NSSM_PATH%\nssm start "QLBV XMLImport3176"
 %NSSM_PATH%\nssm start "QLBV TrucDuLieuYTeXmlScan"
 %NSSM_PATH%\nssm start "QLBV CongDuLieuYTeDienBienXmlScan"
-%NSSM_PATH%\nssm start "QLBV JobSubmitQd130Xml"
 %NSSM_PATH%\nssm start "QLBV JobSubmitXml3176"
 %NSSM_PATH%\nssm start "QLBV JobCtdt"
 %NSSM_PATH%\nssm start "QLBV JobSignCtdt"
@@ -282,7 +265,6 @@ echo Restarting services...
 %NSSM_PATH%\nssm start "QLBV JobTt12"
 %NSSM_PATH%\nssm start "QLBV JobSignTt12"
 %NSSM_PATH%\nssm start "QLBV JobSubmitTt12"
-%NSSM_PATH%\nssm start "QLBV JobExportQd130Xml"
 %NSSM_PATH%\nssm start "QLBV JobExportXml3176"
 %NSSM_PATH%\nssm start "QLBV KiemTraYLenh"
 %NSSM_PATH%\nssm start "QLBV KiemTraYLenhNotify"

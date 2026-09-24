@@ -5,10 +5,6 @@ cd /d "%~dp0"
 :: Đường dẫn đến nssm.exe (giả sử nằm trong thư mục gốc của dự án)
 set NSSM_PATH=%~dp0
 
-:: Xóa dịch vụ cho JobQd130Xml
-%NSSM_PATH%\nssm stop "QLBV JobQd130Xml"
-%NSSM_PATH%\nssm remove "QLBV JobQd130Xml" confirm
-
 :: Xóa dịch vụ cho JobXml3176
 %NSSM_PATH%\nssm stop "QLBV JobXml3176"
 %NSSM_PATH%\nssm remove "QLBV JobXml3176" confirm
@@ -20,10 +16,6 @@ set NSSM_PATH=%~dp0
 :: Xóa dịch vụ cho importCatalogBHXH:data
 %NSSM_PATH%\nssm stop "QLBV ImportCatalog"
 %NSSM_PATH%\nssm remove "QLBV ImportCatalog" confirm
-
-:: Xóa dịch vụ cho xml130import:day
-%NSSM_PATH%\nssm stop "QLBV XMLImport"
-%NSSM_PATH%\nssm remove "QLBV XMLImport" confirm
 
 :: Xóa dịch vụ cho XMLImport3176
 %NSSM_PATH%\nssm stop "QLBV XMLImport3176"
@@ -37,17 +29,9 @@ set NSSM_PATH=%~dp0
 %NSSM_PATH%\nssm stop "QLBV CongDuLieuYTeDienBienXmlScan"
 %NSSM_PATH%\nssm remove "QLBV CongDuLieuYTeDienBienXmlScan" confirm
 
-:: Xóa dịch vụ cho JobSubmitQd130Xml
-%NSSM_PATH%\nssm stop "QLBV JobSubmitQd130Xml"
-%NSSM_PATH%\nssm remove "QLBV JobSubmitQd130Xml" confirm
-
 :: Xóa dịch vụ cho JobSubmitXml3176
 %NSSM_PATH%\nssm stop "QLBV JobSubmitXml3176"
 %NSSM_PATH%\nssm remove "QLBV JobSubmitXml3176" confirm
-
-:: Xóa dịch vụ cho JobExportQd130Xml
-%NSSM_PATH%\nssm stop "QLBV JobExportQd130Xml"
-%NSSM_PATH%\nssm remove "QLBV JobExportQd130Xml" confirm
 
 :: Xóa dịch vụ cho JobExportXml3176
 %NSSM_PATH%\nssm stop "QLBV JobExportXml3176"
@@ -87,5 +71,13 @@ set NSSM_PATH=%~dp0
 %NSSM_PATH%\nssm stop "QLBV KiemTraYLenhNotify"
 %NSSM_PATH%\nssm remove "QLBV KiemTraYLenhNotify" confirm
 
+:: Dich vu cu cua module Qd130 (XML4750) - module da go, he thong chi con giu XML3176.
+:: install_service.bat va update.bat khong con cai cac dich vu nay (update.bat tu go chung);
+:: giu lai day de may nao con sot van don duoc. Dich vu khong ton tai thi nssm chi bao loi
+:: roi chay tiep, khong anh huong. "QLBV XMLImport" la dich vu chay xml130import:day.
+for %%S in ("QLBV JobQd130Xml" "QLBV JobSubmitQd130Xml" "QLBV JobExportQd130Xml" "QLBV XMLImport") do (
+    %NSSM_PATH%\nssm stop %%S
+    %NSSM_PATH%\nssm remove %%S confirm
+)
 
 echo Services uninstall completed successfully.
