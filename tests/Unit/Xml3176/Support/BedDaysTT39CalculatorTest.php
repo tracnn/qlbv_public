@@ -35,6 +35,29 @@ class BedDaysTT39CalculatorTest extends TestCase
     }
 
     /** @test */
+    public function tu_4h_den_duoi_24h_qua_nua_dem_van_tinh_1_ngay_ke_ca_dac_biet()
+    {
+        // 000007305574: vào 23/09 16:20, ra 24/09 04:50 (12,5h), tử vong. TT39: 4h–<24h tính
+        // 1 ngày; +1 ngày đặc biệt chỉ áp cho lưu trú từ 24h. Bản cũ trả 2 -> báo thiếu nhầm.
+        $this->assertSame(1, BedDaysTT39Calculator::expected(1, 12.5, true));
+        $this->assertSame(1, BedDaysTT39Calculator::expected(1, 12.5, false));
+        $this->assertSame(1, BedDaysTT39Calculator::expected(1, 23.9, true));
+    }
+
+    /** @test */
+    public function tu_24h_tro_len_ap_quy_tac_nhieu_ngay()
+    {
+        $this->assertSame(2, BedDaysTT39Calculator::expected(1, 24.0, true));
+        $this->assertSame(1, BedDaysTT39Calculator::expected(1, 24.0, false));
+    }
+
+    /** @test */
+    public function ho_so_duoi_24h_tu_vong_khai_1_ngay_khong_bi_bao_thieu()
+    {
+        $this->assertFalse(BedDaysTT39Calculator::isBelow(1.0, BedDaysTT39Calculator::expected(1, 12.5, true), 0.5));
+    }
+
+    /** @test */
     public function nhieu_ngay_dac_biet_cong_1()
     {
         // tử vong/chuyển viện/nặng xin về -> +1

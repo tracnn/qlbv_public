@@ -11,8 +11,10 @@ class BedDaysTT39Calculator
     /**
      * Số ngày giường đúng theo TT39.
      *  - Lưu trú < 4h -> 0 (không tính giường, kể cả khi vắt qua nửa đêm).
-     *  - Cùng ngày (calendarDays == 0) và >= 4h -> 1.
-     *  - Nhiều ngày: calendarDays + (special ? 1 : 0).
+     *  - Từ 4h đến dưới 24h -> 1, KỂ CẢ khi vắt qua nửa đêm và kể cả trường hợp đặc biệt.
+     *    (Bản cũ chỉ tính 1 khi cùng ngày dương lịch, nên ca 12,5h tử vong qua nửa đêm —
+     *    000007305574 — bị đòi 2 ngày và báo "thiếu" nhầm.)
+     *  - Từ 24h trở lên: calendarDays + (special ? 1 : 0).
      *
      * @param int   $calendarDays số ngày dương lịch giữa ngày vào và ngày ra (>= 0)
      * @param float $elapsedHours tổng giờ trôi qua giữa vào và ra
@@ -24,8 +26,8 @@ class BedDaysTT39Calculator
             return 0; // lưu trú < 4h không tính giường, kể cả vắt qua nửa đêm (calendarDays >= 1)
         }
 
-        if ($calendarDays <= 0) {
-            return 1; // cùng ngày, >= 4h
+        if ($elapsedHours < 24 || $calendarDays <= 0) {
+            return 1; // 4h–<24h: 1 ngày, dù qua nửa đêm hay thuộc trường hợp đặc biệt
         }
 
         return $calendarDays + ($special ? 1 : 0);
