@@ -68,6 +68,11 @@ class KetQuaTraCuuTheExport implements FromQuery, WithHeadings, ShouldAutoSize, 
             'Ngày đủ 5 năm',
             'Mã số BHXH',
             'Thời gian tra cứu',
+            // Gia tri DA GUI len cong - them CUOI de khong xe dich cot nguoi dung da quen.
+            'Số thẻ đã gửi',
+            'Họ tên đã gửi',
+            'Ngày sinh đã gửi',
+            'Nơi ĐKBĐ đã gửi',
         ];
     }
 
@@ -104,6 +109,10 @@ class KetQuaTraCuuTheExport implements FromQuery, WithHeadings, ShouldAutoSize, 
             $r->ngay_du5nam,
             $r->maso_bhxh,
             (string) $r->updated_at,
+            $r->ma_the_gui,
+            $r->ho_ten_gui,
+            $r->ngay_sinh_gui,
+            $r->ma_dkbd_gui,
         ];
     }
 

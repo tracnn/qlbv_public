@@ -34,7 +34,7 @@
           <th>Mã kiểm tra</th>
           <th>Ghi chú</th>
           <th>Thời gian</th>
-          <th>Xem</th>
+          <th>Thao tác</th>
         </tr>
       </thead>
     </table>
@@ -82,6 +82,10 @@
         ['ma_the', 'Số thẻ'],
         ['ho_ten', 'Họ tên'],
         ['ngay_sinh', 'Ngày sinh'],
+        ['ma_the_gui', 'Số thẻ đã gửi'],
+        ['ho_ten_gui', 'Họ tên đã gửi'],
+        ['ngay_sinh_gui', 'Ngày sinh đã gửi'],
+        ['ma_dkbd_gui', 'Nơi ĐKBĐ đã gửi'],
         ['gioi_tinh', 'Giới tính'],
         ['dia_chi', 'Địa chỉ'],
         ['ma_the_cu', 'Thẻ cũ'],
@@ -116,6 +120,18 @@
         $.extend(d, thamSoLoc());
     }
 
+    // Render cot quan sat: gia tri lay tu gia tri DA GUI (cong khong tra) thi in nghieng xam de
+    // khong nham la du lieu cong xac nhan. .text() truoc .html(): du lieu tu cong/HIS.
+    function hienGiaTri(cotNguon) {
+        return function (d, type, row) {
+            var t = $('<div>').text(d === null || d === undefined ? '' : d).html();
+
+            return row[cotNguon] === 'gui'
+                ? '<i class="text-muted" title="Theo HIS (cổng không trả về)">' + t + '</i>'
+                : t;
+        };
+    }
+
     function fetchData(startDate, endDate) {
         khoangNgay.from = startDate;
         khoangNgay.to = endDate;
@@ -133,16 +149,24 @@
             },
             "columns": [
                 { "data": "ma_lk" },
-                { "data": "ma_the" },
-                { "data": "ho_ten" },
-                { "data": "ngay_sinh" },
+                // Khong phai cot SQL: sap xep theo chung se lam truy van Datatables vo.
+                { "data": "hien_ma_the", "orderable": false, "searchable": false, "render": hienGiaTri('nguon_ma_the') },
+                { "data": "hien_ho_ten", "orderable": false, "searchable": false, "render": hienGiaTri('nguon_ho_ten') },
+                { "data": "hien_ngay_sinh", "orderable": false, "searchable": false, "render": hienGiaTri('nguon_ngay_sinh') },
                 { "data": "ma_cskcb" },
                 { "data": "nhan_tracuu" },
                 { "data": "nhan_kiemtra" },
                 { "data": "ghi_chu" },
                 { "data": "updated_at" },
-                { "data": "id", "orderable": false, "searchable": false, "render": function (d) {
-                    return '<button type="button" class="btn btn-xs btn-default nut-xem" data-id="' + d + '">Xem</button>';
+                { "data": "id", "orderable": false, "searchable": false, "render": function (d, type, row) {
+                    var h = '<button type="button" class="btn btn-xs btn-default nut-xem" data-id="' + d + '">Xem</button>';
+
+                    // Chi dong LOI moi co nut tra lai - dong hop le tra lai chi ton luot goi cong.
+                    if (row.co_loi) {
+                        h += ' <button type="button" class="btn btn-xs btn-warning nut-tra-lai">Tra lại</button>';
+                    }
+
+                    return h;
                 } }
             ],
             // To nen do nhat cho dong co van de. Dung co_loi may chu tinh san, khong lap lai
@@ -208,6 +232,24 @@
 
             $('#modal-the-body').html(html);
             $('#modal-the').modal('show');
+        });
+
+        $('#check-hein-card-list tbody').on('click', '.nut-tra-lai', function () {
+            var nut = $(this);
+            var d = table.row(nut.closest('tr')).data();
+
+            nut.prop('disabled', true).text('Đang gửi...');
+
+            $.post("{{ route('bhyt.check-hein-card.tra-lai') }}", {
+                _token: '{{ csrf_token() }}', ma_lk: d.ma_lk
+            }).done(function (r) {
+                alert(r.message);
+                // Doi job chay xong roi nap lai DUNG trang dang xem, giu bo loc (null, false).
+                setTimeout(function () { table.ajax.reload(null, false); }, 5000);
+            }).fail(function (x) {
+                alert((x.responseJSON && x.responseJSON.message) || 'Không gửi được yêu cầu tra lại');
+                nut.prop('disabled', false).text('Tra lại');
+            });
         });
     });
 </script>
