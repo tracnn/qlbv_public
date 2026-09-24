@@ -309,9 +309,9 @@ class TraCuuLoiHoSoTest extends TestCase
     }
 
     /** @test */
-    public function tra_lai_the_chan_the_tam_so_sinh_va_bao_ro_ly_do()
+    public function tra_lai_the_the_tam_van_gui_job_de_xoa_ket_qua_loi_cu()
     {
-        // Job se bo qua the tam; khong chan o day thi bam nut xong "khong co gi xay ra".
+        // Job gap the tam khong goi cong ma xoa dong loi cu - nut bam la cach don tung dong.
         Queue::fake();
         config(['organization.BHYT_CO_SO' => ['01001' => ['username' => 'u']]]);
         $this->themHoSo([
@@ -321,10 +321,10 @@ class TraCuuLoiHoSoTest extends TestCase
         ]);
 
         $this->traLaiThe('HS-THE-TAM')
-            ->assertStatus(422)
-            ->assertJsonFragment(['message' => 'Thẻ tạm trẻ sơ sinh (nơi ĐKBĐ 01000), không tra cổng BHXH']);
+            ->assertStatus(200)
+            ->assertJsonFragment(['message' => 'Thẻ tạm trẻ sơ sinh (nơi ĐKBĐ 01000), không tra cổng BHXH — đã gửi yêu cầu xoá kết quả lỗi cũ']);
 
-        Queue::assertNotPushed(jobKtTheBHYT::class);
+        Queue::assertPushedOn('JobKtTheBHYT', jobKtTheBHYT::class);
     }
 
     /** @test */
