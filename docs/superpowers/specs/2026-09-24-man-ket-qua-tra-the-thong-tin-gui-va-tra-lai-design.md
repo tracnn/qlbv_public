@@ -159,9 +159,13 @@ RefreshDatabase, chạy với `DB_HOST=127.0.0.1`.
   khoảng 1.149 dòng dọn.
 
 ## 7. Triển khai trên prod
-1. Deploy code, rồi `php artisan migrate`.
+1. Kéo code rồi chạy `php artisan migrate` NGAY (migration chỉ thêm cột nullable — code cũ vẫn
+   chạy đúng với bảng mới).
 2. `php artisan config:cache` nếu prod cache cấu hình.
-3. Khởi động lại worker `JobKtTheBHYT`.
-4. `php artisan the-bhyt:bu-thong-tin-gui`: xem số liệu, rồi thêm `--ghi`.
+3. `php artisan queue:restart` (worker cũ giữ class cũ trong bộ nhớ: không ghi cột `_gui`, không
+   nhận bản sửa fillable).
+4. `php artisan the-bhyt:bu-thong-tin-gui`: xem số liệu (kỳ vọng ~1.213 dòng), rồi thêm `--ghi`.
 5. Sao lưu bảng `check_hein_cards`.
-6. `php artisan the-bhyt:don-the-tam`: xem số liệu, rồi thêm `--ghi`.
+6. `php artisan the-bhyt:don-the-tam`: xem số liệu (kỳ vọng ~1.149), rồi thêm `--ghi`.
+7. Nghiệm thu: mở màn, tìm theo họ tên đã gửi, bấm "Tra lại" một dòng lỗi thường và một dòng thẻ
+   tạm.
