@@ -36,6 +36,16 @@ class ManKetQuaTraCuuTheGiaoDienTest extends TestCase
     }
 
     /** @test */
+    public function nut_tra_lai_doc_ma_lk_tu_data_attribute_khong_tra_row_bang_tr()
+    {
+        $b = $this->blade();
+
+        $this->assertContains('data-ma-lk', $b);
+        $this->assertContains("nut.data('ma-lk')", $b);
+        $this->assertNotContains('table.row(nut.closest(', $b);
+    }
+
+    /** @test */
     public function modal_co_bon_dong_da_gui()
     {
         $b = $this->blade();

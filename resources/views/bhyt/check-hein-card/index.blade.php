@@ -163,7 +163,12 @@
 
                     // Chi dong LOI moi co nut tra lai - dong hop le tra lai chi ton luot goi cong.
                     if (row.co_loi) {
-                        h += ' <button type="button" class="btn btn-xs btn-warning nut-tra-lai">Tra lại</button>';
+                        // ma_lk dat thang tren nut qua data-ma-lk: DataTables Responsive co the
+                        // dua nut nay vao tr.child khi thu gon cot, luc do table.row(tr).data()
+                        // tra ve undefined. .text().html() chong XSS; .replace them cho dau
+                        // ngoac kep vi .html() khong tu escape no trong thuoc tinh HTML.
+                        var maLkAn = $('<div>').text(row.ma_lk === null || row.ma_lk === undefined ? '' : row.ma_lk).html().replace(/"/g, '&quot;');
+                        h += ' <button type="button" class="btn btn-xs btn-warning nut-tra-lai" data-ma-lk="' + maLkAn + '">Tra lại</button>';
                     }
 
                     return h;
@@ -216,7 +221,19 @@
         });
 
         $('#check-hein-card-list tbody').on('click', '.nut-xem', function () {
-            var d = table.row($(this).closest('tr')).data();
+            // Khong dung table.row($(this).closest('tr')).data(): DataTables Responsive co the
+            // dua nut nay vao tr.child khi thu gon cot, luc do closest('tr') la dong con va
+            // .data() tra ve undefined. Tim thang trong du lieu bang theo data-id.
+            var id = $(this).data('id');
+            var d = null;
+            table.rows().every(function () {
+                if (String(this.data().id) === String(id)) {
+                    d = this.data();
+                }
+            });
+            if (!d) {
+                return;
+            }
             var html = '';
 
             for (var i = 0; i < TRUONG_CHI_TIET.length; i++) {
@@ -236,12 +253,15 @@
 
         $('#check-hein-card-list tbody').on('click', '.nut-tra-lai', function () {
             var nut = $(this);
-            var d = table.row(nut.closest('tr')).data();
+            // Doc data-ma-lk TRUOC khi khoa nut: cung ly do voi nut-xem, va o day con phai
+            // doc TRUOC vi nut.prop('disabled', true) khong xoa data attribute nhung ta cu
+            // doc som cho ro rang, khong phu thuoc tra cuu qua tr cha.
+            var maLk = nut.data('ma-lk');
 
             nut.prop('disabled', true).text('Đang gửi...');
 
             $.post("{{ route('bhyt.check-hein-card.tra-lai') }}", {
-                _token: '{{ csrf_token() }}', ma_lk: d.ma_lk
+                _token: '{{ csrf_token() }}', ma_lk: maLk
             }).done(function (r) {
                 alert(r.message);
                 // Doi job chay xong roi nap lai DUNG trang dang xem, giu bo loc (null, false).
