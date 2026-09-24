@@ -593,6 +593,8 @@ Route::group(['middleware' => ['auth']], function () {
         ->name('bhyt.check-hein-card.fetch-data');
         Route::get('check-hein-card/export', 'BHYT\CheckHeinCardController@xuatExcel')
         ->name('bhyt.check-hein-card.export');
+        Route::post('check-hein-card/tra-lai', 'BHYT\CheckHeinCardController@traLai')
+        ->name('bhyt.check-hein-card.tra-lai');
 
         Route::get('xml3176/index', 'BHYT\BHYTXml3176Controller@index')->name('bhyt.xml3176.index');
         Route::get('xml3176/index/fetch-data', 'BHYT\BHYTXml3176Controller@fetchData')->name('bhyt.xml3176.fetch-data');

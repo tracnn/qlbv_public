@@ -8,6 +8,7 @@ use App\Models\CheckBHYT\check_hein_card;
 use App\Services\BHYT\DanhSachCoSo;
 use App\Services\BHYT\NhanMaThe;
 use App\Exports\KetQuaTraCuuTheExport;
+use App\Services\BHYT\TraLaiThe;
 use Yajra\Datatables\Datatables;
 use Maatwebsite\Excel\Facades\Excel;
 use Carbon\Carbon;
@@ -57,10 +58,13 @@ class CheckHeinCardController extends Controller
         }
 
         if ($tim = trim((string) $request->get('tim'))) {
+            // Tim ca gia tri DA GUI: dong loi thuong khong co so the/ho ten tu cong.
             $q->where(function ($w) use ($tim) {
                 $w->where('ma_lk', 'like', '%' . $tim . '%')
                   ->orWhere('ma_the', 'like', '%' . $tim . '%')
-                  ->orWhere('ho_ten', 'like', '%' . $tim . '%');
+                  ->orWhere('ho_ten', 'like', '%' . $tim . '%')
+                  ->orWhere('ma_the_gui', 'like', '%' . $tim . '%')
+                  ->orWhere('ho_ten_gui', 'like', '%' . $tim . '%');
             });
         }
 
@@ -71,7 +75,7 @@ class CheckHeinCardController extends Controller
     {
         $q = $this->locTheoYeuCau($request);
 
-        return Datatables::of($q)
+        $dt = Datatables::of($q)
             // Nhan tieng Viet: ma tran khong noi gi cho nguoi doc. NhanMaThe tra ma tran khi
             // gap ma la thay vi nem "Undefined index" nhu cac blade cu.
             ->addColumn('nhan_tracuu', function ($r) {
@@ -84,8 +88,27 @@ class CheckHeinCardController extends Controller
             ->addColumn('co_loi', function ($r) {
                 return $r->ma_tracuu !== check_hein_card::TRA_CUU_SACH
                     || $r->ma_kiemtra !== check_hein_card::KIEM_TRA_SACH;
-            })
-            ->make(true);
+            });
+
+        // Gia tri de hien cho ba truong quan sat + nguon cua TUNG truong (mot dong co the co
+        // so the tu cong nhung ho ten phai lay gia tri da gui).
+        foreach (check_hein_card::TRUONG_HIEN as $truong) {
+            $dt->addColumn('hien_' . $truong, function ($r) use ($truong) {
+                return $r->hienThi($truong)[0];
+            })->addColumn('nguon_' . $truong, function ($r) use ($truong) {
+                return $r->hienThi($truong)[1];
+            });
+        }
+
+        return $dt->make(true);
+    }
+
+    /** Tra lai the cua MOT ho so - cung service voi man Tra cuu loi ho so. */
+    public function traLai(Request $request, TraLaiThe $traLai)
+    {
+        $kq = $traLai->gui((string) $request->input('ma_lk'));
+
+        return response()->json(['message' => $kq['message']], $kq['ok'] ? 200 : 422);
     }
 
     public function xuatExcel(Request $request)
