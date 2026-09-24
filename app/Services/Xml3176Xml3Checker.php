@@ -12,6 +12,7 @@ use App\Services\Xml3176\Support\Xml3176DateHelper;
 use App\Services\Xml3176\Support\TyLeComparator;
 use App\Services\Xml3176\Support\ServiceOverlapChecker;
 use App\Services\Xml3176\Support\MaDvktStructure;
+use App\Services\Xml3176\Support\MaKhoaLienKhoa;
 use App\Services\Xml3176\Support\TienTeCalculator;
 use App\Services\Xml3176\Support\TextNormalizer;
 use Illuminate\Support\Collection;
@@ -620,25 +621,47 @@ class Xml3176Xml3Checker
                 return $errors;
             }
 
-            // Chỉ kiểm tra tiền tố khoa khi MA_DICH_VU hợp lệ và có first component khác rỗng
+            // Chỉ kiểm tra khoa của giường khi MA_DICH_VU hợp lệ và có first component khác rỗng
             $maDichVu = (string) ($data->ma_dich_vu ?? '');
             if ($maDichVu !== '') {
                 $parts = explode('.', $maDichVu, 2);
                 $firstComponent = trim($parts[0] ?? '');
 
-                if ($firstComponent !== '' && strpos($data->ma_khoa, $firstComponent) !== 0) {
+                if ($firstComponent !== '' && !$this->khoaChiDinhCoGiuong((string) $data->ma_khoa, $firstComponent)) {
+                    $cacKhoa = MaKhoaLienKhoa::tach($data->ma_khoa);
+                    $khoaChiDinh = MaKhoaLienKhoa::laLienKhoa($data->ma_khoa)
+                        ? $data->ma_khoa . ' (liên khoa ' . implode(', ', $cacKhoa) . ')'
+                        : $data->ma_khoa;
                     $errorCode = $this->generateErrorCode('INVALID_DEPARTMENT_CODE');
                     $errors->push((object)[
                         'error_code' => $errorCode,
                         'error_name' => 'Khoa chỉ định giường không đúng quy định',
                         'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
-                        'description' => 'Khoa chỉ định: ' . $data->ma_khoa . '; Mã giường: ' . $maDichVu
+                        'description' => 'Khoa chỉ định: ' . $khoaChiDinh . '; Mã giường: ' . $maDichVu
+                            . ' — khoa của giường không thuộc khoa chỉ định'
                     ]);
                 }
             }
         }
 
         return $errors;
+    }
+
+    /**
+     * Khoa của giường (phần đầu MA_DICH_VU, vd K36 trong K36.NO1) có thuộc khoa chỉ định không.
+     *
+     * MA_KHOA liên chuyên khoa (K103436 = K10, K34, K36) hợp lệ với giường của BẤT KỲ khoa
+     * thành phần nào. Bản cũ đòi MA_KHOA bắt đầu bằng khoa của giường nên chỉ khoa đầu tiên
+     * qua được: 125/134 lỗi trên dữ liệu thật là báo nhầm kiểu này. Mã không tách được thì
+     * giữ nguyên cách so cũ để không sinh báo nhầm mới.
+     */
+    private function khoaChiDinhCoGiuong(string $maKhoa, string $khoaGiuong): bool
+    {
+        if (!MaKhoaLienKhoa::dungDang($maKhoa)) {
+            return strpos($maKhoa, $khoaGiuong) === 0;
+        }
+
+        return in_array($khoaGiuong, MaKhoaLienKhoa::tach($maKhoa), true);
     }
 
     /**
