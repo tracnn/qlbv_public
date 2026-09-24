@@ -6,12 +6,19 @@ use Illuminate\Database\Eloquent\Model;
 
 class check_hein_card extends Model
 {
-    // Thêm các trường vào fillable
+    // Ten truong PHAI trung ten cot that: tung ghi 'gt_the_tu_moi'/'gt_the_den_moi' nen
+    // updateOrCreate lang le bo hai truong nay (0/46.396 dong co du lieu).
+    // Bon cot *_gui la gia tri MINH DA GUI len cong - cong bao loi thuong khong tra so the,
+    // ho ten, ngay sinh, khong luu thi dong loi chi con ma ho so.
     protected $fillable = [
         'ma_lk', 'ma_cskcb', 'ma_tracuu', 'ma_kiemtra', 'ma_ketqua', 'ghi_chu', 'ma_the', 'ho_ten', 'ngay_sinh',
         'dia_chi', 'ma_the_cu', 'ma_the_moi', 'ma_dkbd', 'cq_bhxh', 'gioi_tinh', 'gt_the_tu', 'gt_the_den',
-        'ma_kv', 'ngay_du5nam', 'maso_bhxh', 'gt_the_tu_moi', 'gt_the_den_moi', 'ma_dkbd_moi', 'ten_dkbd_moi'
+        'ma_kv', 'ngay_du5nam', 'maso_bhxh', 'gt_the_tumoi', 'gt_the_denmoi', 'ma_dkbd_moi', 'ten_dkbd_moi',
+        'ma_the_gui', 'ho_ten_gui', 'ngay_sinh_gui', 'ma_dkbd_gui',
     ];
+
+    /** Ba truong can de quan sat mot dong - cong bao loi thuong bo trong ca ba. */
+    const TRUONG_HIEN = ['ma_the', 'ho_ten', 'ngay_sinh'];
 
     /** Ma tra cuu cua ho so hop le */
     const TRA_CUU_SACH = '000';
@@ -58,6 +65,23 @@ class check_hein_card extends Model
         $maCskcb = trim((string) $maCskcb);
 
         return $maCskcb === '' ? $q : $q->where('ma_cskcb', $maCskcb);
+    }
+
+    /**
+     * Gia tri de HIEN cho mot truong quan sat: gia tri cong neu co, khong thi gia tri da gui.
+     *
+     * @param string $truong mot trong TRUONG_HIEN
+     * @return array [gia tri, nguon] voi nguon 'cong' | 'gui' | ''
+     */
+    public function hienThi($truong)
+    {
+        if (trim((string) $this->{$truong}) !== '') {
+            return [$this->{$truong}, 'cong'];
+        }
+
+        $gui = $this->{$truong . '_gui'};
+
+        return trim((string) $gui) !== '' ? [$gui, 'gui'] : ['', ''];
     }
 
     public function xml1()

@@ -49,14 +49,21 @@ trait DungBangLoiDotDieuTriSqlite
             $t->timestamps();
         });
 
+        // DU cot nhu bang that: job ghi ca mang ket qua cong, thieu mot cot la SQL loi.
         Schema::create('check_hein_cards', function ($t) {
             $t->increments('id');
             $t->string('ma_lk', 100);
+            $t->string('ma_cskcb', 20)->nullable();
             $t->string('ma_tracuu', 10);
             $t->string('ma_kiemtra', 10);
             $t->string('ma_ketqua', 255)->nullable();
             $t->text('ghi_chu')->nullable();
-            $t->string('ma_the', 255)->nullable();
+            foreach (['ma_the', 'ho_ten', 'ngay_sinh', 'dia_chi', 'ma_the_cu', 'ma_the_moi', 'ma_dkbd',
+                      'cq_bhxh', 'gioi_tinh', 'gt_the_tu', 'gt_the_den', 'ma_kv', 'ngay_du5nam', 'maso_bhxh',
+                      'gt_the_tumoi', 'gt_the_denmoi', 'ma_dkbd_moi', 'ten_dkbd_moi',
+                      'ma_the_gui', 'ho_ten_gui', 'ngay_sinh_gui', 'ma_dkbd_gui'] as $cot) {
+                $t->string($cot, 255)->nullable();
+            }
             $t->timestamps();
         });
 
