@@ -159,7 +159,8 @@ class jobKtTheBHYT implements ShouldQueue
                 $result_check['maDKBD'] ?? null, 
                 $result_check['gioiTinh'] ?? null, 
                 $result_check['gtTheTu'] ?? null, 
-                $result_check['gtTheDen'] ?? null
+                $result_check['gtTheDen'] ?? null,
+                $result_check['maDKBDMoi'] ?? null
             );
             $this->addCheckHeinCard(
                 $params['ma_lk'], 
@@ -170,12 +171,21 @@ class jobKtTheBHYT implements ShouldQueue
         }
     }
 
-    private function lichSuKCB($params, $maDKBD, $gioiTinh, $gtTheTu, $gtTheDen)
+    /**
+     * Mã kiểm tra tự tính từ kết quả cổng: 11 cổng không trả đủ thông tin thẻ, 09 sai nơi
+     * ĐKBĐ, 08 sai giới tính, 00 khớp.
+     *
+     * Nơi ĐKBĐ trên HIS khớp nơi ĐKBĐ MỚI (thẻ vừa đổi nơi) cũng là đúng: trước đây chỉ so
+     * nơi cũ nên báo nhầm 09 (000007294309: HIS 01016, cổng nơi cũ 01829, nơi mới 01016).
+     */
+    private function lichSuKCB($params, $maDKBD, $gioiTinh, $gtTheTu, $gtTheDen, $maDKBDMoi = null)
     {
         if (!$gioiTinh || !$maDKBD || !$gtTheTu || !$gtTheDen) {
             return '11';
         }
-        if ($params['maDkbd'] != $maDKBD) {
+        $dkbdHis = trim((string) $params['maDkbd']);
+        if ($dkbdHis !== trim((string) $maDKBD)
+            && ($maDKBDMoi === null || trim((string) $maDKBDMoi) === '' || $dkbdHis !== trim((string) $maDKBDMoi))) {
             return '09';
         }
         if (($params['gioiTinh'] == 1 && $gioiTinh != 'Nam') || 

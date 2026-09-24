@@ -965,10 +965,10 @@ $techAppConfig = [
         '06' => 'Thẻ sai họ tên',
         '07' => 'Thẻ sai ngày sinh',
         '08' => 'Thẻ sai giới tính',
-        '09' => 'Thông tin thẻ không chính xác',
+        '09' => 'Sai nơi đăng ký KCB ban đầu (nơi ĐKBĐ trên HIS khác trên thẻ)',
         '10' => 'Lỗi khi lấy dữ liệu sổ thẻ',
         '401' => 'Lỗi xác thực tài khoản',
-        '11' => 'Thiếu dữ liệu đầu vào',
+        '11' => 'Không lấy được thông tin thẻ từ cổng BHXH',
     ],
 
     'login_error_BHYT' => [
