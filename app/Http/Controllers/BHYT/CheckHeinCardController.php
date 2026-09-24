@@ -49,12 +49,16 @@ class CheckHeinCardController extends Controller
             $q->chiHopLe();
         }
 
-        if ($tu = trim((string) $request->get('tu_ngay'))) {
-            $q->whereDate('updated_at', '>=', $tu);
+        // Loc TRON NGAY bang khoang tren chinh cot: whereDate() sinh date(updated_at) nen MySQL
+        // khong dung duoc index - quet toan bang + filesort ~46 nghin dong o moi lan tai, du
+        // mac dinh chi xem hom nay. Khoang [dau ngay tu, dau ngay sau ngay den) cho cung ket
+        // qua ma dung index updated_at.
+        if ($tu = $this->dauNgay($request->get('tu_ngay'))) {
+            $q->where('updated_at', '>=', $tu->toDateTimeString());
         }
 
-        if ($den = trim((string) $request->get('den_ngay'))) {
-            $q->whereDate('updated_at', '<=', $den);
+        if ($den = $this->dauNgay($request->get('den_ngay'))) {
+            $q->where('updated_at', '<', $den->addDay()->toDateTimeString());
         }
 
         if ($tim = trim((string) $request->get('tim'))) {
@@ -69,6 +73,27 @@ class CheckHeinCardController extends Controller
         }
 
         return $q;
+    }
+
+    /**
+     * Dau ngay (00:00:00) cua gia tri loc; nhan ca 'Y-m-d' lan 'Y-m-d H:i:s' (nut Tai du lieu
+     * gui kem gio). Rong hoac hong thi null = bo qua bo loc, khong de trang vo.
+     *
+     * @return Carbon|null
+     */
+    protected function dauNgay($giaTri)
+    {
+        $giaTri = trim((string) $giaTri);
+
+        if ($giaTri === '') {
+            return null;
+        }
+
+        try {
+            return Carbon::parse($giaTri)->startOfDay();
+        } catch (\Exception $e) {
+            return null;
+        }
     }
 
     public function fetch(Request $request)
