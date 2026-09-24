@@ -279,7 +279,7 @@ module.exports = function deckTgd(PptxGenJS) {
   // chính; hai trọng tâm (02, 03) nhiều thực hành nhất; 01 thực hành = đăng nhập Cổng;
   // 10 dành cho giải tình huống và hỏi đáp. Tổng phải bằng 120 — xem kiểm tra dưới.
   const LO_TRINH = [
-    ['01', 'Tổng quan: vị trí Tiền giám định, quy trình 5 bước, 7 nhóm chức năng', '●', '●', 5, 5],
+    ['01', 'Tổng quan: vị trí, quy trình 5 bước, 7 nhóm chức năng, nguyên tắc và giới hạn', '●', '●', 6, 5],
     ['02', 'Kiểm tra sai sót y lệnh', '●', '○', 4, 14],
     ['03', 'Hồ sơ XML 3176: nạp, kiểm tra, ký số, gửi, theo dõi', '○', '●', 4, 16],
     ['04', 'Thẻ BHYT: đọc mã kết quả, tra hàng loạt', '●', '●', 2, 8],
@@ -288,7 +288,7 @@ module.exports = function deckTgd(PptxGenJS) {
     ['07', 'Quản lý danh mục BHYT', '', '●', 2, 6],
     ['08', 'Chứng từ điện tử theo Phụ lục 02', '', '●', 3, 7],
     ['09', 'Danh mục theo Thông tư 12/2026', '', '●', 2, 6],
-    ['10', 'Phân công, tình huống thường gặp, giới hạn · Hỏi đáp', '●', '●', 4, 12],
+    ['10', 'Phân công, tình huống thường gặp · Hỏi đáp', '●', '●', 3, 12],
   ];
   const tongLT = LO_TRINH.reduce((t, r) => t + r[4], 0);
   const tongTH = LO_TRINH.reduce((t, r) => t + r[5], 0);
@@ -416,6 +416,23 @@ module.exports = function deckTgd(PptxGenJS) {
     speaker: 'Ba nguyên tắc này trả lời trước phần lớn thắc mắc trong các phần sau. Nếu thời gian ít, dừng ở đây rồi chuyển thẳng sang phần của khối mình.',
   });
 
+  L.bulletSlide(pptx, ctx, {
+    kicker: 'Giới hạn',
+    title: 'Những gì phần mềm chưa làm được',
+    bullets: [
+      { t: 'Chưa đồng nhất với toàn bộ quy tắc giám định của BHXH', b: true,
+        sub: 'Hồ sơ qua được Tiền giám định vẫn có thể bị cổng trả về — luôn đọc kết quả ở bước 05' },
+      { t: 'Chỉ bắt được lỗi đã có trong bộ quy tắc', b: true,
+        sub: 'Quy định mới ban hành thì luôn có độ trễ cập nhật. Đề xuất quy tắc mới: gửi đủ điều kiện sai, mức độ, trường hợp loại trừ và căn cứ pháp lý' },
+      { t: 'Kết quả phụ thuộc danh mục', b: true,
+        sub: 'Danh mục thiếu hoặc sai ngày hiệu lực sẽ sinh lỗi giả hàng loạt — xem Phần 07' },
+      { t: 'Kiểm tra y lệnh có độ trễ và không quét lùi', b: true,
+        sub: 'Phiếu đã quét không được đánh giá lại trừ khi chính phiếu đó bị sửa trên HIS — xem mục 2.2.2' },
+    ],
+    note: { label: 'Nguyên tắc cuối cùng:', text: 'Phần mềm là công cụ hỗ trợ, không thay thế quyết định chuyên môn. Trách nhiệm cuối cùng vẫn thuộc về đơn vị tạo lập và kiểm soát hồ sơ.', kind: 'danger' },
+    speaker: 'Đặt ở cuối phần 01 để học viên có kỳ vọng đúng trước khi vào các phần thực hành. Lấy từ trang 6 báo cáo Hội đồng, chuyển sang góc nhìn người dùng. Nói thẳng giới hạn giúp người dùng không tin tuyệt đối vào màu xanh trên màn hình.',
+  });
+
   // ------------------------------------------------------------ 02 – 09 — các chương
   K.yLenh(pptx, ctx, 2);
   P.xml3176(pptx, ctx, 3);
@@ -443,8 +460,8 @@ module.exports = function deckTgd(PptxGenJS) {
   // ------------------------------------------------------------ 10 — Kết
   L.sectionSlide(pptx, ctx, {
     no: 10,
-    title: 'Phân công, tình huống và giới hạn',
-    sub: 'Ai làm gì · Tình huống thường gặp · Những gì phần mềm chưa làm được',
+    title: 'Phân công và tình huống thường gặp',
+    sub: 'Ai làm gì · Tình huống thường gặp tại khoa và phòng ban · Hỏi đáp',
   });
 
   L.tableSlide(pptx, ctx, {
@@ -467,23 +484,6 @@ module.exports = function deckTgd(PptxGenJS) {
 
   K.tinhHuongKhoa(pptx, ctx);
   P.tinhHuongPhongBan(pptx, ctx);
-
-  L.bulletSlide(pptx, ctx, {
-    kicker: 'Giới hạn',
-    title: 'Những gì phần mềm chưa làm được',
-    bullets: [
-      { t: 'Chưa đồng nhất với toàn bộ quy tắc giám định của BHXH', b: true,
-        sub: 'Hồ sơ qua được Tiền giám định vẫn có thể bị cổng trả về — luôn đọc kết quả ở bước 05' },
-      { t: 'Chỉ bắt được lỗi đã có trong bộ quy tắc', b: true,
-        sub: 'Quy định mới ban hành thì luôn có độ trễ cập nhật. Đề xuất quy tắc mới: gửi đủ điều kiện sai, mức độ, trường hợp loại trừ và căn cứ pháp lý' },
-      { t: 'Kết quả phụ thuộc danh mục', b: true,
-        sub: 'Danh mục thiếu hoặc sai ngày hiệu lực sẽ sinh lỗi giả hàng loạt' },
-      { t: 'Kiểm tra y lệnh có độ trễ và không quét lùi', b: true,
-        sub: 'Phiếu đã quét không được đánh giá lại trừ khi chính phiếu đó bị sửa trên HIS' },
-    ],
-    note: { label: 'Nguyên tắc cuối cùng:', text: 'Phần mềm là công cụ hỗ trợ, không thay thế quyết định chuyên môn. Trách nhiệm cuối cùng vẫn thuộc về đơn vị tạo lập và kiểm soát hồ sơ.', kind: 'danger' },
-    speaker: 'Lấy từ trang 6 báo cáo Hội đồng, chuyển sang góc nhìn người dùng. Nói thẳng giới hạn giúp người dùng không tin tuyệt đối vào màu xanh trên màn hình.',
-  });
 
   L.closingSlide(pptx, ctx, {
     title: 'Tóm lại — năm điều mang về',
