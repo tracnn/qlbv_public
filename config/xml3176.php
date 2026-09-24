@@ -100,7 +100,8 @@ return [
         'execution_min_minutes'       => 3, // Số phút thực hiện dịch vụ tối thiểu
         'execution_time_check_groups' => [1, 3], // Mã nhóm cần kiểm tra thời gian thực hiện tối thiểu
         'same_doctor_check_groups'    => [1, 2, 3], // Mã nhóm cần kiểm tra bác sĩ ra y lệnh trùng người thực hiện
-        'surgery_full_payment_rate'   => '100', // Tỷ lệ thanh toán PTTT lần 2 trong ngày
+        'surgery_full_payment_rate'   => '100', // Tỷ lệ thanh toán phẫu thuật lần 2 trong ngày
+        'service_groups_pt'           => [8], // Nhóm phẫu thuật (không gồm thủ thuật nhóm 18) cho quy tắc PT lần 2 trong ngày
         'tyle_epsilon'                => 0.01, // Dung sai đối chiếu tỷ lệ thanh toán BH của VTYT với danh mục
         // Nhóm dịch vụ mà một bệnh nhân KHÔNG thể trải qua hai dịch vụ chồng thời gian
         'overlap_execution_groups'    => [8, 18],

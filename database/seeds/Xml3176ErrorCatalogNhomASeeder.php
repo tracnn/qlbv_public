@@ -29,7 +29,7 @@ class Xml3176ErrorCatalogNhomASeeder extends Seeder
             ['XML7', 'XML7_NGOAITRU_TUNGAY_BEFORE_NGAY_RA', 'Bắt đầu nghỉ ngoại trú trước ngày ra viện'],
             ['XML7', 'XML7_NGOAITRU_DENNGAY_BEFORE_NGAY_RA', 'Đến ngày nghỉ ngoại trú trước ngày ra viện'],
             ['XML8', 'XML8_TOMTAT_KQ_TOO_SHORT', 'Tóm tắt kết quả quá ngắn'],
-            ['XMLComplete', 'XMLComplete_SECOND_SURGERY_FULL_PAYMENT', 'PTTT lần 2 trong ngày thanh toán 100%'],
+            ['XMLComplete', 'XMLComplete_SECOND_SURGERY_FULL_PAYMENT', 'Phẫu thuật lần 2 trong ngày thanh toán 100%'],
             ['XMLComplete', 'XMLComplete_XML4_NGAY_KQ_MISMATCH_XML3', 'Ngày KQ XML4 khác ngày KQ XML3'],
         ];
 

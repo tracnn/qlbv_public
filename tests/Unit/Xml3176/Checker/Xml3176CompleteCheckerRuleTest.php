@@ -64,9 +64,27 @@ class Xml3176CompleteCheckerRuleTest extends TestCase
     {
         Xml3176Xml1::create(['ma_lk' => 'C', 'stt' => 1]);
         Xml3176Xml3::create(['ma_lk' => 'C', 'stt' => 1, 'ma_dich_vu' => 'PT', 'ma_nhom' => 8, 'ma_pttt' => 'PT01', 'ngay_yl' => '202607010800', 'tyle_tt_dv' => '100']);
-        Xml3176Xml3::create(['ma_lk' => 'C', 'stt' => 2, 'ma_dich_vu' => 'PT', 'ma_nhom' => 18, 'ma_pttt' => 'PT02', 'ngay_yl' => '202607011000', 'tyle_tt_dv' => '100']);
+        Xml3176Xml3::create(['ma_lk' => 'C', 'stt' => 2, 'ma_dich_vu' => 'PT', 'ma_nhom' => 8, 'ma_pttt' => 'PT02', 'ngay_yl' => '202607011000', 'tyle_tt_dv' => '100']);
         $codes = $this->errorCodes($this->invokePrivate($this->checker(), 'checkSecondSurgeryFullPayment', 'C'));
         $this->assertContains('XMLComplete_SECOND_SURGERY_FULL_PAYMENT', $codes);
+    }
+
+    /** @test */
+    public function thu_thuat_nhom_18_trong_ngay_khong_bi_bao_ke_ca_xen_phau_thuat()
+    {
+        // 000007305574: dat sonde, dat noi khi quan, hut dom, cap cuu ngung tuan hoan cung
+        // ngay (nhom 18) deu 100% - dung, khong duoc bao. Mot PT xen giua cung khong bien
+        // thu thuat thanh "phau thuat lan 2".
+        Xml3176Xml1::create(['ma_lk' => 'TT', 'stt' => 1]);
+        Xml3176Xml3::create(['ma_lk' => 'TT', 'stt' => 1, 'ma_dich_vu' => '02.0188.0210', 'ma_nhom' => 18, 'ngay_yl' => '202609232114', 'tyle_tt_dv' => '100']);
+        Xml3176Xml3::create(['ma_lk' => 'TT', 'stt' => 2, 'ma_dich_vu' => '01.0070.1888', 'ma_nhom' => 18, 'ngay_yl' => '202609240136', 'tyle_tt_dv' => '100']);
+        Xml3176Xml3::create(['ma_lk' => 'TT', 'stt' => 3, 'ma_dich_vu' => 'PT1', 'ma_nhom' => 8, 'ngay_yl' => '202609240200', 'tyle_tt_dv' => '100']);
+        Xml3176Xml3::create(['ma_lk' => 'TT', 'stt' => 4, 'ma_dich_vu' => '02.0150.0114', 'ma_nhom' => 18, 'ngay_yl' => '202609240213', 'tyle_tt_dv' => '100']);
+        Xml3176Xml3::create(['ma_lk' => 'TT', 'stt' => 5, 'ma_dich_vu' => '01.0158.0074', 'ma_nhom' => 18, 'ngay_yl' => '202609240403', 'tyle_tt_dv' => '100']);
+
+        $codes = $this->errorCodes($this->invokePrivate($this->checker(), 'checkSecondSurgeryFullPayment', 'TT'));
+
+        $this->assertNotContains('XMLComplete_SECOND_SURGERY_FULL_PAYMENT', $codes);
     }
 
     /** @test */

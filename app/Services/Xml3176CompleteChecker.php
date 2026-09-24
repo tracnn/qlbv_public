@@ -909,9 +909,13 @@ class Xml3176CompleteChecker
     }
 
     /**
-     * #891 — PTTT lần 2 trở đi trong cùng ngày có tỷ lệ thanh toán = 100% (CV824/QĐ3176).
+     * #891 — PHẪU THUẬT lần 2 trở đi trong cùng ngày có tỷ lệ thanh toán = 100% (CV824/QĐ3176).
      *
-     * Can cu la NHOM DICH VU (8, 18), khong phai truong MA_PTTT.
+     * Can cu la NHOM DICH VU phau thuat (8), khong phai truong MA_PTTT.
+     *
+     * Chi xet phau thuat, bo qua thu thuat (nhom 18): ho so hoi suc 000007305574 bi bao
+     * "PTTT lan 2/3/4 thanh toan 100%" cho dat sonde, dat noi khi quan, hut dom, cap cuu
+     * ngung tuan hoan - cac thu thuat doc lap trong ngay, thanh toan 100% la dung.
      *
      * Ban dau quy tac gom dong theo "MA_PTTT khac rong". Do tren du lieu that: 28.169
      * dong co MA_PTTT nhung chi 2.487 dong (8,8%) thuoc nhom PTTT - bo xuat HIS dien
@@ -924,10 +928,10 @@ class Xml3176CompleteChecker
     {
         $errors = collect();
         $rate = (float) config('xml3176.xml3.surgery_full_payment_rate', '100');
-        $nhomPttt = config('xml3176.xml3.service_groups_pttt', [8, 18]);
+        $nhomPt = config('xml3176.xml3.service_groups_pt', [8]);
 
         $rows = Xml3176Xml3::where('ma_lk', $ma_lk)
-            ->whereIn('ma_nhom', $nhomPttt)
+            ->whereIn('ma_nhom', $nhomPt)
             ->orderBy('ngay_yl')->get();
 
         $byDay = [];
@@ -947,9 +951,9 @@ class Xml3176CompleteChecker
                 if ((float) $list[$i]->tyle_tt_dv === $rate) {
                     $code = $this->generateErrorCode('SECOND_SURGERY_FULL_PAYMENT');
                     $errors->push((object) [
-                        'error_code' => $code, 'error_name' => 'PTTT lần 2 trong ngày thanh toán 100%',
+                        'error_code' => $code, 'error_name' => 'Phẫu thuật lần 2 trong ngày thanh toán 100%',
                         'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($code),
-                        'description' => 'PTTT lần ' . ($i + 1) . ' ngày ' . $day . ' (dịch vụ ' . $list[$i]->ma_dich_vu . ') thanh toán ' . $rate . '%',
+                        'description' => 'Phẫu thuật lần ' . ($i + 1) . ' ngày ' . $day . ' (dịch vụ ' . $list[$i]->ma_dich_vu . ') thanh toán ' . $rate . '%',
                     ]);
                 }
             }
