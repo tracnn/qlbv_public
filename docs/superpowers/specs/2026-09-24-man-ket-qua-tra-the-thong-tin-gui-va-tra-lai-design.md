@@ -47,7 +47,7 @@ cũ `App\BHYT`.
 |---|---|---|
 | Q1 | **Lưu giá trị đã gửi** vào 4 cột mới, bù dữ liệu cũ từ HIS | Tra HIS lúc hiển thị: làm hỏng ô tìm kiếm và khiến màn phụ thuộc HIS |
 | Q2 | Nút **chỉ trên từng dòng** | Tra hàng loạt |
-| Q3 | **Lệnh dọn một lần** cho thẻ tạm cũ, mặc định `--thu` | Để nguyên, chỉ gắn nhãn |
+| Q3 | **Lệnh dọn một lần** cho thẻ tạm cũ, mặc định chỉ đếm (`--ghi` mới xoá) | Để nguyên, chỉ gắn nhãn |
 | Q4 | **Sửa luôn** lỗi `$fillable` | Để đợt khác |
 | Q5 | Tách **service dùng chung** `TraLaiThe` cho cả hai màn | Viết lại logic ở controller mới |
 | Q6 | Thẻ tạm khi bấm Tra lại: **vẫn đẩy job** (job tự xoá dòng lỗi) và báo rõ. Áp dụng cho **cả màn Tra cứu lỗi hồ sơ** (thay cho 422 hiện tại) | Giữ 422 |
@@ -106,13 +106,16 @@ cũ `App\BHYT`.
 ### 4.5 Route + controller màn Kết quả tra cứu thẻ
 - `POST bhyt/check-hein-card/tra-lai` → `CheckHeinCardController@traLai`, tên
   `bhyt.check-hein-card.tra-lai`. Nằm trong nhóm `checkrole:xml-man` sẵn có; tham số `ma_lk`.
-- `fetch()` thêm cột tính sẵn:
+- `fetch()` thêm cột tính sẵn, qua `check_hein_card::hienThi($truong)`:
   - `hien_ma_the`, `hien_ho_ten`, `hien_ngay_sinh`: giá trị cổng nếu khác rỗng, ngược lại giá trị `_gui`
-  - `nguon_hien`: `'cong'` | `'gui'` | `''`
+  - `nguon_ma_the`, `nguon_ho_ten`, `nguon_ngay_sinh`: `'cong'` | `'gui'` | `''`. Tách theo TỪNG
+    trường, vì một dòng có thể có số thẻ từ cổng nhưng họ tên phải lấy giá trị đã gửi.
+- Ba cột `hien_*` đặt `orderable: false, searchable: false`. Chúng không phải cột SQL; sắp xếp theo
+  chúng sẽ làm truy vấn Datatables vỡ.
 - Ô `tim` tìm thêm `ma_the_gui`, `ho_ten_gui`.
 
 ### 4.6 Giao diện (`index.blade.php`)
-- Ba cột Số thẻ / Họ tên / Ngày sinh render từ `hien_*`. Khi `nguon_hien === 'gui'` thì bọc
+- Ba cột Số thẻ / Họ tên / Ngày sinh render từ `hien_*`. Khi `nguon_<trường> === 'gui'` thì bọc
   `<i class="text-muted" title="Theo HIS (cổng không trả về)">…</i>`. Giá trị qua `.text()` rồi
   `.html()` (chống XSS, giống modal hiện có).
 - Cột "Xem" đổi thành cột "Thao tác": nút **Xem** và nút **Tra lại**. Nút Tra lại chỉ hiện khi
