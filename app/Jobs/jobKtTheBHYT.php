@@ -226,8 +226,19 @@ class jobKtTheBHYT implements ShouldQueue
                 'gt_the_denmoi' => $result_check['gtTheDenMoi'],
                 'ma_dkbd_moi' => $result_check['maDKBDMoi'],
                 'ten_dkbd_moi' => $result_check['tenDKBDMoi'],
+                // Gia tri MINH DA GUI: cong bao loi thuong bo trong so the/ho ten/ngay sinh.
+                'ma_the_gui' => $this->thamSo('maThe'),
+                'ho_ten_gui' => $this->thamSo('hoTen'),
+                'ngay_sinh_gui' => $this->thamSo('ngaySinh'),
+                'ma_dkbd_gui' => $this->thamSo('maDkbd'),
             ]
         );
         $checkHeinCard->touch();
+    }
+
+    /** Mot tham so cua job, thieu khoa thi null (job cu trong hang doi co the thieu). */
+    private function thamSo($khoa)
+    {
+        return isset($this->params[$khoa]) ? $this->params[$khoa] : null;
     }
 }
