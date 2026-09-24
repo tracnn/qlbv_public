@@ -40,7 +40,7 @@ class BuThongTinGuiTheBhytTest extends TestCase
     {
         Artisan::call('the-bhyt:bu-thong-tin-gui');
 
-        $this->assertContains('Se bu: 1 | Khong thay tren HIS: 1', Artisan::output());
+        $this->assertContains('Se bu: 1 | Khong thay tren HIS: 1 | HIS khong co so the: 0', Artisan::output());
         $this->assertNull($this->dong('01013250800123')->ma_the_gui);
     }
 
@@ -55,7 +55,23 @@ class BuThongTinGuiTheBhytTest extends TestCase
         $this->assertSame(dob('19790220'), $r->ngay_sinh_gui);
         $this->assertSame('01005', $r->ma_dkbd_gui);
         $this->assertSame('2026-08-01 08:00:00', $r->updated_at);
-        $this->assertContains('Da bu: 1 | Khong thay tren HIS: 1', Artisan::output());
+        $this->assertContains('Da bu: 1 | Khong thay tren HIS: 1 | HIS khong co so the: 0', Artisan::output());
+    }
+
+    /** @test */
+    public function his_khong_co_so_the_thi_dem_rieng_va_khong_ghi_ma_the_gui_null()
+    {
+        DB::table('check_hein_cards')->insert([
+            'ma_lk' => 'KHONG-CO-SO-THE', 'ma_tracuu' => '050', 'ma_kiemtra' => '11',
+            'created_at' => '2026-08-01 08:00:00', 'updated_at' => '2026-08-01 08:00:00',
+        ]);
+        $this->themHoSo(['treatment_code' => 'KHONG-CO-SO-THE', 'tdl_hein_card_number' => null]);
+
+        Artisan::call('the-bhyt:bu-thong-tin-gui');
+        $this->assertContains('Se bu: 1 | Khong thay tren HIS: 1 | HIS khong co so the: 1', Artisan::output());
+
+        Artisan::call('the-bhyt:bu-thong-tin-gui', ['--ghi' => true]);
+        $this->assertNull($this->dong('KHONG-CO-SO-THE')->ma_the_gui);
     }
 
     /** @test */
@@ -76,6 +92,6 @@ class BuThongTinGuiTheBhytTest extends TestCase
         Artisan::call('the-bhyt:bu-thong-tin-gui', ['--ghi' => true]);
         Artisan::call('the-bhyt:bu-thong-tin-gui');
 
-        $this->assertContains('Se bu: 0 | Khong thay tren HIS: 1', Artisan::output());
+        $this->assertContains('Se bu: 0 | Khong thay tren HIS: 1 | HIS khong co so the: 0', Artisan::output());
     }
 }

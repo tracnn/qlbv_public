@@ -40,11 +40,12 @@ class BuThongTinGuiTheBhyt extends Command
 
         $thay = 0;
         $khongThay = 0;
+        $khongCoThe = 0;
 
         try {
             // chunkById (khong phai chunk): dong vua ghi roi khoi dieu kien loc, chunk theo
             // offset se nhay coc bo sot dong.
-            $q->select('id', 'ma_lk')->chunkById(self::LO, function ($lo) use ($ghi, $bang, &$thay, &$khongThay) {
+            $q->select('id', 'ma_lk')->chunkById(self::LO, function ($lo) use ($ghi, $bang, &$thay, &$khongThay, &$khongCoThe) {
                 $his = DB::connection('HISPro')->table('his_treatment')
                     ->whereIn('treatment_code', $lo->pluck('ma_lk')->unique()->values()->all())
                     ->get(['treatment_code', 'tdl_hein_card_number', 'tdl_patient_name',
@@ -56,6 +57,14 @@ class BuThongTinGuiTheBhyt extends Command
 
                     if (!$h) {
                         $khongThay++;
+                        continue;
+                    }
+
+                    // HIS co ho so nhung khong co so the: khong dem la "thay" va khong ghi,
+                    // khac di lan chay sau van tinh la se bu voi ma_the_gui = null, khong bao
+                    // gio ve 0.
+                    if (trim((string) $h->tdl_hein_card_number) === '') {
+                        $khongCoThe++;
                         continue;
                     }
 
@@ -80,7 +89,8 @@ class BuThongTinGuiTheBhyt extends Command
             return 1;
         }
 
-        $this->info(($ghi ? 'Da bu: ' : 'Se bu: ') . $thay . ' | Khong thay tren HIS: ' . $khongThay);
+        $this->info(($ghi ? 'Da bu: ' : 'Se bu: ') . $thay . ' | Khong thay tren HIS: ' . $khongThay
+            . ' | HIS khong co so the: ' . $khongCoThe);
 
         return 0;
     }
