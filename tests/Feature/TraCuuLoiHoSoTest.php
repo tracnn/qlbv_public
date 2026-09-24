@@ -309,6 +309,25 @@ class TraCuuLoiHoSoTest extends TestCase
     }
 
     /** @test */
+    public function tra_lai_the_chan_the_tam_so_sinh_va_bao_ro_ly_do()
+    {
+        // Job se bo qua the tam; khong chan o day thi bam nut xong "khong co gi xay ra".
+        Queue::fake();
+        config(['organization.BHYT_CO_SO' => ['01001' => ['username' => 'u']]]);
+        $this->themHoSo([
+            'treatment_code' => 'HS-THE-TAM',
+            'tdl_hein_card_number' => 'TE1010000012345',
+            'tdl_hein_medi_org_code' => '01000',
+        ]);
+
+        $this->traLaiThe('HS-THE-TAM')
+            ->assertStatus(422)
+            ->assertJsonFragment(['message' => 'Thẻ tạm trẻ sơ sinh (nơi ĐKBĐ 01000), không tra cổng BHXH']);
+
+        Queue::assertNotPushed(jobKtTheBHYT::class);
+    }
+
+    /** @test */
     public function tra_lai_the_chan_khi_thieu_ma_the()
     {
         Queue::fake();

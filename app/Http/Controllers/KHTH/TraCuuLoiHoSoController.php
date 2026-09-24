@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Jobs\jobKtTheBHYT;
 use App\Services\OrderCheck\TreatmentIssueService;
 use App\Services\OrderCheck\TreatmentProfileService;
+use App\Services\Xml3176\Support\TheTamSoSinh;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
@@ -162,6 +163,14 @@ class TraCuuLoiHoSoController extends Controller
 
         if (trim((string) $hoSo['hein_card_number']) === '') {
             return response()->json(['message' => 'Hồ sơ không có mã thẻ BHYT'], 422);
+        }
+
+        // Job bỏ qua thẻ tạm - không chặn ở đây thì bấm nút xong "không có gì xảy ra".
+        if (TheTamSoSinh::la($hoSo['hein_card_number'], $hoSo['hein_medi_org_code'])) {
+            return response()->json([
+                'message' => 'Thẻ tạm trẻ sơ sinh (nơi ĐKBĐ ' . trim((string) $hoSo['hein_medi_org_code'])
+                    . '), không tra cổng BHXH',
+            ], 422);
         }
 
         // Left join his_gender (xem TreatmentProfileService) nen gioi tinh co the rong.

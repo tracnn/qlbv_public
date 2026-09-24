@@ -6,6 +6,7 @@ use App\Models\BHYT\Xml3176Xml1;
 use App\Services\Xml3176\Support\BenhPl1Matcher;
 use App\Services\Xml3176\Support\DanhSachPhanCachParser;
 use App\Services\Xml3176\Support\DoiTuongKcbCatalog;
+use App\Services\Xml3176\Support\TheTamSoSinh;
 use App\Services\Xml3176\Support\Xml3176DateHelper;
 use Illuminate\Support\Collection;
 
@@ -465,21 +466,7 @@ class Xml3176Xml1Checker
         }
 
         // Kiểm tra mã đơn vị khám bệnh đa khoa ban đầu
-        if (!empty($data->ma_dkbd)) {
-            $maDkbdList = explode(';', $data->ma_dkbd); // Tách các mã DKBD phân cách bởi dấu ";"
-            foreach ($maDkbdList as $maDkbd) {
-
-                if (!$this->commonValidationService->isMedicalOrganizationValid(trim($maDkbd))) {
-                    $errorCode = $this->generateErrorCode('ADMIN_INFO_ERROR_MA_DKBD_NOT_FOUND');
-                    $errors->push((object)[
-                        'error_code' => $errorCode,
-                        'error_name' => 'Mã đăng ký ban đầu không có trong danh mục',
-                        'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
-                        'description' => 'Mã đăng ký ban đầu: ' . $maDkbd . ' không có trong danh mục CSKCB'
-                    ]);
-                }
-            }
-        }
+        $errors = $errors->merge($this->checkMaDkbdKhongCoTrongDanhMuc($data));
 
         // Kiểm tra mã nơi đi
         if (!empty($data->ma_noi_di)) {
@@ -599,7 +586,40 @@ class Xml3176Xml1Checker
                 ]);
             }
         }
-        
+
+        return $errors;
+    }
+
+    /**
+     * Mã ĐKBĐ không có trong danh mục CSKCB. Ghép mỗi mã ĐKBĐ với mã thẻ CÙNG VỊ TRÍ (hồ sơ
+     * nhiều thẻ nối bằng ';'); thẻ tạm trẻ sơ sinh (TE1 + ĐKBĐ XX000) bỏ qua vì XX000 không
+     * phải CSKCB thật - cả 3/3 hồ sơ XX000 trên CSDL thật từng bị báo giả.
+     */
+    private function checkMaDkbdKhongCoTrongDanhMuc(Xml3176Xml1 $data): Collection
+    {
+        $errors = collect();
+        if (empty($data->ma_dkbd)) {
+            return $errors;
+        }
+
+        $maTheList = explode(';', (string) $data->ma_the_bhyt);
+        foreach (explode(';', $data->ma_dkbd) as $i => $maDkbd) {
+            $maThe = isset($maTheList[$i]) ? $maTheList[$i] : null;
+            if (TheTamSoSinh::la($maThe, $maDkbd)) {
+                continue;
+            }
+
+            if (!$this->commonValidationService->isMedicalOrganizationValid(trim($maDkbd))) {
+                $errorCode = $this->generateErrorCode('ADMIN_INFO_ERROR_MA_DKBD_NOT_FOUND');
+                $errors->push((object)[
+                    'error_code' => $errorCode,
+                    'error_name' => 'Mã đăng ký ban đầu không có trong danh mục',
+                    'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+                    'description' => 'Mã đăng ký ban đầu: ' . $maDkbd . ' không có trong danh mục CSKCB'
+                ]);
+            }
+        }
+
         return $errors;
     }
 

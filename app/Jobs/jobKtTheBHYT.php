@@ -12,6 +12,7 @@ use GuzzleHttp\Exception\ClientException;
 use Illuminate\Support\Facades\Log;
 use App\Models\CheckBHYT\check_hein_card;
 use App\Services\BHYTLoginService;
+use App\Services\Xml3176\Support\TheTamSoSinh;
 
 class jobKtTheBHYT implements ShouldQueue
 {
@@ -41,7 +42,21 @@ class jobKtTheBHYT implements ShouldQueue
         if ($this->startsWithPatternCbcs($this->params['maThe'])) {
             return;
         }
-        
+
+        // Thẻ tạm trẻ sơ sinh (TE1 + nơi ĐKBĐ XX000): chưa có trên cổng, tra luôn ra 050/11
+        // "Thẻ không tồn tại!" - lỗi giả. Không tra, và xoá kết quả tra LỖI cũ của hồ sơ
+        // (chỉ là bản lưu kết quả cổng) để báo cáo không còn treo lỗi giả.
+        if (TheTamSoSinh::la($this->params['maThe'], isset($this->params['maDkbd']) ? $this->params['maDkbd'] : null)) {
+            check_hein_card::where('ma_lk', $this->params['ma_lk'])
+                ->where(function ($q) {
+                    $q->whereIn('ma_kiemtra', config('qd130xml.hein_card_invalid.check_code'))
+                      ->orWhereIn('ma_tracuu', config('qd130xml.hein_card_invalid.result_code'));
+                })
+                ->delete();
+
+            return;
+        }
+
         // Cấu hình kiểm tra từ kết quả tra cứu cũ. Mặc định là true
         if ($this->checkOldValue) {
             $existingCardCheck = check_hein_card::where('ma_lk', $this->params['ma_lk'])

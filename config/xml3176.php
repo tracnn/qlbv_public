@@ -58,6 +58,12 @@ return [
     // phải BHYT). Bao cả nhánh con ngăn bởi dấu chấm: '9' loại trừ cả '9.1', nhưng không
     // nuốt '91'. Xuất/ký số/gửi cổng KHÔNG đi qua cổng này, vẫn chạy như cũ.
     'ma_doituong_kcb_khong_kiem' => ['9'],
+    // Thẻ tạm trẻ sơ sinh: HIS điền nơi ĐKBĐ dạng XX000 (mã tỉnh + 000), không phải CSKCB
+    // thật. Không tra cổng BHXH (luôn "Thẻ không tồn tại") và không đối chiếu danh mục CSKCB.
+    'the_tam_so_sinh' => [
+        'dkbd_pattern' => '/^\d{2}000$/',
+        'tien_to_the'  => ['TE1'],
+    ],
     /* Bổ sung key 2024.08.23 */
     'xml1' => [
         // Ma doi tuong bi giam muc huong (trai tuyen). Theo danh muc ma doi tuong KCB do
