@@ -52,7 +52,7 @@ class JobKtTheBHYTLichSuKcbTest extends TestCase
     /** @test */
     public function nhan_ma_09_va_11_sat_ngu_canh()
     {
-        $this->assertSame('Sai nơi đăng ký KCB ban đầu (nơi ĐKBĐ trên HIS khác trên thẻ)', NhanMaThe::kiemTra('09'));
+        $this->assertSame('Sai nơi đăng ký KCB ban đầu', NhanMaThe::kiemTra('09'));
         $this->assertSame('Không lấy được thông tin thẻ từ cổng BHXH', NhanMaThe::kiemTra('11'));
     }
 }
