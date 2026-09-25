@@ -1081,6 +1081,28 @@ class Xml3176Xml1Checker
             }
         }
 
+        // Ma 1.7 (tre so sinh phai dieu tri ngay sau khi sinh ra): nguoi benh phai con la tre so
+        // sinh luc vao vien. BHXH tra loi 000007199029 - nguoi benh sinh 1973 khai 1.7. Ngay
+        // sinh chi co nam (thang/ngay 00) hoac ngay vao hong thi im lang: thieu can cu.
+        $toiDaNgay = DoiTuongKcbCatalog::thuocTinh($ma, $danhMuc, 'so_sinh_toi_da_ngay');
+        if ($toiDaNgay !== null) {
+            $tuoiNgay = Xml3176DateHelper::diffDays($data->ngay_sinh, $data->ngay_vao);
+
+            if ($tuoiNgay !== null && $tuoiNgay > (int) $toiDaNgay) {
+                $sinh = Xml3176DateHelper::datePart($data->ngay_sinh);
+                $errorCode = $this->generateErrorCode('DOI_TUONG_KCB_KHONG_PHAI_SO_SINH');
+                $errors->push((object)[
+                    'error_code' => $errorCode,
+                    'error_name' => 'Không phải đối tượng trẻ sơ sinh phải điều trị ngay sau khi sinh ra',
+                    'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+                    'description' => 'Mã đối tượng ' . $ma . ' (' . DoiTuongKcbCatalog::thuocTinh($ma, $danhMuc, 'ten')
+                        . ') nhưng người bệnh sinh ngày ' . substr($sinh, 6, 2) . '/' . substr($sinh, 4, 2) . '/' . substr($sinh, 0, 4)
+                        . ', đã ' . number_format($tuoiNgay, 0, ',', '.') . ' ngày tuổi khi vào viện (tối đa '
+                        . (int) $toiDaNgay . ' ngày)',
+                ]);
+            }
+        }
+
         // Ma 3.6: MA_KHUVUC bat buoc. Gia tri khac K1/K2/K3 van do ADMIN_INFO_ERROR_MA_KHUVUC lo.
         if (DoiTuongKcbCatalog::thuocTinh($ma, $danhMuc, 'can_ma_khuvuc', false)
             && trim((string) $data->ma_khuvuc) === '') {

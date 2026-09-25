@@ -33,7 +33,9 @@ return [
     '1.4'  => ['ten' => 'KCB khi thay đổi nơi lưu trú, nơi cư trú'],
     '1.5'  => ['ten' => 'Đến KCB theo phiếu hẹn khám lại', 'can_giay_chuyen_tuyen' => true],
     '1.6'  => ['ten' => 'Người đã hiến bộ phận cơ thể phải điều trị ngay sau khi hiến'],
-    '1.7'  => ['ten' => 'Trẻ sơ sinh phải điều trị ngay sau khi sinh ra'],
+    // so_sinh_toi_da_ngay: tuổi (ngày) tối đa lúc vào viện. BHXH trả lỗi 000007199029 (sinh
+    // 1973 khai 1.7); 40/42 hồ sơ 1.7 thật vào viện ngay trong ngày sinh.
+    '1.7'  => ['ten' => 'Trẻ sơ sinh phải điều trị ngay sau khi sinh ra', 'so_sinh_toi_da_ngay' => 28],
     '1.11' => ['ten' => 'Tự đến KCB tại cơ sở KCB cấp ban đầu còn lại', 'tu_den' => true],
     '1.12' => ['ten' => 'Tự đến KCB ngoại trú tại cơ sở cấp cơ bản dưới 50 điểm', 'tu_den' => true],
     '1.13' => ['ten' => 'Tự đến KCB ngoại trú tại cơ sở cấp cơ bản 50-70 điểm', 'tu_den' => true,
