@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\BHYT\Xml3176Xml5;
 use App\Services\Xml3176\Support\TextNormalizer;
+use App\Services\Xml3176\Support\Xml3176DateHelper;
 use Illuminate\Support\Collection;
 
 class Xml3176Xml5Checker
@@ -130,13 +131,18 @@ class Xml3176Xml5Checker
     }
 
     /**
-     * #436 — Diễn biến điều trị trùng nhau trong cùng hồ sơ.
-     * Chỉ báo ở dòng có stt LỚN HƠN để lỗi một chiều, không nhân đôi.
+     * #436 — Diễn biến điều trị trùng nhau TRONG CÙNG MỘT NGÀY (theo THOI_DIEM_DBLS).
+     *
+     * Diễn biến thường quy lặp lại qua các ngày ("Thuốc thường quy; CSC3: Chăm sóc cấp 3...")
+     * là bình thường; bản cũ so với mọi dòng trước của cả hồ sơ nên báo nhầm loại này. Chỉ
+     * trùng trong cùng ngày mới là dấu hiệu sao chép. Thiếu thời điểm -> không xác định được
+     * ngày -> không báo. Chỉ báo ở dòng có stt LỚN HƠN để lỗi một chiều, không nhân đôi.
      */
     private function checkDienBienDuplicate(Xml3176Xml5 $data): Collection
     {
         $errors = collect();
-        if (empty($data->dien_bien_ls)) {
+        $ngay = Xml3176DateHelper::datePart($data->thoi_diem_dbls);
+        if (empty($data->dien_bien_ls) || $ngay === null) {
             return $errors;
         }
         $chuan = TextNormalizer::chuan($data->dien_bien_ls);
@@ -144,15 +150,19 @@ class Xml3176Xml5Checker
         $truoc = Xml3176Xml5::where('ma_lk', $data->ma_lk)
             ->where('id', '!=', $data->id)
             ->where('stt', '<', $data->stt)
+            ->where('thoi_diem_dbls', 'like', $ngay . '%')
+            ->orderByDesc('stt')
             ->get();
 
         foreach ($truoc as $sib) {
-            if (TextNormalizer::chuan($sib->dien_bien_ls) === $chuan) {
+            if (Xml3176DateHelper::datePart($sib->thoi_diem_dbls) === $ngay
+                && TextNormalizer::chuan($sib->dien_bien_ls) === $chuan) {
                 $code = $this->generateErrorCode('DIEN_BIEN_DUPLICATE');
                 $errors->push((object) [
                     'error_code' => $code, 'error_name' => 'Diễn biến điều trị trùng nhau',
                     'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($code),
-                    'description' => 'Diễn biến lâm sàng trùng với dòng STT ' . $sib->stt . ': "' . mb_substr((string) $data->dien_bien_ls, 0, 100) . '"',
+                    'description' => 'Diễn biến lâm sàng ngày ' . substr($ngay, 6, 2) . '/' . substr($ngay, 4, 2) . '/' . substr($ngay, 0, 4)
+                        . ' trùng với dòng STT ' . $sib->stt . ' cùng ngày: "' . mb_substr((string) $data->dien_bien_ls, 0, 100) . '"',
                 ]);
                 break;
             }
