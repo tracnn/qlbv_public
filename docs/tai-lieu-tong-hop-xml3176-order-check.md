@@ -89,7 +89,7 @@ Cả hai đều **bất đồng bộ / chạy nền**, có **danh mục quy tắ
 ## 2. Module XML3176 — Tiền giám định BHYT
 
 ### 2.1. Mục tiêu
-Tiền giám định hồ sơ BHYT theo **Quyết định 3176** (bộ chuẩn XML1–XML15) *trước khi* gửi cổng BHXH. Chỉ hồ sơ **không có lỗi nghiêm trọng (critical)** mới được xuất XML, ký số và gửi. Người dùng thường chỉ thấy hồ sơ do chính mình import; super/administrator thấy tất cả.
+Tiền giám định hồ sơ BHYT theo **Quyết định 3176** (bộ chuẩn XML1–XML15) *trước khi* gửi cổng BHXH. Chỉ hồ sơ **không có lỗi nghiêm trọng (critical)** mới được xuất XML, ký số và gửi. Mọi tài khoản có quyền màn hình đều thấy toàn bộ hồ sơ (từ 25/09/2026 bỏ giới hạn "chỉ thấy hồ sơ mình import"); lọc theo người nạp bằng ô Người nạp.
 
 ### 2.2. Sơ đồ luồng
 

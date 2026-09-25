@@ -160,4 +160,41 @@ class Xml3176LocDanhSachTest extends TestCase
         $this->assertContains('ma_khoa', $sql, 'Truy van ma_lk phai mang theo DU bo loc cua man danh sach');
         $this->assertNotContains('ho_ten', $sql);
     }
+
+    // ─── Pham vi du lieu: BO han gioi han "chi thay ho so minh tu nap" ───────
+
+    /** Nguoi dung dang nhap KHONG phai quan tri. */
+    private function dangNhapNhanVien()
+    {
+        $u = new class extends \App\User {
+            public function hasRole($role, $team = null, $requireAll = false)
+            {
+                return false;
+            }
+        };
+        $u->id = 99;
+        $u->loginname = 'nhanvien';
+        $this->be($u);
+    }
+
+    /** @test */
+    public function nhan_vien_khong_phai_quan_tri_thay_toan_bo_ho_so()
+    {
+        // 35.789/35.803 ho so do he thong TU NAP (imported_by rong): gioi han theo nguoi nap
+        // lam 13 tai khoan xml-man khong phai quan tri gan nhu khong thay ho so nao.
+        $this->dangNhapNhanVien();
+
+        foreach ([[], ['treatment_code' => 'TC'], ['patient_code' => 'PC']] as $ghiDe) {
+            $this->assertNotContains('imported_by', $this->sql($ghiDe),
+                'Nguoi dung khong phai quan tri van bi gioi han theo nguoi nap: ' . json_encode($ghiDe));
+        }
+    }
+
+    /** @test */
+    public function o_loc_nguoi_nap_van_hoat_dong()
+    {
+        $this->dangNhapNhanVien();
+
+        $this->assertContains('imported_by', $this->sql(['imported_by' => 'tracnn']));
+    }
 }

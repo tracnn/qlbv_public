@@ -7,7 +7,7 @@ module.exports = function appendix() {
     table(
       ['Hiện tượng quan sát được', 'Nguyên nhân thường gặp nhất', 'Xem mục'],
       [
-        ['Hồ sơ đã nạp nhưng không thấy trong Danh sách hồ sơ', 'Tài khoản chỉ thấy hồ sơ do chính mình nhập; hoặc bộ lọc thời gian đang chọn loại ngày khác.', '1.4.1 và 1.4.5'],
+        ['Hồ sơ đã nạp nhưng không thấy trong Danh sách hồ sơ', 'Bộ lọc thời gian đang chọn loại ngày khác, hoặc ô Người nạp / Cơ sở đang lọc hẹp.', '1.4.1 và 1.4.5'],
         ['Đặt tệp vào thư mục theo dõi nhưng hồ sơ không vào', 'Tệp hỏng cấu trúc và đã bị chuyển vào thư mục con "loi"; hoặc dịch vụ nền đã dừng.', '1.3'],
         ['Hồ sơ hết lỗi nhưng vẫn không được gửi lên cổng', 'Chức năng tự động gửi đang tắt; hoặc hồ sơ chưa được ký số.', '1.6.2'],
         ['Bấm Xuất XML3176 rồi mà cổng vẫn không nhận hồ sơ', 'Nút này chỉ tải tệp nén về máy, không gửi lên cổng.', '1.1 và 1.4.4'],

@@ -72,7 +72,7 @@ function xml3176(pptx, ctx, no) {
       'Con số về 0 = đã kiểm xong. Đứng yên rất lâu = báo công nghệ thông tin',
       'Cột Sub có biểu tượng sao chép để chép nguyên văn thông điệp lỗi gửi cho bộ phận hỗ trợ',
     ],
-    note: { label: 'Phạm vi xem:', text: 'Tài khoản thông thường CHỈ nhìn thấy hồ sơ do chính mình nhập khẩu. Chỉ tài khoản quản trị mới thấy toàn bộ hồ sơ của đơn vị. Đồng nghiệp nhập hồ sơ mà mình không thấy — đây là nguyên nhân thường gặp nhất.' },
+    note: { label: 'Phạm vi xem:', text: 'Mọi tài khoản được cấp quyền màn hình đều thấy TOÀN BỘ hồ sơ, kể cả hồ sơ hệ thống tự nạp. Muốn xem hồ sơ của một người, chọn ô Người nạp.' },
     speaker: 'Phần "phạm vi xem" giải thích được rất nhiều cuộc gọi hỗ trợ. Nhấn mạnh.',
   });
 

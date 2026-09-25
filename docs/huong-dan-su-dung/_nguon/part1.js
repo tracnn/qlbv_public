@@ -120,7 +120,7 @@ module.exports = function part1() {
     ),
     h3('1.4.5. Theo dõi tiến độ kiểm tra nền'),
     p('Ở góc dưới bên phải màn hình có một biểu tượng quay tròn kèm con số. Con số này là số việc còn nằm trong hàng đợi kiểm tra, tự cập nhật mỗi 5 giây. Khi số này về 0 nghĩa là hệ thống đã kiểm xong toàn bộ hồ sơ vừa nạp. Nếu con số đứng yên rất lâu không giảm, báo bộ phận công nghệ thông tin kiểm tra dịch vụ hàng đợi.'),
-    note('Lưu ý về phạm vi xem:', 'Tài khoản thông thường chỉ nhìn thấy những hồ sơ do chính mình nhập khẩu. Chỉ tài khoản quản trị mới thấy toàn bộ hồ sơ của đơn vị. Nếu đồng nghiệp nhập hồ sơ mà bạn không thấy, đây là nguyên nhân thường gặp nhất.'),
+    note('Lưu ý về phạm vi xem:', 'Mọi tài khoản được cấp quyền màn hình này đều thấy toàn bộ hồ sơ, kể cả hồ sơ hệ thống tự nạp. Muốn chỉ xem hồ sơ của một người, chọn ô Người nạp.'),
 
     h2('1.5. Xem chi tiết một hồ sơ'),
     p('Nháy đúp vào một dòng trong bảng để mở hộp thoại Chi tiết hồ sơ. Hộp thoại chia thành các tab:'),

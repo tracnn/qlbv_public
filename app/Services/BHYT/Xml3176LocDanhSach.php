@@ -181,30 +181,21 @@ class Xml3176LocDanhSach
     }
 
     /**
-     * Pham vi du lieu theo nguoi nap.
+     * Loc theo nguoi nap - CHI khi nguoi dung chon o "Nguoi nap".
      *
-     * Chon co loc: nguoi dung KHONG phai quan tri chi thay ho so minh tu nap. Ba lop
-     * Export va hai nhanh tra cuu dich danh cua man danh sach von da lam vay; rieng
-     * nhanh theo khoang ngay cua man danh sach thi khong - lech do lam bang tren man
-     * rong hon file xuat ra, dung cai ma nguoi dung bao la "xuat khong dung bo loc".
-     * Lay huong CHAT hon lam chuan: noi long se bien mot ro ri du lieu thanh mac dinh.
+     * KHONG con gioi han "nguoi dung khong phai quan tri chi thay ho so minh tu nap"
+     * (nguoi dung chot bo ngay 25/09/2026): 35.789/35.803 ho so do he thong TU NAP nen
+     * imported_by rong, 13 tai khoan xml-man khong phai quan tri gan nhu khong thay ho so
+     * nao tren man danh sach lan file xuat. Quyen xem man hinh da do checkrole:xml-man lo.
      */
     private static function apPhamViNguoiDung($query, $imported_by)
     {
-        if (!empty($imported_by)) {
-            return $query->whereHas('Xml3176Information', function ($q) use ($imported_by) {
-                $q->where('imported_by', $imported_by);
-            });
-        }
-
-        if (!\Auth::check() || \Auth::user()->hasRole(['superadministrator', 'administrator'])) {
+        if (empty($imported_by)) {
             return $query;
         }
 
-        $loginname = \Auth::user()->loginname;
-
-        return $query->whereHas('Xml3176Information', function ($q) use ($loginname) {
-            $q->where('imported_by', $loginname);
+        return $query->whereHas('Xml3176Information', function ($q) use ($imported_by) {
+            $q->where('imported_by', $imported_by);
         });
     }
 
