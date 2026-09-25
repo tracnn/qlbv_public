@@ -234,7 +234,11 @@ class Xml3176CompleteChecker
     {
         $errors = collect();
 
-        // Convert ngay_vao and ngay_ra to DateTime objects
+        // Nhánh lưu trú ngắn (<4h, 4-24h) GIỮ mốc NGAY_VAO: đổi sang NGAY_VAO_NOI_TRU làm 2 hồ sơ
+        // loại 09 vào cấp cứu rồi chuyển nội trú (000006932476, 000007150058) rơi xuống dưới 4h
+        // và bị báo "không được tính tiền giường" - chưa rõ BHXH tính mốc 4h từ lúc nào với ca
+        // cấp cứu. Phần so số ngày nhiều ngày bên dưới mới dùng mốc vào nội trú ($mocVao).
+        $mocVao = BedDaysTT39Calculator::mocVaoNoiTru($data->ngay_vao, $data->ngay_vao_noi_tru, $data->ngay_ra);
         $ngayVao = DateTime::createFromFormat('YmdHi', $data->ngay_vao);
         $ngayRa = DateTime::createFromFormat('YmdHi', $data->ngay_ra);
 
@@ -279,7 +283,7 @@ class Xml3176CompleteChecker
                 $data->ket_qua_dtri, $data->ma_loai_rv, (array) $this->invalidKetQuaDtri, (array) $this->invalidMaLoaiRV
             );
             $totalBedDays = (float) $data->Xml3176Xml3()->whereIn('ma_nhom', $this->bedGroupCodes)->sum('so_luong');
-            $thua = BedDaysTT39Calculator::thua($data->ngay_vao, $data->ngay_ra, $special, $totalBedDays);
+            $thua = BedDaysTT39Calculator::thua($mocVao, $data->ngay_ra, $special, $totalBedDays);
 
             if ($thua !== null) {
                 $errorCode = $this->generateErrorCode('INVALID_BED_DAYS');
@@ -299,8 +303,10 @@ class Xml3176CompleteChecker
 
     /**
      * Cảnh báo hồ sơ nội trú khai tổng ngày giường NHỎ HƠN số ngày điều trị
-     * tính theo TT39 (dương lịch + quy tắc 4h + cờ đặc biệt). Lỗi giám định 440.
-     * Guard "thiếu căn cứ thì im lặng". critical_error do catalog quyết định (=false sau seed).
+     * tính theo TT39 (dương lịch + quy tắc 4h + cờ đặc biệt), đếm từ ngày VÀO NỘI TRÚ. Lỗi giám
+     * định 440. Trường hợp đặc biệt chỉ thiếu ngày được cộng thêm -> cảnh báo riêng
+     * BED_DAYS_SPECIAL_NOT_CLAIMED. Guard "thiếu căn cứ thì im lặng". critical_error do
+     * catalog quyết định (=false sau seed/migration).
      *
      * @param Xml3176Xml1 $data
      * @return Collection
@@ -317,7 +323,10 @@ class Xml3176CompleteChecker
             return $errors; // loại KCB không tính ngày điều trị (vd '09') -> không đòi ngày giường tối thiểu
         }
 
-        $dtVao = Xml3176DateHelper::toDateTime($data->ngay_vao);
+        // Đếm từ lúc VÀO NỘI TRÚ (NGAY_VAO_NOI_TRU), không phải lúc đến khám (NGAY_VAO).
+        $dtVao = Xml3176DateHelper::toDateTime(
+            BedDaysTT39Calculator::mocVaoNoiTru($data->ngay_vao, $data->ngay_vao_noi_tru, $data->ngay_ra)
+        );
         $dtRa  = Xml3176DateHelper::toDateTime($data->ngay_ra);
         if ($dtVao === null || $dtRa === null) {
             return $errors; // guard: ngày không hợp lệ
@@ -347,16 +356,36 @@ class Xml3176CompleteChecker
             ->sum('so_luong');
 
         $tol = (float) config('xml3176.bed_days_tt39.tolerance', 0.5);
-        if (BedDaysTT39Calculator::isBelow($totalBedDays, $expected, $tol)) {
-            $errorCode = $this->generateErrorCode('BED_DAYS_BELOW_TT39');
+        if (!BedDaysTT39Calculator::isBelow($totalBedDays, $expected, $tol)) {
+            return $errors;
+        }
+
+        // Trường hợp đặc biệt chỉ thiếu đúng ngày được CỘNG THÊM: đó là quyền được thanh toán,
+        // không khai thì không vi phạm - tách cảnh báo riêng. 111/163 hồ sơ "thiếu" trên dữ liệu
+        // thật thuộc loại này. Thiếu dưới cả mức thường thì vẫn là thiếu thật.
+        $expectedThuong = BedDaysTT39Calculator::expected($calendarDays, $elapsedHours, false);
+        if ($special && $expected > $expectedThuong
+            && !BedDaysTT39Calculator::isBelow($totalBedDays, $expectedThuong, $tol)) {
+            $errorCode = $this->generateErrorCode('BED_DAYS_SPECIAL_NOT_CLAIMED');
             $errors->push((object)[
                 'error_code'     => $errorCode,
-                'error_name'     => 'Tổng ngày giường nhỏ hơn hướng dẫn TT39',
+                'error_name'     => 'Trường hợp đặc biệt được cộng 1 ngày giường nhưng chưa khai',
                 'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
-                'description'    => 'Tổng ngày giường khai ' . $totalBedDays . ' nhỏ hơn số ngày điều trị theo TT39 '
-                                  . $expected . ' (chênh ' . round($expected - $totalBedDays, 2) . ').',
+                'description'    => 'Tử vong / chuyển viện / nặng xin về được cộng 1 ngày giường theo TT39: được '
+                                  . $expected . ', đã khai ' . $totalBedDays . ' — chưa khai ngày được cộng thêm.',
             ]);
+
+            return $errors;
         }
+
+        $errorCode = $this->generateErrorCode('BED_DAYS_BELOW_TT39');
+        $errors->push((object)[
+            'error_code'     => $errorCode,
+            'error_name'     => 'Tổng ngày giường nhỏ hơn hướng dẫn TT39',
+            'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+            'description'    => 'Tổng ngày giường khai ' . $totalBedDays . ' nhỏ hơn số ngày điều trị theo TT39 '
+                              . $expected . ' (chênh ' . round($expected - $totalBedDays, 2) . ').',
+        ]);
 
         return $errors;
     }

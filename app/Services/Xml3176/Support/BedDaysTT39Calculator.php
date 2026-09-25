@@ -34,6 +34,38 @@ class BedDaysTT39Calculator
     }
 
     /**
+     * Mốc bắt đầu tính ngày điều trị nội trú: NGAY_VAO_NOI_TRU khi hợp lệ, không thì NGAY_VAO.
+     *
+     * NGAY_VAO là lúc người bệnh ĐẾN (khám, cấp cứu); ngày giường nội trú tính từ lúc vào điều
+     * trị nội trú. Đếm từ NGAY_VAO đòi dư ngày khám: 000007255189 đến khám 17/09, vào nội trú
+     * 18/09, khai đúng 6 ngày nhưng bị báo thiếu vì bị đòi 7. Trên 1.061 hồ sơ nội trú thật có
+     * 51 hồ sơ vào nội trú khác ngày đến khám.
+     *
+     * NGAY_VAO_NOI_TRU trống, sai định dạng, trước NGAY_VAO hoặc sau NGAY_RA -> dùng NGAY_VAO
+     * (giữ hành vi cũ, không đoán).
+     *
+     * @param string|null $ngayVao       'YmdHi'
+     * @param string|null $ngayVaoNoiTru 'YmdHi'
+     * @param string|null $ngayRa        'YmdHi'
+     * @return string|null
+     */
+    public static function mocVaoNoiTru($ngayVao, $ngayVaoNoiTru, $ngayRa)
+    {
+        $vnt = $ngayVaoNoiTru ? \DateTime::createFromFormat('YmdHi', (string) $ngayVaoNoiTru) : false;
+        if (!$vnt || $vnt->format('YmdHi') !== (string) $ngayVaoNoiTru) {
+            return $ngayVao;
+        }
+
+        $vao = $ngayVao ? \DateTime::createFromFormat('YmdHi', (string) $ngayVao) : false;
+        $ra = $ngayRa ? \DateTime::createFromFormat('YmdHi', (string) $ngayRa) : false;
+        if (($vao && $vnt < $vao) || ($ra && $vnt > $ra)) {
+            return $ngayVao;
+        }
+
+        return (string) $ngayVaoNoiTru;
+    }
+
+    /**
      * Hồ sơ thuộc trường hợp đặc biệt được cộng thêm 1 ngày giường (tử vong, chuyển viện,
      * nặng xin về...) khi KẾT QUẢ điều trị HOẶC LOẠI ra viện thuộc diện đặc biệt — chỉ cần
      * một trong hai. Luật "thừa ngày giường" cũ viết điều kiện ngược bằng ||, nên hồ sơ

@@ -187,4 +187,25 @@ class BedDaysTT39CalculatorTest extends TestCase
         $this->assertNull(BedDaysTT39Calculator::thua('abc', '202609011157', false, 9.0));
         $this->assertNull(BedDaysTT39Calculator::thua('202609011157', '202608240201', false, 9.0));
     }
+
+    // ---- Mốc tính ngày điều trị nội trú: NGAY_VAO_NOI_TRU, không phải NGAY_VAO ----
+
+    /** @test */
+    public function moc_la_ngay_vao_noi_tru_khi_hop_le()
+    {
+        // 000007255189: đến khám 17/09 06:38, vào nội trú 18/09 09:09, ra 24/09 15:42.
+        $this->assertSame('202609180909',
+            BedDaysTT39Calculator::mocVaoNoiTru('202609170638', '202609180909', '202609241542'));
+    }
+
+    /** @test */
+    public function moc_quay_ve_ngay_vao_khi_vao_noi_tru_trong_hoac_hong()
+    {
+        $this->assertSame('202609170638', BedDaysTT39Calculator::mocVaoNoiTru('202609170638', null, '202609241542'));
+        $this->assertSame('202609170638', BedDaysTT39Calculator::mocVaoNoiTru('202609170638', '', '202609241542'));
+        $this->assertSame('202609170638', BedDaysTT39Calculator::mocVaoNoiTru('202609170638', 'abc', '202609241542'));
+        // sau ngày ra hoặc trước ngày vào: dữ liệu sai, không dùng
+        $this->assertSame('202609170638', BedDaysTT39Calculator::mocVaoNoiTru('202609170638', '202609250000', '202609241542'));
+        $this->assertSame('202609170638', BedDaysTT39Calculator::mocVaoNoiTru('202609170638', '202609160000', '202609241542'));
+    }
 }
