@@ -371,7 +371,7 @@ class Xml3176CompleteChecker
                 'error_code'     => $errorCode,
                 'error_name'     => 'Trường hợp đặc biệt được cộng 1 ngày giường nhưng chưa khai',
                 'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
-                'description'    => 'Tử vong / chuyển viện / nặng xin về được cộng 1 ngày giường theo TT39: được '
+                'description'    => 'Được cộng 1 ngày giường theo TT39 (' . $this->lyDoCongNgayGiuong($data) . '): được '
                                   . $expected . ', đã khai ' . $totalBedDays . ' — chưa khai ngày được cộng thêm.',
             ]);
 
@@ -388,6 +388,31 @@ class Xml3176CompleteChecker
         ]);
 
         return $errors;
+    }
+
+    /**
+     * Lý do hồ sơ được cộng 1 ngày giường, theo ĐÚNG hai danh sách cấu hình mà laDacBiet() dùng
+     * (xml3176.invalid_treatment_result, xml3176.invalid_end_type_treatment) - câu mô tả không
+     * được liệt kê cứng, vì danh sách đổi thì câu sai theo. Nhãn lấy từ __tech.ket_qua_dtri /
+     * __tech.tinh_trang_rv; mã không có nhãn (hoặc nhãn 'N/A') thì chỉ ghi mã.
+     */
+    private function lyDoCongNgayGiuong(Xml3176Xml1 $data): string
+    {
+        $nhan = function ($ma, array $bang) {
+            $ten = isset($bang[$ma]) ? trim((string) $bang[$ma]) : '';
+
+            return $ma . ($ten !== '' && $ten !== 'N/A' ? ' - ' . $ten : '');
+        };
+
+        $lyDo = [];
+        if (in_array($data->ket_qua_dtri, (array) config('xml3176.invalid_treatment_result', []))) {
+            $lyDo[] = 'kết quả điều trị ' . $nhan($data->ket_qua_dtri, (array) config('__tech.ket_qua_dtri', []));
+        }
+        if (in_array($data->ma_loai_rv, (array) config('xml3176.invalid_end_type_treatment', []))) {
+            $lyDo[] = 'loại ra viện ' . $nhan($data->ma_loai_rv, (array) config('__tech.tinh_trang_rv', []));
+        }
+
+        return implode('; ', $lyDo);
     }
 
     /**

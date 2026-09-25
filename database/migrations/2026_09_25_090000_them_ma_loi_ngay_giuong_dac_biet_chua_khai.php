@@ -24,7 +24,7 @@ class ThemMaLoiNgayGiuongDacBietChuaKhai extends Migration
             'xml'            => 'XMLComplete',
             'error_code'     => self::MA,
             'error_name'     => 'Trường hợp đặc biệt được cộng 1 ngày giường nhưng chưa khai',
-            'description'    => 'Tử vong / chuyển viện / nặng xin về được cộng 1 ngày giường theo TT39 nhưng hồ sơ chưa khai ngày cộng thêm',
+            'description'    => 'Hồ sơ được cộng 1 ngày giường theo TT39 (kết quả điều trị thuộc xml3176.invalid_treatment_result hoặc loại ra viện thuộc xml3176.invalid_end_type_treatment) nhưng chưa khai ngày cộng thêm',
             'critical_error' => false,
             'is_check'       => true,
             'created_at'     => now(),

@@ -109,6 +109,48 @@ class Xml3176CompleteNgayGiuongNoiTruTest extends TestCase
         $this->assertNotContains(self::THIEU, $codes);
     }
 
+    /** @return string mô tả của lỗi "đặc biệt chưa khai" */
+    private function moTaDacBiet(array $ghiDe): string
+    {
+        config([
+            '__tech.ket_qua_dtri' => [1 => 'Khỏi', 2 => 'Đỡ', 3 => 'Không thay đổi', 4 => 'Nặng hơn', 5 => 'Tử vong', 6 => 'N/A'],
+            '__tech.tinh_trang_rv' => [1 => 'Ra viện', 2 => 'Chuyển viện', 3 => 'Trốn viện', 4 => 'Xin ra viện'],
+        ]);
+        $x = Xml3176Xml1::create(array_merge([
+            'ma_lk' => 'HS', 'stt' => 1, 'ma_loai_kcb' => '03', 'ket_qua_dtri' => 2, 'ma_loai_rv' => 1, 'so_ngay_dtri' => 8,
+        ], $this->hs255189($ghiDe)));
+        foreach ([0.5, 1, 1, 1, 1, 1, 0.5] as $i => $sl) {
+            Xml3176Xml3::create(['ma_lk' => 'HS', 'stt' => $i + 1, 'ma_nhom' => 15, 'ma_dich_vu' => 'K33.NO1', 'so_luong' => $sl]);
+        }
+        $loi = $this->invokePrivate(new Xml3176CompleteChecker(new FakeXml3176ErrorService()), 'checkBedDaysBelowTT39', $x);
+
+        return (string) collect($loi)->firstWhere('error_code', self::DB_CHUA_KHAI)->description;
+    }
+
+    /** @test */
+    public function mo_ta_neu_dung_ly_do_theo_cau_hinh()
+    {
+        $m = $this->moTaDacBiet(['ket_qua_dtri' => 4]);
+        $this->assertContains('kết quả điều trị 4 - Nặng hơn', $m);
+        $this->assertContains('được 7, đã khai 6', $m);
+        $this->assertNotContains('Tử vong / chuyển viện', $m);
+    }
+
+    /** @test */
+    public function mo_ta_neu_loai_ra_vien_va_ca_hai_ly_do()
+    {
+        $this->assertContains('loại ra viện 3 - Trốn viện', $this->moTaDacBiet(['ma_loai_rv' => 3]));
+    }
+
+    /** @test */
+    public function mo_ta_ma_khong_co_nhan_thi_chi_ghi_ma()
+    {
+        // Nhãn 6 trong cấu hình đang là 'N/A' - không in 'N/A' ra câu cảnh báo.
+        $m = $this->moTaDacBiet(['ket_qua_dtri' => 6]);
+        $this->assertContains('kết quả điều trị 6', $m);
+        $this->assertNotContains('N/A', $m);
+    }
+
     /** @test */
     public function dac_biet_thieu_duoi_muc_thuong_van_la_thieu_that()
     {
