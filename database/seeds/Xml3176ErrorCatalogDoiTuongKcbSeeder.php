@@ -15,10 +15,9 @@ use App\Models\BHYT\Xml3176ErrorCatalog;
  * pham tren 1.213, ba quy tac o XMLComplete chua co ho so nao de chay. Nguoi van hanh tu
  * bat len qua man danh muc ma loi sau khi quan sat.
  *
- * Da bo XML1_DOI_TUONG_KCB_KHONG_BHYT_CO_THE (10 -> 9 ma): ho so ma 9 bi chan tu diem
- * phat job boi cong xml3176.ma_doituong_kcb_khong_kiem (Xml3176Importer::canKiemLoi()),
- * nen Xml3176Xml1Checker khong bao gio chay tren chung - quy tac la ma chet, dong danh
- * muc la dong rac.
+ * Da bo XML1_DOI_TUONG_KCB_KHONG_BHYT_CO_THE khi danh muc nay ra doi (11/09/2026): luc
+ * do ho so ma 9 bi chan tu diem phat job nen quy tac la ma chet. Cong chan da go ngay
+ * 28/09/2026, quy tac do dung lai duoc - them lai thi nho them ca dong danh muc ma loi.
  *
  * Idempotent (updateOrCreate) - chay lai an toan.
  */

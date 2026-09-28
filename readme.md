@@ -1,3 +1,23 @@
+# 28/09/2026
+
+- **Gỡ bỏ cơ chế bỏ qua rà lỗi cho hồ sơ dịch vụ (mã đối tượng 9). Từ nay MỌI hồ sơ đều được kiểm trước khi lên cổng.** Cơ chế cũ có từ 10/09: hồ sơ khai mã đối tượng khám chữa bệnh bằng 9 — tức không phải bảo hiểm y tế — thì phần mềm không đẩy việc rà lỗi, nên chúng đi thẳng qua bước xuất và gửi cổng mà không ai kiểm. Nay bỏ hẳn: không còn khoá cấu hình, không còn đường rẽ nào bỏ qua rà lỗi.
+
+- **Hồ sơ cũ không tự được kiểm lại.** Quy tắc chỉ chạy lúc nạp hồ sơ, nên **32.882 hồ sơ mã 9 đang có trong cơ sở dữ liệu vẫn chưa được rà cho tới khi nạp lại**. Phần mềm chưa có lệnh "kiểm lại" nào; muốn có lỗi thì phải nạp lại qua màn nhập như thường lệ.
+
+- **Lượng cảnh báo sẽ tăng rất mạnh, và đó là điều đã lường trước.** Hồ sơ mã 9 chiếm **32.882 trên 36.272, tức 90,7%** toàn bộ dữ liệu, trong khi mọi quy tắc hiện có đều được viết cho hồ sơ bảo hiểm y tế. Lần đo hồi 10/09 cho thấy riêng nhóm này sinh 97% tổng số lỗi của hệ thống. Khi rà xong, hãy đọc theo mốc đã ghi ở mục 10/09: **một quy tắc báo trên 20% số dòng thì gần như chắc chắn là quy tắc sai, không phải dữ liệu sai** — nhiều quy tắc bảo hiểm áp lên hồ sơ dịch vụ sẽ rơi đúng vào trường hợp đó và cần được tắt riêng qua màn danh mục mã lỗi.
+
+- **CẢNH BÁO trước khi đụng vào cấu hình xuất XML.** Hiện `export_xml_not_check` đang bật, nghĩa là bước xuất **bỏ qua** kiểm tra lỗi nghiêm trọng, nên việc gỡ cổng không chặn hồ sơ nào. Nhưng hồ sơ mã 9 đang mang sẵn **327.939 dòng lỗi nghiêm trọng cũ** (ghi trước ngày 10/09). Nếu tắt `export_xml_not_check` mà chưa dọn số lỗi cũ này, **27.848 hồ sơ sẽ bị chặn xuất ngay lập tức**.
+
+- **Một quy tắc có thể dùng lại.** Quy tắc "hồ sơ mã 9 nhưng vẫn khai mã thẻ BHYT" từng bị bỏ hôm 11/09 vì khi đó hồ sơ mã 9 không bao giờ được kiểm, nên nó là mã chết. Nay nó dùng lại được. Đợt này cố ý chưa khôi phục, ghi lại để khi cần thì biết.
+
+- **Cài đặt: không có migration, không đổi cấu hình bắt buộc.** Chỉ cần đẩy mã rồi:
+
+```bash
+php artisan config:clear && php artisan queue:restart
+```
+
+  Thiếu `queue:restart` thì tiến trình hàng đợi vẫn chạy mã cũ và hồ sơ mã 9 tiếp tục không được rà, trong im lặng.
+
 # 16/09/2026
 
 - **Danh mục TT12: xuất được tệp XML kèm chữ ký số từ màn Danh sách hồ sơ.** Tích chọn hồ sơ rồi bấm **Xuất XML đã chọn** — một hồ sơ thì tải thẳng tệp `.xml`, nhiều hồ sơ thì tải về một tệp ZIP. Dùng chung ô tích với nút Ký và gửi, trần 50 hồ sơ mỗi lượt.
