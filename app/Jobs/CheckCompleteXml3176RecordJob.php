@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Models\BHYT\Xml3176Information;
 use App\Services\Xml3176CompleteChecker;
 
 use Illuminate\Bus\Queueable;
@@ -34,5 +35,12 @@ class CheckCompleteXml3176RecordJob implements ShouldQueue
     public function handle(Xml3176CompleteChecker $xmlCompleteChecker)
     {
         $xmlCompleteChecker->checkErrors($this->ma_lk);
+
+        // Day la job kiem CUOI CUNG cua mot ho so: Xml3176Importer day cac
+        // CheckXml3176TypeJob roi moi day job nay, cung mot hang doi JobXml3176
+        // nen no chay sau. Dat dau da kiem xong de ExportXml3176Job - chay tren
+        // hang doi khac - biet la da co du lieu loi ma hoi.
+        Xml3176Information::where('ma_lk', $this->ma_lk)
+            ->update(['checked_at' => now()]);
     }
 }

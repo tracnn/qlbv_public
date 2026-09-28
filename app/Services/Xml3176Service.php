@@ -960,6 +960,10 @@ class Xml3176Service
                 $values['exported_at'] = null;
                 $values['export_error'] = $error;
                 $values['imported_by'] = $loginname;
+                // Nap lai ho so la bo het dau da kiem: khong xoa thi ExportXml3176Job
+                // thay dau cu cua lan nap truoc, khong cho, va lai xuat truoc khi
+                // cac job kiem cua lan nap NAY ghi xong loi.
+                $values['checked_at'] = null;
             } elseif ($operationType === 'export') {
                 $values['exported_at'] = Carbon::now();
                 $values['export_error'] = $error;

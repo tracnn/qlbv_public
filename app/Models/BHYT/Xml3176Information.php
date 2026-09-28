@@ -13,6 +13,7 @@ class Xml3176Information extends Model
         'macskcb',
         'soluonghoso',
         'imported_at',
+        'checked_at',
         'exported_at',
         'import_error',
         'export_error',

@@ -1,5 +1,15 @@
 # 28/09/2026
 
+- **Sửa lỗi hồ sơ vẫn lên cổng dù đã bật kiểm lỗi trước khi xuất.** Bước kiểm lỗi chạy trên hàng đợi `JobXml3176`, bước xuất chạy trên `JobExportXml3176` — hai tiến trình riêng, chạy song song, và tiến trình xuất gần như luôn thắng cuộc đua. Khi nó hỏi "hồ sơ này có lỗi nghiêm trọng không" thì bảng lỗi còn trống, nên câu trả lời là không, và hồ sơ được xuất, ký số, gửi cổng. Đo trên dữ liệu thật: 50 hồ sơ nạp lúc 11:17:38 đều **được xuất lúc 11:17:38**, còn dòng lỗi nghiêm trọng đầu tiên mãi 11:17:39–11:17:42 mới được ghi. Tức khoá `export_xml_not_check` không hỏng — nó được hỏi vào đúng lúc chưa có gì để thấy.
+
+- **Cách sửa: bước xuất phải chờ kiểm xong.** Hồ sơ nay có thêm dấu "đã kiểm xong" (`checked_at`), do job kiểm cuối cùng của hồ sơ đặt. Nếu đang bật kiểm lỗi mà hồ sơ chưa có dấu này, việc xuất tự hoãn lại 15 giây rồi thử lại, tối đa 10 lần (2,5 phút). Nạp lại hồ sơ thì dấu cũ bị xoá, nên lần nạp sau vẫn phải chờ như lần đầu.
+
+- **Hết 2,5 phút mà chưa kiểm xong thì KHÔNG xuất**, và lý do được ghi vào cột lỗi xuất của hồ sơ để người vận hành nhìn thấy trên màn danh sách. Chọn hướng này vì yêu cầu là mọi hồ sơ phải được kiểm trước khi lên cổng: thà không gửi còn hơn gửi một hồ sơ chưa ai kiểm. Muốn chạy lại thì nạp lại hồ sơ.
+
+- **Không đổi gì khi cơ sở cố ý bỏ kiểm lỗi.** Bật `export_xml_not_check` thì xuất ngay, không chờ. Bật `xml_3176_not_check` (tắt hẳn bước kiểm tổng thể) cũng không chờ — vì khi đó không có ai đặt dấu đã kiểm cả, chờ là treo vĩnh viễn.
+
+- **Cần chạy migration và `queue:restart` khi triển khai.** Thiếu `queue:restart` thì tiến trình cũ vẫn chạy mã cũ và lỗi cuộc đua vẫn còn.
+
 - **Gỡ bỏ cơ chế bỏ qua rà lỗi cho hồ sơ dịch vụ (mã đối tượng 9). Từ nay MỌI hồ sơ đều được kiểm trước khi lên cổng.** Cơ chế cũ có từ 10/09: hồ sơ khai mã đối tượng khám chữa bệnh bằng 9 — tức không phải bảo hiểm y tế — thì phần mềm không đẩy việc rà lỗi, nên chúng đi thẳng qua bước xuất và gửi cổng mà không ai kiểm. Nay bỏ hẳn: không còn khoá cấu hình, không còn đường rẽ nào bỏ qua rà lỗi.
 
 - **Hồ sơ cũ không tự được kiểm lại.** Quy tắc chỉ chạy lúc nạp hồ sơ, nên **32.882 hồ sơ mã 9 đang có trong cơ sở dữ liệu vẫn chưa được rà cho tới khi nạp lại**. Phần mềm chưa có lệnh "kiểm lại" nào; muốn có lỗi thì phải nạp lại qua màn nhập như thường lệ.
