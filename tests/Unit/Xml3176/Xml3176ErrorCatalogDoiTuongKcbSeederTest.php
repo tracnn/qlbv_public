@@ -16,8 +16,9 @@ class Xml3176ErrorCatalogDoiTuongKcbSeederTest extends TestCase
     {
         $src = $this->nguon();
 
-        // Da bo XML1_DOI_TUONG_KCB_KHONG_BHYT_CO_THE (10 -> 9): ma chet, ho so ma 9 bi
-        // chan tu diem phat job nen quy tac nay khong bao gio chay tren chung.
+        // Khong co XML1_DOI_TUONG_KCB_KHONG_BHYT_CO_THE: quy tac do bo tu 11/09/2026.
+        // Cong chan ho so ma 9 da go ngay 28/09/2026 nen quy tac do dung lai duoc; them
+        // lai thi con so 13 o duoi phai tang theo.
         $ma = [
             'XML1_DOI_TUONG_KCB_NGOAI_DANH_MUC',
             'XML1_DOI_TUONG_KCB_THIEU_NOI_DI',

@@ -99,10 +99,9 @@ class Xml3176Xml1DoiTuongKcbTest extends TestCase
     /** @test */
     public function ma_9_khong_bi_bao_thieu_the_bhyt()
     {
-        // Quy tac DOI_TUONG_KCB_KHONG_BHYT_CO_THE da bo han: ho so ma 9 bi chan tu diem
-        // phat job (xml3176.ma_doituong_kcb_khong_kiem) nen checker nay khong bao gio
-        // chay tren chung - dong danh muc cua no la dong rac. Chi con giu lai assert nay:
-        // ma 9 khong the dong thoi bi bao THIEU_THE_BHYT.
+        // Tu 28/09/2026 ho so ma 9 CO duoc ra loi (da go cong bo qua), nen assert nay
+        // khong con la gia dinh suong: no chot rang ho so dich vu khong bi bao thieu the
+        // BHYT - dung thuoc tinh khong_bhyt cua ma 9 trong config/doi_tuong_kcb.php.
         $this->assertNotContains('XML1_DOI_TUONG_KCB_THIEU_THE_BHYT',
             $this->codes(['ma_doituong_kcb' => '9', 'ma_the_bhyt' => '', 't_bhtt' => 500000]));
     }

@@ -1160,10 +1160,10 @@ class Xml3176Xml1Checker
 
         // $khongBhyt van giu vi nhanh THIEU_THE_BHYT ben duoi con dung.
         //
-        // Da bo quy tac DOI_TUONG_KCB_KHONG_BHYT_CO_THE (ma 9 co the BHYT): ho so ma 9
-        // bi chan tu DIEM PHAT JOB boi cong xml3176.ma_doituong_kcb_khong_kiem trong
-        // Xml3176Importer::canKiemLoi(), nen checker nay khong bao gio chay tren chung -
-        // quy tac o day la ma chet.
+        // Quy tac DOI_TUONG_KCB_KHONG_BHYT_CO_THE (ma 9 ma van co the BHYT) da bo hom
+        // 11/09/2026 vi luc do ho so ma 9 bi chan tu diem phat job nen no la ma chet.
+        // Cong chan do da go ngay 28/09/2026 - checker NAY GIO CHAY tren ho so ma 9, nen
+        // quy tac do dung lai duoc. Chua dung lai: ngoai pham vi dot go cong.
         $khongBhyt = (bool) DoiTuongKcbCatalog::thuocTinh($ma, $danhMuc, 'khong_bhyt', false);
 
         // Doi quy thanh toan ma khong co the moi la mau thuan. Cap cuu chua xuat trinh
