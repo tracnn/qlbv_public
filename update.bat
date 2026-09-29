@@ -190,6 +190,15 @@ if errorlevel 1 (
     %NSSM_PATH%\nssm set "QLBV JobExportXml3176" AppDirectory %LARAVEL_PATH%
 )
 
+:: Hang doi ky rieng cho XML3176 (29/09/2026): ky hong vi ly do CUC BO, gui hong vi MANG.
+:: Dich vu nay khong chay thi MOI ho so dung o buoc Ky - job nam cho, khong hong.
+%NSSM_PATH%\nssm status "QLBV JobSignXml3176" >nul 2>&1
+if errorlevel 1 (
+    echo Installing service QLBV JobSignXml3176...
+    %NSSM_PATH%\nssm install "QLBV JobSignXml3176" %PHP_PATH% "%LARAVEL_PATH%artisan queue:work --queue=JobSignXml3176"
+    %NSSM_PATH%\nssm set "QLBV JobSignXml3176" AppDirectory %LARAVEL_PATH%
+)
+
 %NSSM_PATH%\nssm status "QLBV KiemTraYLenh" >nul 2>&1
 if errorlevel 1 (
     echo Installing service QLBV KiemTraYLenh...
@@ -226,6 +235,7 @@ if errorlevel 1 (
 %NSSM_PATH%\nssm stop "QLBV JobSignTt12"
 %NSSM_PATH%\nssm stop "QLBV JobSubmitTt12"
 %NSSM_PATH%\nssm stop "QLBV JobExportXml3176"
+%NSSM_PATH%\nssm stop "QLBV JobSignXml3176"
 %NSSM_PATH%\nssm stop "QLBV KiemTraYLenh"
 %NSSM_PATH%\nssm stop "QLBV KiemTraYLenhNotify"
 
@@ -266,6 +276,7 @@ echo Restarting services...
 %NSSM_PATH%\nssm start "QLBV JobSignTt12"
 %NSSM_PATH%\nssm start "QLBV JobSubmitTt12"
 %NSSM_PATH%\nssm start "QLBV JobExportXml3176"
+%NSSM_PATH%\nssm start "QLBV JobSignXml3176"
 %NSSM_PATH%\nssm start "QLBV KiemTraYLenh"
 %NSSM_PATH%\nssm start "QLBV KiemTraYLenhNotify"
 

@@ -74,6 +74,10 @@ set LARAVEL_PATH=%~dp0
 %NSSM_PATH%\nssm install "QLBV JobExportXml3176" %PHP_PATH% "%LARAVEL_PATH%artisan queue:work --queue=JobExportXml3176"
 %NSSM_PATH%\nssm set "QLBV JobExportXml3176" AppDirectory %LARAVEL_PATH%
 
+:: Tao dich vu cho JobSignXml3176 - buoc ky cua chuoi kiem -> xuat -> ky -> gui XML3176
+%NSSM_PATH%\nssm install "QLBV JobSignXml3176" %PHP_PATH% "%LARAVEL_PATH%artisan queue:work --queue=JobSignXml3176"
+%NSSM_PATH%\nssm set "QLBV JobSignXml3176" AppDirectory %LARAVEL_PATH%
+
 :: Tao dich vu cho ctdt:import (quet inbox chung tu dien tu, nap, roi xep hang ky va gui)
 ::
 :: AppExit Default Restart la BAT BUOC, khong phai tuy chon: lenh nay CO Y thoat sau
@@ -116,6 +120,7 @@ set LARAVEL_PATH=%~dp0
 %NSSM_PATH%\nssm start "QLBV JobSignTt12"
 %NSSM_PATH%\nssm start "QLBV JobSubmitTt12"
 %NSSM_PATH%\nssm start "QLBV JobExportXml3176"
+%NSSM_PATH%\nssm start "QLBV JobSignXml3176"
 %NSSM_PATH%\nssm start "QLBV KiemTraYLenh"
 %NSSM_PATH%\nssm start "QLBV KiemTraYLenhNotify"
 
