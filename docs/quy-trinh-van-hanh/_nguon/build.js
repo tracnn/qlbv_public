@@ -165,7 +165,9 @@ function phanSau() {
       ['organization.export_xml_not_check', 'true = vẫn xuất / ký / gửi hồ sơ có lỗi Nghiêm trọng', 'false khi các khoa đã quen quy trình; để true thì mức Nghiêm trọng chỉ còn là cảnh báo'],
       ['organization.BHYT.submit_xml_3176_enabled', 'Bật / tắt chức năng gửi hồ sơ lên cổng', 'true trên máy chủ gửi thật'],
       ['xml3176.export_xml3176_enabled', 'Tự động xuất XML cho hồ sơ không có lỗi Nghiêm trọng', 'true'],
+      ['xml3176.sign_queue_name (dịch vụ QLBV JobSignXml3176)', 'Hàng đợi bước ký số trong chuỗi kiểm → xuất → ký → gửi', 'Dịch vụ phải luôn chạy; dừng thì mọi hồ sơ nằm chờ ở bước ký'],
     ], [3100, 3400, 2520]),
+    forIt('Hồ sơ đã kiểm xong mà chưa xuất (ví dụ sau sự cố HSM hoặc mất kết nối cơ sở dữ liệu) được đẩy lại bằng lệnh php artisan xml3176:chay-lai-tu-xuat — lệnh chỉ đếm; thêm --thuc-hien để đẩy thật, --ma-lk=<mã> để chỉ định từng hồ sơ.'),
   ];
 }
 

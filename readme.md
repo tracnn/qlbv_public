@@ -1,5 +1,37 @@
 # 29/09/2026
 
+- **Sửa sự cố 29/09: 1.934 hồ sơ sạch không lên cổng.** Bản sửa ngày 28/09 cho bước xuất chờ bước kiểm tối đa 2,5 phút. Ngày 29/09 nạp lô 5.443 hồ sơ, hàng đợi kiểm tồn trung bình 46 phút, tối đa 90 phút — **5.043 hồ sơ hết lượt chờ và không được xuất**, trong đó 1.934 hồ sơ sạch. Không hồ sơ lỗi nào lọt, nhưng hồ sơ sạch cũng bị giữ.
+
+- **Cách sửa: mỗi hồ sơ đi qua đúng một chuỗi, bước trước xong mới gọi bước sau.** Kiểm từng loại XML → kiểm tổng thể → xuất → **ký** → gửi cổng. Không còn chờ theo thời gian: hàng đợi kiểm tồn bao lâu thì hồ sơ được xuất ngay khi kiểm xong bấy lâu. Thứ tự do khung Laravel bảo đảm, không còn dựa vào việc mỗi hàng đợi chỉ có một tiến trình. Một bước kiểm hỏng thì hồ sơ không được xuất — không có chuyện kiểm dở dang mà vẫn lên cổng.
+
+- **Bước ký tách ra hàng đợi riêng `JobSignXml3176`, với dịch vụ Windows mới `QLBV JobSignXml3176`.** Ký hỏng do lý do cục bộ (rút USB token, HSM treo), gửi hỏng do mạng — tách ra thì mạng chập không bắt ký lại. `update.bat` tự cài dịch vụ này. **Nếu dịch vụ không chạy, mọi hồ sơ dừng ở bước ký** — sau khi cập nhật hãy kiểm dịch vụ đang chạy.
+
+- **Nạp lại giữa chừng không còn gây xuất nhầm.** Mỗi lần nạp (hoặc chạy lệnh cứu bên dưới) hồ sơ nhận một mã phiên mới; các bước của lần trước còn đang chờ tự nhận ra mình đã lỗi thời và thôi. Khi nạp lại hàng loạt, hàng đợi kiểm cũng nhẹ đi vì không phải kiểm mỗi hồ sơ hai lần.
+
+- **Hồ sơ bị chặn giờ có lý do trên màn danh sách.** Cột lỗi xuất ghi "Không xuất: còn N lỗi nghiêm trọng", "Không xuất: ngày ra … sau thời điểm xuất", hoặc bước nào hỏng. Trước đây việc chặn này im lặng — không phân biệt được "bị chặn" với "chưa tới lượt".
+
+- **Không còn thử lại vô hạn.** Mọi bước trong chuỗi có số lần thử giới hạn; hết lượt thì ghi lỗi vào hồ sơ. Trước đây các bước kiểm và xuất thử lại mãi, một hồ sơ độc có thể chặn đứng cả hàng đợi.
+
+- **Cứu hồ sơ đang kẹt — chạy MỘT LẦN trên máy chủ sau khi cập nhật:**
+
+```bash
+php artisan xml3176:chay-lai-tu-xuat
+```
+
+  Lệnh này **chỉ đếm** hồ sơ đã kiểm xong mà chưa xuất (chia sạch / có lỗi nghiêm trọng). Đọc số rồi chạy thật:
+
+```bash
+php artisan xml3176:chay-lai-tu-xuat --thuc-hien
+```
+
+  Hồ sơ có lỗi nghiêm trọng sẽ lại bị chặn — đúng như mong đợi. Cần ký lại vài hồ sơ sau sự cố HSM thì chỉ định `--ma-lk=... --thuc-hien`. Lệnh cố ý **không** chọn đại trà "đã xuất mà chưa ký": ở cơ sở không bật ký số, việc đó sẽ copy trùng sang Trục dữ liệu / Điện Biên.
+
+- **Giữ nguyên:** ký không được thì vẫn ghi tệp và vẫn copy sang Trục dữ liệu / Điện Biên, chỉ không gửi cổng BHXH; tên tệp và thư mục xuất không đổi.
+
+- **Hạn chế đã biết:** bấm nút xuất tay (tải zip) đánh dấu hồ sơ là "đã xuất" dù không có gì lên cổng, nên lệnh cứu sẽ bỏ qua hồ sơ đó. Nếu job gửi của lần nạp trước đang giữa lúc gọi cổng đúng lúc nạp lại, bản cũ vẫn lên cổng rồi bản mới gửi đè — khe hở vài giây, chấp nhận.
+
+- **Cài đặt:** có migration (hai cột mới) và một dịch vụ Windows mới — `update.bat` tự lo cả hai. Không đổi cấu hình bắt buộc.
+
 - **Quy tắc mới: không có mã thẻ BHYT thì mã đối tượng phải là 9.** Mã lỗi `XML1_DOI_TUONG_KCB_KHONG_THE_SAI_MA`. Hồ sơ để trống `MA_THE_BHYT` mà khai mã đối tượng khác 9 (người bệnh không KCB BHYT) là khai sai đối tượng. **Không miễn trường hợp nào**, kể cả cấp cứu (mã 2).
 
 - **Đo trên 41.759 hồ sơ: 342 hồ sơ vi phạm (0,82%)** — mã 3.1: 225, mã 1.17: 100, mã 2: 12, mã 1.1: 4, mã 3.6: 1. Đã chạy chính hàm kiểm trên toàn bộ dữ liệu thật và ra đúng 342, khớp với phép đếm trực tiếp. Tỉ lệ thấp xa mốc 20%, nên đây là dữ liệu sai thật chứ không phải quy tắc báo oan.
