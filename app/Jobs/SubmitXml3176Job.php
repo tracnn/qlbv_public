@@ -10,6 +10,8 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
+use App\Jobs\Concerns\ThuocChuoiXml3176;
+use App\Models\BHYT\Xml3176Information;
 use App\Services\BHYTXmlSubmitService;
 use App\Services\BHYTLoginService;
 use App\Services\BHYT\CauHinhCoSo;
@@ -17,11 +19,17 @@ use App\Services\Xml3176Service;
 
 class SubmitXml3176Job implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels, ThuocChuoiXml3176;
 
     protected $ma_lk;
     protected $xmlFilePath;
     protected $macskcb;
+
+    /**
+     * Diem tiem cho test thay cho tham so handle() (khuon SubmitTt12Job): container Laravel
+     * 5.5 tiem ca tham so khai "= null", nen dich vu gui KHONG duoc nhan qua handle().
+     */
+    public $submitServiceGia = null;
 
     /**
      * The number of times the job may be attempted.
@@ -38,18 +46,15 @@ class SubmitXml3176Job implements ShouldQueue
     public $timeout = 60;
 
     /**
-     * Create a new job instance.
-     *
-     * @param string $ma_lk Mã liên kết
-     * @param string $xmlFilePath Đường dẫn file XML đã ký số trên disk exportXml3176
-     * @param string $macskcb Mã cơ sở khám chữa bệnh
-     * @return void
+     * @param string      $ma_lk
+     * @param string|null $chainToken Ma phien cua chuoi. Duong dan tep va ma co so doc tu ho
+     *                                so luc chay. Job cu (truoc chuoi) mang san $xmlFilePath
+     *                                va $macskcb - giu ten thuoc tinh de chung giai nen dung.
      */
-    public function __construct($ma_lk, $xmlFilePath, $macskcb)
+    public function __construct($ma_lk, $chainToken = null)
     {
         $this->ma_lk = $ma_lk;
-        $this->xmlFilePath = $xmlFilePath;
-        $this->macskcb = $macskcb;
+        $this->chainToken = $chainToken;
     }
 
     /**
@@ -67,10 +72,29 @@ class SubmitXml3176Job implements ShouldQueue
             return;
         }
 
+        if (!$this->laJobCu()) {
+            if (!$this->conHieuLuc($this->ma_lk)) {
+                $this->catChuoi();
+                return;
+            }
+
+            $thongTin = Xml3176Information::where('ma_lk', $this->ma_lk)->first();
+            $this->macskcb = $thongTin->macskcb;
+            $this->xmlFilePath = $thongTin->signed_file_path;
+
+            if (empty($this->xmlFilePath)) {
+                $xml3176Service->storeXml3176Information($this->ma_lk, $this->macskcb, 'submit', 1,
+                    'Gửi lỗi — không tìm thấy tệp đã ký');
+                return;
+            }
+        }
+        // Job cu (truoc chuoi) mang san xmlFilePath va macskcb, di thang xuong duoi.
+
         // KHONG nhan BHYTXmlSubmitService qua container: container khong biet ho so nay thuoc
         // co so nao nen se dung BHYTLoginService khong ma co so, va lan gui dau tien se nem.
         // Dung tuong minh bang ma co so cua chinh ho so.
-        $xmlSubmitService = new BHYTXmlSubmitService(new BHYTLoginService($this->macskcb));
+        $xmlSubmitService = $this->submitServiceGia
+            ?: new BHYTXmlSubmitService(new BHYTLoginService($this->macskcb));
 
         try {
             // Đọc nội dung XML từ file đã được lưu trước đó
@@ -145,16 +169,12 @@ class SubmitXml3176Job implements ShouldQueue
         }
     }
 
-    /**
-     * Handle a job failure.
-     *
-     * @param  \Throwable  $exception
-     * @return void
-     */
     public function failed(\Throwable $exception)
     {
         Log::error('SubmitXml3176Job failed after all retries for ma_lk: ' . $this->ma_lk, [
             'error' => $exception->getMessage(),
         ]);
+
+        $this->ghiNeuConHieuLuc($this->ma_lk, ['submit_error' => 'Gửi lỗi — ' . $exception->getMessage()]);
     }
 }
