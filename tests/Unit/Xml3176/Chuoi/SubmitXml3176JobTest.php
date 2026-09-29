@@ -85,12 +85,13 @@ class SubmitXml3176JobTest extends TestCase
     /** @test */
     public function khong_co_duong_dan_tep_thi_ghi_loi_gui()
     {
-        DB::table('xml3176_informations')->update(['signed_file_path' => null]);
+        DB::table('xml3176_informations')->update(['signed_file_path' => null, 'submitted_at' => '2026-09-29 09:00:00']);
 
         $gia = $this->chay(new SubmitXml3176Job('LK1', 'MA_DUNG'));
 
         $this->assertNull($gia->noiDung);
         $this->assertContains('không tìm thấy tệp đã ký', $this->cot('submit_error'));
+        $this->assertSame('2026-09-29 09:00:00', $this->cot('submitted_at'), 'Vet da tung gui phai con nguyen');
     }
 
     /** @test */

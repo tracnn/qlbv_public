@@ -155,12 +155,26 @@ class JobKiemTrongChuoiTest extends TestCase
     /** @test */
     public function kiem_tong_the_job_cu_van_kiem_va_dong_dau()
     {
+        // Ho so chua nap lai tu luc nang cap: chua co ma phien.
+        DB::table('xml3176_informations')->update(['chain_token' => null]);
         $checker = $this->checkerTongThe();
 
         (new CheckCompleteXml3176RecordJob('LK1'))->handle($checker);
 
         $this->assertSame(1, $checker->soLanGoi);
         $this->assertNotNull(DB::table('xml3176_informations')->value('checked_at'));
+    }
+
+    /** @test */
+    public function kiem_tong_the_job_cu_tren_ho_so_da_co_chuoi_moi_thi_thoi()
+    {
+        // setUp: ho so co chain_token = MA_DUNG, tuc da thuoc ve mot chuoi moi.
+        $checker = $this->checkerTongThe();
+
+        (new CheckCompleteXml3176RecordJob('LK1'))->handle($checker);
+
+        $this->assertSame(0, $checker->soLanGoi);
+        $this->assertNull(DB::table('xml3176_informations')->value('checked_at'));
     }
 
     /** @test */

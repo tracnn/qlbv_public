@@ -51,6 +51,7 @@ class Xml3176ChayLaiTuXuatTest extends TestCase
         ]);
 
         Queue::fake();
+        config(['xml3176.export_xml3176_enabled' => true]);
     }
 
     private function maDaDay()
@@ -85,6 +86,30 @@ class Xml3176ChayLaiTuXuatTest extends TestCase
         $this->assertSame(['LOI', 'SACH'], $this->maDaDay());
         $this->assertNotSame('MA_CU', DB::table('xml3176_informations')->where('ma_lk', 'SACH')->value('chain_token'));
         $this->assertSame('MA_CU', DB::table('xml3176_informations')->where('ma_lk', 'DA_XUAT')->value('chain_token'));
+    }
+
+    /** @test */
+    public function tat_tu_dong_xuat_thi_bao_loi_va_khong_day_gi()
+    {
+        config(['xml3176.export_xml3176_enabled' => false]);
+
+        $ma = Artisan::call('xml3176:chay-lai-tu-xuat', ['--thuc-hien' => true]);
+        $ra = Artisan::output();
+
+        $this->assertSame(1, $ma);
+        $this->assertContains('đang tắt', $ra);
+        Queue::assertNothingPushed();
+        $this->assertSame('MA_CU', DB::table('xml3176_informations')->where('ma_lk', 'SACH')->value('chain_token'));
+    }
+
+    /** @test */
+    public function ma_lk_khong_ton_tai_thi_canh_bao()
+    {
+        Artisan::call('xml3176:chay-lai-tu-xuat', ['--ma-lk' => ['SACH', 'GO_NHAM']]);
+        $ra = Artisan::output();
+
+        $this->assertContains('Không tìm thấy', $ra);
+        $this->assertContains('GO_NHAM', $ra);
     }
 
     /** @test */

@@ -20,6 +20,11 @@ use Illuminate\Console\Command;
  * nhom do - chay lai hang loat se COPY TRUNG sang Truc du lieu / Dien Bien. Can ky lai thi
  * chi dinh --ma-lk.
  *
+ * GIOI HAN: ho so nap qua duong khong cho phep xuat (cho_phep_xuat = false, thu muc xml3176tt khi
+ * exportable_tt = false) van co checked_at va exported_at rong nen bi tieu chi mac dinh chon -
+ * lenh khong phan biet duoc. O co so co duong nap do thi KHONG chay chon mac dinh, dung --ma-lk.
+ * Khi xml3176.export_xml3176_enabled tat, lenh tu choi chay.
+ *
  * Moi ho so duoc day nhan MA PHIEN MOI: chuoi cu con song cua no tu thoi, khong gui trung.
  */
 class Xml3176ChayLaiTuXuat extends Command
@@ -32,6 +37,11 @@ class Xml3176ChayLaiTuXuat extends Command
 
     public function handle()
     {
+        if (!config('xml3176.export_xml3176_enabled')) {
+            $this->error('Tự động xuất XML3176 đang tắt (xml3176.export_xml3176_enabled) — không đẩy chuỗi.');
+            return 1;
+        }
+
         $chiDinh = (array) $this->option('ma-lk');
 
         $q = Xml3176Information::query();
@@ -43,6 +53,13 @@ class Xml3176ChayLaiTuXuat extends Command
         }
 
         $danhSach = $q->orderBy('id')->pluck('ma_lk')->all();
+
+        if (!empty($chiDinh)) {
+            $khongThay = array_values(array_diff($chiDinh, $danhSach));
+            if (!empty($khongThay)) {
+                $this->warn('Không tìm thấy trong xml3176_informations: ' . implode(', ', $khongThay));
+            }
+        }
 
         $coLoi = 0;
         foreach (array_chunk($danhSach, 1000) as $lo) {

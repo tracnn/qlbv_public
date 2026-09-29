@@ -54,8 +54,7 @@ class SignXml3176Job implements ShouldQueue
         $ketQua = $xmlService->kyVaGhiTep($this->ma_lk);
 
         if ($ketQua === false) {
-            Xml3176Information::where('ma_lk', $this->ma_lk)
-                ->update(['signed_error' => 'Ký lỗi — không tìm thấy tệp chờ ký']);
+            $this->ghiNeuConHieuLuc($this->ma_lk, ['signed_error' => 'Ký lỗi — không tìm thấy tệp chờ ký']);
             $this->catChuoi();
             return;
         }

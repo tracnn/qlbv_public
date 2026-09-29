@@ -45,6 +45,14 @@ class CheckCompleteXml3176RecordJob implements ShouldQueue
             return;
         }
 
+        // Job cu (khong ma) ma ho so DA co ma phien = ho so vua nap lai sau nang cap va thuoc ve
+        // chuoi moi. Job cu chay truoc (FIFO) neu dong dau checked_at se khien lenh
+        // xml3176:chay-lai-tu-xuat gom ho so, chuoi moi bi cat va buoc xuat thay "khong co loi"
+        // - du lieu chua kiem bi ky va gui. Vi vay job cu thoi, khong kiem, khong dong dau.
+        if ($this->laJobCu() && Xml3176Information::where('ma_lk', $this->ma_lk)->whereNotNull('chain_token')->exists()) {
+            return;
+        }
+
         if (!config('organization.xml_3176_not_check', false)) {
             $xmlCompleteChecker->checkErrors($this->ma_lk);
         }

@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Services\Xml3176\QuyetDinhGui;
 use App\Models\BHYT\Xml3176Xml1;
 use App\Models\BHYT\Xml3176Xml2;
 use App\Models\BHYT\Xml3176Xml3;

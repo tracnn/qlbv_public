@@ -98,7 +98,7 @@ class ExportXml3176Job implements ShouldQueue
 
     private function dung($lyDo)
     {
-        Xml3176Information::where('ma_lk', $this->ma_lk)->update(['export_error' => $lyDo]);
+        $this->ghiNeuConHieuLuc($this->ma_lk, ['export_error' => $lyDo]);
         $this->catChuoi();
     }
 

@@ -83,8 +83,9 @@ class SubmitXml3176Job implements ShouldQueue
             $this->xmlFilePath = $thongTin->signed_file_path;
 
             if (empty($this->xmlFilePath)) {
-                $xml3176Service->storeXml3176Information($this->ma_lk, $this->macskcb, 'submit', 1,
-                    'Gửi lỗi — không tìm thấy tệp đã ký');
+                // Chi ghi submit_error: storeXml3176Information se dat submitted_at = null va xoa
+                // vet ho so tung toi cong.
+                $this->ghiNeuConHieuLuc($this->ma_lk, ['submit_error' => 'Gửi lỗi — không tìm thấy tệp đã ký']);
                 return;
             }
         }

@@ -209,9 +209,8 @@ class Xml3176Importer
             // Mot ho so = mot transaction. Hong o dau cung quay lui sach, va vi
             // deleteExistingXml3176() nam trong day nen DU LIEU CU CON NGUYEN.
             //
-            // Job kiem loi tung dong duoc dispatch BEN TRONG day la co chu dich:
-            // hang doi dung driver database tren cung connection nen rollback xoa
-            // luon cac job do.
+            // Khong co job nao duoc dispatch ben trong transaction: chuoi kiem-xuat-ky-gui chi
+            // duoc xep SAU khi commit, nen rollback khong keo theo viec xoa job trong hang doi.
             DB::transaction(function () use (
                 $danhSachFile, $danhSachLoai, $macskcb, $soluonghoso, $maPhien, &$ma_lk, &$processedFileTypes
             ) {

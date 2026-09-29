@@ -12,7 +12,7 @@
 
 - **Không còn thử lại vô hạn.** Mọi bước trong chuỗi có số lần thử giới hạn; hết lượt thì ghi lỗi vào hồ sơ. Trước đây các bước kiểm và xuất thử lại mãi, một hồ sơ độc có thể chặn đứng cả hàng đợi.
 
-- **Cứu hồ sơ đang kẹt — chạy MỘT LẦN trên máy chủ sau khi cập nhật:**
+- **Cứu hồ sơ đang kẹt — chỉ chạy SAU KHI hàng đợi kiểm đã cạn:** chờ đến khi `select count(*) from jobs where queue='JobXml3176'` trả về 0 (các job kiểm cũ còn nằm trong hàng đợi lúc cập nhật sẽ để một số hồ sơ chưa có dấu kiểm xong, chạy sớm sẽ bỏ sót chúng và làm rộng khe hở nạp lại). Lệnh an toàn khi chạy lại: mỗi lần chạy cấp mã phiên mới và chuỗi cũ tự thôi — nếu còn hồ sơ đang kiểm dở thì chạy lại sau.
 
 ```bash
 php artisan xml3176:chay-lai-tu-xuat
@@ -26,9 +26,11 @@ php artisan xml3176:chay-lai-tu-xuat --thuc-hien
 
   Hồ sơ có lỗi nghiêm trọng sẽ lại bị chặn — đúng như mong đợi. Cần ký lại vài hồ sơ sau sự cố HSM thì chỉ định `--ma-lk=... --thuc-hien`. Lệnh cố ý **không** chọn đại trà "đã xuất mà chưa ký": ở cơ sở không bật ký số, việc đó sẽ copy trùng sang Trục dữ liệu / Điện Biên.
 
+  Lệnh từ chối chạy khi `xml3176.export_xml3176_enabled` tắt. Giới hạn: hồ sơ nạp qua đường không cho phép xuất (`cho_phep_xuat=false`, thư mục xml3176tt khi `exportable_tt=false`) không phân biệt được với hồ sơ thường và sẽ bị chọn — ở cơ sở có đường nạp đó đừng chạy chọn mặc định, hãy dùng `--ma-lk`.
+
 - **Giữ nguyên:** ký không được thì vẫn ghi tệp và vẫn copy sang Trục dữ liệu / Điện Biên, chỉ không gửi cổng BHXH; tên tệp và thư mục xuất không đổi.
 
-- **Hạn chế đã biết:** bấm nút xuất tay (tải zip) đánh dấu hồ sơ là "đã xuất" dù không có gì lên cổng, nên lệnh cứu sẽ bỏ qua hồ sơ đó. Nếu job gửi của lần nạp trước đang giữa lúc gọi cổng đúng lúc nạp lại, bản cũ vẫn lên cổng rồi bản mới gửi đè — khe hở vài giây, chấp nhận.
+- **Hạn chế đã biết:** bấm nút xuất tay (tải zip) đánh dấu hồ sơ là "đã xuất" dù không có gì lên cổng, nên lệnh cứu sẽ bỏ qua hồ sơ đó. Nếu job gửi của lần nạp trước đang giữa lúc gọi cổng đúng lúc nạp lại, bản cũ vẫn lên cổng rồi bản mới gửi đè — khe hở vài giây, chấp nhận. Trên Windows, PHP không có pcntl nên `$timeout` của job không được cưỡng chế — một lệnh ký HSM/USB bị treo có thể chặn hàng đợi ký cho đến khi khởi động lại dịch vụ QLBV JobSignXml3176.
 
 - **Cài đặt:** có migration (hai cột mới) và một dịch vụ Windows mới — `update.bat` tự lo cả hai. Không đổi cấu hình bắt buộc.
 
