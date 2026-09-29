@@ -26,23 +26,41 @@
 
 - **Cần chạy migration và `queue:restart` khi triển khai.** Thiếu `queue:restart` thì tiến trình cũ vẫn chạy mã cũ và lỗi cuộc đua vẫn còn.
 
+- **Đã kiểm chứng trên prod.** Nạp lại đúng 50 hồ sơ đó lúc 12:32: cả 50 đều có dấu đã kiểm; **38 hồ sơ có lỗi nghiêm trọng bị chặn, 12 hồ sơ sạch được xuất và gửi cổng, không hồ sơ nào có lỗi nghiêm trọng mà lọt**. Việc xuất trễ sau khi nạp trung vị 48 giây — tức đã hoãn khoảng ba lượt để đợi kiểm xong, thay vì xuất ngay trong cùng giây như trước.
+
+- **Lưu ý khi đọc màn danh sách: cột "đã gửi cổng" không bị xoá khi nạp lại.** 38 hồ sơ bị chặn ở trên vẫn hiện giờ gửi 11:17 — đó là lần gửi **thật** buổi sáng bằng mã cũ, trước khi sửa. Bản sửa chặn lần gửi mới, không rút lại được lần đã gửi. Cố ý giữ dấu này để còn đối soát với BHXH hồ sơ nào đã từng lên cổng.
+
 - **Gỡ bỏ cơ chế bỏ qua rà lỗi cho hồ sơ dịch vụ (mã đối tượng 9). Từ nay MỌI hồ sơ đều được kiểm trước khi lên cổng.** Cơ chế cũ có từ 10/09: hồ sơ khai mã đối tượng khám chữa bệnh bằng 9 — tức không phải bảo hiểm y tế — thì phần mềm không đẩy việc rà lỗi, nên chúng đi thẳng qua bước xuất và gửi cổng mà không ai kiểm. Nay bỏ hẳn: không còn khoá cấu hình, không còn đường rẽ nào bỏ qua rà lỗi.
 
 - **Hồ sơ cũ không tự được kiểm lại.** Quy tắc chỉ chạy lúc nạp hồ sơ, nên **32.882 hồ sơ mã 9 đang có trong cơ sở dữ liệu vẫn chưa được rà cho tới khi nạp lại**. Phần mềm chưa có lệnh "kiểm lại" nào; muốn có lỗi thì phải nạp lại qua màn nhập như thường lệ.
 
 - **Lượng cảnh báo sẽ tăng rất mạnh, và đó là điều đã lường trước.** Hồ sơ mã 9 chiếm **32.882 trên 36.272, tức 90,7%** toàn bộ dữ liệu, trong khi mọi quy tắc hiện có đều được viết cho hồ sơ bảo hiểm y tế. Lần đo hồi 10/09 cho thấy riêng nhóm này sinh 97% tổng số lỗi của hệ thống. Khi rà xong, hãy đọc theo mốc đã ghi ở mục 10/09: **một quy tắc báo trên 20% số dòng thì gần như chắc chắn là quy tắc sai, không phải dữ liệu sai** — nhiều quy tắc bảo hiểm áp lên hồ sơ dịch vụ sẽ rơi đúng vào trường hợp đó và cần được tắt riêng qua màn danh mục mã lỗi.
 
-- **CẢNH BÁO trước khi đụng vào cấu hình xuất XML.** Hiện `export_xml_not_check` đang bật, nghĩa là bước xuất **bỏ qua** kiểm tra lỗi nghiêm trọng, nên việc gỡ cổng không chặn hồ sơ nào. Nhưng hồ sơ mã 9 đang mang sẵn **327.939 dòng lỗi nghiêm trọng cũ** (ghi trước ngày 10/09). Nếu tắt `export_xml_not_check` mà chưa dọn số lỗi cũ này, **27.848 hồ sơ sẽ bị chặn xuất ngay lập tức**.
+- **`export_xml_not_check` đã được tắt trên prod ngày 28/09**, tức bước xuất nay thật sự chặn hồ sơ có lỗi nghiêm trọng.
 
-- **Một quy tắc có thể dùng lại.** Quy tắc "hồ sơ mã 9 nhưng vẫn khai mã thẻ BHYT" từng bị bỏ hôm 11/09 vì khi đó hồ sơ mã 9 không bao giờ được kiểm, nên nó là mã chết. Nay nó dùng lại được. Đợt này cố ý chưa khôi phục, ghi lại để khi cần thì biết.
+- **Đính chính: 327.939 dòng lỗi nghiêm trọng cũ KHÔNG chặn được hồ sơ nào, không cần dọn.** Bản trước của mục này cảnh báo rằng tắt `export_xml_not_check` sẽ chặn xuất ngay 27.848 hồ sơ mã 9 đang mang các dòng lỗi đó (ghi trước ngày 10/09). Cảnh báo ấy sai. Bước xuất XML3176 **chỉ** chạy ngay sau lúc nạp hồ sơ, không có đường xuất lại nào khác. Mà nạp lại thì phần mềm **xoá sạch lỗi cũ** của hồ sơ trước khi kiểm lại. Vậy không nạp lại thì không có lần xuất nào để chặn, còn nạp lại thì lỗi cũ đã mất. Các dòng lỗi cũ chỉ còn hiện trên màn danh sách và bản xuất Excel.
 
-- **Cài đặt: không có migration, không đổi cấu hình bắt buộc.** Chỉ cần đẩy mã rồi:
+- **Một quy tắc có thể dùng lại.** Quy tắc "hồ sơ mã 9 nhưng vẫn khai mã thẻ BHYT" từng bị bỏ hôm 11/09 vì khi đó hồ sơ mã 9 không bao giờ được kiểm, nên nó là mã chết. Nay nó dùng lại được. Đợt này cố ý chưa khôi phục, ghi lại để khi cần thì biết. Đo ngày 29/09: **0 hồ sơ** có mã thẻ mà khai mã 9, nên khôi phục lúc này cũng chưa bắt được gì.
+
+- **Tài liệu quy trình vận hành Tiền giám định XML 3176** (bản dự thảo 0.1 để các khoa, phòng góp ý): `docs/quy-trinh-van-hanh/Quy-trinh-van-hanh-XML3176.docx`. Gồm mục đích, ba nguyên tắc, vai trò, sơ đồ luồng tổng thể chia làn theo vai trò, sơ đồ xử lý một lỗi, các bước chi tiết, xử lý theo mức lỗi, lịch vận hành đề xuất, chỉ số theo dõi, các việc cần chốt, và phụ lục tra nhanh màn hình cùng công tắc cấu hình cho CNTT. Nguồn dựng lại ở `docs/quy-trinh-van-hanh/_nguon/`.
+
+- **Cài đặt cho cả ngày 28/09: CÓ migration** (cột dấu đã kiểm xong). Không đổi cấu hình bắt buộc:
 
 ```bash
-php artisan config:clear && php artisan queue:restart
+php artisan migrate && php artisan config:clear && php artisan queue:restart
 ```
 
-  Thiếu `queue:restart` thì tiến trình hàng đợi vẫn chạy mã cũ và hồ sơ mã 9 tiếp tục không được rà, trong im lặng.
+  Thiếu `queue:restart` thì tiến trình hàng đợi vẫn chạy mã cũ: hồ sơ mã 9 tiếp tục không được rà, và bước xuất vẫn thắng cuộc đua với bước kiểm — cả hai đều trong im lặng.
+
+# 25/09/2026
+
+- **Quy tắc mới: mã đối tượng 1.7 nhưng không phải trẻ sơ sinh.** Mã lỗi `XML1_DOI_TUONG_KCB_KHONG_PHAI_SO_SINH`. Mã 1.7 là "trẻ sơ sinh phải điều trị ngay sau khi sinh ra", nên người bệnh phải **không quá 28 ngày tuổi lúc vào viện**. Bắt nguồn từ hồ sơ BHXH trả về: `000007199029`, người bệnh sinh năm 1973 mà khai 1.7. Ngày sinh chỉ có năm hoặc ngày vào viện hỏng thì im lặng.
+
+- **Mức NGHIÊM TRỌNG, chặn xuất** — khác các mã đối tượng khác vốn chỉ cảnh báo. Lý do: BHXH chắc chắn từ chối hồ sơ này, gửi lên chỉ mất công sửa lại. Trên 42 hồ sơ khai 1.7: bắt đúng 2 người lớn (`000007199029`, `000006936966`), 40 trẻ sơ sinh thật không bị báo. Migration nạp mã lỗi; người vận hành đã chỉnh mức thì chạy lại không ghi đè.
+
+- **"Diễn biến điều trị trùng nhau" chỉ còn báo khi trùng trong cùng một ngày.** Quy tắc `XML5_DIEN_BIEN_DUPLICATE` trước đây so với mọi dòng trước đó của cả hồ sơ, nên báo nhầm diễn biến thường quy lặp lại qua các ngày ("Thuốc thường quy; CSC3: Chăm sóc cấp 3..."). Nay chỉ so với dòng cùng ngày theo `THOI_DIEM_DBLS`; thiếu thời điểm thì không báo; mô tả lỗi ghi rõ ngày. Trên 52.069 dòng thật: **2.846 dòng / 553 hồ sơ còn 347 dòng / 161 hồ sơ.**
+
+- **Bỏ giới hạn "người dùng không phải quản trị chỉ thấy hồ sơ mình tự nạp".** 35.789 trên 35.803 hồ sơ do hệ thống **tự nạp** (không có người nạp), nên 13 tài khoản xem XML không phải quản trị gần như **không thấy hồ sơ nào** trên màn danh sách lẫn ba nút xuất Excel. Nay mọi tài khoản có quyền vào màn hình đều thấy toàn bộ hồ sơ; ô lọc "Người nạp" vẫn dùng được khi muốn. Tài liệu hướng dẫn sử dụng, slide đào tạo và tài liệu tổng hợp đã sửa theo.
 
 # 16/09/2026
 
