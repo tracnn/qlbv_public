@@ -7,121 +7,113 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 
+use App\Jobs\Concerns\ThuocChuoiXml3176;
 use App\Services\Xml3176Service;
 use App\Models\BHYT\Xml3176ErrorResult;
-use App\Models\BHYT\Xml3176Xml1;
 use App\Models\BHYT\Xml3176Information;
+use App\Models\BHYT\Xml3176Xml1;
 
+/**
+ * Buoc XUAT cua chuoi kiem -> xuat -> ky -> gui: mot cua kiem roi ghi tep cho ky.
+ *
+ * Job chi chay SAU buoc kiem tong the vi no nam sau buoc do trong cung mot chuoi
+ * (Xml3176ChuoiXuLy). Truoc 29/09/2026 job chay song song voi buoc kiem va phai cho theo thoi
+ * gian (15s x 10); ngay nap lo 29/09 hang doi kiem ton toi 90 phut, 1.934 ho so sach het luot
+ * cho va khong len cong.
+ *
+ * Moi lan DUNG co chu dich deu ghi ly do vao export_error roi cat chuoi - khong nem, vi nem
+ * la ton luot thu cho mot viec khong he hong.
+ */
 class ExportXml3176Job implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels, ThuocChuoiXml3176;
 
-    /** So lan toi da hoan lai de cho kiem loi xong (10 x 15s = 2,5 phut). */
-    const SO_LAN_CHO_TOI_DA = 10;
+    /** Thu lai huu han - queue:work mac dinh thu lai vo han. */
+    public $tries = 2;
 
-    /** Giay cho moi lan hoan lai. */
-    const GIAY_CHO_MOI_LAN = 15;
+    /** Phai nho hon retry_after (300) cua ket noi database. */
+    public $timeout = 120;
 
     protected $ma_lk;
 
-    /** So lan job nay da hoan lai de cho kiem loi xong. */
-    protected $soLanCho;
-
-    /**
-     * Create a new job instance.
-     *
-     * @return void
-     */
-    public function __construct($ma_lk, $soLanCho = 0)
+    public function __construct($ma_lk, $chainToken = null)
     {
         $this->ma_lk = $ma_lk;
-        $this->soLanCho = $soLanCho;
+        $this->chainToken = $chainToken;
     }
 
-    /**
-     * Execute the job.
-     *
-     * @return void
-     */
     public function handle(Xml3176Service $xmlService)
     {
-        // Kiểm tra nếu không có lỗi nghiêm trọng trước khi xuất XML
-        $hasCriticalError = Xml3176ErrorResult::where('ma_lk', $this->ma_lk)
-            ->where('critical_error', true)
-            ->exists();
-
-        // Lấy hồ sơ XML theo ma_lk
-        $xmlRecord = Xml3176Xml1::where('ma_lk', $this->ma_lk)->first();
-
-        // Kiểm tra nếu hồ sơ tồn tại và ngay_ra hợp lệ (đúng độ dài format YmdHi)
-        if ($xmlRecord && $xmlRecord->ngay_ra && strlen($xmlRecord->ngay_ra) == 12) {
-            try {
-                if (Carbon::createFromFormat('YmdHi', $xmlRecord->ngay_ra)->gt(Carbon::now())) {
-                    // Nếu ngay_ra lớn hơn thời điểm hiện tại, không xuất hồ sơ XML
-                    return;
-                }
-            } catch (\Exception $e) {
-                \Log::warning('Invalid date format for ngay_ra: ' . $xmlRecord->ngay_ra);
-            }
-        }
-
-        // CHO kiem loi xong moi duoc hoi "co loi nghiem trong khong".
-        //
-        // Buoc kiem loi chay tren hang doi JobXml3176, buoc xuat chay tren
-        // JobExportXml3176: hai worker chay song song va worker xuat thuong
-        // thang cuoc dua. Do ngay 28/09/2026: ca 50 ho so xuat luc 11:17:38,
-        // dong loi nghiem trong dau tien mai 11:17:39 - 11:17:42 moi duoc ghi,
-        // nen $hasCriticalError o tren la false cho MOI ho so, ca 50 deu duoc
-        // xuat, ky so va gui cong du dang bat kiem loi.
-        if ($this->phaiChoKiemLoi()) {
-            if ($this->soLanCho < self::SO_LAN_CHO_TOI_DA) {
-                static::dispatch($this->ma_lk, $this->soLanCho + 1)
-                    ->onQueue(config('xml3176.export_queue_name'))
-                    ->delay(Carbon::now()->addSeconds(self::GIAY_CHO_MOI_LAN));
-                return;
-            }
-
-            // Het luot cho: chon huong AN TOAN la KHONG xuat. Yeu cau van hanh la
-            // moi ho so phai duoc kiem truoc khi len cong BHXH, nen tha khong gui
-            // con hon gui mot ho so chua ai kiem. Nguoi van hanh nap lai ho so la
-            // job kiem chay lai.
-            $giay = self::SO_LAN_CHO_TOI_DA * self::GIAY_CHO_MOI_LAN;
-            Xml3176Information::where('ma_lk', $this->ma_lk)->update([
-                'export_error' => 'Không xuất: chờ ' . $giay . ' giây mà bước kiểm lỗi chưa xong.',
-            ]);
-            \Log::warning('ExportXml3176Job: het luot cho kiem loi, khong xuat ma_lk ' . $this->ma_lk);
+        if ($this->laJobCu()) {
+            // Job dang cu (vong cho 15s x 10) con nam trong hang doi luc nang cap. Phia sau no
+            // khong con buoc nao; lenh xml3176:chay-lai-tu-xuat gom ho so nay lai.
+            Log::info('ExportXml3176Job: job dang cu, bo qua ma_lk ' . $this->ma_lk);
             return;
         }
 
-        if (config('organization.export_xml_not_check')) {
-            $xmlService->processExportXml($this->ma_lk);
-        } else {
-            if (!$hasCriticalError) {
-                $xmlService->processExportXml($this->ma_lk);
+        if (!$this->conHieuLuc($this->ma_lk)) {
+            $this->catChuoi();
+            return;
+        }
+
+        $thongTin = Xml3176Information::where('ma_lk', $this->ma_lk)->first();
+
+        if (empty($thongTin->checked_at)) {
+            $this->dung('Không xuất: hồ sơ chưa kiểm xong');
+            return;
+        }
+
+        $xml1 = Xml3176Xml1::where('ma_lk', $this->ma_lk)->first();
+
+        if ($xml1 && $this->ngayRaOTuongLai($xml1->ngay_ra)) {
+            $this->dung('Không xuất: ngày ra (' . $xml1->ngay_ra . ') sau thời điểm xuất');
+            return;
+        }
+
+        if (!config('organization.export_xml_not_check')) {
+            $soLoi = Xml3176ErrorResult::where('ma_lk', $this->ma_lk)
+                ->where('critical_error', true)
+                ->count();
+
+            if ($soLoi > 0) {
+                $this->dung('Không xuất: còn ' . $soLoi . ' lỗi nghiêm trọng');
+                return;
             }
+        }
+
+        if (!$xmlService->xuatTepChoKy($this->ma_lk)) {
+            $this->dung('Xuất lỗi — không dựng được dữ liệu XML của hồ sơ');
         }
     }
 
-    /**
-     * Da bat kiem loi ma ho so nay chua kiem xong?
-     *
-     * Chi cho khi buoc kiem tong the THUC SU chay: neu co so tat
-     * xml_3176_not_check thi khong co ai dat checked_at ca, cho la treo vinh vien.
-     */
-    private function phaiChoKiemLoi()
+    public function failed(\Throwable $e)
     {
-        if (config('organization.export_xml_not_check')) {
+        Log::error('ExportXml3176Job that bai: ' . $e->getMessage(), ['ma_lk' => $this->ma_lk]);
+
+        $this->ghiNeuConHieuLuc($this->ma_lk, ['export_error' => 'Xuất lỗi — ' . $e->getMessage()]);
+    }
+
+    private function dung($lyDo)
+    {
+        Xml3176Information::where('ma_lk', $this->ma_lk)->update(['export_error' => $lyDo]);
+        $this->catChuoi();
+    }
+
+    /** ngay_ra dang YmdHi (12 ky tu). Sai dang thi coi nhu khong o tuong lai, nhu truoc day. */
+    private function ngayRaOTuongLai($ngayRa)
+    {
+        if (!$ngayRa || strlen($ngayRa) != 12) {
             return false;
         }
 
-        if (config('organization.xml_3176_not_check', false)) {
+        try {
+            return Carbon::createFromFormat('YmdHi', $ngayRa)->gt(Carbon::now());
+        } catch (\Exception $e) {
+            Log::warning('Invalid date format for ngay_ra: ' . $ngayRa);
             return false;
         }
-
-        return !Xml3176Information::where('ma_lk', $this->ma_lk)
-            ->whereNotNull('checked_at')
-            ->exists();
     }
 }
