@@ -87,8 +87,9 @@ class Xml3176Xml1DoiTuongKcbTest extends TestCase
     /** @test */
     public function khong_co_the_nhung_chua_de_nghi_quy_tra_thi_im_lang()
     {
-        // Cap cuu la ngoai le da biet: chuan cho phep tra cuu the truoc khi ra vien.
-        // Chi mau thuan that khi doi quy tra ma khong co the.
+        // Quy tac NAY chi nhan T_BHTT > 0. Phan T_BHTT = 0 (ke ca cap cuu) thuoc
+        // XML1_DOI_TUONG_KCB_KHONG_THE_SAI_MA tu 29/09/2026 - xem
+        // Xml3176Xml1DoiTuongKcbKhongTheTest.
         $this->assertNotContains('XML1_DOI_TUONG_KCB_THIEU_THE_BHYT',
             $this->codes(['ma_doituong_kcb' => '2', 'ma_the_bhyt' => '', 't_bhtt' => null]));
 

@@ -1,3 +1,19 @@
+# 29/09/2026
+
+- **Quy tắc mới: không có mã thẻ BHYT thì mã đối tượng phải là 9.** Mã lỗi `XML1_DOI_TUONG_KCB_KHONG_THE_SAI_MA`. Hồ sơ để trống `MA_THE_BHYT` mà khai mã đối tượng khác 9 (người bệnh không KCB BHYT) là khai sai đối tượng. **Không miễn trường hợp nào**, kể cả cấp cứu (mã 2).
+
+- **Đo trên 41.759 hồ sơ: 342 hồ sơ vi phạm (0,82%)** — mã 3.1: 225, mã 1.17: 100, mã 2: 12, mã 1.1: 4, mã 3.6: 1. Đã chạy chính hàm kiểm trên toàn bộ dữ liệu thật và ra đúng 342, khớp với phép đếm trực tiếp. Tỉ lệ thấp xa mốc 20%, nên đây là dữ liệu sai thật chứ không phải quy tắc báo oan.
+
+- **Chia địa phận với quy tắc cũ, mỗi hồ sơ ra đúng một dòng lỗi.** Quy tắc `XML1_DOI_TUONG_KCB_THIEU_THE_BHYT` có sẵn chỉ báo khi không thẻ mà vẫn **đề nghị quỹ thanh toán** (`T_BHTT > 0`) — lỗi nặng hơn, giữ nguyên. Quy tắc mới chỉ nhận phần `T_BHTT = 0`. Cả 342 hồ sơ trên đều `T_BHTT = 0`, nên trước nay quy tắc cũ **không bắt được hồ sơ nào** trong số đó.
+
+- **Mức cảnh báo, không chặn xuất**, giống các mã đối tượng khác. Muốn chặn thì nâng lên qua màn danh mục mã lỗi.
+
+- **Mã thẻ chỉ gồm khoảng trắng nay được coi là không có thẻ.** Trước đây chuỗi khoảng trắng bị tính là "có thẻ" nên lọt qua mọi quy tắc về thẻ.
+
+- **Triển khai: bắt buộc chạy migration trước.** Thiếu dòng danh mục mã lỗi thì hệ thống mặc định coi mã mới là nghiêm trọng, và lần nổ đầu tiên sẽ tự ghi dòng danh mục ở mức nghiêm trọng — **chặn xuất cả 342 hồ sơ**. Sau đó chạy `queue:restart`.
+
+- **342 hồ sơ cũ không tự được kiểm lại.** Quy tắc chỉ chạy lúc nạp; muốn có lỗi thì nạp lại qua màn nhập.
+
 # 28/09/2026
 
 - **Sửa lỗi hồ sơ vẫn lên cổng dù đã bật kiểm lỗi trước khi xuất.** Bước kiểm lỗi chạy trên hàng đợi `JobXml3176`, bước xuất chạy trên `JobExportXml3176` — hai tiến trình riêng, chạy song song, và tiến trình xuất gần như luôn thắng cuộc đua. Khi nó hỏi "hồ sơ này có lỗi nghiêm trọng không" thì bảng lỗi còn trống, nên câu trả lời là không, và hồ sơ được xuất, ký số, gửi cổng. Đo trên dữ liệu thật: 50 hồ sơ nạp lúc 11:17:38 đều **được xuất lúc 11:17:38**, còn dòng lỗi nghiêm trọng đầu tiên mãi 11:17:39–11:17:42 mới được ghi. Tức khoá `export_xml_not_check` không hỏng — nó được hỏi vào đúng lúc chưa có gì để thấy.

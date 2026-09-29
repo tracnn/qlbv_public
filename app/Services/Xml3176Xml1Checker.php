@@ -1018,7 +1018,7 @@ class Xml3176Xml1Checker
         }
 
         $coNoiDi = !empty($data->ma_noi_di);
-        $coThe   = !empty($data->ma_the_bhyt);
+        $coThe   = trim((string) $data->ma_the_bhyt) !== ''; // chuoi toan khoang trang la KHONG co the
         $tBhtt   = (float) $data->t_bhtt;
 
         // Ma doi hoi phai co co so noi chuyen nguoi benh di (hien chi ma 1.3).
@@ -1166,9 +1166,9 @@ class Xml3176Xml1Checker
         // quy tac do dung lai duoc. Chua dung lai: ngoai pham vi dot go cong.
         $khongBhyt = (bool) DoiTuongKcbCatalog::thuocTinh($ma, $danhMuc, 'khong_bhyt', false);
 
-        // Doi quy thanh toan ma khong co the moi la mau thuan. Cap cuu chua xuat trinh
-        // the la ngoai le da biet - chuan cho phep tra cuu the truoc khi nguoi benh ra
-        // vien - nen chi bao khi T_BHTT > 0.
+        // Doi quy thanh toan ma khong co the. Truoc 29/09/2026 day la nhanh DUY NHAT bao
+        // ho so khong the, va cap cuu chua xuat trinh the duoc mien khi T_BHTT = 0. Nay
+        // phan T_BHTT = 0 thuoc KHONG_THE_SAI_MA ngay duoi, khong mien ai.
         if (!$khongBhyt && !$coThe && $tBhtt > 0) {
             $errorCode = $this->generateErrorCode('DOI_TUONG_KCB_THIEU_THE_BHYT');
             $errors->push((object)[
@@ -1177,6 +1177,25 @@ class Xml3176Xml1Checker
                 'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
                 'description' => 'Mã đối tượng ' . $ma . ' đề nghị quỹ thanh toán '
                     . number_format($tBhtt) . ' đồng nhưng MA_THE_BHYT để trống',
+            ]);
+        }
+
+        // Khong co the BHYT thi ma doi tuong phai la loai khong KCB BHYT (ma 9). Chia dia
+        // phan voi THIEU_THE_BHYT ngay tren: T_BHTT > 0 thuoc quy tac do (nang hon), o day
+        // chi T_BHTT = 0 - moi ho so ra dung MOT dong loi. Khong mien cap cuu (ma 2):
+        // nguoi dung chot ngay 29/09/2026.
+        //
+        // Do 29/09/2026: 342/41.759 ho so khong the khai ma khac 9 (3.1: 225, 1.17: 100,
+        // 2: 12, 1.1: 4, 3.6: 1), ca 342 deu T_BHTT = 0 nen quy tac tren bat duoc 0.
+        if (!$khongBhyt && !$coThe && $tBhtt <= 0) {
+            $errorCode = $this->generateErrorCode('DOI_TUONG_KCB_KHONG_THE_SAI_MA');
+            $errors->push((object)[
+                'error_code' => $errorCode,
+                'error_name' => 'Không có mã thẻ BHYT nhưng mã đối tượng không phải 9',
+                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+                'description' => 'MA_THE_BHYT để trống nhưng mã đối tượng khai là ' . $ma
+                    . ' (' . DoiTuongKcbCatalog::thuocTinh($ma, $danhMuc, 'ten') . '). '
+                    . 'Không có thẻ BHYT thì mã đối tượng phải là 9 - Người bệnh không KCB BHYT',
             ]);
         }
 

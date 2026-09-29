@@ -4,14 +4,14 @@ use Illuminate\Database\Seeder;
 use App\Models\BHYT\Xml3176ErrorCatalog;
 
 /**
- * Nap 13 error_code cua bo quy tac ma doi tuong den KCB (Phu luc 1 do Bo Y te ban hanh).
+ * Nap 14 error_code cua bo quy tac ma doi tuong den KCB (Phu luc 1 do Bo Y te ban hanh).
  *
  * BAT BUOC chay TRUOC khi bat quy tac: thieu dong danh muc thi
  * getCriticalErrorStatus() tra mac dinh TRUE, quy tac no lan dau se TU GHI dong danh muc
  * o muc nghiem trong va chan xuat XML ca lo - chay seeder sau do cung khong go duoc cac
  * dong loi da ghi. Vi vay co mot migration goi seeder nay.
  *
- * Muc nghiem trong duoc dat khong chan xuat XML cho ca 13 ma: dot nay do duoc 3 ho so vi
+ * Muc nghiem trong duoc dat khong chan xuat XML cho ca 14 ma: dot nay do duoc 3 ho so vi
  * pham tren 1.213, ba quy tac o XMLComplete chua co ho so nao de chay. Nguoi van hanh tu
  * bat len qua man danh muc ma loi sau khi quan sat.
  *
@@ -29,7 +29,8 @@ class Xml3176ErrorCatalogDoiTuongKcbSeeder extends Seeder
             ['XML1', 'XML1_DOI_TUONG_KCB_NGOAI_DANH_MUC', 'Mã đối tượng KCB ngoài danh mục', 'Mã đối tượng KCB phải thuộc danh mục 27 mã do Bộ Y tế ban hành'],
             ['XML1', 'XML1_DOI_TUONG_KCB_THIEU_NOI_DI', 'Đến KCB có phiếu chuyển nhưng thiếu mã nơi chuyển đi', 'Mã 1.3 là đến KCB có phiếu chuyển cơ sở nên MA_NOI_DI không được để trống'],
             ['XML1', 'XML1_DOI_TUONG_KCB_TU_DEN_CO_NOI_DI', 'Người bệnh tự đến nhưng lại có mã nơi chuyển đi', 'Các mã tự đến (1.11-1.18, 3.1, 3.2, 3.3, 3.6) thì MA_NOI_DI phải để trống'],
-            ['XML1', 'XML1_DOI_TUONG_KCB_THIEU_THE_BHYT', 'Đề nghị quỹ BHYT thanh toán nhưng không có mã thẻ', 'Chỉ báo khi T_BHTT > 0; cấp cứu chưa xuất trình thẻ là ngoại lệ đã biết'],
+            ['XML1', 'XML1_DOI_TUONG_KCB_THIEU_THE_BHYT', 'Đề nghị quỹ BHYT thanh toán nhưng không có mã thẻ', 'Chỉ báo khi T_BHTT > 0; phần T_BHTT = 0 thuộc XML1_DOI_TUONG_KCB_KHONG_THE_SAI_MA'],
+            ['XML1', 'XML1_DOI_TUONG_KCB_KHONG_THE_SAI_MA', 'Không có mã thẻ BHYT nhưng mã đối tượng không phải 9', 'MA_THE_BHYT để trống thì mã đối tượng phải là 9 (người bệnh không KCB BHYT); chỉ báo khi T_BHTT = 0, phần T_BHTT > 0 thuộc XML1_DOI_TUONG_KCB_THIEU_THE_BHYT'],
             ['XML1', 'XML1_DOI_TUONG_KCB_THIEU_GIAY_CHUYEN_TUYEN', 'Thiếu số phiếu chuyển cơ sở KCB hoặc số phiếu hẹn khám lại', 'Mã 1.3 và 1.5 khai sẵn là đến kèm một tờ phiếu nên GIAY_CHUYEN_TUYEN phải ghi số phiếu đó'],
             ['XML1', 'XML1_DOI_TUONG_KCB_DKBD_KHAC_CSKCB', 'Đến đúng nơi đăng ký ban đầu nhưng MA_DKBD khác MA_CSKCB', 'Mã 1.1: mọi mã trong MA_DKBD phải bằng MA_CSKCB'],
             ['XML1', 'XML1_DOI_TUONG_KCB_THIEU_MA_KHUVUC', 'Thiếu mã khu vực', 'Mã 3.6: MA_KHUVUC không được để trống'],

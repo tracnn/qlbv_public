@@ -12,18 +12,22 @@ class Xml3176ErrorCatalogDoiTuongKcbSeederTest extends TestCase
     }
 
     /** @test */
-    public function seeder_khai_du_13_ma_loi()
+    public function seeder_khai_du_14_ma_loi()
     {
         $src = $this->nguon();
 
         // Khong co XML1_DOI_TUONG_KCB_KHONG_BHYT_CO_THE: quy tac do bo tu 11/09/2026.
         // Cong chan ho so ma 9 da go ngay 28/09/2026 nen quy tac do dung lai duoc; them
-        // lai thi con so 13 o duoi phai tang theo.
+        // lai thi con so 14 o duoi phai tang theo.
+        //
+        // KHONG doi so nay thanh count(...) doc tu seeder: no la chot an toan co y, bat
+        // ai do lang le xoa mot ma khoi seeder.
         $ma = [
             'XML1_DOI_TUONG_KCB_NGOAI_DANH_MUC',
             'XML1_DOI_TUONG_KCB_THIEU_NOI_DI',
             'XML1_DOI_TUONG_KCB_TU_DEN_CO_NOI_DI',
             'XML1_DOI_TUONG_KCB_THIEU_THE_BHYT',
+            'XML1_DOI_TUONG_KCB_KHONG_THE_SAI_MA',
             'XML1_DOI_TUONG_KCB_THIEU_GIAY_CHUYEN_TUYEN',
             'XML1_DOI_TUONG_KCB_DKBD_KHAC_CSKCB',
             'XML1_DOI_TUONG_KCB_THIEU_MA_KHUVUC',
@@ -35,7 +39,7 @@ class Xml3176ErrorCatalogDoiTuongKcbSeederTest extends TestCase
             'XMLComplete_DOI_TUONG_KCB_LINH_THUOC_CO_TIEN_KHAM',
         ];
 
-        $this->assertCount(13, $ma);
+        $this->assertCount(14, $ma);
 
         foreach ($ma as $m) {
             $this->assertContains($m, $src, "Seeder thieu ma $m");
