@@ -1748,6 +1748,103 @@ class Xml3176Service
     }
 
     /**
+     * Duong dan tep cho ky cua mot ho so, tren disk 'local' (storage/app).
+     *
+     * Disk 'local' co san o moi co so; config/filesystems.php bi gitignore nen khong them
+     * disk moi duoc. KHONG dat trong disk exportXml3176 hay disk cua cac dich vu quet Truc du
+     * lieu / Dien Bien (chung doc allFiles()), de tep CHUA KY khong bi nhat nham.
+     *
+     * Ten co dinh theo ho so: xuat lai la ghi de, chay lai an toan. ma_lk den tu tep XML ben
+     * ngoai nen phai lam sach - ghep thang '../' vao duong dan la mo loi thoat ra ngoai.
+     */
+    public static function duongDanChoKy($ma_lk)
+    {
+        return 'xml3176-cho-ky/' . preg_replace('/[^A-Za-z0-9_-]/', '_', (string) $ma_lk) . '.xml';
+    }
+
+    /**
+     * Buoc XUAT cua chuoi: dung XML cua ho so va ghi ra tep cho ky.
+     *
+     * getDataForXmlExport() ghi exported_at va xoa export_error - giu nhu truoc day.
+     *
+     * @return bool false khi khong dung duoc du lieu XML
+     */
+    public function xuatTepChoKy($ma_lk)
+    {
+        $xmlData = $this->getDataForXmlExport($ma_lk);
+
+        if (!$xmlData) {
+            \Log::error('Khong dung duoc du lieu XML cho ma_lk: ' . $ma_lk);
+            return false;
+        }
+
+        Storage::disk('local')->put(self::duongDanChoKy($ma_lk), $xmlData);
+
+        return true;
+    }
+
+    /**
+     * Buoc KY cua chuoi: doc tep cho ky, ky, ghi tep dung cho va dung ten nhu truoc day,
+     * copy sang cong ngoai, ghi duong dan cho buoc gui, xoa tep cho ky.
+     *
+     * Ky KHONG duoc van ghi tep (noi dung chua ky) va van copy - giu nguyen hanh vi truoc
+     * day; chi khong gui cong BHXH, viec do SignXml3176Job quyet dinh qua QuyetDinhGui.
+     *
+     * @return array|false ['isSigned' => bool, 'macskcb' => string]; false khi khong co tep cho ky
+     * @throws \RuntimeException khi khong ghi duoc tep dich - de job thu lai roi failed() ghi loi
+     */
+    public function kyVaGhiTep($ma_lk)
+    {
+        $duongDanChoKy = self::duongDanChoKy($ma_lk);
+
+        if (!Storage::disk('local')->exists($duongDanChoKy)) {
+            return false;
+        }
+
+        $xmlData = Storage::disk('local')->get($duongDanChoKy);
+
+        $xmlDataSigned = $this->xmlSignService->signXml($xmlData);
+        $isSigned = $xmlDataSigned['isSigned'];
+        $signMethod = $xmlDataSigned['method'] ?? null;
+
+        if ($xmlDataSigned) {
+            $xmlData = $xmlDataSigned['data'];
+        }
+
+        $macskcb = $this->getXmlInformation($ma_lk)->macskcb;
+        $signedError = $xmlDataSigned['error'] ?? null;
+
+        $this->storeXml3176Information($ma_lk, $macskcb, 'sign', 1, null, $isSigned, $signedError, null, $signMethod);
+
+        // Ten tep va thu muc GIU NGUYEN nhu processExportXml() truoc day: co the co phan mem
+        // khac dang doc thu muc nay.
+        $fileName = date('Y.m.d_H.i.s') . '_' . $ma_lk . '.xml';
+        $directoryPath = config('xml3176.export_to_directory_by_day')
+            ? date('Ymd') . '/' . $macskcb
+            : $macskcb;
+
+        if ($directoryPath && !Storage::disk('exportXml3176')->exists($directoryPath)) {
+            Storage::disk('exportXml3176')->makeDirectory($directoryPath);
+        }
+
+        $filePath = $directoryPath ? $directoryPath . '/' . $fileName : $fileName;
+
+        if (!Storage::disk('exportXml3176')->put($filePath, $xmlData)) {
+            throw new \RuntimeException('Khong ghi duoc tep XML: ' . $filePath);
+        }
+
+        // Moi cong tu kiem co CUA RIENG NO. Loi copy da duoc bat va ghi log ben trong.
+        $fileCopy = app(FileCopyService::class);
+        $fileCopy->copyExportXml3176ToTrucDuLieuYTe($filePath);
+        $fileCopy->copyExportXml3176ToCongDuLieuYTeDienBien($filePath);
+
+        Xml3176Information::where('ma_lk', $ma_lk)->update(['signed_file_path' => $filePath]);
+        Storage::disk('local')->delete($duongDanChoKy);
+
+        return ['isSigned' => (bool) $isSigned, 'macskcb' => $macskcb];
+    }
+
+    /**
      * Quy trình xử lý hồ sơ
      * Ký tên đóng dấu đợi chờ thông tin
      * Xuất ra tệp gởi niềm tin
