@@ -14,6 +14,7 @@ class Xml3176Information extends Model
         'soluonghoso',
         'imported_at',
         'checked_at',
+        'chain_token',
         'exported_at',
         'import_error',
         'export_error',
@@ -24,6 +25,7 @@ class Xml3176Information extends Model
         'submit_error',
         'is_signed',
         'sign_method',
+        'signed_file_path',
         'signed_error',
         'submitted_message',
     ];

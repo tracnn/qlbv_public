@@ -964,6 +964,9 @@ class Xml3176Service
                 // thay dau cu cua lan nap truoc, khong cho, va lai xuat truoc khi
                 // cac job kiem cua lan nap NAY ghi xong loi.
                 $values['checked_at'] = null;
+                // Tep da ky cua lan nap truoc khong con dung voi du lieu moi. De lai thi mot
+                // job gui lot qua se gui tep cu.
+                $values['signed_file_path'] = null;
             } elseif ($operationType === 'export') {
                 $values['exported_at'] = Carbon::now();
                 $values['export_error'] = $error;

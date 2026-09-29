@@ -35,6 +35,7 @@ return [
     'queue_name' => 'JobXml3176', //Job name chung cho các job 3176 (check lỗi, complete, v.v.)
     'export_queue_name' => 'JobExportXml3176', //Job name riêng cho việc export XML 3176
     'submit_queue_name' => 'JobSubmitXml3176', //Job name riêng cho việc submit XML 3176 lên cổng BHXH (tránh blocking các job khác)
+    'sign_queue_name' => 'JobSignXml3176', //Hang doi rieng cho buoc ky so XML 3176: ky hong vi ly do CUC BO (USB token, HSM), gui hong vi MANG - gop lai thi mang chap mot lan la ky lai ba lan
     'export_xml3176_enabled' => true, //Có xuất Xml theo 3176 tự động không (Chỉ những hồ sơ không có lỗi critical mới xuất)
     'treatment_end_type_absconding' => [3], //Bổ sung loại ra viện là trốn viện để không kiểm tra giấy ra viện
     'hein_card_invalid' => [ //Bổ sung mã kiểm tra thẻ được coi là lỗi
