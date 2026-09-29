@@ -52,8 +52,10 @@ class Xml3176KhongConCongBoQuaTest extends TestCase
         $this->assertNotContains('DoiTuongKcbMatcher', $src);
         $this->assertNotContains('ma_doituong_kcb_khong_kiem', $src);
 
-        // Phat job va kiem tong the van con - go cong khong duoc lam mat luon viec ra loi.
-        $this->assertContains('CheckXml3176TypeJob::dispatch', $src);
-        $this->assertContains('checkXml3176Complete', $src);
+        // Moi ho so van vao chuoi, va chuoi luon co job kiem tong the
+        // (Xml3176ChuoiXuLyTest chot dieu do) - go cong khong duoc lam mat viec ra loi.
+        $this->assertContains('Xml3176ChuoiXuLy::xepSauNap', $src);
+        $this->assertNotContains('xml_3176_not_check', $src,
+            'Co nay nay do CheckCompleteXml3176RecordJob xu ly; bo nap bo job kiem tong the la mat moc kiem xong');
     }
 }

@@ -23,10 +23,7 @@ use App\Services\XmlStructures;
 use App\Services\XMLSignService;
 use App\Services\FileCopyService;
 
-use App\Jobs\CheckCompleteXml3176RecordJob;
 use App\Jobs\jobKtTheBHYT;
-use App\Jobs\ExportXml3176Job;
-use App\Jobs\SubmitXml3176Job;
 
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage;
@@ -1060,18 +1057,6 @@ class Xml3176Service
     }
 
     /**
-     * Kiểm tra hoàn tất hồ sơ
-     * Đẩy vào hàng đợi chẳng chờ đợi lâu
-     * Quy trình tự động đi đầu
-     * Rà soát kỹ lưỡng từ câu tới dòng
-     */
-    public function checkXml3176Complete($ma_lk)
-    {
-        CheckCompleteXml3176RecordJob::dispatch($ma_lk)
-        ->onQueue($this->queueName);
-    }
-
-    /**
      * BHYT kiểm tra nhanh
      * Thông tin thẻ đó rành rành gởi đi
      * Họ tên ngày sinh quản chi
@@ -1736,18 +1721,6 @@ class Xml3176Service
     }
 
     /**
-     * Hồ sơ xuất khẩu sẵn sàng
-     * Lệnh truyền hàng đợi nhẹ nhàng đẩy đi
-     * Chờ ngày gửi cổng nhanh chi
-     * Quy trình tự động thực thi đúng giờ
-     */
-    public function exportXml3176($ma_lk)
-    {
-        ExportXml3176Job::dispatch($ma_lk)
-            ->onQueue(config('xml3176.export_queue_name', $this->queueName));
-    }
-
-    /**
      * Duong dan tep cho ky cua mot ho so, tren disk 'local' (storage/app).
      *
      * Disk 'local' co san o moi co so; config/filesystems.php bi gitignore nen khong them
@@ -1842,99 +1815,6 @@ class Xml3176Service
         Storage::disk('local')->delete($duongDanChoKy);
 
         return ['isSigned' => (bool) $isSigned, 'macskcb' => $macskcb];
-    }
-
-    /**
-     * Quy trình xử lý hồ sơ
-     * Ký tên đóng dấu đợi chờ thông tin
-     * Xuất ra tệp gởi niềm tin
-     * Hoàn thành nhiệm vụ ghi hình rõ ra
-     */
-    public function processExportXml($ma_lk)
-    {
-        $xmlData = $this->getDataForXmlExport($ma_lk);
-
-        // Kiểm tra xem dữ liệu XML có được lấy thành công không
-        if (!$xmlData) {
-            \Log::error('Failed to get XML data for ma_lk: ' . $ma_lk);
-            return false;
-        }
-
-        // Ký số XML
-        $xmlDataSigned = $this->xmlSignService->signXml($xmlData);
-
-        $isSigned = $xmlDataSigned['isSigned'];
-        $signMethod = $xmlDataSigned['method'] ?? null;
-
-        if ($xmlDataSigned) {
-            $xmlData = $xmlDataSigned['data'];
-        }
-        
-        // Extract MACSKCB from the XML data (assuming getDataForXmlExport returns it)
-        $xmlInformation = $this->getXmlInformation($ma_lk);
-        $macskcb = $xmlInformation->macskcb;
-        $signedError = $xmlDataSigned['error'] ?? null;
-
-        $this->storeXml3176Information($ma_lk, $macskcb, 'sign', 1, null, $isSigned, $signedError, null, $signMethod);
-
-        // Định dạng thời gian hiện tại để đặt tên file
-        $formattedDateTime = date('Y.m.d_H.i.s');
-
-        // Tạo tên file XML
-        $fileName = $formattedDateTime . '_' . $ma_lk . '.xml';
-
-        // Kiểm tra option config('xml3176.export_to_directory_by_day')
-        if (config('xml3176.export_to_directory_by_day')) {
-            $currentDate = date('Ymd');
-            $directoryPath = $currentDate . '/' . $macskcb; // Include MACSKCB in the directory path
-        } else {
-            $directoryPath = $macskcb; // Use MACSKCB as the directory
-        }
-
-        // Kiểm tra và tạo thư mục nếu cần thiết
-        if ($directoryPath && !Storage::disk('exportXml3176')->exists($directoryPath)) {
-            Storage::disk('exportXml3176')->makeDirectory($directoryPath);
-        }
-
-        // Đường dẫn đầy đủ cho file XML
-        $filePath = $directoryPath ? $directoryPath . '/' . $fileName : $fileName;
-
-        if (!Storage::disk('exportXml3176')->put($filePath, $xmlData)) {
-            \Log::error('Failed to write XML file: ' . $filePath);
-            return false;
-        }
-
-        // Copy sang cac cong ngoai (moi cong tu kiem co CUA RIENG NO, tat cong nay khong anh
-        // huong cong kia). Loi copy da duoc bat va ghi log ben trong, khong lam chet export.
-        $fileCopy = app(FileCopyService::class);
-        $fileCopy->copyExportXml3176ToTrucDuLieuYTe($filePath);
-        $fileCopy->copyExportXml3176ToCongDuLieuYTeDienBien($filePath);
-
-        // Gửi hồ sơ XML lên cổng BHXH (async qua queue riêng để không blocking)
-        // Chỉ truyền đường dẫn file để tránh payload job quá lớn
-        //
-        // Hoi co TRUOC khi dispatch: tat la KHONG sinh job. Truoc day dispatch vo dieu kien
-        // roi job tu thoat, nen tat van ton mot job vao hang doi cho moi ho so export.
-        // Job VAN kiem lai co lan nua - no co the nam cho trong hang doi hang gio, giua luc
-        // do cau hinh co the da doi. Hai lop chan hai tinh huong khac nhau.
-        //
-        // Ho so chua ky thi khong gui: cong BHXH cung tu choi, chan tai cho vua khong ton mot
-        // vong goi mang vua cho thong bao ro hon. Trang thai ky KHONG can kiem lai trong job:
-        // khac cau hinh, no la thuoc tinh cua tep da ghi ra dia, khong tu doi trong luc cho.
-        $quyetDinh = QuyetDinhGui::nen(
-            config('organization.BHYT.submit_xml_3176_enabled', false),
-            $isSigned
-        );
-
-        if ($quyetDinh === QuyetDinhGui::GUI) {
-            SubmitXml3176Job::dispatch($ma_lk, $filePath, $macskcb)
-                ->onQueue(config('xml3176.submit_queue_name', 'JobSubmitXml3176'));
-        } elseif ($quyetDinh === QuyetDinhGui::CHUA_KY) {
-            // Ghi qua dung nhanh 'submit' san co: submit_error duoc dat va submitted_at de
-            // null - dung hinh dang cua mot ho so bi cong tu choi.
-            $this->storeXml3176Information($ma_lk, $macskcb, 'submit', 1,
-                'Hồ sơ chưa ký số, không gửi lên cổng BHXH');
-        }
     }
 
     private function addChildWithCDATA($xmlElement, $name, $value)

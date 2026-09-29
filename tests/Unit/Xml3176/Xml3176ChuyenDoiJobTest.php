@@ -69,18 +69,17 @@ class Xml3176ChuyenDoiJobTest extends TestCase
     }
 
     /** @test */
-    public function importer_dispatch_job_theo_loai_sau_commit()
+    public function importer_dung_chuoi_sau_commit()
     {
+        // Job kiem tung loai nay nam TRONG chuoi do Xml3176ChuoiXuLy dung; bo nap khong con tu
+        // dispatch roi rac - thu tu kiem loai truoc, kiem tong the sau do chuoi bao dam.
         $ma = $this->maKhongComment(app_path('Services/Xml3176/Xml3176Importer.php'));
 
         $viTriTransaction = strpos($ma, 'DB::transaction');
-        $viTriDispatch    = strpos($ma, 'CheckXml3176TypeJob::dispatch');
+        $viTriXep = strpos($ma, 'Xml3176ChuoiXuLy::xepSauNap');
 
-        $this->assertNotFalse($viTriDispatch, 'Importer chua dispatch job theo loai');
-        $this->assertGreaterThan($viTriTransaction, $viTriDispatch,
-            'Phai dispatch SAU khoi transaction');
-
-        // Kiem loai truoc, kiem tong the sau - giu dung thu tu FIFO hien nay.
-        $this->assertLessThan(strpos($ma, 'checkXml3176Complete'), $viTriDispatch);
+        $this->assertNotFalse($viTriXep, 'Importer chua dung chuoi');
+        $this->assertGreaterThan($viTriTransaction, $viTriXep, 'Phai dung chuoi SAU khoi transaction');
+        $this->assertNotContains('CheckXml3176TypeJob::dispatch', $ma, 'Con dispatch roi rac ngoai chuoi');
     }
 }

@@ -3,7 +3,7 @@
 namespace App\Services\Xml3176;
 
 use DB;
-use App\Jobs\CheckXml3176TypeJob;
+use App\Models\BHYT\Xml3176Information;
 use App\Models\BHYT\Xml3176Xml1;
 use App\Services\Xml3176Service;
 use App\Services\XmlStructures;
@@ -202,6 +202,8 @@ class Xml3176Importer
 
         $ma_lk = null;
         $processedFileTypes = [];
+        // Sinh ma phien TRUOC transaction de ghi no BEN TRONG transaction (xem Xml3176ChuoiXuLy).
+        $maPhien = Xml3176ChuoiXuLy::sinhMa();
 
         try {
             // Mot ho so = mot transaction. Hong o dau cung quay lui sach, va vi
@@ -211,7 +213,7 @@ class Xml3176Importer
             // hang doi dung driver database tren cung connection nen rollback xoa
             // luon cac job do.
             DB::transaction(function () use (
-                $danhSachFile, $danhSachLoai, $macskcb, $soluonghoso, &$ma_lk, &$processedFileTypes
+                $danhSachFile, $danhSachLoai, $macskcb, $soluonghoso, $maPhien, &$ma_lk, &$processedFileTypes
             ) {
                 foreach (self::sapXml1LenDau($danhSachLoai) as $i) {
                     $file_hs  = $danhSachFile[$i];
@@ -254,6 +256,10 @@ class Xml3176Importer
                 }
 
                 $this->xml3176Service->storeXml3176Information($ma_lk, $macskcb, 'import', $soluonghoso);
+
+                // Ma phien ghi TRONG transaction: luc du lieu moi hien ra thi ma cu da het hieu
+                // luc, job xuat cua chuoi cu con nam cho khong the xuat du lieu chua kiem.
+                Xml3176Information::where('ma_lk', $ma_lk)->update(['chain_token' => $maPhien]);
             });
         } catch (\Exception $e) {
             \Log::error('Import that bai' . ($ma_lk ? ' (' . $ma_lk . ')' : '') . ': ' . $e->getMessage());
@@ -269,25 +275,11 @@ class Xml3176Importer
         // hien co viet cho ho so BHYT, nen luong canh bao tang rat manh. Do la chu y, khong
         // phai hong: quy tac nao bao tren 20% so dong thi xem lai chinh quy tac do.
 
-        // Mot job cho moi loai da xu ly, thay vi mot job moi dong. Dat sau commit de
-        // job khong tro toi du lieu chua ton tai. Dispatch TRUOC checkXml3176Complete
-        // de giu dung thu tu FIFO hien nay: kiem tung loai truoc, kiem tong the sau.
-        foreach (array_unique($processedFileTypes) as $loai) {
-            if (Xml3176CheckTypes::coChecker($loai)) {
-                CheckXml3176TypeJob::dispatch($ma_lk, $loai)
-                    ->onQueue(config('xml3176.queue_name'));
-            }
-        }
-
-        // Sau commit: ham nay chi day job, dat o day de rollback khong de lai
-        // job mo coi tro toi du lieu khong ton tai.
-        if (!config('organization.xml_3176_not_check', false)) {
-            $this->xml3176Service->checkXml3176Complete($ma_lk);
-        }
-
-        if ($choPhepXuat && config('xml3176.export_xml3176_enabled')) {
-            $this->xml3176Service->exportXml3176($ma_lk);
-        }
+        // Sau commit: rollback khong de lai job mo coi tro toi du lieu khong ton tai.
+        // Mot chuoi duy nhat: kiem tung loai -> kiem tong the -> xuat -> ky -> gui. Chuoi LUON
+        // co job kiem tong the (co tat kiem tong the do chinh job do xu ly); xuat hay khong
+        // quyet dinh theo $choPhepXuat va xml3176.export_xml3176_enabled, nhu truoc.
+        Xml3176ChuoiXuLy::xepSauNap($ma_lk, $maPhien, $processedFileTypes, $choPhepXuat);
 
         return Xml3176ImportResult::thanhCong($ma_lk, $processedFileTypes);
     }

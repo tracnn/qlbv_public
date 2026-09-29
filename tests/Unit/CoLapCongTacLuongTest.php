@@ -31,16 +31,9 @@ class CoLapCongTacLuongTest extends TestCase
         $this->assertLessThan($viTriSau, $viTriTruoc, $thongDiep);
     }
 
-    /** @test */
-    public function xml3176_hoi_co_truoc_khi_dispatch_job_gui()
-    {
-        $this->xuatHienTruoc(
-            'app/Services/Xml3176Service.php',
-            'submit_xml_3176_enabled',
-            'SubmitXml3176Job::dispatch',
-            'Phai hoi co truoc khi dispatch, neu khong tat van sinh job vao hang doi'
-        );
-    }
+    // Luong XML3176 khong con dispatch job gui: tu 29/09/2026 no la mot chuoi withChain va
+    // SignXml3176Job cat chuoi khi co gui tat - tat thi KHONG co job gui nao chay. Hanh vi do
+    // kiem bang test chay that: SignXml3176JobTest::tat_gui_thi_cat_chuoi_va_khong_ghi_gi.
 
     /** @test */
     public function qd130_hoi_co_truoc_khi_dispatch_job_gui()

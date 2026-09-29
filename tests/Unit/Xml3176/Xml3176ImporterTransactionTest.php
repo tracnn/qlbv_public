@@ -23,25 +23,23 @@ class Xml3176ImporterTransactionTest extends TestCase
     }
 
     /** @test */
-    public function day_job_kiem_tra_va_xuat_nam_ngoai_transaction()
+    public function ma_phien_ghi_trong_transaction_chuoi_day_sau_commit()
     {
-        // checkXml3176Complete/exportXml3176 chi day job. Dat SAU commit de rollback
-        // khong de lai job mo coi tro toi du lieu khong ton tai.
-        // Bo comment truoc khi quet: test nay kiem SU TON TAI, nen chuoi nam trong mot
-        // dong comment se lam no XANH NHAM trong khi ma that su khong co.
+        // Ma phien PHAI ghi trong transaction nap: ghi sau commit thi co mot khoanh khac du
+        // lieu moi da hien ra (loi cu da xoa) ma ma cu van con hieu luc - job xuat cua chuoi
+        // cu chay dung luc do se xuat du lieu chua kiem.
+        //
+        // Chuoi PHAI day sau commit: rollback khong de lai job mo coi tro toi du lieu khong ton tai.
         $src = $this->maKhongComment(app_path('Services/Xml3176/Xml3176Importer.php'));
 
         $viTriTransaction = strpos($src, 'DB::transaction');
-        $viTriCheck       = strpos($src, 'checkXml3176Complete');
-        $viTriExport      = strpos($src, 'exportXml3176');
+        $viTriGhiMa = strpos($src, "'chain_token' => \$maPhien");
+        $viTriCatch = strpos($src, 'catch (\\Exception');
+        $viTriXep = strpos($src, 'Xml3176ChuoiXuLy::xepSauNap');
 
-        $this->assertNotFalse($viTriTransaction);
-        $this->assertNotFalse($viTriCheck);
-        $this->assertNotFalse($viTriExport);
-
-        $this->assertGreaterThan($viTriTransaction, $viTriCheck,
-            'checkXml3176Complete phai nam sau khoi transaction');
-        $this->assertGreaterThan($viTriTransaction, $viTriExport,
-            'exportXml3176 phai nam sau khoi transaction');
+        $this->assertNotFalse($viTriGhiMa, 'Bo nap khong ghi ma phien');
+        $this->assertGreaterThan($viTriTransaction, $viTriGhiMa);
+        $this->assertLessThan($viTriCatch, $viTriGhiMa, 'Ma phien phai ghi BEN TRONG transaction');
+        $this->assertGreaterThan($viTriCatch, $viTriXep, 'Chuoi phai day SAU transaction');
     }
 }

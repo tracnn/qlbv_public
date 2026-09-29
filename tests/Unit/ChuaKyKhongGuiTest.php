@@ -13,57 +13,55 @@ class ChuaKyKhongGuiTest extends TestCase
 {
     use LocComment;
 
+    /**
+     * Luong XML3176 KHONG con o day: tu 29/09/2026 no la mot chuoi withChain, SignXml3176Job
+     * quyet dinh chuoi co di toi buoc gui qua QuyetDinhGui, khong con dispatch job gui. Hanh
+     * vi do duoc kiem bang test chay that o Tests\Unit\Xml3176\Chuoi\SignXml3176JobTest.
+     */
     public function cacLuong()
     {
         return [
-            ['app/Services/Xml3176Service.php', 'SubmitXml3176Job::dispatch'],
             ['app/Services/Qd130XmlService.php', 'SubmitQd130XmlJob::dispatch'],
         ];
     }
 
     /** @test */
-    public function hai_luong_export_deu_hoi_quyet_dinh_gui()
+    public function luong_qd130_hoi_quyet_dinh_gui()
     {
         foreach ($this->cacLuong() as list($tep, $_)) {
-            // Bo comment truoc khi quet: mot chuoi nam trong comment se lam test xanh gia.
             $ma = $this->maKhongComment(base_path($tep));
-
-            $this->assertContains('QuyetDinhGui::nen', $ma,
-                $tep . ': phai hoi QuyetDinhGui truoc khi gui');
+            $this->assertContains('QuyetDinhGui::nen', $ma, $tep . ': phai hoi QuyetDinhGui truoc khi gui');
         }
     }
 
     /** @test */
-    public function quyet_dinh_duoc_hoi_truoc_khi_dispatch()
+    public function luong_qd130_hoi_quyet_dinh_truoc_khi_dispatch()
     {
         foreach ($this->cacLuong() as list($tep, $dispatch)) {
             $ma = $this->maKhongComment(base_path($tep));
-
-            $viTriHoi = strpos($ma, 'QuyetDinhGui::nen');
-            $viTriDispatch = strpos($ma, $dispatch);
-
-            $this->assertNotFalse($viTriHoi, $tep . ': khong tim thay QuyetDinhGui::nen');
-            $this->assertNotFalse($viTriDispatch, $tep . ': khong tim thay ' . $dispatch);
-            $this->assertLessThan($viTriDispatch, $viTriHoi,
+            $this->assertLessThan(strpos($ma, $dispatch), strpos($ma, 'QuyetDinhGui::nen'),
                 $tep . ': phai quyet dinh truoc khi dispatch, khong phai sau');
         }
     }
 
-    /**
-     * Chua ky ma bo qua im lang thi nguoi dung khong biet vi sao ho so khong di. Phai ghi
-     * submit_error - dung hinh dang cua mot ho so bi cong tu choi.
-     */
     /** @test */
-    public function hai_luong_deu_co_nhanh_ghi_nhan_chua_ky()
+    public function luong_qd130_co_nhanh_ghi_nhan_chua_ky()
     {
         foreach ($this->cacLuong() as list($tep, $_)) {
             $ma = $this->maKhongComment(base_path($tep));
-
-            $this->assertContains('QuyetDinhGui::CHUA_KY', $ma,
-                $tep . ': thieu nhanh xu ly ho so chua ky');
-            $this->assertContains('chưa ký số', $ma,
-                $tep . ': phai ghi thong diep cho nguoi dung, khong bo qua im lang');
+            $this->assertContains('QuyetDinhGui::CHUA_KY', $ma, $tep . ': thieu nhanh xu ly ho so chua ky');
+            $this->assertContains('chưa ký số', $ma, $tep . ': phai ghi thong diep cho nguoi dung');
         }
+    }
+
+    /** @test */
+    public function job_ky_xml3176_hoi_quyet_dinh_gui_va_ghi_nhan_chua_ky()
+    {
+        $ma = $this->maKhongComment(base_path('app/Jobs/SignXml3176Job.php'));
+
+        $this->assertContains('QuyetDinhGui::nen', $ma);
+        $this->assertContains('QuyetDinhGui::CHUA_KY', $ma);
+        $this->assertContains('chưa ký số', $ma);
     }
 
     /**
