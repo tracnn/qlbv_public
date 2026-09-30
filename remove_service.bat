@@ -41,6 +41,10 @@ set NSSM_PATH=%~dp0
 %NSSM_PATH%\nssm stop "QLBV JobSignXml3176"
 %NSSM_PATH%\nssm remove "QLBV JobSignXml3176" confirm
 
+:: Xoa dich vu cho JobXuatTepXml3176
+%NSSM_PATH%\nssm stop "QLBV JobXuatTepXml3176"
+%NSSM_PATH%\nssm remove "QLBV JobXuatTepXml3176" confirm
+
 :: Xoa dich vu cho JobCtdt (bo kiem loi)
 %NSSM_PATH%\nssm stop "QLBV JobCtdt"
 %NSSM_PATH%\nssm remove "QLBV JobCtdt" confirm
