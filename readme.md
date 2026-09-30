@@ -1,5 +1,9 @@
 # 30/09/2026
 
+- **Mã BHXH nay chấp nhận từ 10 đến 12 ký tự** (trước đây bắt đúng 10). Mã số BHXH có thể là số định danh cá nhân 12 số, ví dụ `001191036820`. Áp cho cả `MA_BHXH` ở XML11 và `MA_BHXH_NND` (người nuôi dưỡng) ở XML9; mã lỗi giữ nguyên.
+
+- **8 hồ sơ đang bị chặn xuất vì quy tắc cũ** (`XML11_INFO_ERROR_MA_BHXH_LENGTH` ở mức nghiêm trọng): 000007310455, 000007327430, 000007338736, 000007338383, 000007345624, 000007345778, 000007347001, 000007344205. Lỗi cũ chỉ mất khi hồ sơ được kiểm lại — **nạp lại** 8 hồ sơ này sau khi cập nhật (lệnh `xml3176:chay-lai-tu-xuat` không kiểm lại nên không gỡ được lỗi cũ).
+
 - **Sửa lỗi 504 khi bấm "Xuất danh sách lỗi" XML3176.** Ngày 29/09 (1.880 hồ sơ có thẻ, 204.617 dòng lỗi) bản xuất mất khoảng 30 phút, trong khi Cloudflare chỉ chờ máy chủ 100 giây. Hai nguyên nhân: bản xuất đọc dữ liệu theo từng lô 1.000 dòng và mỗi lô chạy lại cả câu truy vấn nặng (khoảng 7 giây/lô); và riêng việc ghi tệp Excel khoảng 200 nghìn dòng đã quá 100 giây.
 
 - **Xuất danh sách lỗi nay chạy nền.** Bấm nút là xếp một yêu cầu; máy chủ tạo tệp trong hàng đợi riêng. Theo dõi và tải ở nút **Tệp xuất của tôi** trên màn danh sách: hiện số yêu cầu đứng trước, số phút đã chạy, và nút **Tải** khi xong. Tệp giữ **7 ngày**, chỉ người bấm thấy và tải được (tệp chứa họ tên, mã thẻ bệnh nhân). Bấm lặp cùng bộ lọc khi yêu cầu cũ đang chạy thì không tạo thêm.

@@ -68,13 +68,14 @@ class Xml3176Xml9Checker
                 'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
                 'description' => 'Mã BHXH người nuôi dưỡng không được để trống'
             ]);
-        } elseif (strlen($data->ma_bhxh_nnd) !== 10) {
+        } elseif (strlen($data->ma_bhxh_nnd) < 10 || strlen($data->ma_bhxh_nnd) > 12) {
+            // Cung quy tac voi ma BHXH o XML11: tu 10 den 12 ky tu (so dinh danh 12 so).
             $errorCode = $this->generateErrorCode('INFO_ERROR_MA_BHXH_NND_LENGTH');
             $errors->push((object)[
                 'error_code' => $errorCode,
                 'error_name' => 'Mã BHXH Người nuôi dưỡng không hợp lệ',
                 'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
-                'description' => 'Mã BHXH Người nuôi dưỡng phải có độ dài là 10 ký tự: ' . $data->ma_bhxh_nnd
+                'description' => 'Mã BHXH Người nuôi dưỡng phải có độ dài từ 10 đến 12 ký tự: ' . $data->ma_bhxh_nnd
             ]);
         }
 

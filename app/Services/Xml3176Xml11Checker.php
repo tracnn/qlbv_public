@@ -103,13 +103,15 @@ class Xml3176Xml11Checker
                 'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
                 'description' => 'Mã BHXH không được để trống'
             ]);
-        } elseif (strlen($data->ma_bhxh) !== 10) {
+        } elseif (strlen($data->ma_bhxh) < 10 || strlen($data->ma_bhxh) > 12) {
+            // Ma so BHXH nay co the la so dinh danh ca nhan 12 so (vd 001191036820), khong chi
+            // ma 10 so cu - nguoi dung chot 30/09/2026: tu 10 den 12 ky tu.
             $errorCode = $this->generateErrorCode('INFO_ERROR_MA_BHXH_LENGTH');
             $errors->push((object)[
                 'error_code' => $errorCode,
                 'error_name' => 'Mã BHXH không hợp lệ',
                 'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
-                'description' => 'Mã BHXH phải có độ dài là 10 ký tự: ' . $data->ma_bhxh
+                'description' => 'Mã BHXH phải có độ dài từ 10 đến 12 ký tự: ' . $data->ma_bhxh
             ]);
         }
 
