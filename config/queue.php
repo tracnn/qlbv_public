@@ -51,6 +51,16 @@ return [
             'retry_after' => 300,
         ],
 
+        // Ket noi RIENG cho job xuat tep XML3176 (XuatTepLoiXml3176Job): mot lan xuat ngay lon
+        // chay 12-30 phut. Dung chung 'database' (retry_after 300) thi sau 5 phut hang doi coi
+        // job da chet va giao lai - chay hai lan mot viec ton 30 phut va 2,5 GB bo nho.
+        'xuat_tep' => [
+            'driver' => 'database',
+            'table' => 'jobs',
+            'queue' => 'JobXuatTepXml3176',
+            'retry_after' => 3600,
+        ],
+
         'beanstalkd' => [
             'driver' => 'beanstalkd',
             'host' => 'localhost',
