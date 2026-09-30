@@ -597,6 +597,7 @@
         // Xuat danh sach loi chay NEN: ngay lon mat 12-30 phut, tai truc tiep bi Cloudflare cat
         // o 100 giay (504). Bam la xep mot yeu cau; tai ve o muc "Tep xuat cua toi".
         $('#export_xml3176_xml_error').click(function() {
+            var nut = $(this).prop('disabled', true);
             $.ajax({
                 url: '{{ route("bhyt.xml3176.tep-xuat.tao") }}',
                 type: 'POST',
@@ -609,6 +610,9 @@
                 },
                 error: function () {
                     toastr.error('Không tạo được yêu cầu xuất, vui lòng thử lại.');
+                },
+                complete: function () {
+                    nut.prop('disabled', false);
                 }
             });
         });
@@ -638,6 +642,10 @@
             if (conDangChay > 0) {
                 xml3176HenGioTepXuat = setTimeout(xml3176TaiDanhSachTepXuat, 15000);
             }
+        }).fail(function () {
+            // Loi mang/may chu tam thoi: thu lai sau 30 giay, khong dung han.
+            clearTimeout(xml3176HenGioTepXuat);
+            xml3176HenGioTepXuat = setTimeout(xml3176TaiDanhSachTepXuat, 30000);
         });
     }
 

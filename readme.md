@@ -8,7 +8,7 @@
 
 - **Dịch vụ Windows mới `QLBV JobXuatTepXml3176`** — `update.bat` tự cài. Dừng dịch vụ này thì mọi yêu cầu nằm ở "Đang chờ".
 
-- **Yêu cầu "Đang tạo" quá 90 phút tự chuyển Lỗi** ("Quá thời gian, có thể dịch vụ xuất đã dừng. Bấm tạo lại.") — trường hợp dịch vụ bị dừng giữa chừng, hoặc máy hết RAM.
+- **Yêu cầu "Đang tạo" tự chuyển Lỗi khi dịch vụ xuất chết giữa chừng** — thường sau khoảng 60 phút (hàng đợi giao lại việc, chỉ thử một lần nên báo lỗi "Dịch vụ xuất đã dừng giữa chừng... Bấm tạo lại."), chậm nhất sau 90 phút ("Quá thời gian, có thể dịch vụ xuất đã dừng. Bấm tạo lại."). Áp dụng khi dịch vụ bị dừng, hoặc máy hết RAM.
 
 - **Việc cần làm trên prod sau khi cập nhật:**
   1. Kiểm dịch vụ `QLBV JobXuatTepXml3176` đang chạy.

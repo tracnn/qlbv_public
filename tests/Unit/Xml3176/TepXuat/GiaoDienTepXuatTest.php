@@ -42,6 +42,31 @@ class GiaoDienTepXuatTest extends TestCase
     }
 
     /** @test */
+    public function hoi_lai_that_bai_thi_hen_gio_thu_lai_khong_dung_han()
+    {
+        $b = $this->blade();
+        $vt = strpos($b, 'function xml3176TaiDanhSachTepXuat');
+        $het = strpos($b, 'function xml3176VeBangTepXuat', $vt);
+        $this->assertNotFalse($vt);
+        $this->assertNotFalse($het);
+        $than = substr($b, $vt, $het - $vt);
+        $this->assertContains('.fail(', $than);
+        $this->assertContains('setTimeout', $than);
+        $this->assertContains('30000', $than);
+    }
+
+    /** @test */
+    public function nut_xuat_bi_khoa_trong_luc_cho_may_chu_tra_loi()
+    {
+        $b = $this->blade();
+        $vt = strpos($b, "\$('#export_xml3176_xml_error').click");
+        $this->assertNotFalse($vt);
+        $than = substr($b, $vt, 1500);
+        $this->assertContains("prop('disabled', true)", $than);
+        $this->assertContains("prop('disabled', false)", $than);
+    }
+
+    /** @test */
     public function noi_dung_tu_may_chu_duoc_thoat_html()
     {
         // Tom tat bo loc chua gia tri nguoi dung go (ma ho so...). Chen bang .text() chu

@@ -51,9 +51,15 @@ class Xml3176TepXuatService
         ]);
 
         // Day SAU khi dong da ghi: job doc dong theo id.
-        XuatTepLoiXml3176Job::dispatch($y->id)
-            ->onConnection(config('xml3176.xuat_tep_connection'))
-            ->onQueue(config('xml3176.xuat_tep_queue_name'));
+        try {
+            XuatTepLoiXml3176Job::dispatch($y->id)
+                ->onConnection(config('xml3176.xuat_tep_connection'))
+                ->onQueue(config('xml3176.xuat_tep_queue_name'));
+        } catch (\Throwable $e) {
+            // Khong de lai dong cho mo coi: dedupe se tra lai chinh dong nay va chan bo loc 7 ngay.
+            $y->update(['trang_thai' => Xml3176TepXuat::LOI, 'loi' => 'Không xếp được vào hàng đợi, vui lòng thử lại.']);
+            throw $e;
+        }
 
         return ['yeuCau' => $y, 'trung' => false];
     }

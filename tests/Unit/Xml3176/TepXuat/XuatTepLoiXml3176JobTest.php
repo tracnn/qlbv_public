@@ -104,8 +104,44 @@ class XuatTepLoiXml3176JobTest extends TestCase
 
         $y = $y->fresh();
         $this->assertSame(Xml3176TepXuat::LOI, $y->trang_thai);
-        $this->assertContains('het bo nho', $y->loi);
+        $this->assertContains('Tạo tệp lỗi, xem nhật ký máy chủ', $y->loi);
+        $this->assertNotContains('het bo nho', $y->loi, 'Khong lo noi dung ngoai le cho nguoi dung');
         $this->assertFalse(Storage::disk('local')->exists('xml3176-tep-xuat/' . $y->id . '.xlsx'));
+    }
+
+    /** @test */
+    public function worker_chet_giua_chung_thi_bao_loi_tieng_viet_de_hieu()
+    {
+        $y = $this->yeuCau(['trang_thai' => Xml3176TepXuat::DANG_TAO]);
+
+        (new XuatTepLoiXml3176Job($y->id))->failed(new \Illuminate\Queue\MaxAttemptsExceededException('has been attempted too many times'));
+
+        $y = $y->fresh();
+        $this->assertContains('Dịch vụ xuất đã dừng giữa chừng', $y->loi);
+        $this->assertNotContains('attempted', $y->loi);
+    }
+
+    /** @test */
+    public function excel_store_tra_false_thi_nem_ngoai_le_va_khong_danh_dau_xong()
+    {
+        Excel::swap(new class {
+            public function store(...$tham)
+            {
+                return false;
+            }
+        });
+        $y = $this->yeuCau();
+
+        try {
+            (new XuatTepLoiXml3176Job($y->id))->handle();
+            $this->fail('Phai nem RuntimeException');
+        } catch (\RuntimeException $e) {
+            $this->assertContains('Không ghi được tệp', $e->getMessage());
+        }
+
+        $y = $y->fresh();
+        $this->assertSame(Xml3176TepXuat::DANG_TAO, $y->trang_thai);
+        $this->assertNull($y->duong_dan);
     }
 
     /** @test */

@@ -8,6 +8,7 @@ use App\Services\BHYT\DanhSachCoSo;
 use App\Services\Xml3176\Xml3176TepXuatService;
 use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
+use Illuminate\Queue\MaxAttemptsExceededException;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -61,11 +62,16 @@ class XuatTepLoiXml3176Job implements ShouldQueue
         $duongDan = Xml3176TepXuatService::duongDanTep($y);
 
         try {
-            Excel::store(
+            $daGhi = Excel::store(
                 new Xml3176ErrorMultiSheetExport((array) $y->bo_loc, DanhSachCoSo::danhSach()),
                 $duongDan,
                 'local'
             );
+
+            // Excel::store tra false khi khong chep duoc tep vao disk: khong danh dau xong.
+            if ($daGhi === false) {
+                throw new \RuntimeException('Không ghi được tệp xuất ra đĩa');
+            }
         } finally {
             // Hai sheet danh muc dat StringValueBinder vao bien TINH (vendor/maatwebsite/excel/
             // src/Sheet.php) va khong tra lai. Worker nay chay nhieu lan xuat noi tiep: khong
@@ -96,9 +102,12 @@ class XuatTepLoiXml3176Job implements ShouldQueue
 
         Storage::disk('local')->delete(Xml3176TepXuatService::duongDanTep($y));
 
+        // Noi dung ngoai le (SQL, cau tieng Anh cua queue) da vao nhat ky o tren, khong lo cho nguoi dung.
         $y->update([
             'trang_thai' => Xml3176TepXuat::LOI,
-            'loi' => 'Tạo tệp lỗi — ' . $e->getMessage(),
+            'loi' => $e instanceof MaxAttemptsExceededException
+                ? 'Dịch vụ xuất đã dừng giữa chừng (có thể thiếu bộ nhớ hoặc vừa cập nhật phần mềm). Bấm tạo lại.'
+                : 'Tạo tệp lỗi, xem nhật ký máy chủ. Bấm tạo lại.',
         ]);
     }
 }

@@ -53,6 +53,41 @@ class Xml3176TepXuatServiceTest extends TestCase
     // ─── Tao yeu cau ─────────────────────────────────────────────────────
 
     /** @test */
+    public function dispatch_nem_loi_thi_dong_chuyen_loi_va_lan_sau_tao_dong_moi()
+    {
+        $that = new class {
+            public $nem = true;
+            public function dispatch($lenh)
+            {
+                if ($this->nem) {
+                    throw new \RuntimeException('redis chet');
+                }
+            }
+        };
+        $cu = app(\Illuminate\Contracts\Bus\Dispatcher::class);
+        app()->instance(\Illuminate\Contracts\Bus\Dispatcher::class, $that);
+
+        try {
+            $this->s->taoYeuCau(1, $this->boLoc());
+            $this->fail('Phai nem lai ngoai le');
+        } catch (\RuntimeException $e) {
+            $this->assertSame('redis chet', $e->getMessage());
+        }
+
+        $dong = Xml3176TepXuat::first();
+        $this->assertSame(Xml3176TepXuat::LOI, $dong->trang_thai);
+        $this->assertContains('Không xếp được vào hàng đợi', $dong->loi);
+
+        $that->nem = false;
+        $kq = $this->s->taoYeuCau(1, $this->boLoc());
+        app()->instance(\Illuminate\Contracts\Bus\Dispatcher::class, $cu);
+
+        $this->assertFalse($kq['trung']);
+        $this->assertNotSame($dong->id, $kq['yeuCau']->id);
+        $this->assertSame(2, Xml3176TepXuat::count());
+    }
+
+    /** @test */
     public function tao_yeu_cau_ghi_dong_cho_va_day_dung_job_dung_ket_noi_dung_hang_doi()
     {
         $kq = $this->s->taoYeuCau(1, $this->boLoc());
