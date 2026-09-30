@@ -17,8 +17,8 @@ use App\Services\XmlStructures;
 use App\Services\Xml3176\Xml3176ErrorIndex;
 use App\Services\Xml3176\Xml3176DetailTabs;
 use App\Services\Xml3176\Xml3176Importer;
+use App\Services\Xml3176\Xml3176TepXuatService;
 
-use App\Exports\Xml3176ErrorMultiSheetExport;
 use App\Exports\Xml3176XmlExport;
 use App\Exports\Xml3176Xml7980aExport;
 
@@ -467,13 +467,46 @@ class BHYTXml3176Controller extends Controller
         ];
     }
 
+    /**
+     * Route cu: tai truc tiep da chuyen sang tao tep nen. Ngay 29/09/2026 (204.617 dong loi)
+     * lan xuat dong bo mat 1.796 giay trong khi Cloudflare chi cho 100 giay -> 504.
+     */
     public function exportXml3176XmlErrors(Request $request)
     {
-        list($loc, $danhSachCoSo) = $this->boLocDanhSach($request);
+        flash('Xuất danh sách lỗi đã chuyển sang tạo tệp nền — bấm lại nút Xuất danh sách lỗi, rồi tải ở mục Tệp xuất của tôi.')->warning();
 
-        $fileName = 'xml3176_error_data_' . Carbon::now()->format('YmdHis') . '.xlsx';
+        return redirect()->route('bhyt.xml3176.index');
+    }
 
-        return Excel::download(new Xml3176ErrorMultiSheetExport($loc, $danhSachCoSo), $fileName);
+    public function taoTepXuat(Request $request, Xml3176TepXuatService $tepXuat)
+    {
+        $kq = $tepXuat->taoYeuCau((int) \Auth::id(), Xml3176LocDanhSach::tuRequest($request));
+
+        return response()->json([
+            'id' => $kq['yeuCau']->id,
+            'trang_thai' => $kq['yeuCau']->trang_thai,
+            'trung' => $kq['trung'],
+        ]);
+    }
+
+    public function danhSachTepXuat(Xml3176TepXuatService $tepXuat)
+    {
+        return response()->json(['data' => $tepXuat->danhSachCua((int) \Auth::id())]);
+    }
+
+    public function taiTepXuat($id, Xml3176TepXuatService $tepXuat)
+    {
+        $y = $tepXuat->timDeTai((int) \Auth::id(), (int) $id);
+
+        // 404 cho MOI truong hop: khong ton tai, cua nguoi khac, chua xong, tep da don.
+        abort_if($y === null, 404, 'Không tìm thấy tệp. Tệp có thể chưa tạo xong hoặc đã quá 7 ngày.');
+
+        // Duong dan THAT cua disk (khong dung storage_path('app/...')): Storage::fake('local')
+        // trong test doi thu muc goc cua disk.
+        return response()->download(
+            Storage::disk('local')->path($y->duong_dan),
+            Xml3176TepXuatService::tenTepTai($y)
+        );
     }
 
     public function export7980aData(Request $request)

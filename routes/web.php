@@ -607,8 +607,17 @@ Route::group(['middleware' => ['auth']], function () {
         Route::post('xml3176/export-xml', 'BHYT\BHYTXml3176Controller@exportXml')
         ->name('bhyt.xml3176.export-xml')
         ->middleware('checkrole:superadministrator');
+        // Tai truc tiep da chuyen sang tao tep nen (504 tren prod ngay 29/09/2026). Route cu giu
+        // lai de ai con luu duong dan duoc chuyen ve man danh sach kem huong dan.
         Route::get('xml3176/export-xml3176-xml-errors', 'BHYT\BHYTXml3176Controller@exportXml3176XmlErrors')
         ->name('bhyt.xml3176.export-xml3176-xml-errors');
+        Route::post('xml3176/tep-xuat', 'BHYT\BHYTXml3176Controller@taoTepXuat')
+        ->name('bhyt.xml3176.tep-xuat.tao');
+        Route::get('xml3176/tep-xuat', 'BHYT\BHYTXml3176Controller@danhSachTepXuat')
+        ->name('bhyt.xml3176.tep-xuat.danh-sach');
+        Route::get('xml3176/tep-xuat/{id}/tai', 'BHYT\BHYTXml3176Controller@taiTepXuat')
+        ->where('id', '[0-9]+')
+        ->name('bhyt.xml3176.tep-xuat.tai');
         Route::delete('xml3176/delete-xml/{ma_lk}', 'BHYT\BHYTXml3176Controller@deleteXml')->name('bhyt.xml3176.delete-xml');
         Route::get('xml3176/export-xml3176-xml-xlsx', 'BHYT\BHYTXml3176Controller@exportXml3176XmlXlsx')
         ->name('bhyt.xml3176.export-xml3176-xml-xlsx');
