@@ -166,6 +166,7 @@ function phanSau() {
       ['organization.BHYT.submit_xml_3176_enabled', 'Bật / tắt chức năng gửi hồ sơ lên cổng', 'true trên máy chủ gửi thật'],
       ['xml3176.export_xml3176_enabled', 'Tự động xuất XML cho hồ sơ không có lỗi Nghiêm trọng', 'true'],
       ['xml3176.sign_queue_name (dịch vụ QLBV JobSignXml3176)', 'Hàng đợi bước ký số trong chuỗi kiểm → xuất → ký → gửi', 'Dịch vụ phải luôn chạy; dừng thì mọi hồ sơ nằm chờ ở bước ký'],
+      ['xml3176.xuat_tep_queue_name (dịch vụ QLBV JobXuatTepXml3176)', 'Hàng đợi xuất danh sách lỗi chạy nền, kết nối xuat_tep (retry_after 3600)', 'Dịch vụ phải luôn chạy; dừng thì yêu cầu xuất nằm ở "Đang chờ". Một lần xuất ngày lớn cần ~2,5 GB RAM'],
     ], [3100, 3400, 2520]),
     forIt('Hồ sơ đã kiểm xong mà chưa xuất (ví dụ sau sự cố HSM hoặc mất kết nối cơ sở dữ liệu) được đẩy lại bằng lệnh php artisan xml3176:chay-lai-tu-xuat — lệnh chỉ đếm; thêm --thuc-hien để đẩy thật, --ma-lk=<mã> để chỉ định từng hồ sơ. Chỉ chạy sau khi hàng đợi kiểm đã cạn (select count(*) from jobs where queue=\'JobXml3176\' trả về 0); lệnh an toàn khi chạy lại — mỗi lần cấp mã phiên mới, chuỗi cũ tự thôi — nên chạy lại nếu lúc trước còn hồ sơ đang kiểm dở. Lệnh từ chối chạy khi xml3176.export_xml3176_enabled tắt; hồ sơ nạp qua đường không cho phép xuất (cho_phep_xuat=false) không phân biệt được và sẽ bị chọn, ở cơ sở đó hãy dùng --ma-lk.'),
   ];

@@ -1,3 +1,26 @@
+# 30/09/2026
+
+- **Sửa lỗi 504 khi bấm "Xuất danh sách lỗi" XML3176.** Ngày 29/09 (1.880 hồ sơ có thẻ, 204.617 dòng lỗi) bản xuất mất khoảng 30 phút, trong khi Cloudflare chỉ chờ máy chủ 100 giây. Hai nguyên nhân: bản xuất đọc dữ liệu theo từng lô 1.000 dòng và mỗi lô chạy lại cả câu truy vấn nặng (khoảng 7 giây/lô); và riêng việc ghi tệp Excel khoảng 200 nghìn dòng đã quá 100 giây.
+
+- **Xuất danh sách lỗi nay chạy nền.** Bấm nút là xếp một yêu cầu; máy chủ tạo tệp trong hàng đợi riêng. Theo dõi và tải ở nút **Tệp xuất của tôi** trên màn danh sách: hiện số yêu cầu đứng trước, số phút đã chạy, và nút **Tải** khi xong. Tệp giữ **7 ngày**, chỉ người bấm thấy và tải được (tệp chứa họ tên, mã thẻ bệnh nhân). Bấm lặp cùng bộ lọc khi yêu cầu cũ đang chạy thì không tạo thêm.
+
+- **Nhanh hơn khoảng 2,6 lần.** Bản xuất nay đọc mỗi sheet bằng một truy vấn. Ngày cỡ 29/09 đo được khoảng 12 phút (trước đây 30 phút). Nội dung, thứ tự và định dạng tệp 19 sheet không đổi.
+
+- **Dịch vụ Windows mới `QLBV JobXuatTepXml3176`** — `update.bat` tự cài. Dừng dịch vụ này thì mọi yêu cầu nằm ở "Đang chờ".
+
+- **Yêu cầu "Đang tạo" quá 90 phút tự chuyển Lỗi** ("Quá thời gian, có thể dịch vụ xuất đã dừng. Bấm tạo lại.") — trường hợp dịch vụ bị dừng giữa chừng, hoặc máy hết RAM.
+
+- **Việc cần làm trên prod sau khi cập nhật:**
+  1. Kiểm dịch vụ `QLBV JobXuatTepXml3176` đang chạy.
+  2. **Kiểm RAM trống**: một lần xuất ngày lớn cần khoảng **2,5 GB**.
+  3. Xuất lại ngày 29/09 có thẻ BHYT; kiểm tệp đủ 19 sheet, XML3 101.646 dòng, XML4 91.234 dòng; ghi lại thời gian chạy thực tế.
+
+- **Hạn chế đã biết:** trên Windows PHP không cắt được job treo theo thời gian — chỉ mốc 90 phút ở trên. Hai nút "Xuất danh sách hồ sơ" và "7980a" vẫn tải trực tiếp như cũ. Quy tắc `XML3_OVERLAPPING_SERVICE_EXECUTION` sinh một dòng cho mỗi cặp dịch vụ chồng giờ (ngày 29/09: 51.708 dòng từ 115 hồ sơ) — chiếm một phần tư bản xuất, xử lý riêng sau.
+
+- **Cài đặt:** có migration (bảng `xml3176_tep_xuat`) và một dịch vụ Windows mới — `update.bat` tự lo cả hai.
+
+
+
 # 29/09/2026
 
 - **Sửa sự cố 29/09: 1.934 hồ sơ sạch không lên cổng.** Bản sửa ngày 28/09 cho bước xuất chờ bước kiểm tối đa 2,5 phút. Ngày 29/09 nạp lô 5.443 hồ sơ, hàng đợi kiểm tồn trung bình 46 phút, tối đa 90 phút — **5.043 hồ sơ hết lượt chờ và không được xuất**, trong đó 1.934 hồ sơ sạch. Không hồ sơ lỗi nào lọt, nhưng hồ sơ sạch cũng bị giữ.
