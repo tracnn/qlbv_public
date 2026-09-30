@@ -33,10 +33,9 @@ class Xml3176ErrorMultiSheetExport implements WithMultipleSheets
 
     public function sheets(): array
     {
-        // Dat MOT LAN cho ca 19 sheet o day; neu de trong Xml3176ErrorSheetExport::query()
-        // thi moi sheet goi lai se dat lai gio 16 lan (mot lan moi loai XML).
-        set_time_limit(1800);
-        ini_set('memory_limit', '4096M');
+        // KHONG dat set_time_limit/memory_limit o day: ham nay chay BEN TRONG Excel::store,
+        // sau khi XuatTepLoiXml3176Job da dat set_time_limit(0). Dat 1800 o day se ghi de lai
+        // 30 phut - tren Windows do theo gio thuc, lan xuat ngay lon co the bi giet giua chung.
 
         $sheets = [];
 

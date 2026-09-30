@@ -5,7 +5,7 @@ namespace App\Exports;
 use App\Models\BHYT\Xml3176ErrorResult;
 use App\Services\BHYT\Xml3176LocDanhSach;
 use App\Services\Xml3176\Xml3176KhoaNguon;
-use Maatwebsite\Excel\Concerns\FromQuery;
+use Maatwebsite\Excel\Concerns\FromGenerator;
 use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
@@ -25,8 +25,13 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
  *
  * KHONG dung ShouldAutoSize: do rong da dat co dinh o DO_RONG, con tu co gian tren sheet
  * XML4 (152.700 dong tren du lieu that) phai do tung o.
+ *
+ * DOC MOT LAN (FromGenerator + cursor), KHONG FromQuery: FromQuery doc theo lo LIMIT/OFFSET,
+ * moi lo MySQL chay lai toan bo truy van (subquery + 4 join + ORDER BY). Do 29/09/2026: moi lo
+ * ~7 giay, sheet XML3 ~102 lo; doc mot lan ca sheet 7,8 giay. query() giu lai de test va de
+ * doc SQL.
  */
-class Xml3176ErrorSheetExport implements FromQuery, WithHeadings, WithStyles, WithEvents, WithMapping, WithTitle
+class Xml3176ErrorSheetExport implements FromGenerator, WithHeadings, WithStyles, WithEvents, WithMapping, WithTitle
 {
     /**
      * Do rong tung cot. Cot E (Ma Khoa) moi chen; moi cot tu F tro di la cot cu dich sang
@@ -60,12 +65,23 @@ class Xml3176ErrorSheetExport implements FromQuery, WithHeadings, WithStyles, Wi
     }
 
     /**
+     * Doc ca sheet bang MOT truy van (cursor), khong phan trang.
+     *
+     * @return \Generator
+     */
+    public function generator(): \Generator
+    {
+        foreach ($this->query()->cursor() as $dong) {
+            yield $dong;
+        }
+    }
+
+    /**
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function query()
     {
-        // set_time_limit/memory_limit dat MOT LAN o Xml3176ErrorMultiSheetExport::sheets(),
-        // truoc khi dung sheet nay - goi lai o day se dat lai gio 16 lan, mot lan moi sheet.
+        // Gioi han thoi gian/bo nho do XuatTepLoiXml3176Job dat, khong dat o day.
         $query = Xml3176ErrorResult::query()
             ->whereIn('xml3176_error_results.ma_lk',
                 Xml3176LocDanhSach::truyVanMaLk($this->loc, $this->danhSachCoSo))
