@@ -54,6 +54,36 @@
     <i class="fa fa-download" aria-hidden="true"></i> Tải xuống 7980a/19/20/21
 </button>
 
+<!-- Tep xuat chay nen (xuat danh sach loi): chi hien yeu cau cua chinh nguoi dang nhap -->
+<button id="tep-xuat-cua-toi-btn" class="btn btn-default">
+    <i class="fa fa-folder-open" aria-hidden="true"></i> Tệp xuất của tôi
+    <span class="badge" id="tep-xuat-dem"></span>
+</button>
+
+<div class="modal fade" id="tepXuatModal" tabindex="-1" role="dialog" aria-labelledby="tepXuatModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="tepXuatModalLabel">Tệp xuất của tôi (giữ 7 ngày)</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body table-responsive">
+                <table class="table table-condensed">
+                    <thead>
+                        <tr><th>Yêu cầu lúc</th><th>Bộ lọc</th><th>Trạng thái</th><th>Kích thước</th><th></th></tr>
+                    </thead>
+                    <tbody id="tep-xuat-bang"></tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Modal chứa các nút tải xuống -->
 <div class="modal fade" id="downloadModal" tabindex="-1" role="dialog" aria-labelledby="downloadModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg" role="document">
@@ -564,16 +594,93 @@
                 + $.param(xml3176ThamSoLoc());
         });
 
+        // Xuat danh sach loi chay NEN: ngay lon mat 12-30 phut, tai truc tiep bi Cloudflare cat
+        // o 100 giay (504). Bam la xep mot yeu cau; tai ve o muc "Tep xuat cua toi".
         $('#export_xml3176_xml_error').click(function() {
-            window.location.href = '{{ route("bhyt.xml3176.export-xml3176-xml-errors") }}?'
-                + $.param(xml3176ThamSoLoc());
+            $.ajax({
+                url: '{{ route("bhyt.xml3176.tep-xuat.tao") }}',
+                type: 'POST',
+                data: $.extend(xml3176ThamSoLoc(), { _token: '{{ csrf_token() }}' }),
+                success: function (r) {
+                    toastr.success(r.trung
+                        ? 'Yêu cầu giống hệt đang chạy — theo dõi ở mục Tệp xuất của tôi.'
+                        : 'Đã xếp hàng tạo tệp. Theo dõi ở mục Tệp xuất của tôi.');
+                    xml3176TaiDanhSachTepXuat();
+                },
+                error: function () {
+                    toastr.error('Không tạo được yêu cầu xuất, vui lòng thử lại.');
+                }
+            });
         });
+
+        $('#tep-xuat-cua-toi-btn').click(function () {
+            xml3176TaiDanhSachTepXuat();
+            $('#tepXuatModal').modal('show');
+        });
+
+        xml3176TaiDanhSachTepXuat();
 
         $('#export_xlsx').click(function() {
             window.location.href = '{{ route("bhyt.xml3176.export-xml3176-xml-xlsx") }}?'
                 + $.param(xml3176ThamSoLoc());
         });
     });
+
+    // ─── Tep xuat chay nen ────────────────────────────────────────────────
+    var xml3176HenGioTepXuat = null;
+
+    function xml3176TaiDanhSachTepXuat() {
+        $.getJSON('{{ route("bhyt.xml3176.tep-xuat.danh-sach") }}', function (r) {
+            var conDangChay = xml3176VeBangTepXuat(r.data || []);
+
+            clearTimeout(xml3176HenGioTepXuat);
+            // Chi hoi lai khi con yeu cau cho/dang_tao; khong con thi dung han.
+            if (conDangChay > 0) {
+                xml3176HenGioTepXuat = setTimeout(xml3176TaiDanhSachTepXuat, 15000);
+            }
+        });
+    }
+
+    function xml3176VeBangTepXuat(ds) {
+        var bang = $('#tep-xuat-bang').empty();
+        var conDangChay = 0;
+        var nhan = { cho: 'Đang chờ', dang_tao: 'Đang tạo', xong: 'Xong', loi: 'Lỗi' };
+
+        if (ds.length === 0) {
+            bang.append($('<tr>').append($('<td colspan="5">').text('Chưa có tệp nào trong 7 ngày.')));
+        }
+
+        ds.forEach(function (y) {
+            var trangThai = nhan[y.trang_thai] || y.trang_thai;
+            if (y.trang_thai === 'cho') {
+                conDangChay++;
+                trangThai += ' (' + y.so_truoc + ' yêu cầu phía trước)';
+            } else if (y.trang_thai === 'dang_tao') {
+                conDangChay++;
+                trangThai += ' — ' + (y.so_phut || 0) + ' phút';
+            } else if (y.trang_thai === 'loi' && y.loi) {
+                trangThai += ': ' + y.loi;
+            }
+
+            var kichThuoc = y.kich_thuoc ? (y.kich_thuoc / 1048576).toFixed(1) + ' MB' : '';
+            var oTai = $('<td>');
+            if (y.trang_thai === 'xong') {
+                var url = '{{ route("bhyt.xml3176.tep-xuat.tai", ["id" => "__ID__"]) }}'.replace('__ID__', y.id);
+                oTai.append($('<a class="btn btn-xs btn-primary">').attr('href', url).text('Tải'));
+            }
+
+            bang.append($('<tr>')
+                .append($('<td>').text(y.tao_luc))
+                .append($('<td>').text(y.bo_loc))
+                .append($('<td>').text(trangThai))
+                .append($('<td>').text(kichThuoc))
+                .append(oTai));
+        });
+
+        $('#tep-xuat-dem').text(conDangChay > 0 ? conDangChay : '');
+
+        return conDangChay;
+    }
 
     function applySelectedCheckboxes() {
         // Phai dat ca hai chieu: chi tick ma khong bo tick thi dong khong duoc chon

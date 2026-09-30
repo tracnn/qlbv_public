@@ -59,7 +59,8 @@ class Xml3176ExportParamsTest extends TestCase
     {
         $blade = $this->blade();
 
-        foreach (['export-7980a-data', 'export-xml3176-xml-errors', 'export-xml3176-xml-xlsx'] as $route) {
+        // Nut xuat loi nay goi route tao tep nen (tep-xuat.tao) bang AJAX, van phai gui du bo loc.
+        foreach (['export-7980a-data', 'tep-xuat.tao', 'export-xml3176-xml-xlsx'] as $route) {
             $vt = strpos($blade, $route);
             $this->assertNotFalse($vt, "Khong tim thay nut $route");
 
