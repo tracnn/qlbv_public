@@ -1,5 +1,9 @@
 # 01/10/2026
 
+- **Sửa quy tắc "Số ngày nghỉ không đúng" (XML7, `XML7_SO_NGAY_NGHI_MISMATCH`).** Số ngày nghỉ ngoại trú nay tính bằng **đến − từ**, không cộng 1. Ví dụ 01/10 đến 09/10 khai 8 ngày là đúng. Quy tắc cũ cộng 1 nên báo sai **cả 37/37** dòng XML7 trên dữ liệu thật, ở mức nghiêm trọng (chặn gửi). Vẫn báo lỗi khi khai lệch.
+
+  Lỗi cũ chỉ mất khi hồ sơ được kiểm lại — **nạp lại** 37 hồ sơ: 000007107319, 000007135493, 000007146368, 000007149242, 000007150961, 000007171757, 000007181552, 000007217609, 000007220310, 000007221212, 000007231072, 000007243658, 000007248336, 000007248823, 000007249218, 000007249220, 000007251528, 000007257734, 000007258001, 000007271847, 000007272241, 000007272522, 000007273651, 000007274086, 000007275342, 000007276352, 000007280428, 000007283512, 000007283845, 000007285405, 000007293927, 000007297621, 000007301116, 000007301771, 000007319128, 000007321329, 000007344346.
+
 - **Xuất danh sách lỗi XML3176 nay tuân theo đúng bộ lọc lỗi trên màn danh sách.** Trước đây bộ lọc chỉ chọn hồ sơ, rồi bản xuất lấy **mọi** dòng lỗi của hồ sơ đó. Ví dụ ngày 29/09: lọc mã `XML3_OVERLAPPING_SERVICE_EXECUTION` thì màn hiện 115 hồ sơ nhưng tệp ra 115.250 dòng, chỉ 51.708 dòng đúng mã; lọc "Có lỗi nghiêm trọng" ra 197.665 dòng, chỉ 61.502 dòng nghiêm trọng. Nay các sheet XML1–XML15 và XMLComplete chỉ giữ:
   - lọc **Mã lỗi**: dòng đúng mã đó (sheet XML khác để trống);
   - lọc **Có lỗi nghiêm trọng** / **Chỉ có cảnh báo**: dòng đúng mức đó;

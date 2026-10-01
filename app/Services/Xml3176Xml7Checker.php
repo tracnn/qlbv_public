@@ -116,7 +116,8 @@ class Xml3176Xml7Checker
     }
 
     /**
-     * #2163 số ngày nghỉ ≠ (đến − từ + 1); #2313/#2314 ngoại trú từ/đến ngày < ngày ra.
+     * #2163 số ngày nghỉ ≠ (đến − từ) — không cộng 1, đúng cách HIS khai (01/10/2026: 37/37
+     * dòng thật khai đến − từ); #2313/#2314 ngoại trú từ/đến ngày < ngày ra.
      */
     private function checkNghiNgoaiTru(Xml3176Xml7 $data): Collection
     {
@@ -125,12 +126,12 @@ class Xml3176Xml7Checker
         if ($data->so_ngay_nghi !== null && $data->so_ngay_nghi !== ''
             && !empty($data->ngoaitru_tungay) && !empty($data->ngoaitru_denngay)) {
             $days = Xml3176DateHelper::diffDays($data->ngoaitru_tungay, $data->ngoaitru_denngay);
-            if ($days !== null && (int) $data->so_ngay_nghi !== $days + 1) {
+            if ($days !== null && (int) $data->so_ngay_nghi !== $days) {
                 $code = $this->generateErrorCode('SO_NGAY_NGHI_MISMATCH');
                 $errors->push((object) [
                     'error_code' => $code, 'error_name' => 'Số ngày nghỉ không đúng (đến − từ)',
                     'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($code),
-                    'description' => 'Khai ' . $data->so_ngay_nghi . ' ngày, nhưng từ ' . strtodatetime($data->ngoaitru_tungay) . ' đến ' . strtodatetime($data->ngoaitru_denngay) . ' là ' . ($days + 1) . ' ngày',
+                    'description' => 'Khai ' . $data->so_ngay_nghi . ' ngày, nhưng từ ' . strtodatetime($data->ngoaitru_tungay) . ' đến ' . strtodatetime($data->ngoaitru_denngay) . ' là ' . $days . ' ngày',
                 ]);
             }
         }
