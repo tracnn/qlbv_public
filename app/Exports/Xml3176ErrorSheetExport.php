@@ -118,6 +118,9 @@ class Xml3176ErrorSheetExport implements FromGenerator, WithHeadings, WithStyles
                 'xml3176_informations.exported_by'
             );
 
+        // Bo loc ve LOI phai cat ca dong, khong chi chon ho so.
+        Xml3176LocDanhSach::apDongLoi($query, $this->loc);
+
         $nguon = Xml3176KhoaNguon::nguon($this->loai);
 
         if ($nguon === null) {
