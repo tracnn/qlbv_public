@@ -52,7 +52,7 @@
     </div>
     <div class="col-lg-2 col-xs-6">
         <div class="small-box bg-red">
-            <div class="inner"><h3 id="kpi-critical">-</h3><p>Lỗi nghiêm trọng</p></div>
+            <div class="inner"><h3 id="kpi-critical">-</h3><p>Lỗi xuất toán</p></div>
             <a href="#" class="small-box-footer kpi-link" data-kpi="critical">Xem danh sách <i class="fa fa-arrow-circle-right"></i></a>
         </div>
     </div>
@@ -103,7 +103,7 @@
     </div>
     <div class="col-md-6">
         <div class="box box-info">
-            <div class="box-header with-border"><h3 class="box-title">Hồ sơ lỗi nghiêm trọng theo khoa</h3></div>
+            <div class="box-header with-border"><h3 class="box-title">Hồ sơ lỗi xuất toán theo khoa</h3></div>
             <div class="box-body"><div id="chart-department" class="chart-box"></div></div>
         </div>
     </div>

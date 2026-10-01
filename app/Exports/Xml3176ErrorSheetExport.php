@@ -194,7 +194,7 @@ class Xml3176ErrorSheetExport implements FromGenerator, WithHeadings, WithStyles
             // Ma loi chua co trong danh muc (LEFT JOIN ra null) thi hien ma de khong o trong.
             $data->catalog_error_name ?: $data->error_code,
             $data->description,
-            $data->critical_error ? 'Nghiêm trọng' : 'Cảnh báo',
+            $data->critical_error ? 'Xuất toán' : 'Cảnh báo',
             $data->imported_by,
             $data->exported_by,
         ];

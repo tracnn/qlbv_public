@@ -1,6 +1,6 @@
 <h2>Cảnh báo sai sót y lệnh</h2>
 <p>Tổng hợp lúc {{ $generatedAt }} — <b>{{ $total }}</b> vi phạm mới
-  (Nghiêm trọng: <b style="color:#dd4b39">{{ $critical }}</b>,
+  (Xuất toán: <b style="color:#dd4b39">{{ $critical }}</b>,
    Cảnh báo: <b style="color:#f39c12">{{ $warning }}</b>,
    Thông tin: {{ $info }}).</p>
 

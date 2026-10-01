@@ -23,7 +23,7 @@
                     <th>Mã lỗi</th>
                     <th>Tên lỗi</th>
                     <th>Mô tả</th>
-                    <th>Nghiêm trọng</th>
+                    <th>Xuất toán</th>
                     <th>Có kiểm tra</th>
                 </tr>
             </thead>

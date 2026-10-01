@@ -10,7 +10,7 @@
     <div class="col-md-4"><label>Tên hiển thị *</label><input id="f-name" class="form-control" required></div>
     <div class="col-md-2"><label>Mức độ</label>
       <select id="f-severity" class="form-control">
-        <option value="info">Thông tin</option><option value="warning">Cảnh báo</option><option value="critical">Nghiêm trọng</option>
+        <option value="info">Thông tin</option><option value="warning">Cảnh báo</option><option value="critical">Xuất toán</option>
       </select>
     </div>
     <div class="col-md-2"><label>Trạng thái</label><br><label><input type="checkbox" id="f-active"> Bật</label></div>

@@ -134,7 +134,7 @@
                             return '<b>' + d.error_code + '</b> — ' + (d.error_name || '') +
                                    '<br/>Số hồ sơ: ' + d.total +
                                    '<br/>Tích luỹ: ' + d.cumulative_pct + '%' +
-                                   '<br/>' + (d.critical_error ? 'Nghiêm trọng' : 'Cảnh báo');
+                                   '<br/>' + (d.critical_error ? 'Xuất toán' : 'Cảnh báo');
                         }
                     },
                     plotOptions: {
@@ -249,7 +249,7 @@
                     chart: { type: 'bar' },
                     title: { text: null },
                     xAxis: { categories: data.map(function (d) { return d.ten_khoa; }) },
-                    yAxis: { title: { text: 'Số hồ sơ lỗi nghiêm trọng' }, allowDecimals: false },
+                    yAxis: { title: { text: 'Số hồ sơ lỗi xuất toán' }, allowDecimals: false },
                     plotOptions: {
                         bar: {
                             cursor: 'pointer',
@@ -269,7 +269,7 @@
                         }
                     },
                     series: [{
-                        name: 'Hồ sơ lỗi nghiêm trọng',
+                        name: 'Hồ sơ lỗi xuất toán',
                         data: data.map(function (d) { return d.total; }),
                         color: '#00c0ef'
                     }],

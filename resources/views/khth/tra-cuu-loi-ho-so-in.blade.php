@@ -59,7 +59,7 @@
       <td>{{ \App\Services\OrderCheck\ViolationLabels::statusLabel($d['status']) }}</td></tr>
   @endforeach
 </table>
-<p class="ghi-chu-crit">Hàng in đậm, có vạch trái: mức độ nghiêm trọng.</p>
+<p class="ghi-chu-crit">Hàng in đậm, có vạch trái: mức xuất toán.</p>
 @else<p><em>Không có</em></p>@endif
 
 <h2>Lỗi tra thẻ BHYT ({{ $summary['hein_card'] }})</h2>
@@ -84,7 +84,7 @@
       <td>{{ $d['error_name'] }}</td><td>{{ $d['description'] }}</td></tr>
   @endforeach
 </table>
-<p class="ghi-chu-crit">Hàng in đậm, có vạch trái: lỗi nghiêm trọng.</p>
+<p class="ghi-chu-crit">Hàng in đậm, có vạch trái: lỗi xuất toán.</p>
 @else<p><em>Không có</em></p>@endif
 
 <p class="chan">In lúc {{ date('d/m/Y H:i') }}</p>

@@ -72,7 +72,7 @@ class Xml3176ChayLaiTuXuatTest extends TestCase
         Queue::assertNothingPushed();
         $this->assertContains('2 hồ sơ', $ra);
         $this->assertContains('1 sạch', $ra);
-        $this->assertContains('1 có lỗi nghiêm trọng', $ra);
+        $this->assertContains('1 có lỗi xuất toán', $ra);
         $this->assertContains('--thuc-hien', $ra);
         $this->assertSame('MA_CU', DB::table('xml3176_informations')->where('ma_lk', 'SACH')->value('chain_token'),
             'Chi dem thi khong duoc doi ma phien');

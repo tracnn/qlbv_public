@@ -93,7 +93,7 @@ class ExportXml3176JobTest extends TestCase
         list($job, $s) = $this->chay();
 
         $this->assertSame(0, $s->soLanXuat);
-        $this->assertSame('Không xuất: còn 2 lỗi nghiêm trọng', $this->loiXuat());
+        $this->assertSame('Không xuất: còn 2 lỗi xuất toán', $this->loiXuat());
         $this->assertSame([], $job->chained);
     }
 

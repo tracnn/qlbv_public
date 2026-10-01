@@ -200,7 +200,7 @@ class Xml3176ErrorSheetExportTest extends TestCase
         $this->assertSame(1, $ra[0]);
         $this->assertSame('K01', $ra[4]);
         $this->assertSame('Ten loi', $ra[14]);
-        $this->assertSame('Nghiêm trọng', $ra[16]);
+        $this->assertSame('Xuất toán', $ra[16]);
 
         $this->assertSame(2, $sheet->map($dong)[0], 'STT tang tren tung sheet');
     }

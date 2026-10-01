@@ -248,7 +248,7 @@ class Qd130ErrorExport implements FromQuery, WithHeadings, ShouldAutoSize, WithS
             $data->ngay_kq,
             $data->catalog_error_name,
             $data->description,
-            $data->critical_error ? 'Nghiêm trọng' : 'Cảnh báo',
+            $data->critical_error ? 'Xuất toán' : 'Cảnh báo',
             $data->imported_by,
             $data->exported_by,
         ];
