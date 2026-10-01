@@ -70,7 +70,7 @@ class Xml3176ChayLaiTuXuat extends Command
         }
 
         $tong = count($danhSach);
-        $this->info($tong . ' hồ sơ: ' . ($tong - $coLoi) . ' sạch, ' . $coLoi . ' có lỗi nghiêm trọng'
+        $this->info($tong . ' hồ sơ: ' . ($tong - $coLoi) . ' sạch, ' . $coLoi . ' có lỗi xuất toán'
             . ' (bước xuất sẽ chặn lại nếu export_xml_not_check tắt).');
 
         if (!$this->option('thuc-hien')) {

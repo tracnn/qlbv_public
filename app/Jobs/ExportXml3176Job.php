@@ -79,7 +79,7 @@ class ExportXml3176Job implements ShouldQueue
                 ->count();
 
             if ($soLoi > 0) {
-                $this->dung('Không xuất: còn ' . $soLoi . ' lỗi nghiêm trọng');
+                $this->dung('Không xuất: còn ' . $soLoi . ' lỗi xuất toán');
                 return;
             }
         }

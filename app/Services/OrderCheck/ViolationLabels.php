@@ -15,7 +15,7 @@ class ViolationLabels
     public static function severity()
     {
         return [
-            'critical' => 'Nghiêm trọng',
+            'critical' => 'Xuất toán',
             'warning'  => 'Cảnh báo',
             'info'     => 'Thông tin',
         ];

@@ -27,7 +27,7 @@ class Xml3176DashboardService
     /** Định nghĩa 5 bậc phễu: key => nhãn hiển thị */
     const FUNNEL_STEPS = [
         'imported'    => 'Đã import',
-        'no_critical' => 'Không lỗi nghiêm trọng',
+        'no_critical' => 'Không lỗi xuất toán',
         'exported'    => 'Đã xuất XML',
         'signed'      => 'Đã ký số',
         'submitted'   => 'Đã gửi BHXH',

@@ -21,7 +21,7 @@ class OrderCheckRuleController extends Controller
         return Datatables::of(OrderCheckRule::query()->orderBy('family')->orderBy('code'))
             ->addColumn('severity_badge', function ($r) {
                 $map = [
-                    'critical' => '<span class="label label-danger">Nghiêm trọng</span>',
+                    'critical' => '<span class="label label-danger">Xuất toán</span>',
                     'warning' => '<span class="label label-warning">Cảnh báo</span>',
                     'info' => '<span class="label label-info">Thông tin</span>',
                 ];

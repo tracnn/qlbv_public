@@ -10,7 +10,7 @@
       <div class="col-md-2"><label>Đến ngày</label><input type="date" id="date_to" class="form-control" value="{{ date('Y-m-d') }}"></div>
       <div class="col-md-2"><label>Mức độ</label>
         <select id="severity" class="form-control select2"><option value="">Tất cả</option>
-          <option value="critical">Nghiêm trọng</option><option value="warning">Cảnh báo</option><option value="info">Thông tin</option>
+          <option value="critical">Xuất toán</option><option value="warning">Cảnh báo</option><option value="info">Thông tin</option>
         </select>
       </div>
       <div class="col-md-2"><label>Trạng thái</label>
@@ -43,7 +43,7 @@
 
 <div class="row">
   <div class="col-md-3"><div class="info-box"><span class="info-box-icon bg-aqua"><i class="fa fa-list"></i></span><div class="info-box-content"><span class="info-box-text">Tổng</span><span class="info-box-number" id="kpi-total">0</span></div></div></div>
-  <div class="col-md-3"><div class="info-box"><span class="info-box-icon bg-red"><i class="fa fa-exclamation-triangle"></i></span><div class="info-box-content"><span class="info-box-text">Nghiêm trọng</span><span class="info-box-number" id="kpi-critical">0</span></div></div></div>
+  <div class="col-md-3"><div class="info-box"><span class="info-box-icon bg-red"><i class="fa fa-exclamation-triangle"></i></span><div class="info-box-content"><span class="info-box-text">Xuất toán</span><span class="info-box-number" id="kpi-critical">0</span></div></div></div>
   <div class="col-md-3"><div class="info-box"><span class="info-box-icon bg-yellow"><i class="fa fa-bell"></i></span><div class="info-box-content"><span class="info-box-text">Cảnh báo</span><span class="info-box-number" id="kpi-warning">0</span></div></div></div>
   <div class="col-md-3"><div class="info-box"><span class="info-box-icon bg-gray"><i class="fa fa-inbox"></i></span><div class="info-box-content"><span class="info-box-text">Chưa xử lý</span><span class="info-box-number" id="kpi-new">0</span></div></div></div>
 </div>
