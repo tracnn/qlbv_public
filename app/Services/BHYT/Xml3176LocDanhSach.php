@@ -199,6 +199,49 @@ class Xml3176LocDanhSach
         });
     }
 
+    /**
+     * Cat DONG loi theo bo loc loi cho ban xuat sheet XML1-XML15/XMLComplete.
+     *
+     * apBoLoc chi chon HO SO; ho so co loi khop thi ban xuat cu lay het moi dong loi cua
+     * no (do 01/10/2026: loc 1 ma loi ra 115.250 dong, chi 51.708 dong dung ma). Nguoi dung
+     * chot: ma loi -> chi dong ma do; nghiem trong/canh bao -> chi dong muc do; loi the ->
+     * khong lay dong loi XML. Bo loc khac (va nhanh tra cuu dich danh) khong cat dong.
+     *
+     * $query la query tren xml3176_error_results.
+     */
+    public static function apDongLoi($query, array $loc)
+    {
+        $g = function ($k) use ($loc) {
+            return array_key_exists($k, $loc) ? $loc[$k] : null;
+        };
+
+        // Giong apBoLoc: go ma dieu tri / ma BN thi bo moi bo loc khac.
+        if (!empty($g('treatment_code')) || !empty($g('patient_code'))) {
+            return $query;
+        }
+
+        $id = $g('xml3176_error_catalog');
+        $catalog = empty($id) ? null : Xml3176ErrorCatalog::find($id);
+
+        if ($catalog) {
+            $query->where('xml3176_error_results.xml', $catalog->xml)
+                  ->where('xml3176_error_results.error_code', $catalog->error_code);
+        }
+
+        $trangThai = $g('xml_filter_status');
+
+        if ($trangThai === 'has_error_critical') {
+            $query->where('xml3176_error_results.critical_error', true);
+        } elseif ($trangThai === 'has_error_warning') {
+            $query->where('xml3176_error_results.critical_error', false);
+        } elseif (in_array($trangThai, ['has_error_hein_card', 'has_error_hein_card_without_xml'], true)) {
+            // Chi sheet loi the; khong dong loi XML nao.
+            $query->whereRaw('1 = 0');
+        }
+
+        return $query;
+    }
+
     /** Ho so co it nhat mot dong loi mang dung ma loi duoc chon. */
     private static function apMaLoi($query, $id)
     {

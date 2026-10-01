@@ -1,3 +1,12 @@
+# 01/10/2026
+
+- **Xuất danh sách lỗi XML3176 nay tuân theo đúng bộ lọc lỗi trên màn danh sách.** Trước đây bộ lọc chỉ chọn hồ sơ, rồi bản xuất lấy **mọi** dòng lỗi của hồ sơ đó. Ví dụ ngày 29/09: lọc mã `XML3_OVERLAPPING_SERVICE_EXECUTION` thì màn hiện 115 hồ sơ nhưng tệp ra 115.250 dòng, chỉ 51.708 dòng đúng mã; lọc "Có lỗi nghiêm trọng" ra 197.665 dòng, chỉ 61.502 dòng nghiêm trọng. Nay các sheet XML1–XML15 và XMLComplete chỉ giữ:
+  - lọc **Mã lỗi**: dòng đúng mã đó (sheet XML khác để trống);
+  - lọc **Có lỗi nghiêm trọng** / **Chỉ có cảnh báo**: dòng đúng mức đó;
+  - lọc **Lỗi thẻ BHYT**: không lấy dòng lỗi XML, chỉ sheet lỗi thẻ.
+
+  Các bộ lọc khác (ngày, khoa, cơ sở, thẻ, người nạp…) vẫn chỉ chọn hồ sơ như cũ. Tra cứu đích danh theo mã điều trị / mã bệnh nhân vẫn bỏ qua mọi bộ lọc lỗi, giống màn danh sách. Sheet lỗi thẻ và hai sheet danh mục không đổi. Không có migration.
+
 # 30/09/2026
 
 - **Mã BHXH nay chấp nhận từ 10 đến 12 ký tự** (trước đây bắt đúng 10). Mã số BHXH có thể là số định danh cá nhân 12 số, ví dụ `001191036820`. Áp cho cả `MA_BHXH` ở XML11 và `MA_BHXH_NND` (người nuôi dưỡng) ở XML9; mã lỗi giữ nguyên.
