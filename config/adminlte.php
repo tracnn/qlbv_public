@@ -903,13 +903,6 @@ return [
             'checkrole'   => 'superadministrator',
             'submenu' => [
                 [
-                    'text'       => 'Kiểm tra chi tiết',
-                    'icon'       => 'rebel',
-                    'checkrole'   => 'superadministrator',
-                    'route'   => 'system.user-function.index',
-                    'active'    => ['system/user-function*'],
-                ],
-                [
                     'text'       => 'Tham số hệ thống',
                     'icon'       => 'cog',
                     'route'        => 'system.sys-param',
