@@ -313,9 +313,7 @@ class EmrController extends Controller
                                 <span class="glyphicon glyphicon-eye-open"></span> Chi tiết EMR</a>
                             <a href="' .route('view-guide-content',['token'=> $token]) .
                             '"class="btn btn-sm btn-primary" target="_blank">
-                                <span class="glyphicon glyphicon-eye-open"></span> Trả KQ</a>
-                            <a href="' .route('system.user-function.search',['treatment_code'=>$result->treatment_code]) .'" class="btn btn-sm btn-warning" target="_blank">
-                                <span class="glyphicon glyphicon-check"></span> </a>';
+                                <span class="glyphicon glyphicon-eye-open"></span> Trả KQ</a>';
                 // Kiểm tra nếu patient_type_id là 102 thì thêm nút Dữ liệu tiêm chủng
                 if ($result->tdl_patient_type_id == 102 && (\Auth::user()->can('vaccination') || 
                     \Auth::user()->hasRole('superadministrator'))) {

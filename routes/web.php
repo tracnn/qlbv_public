@@ -520,10 +520,6 @@ Route::group(['middleware' => ['auth']], function () {
 
     /* User function */
     Route::group(['prefix' => 'system/', 'middleware' => ['checkrole:superadministrator']], function () {
-        Route::get('user-function', 'System\SystemController@index')->name('system.user-function.index');
-        Route::get('user-function/search', 'System\SystemController@search')->name('system.user-function.search');
-        Route::get('user-function/detail-inpatient-bill', 'System\SystemController@detailInpatientBill')->name('system.user-function.detail-inpatient-bill');
-        Route::post('user-function/check-card', 'System\SystemController@checkCard')->name('system.user-function.check-card');
 
         Route::get('check-queue-work', 'System\SystemController@checkQueueWork')->name('system.check-queue-work');
         Route::get('check-error', 'System\CheckErrorController@index')->name('system.check-error');
