@@ -22,17 +22,19 @@ use Illuminate\Database\Migrations\Migration;
  * so_dinh_danh + ma_khoa + ma_cskcb + tu_ngay: mot nguoi co the lam o hai khoa nen
  * ma_khoa phai nam trong khoa.
  *
- * DEM VA NEM chu khong tu xoa: du lieu danh muc la thu nguoi van hanh phai nhin truoc
- * khi mat. Tren CSDL phat trien cac bang nay dang 0 dong nen migration se chay tron;
- * tren may chu san pham thi chua do.
+ * DON TRUNG TRUOC KHI NOI KHOA. Ban dau migration dem va nem, nhung may chu san pham co
+ * 72 to hop trung o medical_staffs (do nhap TT12 khi chua co khoa nay) nen update.bat
+ * dung lai moi lan. Nay giu dong id LON NHAT moi nhom (lan nhap moi nhat), con cac dong
+ * thua thi CHEP sang bang <ten_bang>_trung_tt12 roi moi xoa - nguoi van hanh van xem lai
+ * duoc. Khong co khoa ngoai nao tro vao ba bang nay.
  */
 class DoiKhoaDuyNhatDanhMucTt12 extends Migration
 {
     public function up()
     {
-        $this->chanNeuTrung('medical_staffs', ['so_dinh_danh', 'ma_khoa', 'ma_cskcb', 'tu_ngay']);
-        $this->chanNeuTrung('department_bed_catalogs', ['ma_khoa', 'ma_cskcb', 'tu_ngay']);
-        $this->chanNeuTrung('equipment_catalogs', ['ma_may', 'ma_cskcb', 'tu_ngay']);
+        $this->donTrung('medical_staffs', ['so_dinh_danh', 'ma_khoa', 'ma_cskcb', 'tu_ngay']);
+        $this->donTrung('department_bed_catalogs', ['ma_khoa', 'ma_cskcb', 'tu_ngay']);
+        $this->donTrung('equipment_catalogs', ['ma_may', 'ma_cskcb', 'tu_ngay']);
 
         Schema::table('medical_staffs', function (Blueprint $t) {
             $t->dropUnique('medical_staffs_ma_bhxh_unique');
@@ -71,30 +73,25 @@ class DoiKhoaDuyNhatDanhMucTt12 extends Migration
     }
 
     /**
-     * Dem so to hop trung theo khoa MOI. Nem kem so lieu neu con trung.
+     * Xoa dong trung theo khoa MOI, giu dong id lon nhat moi nhom.
      *
-     * Nem chu khong xoa: nguoi van hanh phai duoc nhin va quyet dinh giu dong nao.
-     * Migration bao loi thi `php artisan migrate` dung lai va khong bang nao bi doi khoa
-     * nua chung - dung dieu ta muon.
+     * So sanh bang '=' nen nhom co cot khoa NULL KHONG bi dung toi: unique index cua MySQL
+     * cho phep nhieu NULL, cac dong do khong chan viec noi khoa.
+     *
+     * Dong bi xoa duoc chep truoc sang <bang>_trung_tt12. CREATE ... LIKE + INSERT IGNORE de
+     * chay lai lan hai (migration chet giua chung) khong nhan doi va khong vo.
      */
-    private function chanNeuTrung($bang, array $khoa)
+    private function donTrung($bang, array $khoa)
     {
-        $dem = DB::table($bang)
-            ->select($khoa)
-            ->selectRaw('COUNT(*) as so_dong')
-            ->groupBy($khoa)
-            ->havingRaw('COUNT(*) > 1')
-            ->get();
+        $khop = implode(' AND ', array_map(function ($k) {
+            return "a.`$k` = b.`$k`";
+        }, $khoa));
+        $saoLuu = $bang . '_trung_tt12';
 
-        if (count($dem) === 0) {
-            return;
-        }
+        DB::statement("CREATE TABLE IF NOT EXISTS `$saoLuu` LIKE `$bang`");
+        DB::statement("INSERT IGNORE INTO `$saoLuu` SELECT a.* FROM `$bang` a"
+            . " WHERE EXISTS (SELECT 1 FROM `$bang` b WHERE $khop AND b.id > a.id)");
 
-        throw new \RuntimeException(
-            'Bang ' . $bang . ' con ' . count($dem) . ' to hop trung theo khoa moi ('
-            . implode(', ', $khoa) . '). Xu ly trung truoc roi chay lai migrate. '
-            . 'Truy van xem chi tiet: SELECT ' . implode(', ', $khoa) . ', COUNT(*) FROM '
-            . $bang . ' GROUP BY ' . implode(', ', $khoa) . ' HAVING COUNT(*) > 1;'
-        );
+        DB::delete("DELETE a FROM `$bang` a JOIN `$bang` b ON $khop AND b.id > a.id");
     }
 }
