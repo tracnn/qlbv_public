@@ -56,7 +56,10 @@ class XuatTepLoiXml3176Job implements ShouldQueue
 
         $y->update(['trang_thai' => Xml3176TepXuat::DANG_TAO, 'bat_dau_luc' => Carbon::now()]);
 
-        // Ngay 29/09/2026 (204.617 dong loi): ~700 giay, bo nho dinh ~2,5 GB.
+        // Duong cu (Laravel Excel): 29/09/2026 204.617 dong ~700 s / ~2,5 GB; 05/10/2026 ~358.800
+        // dong HET 4096M. Duong luong (GhiExcelLuong) do 05/10/2026: 05/10 (358.800+ dong loi) 170 s,
+        // dinh 360 MB; 04/10 date_payment 35 s, dinh 124 MB (duong cu 214 s, 1336 MB).
+        // memory_limit giu 4096M toi khi nghiem thu prod (spec 2026-10-05 ghi-luong).
         set_time_limit(0);
         ini_set('memory_limit', '4096M');
 

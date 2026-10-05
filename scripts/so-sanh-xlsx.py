@@ -24,7 +24,12 @@ def do_rong(tep):
         duong = dich[rid].lstrip('/')
         duong = duong if duong.startswith('xl/') else 'xl/' + duong
         dau = z.open(duong).read(200000).decode('utf-8', 'ignore')
-        ra[ten] = {int(a): float(w) for a, w in re.findall(r'<col min="(\d+)" max="\d+" width="([\d.]+)"', dau)}
+        ra[ten] = {}
+        for el in re.findall(r'<col[^>]*/?>', dau):
+            # chi so cot co customWidth (do rong co chu y); cot chi mang style la do rong mac dinh cua Excel
+            if not re.search(r'customWidth="(1|true)"', el):
+                continue
+            ra[ten][int(re.search(r'min="(\d+)"', el).group(1))] = float(re.search(r'width="([\d.]+)"', el).group(1))
     return ra
 
 
