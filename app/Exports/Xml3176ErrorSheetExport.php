@@ -250,17 +250,34 @@ class Xml3176ErrorSheetExport implements FromGenerator, WithHeadings, WithStyles
         ];
     }
 
-    public function registerEvents(): array
+    /**
+     * Dinh dang dung CHUNG cho duong Laravel Excel (registerEvents/styles) va duong ghi luong
+     * (App\Services\ExcelLuong\GhiExcelLuong): mot nguon, hai duong khong the lech nhau.
+     */
+    public function dinhDangLuong(): array
     {
         return [
-            AfterSheet::class => function (AfterSheet $event) {
+            'do_rong' => self::DO_RONG,
+            'cot_so' => self::COT_NGAY,
+            'kieu_o' => 'tu_dong',
+            'xuong_dong' => true,
+            'tieu_de_can_giua' => true,
+        ];
+    }
+
+    public function registerEvents(): array
+    {
+        $d = $this->dinhDangLuong();
+
+        return [
+            AfterSheet::class => function (AfterSheet $event) use ($d) {
                 $sheet = $event->sheet->getDelegate();
 
-                foreach (self::DO_RONG as $cot => $rong) {
+                foreach ($d['do_rong'] as $cot => $rong) {
                     $sheet->getColumnDimension($cot)->setWidth($rong);
                 }
 
-                foreach (self::COT_NGAY as $cot) {
+                foreach ($d['cot_so'] as $cot) {
                     $sheet->getStyle($cot)->getNumberFormat()->setFormatCode(NumberFormat::FORMAT_NUMBER);
                 }
             },
@@ -269,7 +286,8 @@ class Xml3176ErrorSheetExport implements FromGenerator, WithHeadings, WithStyles
 
     public function styles(Worksheet $sheet)
     {
-        $sheet->getStyle('A:U')->getAlignment()->setWrapText(true);
+        $doRong = $this->dinhDangLuong()['do_rong'];
+        $sheet->getStyle('A:' . array_keys($doRong)[count($doRong) - 1])->getAlignment()->setWrapText(true);
 
         return [
             1 => [

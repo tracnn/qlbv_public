@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Exports\Xml3176ErrorMultiSheetExport;
 use App\Models\BHYT\Xml3176TepXuat;
 use App\Services\BHYT\DanhSachCoSo;
+use App\Services\ExcelLuong\GhiExcelLuong;
 use App\Services\Xml3176\Xml3176TepXuatService;
 use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
@@ -55,27 +56,35 @@ class XuatTepLoiXml3176Job implements ShouldQueue
 
         $y->update(['trang_thai' => Xml3176TepXuat::DANG_TAO, 'bat_dau_luc' => Carbon::now()]);
 
-        // Ngay 29/09/2026 (204.617 dong loi): ~700 giay, bo nho dinh ~2,5 GB.
+        // Duong cu (Laravel Excel): 29/09/2026 204.617 dong ~700 s / ~2,5 GB; 05/10/2026 ~358.800
+        // dong HET 4096M. Duong luong (GhiExcelLuong), do ngay 05/10/2026 (358.800+ dong loi): 170 s,
+        // dinh 360 MB; 04/10 date_payment 35 s, dinh 124 MB (duong cu 214 s, 1336 MB).
+        // memory_limit giu 4096M toi khi nghiem thu prod (spec 2026-10-05 ghi-luong).
         set_time_limit(0);
         ini_set('memory_limit', '4096M');
 
         $duongDan = Xml3176TepXuatService::duongDanTep($y);
 
-        try {
-            $daGhi = Excel::store(
-                new Xml3176ErrorMultiSheetExport((array) $y->bo_loc, DanhSachCoSo::danhSach()),
-                $duongDan,
-                'local'
-            );
+        $export = new Xml3176ErrorMultiSheetExport((array) $y->bo_loc, DanhSachCoSo::danhSach());
 
-            // Excel::store tra false khi khong chep duoc tep vao disk: khong danh dau xong.
-            if ($daGhi === false) {
-                throw new \RuntimeException('Không ghi được tệp xuất ra đĩa');
+        try {
+            if (config('xml3176.xuat_tep_luong', true)) {
+                // Ghi THEO LUONG (Spout): RAM ~ mot lo 1000 dong bat ke so dong. Lay qua app()
+                // chu khong type-hint handle() - bay tiem container Laravel 5.5.
+                app(GhiExcelLuong::class)->ghi($export->sheets(), Storage::disk('local')->path($duongDan));
+            } else {
+                // Duong cu Laravel Excel - giu de quay lui nhanh tren prod (config xml3176.xuat_tep_luong; quay lui: sua .env, php artisan config:cache, khoi dong lai dich vu).
+                $daGhi = Excel::store($export, $duongDan, 'local');
+
+                // Excel::store tra false khi khong chep duoc tep vao disk: khong danh dau xong.
+                if ($daGhi === false) {
+                    throw new \RuntimeException('Không ghi được tệp xuất ra đĩa');
+                }
             }
         } finally {
             // Hai sheet danh muc dat StringValueBinder vao bien TINH (vendor/maatwebsite/excel/
             // src/Sheet.php) va khong tra lai. Worker nay chay nhieu lan xuat noi tiep: khong
-            // tra lai thi cac lan sau ghi moi o thanh chuoi.
+            // tra lai thi cac lan sau ghi moi o thanh chuoi. Can khi cong tac tat.
             Cell::setValueBinder(new DefaultValueBinder());
         }
 

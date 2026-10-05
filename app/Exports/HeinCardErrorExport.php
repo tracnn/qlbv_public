@@ -139,11 +139,28 @@ class HeinCardErrorExport implements FromQuery, WithHeadings, ShouldAutoSize, Wi
         return $h;
     }
 
+    /**
+     * Dinh dang dung CHUNG cho duong Laravel Excel (registerEvents/styles) va duong ghi luong
+     * (App\Services\ExcelLuong\GhiExcelLuong).
+     *
+     * ShouldAutoSize khong co tac dung that: AfterSheet dat cung do rong cho MOI cot cua sheet.
+     */
+    public function dinhDangLuong(): array
+    {
+        return [
+            'do_rong' => $this->coMaKhoa
+                ? ['A' => 5, 'B' => 13, 'C' => 10, 'D' => 15, 'E' => 15, 'F' => 50, 'G' => 18, 'H' => 12, 'I' => 30]
+                : ['A' => 5, 'B' => 13, 'C' => 15, 'D' => 15, 'E' => 50, 'F' => 18],
+            'cot_so' => [],
+            'kieu_o' => 'tu_dong',
+            'xuong_dong' => true,
+            'tieu_de_can_giua' => true,
+        ];
+    }
+
     public function registerEvents(): array
     {
-        $doRong = $this->coMaKhoa
-            ? ['A' => 5, 'B' => 13, 'C' => 10, 'D' => 15, 'E' => 15, 'F' => 50, 'G' => 18, 'H' => 12, 'I' => 30]
-            : ['A' => 5, 'B' => 13, 'C' => 15, 'D' => 15, 'E' => 50, 'F' => 18];
+        $doRong = $this->dinhDangLuong()['do_rong'];
 
         return [
             AfterSheet::class => function(AfterSheet $event) use ($doRong) {

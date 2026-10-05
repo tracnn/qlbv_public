@@ -6,6 +6,7 @@ use App\Exports\Xml3176ErrorMultiSheetExport;
 use App\Jobs\XuatTepLoiXml3176Job;
 use App\Models\BHYT\Xml3176TepXuat;
 use App\Services\BHYT\DanhSachCoSo;
+use App\Services\ExcelLuong\GhiExcelLuong;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
@@ -46,6 +47,7 @@ class XuatTepLoiXml3176JobTest extends TestCase
     /** @test */
     public function chay_xong_thi_luu_tep_dung_cho_bang_bo_loc_da_luu_va_danh_dau_xong()
     {
+        config(['xml3176.xuat_tep_luong' => false]);
         Excel::fake();
         $y = $this->yeuCau();
 
@@ -66,6 +68,7 @@ class XuatTepLoiXml3176JobTest extends TestCase
     /** @test */
     public function yeu_cau_khong_con_hoac_khong_o_cho_thi_khong_lam_gi()
     {
+        config(['xml3176.xuat_tep_luong' => false]);
         Excel::fake();
         $daXong = $this->yeuCau(['trang_thai' => Xml3176TepXuat::XONG]);
 
@@ -82,6 +85,7 @@ class XuatTepLoiXml3176JobTest extends TestCase
     /** @test */
     public function sau_khi_xuat_bo_gan_gia_tri_tro_ve_mac_dinh()
     {
+        config(['xml3176.xuat_tep_luong' => false]);
         // Hai sheet danh muc dat StringValueBinder vao bien TINH va khong tra lai. Worker chay
         // nhieu lan xuat noi tiep: thieu buoc tra lai thi cac lan sau ghi moi o thanh chuoi.
         Excel::fake();
@@ -124,6 +128,7 @@ class XuatTepLoiXml3176JobTest extends TestCase
     /** @test */
     public function excel_store_tra_false_thi_nem_ngoai_le_va_khong_danh_dau_xong()
     {
+        config(['xml3176.xuat_tep_luong' => false]);
         Excel::swap(new class {
             public function store(...$tham)
             {
@@ -150,5 +155,76 @@ class XuatTepLoiXml3176JobTest extends TestCase
         $this->assertSame(1, (new XuatTepLoiXml3176Job(1))->tries);
         $this->assertSame(0, (new \ReflectionMethod(XuatTepLoiXml3176Job::class, 'handle'))->getNumberOfParameters(),
             'Khong nhan dich vu qua type-hint cua handle() (bay tiem container Laravel 5.5)');
+    }
+
+    /** Bo ghi gia: ghi lai tham so, tao tep that de job doc kich thuoc. */
+    private function ghiGia()
+    {
+        $gia = new class extends GhiExcelLuong {
+            public $goi = [];
+
+            public function ghi(array $sheets, string $dich): void
+            {
+                $this->goi[] = [$sheets, $dich];
+                if (!is_dir(dirname($dich))) {
+                    mkdir(dirname($dich), 0777, true);
+                }
+                file_put_contents($dich, 'xlsx');
+            }
+        };
+        app()->instance(GhiExcelLuong::class, $gia);
+
+        return $gia;
+    }
+
+    /** @test */
+    public function mac_dinh_bat_ghi_luong()
+    {
+        $this->assertTrue(config('xml3176.xuat_tep_luong'));
+    }
+
+    /** @test */
+    public function cong_tac_bat_thi_ghi_luong_du_19_sheet_vao_dung_duong_dan()
+    {
+        config(['xml3176.xuat_tep_luong' => true]);
+        $gia = $this->ghiGia();
+        $y = $this->yeuCau();
+
+        (new XuatTepLoiXml3176Job($y->id))->handle();
+
+        $duongDan = 'xml3176-tep-xuat/' . $y->id . '.xlsx';
+        $this->assertCount(1, $gia->goi);
+        $this->assertCount(19, $gia->goi[0][0]);
+        $this->assertSame(Storage::disk('local')->path($duongDan), $gia->goi[0][1]);
+
+        $y = $y->fresh();
+        $this->assertSame(Xml3176TepXuat::XONG, $y->trang_thai);
+        $this->assertSame($duongDan, $y->duong_dan);
+        $this->assertEquals(4, $y->kich_thuoc);
+        $this->assertNotNull($y->xong_luc);
+    }
+
+    /** @test */
+    public function ghi_luong_nem_loi_thi_khong_danh_dau_xong()
+    {
+        config(['xml3176.xuat_tep_luong' => true]);
+        app()->instance(GhiExcelLuong::class, new class extends GhiExcelLuong {
+            public function ghi(array $sheets, string $dich): void
+            {
+                throw new \RuntimeException('hong');
+            }
+        });
+        $y = $this->yeuCau();
+
+        try {
+            (new XuatTepLoiXml3176Job($y->id))->handle();
+            $this->fail('Phai nem lai loi');
+        } catch (\RuntimeException $e) {
+            $this->assertSame('hong', $e->getMessage());
+        }
+
+        $y = $y->fresh();
+        $this->assertSame(Xml3176TepXuat::DANG_TAO, $y->trang_thai);
+        $this->assertNull($y->duong_dan);
     }
 }
