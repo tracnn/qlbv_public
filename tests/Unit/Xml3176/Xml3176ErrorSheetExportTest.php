@@ -60,11 +60,11 @@ class Xml3176ErrorSheetExportTest extends TestCase
     }
 
     /** @test */
-    public function tieu_de_19_cot_ma_khoa_o_vi_tri_thu_5()
+    public function tieu_de_21_cot_ma_khoa_o_vi_tri_thu_5()
     {
         $h = $this->sheet('XML3')->headings();
 
-        $this->assertCount(19, $h);
+        $this->assertCount(21, $h);
         $this->assertSame('Mã Liên Kết', $h[3]);
         $this->assertSame('Mã Khoa', $h[4]);
         $this->assertSame('Mã Bệnh Nhân', $h[5]);
@@ -78,14 +78,14 @@ class Xml3176ErrorSheetExportTest extends TestCase
     }
 
     /** @test */
-    public function do_rong_du_19_cot_va_cot_ngay_khop_tieu_de()
+    public function do_rong_du_21_cot_va_cot_ngay_khop_tieu_de()
     {
         // Chen cot Ma Khoa lam dich moi cot tu E. Test nay chan viec dinh dang so ap nham
         // cot sau khi dich - loi im lang, file van mo duoc.
         $h = $this->sheet('XML3')->headings();
 
-        $this->assertCount(19, Xml3176ErrorSheetExport::DO_RONG);
-        $this->assertSame(range('A', 'S'), array_keys(Xml3176ErrorSheetExport::DO_RONG));
+        $this->assertCount(21, Xml3176ErrorSheetExport::DO_RONG);
+        $this->assertSame(range('A', 'U'), array_keys(Xml3176ErrorSheetExport::DO_RONG));
 
         $tenCotNgay = [];
         foreach (Xml3176ErrorSheetExport::COT_NGAY as $chu) {
@@ -196,7 +196,7 @@ class Xml3176ErrorSheetExportTest extends TestCase
 
         $ra = $sheet->map($dong);
 
-        $this->assertCount(19, $ra);
+        $this->assertCount(21, $ra);
         $this->assertSame(1, $ra[0]);
         $this->assertSame('K01', $ra[4]);
         $this->assertSame('Ten loi', $ra[14]);

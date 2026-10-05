@@ -7,6 +7,7 @@ use App\Exports\Xml3176ErrorSheetExport;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Concerns\FromGenerator;
 use Maatwebsite\Excel\Concerns\FromQuery;
+use Tests\Support\FakeKhoaDieuTriHis;
 use Tests\Support\LocComment;
 use Tests\Support\Xml3176RuleTestSupport;
 use Tests\TestCase;
@@ -76,7 +77,7 @@ class SheetLoiDocMotLanTest extends TestCase
     /** @test */
     public function doc_mot_lan_dung_dong_dung_thu_tu_dung_cot()
     {
-        $s = new Xml3176ErrorSheetExport('XML1', $this->loc(), []);
+        $s = new Xml3176ErrorSheetExport('XML1', $this->loc(), [], new FakeKhoaDieuTriHis());
 
         $dong = [];
         foreach ($s->generator() as $r) {

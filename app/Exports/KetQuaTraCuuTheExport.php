@@ -4,7 +4,6 @@ namespace App\Exports;
 
 use App\Services\BHYT\KhoaDieuTriHis;
 use App\Services\BHYT\NhanMaThe;
-use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithHeadings;
@@ -31,16 +30,11 @@ class KetQuaTraCuuTheExport implements FromQuery, WithHeadings, ShouldAutoSize, 
 
     protected $stt = 0;
 
-    const LOI_HIS = 'Lỗi tra HIS';
-
     /** @var KhoaDieuTriHis */
     protected $khoaHis;
 
     /** Khoa cua lo dang xuat: [ma_lk => ['ma_khoa' => ..., 'ten_khoa' => ...]]. */
     protected $khoaTheoMaLk = [];
-
-    /** Lo dang xuat tra HIS bi loi. */
-    protected $loiHis = false;
 
     public function __construct($truyVan, KhoaDieuTriHis $khoaHis = null)
     {
@@ -57,15 +51,7 @@ class KetQuaTraCuuTheExport implements FromQuery, WithHeadings, ShouldAutoSize, 
      */
     public function prepareRows($rows)
     {
-        $this->loiHis = false;
-
-        try {
-            $this->khoaTheoMaLk = $this->khoaHis->theoMaLk(collect($rows)->pluck('ma_lk')->all());
-        } catch (\Throwable $e) {
-            Log::warning('Xuat ket qua tra cuu the: khong tra duoc khoa HIS - ' . $e->getMessage());
-            $this->khoaTheoMaLk = [];
-            $this->loiHis = true;
-        }
+        $this->khoaTheoMaLk = $this->khoaHis->khoaChoXuat(collect($rows)->pluck('ma_lk')->all());
 
         return $rows;
     }
@@ -154,8 +140,8 @@ class KetQuaTraCuuTheExport implements FromQuery, WithHeadings, ShouldAutoSize, 
             $r->ho_ten_gui,
             $r->ngay_sinh_gui,
             $r->ma_dkbd_gui,
-            $this->loiHis ? self::LOI_HIS : ($khoa['ma_khoa'] ?? null),
-            $this->loiHis ? self::LOI_HIS : ($khoa['ten_khoa'] ?? null),
+            $khoa['ma_khoa'] ?? null,
+            $khoa['ten_khoa'] ?? null,
         ];
     }
 

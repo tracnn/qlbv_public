@@ -2,6 +2,7 @@
 
 namespace App\Exports;
 
+use App\Services\BHYT\KhoaDieuTriHis;
 use App\Services\BHYT\Xml3176LocDanhSach;
 use App\Services\Xml3176\Xml3176KhoaNguon;
 use Maatwebsite\Excel\Concerns\WithMultipleSheets;
@@ -39,11 +40,15 @@ class Xml3176ErrorMultiSheetExport implements WithMultipleSheets
 
         $sheets = [];
 
+        // MOT bo tra khoa HIS cho ca 17 sheet: no nho ma da tra, ho so loi o nhieu sheet chi
+        // tra HIS mot lan.
+        $khoaHis = new KhoaDieuTriHis();
+
         foreach (Xml3176KhoaNguon::LOAI_XML as $loai) {
-            $sheets[] = new Xml3176ErrorSheetExport($loai, $this->loc, $this->danhSachCoSo);
+            $sheets[] = new Xml3176ErrorSheetExport($loai, $this->loc, $this->danhSachCoSo, $khoaHis);
         }
 
-        $sheets[] = new Xml3176ErrorSheetExport('XMLComplete', $this->loc, $this->danhSachCoSo);
+        $sheets[] = new Xml3176ErrorSheetExport('XMLComplete', $this->loc, $this->danhSachCoSo, $khoaHis);
 
         // Cat theo tap ma_lk cua man danh sach (Xml3176LocDanhSach::truyVanMaLk) de sheet
         // nay ap duoc TAT CA bo loc cua man danh sach, khong chi rieng ma co so.
@@ -52,7 +57,8 @@ class Xml3176ErrorMultiSheetExport implements WithMultipleSheets
             array_get($this->loc, 'date_to'),
             Xml3176LocDanhSach::truyVanMaLk($this->loc, $this->danhSachCoSo),
             'xml3176',
-            true
+            true,
+            $khoaHis
         );
 
         // Hai sheet danh muc PHAI dung cuoi. Chung cai StringValueBinder, ma Laravel Excel

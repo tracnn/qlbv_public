@@ -4,6 +4,7 @@ namespace Tests\Unit\Xml3176\TepXuat;
 
 use App\Exports\Xml3176ErrorSheetExport;
 use Illuminate\Support\Facades\DB;
+use Tests\Support\FakeKhoaDieuTriHis;
 use Tests\Support\Xml3176RuleTestSupport;
 use Tests\TestCase;
 
@@ -61,7 +62,7 @@ class SheetLoiCatDongTest extends TestCase
         ], $ghiDe);
 
         $ma = [];
-        foreach ((new Xml3176ErrorSheetExport('XML1', $loc, []))->generator() as $dong) {
+        foreach ((new Xml3176ErrorSheetExport('XML1', $loc, [], new FakeKhoaDieuTriHis()))->generator() as $dong) {
             $ma[] = $dong->error_code;
         }
         sort($ma);

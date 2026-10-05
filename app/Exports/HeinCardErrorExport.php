@@ -13,6 +13,7 @@ use Maatwebsite\Excel\Events\AfterSheet;
 use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Carbon\Carbon;
+use App\Services\BHYT\KhoaDieuTriHis;
 
 class HeinCardErrorExport implements FromQuery, WithHeadings, ShouldAutoSize, WithStyles, WithEvents, WithMapping, WithTitle
 {
@@ -39,15 +40,38 @@ class HeinCardErrorExport implements FromQuery, WithHeadings, ShouldAutoSize, Wi
      * Mac dinh TAT: man QD130 dung chung lop nay va file cua man do phai giu nguyen.
      */
     protected $coMaKhoa;
+    /**
+     * Tra khoa dieu tri cuoi trong HIS - chi dung khi $coMaKhoa (XML3176): hai cot cuoi
+     * 'Ma khoa (HIS)', 'Khoa dieu tri (HIS)'.
+     *
+     * @var KhoaDieuTriHis|null
+     */
+    protected $khoaHis;
+    /** Khoa cua lo dang xuat: [ma_lk => ['ma_khoa' => ..., 'ten_khoa' => ...]]. */
+    protected $khoaTheoMaLk = [];
 
     public function __construct($fromDate = null, $toDate = null, $maLkChoPhep = null,
-        $khoaCauHinh = 'qd130xml', $coMaKhoa = false)
+        $khoaCauHinh = 'qd130xml', $coMaKhoa = false, KhoaDieuTriHis $khoaHis = null)
     {
         $this->fromDate = $fromDate;
         $this->toDate = $toDate;
         $this->maLkChoPhep = $maLkChoPhep;
         $this->khoaCauHinh = $khoaCauHinh;
         $this->coMaKhoa = (bool) $coMaKhoa;
+        $this->khoaHis = $this->coMaKhoa ? ($khoaHis ?: new KhoaDieuTriHis()) : null;
+    }
+
+    /**
+     * Laravel Excel goi truoc map() cho MOI LO (chunk_size dong): tra khoa HIS mot lan cho ca
+     * lo. Che do QD130 khong cham HIS.
+     */
+    public function prepareRows($rows)
+    {
+        if ($this->khoaHis) {
+            $this->khoaTheoMaLk = $this->khoaHis->khoaChoXuat(collect($rows)->pluck('ma_lk')->all());
+        }
+
+        return $rows;
     }
 
     public function query()
@@ -108,6 +132,8 @@ class HeinCardErrorExport implements FromQuery, WithHeadings, ShouldAutoSize, Wi
 
         if ($this->coMaKhoa) {
             array_splice($h, 2, 0, ['Mã Khoa']);
+            $h[] = 'Mã khoa (HIS)';
+            $h[] = 'Khoa điều trị (HIS)';
         }
 
         return $h;
@@ -116,7 +142,7 @@ class HeinCardErrorExport implements FromQuery, WithHeadings, ShouldAutoSize, Wi
     public function registerEvents(): array
     {
         $doRong = $this->coMaKhoa
-            ? ['A' => 5, 'B' => 13, 'C' => 10, 'D' => 15, 'E' => 15, 'F' => 50, 'G' => 18]
+            ? ['A' => 5, 'B' => 13, 'C' => 10, 'D' => 15, 'E' => 15, 'F' => 50, 'G' => 18, 'H' => 12, 'I' => 30]
             : ['A' => 5, 'B' => 13, 'C' => 15, 'D' => 15, 'E' => 50, 'F' => 18];
 
         return [
@@ -160,6 +186,9 @@ class HeinCardErrorExport implements FromQuery, WithHeadings, ShouldAutoSize, Wi
 
         if ($this->coMaKhoa) {
             array_splice($dong, 2, 0, [$data->ma_khoa_xuat]);
+            $khoa = $this->khoaTheoMaLk[trim((string) $data->ma_lk)] ?? null;
+            $dong[] = $khoa['ma_khoa'] ?? null;
+            $dong[] = $khoa['ten_khoa'] ?? null;
         }
 
         return $dong;
