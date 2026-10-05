@@ -73,7 +73,7 @@ class XuatTepLoiXml3176Job implements ShouldQueue
                 // chu khong type-hint handle() - bay tiem container Laravel 5.5.
                 app(GhiExcelLuong::class)->ghi($export->sheets(), Storage::disk('local')->path($duongDan));
             } else {
-                // Duong cu Laravel Excel - giu de quay lui nhanh tren prod (config xml3176.xuat_tep_luong).
+                // Duong cu Laravel Excel - giu de quay lui nhanh tren prod (config xml3176.xuat_tep_luong; quay lui: sua .env, php artisan config:cache, khoi dong lai dich vu).
                 $daGhi = Excel::store($export, $duongDan, 'local');
 
                 // Excel::store tra false khi khong chep duoc tep vao disk: khong danh dau xong.

@@ -181,7 +181,8 @@ if (config('xml3176.xuat_tep_luong', true)) {
 ```
 
 - Công tắc `xml3176.xuat_tep_luong` ← `env('XML3176_XUAT_TEP_LUONG', true)`. Quay lui trên prod:
-  đặt `false` trong `.env`, khởi động lại dịch vụ `QLBV JobXuatTepXml3176`.
+  đặt `XML3176_XUAT_TEP_LUONG=false` trong `.env` → chạy `php artisan config:cache` (prod cache config,
+  `env()` không tự đọc lại) → khởi động lại dịch vụ `QLBV JobXuatTepXml3176`.
 - Không đổi: chuyển trạng thái `dang_tao` → `xong`, kích thước, `failed()`, `$tries = 1`,
   `set_time_limit(0)`, `Cell::setValueBinder(...)` trong `finally` (vô hại; cần khi tắt công tắc).
 - `memory_limit` 4096M **giữ nguyên** ở lần này (xem Nghiệm thu bước 4).
@@ -253,7 +254,7 @@ Script giữ trong repo: `scripts/so-sanh-xuat-loi-xml3176.php`.
 1. Xuất lại đúng bộ lọc #11 (05/10, `date_create`, `has_error`): phải xong; ghi thời gian
    (`bat_dau_luc` / `xong_luc`) và kích thước.
 2. Mở tệp, đối chiếu số dòng XML3/XML4 với kết quả đối chiếu ở trên.
-3. Có vấn đề → `XML3176_XUAT_TEP_LUONG=false` + khởi động lại dịch vụ.
+3. Có vấn đề → đặt `XML3176_XUAT_TEP_LUONG=false` trong `.env` → `php artisan config:cache` → khởi động lại dịch vụ.
 4. Ổn định ~1 tuần → hạ `memory_limit` của job về `1024M`, rồi gỡ nhánh `Excel::store` — mỗi việc
    một commit riêng.
 

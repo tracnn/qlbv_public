@@ -139,7 +139,8 @@ return [
     ],
     //Xuất tệp lỗi XML3176 (XuatTepLoiXml3176Job) ghi THEO LUỒNG bằng Spout - RAM ~ một lô
     //1000 dòng. false = quay về Laravel Excel (giữ mọi ô trong RAM; ngày 05/10/2026 ~358.800
-    //dòng hết 4096M). Quay lui trên prod: XML3176_XUAT_TEP_LUONG=false + khởi động lại dịch vụ
-    //QLBV JobXuatTepXml3176.
+    //dòng hết 4096M). Quay lui trên prod (config đang được cache nên env() không tự đọc lại):
+    //đặt XML3176_XUAT_TEP_LUONG=false trong .env → chạy `php artisan config:cache` → khởi động lại
+    //dịch vụ QLBV JobXuatTepXml3176.
     'xuat_tep_luong' => env('XML3176_XUAT_TEP_LUONG', true),
 ];
