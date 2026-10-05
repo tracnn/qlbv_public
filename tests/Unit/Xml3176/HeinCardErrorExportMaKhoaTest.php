@@ -34,7 +34,7 @@ class HeinCardErrorExportMaKhoaTest extends TestCase
     {
         $h = $this->mo(true)->headings();
 
-        $this->assertCount(7, $h);
+        $this->assertCount(9, $h);
         $this->assertSame('Mã điều trị', $h[1]);
         $this->assertSame('Mã Khoa', $h[2]);
         $this->assertSame('Mã kiểm tra', $h[3]);
@@ -62,7 +62,7 @@ class HeinCardErrorExportMaKhoaTest extends TestCase
         ];
 
         $coKhoa = $this->mo(true)->map($dong);
-        $this->assertCount(7, $coKhoa);
+        $this->assertCount(9, $coKhoa);
         $this->assertSame('K01', $coKhoa[2]);
 
         $khong = $this->mo(false)->map($dong);

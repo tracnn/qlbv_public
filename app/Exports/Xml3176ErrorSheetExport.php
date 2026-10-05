@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 use App\Models\BHYT\Xml3176ErrorResult;
+use App\Services\BHYT\KhoaDieuTriHis;
 use App\Services\BHYT\Xml3176LocDanhSach;
 use App\Services\Xml3176\Xml3176KhoaNguon;
 use Maatwebsite\Excel\Concerns\FromGenerator;
@@ -42,6 +43,8 @@ class Xml3176ErrorSheetExport implements FromGenerator, WithHeadings, WithStyles
         'F' => 14, 'G' => 22, 'H' => 13, 'I' => 18, 'J' => 13,
         'K' => 13, 'L' => 13, 'M' => 13, 'N' => 13, 'O' => 30,
         'P' => 50, 'Q' => 13, 'R' => 12, 'S' => 12,
+        // Khoa dieu tri cuoi trong HIS.
+        'T' => 12, 'U' => 30,
     ];
 
     /** Cot ngay dang so YYYYMMDD[HHMM]: dinh dang so de Excel khong hien dang 2,03E+11. */
@@ -52,16 +55,24 @@ class Xml3176ErrorSheetExport implements FromGenerator, WithHeadings, WithStyles
     protected $danhSachCoSo;
     protected $rowNumber = 0;
 
+    /** So dong gom lai cho mot lan tra khoa HIS. */
+    const LO_KHOA_HIS = 1000;
+
+    /** @var KhoaDieuTriHis dung chung cho ca file - xem Xml3176ErrorMultiSheetExport */
+    protected $khoaHis;
+
     /**
      * @param string $loai 'XML1'...'XML15' hoac 'XMLComplete'
      * @param array $loc bo loc doc tu man danh sach (Xml3176LocDanhSach::tuRequest())
      * @param array $danhSachCoSo ma co so => nhan
+     * @param KhoaDieuTriHis|null $khoaHis tra khoa HIS; bo xuat nhieu sheet truyen MOT instance
      */
-    public function __construct($loai, array $loc, array $danhSachCoSo = [])
+    public function __construct($loai, array $loc, array $danhSachCoSo = [], KhoaDieuTriHis $khoaHis = null)
     {
         $this->loai = $loai;
         $this->loc = $loc;
         $this->danhSachCoSo = $danhSachCoSo;
+        $this->khoaHis = $khoaHis ?: new KhoaDieuTriHis();
     }
 
     /**
@@ -71,9 +82,42 @@ class Xml3176ErrorSheetExport implements FromGenerator, WithHeadings, WithStyles
      */
     public function generator(): \Generator
     {
+        // Van MOT cursor; chi gom LO_KHOA_HIS dong de tra khoa HIS mot lan cho ca lo. KHONG
+        // dung prepareRows(): voi FromGenerator Laravel Excel goi no mot lan cho CA generator,
+        // tuc nap ca sheet (XML4 ~152.700 dong) vao bo nho.
+        //
+        // KHONG 'yield from $mang': no giu khoa 0..999 cua tung lo, ma Laravel Excel doc
+        // generator bang iterator_to_array GIU KHOA - lo sau ghi de lo truoc, sheet chi con
+        // 1.000 dong cuoi. 'yield $d' tu danh khoa tang dan tren ca generator.
+        $lo = [];
+
         foreach ($this->query()->cursor() as $dong) {
-            yield $dong;
+            $lo[] = $dong;
+
+            if (count($lo) >= self::LO_KHOA_HIS) {
+                foreach ($this->ganKhoaHis($lo) as $d) {
+                    yield $d;
+                }
+                $lo = [];
+            }
         }
+
+        foreach ($this->ganKhoaHis($lo) as $d) {
+            yield $d;
+        }
+    }
+
+    protected function ganKhoaHis(array $lo)
+    {
+        $khoa = $this->khoaHis->khoaChoXuat(array_map(function ($d) { return $d->ma_lk; }, $lo));
+
+        foreach ($lo as $d) {
+            $k = $khoa[trim((string) $d->ma_lk)] ?? ['ma_khoa' => null, 'ten_khoa' => null];
+            $d->ma_khoa_his = $k['ma_khoa'];
+            $d->ten_khoa_his = $k['ten_khoa'];
+        }
+
+        return $lo;
     }
 
     /**
@@ -168,6 +212,10 @@ class Xml3176ErrorSheetExport implements FromGenerator, WithHeadings, WithStyles
             'Loại lỗi',
             'Imported by',
             'Exported by',
+            // Khoa dieu tri cuoi trong HIS (his_treatment.last_department_id) - them CUOI de
+            // khong xe dich cot nguoi dung da quen.
+            'Mã khoa (HIS)',
+            'Khoa điều trị (HIS)',
         ];
     }
 
@@ -197,6 +245,8 @@ class Xml3176ErrorSheetExport implements FromGenerator, WithHeadings, WithStyles
             $data->critical_error ? 'Xuất toán' : 'Cảnh báo',
             $data->imported_by,
             $data->exported_by,
+            $data->ma_khoa_his ?? null,
+            $data->ten_khoa_his ?? null,
         ];
     }
 
@@ -219,7 +269,7 @@ class Xml3176ErrorSheetExport implements FromGenerator, WithHeadings, WithStyles
 
     public function styles(Worksheet $sheet)
     {
-        $sheet->getStyle('A:S')->getAlignment()->setWrapText(true);
+        $sheet->getStyle('A:U')->getAlignment()->setWrapText(true);
 
         return [
             1 => [
