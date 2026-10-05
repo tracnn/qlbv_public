@@ -3,6 +3,7 @@ tieu de (dam/can giua), do rong cot. In khac biet; ma thoat 1 neu co khac biet N
 
 Chay: python scripts/so-sanh-xlsx.py <cu.xlsx> <moi.xlsx>
 """
+import itertools
 import re
 import sys
 import zipfile
@@ -50,9 +51,10 @@ def main(cu, moi):
         if ra_a.get(ten) != ra_b.get(ten):
             loi.append(f'[{ten}] do rong: {ra_a.get(ten)} != {ra_b.get(ten)}')
         da, db = a[ten].iter_rows(), b[ten].iter_rows()
-        so_dong = 0
-        for r, (ha, hb) in enumerate(zip(da, db), start=1):
-            so_dong = r
+        so_dong_a = so_dong_b = 0
+        for r, (ha, hb) in enumerate(itertools.zip_longest(da, db, fillvalue=()), start=1):
+            so_dong_a += 1 if ha else 0
+            so_dong_b += 1 if hb else 0
             n = max(len(ha), len(hb))
             ha = list(ha) + [None] * (n - len(ha))
             hb = list(hb) + [None] * (n - len(hb))
@@ -71,10 +73,9 @@ def main(cu, moi):
                     loi.append(f'[{ten}] tieu de C{c}: dam/can {x.font.b}/{x.alignment.horizontal} != {y.font.b}/{y.alignment.horizontal}')
                 if len(loi) > 50:
                     break
-        con_a, con_b = sum(1 for _ in da), sum(1 for _ in db)
-        if con_a or con_b:
-            loi.append(f'[{ten}] so dong lech: cu them {con_a}, moi them {con_b} (sau dong {so_dong})')
-        print(f'{ten:16} {so_dong - 1:>8} dong du lieu')
+        if so_dong_a != so_dong_b:
+            loi.append(f'[{ten}] so dong lech: cu {so_dong_a}, moi {so_dong_b}')
+        print(f'{ten:16} {max(so_dong_a, so_dong_b) - 1:>8} dong du lieu')
     print(f'\nO cong thuc o ban cu (khac biet CO Y): {len(cong_thuc)}')
     for d in cong_thuc[:20]:
         print('  ' + d)
