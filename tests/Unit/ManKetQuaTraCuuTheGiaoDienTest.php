@@ -64,7 +64,7 @@ class ManKetQuaTraCuuTheGiaoDienTest extends TestCase
 
         $this->assertSame(count($x->headings()), count($x->map($r)));
         $this->assertSame(['Số thẻ đã gửi', 'Họ tên đã gửi', 'Ngày sinh đã gửi', 'Nơi ĐKBĐ đã gửi'],
-            array_slice($x->headings(), -4));
-        $this->assertSame('DN4010112345678', array_slice($x->map($r), -4)[0]);
+            array_slice($x->headings(), -6, 4), 'Cot da gui dung ngay truoc hai cot khoa HIS');
+        $this->assertSame('DN4010112345678', array_slice($x->map($r), -6, 4)[0]);
     }
 }

@@ -2,7 +2,9 @@
 
 namespace App\Exports;
 
+use App\Services\BHYT\KhoaDieuTriHis;
 use App\Services\BHYT\NhanMaThe;
+use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithHeadings;
@@ -29,9 +31,43 @@ class KetQuaTraCuuTheExport implements FromQuery, WithHeadings, ShouldAutoSize, 
 
     protected $stt = 0;
 
-    public function __construct($truyVan)
+    const LOI_HIS = 'Lỗi tra HIS';
+
+    /** @var KhoaDieuTriHis */
+    protected $khoaHis;
+
+    /** Khoa cua lo dang xuat: [ma_lk => ['ma_khoa' => ..., 'ten_khoa' => ...]]. */
+    protected $khoaTheoMaLk = [];
+
+    /** Lo dang xuat tra HIS bi loi. */
+    protected $loiHis = false;
+
+    public function __construct($truyVan, KhoaDieuTriHis $khoaHis = null)
     {
         $this->truyVan = $truyVan;
+        $this->khoaHis = $khoaHis ?: new KhoaDieuTriHis();
+    }
+
+    /**
+     * Laravel Excel goi truoc map() cho MOI LO (chunk_size dong): tra khoa HIS mot lan cho ca
+     * lo thay vi moi dong mot truy van Oracle.
+     *
+     * Mat ket noi HIS van cho xuat - phan con lai cua tep van dung - nhung o khoa ghi ro loi:
+     * de trong se trong nhu ho so "khong co khoa".
+     */
+    public function prepareRows($rows)
+    {
+        $this->loiHis = false;
+
+        try {
+            $this->khoaTheoMaLk = $this->khoaHis->theoMaLk(collect($rows)->pluck('ma_lk')->all());
+        } catch (\Throwable $e) {
+            Log::warning('Xuat ket qua tra cuu the: khong tra duoc khoa HIS - ' . $e->getMessage());
+            $this->khoaTheoMaLk = [];
+            $this->loiHis = true;
+        }
+
+        return $rows;
     }
 
     public function query()
@@ -73,12 +109,17 @@ class KetQuaTraCuuTheExport implements FromQuery, WithHeadings, ShouldAutoSize, 
             'Họ tên đã gửi',
             'Ngày sinh đã gửi',
             'Nơi ĐKBĐ đã gửi',
+            // Khoa dieu tri cuoi trong HIS (his_treatment.last_department_id).
+            'Mã khoa (HIS)',
+            'Khoa điều trị (HIS)',
         ];
     }
 
     public function map($r): array
     {
         $this->stt++;
+
+        $khoa = $this->khoaTheoMaLk[trim((string) $r->ma_lk)] ?? null;
 
         return [
             $this->stt,
@@ -113,6 +154,8 @@ class KetQuaTraCuuTheExport implements FromQuery, WithHeadings, ShouldAutoSize, 
             $r->ho_ten_gui,
             $r->ngay_sinh_gui,
             $r->ma_dkbd_gui,
+            $this->loiHis ? self::LOI_HIS : ($khoa['ma_khoa'] ?? null),
+            $this->loiHis ? self::LOI_HIS : ($khoa['ten_khoa'] ?? null),
         ];
     }
 
