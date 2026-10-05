@@ -80,6 +80,21 @@ class DmNvytSheetExport extends StringValueBinder implements FromQuery, WithHead
         return $dong;
     }
 
+    /**
+     * Dinh dang cho duong ghi luong (App\Services\ExcelLuong\GhiExcelLuong): 'chu' = nhu
+     * StringValueBinder ma lop nay ke thua; chi tieu de dam nhu styles().
+     */
+    public function dinhDangLuong(): array
+    {
+        return [
+            'do_rong' => [],
+            'cot_so' => [],
+            'kieu_o' => 'chu',
+            'xuong_dong' => false,
+            'tieu_de_can_giua' => false,
+        ];
+    }
+
     public function styles(Worksheet $sheet)
     {
         return [1 => ['font' => ['bold' => true]]];
