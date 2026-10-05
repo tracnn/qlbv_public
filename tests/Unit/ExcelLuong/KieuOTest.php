@@ -55,4 +55,33 @@ class KieuOTest extends TestCase
         $this->assertSame(['123', false], KieuO::chuyen('123', KieuO::CHU));
         $this->assertSame(['45', false], KieuO::chuyen(45, KieuO::CHU));
     }
+
+    /** Ban cu cat o chuoi o 32.767 ky tu (DataType::checkString); Spout thi nem exception. */
+    /** @test */
+    public function chuoi_qua_dai_bi_cat_32767_ky_tu()
+    {
+        foreach ([KieuO::TU_DONG, KieuO::CHU] as $kieu) {
+            list($gt, $laSo) = KieuO::chuyen(str_repeat('a', 40000), $kieu);
+            $this->assertSame(32767, strlen($gt));
+            $this->assertFalse($laSo);
+        }
+    }
+
+    /** @test */
+    public function xuong_dong_crlf_duoc_chuan_hoa_thanh_lf()
+    {
+        $this->assertSame(["a\nb", false], KieuO::chuyen("a\r\nb", KieuO::TU_DONG));
+        $this->assertSame(["a\nb", false], KieuO::chuyen("a\r\nb", KieuO::CHU));
+    }
+
+    /** @test */
+    public function utf8_hong_duoc_lam_sach()
+    {
+        foreach ([KieuO::TU_DONG, KieuO::CHU] as $kieu) {
+            list($gt, $laSo) = KieuO::chuyen("ab\xC3\x28cd", $kieu);
+            $this->assertTrue(is_string($gt));
+            $this->assertTrue(mb_check_encoding($gt, 'UTF-8'));
+            $this->assertFalse($laSo);
+        }
+    }
 }

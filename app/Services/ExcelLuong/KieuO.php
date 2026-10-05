@@ -4,6 +4,7 @@ namespace App\Services\ExcelLuong;
 
 use PhpOffice\PhpSpreadsheet\Cell\DataType;
 use PhpOffice\PhpSpreadsheet\Cell\DefaultValueBinder;
+use PhpOffice\PhpSpreadsheet\Shared\StringHelper;
 
 /**
  * Kieu mot o khi ghi luong - GIONG quy tac Laravel Excel dang dung (DefaultValueBinder) de
@@ -31,7 +32,7 @@ final class KieuO
         }
 
         if ($kieu === self::CHU) {
-            return [(string) $v, false];
+            return [self::lamSachChuoi($v), false];
         }
 
         switch (DefaultValueBinder::dataTypeForValue($v)) {
@@ -42,7 +43,19 @@ final class KieuO
                 return [$v, false];
             default:
                 // STRING, FORMULA (co y ghi chu), ERROR.
-                return [(string) $v, false];
+                return [self::lamSachChuoi($v), false];
         }
+    }
+
+    /**
+     * Ban cu qua DefaultValueBinder: sanitizeUTF8 (bo byte UTF-8 hong) + checkString (cat 32.767 ky tu,
+     * doi CRLF thanh LF). Ghi luong phai lam lai, neu khong Spout nem exception voi chuoi dai
+     * (mo ta loi la TEXT toi 64KB) va nuot o co byte hong.
+     *
+     * @param mixed $v
+     */
+    private static function lamSachChuoi($v): string
+    {
+        return DataType::checkString(StringHelper::sanitizeUTF8((string) $v));
     }
 }
