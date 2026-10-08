@@ -24,7 +24,7 @@ class Mau04 extends MauCoSo
             array('the' => 'NHOM_VAT_TU',    'kieu' => 'chuoi', 'max' => 1024, 'bat_buoc' => false),
             array('the' => 'TEN_VAT_TU',     'kieu' => 'chuoi', 'max' => null, 'bat_buoc' => true),
             array('the' => 'MA_HIEU',        'kieu' => 'chuoi', 'max' => 1024, 'bat_buoc' => false),
-            array('the' => 'SO_LUU_HANH',    'kieu' => 'chuoi', 'max' => 20,   'bat_buoc' => false),
+            array('the' => 'SO_LUU_HANH',    'kieu' => 'chuoi', 'max' => 50,   'bat_buoc' => false),
             array('the' => 'TINHNANG_KT',    'kieu' => 'chuoi', 'max' => null, 'bat_buoc' => false),
             array('the' => 'QUY_CACH',       'kieu' => 'chuoi', 'max' => 1024, 'bat_buoc' => false),
             array('the' => 'HANG_SX',        'kieu' => 'chuoi', 'max' => 1024, 'bat_buoc' => false),
