@@ -1,6 +1,6 @@
 # Nguồn dựng các bộ slide đào tạo
 
-Hai tệp `.pptx` trong thư mục cha được sinh ra từ các script trong thư mục này bằng thư viện
+Các tệp `.pptx` trong thư mục cha được sinh ra từ các script trong thư mục này bằng thư viện
 [`pptxgenjs`](https://www.npmjs.com/package/pptxgenjs) (Node.js). Sửa nội dung trong các tệp
 `deck-*.js` / `phan-*.js` rồi dựng lại — **không sửa trực tiếp tệp `.pptx`**, vì lần dựng sau
 sẽ ghi đè.
@@ -9,6 +9,7 @@ sẽ ghi đè.
 |---|---|
 | `Slide-dao-tao-Tien-giam-dinh.pptx` | Deck gộp — Giải pháp Tiền giám định, đào tạo các khoa lâm sàng và các phòng ban chức năng (80 slide) |
 | `Slide-dao-tao-D-Bao-cao-giao-ban.pptx` | Deck D — Báo cáo giao ban (42 slide) |
+| `Slide-gioi-thieu-Tien-giam-dinh.pptx` | Deck giới thiệu Tiền giám định cho bệnh viện khác — lãnh đạo BV, lãnh đạo KHTH, nghiệp vụ (15 slide, 20–30 phút); giao diện theo video demo XML3176 cho DRG |
 
 Deck gộp thay cho ba deck A (khoa lâm sàng), B (phòng ban), C (tra cứu tiền cùng chi trả)
 trước đây. Khung và giao diện theo `../Bài Trình Bày Nội Dung.pdf` — báo cáo Hội đồng KHCN về
@@ -27,6 +28,7 @@ bản, slide bám theo tài liệu, nên có nguồn thì lần sau chỉ sửa 
 | `phan-phong-ban.js` | Chương 03 XML 3176, 07 danh mục, 08 chứng từ điện tử, 09 TT12, phần thẻ BHYT của phòng ban, tình huống ở phòng ban |
 | `phan-mcct.js` | Chương 05 tra cứu tiền cùng chi trả |
 | `deck-d.js` | Deck D — Báo cáo giao ban (ảnh nhúng từ `../anh/`) |
+| `deck-gioi-thieu.js` | Deck giới thiệu — nền tối chuyển sắc sinh lúc dựng, ảnh từ `../anh/`; nguồn từng con số ghi ở đầu tệp |
 | `build.js` | Ghép và ghi ra tệp `.pptx` |
 
 Mỗi hàm chương nhận `(pptx, ctx, no)`. Hàm nào tự có `sectionSlide` thì mở chương với số `no`;
@@ -71,7 +73,7 @@ Rồi ở thư mục này:
 node build.js
 ```
 
-Dựng một deck riêng: `node build.js tgd` hoặc `node build.js d`.
+Dựng một deck riêng: `node build.js tgd`, `node build.js d` hoặc `node build.js gt`.
 
 Dựng xong thì xoá `node_modules` ở thư mục gốc đi:
 

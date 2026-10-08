@@ -1,8 +1,9 @@
 // Dựng các bộ slide đào tạo ra tệp .pptx.
 //
-//   node build.js            -> dựng cả hai deck vào ../
+//   node build.js            -> dựng tất cả vào ../
 //   node build.js tgd        -> chỉ dựng deck gộp Tiền giám định
 //   node build.js d          -> chỉ dựng deck D (báo cáo giao ban)
+//   node build.js gt         -> chỉ dựng slide giới thiệu Tiền giám định
 //
 // Yêu cầu: pptxgenjs cài tạm ở thư mục gốc dự án, xem README.md.
 
@@ -20,6 +21,7 @@ try {
 const DECKS = {
   tgd: { build: require('./deck-tgd'), file: 'Slide-dao-tao-Tien-giam-dinh.pptx' },
   d: { build: require('./deck-d'), file: 'Slide-dao-tao-D-Bao-cao-giao-ban.pptx' },
+  gt: { build: require('./deck-gioi-thieu'), file: 'Slide-gioi-thieu-Tien-giam-dinh.pptx' },
 };
 
 const OUT_DIR = path.resolve(__dirname, '..');
