@@ -9,7 +9,8 @@ sẽ ghi đè.
 |---|---|
 | `Slide-dao-tao-Tien-giam-dinh.pptx` | Deck gộp — Giải pháp Tiền giám định, đào tạo các khoa lâm sàng và các phòng ban chức năng (80 slide) |
 | `Slide-dao-tao-D-Bao-cao-giao-ban.pptx` | Deck D — Báo cáo giao ban (42 slide) |
-| `Slide-gioi-thieu-Tien-giam-dinh.pptx` | Deck giới thiệu Tiền giám định cho bệnh viện khác — lãnh đạo BV, lãnh đạo KHTH, nghiệp vụ (15 slide, 20–30 phút); giao diện theo video demo XML3176 cho DRG |
+| `Slide-gioi-thieu-Tien-giam-dinh.pptx` | Deck giới thiệu Tiền giám định cho bệnh viện khác — lãnh đạo BV, lãnh đạo KHTH, nghiệp vụ (19 slide, ~30 phút); giao diện theo video demo XML3176 cho DRG |
+| `Slide-gioi-thieu-Tien-giam-dinh-lanh-dao.pptx` | Bản rút gọn cho lãnh đạo bệnh viện (10 slide, ~15 phút): XML 3176 là trọng tâm, kết bằng đề xuất thí điểm |
 
 Deck gộp thay cho ba deck A (khoa lâm sàng), B (phòng ban), C (tra cứu tiền cùng chi trả)
 trước đây. Khung và giao diện theo `../Bài Trình Bày Nội Dung.pdf` — báo cáo Hội đồng KHCN về
@@ -73,7 +74,9 @@ Rồi ở thư mục này:
 node build.js
 ```
 
-Dựng một deck riêng: `node build.js tgd`, `node build.js d` hoặc `node build.js gt`.
+Dựng một deck riêng: `node build.js tgd`, `node build.js d`, `node build.js gt` hoặc `node build.js gt-ld`.
+
+Hai deck giới thiệu có ô để trống phải điền trước khi trình bày: bảng trước / sau (slide Kết quả tại Bạch Mai — cần Bạch Mai đồng ý công bố), chi phí thí điểm, điện thoại và email liên hệ.
 
 Dựng xong thì xoá `node_modules` ở thư mục gốc đi:
 

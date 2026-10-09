@@ -41,7 +41,8 @@ const EMOJI = 'Segoe UI Emoji';
 const M = 0.7;
 const BODY_W = W - M * 2;
 const ANH = path.resolve(__dirname, '..', 'anh');
-const TONG_SLIDE = 15;
+// Đơn vị đứng tên trình bày (bìa, slide kết). Bạch Mai là khách hàng tham chiếu.
+const DON_VI = 'Công ty Cổ phần Y tế Thông minh';
 
 // ---------------------------------------------------------------- ảnh nền chuyển sắc
 
@@ -116,13 +117,19 @@ function slideMoi(pptx, ctx) {
   const s = pptx.addSlide();
   if (!NEN) NEN = nenChuyenSac();
   s.background = { data: NEN };
-  ctx.page += 1;
-  if (ctx.page > 1) {
-    chu(s, `GIẢI PHÁP TIỀN GIÁM ĐỊNH  ·  ${String(ctx.page).padStart(2, '0')} / ${TONG_SLIDE}`, {
+  ctx.slides.push(s);
+  return s;
+}
+
+// Chân trang "nn / NN" cần tổng số slide nên vẽ sau cùng, bỏ qua slide bìa.
+function chanTrang(ctx) {
+  const tong = ctx.slides.length;
+  ctx.slides.forEach((s, i) => {
+    if (i === 0) return;
+    chu(s, `GIẢI PHÁP TIỀN GIÁM ĐỊNH  ·  ${String(i + 1).padStart(2, '0')} / ${tong}`, {
       x: W - M - 5, y: H - 0.48, w: 5, h: 0.28, fontSize: 9.5, color: CHU_MO, align: 'right', charSpacing: 1,
     });
-  }
-  return s;
+  });
 }
 
 function dau(s, kicker, title, phu) {
@@ -158,7 +165,7 @@ function anhChup(s, tep, x, y, w, h) {
 function biaSlide(pptx, ctx, { pill, ten, mo, luong, tieuDeLuong, chuan, speaker }) {
   const s = slideMoi(pptx, ctx);
 
-  const pw = 5.6;
+  const pw = 7.2;
   s.addShape('roundRect', {
     x: (W - pw) / 2, y: 0.62, w: pw, h: 0.42, rectRadius: 0.21,
     fill: { color: 'FFFFFF', transparency: 94 }, line: { color: '4A6890', width: 0.75 },
@@ -252,16 +259,21 @@ function vanDeSlide(pptx, ctx) {
   L.notes(s, 'Mở bằng nỗi đau mà lãnh đạo và phòng KHTH đều biết. Không đưa con số xuất toán cụ thể — mỗi viện có số riêng; nếu viện bạn có số liệu, mời họ tự liên hệ. Ý chính: phát hiện càng muộn, chi phí sửa càng lớn và lỗi càng dễ lặp lại.');
 }
 
-function haiDiemSlide(pptx, ctx) {
+// chiXml: bản cho lãnh đạo — chỉ nhấn điểm kiểm soát hồ sơ XML 3176; kiểm y lệnh thành phần mở rộng.
+function haiDiemSlide(pptx, ctx, { chiXml = false } = {}) {
   const s = slideMoi(pptx, ctx);
-  dau(s, 'Giải pháp', 'Đưa việc phát hiện lỗi về sớm nhất có thể',
-    'Tiền giám định đặt hai điểm kiểm soát bên trong bệnh viện — trước khi hồ sơ được ký số và gửi đi.');
+  dau(s, 'Giải pháp', chiXml ? 'Chặn lỗi ngay trong bệnh viện, trước khi gửi đi' : 'Đưa việc phát hiện lỗi về sớm nhất có thể',
+    chiXml
+      ? 'Tiền giám định đặt một điểm kiểm soát bên trong bệnh viện — mọi hồ sơ được kiểm trước khi ký số và gửi cổng.'
+      : 'Tiền giám định đặt hai điểm kiểm soát bên trong bệnh viện — trước khi hồ sơ được ký số và gửi đi.');
 
   dongThoiGian(s, [
-    { dau: 'Ra y lệnh', phu: 'Kiểm sai sót y lệnh', mau: VANG, nhan: '① KHOẢNG 60 GIÂY' },
+    chiXml
+      ? { dau: 'Ra y lệnh', phu: 'Bác sĩ chỉ định trên HIS' }
+      : { dau: 'Ra y lệnh', phu: 'Kiểm sai sót y lệnh', mau: VANG, nhan: '① KHOẢNG 60 GIÂY' },
     { dau: 'Ra viện', phu: 'Kết thúc điều trị' },
     { dau: 'Lập hồ sơ XML', phu: 'Nạp vào Tiền giám định' },
-    { dau: 'Kiểm hồ sơ', phu: 'Lỗi nghiêm trọng bị chặn', mau: VANG, nhan: '② TRƯỚC KÝ SỐ' },
+    { dau: 'Kiểm hồ sơ', phu: 'Lỗi nghiêm trọng bị chặn', mau: VANG, nhan: chiXml ? 'ĐIỂM KIỂM SOÁT' : '② TRƯỚC KÝ SỐ' },
     { dau: 'Ký số, gửi cổng', phu: 'Hồ sơ đã sạch lỗi hơn', mau: XANH_LA },
   ], 2.95);
 
@@ -280,10 +292,16 @@ function haiDiemSlide(pptx, ctx) {
     }
   });
 
-  chu(s, 'Phần mềm chỉ đọc HIS, không sửa hộ: lỗi được sửa đúng nơi phát sinh, nên dữ liệu gốc trên HIS và hồ sơ gửi đi luôn khớp nhau.', {
+  chu(s, chiXml
+    ? 'Mở rộng về sau: kiểm sai sót ngay khi bác sĩ ra y lệnh, để bắt lỗi sớm hơn nữa — sau khi danh mục của viện đã chuẩn.'
+    : 'Phần mềm chỉ đọc HIS, không sửa hộ: lỗi được sửa đúng nơi phát sinh, nên dữ liệu gốc trên HIS và hồ sơ gửi đi luôn khớp nhau.', {
     x: M, y: 5.45, w: BODY_W, h: 0.6, fontSize: 14, color: CHU_PHU, align: 'center', valign: 'middle',
   });
   dongVang(s, 'Phát hiện sớm  ·  Sửa tại nguồn  ·  Gửi hồ sơ sạch');
+  if (chiXml) {
+    L.notes(s, 'Bản cho lãnh đạo chỉ nhấn một điểm kiểm soát: hồ sơ XML 3176 được kiểm trước khi ký số, lỗi nghiêm trọng thì không được ký, không được gửi. Phần mềm chỉ đọc HIS, không sửa hộ — khoa sửa trên HIS rồi nạp lại. Kiểm sai sót y lệnh là bước mở rộng: nó cần danh mục thuốc, vật tư, nhân sự của viện đã chuẩn, nếu không sẽ sinh rất nhiều cảnh báo giả. Nếu được hỏi về kiểm y lệnh tại Bạch Mai: đang ở giai đoạn làm sạch danh mục, chưa giao khoa xử lý.');
+    return;
+  }
   L.notes(s, 'Hai điểm kiểm soát: ① ngay sau khi bác sĩ ra y lệnh — hệ thống quét HIS mỗi 60 giây, lỗi hiện ra khi người làm còn trong ca; ② trước khi ký số — hồ sơ XML 3176 có lỗi nghiêm trọng thì không được ký, không được gửi. Nhấn vòng sửa lỗi: phần mềm không sửa dữ liệu, chỉ chỉ ra lỗi; khoa sửa trên HIS rồi nạp lại.');
 }
 
@@ -634,23 +652,200 @@ function ketSlide(pptx, ctx) {
   the(s, (W - pw) / 2, 4.3, pw, 1.4);
   chu(s, [
     { text: 'HỎI ĐÁP  ·  LIÊN HỆ', options: { fontSize: 12, bold: true, color: XANH, charSpacing: 2, breakLine: true } },
-    { text: 'Phòng Công nghệ thông tin — Bệnh viện Bạch Mai', options: { fontSize: 17, bold: true, color: TRANG, breakLine: true } },
+    { text: DON_VI, options: { fontSize: 17, bold: true, color: TRANG, breakLine: true } },
     { text: 'Điện thoại: ………………   ·   Email: ………………', options: { fontSize: 14, color: CHU_PHU } },
   ], { x: (W - pw) / 2, y: 4.3, w: pw, h: 1.4, align: 'center', valign: 'middle', lineSpacing: 24 });
-  L.notes(s, 'Nhắc lại ba từ khoá rồi mở hỏi đáp. Điền số điện thoại và email đầu mối trước khi trình bày. Câu hỏi hay gặp: HIS khác có dùng được không (slide 14), có thay bộ phận giám định không (không — slide 13), chi phí và thời gian triển khai (slide 14).');
+  L.notes(s, 'Nhắc lại ba từ khoá rồi mở hỏi đáp. Điền số điện thoại và email đầu mối trước khi trình bày. Câu hỏi hay gặp: HIS khác có dùng được không (xem slide Triển khai), có thay bộ phận giám định không (không — xem slide Nguyên tắc và giới hạn), chi phí và thời gian (xem slide Đề xuất thí điểm).');
+}
+
+// ---------------------------------------------------------------- kết quả (để trống)
+
+// Khung trước / sau. Ô số liệu để trống: bảng kết quả kiểm lỗi trong phần mềm chỉ giữ lần kiểm
+// mới nhất, nên số "trước" phải lấy từ cổng BHXH hoặc số liệu KHTH lưu riêng, và phải được
+// Bạch Mai đồng ý công bố. Không thay bằng ước đoán.
+function ketQuaSlide(pptx, ctx) {
+  const s = slideMoi(pptx, ctx);
+  dau(s, 'Kết quả tại Bạch Mai', 'Trước và sau khi áp dụng Tiền giám định',
+    'Kỳ trước: ………………   ·   Kỳ sau: ………………   ·   Nguồn số liệu: ………………');
+
+  const cot = [['Chỉ số', 5.3], ['Trước', 2.0], ['Sau', 2.0], ['Thay đổi', 0]];
+  cot[3][1] = BODY_W - cot.slice(0, 3).reduce((t, c) => t + c[1], 0);
+  const xs = [];
+  cot.reduce((x, c) => { xs.push(x); return x + c[1]; }, M);
+  const hy = 2.05;
+  cot.forEach(([t, w], i) => {
+    chu(s, t.toUpperCase(), {
+      x: xs[i] + 0.3, y: hy, w: w - 0.6, h: 0.32, fontSize: 11, bold: true, color: XANH, charSpacing: 2,
+      align: i === 0 ? 'left' : 'center',
+    });
+  });
+  const dong = [
+    'Tỷ lệ hồ sơ còn lỗi nghiêm trọng khi gửi cổng',
+    'Số hồ sơ bị cổng giám định trả về mỗi tháng',
+    'Số tiền BHYT bị xuất toán mỗi tháng',
+    'Thời gian từ khi phát sinh lỗi tới khi sửa xong',
+  ];
+  dong.forEach((t, k) => {
+    const y = 2.5 + k * 0.88;
+    the(s, M, y, BODY_W, 0.76);
+    chu(s, t, { x: xs[0] + 0.3, y, w: cot[0][1] - 0.4, h: 0.76, fontSize: 15, bold: true, color: TRANG, valign: 'middle' });
+    [1, 2, 3].forEach((i) => {
+      chu(s, '………', { x: xs[i], y, w: cot[i][1], h: 0.76, fontSize: 20, bold: i === 3, color: i === 3 ? VANG : CHU_PHU, align: 'center', valign: 'middle' });
+    });
+  });
+  dongVang(s, 'Viện của anh chị sẽ tự đo được đúng các chỉ số này ngay trong giai đoạn thí điểm', 6.15);
+  L.notes(s, 'ĐIỀN SỐ LIỆU TRƯỚC KHI TRÌNH BÀY — và phải được Bệnh viện Bạch Mai đồng ý công bố. '
+    + 'Số "sau" lấy từ Dashboard lỗi XML (thẻ chỉ số, phễu, tồn đọng); số "trước" phải lấy từ báo cáo kết quả giám định trên Cổng BHXH hoặc số liệu phòng KHTH lưu riêng, '
+    + 'vì phần mềm chỉ lưu kết quả của lần kiểm mới nhất. Chọn hai kỳ dài bằng nhau. '
+    + 'Nếu chưa có số đáng tin, bỏ slide này khỏi buổi trình bày — đừng thay bằng ước đoán; lãnh đạo hỏi lại một con số sai thì mất uy tín cả deck.');
+}
+
+// ---------------------------------------------------------------- quy ra tiền
+
+function quyRaTienSlide(pptx, ctx) {
+  const s = slideMoi(pptx, ctx);
+  dau(s, 'Quy ra tiền', 'Viện mình đang có bao nhiêu tiền chịu rủi ro mỗi tháng?',
+    'Ba con số đầu vào phòng KHTH và Phòng BHYT của viện đều có sẵn.');
+
+  const o = [
+    ['📄', 'Số hồ sơ BHYT', 'mỗi tháng'],
+    ['⚠️', 'Tỷ lệ hồ sơ', 'bị cổng trả lỗi'],
+    ['💰', 'Chi phí BHYT', 'trung bình mỗi hồ sơ'],
+    ['🎯', 'Tiền chịu rủi ro', 'mỗi tháng'],
+  ];
+  const op = 0.55;
+  const bw = (BODY_W - op * (o.length - 1)) / o.length;
+  const by = 2.1;
+  const bh = 1.85;
+  o.forEach(([icon, h, phu], i) => {
+    const x = M + i * (bw + op);
+    const cuoi = i === o.length - 1;
+    the(s, x, by, bw, bh, { nhan: cuoi });
+    bieuTuong(s, icon, x, by + 0.12, bw, 0.5, 20);
+    chu(s, [
+      { text: h, options: { fontSize: 16, bold: true, color: TRANG, breakLine: true } },
+      { text: phu, options: { fontSize: 12.5, color: CHU_PHU } },
+    ], { x: x + 0.1, y: by + 0.62, w: bw - 0.2, h: 0.62, align: 'center', valign: 'top', lineSpacing: 18 });
+    chu(s, '………', { x, y: by + 1.25, w: bw, h: 0.48, fontSize: 20, bold: true, color: cuoi ? VANG : XANH, align: 'center', valign: 'middle' });
+    if (!cuoi) {
+      chu(s, i === o.length - 2 ? '=' : '×', { x: x + bw, y: by + bh / 2 - 0.3, w: op, h: 0.6, fontSize: 26, bold: true, color: 'C9D6E8', align: 'center', valign: 'middle' });
+    }
+  });
+
+  const vy = 4.2;
+  s.addShape('roundRect', { x: M, y: vy, w: BODY_W, h: 0.62, rectRadius: 0.08, fill: { color: 'FFFFFF', transparency: 94 }, line: { color: '4A6890', width: 0.75, dashType: 'dash' } });
+  chu(s, [
+    { text: 'VÍ DỤ GIẢ ĐỊNH   ', options: { fontSize: 11, bold: true, color: CHU_MO, charSpacing: 1 } },
+    { text: '20.000 hồ sơ  ×  5%  ×  1.500.000 đ  =  1,5 tỷ đồng mỗi tháng', options: { fontSize: 16, bold: true, color: TRANG } },
+    { text: '   — không phải số liệu của bệnh viện nào', options: { fontSize: 12, italic: true, color: CHU_MO } },
+  ], { x: M, y: vy, w: BODY_W, h: 0.62, align: 'center', valign: 'middle' });
+
+  const cy = 5.05;
+  const gap = 0.3;
+  const cw = (BODY_W - gap) / 2;
+  [
+    ['Tiền bị treo', 'Hồ sơ lỗi chưa gửi được: chậm thanh toán, ảnh hưởng dòng tiền của viện.'],
+    ['Tiền bị mất', 'Chi phí bị xuất toán sau giám định — phần không lấy lại được.'],
+  ].forEach(([h, b], i) => {
+    const x = M + i * (cw + gap);
+    the(s, x, cy, cw, 0.95);
+    chu(s, [
+      { text: h, options: { fontSize: 15, bold: true, color: i ? DO : VANG, breakLine: true } },
+      { text: b, options: { fontSize: 13, color: CHU_PHU } },
+    ], { x: x + 0.3, y: cy, w: cw - 0.6, h: 0.95, valign: 'middle', lineSpacing: 18 });
+  });
+  dongVang(s, 'Tiền giám định kéo phần rủi ro này về lại trong tầm kiểm soát của bệnh viện', 6.15);
+  L.notes(s, 'Mời lãnh đạo tự nhẩm với số của viện mình — con số họ tự ra thuyết phục hơn mọi con số ta đưa. '
+    + 'Dòng ví dụ là giả định thuần tuý (20.000 × 5% × 1,5 triệu = 1,5 tỷ) để minh hoạ cách tính, nói rõ như vậy khi trình bày. '
+    + 'Không hứa Tiền giám định xoá được toàn bộ khoản này: nó giảm phần lỗi nằm trong bộ quy tắc, và đưa phần còn lại ra ánh sáng sớm hơn.');
+}
+
+// ---------------------------------------------------------------- an toàn
+
+function anToanSlide(pptx, ctx) {
+  const s = slideMoi(pptx, ctx);
+  dau(s, 'An toàn', 'Dữ liệu người bệnh và hệ thống HIS được bảo vệ thế nào');
+
+  const o = [
+    ['🏠', 'Đặt tại bệnh viện', 'Máy chủ đặt trong mạng nội bộ của viện. Dữ liệu chỉ gửi lên Cổng giám định BHXH — như quy trình hiện nay.'],
+    ['🔒', 'Chỉ đọc HIS', 'Tài khoản chỉ có quyền đọc: không ghi, không cài trigger, không đổi cấu trúc cơ sở dữ liệu HIS.'],
+    ['⚙️', 'Không làm nặng HIS', 'Truy vấn chạy nền theo lô; khảo sát chỉ mục các bảng HIS lớn trước khi bật.'],
+    ['👥', 'Phân quyền và ghi vết', 'Mỗi người chỉ thấy chức năng được cấp; ghi lại ai nạp, ai gửi hồ sơ, ai tra cứu thẻ.'],
+  ];
+  const gap = 0.3;
+  const cw = (BODY_W - gap) / 2;
+  const ch = 1.95;
+  o.forEach(([icon, h, b], i) => {
+    const x = M + (i % 2) * (cw + gap);
+    const y = 1.65 + Math.floor(i / 2) * (ch + 0.25);
+    the(s, x, y, cw, ch);
+    s.addShape('ellipse', { x: x + 0.3, y: y + 0.3, w: 0.8, h: 0.8, fill: { color: '25324A' }, line: { color: XANH, width: 1 } });
+    bieuTuong(s, icon, x + 0.3, y + 0.3, 0.8, 0.8, 22);
+    chu(s, h, { x: x + 1.35, y: y + 0.3, w: cw - 1.6, h: 0.5, fontSize: 18, bold: true, color: TRANG, valign: 'middle' });
+    chu(s, b, { x: x + 1.35, y: y + 0.85, w: cw - 1.6, h: 0.95, fontSize: 13.5, color: CHU_PHU, valign: 'top', lineSpacing: 19 });
+  });
+  dongVang(s, 'Dữ liệu người bệnh ở lại trong bệnh viện', 6.15);
+  L.notes(s, 'Ba nỗi lo của lãnh đạo: làm hỏng HIS, lộ dữ liệu người bệnh, làm chậm hệ thống. '
+    + 'Phần mềm triển khai trên máy chủ của viện (Windows Server, hoặc Linux / Docker), đọc HIS bằng tài khoản chỉ đọc. '
+    + 'Kết nối ra ngoài duy nhất là Cổng giám định BHXH — để tra thẻ và gửi hồ sơ, đúng như viện đang làm. '
+    + 'Đừng hứa chứng nhận an toàn thông tin nếu chưa có văn bản.');
+}
+
+// ---------------------------------------------------------------- đề xuất thí điểm
+
+function deXuatSlide(pptx, ctx) {
+  const s = slideMoi(pptx, ctx);
+  dau(s, 'Đề xuất', 'Thí điểm 4–8 tuần, đo bằng số liệu của chính viện');
+
+  const lw = 6.9;
+  const dong = [
+    ['PHẠM VI', 'Kiểm hồ sơ XML 3176 chạy song song quy trình hiện tại; chưa bật tự gửi cổng.'],
+    ['VIỆN CỬ', '1 đầu mối phòng KHTH  ·  1 người phụ trách danh mục BHYT  ·  1 cán bộ CNTT'],
+    ['CHÚNG TÔI LÀM', 'Cài đặt tại viện, nạp danh mục, đào tạo người dùng, theo dõi kết quả cùng viện.'],
+    ['CHI PHÍ', '………………………………'],
+  ];
+  dong.forEach(([lab, t], k) => {
+    const y = 1.65 + k * 1.06;
+    the(s, M, y, lw, 0.92);
+    chu(s, lab, { x: M + 0.3, y, w: 1.9, h: 0.92, fontSize: 11, bold: true, color: XANH, charSpacing: 1, valign: 'middle' });
+    chu(s, t, { x: M + 2.25, y, w: lw - 2.5, h: 0.92, fontSize: 14, color: TRANG, valign: 'middle', lineSpacing: 19 });
+  });
+
+  const rx = M + lw + 0.3;
+  const rw = W - M - rx;
+  the(s, rx, 1.65, rw, 4.1, { nhan: true });
+  chu(s, 'ĐO GÌ ĐỂ QUYẾT ĐỊNH', { x: rx + 0.3, y: 1.85, w: rw - 0.6, h: 0.34, fontSize: 12, bold: true, color: VANG, charSpacing: 2 });
+  const kpi = [
+    'Tỷ lệ hồ sơ còn lỗi nghiêm trọng trước khi gửi',
+    'Số hồ sơ bị cổng giám định trả về',
+    'Thời gian sửa một hồ sơ lỗi',
+    'Số hồ sơ tồn đọng theo tuổi',
+  ];
+  chu(s, kpi.map((t, k) => ({ text: t, options: { bullet: { indent: 16 }, breakLine: k < kpi.length - 1 } })), {
+    x: rx + 0.3, y: 2.35, w: rw - 0.6, h: 2.2, fontSize: 15, color: TRANG, valign: 'top', paraSpaceAfter: 10, lineSpacing: 20,
+  });
+  chu(s, 'Kết thúc thí điểm: báo cáo số liệu để lãnh đạo quyết định nhân rộng.', {
+    x: rx + 0.3, y: 4.75, w: rw - 0.6, h: 0.8, fontSize: 13, italic: true, color: CHU_PHU, valign: 'top', lineSpacing: 18,
+  });
+  dongVang(s, 'Hôm nay chỉ cần một quyết định: cho phép thí điểm', 6.15);
+  L.notes(s, 'Slide quan trọng nhất với lãnh đạo: một quyết định nhỏ, rủi ro thấp, có thước đo rõ. '
+    + 'Thí điểm chạy song song, chưa bật tự gửi cổng — nên không ảnh hưởng quy trình đang chạy. '
+    + 'Bốn chỉ số theo tài liệu tổng hợp mục 10.3. ĐIỀN CHI PHÍ và rà lại dòng "Chúng tôi làm" theo đúng cam kết của công ty trước khi trình bày.');
 }
 
 // ---------------------------------------------------------------- deck
 
-module.exports = function deckGioiThieu(PptxGenJS) {
+function deckMoi(PptxGenJS, title) {
   const pptx = new PptxGenJS();
   pptx.layout = 'LAYOUT_WIDE';
-  pptx.title = 'Giải pháp Tiền giám định — Giới thiệu hệ thống';
+  pptx.title = title;
   pptx.subject = 'Giới thiệu hệ thống Tiền giám định hồ sơ BHYT cho các bệnh viện';
-  const ctx = { page: 0 };
+  return { pptx, ctx: { slides: [] } };
+}
 
+function bia(pptx, ctx) {
   biaSlide(pptx, ctx, {
-    pill: 'Bệnh viện Bạch Mai · Giải pháp Tiền giám định BHYT',
+    pill: `${DON_VI} · Giải pháp Tiền giám định BHYT`,
     ten: [['Tiền ', TRANG], ['giám định', XANH]],
     mo: 'Kiểm tra hồ sơ khám chữa bệnh BHYT ngay tại bệnh viện\ntrước khi ký số và gửi Cổng giám định BHXH',
     tieuDeLuong: 'Tiền giám định đặt điểm kiểm soát trước khi hồ sơ rời bệnh viện',
@@ -664,15 +859,11 @@ module.exports = function deckGioiThieu(PptxGenJS) {
     speaker: 'Slide mở đầu, nói trong khoảng một phút. Hồ sơ BHYT đi từ HIS của bệnh viện tới Cổng giám định BHXH; '
       + 'Tiền giám định là trạm kiểm tra nằm giữa: kiểm từng hồ sơ XML 3176 theo bộ quy tắc, tra thẻ BHYT, đối chiếu danh mục. '
       + 'Lỗi nghiêm trọng chặn ký số và gửi cho tới khi được sửa — và sửa trên HIS, tại khoa phòng phát sinh, rồi nạp lại. '
-      + 'Ngoài ra phần mềm còn kiểm sai sót y lệnh khoảng 60 giây sau khi bác sĩ ra y lệnh, tức là trước cả khi hồ sơ được lập.',
+      + 'Hệ thống đang vận hành tại Bệnh viện Bạch Mai.',
   });
+}
 
-  vanDeSlide(pptx, ctx);
-  haiDiemSlide(pptx, ctx);
-  conSoSlide(pptx, ctx);
-  chucNangSlide(pptx, ctx);
-  quyTrinhSlide(pptx, ctx);
-
+function anhYLenh(pptx, ctx) {
   anhSlide(pptx, ctx, {
     kicker: 'Trọng tâm 1',
     title: 'Kiểm sai sót y lệnh — bắt lỗi khi người làm còn trong ca',
@@ -683,9 +874,11 @@ module.exports = function deckGioiThieu(PptxGenJS) {
     ],
     anh: 'anh-01-danh-sach-vi-pham.png',
     chuThich: 'Màn Danh sách vi phạm — dữ liệu trong ảnh là dữ liệu mẫu',
-    speaker: 'Đây là điểm kiểm soát sớm. Lỗi hiện ra khi bác sĩ, kỹ thuật viên còn trong ca, sửa trên HIS mất vài phút thay vì truy lại sau nhiều tuần. Bộ quy tắc do Hội đồng chuyên môn của viện chọn và tinh chỉnh; bắt đầu với ít quy tắc, giảm dương tính giả trước rồi mới mở rộng.',
+    speaker: 'Đây là điểm kiểm soát sớm. Lỗi hiện ra khi bác sĩ, kỹ thuật viên còn trong ca, sửa trên HIS mất vài phút thay vì truy lại sau nhiều tuần. Bộ quy tắc do Hội đồng chuyên môn của viện chọn và tinh chỉnh; bắt đầu với ít quy tắc, giảm dương tính giả trước rồi mới mở rộng. Nếu được hỏi về Bạch Mai: phần này đang ở giai đoạn làm sạch danh mục để giảm cảnh báo giả, chưa giao khoa xử lý thường quy.',
   });
+}
 
+function anhXml(pptx, ctx) {
   anhSlide(pptx, ctx, {
     kicker: 'Trọng tâm 2',
     title: 'Kiểm hồ sơ XML 3176 — chặn lỗi trước khi ký số',
@@ -698,7 +891,9 @@ module.exports = function deckGioiThieu(PptxGenJS) {
     chuThich: 'Màn Danh sách hồ sơ XML 3176 — dòng đỏ là hồ sơ còn lỗi',
     speaker: 'Điểm kiểm soát chính. Danh sách cho thấy hồ sơ nào lỗi (dòng đỏ), đã ký chưa, đã gửi chưa. Mức lỗi của từng mã do viện tự đặt ở danh mục mã lỗi — mã nào chặn, mã nào chỉ cảnh báo.',
   });
+}
 
+function anhTraLoi(pptx, ctx) {
   anhSlide(pptx, ctx, {
     kicker: 'Phản hồi về khoa',
     title: 'Một mã điều trị — thấy mọi lỗi của hồ sơ',
@@ -711,7 +906,9 @@ module.exports = function deckGioiThieu(PptxGenJS) {
     chuThich: 'Màn Tra cứu lỗi hồ sơ theo mã điều trị',
     speaker: 'Đây là công cụ của khoa và phòng KHTH khi trao đổi về một hồ sơ cụ thể: mọi lỗi nằm trên một trang, in ra được để giao việc.',
   });
+}
 
+function anhHoTro(pptx, ctx) {
   anhSlide(pptx, ctx, {
     kicker: 'Hỗ trợ nghiệp vụ',
     title: 'Thẻ BHYT, tiền cùng chi trả, chứng từ và danh mục',
@@ -725,13 +922,50 @@ module.exports = function deckGioiThieu(PptxGenJS) {
     chuThich: 'Kết quả tra cứu tiền cùng chi trả — dữ liệu mẫu',
     speaker: 'Các chức năng hỗ trợ dùng chung hạ tầng ký số và gửi cổng. Tra cứu tiền cùng chi trả hữu ích cho Phòng Tài chính kế toán và Phòng BHYT khi xác định người bệnh đã đủ ngưỡng miễn cùng chi trả hay chưa.',
   });
+}
 
+// Bản đầy đủ: lãnh đạo BV, lãnh đạo KHTH, nhân viên nghiệp vụ — khoảng 30 phút.
+function deckDayDu(PptxGenJS) {
+  const { pptx, ctx } = deckMoi(PptxGenJS, 'Giải pháp Tiền giám định — Giới thiệu hệ thống');
+  bia(pptx, ctx);
+  vanDeSlide(pptx, ctx);
+  haiDiemSlide(pptx, ctx);
+  conSoSlide(pptx, ctx);
+  ketQuaSlide(pptx, ctx);
+  quyRaTienSlide(pptx, ctx);
+  chucNangSlide(pptx, ctx);
+  quyTrinhSlide(pptx, ctx);
+  anhYLenh(pptx, ctx);
+  anhXml(pptx, ctx);
+  anhTraLoi(pptx, ctx);
+  anhHoTro(pptx, ctx);
   dashboardSlide(pptx, ctx);
   vaiTroSlide(pptx, ctx);
   nguyenTacSlide(pptx, ctx);
+  anToanSlide(pptx, ctx);
   trienKhaiSlide(pptx, ctx);
+  deXuatSlide(pptx, ctx);
   ketSlide(pptx, ctx);
-
-  if (ctx.page !== TONG_SLIDE) throw new Error(`TONG_SLIDE = ${TONG_SLIDE} nhưng deck có ${ctx.page} slide`);
+  chanTrang(ctx);
   return pptx;
-};
+}
+
+// Bản cho lãnh đạo bệnh viện: khoảng 15 phút, XML 3176 là trọng tâm duy nhất, kiểm y lệnh là
+// phần mở rộng. Không có slide thao tác màn hình.
+function deckLanhDao(PptxGenJS) {
+  const { pptx, ctx } = deckMoi(PptxGenJS, 'Giải pháp Tiền giám định — Dành cho lãnh đạo bệnh viện');
+  bia(pptx, ctx);
+  vanDeSlide(pptx, ctx);
+  haiDiemSlide(pptx, ctx, { chiXml: true });
+  ketQuaSlide(pptx, ctx);
+  quyRaTienSlide(pptx, ctx);
+  dashboardSlide(pptx, ctx);
+  anToanSlide(pptx, ctx);
+  trienKhaiSlide(pptx, ctx);
+  deXuatSlide(pptx, ctx);
+  ketSlide(pptx, ctx);
+  chanTrang(ctx);
+  return pptx;
+}
+
+module.exports = { deckDayDu, deckLanhDao };

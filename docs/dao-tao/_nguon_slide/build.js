@@ -3,7 +3,8 @@
 //   node build.js            -> dựng tất cả vào ../
 //   node build.js tgd        -> chỉ dựng deck gộp Tiền giám định
 //   node build.js d          -> chỉ dựng deck D (báo cáo giao ban)
-//   node build.js gt         -> chỉ dựng slide giới thiệu Tiền giám định
+//   node build.js gt         -> chỉ dựng deck giới thiệu Tiền giám định (bản đầy đủ)
+//   node build.js gt-ld      -> chỉ dựng deck giới thiệu bản cho lãnh đạo bệnh viện
 //
 // Yêu cầu: pptxgenjs cài tạm ở thư mục gốc dự án, xem README.md.
 
@@ -21,7 +22,8 @@ try {
 const DECKS = {
   tgd: { build: require('./deck-tgd'), file: 'Slide-dao-tao-Tien-giam-dinh.pptx' },
   d: { build: require('./deck-d'), file: 'Slide-dao-tao-D-Bao-cao-giao-ban.pptx' },
-  gt: { build: require('./deck-gioi-thieu'), file: 'Slide-gioi-thieu-Tien-giam-dinh.pptx' },
+  gt: { build: require('./deck-gioi-thieu').deckDayDu, file: 'Slide-gioi-thieu-Tien-giam-dinh.pptx' },
+  'gt-ld': { build: require('./deck-gioi-thieu').deckLanhDao, file: 'Slide-gioi-thieu-Tien-giam-dinh-lanh-dao.pptx' },
 };
 
 const OUT_DIR = path.resolve(__dirname, '..');
