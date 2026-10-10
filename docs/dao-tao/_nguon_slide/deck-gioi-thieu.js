@@ -833,6 +833,91 @@ function deXuatSlide(pptx, ctx) {
     + 'Bốn chỉ số theo tài liệu tổng hợp mục 10.3. ĐIỀN CHI PHÍ và rà lại dòng "Chúng tôi làm" theo đúng cam kết của công ty trước khi trình bày.');
 }
 
+// ---------------------------------------------------------------- nhận danh sách lỗi
+
+// Nguồn: email hằng ngày lỗi thẻ BHYT + lỗi XML 3176 — sendXml3176XmlErrors.php; email tổng hợp
+// sai sót y lệnh theo ngưỡng mức độ — OrderCheckNotifier.php. Cả hai gửi tới danh sách người nhận
+// trong bảng email_receive_report.
+function nhanLoiSlide(pptx, ctx) {
+  const s = slideMoi(pptx, ctx);
+  dau(s, 'Nhận lỗi', 'Danh sách lỗi đến tay người cần biết theo hai cách',
+    'Người cần xem thì tự vào Cổng; người cần được nhắc thì hệ thống tự gửi email — không ai phải đi hỏi.');
+
+  const cot = [
+    ['🖥️', 'CHỦ ĐỘNG', 'Vào Cổng Tiền giám định', XANH, [
+      ['Danh sách hồ sơ, danh sách vi phạm', 'Lọc theo khoa, mức độ, ngày; xuất Excel để giao việc.'],
+      ['Tra cứu theo mã điều trị', 'Quét mã vạch, thấy mọi lỗi của một hồ sơ; in phiếu lỗi.'],
+      ['Dashboard', 'Lỗi tập trung ở đâu, tồn đọng bao lâu — xem bất cứ lúc nào.'],
+    ]],
+    ['📧', 'THỤ ĐỘNG', 'Nhận email do hệ thống tự gửi', VANG, [
+      ['Báo cáo lỗi hằng ngày', 'Tổng hợp lỗi thẻ BHYT và lỗi hồ sơ XML 3176 trong ngày.'],
+      ['Bản tin sai sót y lệnh', 'Gửi các vi phạm mới từ mức độ do viện đặt trở lên.'],
+      ['Danh sách người nhận do viện quản lý', 'Thêm, tắt người nhận ngay trên phần mềm.'],
+    ]],
+  ];
+  const gap = 0.35;
+  const cw = (BODY_W - gap) / 2;
+  const cy = 2.0;
+  const ch = 3.95;
+  cot.forEach(([icon, tag, h, mau, ds], i) => {
+    const x = M + i * (cw + gap);
+    the(s, x, cy, cw, ch, { nhan: i === 1 });
+    s.addShape('ellipse', { x: x + 0.3, y: cy + 0.28, w: 0.8, h: 0.8, fill: { color: '25324A' }, line: { color: mau, width: 1.25 } });
+    bieuTuong(s, icon, x + 0.3, cy + 0.28, 0.8, 0.8, 22);
+    chu(s, [
+      { text: tag, options: { fontSize: 11.5, bold: true, color: mau, charSpacing: 2, breakLine: true } },
+      { text: h, options: { fontSize: 19, bold: true, color: TRANG } },
+    ], { x: x + 1.3, y: cy + 0.25, w: cw - 1.55, h: 0.86, valign: 'middle', lineSpacing: 24 });
+    ds.forEach(([t, b], k) => {
+      const y = cy + 1.35 + k * 0.84;
+      chu(s, [
+        { text: t, options: { fontSize: 15, bold: true, color: TRANG, breakLine: true } },
+        { text: b, options: { fontSize: 13, color: CHU_PHU } },
+      ], { x: x + 0.35, y, w: cw - 0.7, h: 0.8, valign: 'top', lineSpacing: 18 });
+    });
+  });
+  dongVang(s, 'Lỗi tự tìm đến người phụ trách — không chờ cổng giám định báo về', 6.15);
+  L.notes(s, 'Hai cách nhận lỗi. Chủ động: nghiệp vụ và KHTH vào Cổng Tiền giám định xem danh sách, tra theo mã điều trị, xem dashboard. '
+    + 'Thụ động: hệ thống tự gửi email — báo cáo lỗi thẻ BHYT và lỗi XML 3176 hằng ngày, và bản tin các sai sót y lệnh mới (chỉ gửi từ mức độ viện chọn trở lên để không làm phiền). '
+    + 'Lãnh đạo không cần đăng nhập vẫn nắm được tình hình qua email. Danh sách người nhận do viện tự thêm, tắt.');
+}
+
+// ---------------------------------------------------------------- cam kết
+
+// Cam kết thương mại của công ty — rà lại với ban giám đốc công ty trước mỗi buổi trình bày.
+function camKetSlide(pptx, ctx) {
+  const s = slideMoi(pptx, ctx);
+  dau(s, 'Cam kết', 'Đồng hành lâu dài cùng bệnh viện',
+    'Quy định BHYT thay đổi liên tục — phần mềm phải thay đổi theo mà viện không phải lo.');
+
+  const o = [
+    ['🔄', 'Cập nhật quy tắc thường xuyên', 'Bám sát quy định mới của BHXH và Bộ Y tế. Cổng tự động cập nhật quy tắc, danh mục mã lỗi — không cần người can thiệp.', 'CAM KẾT'],
+    ['🆓', 'Nâng cấp nền tảng miễn phí', 'Đã có kế hoạch nâng cấp để đáp ứng yêu cầu tốc độ ngày một cao khi số hồ sơ tăng.', 'CAM KẾT'],
+    ['🤖', 'Ứng dụng AI tra soát lỗi', 'Tra soát lỗi thông minh: gợi ý nguyên nhân, cách sửa, phát hiện bất thường mà quy tắc cứng chưa bắt được.', 'LỘ TRÌNH'],
+    ['🔗', 'Tích hợp HIS sâu hơn', 'Chủ động phát hiện lỗi logic ngay trên HIS — ví dụ sai thời gian, sai mã đối tượng — trước khi lập hồ sơ.', 'LỘ TRÌNH'],
+  ];
+  const gap = 0.3;
+  const cw = (BODY_W - gap) / 2;
+  const ch = 1.95;
+  o.forEach(([icon, h, b, tag], i) => {
+    const x = M + (i % 2) * (cw + gap);
+    const y = 1.95 + Math.floor(i / 2) * (ch + 0.22);
+    const loTrinh = tag === 'LỘ TRÌNH';
+    const mau = loTrinh ? XANH : XANH_LA;
+    the(s, x, y, cw, ch, { nhan: i === 1 });
+    s.addShape('ellipse', { x: x + 0.3, y: y + 0.3, w: 0.8, h: 0.8, fill: { color: '25324A' }, line: { color: mau, width: 1 } });
+    bieuTuong(s, icon, x + 0.3, y + 0.3, 0.8, 0.8, 22);
+    chu(s, tag, { x: x + cw - 1.5, y: y + 0.18, w: 1.25, h: 0.28, fontSize: 9.5, bold: true, color: i === 1 ? VANG : mau, align: 'right', charSpacing: 1 });
+    chu(s, h, { x: x + 1.35, y: y + 0.38, w: cw - 1.6, h: 0.45, fontSize: 18, bold: true, color: TRANG, valign: 'middle' });
+    chu(s, b, { x: x + 1.35, y: y + 0.88, w: cw - 1.6, h: 0.95, fontSize: 13.5, color: CHU_PHU, valign: 'top', lineSpacing: 19 });
+  });
+  dongVang(s, 'Viện tập trung vào chuyên môn — phần mềm theo kịp quy định là việc của chúng tôi', 6.4);
+  L.notes(s, 'Trả lời câu hỏi lãnh đạo hay đặt ra: "mua về rồi quy định đổi thì sao?". '
+    + 'Hai cam kết hiện tại: cập nhật quy tắc thường xuyên — Cổng tự động cập nhật, không cần cán bộ của viện can thiệp; và nâng cấp nền tảng miễn phí, đã có kế hoạch nâng cấp để đáp ứng tốc độ khi khối lượng hồ sơ tăng. '
+    + 'Hai hướng phát triển: ứng dụng AI để tra soát lỗi thông minh, và tích hợp HIS sâu hơn để chủ động bắt lỗi logic (thời gian, mã đối tượng…) ngay trên HIS. '
+    + 'Nói rõ ô "Lộ trình" là kế hoạch, không phải chức năng đã có. Rà lại phạm vi "miễn phí" với ban giám đốc công ty trước khi trình bày.');
+}
+
 // ---------------------------------------------------------------- deck
 
 function deckMoi(PptxGenJS, title) {
@@ -938,12 +1023,14 @@ function deckDayDu(PptxGenJS) {
   anhYLenh(pptx, ctx);
   anhXml(pptx, ctx);
   anhTraLoi(pptx, ctx);
+  nhanLoiSlide(pptx, ctx);
   anhHoTro(pptx, ctx);
   dashboardSlide(pptx, ctx);
   vaiTroSlide(pptx, ctx);
   nguyenTacSlide(pptx, ctx);
   anToanSlide(pptx, ctx);
   trienKhaiSlide(pptx, ctx);
+  camKetSlide(pptx, ctx);
   deXuatSlide(pptx, ctx);
   ketSlide(pptx, ctx);
   chanTrang(ctx);
@@ -960,8 +1047,10 @@ function deckLanhDao(PptxGenJS) {
   ketQuaSlide(pptx, ctx);
   quyRaTienSlide(pptx, ctx);
   dashboardSlide(pptx, ctx);
+  nhanLoiSlide(pptx, ctx);
   anToanSlide(pptx, ctx);
   trienKhaiSlide(pptx, ctx);
+  camKetSlide(pptx, ctx);
   deXuatSlide(pptx, ctx);
   ketSlide(pptx, ctx);
   chanTrang(ctx);
