@@ -3,7 +3,9 @@
 namespace App\Services\Xml3176;
 
 use App\Models\BHYT\Xml3176VatPhamKemDvkt;
+use App\Models\BHYT\Xml3176VpkdUngVien;
 use App\Services\Xml3176\Support\VatPhamKemDvktKey;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -20,20 +22,32 @@ class VatPhamKemDvktLearner
         'THUOC' => ['bang' => 'xml3176_xml2s', 'ma' => 'ma_thuoc', 'ten' => 'ten_thuoc'],
     ];
 
-    public function hoc(float $nguong, int $toiThieu, $tuNgay = null): array
+    public function hoc(float $nguong, int $toiThieu, $tuNgay = null, float $nguongUngVien = 0.5): array
     {
         $dong = [];
+        $ungVienRa = [];
         $soVp = [];
         $cacCap = [];
         $maGoc = [];
 
         foreach (self::NGUON as $loai => $n) {
-            $chon = $this->chonVatPham($loai, $n, $nguong, $toiThieu, $tuNgay);
+            $chon = [];
+            $ungVien = [];
+            foreach ($this->thongKeVatPham($loai, $n, $tuNgay) as $khoa => $g) {
+                $tyLe = $g['lk'] / $g['n'];
+                if ($g['n'] >= $toiThieu && $tyLe >= $nguong) {
+                    $chon[$khoa] = $g;
+                } elseif ($g['lk'] >= 1 && $tyLe >= $nguongUngVien) {
+                    // Chua vao bang tra: hoac ty le trong [nguongUngVien, nguong), hoac du ty le
+                    // nhung thieu so dong toi thieu.
+                    $ungVien[$khoa] = $g;
+                }
+            }
             $soVp[$loai] = count($chon);
-            if (empty($chon)) {
+            if (empty($chon) && empty($ungVien)) {
                 continue;
             }
-            $cap = $this->capDaGan($loai, $n, $chon, $tuNgay);
+            $cap = $this->capDaGan($loai, $n, $chon + $ungVien, $tuNgay);
             foreach ($cap as $dsDv) {
                 foreach ($dsDv as $maDv => $c) {
                     // Ca ma goc (vd 12.0448.1187_GT) lan ma chuan hoa: dong DVKT co the mang dang nao cung duoc.
@@ -41,15 +55,14 @@ class VatPhamKemDvktLearner
                     $maGoc = array_merge($maGoc, array_keys($c['goc']));
                 }
             }
-            $cacCap[$loai] = [$chon, $cap];
+            $cacCap[$loai] = [$chon, $ungVien, $cap];
         }
 
         $tenDv = $this->tenDvkt($maGoc);
 
-        foreach ($cacCap as $loai => list($chon, $cap)) {
-            foreach ($cap as $khoa => $dsDv) {
-                $vp = $chon[$khoa];
-                foreach ($dsDv as $maDv => $c) {
+        foreach ($cacCap as $loai => list($chon, $ungVien, $cap)) {
+            foreach ($chon as $khoa => $vp) {
+                foreach ($cap[$khoa] ?? [] as $maDv => $c) {
                     $dong[] = [
                         'loai' => $loai,
                         'ma_vat_pham' => $vp['ma'],
@@ -62,9 +75,28 @@ class VatPhamKemDvktLearner
                     ];
                 }
             }
+            foreach ($ungVien as $khoa => $vp) {
+                $dsDv = [];
+                foreach ($cap[$khoa] ?? [] as $maDv => $c) {
+                    $dsDv[] = ['ma' => (string) $maDv, 'ten' => $tenDv[$maDv] ?? null, 'so_lan' => $c['n']];
+                }
+                usort($dsDv, function ($a, $b) {
+                    return ($b['so_lan'] <=> $a['so_lan']) ?: strcmp($a['ma'], $b['ma']);
+                });
+                $ungVienRa[] = [
+                    'loai' => $loai,
+                    'ma_vat_pham' => $vp['ma'],
+                    'ten_vat_pham' => $vp['ten'],
+                    'ten_khop' => $vp['ten_khop'],
+                    'so_dong' => $vp['n'],
+                    'so_lien_ket' => $vp['lk'],
+                    'ty_le_gan' => round($vp['lk'] / $vp['n'], 4),
+                    'dvkt' => $dsDv,
+                ];
+            }
         }
 
-        return ['dong' => $dong, 'so_vat_pham' => $soVp];
+        return ['dong' => $dong, 'so_vat_pham' => $soVp, 'ung_vien' => $ungVienRa];
     }
 
     public function ghi(array $dong): array
@@ -123,12 +155,25 @@ class VatPhamKemDvktLearner
         return $kq;
     }
 
+    /** Thay toan bo bang ung vien bang danh sach moi (tu hoc()). Tra so dong ghi. */
+    public function ghiUngVien(array $ungVien, $lanHocId = null): int
+    {
+        return DB::transaction(function () use ($ungVien, $lanHocId) {
+            Xml3176VpkdUngVien::query()->delete();
+            foreach ($ungVien as $u) {
+                Xml3176VpkdUngVien::create($u + ['lan_hoc_id' => $lanHocId]);
+            }
+
+            return count($ungVien);
+        });
+    }
+
     private static function khoaDong($loai, $ma, $tenKhop, $maDvkt): string
     {
         return implode("\x1F", [$loai, trim((string) $ma), (string) $tenKhop, VatPhamKemDvktKey::chuanHoaMaDvkt($maDvkt)]);
     }
 
-    private function chonVatPham(string $loai, array $n, float $nguong, int $toiThieu, $tuNgay): array
+    private function thongKeVatPham(string $loai, array $n, $tuNgay): array
     {
         $q = DB::table($n['bang'])
             ->selectRaw("{$n['ma']} as ma, {$n['ten']} as ten, COUNT(*) as so_dong, "
@@ -156,9 +201,7 @@ class VatPhamKemDvktLearner
             $gom[$khoa]['lk'] += (int) $r->so_lk;
         }
 
-        return array_filter($gom, function ($g) use ($nguong, $toiThieu) {
-            return $g['n'] >= $toiThieu && $g['lk'] / $g['n'] >= $nguong;
-        });
+        return $gom;
     }
 
     private function capDaGan(string $loai, array $n, array $chon, $tuNgay): array
@@ -217,9 +260,11 @@ class VatPhamKemDvktLearner
      * Nap cac dong Excel da duyet. Dong co san -> cap nhat hieu_luc, ghi_chu; dong moi -> them
      * voi nguon TAY. Khong xoa dong nao. Dong loi duoc bao lai, cac dong khac van nap.
      */
-    public function nap(array $hang): array
+    public function nap(array $hang, $nguoiSuaId = null): array
     {
         $kq = ['them' => 0, 'cap_nhat' => 0, 'loi' => []];
+        // Nap tu man quan tri thi ghi vet nguoi sua; lenh dong lenh truyen null.
+        $vet = $nguoiSuaId === null ? [] : ['nguoi_sua_id' => (int) $nguoiSuaId, 'sua_luc' => Carbon::now()];
 
         foreach (array_values($hang) as $i => $h) {
             $dongExcel = $i + 2;
@@ -262,6 +307,7 @@ class VatPhamKemDvktLearner
             if ($m) {
                 $m->hieu_luc = $hieuLuc;
                 $m->ghi_chu = $ghiChu;
+                $m->fill($vet);
                 $m->save();
                 $kq['cap_nhat']++;
                 continue;
@@ -273,7 +319,7 @@ class VatPhamKemDvktLearner
                 'ten_khop' => $tenKhop, 'ma_dvkt' => $maDv, 'ten_dvkt' => $tenDvkt === '' ? null : $tenDvkt,
                 'nguon' => Xml3176VatPhamKemDvkt::NGUON_TAY, 'so_lan_gan' => 0, 'ty_le_gan' => null,
                 'hieu_luc' => $hieuLuc, 'ghi_chu' => $ghiChu,
-            ]);
+            ] + $vet);
             $kq['them']++;
         }
 
