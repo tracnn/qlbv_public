@@ -61,6 +61,7 @@ class VatPhamKemDvktController extends Controller
             })
             ->editColumn('hieu_luc', function ($m) {
                 return '<input type="checkbox" class="vpkd-hieu-luc" data-id="' . $m->id . '"'
+                    . ' data-nguon="' . e($m->nguon) . '"'
                     . ' data-ghi-chu="' . e($m->ghi_chu) . '"' . ($m->hieu_luc ? ' checked' : '') . '>';
             })
             ->editColumn('ghi_chu', function ($m) {

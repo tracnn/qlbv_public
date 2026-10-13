@@ -79,7 +79,13 @@ class VatPhamKemDvktHocLaiService
 
             return $ketQua;
         } catch (\Throwable $e) {
-            $lan->update(['trang_thai' => Xml3176VpkdLanHoc::LOI, 'loi' => mb_substr($e->getMessage(), 0, 2000), 'xong_luc' => Carbon::now()]);
+            // Khong luu thong diep exception (co the lo SQL/duong dan) vao cot hien ra man hinh.
+            \Log::error('Hoc lai bang tra vat pham kem DVKT that bai', ['lan_hoc_id' => $lan->id, 'exception' => $e]);
+            $lan->update([
+                'trang_thai' => Xml3176VpkdLanHoc::LOI,
+                'loi' => 'Lỗi khi học lại — xem log ứng dụng (' . class_basename($e) . ')',
+                'xong_luc' => Carbon::now(),
+            ]);
             throw $e;
         }
     }
@@ -88,9 +94,10 @@ class VatPhamKemDvktHocLaiService
     {
         $moc = Carbon::now()->subMinutes(self::PHUT_TREO);
         $loi = ['trang_thai' => Xml3176VpkdLanHoc::LOI, 'loi' => 'Treo quá 60 phút', 'xong_luc' => Carbon::now()];
+        $loiCho = ['loi' => 'Quá 60 phút chưa được chạy (hàng đợi bận)'] + $loi;
 
         $n = Xml3176VpkdLanHoc::where('trang_thai', Xml3176VpkdLanHoc::DANG_CHAY)->where('bat_dau_luc', '<', $moc)->update($loi);
-        $n += Xml3176VpkdLanHoc::where('trang_thai', Xml3176VpkdLanHoc::CHO)->where('created_at', '<', $moc)->update($loi);
+        $n += Xml3176VpkdLanHoc::where('trang_thai', Xml3176VpkdLanHoc::CHO)->where('created_at', '<', $moc)->update($loiCho);
 
         return $n;
     }

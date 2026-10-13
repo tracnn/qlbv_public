@@ -100,6 +100,7 @@
 <script src="{{ asset('js/dropzone.min.js') }}"></script>
 <script type="text/javascript">
     Dropzone.autoDiscover = false;
+    toastr.options.escapeHtml = true;
     var TOKEN = "{{ csrf_token() }}";
     var URL_ID = {
         hieuLuc: "{{ route('category-bhyt.vat-pham-kem-dvkt.hieu-luc', ['id' => '__ID__']) }}",
@@ -139,13 +140,15 @@
 
     $('#vpkd-bang-tra').on('change', '.vpkd-hieu-luc', function () {
         var o = $(this), bat = o.is(':checked');
+        var chuyenTay = bat && o.attr('data-nguon') === 'HOC' && o.attr('data-ghi-chu') === 'Học lại: dưới ngưỡng';
         Swal.fire({
             title: bat ? 'Bật lại cặp này?' : 'Tắt cặp này?', icon: 'warning', showCancelButton: true,
-            input: 'text', inputValue: o.data('ghi-chu') || '', inputPlaceholder: bat ? 'Ghi chú (tuỳ chọn)' : 'Lý do tắt (bắt buộc)',
+            text: chuyenTay ? 'Dòng học tự động đang bị tắt do dưới ngưỡng sẽ chuyển thành dòng bổ sung tay (TAY) để lần học sau không tắt lại.' : undefined,
+            input: 'text', inputValue: bat ? (o.attr('data-ghi-chu') || '') : '', inputPlaceholder: bat ? 'Ghi chú (tuỳ chọn)' : 'Lý do tắt (bắt buộc)',
             inputValidator: function (v) { if (!bat && !$.trim(v)) { return 'Cần ghi lý do khi tắt'; } }
         }).then(function (r) {
             if (!r.isConfirmed) { o.prop('checked', !bat); return; }
-            $.post(url(URL_ID.hieuLuc, o.data('id')), { _token: TOKEN, hieu_luc: bat ? 1 : 0, ghi_chu: r.value })
+            $.post(url(URL_ID.hieuLuc, o.attr('data-id')), { _token: TOKEN, hieu_luc: bat ? 1 : 0, ghi_chu: r.value })
                 .done(function () { toastr.success('Đã cập nhật.'); bangTra.ajax.reload(null, false); })
                 .fail(function (x) { o.prop('checked', !bat); baoLoi(x); });
         });
@@ -154,17 +157,17 @@
     $('#vpkd-bang-tra').on('click', '.vpkd-ghi-chu', function (e) {
         e.preventDefault();
         var o = $(this);
-        Swal.fire({ title: 'Ghi chú', input: 'text', inputValue: o.data('ghi-chu') || '', showCancelButton: true })
+        Swal.fire({ title: 'Ghi chú', input: 'text', inputValue: o.attr('data-ghi-chu') || '', showCancelButton: true })
             .then(function (r) {
                 if (!r.isConfirmed) { return; }
-                $.post(url(URL_ID.ghiChu, o.data('id')), { _token: TOKEN, ghi_chu: r.value })
+                $.post(url(URL_ID.ghiChu, o.attr('data-id')), { _token: TOKEN, ghi_chu: r.value })
                     .done(function () { toastr.success('Đã lưu ghi chú.'); bangTra.ajax.reload(null, false); })
                     .fail(baoLoi);
             });
     });
 
     $('#vpkd-bang-tra').on('click', '.vpkd-xoa', function () {
-        var id = $(this).data('id');
+        var id = $(this).attr('data-id');
         Swal.fire({ title: 'Bạn có chắc chắn?', text: 'Xoá dòng bổ sung tay này.', icon: 'warning', showCancelButton: true })
             .then(function (r) {
                 if (!r.isConfirmed) { return; }
@@ -194,12 +197,14 @@
     $('a[href="#vpkd-tab-ung-vien"]').on('shown.bs.tab', function () { ungVien.columns.adjust(); });
 
     $('#vpkd-ung-vien').on('click', '.vpkd-uv-them', function () {
-        var id = $(this).data('id');
+        var nut = $(this), id = nut.attr('data-id');
         var ma = $('.vpkd-uv-dv[data-uv="' + id + '"]:checked:not(:disabled)').map(function () { return this.value; }).get();
         if (!ma.length) { toastr.warning('Hãy tick ít nhất một DVKT chưa có.'); return; }
+        nut.prop('disabled', true);
         $.post(url(URL_ID.uvThem, id), { _token: TOKEN, ma_dvkt: ma })
             .done(function (r) { toastr.success(r.message); taiLai(); })
-            .fail(baoLoi);
+            .fail(baoLoi)
+            .always(function () { nut.prop('disabled', false); });
     });
 
     // ---- Them dong tay ----
@@ -216,12 +221,13 @@
     $('#them-loai').on('change', function () { $('#them-ten').val('').prop('readonly', false); $('#them-ma').val(null).trigger('change'); $('#them-khop').empty(); kiemKhopHienTai = null; });
 
     $('#them-ma').on('change', function () {
-        var ma = $(this).val();
+        var ma = $(this).val(), maGui = ma;
         $('#them-ten').val('').prop('readonly', false);
         $('#them-khop').empty(); kiemKhopHienTai = null;
         if (!ma) { return; }
         $.get("{{ route('category-bhyt.vat-pham-kem-dvkt.kiem-khop') }}", { loai: $('#them-loai').val(), ma: ma })
             .done(function (r) {
+                if ($('#them-ma').val() !== maGui) { return; }
                 kiemKhopHienTai = r;
                 if (!r.ds.length) {
                     $('#them-khop').html(r.ma_nhom_chung
@@ -248,6 +254,7 @@
         if (kiemKhopHienTai && kiemKhopHienTai.ma_nhom_chung && !kiemKhopHienTai.ds.length) {
             toastr.error('Mã nhóm chung chưa xuất hiện trên XML 12 tháng — không thể khớp'); return;
         }
+        var nut = $(this).prop('disabled', true);
         $.post("{{ route('category-bhyt.vat-pham-kem-dvkt.them') }}", {
             _token: TOKEN, loai: $('#them-loai').val(), ma_vat_pham: $('#them-ma').val(),
             ten_vat_pham: $('#them-ten').val(), ma_dvkt: $('#them-dvkt').val() || [], ghi_chu: $('#them-ghi-chu').val()
@@ -256,7 +263,7 @@
             $('#vpkd-modal-them').modal('hide');
             $('#them-ma, #them-dvkt').val(null).trigger('change'); $('#them-ten, #them-ghi-chu').val(''); $('#them-khop').empty();
             taiLai();
-        }).fail(baoLoi);
+        }).fail(baoLoi).always(function () { nut.prop('disabled', false); });
     });
 
     // ---- Hoc lai ----

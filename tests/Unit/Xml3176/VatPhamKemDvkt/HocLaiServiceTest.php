@@ -88,6 +88,7 @@ class HocLaiServiceTest extends TestCase
         $this->assertSame(Xml3176VpkdLanHoc::LOI, $treo->fresh()->trang_thai);
         $this->assertSame('Treo quá 60 phút', $treo->fresh()->loi);
         $this->assertSame(Xml3176VpkdLanHoc::LOI, $choCu->fresh()->trang_thai);
+        $this->assertSame('Quá 60 phút chưa được chạy (hàng đợi bận)', $choCu->fresh()->loi);
         $this->assertSame(Xml3176VpkdLanHoc::DANG_CHAY, $moi->fresh()->trang_thai);
     }
 
@@ -132,7 +133,7 @@ class HocLaiServiceTest extends TestCase
         }
 
         $this->assertSame(Xml3176VpkdLanHoc::LOI, $lan->fresh()->trang_thai);
-        $this->assertNotEmpty($lan->fresh()->loi);
+        $this->assertStringStartsWith('Lỗi khi học lại — xem log ứng dụng', $lan->fresh()->loi);
         $this->assertSame(0, Xml3176VatPhamKemDvkt::count(), 'Giao dich phai rollback ca bang tra');
     }
 

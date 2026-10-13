@@ -43,4 +43,14 @@ class QuanTriViewTest extends TestCase
         $this->assertNotContains("value='' + ", $src);
         $this->assertContains('.val(JSON.stringify(', $src);
     }
+
+    /** @test */
+    public function view_chong_xss_toastr_race_kiem_khop_va_doc_thuoc_tinh_nguyen_van()
+    {
+        $src = $this->nguon();
+        $this->assertContains('escapeHtml = true', $src);
+        $this->assertContains("attr('data-nguon')", $src);
+        $this->assertContains('maGui', $src);
+        $this->assertNotContains(".data('ghi-chu')", $src);
+    }
 }

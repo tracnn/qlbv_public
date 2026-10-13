@@ -14,7 +14,8 @@ use Illuminate\Queue\SerializesModels;
  * Hoc lai bang tra vat pham kem DVKT me chay nen cho mot dong xml3176_vpkd_lan_hoc.
  *
  * KHONG khai $timeout (PHP Windows khong co pcntl); treo do VatPhamKemDvktHocLaiService::danhDauTreo
- * phat hien. KHONG type-hint service tren handle(): lay bang app() (bay tiem container da gap).
+ * phat hien. Gia dinh CHI MOT worker tren hang doi JobXuatTepXml3176 (hai luot hoc khong bao gio
+ * chay dong thoi); them worker thi phai them khoa. KHONG type-hint service tren handle(): lay bang app() (bay tiem container da gap).
  */
 class HocVatPhamKemDvktJob implements ShouldQueue
 {

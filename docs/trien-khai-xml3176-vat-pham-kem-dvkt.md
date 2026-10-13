@@ -31,6 +31,8 @@ Menu **Quản lý danh mục → BHYT → DM vật phẩm kèm DVKT mẹ** (quy�
 | Duyệt (Bước 4) | Tab **Bảng tra**: lọc, tắt cặp sai (bắt buộc ghi lý do), sửa ghi chú, xoá dòng TAY. Nút **Thêm dòng tay**: chọn mã → bảng tên thật trên XML 12 tháng → chọn tên (bắt buộc với VTYT mã nhóm chung) → chọn DVKT mẹ. Tab **Ứng viên chờ duyệt**: tick DVKT đúng → **Thêm thành dòng tay**. |
 | Excel (Bước 3.2, 5) | Nút **Xuất Excel** / **Nhập Excel** (kéo-thả, có tệp lỗi theo dòng). |
 
+Bật/tắt và thêm dòng trên màn hình có hiệu lực với quy tắc kiểm tra sau tối đa 10 phút (thời hạn bộ nhớ đệm của bảng tra). Bật lại một dòng HOC đã bị lệnh học tự tắt (dưới ngưỡng) sẽ chuyển dòng đó thành TAY để lần học sau không tắt lại.
+
 Mọi thao tác trên màn hình ghi người và thời điểm sửa cuối (cột "Người sửa"). Dòng lệnh ở Bước 3–5 vẫn dùng được làm phương án dự phòng; lệnh học (không `--thu`) cũng cập nhật lịch sử lượt học và tab ứng viên.
 
 Sau khi `update.bat` chạy, kiểm `php artisan migrate:status | findstr "vpkd them_nguoi_sua_vao_xml3176"` phải thấy đúng 3 dòng, cả 3 đều `Y`: 2 migration `create_xml3176_vpkd_*` và `them_nguoi_sua_vao_xml3176_vat_pham_kem_dvkt`.

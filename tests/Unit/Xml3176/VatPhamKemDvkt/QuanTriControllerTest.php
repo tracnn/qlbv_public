@@ -191,6 +191,7 @@ class QuanTriControllerTest extends TestCase
         $this->assertSame(1, $d['recordsFiltered']);
         $this->assertContains('Nguyen Van A', $d['data'][0]['nguoi_sua_luc']);
         $this->assertContains('vpkd-hieu-luc', $d['data'][0]['hieu_luc']);
+        $this->assertContains('data-nguon=', $d['data'][0]['hieu_luc']);
 
         $res = $this->c()->datatable($this->reqDatatable(['order' => [['column' => 10, 'dir' => 'desc']]]));
         $this->assertSame(200, $res->getStatusCode());

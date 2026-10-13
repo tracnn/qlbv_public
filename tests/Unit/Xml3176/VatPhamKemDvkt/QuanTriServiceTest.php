@@ -75,6 +75,35 @@ class QuanTriServiceTest extends TestCase
     }
 
     /** @test */
+    public function tat_bang_ghi_chu_tu_dong_cua_lenh_hoc_bi_tu_choi()
+    {
+        $m = $this->dong();
+        $this->assertSame(
+            'Hãy ghi lý do tắt của bạn (không dùng ghi chú tự động của lệnh học)',
+            $this->loi(fn() => $this->sv()->datHieuLuc($m, false, Xml3176VatPhamKemDvkt::GHI_CHU_TU_TAT, 7))
+        );
+        $this->assertTrue($m->fresh()->hieu_luc);
+    }
+
+    /** @test */
+    public function bat_lai_dong_hoc_bi_tu_tat_chuyen_thanh_tay()
+    {
+        $m = $this->dong(['hieu_luc' => false, 'ghi_chu' => Xml3176VatPhamKemDvkt::GHI_CHU_TU_TAT]);
+        $this->sv()->datHieuLuc($m, true, '', 7);
+        $this->assertTrue($m->fresh()->hieu_luc);
+        $this->assertSame('TAY', $m->fresh()->nguon);
+    }
+
+    /** @test */
+    public function bat_lai_dong_hoc_bi_nguoi_dung_tat_van_la_hoc()
+    {
+        $m = $this->dong(['hieu_luc' => false, 'ghi_chu' => 'Cặp sai chuyên môn']);
+        $this->sv()->datHieuLuc($m, true, '', 7);
+        $this->assertTrue($m->fresh()->hieu_luc);
+        $this->assertSame('HOC', $m->fresh()->nguon);
+    }
+
+    /** @test */
     public function ghi_chu_rong_thanh_null_va_gioi_han_do_dai()
     {
         $m = $this->dong(['ghi_chu' => 'cu']);

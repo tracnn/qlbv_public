@@ -26,7 +26,17 @@ class VatPhamKemDvktQuanTri
         if (!$hieuLuc && $ghiChu === null) {
             throw new \InvalidArgumentException('Cần ghi lý do khi tắt');
         }
-        $m->fill(['hieu_luc' => $hieuLuc, 'ghi_chu' => $ghiChu] + self::vet($nguoiSuaId))->save();
+        if (!$hieuLuc && $ghiChu === Xml3176VatPhamKemDvkt::GHI_CHU_TU_TAT) {
+            throw new \InvalidArgumentException('Hãy ghi lý do tắt của bạn (không dùng ghi chú tự động của lệnh học)');
+        }
+        $du = ['hieu_luc' => $hieuLuc, 'ghi_chu' => $ghiChu];
+        // Dong HOC bi lenh hoc tu tat (duoi nguong) ma nguoi duyet bat lai: doi thanh TAY de lan hoc
+        // sau khong tat lai (learner chi dong den dong HOC).
+        if ($hieuLuc && !$m->hieu_luc && $m->nguon === Xml3176VatPhamKemDvkt::NGUON_HOC
+            && $m->ghi_chu === Xml3176VatPhamKemDvkt::GHI_CHU_TU_TAT) {
+            $du['nguon'] = Xml3176VatPhamKemDvkt::NGUON_TAY;
+        }
+        $m->fill($du + self::vet($nguoiSuaId))->save();
     }
 
     public function datGhiChu(Xml3176VatPhamKemDvkt $m, $ghiChu, $nguoiSuaId): void

@@ -22,7 +22,7 @@ class CreateXml3176VpkdUngVienTable extends Migration
             $table->integer('so_dong');
             $table->integer('so_lien_ket');
             $table->decimal('ty_le_gan', 5, 4);
-            $table->text('dvkt');
+            $table->mediumText('dvkt');
             $table->timestamps();
         });
     }
