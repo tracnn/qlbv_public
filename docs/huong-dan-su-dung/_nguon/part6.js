@@ -255,7 +255,7 @@ module.exports = function part6() {
         ['CTDT007', 'Mã cơ sở trong chứng từ lệch với mã cơ sở của hồ sơ.', 'Chặn'],
         ['CTDT008', 'Thiếu mã thẻ bảo hiểm y tế.', 'Cảnh báo'],
         ['CTDT009', 'Mã thẻ bảo hiểm y tế sai độ dài (phải từ 15 đến 17 ký tự).', 'Chặn'],
-        ['CTDT010', 'Giấy ra viện: ngày nghỉ ngoại trú phải nhập đủ hai ngày và bắt đầu sau ngày ra viện.', 'Chặn'],
+        ['CTDT010', 'Giấy ra viện: ngày nghỉ ngoại trú phải nhập đủ hai ngày và không bắt đầu trước ngày ra viện.', 'Chặn'],
       ],
       [1400, 6120, 1500],
     ),

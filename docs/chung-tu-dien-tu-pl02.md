@@ -274,7 +274,7 @@ kết quả là `app/Jobs/CheckCtdtJob.php`.
 | `CTDT007` | `MACSKCB` trong chứng từ lệch với mã cơ sở của hồ sơ | chặn |
 | `CTDT008` | Thiếu mã thẻ BHYT | **cảnh báo** |
 | `CTDT009` | Mã thẻ BHYT có giá trị nhưng độ dài ngoài 15–17 ký tự (thêm 2026-10-13) | chặn |
-| `CTDT010` | Giấy ra viện: ngày nghỉ ngoại trú chỉ nhập một vế, hoặc `NGOAITRU_TUNGAY` không sau ngày ra viện (thêm 2026-10-13, theo lỗi cổng trả về) | chặn |
+| `CTDT010` | Giấy ra viện: ngày nghỉ ngoại trú chỉ nhập một vế, hoặc `NGOAITRU_TUNGAY` sớm hơn ngày ra viện; trùng ngày ra là hợp lệ (thêm 2026-10-13) | chặn |
 
 Chỉ lỗi mức **chặn** mới cộng vào `ctdt_ho_so.so_loi` và mới chặn việc gửi. Lỗi mức cảnh báo vẫn
 hiện đủ trên tab "Lỗi" của màn chi tiết — vì vậy badge trên tab (đếm **cả** cảnh báo) thường lớn

@@ -545,9 +545,8 @@ class CtdtCheckerTest extends TestCase
     }
 
     /**
-     * Ngay nghi ngoai tru sau ra vien (dot 2026-10-13). Cong BHXH bao loi giay ra vien co
-     * NGAY_RA 202610061059 va NGOAITRU_TUNGAY 20261006: nghi "sau khi ra vien" ma bat dau
-     * dung ngay ra vien.
+     * Ngay nghi ngoai tru sau ra vien (dot 2026-10-13). Bat dau DUNG ngay ra vien la hop le
+     * theo quyet dinh cua chu du an - xem docblock CtdtChecker::kiemNghiNgoaiTru().
      */
     private function ct03NghiNgoaiTru($tuNgay, $denNgay)
     {
@@ -558,21 +557,23 @@ class CtdtCheckerTest extends TestCase
     }
 
     /** @test */
-    public function nghi_ngoai_tru_bat_dau_DUNG_ngay_ra_vien_sinh_CTDT010_muc_chan()
+    public function nghi_ngoai_tru_bat_dau_DUNG_ngay_ra_vien_la_hop_le()
     {
+        // Chu du an quyet dinh KHONG chan ca nay, du cong da bao loi mot ho so nhu vay
+        // (NGAY_RA 202610061059, NGOAITRU_TUNGAY 20261006) ngay 2026-10-13.
         $loi = CtdtChecker::kiem('CT03', $this->ct03NghiNgoaiTru('20261006', '20261011'), '01929');
 
-        $this->assertSame(['CTDT010'], $this->maLoi($loi));
-        $this->assertSame('NGOAITRU_TUNGAY', $loi[0]['ten_truong']);
-        $this->assertSame('chan', $loi[0]['muc_do']);
+        $this->assertSame([], $loi);
     }
 
     /** @test */
-    public function nghi_ngoai_tru_bat_dau_TRUOC_ngay_ra_vien_sinh_CTDT010()
+    public function nghi_ngoai_tru_bat_dau_TRUOC_ngay_ra_vien_sinh_CTDT010_muc_chan()
     {
         $loi = CtdtChecker::kiem('CT03', $this->ct03NghiNgoaiTru('20261005', '20261011'), '01929');
 
         $this->assertSame(['CTDT010'], $this->maLoi($loi));
+        $this->assertSame('NGOAITRU_TUNGAY', $loi[0]['ten_truong']);
+        $this->assertSame('chan', $loi[0]['muc_do']);
     }
 
     /** @test */

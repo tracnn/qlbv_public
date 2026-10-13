@@ -225,15 +225,14 @@ class CtdtKiemToanLuongTest extends TestCase
     }
 
     /** @test */
-    public function nghi_ngoai_tru_bat_dau_dung_ngay_ra_vien_thi_khong_duoc_ky_va_gui()
+    public function nghi_ngoai_tru_bat_dau_truoc_ngay_ra_vien_thi_khong_duoc_ky_va_gui()
     {
-        // Tai hien ho so cong BHXH bao loi ngay 2026-10-13.
         config(['organization.chung_tu_dien_tu.sign_enabled' => true]);
 
         $this->napVaKiem($this->goiCt2025([[
             $this->chungTu('CT03', $this->truongCt03HopLe([
                 'NGAY_VAO' => '202610050342', 'NGAY_RA' => '202610061059',
-                'NGOAITRU_TUNGAY' => '20261006', 'NGOAITRU_DENNGAY' => '20261011',
+                'NGOAITRU_TUNGAY' => '20261005', 'NGOAITRU_DENNGAY' => '20261011',
             ])),
         ]]));
 

@@ -138,9 +138,13 @@ class CtdtChecker
     /**
      * Ngay nghi ngoai tru SAU ra vien cua giay ra vien (CT03) - dot 2026-10-13.
      *
-     * CAN CU LA CONG TU CHOI: cong BHXH bao loi mot giay ra vien co NGAY_RA 202610061059 va
-     * NGOAITRU_TUNGAY 20261006 ("nhap ngay nguoi benh can nghi de dieu tri ngoai tru SAU KHI
-     * RA VIEN"). Hai the CO gia tri, nen loi khong phai thieu ma la bat dau DUNG ngay ra.
+     * Khoi dau tu mot loi cong tra ve: cong BHXH bao loi mot giay ra vien co NGAY_RA
+     * 202610061059 va NGOAITRU_TUNGAY 20261006 ("nhap ngay nguoi benh can nghi de dieu tri
+     * ngoai tru SAU KHI RA VIEN").
+     *
+     * BAT DAU DUNG NGAY RA VIEN LA HOP LE - quyet dinh cua chu du an, du ca bi cong bao loi
+     * chinh la ca do. Chi chan khi bat dau TRUOC ngay ra. Dung "siet lai cho khop loi cong" o
+     * lan ra soat sau ma khong hoi lai.
      *
      * De trong CA HAI la hop le: 43318/43564 CT03 that de trong va cong da cap ma giao dich
      * cho chung. Do 2026-10-13 tren 246 CT03 co nhap: 31 bat dau dung ngay ra, khong cai nao
@@ -173,10 +177,10 @@ class CtdtChecker
             return;
         }
 
-        if (substr($tu, 0, 8) <= substr($ra, 0, 8)) {
+        if (substr($tu, 0, 8) < substr($ra, 0, 8)) {
             $loi[] = self::loi('CTDT010', 'NGOAITRU_TUNGAY',
-                'NGOAITRU_TUNGAY (' . $tu . ') phải sau ngày ra viện NGAY_RA (' . $ra
-                . ') — nghỉ ngoại trú tính từ sau khi ra viện');
+                'NGOAITRU_TUNGAY (' . $tu . ') sớm hơn ngày ra viện NGAY_RA (' . $ra
+                . ') — nghỉ ngoại trú tính từ ngày ra viện trở đi');
         }
     }
 
