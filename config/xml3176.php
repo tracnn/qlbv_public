@@ -146,4 +146,16 @@ return [
     //đặt XML3176_XUAT_TEP_LUONG=false trong .env → chạy `php artisan config:cache` → khởi động lại
     //dịch vụ QLBV JobXuatTepXml3176.
     'xuat_tep_luong' => env('XML3176_XUAT_TEP_LUONG', true),
+
+    /*
+     * Quy tac VTYT/thuoc thanh toan ngoai gia phai di kem DVKT me duoc BHYT tra.
+     * Bang tra hoc tu dong da lien ket ma_dich_vu; chi giu vat pham co ty le dong BHYT
+     * duoc gan >= nguong. Duoi nguong la vat tu/thuoc dung chung (bom kim, NaCl...) - do
+     * tren CSDL that, hoc tho khong loc bao nham 9.067 ho so VTYT va 16.265 ho so thuoc.
+     * Doi gia tri thi phai php artisan config:cache.
+     */
+    'vat_pham_kem_dvkt' => [
+        'nguong' => 0.8,
+        'toi_thieu' => 5, // so dong toi thieu, loai ca nhieu kieu 2/3
+    ],
 ];
