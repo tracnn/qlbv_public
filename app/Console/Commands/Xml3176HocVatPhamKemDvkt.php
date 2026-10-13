@@ -4,6 +4,8 @@ namespace App\Console\Commands;
 
 use App\Exports\VatPhamKemDvktExport;
 use App\Models\BHYT\Xml3176VatPhamKemDvkt;
+use App\Models\BHYT\Xml3176VpkdLanHoc;
+use App\Services\Xml3176\VatPhamKemDvktHocLaiService;
 use App\Services\Xml3176\VatPhamKemDvktLearner;
 use Illuminate\Console\Command;
 use Maatwebsite\Excel\Facades\Excel;
@@ -33,21 +35,28 @@ class Xml3176HocVatPhamKemDvkt extends Command
             return 1;
         }
 
-        $kq = $learner->hoc($nguong, $toiThieu, $this->option('tu-ngay') ?: null);
-        foreach ($kq['so_vat_pham'] as $loai => $soVp) {
-            $soCap = count(array_filter($kq['dong'], function ($d) use ($loai) { return $d['loai'] === $loai; }));
-            $this->info("{$loai}: {$soVp} vật phẩm, {$soCap} cặp");
-        }
-
         if ($this->option('thu')) {
+            $kq = $learner->hoc($nguong, $toiThieu, $this->option('tu-ngay') ?: null,
+                (float) config('xml3176.vat_pham_kem_dvkt.nguong_ung_vien', 0.5));
+            foreach ($kq['so_vat_pham'] as $loai => $soVp) {
+                $soCap = count(array_filter($kq['dong'], function ($d) use ($loai) { return $d['loai'] === $loai; }));
+                $this->info("{$loai}: {$soVp} vật phẩm, {$soCap} cặp");
+            }
+            $this->info('Ứng viên: ' . count($kq['ung_vien']));
             $this->warn('Chế độ thử: không ghi bảng.');
             if ($this->option('xuat')) {
                 $this->warn('Cảnh báo: tệp xuất ở chế độ thử có cột nguon rỗng; nạp lại tệp này sẽ biến toàn bộ dòng thành TAY.');
             }
             $dongXuat = $kq['dong'];
         } else {
-            $g = $learner->ghi($kq['dong']);
-            $this->info("Ghi: thêm {$g['them']}, cập nhật {$g['cap_nhat']}, tắt {$g['tat']}, bật lại {$g['bat_lai']}");
+            // Di qua service de lich su luot hoc va bang ung vien nhat quan voi man quan tri.
+            $lan = Xml3176VpkdLanHoc::create(['user_id' => null, 'trang_thai' => Xml3176VpkdLanHoc::CHO]);
+            $k = app(VatPhamKemDvktHocLaiService::class)->thucHien($lan, $nguong, $toiThieu, $this->option('tu-ngay') ?: null);
+            foreach ($k['so_vat_pham'] as $loai => $soVp) {
+                $this->info("{$loai}: {$soVp} vật phẩm, {$k['so_cap'][$loai]} cặp");
+            }
+            $this->info("Ghi: thêm {$k['them']}, cập nhật {$k['cap_nhat']}, tắt {$k['tat']}, bật lại {$k['bat_lai']}");
+            $this->info("Ứng viên: {$k['so_ung_vien']}");
             $dongXuat = Xml3176VatPhamKemDvkt::orderBy('loai')->orderBy('ma_vat_pham')->orderBy('ma_dvkt')->get()->all();
         }
 
