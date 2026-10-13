@@ -34,4 +34,13 @@ class QuanTriViewTest extends TestCase
         $this->assertContains('Cần ghi lý do khi tắt', $src);
         $this->assertContains('csrf_token()', $src);
     }
+
+    /** @test */
+    public function view_khong_nhung_du_lieu_vao_thuoc_tinh_bang_noi_chuoi()
+    {
+        $src = $this->nguon();
+        $this->assertContains('data-idx', $src);
+        $this->assertNotContains("value='' + ", $src);
+        $this->assertContains('.val(JSON.stringify(', $src);
+    }
 }

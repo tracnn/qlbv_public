@@ -67,7 +67,7 @@
         <div class="form-group"><label>Loại</label>
             <select id="them-loai" class="form-control"><option value="VTYT">VTYT</option><option value="THUOC">Thuốc</option></select></div>
         <div class="form-group"><label>Mã vật phẩm</label>
-            <select id="them-ma" class="form-control" style="width:100%"></select></div>
+            <select id="them-ma" class="form-control" style="width:100%"><option></option></select></div>
         <div id="them-khop" class="form-group"></div>
         <div class="form-group"><label>Tên vật phẩm</label>
             <input id="them-ten" class="form-control" placeholder="Đúng như tên trên XML"></div>
@@ -213,10 +213,11 @@
         ajax: { url: "{{ route('category-bhyt.vat-pham-kem-dvkt.tim-dvkt') }}", delay: 300,
                 data: function (p) { return { q: p.term }; } }
     });
-    $('#them-loai').on('change', function () { $('#them-ma').val(null).trigger('change'); $('#them-khop').empty(); kiemKhopHienTai = null; });
+    $('#them-loai').on('change', function () { $('#them-ten').val('').prop('readonly', false); $('#them-ma').val(null).trigger('change'); $('#them-khop').empty(); kiemKhopHienTai = null; });
 
     $('#them-ma').on('change', function () {
         var ma = $(this).val();
+        $('#them-ten').val('').prop('readonly', false);
         $('#them-khop').empty(); kiemKhopHienTai = null;
         if (!ma) { return; }
         $.get("{{ route('category-bhyt.vat-pham-kem-dvkt.kiem-khop') }}", { loai: $('#them-loai').val(), ma: ma })
@@ -231,7 +232,7 @@
                 }
                 var h = '<label>Tên trên XML 12 tháng</label><table class="table table-condensed"><tr><th></th><th>Tên</th><th>Số dòng</th><th>BHYT trả</th><th>Hồ sơ</th></tr>';
                 $.each(r.ds, function (i, d) {
-                    h += '<tr><td><input type="radio" name="them-ten-xml" value="' + $('<div>').text(d.ten).html() + '"' + (i === 0 ? ' checked' : '') + '></td><td>'
+                    h += '<tr><td><input type="radio" name="them-ten-xml" data-idx="' + i + '"' + (i === 0 ? ' checked' : '') + '></td><td>'
                         + $('<div>').text(d.ten).html() + '</td><td>' + d.so_dong + '</td><td>' + d.so_dong_bhyt + '</td><td>' + d.so_ho_so + '</td></tr>';
                 });
                 $('#them-khop').html(h + '</table>');
@@ -239,7 +240,9 @@
             })
             .fail(baoLoi);
     });
-    $('#them-khop').on('change', 'input[name="them-ten-xml"]', function () { $('#them-ten').val($(this).val()); });
+    $('#them-khop').on('change', 'input[name="them-ten-xml"]', function () {
+        if (kiemKhopHienTai && kiemKhopHienTai.ds[$(this).data('idx')]) { $('#them-ten').val(kiemKhopHienTai.ds[$(this).data('idx')].ten); }
+    });
 
     $('#them-luu').on('click', function () {
         if (kiemKhopHienTai && kiemKhopHienTai.ma_nhom_chung && !kiemKhopHienTai.ds.length) {
@@ -271,7 +274,7 @@
                         if (r.lan_hoc && r.lan_hoc.trang_thai === 'XONG') { toastr.success('Học lại xong.'); taiLai(); }
                         else if (r.lan_hoc) { toastr.error(r.lan_hoc.nhan); }
                     }
-                });
+                }).fail(function () { console.warn('Không lấy được trạng thái lượt học, sẽ thử lại.'); });
             }, 10000);
         }
     }
@@ -294,15 +297,16 @@
         paramName: 'file', uploadMultiple: false, maxFiles: 1, acceptedFiles: '.xlsx',
         dictDefaultMessage: 'Kéo thả tệp .xlsx vào đây hoặc bấm để chọn',
         success: function (file, r) {
-            var h = '<div class="alert alert-' + (r.ket_qua.loi.length ? 'warning' : 'success') + '">' + $('<div>').text(r.message).html() + '</div>';
+            var $kq = $('#nhap-ket-qua').empty();
+            $kq.append($('<div>').addClass('alert alert-' + (r.ket_qua.loi.length ? 'warning' : 'success')).text(r.message));
             if (r.ket_qua.loi.length) {
-                h += '<form method="POST" action="{{ route('category-bhyt.vat-pham-kem-dvkt.nhap-loi') }}">'
-                    + '<input type="hidden" name="_token" value="' + TOKEN + '">'
-                    + '<input type="hidden" name="ten_tep" value="' + $('<div>').text(file.name).html() + '">'
-                    + '<input type="hidden" name="dong_loi" value=\'' + $('<div>').text(JSON.stringify(r.ket_qua.loi)).html() + '\'>'
-                    + '<button class="btn btn-default btn-sm"><i class="fa fa-download"></i> Tải tệp lỗi (' + r.ket_qua.loi.length + ')</button></form>';
+                var $f = $('<form method="POST">').attr('action', "{{ route('category-bhyt.vat-pham-kem-dvkt.nhap-loi') }}");
+                $f.append($('<input type="hidden">').attr('name', '_token').val(TOKEN));
+                $f.append($('<input type="hidden">').attr('name', 'ten_tep').val(file.name));
+                $f.append($('<input type="hidden">').attr('name', 'dong_loi').val(JSON.stringify(r.ket_qua.loi)));
+                $f.append($('<button class="btn btn-default btn-sm"></button>').html('<i class="fa fa-download"></i> ').append(document.createTextNode('Tải tệp lỗi (' + r.ket_qua.loi.length + ')')));
+                $kq.append($f);
             }
-            $('#nhap-ket-qua').html(h);
             this.removeAllFiles();
             taiLai();
         },
