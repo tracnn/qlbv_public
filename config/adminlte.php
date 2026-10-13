@@ -772,6 +772,12 @@ return [
                             'route'   => 'category-bhyt.xml3176-error-catalog',
                             'active'=> ['category/bhyt/xml3176-error-catalog*'],
                         ],
+                        [
+                            'text'  => 'DM vật phẩm kèm DVKT mẹ',
+                            'icon'  => 'book',
+                            'route'   => 'category-bhyt.vat-pham-kem-dvkt.index',
+                            'active'=> ['category/bhyt/vat-pham-kem-dvkt*'],
+                        ],
                     ],
                 ],
                 [

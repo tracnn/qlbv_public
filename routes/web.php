@@ -447,6 +447,27 @@ Route::group(['middleware' => ['auth']], function () {
         Route::post('/category-bhyt/update-xml3176-error-catalog', 'Category\CategoryBHYTController@updateXml3176ErrorCatalog')
         ->name('category-bhyt.update-xml3176-error-catalog');
 
+        // Bang tra vat pham (VTYT/thuoc) kem DVKT me - XML3176
+        Route::group(['prefix' => 'bhyt/vat-pham-kem-dvkt', 'as' => 'category-bhyt.vat-pham-kem-dvkt.'], function () {
+            $c = 'Category\VatPhamKemDvktController@';
+            Route::get('/', $c . 'index')->name('index');
+            Route::get('datatable', $c . 'datatable')->name('datatable');
+            Route::get('ung-vien-datatable', $c . 'ungVienDatatable')->name('ung-vien-datatable');
+            Route::post('{id}/hieu-luc', $c . 'hieuLuc')->where('id', '[0-9]+')->name('hieu-luc');
+            Route::post('{id}/ghi-chu', $c . 'ghiChu')->where('id', '[0-9]+')->name('ghi-chu');
+            Route::post('{id}/xoa', $c . 'xoa')->where('id', '[0-9]+')->name('xoa');
+            Route::get('kiem-khop', $c . 'kiemKhop')->name('kiem-khop');
+            Route::get('tim-vat-pham', $c . 'timVatPham')->name('tim-vat-pham');
+            Route::get('tim-dvkt', $c . 'timDvkt')->name('tim-dvkt');
+            Route::post('them', $c . 'them')->name('them');
+            Route::post('ung-vien/{id}/them', $c . 'ungVienThem')->where('id', '[0-9]+')->name('ung-vien-them');
+            Route::post('hoc-lai', $c . 'hocLai')->name('hoc-lai');
+            Route::get('hoc-lai/trang-thai', $c . 'trangThai')->name('trang-thai');
+            Route::get('xuat', $c . 'xuat')->name('xuat');
+            Route::post('nhap', $c . 'nhap')->name('nhap');
+            Route::post('nhap-loi', $c . 'nhapLoi')->name('nhap-loi');
+        });
+
         Route::get('bhyt/category-bhyt-import-index', 'Category\CategoryBHYTController@importIndex')
         ->name('category-bhyt.import-index');
         Route::get('bhyt/category-bhyt-import-template', 'Category\CategoryBHYTController@downloadTemplate')

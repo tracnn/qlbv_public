@@ -84,4 +84,17 @@ class MenuDanhMucBhytTest extends TestCase
             $this->assertSame($route, $khoi[$i]['route'], "Muc \"$ten\" tro sai route");
         }
     }
+
+    /** @test */
+    public function muc_vat_pham_kem_dvkt_dat_ngay_sau_dm_loi_xml_3176()
+    {
+        $khoi = $this->khoiBhyt();
+
+        $loi = $this->viTri($khoi, 'DM lỗi Xml 3176');
+        $vp = $this->viTri($khoi, 'DM vật phẩm kèm DVKT mẹ');
+
+        $this->assertNotSame(-1, $vp, 'Thieu muc DM vat pham kem DVKT me');
+        $this->assertSame($loi + 1, $vp);
+        $this->assertSame('category-bhyt.vat-pham-kem-dvkt.index', array_values($khoi)[$vp]['route']);
+    }
 }
