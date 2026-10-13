@@ -4,7 +4,7 @@ namespace App\Services\Xml3176;
 
 use App\Models\BHYT\Xml3176VatPhamKemDvkt;
 use App\Services\Xml3176\Support\VatPhamKemDvktKey;
-use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * Nap bang tra vat pham -> DVKT me mot lan moi tien trinh, lam moi sau TTL_GIAY de tien
@@ -20,13 +20,13 @@ class VatPhamKemDvktLookup
     public static function bang(): array
     {
         if (self::$bang === null || time() - self::$napLuc > self::TTL_GIAY) {
-            try {
-                $dong = Xml3176VatPhamKemDvkt::where('hieu_luc', true)
-                    ->get(['loai', 'ma_vat_pham', 'ten_khop', 'ma_dvkt', 'ten_dvkt']);
-            } catch (QueryException $e) {
-                // Bang chua migrate (trien khai chua xong): R1 im lang, R2 van chay.
-                $dong = [];
-            }
+            // Chi bang chua migrate (trien khai chua xong) moi coi la rong: R1 im lang, R2 van chay.
+            // Moi loi CSDL khac (deadlock, mat ket noi...) phai lan ra de job loi va duoc thu lai,
+            // khong duoc nuot roi cache bang rong lam tat quy tac am tham.
+            $dong = Schema::hasTable('xml3176_vat_pham_kem_dvkt')
+                ? Xml3176VatPhamKemDvkt::where('hieu_luc', true)
+                    ->get(['loai', 'ma_vat_pham', 'ten_khop', 'ma_dvkt', 'ten_dvkt'])
+                : [];
             self::$bang = self::tuDong($dong);
             self::$napLuc = time();
         }

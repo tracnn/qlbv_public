@@ -5,6 +5,7 @@ namespace Tests\Unit\Xml3176\VatPhamKemDvkt;
 use App\Models\BHYT\Xml3176VatPhamKemDvkt;
 use App\Services\Xml3176\VatPhamKemDvktLookup;
 use App\Services\Xml3176CompleteChecker;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Tests\Support\FakeXml3176ErrorService;
 use Tests\Support\Xml3176RuleTestSupport;
@@ -86,6 +87,22 @@ class VatPhamKemDvktCheckerTest extends TestCase
         $this->xml3('X', 1, ['ma_dich_vu' => '', 'ma_vat_tu' => 'N08.00.150', 'ten_vat_tu' => 'Buồng tiêm truyền cấy dưới da', 't_bhtt' => 4188000, 'so_luong' => 1, 'ngay_yl' => '202610050900']);
 
         $this->assertSame([], $this->codes('X'));
+    }
+
+    /** @test */
+    public function loi_csdl_khac_khong_bi_nuot()
+    {
+        // SQLite coi cot khong ton tai trong dau nhay kep la chuoi nen khong tu loi; gia lap loi CSDL
+        // (deadlock/mat ket noi) tren dung truy van nap bang tra.
+        DB::listen(function ($q) {
+            if (strpos($q->sql, 'xml3176_vat_pham_kem_dvkt') !== false && strpos($q->sql, 'hieu_luc') !== false) {
+                throw new QueryException($q->sql, $q->bindings, new \Exception('database is locked'));
+            }
+        });
+        VatPhamKemDvktLookup::xoaBoNho();
+
+        $this->expectException(QueryException::class);
+        VatPhamKemDvktLookup::bang();
     }
 
     /** @test */
