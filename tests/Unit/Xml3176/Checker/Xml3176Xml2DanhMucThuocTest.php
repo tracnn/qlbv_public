@@ -131,4 +131,25 @@ class Xml3176Xml2DanhMucThuocTest extends TestCase
     {
         $this->assertContains('XML2_INVALID_DRUG_CODE', $this->maLoi(['ma_thuoc' => '40.999']));
     }
+
+    /** @test */
+    public function khoa_bo_qua_kiem_giuong_van_bi_doi_chieu_danh_muc_thuoc()
+    {
+        // organization.exclude_department (['K02']) danh cho kiem chi dinh giuong. Tung bi
+        // dung chung cho checkDrugCatalog nen moi dong thuoc K02 bo qua doi chieu danh muc
+        // - 96 dong Medivernol/Ceftriaxone K02 bi cong giam tru T10/2026 ma khong canh bao.
+        config(['organization.exclude_department' => ['K02']]);
+
+        $this->assertContains('XML2_INVALID_DRUG_CONCENTRATION',
+            $this->maLoi(['ma_khoa' => 'K02', 'ham_luong' => '1g']));
+    }
+
+    /** @test */
+    public function khoa_khai_trong_danh_sach_bo_qua_kiem_thuoc_thi_khong_doi_chieu()
+    {
+        config(['xml3176.drug_exclude_department' => ['K99']]);
+
+        $this->assertNotContains('XML2_INVALID_DRUG_CONCENTRATION',
+            $this->maLoi(['ma_khoa' => 'K99', 'ham_luong' => '1g']));
+    }
 }

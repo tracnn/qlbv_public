@@ -43,7 +43,9 @@ class Xml3176Xml2Checker
 
         $this->drugGroups = config('xml3176.drug_group_code'); // Mã nhóm thuốc cần kiểm tra
         $this->bloodGroup = config('xml3176.blood_group_code'); // Mã nhóm máu
-        $this->excludedDepartments = config('organization.exclude_department'); //Mã khoa không cần kiểm tra
+        // Khoa bo qua doi chieu danh muc thuoc - KHOA RIENG, khong dung chung organization.exclude_department
+        // (danh cho kiem chi dinh giuong): dung chung tung lam moi dong thuoc K02 lot kiem tra.
+        $this->excludedDepartments = (array) config('xml3176.drug_exclude_department', []);
         $this->drugGroupNotCheck = config('xml3176.drug_group_not_check');
         $this->drugCodeNotCheck = config('xml3176.drug_code_not_check'); // Các mã thuốc cụ thể không cần kiểm tra
     }

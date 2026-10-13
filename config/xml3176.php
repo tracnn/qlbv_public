@@ -13,6 +13,7 @@ return [
     'blood_group_code' => [7], //Mã nhóm là máu
     'drug_group_not_check' => ['05V', '05C', 'HD'], //Nhóm thuốc (Thành phần đầu của mã thuốc) không cần kiểm tra
     'drug_code_not_check' => ['40.17', '40.573'], //Mã thuốc không cần kiểm tra (Oxy/NO)
+    'drug_exclude_department' => [], //Mã khoa không đối chiếu danh mục thuốc. Tách riêng khỏi organization.exclude_department (khoa bỏ qua kiểm giường)
     'material_group_code' => [10, 11], //Nhóm VTYT
     'examination_group_code' => [13], //Nhóm dịch vụ khám
     'transport_group_code' => [12], //Nhóm dịch vụ vận chuyển
