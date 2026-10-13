@@ -312,6 +312,15 @@ class Xml3176Xml2Checker
                         ->first(); //* Không được thay bằng exists() *\\
 
                     if (!$medicine) {
+                        // Dong danh muc duoc xac dinh boi ma + SDK + thau; ham luong chi so SAU khi
+                        // da tim dung dong. Khop ham luong voi BAT KY dong cung ma (cach cu) lam
+                        // ham luong sai bi bao nham thanh "sai thau" - cong lai giam tru "Thuoc sai
+                        // ham luong" (T10/2026: 5.846 dong, Medivernol 40.183).
+                        $hamLuongDuyet = MedicineCatalog::cuaCoSo($maCskcb)->where('ma_thuoc', $data->ma_thuoc)
+                            ->where('so_dang_ky', $data->so_dang_ky)
+                            ->where('tt_thau', 'LIKE', $ttThau . '%')
+                            ->pluck('ham_luong')->unique()->values();
+
                         if (!MedicineCatalog::cuaCoSo($maCskcb)->where('ma_thuoc', $data->ma_thuoc)->exists()) {
                             $errorCode = $this->generateErrorCode('INVALID_DRUG_CODE');
                             $errors->push((object)[
@@ -319,6 +328,15 @@ class Xml3176Xml2Checker
                                 'error_name' => 'Mã thuốc chưa có trong danh mục BHYT',
                                 'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
                                 'description' => 'Mã thuốc không có trong danh mục BHYT: ' . formatDescription($data->ma_thuoc)
+                            ]);
+                        } elseif ($hamLuongDuyet->isNotEmpty()) {
+                            $errorCode = $this->generateErrorCode('INVALID_DRUG_CONCENTRATION');
+                            $errors->push((object)[
+                                'error_code' => $errorCode,
+                                'error_name' => 'Mã thuốc sai hàm lượng trong danh mục BHYT',
+                                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+                                'description' => 'Mã thuốc: ' . $data->ma_thuoc . '; Sai hàm lượng: ' . formatDescription($data->ham_luong)
+                                    . '; Hàm lượng được duyệt (cùng SĐK, thầu): ' . $hamLuongDuyet->implode(' | ')
                             ]);
                         } elseif (!MedicineCatalog::cuaCoSo($maCskcb)->where('ma_thuoc', $data->ma_thuoc)->where('ham_luong', $data->ham_luong)->exists()) {
                             $errorCode = $this->generateErrorCode('INVALID_DRUG_CONCENTRATION');

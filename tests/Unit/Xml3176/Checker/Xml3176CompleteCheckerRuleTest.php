@@ -209,4 +209,70 @@ class Xml3176CompleteCheckerRuleTest extends TestCase
 
         $this->assertContains('XMLComplete_MUC_HUONG_TRAI_TUYEN_TW', $codes);
     }
+
+    /** Ho so 3.1 noi tru tai co so co tuyen_cmkt cho truoc, khai muc_huong cho truoc. */
+    private function hoSoTraiTuyenNoiTru(string $maLk, string $tuyenCmkt, $mucHuong, string $maThe = 'DN4010112345678'): Xml3176Xml1
+    {
+        config(['xml3176.xml1.ma_doituong_kcb_trai_tuyen' => ['3.1']]);
+        if (!MedicalOrganization::where('ma_cskcb', '01929')->exists()) {
+            MedicalOrganization::create([
+                'ma_cskcb' => '01929', 'ten_cskcb' => 'BV test', 'dia_chi_cskcb' => 'dia chi test',
+                'tuyen_cmkt' => $tuyenCmkt,
+            ]);
+        }
+        $x1 = Xml3176Xml1::create([
+            'ma_lk' => $maLk, 'stt' => 1,
+            'ma_doituong_kcb' => '3.1', 'ma_loai_kcb' => '03',
+            'ma_the_bhyt' => $maThe, 'ma_cskcb' => '01929',
+            'ngay_vao' => '202609010800', 't_tongchi_bh' => 5000000,
+        ]);
+        Xml3176Xml3::create(['ma_lk' => $maLk, 'stt' => 1, 'ma_dich_vu' => 'DV1', 'muc_huong' => $mucHuong]);
+
+        return $x1;
+    }
+
+    /** @test */
+    public function tuyen_tw_luu_bang_chu_van_duoc_nhan_la_tuyen_tw()
+    {
+        // Danh muc CSKCB nhap tu tep BHXH luu tuyen_cmkt bang chu: CSDL that co 47 dong
+        // "Tuyến trung ương", khong dong nao la '1'. Config chi khai ['1'] nen quy tac
+        // trai tuyen TW chua bao gio chay tren du lieu that.
+        $x1 = $this->hoSoTraiTuyenNoiTru('TW_CHU', 'Tuyến trung ương', 100);
+
+        $codes = $this->errorCodes($this->invokePrivate($this->checker(), 'checkMucHuong', $x1));
+
+        $this->assertContains('XMLComplete_MUC_HUONG_TRAI_TUYEN_TW', $codes);
+    }
+
+    /** @test */
+    public function tran_trai_tuyen_tw_bang_40_phan_tram_quyen_loi_the()
+    {
+        // The quyen loi 4 (80%): tran = 40% x 80% = 32%. Khai 40 la vuot tran - cong giam
+        // tru "Vao vien trai tuyen, BV de nghi sai muc huong".
+        $x1 = $this->hoSoTraiTuyenNoiTru('TW40', 'Tuyến trung ương', 40);
+
+        $codes = $this->errorCodes($this->invokePrivate($this->checker(), 'checkMucHuong', $x1));
+
+        $this->assertContains('XMLComplete_MUC_HUONG_TRAI_TUYEN_TW', $codes);
+    }
+
+    /** @test */
+    public function khai_dung_40_phan_tram_quyen_loi_the_thi_khong_bao()
+    {
+        $x1 = $this->hoSoTraiTuyenNoiTru('TW32', 'Tuyến trung ương', 32);
+
+        $codes = $this->errorCodes($this->invokePrivate($this->checker(), 'checkMucHuong', $x1));
+
+        $this->assertNotContains('XMLComplete_MUC_HUONG_TRAI_TUYEN_TW', $codes);
+    }
+
+    /** @test */
+    public function co_so_tuyen_tinh_khong_bi_soi_tran_trai_tuyen_tw()
+    {
+        $x1 = $this->hoSoTraiTuyenNoiTru('TINH', 'Tuyến tỉnh', 100);
+
+        $codes = $this->errorCodes($this->invokePrivate($this->checker(), 'checkMucHuong', $x1));
+
+        $this->assertNotContains('XMLComplete_MUC_HUONG_TRAI_TUYEN_TW', $codes);
+    }
 }

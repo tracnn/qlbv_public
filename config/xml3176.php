@@ -124,8 +124,10 @@ return [
         // Ký tự quyền lợi (vị trí 3 mã thẻ) -> % mức hưởng. Chỉnh được không cần sửa code.
         'quyen_loi_map'              => ['1' => 100, '2' => 100, '3' => 95, '4' => 80, '5' => 100],
         'nguong_luong_co_so_rate'    => 0.15, // Ngưỡng 15% lương cơ sở (miễn cùng chi trả)
-        'trai_tuyen_noi_tru_tw_rate' => 40,   // % mức hưởng trái tuyến nội trú tuyến TW
-        'tuyen_tw_values'            => ['1'], // Giá trị medical_organizations.tuyen_cmkt coi là tuyến TW
+        'trai_tuyen_noi_tru_tw_rate' => 40,   // % của mức hưởng theo thẻ khi trái tuyến nội trú tuyến TW (thẻ 80% -> 32%)
+        // Giá trị medical_organizations.tuyen_cmkt coi là tuyến TW (so không phân biệt hoa thường).
+        // Danh mục CSKCB nhập từ tệp BHXH lưu bằng chữ "Tuyến trung ương".
+        'tuyen_tw_values'            => ['1', 'Tuyến trung ương'],
     ],
     'bed_days_tt39' => [
         'tolerance' => 0.5, // Dung sai (ngày) bỏ qua nhiễu làm tròn ½ ngày; chỉ cảnh báo khi thiếu rõ rệt

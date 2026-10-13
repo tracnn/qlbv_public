@@ -19,6 +19,7 @@ use App\Services\Xml3176\Support\DoiTuongKcbCatalog;
 use App\Services\Xml3176\Support\Xml3176DateHelper;
 use App\Models\BHYT\MedicalOrganization;
 use App\Services\Xml3176\Support\MucHuongCalculator;
+use App\Services\Xml3176\Support\TextNormalizer;
 use App\Services\Xml3176\Support\BedDaysTT39Calculator;
 use App\Services\Xml3176\Support\ExaminationFeeCalculator;
 use App\Services\Mcct\NguongMienCungChiTra;
@@ -418,7 +419,7 @@ class Xml3176CompleteChecker
     /**
      * Kiểm tra mức hưởng khai (muc_huong) có vượt trần cho phép không.
      *  - Đúng tuyến, chi phí >= 15% lương cơ sở -> trần = quyền lợi thẻ.
-     *  - Trái tuyến nội trú tuyến TW -> trần = 40%.
+     *  - Trái tuyến nội trú tuyến TW -> trần = 40% x quyền lợi thẻ.
      * Guard "thiếu căn cứ thì im lặng" (xem spec §7). Phát tối đa 1 lỗi/hồ sơ.
      *
      * @param Xml3176Xml1 $data
@@ -461,11 +462,15 @@ class Xml3176CompleteChecker
             if (!$noiTru) {
                 return $errors; // ngoài phạm vi: trái tuyến ngoại trú
             }
-            $tuyen = MedicalOrganization::where('ma_cskcb', $data->ma_cskcb)->value('tuyen_cmkt');
-            if (!in_array($tuyen, (array) $cfg['tuyen_tw_values'], true)) {
+            // Danh muc CSKCB nhap tu tep BHXH luu tuyen bang chu ("Tuyến trung ương") - so
+            // dang chuan hoa (hoa thuong, khoang trang) voi danh sach gia tri trong config.
+            $tuyen = TextNormalizer::chuan(MedicalOrganization::where('ma_cskcb', $data->ma_cskcb)->value('tuyen_cmkt'));
+            $tuyenTw = array_map([TextNormalizer::class, 'chuan'], (array) $cfg['tuyen_tw_values']);
+            if ($tuyen === '' || !in_array($tuyen, $tuyenTw, true)) {
                 return $errors; // GUARD: không xác định được tuyến TW
             }
-            $tran = (int) $cfg['trai_tuyen_noi_tru_tw_rate'];
+            // Trai tuyen noi tru TW: quy thanh toan 40% CUA muc huong theo the (the 80% -> 32%).
+            $tran = round((float) $cfg['trai_tuyen_noi_tru_tw_rate'] * $entitlement / 100, 2);
             $errorKey = 'MUC_HUONG_TRAI_TUYEN_TW';
             $loaiMo = 'trái tuyến nội trú tuyến TW';
         } else {

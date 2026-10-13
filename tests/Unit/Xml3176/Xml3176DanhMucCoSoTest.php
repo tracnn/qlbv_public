@@ -47,7 +47,7 @@ class Xml3176DanhMucCoSoTest extends TestCase
         // Dem CUNG so lan: them mot cho tra danh muc moi ma quen loc co so thi test do,
         // thay vi lot im lang.
         $canCo = [
-            'Xml3176Xml2Checker' => 4,
+            'Xml3176Xml2Checker' => 5,
             'Xml3176Xml3Checker' => 3,
             'Xml3176Xml4Checker' => 1,
         ];
