@@ -23,6 +23,8 @@ use App\Services\Xml3176\Support\TextNormalizer;
 use App\Services\Xml3176\Support\BedDaysTT39Calculator;
 use App\Services\Xml3176\Support\ExaminationFeeCalculator;
 use App\Services\Mcct\NguongMienCungChiTra;
+use App\Services\Xml3176\VatPhamKemDvktLookup;
+use App\Services\Xml3176\VatPhamKemDvktRule;
 use Illuminate\Support\Collection;
 
 use DateTime;
@@ -90,6 +92,7 @@ class Xml3176CompleteChecker
             $errors = $errors->merge($this->checkSecondSurgeryFullPayment($ma_lk));
             $errors = $errors->merge($this->checkMucHuong($data));
             $errors = $errors->merge($this->checkBedDaysBelowTT39($data));
+            $errors = $errors->merge($this->checkVatPhamKemDvkt($ma_lk));
 
             // Save errors to xml_error_checks table
             $this->xmlErrorService->saveErrors($this->xmlType, $data->ma_lk, $data->stt, $errors);
@@ -1017,6 +1020,34 @@ class Xml3176CompleteChecker
                 }
             }
         }
+        return $errors;
+    }
+
+    /**
+     * VTYT/thuoc thanh toan ngoai gia DVKT phai di kem DVKT me duoc quy BHYT tra.
+     *
+     * Chuyen de chu dong BHXH 10/2026: ho so co VTYT "chua bao gom trong gia DVKT" de nghi
+     * quy tra trong khi DVKT me quen ke hoac BN tu tra. Logic o VatPhamKemDvktRule; bang tra
+     * hoc boi lenh xml3176:hoc-vat-pham-kem-dvkt.
+     */
+    private function checkVatPhamKemDvkt($ma_lk): Collection
+    {
+        $xml3 = Xml3176Xml3::where('ma_lk', $ma_lk)
+            ->get(['ma_dich_vu', 'ma_vat_tu', 'ten_vat_tu', 'ten_dich_vu', 'goi_vtyt', 'so_luong', 't_bhtt', 'ngay_yl']);
+        $xml2 = Xml3176Xml2::where('ma_lk', $ma_lk)
+            ->get(['ma_thuoc', 'ten_thuoc', 'ma_dich_vu', 't_bhtt', 'ngay_yl']);
+
+        $errors = collect();
+        foreach ((new VatPhamKemDvktRule(VatPhamKemDvktLookup::bang()))->kiem($xml3, $xml2) as $loi) {
+            $code = $this->generateErrorCode($loi['key']);
+            $errors->push((object) [
+                'error_code' => $code,
+                'error_name' => $loi['ten'],
+                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($code),
+                'description' => $loi['mo_ta'],
+            ]);
+        }
+
         return $errors;
     }
 
