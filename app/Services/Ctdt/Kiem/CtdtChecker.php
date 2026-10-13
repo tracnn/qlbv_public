@@ -29,6 +29,7 @@ class CtdtChecker
         self::kiemKieuTruong($duLieu, $loi);
         self::kiemCapNgay($duLieu, $loi);
         self::kiemMacskcb($duLieu, $macskcbHoSo, $loi);
+        self::kiemNghiNgoaiTru($duLieu, $loi);
 
         return $loi;
     }
@@ -131,6 +132,51 @@ class CtdtChecker
             $loi[] = self::loi('CTDT007', 'MACSKCB',
                 'MACSKCB trong chứng từ (' . $trongChungTu . ') khác mã cơ sở của hồ sơ ('
                 . $cuaHoSo . ')');
+        }
+    }
+
+    /**
+     * Ngay nghi ngoai tru SAU ra vien cua giay ra vien (CT03) - dot 2026-10-13.
+     *
+     * CAN CU LA CONG TU CHOI: cong BHXH bao loi mot giay ra vien co NGAY_RA 202610061059 va
+     * NGOAITRU_TUNGAY 20261006 ("nhap ngay nguoi benh can nghi de dieu tri ngoai tru SAU KHI
+     * RA VIEN"). Hai the CO gia tri, nen loi khong phai thieu ma la bat dau DUNG ngay ra.
+     *
+     * De trong CA HAI la hop le: 43318/43564 CT03 that de trong va cong da cap ma giao dich
+     * cho chung. Do 2026-10-13 tren 246 CT03 co nhap: 31 bat dau dung ngay ra, khong cai nao
+     * som hon, khong cai nao chi co mot ve.
+     *
+     * Cap "den ngay truoc tu ngay" da do CTDT006 lo (CtdtQuyTac::CAP_NGAY). Ve sai dinh dang
+     * da co CTDT002 thi khong so tiep - mot nguyen nhan, mot loi.
+     */
+    private static function kiemNghiNgoaiTru(array $duLieu, array &$loi)
+    {
+        $coTu  = !self::trong($duLieu, 'NGOAITRU_TUNGAY');
+        $coDen = !self::trong($duLieu, 'NGOAITRU_DENNGAY');
+
+        if ($coTu !== $coDen) {
+            $thieu = $coTu ? 'NGOAITRU_DENNGAY' : 'NGOAITRU_TUNGAY';
+            $loi[] = self::loi('CTDT010', $thieu,
+                'Có ' . ($coTu ? 'NGOAITRU_TUNGAY' : 'NGOAITRU_DENNGAY') . ' nhưng thiếu ' . $thieu
+                . ' — ngày nghỉ ngoại trú phải nhập đủ cả hai');
+            return;
+        }
+
+        if (!$coTu || self::trong($duLieu, 'NGAY_RA')) {
+            return;
+        }
+
+        $tu = trim((string) $duLieu['NGOAITRU_TUNGAY']);
+        $ra = trim((string) $duLieu['NGAY_RA']);
+
+        if (!self::ngayHopLe($tu) || !self::ngayHopLe($ra)) {
+            return;
+        }
+
+        if (substr($tu, 0, 8) <= substr($ra, 0, 8)) {
+            $loi[] = self::loi('CTDT010', 'NGOAITRU_TUNGAY',
+                'NGOAITRU_TUNGAY (' . $tu . ') phải sau ngày ra viện NGAY_RA (' . $ra
+                . ') — nghỉ ngoại trú tính từ sau khi ra viện');
         }
     }
 

@@ -138,6 +138,9 @@ class CtdtQuyTac
         'NGAY_VAO'   => 'NGAY_RA',
         'TU_NGAY'    => 'DEN_NGAY',
         'NGAYGIO_VV' => 'NGAY_TV',
+        // Nghi ngoai tru sau ra vien (CT03). Rang buoc voi NGAY_RA nam o
+        // CtdtChecker::kiemNghiNgoaiTru().
+        'NGOAITRU_TUNGAY' => 'NGOAITRU_DENNGAY',
     ];
 
     /** @return string|null 'ngay' | 'gioi_tinh' | 'loai_giayto' | 'co_khong' | 'ma_the' | null */

@@ -109,14 +109,14 @@ class CtdtQuyTacTest extends TestCase
     }
 
     /** @test */
-    public function danh_muc_ma_loi_du_chin_ma_va_deu_co_muc_do_hop_le()
+    public function danh_muc_ma_loi_du_muoi_ma_va_deu_co_muc_do_hop_le()
     {
         $danhMuc = config('ctdt.ma_loi');
 
-        $this->assertCount(9, $danhMuc);
+        $this->assertCount(10, $danhMuc);
 
         foreach (['CTDT001', 'CTDT002', 'CTDT003', 'CTDT004',
-                  'CTDT005', 'CTDT006', 'CTDT007', 'CTDT008', 'CTDT009'] as $ma) {
+                  'CTDT005', 'CTDT006', 'CTDT007', 'CTDT008', 'CTDT009', 'CTDT010'] as $ma) {
             $this->assertArrayHasKey($ma, $danhMuc, 'Thieu ma loi ' . $ma);
             $this->assertNotEmpty($danhMuc[$ma]['mo_ta'], $ma . ' thieu mo ta');
             $this->assertContains($danhMuc[$ma]['muc_do'], ['chan', 'canh_bao'], $ma . ' sai muc do');
@@ -129,8 +129,10 @@ class CtdtQuyTacTest extends TestCase
         $danhMuc = config('ctdt.ma_loi');
 
         // Chan: thieu truong bat buoc, ngay sai, gioi tinh sai, loai giay to sai, ngay
-        // nguoc, ma co so lech, ma the sai do dai. Canh bao: co 0/1 sai, thieu ma the.
-        foreach (['CTDT001', 'CTDT002', 'CTDT003', 'CTDT004', 'CTDT006', 'CTDT007', 'CTDT009'] as $ma) {
+        // nguoc, ma co so lech, ma the sai do dai, ngay nghi ngoai tru sai. Canh bao: co 0/1
+        // sai, thieu ma the.
+        foreach (['CTDT001', 'CTDT002', 'CTDT003', 'CTDT004', 'CTDT006', 'CTDT007', 'CTDT009',
+                  'CTDT010'] as $ma) {
             $this->assertSame('chan', $danhMuc[$ma]['muc_do'], $ma . ' phai la muc chan');
         }
 

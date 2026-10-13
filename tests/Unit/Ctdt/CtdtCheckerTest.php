@@ -543,4 +543,82 @@ class CtdtCheckerTest extends TestCase
             $this->assertSame($the, $loi[0]['ten_truong']);
         }
     }
+
+    /**
+     * Ngay nghi ngoai tru sau ra vien (dot 2026-10-13). Cong BHXH bao loi giay ra vien co
+     * NGAY_RA 202610061059 va NGOAITRU_TUNGAY 20261006: nghi "sau khi ra vien" ma bat dau
+     * dung ngay ra vien.
+     */
+    private function ct03NghiNgoaiTru($tuNgay, $denNgay)
+    {
+        return $this->ct03HopLe([
+            'NGAY_VAO' => '202610050342', 'NGAY_RA' => '202610061059',
+            'NGOAITRU_TUNGAY' => $tuNgay, 'NGOAITRU_DENNGAY' => $denNgay,
+        ]);
+    }
+
+    /** @test */
+    public function nghi_ngoai_tru_bat_dau_DUNG_ngay_ra_vien_sinh_CTDT010_muc_chan()
+    {
+        $loi = CtdtChecker::kiem('CT03', $this->ct03NghiNgoaiTru('20261006', '20261011'), '01929');
+
+        $this->assertSame(['CTDT010'], $this->maLoi($loi));
+        $this->assertSame('NGOAITRU_TUNGAY', $loi[0]['ten_truong']);
+        $this->assertSame('chan', $loi[0]['muc_do']);
+    }
+
+    /** @test */
+    public function nghi_ngoai_tru_bat_dau_TRUOC_ngay_ra_vien_sinh_CTDT010()
+    {
+        $loi = CtdtChecker::kiem('CT03', $this->ct03NghiNgoaiTru('20261005', '20261011'), '01929');
+
+        $this->assertSame(['CTDT010'], $this->maLoi($loi));
+    }
+
+    /** @test */
+    public function nghi_ngoai_tru_bat_dau_SAU_ngay_ra_vien_la_hop_le()
+    {
+        $loi = CtdtChecker::kiem('CT03', $this->ct03NghiNgoaiTru('20261007', '20261011'), '01929');
+
+        $this->assertSame([], $loi);
+    }
+
+    /** @test */
+    public function khong_nhap_ngay_nghi_ngoai_tru_la_hop_le()
+    {
+        // 43318/43564 CT03 that de trong ca hai, va cong da cap ma giao dich cho chung.
+        $loi = CtdtChecker::kiem('CT03', $this->ct03NghiNgoaiTru('', ''), '01929');
+
+        $this->assertSame([], $loi);
+    }
+
+    /** @test */
+    public function nghi_ngoai_tru_chi_nhap_mot_ve_sinh_CTDT010()
+    {
+        $chiTu = CtdtChecker::kiem('CT03', $this->ct03NghiNgoaiTru('20261007', ''), '01929');
+        $this->assertSame(['CTDT010'], $this->maLoi($chiTu));
+        $this->assertSame('NGOAITRU_DENNGAY', $chiTu[0]['ten_truong']);
+
+        $chiDen = CtdtChecker::kiem('CT03', $this->ct03NghiNgoaiTru('', '20261011'), '01929');
+        $this->assertSame(['CTDT010'], $this->maLoi($chiDen));
+        $this->assertSame('NGOAITRU_TUNGAY', $chiDen[0]['ten_truong']);
+    }
+
+    /** @test */
+    public function nghi_ngoai_tru_den_ngay_truoc_tu_ngay_sinh_CTDT006()
+    {
+        $loi = CtdtChecker::kiem('CT03', $this->ct03NghiNgoaiTru('20261010', '20261008'), '01929');
+
+        $this->assertSame(['CTDT006'], $this->maLoi($loi));
+        $this->assertSame('NGOAITRU_DENNGAY', $loi[0]['ten_truong']);
+    }
+
+    /** @test */
+    public function nghi_ngoai_tru_sai_dinh_dang_chi_bao_CTDT002()
+    {
+        // Mot nguyen nhan, mot loi - giong cach CTDT006 nhuong cho CTDT002.
+        $loi = CtdtChecker::kiem('CT03', $this->ct03NghiNgoaiTru('2026-10-06', '20261011'), '01929');
+
+        $this->assertSame(['CTDT002'], $this->maLoi($loi));
+    }
 }
