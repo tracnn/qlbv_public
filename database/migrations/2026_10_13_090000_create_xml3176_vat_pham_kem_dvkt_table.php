@@ -16,10 +16,11 @@ class CreateXml3176VatPhamKemDvktTable extends Migration
         Schema::create('xml3176_vat_pham_kem_dvkt', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->string('loai', 10);
-            $table->string('ma_vat_pham', 100);
+            // utf8_bin: khoa duy nhat phai phan biet hoa/thuong va dau nhu so sanh byte cua PHP (utf8_general_ci se gop)
+            $table->string('ma_vat_pham', 100)->collation('utf8_bin');
             $table->string('ten_vat_pham', 1024)->nullable();
-            $table->string('ten_khop', 191)->default('');
-            $table->string('ma_dvkt', 50);
+            $table->string('ten_khop', 191)->default('')->collation('utf8_bin');
+            $table->string('ma_dvkt', 50)->collation('utf8_bin');
             $table->string('ten_dvkt', 1024)->nullable();
             $table->string('nguon', 10);
             $table->integer('so_lan_gan')->default(0);

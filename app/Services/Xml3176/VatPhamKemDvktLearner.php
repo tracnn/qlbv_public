@@ -94,7 +94,7 @@ class VatPhamKemDvktLearner
 
                 $m->fill([
                     'ten_vat_pham' => $d['ten_vat_pham'],
-                    'ten_dvkt' => $d['ten_dvkt'],
+                    'ten_dvkt' => $d['ten_dvkt'] ?? $m->ten_dvkt, // khong ghi de ten cu bang null
                     'so_lan_gan' => $d['so_lan_gan'],
                     'ty_le_gan' => $d['ty_le_gan'],
                 ]);
@@ -228,6 +228,11 @@ class VatPhamKemDvktLearner
             }
 
             $loai = strtoupper(trim((string) ($h['loai'] ?? '')));
+            // Excel o dang so (vd 40.54 thay vi '40.540') da mat so 0 cuoi, khong the doan lai ma
+            if ((isset($h['ma_vat_pham']) && !is_string($h['ma_vat_pham'])) || (isset($h['ma_dvkt']) && !is_string($h['ma_dvkt']))) {
+                $kq['loi'][] = ['dong' => $dongExcel, 'ly_do' => 'Mã vật phẩm/mã DVKT phải ở định dạng Text trong Excel'];
+                continue;
+            }
             $ma = trim((string) ($h['ma_vat_pham'] ?? ''));
             $maDv = VatPhamKemDvktKey::chuanHoaMaDvkt($h['ma_dvkt'] ?? '');
 
@@ -241,6 +246,10 @@ class VatPhamKemDvktLearner
             }
 
             $ten = trim((string) ($h['ten_vat_pham'] ?? ''));
+            if ($loai === Xml3176VatPhamKemDvkt::LOAI_VTYT && VatPhamKemDvktKey::laMaNhomChung($ma) && $ten === '') {
+                $kq['loi'][] = ['dong' => $dongExcel, 'ly_do' => 'VTYT mã nhóm chung cần tên vật phẩm để khớp'];
+                continue;
+            }
             $tenKhop = VatPhamKemDvktKey::tenKhop($loai, $ma, $ten);
             $ghiChu = trim((string) ($h['ghi_chu'] ?? ''));
             $ghiChu = $ghiChu === '' ? null : $ghiChu;

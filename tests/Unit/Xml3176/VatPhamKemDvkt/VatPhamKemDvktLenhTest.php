@@ -134,7 +134,7 @@ class VatPhamKemDvktLenhTest extends TestCase
         $ma = Artisan::call('xml3176:nap-vat-pham-kem-dvkt', ['tep' => $tep]);
         $ra = Artisan::output();
 
-        $this->assertSame(0, $ma);
+        $this->assertSame(1, $ma);
         $this->assertContains('Thêm 1, cập nhật 1, lỗi 2', $ra);
         $this->assertContains('Dòng 4', $ra);
         $this->assertContains('Dòng 5', $ra);
@@ -164,5 +164,34 @@ class VatPhamKemDvktLenhTest extends TestCase
         foreach (['0', 'false', 'không', 'khong', 'N', 0, false] as $v) {
             $this->assertFalse(VatPhamKemDvktLearner::docHieuLuc($v), var_export($v, true));
         }
+    }
+
+    /** @test */
+    public function nap_bao_loi_ma_dang_so_va_vtyt_nhom_chung_thieu_ten()
+    {
+        $kq = (new VatPhamKemDvktLearner())->nap([
+            ['loai' => 'THUOC', 'ma_vat_pham' => 40.54, 'ma_dvkt' => '18.0150.0041'],
+            ['loai' => 'THUOC', 'ma_vat_pham' => '40.540', 'ma_dvkt' => 18.015],
+            ['loai' => 'VTYT', 'ma_vat_pham' => 'N06.02.100', 'ten_vat_pham' => '', 'ma_dvkt' => '20.0053.0105'],
+            ['loai' => 'VTYT', 'ma_vat_pham' => 'N06.02.100.01', 'ten_vat_pham' => '', 'ma_dvkt' => '20.0053.0105'],
+        ]);
+
+        $this->assertSame(1, $kq['them']);
+        $this->assertCount(3, $kq['loi']);
+        $this->assertContains('định dạng Text', $kq['loi'][0]['ly_do']);
+        $this->assertContains('định dạng Text', $kq['loi'][1]['ly_do']);
+        $this->assertContains('cần tên vật phẩm', $kq['loi'][2]['ly_do']);
+        $this->assertSame(4, $kq['loi'][2]['dong']);
+    }
+
+    /** @test */
+    public function lenh_hoc_thu_kem_xuat_canh_bao_nguon_rong()
+    {
+        Excel::fake();
+
+        Artisan::call('xml3176:hoc-vat-pham-kem-dvkt', ['--thu' => true, '--xuat' => 'vpkd_thu.xlsx']);
+
+        $this->assertContains('nguon rỗng', Artisan::output());
+        Excel::assertStored('vpkd_thu.xlsx', 'local');
     }
 }

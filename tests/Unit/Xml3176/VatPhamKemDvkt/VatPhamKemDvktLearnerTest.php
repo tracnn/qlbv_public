@@ -147,4 +147,19 @@ class VatPhamKemDvktLearnerTest extends TestCase
 
         $this->assertSame([], $this->learner()->hoc(0.8, 5, '202610')['dong']);
     }
+
+    /** @test */
+    public function ghi_cap_nhat_khong_ghi_de_ten_dvkt_bang_null()
+    {
+        $this->vtyt('N08.00.150', 'Buồng tiêm truyền', 10, 9, '12.0448.1187');
+        $this->dvkt('12.0448.1187', 'Đặt buồng tiêm truyền');
+        $l = $this->learner();
+        $l->ghi($l->hoc(0.8, 5)['dong']);
+        $this->assertSame('Đặt buồng tiêm truyền', Xml3176VatPhamKemDvkt::first()->ten_dvkt);
+
+        DB::table('xml3176_xml3s')->where('ma_vat_tu', '')->delete();
+        $l->ghi($l->hoc(0.8, 5)['dong']);
+
+        $this->assertSame('Đặt buồng tiêm truyền', Xml3176VatPhamKemDvkt::first()->ten_dvkt);
+    }
 }

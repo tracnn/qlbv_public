@@ -36,6 +36,7 @@ class Xml3176NapVatPhamKemDvkt extends Command
             $this->warn("Dòng {$l['dong']}: {$l['ly_do']}");
         }
 
-        return 0;
+        // Van xu ly het cac dong, nhung bao that bai de script/CI nhan ra
+        return empty($kq['loi']) ? 0 : 1;
     }
 }

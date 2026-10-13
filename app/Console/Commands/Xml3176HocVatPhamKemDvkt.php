@@ -41,6 +41,9 @@ class Xml3176HocVatPhamKemDvkt extends Command
 
         if ($this->option('thu')) {
             $this->warn('Chế độ thử: không ghi bảng.');
+            if ($this->option('xuat')) {
+                $this->warn('Cảnh báo: tệp xuất ở chế độ thử có cột nguon rỗng; nạp lại tệp này sẽ biến toàn bộ dòng thành TAY.');
+            }
             $dongXuat = $kq['dong'];
         } else {
             $g = $learner->ghi($kq['dong']);

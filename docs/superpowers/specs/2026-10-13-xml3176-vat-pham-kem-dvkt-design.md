@@ -187,10 +187,15 @@ Unit test theo mẫu `tests/Support/Xml3176RuleTestSupport.php` (SQLite; **cấm
 
 1. `php artisan migrate`
 2. `php artisan db:seed --class=Xml3176ErrorCatalogVatPhamKemDvktSeeder`
-3. `php artisan xml3176:hoc-vat-pham-kem-dvkt --xuat=storage/app/vat_pham_kem_dvkt.xlsx` → gửi người dùng duyệt
-4. `php artisan xml3176:nap-vat-pham-kem-dvkt storage/app/vat_pham_kem_dvkt.xlsx`
+3. `php artisan xml3176:hoc-vat-pham-kem-dvkt --xuat=vat_pham_kem_dvkt.xlsx` (tương đối so với `storage/app`) → gửi người dùng duyệt
+4. `php artisan xml3176:nap-vat-pham-kem-dvkt storage/app/vat_pham_kem_dvkt.xlsx` (lệnh trả mã thoát 1 nếu có dòng lỗi)
 5. `php artisan config:cache`
-6. Chạy lại kiểm hồ sơ cho các tháng cần rà soát; học lại định kỳ (thủ công) khi HIS có vật phẩm mới.
+6. Khởi động lại các dịch vụ queue worker (dịch vụ NSSM, hoặc `php artisan queue:restart`) để worker chạy lâu nạp bộ kiểm mới.
+7. Chạy lại kiểm hồ sơ cho các tháng cần rà soát; học lại định kỳ (thủ công) khi HIS có vật phẩm mới.
+
+Lưu ý:
+- R2 có hiệu lực ngay khi mã mới chạy (không cần bảng tra); đo ngày 13/10/2026 được 0 ca.
+- Cửa sổ học phải nhất quán: học lại với `--tu-ngay` hẹp hơn sẽ tự tắt các dòng HOC nằm ngoài cửa sổ đó.
 
 ## 6. Tệp dự kiến
 

@@ -108,21 +108,25 @@ class VatPhamKemDvktRule
 
         $nhom = [];
         foreach ($dong as $d) {
-            if ($d->t_bhtt <= 0 || !self::rong($d->ma_dich_vu)) {
+            if (!self::rong($d->ma_dich_vu)) {
                 continue;
             }
             $khoa = VatPhamKemDvktKey::khoa($loai, $d->ma, $d->ten);
             if (!isset($bangLoai[$khoa])) {
                 continue;
             }
+            // Cong rong theo nhom truoc khi loc: cap +X/-X (hoan tra) khong duoc bao loi
             if (!isset($nhom[$khoa])) {
-                $nhom[$khoa] = ['ma' => $d->ma, 'ten' => $d->ten, 'bhtt' => 0.0, 'ngay' => $d->ngay_yl];
+                $nhom[$khoa] = ['ma' => $d->ma, 'ten' => $d->ten, 'bhtt' => 0.0, 'ngay' => ''];
             }
             $nhom[$khoa]['bhtt'] += $d->t_bhtt;
-            if ($d->ngay_yl !== '' && ($nhom[$khoa]['ngay'] === '' || strcmp($d->ngay_yl, $nhom[$khoa]['ngay']) < 0)) {
+            if ($d->t_bhtt > 0 && $d->ngay_yl !== '' && ($nhom[$khoa]['ngay'] === '' || strcmp($d->ngay_yl, $nhom[$khoa]['ngay']) < 0)) {
                 $nhom[$khoa]['ngay'] = $d->ngay_yl;
             }
         }
+        $nhom = array_filter($nhom, function ($g) {
+            return $g['bhtt'] > 0;
+        });
 
         $key = $loai === 'VTYT' ? 'VTYT_KHONG_CO_DVKT_ME' : 'THUOC_KHONG_CO_DVKT_ME';
         $ra = [];

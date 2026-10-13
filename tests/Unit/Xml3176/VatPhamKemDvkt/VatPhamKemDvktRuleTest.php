@@ -212,4 +212,15 @@ class VatPhamKemDvktRuleTest extends TestCase
         $this->assertSame([], $rule->kiem([$this->vt('N08.00.150', 'Buồng tiêm truyền cấy dưới da', 4188000)], []));
         $this->assertSame(['GOI_VTYT_KHONG_KHOP'], $this->keys($rule->kiem([$this->vt('N08.00.150', 'Buồng', 1, '12.0448.1187', 'G1')], [])));
     }
+
+    /** @test */
+    public function r1_cap_cong_tru_hoan_tra_khong_bao_loi()
+    {
+        $ten = 'Buồng tiêm truyền cấy dưới da';
+        $this->assertSame([], $this->kiem([$this->vt('N08.00.150', $ten, 4188000), $this->vt('N08.00.150', $ten, -4188000)]));
+
+        $loi = $this->kiem([$this->vt('N08.00.150', $ten, 4188000), $this->vt('N08.00.150', $ten, -1000000)]);
+        $this->assertSame(['VTYT_KHONG_CO_DVKT_ME'], $this->keys($loi));
+        $this->assertContains('3.188.000đ', $loi[0]['mo_ta']);
+    }
 }
