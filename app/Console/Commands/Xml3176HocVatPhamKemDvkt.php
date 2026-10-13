@@ -49,6 +49,14 @@ class Xml3176HocVatPhamKemDvkt extends Command
             }
             $dongXuat = $kq['dong'];
         } else {
+            // Chan chay dong thoi voi job nen: hai luot cung ghi bang tra se de nhau.
+            app(VatPhamKemDvktHocLaiService::class)->danhDauTreo();
+            $dang = Xml3176VpkdLanHoc::whereIn('trang_thai', [Xml3176VpkdLanHoc::CHO, Xml3176VpkdLanHoc::DANG_CHAY])->orderBy('id', 'desc')->first();
+            if ($dang !== null) {
+                $this->error("Đang có lượt học #{$dang->id} ({$dang->trang_thai}) — chờ lượt đó xong hoặc quá 60 phút rồi chạy lại.");
+
+                return 1;
+            }
             // Di qua service de lich su luot hoc va bang ung vien nhat quan voi man quan tri.
             $lan = Xml3176VpkdLanHoc::create(['user_id' => null, 'trang_thai' => Xml3176VpkdLanHoc::CHO]);
             $k = app(VatPhamKemDvktHocLaiService::class)->thucHien($lan, $nguong, $toiThieu, $this->option('tu-ngay') ?: null);

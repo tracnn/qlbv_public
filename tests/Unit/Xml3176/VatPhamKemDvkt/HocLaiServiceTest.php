@@ -169,4 +169,17 @@ class HocLaiServiceTest extends TestCase
         $this->assertSame(0, Xml3176VpkdLanHoc::count());
         $this->assertSame(0, Xml3176VpkdUngVien::count());
     }
+
+    /** @test */
+    public function lenh_hoc_tu_choi_khi_dang_co_luot_hoc_chay()
+    {
+        Xml3176VpkdLanHoc::create(['user_id' => 7, 'trang_thai' => Xml3176VpkdLanHoc::DANG_CHAY, 'bat_dau_luc' => Carbon::now()]);
+
+        $ma = Artisan::call('xml3176:hoc-vat-pham-kem-dvkt');
+
+        $this->assertSame(1, $ma);
+        $this->assertContains('Đang có lượt học #', Artisan::output());
+        $this->assertSame(0, Xml3176VatPhamKemDvkt::count());
+        $this->assertSame(1, Xml3176VpkdLanHoc::count());
+    }
 }
