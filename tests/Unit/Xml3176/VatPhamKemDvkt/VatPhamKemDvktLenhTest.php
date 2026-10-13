@@ -3,6 +3,7 @@
 namespace Tests\Unit\Xml3176\VatPhamKemDvkt;
 
 use App\Exports\VatPhamKemDvktExport;
+use App\Imports\VatPhamKemDvktImport;
 use App\Models\BHYT\Xml3176VatPhamKemDvkt;
 use App\Services\Xml3176\VatPhamKemDvktLearner;
 use Illuminate\Support\Facades\Artisan;
@@ -99,6 +100,23 @@ class VatPhamKemDvktLenhTest extends TestCase
         $this->assertSame('40.540', $ex->array()[0][1]);
         $this->assertSame('0', $ex->array()[0][6]);
         $this->assertSame('1', $ex->array()[1][6]);
+    }
+
+    /** @test */
+    public function xuat_ra_tep_that_roi_doc_lai_giu_ma_dang_chuoi()
+    {
+        $noiDung = Excel::raw(new VatPhamKemDvktExport([
+            ['loai' => 'THUOC', 'ma_vat_pham' => '40.540', 'ma_dvkt' => '18.0659.0054', 'hieu_luc' => false],
+        ]), \Maatwebsite\Excel\Excel::XLSX);
+        $duongDan = $this->thuMuc . DIRECTORY_SEPARATOR . 'xuat.xlsx';
+        file_put_contents($duongDan, $noiDung);
+
+        $imp = new VatPhamKemDvktImport();
+        Excel::import($imp, $duongDan);
+
+        $this->assertSame('40.540', $imp->hang[0]['ma_vat_pham']);
+        $this->assertSame('18.0659.0054', $imp->hang[0]['ma_dvkt']);
+        $this->assertSame('0', $imp->hang[0]['hieu_luc']);
     }
 
     /** @test */
