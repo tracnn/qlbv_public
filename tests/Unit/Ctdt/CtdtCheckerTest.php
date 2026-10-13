@@ -22,7 +22,8 @@ class CtdtCheckerTest extends TestCase
             'NGAY_SINH' => '19950914',
             'NGAY_VAO'  => '201912121200',
             'NGAY_RA'   => '201912180001',
-            'MA_THE'    => 'DN1234567890',
+            'MA_THE'    => 'DN4010123456789',
+            'SO_CCCD'   => '001095012345',
             'GIOI_TINH' => '1',
             'DIA_CHI'   => 'Ha Noi',
 
@@ -137,7 +138,7 @@ class CtdtCheckerTest extends TestCase
             'MA_GCS' => 'GCS-1', 'MA_BHXH_NND' => '0123456789',
             'HOTEN_NND' => 'Le Thi Test',
             'NGAYSINH_NND' => '19950101', 'NGAY_SINH_CON' => '202601011200',
-            'MA_THE_NND' => '',
+            'SO_CCCD_NND' => '001195012345', 'MA_THE_NND' => '',
         ], '01929');
 
         $this->assertSame([], $loi);
@@ -376,7 +377,8 @@ class CtdtCheckerTest extends TestCase
         $loi = CtdtChecker::kiem('GIAYBAOTU', [
             'MA_GBT' => 'GBT-1', 'HO_TEN' => 'Nguyen Van Test',
             'NGAY_SINH' => '20220101', 'NGAY_TV' => '202510070200',
-            'MACSKCB' => '01929', 'MA_THE' => 'DN1', 'MA_BHXH' => '0123456789',
+            'MACSKCB' => '01929', 'MA_THE' => 'DN4010123456789', 'MA_BHXH' => '0123456789',
+            'SO_GIAYTO' => '001095012345',
         ], '01929');
 
         $this->assertSame([], $loi);
@@ -460,5 +462,85 @@ class CtdtCheckerTest extends TestCase
         $ma = $this->maLoi($loi);
         $this->assertContains('CTDT002', $ma);
         $this->assertNotContains('CTDT006', $ma);
+    }
+
+    /** @test */
+    public function thieu_SO_CCCD_sinh_CTDT001_muc_chan()
+    {
+        // Dot 2026-10-13: chung tu khong co so CCCD thi CHAN - khong ky so, khong gui cong.
+        // Chan ca khi LOAI_GIAYTO = 0 (khong giay to): quyet dinh cua chu du an, xem
+        // docblock CtdtTruongBatBuoc.
+        $loi = CtdtChecker::kiem('CT03', $this->ct03HopLe([
+            'SO_CCCD' => '', 'LOAI_GIAYTO' => '0',
+        ]), '01929');
+
+        $this->assertSame(['CTDT001'], $this->maLoi($loi));
+        $this->assertSame('SO_CCCD', $loi[0]['ten_truong']);
+        $this->assertSame('chan', $loi[0]['muc_do']);
+    }
+
+    /** @test */
+    public function giay_chung_sinh_kiem_SO_CCCD_NND_va_giay_bao_tu_kiem_SO_GIAYTO()
+    {
+        $gcs = CtdtChecker::kiem('GIAYCHUNGSINH', [
+            'MA_GCS' => 'GCS-1', 'MA_BHXH_NND' => '0123456789', 'HOTEN_NND' => 'Tran Thi Me',
+            'NGAYSINH_NND' => '19950101', 'NGAY_SINH_CON' => '202610010800',
+            'SO_CCCD_NND' => '',
+        ], '01929');
+        $this->assertContains('SO_CCCD_NND', array_column($gcs, 'ten_truong'));
+
+        $gbt = CtdtChecker::kiem('GIAYBAOTU', [
+            'MA_GBT' => 'GBT-1', 'HO_TEN' => 'Nguyen Van Test',
+            'NGAY_SINH' => '19500101', 'NGAY_TV' => '202510070200', 'MA_BHXH' => '0123456789',
+            'SO_GIAYTO' => '',
+        ], '01929');
+        $this->assertContains('SO_GIAYTO', array_column($gbt, 'ten_truong'));
+    }
+
+    /** @test */
+    public function ma_the_do_dai_15_den_17_la_hop_le()
+    {
+        foreach (['DN4010123456789', 'DN40101234567890', 'DN401012345678901'] as $maThe) {
+            $loi = CtdtChecker::kiem('CT03', $this->ct03HopLe(['MA_THE' => $maThe]), '01929');
+            $this->assertSame([], $loi, 'MA_THE dai ' . strlen($maThe) . ' phai hop le');
+        }
+    }
+
+    /** @test */
+    public function ma_the_ngoai_15_den_17_sinh_CTDT009_muc_chan()
+    {
+        // 8 CT07 that co MA_THE dai 10 ky tu - trong giong ma so BHXH dien nham o.
+        foreach (['3820325218', 'DN401012345678', 'DN4010123456789012'] as $maThe) {
+            $loi = CtdtChecker::kiem('CT03', $this->ct03HopLe(['MA_THE' => $maThe]), '01929');
+
+            $this->assertSame(['CTDT009'], $this->maLoi($loi), 'MA_THE = ' . $maThe);
+            $this->assertSame('MA_THE', $loi[0]['ten_truong']);
+            $this->assertSame('chan', $loi[0]['muc_do']);
+            $this->assertContains((string) strlen($maThe), $loi[0]['mo_ta'],
+                'Mo ta phai neu do dai thuc te');
+        }
+    }
+
+    /** @test */
+    public function ma_the_co_khoang_trang_dau_cuoi_tinh_sau_khi_trim()
+    {
+        $loi = CtdtChecker::kiem('CT03', $this->ct03HopLe(['MA_THE' => '  DN4010123456789 ']), '01929');
+
+        $this->assertNotContains('CTDT009', $this->maLoi($loi));
+    }
+
+    /** @test */
+    public function ma_the_cua_nguoi_nuoi_duong_va_the_tam_cung_bi_kiem_do_dai()
+    {
+        foreach (['MA_THE_NND', 'MA_THE_MTH', 'MA_THE_TAM'] as $the) {
+            $loi = CtdtChecker::kiem('GIAYCHUNGSINH', [
+                'MA_GCS' => 'GCS-1', 'MA_BHXH_NND' => '0123456789', 'HOTEN_NND' => 'Tran Thi Me',
+                'NGAYSINH_NND' => '19950101', 'NGAY_SINH_CON' => '202610010800',
+                'SO_CCCD_NND' => '001195012345', $the => 'ABC123',
+            ], '01929');
+
+            $this->assertSame(['CTDT009'], $this->maLoi($loi), $the);
+            $this->assertSame($the, $loi[0]['ten_truong']);
+        }
     }
 }

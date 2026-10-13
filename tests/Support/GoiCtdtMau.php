@@ -38,7 +38,8 @@ trait GoiCtdtMau
             'DIA_CHI'   => 'Ha Noi',
             'NGAY_VAO'  => '201912121200',
             'NGAY_RA'   => '201912180001',
-            'MA_THE'    => 'DN1234567890',
+            'MA_THE'    => 'DN4010123456789',
+            'SO_CCCD'   => '001095012345',
 
             // Muoi truong them o dot 2026-09-07 - xem docblock CtdtTruongBatBuoc.
             'PP_DIEUTRI'         => 'Dieu tri noi khoa',

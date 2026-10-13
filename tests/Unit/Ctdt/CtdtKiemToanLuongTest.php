@@ -9,6 +9,7 @@ use App\Jobs\CheckCtdtJob;
 use App\Services\Ctdt\CtdtImporter;
 use App\Services\Ctdt\CtdtDanhSach;
 use App\Services\Ctdt\CtdtTrangThaiGui;
+use App\Services\Ctdt\CtdtDuDieuKienGui;
 use App\Models\BHYT\Ctdt\CtdtHoSo;
 use App\Models\BHYT\Ctdt\CtdtLoi;
 
@@ -65,7 +66,7 @@ class CtdtKiemToanLuongTest extends TestCase
         // Bat bien that: cot "So loi" va bo loc chi_con_loi phai noi cung mot chuyen - lech
         // nhau la nguoi dung loc ra mot danh sach khong khop voi con so ho vua nhin thay.
         $this->napVaKiem($this->goiCt2025([[
-            $this->chungTu('CT03', ['MA_YTE' => 'YT001', 'MA_BHXH' => '0123456789', 'MA_THE' => 'DN1']),
+            $this->chungTu('CT03', ['MA_YTE' => 'YT001', 'MA_BHXH' => '0123456789', 'MA_THE' => 'DN4010123456789']),
         ]]));
 
         $hoSo = CtdtHoSo::first();
@@ -102,7 +103,7 @@ class CtdtKiemToanLuongTest extends TestCase
         $this->assertGreaterThan(0, (int) CtdtHoSo::first()->so_loi);
 
         $xmlDaSua = $this->goiCt2025([[
-            $this->chungTu('CT03', $this->truongCt03HopLe(['MA_THE' => 'DN1'])),
+            $this->chungTu('CT03', $this->truongCt03HopLe(['MA_THE' => 'DN4010123456789'])),
         ]]);
 
         // Nap lai KHONG chay job - mo phong luc worker chet. CtdtImporter::nhapTuChuoi() tu
@@ -187,5 +188,39 @@ class CtdtKiemToanLuongTest extends TestCase
             CtdtHoSo::query()->delete();
             $tenModel::query()->delete();
         }
+    }
+
+    /** @test */
+    public function thieu_so_CCCD_thi_khong_duoc_ky_va_gui()
+    {
+        // Dot 2026-10-13: XML gui len khong co so CCCD thi chan - ca nut don le lan gui hang
+        // loat deu di qua CtdtDuDieuKienGui, nen chan o day la chan ca ky so lan gui cong.
+        config(['organization.chung_tu_dien_tu.sign_enabled' => true]);
+
+        $this->napVaKiem($this->goiCt2025([[
+            $this->chungTu('CT03', $this->truongCt03HopLe(['SO_CCCD' => '', 'LOAI_GIAYTO' => '0'])),
+        ]]));
+
+        $hoSo = CtdtHoSo::first();
+
+        $this->assertSame(1, (int) $hoSo->so_loi);
+        $this->assertSame('SO_CCCD', CtdtLoi::first()->ten_truong);
+        $this->assertSame(CtdtDuDieuKienGui::CON_LOI, CtdtDuDieuKienGui::cua($hoSo));
+    }
+
+    /** @test */
+    public function ma_the_sai_do_dai_thi_khong_duoc_ky_va_gui()
+    {
+        config(['organization.chung_tu_dien_tu.sign_enabled' => true]);
+
+        $this->napVaKiem($this->goiCt2025([[
+            $this->chungTu('CT03', $this->truongCt03HopLe(['MA_THE' => '3820325218'])),
+        ]]));
+
+        $hoSo = CtdtHoSo::first();
+
+        $this->assertSame(1, (int) $hoSo->so_loi);
+        $this->assertSame('CTDT009', CtdtLoi::first()->ma_loi);
+        $this->assertSame(CtdtDuDieuKienGui::CON_LOI, CtdtDuDieuKienGui::cua($hoSo));
     }
 }

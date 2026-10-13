@@ -82,6 +82,10 @@ class CtdtChecker
             } elseif ($kieu === 'co_khong' && !in_array($giaTri, ['0', '1'], true)) {
                 $loi[] = self::loi('CTDT005', $the,
                     $the . ' = "' . $giaTri . '" ngoài giá trị 0/1');
+            } elseif ($kieu === 'ma_the' && (mb_strlen($giaTri) < 15 || mb_strlen($giaTri) > 17)) {
+                $loi[] = self::loi('CTDT009', $the,
+                    $the . ' = "' . $giaTri . '" dài ' . mb_strlen($giaTri)
+                    . ' ký tự (cần 15 đến 17)');
             }
         }
     }

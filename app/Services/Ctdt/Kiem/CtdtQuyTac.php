@@ -70,6 +70,15 @@ class CtdtQuyTac
         'SINHCON_PHAUTHUAT'          => 'co_khong',
         'SINHCON_DUOI32TUAN'         => 'co_khong',
         'CAP_LAN_DAU'                => 'co_khong',
+
+        // ── Ma the BHYT: neu co thi dai 15 den 17 ky tu (dot 2026-10-13) ──────────
+        // Do tren du lieu that: CT03/CT04/GIAYDIEUTRINOITRU chi co 15 va 17, CT07 co them 16
+        // va 8 the dai 10 ky tu - trong giong ma so BHXH dien nham o. O trong khong kiem:
+        // khong co the BHYT la binh thuong (xem CtdtTruongBatBuoc).
+        'MA_THE'     => 'ma_the',
+        'MA_THE_NND' => 'ma_the',
+        'MA_THE_MTH' => 'ma_the',
+        'MA_THE_TAM' => 'ma_the',
     ];
 
     /**
@@ -131,7 +140,7 @@ class CtdtQuyTac
         'NGAYGIO_VV' => 'NGAY_TV',
     ];
 
-    /** @return string|null 'ngay' | 'gioi_tinh' | 'loai_giayto' | 'co_khong' | null */
+    /** @return string|null 'ngay' | 'gioi_tinh' | 'loai_giayto' | 'co_khong' | 'ma_the' | null */
     public static function kieuCua($tenThe)
     {
         $tenThe = (string) $tenThe;

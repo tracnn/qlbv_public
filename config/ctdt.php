@@ -79,5 +79,6 @@ return [
         'CTDT006' => ['mo_ta' => 'Ngày kết thúc sớm hơn ngày bắt đầu',       'muc_do' => 'chan'],
         'CTDT007' => ['mo_ta' => 'Mã cơ sở trong chứng từ lệch với hồ sơ',   'muc_do' => 'chan'],
         'CTDT008' => ['mo_ta' => 'Thiếu mã thẻ BHYT',                        'muc_do' => 'canh_bao'],
+        'CTDT009' => ['mo_ta' => 'Mã thẻ BHYT sai độ dài (cần 15–17 ký tự)', 'muc_do' => 'chan'],
     ],
 ];

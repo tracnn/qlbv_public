@@ -248,19 +248,45 @@ class CtdtTruongBatBuocTest extends TestCase
              // Dot 2026-09-07, do tren 1050 CT03 that - xem docblock cua lop.
              'PP_DIEUTRI', 'CHAN_DOAN', 'BENHICD10_ID', 'TENBENHICD10', 'NGAY_CHUNG_TU',
              'THU_TRUONG_DVI', 'TEN_TRUONGKHOA', 'MA_CCHN_TRUONGKHOA', 'LOAI_GIAYTO',
-             'NGHE_NGHIEP'],
+             'NGHE_NGHIEP',
+             // Dot 2026-10-13, do tren 43213 CT03 that: rong 1669, chan co y.
+             'SO_CCCD'],
             CtdtTruongBatBuoc::cua('CT03'));
 
         $this->assertSame(
             ['MA_BHXH', 'HO_TEN', 'NGAY_SINH', 'GIOI_TINH', 'DIA_CHI', 'NGAY_VAO',
              'NGAY_RA', 'CHAN_DOAN_VAO', 'CHAN_DOAN_RA', 'QT_BENHLY', 'TOMTAT_KQ',
-             'TT_RAVIEN', 'NGAY_CT'],
+             'TT_RAVIEN', 'NGAY_CT', 'SO_CCCD'],
             CtdtTruongBatBuoc::cua('CT04'));
 
         $this->assertSame(
             ['MA_BHXH', 'SO_KCB', 'HO_TEN', 'NGAY_SINH', 'GIOI_TINH', 'DON_VI',
              'CHANDOAN_DIEUTRI', 'TU_NGAY', 'DEN_NGAY', 'MA_CCHN',
-             'TEN_NGUOI_HANH_NGHE', 'TEKT'],
+             'TEN_NGUOI_HANH_NGHE', 'TEKT', 'SO_CCCD'],
             CtdtTruongBatBuoc::cua('CT07'));
+    }
+
+    /** @test */
+    public function so_giay_to_tuy_than_bat_buoc_o_moi_loai()
+    {
+        // Dot 2026-10-13: thieu so CCCD thi chan, khong ky so, khong gui cong. Ten the khac
+        // nhau tuy loai: giay chung sinh la cua nguoi nuoi duong, giay bao tu khong co the
+        // SO_CCCD ma dung SO_GIAYTO.
+        $mongDoi = [
+            'CT03' => 'SO_CCCD', 'CT04' => 'SO_CCCD', 'CT06' => 'SO_CCCD', 'CT07' => 'SO_CCCD',
+            'GIAYDIEUTRINOITRU' => 'SO_CCCD', 'GIAYDIEUTRIVOSINH' => 'SO_CCCD',
+            'GIAYSUCKHOEME' => 'SO_CCCD', 'GIAYCHUNGSINH' => 'SO_CCCD_NND',
+            'GIAYBAOTU' => 'SO_GIAYTO',
+        ];
+
+        $coThat = array_keys(CtdtLoaiRegistry::tatCa());
+        $daKhai = array_keys($mongDoi);
+        sort($coThat);
+        sort($daKhai);
+        $this->assertSame($coThat, $daKhai, 'Co loai moi - phai quyet dinh the so giay to cua no');
+
+        foreach ($mongDoi as $loai => $the) {
+            $this->assertContains($the, CtdtTruongBatBuoc::cua($loai), $loai . '/' . $the);
+        }
     }
 }

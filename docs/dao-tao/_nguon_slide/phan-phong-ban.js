@@ -400,6 +400,7 @@ function ctdt(pptx, ctx, no) {
       ['CTDT006', 'Ngày kết thúc sớm hơn ngày bắt đầu', { t: 'Chặn', b: true, color: 'C62828' }],
       ['CTDT007', 'Mã cơ sở trong chứng từ lệch với mã cơ sở của hồ sơ', { t: 'Chặn', b: true, color: 'C62828' }],
       ['CTDT008', 'Thiếu mã thẻ bảo hiểm y tế', { t: 'Cảnh báo', color: 'B26A00' }],
+      ['CTDT009', 'Mã thẻ bảo hiểm y tế sai độ dài (15–17 ký tự)', { t: 'Chặn', b: true, color: 'C62828' }],
     ],
     note: { label: 'Giấy ra viện — trường bắt buộc:', text: 'Người bệnh: Mã BHXH, Họ tên, Ngày sinh, Giới tính, Địa chỉ, Nghề nghiệp, Loại giấy tờ. Đợt điều trị: Mã khoa, Ngày vào, Ngày ra, Chẩn đoán, Mã và Tên bệnh ICD-10, Phương pháp điều trị. Chứng từ: Ngày chứng từ, Thủ trưởng đơn vị, Tên trưởng khoa, Mã chứng chỉ hành nghề của trưởng khoa.' },
     speaker: 'Nhấn: Phương pháp điều trị (PP_DIEUTRI) mới thành bắt buộc từ 07/09/2026 sau khi cổng từ chối một hồ sơ. Khoảng 7% giấy ra viện đang bỏ trống trường này — sẽ chuyển sang "Còn lỗi chặn" sau khi nạp lại. Luật mới chỉ áp cho hồ sơ nạp từ thời điểm nâng cấp trở đi.',

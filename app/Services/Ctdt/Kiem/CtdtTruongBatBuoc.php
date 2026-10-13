@@ -82,6 +82,26 @@ namespace App\Services\Ctdt\Kiem;
  * LUU Y VAN HANH: module nay KHONG co duong kiem lai. CheckCtdtJob chi duoc day tu
  * CtdtImporter luc nap, nen luat moi CHI bam vao ho so nap tu day tro di. 78 ho so cu van
  * giu so_loi cu va van gui duoc, cho toi khi duoc nap lai.
+ *
+ * ---------------------------------------------------------------------------------------
+ * SO CCCD - dot 2026-10-13
+ *
+ * Chu du an yeu cau: chung tu gui len khong co so CCCD thi CHAN - khong ky so, khong gui
+ * cong. Ap cho MOI loai; ten the tuy loai: SO_CCCD, rieng GIAYCHUNGSINH la SO_CCCD_NND
+ * (nguoi nuoi duong) va GIAYBAOTU la SO_GIAYTO (loai nay khong co the SO_CCCD).
+ *
+ * DO TRUOC 2026-10-13 tren du lieu that, so dong rong:
+ *   CT03               1669 / 43213 (3.9%)
+ *   CT04               1669 / 43227
+ *   GIAYDIEUTRINOITRU  1654 / 38355
+ *   CT07                  6 /   844
+ * TAT CA dong rong deu co LOAI_GIAYTO = 0 (khong giay to); khong dong nao khai loai 1-4 ma
+ * bo trong so. Trong 1669 CT03: 1285 tre duoi 14 tuoi, 20 tu 14-18, 364 tren 18.
+ *
+ * CHAN TUYET DOI, KE CA LOAI_GIAYTO = 0 VA TRE EM, LA CO Y: chu du an da duoc dua ba
+ * phuong an (chan het / mien tre duoi 14 / chi chan khi khai loai 1-4) kem so do o tren va
+ * chon chan het. ~4% ho so se nam o "Con loi chan" cho toi khi phan mem sinh XML dien so
+ * dinh danh. Dung "noi long cho tre em" o lan ra soat sau ma khong hoi lai.
  */
 class CtdtTruongBatBuoc
 {
@@ -92,19 +112,22 @@ class CtdtTruongBatBuoc
                                 // Dot 2026-09-07 - xem docblock muc "Giay ra vien".
                                 'PP_DIEUTRI', 'CHAN_DOAN', 'BENHICD10_ID', 'TENBENHICD10',
                                 'NGAY_CHUNG_TU', 'THU_TRUONG_DVI', 'TEN_TRUONGKHOA',
-                                'MA_CCHN_TRUONGKHOA', 'LOAI_GIAYTO', 'NGHE_NGHIEP'],
+                                'MA_CCHN_TRUONGKHOA', 'LOAI_GIAYTO', 'NGHE_NGHIEP',
+                                // Dot 2026-10-13 - xem docblock muc "So CCCD".
+                                'SO_CCCD'],
         'CT04'              => ['MA_BHXH', 'HO_TEN', 'NGAY_SINH', 'GIOI_TINH', 'DIA_CHI',
                                 'NGAY_VAO', 'NGAY_RA', 'CHAN_DOAN_VAO', 'CHAN_DOAN_RA',
-                                'QT_BENHLY', 'TOMTAT_KQ', 'TT_RAVIEN', 'NGAY_CT'],
-        'CT06'              => ['MA_BHXH', 'HO_TEN', 'NGAY_SINH', 'NGAY_VAO', 'NGAY_RA'],
+                                'QT_BENHLY', 'TOMTAT_KQ', 'TT_RAVIEN', 'NGAY_CT', 'SO_CCCD'],
+        'CT06'              => ['MA_BHXH', 'HO_TEN', 'NGAY_SINH', 'NGAY_VAO', 'NGAY_RA', 'SO_CCCD'],
         'CT07'              => ['MA_BHXH', 'SO_KCB', 'HO_TEN', 'NGAY_SINH', 'GIOI_TINH',
                                 'DON_VI', 'CHANDOAN_DIEUTRI', 'TU_NGAY', 'DEN_NGAY',
-                                'MA_CCHN', 'TEN_NGUOI_HANH_NGHE', 'TEKT'],
-        'GIAYDIEUTRINOITRU' => ['MA_BHXH', 'HO_TEN', 'NGAY_SINH', 'NGAY_VAO', 'NGAY_RA'],
-        'GIAYDIEUTRIVOSINH' => ['HO_TEN', 'NGAY_SINH', 'NGAY_VAO', 'NGAY_RA'],
-        'GIAYSUCKHOEME'     => ['HO_TEN', 'NGAY_SINH', 'NGAY_VAO', 'NGAY_RA'],
-        'GIAYBAOTU'         => ['MA_GBT', 'HO_TEN', 'NGAY_SINH', 'NGAY_TV'],
-        'GIAYCHUNGSINH'     => ['MA_GCS', 'MA_BHXH_NND', 'HOTEN_NND', 'NGAYSINH_NND', 'NGAY_SINH_CON'],
+                                'MA_CCHN', 'TEN_NGUOI_HANH_NGHE', 'TEKT', 'SO_CCCD'],
+        'GIAYDIEUTRINOITRU' => ['MA_BHXH', 'HO_TEN', 'NGAY_SINH', 'NGAY_VAO', 'NGAY_RA', 'SO_CCCD'],
+        'GIAYDIEUTRIVOSINH' => ['HO_TEN', 'NGAY_SINH', 'NGAY_VAO', 'NGAY_RA', 'SO_CCCD'],
+        'GIAYSUCKHOEME'     => ['HO_TEN', 'NGAY_SINH', 'NGAY_VAO', 'NGAY_RA', 'SO_CCCD'],
+        'GIAYBAOTU'         => ['MA_GBT', 'HO_TEN', 'NGAY_SINH', 'NGAY_TV', 'SO_GIAYTO'],
+        'GIAYCHUNGSINH'     => ['MA_GCS', 'MA_BHXH_NND', 'HOTEN_NND', 'NGAYSINH_NND', 'NGAY_SINH_CON',
+                                'SO_CCCD_NND'],
     ];
 
     /**

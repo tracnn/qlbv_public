@@ -45,7 +45,8 @@ class CheckCtdtJobTest extends TestCase
             'dia_chi'   => 'Ha Noi',
             'ngay_vao'  => '201912121200',
             'ngay_ra'   => '201912180001',
-            'ma_the'    => 'DN1',
+            'ma_the'    => 'DN4010123456789',
+            'so_cccd'   => '001095012345',
 
             // Muoi truong them o dot 2026-09-07 - xem docblock CtdtTruongBatBuoc.
             'pp_dieutri'         => 'Dieu tri noi khoa',
@@ -87,7 +88,7 @@ class CheckCtdtJobTest extends TestCase
             'ma_yte' => 'YT001', 'ma_bhxh' => '0123456789', 'ma_khoa' => 'K01',
             'ho_ten' => 'Nguyen Van Test', 'ngay_sinh' => '19950914', 'gioi_tinh' => '1',
             'dia_chi' => 'Ha Noi',
-            'ngay_vao' => '201912121200', 'ngay_ra' => '201912180001', 'ma_the' => 'DN1',
+            'ngay_vao' => '201912121200', 'ngay_ra' => '201912180001', 'ma_the' => 'DN4010123456789',
         ]);
 
         $this->chay();
@@ -102,7 +103,7 @@ class CheckCtdtJobTest extends TestCase
     {
         $this->hoSoCt03(['ma_yte' => 'YT001', 'ma_bhxh' => '0123456789', 'ma_khoa' => 'K01',
             'ho_ten' => '', 'ngay_sinh' => '19950914', 'gioi_tinh' => '1', 'dia_chi' => 'Ha Noi',
-            'ngay_vao' => '201912121200', 'ngay_ra' => '201912180001', 'ma_the' => 'DN1']);
+            'ngay_vao' => '201912121200', 'ngay_ra' => '201912180001', 'ma_the' => 'DN4010123456789']);
 
         $this->chay();
 
@@ -145,7 +146,7 @@ class CheckCtdtJobTest extends TestCase
         // Job phai tu idempotent: hang doi co the giao lai sau khi that bai giua chung.
         $this->hoSoCt03(['ma_yte' => 'YT001', 'ma_bhxh' => '0123456789', 'ma_khoa' => 'K01',
             'ho_ten' => '', 'ngay_sinh' => '19950914', 'gioi_tinh' => '1', 'dia_chi' => 'Ha Noi',
-            'ngay_vao' => '201912121200', 'ngay_ra' => '201912180001', 'ma_the' => 'DN1']);
+            'ngay_vao' => '201912121200', 'ngay_ra' => '201912180001', 'ma_the' => 'DN4010123456789']);
 
         $this->chay();
         $this->chay();
@@ -160,7 +161,7 @@ class CheckCtdtJobTest extends TestCase
     {
         $hoSo = $this->hoSoCt03(['ma_yte' => 'YT001', 'ma_bhxh' => '0123456789', 'ma_khoa' => 'K01',
             'ho_ten' => '', 'ngay_sinh' => '19950914', 'gioi_tinh' => '1', 'dia_chi' => 'Ha Noi',
-            'ngay_vao' => '201912121200', 'ngay_ra' => '201912180001', 'ma_the' => 'DN1']);
+            'ngay_vao' => '201912121200', 'ngay_ra' => '201912180001', 'ma_the' => 'DN4010123456789']);
 
         $this->chay();
         $this->assertSame(1, CtdtLoi::count());
@@ -190,7 +191,7 @@ class CheckCtdtJobTest extends TestCase
         \App\Models\BHYT\Ctdt\CtdtGiayBaoTu::create([
             'chung_tu_id' => $chungTu->id, 'ma_gbt' => 'GBT-1',
             'ho_ten' => 'Nguyen Van Test', 'ngay_sinh' => '20220101',
-            'ngay_tv' => '202510070200', 'ma_the' => 'DN1',
+            'ngay_tv' => '202510070200', 'ma_the' => 'DN4010123456789',
             'macskcb' => '37470',
         ]);
 
@@ -236,7 +237,7 @@ class CheckCtdtJobTest extends TestCase
         // Tu Giai doan 4, mot ho so "chua kiem" la mot ho so khong bao gio gui duoc.
         $this->hoSoCt03([
             'ma_yte' => 'YT001', 'ma_bhxh' => '0123456789', 'ho_ten' => 'Nguyen Van Test', 'ngay_sinh' => '19950914',
-            'ngay_vao' => '201912121200', 'ngay_ra' => '201912180001', 'ma_the' => 'DN1',
+            'ngay_vao' => '201912121200', 'ngay_ra' => '201912180001', 'ma_the' => 'DN4010123456789',
         ]);
 
         (new CheckCtdtJob('YT001'))->failed(new \Exception('CSDL mat ket noi'));

@@ -252,11 +252,13 @@ class CtdtGuiToanLuongTest extends TestCase
         $this->napVaKiem($this->goiHopLe());
         $this->napVaKiem($this->goiGbt([
             'MA_GBT' => 'GBT-1', 'MA_BHXH' => '0123456789', 'HO_TEN' => 'Tran Thi Test',
-            'NGAY_SINH' => '19480826', 'NGAY_TV' => '202510070200', 'MA_THE' => 'DN1',
+            'NGAY_SINH' => '19480826', 'NGAY_TV' => '202510070200', 'MA_THE' => 'DN4010123456789',
+            'SO_GIAYTO' => '001048012345',
         ]));
         $this->napVaKiem($this->goiGcs([
             'MA_GCS' => 'GCS-1', 'MA_BHXH_NND' => '0123456789', 'HOTEN_NND' => 'Le Thi Test',
-            'NGAYSINH_NND' => '19950101', 'NGAY_SINH_CON' => '202601011200', 'MA_THE_NND' => 'DN2',
+            'NGAYSINH_NND' => '19950101', 'NGAY_SINH_CON' => '202601011200', 'MA_THE_NND' => 'DN4010123456780',
+            'SO_CCCD_NND' => '001195012345',
         ]));
 
         $this->assertSame(3, CtdtHoSo::count());

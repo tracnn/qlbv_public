@@ -254,6 +254,7 @@ module.exports = function part6() {
         ['CTDT006', 'Ngày kết thúc sớm hơn ngày bắt đầu.', 'Chặn'],
         ['CTDT007', 'Mã cơ sở trong chứng từ lệch với mã cơ sở của hồ sơ.', 'Chặn'],
         ['CTDT008', 'Thiếu mã thẻ bảo hiểm y tế.', 'Cảnh báo'],
+        ['CTDT009', 'Mã thẻ bảo hiểm y tế sai độ dài (phải từ 15 đến 17 ký tự).', 'Chặn'],
       ],
       [1400, 6120, 1500],
     ),
