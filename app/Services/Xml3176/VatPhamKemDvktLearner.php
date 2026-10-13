@@ -212,4 +212,76 @@ class VatPhamKemDvktLearner
 
         return $ten;
     }
+
+    /**
+     * Nap cac dong Excel da duyet. Dong co san -> cap nhat hieu_luc, ghi_chu; dong moi -> them
+     * voi nguon TAY. Khong xoa dong nao. Dong loi duoc bao lai, cac dong khac van nap.
+     */
+    public function nap(array $hang): array
+    {
+        $kq = ['them' => 0, 'cap_nhat' => 0, 'loi' => []];
+
+        foreach (array_values($hang) as $i => $h) {
+            $dongExcel = $i + 2;
+            if (count(array_filter(array_map(function ($v) { return trim((string) $v); }, (array) $h), 'strlen')) === 0) {
+                continue;
+            }
+
+            $loai = strtoupper(trim((string) ($h['loai'] ?? '')));
+            $ma = trim((string) ($h['ma_vat_pham'] ?? ''));
+            $maDv = VatPhamKemDvktKey::chuanHoaMaDvkt($h['ma_dvkt'] ?? '');
+
+            if (!in_array($loai, [Xml3176VatPhamKemDvkt::LOAI_VTYT, Xml3176VatPhamKemDvkt::LOAI_THUOC], true)) {
+                $kq['loi'][] = ['dong' => $dongExcel, 'ly_do' => "Loại '{$loai}' không hợp lệ (VTYT hoặc THUOC)"];
+                continue;
+            }
+            if ($ma === '' || $maDv === '') {
+                $kq['loi'][] = ['dong' => $dongExcel, 'ly_do' => 'Thiếu mã vật phẩm hoặc mã DVKT'];
+                continue;
+            }
+
+            $ten = trim((string) ($h['ten_vat_pham'] ?? ''));
+            $tenKhop = VatPhamKemDvktKey::tenKhop($loai, $ma, $ten);
+            $ghiChu = trim((string) ($h['ghi_chu'] ?? ''));
+            $ghiChu = $ghiChu === '' ? null : $ghiChu;
+            $hieuLuc = self::docHieuLuc($h['hieu_luc'] ?? null);
+
+            $m = Xml3176VatPhamKemDvkt::where([
+                'loai' => $loai, 'ma_vat_pham' => $ma, 'ten_khop' => $tenKhop, 'ma_dvkt' => $maDv,
+            ])->first();
+
+            if ($m) {
+                $m->hieu_luc = $hieuLuc;
+                $m->ghi_chu = $ghiChu;
+                $m->save();
+                $kq['cap_nhat']++;
+                continue;
+            }
+
+            $tenDvkt = trim((string) ($h['ten_dvkt'] ?? ''));
+            Xml3176VatPhamKemDvkt::create([
+                'loai' => $loai, 'ma_vat_pham' => $ma, 'ten_vat_pham' => $ten === '' ? null : $ten,
+                'ten_khop' => $tenKhop, 'ma_dvkt' => $maDv, 'ten_dvkt' => $tenDvkt === '' ? null : $tenDvkt,
+                'nguon' => Xml3176VatPhamKemDvkt::NGUON_TAY, 'so_lan_gan' => 0, 'ty_le_gan' => null,
+                'hieu_luc' => $hieuLuc, 'ghi_chu' => $ghiChu,
+            ]);
+            $kq['them']++;
+        }
+
+        return $kq;
+    }
+
+    /** O trong -> bat. Tat khi: 0, false, khong/không, n, no, tat/tắt. */
+    public static function docHieuLuc($v): bool
+    {
+        if ($v === null) {
+            return true;
+        }
+        if (is_bool($v)) {
+            return $v;
+        }
+        $s = mb_strtolower(trim((string) $v), 'UTF-8');
+
+        return !in_array($s, ['0', 'false', 'khong', 'không', 'n', 'no', 'tat', 'tắt'], true);
+    }
 }
