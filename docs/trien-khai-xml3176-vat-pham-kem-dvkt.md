@@ -33,7 +33,7 @@ Menu **Quản lý danh mục → BHYT → DM vật phẩm kèm DVKT mẹ** (quy�
 
 Mọi thao tác trên màn hình ghi người và thời điểm sửa cuối (cột "Người sửa"). Dòng lệnh ở Bước 3–5 vẫn dùng được làm phương án dự phòng; lệnh học (không `--thu`) cũng cập nhật lịch sử lượt học và tab ứng viên.
 
-Sau khi `update.bat` chạy, kiểm `php artisan migrate:status | findstr vpkd` thấy 2 migration `create_xml3176_vpkd_*` và `them_nguoi_sua_vao_xml3176_vat_pham_kem_dvkt` đã chạy (`Y`).
+Sau khi `update.bat` chạy, kiểm `php artisan migrate:status | findstr "vpkd them_nguoi_sua_vao_xml3176"` phải thấy đúng 3 dòng, cả 3 đều `Y`: 2 migration `create_xml3176_vpkd_*` và `them_nguoi_sua_vao_xml3176_vat_pham_kem_dvkt`.
 
 ---
 
