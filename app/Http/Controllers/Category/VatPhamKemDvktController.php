@@ -221,9 +221,15 @@ class VatPhamKemDvktController extends Controller
             return response()->json(['message' => 'Tệp phải là .xlsx'], 422);
         }
 
-        $imp = new VatPhamKemDvktImport();
-        Excel::import($imp, $tep);
-        $kq = $this->learner->nap($imp->hang, Auth::id());
+        try {
+            $imp = new VatPhamKemDvktImport();
+            Excel::import($imp, $tep);
+            $kq = $this->learner->nap($imp->hang, Auth::id());
+        } catch (\Throwable $e) {
+            \Log::warning('Nhap vat pham kem DVKT: khong doc duoc tep Excel', ['loi' => $e->getMessage()]);
+
+            return response()->json(['message' => 'Không đọc được tệp Excel: ' . $e->getMessage()], 422);
+        }
 
         return response()->json([
             'message' => "Thêm {$kq['them']}, cập nhật {$kq['cap_nhat']}, lỗi " . count($kq['loi']),

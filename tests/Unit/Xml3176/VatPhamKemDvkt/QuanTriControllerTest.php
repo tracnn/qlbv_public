@@ -147,4 +147,96 @@ class QuanTriControllerTest extends TestCase
         $r = $this->c()->kiemKhop(Request::create('/', 'GET', ['loai' => 'X', 'ma' => 'a']));
         $this->assertSame(422, $r->getStatusCode());
     }
+
+    private function cotDt(array $ds): array
+    {
+        $cot = [];
+        foreach ($ds as $i => $c) {
+            $cot[$i] = ['data' => $c[0], 'name' => $c[1], 'searchable' => $c[2] ? 'true' : 'false', 'orderable' => $c[3] ? 'true' : 'false',
+                'search' => ['value' => '', 'regex' => 'false']];
+        }
+
+        return $cot;
+    }
+
+    private function reqDatatable(array $them): Request
+    {
+        $t = 'xml3176_vat_pham_kem_dvkt.';
+        $cot = $this->cotDt([
+            ['loai', $t . 'loai', true, true], ['ma_vat_pham', $t . 'ma_vat_pham', true, true],
+            ['ten_vat_pham', $t . 'ten_vat_pham', true, true], ['ma_dvkt', $t . 'ma_dvkt', true, true],
+            ['ten_dvkt', $t . 'ten_dvkt', true, true], ['nguon', $t . 'nguon', true, true],
+            ['so_lan_gan', $t . 'so_lan_gan', true, true], ['ty_le_gan', $t . 'ty_le_gan', true, true],
+            ['hieu_luc', $t . 'hieu_luc', true, true], ['ghi_chu', $t . 'ghi_chu', false, true],
+            ['nguoi_sua_luc', $t . 'sua_luc', false, true], ['thao_tac', '', false, false],
+        ]);
+
+        return Request::create('/', 'GET', $them + [
+            'draw' => 1, 'start' => 0, 'length' => 10, 'columns' => $cot,
+            'order' => [['column' => 1, 'dir' => 'asc']], 'search' => ['value' => '40.6', 'regex' => 'false'],
+            'loai' => 'THUOC',
+        ]);
+    }
+
+    /** @test */
+    public function datatable_loc_tim_kiem_sap_xep_khong_loi_va_hien_nguoi_sua()
+    {
+        \DB::table('users')->insert(['id' => 7, 'name' => 'Nguyen Van A', 'email' => 'a@x.vn', 'password' => 'x']);
+        $this->dong(['nguoi_sua_id' => 7, 'sua_luc' => '2026-10-13 10:00:00']);
+        $this->dong(['loai' => 'VTYT', 'ma_vat_pham' => '40.999', 'ma_dvkt' => 'Y']);
+
+        $res = $this->c()->datatable($this->reqDatatable([]));
+        $this->assertSame(200, $res->getStatusCode());
+        $d = $res->getData(true);
+        $this->assertSame(1, $d['recordsFiltered']);
+        $this->assertContains('Nguyen Van A', $d['data'][0]['nguoi_sua_luc']);
+        $this->assertContains('vpkd-hieu-luc', $d['data'][0]['hieu_luc']);
+
+        $res = $this->c()->datatable($this->reqDatatable(['order' => [['column' => 10, 'dir' => 'desc']]]));
+        $this->assertSame(200, $res->getStatusCode());
+        $this->assertSame(1, $res->getData(true)['recordsFiltered']);
+    }
+
+    /** @test */
+    public function ung_vien_datatable_danh_dau_da_co()
+    {
+        $this->dong();
+        Xml3176VpkdUngVien::create([
+            'lan_hoc_id' => 3, 'loai' => 'THUOC', 'ma_vat_pham' => '40.644', 'ten_vat_pham' => 'Omnipaque', 'ten_khop' => '',
+            'so_dong' => 10, 'so_lien_ket' => 6, 'ty_le_gan' => 0.6,
+            'dvkt' => [['ma' => '18.0150.0041', 'ten' => 'CLVT', 'so_lan' => 6], ['ma' => '18.0156.0041', 'ten' => 'MRI', 'so_lan' => 4]],
+        ]);
+        $cot = $this->cotDt([
+            ['loai', 'loai', true, true], ['ma_vat_pham', 'ma_vat_pham', true, true], ['ten_vat_pham', 'ten_vat_pham', true, true],
+            ['so_dong', 'so_dong', true, true], ['so_lien_ket', 'so_lien_ket', true, true], ['ty_le_gan', 'ty_le_gan', true, true],
+            ['dvkt', 'dvkt', false, false], ['thao_tac', '', false, false],
+        ]);
+
+        $res = $this->c()->ungVienDatatable(Request::create('/', 'GET', [
+            'draw' => 1, 'start' => 0, 'length' => 10, 'columns' => $cot,
+            'order' => [['column' => 3, 'dir' => 'desc']], 'search' => ['value' => '', 'regex' => 'false'],
+        ]));
+        $this->assertSame(200, $res->getStatusCode());
+        $html = $res->getData(true)['data'][0]['dvkt'];
+        $this->assertContains('đã có', $html);
+        $this->assertSame(1, substr_count($html, 'disabled'));
+        $this->assertRegExp('/value="18\.0150\.0041" checked disabled/', $html);
+    }
+
+    /** @test */
+    public function nhap_tep_hong_422_va_tep_sai_duoi_422()
+    {
+        $p = tempnam(sys_get_temp_dir(), 'vpkd');
+        file_put_contents($p, 'khong phai excel');
+        $f = new \Illuminate\Http\UploadedFile($p, 'x.xlsx', null, null, true);
+        $r = $this->c()->nhap(Request::create('/', 'POST', [], [], ['file' => $f]));
+        $this->assertSame(422, $r->getStatusCode());
+        $this->assertStringStartsWith('Không đọc được tệp Excel', $r->getData()->message);
+
+        $f2 = new \Illuminate\Http\UploadedFile($p, 'x.csv', null, null, true);
+        $r = $this->c()->nhap(Request::create('/', 'POST', [], [], ['file' => $f2]));
+        $this->assertSame(422, $r->getStatusCode());
+        $this->assertSame('Tệp phải là .xlsx', $r->getData()->message);
+        @unlink($p);
+    }
 }
