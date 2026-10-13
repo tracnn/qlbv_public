@@ -18,6 +18,7 @@ class Xml3176VatPhamKemDvkt extends Model
     protected $fillable = [
         'loai', 'ma_vat_pham', 'ten_vat_pham', 'ten_khop', 'ma_dvkt', 'ten_dvkt',
         'nguon', 'so_lan_gan', 'ty_le_gan', 'hieu_luc', 'ghi_chu',
+        'nguoi_sua_id', 'sua_luc',
     ];
 
     protected $attributes = [
@@ -30,5 +31,8 @@ class Xml3176VatPhamKemDvkt extends Model
         'so_lan_gan' => 'integer',
         'ty_le_gan' => 'float',
         'hieu_luc' => 'boolean',
+        'nguoi_sua_id' => 'integer',
     ];
+
+    protected $dates = ['sua_luc'];
 }

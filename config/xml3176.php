@@ -157,5 +157,7 @@ return [
     'vat_pham_kem_dvkt' => [
         'nguong' => 0.8,
         'toi_thieu' => 5, // so dong toi thieu, loai ca nhieu kieu 2/3
+        // Ung vien cho duyet: vat pham chua vao bang tra, co it nhat 1 lan gan, ty le gan >= gia tri nay.
+        'nguong_ung_vien' => 0.5,
     ],
 ];
