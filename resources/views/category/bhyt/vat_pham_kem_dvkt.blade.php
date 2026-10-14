@@ -29,6 +29,7 @@
 <ul class="nav nav-tabs">
     <li class="active"><a href="#vpkd-tab-bang-tra" data-toggle="tab">Bảng tra</a></li>
     <li><a href="#vpkd-tab-ung-vien" data-toggle="tab">Ứng viên chờ duyệt</a></li>
+    <li><a href="#vpkd-tab-bat-buoc" data-toggle="tab">DVKT bắt buộc kèm vật phẩm</a></li>
 </ul>
 <div class="tab-content">
     <div class="tab-pane active" id="vpkd-tab-bang-tra">
@@ -54,6 +55,23 @@
             <table id="vpkd-ung-vien" class="table display table-hover" width="100%">
                 <thead><tr>
                     <th>Loại</th><th>Mã</th><th>Tên</th><th>Số dòng BHYT</th><th>Số liên kết</th><th>Tỷ lệ gắn</th><th>DVKT từng gắn</th><th></th>
+                </tr></thead>
+            </table>
+        </div></div>
+    </div>
+    <div class="tab-pane" id="vpkd-tab-bat-buoc">
+        <div class="panel panel-default"><div class="panel-body">
+            <p class="text-muted">DVKT mà hầu hết hồ sơ BHYT đều kèm vật phẩm (học tự động). Hồ sơ có DVKT này được BHYT trả mà không có vật phẩm đi kèm sẽ bị cảnh báo <code>XMLComplete_DVKT_THIEU_VAT_PHAM_KEM</code>.</p>
+            <div class="form-inline" style="margin-bottom:10px">
+                <select id="loc-bb-nguon" class="form-control input-sm"><option value="">Nguồn: tất cả</option><option>HOC</option><option>TAY</option></select>
+                <select id="loc-bb-hieu-luc" class="form-control input-sm"><option value="">Hiệu lực: tất cả</option><option value="1">Đang dùng</option><option value="0">Đã tắt</option></select>
+                <select id="bb-them-ma" class="form-control input-sm" style="width:320px"><option></option></select>
+                <button id="bb-them" class="btn btn-success btn-sm"><i class="fa fa-plus"></i> Thêm DVKT tay</button>
+            </div>
+            <table id="vpkd-bat-buoc" class="table display table-hover nowrap" width="100%">
+                <thead><tr>
+                    <th>Mã DVKT</th><th>Tên DVKT</th><th>Số HS</th><th>Số HS có kèm</th><th>Tỷ lệ</th>
+                    <th>Nguồn</th><th>Hiệu lực</th><th>Ghi chú</th><th>Người sửa</th><th></th>
                 </tr></thead>
             </table>
         </div></div>
@@ -106,15 +124,18 @@
         hieuLuc: "{{ route('category-bhyt.vat-pham-kem-dvkt.hieu-luc', ['id' => '__ID__']) }}",
         ghiChu: "{{ route('category-bhyt.vat-pham-kem-dvkt.ghi-chu', ['id' => '__ID__']) }}",
         xoa: "{{ route('category-bhyt.vat-pham-kem-dvkt.xoa', ['id' => '__ID__']) }}",
+        bbHieuLuc: "{{ route('category-bhyt.vat-pham-kem-dvkt.bat-buoc-hieu-luc', ['id' => '__ID__']) }}",
+        bbGhiChu: "{{ route('category-bhyt.vat-pham-kem-dvkt.bat-buoc-ghi-chu', ['id' => '__ID__']) }}",
+        bbXoa: "{{ route('category-bhyt.vat-pham-kem-dvkt.bat-buoc-xoa', ['id' => '__ID__']) }}",
         uvThem: "{{ route('category-bhyt.vat-pham-kem-dvkt.ung-vien-them', ['id' => '__ID__']) }}"
     };
     function url(mau, id) { return mau.replace('__ID__', id); }
     function baoLoi(xhr) {
         toastr.error(xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Có lỗi xảy ra khi gửi yêu cầu.');
     }
-    var bangTra, ungVien, hoiTrangThai = null, kiemKhopHienTai = null;
+    var bangTra, ungVien, batBuoc, hoiTrangThai = null, kiemKhopHienTai = null;
 
-    function taiLai() { bangTra.ajax.reload(null, false); ungVien.ajax.reload(null, false); }
+    function taiLai() { bangTra.ajax.reload(null, false); ungVien.ajax.reload(null, false); batBuoc.ajax.reload(null, false); }
 
     // ---- Bang tra ----
     bangTra = $('#vpkd-bang-tra').DataTable({
@@ -205,6 +226,80 @@
             .done(function (r) { toastr.success(r.message); taiLai(); })
             .fail(baoLoi)
             .always(function () { nut.prop('disabled', false); });
+    });
+
+    // ---- DVKT bat buoc kem vat pham ----
+    batBuoc = $('#vpkd-bat-buoc').DataTable({
+        processing: true, serverSide: true, scrollX: true, order: [[2, 'desc']],
+        ajax: { url: "{{ route('category-bhyt.vat-pham-kem-dvkt.bat-buoc-datatable') }}",
+                data: function (d) { d.nguon = $('#loc-bb-nguon').val(); d.hieu_luc = $('#loc-bb-hieu-luc').val(); } },
+        columns: [
+            { data: 'ma_dvkt', name: 'xml3176_vpkd_dvkt_bat_buoc.ma_dvkt' },
+            { data: 'ten_dvkt', name: 'xml3176_vpkd_dvkt_bat_buoc.ten_dvkt' },
+            { data: 'so_ho_so', name: 'xml3176_vpkd_dvkt_bat_buoc.so_ho_so', searchable: false },
+            { data: 'so_ho_so_co_kem', name: 'xml3176_vpkd_dvkt_bat_buoc.so_ho_so_co_kem', searchable: false },
+            { data: 'ty_le', name: 'xml3176_vpkd_dvkt_bat_buoc.ty_le', searchable: false },
+            { data: 'nguon', name: 'xml3176_vpkd_dvkt_bat_buoc.nguon', searchable: false },
+            { data: 'hieu_luc', name: 'xml3176_vpkd_dvkt_bat_buoc.hieu_luc', searchable: false },
+            { data: 'ghi_chu', name: 'xml3176_vpkd_dvkt_bat_buoc.ghi_chu', searchable: false },
+            { data: 'nguoi_sua_luc', name: 'xml3176_vpkd_dvkt_bat_buoc.sua_luc', searchable: false },
+            { data: 'thao_tac', orderable: false, searchable: false }
+        ]
+    });
+    $('#loc-bb-nguon, #loc-bb-hieu-luc').on('change', function () { batBuoc.ajax.reload(); });
+    $('a[href="#vpkd-tab-bat-buoc"]').on('shown.bs.tab', function () { batBuoc.columns.adjust(); });
+
+    $('#vpkd-bat-buoc').on('change', '.vpkd-bb-hieu-luc', function () {
+        var o = $(this), bat = o.is(':checked');
+        Swal.fire({
+            title: bat ? 'Bật lại DVKT này?' : 'Tắt DVKT này?', icon: 'warning', showCancelButton: true,
+            input: 'text', inputValue: bat ? (o.attr('data-ghi-chu') || '') : '',
+            inputPlaceholder: bat ? 'Ghi chú (tuỳ chọn)' : 'Lý do tắt (bắt buộc)',
+            inputValidator: function (v) { if (!bat && !$.trim(v)) { return 'Cần ghi lý do khi tắt'; } }
+        }).then(function (r) {
+            if (!r.isConfirmed) { o.prop('checked', !bat); return; }
+            $.post(url(URL_ID.bbHieuLuc, o.attr('data-id')), { _token: TOKEN, hieu_luc: bat ? 1 : 0, ghi_chu: r.value })
+                .done(function () { toastr.success('Đã cập nhật.'); batBuoc.ajax.reload(null, false); })
+                .fail(function (x) { o.prop('checked', !bat); baoLoi(x); });
+        });
+    });
+
+    $('#vpkd-bat-buoc').on('click', '.vpkd-bb-ghi-chu', function (e) {
+        e.preventDefault();
+        var o = $(this);
+        Swal.fire({ title: 'Ghi chú', input: 'text', inputValue: o.attr('data-ghi-chu') || '', showCancelButton: true })
+            .then(function (r) {
+                if (!r.isConfirmed) { return; }
+                $.post(url(URL_ID.bbGhiChu, o.attr('data-id')), { _token: TOKEN, ghi_chu: r.value })
+                    .done(function () { toastr.success('Đã lưu ghi chú.'); batBuoc.ajax.reload(null, false); })
+                    .fail(baoLoi);
+            });
+    });
+
+    $('#vpkd-bat-buoc').on('click', '.vpkd-bb-xoa', function () {
+        var id = $(this).attr('data-id');
+        Swal.fire({ title: 'Bạn có chắc chắn?', text: 'Xoá DVKT bổ sung tay này.', icon: 'warning', showCancelButton: true })
+            .then(function (r) {
+                if (!r.isConfirmed) { return; }
+                $.post(url(URL_ID.bbXoa, id), { _token: TOKEN })
+                    .done(function () { toastr.success('Đã xoá.'); batBuoc.ajax.reload(null, false); })
+                    .fail(baoLoi);
+            });
+    });
+
+    $('#bb-them-ma').select2({
+        tags: true, placeholder: 'Mã hoặc tên DVKT', width: 'resolve',
+        ajax: { url: "{{ route('category-bhyt.vat-pham-kem-dvkt.tim-dvkt') }}", delay: 300,
+                data: function (p) { return { q: p.term }; } }
+    });
+    $('#bb-them').on('click', function () {
+        var btn = $(this), ma = $('#bb-them-ma').val();
+        if (!ma) { toastr.warning('Chọn mã DVKT.'); return; }
+        btn.prop('disabled', true);
+        $.post("{{ route('category-bhyt.vat-pham-kem-dvkt.bat-buoc-them') }}", { _token: TOKEN, ma_dvkt: ma })
+            .done(function (r) { toastr.success(r.message); $('#bb-them-ma').val(null).trigger('change'); batBuoc.ajax.reload(null, false); })
+            .fail(baoLoi)
+            .always(function () { btn.prop('disabled', false); });
     });
 
     // ---- Them dong tay ----

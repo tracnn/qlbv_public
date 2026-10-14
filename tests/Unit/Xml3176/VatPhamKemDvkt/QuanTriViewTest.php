@@ -28,7 +28,8 @@ class QuanTriViewTest extends TestCase
     {
         $src = $this->nguon();
         foreach (['datatable', 'ung-vien-datatable', 'hieu-luc', 'ghi-chu', 'xoa', 'kiem-khop', 'tim-vat-pham',
-                  'tim-dvkt', 'them', 'ung-vien-them', 'hoc-lai', 'trang-thai', 'xuat', 'nhap', 'nhap-loi'] as $r) {
+                  'tim-dvkt', 'them', 'ung-vien-them', 'hoc-lai', 'trang-thai', 'xuat', 'nhap', 'nhap-loi',
+                  'bat-buoc-datatable', 'bat-buoc-hieu-luc', 'bat-buoc-ghi-chu', 'bat-buoc-xoa', 'bat-buoc-them'] as $r) {
             $this->assertContains("category-bhyt.vat-pham-kem-dvkt.$r", $src, "View chua dung route $r");
         }
         $this->assertContains('Cần ghi lý do khi tắt', $src);
@@ -52,5 +53,14 @@ class QuanTriViewTest extends TestCase
         $this->assertContains("attr('data-nguon')", $src);
         $this->assertContains('maGui', $src);
         $this->assertNotContains(".data('ghi-chu')", $src);
+    }
+
+    /** @test */
+    public function co_tab_dvkt_bat_buoc()
+    {
+        $src = $this->nguon();
+        $this->assertContains('vpkd-tab-bat-buoc', $src);
+        $this->assertContains('DVKT bắt buộc kèm vật phẩm', $src);
+        $this->assertContains('vpkd-bb-hieu-luc', $src);
     }
 }
