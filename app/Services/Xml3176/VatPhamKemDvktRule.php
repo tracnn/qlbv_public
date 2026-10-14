@@ -164,6 +164,7 @@ class VatPhamKemDvktRule
 
     private function r2(array $dong, string $loai, array $dvkt): array
     {
+        $bangLoai = $this->bang[$loai] ?? [];
         $nhom = [];
         foreach ($dong as $d) {
             if ($d->t_bhtt <= 0 || self::rong($d->ma_dich_vu)) {
@@ -171,11 +172,17 @@ class VatPhamKemDvktRule
             }
             $k = VatPhamKemDvktKey::chuanHoaMaDvkt($d->ma_dich_vu);
             if (!isset($nhom[$k])) {
-                $nhom[$k] = ['ten' => [], 'goi' => []];
+                $nhom[$k] = ['ten' => [], 'goi' => [], 'lech' => []];
             }
             $nhom[$k]['ten'][$d->ten] = true;
             if ($d->goi !== '') {
                 $nhom[$k]['goi'][$d->goi] = true;
+            }
+            // Vat pham co trong bang tra ma gan vao DVKT ngoai danh sach me hop le (prod: thuoc can
+            // quang gan vao chup "khong tiem thuoc can quang").
+            $me = $bangLoai[VatPhamKemDvktKey::khoa($loai, $d->ma, $d->ten)] ?? null;
+            if ($me !== null && !isset($me[$k])) {
+                $nhom[$k]['lech'][$d->ten] = $me;
             }
         }
 
@@ -191,6 +198,14 @@ class VatPhamKemDvktRule
                     '%d gói VTYT (%s) nhưng DVKT mẹ %s chỉ được BHYT thanh toán %s lần.',
                     count($g['goi']), implode(', ', array_keys($g['goi'])), $k, self::so($dvkt[$k]['sl_bhyt'])
                 );
+            } elseif (!empty($g['lech'])) {
+                $me = reset($g['lech']);
+                $lyDo = sprintf(
+                    'DVKT %s %s không thuộc danh sách DVKT mẹ hợp lệ của vật phẩm. Hợp lệ: %s.',
+                    $k, $dvkt[$k]['ten'], self::dsMe($me)
+                );
+                $ra[] = ['key' => $key, 'ten' => self::TEN[$key], 'mo_ta' => self::dsTen(array_keys($g['lech'])) . ' gắn DVKT ' . $k . ': ' . $lyDo];
+                continue;
             } else {
                 continue;
             }

@@ -82,6 +82,51 @@ class VatPhamKemDvktLearnerTest extends TestCase
     }
 
     /** @test */
+    public function bo_dvkt_me_khong_phai_ma_ky_thuat_hoac_trung_ma_vat_pham()
+    {
+        // Prod 29/08-03/09/2026: HIS ghi MA_DICH_VU = 40.642 (chinh ma thuoc Xenetix) tren 20 dong XML2.
+        $this->thuoc('40.642', 'Xenetix 350', 5, 3, '40.642');
+        $this->thuoc('40.642', 'Xenetix 350', 5, 5, '18.0192.0041');
+        $this->thuoc('40.642', 'Xenetix 350', 1, 1, 'N03.01.070');
+        $this->dvkt('18.0192.0041', 'Chụp cắt lớp vi tính lồng ngực có tiêm thuốc cản quang');
+
+        $ma = collect($this->learner()->hoc(0.8, 5)['dong'])->pluck('ma_dvkt')->all();
+
+        $this->assertSame(['18.0192.0041'], $ma);
+    }
+
+    /** @test */
+    public function bo_dvkt_me_khong_dung_thuoc_can_quang()
+    {
+        // Prod: Iopamiro gan vao "CLVT long nguc khong tiem thuoc can quang" 42 lan - hoc vao bang tra
+        // thi R1 bo lot ho so co thuoc can quang ma chi chup khong can quang.
+        $this->thuoc('40.645', 'Iopamiro', 10, 9, '18.0192.0041');
+        $this->thuoc('40.645', 'Iopamiro', 10, 9, '18.0191.0040');
+        $this->dvkt('18.0192.0041', 'Chụp cắt lớp vi tính lồng ngực có tiêm thuốc cản quang (từ 1- 32 dãy)');
+        $this->dvkt('18.0191.0040', 'Chụp cắt lớp vi tính lồng ngực KHÔNG tiêm thuốc cản quang (từ 1- 32 dãy)');
+        $this->dvkt('18.0220.0040', 'Chụp cắt lớp vi tính bụng - tiểu khung thường quy [không có thuốc cản quang]');
+        $this->thuoc('40.645', 'Iopamiro', 1, 1, '18.0220.0040');
+
+        $kq = $this->learner()->hoc(0.8, 5);
+
+        $this->assertSame(['18.0192.0041'], collect($kq['dong'])->pluck('ma_dvkt')->all());
+    }
+
+    /** @test */
+    public function xet_moi_ten_cua_dvkt_me_khi_loai_tru()
+    {
+        // Prod: 18.0219.0040 co ca ten "(PACS)" lan ten "[khong co thuoc can quang]". Ten (PACS) lon
+        // hon theo thu tu chu nen MAX(ten) chon no - chi xet mot ten thi lot.
+        $this->thuoc('40.645', 'Iopamiro', 10, 9, '18.0192.0041');
+        $this->thuoc('40.645', 'Iopamiro', 10, 9, '18.0219.0040');
+        $this->dvkt('18.0192.0041', 'CT lồng ngực có tiêm thuốc cản quang');
+        $this->dvkt('18.0219.0040', 'CT bụng thường quy (PACS)');
+        $this->dvkt('18.0219.0040', 'CT bụng [không có thuốc cản quang]');
+
+        $this->assertSame(['18.0192.0041'], collect($this->learner()->hoc(0.8, 5)['dong'])->pluck('ma_dvkt')->all());
+    }
+
+    /** @test */
     public function moi_dvkt_tung_gan_deu_vao_danh_sach_me()
     {
         $this->thuoc('40.644', 'Omnipaque', 5, 3, '18.0150.0041');

@@ -159,5 +159,14 @@ return [
         'toi_thieu' => 5, // so dong toi thieu, loai ca nhieu kieu 2/3
         // Ung vien cho duyet: vat pham chua vao bang tra, co it nhat 1 lan gan, ty le gan >= gia tri nay.
         'nguong_ung_vien' => 0.5,
+        // Ten DVKT chua mot trong cac cum nay (khong phan biet hoa thuong) thi KHONG duoc lam DVKT me:
+        // thuoc can quang gan vao chup "khong tiem thuoc can quang" la chinh loi can bat, khong phai
+        // cap hop le de hoc. Doi thi phai php artisan config:cache.
+        'dvkt_me_loai_tru_ten' => [
+            'không tiêm thuốc cản quang',
+            'không có thuốc cản quang',
+            'không tiêm chất tương phản',
+            'không có chất tương phản',
+        ],
     ],
 ];

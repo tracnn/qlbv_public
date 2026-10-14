@@ -205,6 +205,50 @@ class VatPhamKemDvktRuleTest extends TestCase
     }
 
     /** @test */
+    public function r2_thuoc_gan_dvkt_khong_thuoc_danh_sach_me_hop_le()
+    {
+        // Prod: thuoc can quang gan vao "CLVT long nguc KHONG tiem thuoc can quang" (18.0191.0040).
+        $loi = $this->kiem(
+            [$this->dv('18.0191.0040', 502400, 1, 'CLVT lồng ngực không tiêm thuốc cản quang')],
+            [$this->th('40.644', 'Omnipaque', 363632, '18.0191.0040')]
+        );
+
+        $this->assertSame(['THUOC_DVKT_ME_KHONG_KHOP'], $this->keys($loi));
+        $this->assertContains('không thuộc danh sách DVKT mẹ hợp lệ', $loi[0]['mo_ta']);
+        $this->assertContains('18.0150.0041', $loi[0]['mo_ta'], 'Neu ra mot vai DVKT me hop le de nguoi sua biet');
+    }
+
+    /** @test */
+    public function r2_vtyt_goi_gan_dvkt_khong_thuoc_danh_sach_me_hop_le()
+    {
+        $loi = $this->kiem([
+            $this->dv('02.0086.0106', 1000000),
+            $this->vt('N08.00.150', 'Buồng tiêm truyền cấy dưới da', 4188000, '02.0086.0106', 'G1'),
+        ]);
+
+        $this->assertSame(['GOI_VTYT_KHONG_KHOP'], $this->keys($loi));
+        $this->assertContains('không thuộc danh sách DVKT mẹ hợp lệ', $loi[0]['mo_ta']);
+    }
+
+    /** @test */
+    public function r2_vat_pham_khong_co_trong_bang_tra_thi_khong_xet_dvkt_me_hop_le()
+    {
+        $this->assertSame([], $this->kiem(
+            [$this->dv('18.0191.0040', 502400)],
+            [$this->th('40.999', 'Thuốc khác', 1000, '18.0191.0040')]
+        ));
+    }
+
+    /** @test */
+    public function r2_dvkt_me_hau_to_gt_van_khop_danh_sach_hop_le()
+    {
+        $this->assertSame([], $this->kiem([
+            $this->dv('12.0448.1187_GT', 1070800),
+            $this->vt('N08.00.150', 'Buồng tiêm truyền cấy dưới da', 4188000, '12.0448.1187_GT', 'G1'),
+        ]));
+    }
+
+    /** @test */
     public function bang_rong_thi_r1_im_lang_r2_van_chay()
     {
         $rule = new VatPhamKemDvktRule([]);

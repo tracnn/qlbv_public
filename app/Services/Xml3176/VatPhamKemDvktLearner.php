@@ -4,6 +4,7 @@ namespace App\Services\Xml3176;
 
 use App\Models\BHYT\Xml3176VatPhamKemDvkt;
 use App\Models\BHYT\Xml3176VpkdUngVien;
+use App\Services\Xml3176\Support\TextNormalizer;
 use App\Services\Xml3176\Support\VatPhamKemDvktKey;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -58,7 +59,20 @@ class VatPhamKemDvktLearner
             $cacCap[$loai] = [$chon, $ungVien, $cap];
         }
 
-        $tenDv = $this->tenDvkt($maGoc);
+        $tenDvDs = $this->tenDvkt($maGoc);
+        $tenDv = array_map(function ($ds) { return max($ds); }, $tenDvDs);
+
+        // Bo cap co DVKT me khong hop le TRUOC khi dung bang tra va ung vien.
+        foreach ($cacCap as $loai => list($chon, $ungVien, $cap)) {
+            foreach ($cap as $khoa => $dsDv) {
+                $maVp = ($chon[$khoa] ?? $ungVien[$khoa])['ma'];
+                foreach (array_keys($dsDv) as $maDv) {
+                    if (!self::laDvktMeHopLe((string) $maDv, $maVp, $tenDvDs[$maDv] ?? [])) {
+                        unset($cacCap[$loai][2][$khoa][$maDv]);
+                    }
+                }
+            }
+        }
 
         foreach ($cacCap as $loai => list($chon, $ungVien, $cap)) {
             foreach ($chon as $khoa => $vp) {
@@ -168,6 +182,33 @@ class VatPhamKemDvktLearner
         });
     }
 
+    /**
+     * DVKT me hop le khi:
+     *  - co dang ma ky thuat NN.NNNN.NNNN (prod 29/08/2026: HIS ghi MA_DICH_VU = 40.642, chinh ma
+     *    thuoc Xenetix, tren 20 dong XML2 - lenh hoc tung coi do la mot DVKT);
+     *  - khac ma vat pham;
+     *  - MOI ten cua ma (string hoac mang) khong mang nghia "khong dung thuoc can quang/chat tuong phan" (prod: Iopamiro gan vao
+     *    "CLVT long nguc khong tiem thuoc can quang" 42 lan - hoc vao thi R1 bo lot dung ca can bat).
+     */
+    public static function laDvktMeHopLe(string $maDv, string $maVatPham, $tenDv): bool
+    {
+        if ($maDv === trim($maVatPham) || !preg_match('/^\d{2}\.\d{4}\.\d{4}/', $maDv)) {
+            return false;
+        }
+        $mauLoai = array_filter(array_map([TextNormalizer::class, 'chuan'],
+            (array) config('xml3176.vat_pham_kem_dvkt.dvkt_me_loai_tru_ten', [])), 'strlen');
+        foreach ((array) $tenDv as $t) {
+            $ten = TextNormalizer::chuan($t);
+            foreach ($mauLoai as $mau) {
+                if ($ten !== '' && mb_strpos($ten, $mau, 0, 'UTF-8') !== false) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
     private static function khoaDong($loai, $ma, $tenKhop, $maDvkt): string
     {
         return implode("\x1F", [$loai, trim((string) $ma), (string) $tenKhop, VatPhamKemDvktKey::chuanHoaMaDvkt($maDvkt)]);
@@ -233,27 +274,32 @@ class VatPhamKemDvktLearner
     }
 
     /** Ten DVKT lay tu chinh dong DVKT trong XML3 (ma_vat_tu rong), khoa theo ma chuan hoa. */
+    /**
+     * MOI ten cua tung ma DVKT (dong DVKT trong XML3), khoa theo ma chuan hoa. Cung mot ma co the
+     * mang nhieu ten (vd 18.0219.0040 "(PACS)" va "[khong co thuoc can quang]"): loai tru phai xet
+     * het, con ten hien thi lay ten lon nhat nhu truoc.
+     *
+     * @return array ma => string[]
+     */
     private function tenDvkt(array $maGoc): array
     {
         $ten = [];
         foreach (array_chunk(array_values(array_unique($maGoc)), 500) as $lo) {
             $rows = DB::table('xml3176_xml3s')
-                ->selectRaw('ma_dich_vu as ma, MAX(ten_dich_vu) as ten')
+                ->select('ma_dich_vu as ma', 'ten_dich_vu as ten')
                 ->where(function ($q) {
                     $q->whereNull('ma_vat_tu')->orWhere('ma_vat_tu', '');
                 })
                 ->whereIn('ma_dich_vu', $lo)
-                ->groupBy('ma_dich_vu')
+                ->whereNotNull('ten_dich_vu')->where('ten_dich_vu', '<>', '')
+                ->distinct()
                 ->get();
             foreach ($rows as $r) {
-                $k = VatPhamKemDvktKey::chuanHoaMaDvkt($r->ma);
-                if (!isset($ten[$k]) && $r->ten !== null && $r->ten !== '') {
-                    $ten[$k] = $r->ten;
-                }
+                $ten[VatPhamKemDvktKey::chuanHoaMaDvkt($r->ma)][$r->ten] = true;
             }
         }
 
-        return $ten;
+        return array_map('array_keys', $ten);
     }
 
     /**
