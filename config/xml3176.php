@@ -168,5 +168,10 @@ return [
             'không tiêm chất tương phản',
             'không có chất tương phản',
         ],
+        // R3: DVKT ma >= nguong ho so BHYT tra deu kem vat pham cung nhom (va >= toi_thieu ho so) thi bat
+        // buoc kem vat pham. Do 14/10/2026: CLVT co can quang 98-99% (vao), MRI co tiem chat tuong phan
+        // ~37% (tu loai - gia nhieu kha nang da bao gom thuoc).
+        'dvkt_bat_buoc_nguong' => 0.9,
+        'dvkt_bat_buoc_toi_thieu' => 20,
     ],
 ];
