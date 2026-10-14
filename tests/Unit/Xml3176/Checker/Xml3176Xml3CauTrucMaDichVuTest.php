@@ -69,9 +69,18 @@ class Xml3176Xml3CauTrucMaDichVuTest extends TestCase
     }
 
     /** @test */
-    public function hau_to_la_bi_bao_con_tb_va_gt_thi_khong()
+    public function hau_to_sai_dang_bi_bao_con_hau_to_hai_chu_cai_thi_khong()
     {
-        $this->assertContains('XML3_MA_DICH_VU_HAU_TO_LA',
+        // Moi hau to _XX (hai chu cai) deu hop le: danh muc BHXH co ca _GT, _BS; prod 01-14/10
+        // co 69 dong _BS bi bao oan khi chi chap nhan _TB/_GT. Chi bat hau to SAI DANG.
+        foreach (['02.0261.0319_1', '02.0261.0319_ABC', '02.0261.0319_', '02.0261.0319_gt'] as $ma) {
+            $this->assertContains('XML3_MA_DICH_VU_HAU_TO_LA', $this->codes(['ma_dich_vu' => $ma]), $ma);
+        }
+
+        $this->assertNotContains('XML3_MA_DICH_VU_HAU_TO_LA',
+            $this->codes(['ma_dich_vu' => '09.9000.1894_BS']));
+
+        $this->assertNotContains('XML3_MA_DICH_VU_HAU_TO_LA',
             $this->codes(['ma_dich_vu' => '02.0261.0319_XX']));
 
         $this->assertNotContains('XML3_MA_DICH_VU_HAU_TO_LA',

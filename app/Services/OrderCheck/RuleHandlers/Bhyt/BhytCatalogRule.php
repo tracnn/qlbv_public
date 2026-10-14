@@ -63,6 +63,17 @@ abstract class BhytCatalogRule implements RuleHandler
      */
     abstract protected function loaiDichVu();
 
+    /**
+     * Ma tra tiep khi ma nguyen van khong co trong danh muc. Mac dinh khong co; quy tac dich vu
+     * bo hau to _XX (danh muc BHXH chi liet ke ma goc cho _TB).
+     *
+     * @return string[]
+     */
+    protected function maDuPhong($ma)
+    {
+        return [];
+    }
+
     protected function trongPhamViLoai($loai)
     {
         $ds = $this->loaiDichVu();
@@ -125,10 +136,15 @@ abstract class BhytCatalogRule implements RuleHandler
             return [];
         }
 
-        // Mot truy van cho ca phieu, khong tra tung dong.
-        $this->danhMuc->nap(array_map(function ($d) {
-            return $d[2];
-        }, $dong));
+        // Mot truy van cho ca phieu, khong tra tung dong - gom ca ma du phong.
+        $canNap = [];
+        foreach ($dong as $d) {
+            $canNap[] = $d[2];
+            foreach ($this->maDuPhong($d[2]) as $m) {
+                $canNap[] = $m;
+            }
+        }
+        $this->danhMuc->nap($canNap);
 
         $vi = [];
 
@@ -137,6 +153,12 @@ abstract class BhytCatalogRule implements RuleHandler
 
             if ($this->danhMuc->coTrongDanhMuc($ma, $ngay, $c->maCskcb)) {
                 continue;
+            }
+
+            foreach ($this->maDuPhong($ma) as $m) {
+                if ($this->danhMuc->coTrongDanhMuc($m, $ngay, $c->maCskcb)) {
+                    continue 2;
+                }
             }
 
             $vi[] = new Violation(

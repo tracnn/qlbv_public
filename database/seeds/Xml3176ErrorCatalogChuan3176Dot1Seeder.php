@@ -24,7 +24,7 @@ class Xml3176ErrorCatalogChuan3176Dot1Seeder extends Seeder
             // Nhom A - cau truc ma dich vu
             ['XML3', 'XML3_MA_DICH_VU_TB_CO_DON_GIA', 'DVKT không thực hiện được nhưng vẫn có đơn giá', 'Mã có hậu tố _TB thì DON_GIA_BH và DON_GIA_BV phải bằng 0 (khoản 3 Điều 7 TT 39/2018/TT-BYT)'],
             ['XML3', 'XML3_MA_DICH_VU_CHUA_CO_GIA_CO_DON_GIA_BH', 'DVKT chưa có mức giá nhưng vẫn có đơn giá BH', 'Mã kết thúc bằng 0000 thì DON_GIA_BH phải bằng 0'],
-            ['XML3', 'XML3_MA_DICH_VU_HAU_TO_LA', 'Hậu tố mã dịch vụ không hợp lệ', 'Chuẩn chỉ quy định hai hậu tố _TB và _GT'],
+            ['XML3', 'XML3_MA_DICH_VU_HAU_TO_LA', 'Hậu tố mã dịch vụ không hợp lệ', 'Hậu tố phải gồm đúng hai chữ cái in hoa (_TB, _GT, _BS...)'],
             ['XML3', 'XML3_MA_DICH_VU_VAN_CHUYEN_THIEU_XANG_DAU', 'Vận chuyển người bệnh nhưng thiếu mã xăng dầu', 'Mã VC.XXXXX phải kèm MA_XANG_DAU để tính chi phí vận chuyển'],
             ['XML3', 'XML3_MA_DICH_VU_VAN_CHUYEN_CSKCB_NOT_FOUND', 'Mã cơ sở nơi chuyển đến không có trong danh mục', 'XXXXX trong VC.XXXXX phải là mã cơ sở KBCB hợp lệ'],
             ['XML3', 'XML3_MA_DICH_VU_CHUYEN_MAU_CSKCB_NOT_FOUND', 'Mã cơ sở nơi thực hiện cận lâm sàng không có trong danh mục', 'WWWWW trong XX.YYYY.ZZZZ.K.WWWWW phải là mã cơ sở KBCB hợp lệ (TT 09/2019/TT-BYT)'],

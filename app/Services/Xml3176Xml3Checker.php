@@ -12,6 +12,7 @@ use App\Services\Xml3176\Support\Xml3176DateHelper;
 use App\Services\Xml3176\Support\TyLeComparator;
 use App\Services\Xml3176\Support\ServiceOverlapChecker;
 use App\Services\Xml3176\Support\MaDvktStructure;
+use App\Services\Xml3176\Support\MaDvktMatcher;
 use App\Services\Xml3176\Support\MaKhoaLienKhoa;
 use App\Services\Xml3176\Support\TienTeCalculator;
 use App\Services\Xml3176\Support\TextNormalizer;
@@ -967,7 +968,22 @@ class Xml3176Xml3Checker
 
             // Danh muc DVKT cap theo CO SO; dong khong gan ma co so dung chung.
             $maCskcb = $data->Xml3176Xml1 ? $data->Xml3176Xml1->ma_cskcb : null;
-            $serviceExists = ServiceCatalog::cuaCoSo($maCskcb)->where('ma_dich_vu', $data->ma_dich_vu)->exists();
+
+            // Ma co hau to _XX (vd _TB): tra NGUYEN VAN truoc - ma _GT co dong rieng trong danh
+            // muc (gia, ten gay te) thi phai so theo dong do. Khong co thi bo hau to, tra MA GOC.
+            // Do 01-13/10/2026: 438 dong _TB bi bao "khong ton tai" vi danh muc BHXH chi liet ke
+            // ma goc. Khop qua ma goc thi bo qua so gia va ten: ten co phan hau to hop le
+            // ("[gay te]", "[Ap dung truong hop that bai]") va _TB da co quy tac don gia rieng.
+            $maTra = $data->ma_dich_vu;
+            $theoMaGoc = false;
+            $serviceExists = ServiceCatalog::cuaCoSo($maCskcb)->where('ma_dich_vu', $maTra)->exists();
+            $maGoc = MaDvktMatcher::maGoc($data->ma_dich_vu);
+            if (!$serviceExists && $maGoc !== '' && $maGoc !== trim((string) $data->ma_dich_vu)
+                && ServiceCatalog::cuaCoSo($maCskcb)->where('ma_dich_vu', $maGoc)->exists()) {
+                $maTra = $maGoc;
+                $theoMaGoc = true;
+                $serviceExists = true;
+            }
 
             if (!$serviceExists) {
                 $errorCode = $this->generateErrorCode('INVALID_MA_DICH_VU');
@@ -980,7 +996,7 @@ class Xml3176Xml3Checker
             } else {
                 $ngayVao = \DateTime::createFromFormat('YmdHi', $data->Xml3176Xml1->ngay_vao)->format('Ymd');
 
-                $validServiceExists = ServiceCatalog::cuaCoSo($maCskcb)->where('ma_dich_vu', $data->ma_dich_vu)
+                $validServiceExists = ServiceCatalog::cuaCoSo($maCskcb)->where('ma_dich_vu', $maTra)
                 ->where('tu_ngay', '<=', $ngayVao)
                 ->where(function ($query) use ($ngayVao) {
                     $query->where('den_ngay', '>=', $ngayVao)
@@ -993,9 +1009,11 @@ class Xml3176Xml3Checker
                         'error_code' => $errorCode,
                         'error_name' => 'Không tìm thấy dịch vụ hợp lệ',
                         'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
-                        'description' => 'Không tìm thấy dịch vụ hợp lệ cho mã dịch vụ: ' . $data->ma_dich_vu . ' với ngày vào: ' . strtodatetime($data->Xml3176Xml1->ngay_vao)
+                        'description' => 'Không tìm thấy dịch vụ hợp lệ cho mã dịch vụ: ' . $data->ma_dich_vu
+                            . ($theoMaGoc ? ' (đối chiếu theo mã gốc ' . $maTra . ')' : '')
+                            . ' với ngày vào: ' . strtodatetime($data->Xml3176Xml1->ngay_vao)
                     ]);
-                } else {
+                } elseif (!$theoMaGoc) {
                     // Kiểm tra giá: Nếu tất cả các don_gia đều nhỏ hơn $data->don_gia_bh thì báo lỗi
                     $allPricesLower = $validServiceExists->every(function ($service) use ($data) {
                         return $service->don_gia < $data->don_gia_bh;
@@ -1150,16 +1168,18 @@ class Xml3176Xml3Checker
             ]);
         }
 
-        // Chuan chi dinh nghia hai hau to: '_TB' va '_GT' (gay te).
+        // Hau to hop le la '_XX' - hai chu cai in hoa (_TB, _GT, _BS...). Danh muc BHXH co ca
+        // _BS: chi chap nhan _TB/_GT da bao oan 69 dong _BS (01-14/10/2026). Chi bat hau to
+        // SAI DANG: rong ('..._'), so, mot hoac ba chu cai tro len, chu thuong.
         $hauTo = MaDvktStructure::hauTo($ma);
-        if ($hauTo !== '' && !in_array($hauTo, ['TB', 'GT'], true)) {
+        if (strpos($ma, '_') !== false && !preg_match('/^[A-Z]{2}$/', $hauTo)) {
             $errorCode = $this->generateErrorCode('MA_DICH_VU_HAU_TO_LA');
             $errors->push((object)[
                 'error_code' => $errorCode,
                 'error_name' => 'Hậu tố mã dịch vụ không hợp lệ',
                 'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
                 'description' => 'Mã ' . $ma . ' có hậu tố _' . $hauTo
-                    . '. Chuẩn chỉ quy định hai hậu tố: _TB và _GT',
+                    . '. Hậu tố hợp lệ phải gồm đúng hai chữ cái in hoa (vd _TB, _GT, _BS)',
             ]);
         }
 

@@ -48,7 +48,7 @@ class Xml3176DanhMucCoSoTest extends TestCase
         // thay vi lot im lang.
         $canCo = [
             'Xml3176Xml2Checker' => 5,
-            'Xml3176Xml3Checker' => 3,
+            'Xml3176Xml3Checker' => 4,   // +1 (14/10/2026): tra ma goc khi ma DVKT co hau to _XX
             'Xml3176Xml4Checker' => 1,
         ];
 
