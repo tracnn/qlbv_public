@@ -3,6 +3,7 @@
 namespace App\Services\Xml3176;
 
 use App\Jobs\HocVatPhamKemDvktJob;
+use App\Models\BHYT\Xml3176VpkdDvktBatBuoc;
 use App\Models\BHYT\Xml3176VpkdLanHoc;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -60,9 +61,17 @@ class VatPhamKemDvktHocLaiService
         try {
             $hoc = $this->learner->hoc($nguong, $toiThieu, $tuNgay, (float) config('xml3176.vat_pham_kem_dvkt.nguong_ung_vien', 0.5));
 
-            $ketQua = DB::transaction(function () use ($hoc, $lan) {
+            $ketQua = DB::transaction(function () use ($hoc, $lan, $tuNgay) {
                 $g = $this->learner->ghi($hoc['dong']);
                 $g['so_ung_vien'] = $this->learner->ghiUngVien($hoc['ung_vien'], $lan->id);
+                // R3: hoc tu bang tra VUA ghi, cung giao dich.
+                $bb = $this->learner->hocDvktBatBuoc(
+                    (float) config('xml3176.vat_pham_kem_dvkt.dvkt_bat_buoc_nguong', 0.9),
+                    (int) config('xml3176.vat_pham_kem_dvkt.dvkt_bat_buoc_toi_thieu', 20),
+                    $tuNgay
+                );
+                $g['dvkt_bat_buoc'] = $this->learner->ghiDvktBatBuoc($bb);
+                $g['so_dvkt_bat_buoc'] = Xml3176VpkdDvktBatBuoc::where('hieu_luc', true)->count();
 
                 return $g;
             });
@@ -127,9 +136,9 @@ class VatPhamKemDvktHocLaiService
                 break;
             case Xml3176VpkdLanHoc::XONG:
                 $nhan = sprintf(
-                    'Xong %s bởi %s: thêm %d, cập nhật %d, tắt %d, bật lại %d, ứng viên %d',
+                    'Xong %s bởi %s: thêm %d, cập nhật %d, tắt %d, bật lại %d, ứng viên %d, DVKT bắt buộc %d',
                     optional($lan->xong_luc)->format('d/m H:i'), $nguoi,
-                    $k['them'] ?? 0, $k['cap_nhat'] ?? 0, $k['tat'] ?? 0, $k['bat_lai'] ?? 0, $k['so_ung_vien'] ?? 0
+                    $k['them'] ?? 0, $k['cap_nhat'] ?? 0, $k['tat'] ?? 0, $k['bat_lai'] ?? 0, $k['so_ung_vien'] ?? 0, $k['so_dvkt_bat_buoc'] ?? 0
                 );
                 break;
             default:

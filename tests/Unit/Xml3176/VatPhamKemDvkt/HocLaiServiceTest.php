@@ -29,6 +29,8 @@ class HocLaiServiceTest extends TestCase
             '2026_10_14_090000_them_nguoi_sua_vao_xml3176_vat_pham_kem_dvkt.php',
             '2026_10_14_090100_create_xml3176_vpkd_lan_hoc_table.php',
             '2026_10_14_090200_create_xml3176_vpkd_ung_vien_table.php',
+            '2026_01_09_161708_create_xml3176_error_catalogs_table.php',
+            '2026_10_15_090000_create_xml3176_vpkd_dvkt_bat_buoc_table.php',
         ]);
         // 10 dong, 9 gan -> vao bang tra; 10 dong, 6 gan -> ung vien
         for ($i = 0; $i < 10; $i++) {
@@ -135,6 +137,28 @@ class HocLaiServiceTest extends TestCase
         $this->assertSame(Xml3176VpkdLanHoc::LOI, $lan->fresh()->trang_thai);
         $this->assertStringStartsWith('Lỗi khi học lại — xem log ứng dụng', $lan->fresh()->loi);
         $this->assertSame(0, Xml3176VatPhamKemDvkt::count(), 'Giao dich phai rollback ca bang tra');
+        $this->assertSame(0, \App\Models\BHYT\Xml3176VpkdDvktBatBuoc::count());
+    }
+
+    /** @test */
+    public function luot_hoc_ghi_dvkt_bat_buoc_vao_ket_qua_va_nhan()
+    {
+        config(['xml3176.vat_pham_kem_dvkt.dvkt_bat_buoc_toi_thieu' => 1]);
+        // setUp: 10 ho so "Buong" gan 12.0448.1187 (9 lien ket) - them dong DVKT BHYT tra cho 10 ho so do
+        for ($i = 0; $i < 10; $i++) {
+            \Illuminate\Support\Facades\DB::table('xml3176_xml3s')->insert(['ma_lk' => 'A' . $i, 'stt' => 3,
+                'ma_vat_tu' => '', 'ma_dich_vu' => '12.0448.1187', 'ten_dich_vu' => 'Đặt buồng', 't_bhtt' => 1000,
+                'so_luong' => 1, 'ngay_yl' => '202609010800']);
+        }
+        $lan = Xml3176VpkdLanHoc::create(['user_id' => 7, 'trang_thai' => Xml3176VpkdLanHoc::CHO]);
+
+        (new HocVatPhamKemDvktJob($lan->id))->handle();
+
+        $lan = $lan->fresh();
+        $this->assertSame(1, $lan->ket_qua['so_dvkt_bat_buoc']);
+        $this->assertSame(1, $lan->ket_qua['dvkt_bat_buoc']['them']);
+        $this->assertContains(', DVKT bắt buộc 1', $this->sv()->moTa($lan)['nhan']);
+        $this->assertSame('12.0448.1187', \App\Models\BHYT\Xml3176VpkdDvktBatBuoc::first()->ma_dvkt);
     }
 
     /** @test */
@@ -146,7 +170,7 @@ class HocLaiServiceTest extends TestCase
         $m = $this->sv()->moTa($this->sv()->ganNhat());
 
         $this->assertFalse($m['dang_chay']);
-        $this->assertContains('bởi tracnn: thêm 1, cập nhật 0, tắt 0, bật lại 0, ứng viên 1', $m['nhan']);
+        $this->assertContains('bởi tracnn: thêm 1, cập nhật 0, tắt 0, bật lại 0, ứng viên 1, DVKT bắt buộc 0', $m['nhan']);
         $this->assertNull($this->sv()->moTa(null));
     }
 

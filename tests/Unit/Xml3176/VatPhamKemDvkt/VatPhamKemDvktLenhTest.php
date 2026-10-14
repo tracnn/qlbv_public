@@ -28,6 +28,8 @@ class VatPhamKemDvktLenhTest extends TestCase
             '2026_10_14_090000_them_nguoi_sua_vao_xml3176_vat_pham_kem_dvkt.php',
             '2026_10_14_090100_create_xml3176_vpkd_lan_hoc_table.php',
             '2026_10_14_090200_create_xml3176_vpkd_ung_vien_table.php',
+            '2026_01_09_161708_create_xml3176_error_catalogs_table.php',
+            '2026_10_15_090000_create_xml3176_vpkd_dvkt_bat_buoc_table.php',
         ]);
         for ($i = 0; $i < 10; $i++) {
             DB::table('xml3176_xml3s')->insert([

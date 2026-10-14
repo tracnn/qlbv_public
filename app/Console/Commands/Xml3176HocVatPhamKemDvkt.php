@@ -65,6 +65,7 @@ class Xml3176HocVatPhamKemDvkt extends Command
             }
             $this->info("Ghi: thêm {$k['them']}, cập nhật {$k['cap_nhat']}, tắt {$k['tat']}, bật lại {$k['bat_lai']}");
             $this->info("Ứng viên: {$k['so_ung_vien']}");
+            $this->info('DVKT bắt buộc kèm vật phẩm: ' . ($k['so_dvkt_bat_buoc'] ?? 0));
             $dongXuat = Xml3176VatPhamKemDvkt::orderBy('loai')->orderBy('ma_vat_pham')->orderBy('ma_dvkt')->get()->all();
         }
 
