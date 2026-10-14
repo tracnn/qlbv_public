@@ -37,6 +37,8 @@ Mọi thao tác trên màn hình ghi người và thời điểm sửa cuối (c
 
 Từ 14/10/2026 lệnh học **chỉ học từ dòng quỹ BHYT trả** (`t_bhtt > 0`; bỏ hồ sơ dịch vụ/BN tự trả) và **không nhận** DVKT mẹ không phải mã kỹ thuật (vd HIS ghi mã thuốc `40.642` vào MA_DICH_VU) hoặc có tên chứa "không tiêm/không có thuốc cản quang", "không tiêm/không có chất tương phản" (sửa danh sách ở `config/xml3176.php` → `vat_pham_kem_dvkt.dvkt_me_loai_tru_ten`). Sau khi cập nhật mã, bấm **Học lại** một lần để các dòng HOC sai tự tắt. Dòng có liên kết (MA_DICH_VU/GOI_VTYT) gắn vào DVKT ngoài danh sách DVKT mẹ hợp lệ của vật phẩm cũng bị báo `XMLComplete_THUOC_DVKT_ME_KHONG_KHOP` / `XMLComplete_GOI_VTYT_KHONG_KHOP` (vd thuốc cản quang gắn vào chụp không tiêm cản quang).
 
+**R3 — DVKT bắt buộc kèm vật phẩm (từ 15/10/2026).** Mỗi lượt Học lại sinh thêm danh sách DVKT mà ≥ 90% hồ sơ BHYT (≥ 20 hồ sơ) đều kèm vật phẩm cùng nhóm (cấu hình `vat_pham_kem_dvkt.dvkt_bat_buoc_nguong` / `_toi_thieu`). Hồ sơ có DVKT này được BHYT trả mà không có vật phẩm đi kèm → cảnh báo `XMLComplete_DVKT_THIEU_VAT_PHAM_KEM` (không chặn gửi; mã lỗi tự nạp khi migrate). Quản lý ở tab **DVKT bắt buộc kèm vật phẩm**. Sau khi cập nhật mã: bấm **Học lại** một lần.
+
 Sau khi `update.bat` chạy, kiểm `php artisan migrate:status | findstr "vpkd them_nguoi_sua_vao_xml3176"` phải thấy đúng 3 dòng, cả 3 đều `Y`: 2 migration `create_xml3176_vpkd_*` và `them_nguoi_sua_vao_xml3176_vat_pham_kem_dvkt`.
 
 ---
