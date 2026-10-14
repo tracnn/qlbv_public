@@ -25,18 +25,21 @@ class VatPhamKemDvktLookup
             // khong duoc nuot roi cache bang rong lam tat quy tac am tham.
             $dong = Schema::hasTable('xml3176_vat_pham_kem_dvkt')
                 ? Xml3176VatPhamKemDvkt::where('hieu_luc', true)
-                    ->get(['loai', 'ma_vat_pham', 'ten_khop', 'ma_dvkt', 'ten_dvkt'])
+                    ->get(['loai', 'ma_vat_pham', 'ten_vat_pham', 'ten_khop', 'ma_dvkt', 'ten_dvkt'])
                 : [];
-            self::$bang = self::tuDong($dong);
+            $batBuoc = Schema::hasTable('xml3176_vpkd_dvkt_bat_buoc')
+                ? \App\Models\BHYT\Xml3176VpkdDvktBatBuoc::where('hieu_luc', true)->get(['ma_dvkt', 'ten_dvkt'])
+                : [];
+            self::$bang = self::tuDong($dong, $batBuoc);
             self::$napLuc = time();
         }
 
         return self::$bang;
     }
 
-    public static function tuDong($dong): array
+    public static function tuDong($dong, $batBuoc = []): array
     {
-        $bang = ['VTYT' => [], 'THUOC' => []];
+        $bang = ['VTYT' => [], 'THUOC' => [], 'DVKT_BAT_BUOC' => [], 'TEN_VAT_PHAM' => []];
         foreach ($dong as $d) {
             $d = is_array($d) ? (object) $d : $d;
             if (isset($d->hieu_luc) && !$d->hieu_luc) {
@@ -44,6 +47,14 @@ class VatPhamKemDvktLookup
             }
             $khoa = trim((string) $d->ma_vat_pham) . '|' . (string) $d->ten_khop;
             $bang[$d->loai][$khoa][VatPhamKemDvktKey::chuanHoaMaDvkt($d->ma_dvkt)] = (string) ($d->ten_dvkt ?? '');
+            $bang['TEN_VAT_PHAM'][$d->loai . '|' . $khoa] = (string) ($d->ten_vat_pham ?? $d->ma_vat_pham);
+        }
+        foreach ($batBuoc as $b) {
+            $b = is_array($b) ? (object) $b : $b;
+            if (isset($b->hieu_luc) && !$b->hieu_luc) {
+                continue;
+            }
+            $bang['DVKT_BAT_BUOC'][VatPhamKemDvktKey::chuanHoaMaDvkt($b->ma_dvkt)] = (string) ($b->ten_dvkt ?? '');
         }
 
         return $bang;

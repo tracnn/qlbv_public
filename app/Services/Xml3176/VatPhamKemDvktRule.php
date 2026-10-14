@@ -24,6 +24,7 @@ class VatPhamKemDvktRule
         'THUOC_KHONG_CO_DVKT_ME' => 'Thuốc thanh toán ngoài giá không có DVKT mẹ được BHYT thanh toán',
         'GOI_VTYT_KHONG_KHOP' => 'Gói VTYT không khớp DVKT mẹ được BHYT thanh toán',
         'THUOC_DVKT_ME_KHONG_KHOP' => 'Thuốc gắn DVKT mẹ không được BHYT thanh toán',
+        'DVKT_THIEU_VAT_PHAM_KEM' => 'DVKT bắt buộc kèm vật phẩm nhưng không có vật phẩm',
     ];
 
     /** @var array ['VTYT' => [khoa => [ma_dvkt => ten_dvkt]], 'THUOC' => [...]] */
@@ -58,7 +59,8 @@ class VatPhamKemDvktRule
             $this->r1($vtyt, 'VTYT', $dvkt),
             $this->r1($thuoc, 'THUOC', $dvkt),
             $this->r2($vtyt, 'VTYT', $dvkt),
-            $this->r2($thuoc, 'THUOC', $dvkt)
+            $this->r2($thuoc, 'THUOC', $dvkt),
+            $this->r3($vtyt, $thuoc, $dvkt)
         );
     }
 
@@ -87,12 +89,16 @@ class VatPhamKemDvktRule
                 continue;
             }
             if (!isset($dv[$k])) {
-                $dv[$k] = ['bhtt' => 0.0, 'sl_bhyt' => 0.0, 'ten' => (string) ($r->ten_dich_vu ?? '')];
+                $dv[$k] = ['bhtt' => 0.0, 'sl_bhyt' => 0.0, 'ten' => (string) ($r->ten_dich_vu ?? ''), 'ngay' => ''];
             }
             $bhtt = (float) ($r->t_bhtt ?? 0);
             $dv[$k]['bhtt'] += $bhtt;
             if ($bhtt > 0) {
                 $dv[$k]['sl_bhyt'] += (float) ($r->so_luong ?? 0);
+                $ngay = (string) ($r->ngay_yl ?? '');
+                if ($ngay !== '' && ($dv[$k]['ngay'] === '' || strcmp($ngay, $dv[$k]['ngay']) < 0)) {
+                    $dv[$k]['ngay'] = $ngay;
+                }
             }
         }
 
@@ -211,6 +217,72 @@ class VatPhamKemDvktRule
             }
 
             $ra[] = ['key' => $key, 'ten' => self::TEN[$key], 'mo_ta' => self::dsTen(array_keys($g['ten'])) . ' gắn DVKT ' . $k . ': ' . $lyDo];
+        }
+
+        return $ra;
+    }
+
+    /**
+     * R3: DVKT trong danh sach bat buoc duoc BHYT tra ma ho so khong co vat pham cung nhom duoc BHYT tra.
+     * Nhom(D) = vat pham co D trong danh sach me (bang tra hieu luc).
+     */
+    private function r3(array $vtyt, array $thuoc, array $dvkt): array
+    {
+        $batBuoc = $this->bang['DVKT_BAT_BUOC'] ?? [];
+        if (empty($batBuoc)) {
+            return [];
+        }
+        $nhom = [];
+        foreach (['VTYT', 'THUOC'] as $loai) {
+            foreach ($this->bang[$loai] ?? [] as $khoa => $me) {
+                foreach ($me as $dv => $_) {
+                    $nhom[$dv][$loai . '|' . $khoa] = true;
+                }
+            }
+        }
+        $co = [];
+        foreach (['VTYT' => $vtyt, 'THUOC' => $thuoc] as $loai => $ds) {
+            foreach ($ds as $d) {
+                $k = $loai . '|' . VatPhamKemDvktKey::khoa($loai, $d->ma, $d->ten);
+                $co[$k]['bhtt'] = ($co[$k]['bhtt'] ?? 0.0) + $d->t_bhtt;
+                $co[$k]['ten'] = $d->ten;
+            }
+        }
+
+        $key = 'DVKT_THIEU_VAT_PHAM_KEM';
+        $ra = [];
+        foreach ($batBuoc as $dv => $tenBb) {
+            if (!isset($dvkt[$dv]) || $dvkt[$dv]['bhtt'] <= 0 || empty($nhom[$dv])) {
+                continue;
+            }
+            $tra = false;
+            $khongTra = [];
+            foreach ($nhom[$dv] as $k => $_) {
+                if (!isset($co[$k])) {
+                    continue;
+                }
+                if ($co[$k]['bhtt'] > 0) {
+                    $tra = true;
+                    break;
+                }
+                $khongTra[$co[$k]['ten']] = true;
+            }
+            if ($tra) {
+                continue;
+            }
+            $dau = sprintf('%s %s BHYT trả %s, YL %s: ', $dv, $dvkt[$dv]['ten'] !== '' ? $dvkt[$dv]['ten'] : $tenBb,
+                self::tien($dvkt[$dv]['bhtt']), self::ngay($dvkt[$dv]['ngay']));
+            if (!empty($khongTra)) {
+                $moTa = $dau . 'có ' . self::dsTen(array_keys($khongTra)) . ' nhưng quỹ BHYT không thanh toán vật phẩm.';
+            } else {
+                $ten = [];
+                foreach (array_keys($nhom[$dv]) as $k) {
+                    $ten[$this->bang['TEN_VAT_PHAM'][$k] ?? $k] = true;
+                }
+                $moTa = $dau . 'hồ sơ không có vật phẩm đi kèm (cần một trong: ' . self::dsTen(array_keys($ten))
+                    . '). Kiểm tra kê đúng mã DVKT (vd có/không cản quang).';
+            }
+            $ra[] = ['key' => $key, 'ten' => self::TEN[$key], 'mo_ta' => $moTa];
         }
 
         return $ra;
