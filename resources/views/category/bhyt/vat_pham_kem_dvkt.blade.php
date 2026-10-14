@@ -66,6 +66,7 @@
                 <select id="loc-bb-nguon" class="form-control input-sm"><option value="">Nguồn: tất cả</option><option>HOC</option><option>TAY</option></select>
                 <select id="loc-bb-hieu-luc" class="form-control input-sm"><option value="">Hiệu lực: tất cả</option><option value="1">Đang dùng</option><option value="0">Đã tắt</option></select>
                 <select id="bb-them-ma" class="form-control input-sm" style="width:320px"><option></option></select>
+                <input id="bb-them-ghi-chu" class="form-control input-sm" maxlength="1024" placeholder="Ghi chú (tuỳ chọn)">
                 <button id="bb-them" class="btn btn-success btn-sm"><i class="fa fa-plus"></i> Thêm DVKT tay</button>
             </div>
             <table id="vpkd-bat-buoc" class="table display table-hover nowrap" width="100%">
@@ -296,8 +297,8 @@
         var btn = $(this), ma = $('#bb-them-ma').val();
         if (!ma) { toastr.warning('Chọn mã DVKT.'); return; }
         btn.prop('disabled', true);
-        $.post("{{ route('category-bhyt.vat-pham-kem-dvkt.bat-buoc-them') }}", { _token: TOKEN, ma_dvkt: ma })
-            .done(function (r) { toastr.success(r.message); $('#bb-them-ma').val(null).trigger('change'); batBuoc.ajax.reload(null, false); })
+        $.post("{{ route('category-bhyt.vat-pham-kem-dvkt.bat-buoc-them') }}", { _token: TOKEN, ma_dvkt: ma, ghi_chu: $('#bb-them-ghi-chu').val() })
+            .done(function (r) { toastr.success(r.message); $('#bb-them-ma').val(null).trigger('change'); $('#bb-them-ghi-chu').val(''); batBuoc.ajax.reload(null, false); })
             .fail(baoLoi)
             .always(function () { btn.prop('disabled', false); });
     });

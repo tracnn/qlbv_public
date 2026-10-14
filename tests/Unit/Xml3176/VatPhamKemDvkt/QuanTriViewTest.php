@@ -62,5 +62,6 @@ class QuanTriViewTest extends TestCase
         $this->assertContains('vpkd-tab-bat-buoc', $src);
         $this->assertContains('DVKT bắt buộc kèm vật phẩm', $src);
         $this->assertContains('vpkd-bb-hieu-luc', $src);
+        $this->assertContains('bb-them-ghi-chu', $src);
     }
 }

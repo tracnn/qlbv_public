@@ -270,17 +270,22 @@ class VatPhamKemDvktRule
             if ($tra) {
                 continue;
             }
-            $dau = sprintf('%s %s BHYT trả %s, YL %s: ', $dv, $dvkt[$dv]['ten'] !== '' ? $dvkt[$dv]['ten'] : $tenBb,
+            $tenDv = $dvkt[$dv]['ten'] !== '' ? $dvkt[$dv]['ten'] : $tenBb;
+            $dau = sprintf('%s %s BHYT trả %s, YL %s: ', $dv, $tenDv,
                 self::tien($dvkt[$dv]['bhtt']), self::ngay($dvkt[$dv]['ngay']));
             if (!empty($khongTra)) {
                 $moTa = $dau . 'có ' . self::dsTen(array_keys($khongTra)) . ' nhưng quỹ BHYT không thanh toán vật phẩm.';
             } else {
+                $tenChuan = mb_strtolower((string) $tenDv, 'UTF-8');
+                $goiY = (mb_strpos($tenChuan, 'cản quang') !== false || mb_strpos($tenChuan, 'tương phản') !== false)
+                    ? ' Kiểm tra kê đúng mã DVKT (vd có/không cản quang).'
+                    : ' Kiểm tra kê đúng mã DVKT hoặc bổ sung vật phẩm đi kèm.';
                 $ten = [];
                 foreach (array_keys($nhom[$dv]) as $k) {
                     $ten[$this->bang['TEN_VAT_PHAM'][$k] ?? $k] = true;
                 }
                 $moTa = $dau . 'hồ sơ không có vật phẩm đi kèm (cần một trong: ' . self::dsTen(array_keys($ten))
-                    . '). Kiểm tra kê đúng mã DVKT (vd có/không cản quang).';
+                    . ').' . $goiY;
             }
             $ra[] = ['key' => $key, 'ten' => self::TEN[$key], 'mo_ta' => $moTa];
         }

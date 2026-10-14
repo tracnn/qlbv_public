@@ -16,9 +16,9 @@ class DvktBatBuocRuleTest extends TestCase
         ], array_map(function ($ma, $ten) { return ['ma_dvkt' => $ma, 'ten_dvkt' => $ten]; }, array_keys($batBuoc), $batBuoc)));
     }
 
-    private function dv($ma, $bhtt)
+    private function dv($ma, $bhtt, $ten = 'CLVT tầng trên ổ bụng')
     {
-        return (object) ['ma_dich_vu' => $ma, 'ma_vat_tu' => '', 'ten_dich_vu' => 'CLVT tầng trên ổ bụng', 't_bhtt' => $bhtt, 'so_luong' => 1, 'ngay_yl' => '202610070900'];
+        return (object) ['ma_dich_vu' => $ma, 'ma_vat_tu' => '', 'ten_dich_vu' => $ten, 't_bhtt' => $bhtt, 'so_luong' => 1, 'ngay_yl' => '202610070900'];
     }
 
     private function th($ma, $ten, $bhtt)
@@ -47,6 +47,18 @@ class DvktBatBuocRuleTest extends TestCase
         $this->assertContains('Omnipaque', $loi[0]['mo_ta']);
         $this->assertContains('522.960đ', $loi[0]['mo_ta']);
         $this->assertContains('07/10/2026', $loi[0]['mo_ta']);
+    }
+
+    /** @test */
+    public function goi_y_theo_loai_dvkt()
+    {
+        $chung = $this->rule()->kiem([$this->dv('18.0219.0041', 522960)], []);
+        $this->assertContains('hoặc bổ sung vật phẩm đi kèm.', $chung[0]['mo_ta']);
+        $this->assertNotContains('cản quang', $chung[0]['mo_ta']);
+
+        $cq = $this->rule()->kiem([$this->dv('18.0219.0041', 522960, 'CLVT tầng trên ổ bụng có cản quang')], []);
+        $this->assertContains('(vd có/không cản quang)', $cq[0]['mo_ta']);
+        $this->assertNotContains('hoặc bổ sung vật phẩm', $cq[0]['mo_ta']);
     }
 
     /** @test */
