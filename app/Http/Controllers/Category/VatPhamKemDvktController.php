@@ -7,6 +7,7 @@ use App\Exports\VatPhamKemDvktExport;
 use App\Http\Controllers\Controller;
 use App\Imports\VatPhamKemDvktImport;
 use App\Models\BHYT\Xml3176VatPhamKemDvkt;
+use App\Models\BHYT\Xml3176VpkdDvktBatBuoc;
 use App\Models\BHYT\Xml3176VpkdUngVien;
 use App\Services\Xml3176\VatPhamKemDvktHocLaiService;
 use App\Services\Xml3176\VatPhamKemDvktLearner;
@@ -248,9 +249,75 @@ class VatPhamKemDvktController extends Controller
         return Excel::download(new LoiNhapDanhMucExport($dongLoi, (string) $request->input('ten_tep')), 'loi_nhap_vat_pham_kem_dvkt.xlsx');
     }
 
-    private function voiDong($id, callable $f)
+    public function batBuocDatatable(Request $request)
     {
-        $m = Xml3176VatPhamKemDvkt::find($id);
+        $q = Xml3176VpkdDvktBatBuoc::query()
+            ->leftJoin('users', 'users.id', '=', 'xml3176_vpkd_dvkt_bat_buoc.nguoi_sua_id')
+            ->select('xml3176_vpkd_dvkt_bat_buoc.*', 'users.name as nguoi_sua');
+        if ($request->filled('nguon')) {
+            $q->where('xml3176_vpkd_dvkt_bat_buoc.nguon', $request->input('nguon'));
+        }
+        if ($request->filled('hieu_luc')) {
+            $q->where('xml3176_vpkd_dvkt_bat_buoc.hieu_luc', (int) $request->input('hieu_luc'));
+        }
+
+        return Datatables::of($q)
+            ->editColumn('ty_le', function ($m) {
+                return $m->ty_le === null ? '' : number_format($m->ty_le * 100, 1, ',', '.') . '%';
+            })
+            ->editColumn('hieu_luc', function ($m) {
+                return '<input type="checkbox" class="vpkd-bb-hieu-luc" data-id="' . $m->id . '" data-nguon="' . e($m->nguon) . '"'
+                    . ' data-ghi-chu="' . e($m->ghi_chu) . '"' . ($m->hieu_luc ? ' checked' : '') . '>';
+            })
+            ->editColumn('ghi_chu', function ($m) {
+                return e($m->ghi_chu) . ' <a href="#" class="vpkd-bb-ghi-chu" data-id="' . $m->id . '" data-ghi-chu="'
+                    . e($m->ghi_chu) . '" title="Sửa ghi chú"><i class="fa fa-pencil"></i></a>';
+            })
+            ->addColumn('nguoi_sua_luc', function ($m) {
+                return $m->sua_luc ? e($m->nguoi_sua ?: '#' . $m->nguoi_sua_id) . '<br>' . $m->sua_luc->format('d/m/Y H:i') : '';
+            })
+            ->addColumn('thao_tac', function ($m) {
+                return $m->nguon === Xml3176VatPhamKemDvkt::NGUON_TAY
+                    ? '<button class="btn btn-xs btn-danger vpkd-bb-xoa" data-id="' . $m->id . '"><i class="fa fa-trash"></i></button>'
+                    : '';
+            })
+            ->rawColumns(['hieu_luc', 'ghi_chu', 'nguoi_sua_luc', 'thao_tac'])
+            ->toJson();
+    }
+
+    public function batBuocHieuLuc(Request $request, $id)
+    {
+        return $this->voiDong($id, function ($m) use ($request) {
+            $this->quanTri->datHieuLuc($m, (bool) (int) $request->input('hieu_luc'), $request->input('ghi_chu'), Auth::id());
+        }, Xml3176VpkdDvktBatBuoc::class);
+    }
+
+    public function batBuocGhiChu(Request $request, $id)
+    {
+        return $this->voiDong($id, function ($m) use ($request) {
+            $this->quanTri->datGhiChu($m, $request->input('ghi_chu'), Auth::id());
+        }, Xml3176VpkdDvktBatBuoc::class);
+    }
+
+    public function batBuocXoa($id)
+    {
+        return $this->voiDong($id, function ($m) {
+            $this->quanTri->xoa($m);
+        }, Xml3176VpkdDvktBatBuoc::class);
+    }
+
+    public function batBuocThem(Request $request)
+    {
+        return $this->bat(function () use ($request) {
+            $m = $this->quanTri->themBatBuoc($request->input('ma_dvkt'), $request->input('ghi_chu'), Auth::id());
+
+            return response()->json(['message' => 'Đã thêm DVKT ' . $m->ma_dvkt]);
+        });
+    }
+
+    private function voiDong($id, callable $f, string $lop = Xml3176VatPhamKemDvkt::class)
+    {
+        $m = $lop::find($id);
         if ($m === null) {
             return response()->json(['message' => 'Không tìm thấy dòng'], 404);
         }

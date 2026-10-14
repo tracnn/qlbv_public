@@ -466,6 +466,11 @@ Route::group(['middleware' => ['auth']], function () {
             Route::get('xuat', $c . 'xuat')->name('xuat');
             Route::post('nhap', $c . 'nhap')->name('nhap');
             Route::post('nhap-loi', $c . 'nhapLoi')->name('nhap-loi');
+            Route::get('bat-buoc-datatable', $c . 'batBuocDatatable')->name('bat-buoc-datatable');
+            Route::post('bat-buoc/{id}/hieu-luc', $c . 'batBuocHieuLuc')->where('id', '[0-9]+')->name('bat-buoc-hieu-luc');
+            Route::post('bat-buoc/{id}/ghi-chu', $c . 'batBuocGhiChu')->where('id', '[0-9]+')->name('bat-buoc-ghi-chu');
+            Route::post('bat-buoc/{id}/xoa', $c . 'batBuocXoa')->where('id', '[0-9]+')->name('bat-buoc-xoa');
+            Route::post('bat-buoc/them', $c . 'batBuocThem')->name('bat-buoc-them');
         });
 
         Route::get('bhyt/category-bhyt-import-index', 'Category\CategoryBHYTController@importIndex')

@@ -6,6 +6,7 @@ use App\Models\BHYT\MedicalSupplyCatalog;
 use App\Models\BHYT\MedicineCatalog;
 use App\Models\BHYT\ServiceCatalog;
 use App\Models\BHYT\Xml3176VatPhamKemDvkt;
+use App\Models\BHYT\Xml3176VpkdDvktBatBuoc;
 use App\Services\Xml3176\Support\VatPhamKemDvktKey;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -20,7 +21,8 @@ class VatPhamKemDvktQuanTri
     const TOI_DA_TEN_KHOP = 50;
     const TOI_DA_TIM = 30;
 
-    public function datHieuLuc(Xml3176VatPhamKemDvkt $m, bool $hieuLuc, $ghiChu, $nguoiSuaId): void
+    /** Dung chung cho bang tra va bang DVKT bat buoc (cung cot hieu_luc, ghi_chu, nguon, nguoi_sua_id, sua_luc). */
+    public function datHieuLuc(\Illuminate\Database\Eloquent\Model $m, bool $hieuLuc, $ghiChu, $nguoiSuaId): void
     {
         $ghiChu = self::ghiChuHopLe($ghiChu);
         if (!$hieuLuc && $ghiChu === null) {
@@ -39,18 +41,40 @@ class VatPhamKemDvktQuanTri
         $m->fill($du + self::vet($nguoiSuaId))->save();
     }
 
-    public function datGhiChu(Xml3176VatPhamKemDvkt $m, $ghiChu, $nguoiSuaId): void
+    public function datGhiChu(\Illuminate\Database\Eloquent\Model $m, $ghiChu, $nguoiSuaId): void
     {
         $m->fill(['ghi_chu' => self::ghiChuHopLe($ghiChu)] + self::vet($nguoiSuaId))->save();
     }
 
-    public function xoa(Xml3176VatPhamKemDvkt $m): void
+    public function xoa(\Illuminate\Database\Eloquent\Model $m): void
     {
         if ($m->nguon !== Xml3176VatPhamKemDvkt::NGUON_TAY) {
             // Xoa dong HOC thi lan hoc sau them lai - chi cho tat.
             throw new \InvalidArgumentException('Chỉ xoá được dòng bổ sung tay (TAY); dòng học tự động hãy tắt hiệu lực');
         }
         $m->delete();
+    }
+
+    public function themBatBuoc($maDvkt, $ghiChu, $nguoiSuaId): Xml3176VpkdDvktBatBuoc
+    {
+        $ma = VatPhamKemDvktKey::chuanHoaMaDvkt($maDvkt);
+        if ($ma === '' || mb_strlen($ma, 'UTF-8') > 50) {
+            throw new \InvalidArgumentException('Mã DVKT phải từ 1 đến 50 ký tự');
+        }
+        $ghiChu = self::ghiChuHopLe($ghiChu);
+        $me = Xml3176VatPhamKemDvkt::where('hieu_luc', true)->whereIn('ma_dvkt', [$ma, $ma . '_GT'])->first();
+        if ($me === null) {
+            throw new \InvalidArgumentException('DVKT chưa là DVKT mẹ của vật phẩm nào trong bảng tra — không có gì để kiểm');
+        }
+        if (Xml3176VpkdDvktBatBuoc::where('ma_dvkt', $ma)->exists()) {
+            throw new \InvalidArgumentException('Đã có');
+        }
+        $ten = ServiceCatalog::where('ma_dich_vu', $ma)->value('ten_dich_vu') ?: $me->ten_dvkt;
+
+        return Xml3176VpkdDvktBatBuoc::create([
+            'ma_dvkt' => $ma, 'ten_dvkt' => $ten, 'so_ho_so' => 0, 'so_ho_so_co_kem' => 0, 'ty_le' => null,
+            'nguon' => Xml3176VatPhamKemDvkt::NGUON_TAY, 'hieu_luc' => true, 'ghi_chu' => $ghiChu,
+        ] + self::vet($nguoiSuaId));
     }
 
     public function themDongTay($loai, $ma, $ten, array $dsMaDvkt, array $tenDvkt, $ghiChu, $nguoiSuaId): array
