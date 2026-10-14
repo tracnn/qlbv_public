@@ -251,6 +251,9 @@ class VatPhamKemDvktLearner
             ->selectRaw("{$n['ma']} as ma, {$n['ten']} as ten, ma_dich_vu as dv, COUNT(*) as so_dong")
             ->where($n['ma'], '<>', '')
             ->where('ma_dich_vu', '<>', '')
+            // Chi hoc tu dong quy BHYT tra: prod 20 dong Xenetix cua ho so dich vu (doi tuong 9, BN tu
+            // tra) ghi MA_DICH_VU sai - du lieu tu tra khong duoc day quy tac thanh toan BHYT.
+            ->where('t_bhtt', '>', 0)
             ->groupBy($n['ma'], $n['ten'], 'ma_dich_vu');
         if ($tuNgay) {
             $q->where('ngay_yl', '>=', $tuNgay);

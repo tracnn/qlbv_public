@@ -113,6 +113,27 @@ class VatPhamKemDvktLearnerTest extends TestCase
     }
 
     /** @test */
+    public function chi_hoc_cap_tu_dong_bhyt_tra()
+    {
+        // Prod: 20 dong Xenetix cua ho so dich vu (doi tuong 9, khong the, BN tu tra) gan sai DVKT
+        // - du lieu tu tra khong duoc day quy tac thanh toan BHYT.
+        $this->thuoc('40.642', 'Xenetix 350', 10, 9, '18.0192.0041');
+        for ($i = 0; $i < 5; $i++) {
+            DB::table('xml3176_xml2s')->insert([
+                'ma_lk' => 'DV' . $i, 'stt' => ++$this->stt, 'ma_thuoc' => '40.642', 'ten_thuoc' => 'Xenetix 350',
+                'ma_dich_vu' => '18.0298.0066', 't_bhtt' => null, 't_bntt' => 465500, 'ngay_yl' => '202609010800',
+            ]);
+        }
+        $this->dvkt('18.0192.0041', 'CT lồng ngực có tiêm thuốc cản quang');
+        $this->dvkt('18.0298.0066', 'Chụp cộng hưởng từ não- mạch não');
+
+        $dong = $this->learner()->hoc(0.8, 5)['dong'];
+
+        $this->assertSame(['18.0192.0041'], collect($dong)->pluck('ma_dvkt')->all());
+        $this->assertSame(9, $dong[0]['so_lan_gan']);
+    }
+
+    /** @test */
     public function xet_moi_ten_cua_dvkt_me_khi_loai_tru()
     {
         // Prod: 18.0219.0040 co ca ten "(PACS)" lan ten "[khong co thuoc can quang]". Ten (PACS) lon
