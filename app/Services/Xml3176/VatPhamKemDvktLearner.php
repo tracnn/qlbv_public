@@ -3,6 +3,7 @@
 namespace App\Services\Xml3176;
 
 use App\Models\BHYT\Xml3176VatPhamKemDvkt;
+use App\Models\BHYT\Xml3176VpkdDvktBatBuoc;
 use App\Models\BHYT\Xml3176VpkdUngVien;
 use App\Services\Xml3176\Support\TextNormalizer;
 use App\Services\Xml3176\Support\VatPhamKemDvktKey;
@@ -180,6 +181,132 @@ class VatPhamKemDvktLearner
 
             return count($ungVien);
         });
+    }
+
+    /**
+     * R3: DVKT ma >= $nguong ho so BHYT tra deu kem >= 1 vat pham cung nhom (vat pham co DVKT nay
+     * trong danh sach me HIEU LUC cua bang tra) duoc BHYT tra, va co >= $toiThieu ho so. Doc bang tra
+     * hien tai - goi SAU ghi(). Chi dem dong t_bhtt > 0 ca hai phia.
+     */
+    public function hocDvktBatBuoc(float $nguong, int $toiThieu, $tuNgay = null): array
+    {
+        $nhom = [];
+        $tenDv = [];
+        $maVp = ['VTYT' => [], 'THUOC' => []];
+        foreach (Xml3176VatPhamKemDvkt::where('hieu_luc', true)->get(['loai', 'ma_vat_pham', 'ten_khop', 'ma_dvkt', 'ten_dvkt']) as $m) {
+            $dv = VatPhamKemDvktKey::chuanHoaMaDvkt($m->ma_dvkt);
+            $nhom[$dv][$m->loai . '|' . trim($m->ma_vat_pham) . '|' . $m->ten_khop] = true;
+            $maVp[$m->loai][trim($m->ma_vat_pham)] = true;
+            if (!isset($tenDv[$dv]) && $m->ten_dvkt !== null && $m->ten_dvkt !== '') {
+                $tenDv[$dv] = $m->ten_dvkt;
+            }
+        }
+        if (empty($nhom)) {
+            return [];
+        }
+
+        // Ho so co DVKT duoc BHYT tra (ma goc va bien the _GT).
+        $hs = [];
+        foreach (array_chunk(array_keys($nhom), 250) as $lo) {
+            $ma = array_merge($lo, array_map(function ($x) { return $x . '_GT'; }, $lo));
+            $q = DB::table('xml3176_xml3s')->select('ma_lk', 'ma_dich_vu')
+                ->where(function ($w) { $w->whereNull('ma_vat_tu')->orWhere('ma_vat_tu', ''); })
+                ->whereIn('ma_dich_vu', $ma)->where('t_bhtt', '>', 0)
+                ->groupBy('ma_lk', 'ma_dich_vu');
+            if ($tuNgay) {
+                $q->where('ngay_yl', '>=', $tuNgay);
+            }
+            foreach ($q->get() as $r) {
+                $hs[VatPhamKemDvktKey::chuanHoaMaDvkt($r->ma_dich_vu)][$r->ma_lk] = true;
+            }
+        }
+        $canLk = [];
+        foreach ($hs as $lks) {
+            $canLk += $lks;
+        }
+
+        // Vat pham duoc BHYT tra trong cac ho so do: ma_lk => {khoa vat pham}.
+        $coVp = [];
+        foreach (self::NGUON as $loai => $n) {
+            foreach (array_chunk(array_keys($maVp[$loai]), 250) as $lo) {
+                $q = DB::table($n['bang'])->select('ma_lk', "{$n['ma']} as ma", "{$n['ten']} as ten")
+                    ->whereIn($n['ma'], $lo)->where('t_bhtt', '>', 0)
+                    ->groupBy('ma_lk', $n['ma'], $n['ten']);
+                if ($tuNgay) {
+                    $q->where('ngay_yl', '>=', $tuNgay);
+                }
+                foreach ($q->cursor() as $r) {
+                    if (isset($canLk[$r->ma_lk])) {
+                        $coVp[$r->ma_lk][$loai . '|' . VatPhamKemDvktKey::khoa($loai, $r->ma, $r->ten)] = true;
+                    }
+                }
+            }
+        }
+
+        $ra = [];
+        foreach ($hs as $dv => $lks) {
+            $n = count($lks);
+            $co = 0;
+            foreach (array_keys($lks) as $lk) {
+                if (!empty(array_intersect_key($coVp[$lk] ?? [], $nhom[$dv]))) {
+                    $co++;
+                }
+            }
+            if ($n >= $toiThieu && $co / $n >= $nguong) {
+                $ra[] = ['ma_dvkt' => (string) $dv, 'ten_dvkt' => $tenDv[$dv] ?? null, 'so_ho_so' => $n,
+                    'so_ho_so_co_kem' => $co, 'ty_le' => round($co / $n, 4)];
+            }
+        }
+        usort($ra, function ($a, $b) { return strcmp($a['ma_dvkt'], $b['ma_dvkt']); });
+
+        return $ra;
+    }
+
+    /** Cung ngu nghia ghi(): chi dong HOC; giu hieu_luc/ghi_chu nguoi dung; tu tat / tu bat lai. */
+    public function ghiDvktBatBuoc(array $dong): array
+    {
+        $kq = ['them' => 0, 'cap_nhat' => 0, 'tat' => 0, 'bat_lai' => 0];
+
+        DB::transaction(function () use ($dong, &$kq) {
+            $hienCo = Xml3176VpkdDvktBatBuoc::all()->keyBy('ma_dvkt');
+            $daHoc = [];
+            foreach ($dong as $d) {
+                $daHoc[$d['ma_dvkt']] = true;
+                $m = $hienCo->get($d['ma_dvkt']);
+                if ($m === null) {
+                    Xml3176VpkdDvktBatBuoc::create($d + ['nguon' => Xml3176VatPhamKemDvkt::NGUON_HOC, 'hieu_luc' => true]);
+                    $kq['them']++;
+                    continue;
+                }
+                if ($m->nguon !== Xml3176VatPhamKemDvkt::NGUON_HOC) {
+                    continue;
+                }
+                $m->fill([
+                    'ten_dvkt' => $d['ten_dvkt'] ?? $m->ten_dvkt,
+                    'so_ho_so' => $d['so_ho_so'], 'so_ho_so_co_kem' => $d['so_ho_so_co_kem'], 'ty_le' => $d['ty_le'],
+                ]);
+                if (!$m->hieu_luc && $m->ghi_chu === Xml3176VatPhamKemDvkt::GHI_CHU_TU_TAT) {
+                    $m->hieu_luc = true;
+                    $m->ghi_chu = null;
+                    $kq['bat_lai']++;
+                }
+                $m->save();
+                $kq['cap_nhat']++;
+            }
+            foreach ($hienCo as $ma => $m) {
+                if (isset($daHoc[$ma]) || $m->nguon !== Xml3176VatPhamKemDvkt::NGUON_HOC || !$m->hieu_luc) {
+                    continue;
+                }
+                $m->hieu_luc = false;
+                if ($m->ghi_chu === null || $m->ghi_chu === '') {
+                    $m->ghi_chu = Xml3176VatPhamKemDvkt::GHI_CHU_TU_TAT;
+                }
+                $m->save();
+                $kq['tat']++;
+            }
+        });
+
+        return $kq;
     }
 
     /**
