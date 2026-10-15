@@ -28,6 +28,14 @@ class Xml3176ErrorService
         return $this->dangGom;
     }
 
+    /**
+     * Tra ban sao bo dem gom (chi doc) - dung cho lenh do/so sanh ket qua kiem.
+     */
+    public function boDemGom(): array
+    {
+        return $this->boDem;
+    }
+
     public function soDongTrongBoDem(): int
     {
         return count($this->boDem);
