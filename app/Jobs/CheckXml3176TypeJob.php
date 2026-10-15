@@ -58,7 +58,6 @@ class CheckXml3176TypeJob implements ShouldQueue
         }
 
         $cauHinh = Xml3176CheckTypes::cauHinh($this->xmlType);
-        $model   = $cauHinh['model'];
 
         // Xoa loi CUA RIENG LOAI NAY. Khong dung deleteErrors() vi ham do xoa TOAN BO
         // loi cua ho so - dung no o day thi job nay se xoa mat ket qua cua 11 job kia.
@@ -72,7 +71,8 @@ class CheckXml3176TypeJob implements ShouldQueue
         $loi->batDauGom();
 
         try {
-            $model::where('ma_lk', $this->maLk)
+            // Nap kem XML1 (neu loai co quan he) - mot truy van moi lo thay vi moi dong.
+            Xml3176CheckTypes::truyVanDong($this->xmlType, $this->maLk)
                 ->chunk(self::CO_LO, function ($dong) use ($checker) {
                     foreach ($dong as $d) {
                         $checker->checkErrors($d);

@@ -5,10 +5,13 @@ namespace App\Services;
 use App\Models\BHYT\Xml3176Xml5;
 use App\Services\Xml3176\Support\TextNormalizer;
 use App\Services\Xml3176\Support\Xml3176DateHelper;
+use App\Services\Xml3176\Support\NhoTheoHoSo;
 use Illuminate\Support\Collection;
 
 class Xml3176Xml5Checker
 {
+    use NhoTheoHoSo;
+
     protected $xmlErrorService;
     protected $prefix;
 
@@ -125,12 +128,20 @@ class Xml3176Xml5Checker
         }
         $chuan = TextNormalizer::chuan($data->dien_bien_ls);
 
-        $truoc = Xml3176Xml5::where('ma_lk', $data->ma_lk)
-            ->where('id', '!=', $data->id)
-            ->where('stt', '<', $data->stt)
-            ->where('thoi_diem_dbls', 'like', $ngay . '%')
-            ->orderByDesc('stt')
-            ->get();
+        // Toan bo dong XML5 cua ho so nap mot lan; loc va sap y nhu truy van cu
+        // (id !=, stt <, thoi_diem_dbls LIKE 'ngay%', orderByDesc stt) trong PHP.
+        // LIKE: $ngay chi gom chu so nen so sanh tien to nguyen van la dung; NULL khong khop.
+        $tatCa = $this->theoHoSo($data->ma_lk, 'xml5_ca_ho_so', function () use ($data) {
+            return Xml3176Xml5::where('ma_lk', $data->ma_lk)->orderBy('id')->get();
+        });
+        $truoc = $tatCa->filter(function ($sib) use ($data, $ngay) {
+            return $data->id !== null && (int) $sib->id !== (int) $data->id // id != NULL: khong dong nao
+                && (int) $sib->stt < (int) $data->stt
+                && $sib->thoi_diem_dbls !== null
+                && strncmp((string) $sib->thoi_diem_dbls, $ngay, strlen($ngay)) === 0;
+        })->sortByDesc(function ($sib) {
+            return (int) $sib->stt;
+        });
 
         foreach ($truoc as $sib) {
             if (Xml3176DateHelper::datePart($sib->thoi_diem_dbls) === $ngay

@@ -65,8 +65,8 @@ class Xml3176Xml2Checker
         // Thực hiện kiểm tra lỗi
         $errors = collect();
 
-        // Load related XML1
-        $data->load('Xml3176Xml1');
+        // Load related XML1 (job da nap san kem dong thi khong truy van lai)
+        $data->loadMissing('Xml3176Xml1');
         if ($data->Xml3176Xml1) {
             $errors = $errors->merge($this->checkOrderTime($data));
         }

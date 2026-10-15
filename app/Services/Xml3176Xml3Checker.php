@@ -17,10 +17,13 @@ use App\Services\Xml3176\Support\MaDvktMatcher;
 use App\Services\Xml3176\Support\MaKhoaLienKhoa;
 use App\Services\Xml3176\Support\TienTeCalculator;
 use App\Services\Xml3176\Support\TextNormalizer;
+use App\Services\Xml3176\Support\NhoTheoHoSo;
 use Illuminate\Support\Collection;
 
 class Xml3176Xml3Checker
 {
+    use NhoTheoHoSo;
+
     protected $xmlErrorService;
     protected $commonValidationService;
     protected $prefix;
@@ -179,8 +182,8 @@ class Xml3176Xml3Checker
         // Thực hiện kiểm tra lỗi
         $errors = collect();
 
-        // Load related XML1
-        $data->load('Xml3176Xml1');
+        // Load related XML1 (job da nap san kem dong thi khong truy van lai)
+        $data->loadMissing('Xml3176Xml1');
         $this->serviceDisplay = !empty($data->ten_vat_tu) ? $data->ten_vat_tu : $data->ten_dich_vu;
 
         if ($data->Xml3176Xml1) {
@@ -855,10 +858,7 @@ class Xml3176Xml3Checker
 
             // Bổ sung kiểm tra với ma_dich_vu
             if (!empty($data->ma_dich_vu)) {
-                $matchedServices = Xml3176Xml3::where('ma_dich_vu', $data->ma_dich_vu)
-                ->where('ma_lk', $data->ma_lk)
-                ->where('ma_vat_tu', '')
-                ->get();
+                $matchedServices = $this->dvktKhongVatTu($data->ma_lk)[self::khoaChuoiSql($data->ma_dich_vu)] ?? [];
 
                 $dataDate = substr($data->ngay_yl, 0, 8);
                 $hasMatchingDate = false;
@@ -885,6 +885,27 @@ class Xml3176Xml3Checker
         }
 
         return $errors;
+    }
+
+    /**
+     * Dong DVKT (ma_vat_tu = '') cua ho so, nhom theo khoa so sanh SQL cua ma_dich_vu.
+     * Mot truy van moi ho so thay cho mot truy van moi dong VTYT; loc ma_vat_tu van de SQL lam
+     * (PAD SPACE: '  ' cung bang ''; NULL khong bang '').
+     */
+    private function dvktKhongVatTu($maLk): array
+    {
+        return $this->theoHoSo($maLk, 'xml3_dvkt_khong_vat_tu', function () use ($maLk) {
+            $theoMa = [];
+            $ds = Xml3176Xml3::where('ma_lk', $maLk)->where('ma_vat_tu', '')
+                ->orderBy('id')->get(['id', 'ma_dich_vu', 'ngay_yl']);
+            foreach ($ds as $dong) {
+                if ($dong->ma_dich_vu !== null) { // ma_dich_vu = ? khong bao gio khop NULL
+                    $theoMa[self::khoaChuoiSql($dong->ma_dich_vu)][] = $dong;
+                }
+            }
+
+            return $theoMa;
+        });
     }
 
     /**
@@ -1046,12 +1067,19 @@ class Xml3176Xml3Checker
             return $errors; // guard: thiếu mốc thời gian
         }
 
-        $others = Xml3176Xml3::where('ma_lk', $data->ma_lk)
-            ->whereIn('ma_nhom', $groups)
-            ->where('id', '>', $data->id)
-            ->whereNotNull('ngay_th_yl')
-            ->whereNotNull('ngay_kq')
-            ->get();
+        // Dong PTTT co du moc cua ho so nap mot lan (sap theo id - truy van cu khong co orderBy,
+        // MySQL tra theo chi muc, thuc te id tang dan); loc id > trong PHP.
+        $ptttCoMoc = $this->theoHoSo($data->ma_lk, 'xml3_pttt_co_moc|' . serialize($groups), function () use ($data, $groups) {
+            return Xml3176Xml3::where('ma_lk', $data->ma_lk)
+                ->whereIn('ma_nhom', $groups)
+                ->whereNotNull('ngay_th_yl')
+                ->whereNotNull('ngay_kq')
+                ->orderBy('id')
+                ->get();
+        });
+        $others = $ptttCoMoc->filter(function ($other) use ($data) {
+            return $data->id !== null && (int) $other->id > (int) $data->id; // id > NULL: khong dong nao
+        });
 
         foreach ($others as $other) {
             if (!ServiceOverlapChecker::chongNhau($data->ngay_th_yl, $data->ngay_kq, $other->ngay_th_yl, $other->ngay_kq)) {

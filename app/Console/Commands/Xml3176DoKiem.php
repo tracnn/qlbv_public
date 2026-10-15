@@ -68,8 +68,8 @@ class Xml3176DoKiem extends Command
             foreach (Xml3176CheckTypes::LOAI as $loai => $cauHinh) {
                 $this->doMuc($loai, function () use ($cauHinh, $maLk, $loai) {
                     $checker = app($cauHinh['checker']);
-                    $model = $cauHinh['model'];
-                    $model::where('ma_lk', $maLk)->chunk(self::CO_LO, function ($dong) use ($checker, $loai) {
+                    // Nap dong y het CheckXml3176TypeJob::handle (kem XML1).
+                    Xml3176CheckTypes::truyVanDong($loai, $maLk)->chunk(self::CO_LO, function ($dong) use ($checker, $loai) {
                         foreach ($dong as $d) {
                             $this->thongKe[$loai]['dong']++; // dem ca khi checker nem ngoai le
                             $checker->checkErrors($d);

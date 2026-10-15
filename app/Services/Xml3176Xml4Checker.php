@@ -6,10 +6,13 @@ use App\Models\BHYT\Xml3176Xml4;
 use App\Models\BHYT\Xml3176Xml3;
 use App\Models\BHYT\ServiceCatalog;
 use App\Services\Xml3176\DanhMucTraCuu;
+use App\Services\Xml3176\Support\NhoTheoHoSo;
 use Illuminate\Support\Collection;
 
 class Xml3176Xml4Checker
 {
+    use NhoTheoHoSo;
+
     protected $xmlErrorService;
     protected $prefix;
 
@@ -57,6 +60,26 @@ class Xml3176Xml4Checker
 
         // Save errors to xml_error_checks table
         $this->xmlErrorService->saveErrors($this->xmlType, $data->ma_lk, $data->stt, $errors, $additionalData);
+    }
+
+    /**
+     * Tap ma_dich_vu (khoa so sanh SQL) cua XML3 cung ho so thuoc nhom bat buoc mo ta/ket luan.
+     * Mot truy van moi ho so thay cho exists() moi dong; loc ma_nhom van de SQL lam.
+     */
+    private function dvktCanKetLuan($maLk): array
+    {
+        $nhom = config('xml3176.xml4.xml3_ma_nhom_require_ket_luan');
+
+        return $this->theoHoSo($maLk, 'xml3_can_ket_luan|' . serialize($nhom), function () use ($maLk, $nhom) {
+            $tap = [];
+            foreach (Xml3176Xml3::where('ma_lk', $maLk)->whereIn('ma_nhom', $nhom)->pluck('ma_dich_vu') as $ma) {
+                if ($ma !== null) { // ma_dich_vu = ? khong bao gio khop NULL
+                    $tap[self::khoaChuoiSql($ma)] = true;
+                }
+            }
+
+            return $tap;
+        });
     }
 
     /**
@@ -147,10 +170,7 @@ class Xml3176Xml4Checker
 
         //ket_luan & mo_ta không được để trống
         if (!empty($data->ma_dich_vu)) {
-            $require_mo_ta_ket_luan = Xml3176Xml3::where('ma_lk', $data->ma_lk)
-                ->where('ma_dich_vu', $data->ma_dich_vu)
-                ->whereIn('ma_nhom', config('xml3176.xml4.xml3_ma_nhom_require_ket_luan'))
-                ->exists();
+            $require_mo_ta_ket_luan = isset($this->dvktCanKetLuan($data->ma_lk)[self::khoaChuoiSql($data->ma_dich_vu)]);
 
             if ($require_mo_ta_ket_luan && empty($data->mo_ta)) {
                 $errorCode = $this->generateErrorCode('INFO_ERROR_MO_TA_EMPTY');

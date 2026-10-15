@@ -30,6 +30,23 @@ class Xml3176CheckTypes
         return is_string($loai) && array_key_exists($loai, self::LOAI);
     }
 
+    /**
+     * Truy van dong cua MOT ho so cho mot loai - dung chung cho job kiem va lenh do de hai
+     * noi nap dong y het nhau. Model co quan he Xml3176Xml1 (XML2/3/4/5/11) nap kem XML1 mot
+     * lan moi lo thay vi moi dong mot truy van.
+     */
+    public static function truyVanDong($loai, $maLk)
+    {
+        $model = self::cauHinh($loai)['model'];
+        $truyVan = $model::where('ma_lk', $maLk);
+
+        if (method_exists($model, 'Xml3176Xml1')) {
+            $truyVan->with('Xml3176Xml1');
+        }
+
+        return $truyVan;
+    }
+
     public static function cauHinh($loai)
     {
         if (!self::coChecker($loai)) {
