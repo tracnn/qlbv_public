@@ -46,7 +46,7 @@ class JobKiemTrongChuoiTest extends TestCase
         return new class extends Xml3176CompleteChecker {
             public $soLanGoi = 0;
             public function __construct() {}
-            public function checkErrors($ma_lk): void { $this->soLanGoi++; }
+            public function checkErrors($ma_lk, \App\Services\Xml3176\DuLieuHoSo $du = null): void { $this->soLanGoi++; }
         };
     }
 

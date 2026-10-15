@@ -2,19 +2,9 @@
 
 namespace App\Services;
 
-use App\Models\BHYT\Xml3176Xml1;
-use App\Models\BHYT\Xml3176Xml2;
-use App\Models\BHYT\Xml3176Xml3;
-use App\Models\BHYT\Xml3176Xml4;
-use App\Models\BHYT\Xml3176Xml5;
-use App\Models\BHYT\Xml3176Xml7;
-use App\Models\BHYT\Xml3176Xml8;
-use App\Models\BHYT\Xml3176Xml9;
-use App\Models\BHYT\Xml3176Xml11;
-use App\Models\BHYT\Xml3176Xml12;
-use App\Models\BHYT\Xml3176Xml13;
-use App\Models\BHYT\Xml3176Xml14;
+use App\Services\Xml3176\DuLieuHoSo;
 use App\Services\Xml3176\Support\DanhSachPhanCachParser;
+use App\Services\Xml3176\Support\SoSanhSql;
 use App\Services\Xml3176\Support\DoiTuongKcbCatalog;
 use App\Services\Xml3176\Support\Xml3176DateHelper;
 use App\Models\BHYT\MedicalOrganization;
@@ -75,33 +65,79 @@ class Xml3176CompleteChecker
     /**
      * Check Xml3176Xml Errors
      *
+     * Moi phep kiem doc tu DuLieuHoSo (moi bang XML nap mot lan) thay cho ~40 truy van rieng;
+     * ngu nghia SQL cu (SUM/MAX/IN/collation/thu tu quet) tai hien trong DuLieuHoSo.
+     *
      * @param $ma_lk
+     * @param DuLieuHoSo|null $du du lieu ho so nap san (null -> tu nap)
      * @return void
      */
-    public function checkErrors($ma_lk): void
+    public function checkErrors($ma_lk, DuLieuHoSo $du = null): void
     {
-        $data = Xml3176Xml1::where('ma_lk', $ma_lk)->first();
+        $du = $du ?: DuLieuHoSo::nap((string) $ma_lk);
+        // cu: Xml3176Xml1::where('ma_lk', $ma_lk)->first()
+        $data = $du->xml1();
         // Thực hiện kiểm tra lỗi
         if ($data) {
             $errors = collect();
-        
-            $errors = $errors->merge($this->infoChecker($ma_lk));
-            $errors = $errors->merge($this->checkInvalidBedDays($data));
-            $errors = $errors->merge($this->checkExpenseErrors($data));
-            $errors = $errors->merge($this->checkExaminationErrors($data));
-            $errors = $errors->merge($this->checkNgayTaiKham($data));
-            $errors = $errors->merge($this->checkCanNangCon($data));
-            $errors = $errors->merge($this->checkDoiTuongKcbMucHuong($data));
-            $errors = $errors->merge($this->checkXml4NgayKqMismatchXml3($ma_lk));
-            $errors = $errors->merge($this->checkSecondSurgeryFullPayment($ma_lk));
-            $errors = $errors->merge($this->checkMucHuong($data));
-            $errors = $errors->merge($this->checkBedDaysBelowTT39($data));
-            $errors = $errors->merge($this->checkVatPhamKemDvkt($ma_lk));
-            $errors = $errors->merge($this->kiemNvyt($ma_lk));
+
+            $errors = $errors->merge($this->infoChecker($ma_lk, $du));
+            $errors = $errors->merge($this->checkInvalidBedDays($data, $du));
+            $errors = $errors->merge($this->checkExpenseErrors($data, $du));
+            $errors = $errors->merge($this->checkExaminationErrors($data, $du));
+            $errors = $errors->merge($this->checkNgayTaiKham($data, $du));
+            $errors = $errors->merge($this->checkCanNangCon($data, $du));
+            $errors = $errors->merge($this->checkDoiTuongKcbMucHuong($data, $du));
+            $errors = $errors->merge($this->checkXml4NgayKqMismatchXml3($ma_lk, $du));
+            $errors = $errors->merge($this->checkSecondSurgeryFullPayment($ma_lk, $du));
+            $errors = $errors->merge($this->checkMucHuong($data, $du));
+            $errors = $errors->merge($this->checkBedDaysBelowTT39($data, $du));
+            $errors = $errors->merge($this->checkVatPhamKemDvkt($ma_lk, $du));
+            $errors = $errors->merge($this->kiemNvyt($ma_lk, $du));
 
             // Save errors to xml_error_checks table
             $this->xmlErrorService->saveErrors($this->xmlType, $data->ma_lk, $data->stt, $errors);
         }
+    }
+
+    /**
+     * DuLieuHoSo cua ho so: dung ban nap san neu co, khong thi nap rieng cac loai can (duong goi
+     * thang mot ham check* - test cu, lenh rieng).
+     */
+    private function duLieu($maLk, array $loai, DuLieuHoSo $du = null): DuLieuHoSo
+    {
+        return $du ?: DuLieuHoSo::nap((string) $maLk, $loai);
+    }
+
+    /** Bo loc tuong duong `whereIn($cot, $tap)` tren cot VARCHAR (ma_nhom, ma_pttt), tap tu config. */
+    private static function locTrongTap(string $cot, array $tap): callable
+    {
+        return function ($r) use ($cot, $tap) {
+            return DuLieuHoSo::trongTap($r->$cot, $tap);
+        };
+    }
+
+    /**
+     * Gia tri Builder::sum() cu tra cho SUM(DOUBLE) (`?: 0`), dung o mo ta in gia tri tho:
+     * 0 -> int 0; so nguyen -> chuoi khong phan le ('2'); con lai -> dang ngan nhat du chinh xac
+     * nhu chuoi MariaDB tra ('0.30000000000000004'), khong theo precision 14 cua PHP.
+     */
+    private static function tongTho(float $tong)
+    {
+        if ($tong == 0.0) {
+            return 0;
+        }
+        if (floor($tong) === $tong && abs($tong) < 1e15) {
+            return sprintf('%.0f', $tong);
+        }
+        $s = var_export($tong, true);
+        if (stripos($s, 'e') !== false) {
+            // '1.0E-7' -> '1e-7' (dang MariaDB) - chi gap o du lieu bat thuong
+            list($m, $e) = explode('E', strtoupper($s));
+            $s = preg_replace('/\.0$/', '', $m) . 'e' . (int) $e;
+        }
+
+        return $s;
     }
 
     /**
@@ -110,14 +146,14 @@ class Xml3176CompleteChecker
      * @param Xml3176Xml11 $data
      * @return Collection
      */
-    private function checkExaminationErrors(Xml3176Xml1 $data): Collection
+    private function checkExaminationErrors($data, DuLieuHoSo $du = null): Collection
     {
         $errors = collect();
+        $du = $this->duLieu($data->ma_lk, ['xml3'], $du);
 
         // Check for multiple records in Xml3176Xml3 with ma_lk and ma_nhom in examinationGroupCodes
-        $records = Xml3176Xml3::where('ma_lk', $data->ma_lk)
-            ->whereIn('ma_nhom', $this->examinationGroupCodes)
-            ->get();
+        // cu: Xml3176Xml3::where('ma_lk')->whereIn('ma_nhom', examinationGroupCodes)->get() - thu tu quet (stt)
+        $records = collect($du->dongTheoStt('xml3', self::locTrongTap('ma_nhom', (array) $this->examinationGroupCodes)));
 
         // Check if the treatment type is inpatient and there are multiple examination fees
         if (in_array($data->ma_loai_kcb, $this->treatmentTypeInpatient) && $records->count() >= 2) {
@@ -190,7 +226,7 @@ class Xml3176CompleteChecker
      * @param Xml3176Xml11 $data
      * @return Collection
      */
-    private function infoChecker($ma_lk): Collection
+    private function infoChecker($ma_lk, DuLieuHoSo $du = null): Collection
     {
         $errors = collect();
 
@@ -203,7 +239,9 @@ class Xml3176CompleteChecker
                 'description' => 'Mã liên kết hồ sơ không được để trống'
             ]);
         } else {
-            $existXml1 = Xml3176Xml1::where('ma_lk', $ma_lk)->first();
+            $du = $this->duLieu($ma_lk, ['xml1', 'xml7'], $du);
+            // cu: Xml3176Xml1::where('ma_lk', $ma_lk)->first()
+            $existXml1 = $du->xml1();
             if (!$existXml1) {
                 $errorCode = $this->generateErrorCode('INFO_ERROR_XML_COMPLETE_MA_LK_NOT_FOUND');
                 $errors->push((object)[
@@ -216,7 +254,8 @@ class Xml3176CompleteChecker
                 // Kiểm tra ma_loai_kcb thuộc xmlTypeMustHaveXml7
                 if (in_array($existXml1->ma_loai_kcb, $this->xmlTypeMustHaveXml7) 
                     && !in_array($existXml1->ma_loai_rv, config('xml3176.treatment_end_type_absconding'))) {
-                    $existXml7 = Xml3176Xml7::where('ma_lk', $ma_lk)->exists();
+                    // cu: Xml3176Xml7::where('ma_lk', $ma_lk)->exists()
+                    $existXml7 = $du->co('xml7');
                     if (!$existXml7) {
                         $errorCode = $this->generateErrorCode('INFO_ERROR_XML_COMPLETE_MISSING_XML7');
                         $errors->push((object)[
@@ -239,9 +278,15 @@ class Xml3176CompleteChecker
      * @param XML1 $data
      * @return Collection
      */
-    private function checkInvalidBedDays(Xml3176Xml1 $data): Collection
+    private function checkInvalidBedDays($data, DuLieuHoSo $du = null): Collection
     {
         $errors = collect();
+        $du = $this->duLieu($data->ma_lk, ['xml3'], $du);
+        // cu: $data->Xml3176Xml3()->whereIn('ma_nhom', bedGroupCodes)->sum('so_luong') (2 lan duoi day)
+        $tongGiuong = DuLieuHoSo::tong(
+            $du->loc('xml3', self::locTrongTap('ma_nhom', (array) $this->bedGroupCodes)),
+            'so_luong'
+        );
 
         // Nhánh lưu trú ngắn (<4h, 4-24h) GIỮ mốc NGAY_VAO: đổi sang NGAY_VAO_NOI_TRU làm 2 hồ sơ
         // loại 09 vào cấp cứu rồi chuyển nội trú (000006932476, 000007150058) rơi xuống dưới 4h
@@ -256,7 +301,8 @@ class Xml3176CompleteChecker
         $hoursDifference = ($interval->days * 24) + $interval->h + ($interval->i / 60);
 
         if (in_array($data->ma_loai_kcb, $this->treatmentTypeInpatient) && $data->so_ngay_dtri <= 2) {
-            $totalBedDays = $data->Xml3176Xml3()->whereIn('ma_nhom', $this->bedGroupCodes)->sum('so_luong');
+            // gia tri tho nhu Builder::sum() cu (khong ep float) vi mo ta in thang
+            $totalBedDays = self::tongTho($tongGiuong);
             
             if ($hoursDifference < 4) {
                 // Check if there are bed charges in Xml3176Xml3
@@ -291,7 +337,7 @@ class Xml3176CompleteChecker
             $special = BedDaysTT39Calculator::laDacBiet(
                 $data->ket_qua_dtri, $data->ma_loai_rv, (array) $this->invalidKetQuaDtri, (array) $this->invalidMaLoaiRV
             );
-            $totalBedDays = (float) $data->Xml3176Xml3()->whereIn('ma_nhom', $this->bedGroupCodes)->sum('so_luong');
+            $totalBedDays = $tongGiuong;
             $thua = BedDaysTT39Calculator::thua($mocVao, $data->ngay_ra, $special, $totalBedDays);
 
             if ($thua !== null) {
@@ -320,7 +366,7 @@ class Xml3176CompleteChecker
      * @param Xml3176Xml1 $data
      * @return Collection
      */
-    private function checkBedDaysBelowTT39(Xml3176Xml1 $data): Collection
+    private function checkBedDaysBelowTT39($data, DuLieuHoSo $du = null): Collection
     {
         $errors = collect();
 
@@ -360,9 +406,12 @@ class Xml3176CompleteChecker
             return $errors; // guard: lưu trú <4h hợp lệ
         }
 
-        $totalBedDays = (float) $data->Xml3176Xml3()
-            ->whereIn('ma_nhom', (array) config('xml3176.bed_group_code', []))
-            ->sum('so_luong');
+        // cu: (float) $data->Xml3176Xml3()->whereIn('ma_nhom', bed_group_code)->sum('so_luong')
+        $totalBedDays = DuLieuHoSo::tong(
+            $this->duLieu($data->ma_lk, ['xml3'], $du)
+                ->loc('xml3', self::locTrongTap('ma_nhom', (array) config('xml3176.bed_group_code', []))),
+            'so_luong'
+        );
 
         $tol = (float) config('xml3176.bed_days_tt39.tolerance', 0.5);
         if (!BedDaysTT39Calculator::isBelow($totalBedDays, $expected, $tol)) {
@@ -405,7 +454,7 @@ class Xml3176CompleteChecker
      * được liệt kê cứng, vì danh sách đổi thì câu sai theo. Nhãn lấy từ __tech.ket_qua_dtri /
      * __tech.tinh_trang_rv; mã không có nhãn (hoặc nhãn 'N/A') thì chỉ ghi mã.
      */
-    private function lyDoCongNgayGiuong(Xml3176Xml1 $data): string
+    private function lyDoCongNgayGiuong($data): string
     {
         $nhan = function ($ma, array $bang) {
             $ten = isset($bang[$ma]) ? trim((string) $bang[$ma]) : '';
@@ -433,7 +482,7 @@ class Xml3176CompleteChecker
      * @param Xml3176Xml1 $data
      * @return Collection
      */
-    private function checkMucHuong(Xml3176Xml1 $data): Collection
+    private function checkMucHuong($data, DuLieuHoSo $du = null): Collection
     {
         $errors = collect();
         $cfg = config('xml3176.muc_huong');
@@ -502,8 +551,10 @@ class Xml3176CompleteChecker
             $loaiMo = 'đúng tuyến';
         }
 
-        $maxXml2 = $data->Xml3176Xml2()->whereNotNull('muc_huong')->max('muc_huong');
-        $maxXml3 = $data->Xml3176Xml3()->whereNotNull('muc_huong')->max('muc_huong');
+        // cu: $data->Xml3176Xml{2,3}()->whereNotNull('muc_huong')->max('muc_huong')
+        $du = $this->duLieu($data->ma_lk, ['xml2', 'xml3'], $du);
+        $maxXml2 = DuLieuHoSo::max($du->dong('xml2'), 'muc_huong');
+        $maxXml3 = DuLieuHoSo::max($du->dong('xml3'), 'muc_huong');
         if ($maxXml2 === null && $maxXml3 === null) {
             return $errors; // guard: không dòng nào khai mức hưởng
         }
@@ -526,12 +577,17 @@ class Xml3176CompleteChecker
     /**
      * Hàm kiểm tra các loại tiền chi phí trong hồ sơ tổng hợp và hồ sơ chi tiết
      */
-    private function checkExpenseErrors(Xml3176Xml1 $data): Collection
+    private function checkExpenseErrors($data, DuLieuHoSo $du = null): Collection
     {
         $errors = collect();
+        $du = $this->duLieu($data->ma_lk, ['xml1', 'xml2', 'xml3'], $du);
+        // Moi tong duoi day thay mot `Xml3176XmlN::where('ma_lk', ...)[->loc]->sum(cot)` cu; giu
+        // nguyen phep cong HAI tong rieng XML2 + XML3 va bieu thuc so sanh round(..., 2).
+        $x2 = $du->dong('xml2');
+        $x3 = $du->dong('xml3');
 
         // Kiểm tra t_thuoc
-        $sum_t_thuoc = Xml3176Xml2::where('ma_lk', $data->ma_lk)->sum('thanh_tien_bv');
+        $sum_t_thuoc = DuLieuHoSo::tong($x2, 'thanh_tien_bv');
         if ($data->t_thuoc != round($sum_t_thuoc, 2)) {
             $errorCode = $this->generateErrorCode('INVALID_EXPENSE_DRUG');
             $errors->push((object)[
@@ -543,7 +599,10 @@ class Xml3176CompleteChecker
         }
 
         // Kiểm tra tiền VTYT
-        $sum_t_vtyt = Xml3176Xml3::where('ma_lk', $data->ma_lk)->whereIn('ma_nhom', $this->materialGroupCodes)->sum('thanh_tien_bv');
+        $sum_t_vtyt = DuLieuHoSo::tong(
+            $du->loc('xml3', self::locTrongTap('ma_nhom', (array) $this->materialGroupCodes)),
+            'thanh_tien_bv'
+        );
         if ($data->t_vtyt != round($sum_t_vtyt, 2)) {
             $errorCode = $this->generateErrorCode('INVALID_EXPENSE_T_VTYT');
             $errors->push((object)[
@@ -555,8 +614,8 @@ class Xml3176CompleteChecker
         }
 
         // Kiểm tra t_tongchi_bv
-        $sum_t_tongchi_bv_xml2 = Xml3176Xml2::where('ma_lk', $data->ma_lk)->sum('thanh_tien_bv');
-        $sum_t_tongchi_bv_xml3 = Xml3176Xml3::where('ma_lk', $data->ma_lk)->sum('thanh_tien_bv');
+        $sum_t_tongchi_bv_xml2 = DuLieuHoSo::tong($x2, 'thanh_tien_bv');
+        $sum_t_tongchi_bv_xml3 = DuLieuHoSo::tong($x3, 'thanh_tien_bv');
         $sum_t_tongchi_bv = $sum_t_tongchi_bv_xml2 + $sum_t_tongchi_bv_xml3;
 
         if ($data->t_tongchi_bv != round($sum_t_tongchi_bv, 2)) {
@@ -570,8 +629,8 @@ class Xml3176CompleteChecker
         }
 
         // Kiểm tra t_tongchi_bh
-        $sum_t_tongchi_bh_xml2 = Xml3176Xml2::where('ma_lk', $data->ma_lk)->sum('thanh_tien_bh');
-        $sum_t_tongchi_bh_xml3 = Xml3176Xml3::where('ma_lk', $data->ma_lk)->sum('thanh_tien_bh');
+        $sum_t_tongchi_bh_xml2 = DuLieuHoSo::tong($x2, 'thanh_tien_bh');
+        $sum_t_tongchi_bh_xml3 = DuLieuHoSo::tong($x3, 'thanh_tien_bh');
         $sum_t_tongchi_bh = $sum_t_tongchi_bh_xml2 + $sum_t_tongchi_bh_xml3;
 
         if ($data->t_tongchi_bh != round($sum_t_tongchi_bh, 2)) {
@@ -585,8 +644,8 @@ class Xml3176CompleteChecker
         }
 
         // Kiểm tra t_bntt
-        $sum_t_bntt_xml2 = Xml3176Xml2::where('ma_lk', $data->ma_lk)->sum('t_bntt');
-        $sum_t_bntt_xml3 = Xml3176Xml3::where('ma_lk', $data->ma_lk)->sum('t_bntt');
+        $sum_t_bntt_xml2 = DuLieuHoSo::tong($x2, 't_bntt');
+        $sum_t_bntt_xml3 = DuLieuHoSo::tong($x3, 't_bntt');
         $sum_t_bntt = $sum_t_bntt_xml2 + $sum_t_bntt_xml3;
 
         if ($data->t_bntt != round($sum_t_bntt, 2)) {
@@ -600,8 +659,8 @@ class Xml3176CompleteChecker
         }
 
         // Kiểm tra t_bncct
-        $sum_t_bncct_xml2 = Xml3176Xml2::where('ma_lk', $data->ma_lk)->sum('t_bncct');
-        $sum_t_bncct_xml3 = Xml3176Xml3::where('ma_lk', $data->ma_lk)->sum('t_bncct');
+        $sum_t_bncct_xml2 = DuLieuHoSo::tong($x2, 't_bncct');
+        $sum_t_bncct_xml3 = DuLieuHoSo::tong($x3, 't_bncct');
         $sum_t_bncct = $sum_t_bncct_xml2 + $sum_t_bncct_xml3;
 
         if ($data->t_bncct != round($sum_t_bncct, 2)) {
@@ -615,8 +674,9 @@ class Xml3176CompleteChecker
         }
 
         // Kiểm tra t_bhtt
-        $t_tongchi_bh = Xml3176Xml1::where('ma_lk', $data->ma_lk)->sum('t_tongchi_bh');
-        $t_bncct = Xml3176Xml1::where('ma_lk', $data->ma_lk)->sum('t_bncct');
+        // cu: Xml3176Xml1::where('ma_lk')->sum(...) - tong tren moi dong XML1 cua ho so (thuc te 1 dong)
+        $t_tongchi_bh = DuLieuHoSo::tong($du->dong('xml1'), 't_tongchi_bh');
+        $t_bncct = DuLieuHoSo::tong($du->dong('xml1'), 't_bncct');
         $t_bhtt = $t_tongchi_bh - $t_bncct;
 
         if ($data->t_bhtt != round($t_bhtt, 2)) {
@@ -630,8 +690,8 @@ class Xml3176CompleteChecker
         }
 
         // Kiểm tra t_nguonkhac
-        $t_nguonkhac_xml2 = Xml3176Xml2::where('ma_lk', $data->ma_lk)->sum('t_nguonkhac');
-        $t_nguonkhac_xml3 = Xml3176Xml3::where('ma_lk', $data->ma_lk)->sum('t_nguonkhac');
+        $t_nguonkhac_xml2 = DuLieuHoSo::tong($x2, 't_nguonkhac');
+        $t_nguonkhac_xml3 = DuLieuHoSo::tong($x3, 't_nguonkhac');
         $t_nguonkhac = $t_nguonkhac_xml2 + $t_nguonkhac_xml3;
 
         if ($data->t_nguonkhac != round($t_nguonkhac, 2)) {
@@ -656,8 +716,9 @@ class Xml3176CompleteChecker
         }
 
         if (!$excluded) {
-            $sum_t_bhtt_xml2 = Xml3176Xml2::where('ma_lk', $data->ma_lk)->where('ma_pttt', 1)->sum('t_bhtt');
-            $sum_t_bhtt_xml3 = Xml3176Xml3::where('ma_lk', $data->ma_lk)->where('ma_pttt', 1)->sum('t_bhtt');
+            // cu: ->where('ma_pttt', 1)->sum('t_bhtt') - ma_pttt VARCHAR so voi so nguyen
+            $sum_t_bhtt_xml2 = DuLieuHoSo::tong($du->loc('xml2', self::locTrongTap('ma_pttt', [1])), 't_bhtt');
+            $sum_t_bhtt_xml3 = DuLieuHoSo::tong($du->loc('xml3', self::locTrongTap('ma_pttt', [1])), 't_bhtt');
             $total_t_bhtt = $sum_t_bhtt_xml2 + $sum_t_bhtt_xml3;
             $t_bhtt_gdv = doubleval($data->t_bhtt_gdv) ?? 0;
 
@@ -710,7 +771,7 @@ class Xml3176CompleteChecker
      * khong do du lieu sai. Nen kiem theo hai chieu kha thi: phai CO dong XML14, va ngay
      * tren dong do phai NAM TRONG tap NGAY_TAI_KHAM.
      */
-    private function checkNgayTaiKham(Xml3176Xml1 $data): Collection
+    private function checkNgayTaiKham($data, DuLieuHoSo $du = null): Collection
     {
         $errors = collect();
         $ngays = DanhSachPhanCachParser::tach($data->ngay_tai_kham);
@@ -746,7 +807,8 @@ class Xml3176CompleteChecker
             return $errors;
         }
 
-        $xml14 = Xml3176Xml14::where('ma_lk', $data->ma_lk)->first();
+        // cu: Xml3176Xml14::where('ma_lk', $data->ma_lk)->first() (ma_lk unique: toi da mot dong)
+        $xml14 = $this->duLieu($data->ma_lk, ['xml14'], $du)->dau('xml14');
 
         if (!$xml14) {
             $errorCode = $this->generateErrorCode('NGAY_TAI_KHAM_KHONG_KHOP_XML14');
@@ -799,7 +861,7 @@ class Xml3176CompleteChecker
      * KHONG so so phan tu voi SO_CON cua XML9: chuan khong noi ro CAN_NANG_CON ghi con
      * con song hay ghi ca con chet. Thieu can cu.
      */
-    private function checkCanNangCon(Xml3176Xml1 $data): Collection
+    private function checkCanNangCon($data, DuLieuHoSo $du = null): Collection
     {
         $errors = collect();
         $canNang = DanhSachPhanCachParser::tach($data->can_nang_con);
@@ -808,7 +870,8 @@ class Xml3176CompleteChecker
             return $errors;
         }
 
-        if (!Xml3176Xml9::where('ma_lk', $data->ma_lk)->exists()) {
+        // cu: Xml3176Xml9::where('ma_lk', $data->ma_lk)->exists()
+        if (!$this->duLieu($data->ma_lk, ['xml9'], $du)->co('xml9')) {
             $errorCode = $this->generateErrorCode('CAN_NANG_CON_THIEU_XML9');
             $errors->push((object)[
                 'error_code' => $errorCode,
@@ -832,9 +895,10 @@ class Xml3176CompleteChecker
      * nao de chay tren du lieu hien tai (khong ma nao trong 1.2, 1.13, 1.14, 1.18, 7,
      * 7.2, 7.3, 7.4, 10 xuat hien), nen chua duoc kiem chung thuc te.
      */
-    private function checkDoiTuongKcbMucHuong(Xml3176Xml1 $data): Collection
+    private function checkDoiTuongKcbMucHuong($data, DuLieuHoSo $du = null): Collection
     {
         $errors = collect();
+        $du = $this->duLieu($data->ma_lk, ['xml2', 'xml3'], $du);
         $ma = DoiTuongKcbCatalog::chuanHoa($data->ma_doituong_kcb);
         $danhMuc = (array) config('doi_tuong_kcb', []);
 
@@ -848,7 +912,7 @@ class Xml3176CompleteChecker
         $coDinh = DoiTuongKcbCatalog::thuocTinh($ma, $danhMuc, 'muc_huong_co_dinh');
 
         if ($coDinh !== null) {
-            $lech = $this->mucHuongKhacVoi($data->ma_lk, (float) $coDinh);
+            $lech = $this->mucHuongKhacVoi($du, (float) $coDinh);
 
             if ($lech !== null) {
                 $code = $this->generateErrorCode('DOI_TUONG_KCB_MUC_HUONG_CO_DINH');
@@ -872,7 +936,7 @@ class Xml3176CompleteChecker
                 $tuMoc = $vao->format('Y-m-d') >= $theoMoc['moc'];
 
                 if ($tuMoc) {
-                    $lech = $this->mucHuongKhacVoi($data->ma_lk, (float) $theoMoc['tu_moc']);
+                    $lech = $this->mucHuongKhacVoi($du, (float) $theoMoc['tu_moc']);
 
                     if ($lech !== null) {
                         $code = $this->generateErrorCode('DOI_TUONG_KCB_MUC_HUONG_THEO_MOC');
@@ -903,9 +967,8 @@ class Xml3176CompleteChecker
         if (DoiTuongKcbCatalog::thuocTinh($ma, $danhMuc, 'linh_thuoc_khong_kham', false)) {
             $nhomKham = (array) config('xml3176.examination_group_code', []);
 
-            $soDongKham = Xml3176Xml3::where('ma_lk', $data->ma_lk)
-                ->whereIn('ma_nhom', $nhomKham)
-                ->count();
+            // cu: Xml3176Xml3::where('ma_lk')->whereIn('ma_nhom', $nhomKham)->count()
+            $soDongKham = $du->dem('xml3', self::locTrongTap('ma_nhom', $nhomKham));
 
             if ($soDongKham > 0) {
                 $code = $this->generateErrorCode('DOI_TUONG_KCB_LINH_THUOC_CO_TIEN_KHAM');
@@ -926,19 +989,22 @@ class Xml3176CompleteChecker
      * Tra ve muc huong dau tien khac $mong doi trong cac dong XML2/XML3 cua ho so, hoac
      * null neu khong dong nao lech. Dong khong khai MUC_HUONG thi bo qua - thieu can cu.
      */
-    private function mucHuongKhacVoi($ma_lk, float $mongDoi)
+    private function mucHuongKhacVoi(DuLieuHoSo $du, float $mongDoi)
     {
-        foreach ([Xml3176Xml2::class, Xml3176Xml3::class] as $model) {
+        // Laravel bind float $mongDoi dang chuoi (precision PHP); MySQL ep sang DOUBLE de so
+        $mong = (float) (string) $mongDoi;
+        foreach (['xml2', 'xml3'] as $loai) {
             // Bo dieu kien <> '' : cot muc_huong la double, MySQL ep '' ve 0.0 nen dieu
             // kien do loai luon moi dong khai muc huong = 0 - dung loai dong quy tac can
             // bat. whereNotNull() da lo dung ca "chua khai" (NULL).
-            $gt = $model::where('ma_lk', $ma_lk)
-                ->whereNotNull('muc_huong')
-                ->where('muc_huong', '<>', $mongDoi)
-                ->value('muc_huong');
+            // cu: XmlN::where('ma_lk')->whereNotNull('muc_huong')->where('muc_huong', '<>', $mongDoi)
+            //     ->value('muc_huong') - dong dau tien theo thu tu quet (stt), gia tri tho
+            $dong = $du->dongTheoStt($loai, function ($r) use ($mong) {
+                return $r->muc_huong !== null && (float) DuLieuHoSo::soSql($r->muc_huong) != $mong;
+            });
 
-            if ($gt !== null) {
-                return $gt;
+            if (!empty($dong)) {
+                return $dong[0]->muc_huong;
             }
         }
 
@@ -948,14 +1014,18 @@ class Xml3176CompleteChecker
     /**
      * #2098 — Ngày KQ tại XML4 không khớp ngày KQ tại XML3 (cùng ma_dich_vu).
      */
-    private function checkXml4NgayKqMismatchXml3($ma_lk): Collection
+    private function checkXml4NgayKqMismatchXml3($ma_lk, DuLieuHoSo $du = null): Collection
     {
         $errors = collect();
+        $du = $this->duLieu($ma_lk, ['xml3', 'xml4'], $du);
 
-        $xml3 = Xml3176Xml3::where('ma_lk', $ma_lk)
-            ->whereNotNull('ngay_kq')->where('ngay_kq', '<>', '')->get()->groupBy('ma_dich_vu');
-        $xml4 = Xml3176Xml4::where('ma_lk', $ma_lk)
-            ->whereNotNull('ngay_kq')->where('ngay_kq', '<>', '')->get();
+        // cu: XmlN::where('ma_lk')->whereNotNull('ngay_kq')->where('ngay_kq', '<>', '')->get() - thu tu
+        // quet (stt); '<>' theo collation nen chuoi toan dau cach coi nhu '' va bi loai
+        $coNgayKq = function ($r) {
+            return $r->ngay_kq !== null && !DuLieuHoSo::bang($r->ngay_kq, '');
+        };
+        $xml3 = collect($du->dongTheoStt('xml3', $coNgayKq))->groupBy('ma_dich_vu');
+        $xml4 = $du->dongTheoStt('xml4', $coNgayKq);
 
         foreach ($xml4 as $r4) {
             if (!isset($xml3[$r4->ma_dich_vu])) {
@@ -993,15 +1063,16 @@ class Xml3176CompleteChecker
      * 100%", tong 24.954 loi tren 914/1153 ho so - 79%, gan het la bao oan. Doi sang
      * nhom dua so loi ve khoang 1.772 tren 79 ho so.
      */
-    private function checkSecondSurgeryFullPayment($ma_lk): Collection
+    private function checkSecondSurgeryFullPayment($ma_lk, DuLieuHoSo $du = null): Collection
     {
         $errors = collect();
         $rate = (float) config('xml3176.xml3.surgery_full_payment_rate', '100');
         $nhomPt = config('xml3176.xml3.service_groups_pt', [8]);
 
-        $rows = Xml3176Xml3::where('ma_lk', $ma_lk)
-            ->whereIn('ma_nhom', $nhomPt)
-            ->orderBy('ngay_yl')->get();
+        // cu: Xml3176Xml3::where('ma_lk')->whereIn('ma_nhom', $nhomPt)->orderBy('ngay_yl')->get()
+        $rows = self::sapTheoNgayYl(
+            $this->duLieu($ma_lk, ['xml3'], $du)->dongTheoStt('xml3', self::locTrongTap('ma_nhom', (array) $nhomPt))
+        );
 
         $byDay = [];
         foreach ($rows as $r) {
@@ -1031,18 +1102,42 @@ class Xml3176CompleteChecker
     }
 
     /**
+     * Nhu `ORDER BY ngay_yl ASC` tren VARCHAR utf8_general_ci: NULL dau tien, so theo khoa
+     * collation. Dong bang nhau giu thu tu dau vao (thu tu quet stt): MariaDB khong cam ket thu tu
+     * cho dong bang nhau, thu tu quet la lua chon gan nhat.
+     */
+    private static function sapTheoNgayYl(array $dong): array
+    {
+        $khoa = [];
+        foreach ($dong as $i => $r) {
+            $khoa[$i] = $r->ngay_yl === null ? null : SoSanhSql::khoa($r->ngay_yl);
+        }
+        uksort($dong, function ($a, $b) use ($khoa) {
+            if ($khoa[$a] === null || $khoa[$b] === null) {
+                $ss = ($khoa[$a] === null ? 0 : 1) <=> ($khoa[$b] === null ? 0 : 1);
+            } else {
+                $ss = strcmp($khoa[$a], $khoa[$b]);
+            }
+
+            return $ss !== 0 ? $ss : $a <=> $b;
+        });
+
+        return array_values($dong);
+    }
+
+    /**
      * VTYT/thuoc thanh toan ngoai gia DVKT phai di kem DVKT me duoc quy BHYT tra.
      *
      * Chuyen de chu dong BHXH 10/2026: ho so co VTYT "chua bao gom trong gia DVKT" de nghi
      * quy tra trong khi DVKT me quen ke hoac BN tu tra. Logic o VatPhamKemDvktRule; bang tra
      * hoc boi lenh xml3176:hoc-vat-pham-kem-dvkt.
      */
-    private function checkVatPhamKemDvkt($ma_lk): Collection
+    private function checkVatPhamKemDvkt($ma_lk, DuLieuHoSo $du = null): Collection
     {
-        $xml3 = Xml3176Xml3::where('ma_lk', $ma_lk)
-            ->get(['ma_dich_vu', 'ma_vat_tu', 'ten_vat_tu', 'ten_dich_vu', 'goi_vtyt', 'so_luong', 't_bhtt', 'ngay_yl']);
-        $xml2 = Xml3176Xml2::where('ma_lk', $ma_lk)
-            ->get(['ma_thuoc', 'ten_thuoc', 'ma_dich_vu', 't_bhtt', 'ngay_yl']);
+        $du = $this->duLieu($ma_lk, ['xml2', 'xml3'], $du);
+        // cu: XmlN::where('ma_lk')->get([cot...]) - dung cac cot do, thu tu quet (stt)
+        $xml3 = self::chonCot($du->dongTheoStt('xml3'), ['ma_dich_vu', 'ma_vat_tu', 'ten_vat_tu', 'ten_dich_vu', 'goi_vtyt', 'so_luong', 't_bhtt', 'ngay_yl']);
+        $xml2 = self::chonCot($du->dongTheoStt('xml2'), ['ma_thuoc', 'ten_thuoc', 'ma_dich_vu', 't_bhtt', 'ngay_yl']);
 
         $errors = collect();
         foreach ((new VatPhamKemDvktRule(VatPhamKemDvktLookup::bang()))->kiem($xml3, $xml2) as $loi) {
@@ -1058,14 +1153,29 @@ class Xml3176CompleteChecker
         return $errors;
     }
 
+    /** Chi giu cac cot $cot cua moi dong (nhu ->get([cot...])). */
+    private static function chonCot(array $dong, array $cot): array
+    {
+        $ra = [];
+        foreach ($dong as $r) {
+            $o = new \stdClass();
+            foreach ($cot as $c) {
+                $o->$c = $r->$c ?? null;
+            }
+            $ra[] = $o;
+        }
+
+        return $ra;
+    }
+
     /**
      * Dinh danh NVYT (thu truong don vi, BS chi dinh, nguoi thuc hien, BS doc KQ) cua ca ho so,
      * gom thanh 3 ma XMLComplete_NVYT_*. Logic o NvytRule; truong lay tu moi bang XML qua NvytThuThap.
      */
-    public function kiemNvyt($ma_lk): Collection
+    public function kiemNvyt($ma_lk, DuLieuHoSo $du = null): Collection
     {
         $errors = collect();
-        foreach ((new NvytRule(NvytLookup::bang()))->kiem(NvytThuThap::tuHoSo((string) $ma_lk)) as $loi) {
+        foreach ((new NvytRule(NvytLookup::bang()))->kiem(NvytThuThap::tuHoSo((string) $ma_lk, $du)) as $loi) {
             $code = $this->generateErrorCode($loi['key']);
             $errors->push((object) [
                 'error_code' => $code,

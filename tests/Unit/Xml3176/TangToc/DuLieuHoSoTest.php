@@ -219,6 +219,28 @@ class DuLieuHoSoTest extends TestCase
     }
 
     /** @test */
+    public function dong_theo_stt_theo_thu_tu_quet_khoa_ma_lk_stt()
+    {
+        $this->bootDuBang();
+        DB::table('xml3176_xml3s')->insert(['id' => 1, 'ma_lk' => 'A', 'stt' => 3, 'ma_nhom' => '10']);
+        DB::table('xml3176_xml3s')->insert(['id' => 2, 'ma_lk' => 'A', 'stt' => 1, 'ma_nhom' => '1']);
+        DB::table('xml3176_xml3s')->insert(['id' => 3, 'ma_lk' => 'A', 'stt' => 2, 'ma_nhom' => '11']);
+
+        $hs = DuLieuHoSo::nap('A', ['xml3']);
+        $id = function (array $ds) {
+            return array_map(function ($r) {
+                return (int) $r->id;
+            }, $ds);
+        };
+        $this->assertSame([2, 3, 1], $id($hs->dongTheoStt('xml3')));
+        $this->assertSame([3, 1], $id($hs->dongTheoStt('xml3', function ($r) {
+            return DuLieuHoSo::trongTap($r->ma_nhom, [10, 11]);
+        })));
+        // dong() van theo id
+        $this->assertSame([1, 2, 3], $id($hs->dong('xml3')));
+    }
+
+    /** @test */
     public function dong_sap_theo_id()
     {
         $this->bootDuBang();

@@ -114,6 +114,31 @@ class DuLieuHoSo
         return array_values(array_filter($this->dong($loai), $loc));
     }
 
+    /**
+     * Cac dong (thoa $loc neu co) theo thu tu MariaDB tra cho `where ma_lk = ? [and ...]` KHONG
+     * orderBy: khoa `*_ma_lk_stt_unique` (xml1-5) -> stt tang dan, roi id (du phong). Bang chi co
+     * khoa ma_lk unique (xml7..14) chi co mot dong nen thu tu khong anh huong. Dung thay cho
+     * ->get()/->first()/->value() cu ma ket qua phu thuoc thu tu (mo ta, dong dau tien...).
+     */
+    public function dongTheoStt(string $loai, callable $loc = null): array
+    {
+        $ds = $loc === null ? $this->dong($loai) : $this->loc($loai, $loc);
+        $khoa = [];
+        foreach ($ds as $i => $r) {
+            $khoa[$i] = [
+                isset($r->stt) ? (int) $r->stt : PHP_INT_MIN,
+                isset($r->id) ? (int) $r->id : PHP_INT_MIN,
+                $i,
+            ];
+        }
+        // Khoa (stt, id, vi tri) duy nhat nen usort khong on dinh cung khong anh huong
+        uksort($ds, function ($a, $b) use ($khoa) {
+            return $khoa[$a] <=> $khoa[$b];
+        });
+
+        return array_values($ds);
+    }
+
     // ------------------------------------------------------------------ phep tinh kieu SQL
 
     /**

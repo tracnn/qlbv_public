@@ -174,12 +174,12 @@ class NvytKiemLaiLenhTest extends TestCase
         // LK1 het chan va da commit; LK2 ném loi khi kiem -> LK1 van nam trong tep, LK2 giu nguyen
         $this->app->bind(\App\Services\Xml3176CompleteChecker::class, function () {
             return new class(app(\App\Services\Xml3176ErrorService::class)) extends \App\Services\Xml3176CompleteChecker {
-                public function kiemNvyt($ma_lk): \Illuminate\Support\Collection
+                public function kiemNvyt($ma_lk, \App\Services\Xml3176\DuLieuHoSo $du = null): \Illuminate\Support\Collection
                 {
                     if ($ma_lk === 'LK2') {
                         throw new \RuntimeException('mat ket noi gia lap');
                     }
-                    return parent::kiemNvyt($ma_lk);
+                    return parent::kiemNvyt($ma_lk, $du);
                 }
             };
         });

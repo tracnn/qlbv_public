@@ -110,6 +110,6 @@ class VatPhamKemDvktCheckerTest extends TestCase
     {
         $nguon = file_get_contents(app_path('Services/Xml3176CompleteChecker.php'));
 
-        $this->assertContains('$this->checkVatPhamKemDvkt($ma_lk)', $nguon);
+        $this->assertContains('$this->checkVatPhamKemDvkt($ma_lk, $du)', $nguon);
     }
 }
