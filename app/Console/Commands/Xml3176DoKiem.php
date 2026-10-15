@@ -231,20 +231,27 @@ class Xml3176DoKiem extends Command
         $kq = '';
         foreach ($sanSang['nhom'] as $dsDong) {
             foreach ($dsDong as $d) {
-                $kq .= json_encode([
-                    'xml'            => $d['xml'],
-                    'ma_lk'          => $d['ma_lk'],
-                    'stt'            => $d['stt'],
-                    'error_code'     => $d['error_code'],
-                    'description'    => $d['description'],
-                    'critical_error' => $d['critical_error'],
-                ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "\n";
+                $kq .= self::maHoaDong($d);
                 $this->tongLoi++;
             }
         }
         if ($kq !== '' && $this->tepTam) {
             fwrite($this->tepTam, $kq);
         }
+    }
+
+    /** Ma hoa mot dong loi thanh JSON; UTF-8 hong duoc thay the de khong bao gio ra dong trong (mat dong). */
+    public static function maHoaDong(array $d)
+    {
+        return json_encode([
+            'xml'            => $d['xml'],
+            'ma_lk'          => $d['ma_lk'],
+            'stt'            => $d['stt'],
+            'error_code'     => $d['error_code'],
+            'description'    => $d['description'],
+            'critical_error' => $d['critical_error'],
+        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE) . "
+";
     }
 
     private function moTepTam()

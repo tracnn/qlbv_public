@@ -113,3 +113,11 @@ ORDER BY phut;
    Chọn khoảng `<TU_LUC>`..`<DEN_LUC>` bao trọn một đợt nhập (ví dụ đợt nhập sau deploy, và một đợt nhập
    tương đương trước deploy). So số hồ sơ/phút ở giai đoạn ổn định, bỏ phút đầu và phút cuối của đợt.
    Lưu ý `checked_at` bị xoá về null khi nạp lại hồ sơ, nên với lô cũ chỉ đếm được hồ sơ chưa bị nạp lại.
+
+
+## Lưu ý vận hành bổ sung
+
+- **Thứ tự dòng trong mô tả "PTTT trùng bác sĩ"**: sau khi tạo chỉ mục PTTT, thứ tự các dòng liệt kê trong mô tả lỗi này có thể đổi (truy vấn không có `orderBy`). Tập lỗi không đổi; không coi mô tả bị đảo thứ tự là hồi quy khi so sánh.
+- **Lệnh cứu `php artisan xml3176:chay-lai-tu-xuat`**: không chạy khi hàng đợi `JobXml3176` còn job định dạng cũ (`CheckXml3176TypeJob` / `CheckCompleteXml3176RecordJob`) sau khi deploy, vì job cấp hồ sơ cũ đóng dấu `checked_at` mà không có chốt token.
+- **Số worker**: giữ đúng một worker (dịch vụ NSSM) trên hàng đợi `JobXml3176`. `$timeout` không được thực thi trên Windows và `retry_after=300` có thể gây xử lý trùng nếu có nhiều worker.
+- **Vấn đề có sẵn, không do bước B**: quy tắc `XML3_OVERLAPPING_SERVICE_EXECUTION` sinh lỗi theo từng cặp (một hồ sơ có 38.775 lỗi) và hồ sơ `000007038497` cạn bộ nhớ ở cả mã cũ lẫn mã mới. Bước B không thay đổi điều này; theo dõi riêng.

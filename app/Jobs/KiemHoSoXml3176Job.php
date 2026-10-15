@@ -70,6 +70,7 @@ class KiemHoSoXml3176Job implements ShouldQueue
             return;
         }
 
+        // Nhanh nay chi phu payload khong co chain token (giu cho an toan; xepSauNap luon truyen token).
         if ($this->laJobCu()) {
             Xml3176Information::where('ma_lk', $this->maLk)
                 ->update(['checked_at' => now()]);
