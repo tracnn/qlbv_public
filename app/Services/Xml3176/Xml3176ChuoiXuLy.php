@@ -2,9 +2,8 @@
 
 namespace App\Services\Xml3176;
 
-use App\Jobs\CheckCompleteXml3176RecordJob;
-use App\Jobs\CheckXml3176TypeJob;
 use App\Jobs\ExportXml3176Job;
+use App\Jobs\KiemHoSoXml3176Job;
 use App\Jobs\SignXml3176Job;
 use App\Jobs\SubmitXml3176Job;
 use App\Models\BHYT\Xml3176Information;
@@ -12,7 +11,7 @@ use App\Models\BHYT\Xml3176Information;
 /**
  * Dung chuoi kiem -> xuat -> ky -> gui cho MOT ho so XML3176 (khuon CtdtXepHangKyGui).
  *
- * [JobXml3176]        Kiem XML1 -> Kiem XML2 -> ... -> Kiem tong the
+ * [JobXml3176]        Kiem ho so (moi loai XML + tong the, mot job - KiemHoSoXml3176Job)
  * [JobExportXml3176]  -> Xuat
  * [JobSignXml3176]    -> Ky
  * [JobSubmitXml3176]  -> Gui cong
@@ -46,17 +45,12 @@ class Xml3176ChuoiXuLy
      */
     public static function xepSauNap($maLk, $maPhien, array $loaiDaNap, $choPhepXuat)
     {
-        $hangDoiKiem = config('xml3176.queue_name');
-        $jobs = [];
-
-        foreach (array_values(array_unique($loaiDaNap)) as $loai) {
-            if (Xml3176CheckTypes::coChecker($loai)) {
-                $jobs[] = (new CheckXml3176TypeJob($maLk, $loai, $maPhien))->onQueue($hangDoiKiem);
-            }
-        }
-
-        // LUON co mat, ke ca khi xml_3176_not_check bat - job la moc "kiem xong" cua chuoi.
-        $jobs[] = (new CheckCompleteXml3176RecordJob($maLk, $maPhien))->onQueue($hangDoiKiem);
+        // LUON co mat, ke ca khi khong loai nao co checker hoac tat kiem tong the - job la moc
+        // "kiem xong" cua chuoi. Loai: co checker, khu trung, thu tu Xml3176CheckTypes::LOAI.
+        $jobs = [
+            (new KiemHoSoXml3176Job($maLk, KiemHoSoXml3176::theoThuTu($loaiDaNap), $maPhien))
+                ->onQueue(config('xml3176.queue_name')),
+        ];
 
         if ($choPhepXuat && config('xml3176.export_xml3176_enabled')) {
             $jobs = array_merge($jobs, self::buocTuXuat($maLk, $maPhien));

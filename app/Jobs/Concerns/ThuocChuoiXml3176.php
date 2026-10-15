@@ -52,14 +52,16 @@ trait ThuocChuoiXml3176
      * Ghi len ho so CHI KHI chuoi nay con hieu luc. Dung trong failed(): loi cua chuoi cu
      * khong duoc de len trang thai cua chuoi moi. Mot cau lenh duy nhat (khong so ma roi moi
      * ghi) de khong co khe ho giua luc so va luc ghi.
+     *
+     * @return int so dong da ghi (0 = chuoi khong con hieu luc / job cu)
      */
     protected function ghiNeuConHieuLuc($maLk, array $cot)
     {
         if ($this->chainToken === null) {
-            return;
+            return 0;
         }
 
-        Xml3176Information::where('ma_lk', $maLk)
+        return Xml3176Information::where('ma_lk', $maLk)
             ->where('chain_token', $this->chainToken)
             ->update($cot);
     }

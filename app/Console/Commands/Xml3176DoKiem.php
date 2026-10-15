@@ -3,8 +3,8 @@
 namespace App\Console\Commands;
 
 use App\Models\BHYT\Xml3176ErrorCatalog;
+use App\Services\Xml3176\KiemHoSoXml3176;
 use App\Services\Xml3176\Xml3176CheckTypes;
-use App\Services\Xml3176CompleteChecker;
 use App\Services\Xml3176ErrorService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
@@ -13,12 +13,11 @@ use Illuminate\Support\Facades\DB;
  * Do thoi gian kiem XML3176 va xuat danh sach loi de so sanh truoc/sau khi toi uu.
  *
  * CHI DOC: cau dau tien dat phien MySQL o che do READ ONLY, va ErrorService o che do gom
- * (khong bao gio ketThucGom) nen khong co dong loi nao duoc ghi. Chay giong
- * CheckXml3176TypeJob::handle: moi loai XML nap dong theo lo 500, roi XMLComplete.
+ * (khong bao gio ketThucGom) nen khong co dong loi nao duoc ghi. Kiem bang chinh
+ * KiemHoSoXml3176 (duong kiem cua job) o che do khong ghi: moi loai XML lo 500, roi XMLComplete.
  */
 class Xml3176DoKiem extends Command
 {
-    const CO_LO = 500;
     const SO_MAU_SQL = 40;
 
     protected $signature = 'xml3176:do-kiem
@@ -69,6 +68,7 @@ class Xml3176DoKiem extends Command
 
         $loi = app(Xml3176ErrorService::class);
         $loi->batDauGom(); // khong bao gio ketThucGom -> khong ghi
+        $kiem = app(KiemHoSoXml3176::class);
 
         $this->thongKe = [];
         $this->mauSql = [];
@@ -85,23 +85,15 @@ class Xml3176DoKiem extends Command
         try {
         foreach ($dsMaLk as $maLk) {
             $batHoSo = microtime(true);
-            foreach (Xml3176CheckTypes::LOAI as $loai => $cauHinh) {
-                $this->doMuc($loai, function () use ($cauHinh, $maLk, $loai) {
-                    $checker = app($cauHinh['checker']);
-                    // Nap dong y het CheckXml3176TypeJob::handle (kem XML1).
-                    Xml3176CheckTypes::truyVanDong($loai, $maLk)->chunk(self::CO_LO, function ($dong) use ($checker, $loai) {
-                        foreach ($dong as $d) {
-                            $this->thongKe[$loai]['dong']++; // dem ca khi checker nem ngoai le
-                            $checker->checkErrors($d);
-                        }
-                    });
-                }, $maLk, $ngoaiLe);
-            }
-
-            $this->doMuc('XMLComplete', function () use ($maLk) {
-                $this->thongKe['XMLComplete']['dong']++;
-                app(Xml3176CompleteChecker::class)->checkErrors($maLk);
-            }, $maLk, $ngoaiLe);
+            // Cung duong kiem voi KiemHoSoXml3176Job, che do khong ghi: moi loai co checker
+            // (loai khong co dong chi ton mot truy van rong, nhu lenh cu) roi tong the.
+            $kiem->chay($maLk, array_keys(Xml3176CheckTypes::LOAI), function () {
+                return true;
+            }, false, function ($muc, callable $viec) use ($maLk, &$ngoaiLe) {
+                $this->doMuc($muc, $viec, $maLk, $ngoaiLe);
+            }, function ($muc) {
+                $this->thongKe[$muc]['dong']++; // dem ca khi checker nem ngoai le
+            });
 
             // Xa bo dem theo tung ho so de bo nho/cache giong worker that.
             $this->hienTai = null;

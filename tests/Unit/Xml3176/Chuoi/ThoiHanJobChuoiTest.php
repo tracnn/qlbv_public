@@ -18,6 +18,7 @@ class ThoiHanJobChuoiTest extends TestCase
     private $cacJob = [
         \App\Jobs\CheckXml3176TypeJob::class,
         \App\Jobs\CheckCompleteXml3176RecordJob::class,
+        \App\Jobs\KiemHoSoXml3176Job::class,
         \App\Jobs\ExportXml3176Job::class,
         \App\Jobs\SignXml3176Job::class,
         \App\Jobs\SubmitXml3176Job::class,

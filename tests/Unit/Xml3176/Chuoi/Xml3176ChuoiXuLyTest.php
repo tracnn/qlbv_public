@@ -5,6 +5,7 @@ namespace Tests\Unit\Xml3176\Chuoi;
 use App\Jobs\CheckCompleteXml3176RecordJob;
 use App\Jobs\CheckXml3176TypeJob;
 use App\Jobs\ExportXml3176Job;
+use App\Jobs\KiemHoSoXml3176Job;
 use App\Jobs\SignXml3176Job;
 use App\Jobs\SubmitXml3176Job;
 use App\Services\Xml3176\Xml3176ChuoiXuLy;
@@ -16,6 +17,10 @@ use Tests\TestCase;
 /**
  * Thu tu chuoi do FRAMEWORK bao dam, khong con dua vao viec moi hang doi chi co mot worker.
  * Laravel 5.5 khong co Queue::assertPushedWithChain(): doc $job->chained roi unserialize.
+ *
+ * Tu Buoc B (spec 3.3): buoc kiem la MOT KiemHoSoXml3176Job mang danh sach loai (co checker,
+ * khu trung, thu tu Xml3176CheckTypes::LOAI) thay cho N CheckXml3176TypeJob +
+ * CheckCompleteXml3176RecordJob; hai lop cu khong con duoc xep moi.
  */
 class Xml3176ChuoiXuLyTest extends TestCase
 {
@@ -55,7 +60,7 @@ class Xml3176ChuoiXuLyTest extends TestCase
     private function moTa(array $chuoi)
     {
         return array_map(function ($job) {
-            $loai = $job instanceof CheckXml3176TypeJob ? $this->thuocTinh($job, 'xmlType') : '-';
+            $loai = $job instanceof KiemHoSoXml3176Job ? implode(',', $this->thuocTinh($job, 'loaiXml')) : '-';
 
             return class_basename($job) . '|' . $loai . '|' . $job->queue . '|' . $this->thuocTinh($job, 'chainToken');
         }, $chuoi);
@@ -73,16 +78,16 @@ class Xml3176ChuoiXuLyTest extends TestCase
     /** @test */
     public function sau_nap_du_chuoi_dung_thu_tu_dung_hang_doi_cung_mot_ma()
     {
-        Xml3176ChuoiXuLy::xepSauNap('LK1', 'M1', ['XML1', 'XML2', 'XML1', 'KHONG_CO_CHECKER'], true);
+        Xml3176ChuoiXuLy::xepSauNap('LK1', 'M1', ['XML2', 'XML1', 'XML1', 'KHONG_CO_CHECKER'], true);
 
         $this->assertSame([
-            'CheckXml3176TypeJob|XML1|JobXml3176|M1',
-            'CheckXml3176TypeJob|XML2|JobXml3176|M1',
-            'CheckCompleteXml3176RecordJob|-|JobXml3176|M1',
+            'KiemHoSoXml3176Job|XML1,XML2|JobXml3176|M1',
             'ExportXml3176Job|-|JobExportXml3176|M1',
             'SignXml3176Job|-|JobSignXml3176|M1',
             'SubmitXml3176Job|-|JobSubmitXml3176|M1',
-        ], $this->moTa($this->chuoiDaDay(CheckXml3176TypeJob::class)));
+        ], $this->moTa($this->chuoiDaDay(KiemHoSoXml3176Job::class)));
+        Queue::assertNotPushed(CheckXml3176TypeJob::class);
+        Queue::assertNotPushed(CheckCompleteXml3176RecordJob::class);
     }
 
     /** @test */
@@ -91,9 +96,8 @@ class Xml3176ChuoiXuLyTest extends TestCase
         Xml3176ChuoiXuLy::xepSauNap('LK1', 'M1', ['XML1'], false);
 
         $this->assertSame([
-            'CheckXml3176TypeJob|XML1|JobXml3176|M1',
-            'CheckCompleteXml3176RecordJob|-|JobXml3176|M1',
-        ], $this->moTa($this->chuoiDaDay(CheckXml3176TypeJob::class)));
+            'KiemHoSoXml3176Job|XML1|JobXml3176|M1',
+        ], $this->moTa($this->chuoiDaDay(KiemHoSoXml3176Job::class)));
     }
 
     /** @test */
@@ -103,19 +107,19 @@ class Xml3176ChuoiXuLyTest extends TestCase
 
         Xml3176ChuoiXuLy::xepSauNap('LK1', 'M1', ['XML1'], true);
 
-        $this->assertCount(2, $this->chuoiDaDay(CheckXml3176TypeJob::class));
+        $this->assertCount(1, $this->chuoiDaDay(KiemHoSoXml3176Job::class));
     }
 
     /** @test */
     public function tat_kiem_tong_the_van_co_job_kiem_tong_the_trong_chuoi()
     {
-        // Job do la moc "kiem xong"; co xml_3176_not_check chi tat phan kiem ben trong no.
+        // Job kiem ho so la moc "kiem xong"; co xml_3176_not_check chi tat phan kiem tong the ben trong no.
         config(['organization.xml_3176_not_check' => true]);
 
         Xml3176ChuoiXuLy::xepSauNap('LK1', 'M1', ['XML1'], true);
 
-        $this->assertContains('CheckCompleteXml3176RecordJob|-|JobXml3176|M1',
-            $this->moTa($this->chuoiDaDay(CheckXml3176TypeJob::class)));
+        $this->assertContains('KiemHoSoXml3176Job|XML1|JobXml3176|M1',
+            $this->moTa($this->chuoiDaDay(KiemHoSoXml3176Job::class)));
     }
 
     /** @test */
@@ -123,8 +127,9 @@ class Xml3176ChuoiXuLyTest extends TestCase
     {
         Xml3176ChuoiXuLy::xepSauNap('LK1', 'M1', ['KHONG_CO_CHECKER'], true);
 
-        $this->assertSame('CheckCompleteXml3176RecordJob|-|JobXml3176|M1',
-            $this->moTa($this->chuoiDaDay(CheckCompleteXml3176RecordJob::class))[0]);
+        // Danh sach loai rong: job chi kiem tong the + dong dau, van la moc "kiem xong".
+        $this->assertSame('KiemHoSoXml3176Job||JobXml3176|M1',
+            $this->moTa($this->chuoiDaDay(KiemHoSoXml3176Job::class))[0]);
         Queue::assertNotPushed(CheckXml3176TypeJob::class);
     }
 
