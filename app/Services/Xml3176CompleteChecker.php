@@ -76,7 +76,7 @@ class Xml3176CompleteChecker
     {
         $du = $du ?: DuLieuHoSo::nap((string) $ma_lk);
         // cu: Xml3176Xml1::where('ma_lk', $ma_lk)->first()
-        $data = $du->xml1();
+        $data = self::xml1TheoStt($du);
         // Thực hiện kiểm tra lỗi
         if ($data) {
             $errors = collect();
@@ -118,26 +118,11 @@ class Xml3176CompleteChecker
     }
 
     /**
-     * Gia tri Builder::sum() cu tra cho SUM(DOUBLE) (`?: 0`), dung o mo ta in gia tri tho:
-     * 0 -> int 0; so nguyen -> chuoi khong phan le ('2'); con lai -> dang ngan nhat du chinh xac
-     * nhu chuoi MariaDB tra ('0.30000000000000004'), khong theo precision 14 cua PHP.
+     * Dong XML1 dau tien theo thu tu quet khoa (ma_lk, stt) - nhu ->first() cu khong orderBy.
      */
-    private static function tongTho(float $tong)
+    private static function xml1TheoStt(DuLieuHoSo $du)
     {
-        if ($tong == 0.0) {
-            return 0;
-        }
-        if (floor($tong) === $tong && abs($tong) < 1e15) {
-            return sprintf('%.0f', $tong);
-        }
-        $s = var_export($tong, true);
-        if (stripos($s, 'e') !== false) {
-            // '1.0E-7' -> '1e-7' (dang MariaDB) - chi gap o du lieu bat thuong
-            list($m, $e) = explode('E', strtoupper($s));
-            $s = preg_replace('/\.0$/', '', $m) . 'e' . (int) $e;
-        }
-
-        return $s;
+        return $du->dongTheoStt('xml1')[0] ?? null;
     }
 
     /**
@@ -241,7 +226,7 @@ class Xml3176CompleteChecker
         } else {
             $du = $this->duLieu($ma_lk, ['xml1', 'xml7'], $du);
             // cu: Xml3176Xml1::where('ma_lk', $ma_lk)->first()
-            $existXml1 = $du->xml1();
+            $existXml1 = self::xml1TheoStt($du);
             if (!$existXml1) {
                 $errorCode = $this->generateErrorCode('INFO_ERROR_XML_COMPLETE_MA_LK_NOT_FOUND');
                 $errors->push((object)[
@@ -301,8 +286,9 @@ class Xml3176CompleteChecker
         $hoursDifference = ($interval->days * 24) + $interval->h + ($interval->i / 60);
 
         if (in_array($data->ma_loai_kcb, $this->treatmentTypeInpatient) && $data->so_ngay_dtri <= 2) {
-            // gia tri tho nhu Builder::sum() cu (khong ep float) vi mo ta in thang
-            $totalBedDays = self::tongTho($tongGiuong);
+            // nhu Builder::sum() cu `?: 0`: mysqlnd khong emulate prepare tra float PHP, mo ta noi
+            // chuoi theo precision PHP; rong -> int 0
+            $totalBedDays = $tongGiuong ?: 0;
             
             if ($hoursDifference < 4) {
                 // Check if there are bed charges in Xml3176Xml3

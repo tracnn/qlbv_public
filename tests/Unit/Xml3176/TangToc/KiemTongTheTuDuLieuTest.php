@@ -219,6 +219,24 @@ class KiemTongTheTuDuLieuTest extends TestCase
     }
 
     /** @test */
+    public function ngay_giuong_mo_ta_in_tong_float_theo_precision_php()
+    {
+        // mysqlnd + ATTR_EMULATE_PREPARES=false: Builder::sum() cu tra float PHP, noi chuoi theo
+        // precision 14 -> 0.1 + 0.2 + 2 in '2.3' (khong phai chuoi MariaDB '2.3000000000000003').
+        $this->x1('G_FLOAT', ['ma_loai_kcb' => '03', 'ngay_vao' => '202610010800', 'ngay_ra' => '202610011800', 'so_ngay_dtri' => 1]);
+        $this->x7('G_FLOAT');
+        $this->x3('G_FLOAT', 1, ['ma_dich_vu' => 'G1', 'ma_nhom' => '15', 'so_luong' => 0.1]);
+        $this->x3('G_FLOAT', 2, ['ma_dich_vu' => 'G2', 'ma_nhom' => '15', 'so_luong' => 0.2]);
+        $this->x3('G_FLOAT', 3, ['ma_dich_vu' => 'G3', 'ma_nhom' => '15', 'so_luong' => 2]);
+
+        $this->assertSame(
+            ['EXCESS_BED_DAYS|Thời gian điều trị nội trú từ 4 đến 24 giờ, tính thừa ngày giường: ' . (0.1 + 0.2 + 2)],
+            $this->loi('G_FLOAT')
+        );
+        $this->assertSame('2.3', (string) (0.1 + 0.2 + 2));
+    }
+
+    /** @test */
     public function ngay_giuong_nhieu_ngay_khai_thieu()
     {
         $this->x1('G_THIEU', ['ma_loai_kcb' => '03', 'ngay_vao' => '202610010800', 'ngay_ra' => '202610051000', 'so_ngay_dtri' => 5]);
@@ -468,18 +486,32 @@ class KiemTongTheTuDuLieuTest extends TestCase
     // ------------------------------------------------------------------ NVYT
 
     /** @test */
-    public function nvyt_thieu_va_sai_dinh_danh_theo_moi_bang()
+    public function nvyt_thieu_va_sai_dinh_dang_theo_moi_bang()
     {
         $this->x1('NV', ['ma_ttdv' => '']);
         $this->x2('NV', 1, ['ma_bac_si' => 'khongco', 'ten_thuoc' => 'Thuoc A']);
         $this->x3('NV', 1, ['ma_dich_vu' => 'D1', 'ma_nhom' => '3', 'ma_bac_si' => '', 'nguoi_thuc_hien' => '', 'ten_dich_vu' => 'Dich vu 1']);
         $this->x4('NV', 1, ['ma_dich_vu' => 'DV4', 'ma_bs_doc_kq' => '0', 'ten_chi_so' => 'Glucose']);
+        $this->x4('NV', 2, ['ma_dich_vu' => 'DV5', 'ma_bs_doc_kq' => 'vietrad', 'ten_chi_so' => 'Ure']);
         DB::table('xml3176_xml5s')->insert(['ma_lk' => 'NV', 'stt' => 1, 'nguoi_thuc_hien' => '']);
+        DB::table('medical_staffs')->insert([
+            'ma_khoa' => 'K', 'ten_khoa' => 'K', 'ma_bhxh' => 'B1', 'ho_ten' => 'NGUOI A', 'gioi_tinh' => 1,
+            'chucdanh_nn' => 1, 'macchn' => '027588/HNO-CCHN', 'ngaycap_cchn' => '', 'noicap_cchn' => '',
+            'thoigian_dk' => 1, 'thoigian_ngay' => '', 'thoigian_tuan' => '', 'tu_ngay' => '20200101',
+        ]);
 
         $nvyt = array_values(array_filter($this->loi('NV', false), function ($l) {
             return strpos($l, 'NVYT_') === 0;
         }));
-        $this->assertNotEmpty($nvyt);
+        // Ky vong lay tu ma cu (HEAD~1 truoc chuyen doi) chay tren cung du lieu
+        $this->assertSame([
+            'NVYT_THIEU|Thiếu mã thủ trưởng đơn vị ở XML1.',
+            'NVYT_THIEU|Thiếu mã BS chỉ định ở 1 dòng: XML3 (1 dòng).',
+            'NVYT_THIEU|Thiếu mã người thực hiện ở 2 dòng: XML3 (1 dòng: Dich vu 1), XML5 (1 dòng).',
+            'NVYT_THIEU|Thiếu mã BS đọc KQ ở 1 dòng: XML4 (1 dòng: Glucose).',
+            'NVYT_SAI_DINH_DANG|khongco là tài khoản/tên đăng nhập, không phải mã CCHN — BS chỉ định XML2 (1 dòng)',
+            'NVYT_SAI_DINH_DANG|vietrad là tài khoản/tên đăng nhập, không phải mã CCHN — BS đọc KQ XML4 (1 dòng: Ure)',
+        ], $nvyt);
 
         // tuHoSo nap san cho cung ket qua nhu tu nap
         $this->assertSame(NvytThuThap::tuHoSo('NV'), NvytThuThap::tuHoSo('NV', DuLieuHoSo::nap('NV')));
@@ -511,21 +543,6 @@ class KiemTongTheTuDuLieuTest extends TestCase
 
         $this->assertNotContains('XMLComplete_INVALID_EXPENSE_T_VTYT', $ma);
         $this->assertNotContains('XMLComplete_INVALID_EXPENSE_T_BHTT_GDV', $ma);
-    }
-
-    /** @test */
-    public function tong_giuong_in_tho_theo_dang_chuoi_mysql()
-    {
-        // Builder::sum() cu tra chuoi MySQL ('2', '0.30000000000000004') hoac 0; mo ta EXCESS_BED_DAYS in thang
-        $c = new Xml3176CompleteChecker(new FakeXml3176ErrorService());
-        $tho = function (float $v) use ($c) {
-            return $this->invokePrivate($c, 'tongTho', $v);
-        };
-        $this->assertSame(0, $tho(0.0));
-        $this->assertSame('2', $tho(2.0));
-        $this->assertSame('2.5', $tho(2.5));
-        $this->assertSame('0.30000000000000004', $tho(0.1 + 0.2));
-        $this->assertSame('-3', $tho(-3.0));
     }
 
     // ------------------------------------------------------------------ dem truy van
