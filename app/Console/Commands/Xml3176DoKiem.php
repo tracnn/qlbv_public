@@ -250,8 +250,7 @@ class Xml3176DoKiem extends Command
             'error_code'     => $d['error_code'],
             'description'    => $d['description'],
             'critical_error' => $d['critical_error'],
-        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE) . "
-";
+        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE) . "\n";
     }
 
     private function moTepTam()
