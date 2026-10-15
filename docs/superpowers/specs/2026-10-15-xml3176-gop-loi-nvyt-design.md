@@ -53,21 +53,25 @@ Lỗi lập trình kèm theo: `app/Services/Xml3176Xml3Checker.php:339` tra cả
 
 Danh mục NVYT = bảng `medical_staffs` (5.087 dòng; cột `macchn`, `ma_bhxh`, `so_dinh_danh`, `ho_ten`).
 
-Cột tra theo vai trò:
+Cột tra theo vai trò (quyết định của người dùng 15/10/2026):
 
-| Vai trò | Hợp lệ khi khớp |
-|---|---|
-| Thủ trưởng đơn vị | `macchn` hoặc `so_dinh_danh` hoặc `ma_bhxh` |
-| Các vai trò khác | `macchn` hoặc `ma_bhxh` |
+| Vai trò | Định danh hợp lệ | Hợp lệ khi khớp |
+|---|---|---|
+| Thủ trưởng đơn vị | CCHN/GPHN, CCCD hoặc mã BHXH | `macchn` hoặc `so_dinh_danh` hoặc `ma_bhxh` |
+| Vai trò chuyên môn: BS chỉ định, người thực hiện, BS đọc KQ (kể cả XML7/XML11 `ma_bs`) | **chỉ CCHN/GPHN** — không có chứng chỉ hành nghề thì không được làm chuyên môn | `macchn` |
+
+(Prod 01/10–15/10: các trường chuyên môn gần như toàn ghi dạng CCHN, kể cả XML11 `ma_bs`; ngoại lệ là tài khoản máy ở XML4.)
+
+Dạng CCHN/GPHN: `^\d{4,7}/[A-ZĐÐ]{2,4}-(CCHN|GPHN)$` (không phân biệt hoa thường; Đ U+0110 và Ð U+00D0 đều chấp nhận).
 
 Thứ tự xét một giá trị không rỗng:
 1. Khớp cột tra của vai trò → **hợp lệ**.
-2. Vai trò không phải TTDV và giá trị khớp `so_dinh_danh` của một người → **`SAI_DINH_DANG`**, loại "số định danh", gợi ý mã CCHN của người đó (nếu `macchn` rỗng thì gợi ý `ma_bhxh`; cả hai rỗng thì không gợi ý).
-3. Đúng dạng → **`KHONG_CO_TRONG_DM`**. Đúng dạng là:
-   - CCHN/GPHN: `^\d{4,7}/[A-ZĐÐ]{2,4}-(CCHN|GPHN)$` (không phân biệt hoa thường; Đ U+0110 và Ð U+00D0 đều chấp nhận);
-   - 10–12 chữ số (mã BHXH 10–12 ký tự; CCCD 12 số với TTDV).
-   - Giá trị 12 chữ số ở vai trò không phải TTDV: mô tả thêm "(dạng 12 số: mã BHXH hoặc số định danh — kiểm tra lại)".
+2. **Vai trò chuyên môn** mà giá trị khớp `so_dinh_danh` hoặc `ma_bhxh` của một người → **`SAI_DINH_DANG`**, loại "số định danh" / "mã BHXH", nêu tên người và gợi ý mã CCHN của người đó; nếu người đó không có `macchn` trong danh mục thì ghi "người này chưa có CCHN trong danh mục NVYT".
+3. Đúng dạng của vai trò nhưng không khớp → **`KHONG_CO_TRONG_DM`**:
+   - TTDV: dạng CCHN/GPHN hoặc 10–12 chữ số; mô tả thêm "(đã tra theo CCHN, số định danh, mã BHXH)";
+   - vai trò chuyên môn: chỉ dạng CCHN/GPHN.
 4. Còn lại → **`SAI_DINH_DANG`**, kèm loại:
+   - vai trò chuyên môn, 10–12 chữ số (không khớp ai ở bước 2) → "mã BHXH/số định danh, không phải mã CCHN — vai trò chuyên môn phải dùng CCHN";
    - có chữ cái (không theo dạng CCHN) → "tài khoản/tên đăng nhập, không phải mã CCHN" (vd `vietrad`, `pqa1`, `sys`);
    - toàn chữ số, < 10 chữ số → "số CCHN thiếu phần đuôi"; nếu đúng **một** người trong danh mục có phần số trước `/` của `macchn` bằng giá trị (so sánh sau khi bỏ số 0 đầu ở cả hai phía) → gợi ý mã đầy đủ;
    - khác → "định dạng không hợp lệ".
