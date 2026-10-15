@@ -38,6 +38,13 @@ class Xml3176DoKiem extends Command
     private $dangDo = false;
     private $thongKe = [];
     private $mauSql = [];
+    /** @var resource|null Tep tam gom loi da loc, ghi noi sau moi ho so */
+    private $tepTam;
+    private $duongTepTam;
+    private $tongLoi = 0;
+    private $boDemToiDa = 0;
+    /** @var float[] Thoi gian tuong (ms) moi ho so */
+    private $thoiGianHoSo = [];
 
     public function handle()
     {
@@ -63,11 +70,16 @@ class Xml3176DoKiem extends Command
 
         $this->thongKe = [];
         $this->mauSql = [];
+        $this->tongLoi = 0;
+        $this->boDemToiDa = 0;
+        $this->thoiGianHoSo = [];
+        $this->moTepTam();
         $this->theoDoiSql();
         $this->dangDo = true;
         $ngoaiLe = [];
 
         foreach ($dsMaLk as $maLk) {
+            $batHoSo = microtime(true);
             foreach (Xml3176CheckTypes::LOAI as $loai => $cauHinh) {
                 $this->doMuc($loai, function () use ($cauHinh, $maLk, $loai) {
                     $checker = app($cauHinh['checker']);
@@ -85,22 +97,32 @@ class Xml3176DoKiem extends Command
                 $this->thongKe['XMLComplete']['dong']++;
                 app(Xml3176CompleteChecker::class)->checkErrors($maLk);
             }, $maLk, $ngoaiLe);
+
+            // Xa bo dem theo tung ho so de bo nho/cache giong worker that.
+            $this->hienTai = null;
+            $this->thoiGianHoSo[] = (microtime(true) - $batHoSo) * 1000;
+            $this->boDemToiDa = max($this->boDemToiDa, $loi->soDongTrongBoDem());
+            $this->xaBoDem($loi);
         }
 
         $this->hienTai = null;
         $this->dangDo = false;
 
+        $noiDungLoi = $this->docTepTam();
+        $this->donTepTam();
         if ($this->option('xuat-loi')) {
-            $this->ghiTep($this->option('xuat-loi'), $this->dongLoi($loi->boDemGom()));
+            $this->ghiTep($this->option('xuat-loi'), $noiDungLoi);
         }
 
         if ($this->option('xuat-do')) {
             $this->ghiTep($this->option('xuat-do'), $this->baoCaoDo(count($dsMaLk), $ngoaiLe));
         }
 
-        $this->info('Đã kiểm ' . count($dsMaLk) . ' hồ sơ (mẫu thực tế), ' . $loi->soDongTrongBoDem() . ' lỗi, '
+        $tg = $this->tomTatThoiGian();
+        $this->info('Đã kiểm ' . count($dsMaLk) . ' hồ sơ (mẫu thực tế), ' . $this->tongLoi . ' lỗi, '
             . count($ngoaiLe) . ' ngoại lệ, bộ nhớ đỉnh '
-            . round(memory_get_peak_usage(true) / 1048576, 1) . ' MB.');
+            . round(memory_get_peak_usage(true) / 1048576, 1) . ' MB, thời gian/hồ sơ: tb '
+            . round($tg['tb'], 1) . ' ms, p90 ' . round($tg['p90'], 1) . ' ms, max ' . round($tg['max'], 1) . ' ms.');
 
         if ($ngoaiLe) {
             foreach ($ngoaiLe as $dong) {
@@ -189,51 +211,120 @@ class Xml3176DoKiem extends Command
         $this->hienTai = null;
     }
 
-    /** Moi loi mot dong JSON, sap theo (ma_lk, xml, stt, error_code, description). */
-    private function dongLoi(array $boDem)
+    /** Loc bo dem cua mot ho so (y het ketThucGom), ghi noi moi loi mot dong JSON vao tep tam, xoa bo dem. */
+    private function xaBoDem(Xml3176ErrorService $loi)
     {
-        // Loc y het ketThucGom: bo ma loi bi tat (is_check = false), dung chuanBiGhi cua job.
-        $ds = [];
-        if ($boDem) {
-            $ma = array_values(array_unique(array_column($boDem, 'error_code')));
-            $maBiTat = Xml3176ErrorCatalog::whereIn('error_code', $ma)
-                ->where('is_check', false)->pluck('error_code')->all();
-
-            $sanSang = Xml3176ErrorService::chuanBiGhi($boDem, $maBiTat, '');
-            foreach ($sanSang['nhom'] as $dsDong) {
-                foreach ($dsDong as $d) {
-                    $ds[] = [
-                        'xml'            => $d['xml'],
-                        'ma_lk'          => $d['ma_lk'],
-                        'stt'            => $d['stt'],
-                        'error_code'     => $d['error_code'],
-                        'description'    => $d['description'],
-                        'critical_error' => $d['critical_error'],
-                    ];
-                }
-            }
+        $boDem = $loi->boDemGom();
+        $loi->xoaBoDemGom();
+        if (!$boDem) {
+            return;
         }
 
-        $khoa = function ($d) {
-            return [(string) $d['ma_lk'], (string) $d['xml'], (int) $d['stt'], (string) $d['error_code'],
+        // Loc y het ketThucGom: bo ma loi bi tat (is_check = false), dung chuanBiGhi cua job.
+        $ma = array_values(array_unique(array_column($boDem, 'error_code')));
+        $maBiTat = Xml3176ErrorCatalog::whereIn('error_code', $ma)
+            ->where('is_check', false)->pluck('error_code')->all();
+
+        $sanSang = Xml3176ErrorService::chuanBiGhi($boDem, $maBiTat, '');
+        $kq = '';
+        foreach ($sanSang['nhom'] as $dsDong) {
+            foreach ($dsDong as $d) {
+                $kq .= json_encode([
+                    'xml'            => $d['xml'],
+                    'ma_lk'          => $d['ma_lk'],
+                    'stt'            => $d['stt'],
+                    'error_code'     => $d['error_code'],
+                    'description'    => $d['description'],
+                    'critical_error' => $d['critical_error'],
+                ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "\n";
+                $this->tongLoi++;
+            }
+        }
+        if ($kq !== '') {
+            fwrite($this->tepTam, $kq);
+        }
+    }
+
+    private function moTepTam()
+    {
+        $xuat = $this->option('xuat-loi');
+        $thuMuc = $xuat ? dirname($xuat) : sys_get_temp_dir();
+        if (!is_dir($thuMuc) || !is_writable($thuMuc)) {
+            $thuMuc = sys_get_temp_dir();
+        }
+        $this->duongTepTam = tempnam($thuMuc, 'dokiem_');
+        $this->tepTam = fopen($this->duongTepTam, 'wb');
+    }
+
+    private function donTepTam()
+    {
+        if (is_resource($this->tepTam)) {
+            fclose($this->tepTam);
+        }
+        $this->tepTam = null;
+        if ($this->duongTepTam && is_file($this->duongTepTam)) {
+            @unlink($this->duongTepTam);
+        }
+        $this->duongTepTam = null;
+    }
+
+    /** Doc tep tam, sap theo (ma_lk, xml, stt, error_code, description, critical_error), tra noi dung xuat. */
+    private function docTepTam()
+    {
+        fflush($this->tepTam);
+        $dong = [];
+        $ds = [];
+        $fh = fopen($this->duongTepTam, 'rb');
+        while (($l = fgets($fh)) !== false) {
+            $l = rtrim($l, "\n");
+            if ($l === '') {
+                continue;
+            }
+            $d = json_decode($l, true);
+            $dong[] = $l;
+            $ds[] = [(string) $d['ma_lk'], (string) $d['xml'], (int) $d['stt'], (string) $d['error_code'],
                 (string) $d['description'], (int) $d['critical_error']];
-        };
-        usort($ds, function ($a, $b) use ($khoa) {
-            return $khoa($a) <=> $khoa($b);
+        }
+        fclose($fh);
+
+        $thuTu = array_keys($ds);
+        usort($thuTu, function ($a, $b) use ($ds) {
+            return $ds[$a] <=> $ds[$b];
         });
 
         $kq = '';
-        foreach ($ds as $d) {
-            $kq .= json_encode($d, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "\n";
+        foreach ($thuTu as $i) {
+            $kq .= $dong[$i] . "\n";
         }
 
         return $kq;
+    }
+
+    private function tomTatThoiGian()
+    {
+        $n = count($this->thoiGianHoSo);
+        if (!$n) {
+            return ['tb' => 0, 'p90' => 0, 'max' => 0];
+        }
+        $s = $this->thoiGianHoSo;
+        sort($s);
+
+        return [
+            'tb'  => array_sum($s) / $n,
+            'p90' => $s[(int) min($n - 1, ceil(0.9 * $n) - 1)],
+            'max' => $s[$n - 1],
+        ];
     }
 
     private function baoCaoDo($soHoSo, array $ngoaiLe)
     {
         $kq = "mau: $soHoSo ho so\n";
         $kq .= sprintf("bo nho dinh: %.1f MB\n", memory_get_peak_usage(true) / 1048576);
+        $tg = $this->tomTatThoiGian();
+        $kq .= sprintf("wall/ho so: tb %.1f ms, p90 %.1f ms, max %.1f ms
+", $tg['tb'], $tg['p90'], $tg['max']);
+        $kq .= "bo dem toi da: {$this->boDemToiDa}
+";
         $kq .= sprintf("%-12s %8s %9s %10s %10s %8s\n", 'XML', 'dong', 'truy van', 'ms SQL', 'ms tong', 'q/dong');
         foreach ($this->thongKe as $muc => $s) {
             $kq .= sprintf("%-12s %8d %9d %10.0f %10.0f %8.1f\n", $muc, $s['dong'], $s['truyVan'], $s['msSql'], $s['msTong'],

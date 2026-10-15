@@ -168,4 +168,59 @@ class DoKiemLenhTest extends TestCase
 
         $this->assertSame(2, $this->chay(['--xuat-loi' => $this->tep('z.jsonl')]));
     }
+
+    /** @test */
+    public function xuat_loi_khong_doi_khi_xa_theo_ho_so()
+    {
+        $this->assertSame(0, $this->chay(['--xuat-loi' => $this->tep('l.jsonl')]));
+        $dong = array_values(array_filter(explode("\n", file_get_contents($this->tep('l.jsonl'))), 'strlen'));
+        $this->assertNotEmpty($dong);
+
+        // Chuoi ky vong: chinh cac dong do, sap theo khoa cu, noi bang "\n" tuong minh.
+        $mang = array_map(function ($d) {
+            return json_decode($d, true);
+        }, $dong);
+        usort($mang, function ($a, $b) {
+            $k = function ($d) {
+                return [(string) $d['ma_lk'], (string) $d['xml'], (int) $d['stt'], (string) $d['error_code'],
+                    (string) $d['description'], (int) $d['critical_error']];
+            };
+            return $k($a) <=> $k($b);
+        });
+        $kyVong = '';
+        foreach ($mang as $d) {
+            $kyVong .= json_encode($d, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "\n";
+        }
+        $this->assertSame($kyVong, file_get_contents($this->tep('l.jsonl')));
+
+        // Ca hai ho so deu co loi va ma_lk A1 dung truoc B2.
+        $maLk = array_values(array_unique(array_column($mang, 'ma_lk')));
+        $this->assertSame(['A1', 'B2'], $maLk);
+    }
+
+    /** @test */
+    public function bo_dem_gom_khong_tich_luy()
+    {
+        $this->assertSame(0, $this->chay(['--xuat-loi' => $this->tep('l.jsonl'), '--xuat-do' => $this->tep('do.txt')]));
+
+        $this->assertSame([], app(\App\Services\Xml3176ErrorService::class)->boDemGom());
+
+        $tong = count($this->docLoi('l.jsonl'));
+        $theoHoSo = array_count_values(array_column($this->docLoi('l.jsonl'), 'ma_lk'));
+        $lonNhat = max($theoHoSo);
+        $this->assertLessThan($tong, $lonNhat);
+
+        $this->assertRegExp('/bo dem toi da: (\d+)/', file_get_contents($this->tep('do.txt')));
+        preg_match('/bo dem toi da: (\d+)/', file_get_contents($this->tep('do.txt')), $m);
+        // Bo dem tho chua ca loi bi tat, nhung o day khong co ma bi tat nen khong lon hon ho so lon nhat.
+        $this->assertLessThanOrEqual($lonNhat, (int) $m[1]);
+        $this->assertGreaterThan(0, (int) $m[1]);
+    }
+
+    /** @test */
+    public function xuat_do_co_thoi_gian_ho_so()
+    {
+        $this->assertSame(0, $this->chay(['--xuat-do' => $this->tep('do.txt')]));
+        $this->assertRegExp('/wall\/ho so: tb [\d.]+ ms, p90 [\d.]+ ms, max [\d.]+ ms/', file_get_contents($this->tep('do.txt')));
+    }
 }

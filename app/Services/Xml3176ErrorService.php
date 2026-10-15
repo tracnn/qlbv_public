@@ -37,6 +37,14 @@ class Xml3176ErrorService
         return $this->boDem;
     }
 
+    /**
+     * Xoa bo dem gom nhung van o che do gom - lenh do xa loi theo tung ho so.
+     */
+    public function xoaBoDemGom(): void
+    {
+        $this->boDem = [];
+    }
+
     public function soDongTrongBoDem(): int
     {
         return count($this->boDem);
