@@ -43,6 +43,8 @@ class Xml3176DoKiem extends Command
     private $duongTepTam;
     private $tongLoi = 0;
     private $boDemToiDa = 0;
+    private $nhoDinhKiem = 0;
+    private $nhoDinhSapXep = 0;
     /** @var float[] Thoi gian tuong (ms) moi ho so */
     private $thoiGianHoSo = [];
 
@@ -73,11 +75,14 @@ class Xml3176DoKiem extends Command
         $this->tongLoi = 0;
         $this->boDemToiDa = 0;
         $this->thoiGianHoSo = [];
-        $this->moTepTam();
+        if ($this->option('xuat-loi')) {
+            $this->moTepTam();
+        }
         $this->theoDoiSql();
         $this->dangDo = true;
         $ngoaiLe = [];
 
+        try {
         foreach ($dsMaLk as $maLk) {
             $batHoSo = microtime(true);
             foreach (Xml3176CheckTypes::LOAI as $loai => $cauHinh) {
@@ -107,11 +112,15 @@ class Xml3176DoKiem extends Command
 
         $this->hienTai = null;
         $this->dangDo = false;
+        $this->nhoDinhKiem = memory_get_peak_usage(true); // truoc buoc sap xep cuoi
 
-        $noiDungLoi = $this->docTepTam();
-        $this->donTepTam();
         if ($this->option('xuat-loi')) {
-            $this->ghiTep($this->option('xuat-loi'), $noiDungLoi);
+            $this->ghiTep($this->option('xuat-loi'), $this->docTepTam());
+        }
+        $this->nhoDinhSapXep = memory_get_peak_usage(true);
+        } finally {
+            $this->dangDo = false;
+            $this->donTepTam();
         }
 
         if ($this->option('xuat-do')) {
@@ -120,8 +129,9 @@ class Xml3176DoKiem extends Command
 
         $tg = $this->tomTatThoiGian();
         $this->info('Đã kiểm ' . count($dsMaLk) . ' hồ sơ (mẫu thực tế), ' . $this->tongLoi . ' lỗi, '
-            . count($ngoaiLe) . ' ngoại lệ, bộ nhớ đỉnh '
-            . round(memory_get_peak_usage(true) / 1048576, 1) . ' MB, thời gian/hồ sơ: tb '
+            . count($ngoaiLe) . ' ngoại lệ, bộ nhớ đỉnh (kiểm) '
+            . round($this->nhoDinhKiem / 1048576, 1) . ' MB, (sắp xếp) '
+            . round($this->nhoDinhSapXep / 1048576, 1) . ' MB, thời gian/hồ sơ: tb '
             . round($tg['tb'], 1) . ' ms, p90 ' . round($tg['p90'], 1) . ' ms, max ' . round($tg['max'], 1) . ' ms.');
 
         if ($ngoaiLe) {
@@ -240,7 +250,7 @@ class Xml3176DoKiem extends Command
                 $this->tongLoi++;
             }
         }
-        if ($kq !== '') {
+        if ($kq !== '' && $this->tepTam) {
             fwrite($this->tepTam, $kq);
         }
     }
@@ -319,12 +329,11 @@ class Xml3176DoKiem extends Command
     private function baoCaoDo($soHoSo, array $ngoaiLe)
     {
         $kq = "mau: $soHoSo ho so\n";
-        $kq .= sprintf("bo nho dinh: %.1f MB\n", memory_get_peak_usage(true) / 1048576);
+        $kq .= sprintf("bo nho dinh (kiem): %.1f MB\n", $this->nhoDinhKiem / 1048576);
+        $kq .= sprintf("bo nho dinh (sap xep): %.1f MB\n", $this->nhoDinhSapXep / 1048576);
         $tg = $this->tomTatThoiGian();
-        $kq .= sprintf("wall/ho so: tb %.1f ms, p90 %.1f ms, max %.1f ms
-", $tg['tb'], $tg['p90'], $tg['max']);
-        $kq .= "bo dem toi da: {$this->boDemToiDa}
-";
+        $kq .= sprintf("wall/ho so: tb %.1f ms, p90 %.1f ms, max %.1f ms\n", $tg['tb'], $tg['p90'], $tg['max']);
+        $kq .= "bo dem toi da: {$this->boDemToiDa}\n";
         $kq .= sprintf("%-12s %8s %9s %10s %10s %8s\n", 'XML', 'dong', 'truy van', 'ms SQL', 'ms tong', 'q/dong');
         foreach ($this->thongKe as $muc => $s) {
             $kq .= sprintf("%-12s %8d %9d %10.0f %10.0f %8.1f\n", $muc, $s['dong'], $s['truyVan'], $s['msSql'], $s['msTong'],
