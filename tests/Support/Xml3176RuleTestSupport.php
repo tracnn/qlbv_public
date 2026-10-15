@@ -37,6 +37,7 @@ trait Xml3176RuleTestSupport
             'driver' => 'sqlite', 'database' => ':memory:', 'prefix' => '',
         ]]);
         DB::purge('mysql');
+        \App\Services\Xml3176\Xml3176BoDem::xoaTatCa();
         foreach ($files as $f) {
             $path = database_path('migrations/' . $f);
             require_once $path;

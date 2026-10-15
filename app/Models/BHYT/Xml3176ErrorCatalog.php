@@ -2,6 +2,7 @@
 
 namespace App\Models\BHYT;
 
+use App\Services\Xml3176\Xml3176BoDem;
 use Illuminate\Database\Eloquent\Model;
 
 class Xml3176ErrorCatalog extends Model
@@ -27,16 +28,24 @@ class Xml3176ErrorCatalog extends Model
      */
     public static function createOrUpdate(string $xmlType, string $errorCode, string $errorName = null, bool $criticalError = false): void
     {
-        static::updateOrCreate(
-            [
-                'xml' => $xmlType,
-                'error_code' => $errorCode
-            ],
-            [
-                'error_name' => $errorName,
-                'description' => $errorName,
-                'critical_error' => $criticalError,
-            ]
-        );
+        $dong = static::firstOrNew(['xml' => $xmlType, 'error_code' => $errorCode]);
+        $dong->error_name = $errorName;
+        $dong->description = $errorName;
+
+        // Chi dat muc chan khi tao moi: admin da doi tren man quan tri thi khong bi ghi de.
+        if (!$dong->exists) {
+            $dong->critical_error = $criticalError;
+        }
+
+        $dong->save();
+
+        // Ma chua co trong bo dem thi them gia tri thuc trong CSDL; ma da co giu nguyen
+        // (bo dem theo dong dau tien cua ma, dong nay khong lam doi no).
+        if (!Xml3176BoDem::coTrongBang('ma_loi', $errorCode)) {
+            Xml3176BoDem::dat('ma_loi', $errorCode, [
+                'critical_error' => (bool) $dong->critical_error,
+                'is_check'       => $dong->is_check === null ? true : (bool) $dong->is_check,
+            ]);
+        }
     }
 }

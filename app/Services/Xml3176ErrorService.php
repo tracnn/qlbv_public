@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\BHYT\Xml3176ErrorResult;
 use App\Models\BHYT\Xml3176ErrorCatalog;
+use App\Services\Xml3176\Xml3176BoDem;
 use Illuminate\Support\Collection;
 
 class Xml3176ErrorService
@@ -154,13 +155,36 @@ class Xml3176ErrorService
         ->delete();
     }
 
+    /**
+     * Bang danh muc ma loi nho trong tien trinh: error_code => [critical_error, is_check].
+     * critical_error lay theo dong dau tien (id nho nhat) nhu truy van first() cu;
+     * is_check chi true khi MOI dong cung ma deu bat (cu: ton tai dong is_check=false thi bo qua).
+     */
+    private function bangMaLoi(): array
+    {
+        return Xml3176BoDem::bang('ma_loi', function () {
+            $bang = [];
+            $dong = Xml3176ErrorCatalog::orderBy('id')->get(['error_code', 'critical_error', 'is_check']);
+            foreach ($dong as $d) {
+                $ma = (string) $d->error_code;
+                if (!isset($bang[$ma])) {
+                    $bang[$ma] = ['critical_error' => (bool) $d->critical_error, 'is_check' => true];
+                }
+                if (!$d->is_check) {
+                    $bang[$ma]['is_check'] = false;
+                }
+            }
+
+            return $bang;
+        });
+    }
+
     public function getCriticalErrorStatus($errorCode)
     {
-        // Tìm bản ghi trong Xml3176ErrorCatalog theo error_code
-        $errorCatalog = Xml3176ErrorCatalog::where('error_code', $errorCode)->first();
+        $bang = $this->bangMaLoi();
 
-        // Trả về critical_error nếu có, nếu không thì trả về true
-        return $errorCatalog ? $errorCatalog->critical_error : true;
+        // Ma chua co trong danh muc thi mac dinh true
+        return isset($bang[(string) $errorCode]) ? $bang[(string) $errorCode]['critical_error'] : true;
     }
 
     public function saveErrors(string $xmlType, string $ma_lk, int $stt, Collection $errors,  array $additionalData = []): void
@@ -188,9 +212,8 @@ class Xml3176ErrorService
         // Save errors to xml_error_checks table
         foreach ($errors as $error) {
             // Xem lỗi này có được đánh dấu kiểm tra không
-            $skipCheck = Xml3176ErrorCatalog::where('error_code', $error->error_code)
-                ->where('is_check', false)
-                ->exists();
+            $bang = $this->bangMaLoi();
+            $skipCheck = isset($bang[(string) $error->error_code]) && !$bang[(string) $error->error_code]['is_check'];
 
             // Nếu lỗi được đánh dấu là không kiểm tra thì bỏ qua
             if ($skipCheck) {
