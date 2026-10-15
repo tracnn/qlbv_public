@@ -2,7 +2,7 @@
 
 namespace App\Services\Xml3176;
 
-use App\Services\Xml3176\Support\NhoTheoHoSo;
+use App\Services\Xml3176\Support\SoSanhSql;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -19,14 +19,8 @@ use Illuminate\Support\Facades\DB;
  */
 class DuLieuHoSo
 {
-    // Chi dung khoaChuoiSql (khoa so chuoi kieu utf8_general_ci) - mot nguon duy nhat cho ngu nghia '='.
-    use NhoTheoHoSo;
-
     /** Cac loai XML nap mac dinh (loai co checker / kiem tong the doc toi). */
     const LOAI_MAC_DINH = ['xml1', 'xml2', 'xml3', 'xml4', 'xml5', 'xml7', 'xml8', 'xml9', 'xml10', 'xml11', 'xml13', 'xml14'];
-
-    /** Thang bcmath khi cong tien. */
-    const THANG = 6;
 
     /** @var string */
     private $maLk;
@@ -123,30 +117,47 @@ class DuLieuHoSo
     // ------------------------------------------------------------------ phep tinh kieu SQL
 
     /**
-     * Tuong duong `SUM(cot)` cua Builder::sum(): bo NULL; tap rong/toan NULL -> 0 (Builder tra `?: 0`).
+     * Tuong duong `SUM(cot)` cua Builder::sum() tren cot DOUBLE (cot tien, so_luong) - GIONG HET
+     * MariaDB, ke ca sai so nhi phan (vd 45 x 0.135 = 6.074999999999994, round 2 -> 6.07):
+     * - Cong so double PHP (IEEE 754, nhu MariaDB) tuan tu; KHONG dung bcadd (thap phan chinh
+     *   xac se lech o ranh gioi .xx5 sau round(..., 2)).
+     * - Thu tu cong = thu tu MariaDB quet: EXPLAIN tren prod cho `where ma_lk = ?` dung khoa
+     *   `*_ma_lk_stt_unique` -> dong duoc duyet theo stt tang dan (stt integer, unique theo ma_lk
+     *   nen khong hoa). Vi vay sap theo (int) stt, roi id, roi vi tri dau vao (du phong) - KHONG
+     *   theo thu tu id. Tap con da loc (vd whereIn ma_nhom) van giu thu tu stt tuong doi.
+     * - Bo NULL; tap rong/toan NULL -> 0.0 (Builder::sum() tra `?: 0`).
+     * - Gia tri chuoi ep sang so theo kieu MySQL (soSql) roi sang float: '' -> 0, '12abc' -> 12.
      *
-     * Quyet dinh: cong bang bcadd thang 6 (chinh xac thap phan) thay vi cong double nhu MySQL.
-     * Cot tien la DOUBLE nen MySQL cong co sai so nhi phan (0.1+0.2=0.30000000000000004); moi so
-     * sanh cu deu qua round(..., 2) nen hai cach cho cung ket qua (tru truong hop tong double roi
-     * sat ranh gioi x.xx5 - ghi nhan, chap nhan theo spec). Chu so sau thang 6 bi cat (bcadd cat).
-     *
-     * Gia tri chuoi ep sang so theo kieu MySQL (xem soSql): '' -> 0, '12abc' -> 12, '1e-7' -> 0.0000001.
-     *
-     * @param array  $dong stdClass[] hoac mang
-     * @return string chuoi bc thang 6, vd '1.305000'
+     * @param array $dong stdClass[] hoac mang (can cot stt de cong dung thu tu MariaDB)
      */
-    public static function tong(array $dong, string $cot): string
+    public static function tong(array $dong, string $cot): float
     {
-        $tong = '0';
-        foreach ($dong as $r) {
+        $ds = [];
+        foreach (array_values($dong) as $i => $r) {
             $v = self::giaTri($r, $cot);
             if ($v === null) {
                 continue;
             }
-            $tong = bcadd($tong, self::soSql($v), self::THANG);
+            $stt = self::giaTri($r, 'stt');
+            $id = self::giaTri($r, 'id');
+            $ds[] = [
+                $stt === null ? PHP_INT_MIN : (int) $stt,
+                $id === null ? PHP_INT_MIN : (int) $id,
+                $i,
+                is_float($v) ? $v : (float) self::soSql($v),
+            ];
+        }
+        // Khoa (stt, id, vi tri) la duy nhat nen usort khong on dinh cung khong anh huong
+        usort($ds, function ($a, $b) {
+            return [$a[0], $a[1], $a[2]] <=> [$b[0], $b[1], $b[2]];
+        });
+
+        $tong = 0.0;
+        foreach ($ds as $x) {
+            $tong += $x[3];
         }
 
-        return bcadd($tong, '0', self::THANG);
+        return $tong;
     }
 
     /**
@@ -185,7 +196,7 @@ class DuLieuHoSo
             return false;
         }
 
-        return self::khoaChuoiSql($a) === self::khoaChuoiSql($b);
+        return SoSanhSql::khoa($a) === SoSanhSql::khoa($b);
     }
 
     /**

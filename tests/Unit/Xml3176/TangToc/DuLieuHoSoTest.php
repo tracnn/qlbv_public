@@ -38,46 +38,95 @@ class DuLieuHoSoTest extends TestCase
 
     // ---------------- tong ----------------
 
-    /** @test */
-    public function tong_bo_null_va_chinh_xac_thap_phan()
+    /** Cong double tuan tu theo dung thu tu dau vao - mo phong SUM(double) cua MariaDB. */
+    private function congDouble(array $giaTri)
     {
-        $this->assertSame('1.305000', DuLieuHoSo::tong($this->dong([0.1, 0.2, null, '1.005']), 'thanh_tien_bv'));
+        $s = 0.0;
+        foreach ($giaTri as $v) {
+            if ($v !== null) {
+                $s += (float) $v;
+            }
+        }
+
+        return $s;
+    }
+
+    /** @test */
+    public function tong_bo_null_cong_double_nhu_mariadb()
+    {
+        $tong = DuLieuHoSo::tong($this->dong([0.1, 0.2, null, '1.005']), 'thanh_tien_bv');
+        $this->assertSame($this->congDouble([0.1, 0.2, null, 1.005]), $tong);
+        // 0.1 + 0.2 la double, khong phai thap phan chinh xac
+        $this->assertSame(0.1 + 0.2, DuLieuHoSo::tong($this->dong([0.1, 0.2]), 'thanh_tien_bv'));
     }
 
     /** @test */
     public function tong_rong_bang_0()
     {
         // SUM tren tap rong / toan NULL -> NULL; Builder::sum() cu tra 0 (`?: 0`)
-        $this->assertSame('0.000000', DuLieuHoSo::tong([], 'thanh_tien_bv'));
-        $this->assertSame('0.000000', DuLieuHoSo::tong($this->dong([null, null]), 'thanh_tien_bv'));
+        $this->assertSame(0.0, DuLieuHoSo::tong([], 'thanh_tien_bv'));
+        $this->assertSame(0.0, DuLieuHoSo::tong($this->dong([null, null]), 'thanh_tien_bv'));
     }
 
     /** @test */
     public function tong_so_am_va_so_mu()
     {
         // MySQL tra double dang '1e-7' / '1.5e3' qua giao thuc van ban; PHP float var_export ra '1.0E+25'
-        $this->assertSame('1500.000000', DuLieuHoSo::tong($this->dong(['1.5e3']), 'thanh_tien_bv'));
-        $this->assertSame('-0.499999', DuLieuHoSo::tong($this->dong(['-1.5', 1, '0.000001']), 'thanh_tien_bv'));
-        $this->assertSame('10000000000000000000000000.000000', DuLieuHoSo::tong($this->dong([1e25]), 'thanh_tien_bv'));
-        $this->assertSame('0.000010', DuLieuHoSo::tong($this->dong(['1e-5']), 'thanh_tien_bv'));
-        $this->assertSame('0.000001', DuLieuHoSo::tong($this->dong([1e-6]), 'thanh_tien_bv'));
+        $this->assertSame(1500.0, DuLieuHoSo::tong($this->dong(['1.5e3']), 'thanh_tien_bv'));
+        $this->assertSame(-1.5 + 1 + 0.000001, DuLieuHoSo::tong($this->dong(['-1.5', 1, '0.000001']), 'thanh_tien_bv'));
+        $this->assertSame(1e25, DuLieuHoSo::tong($this->dong([1e25]), 'thanh_tien_bv'));
+        $this->assertSame(1e-7, DuLieuHoSo::tong($this->dong(['1e-7']), 'thanh_tien_bv'));
     }
 
     /** @test */
     public function tong_chuoi_kieu_mysql()
     {
         // Ep chuoi -> so kieu MySQL: bo khoang trang dau, lay tien to so, rac/rong -> 0
-        $this->assertSame('15.500000', DuLieuHoSo::tong($this->dong(['', '12abc', 'abc', ' 3.5 ', '.']), 'thanh_tien_bv'));
-        $this->assertSame('-2.000000', DuLieuHoSo::tong($this->dong(['-2e', '+0e5x']), 'thanh_tien_bv'));
+        $this->assertSame(15.5, DuLieuHoSo::tong($this->dong(['', '12abc', 'abc', ' 3.5 ', '.']), 'thanh_tien_bv'));
+        $this->assertSame(-2.0, DuLieuHoSo::tong($this->dong(['-2e', '+0e5x']), 'thanh_tien_bv'));
     }
 
     /** @test */
-    public function tong_khop_bieu_thuc_so_sanh_cu()
+    public function tong_ranh_gioi_xx5_giong_double_khong_giong_thap_phan()
     {
-        // 0.1 + 0.2 trong double = 0.30000000000000004; sau round(...,2) van bang 0.3
-        $tong = DuLieuHoSo::tong($this->dong([0.1, 0.2]), 'thanh_tien_bv');
-        $this->assertFalse(0.3 != round((float) $tong, 2));
-        $this->assertSame(round(0.1 + 0.2, 2), round((float) $tong, 2));
+        // 45 dong x 0.135: tong thap phan chinh xac 6.075 (round 2 -> 6.08) nhung double cong
+        // tuan tu = 6.074999999999994 (round 2 -> 6.07). MariaDB cho 6.07 -> phai giong double.
+        $dong = [];
+        for ($i = 1; $i <= 45; $i++) {
+            $dong[] = (object) ['id' => $i, 'stt' => $i, 'thanh_tien_bv' => '0.135'];
+        }
+        $tong = DuLieuHoSo::tong($dong, 'thanh_tien_bv');
+        $this->assertSame(round($this->congDouble(array_fill(0, 45, '0.135')), 2), round($tong, 2));
+        $this->assertSame(6.07, round($tong, 2));
+        $this->assertSame('6.075', bcmul('0.135', '45', 3), 'Tong chinh xac thap phan la 6.075 (se round thanh 6.08)');
+
+        // Nhieu dong (n = 419), gia tri 3 chu so le xen ke, so sanh voi cong double theo stt
+        $giaTri = ['0.115', '1.005', '0.335', '2.345', '0.015'];
+        $dong = [];
+        $theoStt = [];
+        for ($i = 1; $i <= 419; $i++) {
+            $v = $giaTri[$i % 5];
+            $dong[] = (object) ['id' => $i, 'stt' => $i, 'thanh_tien_bv' => $v];
+            $theoStt[] = $v;
+        }
+        $this->assertSame($this->congDouble($theoStt), DuLieuHoSo::tong($dong, 'thanh_tien_bv'));
+        $this->assertSame(round($this->congDouble($theoStt), 2), round(DuLieuHoSo::tong($dong, 'thanh_tien_bv'), 2));
+    }
+
+    /** @test */
+    public function tong_cong_theo_thu_tu_stt_khong_theo_id()
+    {
+        // MariaDB quet theo khoa (ma_lk, stt) -> cong theo stt. Thu tu cong doi ket qua double:
+        // 1e16 + 1 - 1e16 = 0 nhung 1e16 - 1e16 + 1 = 1.
+        $dong = [
+            (object) ['id' => 1, 'stt' => 1, 'thanh_tien_bv' => '1e16'],
+            (object) ['id' => 2, 'stt' => 3, 'thanh_tien_bv' => '1'],
+            (object) ['id' => 3, 'stt' => 2, 'thanh_tien_bv' => '-1e16'],
+        ];
+        // theo id: 1e16 + 1 - 1e16 = 0.0; theo stt: 1e16 - 1e16 + 1 = 1.0
+        $this->assertSame(1.0, DuLieuHoSo::tong($dong, 'thanh_tien_bv'));
+        $this->assertSame(1.0, DuLieuHoSo::tong(array_reverse($dong), 'thanh_tien_bv'));
+        $this->assertSame(0.0, 1e16 + 1 - 1e16);
     }
 
     // ---------------- max ----------------

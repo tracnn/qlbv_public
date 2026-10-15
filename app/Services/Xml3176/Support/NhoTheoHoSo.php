@@ -34,13 +34,9 @@ trait NhoTheoHoSo
         return $this->hoSoDuLieu[$khoa];
     }
 
-    /**
-     * Khoa so sanh chuoi theo ngu nghia '=' cua MySQL (collation *_general_ci, PAD SPACE):
-     * khong phan biet hoa thuong, bo khoang trang CUOI (chi dau cach, khong bo tab/xuong dong).
-     * Khac biet con lai: general_ci con coi chu co dau = khong dau; ma DVKT la ASCII nen khong anh huong.
-     */
+    /** Khoa so sanh chuoi kieu utf8_general_ci - xem SoSanhSql::khoa. */
     private static function khoaChuoiSql($s)
     {
-        return mb_strtoupper(rtrim((string) $s, ' '), 'UTF-8');
+        return SoSanhSql::khoa($s);
     }
 }
