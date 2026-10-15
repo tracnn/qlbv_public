@@ -68,12 +68,16 @@ class Xml3176KiemLaiNvyt extends Command
         $hetChan = 0;
         $cuoi = '';
         $soLoi = 0;
+        $soLoiGhiTep = 0;
 
         // Tep ma_lk het chan mo tu dau, ghi noi tiep ngay sau moi transaction: ngat giua chung khong mat dau vet
         $tep = null;
         if (!$thu) {
             $tep = storage_path('logs/kiem-lai-nvyt-' . date('YmdHis') . '.txt');
-            file_put_contents($tep, '');
+            if (@file_put_contents($tep, '') === false) {
+                $this->error("Không ghi được tệp ma_lk hết chặn: {$tep}. Dừng, chưa xử lý hồ sơ nào.");
+                return 1;
+            }
             $this->info("Tệp ma_lk hết chặn: {$tep}");
         }
 
@@ -140,7 +144,10 @@ class Xml3176KiemLaiNvyt extends Command
                 }
                 if ($daHetChan) {
                     $hetChan++;
-                    file_put_contents($tep, $maLk . PHP_EOL, FILE_APPEND | LOCK_EX);
+                    if (@file_put_contents($tep, $maLk . PHP_EOL, FILE_APPEND | LOCK_EX) === false) {
+                        $soLoiGhiTep++;
+                        $this->warn("Không ghi được ma_lk {$maLk} vào tệp {$tep}");
+                    }
                 }
             }
 
@@ -160,7 +167,11 @@ class Xml3176KiemLaiNvyt extends Command
         $this->info('Số hồ sơ hết lỗi chặn: ' . $hetChan);
         $this->info('Số hồ sơ lỗi (đã bỏ qua, chạy lại để xử lý): ' . $soLoi);
 
-        return $soLoi > 0 ? 1 : 0;
+        if ($soLoiGhiTep > 0) {
+            $this->warn("Số ma_lk hết chặn không ghi được vào tệp: {$soLoiGhiTep}");
+        }
+
+        return ($soLoi > 0 || $soLoiGhiTep > 0) ? 1 : 0;
     }
 
     private function ngayHopLe(string $v): bool

@@ -60,7 +60,18 @@ class NvytLookup
             if ($macchn !== '') {
                 $phanSo = ltrim(explode('/', $macchn)[0], '0');
                 if ($phanSo !== '' && ctype_digit($phanSo)) {
-                    $bang['so_cchn'][$phanSo][] = $macchn;
+                    // Bo trung: nhieu dong danh muc cho cung mot nguoi khong duoc tinh la nhieu nguoi
+                    $dsChn = $bang['so_cchn'][$phanSo] ?? [];
+                    $trung = false;
+                    foreach ($dsChn as $c) {
+                        if (self::khoa($c) === self::khoa($macchn)) {
+                            $trung = true;
+                            break;
+                        }
+                    }
+                    if (!$trung) {
+                        $bang['so_cchn'][$phanSo][] = $macchn;
+                    }
                 }
             }
         }

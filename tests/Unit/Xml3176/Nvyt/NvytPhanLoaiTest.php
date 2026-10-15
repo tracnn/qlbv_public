@@ -103,6 +103,14 @@ class NvytPhanLoaiTest extends TestCase
     }
 
     /** @test */
+    public function so_thieu_duoi_nhieu_dong_cung_cchn_van_goi_y()
+    {
+        $r = $this->rule([['macchn' => '0010344/BYT-CCHN', 'ma_bhxh' => '0108888888', 'so_dinh_danh' => '', 'ho_ten' => 'TRẦN B']]);
+        $kq = $r->phanLoai(NvytRule::BS_CHI_DINH, '10344');
+        $this->assertContains('có thể là 0010344/BYT-CCHN', $kq['ly_do']);
+    }
+
+    /** @test */
     public function chu_d_hai_kieu_dung_dang()
     {
         $r = $this->rule();

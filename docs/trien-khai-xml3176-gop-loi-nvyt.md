@@ -23,14 +23,17 @@ Kiểm tra mã nhân viên y tế (NVYT) của XML1..14 nay chạy một lần �
    `php artisan xml3176:kiem-lai-nvyt --tu=2026-09-01 --thu`
 2. Đối chiếu số liệu rồi chạy thật:
    `php artisan xml3176:kiem-lai-nvyt --tu=2026-09-01`
-   (tuỳ chọn `--den=Y-m-d`, `--lo=500`). Lệnh xoá dòng lỗi NVYT cũ/mới của hồ sơ rồi ghi lại theo luật mới, mỗi lô một transaction.
+   (tuỳ chọn `--den=Y-m-d`, `--lo=500`). Lệnh xoá dòng lỗi NVYT cũ/mới của hồ sơ rồi ghi lại theo luật mới, mỗi hồ sơ được xử lý trong một transaction riêng.
 3. Lệnh ghi danh sách `ma_lk` hết chặn (trước đây bị chặn bởi mã cũ, nay không còn) vào `storage/logs/kiem-lai-nvyt-<YmdHis>.txt`. Khi cần đẩy các hồ sơ này đi tiếp, dùng:
    `php artisan xml3176:chay-lai-tu-xuat --ma-lk=<ma_lk> ...` (thêm `--thuc-hien` để đẩy thật; thiếu cờ này chỉ đếm).
 
-Chạy lệnh ngoài giờ cao điểm; không chạy song song với đợt nạp lô lớn.
+`--thu` chỉ in số liệu đếm (số dòng sẽ xoá, số lỗi mới theo từng mã, số hồ sơ), KHÔNG liệt kê các hồ sơ sẽ hết chặn; chỉ lần chạy thật mới in số hồ sơ hết chặn và ghi tệp `storage/logs/kiem-lai-nvyt-<YmdHis>.txt`.
+
+Chạy lệnh ngoài giờ cao điểm; không chạy song song với đợt nạp lô lớn. Không chạy lệnh thật khi hàng đợi kiểm còn tồn (tránh chạy đồng thời với chuỗi kiểm từng hồ sơ trên cùng các hồ sơ đó).
 
 ## 3. Lưu ý
 
 - Bảng tra NVYT (`NvytLookup`) dùng bộ nhớ đệm; sau khi sửa danh mục NVYT, lệnh tự xoá đệm khi bắt đầu chạy.
 - Bảng danh mục NVYT rỗng thì luật im lặng (không báo `KHONG_CO_TRONG_DM`/`SAI_DINH_DANG`), chỉ còn báo `THIEU`.
-- Quay lui: `php artisan migrate:rollback --step=1` bật lại 34 mã cũ (cần gỡ code mới đồng thời), sau đó `config:cache`.
+- Nếu từng có lần triển khai chạy code mới mà migration chưa thành công, các hồ sơ được kiểm trong khoảng thời gian đó có thể mang dòng `KHONG_CO_TRONG_DM`/`SAI_DINH_DANG` bị đánh dấu chặn; chạy lệnh kiểm lại trên khoảng ngày phủ các hồ sơ đó sẽ sửa (lần chạy khuyến nghị `--tu=2026-09-01` đã phủ toàn bộ).
+- Quay lui: `php artisan migrate:rollback --path=database/migrations/2026_10_15_100000_gop_ma_loi_nvyt_xml3176.php` bật lại 34 mã cũ, sau đó `config:cache`. Phải gỡ code mới (revert) trên main TRƯỚC, nếu không `update.bat` chạy mỗi giờ sẽ migrate lại.
