@@ -60,6 +60,7 @@ class KiemHoSoXml3176Job implements ShouldQueue
             return;
         }
 
+        // Token vua so o tren: chay() bo lan so dau tien, so lai truoc moi lan xoa/ghi sau do.
         $xong = app(KiemHoSoXml3176::class)->chay($this->maLk, $this->loaiXml, function () {
             return $this->laJobCu() || $this->conHieuLuc($this->maLk);
         });
@@ -77,6 +78,8 @@ class KiemHoSoXml3176Job implements ShouldQueue
 
         // Mot cau lenh co dieu kien token: khong dong dau du lieu cua chuoi moi chua kiem. Ho so
         // vua doi token (sau lan so cuoi) thi khong dong dau duoc -> cat chuoi luon.
+        // MySQL dem dong DA DOI (khong bat FOUND_ROWS): checked_at trung dung giay hien tai thi
+        // tra 0 va chuoi bi cat nham - gan nhu khong the (moi lan nap/chay lai deu sinh token moi).
         if (!$this->ghiNeuConHieuLuc($this->maLk, ['checked_at' => now()])) {
             $this->catChuoi();
         }

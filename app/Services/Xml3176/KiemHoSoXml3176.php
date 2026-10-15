@@ -17,9 +17,10 @@ use App\Services\Xml3176ErrorService;
  * Kiem tong the (tru khi organization.xml_3176_not_check): xoa loi XMLComplete cu -> gom ->
  * DuLieuHoSo::nap + Xml3176CompleteChecker::checkErrors -> ketThucGom trong finally.
  *
- * NGUOI CANH ($conHieuLuc): goi TRUOC moi lan xoa/ghi loi (moi loai va kiem tong the). Tra
- * false -> dung ngay, khong xoa/ghi tiep, tra false. Job truyen phep so chain_token; lenh do
- * truyen phep luon dung.
+ * NGUOI CANH ($conHieuLuc): goi TRUOC moi lan xoa loi va NGAY TRUOC moi lan ghi bo dem
+ * (ketThucGom) cua tung loai va kiem tong the. Tra false -> bo bo dem chua ghi, dung ngay, khong
+ * xoa/ghi tiep, tra false. Lan xoa DAU TIEN khong goi: nguoi goi phai so ngay truoc khi goi
+ * chay() (job da so o dau handle()). Job truyen phep so chain_token; lenh do truyen luon dung.
  *
  * Khong dong dau checked_at - job lam (co dieu kien token).
  */
@@ -58,14 +59,22 @@ class KiemHoSoXml3176
             $loi->batDauGom();
         }
 
+        // Nguoi goi vua so token ngay truoc khi goi chay(): bo lan so dau tien.
+        $vuaSo = true;
+
         foreach (self::theoThuTu($loaiXml) as $loai) {
-            if (!$conHieuLuc()) {
+            if (!$vuaSo && !$conHieuLuc()) {
                 return false;
             }
+            $vuaSo = false;
 
-            $boc($loai, function () use ($maLk, $loai, $ghi, $loi, $moiDong) {
-                $this->kiemLoai($maLk, $loai, $ghi, $loi, $moiDong);
+            $con = true;
+            $boc($loai, function () use ($maLk, $loai, $ghi, $loi, $conHieuLuc, $moiDong, &$con) {
+                $con = $this->kiemLoai($maLk, $loai, $ghi, $loi, $conHieuLuc, $moiDong);
             });
+            if (!$con) {
+                return false;
+            }
         }
 
         // Lenh do luon kiem tong the nhu ban cu cua no (so sanh voi moc truoc).
@@ -73,15 +82,16 @@ class KiemHoSoXml3176
             return true;
         }
 
-        if (!$conHieuLuc()) {
+        if (!$vuaSo && !$conHieuLuc()) {
             return false;
         }
 
-        $boc(self::TONG_THE, function () use ($maLk, $ghi, $loi, $moiDong) {
-            $this->kiemTongThe($maLk, $ghi, $loi, $moiDong);
+        $con = true;
+        $boc(self::TONG_THE, function () use ($maLk, $ghi, $loi, $conHieuLuc, $moiDong, &$con) {
+            $con = $this->kiemTongThe($maLk, $ghi, $loi, $conHieuLuc, $moiDong);
         });
 
-        return true;
+        return $con;
     }
 
     /** Loai co checker trong danh sach, khu trung, theo thu tu Xml3176CheckTypes::LOAI. */
@@ -94,7 +104,8 @@ class KiemHoSoXml3176
         }));
     }
 
-    private function kiemLoai($maLk, $loai, $ghi, Xml3176ErrorService $loi, callable $moiDong = null)
+    /** @return bool false neu nguoi canh tra false ngay truoc khi ghi (bo dem da bo) */
+    private function kiemLoai($maLk, $loai, $ghi, Xml3176ErrorService $loi, callable $conHieuLuc, callable $moiDong = null): bool
     {
         $cauHinh = Xml3176CheckTypes::cauHinh($loai);
 
@@ -111,6 +122,8 @@ class KiemHoSoXml3176
             $loi->batDauGom();
         }
 
+        $con = true;
+        $dangNem = true;
         try {
             // Nap kem XML1 (neu loai co quan he) - mot truy van moi lo thay vi moi dong.
             Xml3176CheckTypes::truyVanDong($loai, $maLk)
@@ -122,15 +135,20 @@ class KiemHoSoXml3176
                         $checker->checkErrors($d);
                     }
                 });
+            $dangNem = false;
         } finally {
-            // Hong giua chung thi phan da tim duoc van ghi, va bo dem khong ro sang buoc sau.
+            // Hong giua chung thi phan da tim duoc van ghi (neu con hieu luc), va bo dem khong
+            // ro sang buoc sau.
             if ($ghi) {
-                $loi->ketThucGom();
+                $con = $this->ghiBoDem($loi, $conHieuLuc, $dangNem);
             }
         }
+
+        return $con;
     }
 
-    private function kiemTongThe($maLk, $ghi, Xml3176ErrorService $loi, callable $moiDong = null)
+    /** @return bool false neu nguoi canh tra false ngay truoc khi ghi (bo dem da bo) */
+    private function kiemTongThe($maLk, $ghi, Xml3176ErrorService $loi, callable $conHieuLuc, callable $moiDong = null): bool
     {
         if ($ghi) {
             // Xoa XMLComplete cu truoc khi ghi: job tong the cu khong xoa, retry co the nhan doi.
@@ -140,15 +158,50 @@ class KiemHoSoXml3176
             $loi->batDauGom();
         }
 
+        $con = true;
+        $dangNem = true;
         try {
             if ($moiDong) {
                 $moiDong(self::TONG_THE);
             }
             app(Xml3176CompleteChecker::class)->checkErrors($maLk, DuLieuHoSo::nap((string) $maLk));
+            $dangNem = false;
         } finally {
             if ($ghi) {
-                $loi->ketThucGom();
+                $con = $this->ghiBoDem($loi, $conHieuLuc, $dangNem);
             }
         }
+
+        return $con;
+    }
+
+    /**
+     * So token NGAY TRUOC khi ghi bo dem: lech -> bo bo dem (ket qua cua du lieu cu) roi moi tat
+     * gom. Luon ketThucGom de bo dem khong ro sang buoc/job sau.
+     *
+     * Dang co ngoai le lan truyen ($dangNem) thi khong de loi cua nguoi canh che mat no: nguoi
+     * canh nem -> bo bo dem, nuot loi cua nguoi canh, ngoai le goc tiep tuc lan truyen.
+     *
+     * @return bool true neu da ghi (con hieu luc)
+     */
+    private function ghiBoDem(Xml3176ErrorService $loi, callable $conHieuLuc, bool $dangNem): bool
+    {
+        try {
+            $con = (bool) $conHieuLuc();
+        } catch (\Throwable $e) {
+            $loi->xoaBoDemGom();
+            $loi->ketThucGom();
+            if ($dangNem) {
+                return false;
+            }
+            throw $e;
+        }
+
+        if (!$con) {
+            $loi->xoaBoDemGom();
+        }
+        $loi->ketThucGom();
+
+        return $con;
     }
 }

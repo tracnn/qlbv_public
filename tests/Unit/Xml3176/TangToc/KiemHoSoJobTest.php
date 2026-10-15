@@ -33,6 +33,9 @@ class KiemHoSoJobTest extends TestCase
     /** @var callable|null Goi ben trong checker gia (vd doi token giua chung) */
     public static $khiKiem = null;
 
+    /** @var callable|null Goi ngay sau moi ketThucGom (sau lan so token truoc khi ghi) */
+    public static $sauGhi = null;
+
     protected function setUp()
     {
         parent::setUp();
@@ -59,9 +62,10 @@ class KiemHoSoJobTest extends TestCase
         config(['organization.xml_3176_not_check' => false]);
         self::$nhatKy = [];
         self::$khiKiem = null;
+        self::$sauGhi = null;
 
-        // ErrorService that, mot thuc the cho ca job va checker gia.
-        $this->app->instance(Xml3176ErrorService::class, new Xml3176ErrorService());
+        // ErrorService that (them moc sau ketThucGom), mot thuc the cho ca job va checker gia.
+        $this->app->instance(Xml3176ErrorService::class, new ErrorServiceCoMoc());
 
         DB::table('xml3176_informations')->insert(['ma_lk' => 'LK1', 'macskcb' => '01929', 'chain_token' => 'MA_DUNG']);
         DB::table('xml3176_xml1s')->insert(['ma_lk' => 'LK1', 'stt' => 1]);
@@ -161,6 +165,8 @@ class KiemHoSoJobTest extends TestCase
 
         $job->handle();
 
+        $this->assertSame([], $this->maLoi('XML1'),
+            'Loai dang kiem khi doi token: loi cu da xoa, bo dem cua du lieu cu bi bo, khong ghi');
         $this->assertSame(['CU'], $this->maLoi('XML2'), 'Loai sau khi doi token: khong xoa, khong ghi');
         $this->assertSame(['CU'], $this->maLoi('XMLComplete'), 'Kiem tong the khong chay sau khi doi token');
         $this->assertSame([['XML1', true]], self::$nhatKy);
@@ -182,6 +188,7 @@ class KiemHoSoJobTest extends TestCase
         $kq = app(KiemHoSoXml3176::class)->chay('LK1', ['XML1', 'XML2'], $canh);
 
         $this->assertFalse($kq);
+        $this->assertSame(2, $lan, 'Lan so dau (truoc xoa XML1) do nguoi goi lam; so truoc ghi XML1, roi truoc XML2');
         $this->assertSame(['F_XML1'], $this->maLoi('XML1'));
         $this->assertSame(['CU'], $this->maLoi('XML2'));
         $this->assertSame(['CU'], $this->maLoi('XMLComplete'));
@@ -214,14 +221,73 @@ class KiemHoSoJobTest extends TestCase
         $this->assertNull($this->checkedAt());
         $this->assertSame([], $job->chained);
 
-        // Token doi trong luc kiem tong the (sau lan so cuoi): van khong dong dau.
+        // Token doi trong luc kiem tong the: lan so truoc ghi bat duoc, khong ghi, khong dong dau.
         self::$khiKiem = function ($muc) {
             if ($muc === 'XMLComplete') {
                 DB::table('xml3176_informations')->update(['chain_token' => 'MA_MOI']);
             }
         };
-        (new KiemHoSoXml3176Job('LK1', [], 'MA_DUNG'))->handle();
+        $job = new KiemHoSoXml3176Job('LK1', [], 'MA_DUNG');
+        $job->chained = ['xuat'];
+        $job->handle();
+        $this->assertSame([], $this->maLoi('XMLComplete'));
         $this->assertNull($this->checkedAt(), 'Dong dau phai co dieu kien chain_token');
+        $this->assertSame([], $job->chained);
+
+        // Token doi SAU lan so cuoi (sau khi ghi XMLComplete): cau dong dau co dieu kien chan.
+        DB::table('xml3176_informations')->update(['chain_token' => 'MA_DUNG']);
+        self::$khiKiem = null;
+        self::$sauGhi = function () {
+            DB::table('xml3176_informations')->update(['chain_token' => 'MA_MOI']);
+        };
+        $job = new KiemHoSoXml3176Job('LK1', [], 'MA_DUNG');
+        $job->chained = ['xuat'];
+        $job->handle();
+        $this->assertNull($this->checkedAt(), 'Dong dau phai co dieu kien chain_token');
+        $this->assertSame([], $job->chained, 'Dong dau khong duoc -> cat chuoi');
+    }
+
+    /** @test */
+    public function checker_nem_khi_token_da_doi_thi_bo_bo_dem_va_giu_ngoai_le_goc()
+    {
+        self::$khiKiem = function ($muc) {
+            DB::table('xml3176_informations')->update(['chain_token' => 'MA_MOI']);
+            throw new \RuntimeException('hong');
+        };
+
+        try {
+            (new KiemHoSoXml3176Job('LK1', ['XML1'], 'MA_DUNG'))->handle();
+            $this->fail('Phai nem');
+        } catch (\RuntimeException $e) {
+            $this->assertSame('hong', $e->getMessage());
+        }
+
+        $this->assertSame([], $this->maLoi('XML1'), 'Token da doi: bo dem khong duoc ghi');
+        $this->assertFalse(app(Xml3176ErrorService::class)->dangGom());
+    }
+
+    /** @test */
+    public function nguoi_canh_nem_khi_checker_dang_nem_thi_ngoai_le_goc_lan_truyen()
+    {
+        self::$khiKiem = function ($muc) {
+            throw new \RuntimeException('hong');
+        };
+        $lan = 0;
+        $canh = function () use (&$lan) {
+            $lan++;
+            throw new \LogicException('mat ket noi khi so token');
+        };
+
+        try {
+            app(KiemHoSoXml3176::class)->chay('LK1', ['XML1'], $canh);
+            $this->fail('Phai nem');
+        } catch (\RuntimeException $e) {
+            $this->assertSame('hong', $e->getMessage(), 'Loi cua nguoi canh khong che ngoai le goc');
+        }
+
+        $this->assertSame(1, $lan);
+        $this->assertSame([], $this->maLoi('XML1'), 'Khong so duoc token: khong ghi');
+        $this->assertFalse(app(Xml3176ErrorService::class)->dangGom());
     }
 
     /** @test */
@@ -385,6 +451,18 @@ class KiemHoSoJobTest extends TestCase
     }
 }
 
+/** ErrorService that, them moc goi ngay sau ketThucGom. */
+class ErrorServiceCoMoc extends Xml3176ErrorService
+{
+    public function ketThucGom(): void
+    {
+        parent::ketThucGom();
+        if (KiemHoSoJobTest::$sauGhi) {
+            call_user_func(KiemHoSoJobTest::$sauGhi);
+        }
+    }
+}
+
 /** Checker loai gia: moi dong mot loi F_<loai>, ghi nhat ky che do gom. */
 class CheckerLoaiGia
 {
@@ -399,12 +477,13 @@ class CheckerLoaiGia
     {
         $loi = app(Xml3176ErrorService::class);
         KiemHoSoJobTest::$nhatKy[] = [$this->loai, $loi->dangGom()];
-        if (KiemHoSoJobTest::$khiKiem) {
-            call_user_func(KiemHoSoJobTest::$khiKiem, $this->loai);
-        }
         $loi->saveErrors($this->loai, $d->ma_lk, (int) $d->stt, collect([(object) [
             'error_code' => 'F_' . $this->loai, 'description' => 'moi', 'critical_error' => true,
         ]]));
+        // Moc goi SAU khi da gom loi: checker nem thi bo dem da co du lieu.
+        if (KiemHoSoJobTest::$khiKiem) {
+            call_user_func(KiemHoSoJobTest::$khiKiem, $this->loai);
+        }
     }
 }
 
@@ -422,11 +501,12 @@ class CheckerTongTheGia extends Xml3176CompleteChecker
         $this->duNhan = $du;
         $loi = app(Xml3176ErrorService::class);
         KiemHoSoJobTest::$nhatKy[] = ['XMLComplete', $loi->dangGom()];
-        if (KiemHoSoJobTest::$khiKiem) {
-            call_user_func(KiemHoSoJobTest::$khiKiem, 'XMLComplete');
-        }
         $loi->saveErrors('XMLComplete', $ma_lk, 1, collect([(object) [
             'error_code' => 'F_XMLComplete', 'description' => 'moi', 'critical_error' => true,
         ]]));
+        // Moc goi SAU khi da gom loi: checker nem thi bo dem da co du lieu.
+        if (KiemHoSoJobTest::$khiKiem) {
+            call_user_func(KiemHoSoJobTest::$khiKiem, 'XMLComplete');
+        }
     }
 }
