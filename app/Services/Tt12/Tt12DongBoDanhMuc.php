@@ -45,30 +45,33 @@ class Tt12DongBoDanhMuc
         $khoa    = $this->khoaDuyNhat($lop);
         $daGhi   = 0;
 
-        Tt12Dong::where('ho_so_id', $hoSo->id)
-            ->orderBy('stt')
-            ->chunk(self::CO_LO, function ($cacDong) use ($bang, $anhXa, $khoa, &$daGhi) {
-                DB::transaction(function () use ($cacDong, $bang, $anhXa, $khoa, &$daGhi) {
-                    foreach ($cacDong as $dong) {
-                        $this->ghiMotDong($bang, $anhXa, $khoa, $dong);
-                        $daGhi++;
-                    }
+        try {
+            Tt12Dong::where('ho_so_id', $hoSo->id)
+                ->orderBy('stt')
+                ->chunk(self::CO_LO, function ($cacDong) use ($bang, $anhXa, $khoa, &$daGhi) {
+                    DB::transaction(function () use ($cacDong, $bang, $anhXa, $khoa, &$daGhi) {
+                        foreach ($cacDong as $dong) {
+                            $this->ghiMotDong($bang, $anhXa, $khoa, $dong);
+                            $daGhi++;
+                        }
+                    });
                 });
-            });
 
-        $hoSo->update(array(
-            'dong_bo_at'      => Carbon::now(),
-            'dong_bo_so_dong' => $daGhi,
-        ));
+            $hoSo->update(array(
+                'dong_bo_at'      => Carbon::now(),
+                'dong_bo_so_dong' => $daGhi,
+            ));
 
-        Log::info('Tt12DongBoDanhMuc: da dong bo', array(
-            'ma_ho_so' => $hoSo->ma_ho_so,
-            'bang'     => $bang,
-            'so_dong'  => $daGhi,
-        ));
-
-        if ($daGhi > 0) {
-            \App\Services\Xml3176\Xml3176PhienBanDanhMuc::tang('dong bo TT12 ' . $bang);
+            Log::info('Tt12DongBoDanhMuc: da dong bo', array(
+                'ma_ho_so' => $hoSo->ma_ho_so,
+                'bang'     => $bang,
+                'so_dong'  => $daGhi,
+            ));
+        } finally {
+            // Ca khi lo sau loi: cac lo truoc da commit, worker phai thay ngay.
+            if ($daGhi > 0) {
+                \App\Services\Xml3176\Xml3176PhienBanDanhMuc::tang('dong bo TT12 ' . $bang);
+            }
         }
 
         return $daGhi;

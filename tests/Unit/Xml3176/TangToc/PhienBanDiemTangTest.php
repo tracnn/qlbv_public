@@ -144,6 +144,85 @@ class PhienBanDiemTangTest extends TestCase
     }
 
     /** @test */
+    public function dong_bo_tt12_lo_sau_loi_van_tang_va_nem_lai()
+    {
+        $this->bootTt12();
+        $hoSo = $this->hoSoTt12('200', 0);
+        $dong = [];
+        for ($i = 1; $i <= Tt12DongBoDanhMuc::CO_LO + 1; $i++) {
+            $dong[] = ['ho_so_id' => $hoSo->id, 'stt' => $i, 'du_lieu' => json_encode([
+                'STT' => (string) $i, 'MA_KHOA' => 'K' . $i, 'TEN_KHOA' => 'Kham', 'BAN_KHAM' => '3',
+                'GIUONG_PD' => '0', 'GIUONG_TK' => '0', 'GIUONG_HSTC' => '0', 'GIUONG_HSCC' => '0',
+                'TU_NGAY' => '20260101', 'DEN_NGAY' => '', 'MA_CSKCB' => '01929',
+            ])];
+        }
+        foreach (array_chunk($dong, 200) as $lo) {
+            DB::table('tt12_dong')->insert($lo);
+        }
+
+        // Doc lo thu hai (offset CO_LO) that bai, sau khi lo dau da commit.
+        DB::listen(function ($q) {
+            if (strpos($q->sql, 'tt12_dong') !== false && strpos($q->sql, 'offset ' . Tt12DongBoDanhMuc::CO_LO) !== false) {
+                throw new \RuntimeException('mat ket noi giua chung');
+            }
+        });
+
+        try {
+            (new Tt12DongBoDanhMuc())->dongBo($hoSo);
+            $this->fail('Phai nem lai');
+        } catch (\RuntimeException $e) {
+            $this->assertSame('mat ket noi giua chung', $e->getMessage());
+        }
+
+        $this->assertSame(Tt12DongBoDanhMuc::CO_LO, DB::table('department_bed_catalogs')->count(), 'lo dau da ghi');
+        $this->assertSame(1, $this->phienBan());
+    }
+
+    /** @test */
+    public function nap_vat_pham_kem_dvkt_loi_giua_chung_van_tang()
+    {
+        $this->boot([
+            '2026_10_13_090000_create_xml3176_vat_pham_kem_dvkt_table.php',
+            '2026_10_14_090000_them_nguoi_sua_vao_xml3176_vat_pham_kem_dvkt.php',
+        ]);
+        $soChen = 0;
+        // Lenh chen thu hai nem (dong dau da ghi va da dem).
+        DB::listen(function ($q) use (&$soChen) {
+            if (stripos($q->sql, 'insert into "xml3176_vat_pham_kem_dvkt"') === 0 && ++$soChen === 2) {
+                throw new \RuntimeException('loi dong 2');
+            }
+        });
+
+        try {
+            (new \App\Services\Xml3176\VatPhamKemDvktLearner())->nap([
+                ['loai' => 'THUOC', 'ma_vat_pham' => '40.540', 'ma_dvkt' => '18.0150.0041'],
+                ['loai' => 'THUOC', 'ma_vat_pham' => '40.541', 'ma_dvkt' => '18.0150.0041'],
+            ]);
+            $this->fail('Phai nem lai');
+        } catch (\RuntimeException $e) {
+            $this->assertSame('loi dong 2', $e->getMessage());
+        }
+
+        $this->assertSame(1, $this->phienBan());
+    }
+
+    /** @test */
+    public function nap_vat_pham_kem_dvkt_khong_ghi_dong_nao_thi_khong_tang()
+    {
+        $this->boot([
+            '2026_10_13_090000_create_xml3176_vat_pham_kem_dvkt_table.php',
+            '2026_10_14_090000_them_nguoi_sua_vao_xml3176_vat_pham_kem_dvkt.php',
+        ]);
+
+        $kq = (new \App\Services\Xml3176\VatPhamKemDvktLearner())->nap([
+            ['loai' => 'XX', 'ma_vat_pham' => '40.540', 'ma_dvkt' => '18.0150.0041'],
+        ]);
+
+        $this->assertCount(1, $kq['loi']);
+        $this->assertSame(0, $this->phienBan());
+    }
+
+    /** @test */
     public function job_kiem_xoa_bo_dem_khi_phien_ban_doi()
     {
         $this->boot([
