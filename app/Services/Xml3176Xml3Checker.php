@@ -346,26 +346,7 @@ class Xml3176Xml3Checker
             }
         }
 
-        // Check for serviceGroupsRequiringAnesthesia
-        if (in_array($data->ma_nhom, $this->serviceGroupsRequiringAnesthesia)) {
-            if (empty($data->pp_vo_cam)) {
-                $errorCode = $this->generateErrorCode('INFO_ERROR_PP_VO_CAM_EMPTY');
-                $errors->push((object)[
-                    'error_code' => $errorCode,
-                    'error_name' => 'Thiếu phương pháp vô cảm',
-                    'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
-                    'description' => 'Phương pháp vô cảm không được để trống đối với dịch vụ: ' . $this->serviceDisplay
-                ]);
-            } elseif (!in_array($data->pp_vo_cam, config('xml3176.anesthesia_code'))) {
-                $errorCode = $this->generateErrorCode('INFO_ERROR_PP_VO_CAM_INVALID');
-                $errors->push((object)[
-                    'error_code' => $errorCode,
-                    'error_name' => 'Phương pháp vô cảm không hợp lệ',
-                    'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
-                    'description' => 'Phương pháp vô cảm không hợp lệ. Giá trị phải thuộc [1, 2, 3, 4]: ' . $data->pp_vo_cam
-                ]);
-            }
-        }
+        // Ra soat 15/10/2026: bo khoi kiem PP_VO_CAM chep lai lan hai o day (306 dong trung).
 
         // Check ma_benh
         if (!empty($data->ma_benh)) {
@@ -565,21 +546,26 @@ class Xml3176Xml3Checker
                     })
                     ->get();
 
+                // Ra soat 15/10/2026: truoc day moi dong doi tac mot loi - doi tac cung ma_lk va
+                // cung khung gio cho ra mo ta y het (208 dong thua). Nay MOT loi moi dong, gom
+                // cac doi tac khac nhau vao mo ta; mot doi tac thi mo ta giu nguyen nhu cu.
                 if ($overlappingRecords->isNotEmpty()) {
+                    $doiTac = [];
                     foreach ($overlappingRecords as $overlappingRecord) {
-                        $errorCode = $this->generateErrorCode('OVERLAPPING_BED_USAGE');
-                        $errors->push((object)[
-                            'error_code' => $errorCode,
-                            'error_name' => 'Giường sử dụng trùng lặp',
-                            'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
-                            'description' => 'Giường ' . $maGiuong . ' tại khoa ' . $data->ma_khoa .
-                                ' sử dụng trùng lặp trong khoảng thời gian từ ' .
-                                strtodatetime($data->ngay_th_yl) . ' đến ' . strtodatetime($data->ngay_kq) .
-                                '. Trùng lặp với hồ sơ có mã: ' . $overlappingRecord->ma_lk .
-                                ' (NGAY_TH_YL: ' . strtodatetime($overlappingRecord->ngay_th_yl) .
-                                ', NGAY_KQ: ' . strtodatetime($overlappingRecord->ngay_kq) . ')'
-                        ]);
+                        $doiTac[] = $overlappingRecord->ma_lk .
+                            ' (NGAY_TH_YL: ' . strtodatetime($overlappingRecord->ngay_th_yl) .
+                            ', NGAY_KQ: ' . strtodatetime($overlappingRecord->ngay_kq) . ')';
                     }
+                    $errorCode = $this->generateErrorCode('OVERLAPPING_BED_USAGE');
+                    $errors->push((object)[
+                        'error_code' => $errorCode,
+                        'error_name' => 'Giường sử dụng trùng lặp',
+                        'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+                        'description' => 'Giường ' . $maGiuong . ' tại khoa ' . $data->ma_khoa .
+                            ' sử dụng trùng lặp trong khoảng thời gian từ ' .
+                            strtodatetime($data->ngay_th_yl) . ' đến ' . strtodatetime($data->ngay_kq) .
+                            '. Trùng lặp với hồ sơ có mã: ' . implode('; ', array_unique($doiTac))
+                    ]);
                 }
             }
 
@@ -851,8 +837,10 @@ class Xml3176Xml3Checker
                             }
 
                             // Đối chiếu tỷ lệ thanh toán BHYT với tỷ lệ duyệt trong danh mục (Thay đổi tỷ lệ TT)
+                            // Ra soat 15/10/2026: tyle ngoai (0,100] da co INFO_ERROR_TYLE_TT_BH,
+                            // khong so danh muc nua de khong bao hai lan.
                             $tyleEps = (float) config('xml3176.xml3.tyle_epsilon', 0.01);
-                            if (TyLeComparator::lech($data->tyle_tt_bh, $supply->tyle_tt_bh, $tyleEps)) {
+                            if (TienTeCalculator::tyLeHopLe($data->tyle_tt_bh) && TyLeComparator::lech($data->tyle_tt_bh, $supply->tyle_tt_bh, $tyleEps)) {
                                 $errorCode = $this->generateErrorCode('INVALID_APPROVED_TYLE_TT_BH');
                                 $errors->push((object)[
                                     'error_code' => $errorCode,
@@ -1010,7 +998,9 @@ class Xml3176Xml3Checker
                         return $service->don_gia < $data->don_gia_bh;
                     });
 
-                    if ($allPricesLower) {
+                    // Ra soat 15/10/2026: ma duoi 0000 (chua co gia) co don gia da co
+                    // MA_DICH_VU_CHUA_CO_GIA_CO_DON_GIA_BH bao rieng.
+                    if ($allPricesLower && !MaDvktStructure::laChuaCoGia($data->ma_dich_vu)) {
                         $errorCode = $this->generateErrorCode('INVALID_APPROVED_DON_GIA_BH');
                         $errors->push((object)[
                             'error_code' => $errorCode,
@@ -1263,7 +1253,9 @@ class Xml3176Xml3Checker
         }
 
         // 04 ky tu cuoi la '0000': DVKT chua duoc quy dinh muc gia => DON_GIA_BH = 0.
-        if (MaDvktStructure::laChuaCoGia($ma) && (float) $data->don_gia_bh != 0) {
+        // Ra soat 15/10/2026: ma _TB da bao TB_CO_DON_GIA o tren, khong bao them lan nua.
+        if (MaDvktStructure::laChuaCoGia($ma) && !MaDvktStructure::laKhongThucHien($ma)
+            && (float) $data->don_gia_bh != 0) {
             $errorCode = $this->generateErrorCode('MA_DICH_VU_CHUA_CO_GIA_CO_DON_GIA_BH');
             $errors->push((object)[
                 'error_code' => $errorCode,
