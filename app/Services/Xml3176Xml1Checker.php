@@ -502,26 +502,6 @@ class Xml3176Xml1Checker
             ]);
         }
 
-        if (empty($data->ma_ttdv)) {
-            $errorCode = $this->generateErrorCode('INFO_ERROR_MA_TTDV');
-            $errors->push((object)[
-                'error_code' => $errorCode,
-                'error_name' => 'Thiếu mã thủ trưởng đơn vị',
-                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
-                'description' => 'Thủ trưởng đơn vị không được để trống'
-            ]);
-        } else {
-            if (!$this->commonValidationService->isMedicalStaffValid($data->ma_ttdv)) {
-                $errorCode = $this->generateErrorCode('INVALID_MEDICAL_STAFF_MA_TTDV');
-                $errors->push((object)[
-                    'error_code' => $errorCode,
-                    'error_name' => 'Mã thủ trưởng đơn vị chưa được duyệt',
-                    'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
-                    'description' => 'Mã thủ trưởng đơn vị chưa được duyệt danh mục: ' . $data->ma_ttdv
-                ]);
-            }
-        }
-
         if (!empty($data->ma_the_bhyt)) {
             $maTheBhytList = explode(';', $data->ma_the_bhyt);
             $maDkbdList = explode(';', $data->ma_dkbd);

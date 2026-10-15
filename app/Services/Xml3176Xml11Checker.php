@@ -10,17 +10,15 @@ use Carbon\Carbon;
 class Xml3176Xml11Checker
 {
     protected $xmlErrorService;
-    protected $commonValidationService;
     protected $prefix;
 
     protected $xmlType;
 
     protected $docXml11Type;
 
-    public function __construct(Xml3176ErrorService $xmlErrorService, CommonValidationService $commonValidationService)
+    public function __construct(Xml3176ErrorService $xmlErrorService)
     {
         $this->xmlErrorService = $xmlErrorService;
-        $this->commonValidationService = $commonValidationService;
         $this->setConditions();
     }
 
@@ -276,46 +274,6 @@ class Xml3176Xml11Checker
                     'error_name' => 'Định dạng ngày không hợp lệ',
                     'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
                     'description' => 'Định dạng ngày phải là Ymd'
-                ]);
-            }
-        }
-
-        if (empty($data->ma_bs)) {
-            $errorCode = $this->generateErrorCode('INFO_ERROR_MA_BS');
-            $errors->push((object)[
-                'error_code' => $errorCode,
-                'error_name' => 'Thiếu mã bác sĩ (Mã BHXH)',
-                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
-                'description' => 'Mã bác sĩ (Mã BHXH) không được để trống'
-            ]);
-        } else {
-            if (!$this->commonValidationService->isMedicalStaffValid($data->ma_bs)) {
-                $errorCode = $this->generateErrorCode('INVALID_MEDICAL_STAFF_MA_BS');
-                $errors->push((object)[
-                    'error_code' => $errorCode,
-                    'error_name' => 'Mã bác sĩ (Mã BHXH) chưa được duyệt',
-                    'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
-                    'description' => 'Mã bác sĩ chưa được duyệt danh mục (Mã BHXH: ' . $data->ma_bs . ')'
-                ]);
-            }
-        }
-
-        if (empty($data->ma_ttdv)) {
-            $errorCode = $this->generateErrorCode('INFO_ERROR_MA_TTDV');
-            $errors->push((object)[
-                'error_code' => $errorCode,
-                'error_name' => 'Thiếu mã thủ trưởng đơn vị',
-                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
-                'description' => 'Thủ trưởng đơn vị không được để trống'
-            ]);
-        } else {
-            if (!$this->commonValidationService->isMedicalStaffValid($data->ma_ttdv)) {
-                $errorCode = $this->generateErrorCode('INVALID_MEDICAL_STAFF_MA_TTDV');
-                $errors->push((object)[
-                    'error_code' => $errorCode,
-                    'error_name' => 'Mã thủ trưởng đơn vị chưa được duyệt',
-                    'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
-                    'description' => 'Mã thủ trưởng đơn vị chưa được duyệt danh mục (Mã CCHN: ' . $data->ma_ttdv . ')'
                 ]);
             }
         }

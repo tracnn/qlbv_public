@@ -10,15 +10,13 @@ use DateTime;
 class Xml3176Xml9Checker
 {
     protected $xmlErrorService;
-    protected $commonValidationService;
     protected $prefix;
 
     protected $xmlType;
 
-    public function __construct(Xml3176ErrorService $xmlErrorService, CommonValidationService $commonValidationService)
+    public function __construct(Xml3176ErrorService $xmlErrorService)
     {
         $this->xmlErrorService = $xmlErrorService;
-        $this->commonValidationService = $commonValidationService;
         $this->setConditions();
     }
 
@@ -327,26 +325,6 @@ class Xml3176Xml9Checker
                 'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
                 'description' => 'Họ tên con không được để trống'
             ]);
-        }
-
-        if (empty($data->ma_ttdv)) {
-            $errorCode = $this->generateErrorCode('INFO_ERROR_MA_TTDV');
-            $errors->push((object)[
-                'error_code' => $errorCode,
-                'error_name' => 'Thiếu mã thủ trưởng đơn vị',
-                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
-                'description' => 'Thủ trưởng đơn vị không được để trống'
-            ]);
-        } else {
-            if (!$this->commonValidationService->isMedicalStaffValid($data->ma_ttdv)) {
-                $errorCode = $this->generateErrorCode('INVALID_MEDICAL_STAFF_MA_TTDV');
-                $errors->push((object)[
-                    'error_code' => $errorCode,
-                    'error_name' => 'Mã thủ trưởng đơn vị chưa được duyệt',
-                    'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
-                    'description' => 'Mã thủ trưởng đơn vị chưa được duyệt danh mục (Mã CCHN: ' . $data->ma_ttdv . ')'
-                ]);
-            }
         }
 
         return $errors;

@@ -19,7 +19,6 @@ use App\Services\Xml3176\Support\TienTeCalculator;
 class Xml3176Xml2Checker
 {
     protected $xmlErrorService;
-    protected $commonValidationService;
     protected $prefix;
 
     protected $xmlType;
@@ -29,10 +28,9 @@ class Xml3176Xml2Checker
     protected $drugGroupNotCheck;
     protected $drugCodeNotCheck;
 
-    public function __construct(Xml3176ErrorService $xmlErrorService, CommonValidationService $commonValidationService)
+    public function __construct(Xml3176ErrorService $xmlErrorService)
     {
         $this->xmlErrorService = $xmlErrorService;
-        $this->commonValidationService = $commonValidationService;
         $this->setConditions();
     }
 
@@ -73,7 +71,6 @@ class Xml3176Xml2Checker
         }
 
         $errors = $errors->merge($this->infoChecker($data));
-        $errors = $errors->merge($this->checkMedicalStaff($data));
         $errors = $errors->merge($this->checkDrugCatalog($data));
         $errors = $errors->merge($this->checkCongThucTien($data));
         $errors = $errors->merge($this->checkNguonChiTra($data));
@@ -185,39 +182,6 @@ class Xml3176Xml2Checker
                         'description' => 'Thời gian y lệnh nhỏ hơn ngày vào hoặc lớn hơn ngày ra (Mã thuốc: ' . $data->ma_thuoc . ')'
                     ]);
                 }
-            }
-        }
-
-        return $errors;
-    }
-
-    /**
-     * Check for medical staff errors
-     *
-     * @param XML2 $data
-     * @return Collection
-     */
-    private function checkMedicalStaff(Xml3176Xml2 $data): Collection
-    {
-        $errors = collect();
-
-        if (empty($data->ma_bac_si)) {
-            $errorCode = $this->generateErrorCode('MISSING_MEDICAL_STAFF_CODE');
-            $errors->push((object)[
-                'error_code' => $errorCode,
-                'error_name' => 'Thiếu mã bác sĩ',
-                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
-                'description' => 'Không có mã bác sĩ chỉ định'
-            ]);
-        } else {
-            if (!$this->commonValidationService->isMedicalStaffValid($data->ma_bac_si)) {
-                $errorCode = $this->generateErrorCode('INVALID_MEDICAL_STAFF_CODE');
-                $errors->push((object)[
-                    'error_code' => $errorCode,
-                    'error_name' => 'Mã CCHN chưa được duyệt',
-                    'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
-                    'description' => 'Mã bác sĩ chưa được duyệt danh mục trên cổng BHXH (Mã CCHN: ' . $data->ma_bac_si . ')'
-                ]);
             }
         }
 

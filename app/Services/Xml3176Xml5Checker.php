@@ -10,15 +10,13 @@ use Illuminate\Support\Collection;
 class Xml3176Xml5Checker
 {
     protected $xmlErrorService;
-    protected $commonValidationService;
     protected $prefix;
 
     protected $xmlType;
 
-    public function __construct(Xml3176ErrorService $xmlErrorService, CommonValidationService $commonValidationService)
+    public function __construct(Xml3176ErrorService $xmlErrorService)
     {
         $this->xmlErrorService = $xmlErrorService;
-        $this->commonValidationService = $commonValidationService;
         $this->setConditions();
     }
 
@@ -104,26 +102,6 @@ class Xml3176Xml5Checker
                         'description' => 'THOI_DIEM_BDLS: ' . strtodatetime($thoi_diem_dbls) . ' không nằm trong khoảng thời gian vào (' . strtodatetime($ngayVao) . ') và ra (' . strtodatetime($ngayRa) . ')'
                     ]);
                 }
-            }
-        }
-
-        if (empty($data->nguoi_thuc_hien)) {
-            $errorCode = $this->generateErrorCode('INFO_ERROR_NGUOI_THUC_HIEN');
-            $errors->push((object)[
-                'error_code' => $errorCode,
-                'error_name' => 'Thiếu người thực hiện',
-                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
-                'description' => 'Người thực hiện không được để trống'
-            ]);
-        } else {
-            if (!$this->commonValidationService->isMedicalStaffValid($data->nguoi_thuc_hien)) {
-                $errorCode = $this->generateErrorCode('INFO_ERROR_NGUOI_THUC_HIEN_NOT_FOUND');
-                $errors->push((object)[
-                    'error_code' => $errorCode,
-                    'error_name' => 'Người thực hiện chưa được duyệt',
-                    'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
-                    'description' => 'Người thực hiện chưa được duyệt danh mục NVYT: ' . $data->nguoi_thuc_hien
-                ]);
             }
         }
 

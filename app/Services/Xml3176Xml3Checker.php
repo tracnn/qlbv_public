@@ -278,31 +278,6 @@ class Xml3176Xml3Checker
             }
         }
 
-        if (in_array($data->ma_nhom, $this->groupCodeWithExecutor) && empty($data->nguoi_thuc_hien)) {
-            $errorCode = $this->generateErrorCode('INFO_ERROR_GROUP_CODE_NGUOI_THUC_HIEN');
-            $errors->push((object)[
-                'error_code' => $errorCode,
-                'error_name' => 'Thiếu người thực hiện',
-                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
-                'description' => 'Người thực hiện không được để trống đối với DVKT: ' . $this->serviceDisplay
-            ]);
-        }
-
-        if (!empty($data->nguoi_thuc_hien)) {
-            $nguoi_thuc_hien_array = explode(';', $data->nguoi_thuc_hien);
-            foreach ($nguoi_thuc_hien_array as $nguoi_thuc_hien) {
-                if (!$this->commonValidationService->isMedicalStaffValid($nguoi_thuc_hien)) {
-                    $errorCode = $this->generateErrorCode('INFO_ERROR_NGUOI_THUC_HIEN_NOT_FOUND');
-                    $errors->push((object)[
-                        'error_code' => $errorCode,
-                        'error_name' => 'Người thực hiện không tồn tại',
-                        'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
-                        'description' => 'Người thực hiện không tồn tại trong danh mục NVYT: ' . $nguoi_thuc_hien
-                    ]);
-                }
-            }
-        }
-
         // Bat buoc co ma may: can cu DANH MUC DVKT do BHXH ban hanh, khong con loc theo nhom.
         //
         // Danh muc chua nap -> LUI ve cach loc theo nhom cu. Neu doi thang theo danh muc ma
@@ -325,29 +300,6 @@ class Xml3176Xml3Checker
             ]);
         }
 
-        if (empty($data->ma_bac_si)) {
-            $errorCode = $this->generateErrorCode('INFO_ERROR_MA_BAC_SI');
-            $errors->push((object)[
-                'error_code' => $errorCode,
-                'error_name' => 'Thiếu mã bác sĩ',
-                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
-                'description' => 'Mã bác sĩ không được để trống'
-            ]);
-        } else {
-            $ma_bac_si_array = explode(';', $data->ma_bac_si);
-            foreach ($ma_bac_si_array as $ma_bac_si) {
-                if (!$this->commonValidationService->isMedicalStaffValid($data->ma_bac_si)) {
-                    $errorCode = $this->generateErrorCode('INFO_ERROR_MA_BAC_SI_NOT_FOUND');
-                    $errors->push((object)[
-                        'error_code' => $errorCode,
-                        'error_name' => 'Mã bác sĩ không tồn tại',
-                        'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
-                        'description' => 'Mã bác sĩ không tồn tại trong danh mục NVYT: ' . $ma_bac_si
-                    ]);
-                }
-            }
-        }
-        
         // Check for serviceGroupsRequiringAnesthesia
         if (in_array($data->ma_nhom, $this->serviceGroupsRequiringAnesthesia)) {
             // Kiểm tra số lượng không được lớn hơn 1

@@ -10,15 +10,13 @@ use Illuminate\Support\Collection;
 class Xml3176Xml4Checker
 {
     protected $xmlErrorService;
-    protected $commonValidationService;
     protected $prefix;
 
     protected $xmlType;
 
-    public function __construct(Xml3176ErrorService $xmlErrorService, CommonValidationService $commonValidationService)
+    public function __construct(Xml3176ErrorService $xmlErrorService)
     {
         $this->xmlErrorService = $xmlErrorService;
-        $this->commonValidationService = $commonValidationService;
         $this->setConditions();
     }
 
@@ -230,26 +228,6 @@ class Xml3176Xml4Checker
                 'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
                 'description' => 'Ngày trả kết quả không được để trống'
             ]);
-        }
-
-        if (empty($data->ma_bs_doc_kq)) {
-            $errorCode = $this->generateErrorCode('INFO_ERROR_MA_BS_DOC_KQ');
-            $errors->push((object)[
-                'error_code' => $errorCode,
-                'error_name' => 'Thiếu mã bác sĩ đọc kết quả',
-                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
-                'description' => 'Mã bác sĩ đọc kết quả không được để trống'
-            ]);
-        } else {
-            if (!$this->commonValidationService->isMedicalStaffValid($data->ma_bs_doc_kq)) {
-                $errorCode = $this->generateErrorCode('INFO_ERROR_MA_BS_DOC_KQ_NOT_FOUND');
-                $errors->push((object)[
-                    'error_code' => $errorCode,
-                    'error_name' => 'Mã bác sĩ đọc kết quả chưa được duyệt',
-                    'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
-                    'description' => 'Mã bác sĩ đọc kết quả chưa được duyệt danh mục NVYT: ' . $data->ma_bs_doc_kq
-                ]);
-            }
         }
 
         return $errors;
