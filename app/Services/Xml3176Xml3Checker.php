@@ -195,8 +195,7 @@ class Xml3176Xml3Checker
         $errors = $errors->merge($this->checkMedicalSupplyCatalog($data)); // Thêm kiểm tra VTYT
         $errors = $errors->merge($this->checkMedicalService($data)); // Kiểm tra dịch vụ kỹ thuật
         $errors = $errors->merge($this->checkServiceGroupPtttDuplicate($data)); // Kiểm tra dịch vụ kỹ thuật
-        $errors = $errors->merge($this->checkExecutionTimeTooLong($data));
-        $errors = $errors->merge($this->checkOverlappingServiceExecution($data));
+        $errors = $errors->merge($this->kiemThoiGianPttt($data));
         $errors = $errors->merge($this->checkCauTrucMaDichVu($data));
         $errors = $errors->merge($this->checkCongThucTien($data));
         $errors = $errors->merge($this->checkTapGiaTri($data));
@@ -207,6 +206,13 @@ class Xml3176Xml3Checker
 
         $errors = $errors->merge($this->checkTimingAndExecutor($data));
 
+        // Save errors to xml_error_checks table
+        $this->xmlErrorService->saveErrors($this->xmlType, $data->ma_lk, $data->stt, $errors, $this->thongTinThem($data));
+    }
+
+    /** Cot them cua dong loi XML3 (ngay_yl, ngay_kq) - dung chung voi lenh kiem lai. */
+    public function thongTinThem(Xml3176Xml3 $data): array
+    {
         $additionalData = [
             'ngay_yl' => $data->ngay_yl
         ];
@@ -215,8 +221,16 @@ class Xml3176Xml3Checker
             $additionalData['ngay_kq'] = $data->ngay_kq;
         }
 
-        // Save errors to xml_error_checks table
-        $this->xmlErrorService->saveErrors($this->xmlType, $data->ma_lk, $data->stt, $errors, $additionalData);
+        return $additionalData;
+    }
+
+    /**
+     * Hai quy tac thoi gian thuc hien PTTT (dai bat thuong, chong gio) - lenh
+     * xml3176:kiem-lai-chong-gio goi rieng de thay loi cu ma khong kiem lai ca dong.
+     */
+    public function kiemThoiGianPttt(Xml3176Xml3 $data): Collection
+    {
+        return $this->checkExecutionTimeTooLong($data)->merge($this->checkOverlappingServiceExecution($data));
     }
 
     /**
