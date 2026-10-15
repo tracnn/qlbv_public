@@ -23,7 +23,6 @@ return [
 
     //XML3
     'XML3_INFO_ERROR_MA_MAY_NOT_FOUND' => '1. Bổ sung máy trong danh mục HIS; 2. Đẩy cổng BHXH phê duyệt; 3. Tải danh mục trang thiết bị trên cổng import vào phần mềm GĐBHYT',
-    'XML3_INFO_ERROR_MA_BAC_SI_NOT_FOUND' => '1. Kiểm tra danh mục NVYT trên HIS; 2. Bổ sung danh mục và đẩy cổng BHXH duyệt; 3. Cập nhật danh mục vào phần mềm GĐBHYT',
 
     //XML4
     'XML4_INFO_ERROR_KET_LUAN_EMPTY' => 'UPDATE 
@@ -58,4 +57,9 @@ return [
         WHERE 
             treatment_code = \'{ma_dieu_tri}\';
         COMMIT;',
+
+    //XMLComplete - NVYT
+    'XMLComplete_NVYT_THIEU' => 'Bổ sung mã nhân viên y tế trên HIS (thủ trưởng đơn vị, bác sĩ, người thực hiện, BS đọc kết quả).',
+    'XMLComplete_NVYT_KHONG_CO_TRONG_DM' => 'Phòng TCCB đăng ký NVYT lên cổng BHXH và cập nhật danh mục NVYT vào phần mềm.',
+    'XMLComplete_NVYT_SAI_DINH_DANG' => 'CNTT/hãng PACS-LIS ánh xạ tài khoản, CCCD, mã BHXH sang mã CCHN khi xuất XML.',
 ];

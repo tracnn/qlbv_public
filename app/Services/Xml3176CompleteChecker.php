@@ -23,6 +23,9 @@ use App\Services\Xml3176\Support\TextNormalizer;
 use App\Services\Xml3176\Support\BedDaysTT39Calculator;
 use App\Services\Xml3176\Support\ExaminationFeeCalculator;
 use App\Services\Mcct\NguongMienCungChiTra;
+use App\Services\Xml3176\NvytLookup;
+use App\Services\Xml3176\NvytRule;
+use App\Services\Xml3176\NvytThuThap;
 use App\Services\Xml3176\VatPhamKemDvktLookup;
 use App\Services\Xml3176\VatPhamKemDvktRule;
 use Illuminate\Support\Collection;
@@ -93,6 +96,7 @@ class Xml3176CompleteChecker
             $errors = $errors->merge($this->checkMucHuong($data));
             $errors = $errors->merge($this->checkBedDaysBelowTT39($data));
             $errors = $errors->merge($this->checkVatPhamKemDvkt($ma_lk));
+            $errors = $errors->merge($this->kiemNvyt($ma_lk));
 
             // Save errors to xml_error_checks table
             $this->xmlErrorService->saveErrors($this->xmlType, $data->ma_lk, $data->stt, $errors);
@@ -1039,6 +1043,26 @@ class Xml3176CompleteChecker
 
         $errors = collect();
         foreach ((new VatPhamKemDvktRule(VatPhamKemDvktLookup::bang()))->kiem($xml3, $xml2) as $loi) {
+            $code = $this->generateErrorCode($loi['key']);
+            $errors->push((object) [
+                'error_code' => $code,
+                'error_name' => $loi['ten'],
+                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($code),
+                'description' => $loi['mo_ta'],
+            ]);
+        }
+
+        return $errors;
+    }
+
+    /**
+     * Dinh danh NVYT (thu truong don vi, BS chi dinh, nguoi thuc hien, BS doc KQ) cua ca ho so,
+     * gom thanh 3 ma XMLComplete_NVYT_*. Logic o NvytRule; truong lay tu moi bang XML qua NvytThuThap.
+     */
+    public function kiemNvyt($ma_lk): Collection
+    {
+        $errors = collect();
+        foreach ((new NvytRule(NvytLookup::bang()))->kiem(NvytThuThap::tuHoSo((string) $ma_lk)) as $loi) {
             $code = $this->generateErrorCode($loi['key']);
             $errors->push((object) [
                 'error_code' => $code,
