@@ -43,6 +43,7 @@ abstract class TestCase extends BaseTestCase
         };
         \App\Services\Xml3176\NvytLookup::xoaBoNho();
         \App\Services\Xml3176\VatPhamKemDvktLookup::xoaBoNho();
+        \App\Services\Xml3176\Xml3176PhienBanDanhMuc::quenPhienBan();
 
         $macDinh = config('database.default');
         $ten = config('database.connections.' . $macDinh . '.database');

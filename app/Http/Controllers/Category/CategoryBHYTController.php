@@ -252,7 +252,10 @@ class CategoryBHYTController extends Controller
             return response()->json(['message' => $e->getMessage()], 422);
         }
 
-        return response()->json(['so_dong' => $q->delete()]);
+        $soDong = $q->delete();
+        \App\Services\Xml3176\Xml3176PhienBanDanhMuc::tang('xoa danh muc ' . $request->input('loai'));
+
+        return response()->json(['so_dong' => $soDong]);
     }
 
     /** Dung truy van dung chung cho ca dem lan xoa, de hai ben khong bao gio lech nhau */
@@ -369,6 +372,7 @@ class CategoryBHYTController extends Controller
                 $catalog->critical_error = $request->critical_error;
             }
             $catalog->save();
+            \App\Services\Xml3176\Xml3176PhienBanDanhMuc::tang('sua muc chan/kiem ma loi ' . $catalog->error_code);
             
             return response()->json(['success' => true]);
         }

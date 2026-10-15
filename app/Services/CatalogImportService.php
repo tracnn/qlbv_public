@@ -321,13 +321,18 @@ class CatalogImportService
             $this->xuLyLo($rows, $dongDau, $tt, $maCskcb);
         });
 
-        Excel::import($imp, $filePath);
+        try {
+            Excel::import($imp, $filePath);
 
-        if ($tt['type'] === null) {
-            throw new \Exception('File không chứa dữ liệu');
+            if ($tt['type'] === null) {
+                throw new \Exception('File không chứa dữ liệu');
+            }
+
+            $tt['ghi']->ghi($tt['lo']);   // lo cuoi con du
+        } finally {
+            // Ca khi nhap loi giua chung: cac lo truoc da ghi, worker phai thay ngay.
+            \App\Services\Xml3176\Xml3176PhienBanDanhMuc::tang('nhap danh muc ' . ($tt['type'] ?: '?'));
         }
-
-        $tt['ghi']->ghi($tt['lo']);   // lo cuoi con du
 
         return $this->ketQua;
     }

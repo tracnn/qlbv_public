@@ -75,6 +75,7 @@ class VatPhamKemDvktHocLaiService
 
                 return $g;
             });
+            Xml3176PhienBanDanhMuc::tang('hoc lai vat pham kem DVKT');
 
             $soCap = [];
             foreach (array_keys($hoc['so_vat_pham']) as $loai) {

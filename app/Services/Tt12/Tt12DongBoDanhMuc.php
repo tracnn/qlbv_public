@@ -67,6 +67,10 @@ class Tt12DongBoDanhMuc
             'so_dong'  => $daGhi,
         ));
 
+        if ($daGhi > 0) {
+            \App\Services\Xml3176\Xml3176PhienBanDanhMuc::tang('dong bo TT12 ' . $bang);
+        }
+
         return $daGhi;
     }
 

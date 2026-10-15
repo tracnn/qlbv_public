@@ -57,6 +57,9 @@ class CheckXml3176TypeJob implements ShouldQueue
             return;
         }
 
+        // Danh muc sua qua ung dung (tien trinh khac) -> xoa bo dem tinh truoc khi kiem.
+        \App\Services\Xml3176\Xml3176PhienBanDanhMuc::dongBoBoDem();
+
         $cauHinh = Xml3176CheckTypes::cauHinh($this->xmlType);
 
         // Xoa loi CUA RIENG LOAI NAY. Khong dung deleteErrors() vi ham do xoa TOAN BO

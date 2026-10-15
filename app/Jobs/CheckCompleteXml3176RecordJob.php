@@ -54,6 +54,8 @@ class CheckCompleteXml3176RecordJob implements ShouldQueue
         }
 
         if (!config('organization.xml_3176_not_check', false)) {
+            // Danh muc sua qua ung dung (tien trinh khac) -> xoa bo dem tinh truoc khi kiem.
+            \App\Services\Xml3176\Xml3176PhienBanDanhMuc::dongBoBoDem();
             $xmlCompleteChecker->checkErrors($this->ma_lk);
         }
 

@@ -39,11 +39,13 @@ class VatPhamKemDvktQuanTri
             $du['nguon'] = Xml3176VatPhamKemDvkt::NGUON_TAY;
         }
         $m->fill($du + self::vet($nguoiSuaId))->save();
+        Xml3176PhienBanDanhMuc::tang('vat pham kem DVKT: dat hieu luc');
     }
 
     public function datGhiChu(\Illuminate\Database\Eloquent\Model $m, $ghiChu, $nguoiSuaId): void
     {
         $m->fill(['ghi_chu' => self::ghiChuHopLe($ghiChu)] + self::vet($nguoiSuaId))->save();
+        Xml3176PhienBanDanhMuc::tang('vat pham kem DVKT: ghi chu');
     }
 
     public function xoa(\Illuminate\Database\Eloquent\Model $m): void
@@ -53,6 +55,7 @@ class VatPhamKemDvktQuanTri
             throw new \InvalidArgumentException('Chỉ xoá được dòng bổ sung tay (TAY); dòng học tự động hãy tắt hiệu lực');
         }
         $m->delete();
+        Xml3176PhienBanDanhMuc::tang('vat pham kem DVKT: xoa');
     }
 
     public function themBatBuoc($maDvkt, $ghiChu, $nguoiSuaId): Xml3176VpkdDvktBatBuoc
@@ -71,10 +74,13 @@ class VatPhamKemDvktQuanTri
         }
         $ten = ServiceCatalog::where('ma_dich_vu', $ma)->value('ten_dich_vu') ?: $me->ten_dvkt;
 
-        return Xml3176VpkdDvktBatBuoc::create([
+        $moi = Xml3176VpkdDvktBatBuoc::create([
             'ma_dvkt' => $ma, 'ten_dvkt' => $ten, 'so_ho_so' => 0, 'so_ho_so_co_kem' => 0, 'ty_le' => null,
             'nguon' => Xml3176VatPhamKemDvkt::NGUON_TAY, 'hieu_luc' => true, 'ghi_chu' => $ghiChu,
         ] + self::vet($nguoiSuaId));
+        Xml3176PhienBanDanhMuc::tang('vat pham kem DVKT: them DVKT bat buoc');
+
+        return $moi;
     }
 
     public function themDongTay($loai, $ma, $ten, array $dsMaDvkt, array $tenDvkt, $ghiChu, $nguoiSuaId): array
@@ -126,6 +132,10 @@ class VatPhamKemDvktQuanTri
                 $kq['them'][] = $k;
             }
         });
+
+        if (!empty($kq['them'])) {
+            Xml3176PhienBanDanhMuc::tang('vat pham kem DVKT: them dong tay');
+        }
 
         if (empty($kq['them'])) {
             throw new \InvalidArgumentException('Tất cả cặp đã có trong bảng tra: ' . implode(', ', $kq['da_co']));

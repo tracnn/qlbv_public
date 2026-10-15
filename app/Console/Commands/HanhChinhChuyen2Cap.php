@@ -78,6 +78,9 @@ class HanhChinhChuyen2Cap extends Command
             return 1;
         }
 
+        // Sau giao dich con sua district_* tren cac dong vua nhap.
+        \App\Services\Xml3176\Xml3176PhienBanDanhMuc::tang('chuyen don vi hanh chinh 2 cap');
+
         $tong   = DB::table('administrative_units')->count();
         $active = DB::table('administrative_units')->where('is_active', 1)->count();
         $soTinh = DB::table('administrative_units')->where('is_active', 1)->distinct()->count('province_code');

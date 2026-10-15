@@ -46,6 +46,9 @@ class Xml3176DoKiem extends Command
             DB::statement('SET SESSION TRANSACTION READ ONLY');
         }
 
+        // Chi doc; bang chua co (CSDL chua migrate) thi bo qua, khong nem.
+        \App\Services\Xml3176\Xml3176PhienBanDanhMuc::dongBoBoDem();
+
         $dsMaLk = $this->layDanhSach();
         if ($dsMaLk === null) {
             return 1;

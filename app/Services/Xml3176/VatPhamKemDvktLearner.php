@@ -499,6 +499,8 @@ class VatPhamKemDvktLearner
             $kq['them']++;
         }
 
+        Xml3176PhienBanDanhMuc::tang('nap bang tra vat pham kem DVKT');
+
         return $kq;
     }
 

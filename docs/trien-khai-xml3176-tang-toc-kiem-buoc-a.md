@@ -34,7 +34,7 @@ Các truy vấn nặng nhất còn lại (đầu vào cho Bước B; hai mục �
 
 ## 2. Những gì thay đổi khi deploy
 
-### 2.1. Hai migration chỉ mục
+### 2.1. Migration (hai chỉ mục + bảng phiên bản danh mục)
 
 - `2026_10_15_110000_them_chi_muc_ma_dich_vu_service_catalogs`: chỉ mục
   `service_catalogs_ma_dich_vu_ma_cskcb_index` trên `service_catalogs(ma_dich_vu, ma_cskcb)`.
@@ -50,6 +50,13 @@ Lưu ý khi deploy:
   "Khong tao duoc chi muc". Nếu có, tạo chỉ mục tay ở giờ thấp điểm.
 - Kết quả kiểm vẫn đúng khi chưa có chỉ mục, chỉ chậm hơn.
 
+Thêm một migration tạo bảng (nhỏ, chạy tức thì):
+
+- `2026_10_15_130000_create_xml3176_phien_ban_danh_muc_table`: bảng `xml3176_phien_ban_danh_muc`
+  (một dòng `id = 1`, cột `phien_ban`, `ly_do`, `updated_at`) - xem mục 2.2. Chạy lại không lỗi.
+  Khi chưa migrate, ứng dụng và lệnh `xml3176:do-kiem` vẫn chạy bình thường (chỉ ghi cảnh báo
+  "phien ban danh muc" vào log), nhưng sửa danh mục khi đó chỉ có hiệu lực sau tối đa 10 phút.
+
 ### 2.2. Bộ đệm 600 giây
 
 Các danh mục sau được đệm trong từng worker 600 giây (10 phút):
@@ -63,14 +70,29 @@ Các danh mục sau được đệm trong từng worker 600 giây (10 phút):
 - danh sách DVKT cần mã máy;
 - bệnh thuộc phụ lục 1 (PL1).
 
-**Sau khi nhập/đồng bộ một danh mục (kể cả "đồng bộ lại" TT12) hoặc đổi mức chặn**, phải làm một trong hai
-việc trước khi kiểm lại hồ sơ:
+**Sửa danh mục qua ứng dụng có hiệu lực ngay ở job kiểm kế tiếp, không cần khởi động lại hàng đợi.**
+Mỗi lần ghi danh mục qua các đường sau, số phiên bản trong bảng `xml3176_phien_ban_danh_muc` tăng 1; mỗi
+job kiểm đọc số này lúc bắt đầu (một truy vấn) và xoá bộ đệm nếu số đã đổi:
+
+- nhập Excel danh mục trên màn hình và các lệnh nhập tự động (`importCatalogBHXH:data`, chuyển đơn vị
+  hành chính 2 cấp) - kể cả khi nhập lỗi giữa chừng;
+- xoá danh mục;
+- đồng bộ TT12 (sau khi hồ sơ được tiếp nhận, kể cả "đồng bộ lại") khi có dòng được ghi;
+- bật/tắt mức chặn (`critical_error`) và kiểm tra (`is_check`) trong danh mục mã lỗi XML3176;
+- bảng tra vật phẩm kèm DVKT: học lại, nạp Excel, bật/tắt hiệu lực, ghi chú, xoá, thêm dòng tay, thêm
+  DVKT bắt buộc.
+
+**Chỉ khi sửa thẳng trong CSDL (chạy SQL tay)** mới phải làm một trong hai việc trước khi kiểm lại hồ sơ:
 
 1. khởi động lại dịch vụ hàng đợi NSSM **`QLBV JobXml3176`** (tên đúng như trong `update.bat` /
    `install_service.bat`), hoặc
 2. chờ **10 phút** để các worker tự đọc bản mới.
 
-Nếu không, hồ sơ kiểm lại ngay vẫn có thể ra kết quả theo danh mục cũ.
+(Hoặc sau khi sửa tay, tăng số phiên bản bằng tay:
+`UPDATE xml3176_phien_ban_danh_muc SET phien_ban = phien_ban + 1, ly_do = 'sua tay' WHERE id = 1;`.)
+
+Tra soát: `SELECT * FROM xml3176_phien_ban_danh_muc;` - cột `ly_do` cho biết lần tăng gần nhất do việc gì,
+`updated_at` lúc nào.
 
 Về `is_check`: các kiểm tra XML1–XML14 (chế độ gom) đọc `is_check` **trực tiếp, mới** từ CSDL ở cuối mỗi
 job; chỉ XMLComplete đọc `is_check` từ bộ đệm 600 giây. `critical_error` thì luôn theo bộ đệm.
