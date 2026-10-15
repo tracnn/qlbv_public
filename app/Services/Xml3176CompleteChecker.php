@@ -24,6 +24,7 @@ use App\Services\Xml3176\Support\BedDaysTT39Calculator;
 use App\Services\Xml3176\Support\ExaminationFeeCalculator;
 use App\Services\Mcct\NguongMienCungChiTra;
 use App\Services\Xml3176\NvytLookup;
+use App\Services\Xml3176\Xml3176BoDem;
 use App\Services\Xml3176\NvytRule;
 use App\Services\Xml3176\NvytThuThap;
 use App\Services\Xml3176\VatPhamKemDvktLookup;
@@ -471,7 +472,9 @@ class Xml3176CompleteChecker
             }
             // Danh muc CSKCB nhap tu tep BHXH luu tuyen bang chu ("Tuyến trung ương") - so
             // dang chuan hoa (hoa thuong, khoang trang) voi danh sach gia tri trong config.
-            $tuyen = TextNormalizer::chuan(MedicalOrganization::where('ma_cskcb', $data->ma_cskcb)->value('tuyen_cmkt'));
+            $tuyen = TextNormalizer::chuan(Xml3176BoDem::nho('cvs.tuyen_cmkt', CommonValidationService::khoa($data->ma_cskcb), function () use ($data) {
+                return MedicalOrganization::where('ma_cskcb', $data->ma_cskcb)->value('tuyen_cmkt');
+            }));
             $tuyenTw = array_map([TextNormalizer::class, 'chuan'], (array) $cfg['tuyen_tw_values']);
             if ($tuyen === '' || !in_array($tuyen, $tuyenTw, true)) {
                 return $errors; // GUARD: không xác định được tuyến TW

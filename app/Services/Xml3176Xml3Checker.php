@@ -367,8 +367,8 @@ class Xml3176Xml3Checker
             $ma_benh_array = explode(';', $data->ma_benh);
             foreach ($ma_benh_array as $ma_benh) {
                 // Check ma_benh in array
-                if (!Icd10Category::where('icd_code', $ma_benh)->where('is_active', true)->exists()) {
-                    $existIcdYhct = IcdYhctCategory::where('icd_code', $ma_benh)->where('is_active', true)->first();
+                if (!$this->commonValidationService->isIcd10CategoryValid($ma_benh)) {
+                    $existIcdYhct = $this->commonValidationService->isIcdYhctCategoryValue($ma_benh);
                     if ($existIcdYhct) {
                         $errorCode = $this->generateErrorCode('INFO_ERROR_MA_BENH_IN_YHCT');
                         $errors->push((object)[
@@ -403,7 +403,7 @@ class Xml3176Xml3Checker
             }
             $ma_benh_yhct_array = explode(';', $data->ma_benh_yhct);
             foreach ($ma_benh_yhct_array as $ma_benh_yhct) {
-                if (!IcdYhctCategory::where('icd_code', $ma_benh_yhct)->where('is_active', true)->exists()) {
+                if (!$this->commonValidationService->isIcdYhctCategoryValid($ma_benh_yhct)) {
                     $errorCode = $this->generateErrorCode('INFO_ERROR_MA_BENH_YHCT_INVALID');
                     $errors->push((object)[
                         'error_code' => $errorCode,
@@ -430,7 +430,7 @@ class Xml3176Xml3Checker
                 // Loại bỏ chuỗi ký tự dạng [...] nếu có
                 $maMay = trim(preg_replace('/\[.*?\]/', '', $maMay));
                 // Kiểm tra tồn tại trong danh mục trang thiết bị theo MA_MAY đầy đủ
-                $existEquipment = EquipmentCatalog::where('ma_may', $maMay)->exists();
+                $existEquipment = $this->commonValidationService->isEquipmentMaMayValid($maMay);
                 if (!$existEquipment) {
                     $errorCode = $this->generateErrorCode('INFO_ERROR_MA_MAY_NOT_FOUND');
                     $errors->push((object)[
