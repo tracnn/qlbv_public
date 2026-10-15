@@ -6,7 +6,14 @@
 
 - **Mỗi hồ sơ giữ tối đa 2.000 dòng cho một mã lỗi**, dư thì thay bằng một dòng "Đã lược bớt K lỗi cùng mã … của hồ sơ". Áp cho mọi quy tắc để một quy tắc bùng nổ không làm sập worker. Hiện chạm thêm 14 hồ sơ ở `XML4_XN_MISSING_VALUE_RESULT` (ví dụ 000007139114: 2.873 dòng → 2.000 + 1 dòng tóm tắt).
 
-- **Triển khai:** chạy `php artisan migrate` **trước** khi worker chạy code mới (nạp mã mới ở mức cảnh báo; code chạy trước sẽ tự tạo mã ở mức nghiêm trọng — migration ép lại về cảnh báo). Sau đó thay lỗi cũ trên các hồ sơ đã nạp:
+- **Bỏ báo trùng: một sai sót chỉ còn một dòng lỗi.** Rà soát ngày 15/10 trên toàn bộ 3,2 triệu dòng lỗi và trong mã nguồn tìm ra 16 chỗ mà quy tắc mới thêm từ tháng 9 báo trùng với quy tắc khác, hoặc một quy tắc ra cùng một lỗi nhiều lần:
+  - **Gộp mã:** `XML4_MA_CHI_SO_EMPTY` + `XML4_TEN_CHI_SO_EMPTY` thành **`XML4_CHI_SO_EMPTY`**; mô tả ghi rõ thiếu mã, thiếu tên hay thiếu cả hai (350.508 dòng từng ra hai lỗi). Migration nạp mã mới theo mức của mã cũ và tắt hai mã cũ.
+  - **Quy tắc nhường nhau** (giữ quy tắc nói đúng hơn): dưới 3 phút nhường cho "NGAY_TH_YL = NGAY_KQ" (41.747 dòng); "NGAY_KQ > ngày ra" chỉ còn báo ở dòng vật tư, vì các dòng khác đã có `XML3_INVALID_NGAY_KQ`; thiếu giấy chuyển tuyến nhường cho quy tắc theo mã đối tượng 1.3/1.5; `MA_DOITUONG_KCB_INVALID` nhường cho `DUNG_DKBD_SAI_MA`; "XN không giá trị và kết quả" nhường cho thiếu mô tả/kết luận; XML7 "đến ngày trước ngày ra" nhường cho "từ ngày trước ngày ra"; mức hưởng vượt trần thẻ nhường cho mã có mức theo mốc (1.13/1.14/1.18); `NGAY_HEN_KL` rỗng chỉ báo ở XML14; tiền khám vượt trần nhường cho "lần 2 chưa giảm 30%", và dòng khám lặp mã không bị đếm lại; mã DVKT `0000`/`_TB` chỉ một lỗi đơn giá; tỷ lệ TT BH ngoài 0–100 không bị so thêm với danh mục; gói VTYT không có DVKT mẹ nhường cho `XML3_DATE_MISMATCH`.
+  - **Cùng một lỗi ra nhiều lần:** khối kiểm phương pháp vô cảm bị chép hai lần (306 dòng thừa); trùng giường nay một lỗi mỗi dòng và kể các hồ sơ trùng (208 dòng thừa); "Ngày KQ XML4 khác XML3" mỗi mô tả một lần.
+
+  Đo lại trên 20 hồ sơ thật có các kiểu trùng trên: dòng lỗi giống hệt nhau 21 → 0, cặp dưới 3 phút/trùng giờ 168 → 0, cặp mã/tên chỉ số 1.308 → 0, các cặp còn lại về 0. Lỗi cũ chỉ mất khi hồ sơ được kiểm lại.
+
+- **Triển khai:** chạy `php artisan migrate` **trước** khi worker chạy code mới (nạp `XML3_EXECUTION_TIME_TOO_LONG` ở mức cảnh báo và `XML4_CHI_SO_EMPTY` theo mức của mã cũ; code chạy trước sẽ tự tạo mã mới ở mức nghiêm trọng — migration ép lại). Sau đó thay lỗi cũ trên các hồ sơ đã nạp:
 
   ```
   php artisan xml3176:kiem-lai-chong-gio --thu
