@@ -24,7 +24,7 @@ class Xml3176DoKiem extends Command
     protected $signature = 'xml3176:do-kiem
         {--ma-lk-tep= : Tep moi dong mot ma_lk}
         {--so=40 : So ho so lay ngau nhien neu khong co tep}
-        {--tu=2026-10-01 : Lay ho so co created_at >= ngay nay}
+        {--tu= : Lay ho so co created_at >= ngay nay (mac dinh: 14 ngay truoc hom nay)}
         {--uu-tien-noi-tru : It nhat mot nua mau la ho so noi tru}
         {--ghi-ma-lk= : Luu danh sach ma_lk da dung}
         {--xuat-loi= : Tep jsonl danh sach loi}
@@ -95,8 +95,9 @@ class Xml3176DoKiem extends Command
             $this->ghiTep($this->option('xuat-do'), $this->baoCaoDo(count($dsMaLk), $ngoaiLe));
         }
 
-        $this->info('Đã kiểm ' . count($dsMaLk) . ' hồ sơ, ' . $loi->soDongTrongBoDem() . ' lỗi, '
-            . count($ngoaiLe) . ' ngoại lệ.');
+        $this->info('Đã kiểm ' . count($dsMaLk) . ' hồ sơ (mẫu thực tế), ' . $loi->soDongTrongBoDem() . ' lỗi, '
+            . count($ngoaiLe) . ' ngoại lệ, bộ nhớ đỉnh '
+            . round(memory_get_peak_usage(true) / 1048576, 1) . ' MB.');
 
         if ($ngoaiLe) {
             foreach ($ngoaiLe as $dong) {
@@ -122,7 +123,7 @@ class Xml3176DoKiem extends Command
         }
 
         $so = max(1, (int) $this->option('so'));
-        $tu = $this->option('tu');
+        $tu = $this->option('tu') ?: date('Y-m-d', strtotime('-14 days'));
         $goc = function () use ($tu) {
             return DB::table('xml3176_xml1s')->where('created_at', '>=', $tu);
         };
@@ -229,6 +230,7 @@ class Xml3176DoKiem extends Command
     private function baoCaoDo($soHoSo, array $ngoaiLe)
     {
         $kq = "mau: $soHoSo ho so\n";
+        $kq .= sprintf("bo nho dinh: %.1f MB\n", memory_get_peak_usage(true) / 1048576);
         $kq .= sprintf("%-12s %8s %9s %10s %10s %8s\n", 'XML', 'dong', 'truy van', 'ms SQL', 'ms tong', 'q/dong');
         foreach ($this->thongKe as $muc => $s) {
             $kq .= sprintf("%-12s %8d %9d %10.0f %10.0f %8.1f\n", $muc, $s['dong'], $s['truyVan'], $s['msSql'], $s['msTong'],

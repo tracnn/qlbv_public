@@ -16,11 +16,15 @@ class BoDemTest extends TestCase
         Xml3176BoDem::$bayGio = function () {
             return $this->gio;
         };
+        Xml3176BoDem::$docBoNho = function () {
+            return 0;
+        };
     }
 
     protected function tearDown()
     {
         Xml3176BoDem::xoaTatCa();
+        Xml3176BoDem::$docBoNho = null;
         parent::tearDown();
     }
 
@@ -121,19 +125,131 @@ class BoDemTest extends TestCase
     }
 
     /** @test */
-    public function dat_va_xoa_tat_ca()
+    public function dat_khi_bang_chua_nap_khong_lam_gi()
     {
-        Xml3176BoDem::dat('a', 'k', 'daDat');
-        $this->assertSame('daDat', Xml3176BoDem::nho('a', 'k', function () {
+        Xml3176BoDem::dat('b', 'k', 'daDat');
+        // khong ghi vao kho theo khoa: nho() van tinh moi
+        $this->assertSame('khac', Xml3176BoDem::nho('b', 'k', function () {
             return 'khac';
         }));
+        // bang nap sau do khong co muc da dat
+        $this->assertSame(['x' => 1], Xml3176BoDem::bang('b', function () {
+            return ['x' => 1];
+        }));
+    }
 
+    /** @test */
+    public function dat_khi_bang_het_han_khong_lam_gi()
+    {
+        Xml3176BoDem::bang('b', function () {
+            return ['x' => 1];
+        });
+        $this->gio += Xml3176BoDem::TTL_GIAY + 1;
+        Xml3176BoDem::dat('b', 'y', 2);
+        $this->assertSame(['x' => 2], Xml3176BoDem::bang('b', function () {
+            return ['x' => 2];
+        }));
+    }
+
+    /** @test */
+    public function xoa_tat_ca_bo_het()
+    {
+        Xml3176BoDem::nho('a', 'k', function () {
+            return 'cu';
+        });
         Xml3176BoDem::xoaTatCa();
         Xml3176BoDem::$bayGio = function () {
             return $this->gio;
         };
         $this->assertSame('khac', Xml3176BoDem::nho('a', 'k', function () {
             return 'khac';
+        }));
+    }
+
+    /** @test */
+    public function tran_muc_theo_ten_bo_dem()
+    {
+        // bo dem model: tran 5.000
+        for ($i = 0; $i < Xml3176BoDem::TRAN_MUC_MODEL; $i++) {
+            Xml3176BoDem::nho('danh_muc.vtyt', (string) $i, function () use ($i) {
+                return $i;
+            });
+        }
+        $dem = 0;
+        Xml3176BoDem::nho('danh_muc.vtyt', 'moi', function () use (&$dem) {
+            $dem++;
+
+            return 1;
+        });
+        Xml3176BoDem::nho('danh_muc.vtyt', '0', function () use (&$dem) {
+            $dem++;
+
+            return 0;
+        });
+        $this->assertSame(2, $dem, 'bo dem model phai bi xoa khi vuot 5.000');
+
+        // bo dem scalar: van giu duoc hon 5.000 muc
+        for ($i = 0; $i < Xml3176BoDem::TRAN_MUC_MODEL + 1; $i++) {
+            Xml3176BoDem::nho('danh_muc.dvkt_ton_tai', (string) $i, function () {
+                return true;
+            });
+        }
+        $dem = 0;
+        Xml3176BoDem::nho('danh_muc.dvkt_ton_tai', '0', function () use (&$dem) {
+            $dem++;
+
+            return true;
+        });
+        $this->assertSame(0, $dem, 'bo dem scalar giu tran 20.000');
+    }
+
+    /** @test */
+    public function vuot_nguong_bo_nho_xoa_tat_ca_roi_nho_muc_moi()
+    {
+        Xml3176BoDem::nho('a', 'k', function () {
+            return 'cu';
+        });
+        Xml3176BoDem::bang('b', function () {
+            return ['x' => 1];
+        });
+
+        Xml3176BoDem::$docBoNho = function () {
+            return Xml3176BoDem::NGUONG_BO_NHO + 1;
+        };
+        $this->assertSame('moi', Xml3176BoDem::nho('c', 'k', function () {
+            return 'moi';
+        }));
+        Xml3176BoDem::$docBoNho = function () {
+            return 0;
+        };
+
+        // bo dem cu da bi xoa
+        $this->assertSame('tinhLai', Xml3176BoDem::nho('a', 'k', function () {
+            return 'tinhLai';
+        }));
+        $this->assertSame(['x' => 2], Xml3176BoDem::bang('b', function () {
+            return ['x' => 2];
+        }));
+        // muc moi van con (duoc nho sau khi xoa)
+        $this->assertSame('moi', Xml3176BoDem::nho('c', 'k', function () {
+            return 'sai';
+        }));
+    }
+
+    /** @test */
+    public function duoi_nguong_bo_nho_khong_xoa()
+    {
+        Xml3176BoDem::nho('a', 'k', function () {
+            return 'cu';
+        });
+        Xml3176BoDem::$docBoNho = function () {
+            return Xml3176BoDem::NGUONG_BO_NHO;
+        };
+        Xml3176BoDem::nho('c', 'k', function () {
+            return 'moi';
+        });
+        $this->assertSame('cu', Xml3176BoDem::nho('a', 'k', function () {
+            return 'sai';
         }));
     }
 

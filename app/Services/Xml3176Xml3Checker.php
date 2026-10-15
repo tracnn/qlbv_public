@@ -3,12 +3,7 @@
 namespace App\Services;
 
 use App\Models\BHYT\Xml3176Xml3;
-use App\Models\BHYT\MedicalSupplyCatalog;
-use App\Models\BHYT\Icd10Category;
-use App\Models\BHYT\IcdYhctCategory;
-use App\Models\BHYT\ServiceCatalog;
 use App\Services\Xml3176\DanhMucTraCuu;
-use App\Models\BHYT\EquipmentCatalog;
 use App\Services\Xml3176\Support\Xml3176DateHelper;
 use App\Services\Xml3176\Support\TyLeComparator;
 use App\Services\Xml3176\Support\ServiceOverlapChecker;

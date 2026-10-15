@@ -6,9 +6,6 @@ use App\Models\BHYT\Xml3176Xml2;
 use App\Models\BHYT\Xml3176Xml1;
 use App\Models\BHYT\DepartmentBedCatalog;
 use App\Models\BHYT\EquipmentCatalog;
-use App\Models\BHYT\MedicalSupplyCatalog;
-use App\Models\BHYT\MedicineCatalog;
-use App\Models\BHYT\ServiceCatalog;
 use App\Services\Xml3176\DanhMucTraCuu;
 
 use Illuminate\Support\Collection;

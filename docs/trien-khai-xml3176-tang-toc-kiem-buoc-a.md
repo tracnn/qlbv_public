@@ -52,11 +52,35 @@ Lưu ý khi deploy:
 
 ### 2.2. Bộ đệm 600 giây
 
-Danh mục nhỏ (mã lỗi, mức chặn, danh mục tra cứu) được đệm trong worker 600 giây.
+Các danh mục sau được đệm trong từng worker 600 giây (10 phút):
 
-- Thay đổi danh mục hoặc mức chặn (`critical_error`/`is_check` của mã lỗi) có hiệu lực **tối đa sau
-  10 phút** trong các worker đang chạy.
-- Muốn có hiệu lực ngay: khởi động lại các dịch vụ hàng đợi (queue worker).
+- danh mục mã lỗi (`critical_error`, `is_check`);
+- danh mục DVKT / dịch vụ (`service_catalogs`), thuốc, vật tư y tế;
+- CSKCB và `tuyen_cmkt`;
+- ICD10 và ICD YHCT;
+- đơn vị hành chính (tỉnh/huyện/xã);
+- thiết bị (mã máy), nghề nghiệp;
+- danh sách DVKT cần mã máy;
+- bệnh thuộc phụ lục 1 (PL1).
+
+**Sau khi nhập/đồng bộ một danh mục (kể cả "đồng bộ lại" TT12) hoặc đổi mức chặn**, phải làm một trong hai
+việc trước khi kiểm lại hồ sơ:
+
+1. khởi động lại dịch vụ hàng đợi NSSM **`QLBV JobXml3176`** (tên đúng như trong `update.bat` /
+   `install_service.bat`), hoặc
+2. chờ **10 phút** để các worker tự đọc bản mới.
+
+Nếu không, hồ sơ kiểm lại ngay vẫn có thể ra kết quả theo danh mục cũ.
+
+Về `is_check`: các kiểm tra XML1–XML14 (chế độ gom) đọc `is_check` **trực tiếp, mới** từ CSDL ở cuối mỗi
+job; chỉ XMLComplete đọc `is_check` từ bộ đệm 600 giây. `critical_error` thì luôn theo bộ đệm.
+
+Ghi chú: các checker Qd130 dùng chung `CommonValidationService` nên cũng được đệm (module đã gỡ);
+`isMedicalStaffValid` không được đệm.
+
+Bộ nhớ: bộ đệm có giới hạn để worker dài hạn không phình (PHP `memory_limit` trên prod có thể chỉ 128M):
+tối đa 20.000 mục cho mỗi bộ đệm scalar, 5.000 mục cho bộ đệm giữ model/Collection; nếu bộ nhớ thực dùng
+vượt 64 MB thì **toàn bộ** bộ đệm bị xoá rồi nạp lại dần (chậm đi một chút nhưng không đổi kết quả).
 
 ### 2.3. createOrUpdate không ghi đè mức chặn do admin đặt
 
@@ -75,11 +99,11 @@ Tuỳ chọn:
 |---|---|
 | `--ma-lk-tep=` | Tệp mỗi dòng một `ma_lk` (dùng lại đúng một mẫu cho trước/sau) |
 | `--so=40` | Số hồ sơ lấy ngẫu nhiên nếu không có tệp |
-| `--tu=2026-10-01` | Lấy hồ sơ có `created_at` từ ngày này |
+| `--tu=` | Lấy hồ sơ có `created_at` từ ngày này (mặc định: 14 ngày trước hôm nay) |
 | `--uu-tien-noi-tru` | Ít nhất một nửa mẫu là hồ sơ nội trú |
 | `--ghi-ma-lk=` | Lưu danh sách `ma_lk` đã dùng ra tệp |
 | `--xuat-loi=` | Xuất danh sách lỗi dạng jsonl |
-| `--xuat-do=` | Xuất thống kê (số truy vấn, ms SQL theo loại XML, mẫu truy vấn nặng) |
+| `--xuat-do=` | Xuất thống kê (số hồ sơ thực tế, bộ nhớ đỉnh, số truy vấn, ms SQL theo loại XML, mẫu truy vấn nặng) |
 
 Mã thoát: `0` bình thường; `1` tham số sai (ví dụ không thấy tệp); **`2` có ngoại lệ trong lúc kiểm**
 (kết quả đo/so sánh khi đó không dùng được, xem dòng "ngoai le" in ra).

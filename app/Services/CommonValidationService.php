@@ -49,6 +49,10 @@ class CommonValidationService
         });
     }
 
+    /**
+     * Tra model IcdYhctCategory (hoac null). Model nay DUNG CHUNG tu bo dem giua cac lan goi:
+     * noi goi KHONG duoc sua (set thuoc tinh, save...) model tra ve.
+     */
     public function isIcdYhctCategoryValue($value)
     {
         return Xml3176BoDem::nho('cvs.icdyhct_dong', self::khoa($value), function () use ($value) {

@@ -82,6 +82,24 @@ class DanhMucMaLoiDemTest extends TestCase
     }
 
     /** @test */
+    public function cung_ma_o_hai_xml_lay_muc_chan_dong_dau_va_is_check_false_neu_co_dong_tat()
+    {
+        // id nho nhat: critical_error = false, is_check = true
+        Xml3176ErrorCatalog::create(['xml' => 'XML1', 'error_code' => 'DUP', 'critical_error' => false, 'is_check' => true]);
+        // dong sau: critical_error = true, is_check = false
+        Xml3176ErrorCatalog::create(['xml' => 'XML2', 'error_code' => 'DUP', 'critical_error' => true, 'is_check' => false]);
+
+        $dv = new Xml3176ErrorService();
+        $this->assertFalse($dv->getCriticalErrorStatus('DUP'), 'critical_error lay tu dong id nho nhat');
+
+        $ham = new \ReflectionMethod($dv, 'bangMaLoi');
+        $ham->setAccessible(true);
+        $bang = $ham->invoke($dv);
+        $this->assertFalse($bang['DUP']['is_check'], 'chi can mot dong is_check=false thi tat');
+        $this->assertFalse($bang['DUP']['critical_error']);
+    }
+
+    /** @test */
     public function save_errors_khong_gom_ton_trong_is_check()
     {
         Xml3176ErrorCatalog::create(['xml' => 'XML1', 'error_code' => 'TAT', 'critical_error' => true, 'is_check' => false]);

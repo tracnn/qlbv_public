@@ -35,6 +35,15 @@ abstract class TestCase extends BaseTestCase
     {
         parent::setUp();
 
+        // Bo nho tinh cua kiem XML3176 song qua test: xoa de test khong anh huong nhau.
+        \App\Services\Xml3176\Xml3176BoDem::xoaTatCa();
+        // Tien trinh phpunit dung hon 64MB la binh thuong: dung bo nho gia de bo dem khong tu xoa.
+        \App\Services\Xml3176\Xml3176BoDem::$docBoNho = function () {
+            return 0;
+        };
+        \App\Services\Xml3176\NvytLookup::xoaBoNho();
+        \App\Services\Xml3176\VatPhamKemDvktLookup::xoaBoNho();
+
         $macDinh = config('database.default');
         $ten = config('database.connections.' . $macDinh . '.database');
 

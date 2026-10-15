@@ -39,8 +39,9 @@ class Xml3176ErrorCatalog extends Model
 
         $dong->save();
 
-        // Ma chua co trong bo dem thi them gia tri thuc trong CSDL; ma da co giu nguyen
-        // (bo dem theo dong dau tien cua ma, dong nay khong lam doi no).
+        // Ma chua co trong bang bo dem thi them gia tri thuc trong CSDL; ma da co giu nguyen
+        // (bo dem theo dong dau tien cua ma, dong nay khong lam doi no). Bang chua nap hoac da
+        // het han thi dat() khong lam gi: lan nap sau doc CSDL moi da co ma nay.
         if (!Xml3176BoDem::coTrongBang('ma_loi', $errorCode)) {
             Xml3176BoDem::dat('ma_loi', $errorCode, [
                 'critical_error' => (bool) $dong->critical_error,
