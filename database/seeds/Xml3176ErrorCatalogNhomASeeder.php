@@ -21,8 +21,7 @@ class Xml3176ErrorCatalogNhomASeeder extends Seeder
             ['XML3', 'XML3_NGAY_KQ_GREATER_NGAY_RA', 'Ngày kết quả dịch vụ lớn hơn ngày ra viện'],
             ['XML3', 'XML3_EXECUTION_TIME_UNDER_3MIN', 'Thời gian thực hiện nhỏ hơn quy định'],
             ['XML3', 'XML3_SAME_DOCTOR_ORDER_AND_EXECUTE', 'Bác sĩ vừa ra y lệnh vừa thực hiện'],
-            ['XML4', 'XML4_MA_CHI_SO_EMPTY', 'Mã chỉ số để trống'],
-            ['XML4', 'XML4_TEN_CHI_SO_EMPTY', 'Tên chỉ số để trống'],
+            ['XML4', 'XML4_CHI_SO_EMPTY', 'Mã/tên chỉ số để trống'], // gop MA_/TEN_CHI_SO_EMPTY 15/10/2026
             ['XML4', 'XML4_XN_MISSING_VALUE_RESULT', 'Xét nghiệm không nhập giá trị và kết quả'],
             ['XML5', 'XML5_DIEN_BIEN_DUPLICATE', 'Diễn biến điều trị trùng nhau'],
             ['XML7', 'XML7_SO_NGAY_NGHI_MISMATCH', 'Số ngày nghỉ không đúng (đến − từ)'],
