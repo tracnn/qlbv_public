@@ -1,3 +1,20 @@
+# 15/10/2026
+
+- **Lỗi "Thời gian thực hiện trùng với dịch vụ khác" (`XML3_OVERLAPPING_SERVICE_EXECUTION`) nay báo mỗi dòng một lỗi, không còn mỗi cặp một lỗi.** Mô tả kể tối đa 5 dịch vụ chồng giờ với dòng đó (theo giờ bắt đầu), dư thì ghi "… và K dịch vụ khác". Hai dòng chồng nhau thì cả hai dòng đều có lỗi. Trước đây quy tắc sinh **1.022.905 dòng lỗi trên 1.950 hồ sơ**; hồ sơ 000007038497 có 372.807 cặp, làm việc kiểm tràn 512 MB và hồ sơ chưa bao giờ kiểm xong. Đo lại trên dữ liệu thật: hồ sơ này còn 51 lỗi chồng giờ (000007139114: 38.775 → 24; 000007161892: 64.400 → 41), bộ nhớ đỉnh 82 MB.
+
+- **Lỗi mới "Thời gian thực hiện dịch vụ dài bất thường" (`XML3_EXECUTION_TIME_TOO_LONG`, mức cảnh báo).** Dịch vụ PTTT (nhóm 8, 18) có NGAY_KQ − NGAY_TH_YL vượt **24 giờ** thì báo lỗi này và **không đưa vào phép so chồng giờ**. Ngưỡng riêng: lọc máu liên tục CVVHDF (`01.0181`, `01.0182`, `01.0183`) 72 giờ, VAC (`11.0118`) 48 giờ — chỉnh trong `config/xml3176.php` (`execution_max_hours`, `execution_max_hours_theo_ma`). Gốc của gần hết lỗi chồng giờ cũ là dòng Hút đờm (`01.0054.0114`, `01.0055.0114`, `02.0150.0114`) ghi cùng một NGAY_KQ sát ngày ra viện, nên một thủ thuật 15 phút "kéo dài" tới 1.228 giờ. Toàn CSDL có 13.654 dòng / 516 hồ sơ vượt 24 giờ, 93% là Hút đờm.
+
+- **Mỗi hồ sơ giữ tối đa 2.000 dòng cho một mã lỗi**, dư thì thay bằng một dòng "Đã lược bớt K lỗi cùng mã … của hồ sơ". Áp cho mọi quy tắc để một quy tắc bùng nổ không làm sập worker. Hiện chạm thêm 14 hồ sơ ở `XML4_XN_MISSING_VALUE_RESULT` (ví dụ 000007139114: 2.873 dòng → 2.000 + 1 dòng tóm tắt).
+
+- **Triển khai:** chạy `php artisan migrate` **trước** khi worker chạy code mới (nạp mã mới ở mức cảnh báo; code chạy trước sẽ tự tạo mã ở mức nghiêm trọng — migration ép lại về cảnh báo). Sau đó thay lỗi cũ trên các hồ sơ đã nạp:
+
+  ```
+  php artisan xml3176:kiem-lai-chong-gio --thu
+  php artisan xml3176:kiem-lai-chong-gio
+  ```
+
+  Mỗi hồ sơ một transaction, dừng giữa chừng chạy lại an toàn, lỗi mã khác giữ nguyên. Hồ sơ 000007038497 (và hồ sơ nào `checked_at` còn trống) cần kiểm lại toàn bộ như bình thường.
+
 # 01/10/2026
 
 - **Đổi chữ "Lỗi nghiêm trọng" thành "Lỗi xuất toán"** cho lỗi XML BHYT (XML3176, QĐ130) và kiểm tra y lệnh: cột Mức độ trong tệp Excel lỗi ("Xuất toán" / "Cảnh báo"), cột ở hai màn danh mục mã lỗi, dashboard XML3176, ô **Lọc hồ sơ** ("HS lỗi xuất toán", "HS không lỗi xuất toán" thay cho "HS lỗi critical", "HS không critical"), thông báo "Không xuất: còn N lỗi xuất toán", lệnh `xml3176:chay-lai-tu-xuat`, mức vi phạm ở các màn kiểm tra y lệnh, phiếu in và email tổng hợp. Chỉ đổi chữ hiển thị; dữ liệu và cách chặn xuất không đổi. "Mức độ nghiêm trọng" của tác dụng phụ ở màn tiêm chủng giữ nguyên.
@@ -34,7 +51,7 @@
   2. **Kiểm RAM trống**: một lần xuất ngày lớn cần khoảng **2,5 GB**.
   3. Xuất lại ngày 29/09 có thẻ BHYT; kiểm tệp đủ 19 sheet, XML3 101.646 dòng, XML4 91.234 dòng; ghi lại thời gian chạy thực tế.
 
-- **Hạn chế đã biết:** trên Windows PHP không cắt được job treo theo thời gian — chỉ mốc 90 phút ở trên. Hai nút "Xuất danh sách hồ sơ" và "7980a" vẫn tải trực tiếp như cũ. Quy tắc `XML3_OVERLAPPING_SERVICE_EXECUTION` sinh một dòng cho mỗi cặp dịch vụ chồng giờ (ngày 29/09: 51.708 dòng từ 115 hồ sơ) — chiếm một phần tư bản xuất, xử lý riêng sau.
+- **Hạn chế đã biết:** trên Windows PHP không cắt được job treo theo thời gian — chỉ mốc 90 phút ở trên. Hai nút "Xuất danh sách hồ sơ" và "7980a" vẫn tải trực tiếp như cũ. Quy tắc `XML3_OVERLAPPING_SERVICE_EXECUTION` sinh một dòng cho mỗi cặp dịch vụ chồng giờ (ngày 29/09: 51.708 dòng từ 115 hồ sơ) — chiếm một phần tư bản xuất (đã sửa 15/10/2026, xem trên).
 
 - **Cài đặt:** có migration (bảng `xml3176_tep_xuat`) và một dịch vụ Windows mới — `update.bat` tự lo cả hai.
 

@@ -22,20 +22,21 @@ class MigrationMaLoiThoiGianPtttDaiTest extends TestCase
     }
 
     /** @test */
-    public function nap_o_muc_nghiem_trong()
+    public function nap_o_muc_canh_bao()
     {
         $r = DB::table('xml3176_error_catalogs')->where('error_code', self::MA)->first();
 
         $this->assertNotNull($r);
         $this->assertSame('XML3', $r->xml);
-        $this->assertEquals(1, $r->critical_error);
+        $this->assertEquals(0, $r->critical_error);
         $this->assertEquals(1, $r->is_check);
     }
 
     /** @test */
-    public function chay_lai_khong_nhan_doi_va_khong_ghi_de_muc_da_chinh()
+    public function ep_canh_bao_khi_code_moi_da_tu_tao_o_muc_nghiem_trong()
     {
-        DB::table('xml3176_error_catalogs')->where('error_code', self::MA)->update(['critical_error' => false]);
+        // Code chay truoc migrate: createOrUpdate tao dong voi getCriticalErrorStatus mac dinh true
+        DB::table('xml3176_error_catalogs')->where('error_code', self::MA)->update(['critical_error' => true]);
 
         (new \NapMaLoiThoiGianPtttDai())->up();
 

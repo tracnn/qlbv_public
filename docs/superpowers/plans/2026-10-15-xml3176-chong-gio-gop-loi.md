@@ -15,7 +15,7 @@
 - Test chạy `DB_HOST=127.0.0.1 vendor/bin/phpunit`; dựng bảng bằng `bootXml3176Sqlite`; cấm RefreshDatabase/DatabaseMigrations; không chạy migrate.
 - Nhóm áp dụng: `config('xml3176.xml3.overlap_execution_groups')` (mặc định [8, 18]).
 - `xml3176.xml3.execution_max_hours` = 24; `execution_max_hours_theo_ma` = `['01.0181' => 72, '01.0182' => 72, '01.0183' => 72, '11.0118' => 48]` (tiền tố mã, tiền tố dài nhất thắng). Vượt = số phút thực hiện > ngưỡng × 60.
-- Mã mới `XML3_EXECUTION_TIME_TOO_LONG`, tên "Thời gian thực hiện dịch vụ dài bất thường", critical_error = true, is_check = true.
+- Mã mới `XML3_EXECUTION_TIME_TOO_LONG`, tên "Thời gian thực hiện dịch vụ dài bất thường", critical_error = false (cảnh báo, như mã chồng giờ trên prod — đổi 15/10 sau khi đo danh mục prod), is_check = true.
 - Dòng vượt ngưỡng KHÔNG tham gia so chồng giờ. Dòng có khoảng ngược/rỗng (đến ≤ từ) cũng không (giữ như `chongNhau`).
 - Chồng giờ: mỗi dòng một lỗi, đối xứng hai phía, liệt kê tối đa 5 đối tác theo (giờ bắt đầu, id) tăng dần.
 - Trần: 2.000 dòng / (ma_lk, error_code) trong chế độ gom, cộng một dòng tóm tắt khi có lược.
@@ -77,13 +77,13 @@ Dòng tóm tắt: cùng xml/ma_lk/error_code/critical/error_name của lỗi lư
 ### Task 4: Migration danh mục + lệnh kiểm lại
 
 **Files:**
-- Create: `database/migrations/2026_10_15_120000_nap_ma_loi_thoi_gian_pttt_dai.php` (updateOrCreate mã mới, critical true — ép như migration NVYT vì mã có thể tự sinh trước khi migrate)
+- Create: `database/migrations/2026_10_15_120000_nap_ma_loi_thoi_gian_pttt_dai.php` (updateOrCreate mã mới, critical false — ép như migration NVYT vì mã có thể tự sinh ở mức nghiêm trọng trước khi migrate)
 - Modify: `database/seeds/Xml3176ErrorCatalogOverlapServiceSeeder.php` (thêm mã mới)
 - Modify: `Xml3176Xml3Checker` — public `kiemThoiGianPttt(Xml3176Xml3 $data): Collection` (gộp hai quy tắc) và public `thongTinThem(Xml3176Xml3 $data): array` (additionalData ngay_yl/ngay_kq, tách từ `checkErrors`)
 - Create: `app/Console/Commands/Xml3176KiemLaiChongGio.php` — `xml3176:kiem-lai-chong-gio {--tu=} {--den=} {--thu} {--lo=500}`; duyệt xml1 theo ma_lk tăng dần, chỉ hồ sơ có dòng XML3 nhóm cấu hình; mỗi hồ sơ một transaction: xoá hai mã → `batDauGom` → `saveErrors('XML3', …)` từng dòng → `ketThucGom`; dừng nếu thiếu mã mới trong danh mục; in số xoá / số mới theo mã.
 - Test: `tests/Unit/Xml3176/MigrationMaLoiThoiGianPtttDaiTest.php`, `tests/Unit/Xml3176/KiemLaiChongGioTest.php`
 
-- [ ] Test migration: nạp critical 1, is_check 1, chạy lại không nhân đôi.
+- [ ] Test migration: nạp critical 0, is_check 1; dòng tự sinh critical 1 bị ép về 0, không nhân đôi.
 - [ ] Test lệnh: hồ sơ có 3 lỗi chồng cũ theo cặp → sau lệnh còn lỗi theo dòng mới; `--thu` không ghi; lỗi mã khác giữ nguyên.
 - [ ] Đỏ → cài → xanh → commit.
 
