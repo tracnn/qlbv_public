@@ -132,6 +132,47 @@ class NvytThuThapTest extends TestCase
     }
 
     /** @test */
+    public function gia_tri_0_coi_nhu_rong_va_bao_thieu()
+    {
+        $this->them(4, ['stt' => 1, 'ma_dich_vu' => 'DV4', 'ma_bs_doc_kq' => '0']);
+        $this->them(3, ['stt' => 1, 'ma_dich_vu' => 'D1', 'ma_nhom' => '3', 'ma_bac_si' => '0', 'nguoi_thuc_hien' => '0;']);
+        $o = NvytThuThap::tuHoSo(self::MA_LK);
+        foreach ($o as $c) {
+            $this->assertSame('', $c['gia_tri']);
+            $this->assertTrue($c['bat_buoc']);
+        }
+        $this->assertCount(3, $o);
+        $checker = new Xml3176CompleteChecker(new Xml3176ErrorService());
+        $this->assertSame(['XMLComplete_NVYT_THIEU', 'XMLComplete_NVYT_THIEU'], array_slice($checker->kiemNvyt(self::MA_LK)->pluck('error_code')->all(), 0, 2));
+    }
+
+    /** @test */
+    public function xml4_nhan_uu_tien_ten_chi_so()
+    {
+        $this->them(4, ['stt' => 1, 'ma_dich_vu' => 'DV4', 'ten_chi_so' => 'Glucose', 'ma_bs_doc_kq' => 'R']);
+        $this->them(4, ['stt' => 2, 'ma_dich_vu' => 'DV5', 'ten_chi_so' => '', 'ma_bs_doc_kq' => 'R']);
+        $o = $this->loc(NvytThuThap::tuHoSo(self::MA_LK), NvytRule::BS_DOC_KQ, 4);
+        $this->assertSame(['Glucose', 'DV5'], array_column($o, 'nhan'));
+    }
+
+    /** @test */
+    public function check_errors_cua_xmlcomplete_gom_loi_nvyt()
+    {
+        $this->nv('027588/HNO-CCHN');
+        $this->them(1, ['ma_ttdv' => '', 'ngay_vao' => '202610010800', 'ngay_ra' => '202610011000', 'ma_loai_kcb' => '01']);
+        $this->them(4, ['stt' => 1, 'ma_dich_vu' => 'DV4', 'ma_bs_doc_kq' => 'vietrad']);
+        $luu = new class extends Xml3176ErrorService {
+            public $codes = [];
+            public function saveErrors(string $xmlType, string $ma_lk, int $stt, \Illuminate\Support\Collection $errors, array $additionalData = []): void
+            {
+                $this->codes = $errors->pluck('error_code')->all();
+            }
+        };
+        (new Xml3176CompleteChecker($luu))->checkErrors(self::MA_LK);
+        $this->assertContains('XMLComplete_NVYT_THIEU', $luu->codes);
+        $this->assertContains('XMLComplete_NVYT_SAI_DINH_DANG', $luu->codes);
+    }
+    /** @test */
     public function kiem_nvyt_ghi_ma_xmlcomplete_va_muc_chan()
     {
         $this->nv('027588/HNO-CCHN');

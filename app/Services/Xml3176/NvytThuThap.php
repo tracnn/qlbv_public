@@ -47,9 +47,9 @@ class NvytThuThap
             }
         }
 
-        // XML4: BS doc ket qua, nhan = ma dich vu (neu rong thi ten chi so)
+        // XML4: BS doc ket qua, nhan = ten chi so (neu rong thi ma dich vu)
         foreach (self::doc(4, $ma_lk, ['ma_bs_doc_kq', 'ma_dich_vu', 'ten_chi_so']) as $r) {
-            $nhan = !empty($r->ma_dich_vu) ? (string) $r->ma_dich_vu : (string) $r->ten_chi_so;
+            $nhan = trim((string) $r->ten_chi_so) !== '' ? (string) $r->ten_chi_so : (string) $r->ma_dich_vu;
             $o[] = self::o(NvytRule::BS_DOC_KQ, 4, $r->ma_bs_doc_kq, true, $nhan);
         }
 
@@ -106,7 +106,8 @@ class NvytThuThap
         return [
             'vai_tro' => $vaiTro,
             'xml' => $xml,
-            'gia_tri' => $giaTri === null ? null : trim((string) $giaTri),
+            // '0' coi nhu rong (giu hanh vi empty() cua block cu: tren thuc te co XML4 ma_bs_doc_kq = '0')
+            'gia_tri' => trim((string) $giaTri) === '0' ? '' : trim((string) $giaTri),
             'bat_buoc' => $batBuoc,
             'nhan' => trim($nhan),
         ];

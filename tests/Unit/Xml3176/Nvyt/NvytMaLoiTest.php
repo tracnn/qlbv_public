@@ -45,21 +45,33 @@ class NvytMaLoiTest extends TestCase
     }
 
     /** @test */
-    public function chay_hai_lan_khong_nhan_doi_va_giu_muc_da_chinh()
+    public function chay_hai_lan_khong_nhan_doi_va_ep_lai_muc_chan()
     {
         $this->chay();
-        Xml3176ErrorCatalog::where('error_code', 'XMLComplete_NVYT_THIEU')->update(['critical_error' => false]);
+        Xml3176ErrorCatalog::where('error_code', 'XMLComplete_NVYT_THIEU')->update(['critical_error' => false, 'is_check' => false]);
         $this->chay();
-        $this->assertSame(1, Xml3176ErrorCatalog::where('error_code', 'XMLComplete_NVYT_THIEU')->count());
-        $this->assertFalse((bool) Xml3176ErrorCatalog::where('error_code', 'XMLComplete_NVYT_THIEU')->first()->critical_error);
+        $r = Xml3176ErrorCatalog::where('error_code', 'XMLComplete_NVYT_THIEU')->get();
+        $this->assertCount(1, $r);
+        $this->assertTrue((bool) $r[0]->critical_error);
+        $this->assertTrue((bool) $r[0]->is_check);
     }
 
+    /** @test */
+    public function dong_da_tao_truoc_khi_migrate_bi_ep_ve_muc_dung()
+    {
+        // Code moi chay truoc migrate: saveErrors tao dong voi critical_error = 1 (mac dinh)
+        Xml3176ErrorCatalog::create(['xml' => 'XMLComplete', 'error_code' => 'XMLComplete_NVYT_SAI_DINH_DANG', 'error_name' => 'x', 'critical_error' => true, 'is_check' => true]);
+        $this->chay();
+        $r = Xml3176ErrorCatalog::where('error_code', 'XMLComplete_NVYT_SAI_DINH_DANG')->first();
+        $this->assertFalse((bool) $r->critical_error);
+        $this->assertSame('Mã nhân viên y tế sai định danh', $r->error_name);
+    }
     /** @test */
     public function ma_cu_bi_tat()
     {
         $cu = NvytRule::MA_CU;
         foreach ([$cu[0], $cu[5]] as $ma) {
-            Xml3176ErrorCatalog::create(['xml' => 'XMLX', 'error_code' => $ma, 'error_name' => 'x', 'critical_error' => true, 'is_check' => true]);
+            Xml3176ErrorCatalog::create(['xml' => 'XMLX', 'error_code' => $ma, 'error_name' => 'x', 'description' => 'Mo ta cu', 'critical_error' => true, 'is_check' => true]);
         }
         Xml3176ErrorCatalog::create(['xml' => 'XML1', 'error_code' => 'XML1_KHAC', 'error_name' => 'x', 'critical_error' => true, 'is_check' => true]);
 
@@ -68,6 +80,15 @@ class NvytMaLoiTest extends TestCase
         $this->assertFalse((bool) Xml3176ErrorCatalog::where('error_code', $cu[0])->first()->is_check);
         $this->assertFalse((bool) Xml3176ErrorCatalog::where('error_code', $cu[5])->first()->is_check);
         $this->assertTrue((bool) Xml3176ErrorCatalog::where('error_code', 'XML1_KHAC')->first()->is_check);
+
+        $ghiChu = 'Mo ta cu — Đã thay bằng XMLComplete_NVYT_* (15/10/2026)';
+        $this->assertSame($ghiChu, Xml3176ErrorCatalog::where('error_code', $cu[0])->first()->description);
+        $this->assertSame('x', Xml3176ErrorCatalog::where('error_code', 'XML1_KHAC')->first()->error_name);
+        $this->assertNull(Xml3176ErrorCatalog::where('error_code', 'XML1_KHAC')->first()->description);
+
+        // chay lai khong noi them ghi chu lan hai
+        $this->chay();
+        $this->assertSame($ghiChu, Xml3176ErrorCatalog::where('error_code', $cu[0])->first()->description);
 
         // down(): bat lai ma cu, khong xoa ma moi
         (new \GopMaLoiNvytXml3176())->down();
@@ -80,5 +101,7 @@ class NvytMaLoiTest extends TestCase
     {
         $this->assertCount(34, NvytRule::MA_CU);
         $this->assertCount(34, array_unique(NvytRule::MA_CU));
+        require_once database_path('migrations/2026_10_15_100000_gop_ma_loi_nvyt_xml3176.php');
+        $this->assertSame(NvytRule::MA_CU, \GopMaLoiNvytXml3176::MA_CU);
     }
 }
