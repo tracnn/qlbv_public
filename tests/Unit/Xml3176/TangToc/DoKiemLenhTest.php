@@ -30,6 +30,7 @@ class DoKiemLenhTest extends TestCase
             '2026_01_09_152930_create_xml3176_xml13s_table.php',
             '2026_01_09_152936_create_xml3176_xml14s_table.php',
             '2024_07_04_072537_create_icd10_categories_table.php',
+            '2024_07_04_092500_create_icdyhct_categories_table.php',
             '2026_01_09_161708_create_xml3176_error_catalogs_table.php',
             '2026_01_09_161902_create_xml3176_error_results_table.php',
         ]);
@@ -139,5 +140,33 @@ class DoKiemLenhTest extends TestCase
 
         $this->assertSame("B2
 ", file_get_contents($this->tep('m.txt')));
+    }
+
+    /** @test */
+    public function ma_loi_bi_tat_is_check_false_khong_co_trong_tep()
+    {
+        $this->chay(['--xuat-loi' => $this->tep('x.jsonl')]);
+        $truoc = $this->docLoi('x.jsonl');
+        $this->assertNotEmpty($truoc);
+        $ma = $truoc[0]['error_code'];
+
+        DB::table('xml3176_error_catalogs')->insert([
+            'xml' => $truoc[0]['xml'], 'error_code' => $ma, 'critical_error' => 0, 'is_check' => 0,
+        ]);
+
+        $this->chay(['--xuat-loi' => $this->tep('y.jsonl')]);
+        $sau = $this->docLoi('y.jsonl');
+
+        $this->assertNotContains($ma, array_column($sau, 'error_code'));
+        $this->assertLessThan(count($truoc), count($sau));
+    }
+
+    /** @test */
+    public function co_ngoai_le_thi_tra_ma_thoat_2()
+    {
+        // Bang xml3176_xml12s khong lien quan; bo bang XML5 de checker XML5 nem ngoai le.
+        DB::statement('DROP TABLE xml3176_xml5s');
+
+        $this->assertSame(2, $this->chay(['--xuat-loi' => $this->tep('z.jsonl')]));
     }
 }

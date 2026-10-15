@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Models\BHYT\Xml3176ErrorCatalog;
 use App\Services\Xml3176\Xml3176CheckTypes;
 use App\Services\Xml3176CompleteChecker;
 use App\Services\Xml3176ErrorService;
@@ -33,6 +34,8 @@ class Xml3176DoKiem extends Command
 
     /** @var string|null Muc thong ke dang chay, null = ngoai pham vi do */
     private $hienTai;
+    /** Co tat khi xong de callback DB::listen (khong go duoc) khong dem tiep */
+    private $dangDo = false;
     private $thongKe = [];
     private $mauSql = [];
 
@@ -55,7 +58,10 @@ class Xml3176DoKiem extends Command
         $loi = app(Xml3176ErrorService::class);
         $loi->batDauGom(); // khong bao gio ketThucGom -> khong ghi
 
+        $this->thongKe = [];
+        $this->mauSql = [];
         $this->theoDoiSql();
+        $this->dangDo = true;
         $ngoaiLe = [];
 
         foreach ($dsMaLk as $maLk) {
@@ -79,6 +85,7 @@ class Xml3176DoKiem extends Command
         }
 
         $this->hienTai = null;
+        $this->dangDo = false;
 
         if ($this->option('xuat-loi')) {
             $this->ghiTep($this->option('xuat-loi'), $this->dongLoi($loi->boDemGom()));
@@ -90,6 +97,13 @@ class Xml3176DoKiem extends Command
 
         $this->info('Đã kiểm ' . count($dsMaLk) . ' hồ sơ, ' . $loi->soDongTrongBoDem() . ' lỗi, '
             . count($ngoaiLe) . ' ngoại lệ.');
+
+        if ($ngoaiLe) {
+            foreach ($ngoaiLe as $dong) {
+                $this->error('ngoai le: ' . $dong);
+            }
+            return 2; // co ngoai le -> ket qua do/so sanh khong dung duoc
+        }
 
         return 0;
     }
@@ -134,7 +148,7 @@ class Xml3176DoKiem extends Command
     private function theoDoiSql()
     {
         DB::listen(function ($q) {
-            if ($this->hienTai === null) {
+            if (!$this->dangDo || $this->hienTai === null) {
                 return;
             }
             $this->thongKe[$this->hienTai]['truyVan']++;
@@ -174,16 +188,26 @@ class Xml3176DoKiem extends Command
     /** Moi loi mot dong JSON, sap theo (ma_lk, xml, stt, error_code, description). */
     private function dongLoi(array $boDem)
     {
+        // Loc y het ketThucGom: bo ma loi bi tat (is_check = false), dung chuanBiGhi cua job.
         $ds = [];
-        foreach ($boDem as $d) {
-            $ds[] = [
-                'xml'            => $d['xml'],
-                'ma_lk'          => $d['ma_lk'],
-                'stt'            => $d['stt'],
-                'error_code'     => $d['error_code'],
-                'description'    => $d['description'],
-                'critical_error' => $d['critical_error'],
-            ];
+        if ($boDem) {
+            $ma = array_values(array_unique(array_column($boDem, 'error_code')));
+            $maBiTat = Xml3176ErrorCatalog::whereIn('error_code', $ma)
+                ->where('is_check', false)->pluck('error_code')->all();
+
+            $sanSang = Xml3176ErrorService::chuanBiGhi($boDem, $maBiTat, '');
+            foreach ($sanSang['nhom'] as $dsDong) {
+                foreach ($dsDong as $d) {
+                    $ds[] = [
+                        'xml'            => $d['xml'],
+                        'ma_lk'          => $d['ma_lk'],
+                        'stt'            => $d['stt'],
+                        'error_code'     => $d['error_code'],
+                        'description'    => $d['description'],
+                        'critical_error' => $d['critical_error'],
+                    ];
+                }
+            }
         }
 
         $khoa = function ($d) {
