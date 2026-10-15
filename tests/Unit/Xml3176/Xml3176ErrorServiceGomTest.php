@@ -145,4 +145,57 @@ class Xml3176ErrorServiceGomTest extends TestCase
 
         $this->assertFalse($svc->dangGom());
     }
+    private function loiCungMa($n, $ma = 'E1')
+    {
+        $ds = collect();
+        for ($i = 0; $i < $n; $i++) {
+            $ds->push((object) ['error_code' => $ma, 'error_name' => $ma . '-ten', 'description' => 'x' . $i, 'critical_error' => true]);
+        }
+
+        return $ds;
+    }
+
+    /**
+     * @test
+     * Ho so 000007038497 (15/10/2026): 372.807 loi mot ma lam bo dem tran 512 MB. Tran chung
+     * cho moi quy tac de mot quy tac bung no khong lam sap worker.
+     */
+    public function bo_dem_chan_tran_moi_ho_so_moi_ma()
+    {
+        $svc = new Xml3176ErrorService();
+        $svc->batDauGom();
+
+        $svc->saveErrors('XML3', 'A', 7, $this->loiCungMa(1999), ['ngay_yl' => '202601010800']);
+        $svc->saveErrors('XML3', 'A', 8, $this->loiCungMa(6), ['ngay_yl' => '202601010900']);
+        $svc->saveErrors('XML3', 'A', 9, $this->loiCungMa(3, 'E2'));
+        $svc->saveErrors('XML3', 'B', 1, $this->loiCungMa(4));
+
+        $boDem = $svc->boDemGom();
+        $a1 = array_values(array_filter($boDem, function ($d) {
+            return $d['ma_lk'] === 'A' && $d['error_code'] === 'E1';
+        }));
+
+        $this->assertCount(Xml3176ErrorService::TRAN_MOI_MA + 1, $a1);
+        $tomTat = $a1[Xml3176ErrorService::TRAN_MOI_MA];
+        $this->assertSame('Đã lược bớt 5 lỗi cùng mã E1 của hồ sơ (chỉ giữ 2.000 dòng đầu).', $tomTat['description']);
+        $this->assertSame(8, $tomTat['stt'], 'stt cua loi bi luoc dau tien');
+        $this->assertSame('XML3', $tomTat['xml']);
+        $this->assertTrue($tomTat['critical_error']);
+        $this->assertSame('E1-ten', $tomTat['error_name']);
+        $this->assertSame([], $tomTat['them']);
+
+        $this->assertSame(2000 + 1 + 3 + 4, $svc->soDongTrongBoDem(), 'ma khac va ho so khac khong bi anh huong');
+    }
+
+    /** @test */
+    public function bat_dau_gom_lai_thi_dem_lai()
+    {
+        $svc = new Xml3176ErrorService();
+        $svc->batDauGom();
+        $svc->saveErrors('XML3', 'A', 1, $this->loiCungMa(2000));
+        $svc->batDauGom();
+        $svc->saveErrors('XML3', 'A', 1, $this->loiCungMa(10));
+
+        $this->assertSame(10, $svc->soDongTrongBoDem());
+    }
 }

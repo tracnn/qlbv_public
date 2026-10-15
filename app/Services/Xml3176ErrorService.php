@@ -12,16 +12,30 @@ class Xml3176ErrorService
     /** Kich thuoc lo khi chen. */
     const CO_LO = 500;
 
+    /**
+     * So dong toi da moi (ma_lk, error_code) trong bo dem gom. Ho so 000007038497 (15/10/2026)
+     * day 372.807 loi mot ma vao bo dem va tran 512 MB; vuot tran thi chi con mot dong tom tat.
+     */
+    const TRAN_MOI_MA = 2000;
+
     /** @var bool */
     private $dangGom = false;
 
     /** @var array */
     private $boDem = [];
 
+    /** @var array ma_lk|error_code => so dong da vao bo dem */
+    private $demTheoMa = [];
+
+    /** @var array ma_lk|error_code => ['viTri' => chi so dong tom tat, 'so' => so loi da luoc] */
+    private $luoc = [];
+
     public function batDauGom(): void
     {
         $this->dangGom = true;
         $this->boDem = [];
+        $this->demTheoMa = [];
+        $this->luoc = [];
     }
 
     public function dangGom(): bool
@@ -51,6 +65,8 @@ class Xml3176ErrorService
     {
         $boDem = $this->boDem;
         $this->boDem = [];
+        $this->demTheoMa = [];
+        $this->luoc = [];
         $this->dangGom = false;
 
         if (empty($boDem)) {
@@ -94,6 +110,32 @@ class Xml3176ErrorService
      * @param string $thoiDiem Dau thoi gian dung cho ca lo
      * @return array ['nhom' => array<string, array>, 'danhMuc' => array]
      */
+    /**
+     * Loi vuot TRAN_MOI_MA: lan dau them MOT dong tom tat vao bo dem (stt cua loi bi luoc dau
+     * tien), cac lan sau chi tang so trong mo ta.
+     */
+    private function luocLoi(string $khoa, string $xmlType, string $ma_lk, int $stt, $error): void
+    {
+        if (!isset($this->luoc[$khoa])) {
+            $this->boDem[] = [
+                'xml'            => $xmlType,
+                'ma_lk'          => $ma_lk,
+                'stt'            => $stt,
+                'error_code'     => $error->error_code,
+                'description'    => '',
+                'critical_error' => $error->critical_error ?? false,
+                'error_name'     => $error->error_name ?? null,
+                'them'           => [],
+            ];
+            $this->luoc[$khoa] = ['viTri' => count($this->boDem) - 1, 'so' => 0];
+        }
+
+        $this->luoc[$khoa]['so']++;
+        $this->boDem[$this->luoc[$khoa]['viTri']]['description'] = 'Đã lược bớt ' . $this->luoc[$khoa]['so']
+            . ' lỗi cùng mã ' . $error->error_code . ' của hồ sơ (chỉ giữ '
+            . number_format(self::TRAN_MOI_MA, 0, ',', '.') . ' dòng đầu).';
+    }
+
     public static function chuanBiGhi(array $boDem, array $maBiTat, string $thoiDiem): array
     {
         $maBiTat = array_flip($maBiTat);
@@ -194,6 +236,13 @@ class Xml3176ErrorService
         // TUNG DONG tu ben trong checker.
         if ($this->dangGom) {
             foreach ($errors as $error) {
+                $khoa = $ma_lk . '|' . $error->error_code;
+                $this->demTheoMa[$khoa] = ($this->demTheoMa[$khoa] ?? 0) + 1;
+                if ($this->demTheoMa[$khoa] > self::TRAN_MOI_MA) {
+                    $this->luocLoi($khoa, $xmlType, $ma_lk, $stt, $error);
+                    continue;
+                }
+
                 $this->boDem[] = [
                     'xml'            => $xmlType,
                     'ma_lk'          => $ma_lk,
