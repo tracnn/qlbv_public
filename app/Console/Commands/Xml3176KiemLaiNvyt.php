@@ -2,13 +2,16 @@
 
 namespace App\Console\Commands;
 
+use App\Models\BHYT\Xml3176ErrorCatalog;
 use App\Models\BHYT\Xml3176ErrorResult;
 use App\Services\Xml3176\NvytLookup;
 use App\Services\Xml3176\NvytRule;
 use App\Services\Xml3176CompleteChecker;
 use App\Services\Xml3176ErrorService;
 use Illuminate\Console\Command;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Kiem lai NVYT hang loat cho ho so da nap: thay 34 ma loi cu bang 3 ma XMLComplete_NVYT_*.
@@ -40,6 +43,19 @@ class Xml3176KiemLaiNvyt extends Command
         $tu = $this->option('tu');
         $den = $this->option('den');
 
+        foreach (['tu' => $tu, 'den' => $den] as $ten => $gt) {
+            if ($gt && !$this->ngayHopLe($gt)) {
+                $this->error("--{$ten} phải có dạng Y-m-d (ví dụ 2026-10-15), nhận được: {$gt}");
+                return 1;
+            }
+        }
+
+        // Ma moi chua co trong danh muc thi getCriticalErrorStatus mac dinh true -> loi se bi tao thanh chan
+        if (Xml3176ErrorCatalog::whereIn('error_code', self::MA_MOI)->count() < count(self::MA_MOI)) {
+            $this->error('Thiếu mã lỗi NVYT mới trong xml3176_error_catalogs. Hãy chạy migration trước khi kiểm lại.');
+            return 1;
+        }
+
         NvytLookup::xoaBoNho();
 
         $checker = app(Xml3176CompleteChecker::class);
@@ -49,8 +65,17 @@ class Xml3176KiemLaiNvyt extends Command
         $soHs = 0;
         $soXoa = 0;
         $moiTheoMa = array_fill_keys(self::MA_MOI, 0);
-        $hetChan = [];
+        $hetChan = 0;
         $cuoi = '';
+        $soLoi = 0;
+
+        // Tep ma_lk het chan mo tu dau, ghi noi tiep ngay sau moi transaction: ngat giua chung khong mat dau vet
+        $tep = null;
+        if (!$thu) {
+            $tep = storage_path('logs/kiem-lai-nvyt-' . date('YmdHis') . '.txt');
+            file_put_contents($tep, '');
+            $this->info("Tệp ma_lk hết chặn: {$tep}");
+        }
 
         while (true) {
             $q = DB::table('xml3176_xml1s')
@@ -82,7 +107,11 @@ class Xml3176KiemLaiNvyt extends Command
                     continue;
                 }
 
-                DB::transaction(function () use ($maLk, $hs, $maXoa, $checker, $service, &$soXoa, &$moiTheoMa, &$hetChan) {
+                $xoaTruoc = $soXoa;
+                $moiTruoc = $moiTheoMa;
+                $daHetChan = false;
+                try {
+                DB::transaction(function () use ($maLk, $hs, $maXoa, $checker, $service, &$soXoa, &$moiTheoMa, &$daHetChan) {
                     $truoc = Xml3176ErrorResult::where('ma_lk', $maLk)->where('critical_error', true)->exists();
 
                     $soXoa += Xml3176ErrorResult::where('ma_lk', $maLk)->whereIn('error_code', $maXoa)->delete();
@@ -97,9 +126,22 @@ class Xml3176KiemLaiNvyt extends Command
 
                     $sau = Xml3176ErrorResult::where('ma_lk', $maLk)->where('critical_error', true)->exists();
                     if ($truoc && !$sau) {
-                        $hetChan[] = $maLk;
+                        $daHetChan = true;
                     }
                 });
+                } catch (\Throwable $e) {
+                    // Transaction da rollback: tra so dem ve truoc ho so nay
+                    $soXoa = $xoaTruoc;
+                    $moiTheoMa = $moiTruoc;
+                    $soLoi++;
+                    Log::error('xml3176:kiem-lai-nvyt loi ma_lk ' . $maLk . ': ' . $e->getMessage());
+                    $this->error("Lỗi ma_lk {$maLk}: " . $e->getMessage());
+                    continue;
+                }
+                if ($daHetChan) {
+                    $hetChan++;
+                    file_put_contents($tep, $maLk . PHP_EOL, FILE_APPEND | LOCK_EX);
+                }
             }
 
             $this->line("Đã xử lý {$soHs} hồ sơ (đến ma_lk {$cuoi})");
@@ -115,13 +157,20 @@ class Xml3176KiemLaiNvyt extends Command
             return 0;
         }
 
-        $this->info('Số hồ sơ hết lỗi chặn: ' . count($hetChan));
-        if (!empty($hetChan)) {
-            $tep = storage_path('logs/kiem-lai-nvyt-' . date('YmdHis') . '.txt');
-            file_put_contents($tep, implode(PHP_EOL, $hetChan) . PHP_EOL);
-            $this->info("Danh sách ma_lk hết chặn: {$tep}");
-        }
+        $this->info('Số hồ sơ hết lỗi chặn: ' . $hetChan);
+        $this->info('Số hồ sơ lỗi (đã bỏ qua, chạy lại để xử lý): ' . $soLoi);
 
-        return 0;
+        return $soLoi > 0 ? 1 : 0;
+    }
+
+    private function ngayHopLe(string $v): bool
+    {
+        try {
+            $d = Carbon::createFromFormat('Y-m-d', $v);
+        } catch (\Exception $e) {
+            return false;
+        }
+        $e = Carbon::getLastErrors();
+        return $d && empty($e['warning_count']) && empty($e['error_count']);
     }
 }

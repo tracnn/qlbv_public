@@ -82,7 +82,7 @@ class NvytKiemLaiLenhTest extends TestCase
         $this->loi('LK1', 'XML4_INFO_ERROR_MA_BS_DOC_KQ_NOT_FOUND', false, 3);
         $out = $this->chay(['--thu' => true]);
         $this->assertSame(3, $this->dem());
-        $this->assertContains('3', $out);
+        $this->assertContains('Số dòng mã cũ sẽ xoá: 3', $out);
     }
 
     /** @test */
@@ -130,5 +130,71 @@ class NvytKiemLaiLenhTest extends TestCase
         $this->chay(['--tu' => '2026-10-01']);
         $this->assertSame(1, DB::table('xml3176_error_results')->where('ma_lk', 'LK1')->count());
         $this->assertSame(0, DB::table('xml3176_error_results')->where('ma_lk', 'LK2')->count());
+    }
+
+    /** @test */
+    public function loc_den_ngay_gom_ca_ngay_cuoi()
+    {
+        $this->hs('LK1', [], '2026-10-10 23:30:00');
+        $this->hs('LK2', [], '2026-10-11 00:00:01');
+        $this->loi('LK1', 'XML1_INFO_ERROR_MA_TTDV');
+        $this->loi('LK2', 'XML1_INFO_ERROR_MA_TTDV');
+        $this->chay(['--den' => '2026-10-10']);
+        $this->assertSame(0, DB::table('xml3176_error_results')->where('ma_lk', 'LK1')->count());
+        $this->assertSame(1, DB::table('xml3176_error_results')->where('ma_lk', 'LK2')->count());
+    }
+
+    /** @test */
+    public function ngay_sai_dinh_dang_bi_tu_choi()
+    {
+        $this->hs('LK1');
+        $this->loi('LK1', 'XML1_INFO_ERROR_MA_TTDV');
+        $code = Artisan::call('xml3176:kiem-lai-nvyt', ['--tu' => '15/10/2026']);
+        $this->assertSame(1, $code);
+        $this->assertContains('Y-m-d', Artisan::output());
+        $this->assertSame(1, $this->dem());
+    }
+
+    /** @test */
+    public function thieu_ma_moi_trong_danh_muc_thi_dung_khong_doi_gi()
+    {
+        $this->hs('LK1');
+        $this->loi('LK1', 'XML1_INFO_ERROR_MA_TTDV', true);
+        DB::table('xml3176_error_catalogs')->where('error_code', 'XMLComplete_NVYT_THIEU')->delete();
+        $code = Artisan::call('xml3176:kiem-lai-nvyt');
+        $this->assertSame(1, $code);
+        $this->assertContains('migration', Artisan::output());
+        $this->assertSame(1, $this->dem());
+        $this->assertEmpty(glob(storage_path('logs/kiem-lai-nvyt-*.txt')));
+    }
+
+    /** @test */
+    public function ho_so_loi_giua_chung_khong_mat_dau_vet_ho_so_truoc()
+    {
+        // LK1 het chan va da commit; LK2 ném loi khi kiem -> LK1 van nam trong tep, LK2 giu nguyen
+        $this->app->bind(\App\Services\Xml3176CompleteChecker::class, function () {
+            return new class(app(\App\Services\Xml3176ErrorService::class)) extends \App\Services\Xml3176CompleteChecker {
+                public function kiemNvyt($ma_lk): \Illuminate\Support\Collection
+                {
+                    if ($ma_lk === 'LK2') {
+                        throw new \RuntimeException('mat ket noi gia lap');
+                    }
+                    return parent::kiemNvyt($ma_lk);
+                }
+            };
+        });
+        $this->hs('LK1');
+        $this->hs('LK2');
+        $this->loi('LK1', 'XML1_INFO_ERROR_MA_TTDV', true);
+        $this->loi('LK2', 'XML1_INFO_ERROR_MA_TTDV', true);
+        $code = Artisan::call('xml3176:kiem-lai-nvyt');
+        $out = Artisan::output();
+        $this->assertSame(1, $code);
+        $this->assertContains('Số hồ sơ lỗi (đã bỏ qua, chạy lại để xử lý): 1', $out);
+        $this->assertContains('Số hồ sơ hết lỗi chặn: 1', $out);
+        $tep = glob(storage_path('logs/kiem-lai-nvyt-*.txt'));
+        $this->assertContains('LK1', file_get_contents($tep[0]));
+        $this->assertNotContains('LK2', file_get_contents($tep[0]));
+        $this->assertSame(1, DB::table('xml3176_error_results')->where('ma_lk', 'LK2')->count());
     }
 }
