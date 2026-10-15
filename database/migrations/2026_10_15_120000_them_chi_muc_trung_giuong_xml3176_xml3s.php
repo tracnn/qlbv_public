@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\QueryException;
 use Illuminate\Database\Schema\Blueprint;
@@ -27,14 +28,30 @@ class ThemChiMucTrungGiuongXml3176Xml3s extends Migration
             return;
         }
 
-        if (DB::getDriverName() === 'mysql') {
+        // Chi muc chi de toi uu: loi tao chi muc khong duoc chan cac migration sau.
+        try {
+            $this->taoChiMuc();
+        } catch (QueryException $e) {
+            Log::warning('Khong tao duoc chi muc ' . self::TEN . ' tren bang ' . self::BANG . ': ' . $e->getMessage());
+        }
+    }
+
+    protected function taoChiMuc()
+    {
+        if ($this->driver() === 'mysql') {
             $sql = 'ALTER TABLE ' . self::BANG . ' ADD INDEX ' . self::TEN . ' (ma_giuong, ma_khoa, ngay_th_yl)';
             try {
-                DB::statement($sql . ', ALGORITHM=INPLACE, LOCK=NONE');
+                $this->chayAlter($sql . ', ALGORITHM=INPLACE, LOCK=NONE');
             } catch (QueryException $e) {
                 // Khong ho tro INPLACE/LOCK=NONE: tao cach thuong.
-                if (!$this->coIndex()) {
-                    DB::statement($sql);
+                if ($this->coIndex()) {
+                    return;
+                }
+                try {
+                    $this->chayAlter($sql);
+                } catch (QueryException $e2) {
+                    Log::warning('Khong tao duoc chi muc ' . self::TEN . ' tren bang ' . self::BANG
+                        . '. Loi INPLACE: ' . $e->getMessage() . ' | Loi thuong: ' . $e2->getMessage());
                 }
             }
 
@@ -44,6 +61,16 @@ class ThemChiMucTrungGiuongXml3176Xml3s extends Migration
         Schema::table(self::BANG, function (Blueprint $t) {
             $t->index(['ma_giuong', 'ma_khoa', 'ngay_th_yl'], self::TEN);
         });
+    }
+
+    protected function driver()
+    {
+        return DB::getDriverName();
+    }
+
+    protected function chayAlter($sql)
+    {
+        DB::statement($sql);
     }
 
     public function down()

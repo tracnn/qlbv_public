@@ -170,4 +170,23 @@ class DanhMucTraCuuDemTest extends TestCase
         $mig->down();
         $this->assertNotContains('service_catalogs_ma_dich_vu_ma_cskcb_index', $ten());
     }
+
+    /** @test */
+    public function migration_chi_muc_loi_tao_khong_nem_ra_ngoai()
+    {
+        require_once base_path('database/migrations/2026_10_15_110000_them_chi_muc_ma_dich_vu_service_catalogs.php');
+        $mig = new class extends \ThemChiMucMaDichVuServiceCatalogs {
+            protected function taoChiMuc()
+            {
+                throw new \Illuminate\Database\QueryException('create index', [], new \Exception('loi gia lap'));
+            }
+        };
+
+        $mig->up();
+
+        $ten = array_map(function ($d) {
+            return $d->name;
+        }, DB::select("PRAGMA index_list('service_catalogs')"));
+        $this->assertNotContains('service_catalogs_ma_dich_vu_ma_cskcb_index', $ten);
+    }
 }

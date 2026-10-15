@@ -42,6 +42,36 @@ class ChiMucTrungGiuongTest extends TestCase
         $mig->up();
 
         $this->assertSame(1, count(array_keys($this->tenChiMuc(), self::TEN)));
+
+        $cot = array_map(function ($d) {
+            return $d->name;
+        }, DB::select('PRAGMA index_info(' . self::TEN . ')'));
+        $this->assertSame(['ma_giuong', 'ma_khoa', 'ngay_th_yl'], $cot);
+    }
+
+    /** @test */
+    public function loi_tao_chi_muc_khong_nem_ra_ngoai()
+    {
+        require_once base_path('database/migrations/2026_10_15_120000_them_chi_muc_trung_giuong_xml3176_xml3s.php');
+        $mig = new class extends \ThemChiMucTrungGiuongXml3176Xml3s {
+            public $lan = 0;
+
+            protected function driver()
+            {
+                return 'mysql';
+            }
+
+            protected function chayAlter($sql)
+            {
+                $this->lan++;
+                throw new \Illuminate\Database\QueryException($sql, [], new \Exception('loi gia lap ' . $this->lan));
+            }
+        };
+
+        $mig->up();
+
+        $this->assertSame(2, $mig->lan, 'thu INPLACE roi thu thuong');
+        $this->assertNotContains(self::TEN, $this->tenChiMuc());
     }
 
     /** @test */

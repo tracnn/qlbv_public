@@ -1,6 +1,8 @@
 <?php
 
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
@@ -22,6 +24,16 @@ class ThemChiMucMaDichVuServiceCatalogs extends Migration
             return;
         }
 
+        // Chi muc chi de toi uu: loi tao chi muc khong duoc chan cac migration sau.
+        try {
+            $this->taoChiMuc();
+        } catch (QueryException $e) {
+            Log::warning('Khong tao duoc chi muc ' . self::TEN . ' tren bang service_catalogs: ' . $e->getMessage());
+        }
+    }
+
+    protected function taoChiMuc()
+    {
         Schema::table('service_catalogs', function (Blueprint $t) {
             $t->index(['ma_dich_vu', 'ma_cskcb'], self::TEN);
         });
