@@ -148,26 +148,31 @@ class Xml3176CompleteChecker
                 ]);
             }
 
-            $tongThanhTien = (float) $records->sum('thanh_tien_bh');
+            // Ra soat 15/10/2026: dong lap ma da bao o DUPLICATE_EXAMINATION_SERVICE thi khong
+            // dem lai o tran tien / lan 2 - moi ma kham bi lap chi giu dong dau tien.
+            $daGap = [];
+            $dongXet = $records->filter(function ($r) use ($maTrung, &$daGap) {
+                $ma = TextNormalizer::chuan($r->ma_dich_vu);
+                if ($ma === '' || !in_array($ma, $maTrung, true)) {
+                    return true;
+                }
+                if (isset($daGap[$ma])) {
+                    return false;
+                }
+                $daGap[$ma] = true;
+
+                return true;
+            });
+
+            $tongThanhTien = (float) $dongXet->sum('thanh_tien_bh');
             $donGiaMax     = (float) $records->max('don_gia_bh');
             $heSo          = (float) config('xml3176.examination.cap_multiplier', 2.0);
             $eps           = (float) config('xml3176.examination.cap_epsilon', 0.01);
 
-            if (ExaminationFeeCalculator::vuotTran($tongThanhTien, $donGiaMax, $heSo, $eps)) {
-                $errorCode = $this->generateErrorCode('EXAMINATION_FEE_EXCEEDS_CAP');
-                $errors->push((object)[
-                    'error_code' => $errorCode,
-                    'error_name' => 'Tiền khám vượt trần 2 lần mức giá một lần khám',
-                    'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
-                    'description' => 'Tổng tiền khám ' . $tongThanhTien . ' vượt trần ' . ($heSo * $donGiaMax)
-                        . ' (= ' . $heSo . ' x mức giá một lần khám ' . $donGiaMax . ').'
-                ]);
-            }
-
             // Từ lần khám thứ 2 trở đi chỉ được tính 30% mức giá: chỉ 1 dòng khám được ở
             // mức giá đầy đủ. Soi thành tiền để đúng dù cơ sở ghi phần giảm ở đơn giá hay tỷ lệ.
             $tyLeLan2 = (float) config('xml3176.examination.second_visit_rate', 0.30);
-            $thanhTiens = $records->pluck('thanh_tien_bh')->all();
+            $thanhTiens = $dongXet->pluck('thanh_tien_bh')->all();
             $soChuaGiam = ExaminationFeeCalculator::soDongChuaGiam($thanhTiens, $tyLeLan2, $eps);
             if ($soChuaGiam > 1) {
                 $errorCode = $this->generateErrorCode('EXAMINATION_SECOND_VISIT_RATE');
@@ -177,6 +182,19 @@ class Xml3176CompleteChecker
                     'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
                     'description' => 'Từ lần khám thứ 2 chỉ được tính ' . ($tyLeLan2 * 100)
                         . '% mức giá một lần khám; có ' . $soChuaGiam . ' dòng khám ở mức giá đầy đủ.'
+                ]);
+            }
+
+            // Ra soat 15/10/2026: da bao lan 2 chua giam 30% thi vuot tran la he qua cua chinh
+            // sai sot do - khong bao them; chi bao vuot tran khi lan 2 da giam ma tong van vuot.
+            if ($soChuaGiam <= 1 && ExaminationFeeCalculator::vuotTran($tongThanhTien, $donGiaMax, $heSo, $eps)) {
+                $errorCode = $this->generateErrorCode('EXAMINATION_FEE_EXCEEDS_CAP');
+                $errors->push((object)[
+                    'error_code' => $errorCode,
+                    'error_name' => 'Tiền khám vượt trần 2 lần mức giá một lần khám',
+                    'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+                    'description' => 'Tổng tiền khám ' . $tongThanhTien . ' vượt trần ' . ($heSo * $donGiaMax)
+                        . ' (= ' . $heSo . ' x mức giá một lần khám ' . $donGiaMax . ').'
                 ]);
             }
         }
@@ -455,7 +473,13 @@ class Xml3176CompleteChecker
         // tran co dinh cua ma thay vi tran suy tu the. Khong nhuong se ra hai yeu cau
         // loai tru nhau: khai 100 bi bao vuot tran o day, khai bang the (vd 80) bi bao
         // sai muc co dinh o quy tac kia - khong gia tri nao thoat ca hai.
-        if (DoiTuongKcbCatalog::thuocTinh($maDoiTuong, (array) config('doi_tuong_kcb', []), 'muc_huong_co_dinh') !== null) {
+        $danhMucDt = (array) config('doi_tuong_kcb', []);
+        if (DoiTuongKcbCatalog::thuocTinh($maDoiTuong, $danhMucDt, 'muc_huong_co_dinh') !== null) {
+            return $errors;
+        }
+        // Ra soat 15/10/2026: ma co muc_huong_theo_moc (1.13/1.14/1.18) cung khong theo the -
+        // nhuong DOI_TUONG_KCB_MUC_HUONG_THEO_MOC, tranh hai loi cho cung mot dong khai.
+        if (is_array(DoiTuongKcbCatalog::thuocTinh($maDoiTuong, $danhMucDt, 'muc_huong_theo_moc'))) {
             return $errors;
         }
 
@@ -763,19 +787,11 @@ class Xml3176CompleteChecker
 
         $ngayHen = trim((string) $xml14->ngay_hen_kl);
 
-        // NGAY_HEN_KL rong: khong duoc im lang. Ho so co NGAY_TAI_KHAM hop le va co dong
-        // XML14 nhung giay hen khong ghi ngay hen la vua mu truoc ho so thieu du lieu, vua
-        // la duong ne - tao mot dong XML14 rong la tat duoc quy tac.
-        if ($ngayHen === '') {
-            $errorCode = $this->generateErrorCode('NGAY_TAI_KHAM_KHONG_KHOP_XML14');
-            $errors->push((object)[
-                'error_code' => $errorCode,
-                'error_name' => 'Ngày tái khám không có giấy hẹn khám lại tương ứng',
-                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
-                'description' => 'Hồ sơ hẹn tái khám ngày ' . implode(', ', $hopLe)
-                    . ' nhưng giấy hẹn khám lại (XML14) không ghi ngày hẹn (NGAY_HEN_KL rỗng)',
-            ]);
-
+        // Ra soat 15/10/2026: NGAY_HEN_KL rong tren dong XML14 da co XML14_INFO_ERROR_NGAY_HEN_KL
+        // (Xml3176Xml14Checker) bao chinh dong do - khong bao trung o day. Khong phai duong ne:
+        // dong XML14 rong van bi bao loi, chi la bao o quy tac XML14. Dung empty() nhu ben
+        // XML14: gia tri chi co khoang trang khong bi ben do bao nen roi xuong nhanh lech ngay.
+        if (empty($xml14->ngay_hen_kl)) {
             return $errors;
         }
 
@@ -957,6 +973,7 @@ class Xml3176CompleteChecker
         $xml4 = Xml3176Xml4::where('ma_lk', $ma_lk)
             ->whereNotNull('ngay_kq')->where('ngay_kq', '<>', '')->get();
 
+        $daBao = [];
         foreach ($xml4 as $r4) {
             if (!isset($xml3[$r4->ma_dich_vu])) {
                 continue;
@@ -966,11 +983,18 @@ class Xml3176CompleteChecker
                 ->filter()->unique();
             $day4 = Xml3176DateHelper::datePart($r4->ngay_kq);
             if ($day4 !== null && $days3->isNotEmpty() && !$days3->contains($day4)) {
+                $moTa = 'Dịch vụ ' . $r4->ma_dich_vu . ': ngày KQ XML4 (' . strtodatetime($r4->ngay_kq) . ') khác ngày KQ XML3';
+                // Ra soat 15/10/2026: nhieu dong XML4 (chi so) cung dich vu, cung NGAY_KQ cho ra
+                // cung mot mo ta - chi bao mot lan.
+                if (isset($daBao[$moTa])) {
+                    continue;
+                }
+                $daBao[$moTa] = true;
                 $code = $this->generateErrorCode('XML4_NGAY_KQ_MISMATCH_XML3');
                 $errors->push((object) [
                     'error_code' => $code, 'error_name' => 'Ngày KQ XML4 khác ngày KQ XML3',
                     'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($code),
-                    'description' => 'Dịch vụ ' . $r4->ma_dich_vu . ': ngày KQ XML4 (' . strtodatetime($r4->ngay_kq) . ') khác ngày KQ XML3',
+                    'description' => $moTa,
                 ]);
             }
         }
@@ -1040,7 +1064,7 @@ class Xml3176CompleteChecker
     private function checkVatPhamKemDvkt($ma_lk): Collection
     {
         $xml3 = Xml3176Xml3::where('ma_lk', $ma_lk)
-            ->get(['ma_dich_vu', 'ma_vat_tu', 'ten_vat_tu', 'ten_dich_vu', 'goi_vtyt', 'so_luong', 't_bhtt', 'ngay_yl']);
+            ->get(['ma_dich_vu', 'ma_vat_tu', 'ten_vat_tu', 'ten_dich_vu', 'goi_vtyt', 'so_luong', 't_bhtt', 'ngay_yl', 'ma_nhom']);
         $xml2 = Xml3176Xml2::where('ma_lk', $ma_lk)
             ->get(['ma_thuoc', 'ten_thuoc', 'ma_dich_vu', 't_bhtt', 'ngay_yl']);
 
