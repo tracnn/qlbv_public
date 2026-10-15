@@ -222,18 +222,18 @@ class KiemTongTheTuDuLieuTest extends TestCase
     public function ngay_giuong_mo_ta_in_tong_float_theo_precision_php()
     {
         // mysqlnd + ATTR_EMULATE_PREPARES=false: Builder::sum() cu tra float PHP, noi chuoi theo
-        // precision 14 -> 0.1 + 0.2 + 2 in '2.3' (khong phai chuoi MariaDB '2.3000000000000003').
+        // precision 14 -> 2.2 + 0.1 in '2.3' (khong phai dang day du '2.3000000000000003').
         $this->x1('G_FLOAT', ['ma_loai_kcb' => '03', 'ngay_vao' => '202610010800', 'ngay_ra' => '202610011800', 'so_ngay_dtri' => 1]);
         $this->x7('G_FLOAT');
-        $this->x3('G_FLOAT', 1, ['ma_dich_vu' => 'G1', 'ma_nhom' => '15', 'so_luong' => 0.1]);
-        $this->x3('G_FLOAT', 2, ['ma_dich_vu' => 'G2', 'ma_nhom' => '15', 'so_luong' => 0.2]);
-        $this->x3('G_FLOAT', 3, ['ma_dich_vu' => 'G3', 'ma_nhom' => '15', 'so_luong' => 2]);
+        $this->x3('G_FLOAT', 1, ['ma_dich_vu' => 'G1', 'ma_nhom' => '15', 'so_luong' => 2.2]);
+        $this->x3('G_FLOAT', 2, ['ma_dich_vu' => 'G2', 'ma_nhom' => '15', 'so_luong' => 0.1]);
 
         $this->assertSame(
-            ['EXCESS_BED_DAYS|Thời gian điều trị nội trú từ 4 đến 24 giờ, tính thừa ngày giường: ' . (0.1 + 0.2 + 2)],
+            ['EXCESS_BED_DAYS|Thời gian điều trị nội trú từ 4 đến 24 giờ, tính thừa ngày giường: ' . (2.2 + 0.1)],
             $this->loi('G_FLOAT')
         );
-        $this->assertSame('2.3', (string) (0.1 + 0.2 + 2));
+        $this->assertSame('2.3', (string) (2.2 + 0.1));
+        $this->assertSame('2.3000000000000003', var_export(2.2 + 0.1, true));
     }
 
     /** @test */
