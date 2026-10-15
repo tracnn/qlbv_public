@@ -7,6 +7,7 @@ use App\Services\Xml3176\DanhMucTraCuu;
 use App\Services\Xml3176\Support\Xml3176DateHelper;
 use App\Services\Xml3176\Support\TyLeComparator;
 use App\Services\Xml3176\Support\ServiceOverlapChecker;
+use App\Services\Xml3176\Support\PtttChongGio;
 use App\Services\Xml3176\Support\MaDvktStructure;
 use App\Services\Xml3176\Support\MaDvktMatcher;
 use App\Services\Xml3176\Support\MaKhoaLienKhoa;
@@ -195,6 +196,7 @@ class Xml3176Xml3Checker
         $errors = $errors->merge($this->checkMedicalSupplyCatalog($data)); // Thêm kiểm tra VTYT
         $errors = $errors->merge($this->checkMedicalService($data)); // Kiểm tra dịch vụ kỹ thuật
         $errors = $errors->merge($this->checkServiceGroupPtttDuplicate($data)); // Kiểm tra dịch vụ kỹ thuật
+        $errors = $errors->merge($this->checkExecutionTimeTooLong($data));
         $errors = $errors->merge($this->checkOverlappingServiceExecution($data));
         $errors = $errors->merge($this->checkCauTrucMaDichVu($data));
         $errors = $errors->merge($this->checkCongThucTien($data));
@@ -1038,6 +1040,66 @@ class Xml3176Xml3Checker
                 ]);
             }
         }
+
+        return $errors;
+    }
+
+    /** So phut thuc hien vuot nguong cua dong; null neu khong vuot hoac thieu moc. */
+    private function phutVuotNguong($dong): ?int
+    {
+        $phut = Xml3176DateHelper::diffMinutes($dong->ngay_th_yl, $dong->ngay_kq);
+        if ($phut === null) {
+            return null;
+        }
+
+        return $phut > $this->nguongGioThucHien($dong) * 60 ? $phut : null;
+    }
+
+    private function nguongGioThucHien($dong): int
+    {
+        return PtttChongGio::nguongGio(
+            (string) $dong->ma_dich_vu,
+            (int) config('xml3176.xml3.execution_max_hours', 24),
+            (array) config('xml3176.xml3.execution_max_hours_theo_ma', [])
+        );
+    }
+
+    private function laNhomThoiGianPttt(Xml3176Xml3 $data): bool
+    {
+        $groups = (array) config('xml3176.xml3.overlap_execution_groups', []);
+
+        return !empty($groups) && in_array($data->ma_nhom, $groups);
+    }
+
+    /**
+     * Dich vu PTTT keo dai qua nguong (mac dinh 24 gio, rieng theo tien to ma).
+     *
+     * Do 15/10/2026: 13.654 dong / 516 ho so vuot 24 gio, 93% la Hut dom ghi NGAY_KQ don ve cuoi
+     * dot. Dong vuot nguong khong dua vao so chong thoi gian (checkOverlappingServiceExecution).
+     */
+    private function checkExecutionTimeTooLong(Xml3176Xml3 $data): Collection
+    {
+        $errors = collect();
+
+        if (!$this->laNhomThoiGianPttt($data)) {
+            return $errors;
+        }
+
+        $phut = $this->phutVuotNguong($data);
+        if ($phut === null) {
+            return $errors;
+        }
+
+        $errorCode = $this->generateErrorCode('EXECUTION_TIME_TOO_LONG');
+        $errors->push((object)[
+            'error_code' => $errorCode,
+            'error_name' => 'Thời gian thực hiện dịch vụ dài bất thường',
+            'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+            'description' => 'Dịch vụ ' . $data->ma_dich_vu . ' (' . strtodatetime($data->ngay_th_yl)
+                . ' - ' . strtodatetime($data->ngay_kq) . ') kéo dài ' . intdiv($phut, 60) . ' giờ '
+                . ($phut % 60) . ' phút, vượt ngưỡng ' . $this->nguongGioThucHien($data)
+                . ' giờ. Kiểm tra lại NGAY_TH_YL / NGAY_KQ.'
+        ]);
 
         return $errors;
     }

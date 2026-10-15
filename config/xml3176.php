@@ -113,6 +113,16 @@ return [
         'tyle_epsilon'                => 0.01, // Dung sai đối chiếu tỷ lệ thanh toán BH của VTYT với danh mục
         // Nhóm dịch vụ mà một bệnh nhân KHÔNG thể trải qua hai dịch vụ chồng thời gian
         'overlap_execution_groups'    => [8, 18],
+        // Số giờ thực hiện tối đa của dịch vụ thuộc overlap_execution_groups; vượt thì báo
+        // XML3_EXECUTION_TIME_TOO_LONG và không đưa dòng đó vào so chồng thời gian
+        'execution_max_hours'         => 24,
+        // Ngưỡng riêng theo tiền tố mã dịch vụ (tiền tố dài nhất thắng)
+        'execution_max_hours_theo_ma' => [
+            '01.0181' => 72, // Lọc máu thẩm tách liên tục cấp cứu (CVVHDF)
+            '01.0182' => 72,
+            '01.0183' => 72,
+            '11.0118' => 48, // Hút áp lực âm (VAC) trong 48h
+        ],
     ],
     'xml8' => [
         'tomtat_kq_min_length' => 20, // Độ dài tối thiểu của tóm tắt kết quả điều trị
