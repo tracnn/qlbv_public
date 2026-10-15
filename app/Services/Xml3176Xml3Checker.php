@@ -722,11 +722,10 @@ class Xml3176Xml3Checker
         }
 
         if (!empty($data->ngay_kq) && $data->Xml3176Xml1) {
-            $ngayKq = $data->ngay_kq;
             $ngayVao = $data->Xml3176Xml1->ngay_vao;
             $ngayRa = $data->Xml3176Xml1->ngay_ra;
 
-            if ($ngayKq < $ngayVao || $ngayKq > $ngayRa) {
+            if ($this->ngayKqNgoaiDotDieuTri($data)) {
                 $errorCode = $this->generateErrorCode('INVALID_NGAY_KQ');
                 $errors->push((object)[
                     'error_code' => $errorCode,
@@ -748,6 +747,19 @@ class Xml3176Xml3Checker
         }
 
         return $errors;
+    }
+
+    /**
+     * Dieu kien cua XML3_INVALID_NGAY_KQ: NGAY_KQ ngoai [ngay_vao, ngay_ra] (so toi phut), bo qua
+     * nhom vat tu. Dung chung voi NGAY_KQ_GREATER_NGAY_RA de mot dong khong ra hai loi.
+     */
+    private function ngayKqNgoaiDotDieuTri(Xml3176Xml3 $data): bool
+    {
+        if (in_array($data->ma_nhom, $this->materialGroupCodes) || empty($data->ngay_kq) || !$data->Xml3176Xml1) {
+            return false;
+        }
+
+        return $data->ngay_kq < $data->Xml3176Xml1->ngay_vao || $data->ngay_kq > $data->Xml3176Xml1->ngay_ra;
     }
 
     /**
@@ -1571,7 +1583,8 @@ class Xml3176Xml3Checker
         $data->loadMissing('Xml3176Xml1');
 
         // #2391
-        if (!empty($data->ngay_th_yl) && !empty($data->ngay_kq) && $data->ngay_th_yl === $data->ngay_kq) {
+        $trungGio = !empty($data->ngay_th_yl) && !empty($data->ngay_kq) && $data->ngay_th_yl === $data->ngay_kq;
+        if ($trungGio) {
             $code = $this->generateErrorCode('NGAY_TH_YL_EQUALS_NGAY_KQ');
             $errors->push((object) [
                 'error_code' => $code, 'error_name' => 'Thời gian thực hiện y lệnh trùng thời gian kết quả',
@@ -1580,8 +1593,10 @@ class Xml3176Xml3Checker
             ]);
         }
 
-        // #199
-        if (!empty($data->ngay_kq) && $data->Xml3176Xml1 && !empty($data->Xml3176Xml1->ngay_ra)) {
+        // #199. Ra soat 15/10/2026: 420/424 dong da co XML3_INVALID_NGAY_KQ (so toi phut, rong
+        // hon) - chi bao khi quy tac do khong bao, tuc dong nhom vat tu.
+        if (!empty($data->ngay_kq) && $data->Xml3176Xml1 && !empty($data->Xml3176Xml1->ngay_ra)
+            && !$this->ngayKqNgoaiDotDieuTri($data)) {
             $kq = Xml3176DateHelper::datePart($data->ngay_kq);
             $ra = Xml3176DateHelper::datePart($data->Xml3176Xml1->ngay_ra);
             if ($kq !== null && $ra !== null && $kq > $ra) {
@@ -1597,7 +1612,9 @@ class Xml3176Xml3Checker
         // #2452/2453
         $groups = array_map('intval', (array) config('xml3176.xml3.execution_time_check_groups', [1, 3]));
         $minMin = (int) config('xml3176.xml3.execution_min_minutes', 3);
-        if (in_array((int) $data->ma_nhom, $groups, true)) {
+        // Trung gio da co NGAY_TH_YL_EQUALS_NGAY_KQ (#2391): ra soat 15/10/2026 thay 41.747 dong
+        // bi bao ca hai.
+        if (!$trungGio && in_array((int) $data->ma_nhom, $groups, true)) {
             $d = Xml3176DateHelper::diffMinutes($data->ngay_th_yl, $data->ngay_kq);
             if ($d !== null && $d < $minMin) {
                 $code = $this->generateErrorCode('EXECUTION_TIME_UNDER_3MIN');
