@@ -138,8 +138,7 @@ class DoKiemLenhTest extends TestCase
             '--so' => 1, '--uu-tien-noi-tru' => true, '--ghi-ma-lk' => $this->tep('m.txt'),
         ]));
 
-        $this->assertSame("B2
-", file_get_contents($this->tep('m.txt')));
+        $this->assertSame("B2\n", file_get_contents($this->tep('m.txt')));
     }
 
     /** @test */
