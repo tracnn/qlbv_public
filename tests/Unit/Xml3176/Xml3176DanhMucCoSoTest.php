@@ -44,19 +44,29 @@ class Xml3176DanhMucCoSoTest extends TestCase
     /** @test */
     public function tam_cho_tra_danh_muc_cua_xml3176_deu_loc_theo_co_so()
     {
-        // Dem CUNG so lan: them mot cho tra danh muc moi ma quen loc co so thi test do,
-        // thay vi lot im lang.
-        $canCo = [
-            'Xml3176Xml2Checker' => 5,
-            'Xml3176Xml3Checker' => 4,   // +1 (14/10/2026): tra ma goc khi ma DVKT co hau to _XX
+        // Moi lan tra danh muc DVKT/thuoc/VTYT di qua DanhMucTraCuu (co bo dem). Dem CUNG so
+        // lan: them mot cho tra moi ma quen loc co so thi test do, thay vi lot im lang.
+        $ma = $this->maKhongComment(app_path('Services/Xml3176/DanhMucTraCuu.php'));
+        $mau = '(?:ServiceCatalog|MedicineCatalog|MedicalSupplyCatalog)';
+        $this->assertSame(6, substr_count($ma, 'cuaCoSo('), 'DanhMucTraCuu phai co dung 6 cho loc theo co so');
+        // Moi truy van tren model danh muc deu phai bat dau bang ::cuaCoSo( (khong ::where/::query tran).
+        $this->assertSame(6, preg_match_all('/' . $mau . '::cuaCoSo\(/', $ma));
+        $this->assertSame(6, preg_match_all('/' . $mau . '::/', $ma));
+
+        // Checker khong duoc tra thang model danh muc (tranh vong qua cho da loc co so).
+        $canGoi = [
+            'Xml3176Xml2Checker' => 5,   // khop + ham luong duyet + 3 lan ton tai (ma, +ham luong, +SDK)
+            'Xml3176Xml3Checker' => 4,   // vtyt + 2 lan dvkt ton tai (nguyen van, ma goc) + hieu luc
             'Xml3176Xml4Checker' => 1,
         ];
 
-        foreach ($canCo as $tep => $so) {
-            $ma = $this->maKhongComment(app_path('Services/' . $tep . '.php'));
+        foreach ($canGoi as $tep => $so) {
+            $m = $this->maKhongComment(app_path('Services/' . $tep . '.php'));
 
-            $this->assertSame($so, substr_count($ma, 'cuaCoSo('),
-                "$tep phai co dung $so cho loc theo co so");
+            $this->assertSame(0, preg_match_all('/' . $mau . '::/', $m),
+                "$tep khong duoc tra thang model danh muc");
+            $this->assertSame($so, substr_count($m, 'DanhMucTraCuu::'),
+                "$tep phai co dung $so cho tra danh muc qua DanhMucTraCuu");
         }
     }
 }

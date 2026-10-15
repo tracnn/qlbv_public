@@ -7,6 +7,7 @@ use App\Models\BHYT\MedicalSupplyCatalog;
 use App\Models\BHYT\Icd10Category;
 use App\Models\BHYT\IcdYhctCategory;
 use App\Models\BHYT\ServiceCatalog;
+use App\Services\Xml3176\DanhMucTraCuu;
 use App\Models\BHYT\EquipmentCatalog;
 use App\Services\Xml3176\Support\Xml3176DateHelper;
 use App\Services\Xml3176\Support\TyLeComparator;
@@ -785,7 +786,7 @@ class Xml3176Xml3Checker
                 // Lấy các bản ghi từ MedicalSupplyCatalog có ma_vat_tu khớp với ma_vat_tu trong $data
                 // Danh muc VTYT cap theo CO SO; dong khong gan ma co so dung chung.
                 $maCskcb = $data->Xml3176Xml1 ? $data->Xml3176Xml1->ma_cskcb : null;
-                $medicalSupplies = MedicalSupplyCatalog::cuaCoSo($maCskcb)->where('ma_vat_tu', $data->ma_vat_tu)->get();
+                $medicalSupplies = DanhMucTraCuu::vtyt($maCskcb, $data->ma_vat_tu);
                 $found = false;
 
                 foreach ($medicalSupplies as $supply) {
@@ -928,10 +929,10 @@ class Xml3176Xml3Checker
             // ("[gay te]", "[Ap dung truong hop that bai]") va _TB da co quy tac don gia rieng.
             $maTra = $data->ma_dich_vu;
             $theoMaGoc = false;
-            $serviceExists = ServiceCatalog::cuaCoSo($maCskcb)->where('ma_dich_vu', $maTra)->exists();
+            $serviceExists = DanhMucTraCuu::dvktTonTai($maCskcb, $maTra);
             $maGoc = MaDvktMatcher::maGoc($data->ma_dich_vu);
             if (!$serviceExists && $maGoc !== '' && $maGoc !== trim((string) $data->ma_dich_vu)
-                && ServiceCatalog::cuaCoSo($maCskcb)->where('ma_dich_vu', $maGoc)->exists()) {
+                && DanhMucTraCuu::dvktTonTai($maCskcb, $maGoc)) {
                 $maTra = $maGoc;
                 $theoMaGoc = true;
                 $serviceExists = true;
@@ -948,12 +949,7 @@ class Xml3176Xml3Checker
             } else {
                 $ngayVao = \DateTime::createFromFormat('YmdHi', $data->Xml3176Xml1->ngay_vao)->format('Ymd');
 
-                $validServiceExists = ServiceCatalog::cuaCoSo($maCskcb)->where('ma_dich_vu', $maTra)
-                ->where('tu_ngay', '<=', $ngayVao)
-                ->where(function ($query) use ($ngayVao) {
-                    $query->where('den_ngay', '>=', $ngayVao)
-                          ->orWhereNull('den_ngay');
-                })->get();
+                $validServiceExists = DanhMucTraCuu::dvktHieuLuc($maCskcb, $maTra, $ngayVao);
 
                 if ($validServiceExists->isEmpty()) {
                     $errorCode = $this->generateErrorCode('INVALID_MA_DICH_VU_NGAY_VAO');

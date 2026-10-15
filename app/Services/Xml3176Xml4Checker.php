@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\BHYT\Xml3176Xml4;
 use App\Models\BHYT\Xml3176Xml3;
 use App\Models\BHYT\ServiceCatalog;
+use App\Services\Xml3176\DanhMucTraCuu;
 use Illuminate\Support\Collection;
 
 class Xml3176Xml4Checker
@@ -133,7 +134,7 @@ class Xml3176Xml4Checker
             $data->loadMissing('Xml3176Xml1');
             $maCskcb = $data->Xml3176Xml1 ? $data->Xml3176Xml1->ma_cskcb : null;
 
-            if (!ServiceCatalog::cuaCoSo($maCskcb)->where('ma_dich_vu', $data->ma_dich_vu)->exists()) {
+            if (!DanhMucTraCuu::dvktTonTai($maCskcb, $data->ma_dich_vu)) {
                 $errorCode = $this->generateErrorCode('INFO_ERROR_MA_DICH_VU_NOT_FOUND');
                 $errors->push((object)[
                     'error_code' => $errorCode,

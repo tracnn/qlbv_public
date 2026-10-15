@@ -9,6 +9,7 @@ use App\Models\BHYT\EquipmentCatalog;
 use App\Models\BHYT\MedicalSupplyCatalog;
 use App\Models\BHYT\MedicineCatalog;
 use App\Models\BHYT\ServiceCatalog;
+use App\Services\Xml3176\DanhMucTraCuu;
 
 use Illuminate\Support\Collection;
 use App\Services\Xml3176\Support\LieuDungParser;
@@ -271,23 +272,16 @@ class Xml3176Xml2Checker
                     // Danh muc thuoc cap theo CO SO; dong khong gan ma co so dung chung.
                     $maCskcb = $data->Xml3176Xml1 ? $data->Xml3176Xml1->ma_cskcb : null;
 
-                    $medicine = MedicineCatalog::cuaCoSo($maCskcb)->where('ma_thuoc', $data->ma_thuoc)
-                        ->where('ham_luong', $data->ham_luong)
-                        ->where('so_dang_ky', $data->so_dang_ky)
-                        ->where('tt_thau', 'LIKE', $ttThau . '%')
-                        ->first(); //* Không được thay bằng exists() *\\
+                    $medicine = DanhMucTraCuu::thuocKhop($maCskcb, $data->ma_thuoc, $data->ham_luong, $data->so_dang_ky, $ttThau); //* Không được thay bằng exists() *\\
 
                     if (!$medicine) {
                         // Dong danh muc duoc xac dinh boi ma + SDK + thau; ham luong chi so SAU khi
                         // da tim dung dong. Khop ham luong voi BAT KY dong cung ma (cach cu) lam
                         // ham luong sai bi bao nham thanh "sai thau" - cong lai giam tru "Thuoc sai
                         // ham luong" (T10/2026: 5.846 dong, Medivernol 40.183).
-                        $hamLuongDuyet = MedicineCatalog::cuaCoSo($maCskcb)->where('ma_thuoc', $data->ma_thuoc)
-                            ->where('so_dang_ky', $data->so_dang_ky)
-                            ->where('tt_thau', 'LIKE', $ttThau . '%')
-                            ->pluck('ham_luong')->unique()->values();
+                        $hamLuongDuyet = DanhMucTraCuu::thuocHamLuongDuyet($maCskcb, $data->ma_thuoc, $data->so_dang_ky, $ttThau);
 
-                        if (!MedicineCatalog::cuaCoSo($maCskcb)->where('ma_thuoc', $data->ma_thuoc)->exists()) {
+                        if (!DanhMucTraCuu::thuocTonTai($maCskcb, $data->ma_thuoc)) {
                             $errorCode = $this->generateErrorCode('INVALID_DRUG_CODE');
                             $errors->push((object)[
                                 'error_code' => $errorCode,
@@ -304,7 +298,7 @@ class Xml3176Xml2Checker
                                 'description' => 'Mã thuốc: ' . $data->ma_thuoc . '; Sai hàm lượng: ' . formatDescription($data->ham_luong)
                                     . '; Hàm lượng được duyệt (cùng SĐK, thầu): ' . $hamLuongDuyet->implode(' | ')
                             ]);
-                        } elseif (!MedicineCatalog::cuaCoSo($maCskcb)->where('ma_thuoc', $data->ma_thuoc)->where('ham_luong', $data->ham_luong)->exists()) {
+                        } elseif (!DanhMucTraCuu::thuocTonTai($maCskcb, $data->ma_thuoc, $data->ham_luong)) {
                             $errorCode = $this->generateErrorCode('INVALID_DRUG_CONCENTRATION');
                             $errors->push((object)[
                                 'error_code' => $errorCode,
@@ -312,7 +306,7 @@ class Xml3176Xml2Checker
                                 'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
                                 'description' => 'Mã thuốc: ' . $data->ma_thuoc . '; Sai hàm lượng: ' . formatDescription($data->ham_luong)
                             ]);
-                        } elseif (!MedicineCatalog::cuaCoSo($maCskcb)->where('ma_thuoc', $data->ma_thuoc)->where('ham_luong', $data->ham_luong)->where('so_dang_ky', $data->so_dang_ky)->exists()) {
+                        } elseif (!DanhMucTraCuu::thuocTonTai($maCskcb, $data->ma_thuoc, $data->ham_luong, $data->so_dang_ky)) {
                             $errorCode = $this->generateErrorCode('INVALID_REGISTRATION_NUMBER');
                             $errors->push((object)[
                                 'error_code' => $errorCode,
