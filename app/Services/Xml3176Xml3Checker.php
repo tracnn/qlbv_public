@@ -1104,58 +1104,106 @@ class Xml3176Xml3Checker
         return $errors;
     }
 
+    /** So dich vu chong gio toi da liet ke trong mo ta loi */
+    const TOI_DA_NEU_CHONG = 5;
+
     /**
      * Một BỆNH NHÂN không thể trải qua hai dịch vụ PTTT chồng thời gian thực hiện.
      * Chỉ soi trong CÙNG hồ sơ (ma_lk) và chỉ các nhóm cấu hình (mặc định PTTT 8,18) —
      * xét nghiệm/CĐHA ghi cùng khung giờ là bình thường nên không xét.
      *
-     * Mỗi cặp chồng nhau chỉ báo MỘT lần (chỉ so với dòng có id lớn hơn).
+     * Mỗi DÒNG chồng giờ báo MỘT lỗi, kể tối đa TOI_DA_NEU_CHONG dịch vụ chồng với nó (cả hai
+     * phía). Trước 15/10/2026 báo mỗi CẶP một lỗi: hồ sơ 000007038497 ra 372.807 lỗi, tràn 512 MB.
+     * Dòng vượt ngưỡng thời gian không so (đã có XML3_EXECUTION_TIME_TOO_LONG).
      */
     private function checkOverlappingServiceExecution(Xml3176Xml3 $data): Collection
     {
         $errors = collect();
 
-        $groups = (array) config('xml3176.xml3.overlap_execution_groups', []);
-        if (empty($groups) || !in_array($data->ma_nhom, $groups)) {
+        if (!$this->laNhomThoiGianPttt($data)) {
             return $errors;
         }
 
-        if (empty($data->ngay_th_yl) || empty($data->ngay_kq)) {
+        if (empty($data->ngay_th_yl) || empty($data->ngay_kq) || $data->id === null) {
             return $errors; // guard: thiếu mốc thời gian
         }
 
-        // Dong PTTT co du moc cua ho so nap mot lan (sap theo id - truy van cu khong co orderBy,
-        // MySQL tra theo chi muc, thuc te id tang dan); loc id > trong PHP.
-        $ptttCoMoc = $this->theoHoSo($data->ma_lk, 'xml3_pttt_co_moc|' . serialize($groups), function () use ($data, $groups) {
-            return Xml3176Xml3::where('ma_lk', $data->ma_lk)
+        $hoSo = $this->chongGioTheoHoSo($data->ma_lk);
+        $id = (int) $data->id;
+        if (!isset($hoSo['kq'][$id])) {
+            return $errors;
+        }
+
+        $so = $hoSo['kq'][$id]['so'];
+        $moc = function ($d) {
+            return '(' . strtodatetime($d->ngay_th_yl) . ' - ' . strtodatetime($d->ngay_kq) . ')';
+        };
+
+        $moTa = 'Dịch vụ ' . $data->ma_dich_vu . ' ' . $moc($data) . ' chồng thời gian thực hiện với ';
+        if ($so === 1) {
+            $doiTac = $hoSo['dong'][$hoSo['kq'][$id]['neu'][0]];
+            $moTa .= 'dịch vụ ' . $doiTac->ma_dich_vu . ' ' . $moc($doiTac) . ' trong cùng hồ sơ.';
+        } else {
+            $ds = [];
+            foreach ($hoSo['kq'][$id]['neu'] as $idDoiTac) {
+                $doiTac = $hoSo['dong'][$idDoiTac];
+                $ds[] = $doiTac->ma_dich_vu . ' ' . $moc($doiTac);
+            }
+            $conLai = $so - count($ds);
+            $moTa .= $so . ' dịch vụ khác trong cùng hồ sơ: ' . implode('; ', $ds)
+                . ($conLai > 0 ? '; và ' . $conLai . ' dịch vụ khác' : '') . '.';
+        }
+
+        $errorCode = $this->generateErrorCode('OVERLAPPING_SERVICE_EXECUTION');
+        $errors->push((object)[
+            'error_code' => $errorCode,
+            'error_name' => 'Thời gian thực hiện trùng với dịch vụ khác',
+            'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+            'description' => $moTa,
+        ]);
+
+        return $errors;
+    }
+
+    /**
+     * Ket qua quet chong gio cua ca ho so, tinh MOT lan moi ho so.
+     *
+     * @return array ['dong' => [id => Xml3176Xml3], 'kq' => PtttChongGio::quet()]
+     */
+    private function chongGioTheoHoSo($maLk): array
+    {
+        $groups = (array) config('xml3176.xml3.overlap_execution_groups', []);
+        $khoa = 'xml3_pttt_chong_gio|' . serialize([
+            $groups,
+            config('xml3176.xml3.execution_max_hours'),
+            config('xml3176.xml3.execution_max_hours_theo_ma'),
+        ]);
+
+        return $this->theoHoSo($maLk, $khoa, function () use ($maLk, $groups) {
+            $dsDong = Xml3176Xml3::where('ma_lk', $maLk)
                 ->whereIn('ma_nhom', $groups)
                 ->whereNotNull('ngay_th_yl')
                 ->whereNotNull('ngay_kq')
                 ->orderBy('id')
-                ->get();
-        });
-        $others = $ptttCoMoc->filter(function ($other) use ($data) {
-            return $data->id !== null && (int) $other->id > (int) $data->id; // id > NULL: khong dong nao
-        });
+                ->get(['id', 'ma_dich_vu', 'ngay_th_yl', 'ngay_kq']);
 
-        foreach ($others as $other) {
-            if (!ServiceOverlapChecker::chongNhau($data->ngay_th_yl, $data->ngay_kq, $other->ngay_th_yl, $other->ngay_kq)) {
-                continue;
+            $dong = [];
+            $khoang = [];
+            foreach ($dsDong as $d) {
+                if ($d->ngay_th_yl === '' || $d->ngay_kq === '' || $this->phutVuotNguong($d) !== null) {
+                    continue;
+                }
+                $tu = Xml3176DateHelper::toDateTime($d->ngay_th_yl);
+                $den = Xml3176DateHelper::toDateTime($d->ngay_kq);
+                if (!$tu || !$den) {
+                    continue;
+                }
+                $dong[(int) $d->id] = $d;
+                $khoang[] = ['id' => (int) $d->id, 'tu' => $tu->getTimestamp(), 'den' => $den->getTimestamp()];
             }
 
-            $errorCode = $this->generateErrorCode('OVERLAPPING_SERVICE_EXECUTION');
-            $errors->push((object)[
-                'error_code' => $errorCode,
-                'error_name' => 'Thời gian thực hiện trùng với dịch vụ khác',
-                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
-                'description' => 'Dịch vụ ' . $data->ma_dich_vu . ' (' . strtodatetime($data->ngay_th_yl)
-                    . ' - ' . strtodatetime($data->ngay_kq) . ') chồng thời gian thực hiện với dịch vụ '
-                    . $other->ma_dich_vu . ' (' . strtodatetime($other->ngay_th_yl) . ' - '
-                    . strtodatetime($other->ngay_kq) . ') trong cùng hồ sơ.'
-            ]);
-        }
-
-        return $errors;
+            return ['dong' => $dong, 'kq' => PtttChongGio::quet($khoang, self::TOI_DA_NEU_CHONG)];
+        });
     }
 
     /**
