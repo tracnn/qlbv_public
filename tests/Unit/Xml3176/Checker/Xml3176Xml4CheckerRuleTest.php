@@ -11,6 +11,14 @@ class Xml3176Xml4CheckerRuleTest extends TestCase
 {
     use Xml3176RuleTestSupport;
 
+    protected function setUp()
+    {
+        parent::setUp();
+        // Ra soat 15/10/2026: XN_MISSING_VALUE_RESULT nay tra tap DVKT bat buoc ket luan
+        // (XML3 cung ho so) de nhuong MO_TA/KET_LUAN_EMPTY - can bang xml3s in-memory.
+        $this->bootXml3176Sqlite(['2026_01_09_152832_create_xml3176_xml3s_table.php']);
+    }
+
     private function chay(array $attrs): array
     {
         $checker = $this->makeChecker(Xml3176Xml4Checker::class);

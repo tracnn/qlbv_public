@@ -112,7 +112,12 @@ class Xml3176Xml4Checker
         $rongHet = trim((string) $data->gia_tri) === ''
             && trim((string) $data->mo_ta) === ''
             && trim((string) $data->ket_luan) === '';
-        if ($laChiSo && $rongHet) {
+        // Ra soat 15/10/2026: DVKT nhom bat buoc mo ta/ket luan da co INFO_ERROR_MO_TA_EMPTY/
+        // KET_LUAN_EMPTY bao (dung dieu kien cua infoChecker) thi nhuong, khong ra loi thu ba.
+        $quyTacCuDaBao = $laChiSo && $rongHet && !empty($data->ma_dich_vu)
+            && (empty($data->mo_ta) || empty($data->ket_luan))
+            && isset($this->dvktCanKetLuan($data->ma_lk)[self::khoaChuoiSql($data->ma_dich_vu)]);
+        if ($laChiSo && $rongHet && !$quyTacCuDaBao) {
             $code = $this->generateErrorCode('XN_MISSING_VALUE_RESULT');
             $errors->push((object) [
                 'error_code' => $code, 'error_name' => 'Xét nghiệm không nhập giá trị và kết quả',

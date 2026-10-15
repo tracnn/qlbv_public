@@ -341,7 +341,10 @@ class Xml3176Xml1Checker
                 true
             );
 
-            if ($is_ma_doituong_kcb_invalid && in_array($data->ma_dkbd, $this->specialDKBD)) {
+            // Ra soat 15/10/2026: nhuong DOI_TUONG_KCB_DUNG_DKBD_SAI_MA khi quy tac do da bao
+            // (cung mot loi: ma tu den ma the dung DKBD). Van bao khi quy tac moi im lang.
+            if ($is_ma_doituong_kcb_invalid && in_array($data->ma_dkbd, $this->specialDKBD)
+                && !$this->laDungDkbdSaiMa($data)) {
                 $errorCode = $this->generateErrorCode('ADMIN_INFO_ERROR_MA_DOITUONG_KCB_INVALID');
                 $errors->push((object)[
                     'error_code' => $errorCode,
@@ -481,7 +484,9 @@ class Xml3176Xml1Checker
             }
 
             // Kiểm tra giấy chuyển tuyến
-            if (empty($data->giay_chuyen_tuyen)) {
+            // Ra soat 15/10/2026: nhuong DOI_TUONG_KCB_THIEU_GIAY_CHUYEN_TUYEN (cu the hon) khi
+            // quy tac do da bao cho ma co can_giay_chuyen_tuyen (1.3/1.5).
+            if (empty($data->giay_chuyen_tuyen) && !$this->laThieuGiayChuyenTuyenTheoMa($data)) {
                 $errorCode = $this->generateErrorCode('ADMIN_INFO_ERROR_GIAY_CHUYEN_TUYEN');
                 $errors->push((object)[
                     'error_code' => $errorCode,
@@ -1025,8 +1030,7 @@ class Xml3176Xml1Checker
         // truong nay, va 7 ho so co gia tri deu do nhap tay. Tuc bo xuat HIS chua map
         // truong nay - do CHINH LA thu quy tac can chi ra. Ma loi duoc nap voi
         // critical_error = false nen khong chan xuat/ky so/gui cong.
-        if (DoiTuongKcbCatalog::thuocTinh($ma, $danhMuc, 'can_giay_chuyen_tuyen', false)
-            && trim((string) $data->giay_chuyen_tuyen) === '') {
+        if ($this->laThieuGiayChuyenTuyenTheoMa($data)) {
             $errorCode = $this->generateErrorCode('DOI_TUONG_KCB_THIEU_GIAY_CHUYEN_TUYEN');
             $errors->push((object)[
                 'error_code' => $errorCode,
@@ -1179,23 +1183,9 @@ class Xml3176Xml1Checker
             ]);
         }
 
-        // MA_DKBD co the chua nhieu ma ngan boi ';' khi nguoi benh doi the giua dot, nen
-        // phai tach roi moi so - so chuoi tho se bo sot.
-        $dkbd = DanhSachPhanCachParser::tach($data->ma_dkbd);
         $cskcb = trim((string) $data->ma_cskcb);
 
-        // Dung noi dang ky ban dau (MA_CSKCB trong MA_DKBD) khong tu no la vi pham: nhieu
-        // ma hop le cho phep dung noi DKBD (vd ma 2 cap cuu, ma 1.4/1.5/1.6/1.7/8/10 - do
-        // lai tren du lieu that cho thay day la BAO OAN, khong phai vi pham that). Chi bao
-        // khi ma khai KHANG DINH nguoi benh den tu noi khac: co thuoc tinh 'tu_den' (tu
-        // den KHONG qua co so DKBD nay) hoac 'can_noi_di' (co phieu chuyen tu co so khac).
-        // Doc 'dung_dkbd' qua config thay vi mang cung de tranh doi hanh vi trong im lang
-        // khi co ai "don dep" bang cach doc config (mã 1.2 da duoc them 'dung_dkbd' o T5).
-        $dungDkbd = (bool) DoiTuongKcbCatalog::thuocTinh($ma, $danhMuc, 'dung_dkbd', false);
-        $khangDinhTuNoiKhac = DoiTuongKcbCatalog::laTuDen($ma, $danhMuc)
-            || (bool) DoiTuongKcbCatalog::thuocTinh($ma, $danhMuc, 'can_noi_di', false);
-
-        if ($cskcb !== '' && in_array($cskcb, $dkbd, true) && !$dungDkbd && $khangDinhTuNoiKhac) {
+        if ($this->laDungDkbdSaiMa($data)) {
             $errorCode = $this->generateErrorCode('DOI_TUONG_KCB_DUNG_DKBD_SAI_MA');
             $errors->push((object)[
                 'error_code' => $errorCode,
@@ -1230,6 +1220,53 @@ class Xml3176Xml1Checker
         }
 
         return $errors;
+    }
+
+    /**
+     * Ra soat 15/10/2026: dieu kien cua DOI_TUONG_KCB_THIEU_GIAY_CHUYEN_TUYEN, tach ra de
+     * ADMIN_INFO_ERROR_GIAY_CHUYEN_TUYEN nhuong dung trong truong hop nay.
+     */
+    private function laThieuGiayChuyenTuyenTheoMa(Xml3176Xml1 $data): bool
+    {
+        $ma = DoiTuongKcbCatalog::chuanHoa($data->ma_doituong_kcb);
+        $danhMuc = (array) config('doi_tuong_kcb', []);
+
+        return $ma !== ''
+            && DoiTuongKcbCatalog::coTrongDanhMuc($ma, $danhMuc)
+            && DoiTuongKcbCatalog::thuocTinh($ma, $danhMuc, 'can_giay_chuyen_tuyen', false)
+            && trim((string) $data->giay_chuyen_tuyen) === '';
+    }
+
+    /**
+     * Ra soat 15/10/2026: dieu kien cua DOI_TUONG_KCB_DUNG_DKBD_SAI_MA, tach ra de
+     * ADMIN_INFO_ERROR_MA_DOITUONG_KCB_INVALID nhuong dung trong truong hop nay.
+     */
+    private function laDungDkbdSaiMa(Xml3176Xml1 $data): bool
+    {
+        $ma = DoiTuongKcbCatalog::chuanHoa($data->ma_doituong_kcb);
+        $danhMuc = (array) config('doi_tuong_kcb', []);
+
+        if ($ma === '' || !DoiTuongKcbCatalog::coTrongDanhMuc($ma, $danhMuc)) {
+            return false;
+        }
+
+        // MA_DKBD co the chua nhieu ma ngan boi ';' khi nguoi benh doi the giua dot, nen
+        // phai tach roi moi so - so chuoi tho se bo sot.
+        $dkbd = DanhSachPhanCachParser::tach($data->ma_dkbd);
+        $cskcb = trim((string) $data->ma_cskcb);
+
+        // Dung noi dang ky ban dau (MA_CSKCB trong MA_DKBD) khong tu no la vi pham: nhieu
+        // ma hop le cho phep dung noi DKBD (vd ma 2 cap cuu, ma 1.4/1.5/1.6/1.7/8/10 - do
+        // lai tren du lieu that cho thay day la BAO OAN, khong phai vi pham that). Chi bao
+        // khi ma khai KHANG DINH nguoi benh den tu noi khac: co thuoc tinh 'tu_den' (tu
+        // den KHONG qua co so DKBD nay) hoac 'can_noi_di' (co phieu chuyen tu co so khac).
+        // Doc 'dung_dkbd' qua config thay vi mang cung de tranh doi hanh vi trong im lang
+        // khi co ai "don dep" bang cach doc config (mã 1.2 da duoc them 'dung_dkbd' o T5).
+        $dungDkbd = (bool) DoiTuongKcbCatalog::thuocTinh($ma, $danhMuc, 'dung_dkbd', false);
+        $khangDinhTuNoiKhac = DoiTuongKcbCatalog::laTuDen($ma, $danhMuc)
+            || (bool) DoiTuongKcbCatalog::thuocTinh($ma, $danhMuc, 'can_noi_di', false);
+
+        return $cskcb !== '' && in_array($cskcb, $dkbd, true) && !$dungDkbd && $khangDinhTuNoiKhac;
     }
 
     // Thêm các phương thức kiểm tra khác ở đây
