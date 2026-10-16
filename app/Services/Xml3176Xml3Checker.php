@@ -19,6 +19,9 @@ class Xml3176Xml3Checker
 {
     use NhoTheoHoSo;
 
+    /** Da ghi log "danh muc DVKT can ma may rong" trong tien trinh nay chua. */
+    private static $daCanhBaoDanhMucMaMayRong = false;
+
     protected $xmlErrorService;
     protected $commonValidationService;
     protected $prefix;
@@ -239,6 +242,25 @@ class Xml3176Xml3Checker
      * @param Xml3176Xml3 $data
      * @return Collection
      */
+    /**
+     * DVKT bat buoc khai ma may: chi can cu danh muc tra cuu "DVKT can ma may" (BHXH ban hanh),
+     * da bo cach loc theo nhom 1/2/3 cu. Danh muc rong thi khong dong nao bi bao thieu ma may
+     * - ghi canh bao vao log (mot lan moi tien trinh) de nguoi van hanh biet ma nap danh muc.
+     */
+    private function canMaMay(Xml3176Xml3 $data): bool
+    {
+        if (!$this->commonValidationService->coDanhMucDvktCanMaMay()) {
+            if (!self::$daCanhBaoDanhMucMaMayRong) {
+                self::$daCanhBaoDanhMucMaMayRong = true;
+                \Log::warning('XML3176: danh muc DVKT can ma may dang rong - quy tac thieu ma may khong bao loi nao. Nap danh muc o man Nhap danh muc.');
+            }
+
+            return false;
+        }
+
+        return $this->commonValidationService->isDvktCanMaMay($data->ma_dich_vu);
+    }
+
     private function infoChecker(Xml3176Xml3 $data): Collection
     {
         $errors = collect();
@@ -292,18 +314,7 @@ class Xml3176Xml3Checker
             }
         }
 
-        // Bat buoc co ma may: can cu DANH MUC DVKT do BHXH ban hanh, khong con loc theo nhom.
-        //
-        // Danh muc chua nap -> LUI ve cach loc theo nhom cu. Neu doi thang theo danh muc ma
-        // bang con rong thi khong ho so nao bi bao thieu ma may nua - mat sach canh bao ma
-        // khong co dau hieu gi. Nap danh muc xong thi tu chuyen sang quy tac moi.
-        if ($this->commonValidationService->coDanhMucDvktCanMaMay()) {
-            $canMaMay = $this->commonValidationService->isDvktCanMaMay($data->ma_dich_vu);
-        } else {
-            $canMaMay = in_array($data->ma_nhom, config('xml3176.xml3.service_groups_requiring_machine'));
-        }
-
-        if ($canMaMay && empty($data->ma_may)) {
+        if ($this->canMaMay($data) && empty($data->ma_may)) {
             $errorCode = $this->generateErrorCode('INFO_ERROR_GROUP_CODE_MA_MAY');
             $errors->push((object)[
                 'error_code' => $errorCode,

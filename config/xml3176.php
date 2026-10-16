@@ -103,7 +103,6 @@ return [
             'nhom_thau_pattern' => '/^N([0-9]|[1-9][0-9])$/', // Nhóm thầu N0 đến N99
             'nam_thau_pattern' => '/^\d{4}$/',   // Định dạng năm 4 ký tự
         ],
-        'service_groups_requiring_machine' => [1,2,3], //Bổ sung mã nhóm bắt buộc phải có máy
         'service_groups_pttt' => [8,18], //Bổ sung mã nhóm là pttt
         'execution_min_minutes'       => 3, // Số phút thực hiện dịch vụ tối thiểu
         'execution_time_check_groups' => [1, 3], // Mã nhóm cần kiểm tra thời gian thực hiện tối thiểu
