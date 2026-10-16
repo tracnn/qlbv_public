@@ -126,9 +126,8 @@ class CommonValidationService
     /**
      * Danh muc DVKT can ma may da duoc nap chua (co dong nao dang dung khong).
      *
-     * Quy tac ma may dung ket qua nay de quyet dinh co lui ve cach loc theo nhom cu
-     * hay khong - danh muc rong ma van doi theo danh muc thi khong ho so nao bi bao
-     * thieu ma may nua, tuc mat sach canh bao ma khong ai biet.
+     * Quy tac ma may (Xml3176Xml3Checker::canMaMay) chi can cu danh muc nay, khong con lui
+     * ve cach loc theo nhom; danh muc rong thi checker ghi canh bao vao log.
      */
     public function coDanhMucDvktCanMaMay()
     {

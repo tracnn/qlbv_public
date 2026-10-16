@@ -35,8 +35,12 @@ class VatPhamKemDvktRule
         $this->bang = $bang;
     }
 
+    /** @var array dong XML3 cua ho so - de soi dieu kien XML3_DATE_MISMATCH */
+    private $xml3 = [];
+
     public function kiem($xml3, $xml2): array
     {
+        $this->xml3 = $xml3;
         $dvkt = $this->gomDvkt($xml3);
 
         $vtyt = [];
@@ -73,7 +77,38 @@ class VatPhamKemDvktRule
             'goi' => trim((string) $goi),
             't_bhtt' => (float) ($r->t_bhtt ?? 0),
             'ngay_yl' => (string) ($r->ngay_yl ?? ''),
+            'ma_nhom' => $r->ma_nhom ?? null,
         ];
+    }
+
+    /**
+     * Ra soat 15/10/2026: dong VTYT nay co bi XML3_DATE_MISMATCH (Xml3176Xml3Checker::
+     * checkMedicalSupplyCatalog) bao khong - chep dung dieu kien ben do: ma_nhom thuoc nhom
+     * VTYT, ma_dich_vu khong empty(), va khong co dong DVKT (ma_vat_tu = '' theo SQL, NULL
+     * khong tinh) cung ma (so '=' MySQL: khong phan biet hoa thuong, bo dau cach cuoi) cung
+     * ngay y lenh.
+     */
+    private function xml3DaBaoLechNgay($d): bool
+    {
+        if (!in_array($d->ma_nhom, (array) config('xml3176.material_group_code', []))) {
+            return false;
+        }
+        if (empty($d->ma_dich_vu)) {
+            return false;
+        }
+        $khoa = mb_strtoupper(rtrim((string) $d->ma_dich_vu, ' '), 'UTF-8');
+        $ngay = substr($d->ngay_yl, 0, 8);
+        foreach ($this->xml3 as $r) {
+            if (!isset($r->ma_vat_tu) || rtrim((string) $r->ma_vat_tu, ' ') !== '' || !isset($r->ma_dich_vu)) {
+                continue;
+            }
+            if (mb_strtoupper(rtrim((string) $r->ma_dich_vu, ' '), 'UTF-8') === $khoa
+                && substr((string) ($r->ngay_yl ?? ''), 0, 8) == $ngay) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /** DVKT cua ho so (dong XML3 khong co ma_vat_tu) gom theo ma chuan hoa. */
@@ -178,7 +213,10 @@ class VatPhamKemDvktRule
             }
             $k = VatPhamKemDvktKey::chuanHoaMaDvkt($d->ma_dich_vu);
             if (!isset($nhom[$k])) {
-                $nhom[$k] = ['ten' => [], 'goi' => [], 'lech' => []];
+                $nhom[$k] = ['ten' => [], 'goi' => [], 'lech' => [], 'xml3_bao' => true];
+            }
+            if ($loai !== 'VTYT' || !$this->xml3DaBaoLechNgay($d)) {
+                $nhom[$k]['xml3_bao'] = false;
             }
             $nhom[$k]['ten'][$d->ten] = true;
             if ($d->goi !== '') {
@@ -196,6 +234,11 @@ class VatPhamKemDvktRule
         $ra = [];
         foreach ($nhom as $k => $g) {
             if (!isset($dvkt[$k])) {
+                // Ra soat 15/10/2026: moi dong VTYT cua nhom da bi XML3_DATE_MISMATCH bao thi
+                // khong bao trung.
+                if ($g['xml3_bao']) {
+                    continue;
+                }
                 $lyDo = sprintf('DVKT mẹ %s không có trong hồ sơ.', $k);
             } elseif ($dvkt[$k]['bhtt'] <= 0) {
                 $lyDo = sprintf('DVKT mẹ %s %s có trong hồ sơ nhưng quỹ BHYT không thanh toán.', $k, $dvkt[$k]['ten']);

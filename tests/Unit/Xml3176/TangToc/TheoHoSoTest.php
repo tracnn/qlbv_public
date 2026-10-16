@@ -156,21 +156,23 @@ class TheoHoSoTest extends TestCase
     }
 
     /** @test */
-    public function xml3_chong_thoi_gian_ket_qua_giong_truy_van_cu()
+    public function xml3_chong_thoi_gian_moi_dong_mot_loi_doi_xung()
     {
+        // Doi co chu dich 15/10/2026: truoc day moi CAP mot loi (chi so voi id lon hon); nay moi
+        // DONG mot loi, ke doi tac ca hai phia, theo gio bat dau.
         list($a, $b, $c) = $this->duLieuChong();
         $k = $this->makeChecker(Xml3176Xml3Checker::class);
         $p = 'XML3_OVERLAPPING_SERVICE_EXECUTION | ';
 
-        // Thu tu theo id tang dan (truy van cu khong co orderBy).
         $this->assertSame([
-            $p . 'Dịch vụ A (01/01/2026 08:00 - 01/01/2026 09:00) chồng thời gian thực hiện với dịch vụ B (01/01/2026 08:30 - 01/01/2026 09:30) trong cùng hồ sơ.',
-            $p . 'Dịch vụ A (01/01/2026 08:00 - 01/01/2026 09:00) chồng thời gian thực hiện với dịch vụ C (01/01/2026 08:45 - 01/01/2026 08:50) trong cùng hồ sơ.',
+            $p . 'Dịch vụ A (01/01/2026 08:00 - 01/01/2026 09:00) chồng thời gian thực hiện với 2 dịch vụ khác trong cùng hồ sơ: B (01/01/2026 08:30 - 01/01/2026 09:30); C (01/01/2026 08:45 - 01/01/2026 08:50).',
         ], $this->chong($k, $a));
         $this->assertSame([
-            $p . 'Dịch vụ B (01/01/2026 08:30 - 01/01/2026 09:30) chồng thời gian thực hiện với dịch vụ C (01/01/2026 08:45 - 01/01/2026 08:50) trong cùng hồ sơ.',
+            $p . 'Dịch vụ B (01/01/2026 08:30 - 01/01/2026 09:30) chồng thời gian thực hiện với 2 dịch vụ khác trong cùng hồ sơ: A (01/01/2026 08:00 - 01/01/2026 09:00); C (01/01/2026 08:45 - 01/01/2026 08:50).',
         ], $this->chong($k, $b));
-        $this->assertSame([], $this->chong($k, $c), 'chi so voi id lon hon');
+        $this->assertSame([
+            $p . 'Dịch vụ C (01/01/2026 08:45 - 01/01/2026 08:50) chồng thời gian thực hiện với 2 dịch vụ khác trong cùng hồ sơ: A (01/01/2026 08:00 - 01/01/2026 09:00); B (01/01/2026 08:30 - 01/01/2026 09:30).',
+        ], $this->chong($k, $c), 'doi xung: dong id lon nhat cung co loi');
     }
 
     /** @test */

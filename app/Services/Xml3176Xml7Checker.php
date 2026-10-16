@@ -97,7 +97,8 @@ class Xml3176Xml7Checker
         $ra = Xml3176DateHelper::datePart($data->ngay_ra);
         if ($ra !== null) {
             $tu = Xml3176DateHelper::datePart($data->ngoaitru_tungay);
-            if ($tu !== null && $tu < $ra) {
+            $tuTruocRa = $tu !== null && $tu < $ra;
+            if ($tuTruocRa) {
                 $code = $this->generateErrorCode('NGOAITRU_TUNGAY_BEFORE_NGAY_RA');
                 $errors->push((object) [
                     'error_code' => $code, 'error_name' => 'Bắt đầu nghỉ ngoại trú trước ngày ra viện',
@@ -106,7 +107,9 @@ class Xml3176Xml7Checker
                 ]);
             }
             $den = Xml3176DateHelper::datePart($data->ngoaitru_denngay);
-            if ($den !== null && $den < $ra) {
+            // Ra soat 15/10/2026: tungay <= denngay < ngay_ra la mot sai sot - TUNGAY da bao thi
+            // DENNGAY nhuong; chi bao rieng khi TUNGAY im lang (thieu tu ngay, dao nguoc tu/den).
+            if (!$tuTruocRa && $den !== null && $den < $ra) {
                 $code = $this->generateErrorCode('NGOAITRU_DENNGAY_BEFORE_NGAY_RA');
                 $errors->push((object) [
                     'error_code' => $code, 'error_name' => 'Đến ngày nghỉ ngoại trú trước ngày ra viện',

@@ -39,8 +39,10 @@ class Xml3176Xml3CheckerRuleTest extends TestCase
     /** @test */
     public function ngay_kq_lon_hon_ngay_ra()
     {
+        // Tu 15/10/2026 chi bao o dong nhom vat tu; dong khac da co XML3_INVALID_NGAY_KQ.
+        $nhomVatTu = (string) config('xml3176.material_group_code')[0];
         $this->assertContains('XML3_NGAY_KQ_GREATER_NGAY_RA',
-            $this->chay(['ngay_kq' => '202607060800'], ['ngay_ra' => '202607050800']));
+            $this->chay(['ma_nhom' => $nhomVatTu, 'ngay_kq' => '202607060800'], ['ngay_ra' => '202607050800']));
     }
 
     /** @test */

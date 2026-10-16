@@ -296,8 +296,9 @@ class KiemTongTheTuDuLieuTest extends TestCase
 
         $this->assertSame([
             'DUPLICATE_EXAMINATION_SERVICE|Mỗi dịch vụ khám chỉ được tính 1 lần. Dịch vụ khám bị lặp: kb2, kb1',
-            'EXAMINATION_FEE_EXCEEDS_CAP|Tổng tiền khám 251.25 vượt trần 201 (= 2 x mức giá một lần khám 100.5).',
-            'EXAMINATION_SECOND_VISIT_RATE|Từ lần khám thứ 2 chỉ được tính 30% mức giá một lần khám; có 3 dòng khám ở mức giá đầy đủ.',
+            // Ra soat 15/10 (main 9daf1785): dong lap ma chi dem dong dau; da bao lan 2 chua giam
+            // thi khong bao them vuot tran.
+            'EXAMINATION_SECOND_VISIT_RATE|Từ lần khám thứ 2 chỉ được tính 30% mức giá một lần khám; có 2 dòng khám ở mức giá đầy đủ.',
         ], $this->loi('K_NGT'));
     }
 
@@ -337,7 +338,9 @@ class KiemTongTheTuDuLieuTest extends TestCase
             'NGAY_TAI_KHAM_KHONG_KHOP_XML14|Giấy hẹn khám lại ghi ngày 20261012 nhưng NGAY_TAI_KHAM của hồ sơ là 20261010',
         ], $this->loi('LB2'));
         $this->assertSame([
-            'NGAY_TAI_KHAM_KHONG_KHOP_XML14|Hồ sơ hẹn tái khám ngày 20261010 nhưng giấy hẹn khám lại (XML14) không ghi ngày hẹn (NGAY_HEN_KL rỗng)',
+            // Ra soat 15/10 (main 9daf1785): NGAY_HEN_KL chi co khoang trang khong bi XML14 checker
+            // bao (empty()) nen roi xuong nhanh lech ngay.
+            'NGAY_TAI_KHAM_KHONG_KHOP_XML14|Giấy hẹn khám lại ghi ngày  nhưng NGAY_TAI_KHAM của hồ sơ là 20261010',
         ], $this->loi('LB3'));
     }
 

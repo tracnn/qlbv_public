@@ -6,7 +6,7 @@ use App\Models\BHYT\Xml3176Xml3;
 use App\Services\Xml3176\DanhMucTraCuu;
 use App\Services\Xml3176\Support\Xml3176DateHelper;
 use App\Services\Xml3176\Support\TyLeComparator;
-use App\Services\Xml3176\Support\ServiceOverlapChecker;
+use App\Services\Xml3176\Support\PtttChongGio;
 use App\Services\Xml3176\Support\MaDvktStructure;
 use App\Services\Xml3176\Support\MaDvktMatcher;
 use App\Services\Xml3176\Support\MaKhoaLienKhoa;
@@ -18,6 +18,9 @@ use Illuminate\Support\Collection;
 class Xml3176Xml3Checker
 {
     use NhoTheoHoSo;
+
+    /** Da ghi log "danh muc DVKT can ma may rong" trong tien trinh nay chua. */
+    private static $daCanhBaoDanhMucMaMayRong = false;
 
     protected $xmlErrorService;
     protected $commonValidationService;
@@ -195,7 +198,7 @@ class Xml3176Xml3Checker
         $errors = $errors->merge($this->checkMedicalSupplyCatalog($data)); // Thêm kiểm tra VTYT
         $errors = $errors->merge($this->checkMedicalService($data)); // Kiểm tra dịch vụ kỹ thuật
         $errors = $errors->merge($this->checkServiceGroupPtttDuplicate($data)); // Kiểm tra dịch vụ kỹ thuật
-        $errors = $errors->merge($this->checkOverlappingServiceExecution($data));
+        $errors = $errors->merge($this->kiemThoiGianPttt($data));
         $errors = $errors->merge($this->checkCauTrucMaDichVu($data));
         $errors = $errors->merge($this->checkCongThucTien($data));
         $errors = $errors->merge($this->checkTapGiaTri($data));
@@ -206,6 +209,13 @@ class Xml3176Xml3Checker
 
         $errors = $errors->merge($this->checkTimingAndExecutor($data));
 
+        // Save errors to xml_error_checks table
+        $this->xmlErrorService->saveErrors($this->xmlType, $data->ma_lk, $data->stt, $errors, $this->thongTinThem($data));
+    }
+
+    /** Cot them cua dong loi XML3 (ngay_yl, ngay_kq) - dung chung voi lenh kiem lai. */
+    public function thongTinThem(Xml3176Xml3 $data): array
+    {
         $additionalData = [
             'ngay_yl' => $data->ngay_yl
         ];
@@ -214,8 +224,16 @@ class Xml3176Xml3Checker
             $additionalData['ngay_kq'] = $data->ngay_kq;
         }
 
-        // Save errors to xml_error_checks table
-        $this->xmlErrorService->saveErrors($this->xmlType, $data->ma_lk, $data->stt, $errors, $additionalData);
+        return $additionalData;
+    }
+
+    /**
+     * Hai quy tac thoi gian thuc hien PTTT (dai bat thuong, chong gio) - lenh
+     * xml3176:kiem-lai-chong-gio goi rieng de thay loi cu ma khong kiem lai ca dong.
+     */
+    public function kiemThoiGianPttt(Xml3176Xml3 $data): Collection
+    {
+        return $this->checkExecutionTimeTooLong($data)->merge($this->checkOverlappingServiceExecution($data));
     }
 
     /**
@@ -224,6 +242,25 @@ class Xml3176Xml3Checker
      * @param Xml3176Xml3 $data
      * @return Collection
      */
+    /**
+     * DVKT bat buoc khai ma may: chi can cu danh muc tra cuu "DVKT can ma may" (BHXH ban hanh),
+     * da bo cach loc theo nhom 1/2/3 cu. Danh muc rong thi khong dong nao bi bao thieu ma may
+     * - ghi canh bao vao log (mot lan moi tien trinh) de nguoi van hanh biet ma nap danh muc.
+     */
+    private function canMaMay(Xml3176Xml3 $data): bool
+    {
+        if (!$this->commonValidationService->coDanhMucDvktCanMaMay()) {
+            if (!self::$daCanhBaoDanhMucMaMayRong) {
+                self::$daCanhBaoDanhMucMaMayRong = true;
+                \Log::warning('XML3176: danh muc DVKT can ma may dang rong - quy tac thieu ma may khong bao loi nao. Nap danh muc o man Nhap danh muc.');
+            }
+
+            return false;
+        }
+
+        return $this->commonValidationService->isDvktCanMaMay($data->ma_dich_vu);
+    }
+
     private function infoChecker(Xml3176Xml3 $data): Collection
     {
         $errors = collect();
@@ -277,18 +314,7 @@ class Xml3176Xml3Checker
             }
         }
 
-        // Bat buoc co ma may: can cu DANH MUC DVKT do BHXH ban hanh, khong con loc theo nhom.
-        //
-        // Danh muc chua nap -> LUI ve cach loc theo nhom cu. Neu doi thang theo danh muc ma
-        // bang con rong thi khong ho so nao bi bao thieu ma may nua - mat sach canh bao ma
-        // khong co dau hieu gi. Nap danh muc xong thi tu chuyen sang quy tac moi.
-        if ($this->commonValidationService->coDanhMucDvktCanMaMay()) {
-            $canMaMay = $this->commonValidationService->isDvktCanMaMay($data->ma_dich_vu);
-        } else {
-            $canMaMay = in_array($data->ma_nhom, config('xml3176.xml3.service_groups_requiring_machine'));
-        }
-
-        if ($canMaMay && empty($data->ma_may)) {
+        if ($this->canMaMay($data) && empty($data->ma_may)) {
             $errorCode = $this->generateErrorCode('INFO_ERROR_GROUP_CODE_MA_MAY');
             $errors->push((object)[
                 'error_code' => $errorCode,
@@ -331,26 +357,7 @@ class Xml3176Xml3Checker
             }
         }
 
-        // Check for serviceGroupsRequiringAnesthesia
-        if (in_array($data->ma_nhom, $this->serviceGroupsRequiringAnesthesia)) {
-            if (empty($data->pp_vo_cam)) {
-                $errorCode = $this->generateErrorCode('INFO_ERROR_PP_VO_CAM_EMPTY');
-                $errors->push((object)[
-                    'error_code' => $errorCode,
-                    'error_name' => 'Thiếu phương pháp vô cảm',
-                    'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
-                    'description' => 'Phương pháp vô cảm không được để trống đối với dịch vụ: ' . $this->serviceDisplay
-                ]);
-            } elseif (!in_array($data->pp_vo_cam, config('xml3176.anesthesia_code'))) {
-                $errorCode = $this->generateErrorCode('INFO_ERROR_PP_VO_CAM_INVALID');
-                $errors->push((object)[
-                    'error_code' => $errorCode,
-                    'error_name' => 'Phương pháp vô cảm không hợp lệ',
-                    'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
-                    'description' => 'Phương pháp vô cảm không hợp lệ. Giá trị phải thuộc [1, 2, 3, 4]: ' . $data->pp_vo_cam
-                ]);
-            }
-        }
+        // Ra soat 15/10/2026: bo khoi kiem PP_VO_CAM chep lai lan hai o day (306 dong trung).
 
         // Check ma_benh
         if (!empty($data->ma_benh)) {
@@ -550,21 +557,26 @@ class Xml3176Xml3Checker
                     })
                     ->get();
 
+                // Ra soat 15/10/2026: truoc day moi dong doi tac mot loi - doi tac cung ma_lk va
+                // cung khung gio cho ra mo ta y het (208 dong thua). Nay MOT loi moi dong, gom
+                // cac doi tac khac nhau vao mo ta; mot doi tac thi mo ta giu nguyen nhu cu.
                 if ($overlappingRecords->isNotEmpty()) {
+                    $doiTac = [];
                     foreach ($overlappingRecords as $overlappingRecord) {
-                        $errorCode = $this->generateErrorCode('OVERLAPPING_BED_USAGE');
-                        $errors->push((object)[
-                            'error_code' => $errorCode,
-                            'error_name' => 'Giường sử dụng trùng lặp',
-                            'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
-                            'description' => 'Giường ' . $maGiuong . ' tại khoa ' . $data->ma_khoa .
-                                ' sử dụng trùng lặp trong khoảng thời gian từ ' .
-                                strtodatetime($data->ngay_th_yl) . ' đến ' . strtodatetime($data->ngay_kq) .
-                                '. Trùng lặp với hồ sơ có mã: ' . $overlappingRecord->ma_lk .
-                                ' (NGAY_TH_YL: ' . strtodatetime($overlappingRecord->ngay_th_yl) .
-                                ', NGAY_KQ: ' . strtodatetime($overlappingRecord->ngay_kq) . ')'
-                        ]);
+                        $doiTac[] = $overlappingRecord->ma_lk .
+                            ' (NGAY_TH_YL: ' . strtodatetime($overlappingRecord->ngay_th_yl) .
+                            ', NGAY_KQ: ' . strtodatetime($overlappingRecord->ngay_kq) . ')';
                     }
+                    $errorCode = $this->generateErrorCode('OVERLAPPING_BED_USAGE');
+                    $errors->push((object)[
+                        'error_code' => $errorCode,
+                        'error_name' => 'Giường sử dụng trùng lặp',
+                        'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+                        'description' => 'Giường ' . $maGiuong . ' tại khoa ' . $data->ma_khoa .
+                            ' sử dụng trùng lặp trong khoảng thời gian từ ' .
+                            strtodatetime($data->ngay_th_yl) . ' đến ' . strtodatetime($data->ngay_kq) .
+                            '. Trùng lặp với hồ sơ có mã: ' . implode('; ', array_unique($doiTac))
+                    ]);
                 }
             }
 
@@ -707,11 +719,10 @@ class Xml3176Xml3Checker
         }
 
         if (!empty($data->ngay_kq) && $data->Xml3176Xml1) {
-            $ngayKq = $data->ngay_kq;
             $ngayVao = $data->Xml3176Xml1->ngay_vao;
             $ngayRa = $data->Xml3176Xml1->ngay_ra;
 
-            if ($ngayKq < $ngayVao || $ngayKq > $ngayRa) {
+            if ($this->ngayKqNgoaiDotDieuTri($data)) {
                 $errorCode = $this->generateErrorCode('INVALID_NGAY_KQ');
                 $errors->push((object)[
                     'error_code' => $errorCode,
@@ -733,6 +744,19 @@ class Xml3176Xml3Checker
         }
 
         return $errors;
+    }
+
+    /**
+     * Dieu kien cua XML3_INVALID_NGAY_KQ: NGAY_KQ ngoai [ngay_vao, ngay_ra] (so toi phut), bo qua
+     * nhom vat tu. Dung chung voi NGAY_KQ_GREATER_NGAY_RA de mot dong khong ra hai loi.
+     */
+    private function ngayKqNgoaiDotDieuTri(Xml3176Xml3 $data): bool
+    {
+        if (in_array($data->ma_nhom, $this->materialGroupCodes) || empty($data->ngay_kq) || !$data->Xml3176Xml1) {
+            return false;
+        }
+
+        return $data->ngay_kq < $data->Xml3176Xml1->ngay_vao || $data->ngay_kq > $data->Xml3176Xml1->ngay_ra;
     }
 
     /**
@@ -824,8 +848,10 @@ class Xml3176Xml3Checker
                             }
 
                             // Đối chiếu tỷ lệ thanh toán BHYT với tỷ lệ duyệt trong danh mục (Thay đổi tỷ lệ TT)
+                            // Ra soat 15/10/2026: tyle ngoai (0,100] da co INFO_ERROR_TYLE_TT_BH,
+                            // khong so danh muc nua de khong bao hai lan.
                             $tyleEps = (float) config('xml3176.xml3.tyle_epsilon', 0.01);
-                            if (TyLeComparator::lech($data->tyle_tt_bh, $supply->tyle_tt_bh, $tyleEps)) {
+                            if (TienTeCalculator::tyLeHopLe($data->tyle_tt_bh) && TyLeComparator::lech($data->tyle_tt_bh, $supply->tyle_tt_bh, $tyleEps)) {
                                 $errorCode = $this->generateErrorCode('INVALID_APPROVED_TYLE_TT_BH');
                                 $errors->push((object)[
                                     'error_code' => $errorCode,
@@ -983,7 +1009,9 @@ class Xml3176Xml3Checker
                         return $service->don_gia < $data->don_gia_bh;
                     });
 
-                    if ($allPricesLower) {
+                    // Ra soat 15/10/2026: ma duoi 0000 (chua co gia) co don gia da co
+                    // MA_DICH_VU_CHUA_CO_GIA_CO_DON_GIA_BH bao rieng.
+                    if ($allPricesLower && !MaDvktStructure::laChuaCoGia($data->ma_dich_vu)) {
                         $errorCode = $this->generateErrorCode('INVALID_APPROVED_DON_GIA_BH');
                         $errors->push((object)[
                             'error_code' => $errorCode,
@@ -1042,58 +1070,166 @@ class Xml3176Xml3Checker
         return $errors;
     }
 
+    /** So phut thuc hien vuot nguong cua dong; null neu khong vuot hoac thieu moc. */
+    private function phutVuotNguong($dong): ?int
+    {
+        $phut = Xml3176DateHelper::diffMinutes($dong->ngay_th_yl, $dong->ngay_kq);
+        if ($phut === null) {
+            return null;
+        }
+
+        return $phut > $this->nguongGioThucHien($dong) * 60 ? $phut : null;
+    }
+
+    private function nguongGioThucHien($dong): int
+    {
+        return PtttChongGio::nguongGio(
+            (string) $dong->ma_dich_vu,
+            (int) config('xml3176.xml3.execution_max_hours', 24),
+            (array) config('xml3176.xml3.execution_max_hours_theo_ma', [])
+        );
+    }
+
+    private function laNhomThoiGianPttt(Xml3176Xml3 $data): bool
+    {
+        $groups = (array) config('xml3176.xml3.overlap_execution_groups', []);
+
+        return !empty($groups) && in_array($data->ma_nhom, $groups);
+    }
+
+    /**
+     * Dich vu PTTT keo dai qua nguong (mac dinh 24 gio, rieng theo tien to ma).
+     *
+     * Do 15/10/2026: 13.654 dong / 516 ho so vuot 24 gio, 93% la Hut dom ghi NGAY_KQ don ve cuoi
+     * dot. Dong vuot nguong khong dua vao so chong thoi gian (checkOverlappingServiceExecution).
+     */
+    private function checkExecutionTimeTooLong(Xml3176Xml3 $data): Collection
+    {
+        $errors = collect();
+
+        if (!$this->laNhomThoiGianPttt($data)) {
+            return $errors;
+        }
+
+        $phut = $this->phutVuotNguong($data);
+        if ($phut === null) {
+            return $errors;
+        }
+
+        $errorCode = $this->generateErrorCode('EXECUTION_TIME_TOO_LONG');
+        $errors->push((object)[
+            'error_code' => $errorCode,
+            'error_name' => 'Thời gian thực hiện dịch vụ dài bất thường',
+            'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+            'description' => 'Dịch vụ ' . $data->ma_dich_vu . ' (' . strtodatetime($data->ngay_th_yl)
+                . ' - ' . strtodatetime($data->ngay_kq) . ') kéo dài ' . intdiv($phut, 60) . ' giờ '
+                . ($phut % 60) . ' phút, vượt ngưỡng ' . $this->nguongGioThucHien($data)
+                . ' giờ. Kiểm tra lại NGAY_TH_YL / NGAY_KQ.'
+        ]);
+
+        return $errors;
+    }
+
+    /** So dich vu chong gio toi da liet ke trong mo ta loi */
+    const TOI_DA_NEU_CHONG = 5;
+
     /**
      * Một BỆNH NHÂN không thể trải qua hai dịch vụ PTTT chồng thời gian thực hiện.
      * Chỉ soi trong CÙNG hồ sơ (ma_lk) và chỉ các nhóm cấu hình (mặc định PTTT 8,18) —
      * xét nghiệm/CĐHA ghi cùng khung giờ là bình thường nên không xét.
      *
-     * Mỗi cặp chồng nhau chỉ báo MỘT lần (chỉ so với dòng có id lớn hơn).
+     * Mỗi DÒNG chồng giờ báo MỘT lỗi, kể tối đa TOI_DA_NEU_CHONG dịch vụ chồng với nó (cả hai
+     * phía). Trước 15/10/2026 báo mỗi CẶP một lỗi: hồ sơ 000007038497 ra 372.807 lỗi, tràn 512 MB.
+     * Dòng vượt ngưỡng thời gian không so (đã có XML3_EXECUTION_TIME_TOO_LONG).
      */
     private function checkOverlappingServiceExecution(Xml3176Xml3 $data): Collection
     {
         $errors = collect();
 
-        $groups = (array) config('xml3176.xml3.overlap_execution_groups', []);
-        if (empty($groups) || !in_array($data->ma_nhom, $groups)) {
+        if (!$this->laNhomThoiGianPttt($data)) {
             return $errors;
         }
 
-        if (empty($data->ngay_th_yl) || empty($data->ngay_kq)) {
+        if (empty($data->ngay_th_yl) || empty($data->ngay_kq) || $data->id === null) {
             return $errors; // guard: thiếu mốc thời gian
         }
 
-        // Dong PTTT co du moc cua ho so nap mot lan (sap theo id - truy van cu khong co orderBy,
-        // MySQL tra theo chi muc, thuc te id tang dan); loc id > trong PHP.
-        $ptttCoMoc = $this->theoHoSo($data->ma_lk, 'xml3_pttt_co_moc|' . serialize($groups), function () use ($data, $groups) {
-            return Xml3176Xml3::where('ma_lk', $data->ma_lk)
+        $hoSo = $this->chongGioTheoHoSo($data->ma_lk);
+        $id = (int) $data->id;
+        if (!isset($hoSo['kq'][$id])) {
+            return $errors;
+        }
+
+        $so = $hoSo['kq'][$id]['so'];
+        $moc = function ($d) {
+            return '(' . strtodatetime($d->ngay_th_yl) . ' - ' . strtodatetime($d->ngay_kq) . ')';
+        };
+
+        $moTa = 'Dịch vụ ' . $data->ma_dich_vu . ' ' . $moc($data) . ' chồng thời gian thực hiện với ';
+        if ($so === 1) {
+            $doiTac = $hoSo['dong'][$hoSo['kq'][$id]['neu'][0]];
+            $moTa .= 'dịch vụ ' . $doiTac->ma_dich_vu . ' ' . $moc($doiTac) . ' trong cùng hồ sơ.';
+        } else {
+            $ds = [];
+            foreach ($hoSo['kq'][$id]['neu'] as $idDoiTac) {
+                $doiTac = $hoSo['dong'][$idDoiTac];
+                $ds[] = $doiTac->ma_dich_vu . ' ' . $moc($doiTac);
+            }
+            $conLai = $so - count($ds);
+            $moTa .= $so . ' dịch vụ khác trong cùng hồ sơ: ' . implode('; ', $ds)
+                . ($conLai > 0 ? '; và ' . $conLai . ' dịch vụ khác' : '') . '.';
+        }
+
+        $errorCode = $this->generateErrorCode('OVERLAPPING_SERVICE_EXECUTION');
+        $errors->push((object)[
+            'error_code' => $errorCode,
+            'error_name' => 'Thời gian thực hiện trùng với dịch vụ khác',
+            'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
+            'description' => $moTa,
+        ]);
+
+        return $errors;
+    }
+
+    /**
+     * Ket qua quet chong gio cua ca ho so, tinh MOT lan moi ho so.
+     *
+     * @return array ['dong' => [id => Xml3176Xml3], 'kq' => PtttChongGio::quet()]
+     */
+    private function chongGioTheoHoSo($maLk): array
+    {
+        $groups = (array) config('xml3176.xml3.overlap_execution_groups', []);
+        $khoa = 'xml3_pttt_chong_gio|' . serialize([
+            $groups,
+            config('xml3176.xml3.execution_max_hours'),
+            config('xml3176.xml3.execution_max_hours_theo_ma'),
+        ]);
+
+        return $this->theoHoSo($maLk, $khoa, function () use ($maLk, $groups) {
+            $dsDong = Xml3176Xml3::where('ma_lk', $maLk)
                 ->whereIn('ma_nhom', $groups)
                 ->whereNotNull('ngay_th_yl')
                 ->whereNotNull('ngay_kq')
                 ->orderBy('id')
-                ->get();
-        });
-        $others = $ptttCoMoc->filter(function ($other) use ($data) {
-            return $data->id !== null && (int) $other->id > (int) $data->id; // id > NULL: khong dong nao
-        });
+                ->get(['id', 'ma_dich_vu', 'ngay_th_yl', 'ngay_kq']);
 
-        foreach ($others as $other) {
-            if (!ServiceOverlapChecker::chongNhau($data->ngay_th_yl, $data->ngay_kq, $other->ngay_th_yl, $other->ngay_kq)) {
-                continue;
+            $dong = [];
+            $khoang = [];
+            foreach ($dsDong as $d) {
+                if ($d->ngay_th_yl === '' || $d->ngay_kq === '' || $this->phutVuotNguong($d) !== null) {
+                    continue;
+                }
+                $tu = Xml3176DateHelper::toDateTime($d->ngay_th_yl);
+                $den = Xml3176DateHelper::toDateTime($d->ngay_kq);
+                if (!$tu || !$den) {
+                    continue;
+                }
+                $dong[(int) $d->id] = $d;
+                $khoang[] = ['id' => (int) $d->id, 'tu' => $tu->getTimestamp(), 'den' => $den->getTimestamp()];
             }
 
-            $errorCode = $this->generateErrorCode('OVERLAPPING_SERVICE_EXECUTION');
-            $errors->push((object)[
-                'error_code' => $errorCode,
-                'error_name' => 'Thời gian thực hiện trùng với dịch vụ khác',
-                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($errorCode),
-                'description' => 'Dịch vụ ' . $data->ma_dich_vu . ' (' . strtodatetime($data->ngay_th_yl)
-                    . ' - ' . strtodatetime($data->ngay_kq) . ') chồng thời gian thực hiện với dịch vụ '
-                    . $other->ma_dich_vu . ' (' . strtodatetime($other->ngay_th_yl) . ' - '
-                    . strtodatetime($other->ngay_kq) . ') trong cùng hồ sơ.'
-            ]);
-        }
-
-        return $errors;
+            return ['dong' => $dong, 'kq' => PtttChongGio::quet($khoang, self::TOI_DA_NEU_CHONG)];
+        });
     }
 
     /**
@@ -1128,7 +1264,9 @@ class Xml3176Xml3Checker
         }
 
         // 04 ky tu cuoi la '0000': DVKT chua duoc quy dinh muc gia => DON_GIA_BH = 0.
-        if (MaDvktStructure::laChuaCoGia($ma) && (float) $data->don_gia_bh != 0) {
+        // Ra soat 15/10/2026: ma _TB da bao TB_CO_DON_GIA o tren, khong bao them lan nua.
+        if (MaDvktStructure::laChuaCoGia($ma) && !MaDvktStructure::laKhongThucHien($ma)
+            && (float) $data->don_gia_bh != 0) {
             $errorCode = $this->generateErrorCode('MA_DICH_VU_CHUA_CO_GIA_CO_DON_GIA_BH');
             $errors->push((object)[
                 'error_code' => $errorCode,
@@ -1448,7 +1586,8 @@ class Xml3176Xml3Checker
         $data->loadMissing('Xml3176Xml1');
 
         // #2391
-        if (!empty($data->ngay_th_yl) && !empty($data->ngay_kq) && $data->ngay_th_yl === $data->ngay_kq) {
+        $trungGio = !empty($data->ngay_th_yl) && !empty($data->ngay_kq) && $data->ngay_th_yl === $data->ngay_kq;
+        if ($trungGio) {
             $code = $this->generateErrorCode('NGAY_TH_YL_EQUALS_NGAY_KQ');
             $errors->push((object) [
                 'error_code' => $code, 'error_name' => 'Thời gian thực hiện y lệnh trùng thời gian kết quả',
@@ -1457,8 +1596,10 @@ class Xml3176Xml3Checker
             ]);
         }
 
-        // #199
-        if (!empty($data->ngay_kq) && $data->Xml3176Xml1 && !empty($data->Xml3176Xml1->ngay_ra)) {
+        // #199. Ra soat 15/10/2026: 420/424 dong da co XML3_INVALID_NGAY_KQ (so toi phut, rong
+        // hon) - chi bao khi quy tac do khong bao, tuc dong nhom vat tu.
+        if (!empty($data->ngay_kq) && $data->Xml3176Xml1 && !empty($data->Xml3176Xml1->ngay_ra)
+            && !$this->ngayKqNgoaiDotDieuTri($data)) {
             $kq = Xml3176DateHelper::datePart($data->ngay_kq);
             $ra = Xml3176DateHelper::datePart($data->Xml3176Xml1->ngay_ra);
             if ($kq !== null && $ra !== null && $kq > $ra) {
@@ -1474,7 +1615,9 @@ class Xml3176Xml3Checker
         // #2452/2453
         $groups = array_map('intval', (array) config('xml3176.xml3.execution_time_check_groups', [1, 3]));
         $minMin = (int) config('xml3176.xml3.execution_min_minutes', 3);
-        if (in_array((int) $data->ma_nhom, $groups, true)) {
+        // Trung gio da co NGAY_TH_YL_EQUALS_NGAY_KQ (#2391): ra soat 15/10/2026 thay 41.747 dong
+        // bi bao ca hai.
+        if (!$trungGio && in_array((int) $data->ma_nhom, $groups, true)) {
             $d = Xml3176DateHelper::diffMinutes($data->ngay_th_yl, $data->ngay_kq);
             if ($d !== null && $d < $minMin) {
                 $code = $this->generateErrorCode('EXECUTION_TIME_UNDER_3MIN');

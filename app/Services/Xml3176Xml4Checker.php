@@ -83,26 +83,28 @@ class Xml3176Xml4Checker
 
     /**
      * #1274 mã chỉ số trống, #1276 tên chỉ số trống, #2521 XN không nhập giá trị+kết quả.
+     *
+     * #1274/#1276 gộp một mã XML4_CHI_SO_EMPTY (15/10/2026): LIS thường thiếu cả hai nên
+     * 350.508 dòng từng ra hai lỗi cho cùng một sai sót.
      */
     private function checkChiSo(Xml3176Xml4 $data): Collection
     {
         $errors = collect();
 
         $coGiaTriDo = (trim((string) $data->gia_tri) !== '') || (trim((string) $data->don_vi_do) !== '');
+        $thieu = [];
         if ($coGiaTriDo && empty($data->ma_chi_so)) {
-            $code = $this->generateErrorCode('MA_CHI_SO_EMPTY');
-            $errors->push((object) [
-                'error_code' => $code, 'error_name' => 'Mã chỉ số để trống',
-                'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($code),
-                'description' => 'Dòng có giá trị/đơn vị đo nhưng thiếu mã chỉ số. Dịch vụ: ' . $data->ma_dich_vu,
-            ]);
+            $thieu[] = 'mã chỉ số';
         }
         if ($coGiaTriDo && empty($data->ten_chi_so)) {
-            $code = $this->generateErrorCode('TEN_CHI_SO_EMPTY');
+            $thieu[] = 'tên chỉ số';
+        }
+        if ($thieu) {
+            $code = $this->generateErrorCode('CHI_SO_EMPTY');
             $errors->push((object) [
-                'error_code' => $code, 'error_name' => 'Tên chỉ số để trống',
+                'error_code' => $code, 'error_name' => 'Mã/tên chỉ số để trống',
                 'critical_error' => $this->xmlErrorService->getCriticalErrorStatus($code),
-                'description' => 'Dòng có giá trị/đơn vị đo nhưng thiếu tên chỉ số. Dịch vụ: ' . $data->ma_dich_vu,
+                'description' => 'Dòng có giá trị/đơn vị đo nhưng thiếu ' . implode(' và ', $thieu) . '. Dịch vụ: ' . $data->ma_dich_vu,
             ]);
         }
 
@@ -110,7 +112,12 @@ class Xml3176Xml4Checker
         $rongHet = trim((string) $data->gia_tri) === ''
             && trim((string) $data->mo_ta) === ''
             && trim((string) $data->ket_luan) === '';
-        if ($laChiSo && $rongHet) {
+        // Ra soat 15/10/2026: DVKT nhom bat buoc mo ta/ket luan da co INFO_ERROR_MO_TA_EMPTY/
+        // KET_LUAN_EMPTY bao (dung dieu kien cua infoChecker) thi nhuong, khong ra loi thu ba.
+        $quyTacCuDaBao = $laChiSo && $rongHet && !empty($data->ma_dich_vu)
+            && (empty($data->mo_ta) || empty($data->ket_luan))
+            && isset($this->dvktCanKetLuan($data->ma_lk)[self::khoaChuoiSql($data->ma_dich_vu)]);
+        if ($laChiSo && $rongHet && !$quyTacCuDaBao) {
             $code = $this->generateErrorCode('XN_MISSING_VALUE_RESULT');
             $errors->push((object) [
                 'error_code' => $code, 'error_name' => 'Xét nghiệm không nhập giá trị và kết quả',

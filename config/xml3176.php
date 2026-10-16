@@ -103,7 +103,6 @@ return [
             'nhom_thau_pattern' => '/^N([0-9]|[1-9][0-9])$/', // Nhóm thầu N0 đến N99
             'nam_thau_pattern' => '/^\d{4}$/',   // Định dạng năm 4 ký tự
         ],
-        'service_groups_requiring_machine' => [1,2,3], //Bổ sung mã nhóm bắt buộc phải có máy
         'service_groups_pttt' => [8,18], //Bổ sung mã nhóm là pttt
         'execution_min_minutes'       => 3, // Số phút thực hiện dịch vụ tối thiểu
         'execution_time_check_groups' => [1, 3], // Mã nhóm cần kiểm tra thời gian thực hiện tối thiểu
@@ -113,6 +112,16 @@ return [
         'tyle_epsilon'                => 0.01, // Dung sai đối chiếu tỷ lệ thanh toán BH của VTYT với danh mục
         // Nhóm dịch vụ mà một bệnh nhân KHÔNG thể trải qua hai dịch vụ chồng thời gian
         'overlap_execution_groups'    => [8, 18],
+        // Số giờ thực hiện tối đa của dịch vụ thuộc overlap_execution_groups; vượt thì báo
+        // XML3_EXECUTION_TIME_TOO_LONG và không đưa dòng đó vào so chồng thời gian
+        'execution_max_hours'         => 24,
+        // Ngưỡng riêng theo tiền tố mã dịch vụ (tiền tố dài nhất thắng)
+        'execution_max_hours_theo_ma' => [
+            '01.0181' => 72, // Lọc máu thẩm tách liên tục cấp cứu (CVVHDF)
+            '01.0182' => 72,
+            '01.0183' => 72,
+            '11.0118' => 48, // Hút áp lực âm (VAC) trong 48h
+        ],
     ],
     'xml8' => [
         'tomtat_kq_min_length' => 20, // Độ dài tối thiểu của tóm tắt kết quả điều trị
