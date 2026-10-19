@@ -297,6 +297,13 @@ return [
                     'active'=> ['dashboard/operating-room*'],
                 ],
                 [
+                    'text'  => 'Dashboard lãnh đạo',
+                    'icon'  => 'line-chart',
+                    'checkrole'   => 'dashboard',
+                    'route'   => 'dashboard.lanh-dao',
+                    'active'=> ['dashboard/lanh-dao*'],
+                ],
+                [
                     'text'      => 'Tỷ lệ trả KQ đúng hẹn',
                     'icon'      => 'clock-o',
                     'checkrole' => 'administrator',
