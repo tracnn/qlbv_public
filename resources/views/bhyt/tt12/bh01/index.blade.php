@@ -220,8 +220,7 @@
 
         $o.append($('<a>').addClass('btn btn-xs btn-default').attr('href', url(MAU_DONG, ma)).attr('target', '_blank')
             .append($('<i>').addClass('fa fa-list')).append(' Xem dòng')).append(' ');
-        $o.append($('<a>').addClass('btn btn-xs btn-default').attr('href', url(MAU_XUAT_EXCEL, ma))
-            .append($('<i>').addClass('fa fa-file-excel-o')).append(' Xuất Excel')).append(' ');
+        $o.append(nut('btn-default bh01-xuat-excel', 'fa-file-excel-o', 'Xuất Excel')).append(' ');
         $o.append(nut('btn-default bh01-lich-su', 'fa-history', 'Nhật ký'));
 
         return $o.html();
@@ -459,6 +458,94 @@
         $.ajax({ url: url(MAU_KY_LAI, $(this).data('ma-ban')), method: 'POST', dataType: 'json', data: { _token: CSRF } })
             .done(function (kq) { thongBao(true, kq.thong_diep); bang.ajax.reload(null, false); })
             .fail(function (xhr) { thongBao(false, loiTuXhr(xhr)); });
+    });
+
+    /**
+     * Xuat Excel mot ban bang XHR chu khong bang lien ket thuong.
+     *
+     * VI SAO: ban 21 nghin dong mat ~8 giay de dung tep; lien ket thuong khong cho trang biet
+     * khi nao xong, nguoi dung nhin man hinh khong thay gi va bam lai nhieu lan (moi lan dung
+     * lai ca tep). XHR cho phep quay nut + dem giay, xong moi luu tep; loi may chu (JSON) hien
+     * ra thong bao thay vi mo mot trang JSON tran.
+     */
+    function xuatExcel($nut) {
+        var ma = $nut.data('ma-ban');
+        var nhanCu = $nut.html();
+        var batDau = Date.now();
+
+        $nut.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Đang xuất…');
+        thongBaoDangChay('Đang xuất Excel bản ' + ma + '…', batDau);
+
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', url(MAU_XUAT_EXCEL, ma));
+        xhr.responseType = 'blob';
+        xhr.onload = function () {
+            dungDongHo();
+            $nut.prop('disabled', false).html(nhanCu);
+
+            if (xhr.status === 200) {
+                $('#bh01-thong-bao').empty().hide();
+                luuBlob(xhr.response, tenTepTuHeader(xhr.getResponseHeader('Content-Disposition')) || (ma + '.xlsx'));
+                return;
+            }
+
+            // Than loi la JSON {thong_diep} nhung da nhan duoi dang blob: doc lai thanh chu.
+            var doc = new FileReader();
+            doc.onload = function () {
+                var kq = null;
+                try { kq = JSON.parse(doc.result); } catch (e) { kq = null; }
+                thongBao(false, loiTuXhr({ status: xhr.status, responseJSON: kq }));
+            };
+            doc.readAsText(xhr.response);
+        };
+        xhr.onerror = function () {
+            dungDongHo();
+            $nut.prop('disabled', false).html(nhanCu);
+            thongBao(false, loiTuXhr({ status: 0 }));
+        };
+        xhr.send();
+    }
+
+    var dongHoXuat = null;
+
+    function thongBaoDangChay(chu, batDau) {
+        var $dem = $('<span>').text('0');
+        $('#bh01-thong-bao').empty().show().append(
+            $('<div>').addClass('alert alert-info').css('margin-bottom', 0)
+                .append($('<i>').addClass('fa fa-spinner fa-spin'))
+                .append(document.createTextNode(' ' + chu + ' Đã chạy '))
+                .append($dem).append(document.createTextNode(' giây.'))
+        );
+        dungDongHo();
+        dongHoXuat = setInterval(function () { $dem.text(Math.round((Date.now() - batDau) / 1000)); }, 1000);
+    }
+
+    function dungDongHo() {
+        if (dongHoXuat !== null) {
+            clearInterval(dongHoXuat);
+            dongHoXuat = null;
+        }
+    }
+
+    function tenTepTuHeader(h) {
+        if (!h) { return null; }
+        var m = /filename\*=UTF-8''([^;]+)/i.exec(h) || /filename="?([^";]+)"?/i.exec(h);
+        return m ? decodeURIComponent(m[1]) : null;
+    }
+
+    function luuBlob(blob, ten) {
+        if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+            window.navigator.msSaveOrOpenBlob(blob, ten);
+            return;
+        }
+        var duongDan = URL.createObjectURL(blob);
+        var $a = $('<a>').attr({ href: duongDan, download: ten }).css('display', 'none').appendTo('body');
+        $a[0].click();
+        setTimeout(function () { URL.revokeObjectURL(duongDan); $a.remove(); }, 1000);
+    }
+
+    $(document).on('click', '.bh01-xuat-excel', function () {
+        xuatExcel($(this));
     });
 
     $(document).on('click', '.bh01-lich-su', function () {
