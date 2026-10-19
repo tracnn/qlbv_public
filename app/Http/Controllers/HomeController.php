@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 
 use App\Http\Controllers\Concerns\ExcludesDashboardPatientTypes;
 use App\HISProBaoCaoQuanTri;
+use App\Services\Dashboard\ChiSoDungChung;
 use App\Services\FtpService;
 
 use Carbon\Carbon;
@@ -153,33 +154,15 @@ class HomeController extends Controller
 
     private function getDetailDayCountInpatient($from_date, $to_date)
     {
-        $data = DB::connection("HISPro")
-        ->table('his_treatment')
+        $data = ChiSoDungChung::noiTruRaVien($from_date, $to_date, $this->excludedPatientTypeIds(), [])
         ->select([
-            DB::raw("
-                CASE
-                    WHEN ((TO_DATE(out_time, 'YYYYMMDDHH24MISS') - TO_DATE(clinical_in_time, 'YYYYMMDDHH24MISS')) * 24) < 4 THEN 0
-                    WHEN ((TO_DATE(out_time, 'YYYYMMDDHH24MISS') - TO_DATE(clinical_in_time, 'YYYYMMDDHH24MISS')) * 24) >= 4 
-                         AND ((TO_DATE(out_time, 'YYYYMMDDHH24MISS') - TO_DATE(clinical_in_time, 'YYYYMMDDHH24MISS')) * 24) < 24 THEN 1
-                    ELSE 
-                        CASE
-                            WHEN MOD((TO_DATE(out_time, 'YYYYMMDDHH24MISS') - TO_DATE(clinical_in_time, 'YYYYMMDDHH24MISS')) * 24, 24) >= 4 
-                                THEN FLOOR(TO_DATE(out_time, 'YYYYMMDDHH24MISS') - TO_DATE(clinical_in_time, 'YYYYMMDDHH24MISS')) + 1
-                            ELSE FLOOR(TO_DATE(out_time, 'YYYYMMDDHH24MISS') - TO_DATE(clinical_in_time, 'YYYYMMDDHH24MISS'))
-                        END
-                END AS day_count
-            "),
+            DB::raw(ChiSoDungChung::SQL_SO_NGAY_DIEU_TRI . ' AS day_count'),
             'treatment_day_count',
             'in_time',
             'clinical_in_time',
             'out_time',
             'treatment_code'
         ])
-        ->whereBetween('out_time', [$from_date, $to_date])
-        ->where('tdl_treatment_type_id', 3)
-        ->when($this->excludedPatientTypeIds(), function ($q, $ids) {
-            $q->whereNotIn('his_treatment.tdl_patient_type_id', $ids);
-        })
         ->get();
 
         return $data;
@@ -1498,18 +1481,9 @@ class HomeController extends Controller
 
     private function newpatient($from_date, $to_date)
     {
-        return DB::connection('HISPro')
-        ->table('his_treatment')
-        ->join('his_patient', 'his_patient.id', '=', 'his_treatment.patient_id')
-        ->join('his_branch', 'his_branch.id', '=', 'his_treatment.branch_id')
+        return ChiSoDungChung::benhNhanMoi($from_date, $to_date, $this->excludedPatientTypeIds(), [])
         ->selectRaw('count(*) as so_luong,branch_name')
-        ->whereBetween('in_time', [$from_date, $to_date])
-        ->whereBetween('his_patient.create_time', [$from_date, $to_date])
-        ->where('his_patient.is_delete',0)
         ->groupBy('branch_name')
-        ->when($this->excludedPatientTypeIds(), function ($q, $ids) {
-            $q->whereNotIn('his_treatment.tdl_patient_type_id', $ids);
-        })
         ->get();
     }
 
@@ -1560,18 +1534,9 @@ class HomeController extends Controller
 
     private function reExamination($from_date, $to_date)
     {
-        return DB::connection('HISPro')
-        ->table('his_treatment')
-        ->join('his_patient', 'his_patient.id', '=', 'his_treatment.patient_id')
-        ->join('his_branch', 'his_branch.id', '=', 'his_treatment.branch_id')
+        return ChiSoDungChung::taiKham($from_date, $to_date, $this->excludedPatientTypeIds(), [])
         ->selectRaw('count(*) as so_luong,branch_name')
-        ->whereBetween('in_time', [$from_date, $to_date])
-        ->where('his_patient.create_time', '<', $from_date)
-        ->where('his_treatment.is_delete',0)
         ->groupBy('branch_name')
-        ->when($this->excludedPatientTypeIds(), function ($q, $ids) {
-            $q->whereNotIn('his_treatment.tdl_patient_type_id', $ids);
-        })
         ->get();
     }
 
