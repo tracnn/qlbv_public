@@ -106,6 +106,43 @@ class TabDieuTriGiuongTest extends TestCase
     }
 
     /** @test */
+    public function luot_treo_cat_tai_gio_ra_vien()
+    {
+        $luot = [
+            // remove_time NULL nhưng hồ sơ đã ra viện trong kỳ → kết thúc tại out_time
+            (object) ['treatment_id' => 1, 'department_id' => 10, 'add_time' => '20261005000000', 'remove_time' => null, 'out_time' => '20261005120000'],
+            // remove_time sớm hơn out_time → giữ remove_time
+            (object) ['treatment_id' => 2, 'department_id' => 40, 'add_time' => '20261006000000', 'remove_time' => '20261006060000', 'out_time' => '20261007000000'],
+        ];
+
+        $kq = $this->ngayGiuong($luot, $this->ky());
+
+        $this->assertEquals(0.5, $kq['1|K04'], '', 1e-9);
+        $this->assertEquals(0.25, $kq['1|K05'], '', 1e-9);
+    }
+
+    /** @test */
+    public function cong_suat_dung_moc_cat_luu_cung_ngay_giuong()
+    {
+        // Ngày-giường tính lúc 10:00 (T1) và được cache; request sau lúc 16:00 (T2) dùng lại
+        $kyT1 = $this->ky('hn', '20261019000000', '20261019235959', '2026-10-19 10:00:00');
+        $kyT2 = $this->ky('hn', '20261019000000', '20261019235959', '2026-10-19 16:00:00');
+        $luot = [];
+        for ($i = 1; $i <= 10; $i++) {
+            $luot[] = $this->luot($i, 60, '20261019000000', null);
+        }
+        $ngayGiuong = $this->ngayGiuong($luot, $kyT1);
+
+        $kq = TabDieuTriGiuong::dinhDang([], $ngayGiuong, [], $this->danhMuc(), $kyT2, $kyT1->denThucTe());
+        $i = array_search('Ngoại', $kq['cong_suat']['categories'], true);
+        $this->assertSame(100.0, $kq['cong_suat']['gia_tri'][$i]);
+
+        // Thẻ HN: 100 giường PD (50 + 40 + 10), 10 BN × 10h → 10%
+        $tong = TabDieuTriGiuong::tongHop([], $ngayGiuong, $this->danhMuc(), $kyT2, $kyT1->denThucTe());
+        $this->assertSame(10.0, $tong['cong_suat_giuong']['hn']);
+    }
+
+    /** @test */
     public function luot_ngoai_danh_muc_bi_bo()
     {
         $kq = $this->ngayGiuong([$this->luot(1, 999, '20261002000000', '20261003000000')], $this->ky());

@@ -26,17 +26,25 @@ class TabDieuTriGiuong
 
     public function lay(KyLoc $ky): array
     {
-        return Cache::remember($ky->khoaCache('dieu_tri_giuong'), self::phutCache($ky), function () use ($ky) {
+        $kq = Cache::remember($ky->khoaCache('dieu_tri_giuong'), self::phutCache($ky), function () use ($ky) {
             $danhMuc = $this->danhMuc->tai(substr($ky->to, 0, 8));
+            $ng = $this->ngayGiuong($ky, $danhMuc);
 
-            return self::dinhDang(
-                $this->ngayDieuTri($ky),
-                $this->ngayGiuong($ky, $danhMuc),
-                $this->truyVanDangNam(),
-                $danhMuc,
-                $ky
-            );
+            $kq = self::dinhDang($this->ngayDieuTri($ky), $ng['ngay_giuong'], [], $danhMuc, $ky, $ng['den']);
+            unset($kq['giuong_hien_tai']);
+
+            return $kq;
         });
+
+        // Ảnh chụp lúc tải, không theo bộ lọc ngày (spec §5.2): ngoài cache theo kỳ
+        $kq['giuong_hien_tai'] = self::giuongHienTai(
+            $this->dangNam(),
+            $this->danhMuc->tai(now()->format('Ymd')),
+            $ky->coSo,
+            $ky->branchIds()
+        );
+
+        return $kq;
     }
 
     /**
@@ -46,8 +54,9 @@ class TabDieuTriGiuong
     {
         return Cache::remember(self::khoaChung($ky, 'dieu_tri_giuong_tong'), self::phutCache($ky), function () use ($ky) {
             $danhMuc = $this->danhMuc->tai(substr($ky->to, 0, 8));
+            $ng = $this->ngayGiuong($ky, $danhMuc);
 
-            return self::tongHop($this->ngayDieuTri($ky), $this->ngayGiuong($ky, $danhMuc), $danhMuc, $ky);
+            return self::tongHop($this->ngayDieuTri($ky), $ng['ngay_giuong'], $danhMuc, $ky, $ng['den']);
         });
     }
 
@@ -59,24 +68,38 @@ class TabDieuTriGiuong
         });
     }
 
-    /** [khoaDonVi => ngày-giường] của mọi cơ sở. */
+    /**
+     * Ngày-giường của mọi cơ sở, cache KÈM mốc cắt: mẫu số công suất phải tính tới đúng mốc này,
+     * không phải "now" của request sau (kỳ chứa hôm nay).
+     *
+     * @return array ['den' => YmdHis, 'ngay_giuong' => [khoaDonVi => ngày-giường]]
+     */
     private function ngayGiuong(KyLoc $ky, array $danhMuc): array
     {
         return Cache::remember(self::khoaChung($ky, 'ngay_giuong'), self::phutCache($ky), function () use ($ky, $danhMuc) {
             $batDau = microtime(true);
+            $den = $ky->denThucTe();
             $kq = self::ngayGiuongTheoDonVi(
                 $this->truyVanLuotNam($ky),
                 $danhMuc['khoa'],
                 self::epoch($ky->from),
-                self::epoch($ky->denThucTe())
+                self::epoch($den)
             );
             Log::debug('Dashboard lanh dao - ngay giuong', [
-                'from' => $ky->from, 'den' => $ky->denThucTe(),
+                'from' => $ky->from, 'den' => $den,
                 'giay' => round(microtime(true) - $batDau, 2),
                 'ram_dinh_mb' => round(memory_get_peak_usage(true) / 1048576, 1),
             ]);
 
-            return $kq;
+            return ['den' => $den, 'ngay_giuong' => $kq];
+        });
+    }
+
+    /** Số đang nằm theo khoa HIS, mọi cơ sở; cache 5 phút, không phụ thuộc kỳ. */
+    private function dangNam(): array
+    {
+        return Cache::remember('lanh_dao:dang_nam', 5, function () {
+            return $this->truyVanDangNam();
         });
     }
 
@@ -105,7 +128,7 @@ class TabDieuTriGiuong
      * Lượt nằm giường chồng lên kỳ, sắp theo treatment_id, department_id, add_time.
      * Trả cursor để không nạp hết vào RAM.
      *
-     * @return iterable dòng: treatment_id, department_id, add_time, remove_time
+     * @return iterable dòng: treatment_id, department_id, add_time, remove_time, out_time
      */
     protected function truyVanLuotNam(KyLoc $ky): iterable
     {
@@ -128,7 +151,7 @@ class TabDieuTriGiuong
             $q->whereNotIn('t.tdl_patient_type_id', $loaiTru);
         }
 
-        return $q->select('tbr.treatment_id', 'r.department_id', 'tbr.add_time', 'tbr.remove_time')
+        return $q->select('tbr.treatment_id', 'r.department_id', 'tbr.add_time', 'tbr.remove_time', 't.out_time')
             ->orderBy('tbr.treatment_id')
             ->orderBy('r.department_id')
             ->orderBy('tbr.add_time')
@@ -165,6 +188,7 @@ class TabDieuTriGiuong
     /**
      * Hàm thuần, một lượt trên dữ liệu đã sắp theo treatment_id: gom khoảng theo (hồ sơ, đơn vị),
      * gộp khoảng chồng (nằm ghép), cắt theo [$tu, $den]. remove_time NULL = đang nằm → $den.
+     * Ruling R9: hồ sơ đã có out_time thì lượt nằm kết thúc muộn nhất tại out_time (giường "treo").
      *
      * @param iterable $luot dòng truyVanLuotNam()
      * @param array $khoaDonVi [department_id => khoaDonVi]
@@ -196,7 +220,11 @@ class TabDieuTriGiuong
                 continue;
             }
             $vao = self::epoch((string) $d->add_time);
-            $ra = ($d->remove_time === null || $d->remove_time === '') ? $den : self::epoch((string) $d->remove_time);
+            $ra = self::rong($d->remove_time) ? $den : self::epoch((string) $d->remove_time);
+            $raVien = isset($d->out_time) ? $d->out_time : null;
+            if (!self::rong($raVien)) {
+                $ra = min($ra, self::epoch((string) $raVien));
+            }
             if ($ra <= $vao) {
                 continue;
             }
@@ -214,8 +242,9 @@ class TabDieuTriGiuong
      * @param array $ngayGiuong [khoaDonVi => ngày-giường]
      * @param array $dangNam dòng truyVanDangNam()
      * @param array $danhMuc kết quả DanhMucDonVi::tai()
+     * @param string|null $den mốc cắt (YmdHis) đã dùng khi tính $ngayGiuong; null = $ky->denThucTe()
      */
-    public static function dinhDang(array $ngayDieuTri, array $ngayGiuong, array $dangNam, array $danhMuc, KyLoc $ky): array
+    public static function dinhDang(array $ngayDieuTri, array $ngayGiuong, array $dangNam, array $danhMuc, KyLoc $ky, string $den = null): array
     {
         $branch = $ky->branchIds();
         $thuoc = function ($dv) use ($danhMuc, $branch) {
@@ -261,40 +290,20 @@ class TabDieuTriGiuong
         }
         $cotNgay = TinhToan::sapGiam($cotNgay, 'gia_tri');
 
-        // Công suất giường + bảng giường hiện tại: chỉ đơn vị có giường phê duyệt
-        $dangTheoDonVi = [];
-        foreach ($dangNam as $d) {
-            $d = (object) (array) $d;
-            $khoa = (int) $d->department_id;
-            if (isset($danhMuc['khoa'][$khoa])) {
-                $dv = $danhMuc['khoa'][$khoa];
-                $dangTheoDonVi[$dv] = (isset($dangTheoDonVi[$dv]) ? $dangTheoDonVi[$dv] : 0) + (int) $d->dang_nam;
-            }
-        }
-
-        $soNgay = $ky->soNgayThucTe();
+        // Công suất giường: chỉ đơn vị có giường phê duyệt
+        $soNgay = self::soNgay($ky, $den);
         $cotCs = [];
-        $bang = [];
         foreach ($danhMuc['don_vi'] as $dv => $donVi) {
             if (!$thuoc($dv) || !$coGiuong($dv)) {
                 continue;
             }
             $pd = (int) $donVi['giuong_pd'];
             $ng = isset($ngayGiuong[$dv]) ? (float) $ngayGiuong[$dv] : 0.0;
-            $ten = DanhMucDonVi::nhan($donVi, $ky->coSo);
             $cotCs[] = [
-                'ten' => $ten,
+                'ten' => DanhMucDonVi::nhan($donVi, $ky->coSo),
                 'gia_tri' => TinhToan::congSuat($ng, $pd, $soNgay),
                 'ngay_giuong' => round($ng, 2),
                 'giuong_pd' => $pd,
-            ];
-            $dang = isset($dangTheoDonVi[$dv]) ? $dangTheoDonVi[$dv] : 0;
-            $bang[] = [
-                'don_vi' => $ten,
-                'giuong_pd' => $pd,
-                'dang_nam' => $dang,
-                'con_trong' => $pd - $dang,
-                'cong_suat' => TinhToan::tyLe($dang, $pd),
             ];
         }
         $cotCs = TinhToan::sapGiam($cotCs, 'gia_tri');
@@ -311,15 +320,55 @@ class TabDieuTriGiuong
                 'ngay_giuong' => array_column($cotCs, 'ngay_giuong'),
                 'giuong_pd' => array_column($cotCs, 'giuong_pd'),
             ],
-            'giuong_hien_tai' => TinhToan::sapGiam($bang, 'cong_suat'),
+            'giuong_hien_tai' => self::giuongHienTai($dangNam, $danhMuc, $ky->coSo, $branch),
         ];
     }
 
     /**
-     * Hàm thuần cho thẻ số. Ngày ĐT gom theo branch của hồ sơ (spec §4); công suất = Σngày-giường
-     * các đơn vị có giường PD của cơ sở ÷ (Σgiuong_pd × số ngày thực tế).
+     * Bảng giường hiện tại (ảnh chụp, không theo kỳ): chỉ đơn vị có giường PD; con_trong có thể âm.
+     *
+     * @param array $dangNam dòng truyVanDangNam()
+     * @param int[] $branch
      */
-    public static function tongHop(array $ngayDieuTri, array $ngayGiuong, array $danhMuc, KyLoc $ky): array
+    public static function giuongHienTai(array $dangNam, array $danhMuc, string $coSo, array $branch): array
+    {
+        $dangTheoDonVi = [];
+        foreach ($dangNam as $d) {
+            $d = (object) (array) $d;
+            $khoa = (int) $d->department_id;
+            if (isset($danhMuc['khoa'][$khoa])) {
+                $dv = $danhMuc['khoa'][$khoa];
+                $dangTheoDonVi[$dv] = (isset($dangTheoDonVi[$dv]) ? $dangTheoDonVi[$dv] : 0) + (int) $d->dang_nam;
+            }
+        }
+
+        $bang = [];
+        foreach ($danhMuc['don_vi'] as $dv => $donVi) {
+            $pd = (int) $donVi['giuong_pd'];
+            if ($pd <= 0 || !in_array((int) $donVi['branch_id'], $branch, true)) {
+                continue;
+            }
+            $dang = isset($dangTheoDonVi[$dv]) ? $dangTheoDonVi[$dv] : 0;
+            $bang[] = [
+                'don_vi' => DanhMucDonVi::nhan($donVi, $coSo),
+                'giuong_pd' => $pd,
+                'dang_nam' => $dang,
+                'con_trong' => $pd - $dang,
+                'cong_suat' => TinhToan::tyLe($dang, $pd),
+            ];
+        }
+
+        return TinhToan::sapGiam($bang, 'cong_suat');
+    }
+
+    /**
+     * Hàm thuần cho thẻ số. Ngày ĐT gom theo branch của hồ sơ (spec §4); công suất = Σngày-giường
+     * các đơn vị có giường PD của cơ sở ÷ (Σgiuong_pd × số ngày từ from đến $den).
+     * Ruling R8: tử số chỉ gồm đơn vị có giuong_pd > 0 (thẻ = tổng các cột biểu đồ công suất).
+     *
+     * @param string|null $den mốc cắt (YmdHis) đã dùng khi tính $ngayGiuong; null = $ky->denThucTe()
+     */
+    public static function tongHop(array $ngayDieuTri, array $ngayGiuong, array $danhMuc, KyLoc $ky, string $den = null): array
     {
         $branchCoSo = [];
         foreach (config('dashboard_lanh_dao.co_so', []) as $ma => $cs) {
@@ -352,7 +401,7 @@ class TabDieuTriGiuong
         $tb = function ($tong, $so) {
             return $so > 0 ? round($tong / $so, 2) : null;
         };
-        $soNgay = $ky->soNgayThucTe();
+        $soNgay = self::soNgay($ky, $den);
         $kq = ['ngay_dieu_tri' => [], 'cong_suat_giuong' => []];
         foreach (['hn', 'nb'] as $cs) {
             $kq['ngay_dieu_tri'][$cs] = $tb($tongNgay[$cs], $soHoSo[$cs]);
@@ -373,6 +422,17 @@ class TabDieuTriGiuong
         }
 
         return \DateTime::createFromFormat('!YmdHis', $ymdHis, $mui)->getTimestamp();
+    }
+
+    /** Số ngày từ from đến mốc cắt $den (mặc định denThucTe), cùng hàm epoch với tử số. */
+    private static function soNgay(KyLoc $ky, string $den = null): float
+    {
+        return (self::epoch($den !== null ? $den : $ky->denThucTe()) - self::epoch($ky->from)) / 86400;
+    }
+
+    private static function rong($giaTri): bool
+    {
+        return $giaTri === null || $giaTri === '' || (string) $giaTri === '0';
     }
 
     private static function phutCache(KyLoc $ky): int
