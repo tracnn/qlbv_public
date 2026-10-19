@@ -3,7 +3,12 @@
 namespace App\Services\Tt12\Bh01;
 
 use App\Services\Tt12\Tt12DocExcel;
-use Box\Spout\Reader\Common\Creator\ReaderEntityFactory;
+use Box\Spout\Common\Helper\GlobalFunctionsHelper;
+use Box\Spout\Reader\XLSX\Creator\HelperFactory;
+use Box\Spout\Reader\XLSX\Creator\InternalEntityFactory;
+use Box\Spout\Reader\XLSX\Creator\ManagerFactory;
+use Box\Spout\Reader\XLSX\Manager\OptionsManager;
+use Box\Spout\Reader\XLSX\Reader;
 
 /**
  * Doc va kiem tep .xlsx 01/BH (dinh dang HSTH01BH.xlsx cua hisnguonmo; spec nhap/xuat Excel muc 3, 4.2-4.5).
@@ -221,9 +226,9 @@ class Bh01DocExcel
                 $thuMucTam = sys_get_temp_dir();
             }
 
-            $reader = ReaderEntityFactory::createXLSXReader();
+            $reader = $this->taoBoDoc();
             $reader->setShouldPreserveEmptyRows(true);
-            // Shared strings lon duoc Spout ghi ra tep tam thay vi giu trong RAM.
+            // Chi dung khi Bh01ChuoiChung phai lui ve luu chuoi dung chung ra tep tam.
             $reader->setTempFolder($thuMucTam);
             $reader->open($duongDan);
 
@@ -384,5 +389,23 @@ class Bh01DocExcel
         call_user_func($nhanTieuDe, $thieu, $trung, $thua);
 
         return ($thieu || $trung) ? null : $map;
+    }
+
+    /**
+     * Dung bo doc XLSX giong ReaderEntityFactory::createXLSXReader() cua Spout 3.3, chi thay
+     * CachingStrategyFactory bang Bh01ChuoiChung - xem ly do o lop do. Spout khong co tuy chon
+     * nao khac de chon cach giu chuoi dung chung.
+     */
+    protected function taoBoDoc()
+    {
+        $helperFactory = new HelperFactory();
+        $managerFactory = new ManagerFactory($helperFactory, new Bh01ChuoiChung());
+
+        return new Reader(
+            new OptionsManager(),
+            new GlobalFunctionsHelper(),
+            new InternalEntityFactory($managerFactory, $helperFactory),
+            $managerFactory
+        );
     }
 }
