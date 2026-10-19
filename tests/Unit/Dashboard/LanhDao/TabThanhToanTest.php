@@ -107,4 +107,18 @@ class TabThanhToanTest extends TestCase
         $this->assertSame(['Ngoại', 'Tim mạch'], $kq['qr']['categories']);
         $this->assertSame([80.0, 10.0], $kq['qr']['ty_le']);
     }
+
+    /** @test */
+    public function dem_giao_dich_bi_bo_khong_ho_so_va_ngoai_danh_muc()
+    {
+        $dong = [
+            $this->dong(10, 'thu', 1, 5), $this->dong(null, 'thu', 1, 7),
+            $this->dong(99, 'thu', 0, 3), $this->dong(98, 'hoan', 1, 2),
+        ];
+
+        $kq = TabThanhToan::dinhDang($dong, $this->danhMuc(), $this->ky());
+
+        $this->assertSame(['khong_ho_so' => 7, 'ngoai_danh_muc' => 5], $kq['bo_qua']);
+        $this->assertSame([5], $kq['qr']['tong_gd']);
+    }
 }

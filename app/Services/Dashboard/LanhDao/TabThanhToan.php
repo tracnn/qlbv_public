@@ -5,6 +5,7 @@ namespace App\Services\Dashboard\LanhDao;
 use App\Http\Controllers\Concerns\ExcludesDashboardPatientTypes;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Tab Thanh toán: tỷ lệ thanh toán QR và tỷ lệ hoàn ứng online theo đơn vị giường phê duyệt.
@@ -28,7 +29,12 @@ class TabThanhToan
         return Cache::remember($ky->khoaCache('thanh_toan'), $phut, function () use ($ky) {
             $danhMuc = $this->danhMuc->tai(substr($ky->to, 0, 8));
 
-            return self::dinhDang($this->truyVan($ky), $danhMuc, $ky);
+            $kq = self::dinhDang($this->truyVan($ky), $danhMuc, $ky);
+            if ($kq['bo_qua']['khong_ho_so'] || $kq['bo_qua']['ngoai_danh_muc']) {
+                Log::debug('Dashboard lanh dao - tab thanh toan: giao dich bi bo', $kq['bo_qua'] + ['from' => $ky->from, 'to' => $ky->to]);
+            }
+
+            return $kq;
         });
     }
 
@@ -58,8 +64,8 @@ class TabThanhToan
             . ' ELSE (CASE WHEN pf.pay_form_code IN (' . $in($qr) . ') THEN 1 ELSE 0 END) END AS la_online,'
             . ' t.amount AS amount'
             . ' FROM his_transaction t'
-            . ' JOIN his_treatment tr ON tr.id = t.treatment_id'
-            . ' JOIN his_pay_form pf ON pf.id = t.pay_form_id'
+            . ' LEFT JOIN his_treatment tr ON tr.id = t.treatment_id'
+            . ' LEFT JOIN his_pay_form pf ON pf.id = t.pay_form_id'
             . ' WHERE t.transaction_time BETWEEN ? AND ?'
             . ' AND t.is_delete = 0 AND t.is_cancel IS NULL'
             . ' AND t.transaction_type_id IN (1, 2, 3)'
@@ -76,17 +82,26 @@ class TabThanhToan
     /**
      * @param array $dong dòng của truyVan()
      * @param array $danhMuc kết quả DanhMucDonVi::tai()
-     * @return array ['qr' => Chuoi, 'hoan_online' => Chuoi]
+     * @return array ['qr' => Chuoi, 'hoan_online' => Chuoi, 'bo_qua' => ['khong_ho_so' => int, 'ngoai_danh_muc' => int]]
      */
     public static function dinhDang(array $dong, array $danhMuc, KyLoc $ky): array
     {
         $branch = $ky->branchIds();
         $gop = ['thu' => [], 'hoan' => []];
+        $boQua = ['khong_ho_so' => 0, 'ngoai_danh_muc' => 0];
 
         foreach ($dong as $d) {
             $d = (object) (array) $d;
+            if (!isset($gop[$d->nhom])) {
+                continue;
+            }
+            if ($d->last_department_id === null || $d->last_department_id === '') {
+                $boQua['khong_ho_so'] += (int) $d->so_gd;
+                continue;
+            }
             $khoa = (int) $d->last_department_id;
-            if (!isset($danhMuc['khoa'][$khoa]) || !isset($gop[$d->nhom])) {
+            if (!isset($danhMuc['khoa'][$khoa])) {
+                $boQua['ngoai_danh_muc'] += (int) $d->so_gd;
                 continue;
             }
             $dv = $danhMuc['khoa'][$khoa];
@@ -109,6 +124,7 @@ class TabThanhToan
         return [
             'qr' => self::chuoi($gop['thu'], $danhMuc, $ky),
             'hoan_online' => self::chuoi($gop['hoan'], $danhMuc, $ky),
+            'bo_qua' => $boQua,
         ];
     }
 
