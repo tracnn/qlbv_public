@@ -42,6 +42,11 @@ class KyLocTest extends TestCase
     {
         $ky = KyLoc::tuRequest(['from' => '2026-07-01', 'to' => '2026-09-30']);
         $this->assertSame('20260930235959', $ky->to);
+    }
+
+    /** @test */
+    public function dung_93_ngay_nem_validation()
+    {
         $this->expectException(ValidationException::class);
         KyLoc::tuRequest(['from' => '2026-07-01', 'to' => '2026-10-01']);
     }

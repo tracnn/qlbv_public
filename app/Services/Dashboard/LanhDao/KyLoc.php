@@ -31,7 +31,7 @@ class KyLoc
     public static function tuRequest(array $input, Carbon $now = null)
     {
         $coSo = isset($input['co_so']) && $input['co_so'] !== '' ? $input['co_so'] : '2cs';
-        $toiDa = (int) config('organization.dashboard_lanh_dao.so_ngay_toi_da', 92);
+        $toiDa = (int) config('dashboard_lanh_dao.so_ngay_toi_da', 92);
 
         $from = self::docNgay(isset($input['from']) ? $input['from'] : null, 'from');
         $to = self::docNgay(isset($input['to']) ? $input['to'] : null, 'to');
@@ -67,7 +67,7 @@ class KyLoc
     /** @return int[] */
     public function branchIds()
     {
-        $cauHinh = config('organization.dashboard_lanh_dao.co_so');
+        $cauHinh = config('dashboard_lanh_dao.co_so');
         $khoa = $this->coSo === '2cs' ? ['hn', 'nb'] : [$this->coSo];
 
         return array_map(function ($k) use ($cauHinh) {
