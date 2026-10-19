@@ -248,12 +248,12 @@ class Bh01DocExcelTest extends TestCase
     }
 
     /** @test */
-    public function tep_hong_nem_runtime_exception()
+    public function tep_hong_nem_tep_excel_hong_exception()
     {
         $duongDan = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'khong_phai_xlsx_' . uniqid() . '.xlsx';
         file_put_contents($duongDan, 'khong phai tep excel');
         try {
-            $this->expectException(\RuntimeException::class);
+            $this->expectException(\App\Services\Tt12\Bh01\Bh01TepExcelHongException::class);
             $this->kiem($duongDan);
         } finally {
             @unlink($duongDan);

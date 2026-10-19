@@ -29,7 +29,7 @@ class Bh01DocExcel
      * @param string $maCskcb co so dang chon
      * @param array  $ky      ket qua Bh01Ky::tu()
      * @return array so_dong, so_dong_canh_bao, loi (<= 20), cot_thua, t_tongchi_bv, t_bhtt
-     * @throws \RuntimeException khi thu vien doc khong mo duoc tep
+     * @throws Bh01TepExcelHongException khi thu vien doc khong mo duoc tep
      */
     public function kiem($duongDan, $maCskcb, array $ky)
     {
@@ -193,43 +193,51 @@ class Bh01DocExcel
     {
         $anhXa = null;      // vi tri cot => ten the; null = tieu de loi, bo qua du lieu
         $daDoc = 0;
+        // Loi nem ra tu callback (vd QueryException khi ghi lo) khong phai loi tep: giu lai de nem nguyen
+        // ban, khong boc thanh "tep hong" lam nguoi dung tuong tep sai trong khi that ra loi may chu.
+        $loiCallback = null;
 
         try {
             (new Tt12DocExcel())->doc(
                 $duongDan,
-                function (array $hang, $sttBatDau) use (&$anhXa, &$daDoc, &$quaTran, $xuLyDong, $nhanLo) {
+                function (array $hang, $sttBatDau) use (&$anhXa, &$daDoc, &$quaTran, &$loiCallback, $xuLyDong, $nhanLo) {
                     if ($anhXa === null || $quaTran) {
                         return;
                     }
-                    if ($daDoc + count($hang) > self::TOI_DA_DONG) {
-                        $quaTran = true;
-                        return;
-                    }
-                    $daDoc += count($hang);
-
-                    $lo = array();
-                    foreach (array_values($hang) as $i => $dong) {
-                        $theoTen = array();
-                        foreach ($anhXa as $viTri => $the) {
-                            $theoTen[$the] = isset($dong[$viTri]) ? $dong[$viTri] : null;
+                    try {
+                        if ($daDoc + count($hang) > self::TOI_DA_DONG) {
+                            $quaTran = true;
+                            return;
                         }
-                        // Dong Excel = vi tri trong du lieu + 1 (dong tieu de). Tt12DocExcel da bo
-                        // dong trong GIUA tep nen so nay co the lech khi co dong trong o giua -
-                        // chap nhan, dong trong giua tep hiem va van lan toi dung vung.
-                        $soDong = $sttBatDau + $i + 1;
+                        $daDoc += count($hang);
 
-                        if ($xuLyDong !== null) {
-                            call_user_func($xuLyDong, $theoTen, $soDong);
-                        } else {
-                            $lo[] = array(
-                                'du_lieu' => self::chuanHoaDong($theoTen),
-                                'ma_lk'   => null,
-                                'vi_tri'  => 'Dòng ' . $soDong,
-                            );
+                        $lo = array();
+                        foreach (array_values($hang) as $i => $dong) {
+                            $theoTen = array();
+                            foreach ($anhXa as $viTri => $the) {
+                                $theoTen[$the] = isset($dong[$viTri]) ? $dong[$viTri] : null;
+                            }
+                            // Dong Excel = vi tri trong du lieu + 1 (dong tieu de). Tt12DocExcel da bo
+                            // dong trong GIUA tep nen so nay co the lech khi co dong trong o giua -
+                            // chap nhan, dong trong giua tep hiem va van lan toi dung vung.
+                            $soDong = $sttBatDau + $i + 1;
+
+                            if ($xuLyDong !== null) {
+                                call_user_func($xuLyDong, $theoTen, $soDong);
+                            } else {
+                                $lo[] = array(
+                                    'du_lieu' => self::chuanHoaDong($theoTen),
+                                    'ma_lk'   => null,
+                                    'vi_tri'  => 'Dòng ' . $soDong,
+                                );
+                            }
                         }
-                    }
-                    if ($nhanLo !== null && $lo) {
-                        call_user_func($nhanLo, $lo);
+                        if ($nhanLo !== null && $lo) {
+                            call_user_func($nhanLo, $lo);
+                        }
+                    } catch (\Exception $e) {
+                        $loiCallback = $e;
+                        throw $e;
                     }
                 },
                 function (array $tieuDe) use (&$anhXa, $nhanTieuDe) {
@@ -269,7 +277,10 @@ class Bh01DocExcel
                 }
             );
         } catch (\Exception $e) {
-            throw new \RuntimeException('Không đọc được tệp Excel: ' . $e->getMessage(), 0, $e);
+            if ($loiCallback !== null) {
+                throw $loiCallback;
+            }
+            throw new Bh01TepExcelHongException('Không đọc được tệp Excel: ' . $e->getMessage(), 0, $e);
         }
     }
 }

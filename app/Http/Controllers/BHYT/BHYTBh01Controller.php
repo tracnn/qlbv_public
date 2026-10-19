@@ -10,6 +10,7 @@ use App\Services\Tt12\Bh01\Bh01KhongTaoDuocException;
 use App\Services\Tt12\Bh01\Bh01NhapExcel;
 use App\Services\Tt12\Bh01\Bh01Nguon;
 use App\Services\Tt12\Bh01\Bh01TaoBan;
+use App\Services\Tt12\Bh01\Bh01TepExcelHongException;
 use App\Services\Tt12\Bh01\Bh01XepHang;
 use App\Services\Tt12\Bh01\Bh01XuatExcel;
 use Illuminate\Http\Request;
@@ -132,6 +133,14 @@ class BHYTBh01Controller extends Controller
             return $this->loi('Chức năng ký số đang tắt, chưa tạo bản.', 422);
         }
 
+        // Than yeu cau vuot post_max_size: PHP bo sach $_POST/$_FILES nen docCoSoVaKy se bao nham
+        // "chua chon co so". Nhan ra bang CONTENT_LENGTH truoc.
+        $tran = $this->byteTuIni(ini_get('post_max_size'));
+        if ($tran > 0 && (int) $request->server('CONTENT_LENGTH') > $tran
+            && count($request->all()) === 0 && count($request->allFiles()) === 0) {
+            return $this->loi('Tệp vượt cỡ cho phép (tối đa ' . ini_get('post_max_size') . ').', 422);
+        }
+
         $loi = $this->docCoSoVaKy($request, $maCskcb, $ky);
         if ($loi !== null) {
             return $loi;
@@ -161,8 +170,9 @@ class BHYTBh01Controller extends Controller
             return $this->loi($e->getMessage(), 422);
         } catch (\InvalidArgumentException $e) {
             return $this->loi($e->getMessage(), 422);
-        } catch (\RuntimeException $e) {
-            // Tep hong/khong phai xlsx that: khong lo thong diep thu vien cho nguoi dung.
+        } catch (Bh01TepExcelHongException $e) {
+            // CHI bat loi doc tep: loi CSDL/may chu (cung la RuntimeException) phai noi len va vao log,
+            // khong duoc bao nham la tep hong. Khong lo thong diep thu vien cho nguoi dung.
             return $this->loi('Không đọc được tệp Excel. Hãy lưu lại dạng .xlsx rồi thử lại.', 422);
         }
 
@@ -377,6 +387,26 @@ class BHYTBh01Controller extends Controller
             'nguon'               => $ban->nguon,
             'ten_tep_nguon'       => $ban->ten_tep_nguon,
         );
+    }
+
+    /** '8M' -> byte; 0 neu khong gioi han ('0'/'-1'/rong). */
+    private function byteTuIni($gt)
+    {
+        $gt = trim((string) $gt);
+        if ($gt === '' || (int) $gt <= 0) {
+            return 0;
+        }
+        $so = (float) $gt;
+        switch (strtolower(substr($gt, -1))) {
+            case 'g':
+                $so *= 1024;
+            case 'm':
+                $so *= 1024;
+            case 'k':
+                $so *= 1024;
+        }
+
+        return (int) $so;
     }
 
     private function nhanNguon($nguon)

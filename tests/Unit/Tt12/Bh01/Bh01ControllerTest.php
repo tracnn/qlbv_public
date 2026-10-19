@@ -446,6 +446,25 @@ class Bh01ControllerTest extends TestCase
     }
 
     /** @test */
+    public function nhap_excel_loi_csdl_khong_bi_bao_nham_la_tep_hong()
+    {
+        \Illuminate\Support\Facades\Schema::drop('bh01_dong');
+        $this->expectException(\Illuminate\Database\QueryException::class);
+
+        $this->controller()->nhapExcel($this->reqTep($this->tepTai($this->tepExcelHopLe(), 'HSTH01BH.xlsx')));
+    }
+
+    /** @test */
+    public function nhap_excel_vuot_post_max_size_thi_422()
+    {
+        $r = Request::create('/x', 'POST', array(), array(), array(), array('CONTENT_LENGTH' => 99999999999));
+        $kq = $this->controller()->nhapExcel($r);
+
+        $this->assertSame(422, $kq->getStatusCode());
+        $this->assertContains('Tệp vượt cỡ cho phép (tối đa ' . ini_get('post_max_size') . ')', $kq->getData()->thong_diep);
+    }
+
+    /** @test */
     public function nhap_excel_khong_co_tep_thi_422()
     {
         $kq = $this->controller()->nhapExcel($this->reqTep(null));
