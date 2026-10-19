@@ -19,9 +19,9 @@ use App\Services\Tt12\Bh01\Bh01XepHang;
 /**
  * Gui DUNG byte tep da ky cua mot ban 01/BH len cong, ghi ket qua len ban + mot dong lich su.
  *
- * Chi Bh01XepHang::xepGui() duoc xep job nay - noi do giu khoa dang_xu_ly_tu. Job nha khoa o
- * cuoi moi luot xu ly va trong failed(), KHONG nha giua cac lan thu lai (cung khuon
- * SubmitTt12Job).
+ * Chi Bh01XepHang::xepGui() duoc xep job nay - noi do giu khoa dang_xu_ly_tu va trao gia tri
+ * khoa cho job. Job chi gui khi khoa van la cua minh; nha khoa (cung chi khoa cua minh) o cuoi
+ * moi luot xu ly va trong failed(), KHONG nha giua cac lan thu lai (cung khuon SubmitTt12Job).
  */
 class SubmitBh01Job implements ShouldQueue
 {
@@ -41,6 +41,9 @@ class SubmitBh01Job implements ShouldQueue
     /** @var string|null nguoi bam gui, de ghi vao lich su */
     protected $guiBoi;
 
+    /** @var string|null gia tri dang_xu_ly_tu ma xepGui() da ghi - ma so huu khoa */
+    protected $khoa;
+
     /**
      * @var Tt12SubmitService|null Chi TEST moi dat. KHONG dua vao tham so co type-hint cua
      *      handle(): container Laravel 5.5 tiem ca tham so `= null`, ban tiem dung ra mang
@@ -49,10 +52,17 @@ class SubmitBh01Job implements ShouldQueue
      */
     public $submitServiceGia = null;
 
-    public function __construct($maBan, $guiBoi = null)
+    public function __construct($maBan, $guiBoi = null, $khoa = null)
     {
         $this->maBan = $maBan;
         $this->guiBoi = $guiBoi;
+        $this->khoa = $khoa === null ? null : (string) $khoa;
+    }
+
+    /** @return string|null */
+    public function khoa()
+    {
+        return $this->khoa;
     }
 
     public function handle()
@@ -70,6 +80,18 @@ class SubmitBh01Job implements ShouldQueue
         if ($ban === null) {
             Log::info('SubmitBh01Job: khong tim thay ban ' . $this->maBan);
             $this->nhaKhoa();
+
+            return;
+        }
+
+        // Hoi khoa TRUOC khi doc tep va gui. Khoa khong con la cua minh nghia la: khoa da het
+        // han va mot lan bam moi da xep job khac (job do se gui), hoac job nay khong di qua
+        // xepGui(). Gui tiep la hai ho so tren cong that. Khong ghi lich su, khong cham khoa:
+        // ca hai thu do gio thuoc ve job kia.
+        if (!Bh01XepHang::conGiuKhoa($this->maBan, $this->khoa)) {
+            Log::warning('SubmitBh01Job: khoa gui khong con la cua job nay, bo qua khong gui ' . $this->maBan, array(
+                'khoa_cua_job' => $this->khoa,
+            ));
 
             return;
         }
@@ -149,10 +171,13 @@ class SubmitBh01Job implements ShouldQueue
         $this->nhaKhoa();
     }
 
-    /** Go qua Bh01XepHang chu khong tu cham vao cot khoa: mot noi duy nhat biet co che khoa. */
+    /**
+     * Go qua Bh01XepHang chu khong tu cham vao cot khoa: mot noi duy nhat biet co che khoa.
+     * Chi nha khi khoa van la $this->khoa - khong xoa khoa cua mot job moi hon.
+     */
     private function nhaKhoa()
     {
-        Bh01XepHang::nhaKhoa($this->maBan);
+        Bh01XepHang::nhaKhoa($this->maBan, $this->khoa);
     }
 
     /** @return string|null */

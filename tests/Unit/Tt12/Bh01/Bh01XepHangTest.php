@@ -7,6 +7,7 @@ use App\Jobs\SubmitBh01Job;
 use App\Models\BHYT\Tt12\Bh01Ban;
 use App\Services\Tt12\Bh01\Bh01XepHang;
 use App\Services\Tt12\Tt12HangDoi;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
 use Tests\Support\DungBangBh01Sqlite;
 use Tests\TestCase;
@@ -41,7 +42,13 @@ class Bh01XepHangTest extends TestCase
 
         Queue::assertPushed(SubmitBh01Job::class, 1);
         Queue::assertPushedOn(Tt12HangDoi::gui(), SubmitBh01Job::class);
-        $this->assertNotNull(Bh01Ban::where('so_ban', 1)->value('dang_xu_ly_tu'));
+
+        // Job mang DUNG gia tri khoa da ghi: no dung gia tri nay de biet khoa con la cua minh.
+        $khoa = DB::table('bh01_ban')->where('so_ban', 1)->value('dang_xu_ly_tu');
+        $this->assertNotEmpty($khoa);
+        Queue::assertPushed(SubmitBh01Job::class, function ($job) use ($khoa) {
+            return $job->khoa() === (string) $khoa;
+        });
     }
 
     /** @test */
@@ -70,7 +77,15 @@ class Bh01XepHangTest extends TestCase
         $this->ban(1);
 
         $this->assertTrue(Bh01XepHang::xepGui('BH01_01929_202609_01', 'a'));
-        Bh01XepHang::nhaKhoa('BH01_01929_202609_01');
+        $khoa = DB::table('bh01_ban')->where('so_ban', 1)->value('dang_xu_ly_tu');
+
+        $this->assertSame(0, Bh01XepHang::nhaKhoa('BH01_01929_202609_01', '2000-01-01 00:00:00'),
+            'Khoa khac gia tri thi khong nha');
+        $this->assertSame(0, Bh01XepHang::nhaKhoa('BH01_01929_202609_01', null),
+            'Khong co khoa thi khong nha - where(cot, null) se thanh whereNull');
+        $this->assertFalse(Bh01XepHang::xepGui('BH01_01929_202609_01', 'a'));
+
+        $this->assertSame(1, Bh01XepHang::nhaKhoa('BH01_01929_202609_01', $khoa));
         $this->assertTrue(Bh01XepHang::xepGui('BH01_01929_202609_01', 'a'));
 
         Queue::assertPushed(SubmitBh01Job::class, 2);

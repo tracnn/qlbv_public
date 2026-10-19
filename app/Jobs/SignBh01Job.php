@@ -32,8 +32,12 @@ class SignBh01Job implements ShouldQueue
     /** Ky lai it lan: hong ky thuong la ly do cuc bo, thu lai it giup. */
     public $tries = 2;
 
-    /** Dai hon SignTt12Job: mot ban co the hang chuc nghin dong, tep co chuc MB. */
-    public $timeout = 600;
+    /**
+     * PHAI NHO HON retry_after (300) cua ket noi 'database' trong config/queue.php: qua
+     * retry_after ma job chua xong thi hang doi coi no da chet va giao them mot ban cho worker
+     * khac - hai lan ky chay chong tren cung mot tep. SignBh01JobTest khoa dieu nay.
+     */
+    public $timeout = 280;
 
     /** @var string */
     protected $maBan;
@@ -68,9 +72,19 @@ class SignBh01Job implements ShouldQueue
             return;
         }
 
-        // Chot cuoi (Bh01XepHang::xepKy da chan mot lan): job co the nam trong hang doi
-        // trong luc ban duoc gui. Ky de tep cua ban da gui se lam tep tai ve khac tep cong
-        // da nhan - mat dau vet doi soat.
+        // Chi ky ban dang CHO KY. Bh01XepHang::xepKy() dat cho_ky truoc khi xep job, nen mot
+        // job ky con sot trong hang doi (bam hai lan, hang doi giao lai sau retry_after) se gap
+        // ban da_ky va dung o day - khong ky de tep va sha256 duoi chan mot job gui dang doc tep.
+        if ($ban->trang_thai_ky !== Bh01Ban::KY_CHO) {
+            Log::info('SignBh01Job: ban khong o trang thai cho ky, bo qua ' . $this->maBan, array(
+                'trang_thai_ky' => $ban->trang_thai_ky,
+            ));
+
+            return;
+        }
+
+        // Chot cuoi (Bh01XepHang::xepKy da chan mot lan): ky de tep cua ban da gui se lam tep
+        // tai ve khac tep cong da nhan - mat dau vet doi soat.
         if ($ban->submitted_at !== null) {
             Log::warning('SignBh01Job: ban da gui cong, khong ky de tep ' . $this->maBan);
 

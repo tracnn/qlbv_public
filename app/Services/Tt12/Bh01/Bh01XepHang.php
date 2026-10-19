@@ -20,6 +20,12 @@ use App\Services\Tt12\Tt12QuyetDinhGui;
  * KHOA NAM TREN CHINH DONG bh01_ban (cot dang_xu_ly_tu) chu khong o bang khoa rieng nhu
  * Tt12XepHangKyGui: mot UPDATE co dieu kien la nguyen tu tren ca MySQL lan SQLite, va
  * khong co dong khoa mo coi nao phai don.
+ *
+ * GIA TRI KHOA LA MA SO HUU: xepGui() ghi dang_xu_ly_tu = mot chuoi thoi diem cu the va trao
+ * DUNG chuoi do cho SubmitBh01Job. Job chi gui khi cot van bang chuoi cua minh, va chi nha khoa
+ * khi cot van bang chuoi cua minh. Thieu buoc nay: worker gui dung lau hon KHOA_PHUT, nguoi
+ * dung bam lai sau khi khoa het han, va khi worker chay lai thi CA HAI job cung POST len cong
+ * that - con job cu xong truoc thi xoa mat khoa cua job moi.
  */
 class Bh01XepHang
 {
@@ -32,6 +38,9 @@ class Bh01XepHang
      */
     const KHOA_PHUT = 20;
 
+    /** Dinh dang chuoi khoa: dung dinh dang cot timestamp tra ve, de so sanh bang chuoi. */
+    const DINH_DANG_KHOA = 'Y-m-d H:i:s';
+
     /**
      * @param  string      $maBan
      * @param  string|null $guiBoi loginname nguoi bam
@@ -40,6 +49,7 @@ class Bh01XepHang
     public static function xepGui($maBan, $guiBoi = null)
     {
         $bayGio = now();
+        $khoa = $bayGio->format(self::DINH_DANG_KHOA);
 
         // MOT cau UPDATE co dieu kien, dem so dong bi doi: hai yeu cau den cung luc thi CSDL
         // chi cho mot ben doi duoc dong. Doc truoc roi ghi sau (SELECT roi UPDATE) se de ca
@@ -50,18 +60,18 @@ class Bh01XepHang
                 $q->whereNull('dang_xu_ly_tu')
                   ->orWhere('dang_xu_ly_tu', '<', $bayGio->copy()->subMinutes(self::KHOA_PHUT));
             })
-            ->update(array('dang_xu_ly_tu' => $bayGio, 'updated_at' => $bayGio));
+            ->update(array('dang_xu_ly_tu' => $khoa, 'updated_at' => $bayGio));
 
         if ($soDong !== 1) {
             return false;
         }
 
         try {
-            SubmitBh01Job::dispatch($maBan, $guiBoi)->onQueue(Tt12HangDoi::gui());
+            SubmitBh01Job::dispatch($maBan, $guiBoi, $khoa)->onQueue(Tt12HangDoi::gui());
         } catch (\Throwable $e) {
             // Xep hang hong (mat ket noi hang doi) thi khong job nao chay de nha khoa: nha
             // ngay, khong thi ban bi chan gui suot KHOA_PHUT ma khong ai biet vi sao.
-            self::nhaKhoa($maBan);
+            self::nhaKhoa($maBan, $khoa);
 
             throw $e;
         }
@@ -105,15 +115,44 @@ class Bh01XepHang
     }
 
     /**
-     * Mo lai duong gui. Job gui goi o cuoi moi luot va trong failed().
+     * Hoi khoa gui cua ban con dung la $khoa khong. Job gui hoi truoc khi doc tep va gui.
      *
-     * @param  string $maBan
-     * @return int so dong da doi
+     * @param  string      $maBan
+     * @param  string|null $khoa
+     * @return bool
      */
-    public static function nhaKhoa($maBan)
+    public static function conGiuKhoa($maBan, $khoa)
     {
+        // Chan null/rong TRUOC: where('cot', null) cua query builder thanh WHERE cot IS NULL,
+        // tuc mot job khong co khoa lai "khop" voi ban khong ai giu khoa.
+        if ($khoa === null || $khoa === '') {
+            return false;
+        }
+
         return DB::table('bh01_ban')
             ->where('ma_ban', $maBan)
+            ->where('dang_xu_ly_tu', (string) $khoa)
+            ->exists();
+    }
+
+    /**
+     * Mo lai duong gui - CHI khi khoa van la $khoa. Job gui goi o cuoi moi luot va trong
+     * failed(); job cu khong duoc xoa khoa ma job moi vua giu.
+     *
+     * @param  string      $maBan
+     * @param  string|null $khoa gia tri xepGui() da trao cho job
+     * @return int so dong da doi
+     */
+    public static function nhaKhoa($maBan, $khoa)
+    {
+        // Cung ly do voi conGiuKhoa(): khong de where(cot, null) thanh IS NULL.
+        if ($khoa === null || $khoa === '') {
+            return 0;
+        }
+
+        return DB::table('bh01_ban')
+            ->where('ma_ban', $maBan)
+            ->where('dang_xu_ly_tu', (string) $khoa)
             ->update(array('dang_xu_ly_tu' => null, 'updated_at' => now()));
     }
 

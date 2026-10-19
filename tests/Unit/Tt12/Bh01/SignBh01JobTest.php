@@ -159,6 +159,9 @@ class SignBh01JobTest extends TestCase
         $lan1->ketQua = array('isSigned' => false, 'error' => 'HSM khong phan hoi');
         $this->chay($lan1);
 
+        // "Ky lai" di qua Bh01XepHang::xepKy, noi dat lai cho_ky truoc khi xep job.
+        Bh01Ban::where('ma_ban', self::MA_BAN)->update(array('trang_thai_ky' => Bh01Ban::KY_CHO));
+
         $lan2 = new FakeXMLSignService();
         $this->chay($lan2);
 
@@ -199,5 +202,49 @@ class SignBh01JobTest extends TestCase
     public function handle_khong_co_tham_so_type_hint()
     {
         $this->assertSame(0, (new \ReflectionMethod(SignBh01Job::class, 'handle'))->getNumberOfParameters());
+    }
+
+    /** @test */
+    public function job_khong_ky_lai_ban_da_ky()
+    {
+        // Job ky con nam trong hang doi (bam hai lan, retry_after) chay sau khi ban da ky: ky
+        // de se doi tep va sha256 ngay duoi chan mot job gui dang doc tep.
+        $this->ban();
+        $this->chay(new FakeXMLSignService());
+        $truoc = Bh01Ban::where('ma_ban', self::MA_BAN)->first();
+        $tepTruoc = Storage::disk('exportTt12')->get($truoc->duong_dan_da_ky);
+
+        $lan2 = new FakeXMLSignService();
+        $lan2->ketQua = array('isSigned' => true, 'data' => '<KHAC/>', 'method' => 'HSM');
+        $this->chay($lan2);
+
+        $sau = Bh01Ban::where('ma_ban', self::MA_BAN)->first();
+        $this->assertSame(0, $lan2->soLanGoi);
+        $this->assertSame($truoc->sha256_tep, $sau->sha256_tep);
+        $this->assertSame($tepTruoc, Storage::disk('exportTt12')->get($sau->duong_dan_da_ky));
+        $this->assertSame(Bh01Ban::KY_XONG, $sau->trang_thai_ky);
+    }
+
+    /** @test */
+    public function ban_ky_loi_chua_xep_lai_thi_khong_ky()
+    {
+        $this->ban();
+        Bh01Ban::where('ma_ban', self::MA_BAN)->update(array('trang_thai_ky' => Bh01Ban::KY_LOI));
+        $ky = new FakeXMLSignService();
+
+        $this->chay($ky);
+
+        $this->assertSame(0, $ky->soLanGoi);
+    }
+
+    /** @test */
+    public function timeout_nho_hon_retry_after()
+    {
+        // timeout >= retry_after thi hang doi 'database' coi job dang ky la chet va giao them
+        // mot ban cho worker khac - hai lan ky chay chong.
+        $this->assertLessThan(
+            (int) config('queue.connections.database.retry_after'),
+            (new SignBh01Job('x'))->timeout
+        );
     }
 }
