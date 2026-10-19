@@ -25,6 +25,8 @@ class FakeTt12SubmitService extends Tt12SubmitService
     public $xmlNhanDuoc = null;
     public $mauNhanDuoc = null;
     public $maCskcbNhanDuoc = null;
+    public $loaiNhanDuoc = null;
+    public $kyQtNhanDuoc = null;
 
     public function __construct()
     {
@@ -37,6 +39,21 @@ class FakeTt12SubmitService extends Tt12SubmitService
         $this->xmlNhanDuoc = $xmlDaKy;
         $this->mauNhanDuoc = $mau;
         $this->maCskcbNhanDuoc = $maCskcb;
+
+        if ($this->nem !== null) {
+            throw $this->nem;
+        }
+
+        return $this->ketQua;
+    }
+
+    public function guiHoSoTongHop($xmlDaKy, $loai, $maCskcb, $kyQt)
+    {
+        $this->soLanGoi++;
+        $this->xmlNhanDuoc = $xmlDaKy;
+        $this->loaiNhanDuoc = $loai;
+        $this->maCskcbNhanDuoc = $maCskcb;
+        $this->kyQtNhanDuoc = $kyQt;
 
         if ($this->nem !== null) {
             throw $this->nem;

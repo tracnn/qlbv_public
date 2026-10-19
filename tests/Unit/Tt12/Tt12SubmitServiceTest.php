@@ -252,4 +252,88 @@ class Tt12SubmitServiceTest extends TestCase
         $this->assertSame('01929', $dv->maCskcbNhanDuoc[1]);
         $this->assertSame('01929', $body[$truong['ma_cskcb']]);
     }
+
+    // -- Ho so tong hop 01/BH -------------------------------------------------------
+
+    /** @test */
+    public function gui_ho_so_tong_hop_body_co_ky_qt_va_loai_5()
+    {
+        $dv = $this->dichVu(array(new Response(200, array(), '{"maKetQua":"200","maGiaoDich":"GD01BH"}')));
+
+        $kq = $dv->guiHoSoTongHop('<HSTH01BH/>', 'BH_01', '01929', '202609');
+
+        $req = $this->daGui[0]['request'];
+        parse_str((string) $req->getBody(), $body);
+        $truong = config('tt12.truong_body');
+
+        $this->assertSame('5', $body[$truong['loai_hs']]);
+        $this->assertSame('202609', $body['kyQT']);
+        $this->assertSame('202609', $body[$truong['ky_qt']]);
+        $this->assertSame('01929', $body['maCSKCB']);
+        $this->assertSame('01', $body['maTinh']);
+        $this->assertSame('01929_BV', $body[$truong['username']]);
+        $this->assertSame(base64_encode('<HSTH01BH/>'), $body[$truong['file_base64']]);
+        $this->assertSame('TOKEN', $req->getHeaderLine('accessToken'));
+        $this->assertStringEndsWith('/api/HoSoTongHop7980/GuiHoSoTongHop01BH', (string) $req->getUri());
+        $this->assertSame('200', $kq['ma_ket_qua']);
+        $this->assertSame('GD01BH', $kq['ma_gd']);
+    }
+
+    /** @test */
+    public function gui_danh_muc_KHONG_mang_ky_qt()
+    {
+        // Duong danh muc khong duoc doi hanh vi: them truong la doi noi dung gui len cong.
+        $dv = $this->dichVu(array(new Response(200, array(), '{"maKetQua":"200"}')));
+        $dv->gui('<HSDANHMUC/>', 'MAU_01', '01929');
+
+        parse_str((string) $this->daGui[0]['request']->getBody(), $body);
+
+        $this->assertArrayNotHasKey('kyQT', $body);
+        $this->assertCount(5, $body);
+    }
+
+    /** @test */
+    public function gui_ho_so_tong_hop_401_dang_nhap_lai_mot_lan()
+    {
+        $login = null;
+
+        $dv = $this->dichVu(array(
+            new Response(200, array(), '{"maKetQua":"401"}'),
+            new Response(200, array(), '{"maKetQua":"200","maGiaoDich":"GD2"}'),
+        ), $login);
+
+        $kq = $dv->guiHoSoTongHop('<HSTH01BH/>', 'BH_01', '01929', '202609');
+
+        $this->assertSame('200', $kq['ma_ket_qua']);
+        $this->assertSame(1, $login->soLanLogout);
+        $this->assertCount(2, $this->daGui);
+
+        parse_str((string) $this->daGui[1]['request']->getBody(), $body);
+        $this->assertSame('202609', $body['kyQT'], 'Lan gui lai cung phai mang kyQT');
+    }
+
+    /** @test */
+    public function ky_qt_sai_dang_thi_nem()
+    {
+        $dv = $this->dichVu(array());
+
+        foreach (array('2026-09', '20269', '2026091', "202609\n", '') as $sai) {
+            try {
+                $dv->guiHoSoTongHop('<HSTH01BH/>', 'BH_01', '01929', $sai);
+                $this->fail('Phai nem voi kyQT ' . json_encode($sai));
+            } catch (\InvalidArgumentException $e) {
+                $this->assertCount(0, $this->daGui, 'Khong duoc goi mang');
+            }
+        }
+    }
+
+    /** @test */
+    public function loai_ho_so_tong_hop_la_thi_nem()
+    {
+        $dv = $this->dichVu(array());
+
+        $this->expectException(\InvalidArgumentException::class);
+
+        $dv->guiHoSoTongHop('<HSTH01BH/>', 'BH_99', '01929', '202609');
+    }
 }

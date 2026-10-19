@@ -86,6 +86,68 @@ class Tt12SubmitService
             throw new \InvalidArgumentException('Thiếu cấu hình url/loaiHs cho mẫu ' . $mau);
         }
 
+        return $this->guiCoThuLai($url, $loaiHs, $xmlDaKy, $maCskcb, array(), array('mau' => $mau));
+    }
+
+    /**
+     * Gui mot ho so tong hop (01/BH) da ky. Cung luong voi gui(): token theo $maCskcb, 401
+     * trong than phan hoi thi dang nhap lai mot lan, loi mang thi NEM.
+     *
+     * VI SAO HAM RIENG chu khong cho gui() nhan them tham so: gui() di qua Tt12MauRegistry
+     * (MAU_01..06) va chuoi dong bo danh muc dua vao do. Cho 01/BH lot vao registry la de no
+     * bi coi la mot mau danh muc o moi vong lap tren registry.
+     *
+     * @param string $xmlDaKy dung byte tep da ky
+     * @param string $loai    khoa trong config('tt12.ho_so_tong_hop'), vd 'BH_01'
+     * @param string $maCskcb ma co so cua CHINH ban - phai cung co so voi token
+     * @param string $kyQt    yyyymm
+     * @return array nhu gui()
+     * @throws \InvalidArgumentException|\Exception
+     */
+    public function guiHoSoTongHop($xmlDaKy, $loai, $maCskcb, $kyQt)
+    {
+        $bang = config('tt12.ho_so_tong_hop', array());
+
+        if (!is_string($loai) || !is_array($bang) || !array_key_exists($loai, $bang)) {
+            throw new \InvalidArgumentException('Loại hồ sơ tổng hợp không hỗ trợ: ' . json_encode($loai));
+        }
+
+        // Kiem TRUOC khi goi mang: kyQT sai dang (vd '2026-09') co the van duoc cong nhan va
+        // ghi ho so vao mot ky khong ton tai. Co D: '$' tron se cho lot mot ky tu xuong dong cuoi.
+        if (!is_string($kyQt) || !preg_match('/^\d{6}$/D', $kyQt)) {
+            throw new \InvalidArgumentException('kyQT phải là yyyymm (6 chữ số): ' . json_encode($kyQt));
+        }
+
+        $loaiHs = isset($bang[$loai]['loai_hs']) ? (string) $bang[$loai]['loai_hs'] : '';
+        $duongDan = isset($bang[$loai]['duong_dan']) ? (string) $bang[$loai]['duong_dan'] : '';
+
+        if ($loaiHs === '' || $duongDan === '') {
+            throw new \InvalidArgumentException('Thiếu cấu hình url/loaiHs cho hồ sơ tổng hợp ' . $loai);
+        }
+
+        $truong = config('tt12.truong_body');
+
+        return $this->guiCoThuLai(
+            \App\Services\BHYT\CongBhxh::url($duongDan),
+            $loaiHs,
+            $xmlDaKy,
+            $maCskcb,
+            array($truong['ky_qt'] => $kyQt),
+            array('loai' => $loai, 'ky_qt' => $kyQt)
+        );
+    }
+
+    /**
+     * Luong chung cua moi duong gui: dung login, base64, goi mot lan, 401 thi thu lai MOT lan.
+     *
+     * Mot noi duy nhat: hai ban chep cua luong 401 se lech nhau o lan sua sau, va ban lech
+     * bien moi lan token het han thanh mot ho so gui hong.
+     *
+     * @param array $truongPhu truong body them vao sau cac truong chung
+     * @param array $nhan      ngu canh ghi log
+     */
+    private function guiCoThuLai($url, $loaiHs, $xmlDaKy, $maCskcb, array $truongPhu, array $nhan)
+    {
         // Dung login service theo dung ma co so cua ho so nay. Neu token va maCSKCB trong
         // body thuoc HAI co so khac nhau thi cong van nhan, va ho so bi ghi sai don vi
         // gui - hong im lang, khong lo ra cho toi luc doi soat.
@@ -95,30 +157,27 @@ class Tt12SubmitService
 
         // Ghi kich thuoc moi lan gui: tai lieu khong noi nguong cua ma 1001 (file size
         // qua dai), phai tu do tu thuc te.
-        Log::info('TT12 gui ho so', array(
-            'mau'             => $mau,
+        Log::info('TT12 gui ho so', array_merge($nhan, array(
             'loai_hs'         => $loaiHs,
             'so_ky_tu_base64' => strlen($base64),
-        ));
+        )));
 
-        $ketQua = $this->motLanGui($url, $loaiHs, $base64, $maCskcb, $login);
+        $ketQua = $this->motLanGui($url, $loaiHs, $base64, $maCskcb, $login, $truongPhu);
 
         // Ma 401 = token bi tu choi. Xoa cache token, dang nhap lai, thu lai DUNG MOT LAN.
         if ((string) $ketQua['ma_ket_qua'] === '401') {
-            Log::warning('TT12: token bi tu choi (maKetQua 401), dang nhap lai va gui lai', array(
-                'mau' => $mau,
-            ));
+            Log::warning('TT12: token bi tu choi (maKetQua 401), dang nhap lai va gui lai', $nhan);
 
             $login->logout();
 
-            $ketQua = $this->motLanGui($url, $loaiHs, $base64, $maCskcb, $login);
+            $ketQua = $this->motLanGui($url, $loaiHs, $base64, $maCskcb, $login, $truongPhu);
         }
 
         return $ketQua;
     }
 
     /** Mot lan goi mang, khong retry */
-    private function motLanGui($url, $loaiHs, $base64, $maCskcb, BHYTLoginService $login)
+    private function motLanGui($url, $loaiHs, $base64, $maCskcb, BHYTLoginService $login, array $truongPhu = array())
     {
         $truong = config('tt12.truong_body');
 
@@ -136,6 +195,16 @@ class Tt12SubmitService
             $truong['ma_cskcb']    => (string) $maCskcb,
             $truong['file_base64'] => $base64,
         );
+
+        // Them SAU va KHONG de len truong chung: mot truong phu trung ten se am tham doi
+        // maCSKCB hay loaiHs cua goi gui.
+        foreach ($truongPhu as $ten => $giaTri) {
+            if (array_key_exists($ten, $body)) {
+                throw new \InvalidArgumentException('Trường body phụ trùng tên trường chung: ' . $ten);
+            }
+
+            $body[$ten] = (string) $giaTri;
+        }
 
         $headers = array(
             'Content-Type'  => 'application/x-www-form-urlencoded',

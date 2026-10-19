@@ -20,6 +20,13 @@ return [
         'MAU_06' => ['loai_hs' => '72', 'duong_dan' => '/api/DanhMucGW/GuiDanhMuc06_DMTBYT'],
     ],
 
+    // Ho so tong hop (Mau 01/BH) - giao thuc khac danh muc o loai_hs, url va truong
+    // kyQT. Khoi rieng chu khong chen vao 'mau': cac vong lap tren 'mau' (registry, dashboard
+    // do phu, dong bo danh muc) se coi 01/BH la mot mau danh muc.
+    'ho_so_tong_hop' => [
+        'BH_01' => ['loai_hs' => '5', 'duong_dan' => '/api/HoSoTongHop7980/GuiHoSoTongHop01BH'],
+    ],
+
     // TEN TRUONG BODY nam o day chu khong go cung trong ma. Tep PDF cua BHXH bi loi
     // tim-thay-the hang loat: cum "CSKCB" bi thay bang "Co so KCB" ngay ca ben trong ten
     // tham so, nen vi du curl viet 'maCo so KCB' con bang dac ta viet 'maCskcb'. Chua co
@@ -30,6 +37,8 @@ return [
         'ma_tinh'    => 'maTinh',
         'ma_cskcb'   => 'maCSKCB',
         'file_base64' => 'fileHsBase64',
+        // Chi ho so tong hop (01/BH) gui truong nay: ky quyet toan yyyymm cua ban.
+        'ky_qt'      => 'kyQT',
     ],
 
     // Bang ma ket qua muc I.4 cua tai lieu, dung chung cho ca sau dich vu.
