@@ -4,6 +4,7 @@ namespace Tests\Unit\Tt12\Bh01;
 
 use App\Models\BHYT\Tt12\Bh01Ban;
 use App\Models\BHYT\Tt12\Bh01Dong;
+use App\Services\Tt12\Bh01\Bh01GhiBan;
 use App\Services\Tt12\Bh01\Bh01KhongTaoDuocException;
 use App\Services\Tt12\Bh01\Bh01Ky;
 use App\Services\Tt12\Bh01\Bh01TaoBan;
@@ -134,7 +135,7 @@ class Bh01TaoBanTest extends TestCase
     {
         $this->dong(array('ma_lk' => 'A'));
 
-        $s = new class extends Bh01TaoBan {
+        $s = new class extends Bh01GhiBan {
             public $lan = 0;
 
             protected function soBanKeTiep($maCskcb, array $ky)
@@ -154,7 +155,7 @@ class Bh01TaoBanTest extends TestCase
             }
         };
 
-        $ban = $s->tao('01929', $this->ky(), 'tester');
+        $ban = (new Bh01TaoBan($s))->tao('01929', $this->ky(), 'tester');
 
         $this->assertSame(2, $ban->so_ban);
         $this->assertSame(2, $s->lan);
@@ -166,7 +167,7 @@ class Bh01TaoBanTest extends TestCase
         // XML1 bi sua giua luot kiem va luot ghi: luot ghi phai tu kiem lai, khong ghi dong chan.
         $this->dong(array('ma_lk' => 'A'));
 
-        $s = new class extends Bh01TaoBan {
+        $s = new class extends Bh01GhiBan {
             protected function soBanKeTiep($maCskcb, array $ky)
             {
                 DB::table('xml3176_xml1s')->insert(array(
@@ -182,7 +183,7 @@ class Bh01TaoBanTest extends TestCase
         };
 
         try {
-            $s->tao('01929', $this->ky(), 'tester');
+            (new Bh01TaoBan($s))->tao('01929', $this->ky(), 'tester');
             $this->fail('Phai nem Bh01KhongTaoDuocException');
         } catch (Bh01KhongTaoDuocException $e) {
             $this->assertContains('Z', $e->getMessage());

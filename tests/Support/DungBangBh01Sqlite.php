@@ -22,6 +22,7 @@ trait DungBangBh01Sqlite
             '2026_10_19_100001_create_bh01_ban_table'         => 'CreateBh01BanTable',
             '2026_10_19_100002_create_bh01_dong_table'        => 'CreateBh01DongTable',
             '2026_10_19_100003_create_bh01_lich_su_gui_table' => 'CreateBh01LichSuGuiTable',
+            '2026_10_19_100005_them_nguon_vao_bh01_ban'       => 'ThemNguonVaoBh01Ban',
         ];
     }
 

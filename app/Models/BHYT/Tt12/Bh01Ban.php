@@ -10,6 +10,9 @@ class Bh01Ban extends Model
     const KY_XONG = 'da_ky';
     const KY_LOI  = 'ky_loi';
 
+    const NGUON_XML3176 = 'xml3176';
+    const NGUON_EXCEL   = 'excel';
+
     protected $table = 'bh01_ban';
 
     protected $fillable = [
@@ -19,6 +22,7 @@ class Bh01Ban extends Model
         'trang_thai_ky', 'sign_method', 'signed_at', 'signed_error', 'duong_dan_da_ky', 'sha256_tep',
         'submitted_at', 'submitted_by', 'ma_ket_qua', 'ma_gd', 'thoi_gian_tiep_nhan', 'thong_diep',
         'dang_xu_ly_tu',
+        'nguon', 'ten_tep_nguon', 'duong_dan_tep_nguon',
     ];
 
     protected $casts = [
