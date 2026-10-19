@@ -168,6 +168,13 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('dashboard/operating-room/utilization', 'Dashboard\OperatingRoomController@utilization')
              ->name('dashboard.operating-room.utilization');
 
+        // ── Dashboard lãnh đạo ────────────────────────────────────────────────
+        Route::get('dashboard/lanh-dao', 'Dashboard\LanhDaoController@index')
+             ->name('dashboard.lanh-dao');
+        Route::get('dashboard/lanh-dao/{phan}', 'Dashboard\LanhDaoController@phan')
+             ->where('phan', 'the-so|thanh-toan|dieu-tri-giuong|kham-thuoc|he-ngoai')
+             ->name('dashboard.lanh-dao.phan');
+
     });
 
     // ── Dashboard XML3176 ─────────────────────────────────────────────────────
