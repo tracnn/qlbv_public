@@ -27,8 +27,6 @@ class sendQd130XmlErrors extends Command
     /**
      * Create a new command instance.
      *
-     * @param Xml1Checker $xml1Checker
-     * @param Xml2Checker $xml2Checker
      * @return void
      */
     public function __construct()

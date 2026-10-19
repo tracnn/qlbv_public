@@ -11,8 +11,6 @@ use App\Models\System\District;
 use App\Models\System\Symptom;
 use App\Models\System\Ward;
 
-use App\Models\BHYT\cat_cond_service;
-use App\Models\BHYT\cat_cond_pharma;
 
 class CategoryController extends Controller
 {
@@ -92,33 +90,4 @@ class CategoryController extends Controller
 
     }
 
-    public function dvktCoDieuKien() {
-        $cond_service = cat_cond_service::all();
-        return view('category.manager.dvkt-co-dieu-kien.index',
-            compact('cond_service'));
-    }
-
-    public function dmtCoDieuKien() {
-        $models = cat_cond_pharma::all();
-        return view('category.manager.dm-thuoc-co-dieu-kien.index',
-            compact('models'));
-    }
-
-    public function updateDvktCoDieuKien(Request $request) {
-        if (!$request->ajax()) {
-            return redirect()->route('home');
-        }
-        $update_model = cat_cond_service::find($request->id);
-        $update_model->cond_val = $request->value;
-        $update_model->save();
-    }
-
-    public function updateDmtCoDieuKien(Request $request) {
-        if (!$request->ajax()) {
-            return redirect()->route('home');
-        }
-        $update_model = cat_cond_pharma::find($request->id);
-        $update_model->pharma_val = $request->value;
-        $update_model->save();
-    }
 }

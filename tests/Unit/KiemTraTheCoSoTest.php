@@ -29,11 +29,6 @@ class KiemTraTheCoSoTest extends TestCase
         return $this->maKhongComment(base_path('app/Jobs/jobKtTheBHYT.php'));
     }
 
-    protected function maNhapXml()
-    {
-        return $this->maKhongComment(base_path('app/Console/Commands/XML4210Import.php'));
-    }
-
     /** @test */
     public function lenh_quet_join_his_branch()
     {
@@ -69,32 +64,15 @@ class KiemTraTheCoSoTest extends TestCase
     }
 
     /**
-     * JobKtTheBHYT duoc dispatch tu HAI noi. Neu chi sua mot noi, noi kia gui thieu maCskcb
-     * va job vo - loi chi lo ra luc chay that.
-     */
-    /** @test */
-    public function nhap_xml_cung_truyen_hai_gia_tri_tach_bach()
-    {
-        $ma = $this->maNhapXml();
-
-        $this->assertContains("'maCskcb'", $ma, 'XML4210Import thieu tham so maCskcb');
-        $this->assertContains("'maDkbd'", $ma, 'XML4210Import thieu tham so maDkbd');
-        $this->assertNotContains("'maCSKCB'", $ma,
-            'XML4210Import con dung ten cu maCSKCB - job khong con doc khoa nay');
-    }
-
-    /**
      * Da sot 3 noi dispatch vi grep chi bat 'JobKtTheBHYT::dispatch' viet hoa, trong khi ma
      * nguon dung ca 'jobKtTheBHYT::dispatch' viet thuong - PHP khong phan biet hoa thuong ten
-     * lop. Test nay quet CA NAM noi, khong phu thuoc cach viet.
+     * lop. Test nay quet MOI noi dispatch, khong phu thuoc cach viet.
      */
     /** @test */
     public function moi_noi_dispatch_deu_truyen_maCskcb_va_maDkbd()
     {
         $noi = [
             'app/Console/Commands/HISProKiemTraTheBHYT.php',
-            'app/Console/Commands/XML4210Import.php',
-            'app/Http/Controllers/System/UploadXML.php',
             'app/Services/Qd130XmlService.php',
             'app/Services/Xml3176Service.php',
         ];

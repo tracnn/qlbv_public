@@ -17,24 +17,6 @@ Breadcrumbs::register('bhyt.xml3176.index', function ($breadcrumbs) {
     $breadcrumbs->push('Hồ sơ XML3176', route('bhyt.xml3176.index'));
 });
 
-// Home > Hồ sơ XML
-Breadcrumbs::register('bhyt.index', function ($breadcrumbs) {
-	$breadcrumbs->parent('home');
-    $breadcrumbs->push('Hồ sơ XML', route('bhyt.index'));
-});
-
-// Home > Chi tiết hồ sơ
-Breadcrumbs::register('bhyt.detailxml', function ($breadcrumbs, $xml1) {
-	$breadcrumbs->parent('bhyt.index');
-    $breadcrumbs->push('Chi tiết hồ sơ KCB: ' .$xml1->ho_ten , route('bhyt.detailxml'));
-});
-
-// Home > Kiểm tra thẻ
-Breadcrumbs::register('bhyt.check-card', function ($breadcrumbs) {
-	$breadcrumbs->parent('bhyt.index');
-    $breadcrumbs->push('Kiểm tra thẻ BHYT', route('bhyt.check-card'));
-});
-
 // Home > Nhập thẻ BHYT
 Breadcrumbs::register('insurance-card.add-new', function ($breadcrumbs) {
 	$breadcrumbs->parent('home');

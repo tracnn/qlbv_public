@@ -632,25 +632,6 @@ return [
                     ],
                 ],
                 [
-                    'text'    => 'Xml 4210',
-                    'icon'    => 'archive',
-                    'checkrole'   => 'xml-man',
-                    'submenu' => [
-                        [
-                            'text'  => 'Danh sách hồ sơ',
-                            'icon'  => 'file',
-                            'route'   => 'bhyt.index',
-                            'active'=> ['bhyt/index*'],
-                        ],
-                        [
-                            'text'       => 'Nhập khẩu hồ sơ',
-                            'icon'       => 'plus',
-                            'route'        => 'system.upload-xml',
-                            'active'    => ['system/upload-xml*']
-                        ],
-                    ],
-                ],
-                [
                     'text'    => 'Báo cáo',
                     'icon'    => 'archive',
                     'checkrole'   => 'xml-man',

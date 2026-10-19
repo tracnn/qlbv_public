@@ -48,8 +48,6 @@ class NhanMaTheTest extends TestCase
      * Da do thuc te: config('__tech.insurance_error_code')['997'] nem
      * "Undefined offset: 997" - trang trang o man chi tiet, va o mail template thi job hang
      * doi chet lang le. Co 11 tep tung viet kieu do.
-     *
-     * Ngoai le duy nhat: app/BHYTKiemTraHoSo.php da boc isset() nen an toan.
      */
     /** @test */
     public function khong_noi_nao_con_truy_cap_bang_nhan_khong_phong_ve()
@@ -67,9 +65,8 @@ class NhanMaTheTest extends TestCase
 
                 $duong = $tep->getPathname();
 
-                // Da boc isset(), an toan. NhanMaThe.php chi nhac chuoi do trong chu thich.
-                if (strpos($duong, 'BHYTKiemTraHoSo.php') !== false
-                    || strpos($duong, 'NhanMaThe.php') !== false) {
+                // NhanMaThe.php chi nhac chuoi do trong chu thich.
+                if (strpos($duong, 'NhanMaThe.php') !== false) {
                     continue;
                 }
 

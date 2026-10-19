@@ -15,7 +15,6 @@ use App\Models\BHYT\MedicalSupplyCatalog;
 use App\Models\BHYT\MedicalStaff;
 use App\Models\BHYT\DepartmentBedCatalog;
 use App\Models\BHYT\EquipmentCatalog;
-use App\Models\BHYT\XmlErrorCatalog;
 use App\Models\BHYT\Qd130XmlErrorCatalog;
 use App\Models\BHYT\Xml3176ErrorCatalog;
 use App\Models\BHYT\Icd10Category;
@@ -273,11 +272,6 @@ class CategoryBHYTController extends Controller
         return DB::table($x['bang'])->where($x['dieu_kien']);
     }
 
-    public function fetchXmlErrorCatalog()
-    {
-        $xmlErrorCatalogs = XmlErrorCatalog::orderBy('xml')->get();
-        return response()->json($xmlErrorCatalogs);
-    }
     public function fetchQd130XmlErrorCatalog()
     {
         $qd130XmlErrorCatalogs = Qd130XmlErrorCatalog::orderBy('xml')->get();
