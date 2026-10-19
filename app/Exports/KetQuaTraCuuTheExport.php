@@ -18,7 +18,7 @@ use Maatwebsite\Excel\Concerns\WithTitle;
  * khong co dau hieu gi cho toi luc ai do ngoi doi chieu tung dong.
  *
  * KHAC HeinCardErrorExport: lop do la mot sheet trong bo xuat loi XML, dung quy tac "loi" cua
- * job (qd130xml.hein_card_invalid). Lop nay khong mang danh "loi" - no xuat dung thu bo loc
+ * job (xml3176.hein_card_invalid). Lop nay khong mang danh "loi" - no xuat dung thu bo loc
  * dang chon, ke ca dong hop le.
  *
  * FromQuery de Laravel Excel duyet THEO LO: bang nay phinh theo thoi gian, moi ho so mot dong.

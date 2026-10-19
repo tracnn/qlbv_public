@@ -1138,8 +1138,6 @@ $techAppConfig = [
     'creator' => array('quynhnt -kkb'),
     'doctor' => array('anhvt -kkb'),
 	
-	//Các option liên quan đến QD130 Xml
-    'export_qd130_enabled' => true,
 
 ];
 

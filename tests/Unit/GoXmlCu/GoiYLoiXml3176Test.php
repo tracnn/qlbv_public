@@ -26,13 +26,4 @@ class GoiYLoiXml3176Test extends TestCase
 
         $this->assertSame('moi', getFormattedSuggestion('KHOA_KHONG_TON_TAI'));
     }
-
-    /** @test */
-    public function xml3176_bao_trum_qd130()
-    {
-        $cu = require base_path('config/qd130xml_suggestions.php');
-        $moi = require base_path('config/xml3176_suggestions.php');
-
-        $this->assertSame([], array_values(array_diff(array_keys($cu), array_keys($moi))));
-    }
 }

@@ -32,6 +32,16 @@ trait GoXmlCuGuard
         '/danh-muc\.(update-)?(dvkt|dm-thuoc)-co-dieu-kien/',
     ];
 
+    /** Ky hieu cua module XML4750 - trong ma ten Qd130 / xml130. */
+    protected static $KY_HIEU_QD130 = [
+        '/qd130/i',
+        '/xml130/i',
+        '/expectedStructures130/',
+        '/loai_ho_so_4750/',
+        '/xml_4750_not_check/',
+        '/Export 4750/',
+    ];
+
     /** Thu muc quet (tuong doi base_path). */
     protected static $THU_MUC_QUET = ['app', 'routes', 'config', 'resources/views', 'tests'];
 

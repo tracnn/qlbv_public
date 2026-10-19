@@ -33,7 +33,6 @@ print_error() {
 list_jobs() {
     print_status "Danh sách các service job:"
     echo ""
-    echo "1. queue_qd130xml     - JobQd130Xml Queue Worker"
     echo "2. queue_ktbhytthe    - JobKtTheBHYT Queue Worker"
     echo "3. import_catalog     - Import Catalog BHXH Service"
     echo "4. xml_import         - XML Import Service"
@@ -54,11 +53,6 @@ start_job() {
     local job_name="$1"
     
     case "$job_name" in
-        "qd130xml"|"queue_qd130xml")
-            print_status "Khởi động JobQd130Xml Queue Worker..."
-            docker-compose up -d queue_qd130xml
-            print_success "JobQd130Xml Queue Worker đã được khởi động"
-            ;;
         "ktbhytthe"|"queue_ktbhytthe")
             print_status "Khởi động JobKtTheBHYT Queue Worker..."
             docker-compose up -d queue_ktbhytthe
@@ -81,12 +75,11 @@ start_job() {
             ;;
         "all")
             print_status "Khởi động tất cả service job..."
-            docker-compose up -d queue_qd130xml queue_ktbhytthe import_catalog xml_import scheduler
+            docker-compose up -d queue_ktbhytthe import_catalog xml_import scheduler
             print_success "Tất cả service job đã được khởi động"
             ;;
         *)
             print_error "Service job không hợp lệ: $job_name"
-            echo "Các service job hợp lệ: qd130xml, ktbhytthe, catalog, xml, scheduler, all"
             exit 1
             ;;
     esac
@@ -97,11 +90,6 @@ stop_job() {
     local job_name="$1"
     
     case "$job_name" in
-        "qd130xml"|"queue_qd130xml")
-            print_status "Dừng JobQd130Xml Queue Worker..."
-            docker-compose stop queue_qd130xml
-            print_success "JobQd130Xml Queue Worker đã được dừng"
-            ;;
         "ktbhytthe"|"queue_ktbhytthe")
             print_status "Dừng JobKtTheBHYT Queue Worker..."
             docker-compose stop queue_ktbhytthe
@@ -124,12 +112,11 @@ stop_job() {
             ;;
         "all")
             print_status "Dừng tất cả service job..."
-            docker-compose stop queue_qd130xml queue_ktbhytthe import_catalog xml_import scheduler
+            docker-compose stop queue_ktbhytthe import_catalog xml_import scheduler
             print_success "Tất cả service job đã được dừng"
             ;;
         *)
             print_error "Service job không hợp lệ: $job_name"
-            echo "Các service job hợp lệ: qd130xml, ktbhytthe, catalog, xml, scheduler, all"
             exit 1
             ;;
     esac
@@ -140,11 +127,6 @@ restart_job() {
     local job_name="$1"
     
     case "$job_name" in
-        "qd130xml"|"queue_qd130xml")
-            print_status "Restart JobQd130Xml Queue Worker..."
-            docker-compose restart queue_qd130xml
-            print_success "JobQd130Xml Queue Worker đã được restart"
-            ;;
         "ktbhytthe"|"queue_ktbhytthe")
             print_status "Restart JobKtTheBHYT Queue Worker..."
             docker-compose restart queue_ktbhytthe
@@ -167,12 +149,11 @@ restart_job() {
             ;;
         "all")
             print_status "Restart tất cả service job..."
-            docker-compose restart queue_qd130xml queue_ktbhytthe import_catalog xml_import scheduler
+            docker-compose restart queue_ktbhytthe import_catalog xml_import scheduler
             print_success "Tất cả service job đã được restart"
             ;;
         *)
             print_error "Service job không hợp lệ: $job_name"
-            echo "Các service job hợp lệ: qd130xml, ktbhytthe, catalog, xml, scheduler, all"
             exit 1
             ;;
     esac
@@ -183,10 +164,6 @@ show_logs() {
     local job_name="$1"
     
     case "$job_name" in
-        "qd130xml"|"queue_qd130xml")
-            print_status "Logs của JobQd130Xml Queue Worker:"
-            docker-compose logs -f queue_qd130xml
-            ;;
         "ktbhytthe"|"queue_ktbhytthe")
             print_status "Logs của JobKtTheBHYT Queue Worker:"
             docker-compose logs -f queue_ktbhytthe
@@ -205,11 +182,10 @@ show_logs() {
             ;;
         "all")
             print_status "Logs của tất cả service job:"
-            docker-compose logs -f queue_qd130xml queue_ktbhytthe import_catalog xml_import scheduler
+            docker-compose logs -f queue_ktbhytthe import_catalog xml_import scheduler
             ;;
         *)
             print_error "Service job không hợp lệ: $job_name"
-            echo "Các service job hợp lệ: qd130xml, ktbhytthe, catalog, xml, scheduler, all"
             exit 1
             ;;
     esac
@@ -221,9 +197,6 @@ exec_job() {
     local command="$2"
     
     case "$job_name" in
-        "qd130xml"|"queue_qd130xml")
-            docker-compose exec queue_qd130xml php artisan $command
-            ;;
         "ktbhytthe"|"queue_ktbhytthe")
             docker-compose exec queue_ktbhytthe php artisan $command
             ;;
@@ -238,7 +211,6 @@ exec_job() {
             ;;
         *)
             print_error "Service job không hợp lệ: $job_name"
-            echo "Các service job hợp lệ: qd130xml, ktbhytthe, catalog, xml, scheduler"
             exit 1
             ;;
     esac
@@ -279,7 +251,6 @@ show_usage() {
     echo "  monitor                 - Monitor queue jobs"
     echo ""
     echo "Job Names:"
-    echo "  qd130xml                - JobQd130Xml Queue Worker"
     echo "  ktbhytthe               - JobKtTheBHYT Queue Worker"
     echo "  catalog                 - Import Catalog Service"
     echo "  xml                     - XML Import Service"
@@ -288,10 +259,8 @@ show_usage() {
     echo ""
     echo "Examples:"
     echo "  $0 list                 - Liệt kê jobs"
-    echo "  $0 start qd130xml       - Khởi động JobQd130Xml"
     echo "  $0 stop all             - Dừng tất cả jobs"
     echo "  $0 logs catalog         - Xem logs Import Catalog"
-    echo "  $0 exec qd130xml tinker - Chạy tinker trong container"
     echo "  $0 monitor              - Monitor queue jobs"
     echo ""
 }

@@ -141,7 +141,7 @@ class CtdtQuyetDinhGuiTest extends TestCase
     /** @test */
     public function KHONG_lam_vo_chu_ky_hai_tham_so_cua_lop_dung_chung()
     {
-        // Day moi la thu that su vo ra se lam hong Xml3176Service va Qd130XmlService: chung
+        // Day moi la thu that su vo ra se lam hong Xml3176Service: no
         // goi nen() voi dung HAI tham so. Neu ai do sau nay them tham so bat buoc vao lop
         // dung chung, hai duong san pham do do ngay - nhung khong test nao cua Giai doan 4
         // bat duoc, tru test nay.

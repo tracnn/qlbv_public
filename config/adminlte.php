@@ -613,25 +613,6 @@ return [
                     ],
                 ],
                 [
-                    'text'    => 'Xml 4750',
-                    'icon'    => 'archive',
-                    'checkrole'   => 'xml-man',
-                    'submenu' => [
-                        [
-                            'text'  => 'Danh sách hồ sơ',
-                            'icon'  => 'file',
-                            'route'   => 'bhyt.qd130.index',
-                            'active'=> ['bhyt/qd130/index*'],
-                        ],
-                        [
-                            'text'       => 'Nhập khẩu hồ sơ',
-                            'icon'       => 'plus',
-                            'route'        => 'bhyt.qd130.import.index',
-                            'active'    => ['bhyt/qd130/import/index*']
-                        ],
-                    ],
-                ],
-                [
                     'text'    => 'Báo cáo',
                     'icon'    => 'archive',
                     'checkrole'   => 'xml-man',
@@ -746,12 +727,6 @@ return [
                             'icon'  => 'book',
                             'route'   => 'category-bhyt.job-category',
                             'active'=> ['category/bhyt/job-category*'],
-                        ],
-                        [
-                            'text'  => 'DM lỗi Xml 4750',
-                            'icon'  => 'book',
-                            'route'   => 'category-bhyt.qd130-xml-error-catalog',
-                            'active'=> ['category/bhyt/qd130-xml-error-catalog*'],
                         ],
                         [
                             'text'  => 'DM lỗi Xml 3176',

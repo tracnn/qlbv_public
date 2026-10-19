@@ -15,7 +15,6 @@ use App\Models\BHYT\MedicalSupplyCatalog;
 use App\Models\BHYT\MedicalStaff;
 use App\Models\BHYT\DepartmentBedCatalog;
 use App\Models\BHYT\EquipmentCatalog;
-use App\Models\BHYT\Qd130XmlErrorCatalog;
 use App\Models\BHYT\Xml3176ErrorCatalog;
 use App\Models\BHYT\Icd10Category;
 use App\Models\BHYT\IcdYhctCategory;
@@ -270,57 +269,6 @@ class CategoryBHYTController extends Controller
         $x = \App\Services\Category\XoaDanhMuc::dieuKien($loai, $maCskcb, config('danh_muc_bhyt'));
 
         return DB::table($x['bang'])->where($x['dieu_kien']);
-    }
-
-    public function fetchQd130XmlErrorCatalog()
-    {
-        $qd130XmlErrorCatalogs = Qd130XmlErrorCatalog::orderBy('xml')->get();
-        return response()->json($qd130XmlErrorCatalogs);
-    }
-
-    public function indexQd130XmlErrorCatalog()
-    {
-        return view('category.bhyt.qd130_xml_error_catalog');
-    }
-
-    public function fetchQd130XmlErrorCatalogDatatable()
-    {
-        $result = Qd130XmlErrorCatalog::query();
-
-        return Datatables::of($result)
-        ->editColumn('critical_error', function ($row) {
-            return '<input type="checkbox" ' . ($row->critical_error ? 'checked' : '') . ' disabled>';
-        })
-        ->editColumn('critical_error', function ($row) {
-            return '<input type="checkbox" class="critical-error-toggle" data-id="' . $row->id . '" ' . ($row->critical_error ? 'checked' : '') . '>';
-        })
-        ->editColumn('is_check', function ($row) {
-            return '<input type="checkbox" class="is-check-toggle" data-id="' . $row->id . '" ' . ($row->is_check ? 'checked' : '') . '>';
-        })
-        ->rawColumns(['critical_error', 'is_check']) // Đảm bảo các cột này được render HTML
-        ->toJson();
-    }
-
-    public function updateQd130XmlErrorCatalog(Request $request)
-    {
-        $id = $request->input('id');
-
-        // Tìm và cập nhật giá trị is_not_check (chuyển đổi giữa is_check và is_not_check)
-        $catalog = Qd130XmlErrorCatalog::find($id);
-
-        if ($catalog) {
-            if ($request->has('is_check')) {
-                $catalog->is_check = $request->is_check;
-            }
-            if ($request->has('critical_error')) {
-                $catalog->critical_error = $request->critical_error;
-            }
-            $catalog->save();
-            
-            return response()->json(['success' => true]);
-        }
-
-        return response()->json(['success' => false], 404);
     }
 
     public function fetchXml3176ErrorCatalog()

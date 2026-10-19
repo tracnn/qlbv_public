@@ -1,3 +1,10 @@
+# 19/10/2026
+
+- **Gỡ bỏ hai module XML cũ không còn dùng: XML4750 (trong mã tên `Qd130`) và XML4210.** Chỉ còn module XML3176. Mất các menu "Xml 4750", "Xml 4210", "DM lỗi Xml 4750", màn nhập XML 4210 (`system/upload-xml`), ba báo cáo chỉ dùng dữ liệu 4210 (KCB trái tuyến, DVKT có điều kiện, thuốc có điều kiện) và hai màn danh mục điều kiện phục vụ chúng; mất các lệnh `xml130import:day`, `xml4210import:day`, `sendqd130xmlerrors:day`. **Giữ nguyên toàn bộ bảng CSDL** (`qd130_*`, `xml1s..xml5s`, ...) — chỉ gỡ mã.
+- **Báo cáo "NVYT - Y lệnh" nay đọc hồ sơ XML3176** (trước đọc bảng `qd130_*`, đã ngừng nạp). Sửa kèm hai lỗi: (1) một bác sĩ có nhiều dòng trong danh mục NVYT bị **đếm nhân bản** số y lệnh — nay đếm theo bác sĩ trước rồi mới nối danh mục; (2) lọc theo ngày vào/ra/thanh toán trỏ vào cột không tồn tại trên XML2/XML3 — nay lọc qua XML1. Đo tháng 9/2026: 1.386.045 y lệnh = đúng tổng XML2 + XML3, chạy 12 giây.
+- `word:day` chỉ còn gửi phần lỗi thẻ BHYT (bỏ phần lỗi XML 4210). Gợi ý xử lý ở màn chi tiết lỗi XML3176 nay đọc `config/xml3176_suggestions.php`.
+- **Triển khai:** xem `docs/trien-khai/2026-10-go-xml-cu.md` — phải gỡ các tác vụ Task Scheduler gọi ba lệnh đã xoá, chạy `config:cache` / `route:cache` / `view:clear` và `queue:restart`.
+
 # 15/10/2026
 
 - **Lỗi "Thời gian thực hiện trùng với dịch vụ khác" (`XML3_OVERLAPPING_SERVICE_EXECUTION`) nay báo mỗi dòng một lỗi, không còn mỗi cặp một lỗi.** Mô tả kể tối đa 5 dịch vụ chồng giờ với dòng đó (theo giờ bắt đầu), dư thì ghi "… và K dịch vụ khác". Hai dòng chồng nhau thì cả hai dòng đều có lỗi. Trước đây quy tắc sinh **1.022.905 dòng lỗi trên 1.950 hồ sơ**; hồ sơ 000007038497 có 372.807 cặp, làm việc kiểm tràn 512 MB và hồ sơ chưa bao giờ kiểm xong. Đo lại trên dữ liệu thật: hồ sơ này còn 51 lỗi chồng giờ (000007139114: 38.775 → 24; 000007161892: 64.400 → 41), bộ nhớ đỉnh 82 MB.

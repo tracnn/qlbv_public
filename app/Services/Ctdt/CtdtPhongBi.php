@@ -55,7 +55,7 @@ class CtdtPhongBi
 
         // The RONG, dat CUOI. Dich vu ky GHI chu ky vao mot the da ton tai
         // (tag_store_signature_value = 'CHUKYDONVI'), khong tu tao - giong het cach
-        // Xml3176Service va Qd130XmlService dang lam truoc khi goi ky.
+        // Xml3176Service dang lam truoc khi goi ky.
         $goc->appendChild($doc->createElement('CHUKYDONVI'));
 
         return $doc->saveXML();

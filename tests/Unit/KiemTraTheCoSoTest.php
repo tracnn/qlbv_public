@@ -73,7 +73,6 @@ class KiemTraTheCoSoTest extends TestCase
     {
         $noi = [
             'app/Console/Commands/HISProKiemTraTheBHYT.php',
-            'app/Services/Qd130XmlService.php',
             'app/Services/Xml3176Service.php',
         ];
 

@@ -35,34 +35,16 @@ class CoLapCongTacLuongTest extends TestCase
     // SignXml3176Job cat chuoi khi co gui tat - tat thi KHONG co job gui nao chay. Hanh vi do
     // kiem bang test chay that: SignXml3176JobTest::tat_gui_thi_cat_chuoi_va_khong_ghi_gi.
 
-    /** @test */
-    public function qd130_hoi_co_truoc_khi_dispatch_job_gui()
-    {
-        $this->xuatHienTruoc(
-            'app/Services/Qd130XmlService.php',
-            'submit_xml_enabled',
-            'SubmitQd130XmlJob::dispatch',
-            'Phai hoi co truoc khi dispatch, neu khong tat van sinh job vao hang doi'
-        );
-    }
-
     /**
      * Job van phai kiem lai co: no co the nam cho trong hang doi rat lau, giua luc do cau
      * hinh co the da bi tat. Va viec kiem phai dung TRUOC moi viec khac.
      */
     /** @test */
-    public function hai_job_kiem_co_truoc_khi_dung_service()
+    public function job_gui_kiem_co_truoc_khi_dung_service()
     {
         $this->xuatHienTruoc(
             'app/Jobs/SubmitXml3176Job.php',
             'submit_xml_3176_enabled',
-            'new BHYTXmlSubmitService',
-            'Job phai kiem co truoc khi dung service - lam viec truoc khi hoi la sai thu tu'
-        );
-
-        $this->xuatHienTruoc(
-            'app/Jobs/SubmitQd130XmlJob.php',
-            'submit_xml_enabled',
             'new BHYTXmlSubmitService',
             'Job phai kiem co truoc khi dung service - lam viec truoc khi hoi la sai thu tu'
         );

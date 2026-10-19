@@ -96,7 +96,7 @@ class TraCuuTheChonCoSoTest extends TestCase
 
     /**
      * ma_cskcb KHONG duoc la 'required'. Da xay ra that: dat 'required' lam vo ca 8 duong
-     * tro sau vao man nay (bao cao trai tuyen, danh sach XML3176, XML QD130, kiem tra du
+     * tro sau vao man nay (bao cao trai tuyen, danh sach XML3176, kiem tra du
      * lieu gui, tra cuu he thong...) - chung chi truyen so the / ho ten / ngay sinh.
      * Nguoi dung khong lam gi sai ma nhan thong bao do.
      */
@@ -131,15 +131,14 @@ class TraCuuTheChonCoSoTest extends TestCase
     }
 
     /**
-     * Hai man co san ma_cskcb tren ban ghi thi phai truyen di, de bam mot phat ra ket qua
+     * Man XML3176 co san ma_cskcb tren ban ghi thi phai truyen di, de bam mot phat ra ket qua
      * thay vi bat nguoi dung chon lai co so da biet.
      */
     /** @test */
-    public function hai_man_xml_truyen_ma_co_so_vao_lien_ket()
+    public function man_xml3176_truyen_ma_co_so_vao_lien_ket()
     {
         foreach ([
             'app/Http/Controllers/BHYT/BHYTXml3176Controller.php',
-            'app/Http/Controllers/BHYT/BHYTQd130Controller.php',
         ] as $tep) {
             $ma = $this->maKhongComment(base_path($tep));
 

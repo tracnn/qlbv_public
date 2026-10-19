@@ -23,7 +23,6 @@ REM Function to list jobs
 if "%1"=="list" (
     echo [INFO] Danh sách các service job:
     echo.
-    echo 1. queue_qd130xml     - JobQd130Xml Queue Worker
     echo 2. queue_ktbhytthe    - JobKtTheBHYT Queue Worker
     echo 3. import_catalog     - Import Catalog BHXH Service
     echo 4. xml_import         - XML Import Service
@@ -50,11 +49,7 @@ if "%1"=="start" (
         goto :show_usage
     )
     
-    if "%2"=="qd130xml" (
-        echo [INFO] Khởi động JobQd130Xml Queue Worker...
-        docker-compose up -d queue_qd130xml
-        echo [SUCCESS] JobQd130Xml Queue Worker đã được khởi động
-    ) else if "%2"=="ktbhytthe" (
+    if "%2"=="ktbhytthe" (
         echo [INFO] Khởi động JobKtTheBHYT Queue Worker...
         docker-compose up -d queue_ktbhytthe
         echo [SUCCESS] JobKtTheBHYT Queue Worker đã được khởi động
@@ -72,11 +67,10 @@ if "%1"=="start" (
         echo [SUCCESS] Laravel Scheduler đã được khởi động
     ) else if "%2"=="all" (
         echo [INFO] Khởi động tất cả service job...
-        docker-compose up -d queue_qd130xml queue_ktbhytthe import_catalog xml_import scheduler
+        docker-compose up -d queue_ktbhytthe import_catalog xml_import scheduler
         echo [SUCCESS] Tất cả service job đã được khởi động
     ) else (
         echo [ERROR] Service job không hợp lệ: %2
-        echo Các service job hợp lệ: qd130xml, ktbhytthe, catalog, xml, scheduler, all
         exit /b 1
     )
     goto :eof
@@ -90,11 +84,7 @@ if "%1"=="stop" (
         goto :show_usage
     )
     
-    if "%2"=="qd130xml" (
-        echo [INFO] Dừng JobQd130Xml Queue Worker...
-        docker-compose stop queue_qd130xml
-        echo [SUCCESS] JobQd130Xml Queue Worker đã được dừng
-    ) else if "%2"=="ktbhytthe" (
+    if "%2"=="ktbhytthe" (
         echo [INFO] Dừng JobKtTheBHYT Queue Worker...
         docker-compose stop queue_ktbhytthe
         echo [SUCCESS] JobKtTheBHYT Queue Worker đã được dừng
@@ -112,11 +102,10 @@ if "%1"=="stop" (
         echo [SUCCESS] Laravel Scheduler đã được dừng
     ) else if "%2"=="all" (
         echo [INFO] Dừng tất cả service job...
-        docker-compose stop queue_qd130xml queue_ktbhytthe import_catalog xml_import scheduler
+        docker-compose stop queue_ktbhytthe import_catalog xml_import scheduler
         echo [SUCCESS] Tất cả service job đã được dừng
     ) else (
         echo [ERROR] Service job không hợp lệ: %2
-        echo Các service job hợp lệ: qd130xml, ktbhytthe, catalog, xml, scheduler, all
         exit /b 1
     )
     goto :eof
@@ -130,11 +119,7 @@ if "%1"=="restart" (
         goto :show_usage
     )
     
-    if "%2"=="qd130xml" (
-        echo [INFO] Restart JobQd130Xml Queue Worker...
-        docker-compose restart queue_qd130xml
-        echo [SUCCESS] JobQd130Xml Queue Worker đã được restart
-    ) else if "%2"=="ktbhytthe" (
+    if "%2"=="ktbhytthe" (
         echo [INFO] Restart JobKtTheBHYT Queue Worker...
         docker-compose restart queue_ktbhytthe
         echo [SUCCESS] JobKtTheBHYT Queue Worker đã được restart
@@ -152,11 +137,10 @@ if "%1"=="restart" (
         echo [SUCCESS] Laravel Scheduler đã được restart
     ) else if "%2"=="all" (
         echo [INFO] Restart tất cả service job...
-        docker-compose restart queue_qd130xml queue_ktbhytthe import_catalog xml_import scheduler
+        docker-compose restart queue_ktbhytthe import_catalog xml_import scheduler
         echo [SUCCESS] Tất cả service job đã được restart
     ) else (
         echo [ERROR] Service job không hợp lệ: %2
-        echo Các service job hợp lệ: qd130xml, ktbhytthe, catalog, xml, scheduler, all
         exit /b 1
     )
     goto :eof
@@ -170,10 +154,7 @@ if "%1"=="logs" (
         goto :show_usage
     )
     
-    if "%2"=="qd130xml" (
-        echo [INFO] Logs của JobQd130Xml Queue Worker:
-        docker-compose logs -f queue_qd130xml
-    ) else if "%2"=="ktbhytthe" (
+    if "%2"=="ktbhytthe" (
         echo [INFO] Logs của JobKtTheBHYT Queue Worker:
         docker-compose logs -f queue_ktbhytthe
     ) else if "%2"=="catalog" (
@@ -187,10 +168,9 @@ if "%1"=="logs" (
         docker-compose logs -f scheduler
     ) else if "%2"=="all" (
         echo [INFO] Logs của tất cả service job:
-        docker-compose logs -f queue_qd130xml queue_ktbhytthe import_catalog xml_import scheduler
+        docker-compose logs -f queue_ktbhytthe import_catalog xml_import scheduler
     ) else (
         echo [ERROR] Service job không hợp lệ: %2
-        echo Các service job hợp lệ: qd130xml, ktbhytthe, catalog, xml, scheduler, all
         exit /b 1
     )
     goto :eof
@@ -208,9 +188,7 @@ if "%1"=="exec" (
         goto :show_usage
     )
     
-    if "%2"=="qd130xml" (
-        docker-compose exec queue_qd130xml php artisan %3
-    ) else if "%2"=="ktbhytthe" (
+    if "%2"=="ktbhytthe" (
         docker-compose exec queue_ktbhytthe php artisan %3
     ) else if "%2"=="catalog" (
         docker-compose exec import_catalog php artisan %3
@@ -220,7 +198,6 @@ if "%1"=="exec" (
         docker-compose exec scheduler php artisan %3
     ) else (
         echo [ERROR] Service job không hợp lệ: %2
-        echo Các service job hợp lệ: qd130xml, ktbhytthe, catalog, xml, scheduler
         exit /b 1
     )
     goto :eof
@@ -260,7 +237,6 @@ echo   exec [JOB_NAME] [CMD]   - Chạy lệnh trong job container
 echo   monitor                 - Monitor queue jobs
 echo.
 echo Job Names:
-echo   qd130xml                - JobQd130Xml Queue Worker
 echo   ktbhytthe               - JobKtTheBHYT Queue Worker
 echo   catalog                 - Import Catalog Service
 echo   xml                     - XML Import Service
@@ -269,10 +245,8 @@ echo   all                     - Tất cả jobs
 echo.
 echo Examples:
 echo   %0 list                 - Liệt kê jobs
-echo   %0 start qd130xml       - Khởi động JobQd130Xml
 echo   %0 stop all             - Dừng tất cả jobs
 echo   %0 logs catalog         - Xem logs Import Catalog
-echo   %0 exec qd130xml tinker - Chạy tinker trong container
 echo   %0 monitor              - Monitor queue jobs
 echo.
 goto :eof
