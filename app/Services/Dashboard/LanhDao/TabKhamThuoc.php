@@ -18,8 +18,8 @@ class TabKhamThuoc
     /** exp_mest_type_code của phiếu xuất loại "Bán" (id 8 trên HIS). */
     const MA_LOAI_BAN = '08';
 
-    /** Khung giờ tiếp đón hiển thị ở biểu đồ. */
-    const GIO_TU = 6;
+    /** Khung giờ tiếp đón của biểu đồ: giờ < GIO_TU gộp vào cột đầu, giờ > GIO_DEN gộp vào cột cuối (gộp ở SQL vì không gộp được trung vị). */
+    const GIO_TU = 5;
     const GIO_DEN = 17;
 
     public function lay(KyLoc $ky): array
@@ -78,7 +78,7 @@ class TabKhamThuoc
 
         $sql = 'SELECT x.branch_id, x.gio, MEDIAN(x.phut) AS trung_vi, COUNT(*) AS so_ho_so,'
             . ' GROUPING(x.branch_id) AS gb, GROUPING(x.gio) AS gg FROM ('
-            . ' SELECT tr.branch_id AS branch_id, TO_NUMBER(SUBSTR(tr.in_time, 9, 2)) AS gio,'
+            . ' SELECT tr.branch_id AS branch_id, GREATEST(' . self::GIO_TU . ', LEAST(' . self::GIO_DEN . ', TO_NUMBER(SUBSTR(tr.in_time, 9, 2)))) AS gio,'
             . " (TO_DATE(tr.out_time, 'YYYYMMDDHH24MISS') - TO_DATE(tr.in_time, 'YYYYMMDDHH24MISS')) * 1440 AS phut"
             . ' FROM his_treatment tr'
             . ' WHERE tr.tdl_treatment_type_id = 1 AND tr.out_time BETWEEN ? AND ? AND tr.in_time IS NOT NULL'
@@ -118,7 +118,7 @@ class TabKhamThuoc
             . ' JOIN his_exp_mest_type ty ON ty.id = e.exp_mest_type_id'
             . ' JOIN his_service_req sr ON sr.id = e.prescription_id'
             . ' JOIN his_treatment tr ON tr.id = sr.treatment_id'
-            . ' WHERE ty.exp_mest_type_code = ? AND e.finish_time BETWEEN ? AND ?'
+            . ' WHERE ty.exp_mest_type_code = ? AND e.finish_time BETWEEN ? AND ? AND e.is_delete = 0 AND sr.is_delete = 0'
             . ' AND tr.branch_id IN (' . $in($branch) . ')'
             . ($loaiTru ? ' AND (tr.tdl_patient_type_id IS NULL OR tr.tdl_patient_type_id NOT IN (' . $in($loaiTru) . '))' : '')
             . ') x WHERE x.phut >= 0) y'

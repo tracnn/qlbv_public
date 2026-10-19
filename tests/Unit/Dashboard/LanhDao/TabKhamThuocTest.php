@@ -33,13 +33,13 @@ class TabKhamThuocTest extends TestCase
         ];
 
         $kq = TabKhamThuoc::dinhDang($kham, [], ['moi' => [], 'cu' => []], $this->ky('2cs'));
-        $this->assertSame(range(6, 17), $kq['tg_kham_theo_gio']['gio']);
-        $this->assertSame(40.0, $kq['tg_kham_theo_gio']['trung_vi'][2]);
-        $this->assertSame(100, $kq['tg_kham_theo_gio']['so_ho_so'][2]);
+        $this->assertSame(range(5, 17), $kq['tg_kham_theo_gio']['gio']);
+        $this->assertSame(40.0, $kq['tg_kham_theo_gio']['trung_vi'][3]);
+        $this->assertSame(100, $kq['tg_kham_theo_gio']['so_ho_so'][3]);
 
         $kq = TabKhamThuoc::dinhDang($kham, [], ['moi' => [], 'cu' => []], $this->ky('hn'));
-        $this->assertSame(30.0, $kq['tg_kham_theo_gio']['trung_vi'][2]);
-        $this->assertSame(60, $kq['tg_kham_theo_gio']['so_ho_so'][2]);
+        $this->assertSame(30.0, $kq['tg_kham_theo_gio']['trung_vi'][3]);
+        $this->assertSame(60, $kq['tg_kham_theo_gio']['so_ho_so'][3]);
     }
 
     /** @test */
@@ -53,7 +53,7 @@ class TabKhamThuocTest extends TestCase
         ];
 
         $kq = TabKhamThuoc::dinhDang($kham, [], ['moi' => [], 'cu' => []], $this->ky('hn'));
-        $this->assertSame(20.0, $kq['tg_kham_theo_gio']['trung_vi'][3]);
+        $this->assertSame(20.0, $kq['tg_kham_theo_gio']['trung_vi'][4]);
         $this->assertSame(0, $kq['tg_kham_theo_gio']['so_ho_so'][0]);
     }
 
@@ -62,8 +62,23 @@ class TabKhamThuocTest extends TestCase
     {
         $kq = TabKhamThuoc::dinhDang([$this->kham(null, 8, 40.0, 100)], [], ['moi' => [], 'cu' => []], $this->ky());
 
-        $this->assertNull($kq['tg_kham_theo_gio']['trung_vi'][3]);
-        $this->assertSame(0, $kq['tg_kham_theo_gio']['so_ho_so'][3]);
+        $this->assertNull($kq['tg_kham_theo_gio']['trung_vi'][4]);
+        $this->assertSame(0, $kq['tg_kham_theo_gio']['so_ho_so'][4]);
+    }
+
+    /** @test */
+    public function gio_bien_nam_o_cot_dau_va_cot_cuoi()
+    {
+        $kham = [$this->kham(null, 5, 300.0, 70), $this->kham(null, 17, 160.0, 9)];
+
+        $kq = TabKhamThuoc::dinhDang($kham, [], ['moi' => [], 'cu' => []], $this->ky());
+
+        $this->assertSame(5, $kq['tg_kham_theo_gio']['gio'][0]);
+        $this->assertSame(17, $kq['tg_kham_theo_gio']['gio'][12]);
+        $this->assertSame(300.0, $kq['tg_kham_theo_gio']['trung_vi'][0]);
+        $this->assertSame(70, $kq['tg_kham_theo_gio']['so_ho_so'][0]);
+        $this->assertSame(160.0, $kq['tg_kham_theo_gio']['trung_vi'][12]);
+        $this->assertSame(9, $kq['tg_kham_theo_gio']['so_ho_so'][12]);
     }
 
     /** @test */
