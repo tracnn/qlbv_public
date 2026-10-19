@@ -30,7 +30,8 @@ class Bh01GhiBan
     );
 
     /**
-     * @param array $thuocTinhBan Chi cac cot cua bh01_ban (vd nguon, ten_tep_nguon); gop vao luc tao.
+     * @param array $thuocTinhBan Chi cac cot cua bh01_ban (vd nguon, ten_tep_nguon); gop vao luc tao. Truong he thong
+     *                            (ma_ban, so_ban, trang_thai_ky...) luon thang: de o ve phai cua phep +.
      */
     public function ghi($maCskcb, array $ky, $taoBoi, callable $duyetLo, array $thuocTinhBan = array())
     {
@@ -70,7 +71,7 @@ class Bh01GhiBan
     /** Chay trong transaction cua ghi(). Tong tinh tu gia tri da chuan hoa. */
     private function ghiTrongGiaoDich($maCskcb, array $ky, $taoBoi, callable $duyetLo, array $thuocTinhBan, $soBan)
     {
-        $ban = Bh01Ban::create($thuocTinhBan + array(
+        $ban = Bh01Ban::create(array(
             'ma_ban'        => sprintf('BH01_%s_%s_%02d', $maCskcb, $ky['ky_qt'], $soBan),
             'ma_cskcb'      => $maCskcb,
             'nam_qt'        => $ky['nam'],
@@ -81,7 +82,7 @@ class Bh01GhiBan
             'tao_boi'       => $taoBoi,
             'tao_luc'       => date('Y-m-d H:i:s'),
             'trang_thai_ky' => Bh01Ban::KY_CHO,
-        ));
+        ) + $thuocTinhBan);
 
         $tong = array_fill_keys(self::$cot_tien, 0.0);
         $stt = 0;

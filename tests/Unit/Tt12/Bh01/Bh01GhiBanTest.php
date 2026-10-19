@@ -90,6 +90,22 @@ class Bh01GhiBanTest extends TestCase
     }
 
     /** @test */
+    public function thuoc_tinh_ban_khong_ghi_de_truong_he_thong()
+    {
+        $nguon = $this->nguon(array(array($this->dongNguon($this->duLieu(), 'Dòng 2'))));
+
+        $ban = (new Bh01GhiBan())->ghi(
+            '01929', $this->ky(), 'tester', $nguon,
+            array('so_ban' => 99, 'trang_thai_ky' => 'da_ky', 'nguon' => 'excel')
+        );
+
+        $luu = Bh01Ban::find($ban->id);
+        $this->assertSame(1, $luu->so_ban);
+        $this->assertSame(Bh01Ban::KY_CHO, $luu->trang_thai_ky);
+        $this->assertSame('excel', $luu->nguon);
+    }
+
+    /** @test */
     public function dong_chan_thi_rollback_va_bao_vi_tri()
     {
         $nguon = $this->nguon(array(array(
