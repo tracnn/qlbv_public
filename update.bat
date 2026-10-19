@@ -35,8 +35,10 @@ php artisan migrate --force
 ::
 :: "QLBV XMLImport" la dich vu chay xml130import:day (KHONG phai XMLImport3176 - giu nguyen).
 :: Module XML4210 khong co dich vu NSSM rieng nen khong co gi de go o day.
-echo Removing legacy Qd130 services...
-for %%S in ("QLBV JobQd130Xml" "QLBV JobSubmitQd130Xml" "QLBV JobExportQd130Xml" "QLBV XMLImport") do (
+:: "QLBV ImportCatalog" la dich vu quet thu muc nhap danh muc BHXH (importCatalogBHXH:data)
+:: - da go, danh muc chi con nhap qua man hinh.
+echo Removing legacy services...
+for %%S in ("QLBV JobQd130Xml" "QLBV JobSubmitQd130Xml" "QLBV JobExportQd130Xml" "QLBV XMLImport" "QLBV ImportCatalog") do (
     %NSSM_PATH%\nssm status %%S >nul 2>&1
     if not errorlevel 1 (
         echo Removing service %%~S...
@@ -60,13 +62,6 @@ if errorlevel 1 (
     echo Installing service QLBV JobKtTheBHYT...
     %NSSM_PATH%\nssm install "QLBV JobKtTheBHYT" %PHP_PATH% "%LARAVEL_PATH%artisan queue:work --queue=JobKtTheBHYT"
     %NSSM_PATH%\nssm set "QLBV JobKtTheBHYT" AppDirectory %LARAVEL_PATH%
-)
-
-%NSSM_PATH%\nssm status "QLBV ImportCatalog" >nul 2>&1
-if errorlevel 1 (
-    echo Installing service QLBV ImportCatalog...
-    %NSSM_PATH%\nssm install "QLBV ImportCatalog" %PHP_PATH% "%LARAVEL_PATH%artisan importCatalogBHXH:data"
-    %NSSM_PATH%\nssm set "QLBV ImportCatalog" AppDirectory %LARAVEL_PATH%
 )
 
 %NSSM_PATH%\nssm status "QLBV XMLImport3176" >nul 2>&1
@@ -231,7 +226,6 @@ if errorlevel 1 (
 :: Stop từng dịch vụ
 %NSSM_PATH%\nssm stop "QLBV JobXml3176"
 %NSSM_PATH%\nssm stop "QLBV JobKtTheBHYT"
-%NSSM_PATH%\nssm stop "QLBV ImportCatalog"
 %NSSM_PATH%\nssm stop "QLBV XMLImport3176"
 %NSSM_PATH%\nssm stop "QLBV TrucDuLieuYTeXmlScan"
 %NSSM_PATH%\nssm stop "QLBV CongDuLieuYTeDienBienXmlScan"
@@ -272,7 +266,6 @@ php artisan route:cache
 :: Restart các dịch vụ đã cài đặt
 echo Restarting services...
 %NSSM_PATH%\nssm start "QLBV JobKtTheBHYT"
-%NSSM_PATH%\nssm start "QLBV ImportCatalog"
 %NSSM_PATH%\nssm start "QLBV JobXml3176"
 %NSSM_PATH%\nssm start "QLBV XMLImport3176"
 %NSSM_PATH%\nssm start "QLBV TrucDuLieuYTeXmlScan"

@@ -19,10 +19,6 @@ set LARAVEL_PATH=%~dp0
 %NSSM_PATH%\nssm install "QLBV JobKtTheBHYT" %PHP_PATH% "%LARAVEL_PATH%artisan queue:work --queue=JobKtTheBHYT"
 %NSSM_PATH%\nssm set "QLBV JobKtTheBHYT" AppDirectory %LARAVEL_PATH%
 
-:: Tạo dịch vụ cho importCatalogBHXH:data
-%NSSM_PATH%\nssm install "QLBV ImportCatalog" %PHP_PATH% "%LARAVEL_PATH%artisan importCatalogBHXH:data"
-%NSSM_PATH%\nssm set "QLBV ImportCatalog" AppDirectory %LARAVEL_PATH%
-
 :: Tạo dịch vụ cho xml3176import:day
 %NSSM_PATH%\nssm install "QLBV XMLImport3176" %PHP_PATH% "%LARAVEL_PATH%artisan xml3176import:day"
 %NSSM_PATH%\nssm set "QLBV XMLImport3176" AppDirectory %LARAVEL_PATH%
@@ -111,7 +107,6 @@ set LARAVEL_PATH=%~dp0
 :: Khởi động tất cả các dịch vụ
 %NSSM_PATH%\nssm start "QLBV JobXml3176"
 %NSSM_PATH%\nssm start "QLBV JobKtTheBHYT"
-%NSSM_PATH%\nssm start "QLBV ImportCatalog"
 %NSSM_PATH%\nssm start "QLBV XMLImport3176"
 %NSSM_PATH%\nssm start "QLBV TrucDuLieuYTeXmlScan"
 %NSSM_PATH%\nssm start "QLBV CongDuLieuYTeDienBienXmlScan"

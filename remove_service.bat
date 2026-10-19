@@ -13,10 +13,6 @@ set NSSM_PATH=%~dp0
 %NSSM_PATH%\nssm stop "QLBV JobKtTheBHYT"
 %NSSM_PATH%\nssm remove "QLBV JobKtTheBHYT" confirm
 
-:: Xóa dịch vụ cho importCatalogBHXH:data
-%NSSM_PATH%\nssm stop "QLBV ImportCatalog"
-%NSSM_PATH%\nssm remove "QLBV ImportCatalog" confirm
-
 :: Xóa dịch vụ cho XMLImport3176
 %NSSM_PATH%\nssm stop "QLBV XMLImport3176"
 %NSSM_PATH%\nssm remove "QLBV XMLImport3176" confirm
@@ -82,8 +78,9 @@ set NSSM_PATH=%~dp0
 :: Dich vu cu cua module Qd130 (XML4750) - module da go, he thong chi con giu XML3176.
 :: install_service.bat va update.bat khong con cai cac dich vu nay (update.bat tu go chung);
 :: giu lai day de may nao con sot van don duoc. Dich vu khong ton tai thi nssm chi bao loi
-:: roi chay tiep, khong anh huong. "QLBV XMLImport" la dich vu chay xml130import:day.
-for %%S in ("QLBV JobQd130Xml" "QLBV JobSubmitQd130Xml" "QLBV JobExportQd130Xml" "QLBV XMLImport") do (
+:: roi chay tiep, khong anh huong. "QLBV XMLImport" la dich vu chay xml130import:day;
+:: "QLBV ImportCatalog" la dich vu quet thu muc nhap danh muc BHXH (importCatalogBHXH:data).
+for %%S in ("QLBV JobQd130Xml" "QLBV JobSubmitQd130Xml" "QLBV JobExportQd130Xml" "QLBV XMLImport" "QLBV ImportCatalog") do (
     %NSSM_PATH%\nssm stop %%S
     %NSSM_PATH%\nssm remove %%S confirm
 )

@@ -2,6 +2,7 @@
 
 - **Gỡ bỏ hai module XML cũ không còn dùng: XML4750 (trong mã tên `Qd130`) và XML4210.** Chỉ còn module XML3176. Mất các menu "Xml 4750", "Xml 4210", "DM lỗi Xml 4750", màn nhập XML 4210 (`system/upload-xml`), ba báo cáo chỉ dùng dữ liệu 4210 (KCB trái tuyến, DVKT có điều kiện, thuốc có điều kiện) và hai màn danh mục điều kiện phục vụ chúng; mất các lệnh `xml130import:day`, `xml4210import:day`, `sendqd130xmlerrors:day`. **Giữ nguyên toàn bộ bảng CSDL** (`qd130_*`, `xml1s..xml5s`, ...) — chỉ gỡ mã.
 - **Báo cáo "NVYT - Y lệnh" nay đọc hồ sơ XML3176** (trước đọc bảng `qd130_*`, đã ngừng nạp). Sửa kèm hai lỗi: (1) một bác sĩ có nhiều dòng trong danh mục NVYT bị **đếm nhân bản** số y lệnh — nay đếm theo bác sĩ trước rồi mới nối danh mục; (2) lọc theo ngày vào/ra/thanh toán trỏ vào cột không tồn tại trên XML2/XML3 — nay lọc qua XML1. Đo tháng 9/2026: 1.386.045 y lệnh = đúng tổng XML2 + XML3, chạy 12 giây.
+- **Gỡ chức năng quét thư mục nhập danh mục BHXH** (lệnh `importCatalogBHXH:data`, dịch vụ NSSM `QLBV ImportCatalog`). `update.bat` tự gỡ dịch vụ ở lần chạy kế tiếp. Danh mục BHXH nay chỉ nhập qua màn hình nhập danh mục.
 - `word:day` chỉ còn gửi phần lỗi thẻ BHYT (bỏ phần lỗi XML 4210). Gợi ý xử lý ở màn chi tiết lỗi XML3176 nay đọc `config/xml3176_suggestions.php`.
 - **Triển khai:** xem `docs/trien-khai/2026-10-go-xml-cu.md` — phải gỡ các tác vụ Task Scheduler gọi ba lệnh đã xoá, chạy `config:cache` / `route:cache` / `view:clear` và `queue:restart`.
 

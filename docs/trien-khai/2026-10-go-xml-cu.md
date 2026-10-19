@@ -10,6 +10,7 @@ Nhánh `go-xml-cu`. Chỉ gỡ mã, **không xoá bảng CSDL**: dữ liệu `qd
   - `php artisan xml130import:day`
   - `php artisan xml4210import:day`
   - `php artisan sendqd130xmlerrors:day`
+- [ ] Dịch vụ NSSM **không** cần làm tay: `update.bat` tự gỡ (idempotent) các dịch vụ `QLBV JobQd130Xml`, `QLBV JobSubmitQd130Xml`, `QLBV JobExportQd130Xml`, `QLBV XMLImport` và `QLBV ImportCatalog` (quét thư mục nhập danh mục BHXH, lệnh `importCatalogBHXH:data` đã gỡ — danh mục nay chỉ nhập qua màn hình).
 - [ ] Giữ nguyên tác vụ `word:day` (nếu có). Lệnh vẫn còn, nay chỉ gửi phần lỗi thẻ BHYT.
 
 ## 2. Sau `git pull`
@@ -49,7 +50,7 @@ WHERE queue IN ('JobQd130Xml','JobExportQd130Xml','JobSubmitQd130Xml','JobXmlChe
 không động vào. Các khoá dưới đây đã không còn mã nào đọc. Để lại thì vô hại, muốn gọn thì
 xoá tay:
 
-- `config/filesystems.php`: disk `xml4210`, `xml4210tt`, `xml130`, `xml130tt`, `xml130GoogleDrive`, `exportXml130`
+- `config/filesystems.php`: disk `CatalogBHXH` (thư mục quét danh mục; tệp còn nằm trong đó sẽ không ai xử lý nữa), disk `xml4210`, `xml4210tt`, `xml130`, `xml130tt`, `xml130GoogleDrive`, `exportXml130`
 - `config/organization.php`: `submit_xml_enabled`, `submit_xml_url` (khối gốc gửi QĐ4750, **không phải** khối Điện Biên), `loai_ho_so_4750`, `xml_4750_not_check`
 
 Xoá xong chạy lại `php artisan config:cache`.
