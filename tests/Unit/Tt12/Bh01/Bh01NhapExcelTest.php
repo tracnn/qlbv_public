@@ -21,8 +21,7 @@ class Bh01NhapExcelTest extends TestCase
     public function setUp()
     {
         parent::setUp();
-        // dungBangBh01 ep ket noi sang SQLite bo nho (Maatwebsite boc lo doc trong DB::transaction
-        // tren ket noi mac dinh, ma .env dev tro CSDL THAT) va dung bang ban/dong.
+        // dungBangBh01 ep ket noi sang SQLite bo nho (.env dev tro CSDL THAT) va dung bang ban/dong.
         $this->dungBangBh01();
         Storage::fake('exportTt12');
     }

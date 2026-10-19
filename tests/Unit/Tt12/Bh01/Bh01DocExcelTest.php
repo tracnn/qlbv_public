@@ -13,18 +13,6 @@ class Bh01DocExcelTest extends TestCase
 
     private $ky = array('nam' => '2026', 'thang' => '10', 'ky_qt' => '202610');
 
-    public function setUp()
-    {
-        parent::setUp();
-        // Maatwebsite boc moi lo doc trong DB::transaction tren ket noi mac dinh, ma .env dev tro CSDL
-        // THAT: ep ket noi sang SQLite bo nho de test chi doc tep, khong cham CSDL that.
-        config([
-            'database.default' => 'mysql',
-            'database.connections.mysql' => array('driver' => 'sqlite', 'database' => ':memory:', 'prefix' => ''),
-        ]);
-        \DB::purge('mysql');
-    }
-
     private function tieuDe()
     {
         $ten = array();
@@ -258,5 +246,29 @@ class Bh01DocExcelTest extends TestCase
         } finally {
             @unlink($duongDan);
         }
+    }
+
+    /** @test */
+    public function so_dong_la_dong_excel_that_khi_co_dong_trong_giua_cac_dong_du_lieu()
+    {
+        // Dong 1 tieu de, dong 2 du lieu, dong 3 trong, dong 4 du lieu (loi: thieu ho ten).
+        $hang = array(
+            $this->tieuDe(),
+            $this->hang($this->dong()),
+            array_fill(0, 20, ''),
+            $this->hang($this->dong(array('HO_TEN' => ''))),
+        );
+        $kq = $this->kiem($this->taoXlsx($hang));
+        $this->assertSame(2, $kq['so_dong']);
+        $this->assertCount(1, $kq['loi']);
+        $this->assertStringStartsWith('Dòng 4:', $kq['loi'][0]);
+
+        $vt = array();
+        (new Bh01DocExcel())->duyetLo($this->taoXlsx($hang), function (array $cacDong) use (&$vt) {
+            foreach ($cacDong as $d) {
+                $vt[] = $d['vi_tri'];
+            }
+        });
+        $this->assertSame(array('Dòng 2', 'Dòng 4'), $vt);
     }
 }

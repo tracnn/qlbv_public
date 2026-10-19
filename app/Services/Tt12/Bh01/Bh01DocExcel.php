@@ -3,22 +3,24 @@
 namespace App\Services\Tt12\Bh01;
 
 use App\Services\Tt12\Tt12DocExcel;
+use Box\Spout\Reader\Common\Creator\ReaderEntityFactory;
 
 /**
  * Doc va kiem tep .xlsx 01/BH (dinh dang HSTH01BH.xlsx cua hisnguonmo; spec nhap/xuat Excel muc 3, 4.2-4.5).
  *
- * Dung lai Tt12DocExcel (doc theo lo + chuanHoaO), khong viet lop doc thu hai.
+ * Doc bang Spout (dang luong, RAM phang); dung lai Tt12DocExcel::chuanHoaO cho moi o.
  *
  * HAI LUOT: kiem() doc het tep va khong ghi gi; duyetLo() doc lai de dua dong da chuan hoa cho
  * Bh01GhiBan. Chi goi duyetLo() sau khi kiem() sach.
  *
- * KHONG CAT SOM: Tt12DocExcel khong cho ngat giua chung, nen kiem() luon doc het tep. Vi vay dem
- * cap (co so, ky) la den cuoi tep (thong bao pham vi day du); loi tung dong chi giu 20 dong dau.
+ * Doc het tep (tru khi qua 100.000 dong): dem cap (co so, ky) la den cuoi tep (thong bao pham vi
+ * day du); loi tung dong chi giu 20 dong dau. Dong bao loi la so dong Excel THAT (ke ca dong trong).
  */
 class Bh01DocExcel
 {
     const TOI_DA_DONG = 100000;
     const TOI_DA_LOI  = 20;
+    const CO_LO       = 500;      // so dong moi lo giao cho duyetLo()
 
     private static $cot_tien = array(
         't_tongchi_bv', 't_tongchi_bh', 't_bhtt', 't_bncct', 't_bntt', 't_nguonkhac',
@@ -182,105 +184,169 @@ class Bh01DocExcel
     }
 
     /**
-     * Doc tep: anh xa tieu de theo ten, doi tung dong sang mang khoa theo ten the.
+     * Doc tep BANG SPOUT (dang luong): anh xa tieu de theo ten, doi tung dong sang mang khoa theo ten the.
+     *
+     * Vi sao Spout: Maatwebsite/PhpSpreadsheet giu o trong RAM - tep that 21.125 dong mat ~23 s va
+     * 112-126 MB moi luot (nhap doc hai luot + ghi => sat tran 128 MB). Spout doc tung dong, RAM phang.
+     *
+     * Chi doc sheet DAU TIEN. Giu dong trong (setShouldPreserveEmptyRows) de dong dau tep luon la
+     * tieu de nhu truoc va so dong Excel dung tuyet doi; dong trong do ta tu bo.
      *
      * @param callable|null $xuLyDong nhan (array $theoTen, int $soDongExcel) - dung cho kiem()
      * @param callable      $nhanTieuDe nhan (thieu[], trung[], thua[]) mot lan
-     * @param bool          &$quaTran bao hieu tep vuot TOI_DA_DONG
-     * @param callable|null $nhanLo   nhan (array phan_tu) moi lo - dung cho duyetLo()
+     * @param bool          &$quaTran bao hieu tep vuot TOI_DA_DONG (dung doc ngay)
+     * @param callable|null $nhanLo   nhan (array phan_tu) moi lo LO_DUYET dong - dung cho duyetLo()
      */
     private function doc($duongDan, $xuLyDong, callable $nhanTieuDe, &$quaTran, $nhanLo = null)
     {
         $anhXa = null;      // vi tri cot => ten the; null = tieu de loi, bo qua du lieu
         $daDoc = 0;
+        $lo = array();
         // Loi nem ra tu callback (vd QueryException khi ghi lo) khong phai loi tep: giu lai de nem nguyen
         // ban, khong boc thanh "tep hong" lam nguoi dung tuong tep sai trong khi that ra loi may chu.
         $loiCallback = null;
+        $reader = null;
 
         try {
-            (new Tt12DocExcel())->doc(
-                $duongDan,
-                function (array $hang, $sttBatDau) use (&$anhXa, &$daDoc, &$quaTran, &$loiCallback, $xuLyDong, $nhanLo) {
-                    if ($anhXa === null || $quaTran) {
-                        return;
+            $thuMucTam = storage_path('app/xuat-tam');
+            if (!is_dir($thuMucTam) && !@mkdir($thuMucTam, 0777, true) && !is_dir($thuMucTam)) {
+                $thuMucTam = sys_get_temp_dir();
+            }
+
+            $reader = ReaderEntityFactory::createXLSXReader();
+            $reader->setShouldPreserveEmptyRows(true);
+            // Shared strings lon duoc Spout ghi ra tep tam thay vi giu trong RAM.
+            $reader->setTempFolder($thuMucTam);
+            $reader->open($duongDan);
+
+            $daBaoTieuDe = false;
+            foreach ($reader->getSheetIterator() as $sheet) {
+                foreach ($sheet->getRowIterator() as $soDong => $row) {
+                    $o = $row->toArray();
+
+                    if (!$daBaoTieuDe) {
+                        $daBaoTieuDe = true;
+                        $anhXa = $this->anhXaTieuDe(array_values($o), $nhanTieuDe);
+                        continue;
                     }
+                    if ($anhXa === null) {
+                        break;      // tieu de loi: khong can doc du lieu
+                    }
+
+                    // Bo dong ma MOI o deu rong (tep sua tay hay keo theo hang tram dong trong).
+                    $trong = true;
+                    foreach ($o as $gt) {
+                        if (Tt12DocExcel::chuanHoaO($gt) !== '') {
+                            $trong = false;
+                            break;
+                        }
+                    }
+                    if ($trong) {
+                        continue;
+                    }
+
+                    if ($daDoc + 1 > self::TOI_DA_DONG) {
+                        $quaTran = true;
+                        break;
+                    }
+                    $daDoc++;
+
+                    // Spout cat o rong o cuoi dong: vi tri thieu duoc coi la null.
+                    $theoTen = array();
+                    foreach ($anhXa as $viTri => $the) {
+                        $theoTen[$the] = isset($o[$viTri]) ? $o[$viTri] : null;
+                    }
+
                     try {
-                        if ($daDoc + count($hang) > self::TOI_DA_DONG) {
-                            $quaTran = true;
-                            return;
-                        }
-                        $daDoc += count($hang);
-
-                        $lo = array();
-                        foreach (array_values($hang) as $i => $dong) {
-                            $theoTen = array();
-                            foreach ($anhXa as $viTri => $the) {
-                                $theoTen[$the] = isset($dong[$viTri]) ? $dong[$viTri] : null;
+                        if ($xuLyDong !== null) {
+                            call_user_func($xuLyDong, $theoTen, $soDong);
+                        } else {
+                            $lo[] = array(
+                                'du_lieu' => self::chuanHoaDong($theoTen),
+                                'ma_lk'   => null,
+                                'vi_tri'  => 'Dòng ' . $soDong,
+                            );
+                            if (count($lo) >= self::CO_LO) {
+                                $goi = $lo;
+                                $lo = array();
+                                call_user_func($nhanLo, $goi);
                             }
-                            // Dong Excel = vi tri trong du lieu + 1 (dong tieu de). Tt12DocExcel da bo
-                            // dong trong GIUA tep nen so nay co the lech khi co dong trong o giua -
-                            // chap nhan, dong trong giua tep hiem va van lan toi dung vung.
-                            $soDong = $sttBatDau + $i + 1;
-
-                            if ($xuLyDong !== null) {
-                                call_user_func($xuLyDong, $theoTen, $soDong);
-                            } else {
-                                $lo[] = array(
-                                    'du_lieu' => self::chuanHoaDong($theoTen),
-                                    'ma_lk'   => null,
-                                    'vi_tri'  => 'Dòng ' . $soDong,
-                                );
-                            }
-                        }
-                        if ($nhanLo !== null && $lo) {
-                            call_user_func($nhanLo, $lo);
                         }
                     } catch (\Exception $e) {
                         $loiCallback = $e;
                         throw $e;
                     }
-                },
-                function (array $tieuDe) use (&$anhXa, $nhanTieuDe) {
-                    $theHopLe = array();
-                    foreach (Bh01DacTa::the() as $dt) {
-                        $theHopLe[$dt['the']] = array();
-                    }
-                    $thua = array();
-                    foreach ($tieuDe as $viTri => $o) {
-                        $goc = Tt12DocExcel::chuanHoaO($o);
-                        if ($goc === '') {
-                            continue;
-                        }
-                        $ten = strtoupper($goc);
-                        if (isset($theHopLe[$ten])) {
-                            $theHopLe[$ten][] = $viTri;
-                        } else {
-                            $thua[] = $goc;
-                        }
-                    }
-
-                    $thieu = array();
-                    $trung = array();
-                    $map = array();
-                    foreach ($theHopLe as $the => $viTris) {
-                        if (count($viTris) === 0) {
-                            $thieu[] = $the;
-                        } elseif (count($viTris) > 1) {
-                            $trung[] = $the;
-                        } else {
-                            $map[$viTris[0]] = $the;
-                        }
-                    }
-
-                    $anhXa = ($thieu || $trung) ? null : $map;
-                    call_user_func($nhanTieuDe, $thieu, $trung, $thua);
                 }
-            );
+                break;      // chi sheet dau tien
+            }
+
+            if (!$daBaoTieuDe) {
+                $this->anhXaTieuDe(array(), $nhanTieuDe);
+            }
+
+            if ($nhanLo !== null && $lo) {
+                try {
+                    call_user_func($nhanLo, $lo);
+                } catch (\Exception $e) {
+                    $loiCallback = $e;
+                    throw $e;
+                }
+            }
         } catch (\Exception $e) {
             if ($loiCallback !== null) {
                 throw $loiCallback;
             }
             throw new Bh01TepExcelHongException('Không đọc được tệp Excel: ' . $e->getMessage(), 0, $e);
+        } finally {
+            if ($reader !== null) {
+                try {
+                    $reader->close();
+                } catch (\Exception $e) {
+                }
+            }
         }
+    }
+
+    /**
+     * Tieu de theo ten (khong phan biet hoa thuong): bao thieu/trung/thua qua $nhanTieuDe.
+     *
+     * @return array|null vi tri cot => ten the; null khi thieu/trung cot
+     */
+    private function anhXaTieuDe(array $tieuDe, callable $nhanTieuDe)
+    {
+        $theHopLe = array();
+        foreach (Bh01DacTa::the() as $dt) {
+            $theHopLe[$dt['the']] = array();
+        }
+        $thua = array();
+        foreach ($tieuDe as $viTri => $o) {
+            $goc = Tt12DocExcel::chuanHoaO($o);
+            if ($goc === '') {
+                continue;
+            }
+            $ten = strtoupper($goc);
+            if (isset($theHopLe[$ten])) {
+                $theHopLe[$ten][] = $viTri;
+            } else {
+                $thua[] = $goc;
+            }
+        }
+
+        $thieu = array();
+        $trung = array();
+        $map = array();
+        foreach ($theHopLe as $the => $viTris) {
+            if (count($viTris) === 0) {
+                $thieu[] = $the;
+            } elseif (count($viTris) > 1) {
+                $trung[] = $the;
+            } else {
+                $map[$viTris[0]] = $the;
+            }
+        }
+
+        call_user_func($nhanTieuDe, $thieu, $trung, $thua);
+
+        return ($thieu || $trung) ? null : $map;
     }
 }
