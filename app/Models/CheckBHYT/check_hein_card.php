@@ -31,7 +31,7 @@ class check_hein_card extends Model
      *
      * Dung dung quy tac ma detail-xml.blade.php dang to do: khac '000' HOAC khac '00'.
      *
-     * KHAC voi quy tac cua jobKtTheBHYT (config qd130xml.hein_card_invalid) - quy tac do tra
+     * KHAC voi quy tac cua jobKtTheBHYT (config xml3176.hein_card_invalid) - quy tac do tra
      * loi cau hoi "co can tra lai khong", con day tra loi "co bat thuong khong". Vi du
      * ma_tracuu '001' (the do BHXH Bo Quoc phong quan ly) la bat thuong nhung khong can tra
      * lai. Man nay de NHIN RA thu bat thuong nen dung quy tac khat khe hon.
@@ -86,7 +86,7 @@ class check_hein_card extends Model
 
     public function xml1()
     {
-        return $this->belongsTo('App\Models\BHYT\XML1', 'ma_lk', 'ma_lk');
+        return $this->belongsTo('App\Models\BHYT\Xml3176Xml1', 'ma_lk', 'ma_lk');
     }
 
     public function his_treatment()
