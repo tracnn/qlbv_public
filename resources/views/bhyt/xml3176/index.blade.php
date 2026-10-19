@@ -7,7 +7,7 @@
     Danh sách
     <small>hồ sơ XML</small>
   </h1>
-{{ Breadcrumbs::render('bhyt.index') }}
+{{ Breadcrumbs::render('bhyt.xml3176.index') }}
 @stop
 
 @push('after-styles')

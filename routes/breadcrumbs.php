@@ -11,6 +11,12 @@ Breadcrumbs::register('dashboard', function ($breadcrumbs) {
     $breadcrumbs->push('Dashboard', route('home'));
 });
 
+// Home > Hồ sơ XML3176
+Breadcrumbs::register('bhyt.xml3176.index', function ($breadcrumbs) {
+	$breadcrumbs->parent('home');
+    $breadcrumbs->push('Hồ sơ XML3176', route('bhyt.xml3176.index'));
+});
+
 // Home > Hồ sơ XML
 Breadcrumbs::register('bhyt.index', function ($breadcrumbs) {
 	$breadcrumbs->parent('home');
