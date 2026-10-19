@@ -40,6 +40,8 @@ trait GoXmlCuGuard
         '/loai_ho_so_4750/',
         '/xml_4750_not_check/',
         '/Export 4750/',
+        '/Xml 4750/i',
+        '/Xml 4210/i',
     ];
 
     /** Thu muc quet (tuong doi base_path). */

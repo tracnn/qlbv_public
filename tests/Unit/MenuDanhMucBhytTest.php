@@ -54,7 +54,7 @@ class MenuDanhMucBhytTest extends TestCase
         $khoi = $this->khoiBhyt();
 
         $tb = $this->viTri($khoi, 'DM Trang thiết bị');
-        $loi = $this->viTri($khoi, 'DM lỗi Xml 4750');
+        $loi = $this->viTri($khoi, 'DM lỗi Xml 3176');
 
         $this->assertNotSame(-1, $tb);
         $this->assertNotSame(-1, $loi);
@@ -63,7 +63,7 @@ class MenuDanhMucBhytTest extends TestCase
             $i = $this->viTri($khoi, $ten);
 
             $this->assertGreaterThan($tb, $i, "\"$ten\" phai nam sau DM Trang thiet bi");
-            $this->assertLessThan($loi, $i, "\"$ten\" phai nam truoc DM loi Xml 4750");
+            $this->assertLessThan($loi, $i, "\"$ten\" phai nam truoc DM loi Xml 3176");
         }
     }
 
