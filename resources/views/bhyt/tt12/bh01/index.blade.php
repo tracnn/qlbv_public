@@ -60,8 +60,12 @@
 </div>
 
 <div class="panel panel-default">
-    <div class="panel-heading"><strong>Các bản đã lập</strong>
+    <div class="panel-heading clearfix"><strong>Các bản đã lập</strong>
         <small class="text-muted">(lọc theo cơ sở/kỳ ở khối trên; bỏ trống cơ sở để xem tất cả)</small>
+        <button type="button" id="bh01-btn-lam-moi" class="btn btn-default btn-xs pull-right"
+                title="Tải lại danh sách để xem trạng thái ký / gửi mới nhất">
+            <i class="fa fa-refresh"></i> Làm mới
+        </button>
     </div>
     <div class="panel-body">
         <div id="bh01-thong-bao" style="display:none; margin-bottom:10px;"></div>
@@ -145,24 +149,9 @@
         return { ma_cskcb: $('#bh01-co-so').val(), nam: $('#bh01-nam').val(), thang: $('#bh01-thang').val() };
     }
 
+    // Bang KHONG tu lam moi theo hen gio (tung lam moi 5 giay/lan khi co ban cho ky - bang
+    // nhay, mat vi tri dang xem). Ky chay o hang doi: nguoi dung bam "Lam moi" de xem trang thai.
     var bang = null;
-    var hen = null;
-    // Luc bat dau thay ban cho_ky lien tuc; null khi khong con ban nao cho ky.
-    var choKyTu = null;
-    // Ngung tu lam moi sau ~11 phut cho ky lien tuc: job ky mat thi ban nam cho_ky mai, hoi
-    // 5 giay mot lan suot ngay chi ton may chu. Lon hon KY_LAI_SAU_PHUT (10) mot chut de lan
-    // lam moi cuoi da thay nut "Ky lai" (coTheKyLai) hien ra.
-    var CHO_KY_TOI_DA_MS = 11 * 60 * 1000;
-
-    // Co ban dang cho ky thi lam moi 5 giay/lan cho toi khi het (dich vu ky chay o hang doi).
-    function henLamMoi(coChoKy) {
-        if (hen) { clearTimeout(hen); hen = null; }
-        if (!coChoKy) { choKyTu = null; return; }
-        if (choKyTu === null) { choKyTu = Date.now(); }
-        if (Date.now() - choKyTu < CHO_KY_TOI_DA_MS) {
-            hen = setTimeout(function () { bang.ajax.reload(null, false); }, 5000);
-        }
-    }
 
     function so(n) {
         return (n === null || n === undefined || n === '') ? '' : Number(n).toLocaleString('vi-VN');
@@ -224,11 +213,6 @@
                     // Chi loc theo co so/ky khi nguoi dung da chon co so; khong thi xem het.
                     var t = thamSoKy();
                     if (t.ma_cskcb) { $.extend(d, t); }
-                },
-                dataSrc: function (json) {
-                    var coChoKy = (json.data || []).some(function (r) { return r.trang_thai_ky === 'cho_ky'; });
-                    henLamMoi(coChoKy);
-                    return json.data;
                 }
             },
             columns: [
@@ -362,6 +346,9 @@
             $('#bh01-xem-truoc').hide().empty();
         });
 
+        // Giu trang dang xem (false): chi lay lai trang thai ky / gui moi nhat.
+        $('#bh01-btn-lam-moi').on('click', function () { bang.ajax.reload(null, false); });
+
         $('#bh01-btn-tao').on('click', function () {
             var $nut = $(this);
             var xong = batDauChay($nut, $('#bh01-thong-bao'), 'Đang tạo bản…');
@@ -373,7 +360,6 @@
                     // cung ky. Muon tao lai thi phai Xem truoc lai.
                     $nut.prop('disabled', true);
                     $('#bh01-xem-truoc').hide().empty();
-                    choKyTu = null;
                     bang.ajax.reload();
                 })
                 .fail(function (xhr) { thongBao(false, loiTuXhr(xhr)); });
@@ -405,8 +391,7 @@
 
     $(document).on('click', '.bh01-ky-lai', function () {
         $.ajax({ url: url(MAU_KY_LAI, $(this).data('ma-ban')), method: 'POST', dataType: 'json', data: { _token: CSRF } })
-            // Vua xep ky lai: tinh lai moc 10 phut tu lan nay.
-            .done(function (kq) { thongBao(true, kq.thong_diep); choKyTu = null; bang.ajax.reload(null, false); })
+            .done(function (kq) { thongBao(true, kq.thong_diep); bang.ajax.reload(null, false); })
             .fail(function (xhr) { thongBao(false, loiTuXhr(xhr)); });
     });
 
