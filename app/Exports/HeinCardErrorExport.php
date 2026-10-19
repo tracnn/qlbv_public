@@ -23,8 +23,7 @@ class HeinCardErrorExport implements FromQuery, WithHeadings, ShouldAutoSize, Wi
     /**
      * Truy van con tra ve tap ma_lk duoc phep xuat, hoac null nghia la khong cat.
      *
-     * Lop nay dung chung cho CA hai man QD130 va XML3176. Man QD130 goi khong kem tham
-     * so nay nen giu nguyen hanh vi cu; rieng man XML3176 truyen vao tap ho so ma nguoi
+     * Goi khong kem tham so nay thi khong cat; man XML3176 truyen vao tap ho so ma nguoi
      * dung dang nhin thay, vi truoc day sheet nay chi nhan khoang ngay va bo QUA moi bo
      * loc khac - ke ca ma co so, nen file xuat tron ca co so khac.
      *
@@ -37,7 +36,7 @@ class HeinCardErrorExport implements FromQuery, WithHeadings, ShouldAutoSize, Wi
     /**
      * Them cot Ma Khoa (khoa ho so XML3176) sau cot Ma dieu tri.
      *
-     * Mac dinh TAT: man QD130 dung chung lop nay va file cua man do phai giu nguyen.
+     * Mac dinh TAT: goi khong kem tham so nay thi file giu nguyen 6 cot.
      */
     protected $coMaKhoa;
     /**
@@ -51,7 +50,7 @@ class HeinCardErrorExport implements FromQuery, WithHeadings, ShouldAutoSize, Wi
     protected $khoaTheoMaLk = [];
 
     public function __construct($fromDate = null, $toDate = null, $maLkChoPhep = null,
-        $khoaCauHinh = 'qd130xml', $coMaKhoa = false, KhoaDieuTriHis $khoaHis = null)
+        $khoaCauHinh = 'xml3176', $coMaKhoa = false, KhoaDieuTriHis $khoaHis = null)
     {
         $this->fromDate = $fromDate;
         $this->toDate = $toDate;
@@ -63,7 +62,7 @@ class HeinCardErrorExport implements FromQuery, WithHeadings, ShouldAutoSize, Wi
 
     /**
      * Laravel Excel goi truoc map() cho MOI LO (chunk_size dong): tra khoa HIS mot lan cho ca
-     * lo. Che do QD130 khong cham HIS.
+     * lo. Che do khong ma khoa khong cham HIS.
      */
     public function prepareRows($rows)
     {

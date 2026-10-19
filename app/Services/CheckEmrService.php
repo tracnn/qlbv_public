@@ -342,21 +342,21 @@ class CheckEmrService
         // Lấy dữ liệu check thẻ BHYT. Nếu có lỗi thì trả về chuổi html
         $theBhyt = check_hein_card::where('ma_lk', $treatment_code)
             ->where(function($query) {
-                    $query->whereIn('ma_kiemtra', config('qd130xml.hein_card_invalid.check_code'))
-                    ->orWhereIn('ma_tracuu', config('qd130xml.hein_card_invalid.result_code'));
+                    $query->whereIn('ma_kiemtra', config('xml3176.hein_card_invalid.check_code'))
+                    ->orWhereIn('ma_tracuu', config('xml3176.hein_card_invalid.result_code'));
                 })
             ->first();
 
         if ($theBhyt) {
             $msgBhyt = 'Thẻ BHYT:';
             
-            // Kiểm tra ma_kiemtra thuộc config('qd130xml.hein_card_invalid.check_code')
-            if (in_array($theBhyt->ma_kiemtra, config('qd130xml.hein_card_invalid.check_code'))) {
+            // Kiểm tra ma_kiemtra thuộc config('xml3176.hein_card_invalid.check_code')
+            if (in_array($theBhyt->ma_kiemtra, config('xml3176.hein_card_invalid.check_code'))) {
                 $msgBhyt .= ' ' . \App\Services\BHYT\NhanMaThe::kiemTra($theBhyt->ma_kiemtra);
             }
             
-            // Kiểm tra ma_tracuu thuộc config('qd130xml.hein_card_invalid.result_code')
-            if (in_array($theBhyt->ma_tracuu, config('qd130xml.hein_card_invalid.result_code'))) {
+            // Kiểm tra ma_tracuu thuộc config('xml3176.hein_card_invalid.result_code')
+            if (in_array($theBhyt->ma_tracuu, config('xml3176.hein_card_invalid.result_code'))) {
                 // Nối thêm thông báo ma_tracuu nếu có
                 $msgBhyt .= ' ' . \App\Services\BHYT\NhanMaThe::traCuu($theBhyt->ma_tracuu);
             }

@@ -34,8 +34,8 @@ class DonTheTamSoSinh extends Command
         $daXoa = 0;
 
         $q = check_hein_card::query()->where(function ($w) {
-            $w->whereIn('ma_kiemtra', config('qd130xml.hein_card_invalid.check_code'))
-              ->orWhereIn('ma_tracuu', config('qd130xml.hein_card_invalid.result_code'));
+            $w->whereIn('ma_kiemtra', config('xml3176.hein_card_invalid.check_code'))
+              ->orWhereIn('ma_tracuu', config('xml3176.hein_card_invalid.result_code'));
         });
 
         try {

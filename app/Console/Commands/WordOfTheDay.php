@@ -111,8 +111,8 @@ class WordOfTheDay extends Command
     private function getCheckHeinCardErrors($fromDateTime, $toDateTime)
     {
         return check_hein_card::where(function($query) {
-            $query->whereIn('ma_kiemtra', config('qd130xml.hein_card_invalid.check_code'))
-            ->orWhereIn('ma_tracuu', config('qd130xml.hein_card_invalid.result_code'));
+            $query->whereIn('ma_kiemtra', config('xml3176.hein_card_invalid.check_code'))
+            ->orWhereIn('ma_tracuu', config('xml3176.hein_card_invalid.result_code'));
         })
         ->whereBetween('updated_at', [$fromDateTime, $toDateTime])
         ->get();

@@ -169,12 +169,12 @@ class SheetLoiKhoaHisTest extends TestCase
         $this->assertCount(1, $his->cacLo);
     }
 
-    /** File cua man QD130 dung chung lop nay - khong duoc doi, va khong duoc cham HIS. */
+    /** Che do khong ma khoa: file 6 cot giu nguyen, va khong duoc cham HIS. */
     /** @test */
-    public function sheet_the_che_do_qd130_khong_doi_va_khong_tra_his()
+    public function sheet_the_khong_ma_khoa_khong_doi_va_khong_tra_his()
     {
         $his = new FakeKhoaDieuTriHis(['LK1' => self::K01]);
-        $x = new HeinCardErrorExport('2026-09-01 00:00:00', '2026-09-30 23:59:59', null, 'qd130xml', false, $his);
+        $x = new HeinCardErrorExport('2026-09-01 00:00:00', '2026-09-30 23:59:59', null, 'xml3176', false, $his);
 
         $this->assertSame(['STT', 'Mã điều trị', 'Mã kiểm tra', 'Mã kết quả', 'Ghi chú', 'Mã thẻ'], $x->headings());
 
