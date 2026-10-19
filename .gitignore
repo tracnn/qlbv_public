@@ -42,3 +42,4 @@ UsbTokenSigningService.Tests/obj/
 .vs/
 # appsettings.Development.json chứa plain PIN - không commit
 UsbTokenSigningService/appsettings.Development.json
+.superpowers/
