@@ -11,6 +11,8 @@
     .table-responsive { display: block; width: 100%; overflow-x: auto; }
     .nhan-canh-bao { color: #b94a48; font-weight: bold; }
     #bh01-xem-truoc dl { margin-bottom: 0; }
+    /* Loi nhap Excel co nhieu dong (moi dong mot loi): giu xuong dong khi hien bang .text(). */
+    #bh01-thong-bao .alert { white-space: pre-line; }
 </style>
 @endpush
 
@@ -55,6 +57,22 @@
             </div>
         </div>
 
+        <div class="row" style="margin-top:15px;">
+            <div class="col-sm-8">
+                <label for="bh01-tep-excel">Hoặc nhập từ tệp Excel (theo cơ sở và kỳ đã chọn)</label>
+                <input type="file" id="bh01-tep-excel" class="form-control" accept=".xlsx">
+            </div>
+            <div class="col-sm-4">
+                <label>&nbsp;</label><br>
+                <button type="button" id="bh01-btn-nhap-excel" class="btn btn-success">
+                    <i class="fa fa-upload"></i> Nhập từ Excel
+                </button>
+                <a href="{{ route('bhyt.tt12.bh01.tep-mau') }}" class="btn btn-link">
+                    <i class="fa fa-file-excel-o"></i> Tải tệp mẫu
+                </a>
+            </div>
+        </div>
+
         <div id="bh01-xem-truoc" style="display:none; margin-top:15px;"></div>
     </div>
 </div>
@@ -77,6 +95,7 @@
                         <th>Cơ sở</th>
                         <th>Kỳ</th>
                         <th>Bản</th>
+                        <th>Nguồn</th>
                         <th>Số hồ sơ</th>
                         <th>Tổng BHTT</th>
                         <th>Cảnh báo</th>
@@ -115,11 +134,13 @@
     var CSRF = "{{ csrf_token() }}";
     var URL_XEM_TRUOC = "{{ route('bhyt.tt12.bh01.xem-truoc') }}";
     var URL_TAO = "{{ route('bhyt.tt12.bh01.tao') }}";
+    var URL_NHAP_EXCEL = "{{ route('bhyt.tt12.bh01.nhap-excel') }}";
     var URL_DATA = "{{ route('bhyt.tt12.bh01.fetch-data') }}";
     // Mau URL co tham so: thay __MA__ bang ma ban da encodeURIComponent.
     var MAU_KY_LAI = "{{ route('bhyt.tt12.bh01.ky-lai', ['ma_ban' => '__MA__']) }}";
     var MAU_GUI = "{{ route('bhyt.tt12.bh01.gui', ['ma_ban' => '__MA__']) }}";
     var MAU_TAI = "{{ route('bhyt.tt12.bh01.tai', ['ma_ban' => '__MA__']) }}";
+    var MAU_XUAT_EXCEL = "{{ route('bhyt.tt12.bh01.xuat-excel', ['ma_ban' => '__MA__']) }}";
     var MAU_DONG = "{{ route('bhyt.tt12.bh01.dong', ['ma_ban' => '__MA__']) }}";
     var MAU_LICH_SU = "{{ route('bhyt.tt12.bh01.lich-su', ['ma_ban' => '__MA__']) }}";
 
@@ -194,6 +215,8 @@
 
         $o.append($('<a>').addClass('btn btn-xs btn-default').attr('href', url(MAU_DONG, ma)).attr('target', '_blank')
             .append($('<i>').addClass('fa fa-list')).append(' Xem dòng')).append(' ');
+        $o.append($('<a>').addClass('btn btn-xs btn-default').attr('href', url(MAU_XUAT_EXCEL, ma))
+            .append($('<i>').addClass('fa fa-file-excel-o')).append(' Xuất Excel')).append(' ');
         $o.append(nut('btn-default bh01-lich-su', 'fa-history', 'Nhật ký'));
 
         return $o.html();
@@ -220,6 +243,17 @@
                 { data: 'ma_cskcb', render: $.fn.dataTable.render.text() },
                 { data: 'ky', render: $.fn.dataTable.render.text() },
                 { data: 'so_ban', render: $.fn.dataTable.render.text() },
+                {
+                    // Ten tep nguon gan bang .attr(): ten tep do nguoi dung dat, khong noi vao chuoi HTML.
+                    data: 'nguon',
+                    render: function (d, t, row) {
+                        var chu = d === 'excel' ? 'Excel' : 'XML3176';
+                        if (t !== 'display') { return chu; }
+                        var $s = $('<span>').text(chu);
+                        if (d === 'excel' && row.ten_tep_nguon) { $s.attr('title', row.ten_tep_nguon); }
+                        return $s[0].outerHTML;
+                    }
+                },
                 { data: 'so_dong', render: function (d, t) { return t === 'display' ? so(d) : d; } },
                 { data: 't_bhtt', render: function (d, t) { return t === 'display' ? so(d) : d; } },
                 {
@@ -348,6 +382,31 @@
 
         // Giu trang dang xem (false): chi lay lai trang thai ky / gui moi nhat.
         $('#bh01-btn-lam-moi').on('click', function () { bang.ajax.reload(null, false); });
+
+        $('#bh01-btn-nhap-excel').on('click', function () {
+            var $nut = $(this);
+            var t = thamSoKy();
+            var tep = $('#bh01-tep-excel')[0].files[0];
+            if (!t.ma_cskcb) { thongBao(false, 'Chưa chọn cơ sở khám chữa bệnh.'); return; }
+            if (!tep) { thongBao(false, 'Chưa chọn tệp Excel.'); return; }
+
+            var du = new FormData();
+            du.append('_token', CSRF);
+            du.append('ma_cskcb', t.ma_cskcb);
+            du.append('nam', t.nam);
+            du.append('thang', t.thang);
+            du.append('tep', tep);
+
+            var xong = batDauChay($nut, $('#bh01-thong-bao'), 'Đang nhập tệp Excel…');
+            $.ajax({ url: URL_NHAP_EXCEL, method: 'POST', dataType: 'json', data: du, processData: false, contentType: false })
+                .always(xong)
+                .done(function (kq) {
+                    thongBao(true, kq.thong_diep);
+                    $('#bh01-tep-excel').val('');
+                    bang.ajax.reload();
+                })
+                .fail(function (xhr) { thongBao(false, loiTuXhr(xhr)); });
+        });
 
         $('#bh01-btn-tao').on('click', function () {
             var $nut = $(this);

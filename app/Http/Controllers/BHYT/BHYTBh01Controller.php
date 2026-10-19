@@ -7,9 +7,11 @@ use App\Models\BHYT\Tt12\Bh01Ban;
 use App\Services\BHYT\DanhSachCoSo;
 use App\Services\Tt12\Bh01\Bh01Ky;
 use App\Services\Tt12\Bh01\Bh01KhongTaoDuocException;
+use App\Services\Tt12\Bh01\Bh01NhapExcel;
 use App\Services\Tt12\Bh01\Bh01Nguon;
 use App\Services\Tt12\Bh01\Bh01TaoBan;
 use App\Services\Tt12\Bh01\Bh01XepHang;
+use App\Services\Tt12\Bh01\Bh01XuatExcel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -120,6 +122,84 @@ class BHYTBh01Controller extends Controller
         ));
     }
 
+    /**
+     * Nhap tep Excel thanh ban 01/BH nguon excel (spec 4.1). Cung chot voi tao: tat ky thi khong
+     * nhan, vi ban se nam cho_ky mai va chiem so ban.
+     */
+    public function nhapExcel(Request $request)
+    {
+        if (!(bool) config('organization.tt12.sign_enabled', false)) {
+            return $this->loi('Chức năng ký số đang tắt, chưa tạo bản.', 422);
+        }
+
+        $loi = $this->docCoSoVaKy($request, $maCskcb, $ky);
+        if ($loi !== null) {
+            return $loi;
+        }
+
+        // file() chu khong phai hasFile(): hasFile() tra false cho tep loi upload, se bao nham "chua chon tep".
+        $tep = $request->file('tep');
+        if ($tep === null) {
+            return $this->loi('Chưa chọn tệp Excel.', 422);
+        }
+        if (!$tep->isValid()) {
+            if (in_array($tep->getError(), array(UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE), true)) {
+                return $this->loi('Tệp vượt cỡ cho phép (' . ini_get('upload_max_filesize') . ').', 422);
+            }
+
+            return $this->loi('Tải tệp lên không thành công, hãy thử lại.', 422);
+        }
+        if (strtolower((string) $tep->getClientOriginalExtension()) !== 'xlsx') {
+            return $this->loi('Chỉ nhận tệp .xlsx. Hãy lưu lại tệp dạng Excel Workbook (.xlsx) rồi thử lại.', 422);
+        }
+
+        try {
+            $kq = (new Bh01NhapExcel())->nhap(
+                $tep->getRealPath(), $tep->getClientOriginalName(), $maCskcb, $ky, $this->nguoiDung($request)
+            );
+        } catch (Bh01KhongTaoDuocException $e) {
+            return $this->loi($e->getMessage(), 422);
+        } catch (\InvalidArgumentException $e) {
+            return $this->loi($e->getMessage(), 422);
+        } catch (\RuntimeException $e) {
+            // Tep hong/khong phai xlsx that: khong lo thong diep thu vien cho nguoi dung.
+            return $this->loi('Không đọc được tệp Excel. Hãy lưu lại dạng .xlsx rồi thử lại.', 422);
+        }
+
+        $ban = Bh01Ban::find($kq['ban']->id);
+        $xepDuoc = Bh01XepHang::xepKyBanMoi($ban->ma_ban);
+
+        $dong = function ($n) {
+            return number_format((float) $n, 0, ',', '.');
+        };
+        $thongDiep = 'Đã nhập bản ' . $ban->ma_ban . ': ' . $ban->so_dong . ' hồ sơ, ' . (int) $ban->so_canh_bao
+            . ' hồ sơ cảnh báo, tổng chi BV ' . $dong($ban->t_tongchi_bv) . ', tổng BHTT ' . $dong($ban->t_bhtt) . '.'
+            . ($xepDuoc ? ' Đang chờ ký.' : ' Chưa xếp được hàng đợi ký, sau 10 phút bấm "Ký lại".');
+        if (!empty($kq['cot_thua'])) {
+            $thongDiep .= ' Bỏ qua cột: ' . implode(', ', $kq['cot_thua']) . '.';
+        }
+
+        return response()->json(array('thanh_cong' => true, 'thong_diep' => $thongDiep, 'ma_ban' => $ban->ma_ban));
+    }
+
+    /** Xuat cac dong cua ban ra Excel dung bo cot nhap (spec 4.2). */
+    public function xuatExcel($maBan)
+    {
+        $ban = Bh01Ban::where('ma_ban', $maBan)->first();
+        if ($ban === null) {
+            return $this->loi('Không tìm thấy bản ' . $maBan, 404);
+        }
+
+        $duongDan = (new Bh01XuatExcel())->xuatBan($ban);
+
+        return response()->download($duongDan, $maBan . '.xlsx')->deleteFileAfterSend(true);
+    }
+
+    public function tepMau()
+    {
+        return response()->download((new Bh01XuatExcel())->tepMau(), 'HSTH01BH_mau.xlsx')->deleteFileAfterSend(true);
+    }
+
     public function kyLai(Request $request, $maBan)
     {
         $ban = Bh01Ban::where('ma_ban', $maBan)->first();
@@ -158,8 +238,9 @@ class BHYTBh01Controller extends Controller
                 'thanh_cong'   => false,
                 'can_xac_nhan' => true,
                 'thong_diep'   => 'Kỳ ' . $ban->thang_qt . '/' . $ban->nam_qt . ' của cơ sở ' . $ban->ma_cskcb
-                    . ' đã được cổng tiếp nhận ở bản ' . $daNhan->so_ban . ' (mã GD ' . $daNhan->ma_gd . '). Gửi bản '
-                    . $ban->so_ban . '?',
+                    . ' đã được cổng tiếp nhận ở bản ' . $daNhan->so_ban . ' (nguồn ' . $this->nhanNguon($daNhan->nguon)
+                    . ', mã GD ' . $daNhan->ma_gd . '). Gửi bản ' . $ban->so_ban . ' (nguồn '
+                    . $this->nhanNguon($ban->nguon) . ')?',
             ), 409);
         }
 
@@ -250,7 +331,14 @@ class BHYTBh01Controller extends Controller
     /** So ban nay (neu la ban moi nhat cua ky) voi XML1 hien tai: so ho so, tong chi BV, tong BHTT. */
     private function kyDaDoi(Bh01Ban $ban)
     {
+        // Ban Excel khong lay tu XML1 nen khong co gi de so (spec 5): khong bao "du lieu da doi".
+        if ($ban->nguon === Bh01Ban::NGUON_EXCEL) {
+            return false;
+        }
+
+        // "Moi nhat" chi tinh trong cac ban xml3176: ban Excel moi hon khong tuoc co bao cua ban xml3176 cuoi.
         $max = Bh01Ban::where('ma_cskcb', $ban->ma_cskcb)
+            ->where('nguon', Bh01Ban::NGUON_XML3176)
             ->where('nam_qt', $ban->nam_qt)
             ->where('thang_qt', $ban->thang_qt)
             ->max('so_ban');
@@ -286,7 +374,14 @@ class BHYTBh01Controller extends Controller
             'ma_gd'               => $ban->ma_gd,
             'thoi_gian_tiep_nhan' => $ban->thoi_gian_tiep_nhan,
             'du_lieu_da_doi'      => $daDoi,
+            'nguon'               => $ban->nguon,
+            'ten_tep_nguon'       => $ban->ten_tep_nguon,
         );
+    }
+
+    private function nhanNguon($nguon)
+    {
+        return $nguon === Bh01Ban::NGUON_EXCEL ? 'Excel' : 'XML3176';
     }
 
     private function nguoiDung(Request $request)

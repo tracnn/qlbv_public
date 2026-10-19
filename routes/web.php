@@ -690,12 +690,18 @@ Route::group(['middleware' => ['auth']], function () {
             ->name('bhyt.tt12.bh01.fetch-data');
         Route::post('tt12/bh01/tao', 'BHYT\BHYTBh01Controller@tao')
             ->name('bhyt.tt12.bh01.tao');
+        Route::post('tt12/bh01/nhap-excel', 'BHYT\BHYTBh01Controller@nhapExcel')
+            ->name('bhyt.tt12.bh01.nhap-excel');
+        Route::get('tt12/bh01/tep-mau', 'BHYT\BHYTBh01Controller@tepMau')
+            ->name('bhyt.tt12.bh01.tep-mau');
         Route::post('tt12/bh01/{ma_ban}/ky-lai', 'BHYT\BHYTBh01Controller@kyLai')
             ->name('bhyt.tt12.bh01.ky-lai');
         Route::post('tt12/bh01/{ma_ban}/gui', 'BHYT\BHYTBh01Controller@gui')
             ->name('bhyt.tt12.bh01.gui');
         Route::get('tt12/bh01/{ma_ban}/tai', 'BHYT\BHYTBh01Controller@tai')
             ->name('bhyt.tt12.bh01.tai');
+        Route::get('tt12/bh01/{ma_ban}/xuat-excel', 'BHYT\BHYTBh01Controller@xuatExcel')
+            ->name('bhyt.tt12.bh01.xuat-excel');
         Route::get('tt12/bh01/{ma_ban}/dong', 'BHYT\BHYTBh01Controller@dong')
             ->name('bhyt.tt12.bh01.dong');
         Route::get('tt12/bh01/{ma_ban}/lich-su', 'BHYT\BHYTBh01Controller@lichSu')

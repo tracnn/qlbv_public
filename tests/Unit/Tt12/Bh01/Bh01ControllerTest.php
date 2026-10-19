@@ -7,12 +7,15 @@ use App\Jobs\SignBh01Job;
 use App\Jobs\SubmitBh01Job;
 use App\Models\BHYT\Tt12\Bh01Ban;
 use App\Services\BHYT\DanhSachCoSo;
+use App\Services\Tt12\Bh01\Bh01DacTa;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Tests\Support\DungBangBh01Sqlite;
+use Tests\Support\TaoXlsxBh01;
 use Tests\TestCase;
 
 /**
@@ -21,7 +24,7 @@ use Tests\TestCase;
  */
 class Bh01ControllerTest extends TestCase
 {
-    use DungBangBh01Sqlite;
+    use DungBangBh01Sqlite, TaoXlsxBh01;
 
     public function setUp()
     {
@@ -139,7 +142,7 @@ class Bh01ControllerTest extends TestCase
         $this->assertTrue($d->can_xac_nhan);
         $this->assertContains('đã được cổng tiếp nhận ở bản 1', $d->thong_diep);
         $this->assertContains('GD1', $d->thong_diep);
-        $this->assertContains('Gửi bản 2?', $d->thong_diep);
+        $this->assertContains('Gửi bản 2 (nguồn XML3176)?', $d->thong_diep);
         Queue::assertNotPushed(SubmitBh01Job::class);
     }
 
@@ -348,6 +351,170 @@ class Bh01ControllerTest extends TestCase
         $this->assertFalse($hang[0]->du_lieu_da_doi);
     }
 
+    private function tepExcelHopLe()
+    {
+        $mau = array(
+            'STT' => '1', 'HO_TEN' => 'Nguyen Van A', 'NGAY_SINH' => '198001010000', 'GIOI_TINH' => '1',
+            'MA_THE_BHYT' => 'GD4010000000001', 'MA_BENH_CHINH' => 'E11.4',
+            'NGAY_VAO' => '202609010800', 'NGAY_VAO_NOI_TRU' => '', 'NGAY_RA' => '202609051000',
+            'SO_NGAY_DTRI' => '4', 'MA_LOAI_KCB' => '03',
+            'T_TONGCHI_BV' => '1000', 'T_TONGCHI_BH' => '800', 'T_BHTT' => '700', 'T_BNCCT' => '100',
+            'T_BNTT' => '200', 'T_NGUONKHAC' => '0',
+            'MA_CSKCB' => '01929', 'NAM_QT' => '2026', 'THANG_QT' => '09',
+        );
+        $tieuDe = array();
+        $dong = array();
+        foreach (Bh01DacTa::the() as $dt) {
+            $tieuDe[] = $dt['the'];
+            $dong[] = $mau[$dt['the']];
+        }
+
+        return $this->taoXlsx(array($tieuDe, $dong));
+    }
+
+    private function tepTai($duongDan, $ten, $loi = null)
+    {
+        return new UploadedFile($duongDan, $ten, null, null, $loi, true);
+    }
+
+    private function reqTep($tep)
+    {
+        $r = Request::create('/x', 'POST', array('ma_cskcb' => '01929', 'nam' => 2026, 'thang' => 9),
+            array(), $tep === null ? array() : array('tep' => $tep));
+        $r->headers->set('X-Requested-With', 'XMLHttpRequest');
+
+        return $r;
+    }
+
+    /** @test */
+    public function nhap_excel_thanh_cong_xep_job_ky()
+    {
+        $kq = $this->controller()->nhapExcel($this->reqTep($this->tepTai($this->tepExcelHopLe(), 'HSTH01BH.xlsx')));
+
+        $this->assertSame(200, $kq->getStatusCode());
+        $ban = Bh01Ban::first();
+        $this->assertSame('excel', $ban->nguon);
+        $this->assertSame('HSTH01BH.xlsx', $ban->ten_tep_nguon);
+        $this->assertSame($ban->ma_ban, $kq->getData()->ma_ban);
+        $tb = $kq->getData()->thong_diep;
+        $this->assertContains($ban->ma_ban, $tb);
+        $this->assertContains('1.000', $tb);
+        $this->assertContains('700', $tb);
+        Queue::assertPushed(SignBh01Job::class, 1);
+    }
+
+    /** @test */
+    public function nhap_excel_tep_hong_thi_422()
+    {
+        $hong = dirname($this->taoXlsx(array(array('x')))) . DIRECTORY_SEPARATOR . 'hong.xlsx';
+        file_put_contents($hong, 'day khong phai xlsx');
+        $kq = $this->controller()->nhapExcel($this->reqTep($this->tepTai($hong, 'HSTH01BH.xlsx')));
+
+        $this->assertSame(422, $kq->getStatusCode());
+        $this->assertContains('Không đọc được tệp Excel', $kq->getData()->thong_diep);
+        $this->assertSame(0, Bh01Ban::count());
+    }
+
+    /** @test */
+    public function nhap_excel_qua_co_thi_422()
+    {
+        $tep = $this->tepTai($this->tepExcelHopLe(), 'HSTH01BH.xlsx', UPLOAD_ERR_INI_SIZE);
+        $kq = $this->controller()->nhapExcel($this->reqTep($tep));
+
+        $this->assertSame(422, $kq->getStatusCode());
+        $this->assertContains('vượt cỡ', $kq->getData()->thong_diep);
+    }
+
+    /** @test */
+    public function nhap_excel_sai_duoi_thi_422()
+    {
+        $kq = $this->controller()->nhapExcel($this->reqTep($this->tepTai($this->tepExcelHopLe(), 'HSTH01BH.csv')));
+
+        $this->assertSame(422, $kq->getStatusCode());
+        $this->assertContains('.xlsx', $kq->getData()->thong_diep);
+    }
+
+    /** @test */
+    public function nhap_excel_khi_tat_ky_thi_422()
+    {
+        config(array('organization.tt12.sign_enabled' => false));
+        $kq = $this->controller()->nhapExcel($this->reqTep($this->tepTai($this->tepExcelHopLe(), 'HSTH01BH.xlsx')));
+
+        $this->assertSame(422, $kq->getStatusCode());
+        $this->assertSame(0, Bh01Ban::count());
+        Queue::assertNotPushed(SignBh01Job::class);
+    }
+
+    /** @test */
+    public function nhap_excel_khong_co_tep_thi_422()
+    {
+        $kq = $this->controller()->nhapExcel($this->reqTep(null));
+
+        $this->assertSame(422, $kq->getStatusCode());
+        $this->assertSame('Chưa chọn tệp Excel.', $kq->getData()->thong_diep);
+    }
+
+    /** @test */
+    public function ban_excel_khong_bao_du_lieu_da_doi()
+    {
+        $this->xml1(array('ma_lk' => 'A'));
+        $this->ban(1, array('so_dong' => 1));
+        $this->ban(2, array('so_dong' => 1, 'nguon' => 'excel'));
+        $this->xml1(array('ma_lk' => 'B'));
+
+        $kq = $this->controller()->fetchData($this->req(array('ma_cskcb' => '01929', 'nam' => 2026, 'thang' => 9), 'GET'));
+        $hang = collect($kq->getData()->data)->keyBy('so_ban');
+
+        $this->assertFalse($hang[2]->du_lieu_da_doi);
+        $this->assertSame('excel', $hang[2]->nguon);
+        // Ban xml3176 moi nhat la ban 1 (ban excel khong tinh): XML1 da doi thi van bao.
+        $this->assertTrue($hang[1]->du_lieu_da_doi);
+    }
+
+    /** @test */
+    public function gui_xac_nhan_neu_nguon_ca_hai_ban()
+    {
+        $this->ban(1, array('ma_ket_qua' => '200', 'ma_gd' => 'GD1'));
+        $this->ban(2, array('nguon' => 'excel'));
+
+        $kq = $this->controller()->gui($this->req(array()), 'BH01_01929_202609_02');
+
+        $this->assertSame(409, $kq->getStatusCode());
+        $this->assertContains('nguồn XML3176', $kq->getData()->thong_diep);
+        $this->assertContains('nguồn Excel', $kq->getData()->thong_diep);
+    }
+
+    /** @test */
+    public function xuat_excel_tra_tep_ten_ma_ban()
+    {
+        $this->ban(1);
+        $kq = $this->controller()->xuatExcel('BH01_01929_202609_01');
+
+        $this->assertSame(200, $kq->getStatusCode());
+        $this->assertContains('BH01_01929_202609_01.xlsx', $kq->headers->get('content-disposition'));
+        $this->assertSame(404, $this->controller()->xuatExcel('khong-co')->getStatusCode());
+    }
+
+    /** @test */
+    public function tep_mau_tra_tep_ten_mau()
+    {
+        $kq = $this->controller()->tepMau();
+
+        $this->assertContains('HSTH01BH_mau.xlsx', $kq->headers->get('content-disposition'));
+    }
+
+    /** @test */
+    public function route_tinh_moi_khong_bi_tham_so_nuot()
+    {
+        $router = app('router')->getRoutes();
+        $nhapExcel = $router->match(Request::create(route('bhyt.tt12.bh01.nhap-excel', array(), false), 'POST'));
+        $tepMau = $router->match(Request::create(route('bhyt.tt12.bh01.tep-mau', array(), false), 'GET'));
+        $xuat = $router->match(Request::create(route('bhyt.tt12.bh01.xuat-excel', array('ma_ban' => 'X'), false), 'GET'));
+
+        $this->assertContains('@nhapExcel', $nhapExcel->getActionName());
+        $this->assertContains('@tepMau', $tepMau->getActionName());
+        $this->assertContains('@xuatExcel', $xuat->getActionName());
+    }
     /** @test */
     public function route_tinh_khong_bi_tham_so_nuot()
     {
