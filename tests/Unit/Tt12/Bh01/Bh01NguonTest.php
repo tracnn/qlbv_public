@@ -134,4 +134,64 @@ class Bh01NguonTest extends TestCase
         $this->expectException(\InvalidArgumentException::class);
         Bh01Ky::tu(2026, 13);
     }
+
+    /** @test */
+    public function doc_theo_lo_giu_dung_thu_tu_truy_van_qua_nhieu_lo()
+    {
+        $this->dong(array('ma_lk' => 'IV', 'ma_loai_kcb' => '03', 'ngay_ra' => '202609010100'));
+        $this->dong(array('ma_lk' => 'I-B', 'ma_loai_kcb' => '01', 'ngay_ra' => '202609050800'));
+        $this->dong(array('ma_lk' => 'III', 'ma_loai_kcb' => '04', 'ngay_ra' => '202609010100'));
+        $this->dong(array('ma_lk' => 'I-A', 'ma_loai_kcb' => '01', 'ngay_ra' => '202609050800'));
+        $this->dong(array('ma_lk' => 'I-0', 'ma_loai_kcb' => '01', 'ngay_ra' => '202609020800'));
+
+        $doc = array();
+        $soLo = 0;
+        Bh01Nguon::docTheoLo('01929', $this->ky(), 2, function ($lo) use (&$doc, &$soLo) {
+            $soLo++;
+            foreach ($lo as $r) {
+                $doc[] = $r->ma_lk;
+            }
+        });
+
+        $this->assertSame(3, $soLo);
+        $this->assertSame(Bh01Nguon::truyVan('01929', $this->ky())->pluck('ma_lk')->all(), $doc);
+    }
+
+    /** @test */
+    public function doc_theo_lo_dung_som_khi_tra_false()
+    {
+        foreach (array('A', 'B', 'C', 'D', 'E') as $lk) {
+            $this->dong(array('ma_lk' => $lk));
+        }
+
+        $soLo = 0;
+        Bh01Nguon::docTheoLo('01929', $this->ky(), 2, function ($lo) use (&$soLo) {
+            $soLo++;
+            return false;
+        });
+
+        $this->assertSame(1, $soLo);
+    }
+
+    /**
+     * Do that 19/10/2026 ky 10/2026 cua 01929 (21.125 ho so): chunk() bang LIMIT/OFFSET mat 37
+     * giay MOT luot vi moi lo MySQL sap xep lai ca tap; tao ban doc hai luot nen vuot 60 giay.
+     * Doc theo danh sach id chi mat ~2,4 giay. Khoa lai: khong truy van nao duoc dung OFFSET.
+     *
+     * @test
+     */
+    public function doc_theo_lo_khong_dung_offset()
+    {
+        foreach (array('A', 'B', 'C', 'D', 'E') as $lk) {
+            $this->dong(array('ma_lk' => $lk));
+        }
+
+        DB::enableQueryLog();
+        Bh01Nguon::docTheoLo('01929', $this->ky(), 2, function ($lo) {
+        });
+
+        foreach (DB::getQueryLog() as $q) {
+            $this->assertNotContains('offset', strtolower($q['query']));
+        }
+    }
 }

@@ -130,7 +130,15 @@
 
     function loiTuXhr(xhr) {
         var kq = xhr.responseJSON;
-        return (kq && kq.thong_diep) ? kq.thong_diep : 'Không gửi được yêu cầu. Kiểm tra kết nối rồi thử lại.';
+        if (kq && kq.thong_diep) {
+            return kq.thong_diep;
+        }
+        // Tach "khong toi duoc may chu" (status 0) khoi "may chu bao loi": gop chung thi mot lan
+        // tao ban qua thoi gian xu ly (HTTP 500) hien thanh "kiem tra ket noi" va dan sai huong.
+        if (xhr.status === 0) {
+            return 'Không gửi được yêu cầu. Kiểm tra kết nối rồi thử lại.';
+        }
+        return 'Máy chủ báo lỗi (HTTP ' + xhr.status + '). Xem log hệ thống để biết chi tiết.';
     }
 
     function thamSoKy() {
