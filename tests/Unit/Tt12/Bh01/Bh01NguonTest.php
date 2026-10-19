@@ -63,6 +63,31 @@ class Bh01NguonTest extends TestCase
     }
 
     /** @test */
+    public function trung_muc_ngay_ra_ma_lk_thi_xep_theo_stt_roi_id()
+    {
+        // (ma_lk, stt) duy nhat: cung ma_lk nhieu dong thi stt quyet dinh thu tu. Chen nguoc de
+        // thu tu tu nhien cua bang khong lam test xanh gia.
+        $this->dong(array('ma_lk' => 'X', 'stt' => 2));
+        $this->dong(array('ma_lk' => 'X', 'stt' => 1));
+
+        $this->assertSame(
+            array(1, 2),
+            array_map('intval', Bh01Nguon::truyVan('01929', $this->ky())->pluck('stt')->all())
+        );
+    }
+
+    /** @test */
+    public function tong_hop_lam_tron_tung_dong()
+    {
+        // Ban luu tong cua gia tri da lam tron TUNG dong (Bh01ChuanHoa::tien), tong hop phai cung cach.
+        $this->dong(array('ma_lk' => 'A', 't_tongchi_bv' => 10.004));
+        $this->dong(array('ma_lk' => 'B', 't_tongchi_bv' => 10.004));
+        $this->dong(array('ma_lk' => 'C', 't_tongchi_bv' => 10.004));
+
+        $this->assertSame(30.0, Bh01Nguon::tongHop('01929', $this->ky())['t_tongchi_bv']);
+    }
+
+    /** @test */
     public function tong_hop_dung_so_lieu()
     {
         $this->dong(array('ma_loai_kcb' => '01', 't_bhtt' => 100.1, 't_tongchi_bv' => 10));

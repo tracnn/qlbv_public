@@ -161,6 +161,38 @@ class Bh01TaoBanTest extends TestCase
     }
 
     /** @test */
+    public function dong_bi_chan_xuat_hien_giua_hai_luot_thi_rollback()
+    {
+        // XML1 bi sua giua luot kiem va luot ghi: luot ghi phai tu kiem lai, khong ghi dong chan.
+        $this->dong(array('ma_lk' => 'A'));
+
+        $s = new class extends Bh01TaoBan {
+            protected function soBanKeTiep($maCskcb, array $ky)
+            {
+                DB::table('xml3176_xml1s')->insert(array(
+                    'ma_lk' => 'Z', 'ho_ten' => '', 'ma_the_bhyt' => 'DN4010000000001',
+                    'ngay_vao' => '202609010800', 'ngay_ra' => '202609300900',
+                    'ma_cskcb' => $maCskcb, 'nam_qt' => $ky['nam'], 'thang_qt' => $ky['thang'],
+                    'ma_loai_kcb' => '01', 't_tongchi_bv' => 1, 't_tongchi_bh' => 1, 't_bhtt' => 1,
+                    't_bncct' => 0, 't_bntt' => 0, 't_nguonkhac' => 0,
+                ));
+
+                return parent::soBanKeTiep($maCskcb, $ky);
+            }
+        };
+
+        try {
+            $s->tao('01929', $this->ky(), 'tester');
+            $this->fail('Phai nem Bh01KhongTaoDuocException');
+        } catch (Bh01KhongTaoDuocException $e) {
+            $this->assertContains('Z', $e->getMessage());
+        }
+
+        $this->assertSame(0, Bh01Ban::count());
+        $this->assertSame(0, Bh01Dong::count());
+    }
+
+    /** @test */
     public function xem_truoc_dem_chan_canh_bao_va_mau_loi()
     {
         $this->dong(array('ma_lk' => 'A'));

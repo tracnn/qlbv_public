@@ -139,11 +139,19 @@
 
     var bang = null;
     var hen = null;
+    // Luc bat dau thay ban cho_ky lien tuc; null khi khong con ban nao cho ky.
+    var choKyTu = null;
+    // Ngung tu lam moi sau ~11 phut cho ky lien tuc: job ky mat thi ban nam cho_ky mai, hoi
+    // 5 giay mot lan suot ngay chi ton may chu. Lon hon KY_LAI_SAU_PHUT (10) mot chut de lan
+    // lam moi cuoi da thay nut "Ky lai" (coTheKyLai) hien ra.
+    var CHO_KY_TOI_DA_MS = 11 * 60 * 1000;
 
     // Co ban dang cho ky thi lam moi 5 giay/lan cho toi khi het (dich vu ky chay o hang doi).
     function henLamMoi(coChoKy) {
         if (hen) { clearTimeout(hen); hen = null; }
-        if (coChoKy) {
+        if (!coChoKy) { choKyTu = null; return; }
+        if (choKyTu === null) { choKyTu = Date.now(); }
+        if (Date.now() - choKyTu < CHO_KY_TOI_DA_MS) {
             hen = setTimeout(function () { bang.ajax.reload(null, false); }, 5000);
         }
     }
@@ -182,8 +190,8 @@
             $o.append($gui).append(' ');
         }
 
-        // Ky lai chi khi ky loi VA chua tung gui: xepKy o may chu cung tu choi ban da gui.
-        if (row.trang_thai_ky === 'ky_loi' && !row.da_gui) {
+        // Co tinh o may chu (Bh01XepHang::coTheKyLai) - mot luat duy nhat cho nut va cho xepKy.
+        if (row.co_the_ky_lai) {
             $o.append(nut('btn-warning bh01-ky-lai', 'fa-refresh', 'Ký lại')).append(' ');
         }
 
@@ -309,7 +317,7 @@
         $('#bh01-btn-tao').on('click', function () {
             var $nut = $(this).prop('disabled', true);
             $.ajax({ url: URL_TAO, method: 'POST', dataType: 'json', data: $.extend({ _token: CSRF }, thamSoKy()) })
-                .done(function (kq) { thongBao(true, kq.thong_diep); bang.ajax.reload(); })
+                .done(function (kq) { thongBao(true, kq.thong_diep); choKyTu = null; bang.ajax.reload(); })
                 .fail(function (xhr) { thongBao(false, loiTuXhr(xhr)); $nut.prop('disabled', false); });
         });
     });
@@ -339,7 +347,8 @@
 
     $(document).on('click', '.bh01-ky-lai', function () {
         $.ajax({ url: url(MAU_KY_LAI, $(this).data('ma-ban')), method: 'POST', dataType: 'json', data: { _token: CSRF } })
-            .done(function (kq) { thongBao(true, kq.thong_diep); bang.ajax.reload(null, false); })
+            // Vua xep ky lai: tinh lai moc 10 phut tu lan nay.
+            .done(function (kq) { thongBao(true, kq.thong_diep); choKyTu = null; bang.ajax.reload(null, false); })
             .fail(function (xhr) { thongBao(false, loiTuXhr(xhr)); });
     });
 

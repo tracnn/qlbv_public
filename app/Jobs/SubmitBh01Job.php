@@ -14,6 +14,7 @@ use App\Models\BHYT\Tt12\Bh01Ban;
 use App\Models\BHYT\Tt12\Bh01LichSuGui;
 use App\Services\Tt12\Tt12SubmitService;
 use App\Services\Tt12\Tt12QuyetDinhGui;
+use App\Services\Tt12\Bh01\Bh01GuiKhongRoKetQuaException;
 use App\Services\Tt12\Bh01\Bh01XepHang;
 
 /**
@@ -30,7 +31,15 @@ class SubmitBh01Job implements ShouldQueue
     /** Gui lai nhieu hon ky: hong gui thuong do MANG, thu lai thuong an. */
     public $tries = 3;
 
-    public $timeout = 300;
+    /**
+     * PHAI NHO HON retry_after (300) cua ket noi 'database' trong config/queue.php: qua
+     * retry_after ma job chua xong thi hang doi giao them mot ban cho worker khac - hai lan POST
+     * len cong that. SubmitBh01JobTest khoa dieu nay (cung khuon SignBh01Job).
+     */
+    public $timeout = 280;
+
+    /** Tien to `loi` cua dong lich su khi goi cong ma khong nhan duoc phan hoi. */
+    const TIEN_TO_KHONG_RO = 'Lỗi mạng/không rõ kết quả: ';
 
     /** Nguyen van phan hoi luu toi da bay nhieu ky tu: cong doi khi tra ca trang HTML loi. */
     const NGUYEN_VAN_TOI_DA = 10000;
@@ -135,6 +144,13 @@ class SubmitBh01Job implements ShouldQueue
             $this->tuChoi($ban, $e->getMessage());
 
             return;
+        } catch (\Throwable $e) {
+            // Loi mang/timeout: KHONG biet cong da nhan chua. Van la mot lan gui (spec 5.3) nen
+            // ghi mot dong lich su TRUOC khi nem cho hang doi thu lai - khong thi ba lan thu hong
+            // chi de lai mot dong log. GIU khoa: lan thu sau thuoc cung luot xu ly.
+            $this->ghiKhongRoKetQua($ban, $e->getMessage());
+
+            throw new Bh01GuiKhongRoKetQuaException($e->getMessage(), 0, $e);
         }
 
         // TU DAY CONG DA NHAN GOI. Moi loi ghi CSDL phia sau ma de lot ra ngoai se lam hang
@@ -168,7 +184,55 @@ class SubmitBh01Job implements ShouldQueue
             'loi' => $e->getMessage(),
         ));
 
+        // Chi ghi khi khoa VAN la cua minh: khoa da sang tay job moi (hoac da nha o duong "da
+        // gui cong nhung khong ghi duoc ket qua") thi thong_diep la cua lan gui khac.
+        if (Bh01XepHang::conGiuKhoa($this->maBan, $this->khoa)) {
+            $ban = Bh01Ban::where('ma_ban', $this->maBan)->first();
+
+            if ($ban !== null) {
+                // Lan thu cuoi khong kip ghi gi (worker bi giet vi timeout -> hang doi bao qua
+                // so lan thu): ghi dong lich su cho no. Loi mang thi tung lan thu da ghi roi.
+                if (!$e instanceof Bh01GuiKhongRoKetQuaException) {
+                    $this->ghiKhongRoKetQua($ban, $e->getMessage());
+                }
+
+                $this->ghiThongDiep($ban, 'Gửi thất bại sau ' . $this->tries . ' lần thử, không rõ cổng đã nhận chưa ('
+                    . $e->getMessage() . '). Kiểm tra trên cổng trước khi gửi lại.');
+            }
+        }
+
         $this->nhaKhoa();
+    }
+
+    /**
+     * Mot dong lich su cho lan goi cong khong co phan hoi + thong_diep tren ban. KHONG nem:
+     * loi ghi o day khong duoc che mat loi goc ma hang doi can de thu lai / bao that bai.
+     */
+    private function ghiKhongRoKetQua(Bh01Ban $ban, $loiGoc)
+    {
+        $moTa = self::TIEN_TO_KHONG_RO . $loiGoc;
+
+        try {
+            Bh01LichSuGui::create(array(
+                'ban_id'  => $ban->id,
+                'gui_luc' => Carbon::now(),
+                'gui_boi' => $this->guiBoi,
+                'loi'     => $moTa,
+            ));
+        } catch (\Throwable $loi) {
+            Log::error('SubmitBh01Job: khong ghi duoc lich su gui ' . $this->maBan, array('loi' => $loi->getMessage()));
+        }
+
+        $this->ghiThongDiep($ban, $moTa);
+    }
+
+    private function ghiThongDiep(Bh01Ban $ban, $thongDiep)
+    {
+        try {
+            $ban->update(array('thong_diep' => $thongDiep));
+        } catch (\Throwable $loi) {
+            Log::error('SubmitBh01Job: khong ghi duoc thong diep ' . $this->maBan, array('loi' => $loi->getMessage()));
+        }
     }
 
     /**

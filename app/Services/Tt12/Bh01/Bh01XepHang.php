@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\DB;
 use App\Jobs\SignBh01Job;
 use App\Jobs\SubmitBh01Job;
 use App\Models\BHYT\Tt12\Bh01Ban;
+use App\Models\BHYT\Tt12\Bh01LichSuGui;
 use App\Services\Tt12\Tt12HangDoi;
 use App\Services\Tt12\Tt12QuyetDinhGui;
 
@@ -37,6 +38,14 @@ class Bh01XepHang
      * Bh01XepHangTest khoa phep tinh nay lai.
      */
     const KHOA_PHUT = 20;
+
+    /**
+     * Ban cho_ky phai nam yen bay nhieu PHUT moi duoc ky lai.
+     *
+     * PHAI >= tries x timeout cua SignBh01Job (2 x 280s ~ 9,3 phut): som hon thi job ky dau co
+     * the van dang chay. Bh01XepHangTest khoa phep tinh nay lai.
+     */
+    const KY_LAI_SAU_PHUT = 10;
 
     /** Dinh dang chuoi khoa: dung dinh dang cot timestamp tra ve, de so sanh bang chuoi. */
     const DINH_DANG_KHOA = 'Y-m-d H:i:s';
@@ -82,28 +91,33 @@ class Bh01XepHang
     /**
      * Xep ky (hoac ky lai) mot ban.
      *
-     * Khong giu khoa: ky lai dung tu cung bh01_dong va cung id_ds_chitiet nen cung noi dung
-     * truoc chu ky. NHUNG tu choi ban da gui hoac dang gui: tep da ky cua ban do la dau vet
-     * doi soat (ban tai ve phai dung la ban cong da nhan), va ky de giua luc job gui dang
-     * doc tep se lam lech sha256.
+     * Ky lai dung tu cung bh01_dong va cung id_ds_chitiet nen cung noi dung truoc chu ky.
+     * Chi xep khi coTheKyLai() (luat nam o do); dieu kien duoc lap lai TRONG cau UPDATE de hai
+     * lan bam cung luc khong cung xep job.
      *
      * @param  string $maBan
-     * @return bool false khi ban khong ton tai, da gui, hoac dang gui
+     * @return bool false khi ban khong ton tai hoac khong duoc ky lai
      */
     public static function xepKy($maBan)
     {
-        $soDong = DB::table('bh01_ban')
+        $bayGio = now();
+
+        $q = DB::table('bh01_ban')
             ->where('ma_ban', $maBan)
-            ->whereNull('submitted_at')
-            ->where(function ($q) {
-                $q->whereNull('dang_xu_ly_tu')
-                  ->orWhere('dang_xu_ly_tu', '<', now()->subMinutes(self::KHOA_PHUT));
-            })
-            ->update(array(
-                'trang_thai_ky' => Bh01Ban::KY_CHO,
-                'signed_error'  => null,
-                'updated_at'    => now(),
-            ));
+            ->where(function ($q) use ($bayGio) {
+                $q->where('trang_thai_ky', Bh01Ban::KY_LOI)
+                  ->orWhere(function ($q) use ($bayGio) {
+                      $q->where('trang_thai_ky', Bh01Ban::KY_CHO)
+                        ->where('updated_at', '<', $bayGio->copy()->subMinutes(self::KY_LAI_SAU_PHUT));
+                  });
+            });
+
+        $soDong = self::chuaTungGui($q)->update(array(
+            'trang_thai_ky' => Bh01Ban::KY_CHO,
+            'signed_error'  => null,
+            // Dat lai dong ho KY_LAI_SAU_PHUT: job vua xep can thoi gian chay.
+            'updated_at'    => $bayGio,
+        ));
 
         if ($soDong !== 1) {
             return false;
@@ -112,6 +126,81 @@ class Bh01XepHang
         SignBh01Job::dispatch($maBan)->onQueue(Tt12HangDoi::ky());
 
         return true;
+    }
+
+    /**
+     * Xep ky LAN DAU cho ban vua tao (Bh01TaoBan tao ban o cho_ky). Tach khoi xepKy(): ban vua
+     * tao dang cho_ky va moi cap nhat, luat ky lai se (dung) tu choi no.
+     *
+     * @param  string $maBan
+     * @return bool
+     */
+    public static function xepKyBanMoi($maBan)
+    {
+        $q = DB::table('bh01_ban')
+            ->where('ma_ban', $maBan)
+            ->where('trang_thai_ky', Bh01Ban::KY_CHO)
+            ->whereNull('signed_at');
+
+        $soDong = self::chuaTungGui($q)->update(array('updated_at' => now()));
+
+        if ($soDong !== 1) {
+            return false;
+        }
+
+        SignBh01Job::dispatch($maBan)->onQueue(Tt12HangDoi::ky());
+
+        return true;
+    }
+
+    /**
+     * Ban nay co duoc ky lai khong - MOT noi duy nhat cho xepKy, controller kyLai va nut tren man.
+     *
+     * Duoc khi: ky_loi, HOAC cho_ky da qua KY_LAI_SAU_PHUT (job ky bi mat - hang doi bi xoa,
+     * worker chet truoc khi failed() chay). cho_ky moi thi KHONG: job ky co the con trong hang
+     * doi, xep them la hai lan ky chong tren cung mot tep. da_ky thi KHONG: tep da ky da co.
+     *
+     * Khong bao gio khi da tung gui (submitted_at, hoac BAT KY dong lich su nao - ke ca loi mang
+     * khong ro cong da nhan chua) hoac dang co khoa gui: tep da ky cua ban do la dau vet doi
+     * soat (ban tai ve phai dung la ban cong da nhan), va ky de giua luc job gui dang doc tep
+     * se lam lech sha256.
+     *
+     * @param  Bh01Ban $ban
+     * @return bool
+     */
+    public static function coTheKyLai(Bh01Ban $ban)
+    {
+        if ($ban->submitted_at !== null || $ban->dang_xu_ly_tu !== null) {
+            return false;
+        }
+
+        if ($ban->trang_thai_ky === Bh01Ban::KY_LOI) {
+            $duocKy = true;
+        } elseif ($ban->trang_thai_ky === Bh01Ban::KY_CHO) {
+            $duocKy = $ban->updated_at !== null
+                && $ban->updated_at->lt(now()->subMinutes(self::KY_LAI_SAU_PHUT));
+        } else {
+            $duocKy = false;
+        }
+
+        return $duocKy && !Bh01LichSuGui::where('ban_id', $ban->id)->exists();
+    }
+
+    /**
+     * Dieu kien "chua tung gui, khong ai dang gui" dung trong cau UPDATE cua xepKy/xepKyBanMoi.
+     *
+     * Khoa gui chan ca khi DA QUA HAN (khac xepGui): khoa con nam do nghia la mot luot gui da
+     * bat dau ma khong ai nha - co the cong da nhan tep hien tai.
+     */
+    private static function chuaTungGui($q)
+    {
+        return $q->whereNull('submitted_at')
+            ->whereNull('dang_xu_ly_tu')
+            ->whereNotExists(function ($s) {
+                $s->select(DB::raw(1))
+                  ->from('bh01_lich_su_gui')
+                  ->whereColumn('bh01_lich_su_gui.ban_id', 'bh01_ban.id');
+            });
     }
 
     /**

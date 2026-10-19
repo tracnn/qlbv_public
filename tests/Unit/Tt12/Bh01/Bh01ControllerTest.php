@@ -30,7 +30,7 @@ class Bh01ControllerTest extends TestCase
         Queue::fake();
         Storage::fake('exportTt12');
         Cache::put(DanhSachCoSo::KHOA_CACHE, array('01929' => '01929 - Bach Mai', '37470' => '37470 - Ninh Binh'), 60);
-        config(array('organization.tt12.submit_enabled' => true));
+        config(array('organization.tt12.submit_enabled' => true, 'organization.tt12.sign_enabled' => true));
     }
 
     private function controller()
@@ -221,6 +221,75 @@ class Bh01ControllerTest extends TestCase
 
         $this->assertSame(200, $kq->getStatusCode());
         Queue::assertPushed(SignBh01Job::class, 1);
+    }
+
+    /** @test */
+    public function ky_lai_ban_cho_ky_moi_thi_409()
+    {
+        $this->ban(1, array('trang_thai_ky' => Bh01Ban::KY_CHO));
+
+        $kq = $this->controller()->kyLai($this->req(array()), 'BH01_01929_202609_01');
+
+        $this->assertSame(409, $kq->getStatusCode());
+        Queue::assertNotPushed(SignBh01Job::class);
+    }
+
+    /** @test */
+    public function tao_tu_choi_khi_tat_ky()
+    {
+        config(array('organization.tt12.sign_enabled' => false));
+        $this->xml1();
+
+        $kq = $this->controller()->tao($this->req(array('ma_cskcb' => '01929', 'nam' => 2026, 'thang' => 9)));
+
+        $this->assertSame(422, $kq->getStatusCode());
+        $this->assertSame('Chức năng ký số đang tắt, chưa tạo bản.', $kq->getData()->thong_diep);
+        $this->assertSame(0, Bh01Ban::count(), 'Tat ky thi khong tao ban - ban se nam cho_ky mai');
+        Queue::assertNotPushed(SignBh01Job::class);
+    }
+
+    /** @test */
+    public function fetch_data_co_co_the_ky_lai()
+    {
+        $this->ban(1, array('trang_thai_ky' => Bh01Ban::KY_LOI));
+        $this->ban(2, array('trang_thai_ky' => Bh01Ban::KY_CHO));
+
+        $kq = $this->controller()->fetchData($this->req(array(), 'GET'));
+        $hang = collect($kq->getData()->data)->keyBy('so_ban');
+
+        $this->assertTrue($hang[1]->co_the_ky_lai);
+        $this->assertFalse($hang[2]->co_the_ky_lai);
+    }
+
+    /** @test */
+    public function fetch_data_gioi_han_100_dong()
+    {
+        for ($i = 1; $i <= 101; $i++) {
+            $this->ban($i);
+        }
+
+        $kq = $this->controller()->fetchData($this->req(array('length' => 100000), 'GET'));
+
+        $this->assertCount(100, $kq->getData()->data);
+        $this->assertSame(101, $kq->getData()->recordsTotal);
+    }
+
+    /** @test */
+    public function tong_hop_lam_tron_tung_dong_khop_ban_vua_tao()
+    {
+        // Ban luu tong cua gia tri DA LAM TRON tung dong; so sanh phai tinh cung cach, khong thi
+        // ban vua tao da bi bao "du lieu da doi".
+        foreach (array('A', 'B', 'C') as $ma) {
+            $this->xml1(array('ma_lk' => $ma, 't_tongchi_bv' => 10.004, 't_bhtt' => 7.006));
+        }
+        $this->assertSame(200, $this->controller()
+            ->tao($this->req(array('ma_cskcb' => '01929', 'nam' => 2026, 'thang' => 9)))->getStatusCode());
+
+        $kq = $this->controller()->fetchData($this->req(array(), 'GET'));
+        $hang = $kq->getData()->data;
+
+        $this->assertCount(1, $hang);
+        $this->assertFalse($hang[0]->du_lieu_da_doi);
     }
 
     /** @test */

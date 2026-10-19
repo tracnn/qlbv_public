@@ -141,6 +141,14 @@ class Bh01TaoBan
             foreach ($lo as $xml1) {
                 $d = Bh01ChuanHoa::dong($xml1);
                 $k = Bh01Kiem::dong($d);
+                // XML1 co the bi sua giua luot 1 va luot 2: kiem lai, nem de rollback ca ban -
+                // khong bao gio ghi mot dong chan vao ban se ky va gui.
+                if (count($k['chan']) > 0) {
+                    throw new Bh01KhongTaoDuocException(
+                        'MA_LK ' . $xml1->ma_lk . ' bị chặn (dữ liệu vừa thay đổi): ' . implode('; ', $k['chan'])
+                        . '. Chưa tạo được bản, hãy xem trước lại.'
+                    );
+                }
                 if (count($k['canh_bao']) > 0) {
                     $canhBao++;
                 }

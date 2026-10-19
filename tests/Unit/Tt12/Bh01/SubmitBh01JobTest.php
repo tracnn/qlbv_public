@@ -216,6 +216,90 @@ class SubmitBh01JobTest extends TestCase
     }
 
     /** @test */
+    public function loi_mang_ghi_lich_su_moi_lan_thu()
+    {
+        // Spec 5.3: MOI lan gui ghi mot dong lich su. Loi mang la lan gui khong ro ket qua - van
+        // phai de lai dau vet, khong thi nguoi van hanh khong biet job da thu bao nhieu lan.
+        $ban = $this->ban();
+        $dv = new FakeTt12SubmitService();
+        $dv->nem = new \Exception('Lỗi gọi cổng BHXH: timeout');
+
+        foreach (array(1, 2) as $lan) {
+            try {
+                $this->chay($dv);
+                $this->fail('Phai nem de hang doi thu lai');
+            } catch (\Exception $e) {
+                $this->assertContains('timeout', $e->getMessage());
+            }
+        }
+
+        $this->assertSame(2, $dv->soLanGoi);
+        $lichSu = Bh01LichSuGui::where('ban_id', $ban->id)->orderBy('id')->get();
+        $this->assertCount(2, $lichSu);
+        foreach ($lichSu as $dong) {
+            $this->assertStringStartsWith('Lỗi mạng/không rõ kết quả: ', $dong->loi);
+            $this->assertContains('timeout', $dong->loi);
+            $this->assertNull($dong->ma_ket_qua);
+            $this->assertSame('nguoi_gui', $dong->gui_boi);
+            $this->assertNotNull($dong->gui_luc);
+        }
+
+        $hienTai = $this->banHienTai();
+        $this->assertSame($lichSu[1]->loi, $hienTai->thong_diep);
+        $this->assertNull($hienTai->submitted_at, 'Khong ro ket qua thi khong duoc ghi la da gui');
+        $this->assertNotNull($hienTai->dang_xu_ly_tu, 'Van giu khoa giua cac lan thu lai');
+    }
+
+    /** @test */
+    public function failed_ghi_thong_diep()
+    {
+        // (a) Het luot sau loi mang: dong lich su da ghi o tung lan thu, failed() chi ghi thong
+        // diep cuoi va nha khoa - khong ghi them dong.
+        $ban = $this->ban();
+        $dv = new FakeTt12SubmitService();
+        $dv->nem = new \Exception('Lỗi gọi cổng BHXH: timeout');
+        try {
+            $this->chay($dv);
+        } catch (\Exception $e) {
+        }
+
+        (new SubmitBh01Job(self::MA_BAN, 'nguoi_gui', self::KHOA))->failed($e);
+
+        $hienTai = $this->banHienTai();
+        $this->assertContains('timeout', $hienTai->thong_diep);
+        $this->assertContains('thất bại', $hienTai->thong_diep);
+        $this->assertSame(1, Bh01LichSuGui::where('ban_id', $ban->id)->count(), 'Khong ghi them dong');
+        $this->assertNull($hienTai->dang_xu_ly_tu);
+
+        // (b) Het luot ma lan thu khong kip ghi gi (worker bi giet vi timeout): failed() ghi
+        // mot dong de lan gui do khong bien mat.
+        Bh01Ban::query()->delete();
+        Bh01LichSuGui::query()->delete();
+        $ban = $this->ban();
+
+        (new SubmitBh01Job(self::MA_BAN, 'nguoi_gui', self::KHOA))
+            ->failed(new \RuntimeException('has been attempted too many times or run too long'));
+
+        $lichSu = Bh01LichSuGui::where('ban_id', $ban->id)->get();
+        $this->assertCount(1, $lichSu);
+        $this->assertStringStartsWith('Lỗi mạng/không rõ kết quả: ', $lichSu[0]->loi);
+        $this->assertNull($lichSu[0]->ma_ket_qua);
+        $this->assertNotEmpty($this->banHienTai()->thong_diep);
+        $this->assertNull($this->banHienTai()->dang_xu_ly_tu);
+    }
+
+    /** @test */
+    public function timeout_nho_hon_retry_after()
+    {
+        // timeout >= retry_after thi hang doi 'database' coi job dang gui la chet va giao them
+        // mot ban - hai lan POST len cong that.
+        $this->assertLessThan(
+            (int) config('queue.connections.database.retry_after'),
+            (new SubmitBh01Job('x'))->timeout
+        );
+    }
+
+    /** @test */
     public function handle_khong_co_tham_so_type_hint()
     {
         $this->assertSame(0, (new \ReflectionMethod(SubmitBh01Job::class, 'handle'))->getNumberOfParameters());
@@ -261,5 +345,7 @@ class SubmitBh01JobTest extends TestCase
         $this->chay(new FakeTt12SubmitService(), 'cu', self::KHOA);
 
         $this->assertSame('2026-10-19 08:30:00', $this->banHienTai()->dang_xu_ly_tu->format('Y-m-d H:i:s'));
+        $this->assertNull($this->banHienTai()->thong_diep, 'Job cu khong duoc ghi de thong diep cua job moi');
+        $this->assertSame(0, Bh01LichSuGui::count());
     }
 }

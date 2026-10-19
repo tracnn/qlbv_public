@@ -26,6 +26,9 @@ class BHYTBh01Controller extends Controller
     /** Dong moi trang o man Xem dong. */
     const DONG_MOI_TRANG = 200;
 
+    /** Tran so ban moi trang danh sach: moi ban moi nhat cua ky ton mot lan tong hop XML1. */
+    const BAN_TOI_DA_MOI_TRANG = 100;
+
     public function index()
     {
         return view('bhyt.tt12.bh01.index', array(
@@ -65,10 +68,11 @@ class BHYTBh01Controller extends Controller
         $tong = (clone $q)->count();
         $batDau = max(0, (int) $request->input('start', 0));
         $soDong = (int) $request->input('length', 25);
+        $soDong = $soDong > 0 ? min($soDong, self::BAN_TOI_DA_MOI_TRANG) : 25;
 
         $cacBan = $q->orderBy('nam_qt', 'desc')->orderBy('thang_qt', 'desc')
             ->orderBy('ma_cskcb')->orderBy('so_ban', 'desc')
-            ->skip($batDau)->take($soDong > 0 ? $soDong : 25)->get();
+            ->skip($batDau)->take($soDong)->get();
 
         // du_lieu_da_doi chi tinh cho ban MOI NHAT cua moi ky (spec 5.5): tongHop quet xml3176_xml1s,
         // tinh cho moi dong la nang va vo nghia voi ban cu. kyDaDoi() tra false ngay voi ban cu.
@@ -87,6 +91,11 @@ class BHYTBh01Controller extends Controller
 
     public function tao(Request $request)
     {
+        // Ky tat ma van tao thi ban nam cho_ky mai (SignBh01Job bo qua khi co tat), chiem so ban.
+        if (!(bool) config('organization.tt12.sign_enabled', false)) {
+            return $this->loi('Chức năng ký số đang tắt, chưa tạo bản.', 422);
+        }
+
         $loi = $this->docCoSoVaKy($request, $maCskcb, $ky);
         if ($loi !== null) {
             return $loi;
@@ -101,12 +110,12 @@ class BHYTBh01Controller extends Controller
         }
 
         // Ky xong moi gui duoc; ky chay o hang doi vi dich vu ky (HSM/USB Token) cham.
-        $xepDuoc = Bh01XepHang::xepKy($ban->ma_ban);
+        $xepDuoc = Bh01XepHang::xepKyBanMoi($ban->ma_ban);
 
         return response()->json(array(
             'thanh_cong' => true,
             'thong_diep' => 'Đã tạo bản ' . $ban->so_ban . ' (' . $ban->so_dong . ' hồ sơ).'
-                . ($xepDuoc ? ' Đang chờ ký.' : ' Chưa xếp được hàng đợi ký, bấm "Ký lại".'),
+                . ($xepDuoc ? ' Đang chờ ký.' : ' Chưa xếp được hàng đợi ký, sau 10 phút bấm "Ký lại".'),
             'ma_ban'     => $ban->ma_ban,
         ));
     }
@@ -118,9 +127,11 @@ class BHYTBh01Controller extends Controller
             return $this->loi('Không tìm thấy bản ' . $maBan, 404);
         }
 
-        // xepKy tu choi ban da gui/dang gui: tep da ky cua ban do la dau vet doi soat voi cong.
-        if (!Bh01XepHang::xepKy($maBan)) {
-            return $this->loi('Không ký lại được: bản đã gửi cổng hoặc đang được xử lý.', 409);
+        // Luat nam o Bh01XepHang::coTheKyLai; xepKy kiem lai trong chinh cau UPDATE (hai lan bam
+        // cung luc), nen ca hai deu tra 409 cung mot thong diep.
+        if (!Bh01XepHang::coTheKyLai($ban) || !Bh01XepHang::xepKy($maBan)) {
+            return $this->loi('Không ký lại được: bản đã ký xong, đã/đang gửi cổng, hoặc đang chờ ký chưa quá '
+                . Bh01XepHang::KY_LAI_SAU_PHUT . ' phút.', 409);
         }
 
         return response()->json(array('thanh_cong' => true, 'thong_diep' => 'Đã xếp hàng đợi ký lại.'));
@@ -269,6 +280,7 @@ class BHYTBh01Controller extends Controller
             'signed_error'        => $ban->signed_error,
             'da_gui'              => $ban->submitted_at !== null,
             'dang_gui'            => $ban->dang_xu_ly_tu !== null,
+            'co_the_ky_lai'       => Bh01XepHang::coTheKyLai($ban),
             'ma_ket_qua'          => $ban->ma_ket_qua,
             'thong_diep'          => $ban->thong_diep,
             'ma_gd'               => $ban->ma_gd,

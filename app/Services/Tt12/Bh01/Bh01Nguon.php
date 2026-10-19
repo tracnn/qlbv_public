@@ -26,7 +26,11 @@ class Bh01Nguon
             ->where('ma_the_bhyt', '<>', '')
             ->orderByRaw(self::bieuThucMuc())
             ->orderBy('ngay_ra')
-            ->orderBy('ma_lk');
+            ->orderBy('ma_lk')
+            // Chot thu tu TOAN PHAN: xml3176_xml1s duy nhat theo (ma_lk, stt), con id chot cuoi.
+            // Thu tu khong toan phan thi chunk() (LIMIT/OFFSET) co the bo sot hoac lap dong.
+            ->orderBy('stt')
+            ->orderBy('id');
     }
 
     public static function tongHop($maCskcb, array $ky)
@@ -37,7 +41,9 @@ class Bh01Nguon
             $chon[] = 'SUM(CASE WHEN (' . $caseMuc . ') = ' . $m . ' THEN 1 ELSE 0 END) AS muc_' . $m;
         }
         foreach (self::$cot_tien as $cot) {
-            $chon[] = 'SUM(' . $cot . ') AS ' . $cot;
+            // ROUND tung dong truoc khi cong: ban luu tong cua gia tri da lam tron tung dong
+            // (Bh01ChuanHoa::tien), cong tho roi moi lam tron se lech va bao "du lieu da doi" gia.
+            $chon[] = 'SUM(ROUND(' . $cot . ', 2)) AS ' . $cot;
         }
 
         $r = DB::table('xml3176_xml1s')
