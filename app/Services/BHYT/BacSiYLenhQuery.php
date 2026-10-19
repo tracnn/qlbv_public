@@ -22,7 +22,7 @@ class BacSiYLenhQuery
      * @param string $dateType date_yl (mac dinh) | date_in | date_out | date_payment | date_create | date_update
      * @param string $dateFrom 'Y-m-d' hoac 'Y-m-d H:i:s'
      * @param string $dateTo   'Y-m-d' hoac 'Y-m-d H:i:s'
-     * @param string $cotMaKhoa Cot lay ma khoa: 'ms.ma_khoa' (khoa cua NVYT) hoac 'q.ma_khoa' (khoa tren y lenh)
+     * @param string $cotMaKhoa 'ms.ma_khoa' (khoa cua NVYT, mot dong moi bac si) hoac 'q.ma_khoa' (khoa tren y lenh, mot dong moi bac si x khoa)
      * @return \Illuminate\Database\Query\Builder
      */
     public static function build($dateType, $dateFrom, $dateTo, $cotMaKhoa = 'ms.ma_khoa')
@@ -38,25 +38,45 @@ class BacSiYLenhQuery
         $tu = $laTimestamp ? $dateFrom : Carbon::createFromFormat('Y-m-d H:i:s', $dateFrom)->format('YmdHi');
         $den = $laTimestamp ? $dateTo : Carbon::createFromFormat('Y-m-d H:i:s', $dateTo)->format('YmdHi');
 
-        $union = self::nguon('xml3176_xml3s', $dateType, $tu, $den, $cotMaKhoa)
-            ->unionAll(self::nguon('xml3176_xml2s', $dateType, $tu, $den, $cotMaKhoa));
+        $khoaYLenh = $cotMaKhoa === 'q.ma_khoa';
 
-        return DB::table(DB::raw("({$union->toSql()}) as t"))
+        $union = self::nguon('xml3176_xml3s', $dateType, $tu, $den, $khoaYLenh)
+            ->unionAll(self::nguon('xml3176_xml2s', $dateType, $tu, $den, $khoaYLenh));
+
+        // Dem theo bac si TRUOC roi moi noi NVYT: medical_staffs khong co index macchn
+        // (JOIN tung dong y lenh quet cheo hang trieu x hang nghin dong) va co nhieu dong
+        // cung macchn (unique theo dinh danh + khoa + co so + tu ngay) - JOIN thang nhan
+        // so y lenh len theo so dong do.
+        $dem = DB::table(DB::raw("({$union->toSql()}) as u"))
             ->mergeBindings($union)
-            ->select(['t.ma_khoa', 't.ten_khoa', 't.ma_bac_si', 't.ho_ten', DB::raw('COUNT(*) as tong_so')])
-            ->groupBy('t.ma_khoa', 't.ten_khoa', 't.ma_bac_si', 't.ho_ten');
+            ->select(array_merge(['u.ma_bac_si'], $khoaYLenh ? ['u.ma_khoa'] : [], [DB::raw('COUNT(*) as tong_so')]))
+            ->groupBy(array_merge(['u.ma_bac_si'], $khoaYLenh ? ['u.ma_khoa'] : []));
+
+        $nvyt = DB::table('medical_staffs')
+            ->select(['macchn', DB::raw('MAX(ma_khoa) as ma_khoa'), DB::raw('MAX(ten_khoa) as ten_khoa'), DB::raw('MAX(ho_ten) as ho_ten')])
+            ->groupBy('macchn');
+
+        $ketQua = DB::table(DB::raw("({$dem->toSql()}) as d"))
+            ->mergeBindings($dem)
+            ->leftJoin(DB::raw("({$nvyt->toSql()}) as ms"), 'ms.macchn', '=', 'd.ma_bac_si')
+            ->select([
+                DB::raw('COALESCE(' . ($khoaYLenh ? 'd' : 'ms') . ".ma_khoa, '') as ma_khoa"),
+                DB::raw("COALESCE(ms.ten_khoa, '') as ten_khoa"),
+                'd.ma_bac_si',
+                DB::raw("COALESCE(ms.ho_ten, '') as ho_ten"),
+                'd.tong_so',
+            ]);
+
+        // Boc lai thanh bang t: man danh sach loc o tim kiem tren t.ma_khoa, t.ho_ten...
+        return DB::table(DB::raw("({$ketQua->toSql()}) as t"))
+            ->mergeBindings($ketQua)
+            ->select(['t.ma_khoa', 't.ten_khoa', 't.ma_bac_si', 't.ho_ten', 't.tong_so']);
     }
 
-    private static function nguon($bang, $dateType, $tu, $den, $cotMaKhoa)
+    private static function nguon($bang, $dateType, $tu, $den, $khoaYLenh)
     {
         $q = DB::table($bang . ' as q')
-            ->leftJoin('medical_staffs as ms', 'ms.macchn', '=', 'q.ma_bac_si')
-            ->select([
-                DB::raw("COALESCE({$cotMaKhoa}, '') as ma_khoa"),
-                DB::raw("COALESCE(ms.ten_khoa, '') as ten_khoa"),
-                'q.ma_bac_si',
-                DB::raw("COALESCE(ms.ho_ten, '') as ho_ten"),
-            ]);
+            ->select($khoaYLenh ? ['q.ma_bac_si', 'q.ma_khoa'] : ['q.ma_bac_si']);
 
         if (isset(self::NGAY_TREN_XML1[$dateType])) {
             // xml1 unique (ma_lk, stt): JOIN se nhan doi y lenh - loc qua tap ma_lk.
