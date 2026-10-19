@@ -21,6 +21,7 @@ class Bh01DocExcel
     const TOI_DA_DONG = 100000;
     const TOI_DA_LOI  = 20;
     const CO_LO       = 500;      // so dong moi lo giao cho duyetLo()
+    const DAI_TOI_DA  = 255;      // cot bh01_dong la varchar(255): MySQL strict bao 22001 (HTTP 500)
 
     private static $cot_tien = array(
         't_tongchi_bv', 't_tongchi_bh', 't_bhtt', 't_bncct', 't_bntt', 't_nguonkhac',
@@ -44,12 +45,10 @@ class Bh01DocExcel
         $dongLa = array();       // so dong Excel cua cac dong lech pham vi, theo thu tu
         $loiTieuDe = array();
         $quaTran = false;
-        $anhXa = array();
 
         $this->doc(
             $duongDan,
-            function ($theoTen, $soDong) use (&$kq, &$loiDong, &$cap, &$dongLa, $maCskcb, $ky) {
-                $d = self::chuanHoaDong($theoTen);
+            function (array $d, $soDong, array $loiO) use (&$kq, &$loiDong, &$cap, &$dongLa, $maCskcb, $ky) {
 
                 // Pham vi (4.3) tren gia tri DA chuan hoa: '1929' da thanh '01929'.
                 if ($d['ma_cskcb'] !== (string) $maCskcb || $d['nam_qt'] !== $ky['nam'] || $d['thang_qt'] !== $ky['thang']) {
@@ -67,8 +66,11 @@ class Bh01DocExcel
                 if (count($k['canh_bao']) > 0) {
                     $kq['so_dong_canh_bao']++;
                 }
-                if (count($k['chan']) > 0 && count($loiDong) < self::TOI_DA_LOI) {
-                    $loiDong[] = 'Dòng ' . $soDong . ': ' . implode('; ', $k['chan']);
+                // Loi o (o loi cong thuc, o qua dai) dung truoc: no thuong la nguyen nhan cua loi Bh01Kiem
+                // cung dong (o loi doc ra rong -> "thieu HO_TEN").
+                $chan = array_merge($loiO, $k['chan']);
+                if (count($chan) > 0 && count($loiDong) < self::TOI_DA_LOI) {
+                    $loiDong[] = 'Dòng ' . $soDong . ': ' . implode('; ', $chan);
                 }
 
                 $kq['so_dong']++;
@@ -192,10 +194,16 @@ class Bh01DocExcel
      * Chi doc sheet DAU TIEN. Giu dong trong (setShouldPreserveEmptyRows) de dong dau tep luon la
      * tieu de nhu truoc va so dong Excel dung tuyet doi; dong trong do ta tu bo.
      *
-     * @param callable|null $xuLyDong nhan (array $theoTen, int $soDongExcel) - dung cho kiem()
+     * O LOI: Spout 3.3 doi o t="e" (#N/A, #DIV/0!, #REF!...) va o so dinh dang ngay ngoai mien thanh
+     * Cell TYPE_ERROR co getValue() null -> neu doc bang toArray() se thanh o rong im lang (truong tuy
+     * chon lot qua, dong toan o loi bi bo nhu dong trong). Vi ban nhap se duoc ky va gui len cong BHXH
+     * THAT, o loi o cot anh xa la loi CHAN; dong co o loi luon tinh la dong co du lieu.
+     *
+     * @param callable|null $xuLyDong nhan (array $d da chuan hoa, int $soDongExcel, string[] $loiO) - dung cho kiem()
      * @param callable      $nhanTieuDe nhan (thieu[], trung[], thua[]) mot lan
      * @param bool          &$quaTran bao hieu tep vuot TOI_DA_DONG (dung doc ngay)
-     * @param callable|null $nhanLo   nhan (array phan_tu) moi lo LO_DUYET dong - dung cho duyetLo()
+     * @param callable|null $nhanLo   nhan (array phan_tu) moi lo CO_LO dong - dung cho duyetLo(); dong co
+     *                                loi o thi nem Bh01KhongTaoDuocException (phong tuyen thu hai sau kiem())
      */
     private function doc($duongDan, $xuLyDong, callable $nhanTieuDe, &$quaTran, $nhanLo = null)
     {
@@ -222,11 +230,15 @@ class Bh01DocExcel
             $daBaoTieuDe = false;
             foreach ($reader->getSheetIterator() as $sheet) {
                 foreach ($sheet->getRowIterator() as $soDong => $row) {
-                    $o = $row->toArray();
+                    $cacO = $row->getCells();
 
                     if (!$daBaoTieuDe) {
                         $daBaoTieuDe = true;
-                        $anhXa = $this->anhXaTieuDe(array_values($o), $nhanTieuDe);
+                        $tieuDe = array();
+                        foreach ($cacO as $viTri => $cell) {
+                            $tieuDe[$viTri] = $cell->getValue();
+                        }
+                        $anhXa = $this->anhXaTieuDe($tieuDe, $nhanTieuDe);
                         continue;
                     }
                     if ($anhXa === null) {
@@ -234,9 +246,10 @@ class Bh01DocExcel
                     }
 
                     // Bo dong ma MOI o deu rong (tep sua tay hay keo theo hang tram dong trong).
+                    // O loi KHONG rong: dong toan o loi phai bi chan, khong duoc lang le bo qua.
                     $trong = true;
-                    foreach ($o as $gt) {
-                        if (Tt12DocExcel::chuanHoaO($gt) !== '') {
+                    foreach ($cacO as $cell) {
+                        if ($cell->isError() || Tt12DocExcel::chuanHoaO($cell->getValue()) !== '') {
                             $trong = false;
                             break;
                         }
@@ -253,16 +266,39 @@ class Bh01DocExcel
 
                     // Spout cat o rong o cuoi dong: vi tri thieu duoc coi la null.
                     $theoTen = array();
+                    $loiO = array();
                     foreach ($anhXa as $viTri => $the) {
-                        $theoTen[$the] = isset($o[$viTri]) ? $o[$viTri] : null;
+                        if (!isset($cacO[$viTri])) {
+                            $theoTen[$the] = null;
+                            continue;
+                        }
+                        $cell = $cacO[$viTri];
+                        if ($cell->isError()) {
+                            $loiO[] = 'ô ' . $the . ' lỗi/không đọc được (' . $cell->getValueEvenIfError() . ')';
+                            $theoTen[$the] = null;
+                        } else {
+                            $theoTen[$the] = $cell->getValue();
+                        }
+                    }
+                    $d = self::chuanHoaDong($theoTen);
+                    // Do do dai tren gia tri DA chuan hoa - chinh la gia tri se ghi vao bh01_dong.
+                    foreach ($d as $khoa => $gt) {
+                        if (mb_strlen($gt, 'UTF-8') > self::DAI_TOI_DA) {
+                            $loiO[] = 'ô ' . strtoupper($khoa) . ' dài hơn ' . self::DAI_TOI_DA . ' ký tự';
+                        }
                     }
 
                     try {
                         if ($xuLyDong !== null) {
-                            call_user_func($xuLyDong, $theoTen, $soDong);
+                            call_user_func($xuLyDong, $d, $soDong, $loiO);
                         } else {
+                            if ($loiO) {
+                                throw new Bh01KhongTaoDuocException(
+                                    'Dòng ' . $soDong . ' bị chặn: ' . implode('; ', $loiO) . '. Chưa tạo được bản.'
+                                );
+                            }
                             $lo[] = array(
-                                'du_lieu' => self::chuanHoaDong($theoTen),
+                                'du_lieu' => $d,
                                 'ma_lk'   => null,
                                 'vi_tri'  => 'Dòng ' . $soDong,
                             );

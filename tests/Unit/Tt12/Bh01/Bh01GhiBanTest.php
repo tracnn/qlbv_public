@@ -123,4 +123,17 @@ class Bh01GhiBanTest extends TestCase
         $this->assertSame(0, Bh01Ban::count());
         $this->assertSame(0, Bh01Dong::count());
     }
+
+    /** @test */
+    public function nguon_khong_co_dong_nao_thi_khong_tao_ban()
+    {
+        try {
+            (new Bh01GhiBan())->ghi('01929', $this->ky(), 'tester', $this->nguon(array()));
+            $this->fail('Phai nem Bh01KhongTaoDuocException');
+        } catch (Bh01KhongTaoDuocException $e) {
+            $this->assertNotSame('', $e->getMessage());
+        }
+
+        $this->assertSame(0, Bh01Ban::count());
+    }
 }

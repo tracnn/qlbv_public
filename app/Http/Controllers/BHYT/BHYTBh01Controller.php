@@ -135,6 +135,9 @@ class BHYTBh01Controller extends Controller
 
         // Than yeu cau vuot post_max_size: PHP bo sach $_POST/$_FILES nen docCoSoVaKy se bao nham
         // "chua chon co so". Nhan ra bang CONTENT_LENGTH truoc.
+        // DU PHONG: tren duong web thuong, middleware toan cuc ValidatePostSize da nem PostTooLargeException
+        // (HTTP 413, giao dien tu dich) truoc khi toi day; nhanh nay chi chay khi middleware khong dung
+        // truoc (vd goi thang controller, test, hoac kernel bo middleware).
         $tran = $this->byteTuIni(ini_get('post_max_size'));
         if ($tran > 0 && (int) $request->server('CONTENT_LENGTH') > $tran
             && count($request->all()) === 0 && count($request->allFiles()) === 0) {

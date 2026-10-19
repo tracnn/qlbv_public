@@ -163,6 +163,11 @@
         if (xhr.status === 0) {
             return 'Không gửi được yêu cầu. Kiểm tra kết nối rồi thử lại.';
         }
+        // Tep vuot post_max_size: middleware ValidatePostSize nem PostTooLargeException (HTTP 413)
+        // TRUOC controller, nen khong co thong_diep JSON - phai tu dich o day.
+        if (xhr.status === 413) {
+            return 'Tệp vượt cỡ cho phép của máy chủ. Hãy chia nhỏ tệp hoặc liên hệ quản trị.';
+        }
         return 'Máy chủ báo lỗi (HTTP ' + xhr.status + '). Xem log hệ thống để biết chi tiết.';
     }
 
@@ -302,7 +307,9 @@
      */
     function batDauChay($nut, $noiHien, chu) {
         var nhanCu = $nut.html();
-        var $khoa = $('#bh01-co-so, #bh01-thang, #bh01-nam, #bh01-btn-xem-truoc, #bh01-btn-tao');
+        // Khoa ca nut/o chon tep nhap Excel: bam dup trong luc dang nhap se tao ban trung.
+        var $khoa = $('#bh01-co-so, #bh01-thang, #bh01-nam, #bh01-btn-xem-truoc, #bh01-btn-tao, '
+            + '#bh01-btn-nhap-excel, #bh01-tep-excel');
         var tatTruoc = $khoa.map(function () { return $(this).prop('disabled'); }).get();
         var batDau = Date.now();
         var $dem = $('<span>').text('0');

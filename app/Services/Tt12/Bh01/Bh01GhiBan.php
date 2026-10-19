@@ -119,6 +119,11 @@ class Bh01GhiBan
             }
         });
 
+        // Ban 0 dong khong co gi de ky/gui; nem TRONG transaction de rollback ca dong bh01_ban vua tao.
+        if ($stt === 0) {
+            throw new Bh01KhongTaoDuocException('Nguồn không có hồ sơ nào. Chưa tạo được bản.');
+        }
+
         $ban->so_dong = $stt;
         $ban->so_canh_bao = $canhBao;
         foreach (self::$cot_tien as $cot) {

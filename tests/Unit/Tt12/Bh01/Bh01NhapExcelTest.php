@@ -146,4 +146,15 @@ class Bh01NhapExcelTest extends TestCase
         $this->assertSame(0, Bh01Ban::count());
         $this->assertSame(array(), Storage::disk('exportTt12')->allFiles('BH01/nguon'));
     }
+
+    /** @test */
+    public function ten_tep_nguon_dai_bi_cat_con_255_ky_tu()
+    {
+        $ten = str_repeat('Ư', 300) . '.xlsx';
+        $kq = (new Bh01NhapExcel())->nhap($this->tep(array($this->dong())), $ten, '37470', $this->ky(), 'tester');
+
+        $luu = Bh01Ban::find($kq['ban']->id)->ten_tep_nguon;
+        $this->assertSame(255, mb_strlen($luu));
+        $this->assertSame(mb_substr($ten, 0, 255), $luu);
+    }
 }

@@ -12,6 +12,8 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
  *
  * Kieu o giu DUNG kieu PHP cua gia tri: chuoi -> o chu, int/float -> o so, DateTime -> o ngay.
  * Phai phan biet vi loi that cua tep Excel nam o cho nay (o so 1929 thay vi chu '01929').
+ * Chuoi bat dau bang '=' duoc ghi thanh CONG THUC (PhpSpreadsheet tinh san gia tri luu kem, vd =NA()
+ * luu o loi t="e" #N/A) - de gia lap o loi cong thuc cua tep that.
  * Tep nam trong thu muc tam rieng, tu xoa o tearDown.
  */
 trait TaoXlsxBh01
@@ -44,6 +46,8 @@ trait TaoXlsxBh01
                 if ($giaTri instanceof \DateTimeInterface) {
                     $o->setValue(NgayExcel::PHPToExcel($giaTri));
                     $o->getStyle()->getNumberFormat()->setFormatCode('yyyy-mm-dd');
+                } elseif (is_string($giaTri) && substr($giaTri, 0, 1) === '=') {
+                    $o->setValue($giaTri);
                 } elseif (is_string($giaTri)) {
                     $o->setValueExplicit($giaTri, DataType::TYPE_STRING);
                 } elseif ($giaTri !== null) {

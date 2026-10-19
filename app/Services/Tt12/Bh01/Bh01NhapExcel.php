@@ -39,7 +39,8 @@ class Bh01NhapExcel
             function ($nhanLo) use ($doc, $duongDanTam) {
                 $doc->duyetLo($duongDanTam, $nhanLo);
             },
-            array('nguon' => Bh01Ban::NGUON_EXCEL, 'ten_tep_nguon' => $tenTepGoc)
+            // Cot ten_tep_nguon la varchar(255); ten tep dai qua se lam MySQL strict nem 22001.
+            array('nguon' => Bh01Ban::NGUON_EXCEL, 'ten_tep_nguon' => mb_substr((string) $tenTepGoc, 0, 255, 'UTF-8'))
         );
 
         $this->luuTepNguon($ban, $duongDanTam);

@@ -34,7 +34,8 @@ class Bh01XuatExcel
     protected function ghi(Bh01DongExport $export)
     {
         $goc = $this->thuMucTam ?: storage_path('app/xuat-tam');
-        if (!is_dir($goc) && !mkdir($goc, 0777, true)) {
+        // Hai yeu cau xuat cung luc co the cung tao thu muc: mkdir that bai nhung thu muc da co la binh thuong.
+        if (!is_dir($goc) && !@mkdir($goc, 0777, true) && !is_dir($goc)) {
             throw new \RuntimeException("Không tạo được thư mục $goc");
         }
         // Tep dich ngay trong thu muc goc (GhiExcelLuong chi xoa thu muc tam rieng cua no, khong dung toi tep dich).

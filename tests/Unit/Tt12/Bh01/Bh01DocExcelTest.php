@@ -271,4 +271,78 @@ class Bh01DocExcelTest extends TestCase
         });
         $this->assertSame(array('Dòng 2', 'Dòng 4'), $vt);
     }
+
+    /** Spout tra o loi (t="e") voi getValue() null: kiem tep dung kieu o that truoc khi tin test. */
+    private function spoutThayOLoi($duongDan, $dong, $cot)
+    {
+        $r = \Box\Spout\Reader\Common\Creator\ReaderEntityFactory::createXLSXReader();
+        $r->setShouldPreserveEmptyRows(true);
+        $r->open($duongDan);
+        try {
+            foreach ($r->getSheetIterator() as $sheet) {
+                foreach ($sheet->getRowIterator() as $so => $row) {
+                    if ($so === $dong) {
+                        $o = $row->getCells()[$cot];
+                        return $o->isError() && $o->getValue() === null;
+                    }
+                }
+            }
+        } finally {
+            $r->close();
+        }
+        return false;
+    }
+
+    /** @test */
+    public function o_loi_cong_thuc_bi_chan()
+    {
+        $tep = $this->tep(array($this->dong(array('NGAY_VAO_NOI_TRU' => '=NA()'))));
+        $cot = array_search('NGAY_VAO_NOI_TRU', $this->tieuDe(), true);
+        $this->assertTrue($this->spoutThayOLoi($tep, 2, $cot), 'Tep test phai chua o loi #N/A');
+
+        $kq = $this->kiem($tep);
+
+        $this->assertSame(1, $kq['so_dong']);
+        $this->assertCount(1, $kq['loi']);
+        $this->assertStringStartsWith('Dòng 2: ', $kq['loi'][0]);
+        $this->assertContains('ô NGAY_VAO_NOI_TRU lỗi/không đọc được (#N/A)', $kq['loi'][0]);
+    }
+
+    /** @test */
+    public function dong_toan_o_loi_khong_bi_bo_qua()
+    {
+        $hang = array($this->tieuDe(), $this->hang($this->dong()), array_fill(0, 20, '=1/0'));
+        $tep = $this->taoXlsx($hang);
+        $this->assertTrue($this->spoutThayOLoi($tep, 3, 0), 'Tep test phai chua o loi #DIV/0!');
+
+        $kq = $this->kiem($tep);
+
+        $this->assertSame(2, $kq['so_dong']);
+        $this->assertNotEmpty($kq['loi']);
+        $this->assertStringStartsWith('Dòng 3: ', $kq['loi'][0]);
+        $this->assertContains('ô HO_TEN lỗi/không đọc được (#DIV/0!)', $kq['loi'][0]);
+    }
+
+    /** @test */
+    public function duyet_lo_gap_o_loi_thi_nem_khong_dua_dong_rong()
+    {
+        $tep = $this->tep(array($this->dong(array('NGAY_VAO_NOI_TRU' => '=NA()'))));
+
+        $this->expectException(\App\Services\Tt12\Bh01\Bh01KhongTaoDuocException::class);
+        (new Bh01DocExcel())->duyetLo($tep, function (array $cacDong) {
+        });
+    }
+
+    /** @test */
+    public function o_dai_hon_255_ky_tu_bi_chan()
+    {
+        $kq = $this->kiem($this->tep(array(
+            $this->dong(array('HO_TEN' => str_repeat('Ă', 255))),
+            $this->dong(array('HO_TEN' => str_repeat('A', 256))),
+        )));
+
+        $this->assertCount(1, $kq['loi']);
+        $this->assertContains('Dòng 3: ', $kq['loi'][0]);
+        $this->assertContains('ô HO_TEN dài hơn 255 ký tự', $kq['loi'][0]);
+    }
 }
