@@ -84,7 +84,7 @@
           <tr>
             <td>{{ $index + 1 }}</td>
             <td>{{ $error->ma_lk }}</td>
-            <td>{{ optional($error->xml1)->ma_the }}</td>
+            <td>{{ optional($error->xml1)->ma_the_bhyt }}</td>
             <td>
               @if($error->ma_tracuu != '000')
                 {{ \App\Services\BHYT\NhanMaThe::traCuu($error->ma_tracuu) }}

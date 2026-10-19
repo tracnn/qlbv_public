@@ -45,4 +45,22 @@ class WordOfTheDayTest extends TestCase
         $this->assertContains('Lỗi thẻ', $html);
         $this->assertNotContains('Lỗi XML', $html);
     }
+
+    /** xml3176_xml1s khong co cot ma_the - chi co ma_the_bhyt. */
+    /** @test */
+    public function mail_import_hien_ma_the_tu_ho_so_xml3176()
+    {
+        $loi = (new check_hein_card())->forceFill(['ma_lk' => 'LK1', 'ma_tracuu' => '000', 'ma_kiemtra' => '01']);
+        $loi->setRelation('xml1', (new Xml3176Xml1())->forceFill(['ma_lk' => 'LK1', 'ma_the_bhyt' => 'DN4010012345678']));
+
+        $html = view('templates.mail-import', [
+            'name' => 'A',
+            'from_date' => '202610190000',
+            'to_date' => '202610192359',
+            'email' => 'a@example.test',
+            'errorsHeinCard' => collect([$loi]),
+        ])->render();
+
+        $this->assertContains('DN4010012345678', $html);
+    }
 }

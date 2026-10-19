@@ -154,6 +154,38 @@ class BacSiYLenhQueryTest extends TestCase
         $this->assertSame(['K01', 'K02'], $rows->pluck('ma_khoa')->all());
     }
 
+    /**
+     * O tim kiem cua man danh sach them where tren t.*: binding tim kiem phai dung SAU cac
+     * binding ngay. mergeBindings dua ngay xml2 vao nhom 'union' (lam phang SAU 'where')
+     * nen tung lam lech: xml2 loc theo chuoi tim kiem, tim kiem so voi ngay.
+     */
+    /** @test */
+    public function tim_kiem_tren_t_giu_dung_thu_tu_binding()
+    {
+        $b = BacSiYLenhQuery::build('date_yl', '2026-09-01', '2026-09-30')
+            ->where('t.ma_khoa', 'like', '%X%')
+            ->getBindings();
+
+        $this->assertSame(['202609010000', '202609302359', '202609010000', '202609302359', '%X%'], $b);
+    }
+
+    /** @test */
+    public function tim_kiem_chay_dung_tren_du_lieu()
+    {
+        $this->dungBang();
+        DB::table('medical_staffs')->insert([
+            ['macchn' => 'BS1', 'ma_khoa' => 'K01', 'ten_khoa' => 'Noi', 'ho_ten' => 'An'],
+            ['macchn' => 'BS2', 'ma_khoa' => 'K02', 'ten_khoa' => 'Ngoai', 'ho_ten' => 'Binh'],
+        ]);
+        DB::table('xml3176_xml2s')->insert([['ma_lk' => 'L1', 'ma_bac_si' => 'BS1', 'ngay_yl' => '202609050800']]);
+        DB::table('xml3176_xml3s')->insert([['ma_lk' => 'L1', 'ma_bac_si' => 'BS2', 'ngay_yl' => '202609050800']]);
+
+        $rows = BacSiYLenhQuery::build('date_yl', '2026-09-01', '2026-09-30')
+            ->where('t.ho_ten', 'like', '%An%')->get();
+
+        $this->assertSame(['BS1'], $rows->pluck('ma_bac_si')->all());
+    }
+
     /** @test */
     public function cot_ma_khoa_chon_duoc()
     {

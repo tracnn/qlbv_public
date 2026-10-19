@@ -47,8 +47,12 @@ class BacSiYLenhQuery
         // (JOIN tung dong y lenh quet cheo hang trieu x hang nghin dong) va co nhieu dong
         // cung macchn (unique theo dinh danh + khoa + co so + tu ngay) - JOIN thang nhan
         // so y lenh len theo so dong do.
+        //
+        // Binding cua bang dan xuat dat vao nhom 'join' (5.5 khong co nhom 'from'): no lam
+        // phang TRUOC 'where'. mergeBindings giu nhom 'union' cua ngay xml2, ma nhom do
+        // dung SAU 'where' - them where tim kiem tren t.* la lech thu tu dau '?'.
         $dem = DB::table(DB::raw("({$union->toSql()}) as u"))
-            ->mergeBindings($union)
+            ->addBinding($union->getBindings(), 'join')
             ->select(array_merge(['u.ma_bac_si'], $khoaYLenh ? ['u.ma_khoa'] : [], [DB::raw('COUNT(*) as tong_so')]))
             ->groupBy(array_merge(['u.ma_bac_si'], $khoaYLenh ? ['u.ma_khoa'] : []));
 
@@ -57,7 +61,7 @@ class BacSiYLenhQuery
             ->groupBy('macchn');
 
         $ketQua = DB::table(DB::raw("({$dem->toSql()}) as d"))
-            ->mergeBindings($dem)
+            ->addBinding($dem->getBindings(), 'join')
             ->leftJoin(DB::raw("({$nvyt->toSql()}) as ms"), 'ms.macchn', '=', 'd.ma_bac_si')
             ->select([
                 DB::raw('COALESCE(' . ($khoaYLenh ? 'd' : 'ms') . ".ma_khoa, '') as ma_khoa"),
@@ -69,7 +73,7 @@ class BacSiYLenhQuery
 
         // Boc lai thanh bang t: man danh sach loc o tim kiem tren t.ma_khoa, t.ho_ten...
         return DB::table(DB::raw("({$ketQua->toSql()}) as t"))
-            ->mergeBindings($ketQua)
+            ->addBinding($ketQua->getBindings(), 'join')
             ->select(['t.ma_khoa', 't.ten_khoa', 't.ma_bac_si', 't.ho_ten', 't.tong_so']);
     }
 

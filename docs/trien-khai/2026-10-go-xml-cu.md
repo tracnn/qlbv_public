@@ -31,11 +31,17 @@ Các hàng đợi sau không còn worker hay mã đọc. Nếu còn việc tồn
 - `JobQd130Xml`, `JobExportQd130Xml`, `JobSubmitQd130Xml` (Qd130)
 - `JobXmlCheckError` (4210)
 
-```
-php artisan queue:clear <connection> --queue=JobQd130Xml
-```
+Laravel 5.5 **không có** `queue:clear`. Driver hàng đợi là `database`, nên xoá thẳng trong
+bảng `jobs`. Đếm trước rồi mới xoá:
 
-(lặp lại cho từng tên)
+```sql
+SELECT queue, COUNT(*) FROM jobs
+WHERE queue IN ('JobQd130Xml','JobExportQd130Xml','JobSubmitQd130Xml','JobXmlCheckError')
+GROUP BY queue;
+
+DELETE FROM jobs
+WHERE queue IN ('JobQd130Xml','JobExportQd130Xml','JobSubmitQd130Xml','JobXmlCheckError');
+```
 
 ## 4. Dọn cấu hình riêng của máy (tuỳ chọn)
 
