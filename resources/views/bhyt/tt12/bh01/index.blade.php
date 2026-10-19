@@ -261,6 +261,44 @@
         });
     }
 
+    /**
+     * Bao "dang xu ly" cho mot thao tac dai (xem truoc/tao ban quet ca chuc nghin ho so).
+     *
+     * Khoa CA khoi chon co so/ky lan hai nut, khong chi nut vua bam: doi ky giua chung thi
+     * ket qua tra ve se gan nham ky moi, con bam Tao trong luc dang Xem truoc thi tao ban tu
+     * mot ket qua chua kiem xong. Dem giay de nguoi dung biet he thong van dang chay chu
+     * khong treo.
+     *
+     * $noiHien: khoi hien thong bao dang chay. Tao ban dung khoi thong bao rieng de KHONG
+     * xoa ket qua xem truoc - tao hong thi nguoi dung van can doc lai ket qua do.
+     *
+     * @return function goi khi xong de tra lai trang thai cu
+     */
+    function batDauChay($nut, $noiHien, chu) {
+        var nhanCu = $nut.html();
+        var $khoa = $('#bh01-co-so, #bh01-thang, #bh01-nam, #bh01-btn-xem-truoc, #bh01-btn-tao');
+        var tatTruoc = $khoa.map(function () { return $(this).prop('disabled'); }).get();
+        var batDau = Date.now();
+        var $dem = $('<span>').text('0');
+
+        $khoa.prop('disabled', true);
+        $nut.html('<i class="fa fa-spinner fa-spin"></i> ').append(document.createTextNode(chu));
+        $noiHien.show().empty().append(
+            $('<div>').addClass('alert alert-info').css('margin-bottom', 0)
+                .append($('<i>').addClass('fa fa-spinner fa-spin'))
+                .append(document.createTextNode(' ' + chu + ' Kỳ có nhiều hồ sơ có thể mất vài phút — đã chạy '))
+                .append($dem).append(document.createTextNode(' giây.'))
+        );
+        var dongHo = setInterval(function () { $dem.text(Math.round((Date.now() - batDau) / 1000)); }, 1000);
+
+        return function () {
+            clearInterval(dongHo);
+            $noiHien.empty().hide();
+            $nut.html(nhanCu);
+            $khoa.each(function (i) { $(this).prop('disabled', tatTruoc[i]); });
+        };
+    }
+
     function xemTruoc() {
         var t = thamSoKy();
         $('#bh01-btn-tao').prop('disabled', true);
@@ -270,7 +308,9 @@
             return;
         }
 
-        $.getJSON(URL_XEM_TRUOC, t).done(function (kq) {
+        var xong = batDauChay($('#bh01-btn-xem-truoc'), $('#bh01-xem-truoc'), 'Đang kiểm tra hồ sơ của kỳ…');
+
+        $.getJSON(URL_XEM_TRUOC, t).always(xong).done(function (kq) {
             var $k = $('#bh01-xem-truoc').empty().show();
             var $dl = $('<dl>').addClass('dl-horizontal');
             function dong(nhan, gt) { $dl.append($('<dt>').text(nhan)).append($('<dd>').text(gt)); }
@@ -315,10 +355,20 @@
         });
 
         $('#bh01-btn-tao').on('click', function () {
-            var $nut = $(this).prop('disabled', true);
+            var $nut = $(this);
+            var xong = batDauChay($nut, $('#bh01-thong-bao'), 'Đang tạo bản…');
             $.ajax({ url: URL_TAO, method: 'POST', dataType: 'json', data: $.extend({ _token: CSRF }, thamSoKy()) })
-                .done(function (kq) { thongBao(true, kq.thong_diep); choKyTu = null; bang.ajax.reload(); })
-                .fail(function (xhr) { thongBao(false, loiTuXhr(xhr)); $nut.prop('disabled', false); });
+                .always(xong)
+                .done(function (kq) {
+                    thongBao(true, kq.thong_diep);
+                    // Giu nut Tao TAT sau khi tao xong: bam lan nua la tao them mot ban moi cho
+                    // cung ky. Muon tao lai thi phai Xem truoc lai.
+                    $nut.prop('disabled', true);
+                    $('#bh01-xem-truoc').hide().empty();
+                    choKyTu = null;
+                    bang.ajax.reload();
+                })
+                .fail(function (xhr) { thongBao(false, loiTuXhr(xhr)); });
         });
     });
 
