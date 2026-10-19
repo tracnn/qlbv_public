@@ -62,4 +62,6 @@ return [
     'XMLComplete_NVYT_THIEU' => 'Bổ sung mã nhân viên y tế trên HIS (thủ trưởng đơn vị, bác sĩ, người thực hiện, BS đọc kết quả).',
     'XMLComplete_NVYT_KHONG_CO_TRONG_DM' => 'Phòng TCCB đăng ký NVYT lên cổng BHXH và cập nhật danh mục NVYT vào phần mềm.',
     'XMLComplete_NVYT_SAI_DINH_DANG' => 'CNTT/hãng PACS-LIS ánh xạ tài khoản, CCCD, mã BHXH sang mã CCHN khi xuất XML.',
+    // Ma cu (truoc khi gop NVYT) - ho so cu con mang ma nay
+    'XML3_INFO_ERROR_MA_BAC_SI_NOT_FOUND' => '1. Kiểm tra danh mục NVYT trên HIS; 2. Bổ sung danh mục và đẩy cổng BHXH duyệt; 3. Cập nhật danh mục vào phần mềm GĐBHYT',
 ];
