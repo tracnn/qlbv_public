@@ -41,6 +41,19 @@ class DanhMucDonViTest extends TestCase
     }
 
     /** @test */
+    public function ten_khi_khong_co_dong_giuong_on_dinh_khong_phu_thuoc_thu_tu()
+    {
+        $a = [$this->khoa(10, 'Khoa B ', 'K09', 1), $this->khoa(11, 'Khoa A', 'K09', 1)];
+        $b = array_reverse($a);
+
+        $ten1 = DanhMucDonVi::dung($a, [], '20261019')['don_vi']['1|K09']['ten'];
+        $ten2 = DanhMucDonVi::dung($b, [], '20261019')['don_vi']['1|K09']['ten'];
+
+        $this->assertSame('Khoa A', $ten1);
+        $this->assertSame($ten1, $ten2);
+    }
+
+    /** @test */
     public function cung_ma_hai_co_so_la_hai_don_vi()
     {
         $khoa = [$this->khoa(1, 'Tim mạch HN', 'K04', 1), $this->khoa(2, 'Tim mạch NB', 'K04', 81)];

@@ -34,7 +34,7 @@ class DanhMucDonVi
             $key = $branch . '|' . $ma;
             $nhom[$key]['ma'] = $ma;
             $nhom[$key]['branch_id'] = $branch;
-            $nhom[$key]['ten_his'][] = (string) $khoa->department_name;
+            $nhom[$key]['ten_his'][] = trim((string) $khoa->department_name);
             $nhom[$key]['ids'][] = $khoa->id;
         }
 
@@ -45,7 +45,7 @@ class DanhMucDonVi
 
             $tenHis = $n['ten_his'];
             usort($tenHis, function ($a, $b) {
-                return mb_strlen($a) - mb_strlen($b);
+                return (mb_strlen($a) - mb_strlen($b)) ?: strcmp($a, $b);
             });
 
             $ten = ($dong !== null && trim((string) $dong->ten_khoa) !== '') ? $dong->ten_khoa : $tenHis[0];

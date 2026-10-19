@@ -98,6 +98,7 @@
                     <span class="info-box-text">Khám mới / cũ</span>
                     <span class="info-box-number ld-val">—</span>
                     <span class="ld-sub">&nbsp;</span>
+                    <span class="ld-note ld-dyn">&nbsp;</span>
                 </div>
             </div>
         </div>
@@ -108,6 +109,7 @@
                     <span class="info-box-text">Hệ ngoại</span>
                     <span class="info-box-number ld-val">—</span>
                     <span class="ld-sub">&nbsp;</span>
+                    <span class="ld-note ld-dyn">&nbsp;</span>
                 </div>
             </div>
         </div>

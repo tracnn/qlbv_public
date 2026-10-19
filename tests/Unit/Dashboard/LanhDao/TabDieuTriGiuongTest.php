@@ -64,6 +64,20 @@ class TabDieuTriGiuongTest extends TestCase
     }
 
     /** @test */
+    public function thoi_gian_hong_bo_qua_luot_khong_vang()
+    {
+        $luot = [
+            $this->luot(1, 10, 'khong-phai-gio', '20261003000000'),
+            $this->luot(2, 10, '20261002000000', 'hong'),
+            $this->luot(3, 10, '20261002000000', '20261002120000'),
+        ];
+
+        $kq = $this->ngayGiuong($luot, $this->ky());
+
+        $this->assertEquals(['1|K04' => 0.5], $kq, '', 1e-9);
+    }
+
+    /** @test */
     public function nam_ghep_hai_giuong_tinh_mot()
     {
         // Khoa con 10 và 11 cùng đơn vị 1|K04 (sắp như truy vấn: treatment_id, department_id, add_time);

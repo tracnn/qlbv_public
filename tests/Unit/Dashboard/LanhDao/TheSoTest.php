@@ -40,6 +40,10 @@ class TheSoTest extends TestCase
         $this->assertSame(10.0, $kq['tg_kham_phut']['hn']);
         $this->assertSame(30.0, $kq['tg_kham_phut']['nb']);
         $this->assertSame(110, $kq['tg_kham_phut']['so_ho_so']);
+        $this->assertSame(['moi' => 30, 'cu' => 60], $kq['kham_moi_cu']['hn']);
+        $this->assertSame(['moi' => 10, 'cu' => 0], $kq['kham_moi_cu']['nb']);
+        $this->assertSame(['y_lenh_pt' => 7, 'ca_pt' => 5, 'can_thiep_tm' => 3], $kq['he_ngoai']['hn']);
+        $this->assertSame(['y_lenh_pt' => 2, 'ca_pt' => 1, 'can_thiep_tm' => 0], $kq['he_ngoai']['nb']);
         $this->assertSame(4.8, $kq['ngay_dieu_tri']['gia_tri']);
         $this->assertSame(40, $kq['ke_don_mua_thuoc_phut']['so_phieu']);
     }
@@ -52,8 +56,12 @@ class TheSoTest extends TestCase
         $this->assertSame(30.0, $kq['tg_kham_phut']['gia_tri']);
         $this->assertSame(10, $kq['tg_kham_phut']['so_ho_so']);
         $this->assertNull($kq['ke_don_mua_thuoc_phut']['gia_tri']);
-        $this->assertSame(['moi' => 10, 'cu' => 0, 'ty_le_moi' => 100.0], $kq['kham_moi_cu']);
-        $this->assertSame(['y_lenh_pt' => 2, 'ca_pt' => 1, 'can_thiep_tm' => 0], $kq['he_ngoai']);
+        $this->assertSame(10, $kq['kham_moi_cu']['moi']);
+        $this->assertSame(0, $kq['kham_moi_cu']['cu']);
+        $this->assertSame(100.0, $kq['kham_moi_cu']['ty_le_moi']);
+        $this->assertSame(2, $kq['he_ngoai']['y_lenh_pt']);
+        $this->assertSame(1, $kq['he_ngoai']['ca_pt']);
+        $this->assertSame(0, $kq['he_ngoai']['can_thiep_tm']);
     }
 
     /** @test */

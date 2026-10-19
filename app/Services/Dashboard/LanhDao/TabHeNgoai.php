@@ -75,7 +75,7 @@ class TabHeNgoai
         $sql = 'SELECT tr.last_department_id, sr.service_req_stt_id, COUNT(*) AS so_luong'
             . ' FROM his_service_req sr'
             . ' JOIN his_treatment tr ON tr.id = sr.treatment_id'
-            . ' WHERE sr.service_req_type_id = ? AND sr.intruction_time BETWEEN ? AND ? AND sr.is_delete = 0'
+            . ' WHERE sr.service_req_type_id = ? AND sr.intruction_time BETWEEN ? AND ? AND sr.is_delete = 0 AND tr.is_delete = 0'
             . ($loaiTru ? ' AND (sr.tdl_patient_type_id IS NULL OR sr.tdl_patient_type_id NOT IN (' . self::dauHoi($loaiTru) . '))' : '')
             . ' GROUP BY tr.last_department_id, sr.service_req_stt_id';
 

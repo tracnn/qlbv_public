@@ -14,8 +14,15 @@
     var tabDangMo = 'thanh-toan';
     var bieuDo = {};
 
+    // Bộ lọc đã áp dụng (chụp khi vào trang và khi bấm "Xem"); mọi lần gọi dùng bản này, không đọc ô nhập đang sửa dở
+    var boLoc = null;
+
+    function chupBoLoc() {
+        boLoc = { from: $('#ld-from').val(), to: $('#ld-to').val(), co_so: $('#ld-co-so').val() };
+    }
+
     function params() {
-        return { from: $('#ld-from').val(), to: $('#ld-to').val(), co_so: $('#ld-co-so').val() };
+        return $.extend({}, boLoc);
     }
 
     function esc(s) {
@@ -55,10 +62,21 @@
         return 'HN ' + v(o.hn) + ' · NB ' + v(o.nb);
     }
 
-    function setThe(ten, chinh, nho) {
+    function setThe(ten, chinh, nho, ghiChu) {
         var $c = $('.ld-card[data-the="' + ten + '"]');
         $c.find('.ld-val').text(chinh);
         $c.find('.ld-sub').text(nho || ' ');
+        $c.find('.ld-note.ld-dyn').text(ghiChu || ' ');
+    }
+
+    function moiCu(o) {
+        o = o || {};
+        return fmt(o.moi) + ' / ' + fmt(o.cu);
+    }
+
+    function heNgoai3(o) {
+        o = o || {};
+        return fmt(o.y_lenh_pt) + '·' + fmt(o.ca_pt) + '·' + fmt(o.can_thiep_tm);
     }
 
     function veTheSo(r) {
@@ -78,10 +96,12 @@
 
         var m = r.kham_moi_cu || {};
         setThe('kham_moi_cu', fmt(m.moi) + ' / ' + fmt(m.cu),
+            'HN ' + moiCu(m.hn) + ' · NB ' + moiCu(m.nb),
             'mới ' + (m.ty_le_moi === null || m.ty_le_moi === undefined ? '—' : fmt(m.ty_le_moi, 1) + '%'));
 
         var h = r.he_ngoai || {};
         setThe('he_ngoai', fmt(h.y_lenh_pt) + ' · ' + fmt(h.ca_pt) + ' · ' + fmt(h.can_thiep_tm),
+            'HN ' + heNgoai3(h.hn) + ' · NB ' + heNgoai3(h.nb),
             'y lệnh PT · ca PT · can thiệp TM');
     }
 
@@ -89,11 +109,18 @@
         $('.ld-card').each(function () {
             $(this).find('.ld-val').text('—');
             $(this).find('.ld-sub').text(' ');
+            $(this).find('.ld-note.ld-dyn').text(' ');
         });
     }
 
     function napTheSo() {
         $('#ld-error-the-so').hide();
+        // Không để số của kỳ trước nằm dưới kỳ mới trong lúc nạp (11–30 s khi cache nguội)
+        $('.ld-card').each(function () {
+            $(this).find('.ld-val').text('…');
+            $(this).find('.ld-sub').text(' ');
+            $(this).find('.ld-note.ld-dyn').text(' ');
+        });
         goi('the-so')
             .done(veTheSo)
             .fail(function (xhr) {
@@ -121,13 +148,13 @@
             chart: { type: ngang ? 'bar' : 'column' },
             title: { text: null },
             credits: { enabled: false },
-            exporting: { enabled: false },
             legend: { enabled: !!opt.legend },
             xAxis: { categories: cats, title: { text: opt.titleX || null }, labels: { style: { fontSize: '11px' } } },
             yAxis: [{
                 title: { text: opt.titleY || null },
                 min: 0,
                 max: opt.maxY,
+                softMax: opt.softMaxY,
                 plotLines: opt.plotLines || [],
                 labels: { format: opt.nhanY || '{value}' }
             }].concat(opt.yAxis2 ? [opt.yAxis2] : []),
@@ -187,6 +214,7 @@
             categories: cs.categories,
             titleY: 'Công suất (%)',
             nhanY: '{value}%',
+            softMaxY: 100,
             plotLines: [{ value: 100, color: COLOR_WARN, width: 2, dashStyle: 'Dash', zIndex: 5,
                 label: { text: '100%', style: { color: COLOR_WARN } } }],
             tooltip: function () {
@@ -341,6 +369,7 @@
     }
 
     function napTatCa() {
+        chupBoLoc();
         daNap = {};
         napTheSo();
         napTab(tabDangMo);

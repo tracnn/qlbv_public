@@ -202,6 +202,7 @@ class TabDieuTriGiuong
         $hoSo = null;
         $khoang = [];
 
+        $boQua = 0;
         $xa = function () use (&$khoang, &$giay, $tu, $den) {
             foreach ($khoang as $dv => $ds) {
                 $giay[$dv] = (isset($giay[$dv]) ? $giay[$dv] : 0) + TinhToan::giayTrongKy($ds, $tu, $den);
@@ -219,11 +220,16 @@ class TabDieuTriGiuong
             if (!isset($khoaDonVi[$khoa]) || $d->add_time === null || $d->add_time === '') {
                 continue;
             }
-            $vao = self::epoch((string) $d->add_time);
-            $ra = self::rong($d->remove_time) ? $den : self::epoch((string) $d->remove_time);
+            $vao = self::epochHoacNull((string) $d->add_time);
+            $ra = self::rong($d->remove_time) ? $den : self::epochHoacNull((string) $d->remove_time);
             $raVien = isset($d->out_time) ? $d->out_time : null;
-            if (!self::rong($raVien)) {
-                $ra = min($ra, self::epoch((string) $raVien));
+            $raVienEpoch = self::rong($raVien) ? null : self::epochHoacNull((string) $raVien);
+            if ($vao === null || $ra === null || (!self::rong($raVien) && $raVienEpoch === null)) {
+                $boQua++;
+                continue;
+            }
+            if ($raVienEpoch !== null) {
+                $ra = min($ra, $raVienEpoch);
             }
             if ($ra <= $vao) {
                 continue;
@@ -231,6 +237,10 @@ class TabDieuTriGiuong
             $khoang[$khoaDonVi[$khoa]][] = [$vao, $ra];
         }
         $xa();
+
+        if ($boQua > 0) {
+            Log::debug('Dashboard lanh dao - bo qua luot nam co thoi gian khong hop le', ['so_luot' => $boQua]);
+        }
 
         return array_map(function ($s) {
             return $s / 86400;
@@ -422,6 +432,18 @@ class TabDieuTriGiuong
         }
 
         return \DateTime::createFromFormat('!YmdHis', $ymdHis, $mui)->getTimestamp();
+    }
+
+    /** Như epoch() nhưng trả null khi chuỗi không phải YmdHis hợp lệ (dữ liệu HIS hỏng không được làm sập cả tab). */
+    private static function epochHoacNull(string $ymdHis)
+    {
+        static $mui = null;
+        if ($mui === null) {
+            $mui = new \DateTimeZone(config('app.timezone'));
+        }
+        $dt = \DateTime::createFromFormat('!YmdHis', $ymdHis, $mui);
+
+        return $dt === false ? null : $dt->getTimestamp();
     }
 
     /** Số ngày từ from đến mốc cắt $den (mặc định denThucTe), cùng hàm epoch với tử số. */

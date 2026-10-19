@@ -50,6 +50,10 @@ class TheSo
             return isset($phan[$khoa][$co]) ? (int) $phan[$khoa][$co] : 0;
         };
 
+        $demCs = function ($khoa, $cs) use ($phan) {
+            return isset($phan[$khoa][$cs]) ? (int) $phan[$khoa][$cs] : 0;
+        };
+
         $moi = $dem('moi');
         $cu = $dem('cu');
 
@@ -58,11 +62,24 @@ class TheSo
             'cong_suat_giuong' => $so('cong_suat_giuong'),
             'tg_kham_phut' => $so('tg_kham_phut') + ['so_ho_so' => $dem('tg_kham_so_ho_so')],
             'ke_don_mua_thuoc_phut' => $so('ke_don_phut') + ['so_phieu' => $dem('ke_don_so_phieu')],
-            'kham_moi_cu' => ['moi' => $moi, 'cu' => $cu, 'ty_le_moi' => TinhToan::tyLe($moi, $moi + $cu)],
+            'kham_moi_cu' => ['moi' => $moi, 'cu' => $cu, 'ty_le_moi' => TinhToan::tyLe($moi, $moi + $cu),
+                'hn' => ['moi' => $demCs('moi', 'hn'), 'cu' => $demCs('cu', 'hn')],
+                'nb' => ['moi' => $demCs('moi', 'nb'), 'cu' => $demCs('cu', 'nb')],
+            ],
             'he_ngoai' => [
                 'y_lenh_pt' => $dem('y_lenh_pt'),
                 'ca_pt' => $dem('ca_pt'),
                 'can_thiep_tm' => $dem('can_thiep_tm'),
+                'hn' => [
+                    'y_lenh_pt' => $demCs('y_lenh_pt', 'hn'),
+                    'ca_pt' => $demCs('ca_pt', 'hn'),
+                    'can_thiep_tm' => $demCs('can_thiep_tm', 'hn'),
+                ],
+                'nb' => [
+                    'y_lenh_pt' => $demCs('y_lenh_pt', 'nb'),
+                    'ca_pt' => $demCs('ca_pt', 'nb'),
+                    'can_thiep_tm' => $demCs('can_thiep_tm', 'nb'),
+                ],
             ],
         ];
     }
