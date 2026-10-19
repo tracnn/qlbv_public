@@ -13,8 +13,8 @@ use Illuminate\Support\Facades\DB;
  * DA CHUAN HOA vao bh01_dong va tinh tong tu chinh cac dong da ghi (khong truy van tong rieng).
  *
  * VI SAO HAI LUOT: luot 1 chi doc + kiem de dung som neu co dong chan (khong ghi gi); luot 2 moi
- * ghi, trong mot transaction. Ca hai doc theo lo (chunk) vi mot ky co the hang chuc nghin dong
- * va PHP chi 128MB. Thu tu on dinh nho truyVan ket thuc bang ma_lk.
+ * ghi, trong mot transaction. Ca hai doc theo lo (Bh01Nguon::docTheoLo, KHONG dung chunk() - xem
+ * ly do o do) vi mot ky co the hang chuc nghin dong va PHP chi 128MB.
  */
 class Bh01TaoBan
 {
@@ -93,7 +93,7 @@ class Bh01TaoBan
     {
         $kq = array('so_dong' => 0, 'so_dong_chan' => 0, 'so_dong_canh_bao' => 0, 'loi_chan_mau' => array());
 
-        Bh01Nguon::truyVan($maCskcb, $ky)->chunk(self::LO_DOC, function ($lo) use (&$kq, $dungSom) {
+        Bh01Nguon::docTheoLo($maCskcb, $ky, self::LO_DOC, function ($lo) use (&$kq, $dungSom) {
             foreach ($lo as $xml1) {
                 $kq['so_dong']++;
                 $k = Bh01Kiem::dong(Bh01ChuanHoa::dong($xml1));
@@ -136,7 +136,7 @@ class Bh01TaoBan
         $stt = 0;
         $canhBao = 0;
 
-        Bh01Nguon::truyVan($maCskcb, $ky)->chunk(self::LO_DOC, function ($lo) use (&$tong, &$stt, &$canhBao, $ban) {
+        Bh01Nguon::docTheoLo($maCskcb, $ky, self::LO_DOC, function ($lo) use (&$tong, &$stt, &$canhBao, $ban) {
             $moi = array();
             foreach ($lo as $xml1) {
                 $d = Bh01ChuanHoa::dong($xml1);

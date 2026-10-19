@@ -33,6 +33,40 @@ class Bh01Nguon
             ->orderBy('id');
     }
 
+    /**
+     * Duyet cac dong cua truyVan() theo lo, DUNG thu tu cua truyVan().
+     *
+     * VI SAO KHONG DUNG chunk(): chunk() phan trang bang LIMIT/OFFSET, va voi ORDER BY tren
+     * bieu thuc CASE thi MySQL phai sap xep lai CA TAP o moi lo. Do that 19/10/2026 ky 10/2026
+     * cua 01929 (21.125 ho so): 37 giay MOT luot, tao ban doc hai luot nen vuot gioi han 60
+     * giay va request chet giua chung. Lay danh sach id DA SAP XEP mot lan (~1,4 giay) roi doc
+     * tung lo bang khoa chinh (~1 giay ca ky) nhanh hon hon chuc lan.
+     *
+     * Danh sach id chi la so nguyen: 21 nghin id ton vai tram KB, vua voi PHP 128MB.
+     *
+     * @param callable $xuLy nhan Collection cac dong stdClass cua mot lo; tra ve false de dung
+     */
+    public static function docTheoLo($maCskcb, array $ky, $kichThuoc, callable $xuLy)
+    {
+        $ids = self::truyVan($maCskcb, $ky)->pluck('id')->all();
+
+        foreach (array_chunk($ids, $kichThuoc) as $loId) {
+            // whereIn khong giu thu tu: xep lai theo dung vi tri trong danh sach id.
+            $theoId = DB::table('xml3176_xml1s')->whereIn('id', $loId)->get()->keyBy('id');
+
+            $lo = collect();
+            foreach ($loId as $id) {
+                if (isset($theoId[$id])) {
+                    $lo->push($theoId[$id]);
+                }
+            }
+
+            if ($xuLy($lo) === false) {
+                return;
+            }
+        }
+    }
+
     public static function tongHop($maCskcb, array $ky)
     {
         $caseMuc = self::bieuThucMuc();

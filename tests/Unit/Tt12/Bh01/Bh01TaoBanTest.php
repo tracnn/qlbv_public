@@ -208,4 +208,18 @@ class Bh01TaoBanTest extends TestCase
         $this->assertStringStartsWith('MA_LK X: ', $r['loi_chan_mau'][0]);
         $this->assertSame(0, Bh01Ban::count());
     }
+
+    /** @test Xem chu thich Bh01NguonTest::doc_theo_lo_khong_dung_offset. */
+    public function tao_ban_va_xem_truoc_khong_dung_offset()
+    {
+        $this->bayDongHopLe();
+
+        DB::enableQueryLog();
+        (new Bh01TaoBan())->xemTruoc('01929', $this->ky());
+        (new Bh01TaoBan())->tao('01929', $this->ky(), 'tester');
+
+        foreach (DB::getQueryLog() as $q) {
+            $this->assertNotContains('offset', strtolower($q['query']), $q['query']);
+        }
+    }
 }
