@@ -724,6 +724,28 @@ Route::group(['middleware' => ['auth']], function () {
         Route::delete('tt12/{ma_ho_so}', 'BHYT\BHYTTt12Controller@delete')
             ->name('bhyt.tt12.delete')
             ->middleware('checkrole:superadministrator');
+        // ── Ho so tong hop 01/BH ───────────────────────────────────────────────
+        // Duong tinh dat TRUOC duong co {ma_ban}: dat sau thi tham so nuot mat 'xem-truoc',
+        // 'fetch-data', 'tao' (Laravel khop theo thu tu khai bao). Khong middleware quyen rieng:
+        // nhu cac thao tac ky/gui TT12 danh muc (spec 8.3).
+        Route::get('tt12/bh01', 'BHYT\BHYTBh01Controller@index')
+            ->name('bhyt.tt12.bh01.index');
+        Route::get('tt12/bh01/xem-truoc', 'BHYT\BHYTBh01Controller@xemTruoc')
+            ->name('bhyt.tt12.bh01.xem-truoc');
+        Route::get('tt12/bh01/fetch-data', 'BHYT\BHYTBh01Controller@fetchData')
+            ->name('bhyt.tt12.bh01.fetch-data');
+        Route::post('tt12/bh01/tao', 'BHYT\BHYTBh01Controller@tao')
+            ->name('bhyt.tt12.bh01.tao');
+        Route::post('tt12/bh01/{ma_ban}/ky-lai', 'BHYT\BHYTBh01Controller@kyLai')
+            ->name('bhyt.tt12.bh01.ky-lai');
+        Route::post('tt12/bh01/{ma_ban}/gui', 'BHYT\BHYTBh01Controller@gui')
+            ->name('bhyt.tt12.bh01.gui');
+        Route::get('tt12/bh01/{ma_ban}/tai', 'BHYT\BHYTBh01Controller@tai')
+            ->name('bhyt.tt12.bh01.tai');
+        Route::get('tt12/bh01/{ma_ban}/dong', 'BHYT\BHYTBh01Controller@dong')
+            ->name('bhyt.tt12.bh01.dong');
+        Route::get('tt12/bh01/{ma_ban}/lich-su', 'BHYT\BHYTBh01Controller@lichSu')
+            ->name('bhyt.tt12.bh01.lich-su');
         // Dashboard do phu danh muc. Dat TRUOC khoi 'tt12/detail/{ma_ho_so}' cho de doc;
         // hai duong dan khong dam nhau nen thu tu o day khong bat buoc.
         Route::get('tt12/dashboard', 'Dashboard\Tt12DashboardController@index')

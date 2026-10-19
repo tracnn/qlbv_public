@@ -593,6 +593,12 @@ return [
                             'active' => ['bhyt/tt12/index*'],
                         ],
                         [
+                            'text'   => 'Hồ sơ tổng hợp 01/BH',
+                            'icon'   => 'file-text',
+                            'route'  => 'bhyt.tt12.bh01.index',
+                            'active' => ['bhyt/tt12/bh01*'],
+                        ],
+                        [
                             'text'   => 'Nạp danh mục',
                             'icon'   => 'plus',
                             'route'  => 'bhyt.tt12.import.index',

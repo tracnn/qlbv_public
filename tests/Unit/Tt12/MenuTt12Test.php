@@ -47,18 +47,19 @@ class MenuTt12Test extends TestCase
     }
 
     /** @test */
-    public function submenu_co_dung_hai_muc_tro_toi_route_co_that()
+    public function submenu_co_dung_cac_muc_tro_toi_route_co_that()
     {
         $khoi = $this->khoiTt12();
 
         $this->assertNotNull($khoi);
         $this->assertArrayHasKey('submenu', $khoi);
-        $this->assertCount(3, $khoi['submenu']);
+        $this->assertCount(4, $khoi['submenu']);
 
         $mong = [
             'Danh sách hồ sơ' => 'bhyt.tt12.index',
             'Nạp danh mục' => 'bhyt.tt12.import.index',
             'Dashboard danh mục' => 'bhyt.tt12.dashboard',
+            'Hồ sơ tổng hợp 01/BH' => 'bhyt.tt12.bh01.index',
         ];
 
         $router = app('router');
