@@ -33,7 +33,7 @@ class TabHeNgoaiTest extends TestCase
 
     private function pt($khoa, $stt, $so)
     {
-        return (object) ['request_department_id' => $khoa, 'service_req_stt_id' => $stt, 'so_luong' => $so];
+        return (object) ['last_department_id' => $khoa, 'service_req_stt_id' => $stt, 'so_luong' => $so];
     }
 
     private function ct($ma, $ten, $branch, $so)

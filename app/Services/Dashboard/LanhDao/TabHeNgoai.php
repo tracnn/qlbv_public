@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Tab Hệ ngoại: y lệnh phẫu thuật / đã thực hiện theo khoa ngoại (khoa chỉ định),
+ * Tab Hệ ngoại: y lệnh phẫu thuật / đã thực hiện theo khoa ngoại (khoa điều trị cuối của hồ sơ, R13),
  * ca can thiệp tim mạch theo phòng.
  */
 class TabHeNgoai
@@ -61,19 +61,23 @@ class TabHeNgoai
     }
 
     /**
-     * Y lệnh phẫu thuật trong kỳ theo khoa chỉ định và trạng thái. Cơ sở suy ra từ danh mục khoa ở bước định dạng.
+     * Y lệnh phẫu thuật trong kỳ theo khoa điều trị cuối của hồ sơ và trạng thái. Cơ sở suy ra từ danh mục khoa ở bước định dạng.
      *
-     * @return array dòng: request_department_id, service_req_stt_id, so_luong
+     * Ruling R13 (thay spec §5.4): gom theo his_treatment.last_department_id, KHÔNG theo sr.request_department_id,
+     * vì trên HIS gần như mọi y lệnh phẫu thuật được chỉ định từ K26 (Gây mê/phòng mổ) nên khoa chỉ định không phân biệt được khoa ngoại.
+     *
+     * @return array dòng: last_department_id, service_req_stt_id, so_luong
      */
     protected function truyVanPhauThuat(KyLoc $ky): array
     {
         $loaiTru = $this->excludedPatientTypeIds();
 
-        $sql = 'SELECT sr.request_department_id, sr.service_req_stt_id, COUNT(*) AS so_luong'
+        $sql = 'SELECT tr.last_department_id, sr.service_req_stt_id, COUNT(*) AS so_luong'
             . ' FROM his_service_req sr'
+            . ' JOIN his_treatment tr ON tr.id = sr.treatment_id'
             . ' WHERE sr.service_req_type_id = ? AND sr.intruction_time BETWEEN ? AND ? AND sr.is_delete = 0'
             . ($loaiTru ? ' AND (sr.tdl_patient_type_id IS NULL OR sr.tdl_patient_type_id NOT IN (' . self::dauHoi($loaiTru) . '))' : '')
-            . ' GROUP BY sr.request_department_id, sr.service_req_stt_id';
+            . ' GROUP BY tr.last_department_id, sr.service_req_stt_id';
 
         return self::chuanHoa(DB::connection('HISPro')->select(
             $sql,
@@ -201,7 +205,7 @@ class TabHeNgoai
         $kq = [];
         foreach ($pt as $d) {
             $d = (object) (array) $d;
-            $key = isset($danhMuc['khoa'][$d->request_department_id]) ? $danhMuc['khoa'][$d->request_department_id] : null;
+            $key = isset($danhMuc['khoa'][$d->last_department_id]) ? $danhMuc['khoa'][$d->last_department_id] : null;
             if ($key === null || !isset($duocPhep[$key]) || !isset($danhMuc['don_vi'][$key])) {
                 continue;
             }
