@@ -84,7 +84,7 @@
           <tr>
             <td>{{ $index + 1 }}</td>
             <td>{{ $error->ma_lk }}</td>
-            <td>{{ optional($error->xml1)->ma_the }}</td>
+            <td>{{ optional($error->xml1)->ma_the_bhyt }}</td>
             <td>
               @if($error->ma_tracuu != '000')
                 {{ \App\Services\BHYT\NhanMaThe::traCuu($error->ma_tracuu) }}
@@ -99,38 +99,6 @@
       </table>
       @else
       <p>Không có lỗi nào được tìm thấy.</p>
-      @endif
-
-      <h3>II. Lỗi XML.</h3>
-      @if($errorsXml->isNotEmpty())
-        @foreach($errorsXml->sortBy('xml')->groupBy('xml') as $xml => $errorsByXml)
-          <h4>Lỗi: {{ $xml }}</h4>
-          @foreach($errorsByXml->sortBy('error_code')->groupBy('error_code') as $errorCode => $errorsByErrorCode)
-            <h4>{{ $loop->iteration }} - {{ $errorsByErrorCode->first()->xmlErrorCatalog->error_name }}</h4>
-            <table>
-              <thead>
-                <tr>
-                  <th>STT</th>
-                  <th>Mã LK</th>
-                  <th>Ngày YL</th>
-                  <th>Mô tả lỗi</th>
-                </tr>
-              </thead>
-              <tbody>
-                @foreach($errorsByErrorCode as $index => $error)
-                <tr>
-                  <td>{{ $index + 1 }}</td>
-                  <td>{{ $error->ma_lk }}</td>
-                  <td>{{ $error->ngay_yl }}</td>
-                  <td>{{ $error->description ?? 'Không có mô tả' }}</td>
-                </tr>
-                @endforeach
-              </tbody>
-            </table>
-          @endforeach
-        @endforeach
-      @else
-        <p>Không có lỗi XML nào được tìm thấy.</p>
       @endif
     </div>
 

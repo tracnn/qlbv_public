@@ -7,7 +7,7 @@
     Báo cáo
     <small>Bác sĩ y lệnh</small>
   </h1>
-{{ Breadcrumbs::render('bhyt.index') }}
+{{ Breadcrumbs::render('bhyt.xml3176.index') }}
 @stop
 
 @section('content')

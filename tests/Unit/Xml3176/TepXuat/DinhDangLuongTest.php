@@ -60,7 +60,7 @@ class DinhDangLuongTest extends TestCase
     {
         foreach ([true => 'I', false => 'F'] as $coMaKhoa => $cotCuoi) {
             $x = new HeinCardErrorExport('2026-10-01 00:00:00', '2026-10-05 23:59:59', null,
-                $coMaKhoa ? 'xml3176' : 'qd130xml', $coMaKhoa, new FakeKhoaDieuTriHis());
+                'xml3176', $coMaKhoa, new FakeKhoaDieuTriHis());
             $d = $x->dinhDangLuong();
 
             $this->assertSame($cotCuoi, array_keys($d['do_rong'])[count($d['do_rong']) - 1]);

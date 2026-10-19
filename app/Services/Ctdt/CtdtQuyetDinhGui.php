@@ -6,7 +6,7 @@ namespace App\Services\Ctdt;
  * Quyet dinh co gui mot ho so chung tu dien tu len cong BHXH hay khong.
  *
  * VI SAO LOP RIENG chu khong mo rong App\Services\Xml3176\QuyetDinhGui: lop do dang duoc
- * Xml3176Service va Qd130XmlService goi voi dung hai tham so, va tests/Unit/QuyetDinhGuiTest
+ * Xml3176Service goi voi dung hai tham so, va tests/Unit/QuyetDinhGuiTest
  * khoa du moi to hop. Them tham so bat buoc la lam vo hai duong san pham khong lien quan;
  * them tham so tuy chon la nhet khai niem so_loi/checked_at - thu XML3176 khong co - vao mot
  * lop dung chung.

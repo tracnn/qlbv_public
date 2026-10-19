@@ -49,8 +49,8 @@ class jobKtTheBHYT implements ShouldQueue
         if (TheTamSoSinh::la($this->params['maThe'], isset($this->params['maDkbd']) ? $this->params['maDkbd'] : null)) {
             check_hein_card::where('ma_lk', $this->params['ma_lk'])
                 ->where(function ($q) {
-                    $q->whereIn('ma_kiemtra', config('qd130xml.hein_card_invalid.check_code'))
-                      ->orWhereIn('ma_tracuu', config('qd130xml.hein_card_invalid.result_code'));
+                    $q->whereIn('ma_kiemtra', config('xml3176.hein_card_invalid.check_code'))
+                      ->orWhereIn('ma_tracuu', config('xml3176.hein_card_invalid.result_code'));
                 })
                 ->delete();
 
@@ -60,8 +60,8 @@ class jobKtTheBHYT implements ShouldQueue
         // Cấu hình kiểm tra từ kết quả tra cứu cũ. Mặc định là true
         if ($this->checkOldValue) {
             $existingCardCheck = check_hein_card::where('ma_lk', $this->params['ma_lk'])
-            ->whereNotIn('ma_kiemtra', config('qd130xml.hein_card_invalid.check_code'))
-            ->whereNotIn('ma_tracuu', config('qd130xml.hein_card_invalid.result_code'))
+            ->whereNotIn('ma_kiemtra', config('xml3176.hein_card_invalid.check_code'))
+            ->whereNotIn('ma_tracuu', config('xml3176.hein_card_invalid.result_code'))
             ->first();
 
             if ($existingCardCheck) {
@@ -103,7 +103,7 @@ class jobKtTheBHYT implements ShouldQueue
     private function startsWithPatternCbcs($maThe)
     {
         // Lấy danh sách các mẫu từ cấu hình
-        $patterns = config('qd130xml.xml1.the_bhyt_cbcs_pattern');
+        $patterns = config('xml3176.xml1.the_bhyt_cbcs_pattern');
 
         // Kiểm tra nếu bất kỳ mẫu nào trong danh sách khớp với các ký tự đầu của mã thẻ
         foreach ($patterns as $pattern) {

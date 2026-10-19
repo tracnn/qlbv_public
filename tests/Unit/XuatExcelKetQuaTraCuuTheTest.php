@@ -121,7 +121,7 @@ class XuatExcelKetQuaTraCuuTheTest extends TestCase
     }
 
     /**
-     * HeinCardErrorExport TRONG NHU mo coi nhung la mot SHEET trong hai bo xuat nhieu sheet
+     * HeinCardErrorExport TRONG NHU mo coi nhung la mot SHEET trong bo xuat nhieu sheet XML3176
      * dang chay. Toi da tung ket luan nham no la ma chet - chot lai de khong ai xoa.
      */
     /** @test */
@@ -129,7 +129,7 @@ class XuatExcelKetQuaTraCuuTheTest extends TestCase
     {
         $this->assertFileExists(base_path('app/Exports/HeinCardErrorExport.php'));
 
-        foreach (['Qd130ErrorMultiSheetExport', 'Xml3176ErrorMultiSheetExport'] as $bo) {
+        foreach (['Xml3176ErrorMultiSheetExport'] as $bo) {
             $ma = $this->maKhongComment(base_path('app/Exports/' . $bo . '.php'));
 
             $this->assertContains('HeinCardErrorExport', $ma,

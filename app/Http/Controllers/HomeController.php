@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 
 use App\Http\Controllers\Concerns\ExcludesDashboardPatientTypes;
-use App\BHYTKiemTraHoSo;
 use App\HISProBaoCaoQuanTri;
 use App\Services\FtpService;
 

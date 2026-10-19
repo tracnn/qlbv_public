@@ -98,8 +98,8 @@ class CtdtPhongBiTest extends TestCase
     public function co_the_rong_CHUKYDONVI_cho_dich_vu_ky_ghi_vao()
     {
         // Dich vu ky GHI chu ky vao mot the DA TON TAI (tag_store_signature_value =
-        // 'CHUKYDONVI'), khong tu tao. Xml3176Service.php:1146 va Qd130XmlService.php:1056
-        // deu addChild('CHUKYDONVI') truoc khi goi ky - lam khac di la ky xong khong co
+        // 'CHUKYDONVI'), khong tu tao. Xml3176Service.php:1146
+        // addChild('CHUKYDONVI') truoc khi goi ky - lam khac di la ky xong khong co
         // chu ky nao trong tep.
         $goi = simplexml_load_string(CtdtPhongBi::dung($this->hoSoCt2025(), $this->chungTuCt03()));
 

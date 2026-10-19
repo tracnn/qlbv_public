@@ -26,11 +26,11 @@ class GuiXmlTheoCoSoTest extends TestCase
 
     public function cacJob()
     {
-        return ['SubmitXml3176Job', 'SubmitQd130XmlJob'];
+        return ['SubmitXml3176Job'];
     }
 
     /** @test */
-    public function hai_job_khong_con_lay_ma_tinh_tu_config()
+    public function job_gui_khong_con_lay_ma_tinh_tu_config()
     {
         foreach ($this->cacJob() as $job) {
             $this->assertNotContains('organization.BHYT.ma_tinh', $this->maJob($job),
@@ -39,7 +39,7 @@ class GuiXmlTheoCoSoTest extends TestCase
     }
 
     /** @test */
-    public function hai_job_suy_ma_tinh_tu_ma_co_so()
+    public function job_gui_suy_ma_tinh_tu_ma_co_so()
     {
         foreach ($this->cacJob() as $job) {
             $this->assertContains('CauHinhCoSo::maTinh($this->macskcb)', $this->maJob($job),
@@ -48,7 +48,7 @@ class GuiXmlTheoCoSoTest extends TestCase
     }
 
     /** @test */
-    public function hai_job_dung_login_service_bang_ma_co_so()
+    public function job_gui_dung_login_service_bang_ma_co_so()
     {
         foreach ($this->cacJob() as $job) {
             $this->assertContains('new BHYTLoginService($this->macskcb)', $this->maJob($job),
@@ -61,7 +61,7 @@ class GuiXmlTheoCoSoTest extends TestCase
      * khong chi sai ve ket qua.
      */
     /** @test */
-    public function hai_job_khong_nhan_submit_service_qua_container()
+    public function job_gui_khong_nhan_submit_service_qua_container()
     {
         foreach ($this->cacJob() as $job) {
             $ma = $this->maJob($job);
@@ -87,9 +87,9 @@ class GuiXmlTheoCoSoTest extends TestCase
     }
 
     /** @test */
-    public function hai_service_khong_con_ham_gui_da_chet()
+    public function service_khong_con_ham_gui_da_chet()
     {
-        foreach (['Xml3176Service', 'Qd130XmlService'] as $s) {
+        foreach (['Xml3176Service'] as $s) {
             $ma = $this->maKhongComment(base_path('app/Services/' . $s . '.php'));
 
             $this->assertNotContains('submitXmlToBHYT', $ma, $s . ' con ham gui da chet');

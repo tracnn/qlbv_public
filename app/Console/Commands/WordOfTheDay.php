@@ -6,7 +6,6 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Mail;
 use App\Models\System\email_receive_report;
 use App\Models\CheckBHYT\check_hein_card;
-use App\Models\XmlErrorCheck;
 
 class WordOfTheDay extends Command
 {
@@ -27,8 +26,6 @@ class WordOfTheDay extends Command
     /**
      * Create a new command instance.
      *
-     * @param Xml1Checker $xml1Checker
-     * @param Xml2Checker $xml2Checker
      * @return void
      */
     public function __construct()
@@ -64,15 +61,8 @@ class WordOfTheDay extends Command
         // Gọi hàm kiểm tra thẻ lỗi
         $errorsHeinCard = $this->getCheckHeinCardErrors($fromDateTime, $toDateTime);
 
-        $this->info('Kiểm tra lỗi XML');
-        // Gọi hàm kiểm tra lỗi XML
-        $errorsXml = $this->getCheckXmlErrors($fromDateTime, $toDateTime);
-
         // Gọi hàm gửi email
-        $this->sendEmails($fromDate, $toDate, 
-            $errorsHeinCard, 
-            $errorsXml
-        );
+        $this->sendEmails($fromDate, $toDate, $errorsHeinCard);
 
         $this->info('Đã gửi báo cáo đến tất cả người nhận');
     }
@@ -111,17 +101,10 @@ class WordOfTheDay extends Command
     private function getCheckHeinCardErrors($fromDateTime, $toDateTime)
     {
         return check_hein_card::where(function($query) {
-            $query->whereIn('ma_kiemtra', config('qd130xml.hein_card_invalid.check_code'))
-            ->orWhereIn('ma_tracuu', config('qd130xml.hein_card_invalid.result_code'));
+            $query->whereIn('ma_kiemtra', config('xml3176.hein_card_invalid.check_code'))
+            ->orWhereIn('ma_tracuu', config('xml3176.hein_card_invalid.result_code'));
         })
         ->whereBetween('updated_at', [$fromDateTime, $toDateTime])
-        ->get();
-    }
-
-    private function getCheckXmlErrors($fromDateTime, $toDateTime)
-    {
-        return XmlErrorCheck::whereBetween('updated_at', [$fromDateTime, $toDateTime])
-        ->with('xmlErrorCatalog')
         ->get();
     }
 
@@ -133,10 +116,7 @@ class WordOfTheDay extends Command
      * @param \Illuminate\Support\Collection $errorsHeinCard
      * @return void
      */
-    private function sendEmails($fromDate, $toDate, 
-        $errorsHeinCard,
-        $errorsXml
-    )
+    private function sendEmails($fromDate, $toDate, $errorsHeinCard)
     {
         $emails = email_receive_report::where('active', 1)
             ->where('bcaobhxh', 1)->get();
@@ -150,8 +130,7 @@ class WordOfTheDay extends Command
                         'from_date' => $fromDate,
                         'to_date' => $toDate,
                         'email' => $value->email,
-                        'errorsHeinCard' => $errorsHeinCard,
-                        'errorsXml' => $errorsXml
+                        'errorsHeinCard' => $errorsHeinCard
                     ),
                     function ($message) use ($value, $fromDate, $toDate) {        
                         $message->to($value->email);

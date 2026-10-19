@@ -372,10 +372,6 @@ Route::group(['middleware' => ['auth']], function () {
     	Route::get('{category}/search', 'Category\Manager\CategoryController@search')->name('category.search');
 
         //fetch category to partials blade
-        Route::get('bhyt/category-bhyt-fetch-xml-error-catalog', 'Category\CategoryBHYTController@fetchXmlErrorCatalog')
-        ->name('category-bhyt.fetch-xml-error-catalog');
-        Route::get('bhyt/category-bhyt-fetch-qd130-xml-error-catalog', 'Category\CategoryBHYTController@fetchQd130XmlErrorCatalog')
-        ->name('category-bhyt.fetch-qd130-xml-error-catalog');
         //end
 
         Route::get('bhyt/medicine-catalog', 'Category\CategoryBHYTController@indexMedicineCatalog')
@@ -431,12 +427,6 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('bhyt/chi-tiet/{loai}/{id}', 'Category\CategoryBHYTController@chiTietDanhMuc')
         ->name('category-bhyt.chi-tiet');
 
-        Route::get('bhyt/qd130-xml-error-catalog', 'Category\CategoryBHYTController@indexQd130XmlErrorCatalog')
-        ->name('category-bhyt.qd130-xml-error-catalog');
-        Route::get('bhyt/category-bhyt-fetch-qd130-xml-error-catalog-datatable', 'Category\CategoryBHYTController@fetchQd130XmlErrorCatalogDatatable')
-        ->name('category-bhyt.fetch-qd130-xml-error-catalog-datatable');
-        Route::post('/category-bhyt/update-qd130-xml-error-catalog', 'Category\CategoryBHYTController@updateQd130XmlErrorCatalog')
-        ->name('category-bhyt.update-qd130-xml-error-catalog');
         
         Route::get('bhyt/category-bhyt-fetch-xml3176-error-catalog', 'Category\CategoryBHYTController@fetchXml3176ErrorCatalog')
         ->name('category-bhyt.fetch-xml3176-error-catalog');
@@ -551,10 +541,6 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('check-error', 'System\CheckErrorController@index')->name('system.check-error');
         Route::get('check-error/search', 'System\CheckErrorController@search')->name('system.check-error.search');
 
-        /* Upload XML */
-        Route::get('upload-xml', 'System\UploadXML@uploadXML')->name('system.upload-xml');
-        Route::post('upload-xml', 'System\UploadXML@doUploadXML')->name('system.do-upload-xml');
-
         /* System parameter */
         Route::get('sys-param', 'System\SystemController@sysparam')->name('system.sys-param');
         Route::post('sys-param', 'System\SystemController@editSysparam')->name('system.edit-sys-param');
@@ -574,38 +560,6 @@ Route::group(['middleware' => ['auth']], function () {
     Route::group(['prefix' => 'bhyt/', 'middleware' => ['checkrole:xml-man']], function () {
         Route::get('index/category-imported-by', 'Category\CategoryHISController@fetchImportedBy')
         ->name('category-his.fetch-imported-by');
-
-        /* BHYT */
-        Route::get('index', 'BHYT\BHYTController@index')->name('bhyt.index');
-        Route::get('index/search', 'BHYT\BHYTController@searchXML')->name('bhyt.search');
-        Route::get('index/get-xml', 'BHYT\BHYTController@getxml')->name('bhyt.get-xml');
-        Route::get('index/check-card','BHYT\BHYTController@checkcard')->name('bhyt.check-card');
-        Route::get('index/process-check-card','BHYT\BHYTController@processCheckcard')->name('bhyt.process-check-card');
-        Route::get('index/detailxml/{ma_lk}', 'BHYT\BHYTController@detailxml')->name('bhyt.detailxml');
-
-        Route::get('index/kcb-trai-tuyen','BHYT\BHYTController@kcbtraituyen')->name('bhyt.kcb-trai-tuyen');
-        Route::get('index/dvkt-co-dieu-kien', 'BHYT\BHYTController@dvktcodieukien')->name('bhyt.dvkt-co-dieu-kien');
-        Route::get('index/thuoc-co-dieu-kien', 'BHYT\BHYTController@thuoccodieukien')->name('bhyt.thuoc-co-dieu-kien');
-        Route::delete('xml-delete/{ma_lk}', 'BHYT\BHYTController@xml_delete')->name('xml.delete');
-
-        Route::get('qd130/index', 'BHYT\BHYTQd130Controller@index')->name('bhyt.qd130.index');
-        Route::get('qd130/index/fetch-data', 'BHYT\BHYTQd130Controller@fetchData')->name('bhyt.qd130.fetch-data');
-        Route::get('qd130/import/index', 'BHYT\BHYTQd130Controller@importIndex')->name('bhyt.qd130.import.index');
-        Route::post('qd130/index/upload-data', 'BHYT\BHYTQd130Controller@uploadData')->name('bhyt.qd130.upload-data');
-        Route::get('qd130/index/detail-xml/{ma_lk}', 'BHYT\BHYTQd130Controller@detailXml')->name('bhyt.qd130.detail-xml');
-
-        Route::post('qd130/export-xml', 'BHYT\BHYTQd130Controller@exportXml')
-        ->name('bhyt.qd130.export-xml')
-        ->middleware('checkrole:superadministrator');;
-        Route::get('qd130/export-qd130-xml-errors', 'BHYT\BHYTQd130Controller@exportQd130XmlErrors')
-        ->name('bhyt.qd130.export-qd130-xml-errors');
-        Route::delete('qd130/delete-xml/{ma_lk}', 'BHYT\BHYTQd130Controller@deleteXml')->name('bhyt.qd130.delete-xml');
-        Route::get('qd130/export-qd130-xml-xlsx', 'BHYT\BHYTQd130Controller@exportQd130XmlXlsx')
-        ->name('bhyt.qd130.export-qd130-xml-xlsx');
-        Route::get('qd130/job-status', 'BHYT\BHYTQd130Controller@checkJobStatus')
-        ->name('bhyt.qd130.jobs.status');
-        Route::get('qd130/export-7980a-data', 'BHYT\BHYTQd130Controller@export7980aData')
-        ->name('bhyt.qd130.export-7980a-data');
 
         // Ket qua tra cuu the BHYT: du lieu gan theo ma_lk cua ho so nen dat cung nhom
         // quyen xml-man voi danh sach XML3176.
@@ -769,19 +723,6 @@ Route::group(['middleware' => ['auth']], function () {
         ->name('bhyt.fetch-bac-si-y-lenh');
         Route::get('reports/export-bac-si-y-lenh-data', 'BHYT\ReportBHYTController@exportBacSiYLenhData')
         ->name('bhyt.export-bac-si-y-lenh-data');
-    });
-
-    /*
-        Danh mục BHYT
-    */
-    Route::group(['prefix' => 'danh-muc/', 'middleware' => ['checkrole:superadministrator']], function () {  
-        Route::get('dvkt-co-dieu-kien','Category\Manager\CategoryController@dvktCoDieuKien')->name('danh-muc.dvkt-co-dieu-kien');
-        Route::post('dvkt-co-dieu-kien', 'Category\Manager\CategoryController@updateDvktCoDieuKien')
-            ->name('danh-muc.update-dvkt-co-dieu-kien');
-        Route::get('dm-thuoc-co-dieu-kien','Category\Manager\CategoryController@dmtCoDieuKien')
-        ->name('danh-muc.dm-thuoc-co-dieu-kien');
-        Route::post('dm-thuoc-co-dieu-kien','Category\Manager\CategoryController@updateDmtCoDieuKien')
-            ->name('danh-muc.update-dm-thuoc-co-dieu-kien');
     });
 
     /*

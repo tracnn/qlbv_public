@@ -1040,13 +1040,6 @@ $techAppConfig = [
         4 => 'Thông tuyến',
     ],
 
-    'loai_kcb' => [
-        1 => 'Khám bệnh',
-        2 => 'Điều trị ngoại trú',
-        3 => 'Điều trị nội trú',
-        9 => 'Điều trị nội trú < 4h',
-    ],
-
     'pl6_4210' => [
         1 => 'XN',
         2 => 'CDHA',
@@ -1145,8 +1138,6 @@ $techAppConfig = [
     'creator' => array('quynhnt -kkb'),
     'doctor' => array('anhvt -kkb'),
 	
-	//Các option liên quan đến QD130 Xml
-    'export_qd130_enabled' => true,
 
 ];
 

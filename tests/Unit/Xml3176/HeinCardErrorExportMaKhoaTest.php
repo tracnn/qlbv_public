@@ -6,7 +6,7 @@ use App\Exports\HeinCardErrorExport;
 use Tests\TestCase;
 
 /**
- * HeinCardErrorExport dung chung cho man QD130 (Qd130ErrorMultiSheetExport) va XML3176.
+ * HeinCardErrorExport: che do mac dinh (6 cot) va che do XML3176 co ma khoa.
  * Cot Ma Khoa chi bat cho XML3176; goi mac dinh phai giu nguyen y het truoc khi sua.
  */
 class HeinCardErrorExportMaKhoaTest extends TestCase

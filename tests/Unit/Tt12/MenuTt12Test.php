@@ -11,7 +11,7 @@ class MenuTt12Test extends TestCase
     /**
      * Tim khoi menu 'Danh muc TT12' bang de quy tren toan cay menu - khoi nay
      * la muc CAP 2, nam trong submenu cua cap 1 'Ho so XML' (cung nhom voi Xml3176,
-     * Chung tu dien tu, Xml 4750...), khong phai muc cap 1.
+     * Chung tu dien tu...), khong phai muc cap 1.
      */
     protected function khoiTt12($cay = null)
     {
