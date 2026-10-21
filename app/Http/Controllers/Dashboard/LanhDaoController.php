@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Dashboard;
 
 use App\Http\Controllers\Controller;
+use App\Services\BHYT\DanhSachCoSo;
 use App\Services\Dashboard\LanhDao\KyLoc;
 use App\Services\Dashboard\LanhDao\LanhDaoService;
 use Illuminate\Http\Request;
@@ -18,7 +19,9 @@ class LanhDaoController extends Controller
 
     public function index()
     {
-        return view('dashboard.lanh-dao');
+        $danhSachCoSo = KyLoc::luaChonCoSo(DanhSachCoSo::danhSach());
+
+        return view('dashboard.lanh-dao', compact('danhSachCoSo'));
     }
 
     /**

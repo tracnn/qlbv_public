@@ -12,7 +12,7 @@ class KyLocTest extends TestCase
     /** @test */
     public function tu_request_doi_ngay_sang_ymdhis()
     {
-        $ky = KyLoc::tuRequest(['from' => '2026-10-01', 'to' => '2026-10-19', 'co_so' => 'nb']);
+        $ky = KyLoc::tuRequest(['from' => '2026-10-01', 'to' => '2026-10-19', 'ma_cskcb' => '37470']);
 
         $this->assertSame('20261001000000', $ky->from);
         $this->assertSame('20261019235959', $ky->to);
@@ -27,7 +27,7 @@ class KyLocTest extends TestCase
 
         $this->assertSame('2cs', $ky->coSo);
         $this->assertSame([1, 81], $ky->branchIds());
-        $this->assertSame([1], KyLoc::tuRequest(['from' => '2026-10-01', 'to' => '2026-10-19', 'co_so' => 'hn'])->branchIds());
+        $this->assertSame([1], KyLoc::tuRequest(['from' => '2026-10-01', 'to' => '2026-10-19', 'ma_cskcb' => '01929'])->branchIds());
     }
 
     /** @test */
@@ -59,10 +59,40 @@ class KyLocTest extends TestCase
     }
 
     /** @test */
-    public function co_so_la_nem_validation()
+    public function ma_cskcb_la_hoac_rong_coi_nhu_tat_ca_co_so()
     {
-        $this->expectException(ValidationException::class);
-        KyLoc::tuRequest(['from' => '2026-10-01', 'to' => '2026-10-19', 'co_so' => 'xyz']);
+        // Giống LocCoSo::maHopLe: mã không thuộc danh sách = không lọc, không ném lỗi
+        foreach (['xyz', '', '   ', '99999'] as $ma) {
+            $ky = KyLoc::tuRequest(['from' => '2026-10-01', 'to' => '2026-10-19', 'ma_cskcb' => $ma]);
+            $this->assertSame('2cs', $ky->coSo, "ma_cskcb='{$ma}'");
+        }
+        $ky = KyLoc::tuRequest(['from' => '2026-10-01', 'to' => '2026-10-19', 'ma_cskcb' => ' 01929 ']);
+        $this->assertSame('hn', $ky->coSo);
+    }
+
+    /** @test */
+    public function lua_chon_co_so_chi_gom_ma_da_cau_hinh_nhan_lay_tu_his()
+    {
+        $his = [
+            '01929' => '01929 — BỆNH VIỆN BẠCH MAI',
+            '01999' => '01999 — Phòng Y tế cơ quan',
+            '37470' => '37470 — BỆNH VIỆN BẠCH MAI CƠ SỞ NINH BÌNH',
+        ];
+
+        $this->assertSame([
+            '01929' => '01929 — BỆNH VIỆN BẠCH MAI',
+            '37470' => '37470 — BỆNH VIỆN BẠCH MAI CƠ SỞ NINH BÌNH',
+        ], KyLoc::luaChonCoSo($his));
+    }
+
+    /** @test */
+    public function lua_chon_co_so_his_hong_van_co_nhan_tu_cau_hinh()
+    {
+        // DanhSachCoSo trả [] khi HIS lỗi — ô chọn vẫn phải có đủ cơ sở của dashboard
+        $this->assertSame([
+            '01929' => '01929 — HN',
+            '37470' => '37470 — NB',
+        ], KyLoc::luaChonCoSo([]));
     }
 
     /** @test */
@@ -103,7 +133,7 @@ class KyLocTest extends TestCase
     /** @test */
     public function khoa_cache_ghep_phan_tu_khoang_va_co_so()
     {
-        $ky = KyLoc::tuRequest(['from' => '2026-10-01', 'to' => '2026-10-19', 'co_so' => 'hn']);
+        $ky = KyLoc::tuRequest(['from' => '2026-10-01', 'to' => '2026-10-19', 'ma_cskcb' => '01929']);
 
         $this->assertSame('lanh_dao:the:20261001000000:20261019235959:hn', $ky->khoaCache('the'));
     }

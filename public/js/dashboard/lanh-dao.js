@@ -18,7 +18,7 @@
     var boLoc = null;
 
     function chupBoLoc() {
-        boLoc = { from: $('#ld-from').val(), to: $('#ld-to').val(), co_so: $('#ld-co-so').val() };
+        boLoc = { from: $('#ld-from').val(), to: $('#ld-to').val(), ma_cskcb: $('#ma_cskcb').val() || '' };
     }
 
     function params() {
@@ -375,6 +375,8 @@
     }
 
     $(function () {
+        // Ô cơ sở dùng chung partials/ma_cskcb (giống màn XML3176, order-check)
+        if ($.fn.select2) { $('#ma_cskcb').select2({ width: '100%' }); }
         $('#ld-btn-load').on('click', napTatCa);
 
         $('#ld-tabs a[data-toggle="tab"]').on('shown.bs.tab', function () {

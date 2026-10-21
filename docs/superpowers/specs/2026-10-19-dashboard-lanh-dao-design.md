@@ -158,7 +158,7 @@ Theo mẫu dashboard con hiện có (`OperatingRoomController` + `OperatingRoomS
   - `GET dashboard/lanh-dao` → trang.
   - `GET dashboard/lanh-dao/the-so`, `.../thanh-toan`, `.../dieu-tri-giuong`, `.../kham-thuoc`,
     `.../he-ngoai` → JSON. Tham số `from`, `to` (date, to ≥ from, tối đa 92 ngày),
-    `co_so` ∈ {hn, nb, 2cs}.
+    `ma_cskcb` = mã CSKCB từ ô chọn dùng chung `partials/ma_cskcb` (`DanhSachCoSo`, chỉ các mã có trong config); rỗng hoặc mã lạ = 2CS (cùng quy ước `LocCoSo`). Nội bộ vẫn quy về hn|nb|2cs.
 - **Controller mỏng** `App\Http\Controllers\Dashboard\LanhDaoController`: validate → gọi service →
   JSON.
 - **Service** `App\Services\Dashboard\LanhDaoService` (truy vấn) + các hàm thuần tách riêng để unit

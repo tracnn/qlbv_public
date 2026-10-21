@@ -2,6 +2,7 @@
 
 namespace App\Services\Dashboard\LanhDao;
 
+use App\Services\BHYT\LocCoSo;
 use Carbon\Carbon;
 use Illuminate\Validation\ValidationException;
 
@@ -28,17 +29,18 @@ class KyLoc
         $this->now = $now ?: Carbon::now();
     }
 
+    /**
+     * Đọc kỳ lọc từ request. Cơ sở nhận MÃ CSKCB (`ma_cskcb`) từ ô chọn dùng chung
+     * partials/ma_cskcb; rỗng hoặc mã lạ = tất cả cơ sở (cùng quy ước LocCoSo::maHopLe).
+     */
     public static function tuRequest(array $input, Carbon $now = null)
     {
-        $coSo = isset($input['co_so']) && $input['co_so'] !== '' ? $input['co_so'] : '2cs';
+        $coSo = self::coSoTuMa(isset($input['ma_cskcb']) ? $input['ma_cskcb'] : null);
         $toiDa = (int) config('dashboard_lanh_dao.so_ngay_toi_da', 92);
 
         $from = self::docNgay(isset($input['from']) ? $input['from'] : null, 'from');
         $to = self::docNgay(isset($input['to']) ? $input['to'] : null, 'to');
 
-        if (!in_array($coSo, ['hn', 'nb', '2cs'], true)) {
-            throw ValidationException::withMessages(['co_so' => ['Cơ sở không hợp lệ.']]);
-        }
         if ($to->lt($from)) {
             throw ValidationException::withMessages(['to' => ['Đến ngày phải sau hoặc bằng Từ ngày.']]);
         }
@@ -47,6 +49,45 @@ class KyLoc
         }
 
         return new self($from->format('Ymd') . '000000', $to->format('Ymd') . '235959', $coSo, $now);
+    }
+
+    /** @return array ma_cskcb => khoá cơ sở (hn|nb) theo config */
+    private static function maTheoCoSo()
+    {
+        $ra = [];
+        foreach ((array) config('dashboard_lanh_dao.co_so') as $khoa => $cs) {
+            $ra[(string) $cs['ma_cskcb']] = $khoa;
+        }
+
+        return $ra;
+    }
+
+    /** Mã CSKCB → hn|nb; rỗng/lạ → 2cs */
+    private static function coSoTuMa($ma)
+    {
+        $bang = self::maTheoCoSo();
+        $ma = LocCoSo::maHopLe($ma, $bang);
+
+        return $ma === '' ? '2cs' : $bang[$ma];
+    }
+
+    /**
+     * Lựa chọn cho ô cơ sở: chỉ các mã CSKCB dashboard đã cấu hình, nhãn lấy từ
+     * DanhSachCoSo (HIS); HIS lỗi (mảng rỗng) thì dùng nhãn ngắn trong config.
+     *
+     * @param array $danhSachHis ma => nhãn, từ DanhSachCoSo::danhSach()
+     * @return array ma => nhãn
+     */
+    public static function luaChonCoSo(array $danhSachHis)
+    {
+        $ra = [];
+        foreach ((array) config('dashboard_lanh_dao.co_so') as $cs) {
+            $ma = (string) $cs['ma_cskcb'];
+            $ra[$ma] = isset($danhSachHis[$ma]) ? $danhSachHis[$ma] : $ma . ' — ' . $cs['nhan'];
+        }
+        ksort($ra);
+
+        return $ra;
     }
 
     private static function docNgay($giaTri, $truong)

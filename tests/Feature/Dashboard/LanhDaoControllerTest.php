@@ -2,7 +2,9 @@
 
 namespace Tests\Feature\Dashboard;
 
+use App\Services\BHYT\DanhSachCoSo;
 use App\Services\Dashboard\LanhDao\KyLoc;
+use Illuminate\Support\Facades\Cache;
 use App\Services\Dashboard\LanhDao\LanhDaoService;
 use Tests\Support\UserGiaCoQuyen;
 use Tests\TestCase;
@@ -34,13 +36,20 @@ class LanhDaoControllerTest extends TestCase
 
         $this->gia = new FakeLanhDaoService();
         $this->app->instance(LanhDaoService::class, $this->gia);
+
+        // Cắt phụ thuộc HIS của DanhSachCoSo (cache driver test là array)
+        Cache::put(DanhSachCoSo::KHOA_CACHE, array(
+            '01929' => '01929 — HN CS',
+            '01999' => '01999 — Khác',
+            '37470' => '37470 — NB CS',
+        ), 60);
     }
 
     /** @test */
     public function moi_phan_tra_json_va_goi_dung_phan()
     {
         foreach (LanhDaoService::PHAN as $i => $phan) {
-            $this->goi("/dashboard/lanh-dao/{$phan}?from=2026-10-01&to=2026-10-19&co_so=nb")
+            $this->goi("/dashboard/lanh-dao/{$phan}?from=2026-10-01&to=2026-10-19&ma_cskcb=37470")
                 ->assertStatus(200)
                 ->assertJson(array('phan' => $phan));
 
@@ -83,6 +92,10 @@ class LanhDaoControllerTest extends TestCase
         $res->assertStatus(200);
         $this->assertContains('LANH_DAO_CFG', $res->getContent());
         $this->assertContains('/dashboard/lanh-dao', $res->getContent());
+        // Ô cơ sở dùng partial chung: select#ma_cskcb, "Tất cả cơ sở" + mã CSKCB đã cấu hình
+        $this->assertContains('id="ma_cskcb"', $res->getContent());
+        $this->assertContains('<option value="37470">37470 — NB CS</option>', $res->getContent());
+        $this->assertNotContains('value="01999"', $res->getContent());
     }
 
     private function goi($duongDan)

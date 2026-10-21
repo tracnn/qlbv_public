@@ -30,14 +30,7 @@
             <label for="ld-to">Đến ngày</label>
             <input type="date" id="ld-to" class="form-control" value="{{ date('Y-m-d') }}">
         </div>
-        <div class="col-md-2">
-            <label for="ld-co-so">Cơ sở</label>
-            <select id="ld-co-so" class="form-control">
-                <option value="2cs" selected>Cả 2 cơ sở</option>
-                <option value="hn">Hà Nội</option>
-                <option value="nb">Ninh Bình</option>
-            </select>
-        </div>
+        @include('partials.ma_cskcb', ['danhSachCoSo' => $danhSachCoSo, 'colClass' => 'col-md-2', 'formGroup' => false])
         <div class="col-md-2">
             <label>&nbsp;</label>
             <button type="button" id="ld-btn-load" class="btn btn-primary form-control">
