@@ -66,7 +66,7 @@
         var $c = $('.ld-card[data-the="' + ten + '"]');
         $c.find('.ld-val').text(chinh);
         $c.find('.ld-sub').text(nho || ' ');
-        $c.find('.ld-note.ld-dyn').text(ghiChu || ' ');
+        $c.find('.ld-note.ld-dyn').text(ghiChu ? '(' + ghiChu + ')' : '');
     }
 
     function moiCu(o) {
@@ -101,15 +101,14 @@
 
         var h = r.he_ngoai || {};
         setThe('he_ngoai', fmt(h.y_lenh_pt) + ' · ' + fmt(h.ca_pt) + ' · ' + fmt(h.can_thiep_tm),
-            'HN ' + heNgoai3(h.hn) + ' · NB ' + heNgoai3(h.nb),
-            'y lệnh PT · ca PT · can thiệp TM');
+            'HN ' + heNgoai3(h.hn) + ' · NB ' + heNgoai3(h.nb));
     }
 
     function xoaThe() {
         $('.ld-card').each(function () {
             $(this).find('.ld-val').text('—');
             $(this).find('.ld-sub').text(' ');
-            $(this).find('.ld-note.ld-dyn').text(' ');
+            $(this).find('.ld-note.ld-dyn').text('');
         });
     }
 
@@ -119,7 +118,7 @@
         $('.ld-card').each(function () {
             $(this).find('.ld-val').text('…');
             $(this).find('.ld-sub').text(' ');
-            $(this).find('.ld-note.ld-dyn').text(' ');
+            $(this).find('.ld-note.ld-dyn').text('');
         });
         goi('the-so')
             .done(veTheSo)
