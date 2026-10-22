@@ -39,6 +39,8 @@ class HisNapHoSo
         'is_chronic', 'end_room_bhyt_code', 'exit_bhyt_code', 'end_department_bhyt_code', 'department_ids',
         'co_department_ids', 'appointment_time', 'representative_hein_code', 'hosp_subs_director_loginname',
         'hospital_director_loginname',
+        // KiemDieuKien (Check/CheckCollinearXml)
+        'end_department_id', 'treatment_result_id', 'tuberculosis_issued_org_name', 'tuberculosis_issued_date',
     ];
 
     /** v_his_patient_type_alter - XML1 17-21, 31, 59, 62 + PTA chinh */
@@ -47,7 +49,7 @@ class HisNapHoSo
         'hein_card_number', 'hein_medi_org_code', 'hein_card_from_time', 'hein_card_to_time', 'free_co_paid_time',
         'live_area_code', 'join_5_year_time', 'level_code', 'right_route_code', 'right_route_type_code',
         'has_birth_certificate', 'is_tt46', 'has_working_letter', 'has_absent_letter', 'is_newborn', 'hncode',
-        'ksk_contract_id',
+        'ksk_contract_id', 'hein_treatment_type_code',
     ];
 
     /** v_his_sere_serv_2 (224 cot) - cac cot XML2 [AX]:319-445 va XML3 [AX]:447-570 dung */
@@ -56,7 +58,7 @@ class HisNapHoSo
         'patient_type_id', 'primary_patient_type_id', 'hein_card_number', 'json_patient_type_alter',
         'tdl_service_type_id', 'tdl_hein_service_type_id', 'tdl_is_main_exam', 'tdl_hein_service_bhyt_code',
         'tdl_hein_service_bhyt_name', 'hst_bhyt_code', 'old_hst_bhyt_code', 'hst_bhyt_code_in_time',
-        'is_no_execute', 'is_expend',
+        'is_no_execute', 'is_expend', 'tdl_service_req_code',
         // gia, tien
         'amount', 'price', 'original_price', 'primary_price', 'limit_price', 'vat_ratio', 'hein_ratio',
         'hein_limit_price', 'hein_limit_ratio', 'config_hein_limit_price', 'other_source_price', 'hein_pay_source_type_id',
@@ -106,7 +108,7 @@ class HisNapHoSo
     const COT_DHST = ['id', 'treatment_id', 'execute_time', 'weight', 'height'];
 
     /** v_his_baby - XML1 61 CAN_NANG_CON */
-    const COT_SO_SINH = ['id', 'treatment_id', 'weight'];
+    const COT_SO_SINH = ['id', 'treatment_id', 'weight', 'hein_card_number_tmp'];
 
     /**
      * his_exp_medimate_used - XML2 tach dong (NGAY_TH_YL_CUA_THUOC_OPTION).

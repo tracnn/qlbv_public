@@ -15,7 +15,7 @@ class HisDanhMuc
     /** XML1 65 MA_TTDV (social_insurance_number, diploma), XML2 32 / XML3 33-34 (diploma, identification_number) */
     const COT_NHAN_VIEN = ['id', 'loginname', 'tdl_username', 'diploma', 'social_insurance_number', 'identification_number'];
     /** XML1 31 MA_DOITUONG_KCB: ICD lao tiem an / COVID */
-    const COT_ICD = ['id', 'icd_code', 'icd_name', 'is_latent_tuberculosis', 'is_covid', 'is_traditional'];
+    const COT_ICD = ['id', 'icd_code', 'icd_name', 'is_latent_tuberculosis', 'is_covid', 'is_traditional', 'do_not_use_hein'];
     /** XML2 17 / XML3 18: so PATIENT_TYPE_CODE voi ma BHYT */
     const COT_DOI_TUONG = ['id', 'patient_type_code', 'patient_type_name'];
     /** XML1 31: LEVEL_CODE noi DKBD (HeinMediOrg) */
