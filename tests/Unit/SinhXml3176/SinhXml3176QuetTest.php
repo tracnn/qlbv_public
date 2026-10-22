@@ -96,7 +96,7 @@ class SinhXml3176QuetTest extends TestCase
         list($ma, $ra) = $this->chay();
 
         $this->assertSame(1, $ma);
-        $this->assertContains('XML4', $ra);
+        $this->assertContains('XML6', $ra);
         $this->assertContains('XML15', $ra);
         $this->assertSame(0, LanSinh::count());
         $this->assertFalse(is_dir($that));

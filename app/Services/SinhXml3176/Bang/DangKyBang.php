@@ -16,7 +16,7 @@ class DangKyBang
 
     public static function macDinh()
     {
-        return new self([new Xml2Dung(), new Xml3Dung(), new Xml1Dung()]);
+        return new self([new Xml2Dung(), new Xml3Dung(), new Xml4Dung(), new Xml5Dung(), new Xml1Dung()]);
     }
 
     /** Theo thu tu dung: cac bang con truoc, XML1 sau cung (XML1 dung ket qua XML2, XML3). */

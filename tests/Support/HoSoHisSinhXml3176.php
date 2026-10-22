@@ -76,6 +76,25 @@ trait HoSoHisSinhXml3176
         return $id;
     }
 
+    /** Them mot to dieu tri co noi dung (sinh XML5 nhanh theo doi). */
+    protected function themToDieuTriLuot($treatmentId, $noiDung, array $ghi = [])
+    {
+        DB::connection('HISPro')->table('his_tracking')->insert(array_merge([
+            'id' => $treatmentId, 'treatment_id' => $treatmentId, 'tracking_time' => 20261001090000,
+            'content' => $noiDung, 'creator' => 'bs1', 'is_delete' => 0,
+        ], $ghi));
+    }
+
+    /** Them mot chi so xet nghiem cho dich vu mac dinh cua themHoSoLuot (sere_serv id = treatment id). */
+    protected function themChiSoXnLuot($treatmentId, $sereServId, array $ghi = [])
+    {
+        DB::connection('HISPro')->table('v_his_sere_serv_tein')->insert(array_merge([
+            'id' => $sereServId, 'tdl_treatment_id' => $treatmentId, 'sere_serv_id' => $sereServId,
+            'bhyt_code' => 'GLU', 'bhyt_name' => 'Glucose', 'value' => '5.5', 'test_index_unit_name' => 'mmol/L',
+            'is_delete' => 0,
+        ], $ghi));
+    }
+
     /** Doi moc khoa vien phi (mo khoa roi khoa lai) tren ca hai bang. */
     protected function khoaLaiHoSo($id, $feeLockTime)
     {
