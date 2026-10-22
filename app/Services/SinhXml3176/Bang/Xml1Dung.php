@@ -187,33 +187,12 @@ class Xml1Dung implements DungBang
         if (count($ptas) === 0) {
             return $ra;
         }
-        $giam = function ($a, $b) {
-            return PtaChinh::giamDan($a, $b);
-        };
         $chinh = PtaChinh::chon($ptas, $keyBhyt);
+        $nhom = TheBhyt::nhom($ptas, $sapThe);
 
-        $sap = $sapThe === '1' ? GiaTriBang::sapOnDinh($ptas, $giam) : GiaTriBang::sapOnDinh($ptas, function ($a, $b) {
-            $c = self::soSanhNull($a->hein_card_from_time, $b->hein_card_from_time);
-
-            return $c !== 0 ? $c : self::soSanhNull($a->hein_card_to_time, $b->hein_card_to_time);
-        });
-        $nhom = [];
-        foreach ($sap as $p) {
-            $k = json_encode([$p->hein_card_number, $p->hein_medi_org_code, $p->hein_card_from_time, $p->hein_card_to_time]);
-            if (!isset($nhom[$k])) {
-                $nhom[$k] = $p;
-            }
-        }
-
-        $cot = ['MA_THE_BHYT' => [], 'MA_DKBD' => [], 'GT_THE_TU' => [], 'GT_THE_DEN' => []];
+        $cot = TheBhyt::cot($nhom);
         $mot = ['NGAY_MIEN_CCT' => [], 'MA_KHUVUC' => [], 'NAM_NAM_LIEN_TUC' => []];
         foreach ($nhom as $p) {
-            if (trim(GiaTriBang::chu($p->hein_card_number)) !== '') {
-                $cot['MA_THE_BHYT'][] = (string) $p->hein_card_number;
-                $cot['MA_DKBD'][] = trim(GiaTriBang::chu($p->hein_medi_org_code)) !== '' ? (string) $p->hein_medi_org_code : '';
-                $cot['GT_THE_TU'][] = self::tg($p->hein_card_from_time, 8);
-                $cot['GT_THE_DEN'][] = self::tg($p->hein_card_to_time, 8);
-            }
             if (GiaTriBang::co($p->free_co_paid_time)) {
                 $mot['NGAY_MIEN_CCT'][] = self::tg($p->free_co_paid_time, 8);
             }
@@ -225,7 +204,7 @@ class Xml1Dung implements DungBang
             }
         }
         foreach ($cot as $k => $gt) {
-            $ra[$k] = implode('', $gt) === '' ? '' : implode(';', $gt);
+            $ra[$k] = TheBhyt::noi($gt);
         }
         foreach ($mot as $k => $gt) {
             $ra[$k] = count($gt) === 1 ? $gt[0] : '';
@@ -389,7 +368,8 @@ class Xml1Dung implements DungBang
         return (string) (($kc->invert ? -1 : 1) * $kc->days + 1);
     }
 
-    private function maLoaiRv($hs)
+    /** Dung chung voi XML13 (cung bang MA_LOAI_RV). */
+    public static function maLoaiRv($hs)
     {
         $ket = GiaTriBang::co($hs->treatment_end_type_id) ? (int) $hs->treatment_end_type_id : 0;
         if ($ket === 7) {
@@ -511,18 +491,6 @@ class Xml1Dung implements DungBang
         $s = ThoiGianHis::chuoi($v);
 
         return $s === null ? '' : substr($s, 0, $n);
-    }
-
-    /** Nullable<long> OrderBy: null dung truoc. */
-    private static function soSanhNull($a, $b)
-    {
-        $coA = GiaTriBang::co($a);
-        $coB = GiaTriBang::co($b);
-        if (!$coA || !$coB) {
-            return ($coA ? 1 : 0) - ($coB ? 1 : 0);
-        }
-
-        return GiaTriBang::soSanh((float) $a, (float) $b);
     }
 
     private static function bang($v, $so)

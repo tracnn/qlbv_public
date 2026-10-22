@@ -107,6 +107,26 @@ class HisDanhMuc
         return $this->lay($this->nhanVien, $loginname);
     }
 
+    /**
+     * Nhan vien co loginname nam trong danh sach, theo thu tu danh sach nhan vien (id tang), moi nguoi mot lan
+     * (Employee.Where(o => set.Contains(o.LOGINNAME)) cua DLL XML13 CHUCDANH_NGUOI_HT).
+     *
+     * @param string[] $loginnames
+     * @return \stdClass[]
+     */
+    public function nhanVienTheoDanhSach(array $loginnames)
+    {
+        $tap = array_flip(array_map('trim', $loginnames));
+        $ra = [];
+        foreach ($this->nhanVien as $login => $nv) {
+            if (isset($tap[$login])) {
+                $ra[] = $nv;
+            }
+        }
+
+        return $ra;
+    }
+
     public function icd($ma)
     {
         return $this->lay($this->icd, $ma);
