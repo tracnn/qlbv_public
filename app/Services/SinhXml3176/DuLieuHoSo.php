@@ -38,6 +38,15 @@ class DuLieuHoSo
     /** his_exp_medimate_used (tach dong XML2 theo lan dung thuoc) */
     public $suDungThuoc = [];
 
+    /** his_tracking (to dieu tri, XML5), da sap tracking_time, id */
+    public $theoDoi = [];
+
+    /** his_debate (hoi chan, XML5) */
+    public $hoiChan = [];
+
+    /** v_his_sere_serv_suin (chi so CDHA/TDCN, XML4 khoi C), gan theo tdl_treatment_id, chua loc theo $dichVu */
+    public $chiSoCdha = [];
+
     public function __construct($hoSo)
     {
         $this->hoSo = $hoSo;

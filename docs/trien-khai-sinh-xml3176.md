@@ -65,6 +65,32 @@ và chưa xét theo cơ sở.
 
 Giới hạn của `HIS_EXP_MEDIMATE_USED` (kiểm `all_tab_columns` lần hai, 22/10/2026): bảng chỉ có 16 cột và **không có** `SERE_SERV_ID`, `MEDICINE_ID`, `MATERIAL_ID`. DLL khớp bản ghi dùng thuốc với dòng thuốc theo thứ tự EXP_MEST_MEDICINE_ID → EXP_MEST_MATERIAL_ID → SERE_SERV_ID → MEDICINE_ID → MATERIAL_ID, qua reflection, nên ba bước sau là nhánh chết trên HIS này. Task XML2 chỉ khớp được theo `EXP_MEST_MEDICINE_ID`, rồi `EXP_MEST_MATERIAL_ID`, đối chiếu với các cột cùng tên của `V_HIS_SERE_SERV_2`.
 
+### Nguồn cho XML4/XML5 (Đợt 2, xác minh 22/10/2026)
+
+Chỉ đọc metadata (`all_objects`, `all_tab_columns`, `all_ind_columns`, owner `HIS_RS`), không đọc dòng dữ liệu nào.
+Sau khi cài đặt, đã đối chiếu lại **mọi** cột trong các hằng `COT_*` của `HisNapHoSo` và `HisDanhMuc`
+(22 bảng/view) với `all_tab_columns`: không thiếu cột nào.
+
+| Dữ liệu | Đối tượng dùng | Loại | Số cột | Gắn hồ sơ qua | Ghi chú |
+|---|---|---|---|---|---|
+| Tờ điều trị (`theoDoi`) | `HIS_TRACKING` | TABLE | 56 | `TREATMENT_ID` (chỉ mục `HIS_TRACKING_INDEX1`) | `CONTENT` là **CLOB** (driver oci8 trả chuỗi); `CARE_INSTRUCTION`, `DISEASE_STAGE`, `CREATOR`, `MODIFIER`, `TRACKING_TIME` có. Sắp `TRACKING_TIME, ID`. Còn có `V_HIS_TRACKING` 71 cột, chưa cần |
+| Hội chẩn (`hoiChan`) | `HIS_DEBATE` | TABLE | 56 | `TREATMENT_ID` (`HIS_DEBATE_INDEX1`) | có `TRACKING_ID`, `CONCLUSION`. Còn có `V_HIS_DEBATE` 79 cột, chưa cần |
+| Chỉ số CĐHA/TDCN (`chiSoCdha`) | `V_HIS_SERE_SERV_SUIN` | VIEW | 19 | `TDL_TREATMENT_ID` (bảng gốc có `HIS_SERE_SERV_SUIN_INDEX1`) | view **có** `TDL_TREATMENT_ID`, nên gắn thẳng theo hồ sơ, không cần đi qua `SERE_SERV_ID`. Bảng gốc `HIS_SERE_SERV_SUIN` (15 cột) không có `SUIM_INDEX_CODE/NAME/UNIT_NAME` |
+| Mã/tên chỉ số theo dịch vụ | `V_HIS_SERVICE` | VIEW | 140 | `ID` = `SERVICE_ID` của dòng dịch vụ | `SUIM_INDEX_CODE`, `SUIM_INDEX_NAME` **chỉ có trên view**; `HIS_SERVICE` (114 cột) chỉ có `SUIM_INDEX_ID`. Danh mục chỉ nạp dịch vụ có `SUIM_INDEX_ID` (`HisDanhMuc::dichVuDanhMuc`) |
+
+Cột thêm vào các nguồn sẵn có, đều đã có trên đối tượng mà plan chỉ định:
+
+- `V_HIS_SERE_SERV_2`: `DESCRIPTION` (**CLOB**), `CONCLUDE`, `RESULT_READ_TIME`, `TRACKING_ID` và các trường khám
+  nhánh 2 XML5 (`HOSPITALIZATION_REASON`, `PATHOLOGICAL_PROCESS`, `PATHOLOGICAL_HISTORY`, `PATHOLOGICAL_HISTORY_FAMILY`,
+  `FULL_EXAM`, `PART_EXAM`, `SUBCLINICAL`, `TREATMENT_INSTRUCTION`). DLL đọc các trường khám thẳng trên
+  `V_HIS_SERE_SERV_2` (`ProcessDataExam(V_HIS_SERE_SERV_2 ...)`), view có đủ, nên **không** cần nạp `HIS_SERVICE_REQ`.
+  Các cột `SUBCLINICAL_RESULT_LOGINNAME`, `EXECUTE_LOGINNAME`, `END_TIME`, `FINISH_TIME`, `START_TIME`, `DHST_ID`,
+  `TDL_IS_MAIN_EXAM`, `TDL_SERVICE_TYPE_ID`, `TDL_INTRUCTION_TIME`, `SERVICE_ID` đã có từ Đợt 1.
+- `V_HIS_SERE_SERV_TEIN`: `BHYT_CODE`, `BHYT_NAME`, `ANTIBIOTIC_RESISTANCE_CODE`, `ANTIBIOTIC_RESISTANCE_NAME`, `VALUE`,
+  `TEST_INDEX_UNIT_NAME`, `RESULT_DESCRIPTION`.
+- `HIS_DHST`: `TRACKING_ID`, `PULSE`, `TEMPERATURE`, `BREATH_RATE`, `SPO2`, `BELLY`, `CHEST`, `URINE`,
+  `BLOOD_PRESSURE_MAX`, `BLOOD_PRESSURE_MIN`, `CAPILLARY_BLOOD_GLUCOSE` (`WEIGHT`, `HEIGHT` đã có).
+
 ## Cấu hình mẫu
 
 Khối mới trong `config/organization.php` (tệp này nằm trong `.gitignore`, mỗi máy một bản). Thiếu cả khối,

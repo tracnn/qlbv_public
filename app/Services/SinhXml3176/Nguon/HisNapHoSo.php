@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\DB;
 /**
  * Nap du lieu HIS (chi doc) cho mot lo ho so: ho so + cac bang con ma XML1-3 can.
  * Moi nguon chi mot truy van cho ca lo (chia nhom NHOM_ID id moi lan); luon select cot tuong minh.
- * Danh sach cot = hop cac cot ma ban do [AX] XML1-3 tham chieu + khoa; dot sau mo rong cac hang so nay.
+ * Danh sach cot = hop cac cot ma ban do [AX] XML1-5 tham chieu + khoa; dot sau mo rong cac hang so nay.
  */
 class HisNapHoSo
 {
@@ -55,6 +55,8 @@ class HisNapHoSo
     /**
      * v_his_sere_serv_2 (224 cot) - cac cot XML2 [AX]:319-445 va XML3 [AX]:447-570 dung.
      * tdl_service_req_type_id: XML1 56 MA_LOAI_KCB ngoai tru man tinh (kiem all_tab_columns 22/10/2026, NUMBER).
+     * Dot 2: XML4 [AX]:666-675 (description CLOB, conclude, result_read_time, subclinical_result_loginname),
+     * XML5 [AX]:711-746 (tracking_id, dhst_id, tdl_is_main_exam, cac truong kham nhanh 2 - deu nam tren view).
      */
     const COT_DICH_VU = [
         'id', 'tdl_treatment_id', 'service_id', 'service_req_id', 'parent_id', 'parent_service_req_id',
@@ -85,6 +87,11 @@ class HisNapHoSo
         'sampler_loginname', 'subclinical_result_loginname', 'ekip_id', 'icd_code', 'icd_sub_code',
         'traditional_icd_code', 'traditional_icd_sub_code', 'machine_group_code', 'source_code', 'source_name',
         'serial_number', 'bed_log_id', 'dhst_id',
+        // XML4 MO_TA/KET_LUAN/NGAY_KQ, XML5 PHAU_THUAT va khop to dieu tri
+        'description', 'conclude', 'result_read_time', 'tracking_id',
+        // XML5 nhanh 2: ProcessDataExam doc thang tren V_HIS_SERE_SERV_2
+        'hospitalization_reason', 'pathological_process', 'pathological_history', 'pathological_history_family',
+        'full_exam', 'part_exam', 'subclinical', 'treatment_instruction',
     ];
 
     /** his_ekip_user - XML3 34 NGUOI_THUC_HIEN (ekip) */
@@ -96,9 +103,11 @@ class HisNapHoSo
         'start_time', 'finish_time',
     ];
 
-    /** v_his_sere_serv_tein - XML3 44 MA_MAY */
+    /** v_his_sere_serv_tein - XML3 44 MA_MAY; XML4 khoi A [AX]:668-673 (ma/ten chi so, gia tri, don vi, mo ta) */
     const COT_KET_QUA_CLS = [
         'id', 'tdl_treatment_id', 'sere_serv_id', 'machine_group_code', 'source_code', 'source_name', 'serial_number',
+        'bhyt_code', 'bhyt_name', 'antibiotic_resistance_code', 'antibiotic_resistance_name', 'value',
+        'test_index_unit_name', 'result_description',
     ];
 
     /** v_his_sere_serv_pttt - XML1 30, XML2 33, XML3 3/4/42 */
@@ -107,8 +116,12 @@ class HisNapHoSo
         'emme_hein_code', 'emme_second_hein_code',
     ];
 
-    /** his_dhst - XML1 60 CAN_NANG, 66 DU_PHONG */
-    const COT_DHST = ['id', 'treatment_id', 'execute_time', 'weight', 'height'];
+    /** his_dhst - XML1 60 CAN_NANG, 66 DU_PHONG; XML5 CSST [AX]:723 (gan to dieu tri qua tracking_id) */
+    const COT_DHST = [
+        'id', 'treatment_id', 'execute_time', 'weight', 'height', 'tracking_id', 'pulse', 'temperature',
+        'breath_rate', 'spo2', 'belly', 'chest', 'urine', 'blood_pressure_max', 'blood_pressure_min',
+        'capillary_blood_glucose',
+    ];
 
     /** v_his_baby - XML1 61 CAN_NANG_CON */
     const COT_SO_SINH = ['id', 'treatment_id', 'weight', 'hein_card_number_tmp'];
@@ -121,6 +134,20 @@ class HisNapHoSo
     const COT_SU_DUNG_THUOC = [
         'id', 'tdl_treatment_id', 'exp_mest_medicine_id', 'exp_mest_material_id', 'use_time', 'amount',
         'medication_session',
+    ];
+
+    /** his_tracking (to dieu tri) - XML5 nhanh 1 [AX]:719-728; content la CLOB (driver oci8 tra chuoi) */
+    const COT_THEO_DOI = [
+        'id', 'treatment_id', 'tracking_time', 'content', 'care_instruction', 'disease_stage', 'creator', 'modifier',
+    ];
+
+    /** his_debate - XML5 HOI_CHAN [AX]:725 (CONCLUSION theo TRACKING_ID) */
+    const COT_HOI_CHAN = ['id', 'treatment_id', 'tracking_id', 'conclusion'];
+
+    /** v_his_sere_serv_suin (chi so CDHA/TDCN) - XML4 khoi C [AX]:661, 668-673; view co san tdl_treatment_id */
+    const COT_CHI_SO_CDHA = [
+        'id', 'tdl_treatment_id', 'sere_serv_id', 'suim_index_id', 'suim_index_code', 'suim_index_name',
+        'suim_index_unit_name', 'value', 'description',
     ];
 
     protected $nhomId = self::NHOM_ID;
@@ -151,6 +178,9 @@ class HisNapHoSo
             ['thuoc_tinh' => 'dhst', 'bang' => 'his_dhst', 'cot' => self::COT_DHST, 'cot_loc' => ['is_delete'], 'khoa' => 'treatment_id'],
             ['thuoc_tinh' => 'soSinh', 'bang' => 'v_his_baby', 'cot' => self::COT_SO_SINH, 'cot_loc' => ['is_delete'], 'khoa' => 'treatment_id'],
             ['thuoc_tinh' => 'suDungThuoc', 'bang' => 'his_exp_medimate_used', 'cot' => self::COT_SU_DUNG_THUOC, 'cot_loc' => ['is_delete'], 'khoa' => 'tdl_treatment_id'],
+            ['thuoc_tinh' => 'theoDoi', 'bang' => 'his_tracking', 'cot' => self::COT_THEO_DOI, 'cot_loc' => ['is_delete'], 'khoa' => 'treatment_id'],
+            ['thuoc_tinh' => 'hoiChan', 'bang' => 'his_debate', 'cot' => self::COT_HOI_CHAN, 'cot_loc' => ['is_delete'], 'khoa' => 'treatment_id'],
+            ['thuoc_tinh' => 'chiSoCdha', 'bang' => 'v_his_sere_serv_suin', 'cot' => self::COT_CHI_SO_CDHA, 'cot_loc' => ['is_delete'], 'khoa' => 'tdl_treatment_id'],
         ];
     }
 
@@ -258,6 +288,9 @@ class HisNapHoSo
 
             if ($n['thuoc_tinh'] === 'dienDieuTri') {
                 $q->orderBy('log_time', 'desc')->orderBy('id', 'desc');
+            } elseif ($n['thuoc_tinh'] === 'theoDoi') {
+                // DLL sap to dieu tri theo TRACKING_TIME ([AX]:715); them id de on dinh khi trung gio
+                $q->orderBy('tracking_time')->orderBy('id');
             } else {
                 $q->orderBy('id');
             }

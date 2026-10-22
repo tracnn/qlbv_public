@@ -223,8 +223,118 @@ class HisNapHoSoTest extends TestCase
         $this->assertSame('K01', $dm->khoa(3)->bhyt_code);
     }
 
+    public function test_nap_theo_doi_hoi_chan_chi_so_cdha()
+    {
+        $this->themHoSo(401, 1);
+        $this->themHoSo(402, 1);
+        $his = DB::connection('HISPro');
+        // Chen tung dong: insert nhieu dong lay cot theo dong dau, dong thieu cot se lech gia tri
+        foreach ([
+            ['id' => 41, 'treatment_id' => 401, 'tracking_time' => 20261001080000, 'content' => 'DB 401', 'care_instruction' => 'CS',
+                'disease_stage' => 'GD', 'creator' => 'dd1', 'modifier' => 'bs1', 'is_delete' => 0],
+            ['id' => 42, 'treatment_id' => 402, 'tracking_time' => 20261001080000, 'content' => 'DB 402', 'is_delete' => 0],
+            ['id' => 43, 'treatment_id' => 401, 'tracking_time' => 20261002080000, 'content' => 'xoa', 'is_delete' => 1],
+        ] as $d) {
+            $his->table('his_tracking')->insert($d);
+        }
+        $his->table('his_debate')->insert([
+            ['id' => 51, 'treatment_id' => 401, 'tracking_id' => 41, 'conclusion' => 'KL 401', 'is_delete' => 0],
+            ['id' => 52, 'treatment_id' => 402, 'tracking_id' => 42, 'conclusion' => 'KL 402', 'is_delete' => 0],
+        ]);
+        foreach ([
+            ['id' => 61, 'tdl_treatment_id' => 401, 'sere_serv_id' => 7, 'suim_index_code' => 'S1', 'suim_index_name' => 'Chi so 1',
+                'suim_index_unit_name' => 'mm', 'value' => '12', 'description' => 'MT', 'is_delete' => 0],
+            ['id' => 62, 'tdl_treatment_id' => 402, 'sere_serv_id' => 8, 'suim_index_code' => 'S2', 'is_delete' => 0],
+        ] as $d) {
+            $his->table('v_his_sere_serv_suin')->insert($d);
+        }
+
+        $kq = $this->napHoSo()->nap([401, 402]);
+
+        $this->assertSame([41], $this->idCac($kq[401]->theoDoi));
+        $this->assertSame([42], $this->idCac($kq[402]->theoDoi));
+        $td = $kq[401]->theoDoi[0];
+        $this->assertSame('DB 401', $td->content);
+        $this->assertSame('CS', $td->care_instruction);
+        $this->assertSame('GD', $td->disease_stage);
+        $this->assertSame('dd1', $td->creator);
+        $this->assertSame('bs1', $td->modifier);
+
+        $this->assertSame([51], $this->idCac($kq[401]->hoiChan));
+        $this->assertSame([52], $this->idCac($kq[402]->hoiChan));
+        $this->assertSame('KL 401', $kq[401]->hoiChan[0]->conclusion);
+        $this->assertEquals(41, $kq[401]->hoiChan[0]->tracking_id);
+
+        $this->assertSame([61], $this->idCac($kq[401]->chiSoCdha));
+        $this->assertSame([62], $this->idCac($kq[402]->chiSoCdha));
+        $cs = $kq[401]->chiSoCdha[0];
+        $this->assertEquals(7, $cs->sere_serv_id);
+        $this->assertSame(['S1', 'Chi so 1', 'mm', '12', 'MT'], [
+            $cs->suim_index_code, $cs->suim_index_name, $cs->suim_index_unit_name, $cs->value, $cs->description,
+        ]);
+
+        // Cot moi cho XML4/XML5 co tren dong dich vu, ket qua CLS, DHST
+        foreach (['description', 'conclude', 'result_read_time', 'tracking_id', 'hospitalization_reason',
+            'pathological_process', 'pathological_history', 'pathological_history_family', 'full_exam', 'part_exam',
+            'subclinical', 'treatment_instruction'] as $c) {
+            $this->assertObjectHasAttribute($c, $kq[401]->dichVu[0]);
+        }
+        foreach (['bhyt_code', 'bhyt_name', 'antibiotic_resistance_code', 'antibiotic_resistance_name', 'value',
+            'test_index_unit_name', 'result_description'] as $c) {
+            $this->assertObjectHasAttribute($c, $kq[401]->ketQuaCls[0]);
+        }
+        foreach (['pulse', 'temperature', 'breath_rate', 'spo2', 'weight', 'height', 'belly', 'chest', 'urine',
+            'blood_pressure_max', 'blood_pressure_min', 'capillary_blood_glucose', 'tracking_id'] as $c) {
+            $this->assertObjectHasAttribute($c, $kq[401]->dhst[0]);
+        }
+
+        // Mac dinh mang rong
+        $his->table('v_his_treatment_12')->insert(['id' => 403, 'treatment_code' => 'HS403']);
+        $rong = $this->napHoSo()->nap([403]);
+        $this->assertSame([], $rong[403]->theoDoi);
+        $this->assertSame([], $rong[403]->hoiChan);
+        $this->assertSame([], $rong[403]->chiSoCdha);
+    }
+
+    public function test_theo_doi_sap_theo_tracking_time()
+    {
+        $this->themHoSo(501, 1);
+        DB::connection('HISPro')->table('his_tracking')->insert([
+            ['id' => 3, 'treatment_id' => 501, 'tracking_time' => 20261003080000, 'content' => 'c', 'is_delete' => 0],
+            ['id' => 1, 'treatment_id' => 501, 'tracking_time' => 20261005080000, 'content' => 'e', 'is_delete' => 0],
+            ['id' => 5, 'treatment_id' => 501, 'tracking_time' => 20261001080000, 'content' => 'a', 'is_delete' => 0],
+            ['id' => 4, 'treatment_id' => 501, 'tracking_time' => 20261003080000, 'content' => 'd', 'is_delete' => 0],
+        ]);
+
+        $kq = $this->napHoSo()->nap([501]);
+
+        $this->assertSame([5, 3, 4, 1], $this->idCac($kq[501]->theoDoi));
+    }
+
+    public function test_dich_vu_danh_muc_co_suim_index()
+    {
+        DB::connection('HISPro')->table('v_his_service')->insert([
+            ['id' => 70, 'suim_index_id' => 9, 'suim_index_code' => 'SI9', 'suim_index_name' => 'Chi so 9'],
+            ['id' => 71, 'suim_index_id' => null, 'suim_index_code' => null, 'suim_index_name' => null],
+        ]);
+
+        $dm = HisDanhMuc::napChoLuot('HISPro');
+
+        $dv = $dm->dichVuDanhMuc(70);
+        $this->assertSame('SI9', $dv->suim_index_code);
+        $this->assertSame('Chi so 9', $dv->suim_index_name);
+        $this->assertSame('SI9', $dm->dichVuDanhMuc('70')->suim_index_code);
+        // Dich vu khong gan chi so (hoac khong co) => null, giong DLL lay SUIM_INDEX_* null
+        $this->assertNull($dm->dichVuDanhMuc(71));
+        $this->assertNull($dm->dichVuDanhMuc(72));
+        $this->assertNull($dm->dichVuDanhMuc(null));
+    }
+
     public function test_moi_bang_con_mot_truy_van()
     {
+        // 10 nguon Dot 1 + theoDoi, hoiChan, chiSoCdha
+        $this->assertCount(13, HisNapHoSo::cacNguon());
+
         foreach ([1, 2, 3, 4, 5] as $id) {
             $this->themHoSo($id);
         }
