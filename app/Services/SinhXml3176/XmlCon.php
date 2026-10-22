@@ -126,7 +126,9 @@ class XmlCon
                 if (in_array($ten, self::$cdataHienTai, true)) {
                     self::ghiCdata($w, $giaTri);
                 } else {
-                    $w->text($giaTri);
+                    // HIS ghi xuong dong nguyen van, bo doc XML doi CRLF/CR thanh LF. XMLWriter::text lai thoat CR
+                    // thanh &#13; (CR con nguyen sau khi nap) => doi truoc cho khop HIS. CDATA thi bo doc tu doi.
+                    $w->text(str_replace(["\r\n", "\r"], "\n", $giaTri));
                 }
             }
             $w->endElement();

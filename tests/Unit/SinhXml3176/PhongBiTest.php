@@ -111,4 +111,18 @@ class PhongBiTest extends TestCase
         $x = simplexml_load_string($s);
         $this->assertSame('XML1', (string) $x->THONGTINHOSO->DANHSACHHOSO->HOSO->FILEHOSO[0]->LOAIHOSO);
     }
+
+    /**
+     * HIS ghi xuong dong nguyen van nen bo doc XML doi CRLF/CR thanh LF; XMLWriter::text lai thoat CR thanh &#13;
+     * nen CR con nguyen sau khi nap. Nghiem thu Dot 3: XML7 GHI_CHU, XML8 QT_BENHLY lech chi vi CR.
+     */
+    public function test_xuong_dong_doc_lai_giong_his()
+    {
+        $xml8 = XmlCon::chuoi('XML8', [['MA_LK' => '1', 'QT_BENHLY' => "a\r\nb\rc\nd", 'TOMTAT_KQ' => "x\r\ny"]]);
+        $x = simplexml_load_string($xml8);
+
+        $this->assertNotContains('&#13;', $xml8);
+        $this->assertSame("a\nb\nc\nd", (string) $x->QT_BENHLY);
+        $this->assertSame("x\ny", (string) $x->TOMTAT_KQ);
+    }
 }
