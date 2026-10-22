@@ -122,7 +122,12 @@ class GiaTriBang
         if ($v === null || $v === '') {
             return '';
         }
-        $s = is_float($v) ? sprintf('%.0f', $v) : trim((string) $v);
+        if (is_float($v)) {
+            // so nguyen (12.0) => '12'; co phan le (38.5) giu nguyen, khong lam tron
+            $s = $v == floor($v) ? sprintf('%.0f', $v) : rtrim(sprintf('%.15g', $v), '0');
+        } else {
+            $s = trim((string) $v);
+        }
         if (preg_match('/^-?\d+\.\d+$/', $s)) {
             $s = rtrim(rtrim($s, '0'), '.');
         }

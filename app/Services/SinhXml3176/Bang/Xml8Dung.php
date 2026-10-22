@@ -19,7 +19,7 @@ use App\Services\SinhXml3176\Nguon\HisDanhMuc;
  * Giu nhu DLL (can xac nhan): [AX]:978 NGUOI_GIAM_HO luon la nguoi than, GHI_CHU dien ten cha/me cho tre < 16;
  *   [AX]:977 NGAY_SINHCON/NGAY_CONCHET chi lay be dau tien co BORN_RESULT_ID = 2 (khong sap xep);
  *   [AX]:976 KET_QUA_DTRI la ky tu cuoi cua ma ket qua HIS; NGAY_CT lay OUT_DATE (XML7 lay OUT_TIME).
- *   Tuoi < 16 tinh theo nam tu TDL_PATIENT_DOB den bay gio; ngay sinh khong hop le => khong dien GHI_CHU.
+ *   Tuoi theo Calculation.Age (xem tuoi()): ngay sinh null/0/khong hop le => -1, tinh la duoi 16 nen van dien GHI_CHU nhu DLL.
  *   Khoang cach gio dung so giay thuc (DLL goi Calculation.DifferenceTime, thu vien ngoai khong co ma).
  * Sua loi DLL [AX]:971: HO_TEN_CHA / HO_TEN_ME bi dao do thu tu uu tien toan tu (ghi de FATHER_NAME khi quan he la "cha",
  *   bo trong khi FATHER_NAME rong); module lam dung chieu nhu XML7 (RaVienChung::hoTenCha/hoTenMe).
@@ -159,15 +159,10 @@ class Xml8Dung implements DungBang
         return $giay > 0 && $giay < self::GIO_NOI_TRU_NGAN * 3600;
     }
 
-    /** Duoi 16 tuoi: FATHER_NAME, MOTHER_NAME, nguoi than; tu 16 tuoi tro len: rong. */
+    /** Duoi 16 tuoi (tuoi -1 khi ngay sinh khong hop le cung tinh): FATHER_NAME, MOTHER_NAME, nguoi than; tu 16 tro len: rong. */
     private function ghiChu($hs)
     {
-        $sinh = ThoiGianHis::ngay($hs->tdl_patient_dob);
-        if ($sinh === null) {
-            return '';
-        }
-        $bayGio = $this->bayGio !== null ? $this->bayGio : new \DateTime();
-        if ($sinh->diff($bayGio)->y >= 16) {
+        if ($this->tuoi($hs->tdl_patient_dob) >= 16) {
             return '';
         }
         if (GiaTriBang::co($hs->father_name)) {
@@ -178,5 +173,28 @@ class Xml8Dung implements DungBang
         }
 
         return GiaTriBang::chu($hs->tdl_patient_relative_name);
+    }
+
+    /**
+     * Calculation.Age(dob) cua thu vien ngay HIS: ngay sinh null/0/khong hop le => -1; con lai
+     * tuoi = nam(hom nay) - nam(sinh), tru 1 neu hom nay (00:00) < sinh + tuoi nam (AddYears giu gio cua ngay sinh,
+     * 29/02 kep ve 28/02 nhu .NET).
+     */
+    private function tuoi($dob)
+    {
+        $sinh = ThoiGianHis::ngay($dob);
+        if ($sinh === null) {
+            return -1;
+        }
+        $homNay = $this->bayGio !== null ? clone $this->bayGio : new \DateTime();
+        $homNay->setTime(0, 0, 0);
+        $tuoi = (int) $homNay->format('Y') - (int) $sinh->format('Y');
+        $nam = (int) $sinh->format('Y') + $tuoi;
+        $thang = (int) $sinh->format('n');
+        $ngay = min((int) $sinh->format('j'), cal_days_in_month(CAL_GREGORIAN, $thang, $nam));
+        $moc = clone $sinh;
+        $moc->setDate($nam, $thang, $ngay);
+
+        return $homNay < $moc ? $tuoi - 1 : $tuoi;
     }
 }

@@ -2,6 +2,7 @@
 
 namespace Tests\Unit\SinhXml3176;
 
+use App\Services\SinhXml3176\Bang\GiaTriBang;
 use App\Services\SinhXml3176\Bang\MaTtdv;
 use App\Services\SinhXml3176\Bang\PtaChinh;
 use App\Services\SinhXml3176\Bang\Xml7Dung;
@@ -386,5 +387,39 @@ class Xml7Xml8DungTest extends TestCase
     {
         $this->assertSame(self::TRUONG_XML7, array_keys($this->x7()));
         $this->assertSame(self::TRUONG_XML8, array_keys($this->x8()));
+    }
+
+    private function ghiChuXml8($dob, \DateTime $bayGio)
+    {
+        $d = $this->du(['tdl_patient_dob' => $dob, 'father_name' => 'Cha']);
+        $ra = (new Xml8Dung($bayGio))->dung($d, $this->dm(), []);
+
+        return $ra[0]['GHI_CHU'];
+    }
+
+    public function test_xml8_ghi_chu_tuoi_theo_calculation_age()
+    {
+        $bayGio = new \DateTime('2026-10-22 15:30:00');
+        // ngay sinh null / 0 / khong hop le: Age = -1, tinh la duoi 16 => dien GHI_CHU
+        foreach ([null, 0, 123, 20261399000000] as $dob) {
+            $this->assertSame('Cha', $this->ghiChuXml8($dob, $bayGio), var_export($dob, true));
+        }
+        // sinh nhat 16 la hom nay, gio sinh sau 00:00: hom nay 00:00 < moc sinh nhat => van 15 tuoi
+        $this->assertSame('Cha', $this->ghiChuXml8(20101022093000, $bayGio));
+        // sinh nhat 16 hom nay luc 00:00: du 16 tuoi
+        $this->assertSame('', $this->ghiChuXml8(20101022000000, $bayGio));
+        // 16 tuoi qua sinh nhat hom qua / chua toi sinh nhat ngay mai
+        $this->assertSame('', $this->ghiChuXml8(20101021235959, $bayGio));
+        $this->assertSame('Cha', $this->ghiChuXml8(20101023000000, $bayGio));
+    }
+
+    public function test_so_chuoi_giu_thap_phan()
+    {
+        $this->assertSame('38.5', GiaTriBang::soChuoi(38.5));
+        $this->assertSame('12', GiaTriBang::soChuoi(12.0));
+        $this->assertSame('12', GiaTriBang::soChuoi('12.0'));
+        $this->assertSame('12', GiaTriBang::soChuoi(12));
+        $this->assertSame('', GiaTriBang::soChuoi(null));
+        $this->assertSame('38.5', $this->x7(['gestational_age' => 38.5])['TUOI_THAI']);
     }
 }
