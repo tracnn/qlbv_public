@@ -150,6 +150,18 @@ class GiaTriBang
         return $ra === null ? '' : $ra;
     }
 
+    /**
+     * $n ky tu cuoi cua chuoi (Substring(Length - n, n) cua DLL); chuoi ngan hon $n thi tra ca chuoi
+     * (DLL nem loi o day va mat ca bang).
+     */
+    public static function cuoi($s, $n)
+    {
+        $s = (string) $s;
+        $dai = mb_strlen($s, 'UTF-8');
+
+        return $dai <= $n ? $s : mb_substr($s, $dai - $n, $n, 'UTF-8');
+    }
+
     /** Cat van ban toi da $n KY TU (UTF-8), khong cat theo byte. */
     public static function catChu($s, $n)
     {
