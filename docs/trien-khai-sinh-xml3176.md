@@ -166,8 +166,9 @@ Kiểm `all_tab_columns`: `V_HIS_BABY` có đủ cột `TDL_PATIENT_*` và `IS_D
 Khối mới trong `config/organization.php` (tệp này nằm trong `.gitignore`, mỗi máy một bản). Thiếu cả khối,
 hoặc `enabled = false`, thì module coi như tắt và lệnh thoát êm. Tham số kỹ thuật không phụ thuộc đơn vị
 (`kich_thuoc_lo`, `nghi_giay`, `chong_lan_phut`, `khoa_luot_phut`, `memory_limit`) nằm ở `config/sinh_xml3176.php`
-(đi theo git). Mặc định `kich_thuoc_lo = 20` (số hồ sơ nạp một lần) và `memory_limit = '512M'`: lệnh CLI tự
-`ini_set('memory_limit', …)` khi khởi động vì máy chủ đặt PHP 128MB. Đổi tham số thì chạy lại `php artisan config:cache`.
+(đi theo git). Mặc định `kich_thuoc_lo = 5` (số hồ sơ nạp một lần) và `memory_limit = '1024M'` (theo số đo Đợt 3: 5 hồ sơ nội trú
+lớn đỉnh 432MB; 20 hồ sơ 948MB và Fatal ở 512M; xem "Bộ nhớ và thời gian" ở mục nghiệm thu Đợt 3 và mục 7 của danh sách
+kiểm trước khi bật): lệnh CLI tự `ini_set('memory_limit', …)` khi khởi động vì máy chủ đặt PHP 128MB. Đổi tham số thì chạy lại `php artisan config:cache`.
 Giá trị `null` trong khối cấu hình không đè lên mặc định; riêng `ket_noi_his` để `null`/rỗng là **lỗi cấu hình**
 (lệnh thoát mã 1), không bao giờ rơi về kết nối mặc định của Laravel.
 
@@ -274,7 +275,7 @@ Chạy bù bỏ qua theo dõi đã sinh và không đụng mốc; chạy khi d�
   dùng chung giữa các tiến trình (`file`, `redis`, `database`…); `array` chỉ sống trong một tiến trình nên
   dịch vụ và lệnh chạy bù tay sẽ chạy chồng nhau.
 - **Bộ nhớ:** lệnh ghi `Log::info` mức đỉnh bộ nhớ (`memory_get_peak_usage(true)`) sau khi nạp danh mục và sau
-  mỗi trang. Xem log khi nạp lô lớn; gần chạm `memory_limit` thì hạ `kich_thuoc_lo`.
+  mỗi trang. Xem log khi nạp lô lớn; gần chạm `memory_limit` thì hạ `kich_thuoc_lo` NGAY (Fatal không kịp cảnh báo; hàm shutdown chỉ nhả khoá và ghi `Log::critical` kèm treatment id đang nạp).
 - **Mỗi hồ sơ thường được nạp và kiểm 2 lần**, 3 lần nếu bật thông tuyến. Tải hàng đợi kiểm của tiền giám
   định tăng tương ứng.
 - **Bản nào vào sau cũng có thể bị gửi cổng.** Nếu tiền giám định đang bật xuất, ký, gửi
@@ -468,7 +469,7 @@ theo đúng tỷ lệ đã xuất. DLL dùng `Math.Round` mặc định (banker'
 |---|---|---|---|---|
 | Phần tử DLL gán `null` (mọi bảng XML6–15) | XmlSerializer bỏ hẳn phần tử | Xuất phần tử rỗng; `so-sanh` coi thẻ rỗng = thiếu thẻ | Global Constraints Đợt 3 | cần xác nhận |
 | MA_TTDV (XML7, 8, 9, 10, 11, 13, 14; XML6/XML15 không có trường này) | IS_3176: DIPLOMA của (phó) giám đốc, bỏ qua key | Như XML1: key `MA_TTDV_FROM_PROFILE_XML` có giá trị thì đi trọn nhánh 130, kiểm "chứa số hiệu bảng" theo đúng cách DLL từng bảng (XML7 không trim, XML13 chuỗi con, còn lại tách `,` + trim). Đo 22/10/2026 (key `1,7,8,9,10,11,13`): XML7/8/9/11/13 ra mã BHXH của (phó) GĐ, XML14 không có `14` nên ra `REPRESENTATIVE_HEIN_CODE` | spec 5.6; chủ dự án quyết cho XML1, Đợt 3 áp cho mọi bảng | đã sửa |
-| Trường văn bản thường (không CDATA) có xuống dòng (XML7 GHI_CHU, XML8 QT_BENHLY…) | Ghi CRLF nguyên văn; bộ đọc XML đổi thành LF nên tiền giám định lưu LF | Đổi CRLF/CR thành LF trước khi ghi (XMLWriter thoát CR thành `&#13;`, CR sẽ còn nguyên sau khi nạp) | đo Đợt 3, sửa 08a0147c | đã sửa |
+| Trường văn bản thường (không CDATA) có xuống dòng (XML7 GHI_CHU, XML8 QT_BENHLY…). Áp cho MỌI trường không CDATA của cả 14 bảng, kể cả XML1–5 (bộ ghi dùng chung); byte tệp module là LF còn tệp HIS là CRLF, chỉ so byte từng tệp mới thấy khác, giá trị sau khi đọc XML bằng nhau | Ghi CRLF nguyên văn; bộ đọc XML đổi thành LF nên tiền giám định lưu LF | Đổi CRLF/CR thành LF trước khi ghi (XMLWriter thoát CR thành `&#13;`, CR sẽ còn nguyên sau khi nạp) | đo Đợt 3, sửa 08a0147c | đã sửa |
 | Tra nhân viên theo loginname | So `==` chính xác; trùng loginname thì liệt kê đủ | `HisDanhMuc` trim khoá, trùng loginname giữ một dòng (cả CHUCDANH_NGUOI_HT XML13) | review Task 5 | cần xác nhận |
 | Mã/loginname toán tử `??` (SO_CCCD XML6/9/15, MA_BS/TEN_BS XML7/10/11, MA_DOITUONG_KCB XML14) | `??` chỉ bắt null | Chuỗi rỗng/toàn khoảng trắng coi như null (Oracle không lưu `''`, nên thực tế như nhau) | như XML1 [AX]:298 | cần xác nhận |
 | Chọn bản ghi HIV/lao | Plugin lấy `HIS_HIV_TREATMENT` ID lớn nhất, `HIS_TUBERCULOSIS_TREAT` bản cuối theo thứ tự API trả về | HIV: ID lớn nhất; lao: bản cuối theo `id` tăng (giả định thứ tự API, mã MOS API không có trong repo). Chỉ lấy dòng `is_delete = 0` | Task 1 | cần xác nhận |
@@ -691,8 +692,8 @@ php artisan sinhxml3176:so-sanh --csdl --qlbv=D:\XML\SinhXml3176Thu --ra=storage
 | 5 hồ sơ lớn nhất | 5 | 432MB | 44 giây (34 giây cho lô) |
 | `so-sanh --csdl`, 32 hồ sơ, 14 bảng | | | 149 giây |
 
-Hồ sơ nội trú lớn tốn khoảng 40–70MB mỗi hồ sơ. **Mặc định hiện tại (`kich_thuoc_lo = 20`, `memory_limit = 512M`)
-không chịu được một lô gồm toàn hồ sơ nội trú lớn.** PHP Fatal error không chạy khối `finally`, nên khoá lượt
+Hồ sơ nội trú lớn tốn khoảng 40–70MB mỗi hồ sơ. **Mặc định cũ (`kich_thuoc_lo = 20`, `memory_limit = 512M`)
+không chịu được một lô gồm toàn hồ sơ nội trú lớn; mặc định mới là 5 / 1024M.** PHP Fatal error không chạy khối `finally`, nên khoá lượt
 (`Cache`, `khoa_luot_phut = 120`) còn nguyên và mốc không tiến: dịch vụ `--lien-tuc` bỏ qua mọi lượt trong 120 phút,
 rồi gặp lại đúng lô đó và chết tiếp. Gỡ tay bằng `php artisan sinhxml3176:quet --go-khoa` (chỉ khi chắc không còn
 tiến trình nào), sau khi đã hạ lô hoặc nâng bộ nhớ. Xem mục 7 của danh sách kiểm bên dưới.
@@ -763,7 +764,8 @@ Chủ dự án làm trên máy chủ, ghi ngày và người kiểm vào biên b
    - `kich_thuoc_lo = 10`, `memory_limit = '1024M'`; hoặc
    - giữ `kich_thuoc_lo = 20`, `memory_limit = '1536M'`.
 
-   Máy chủ phải còn đủ RAM trống cho mức đó. Giữ mặc định 512M/20 thì một lô nội trú lớn làm lệnh chết và dịch vụ kẹt
+   Mặc định trong `config/sinh_xml3176.php` nay là `kich_thuoc_lo = 5`, `memory_limit = '1024M'` (432MB đo được, dư ~2,4 lần).
+   Máy chủ phải còn đủ RAM trống cho mức đó. Quay lại 512M/20 thì một lô nội trú lớn làm lệnh chết và dịch vụ kẹt
    (xem "Bộ nhớ và thời gian" ở trên). Máy chủ nên có `ext-intl` (XML13 TOMTAT_KQ đếm NFKD chính xác).
 8. **Thông tuyến tắt** (`thong_tuyen = false`) cho tới khi đo xong độ trễ nhập `OUT_TIME` (mục "Kiểm trước khi bật thông tuyến").
 9. **Chạy song song với HIS:** máy trạm HIS vẫn đồng bộ như cũ. Tiền giám định giữ bản nạp sau cùng (bản vào sau thắng),
@@ -771,3 +773,9 @@ Chủ dự án làm trên máy chủ, ghi ngày và người kiểm vào biên b
 10. **Cách tắt nhanh:** đặt `enabled = false` trong khối `sinh_xml3176` rồi `php artisan config:cache`; dịch vụ thoát êm ở
     lượt kế tiếp. Nếu lệnh từng chết (Fatal error) thì gỡ khoá bằng `php artisan sinhxml3176:quet --go-khoa` khi chắc
     không còn tiến trình `sinhxml3176:quet` nào.
+11. **(Chưa làm, bắt buộc trước khi bật trên prod) B1 — tách `kich_thuoc_nap` khỏi cỡ trang:** `LuotQuet::xuLyLo` đang nạp
+    cả trang một lần (~35–40MB mỗi hồ sơ nội trú lớn). Thêm `kich_thuoc_nap` (mặc định 5), chia trang thành từng phần để
+    nạp; cỡ trang keyset giữ nguyên.
+12. **(Chưa làm, bắt buộc trước khi bật trên prod) B2 — hồ sơ chết một mình:** một hồ sơ nằm viện rất dài có thể tự vượt
+    giới hạn dù lô bằng 1, và hiện mốc không tiến nên lượt sau chết lại ở đúng hồ sơ đó. Cần ghi trạng thái `loi`
+    ("hết bộ nhớ") cho hồ sơ chết khi đứng một mình để mốc tiến; đến lúc đó phải theo dõi `Log::critical` của hàm shutdown.
