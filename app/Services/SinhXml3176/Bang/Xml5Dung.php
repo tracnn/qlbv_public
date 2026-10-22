@@ -7,7 +7,7 @@ use App\Services\SinhXml3176\Nguon\HisDanhMuc;
 
 /**
  * XML5 - chi tieu chi tiet dien bien lam sang. Port Xml5Processor.GenerateXml5ADO + ProcessDataExam
- * (DLL XML130.XML5, ban do [AX]:705-764), luon theo nhanh IS_3176.
+ * (DLL XML 130.XML5, ban do [AX]:705-764), luon theo nhanh IS_3176.
  * Dau vao ListSereServ = list2 (DichVuTongHop::loc). Nhanh 1: co to dieu tri => moi to co CONTENT mot dong,
  * sap theo TRACKING_TIME. Nhanh 2: khong co to dieu tri nao, co kham chinh => mot dong tu du lieu kham.
  *

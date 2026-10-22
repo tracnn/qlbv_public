@@ -6,8 +6,8 @@ use App\Services\SinhXml3176\DuLieuHoSo;
 use App\Services\SinhXml3176\Nguon\HisDanhMuc;
 
 /**
- * XML4 - chi tieu chi tiet dich vu can lam sang. Port Xml4Processor.GenerateXml4ADO (DLL XML130.XML4,
- * ban do [AX]:647-681). XML4 khong co co IS_3176 ([AX]:690): QD130 va QD3176 xuat giong nhau.
+ * XML4 - chi tieu chi tiet dich vu can lam sang. Port Xml4Processor.GenerateXml4ADO (DLL XML 130.XML4,
+ * ban do [AX]:647-681). XML4 khong co co IS_3176 ([AX]:690): QD 130 va QD3176 xuat giong nhau.
  * Dau vao la list2 (DichVuTongHop::loc), roi loc buoc 1; sinh ba khoi A (Tein), B (khong chi so), C (Suin),
  * STT tang lien tuc A -> B -> C.
  *
