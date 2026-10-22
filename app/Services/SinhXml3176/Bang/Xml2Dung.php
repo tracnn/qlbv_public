@@ -62,8 +62,8 @@ class Xml2Dung implements DungBang
         if ($idBhyt === null) {
             throw new LoiDungBang(self::LOAI, 'Không xác định được đối tượng BHYT trong danh mục');
         }
-        $chon = $this->sapOnDinh($this->chonDong($ung, $idBhyt), function ($a, $b) {
-            return $this->soSanh((float) $a->intruction_time, (float) $b->intruction_time);
+        $chon = GiaTriBang::sapOnDinh($this->chonDong($ung, $idBhyt), function ($a, $b) {
+            return GiaTriBang::soSanh((float) $a->intruction_time, (float) $b->intruction_time);
         });
 
         $ch = [
@@ -95,7 +95,7 @@ class Xml2Dung implements DungBang
         $ra = [];
         $stt = 1;
         foreach ($chon as $ss) {
-            $dt = $this->co($ss->patient_type_id) && (int) $ss->patient_type_id > 0 ? $dm->doiTuong($ss->patient_type_id) : null;
+            $dt = GiaTriBang::co($ss->patient_type_id) && (int) $ss->patient_type_id > 0 ? $dm->doiTuong($ss->patient_type_id) : null;
             if ($dt === null) {
                 throw new LoiDungBang(self::LOAI, 'Không có danh mục đối tượng thanh toán ID ' . $ss->patient_type_id
                     . ' (dịch vụ ID ' . $ss->id . ')');
@@ -106,14 +106,14 @@ class Xml2Dung implements DungBang
             }
 
             $maDichVu = '';
-            $cha = $this->co($ss->parent_id) && isset($theoId[(string) $ss->parent_id]) ? $theoId[(string) $ss->parent_id] : null;
+            $cha = GiaTriBang::co($ss->parent_id) && isset($theoId[(string) $ss->parent_id]) ? $theoId[(string) $ss->parent_id] : null;
             if ($cha !== null) {
                 if ($ch['khong_lay_khong_th'] === '1' && (int) $cha->is_no_execute === 1) {
                     continue; // L:738-744, STT khong tang
                 }
-                $maDichVu = $this->chu($cha->tdl_hein_service_bhyt_code);
+                $maDichVu = GiaTriBang::chu($cha->tdl_hein_service_bhyt_code);
                 if ($maDichVu === '') {
-                    $maDichVu = $this->chu($ss->tdl_hein_service_bhyt_code);
+                    $maDichVu = GiaTriBang::chu($ss->tdl_hein_service_bhyt_code);
                 }
                 if (count($d->pttt) > 0) { // DLL: can danh sach PTTT khac null ([AX]:599, giu nguyen)
                     $pt = isset($ptttTheoDv[(int) $cha->id]) ? $ptttTheoDv[(int) $cha->id] : null;
@@ -124,7 +124,7 @@ class Xml2Dung implements DungBang
                 }
             }
 
-            $lanDung = ($ch['tach'] === '1' && $this->co($ss->medicine_id)) ? $this->lanDung($d->suDungThuoc, $ss) : [];
+            $lanDung = ($ch['tach'] === '1' && GiaTriBang::co($ss->medicine_id)) ? $this->lanDung($d->suDungThuoc, $ss) : [];
             if (count($lanDung) === 0) {
                 $lanDung = [null];
             }
@@ -143,7 +143,7 @@ class Xml2Dung implements DungBang
     {
         $ra = [];
         foreach ($dichVu as $dv) {
-            if (!$this->co($dv->tdl_hein_service_type_id)) {
+            if (!GiaTriBang::co($dv->tdl_hein_service_type_id)) {
                 continue;
             }
             $loai = (int) $dv->tdl_hein_service_type_id;
@@ -163,8 +163,8 @@ class Xml2Dung implements DungBang
         foreach ($ung as $dv) {
             if ((int) $dv->patient_type_id === $idBhyt) {
                 $hein = $dv->vir_total_hein_price;
-                $lay = ($this->co($hein) && (float) $hein > 0)
-                    || ($this->co($hein) && (float) $hein == 0 && $this->co($dv->other_source_price) && (float) $dv->other_source_price > 0);
+                $lay = (GiaTriBang::co($hein) && (float) $hein > 0)
+                    || (GiaTriBang::co($hein) && (float) $hein == 0 && GiaTriBang::co($dv->other_source_price) && (float) $dv->other_source_price > 0);
                 if (!$lay) {
                     continue;
                 }
@@ -183,28 +183,28 @@ class Xml2Dung implements DungBang
     {
         $ra = [];
         foreach ($suDung as $u) {
-            if ($this->co($ss->exp_mest_medicine_id) && $this->co($u->exp_mest_medicine_id)) {
+            if (GiaTriBang::co($ss->exp_mest_medicine_id) && GiaTriBang::co($u->exp_mest_medicine_id)) {
                 $khop = (int) $u->exp_mest_medicine_id === (int) $ss->exp_mest_medicine_id;
-            } elseif ($this->co($ss->exp_mest_material_id) && $this->co($u->exp_mest_material_id)) {
+            } elseif (GiaTriBang::co($ss->exp_mest_material_id) && GiaTriBang::co($u->exp_mest_material_id)) {
                 $khop = (int) $u->exp_mest_material_id === (int) $ss->exp_mest_material_id;
             } else {
                 $khop = false;
             }
-            if (!$khop || !$this->co($u->use_time) || (float) $u->use_time <= 0
-                || !$this->co($u->amount) || (float) $u->amount <= 0) {
+            if (!$khop || !GiaTriBang::co($u->use_time) || (float) $u->use_time <= 0
+                || !GiaTriBang::co($u->amount) || (float) $u->amount <= 0) {
                 continue;
             }
             $ra[] = [
                 'use_time' => ThoiGianHis::chuoi($u->use_time),
                 'amount' => (float) $u->amount,
-                'session' => $this->co($u->medication_session) ? (int) $u->medication_session : 0,
+                'session' => GiaTriBang::co($u->medication_session) ? (int) $u->medication_session : 0,
             ];
         }
 
-        return $this->sapOnDinh($ra, function ($a, $b) {
+        return GiaTriBang::sapOnDinh($ra, function ($a, $b) {
             return $a['session'] !== $b['session']
-                ? $this->soSanh($a['session'], $b['session'])
-                : $this->soSanh((float) $a['use_time'], (float) $b['use_time']);
+                ? GiaTriBang::soSanh($a['session'], $b['session'])
+                : GiaTriBang::soSanh((float) $a['use_time'], (float) $b['use_time']);
         });
     }
 
@@ -215,42 +215,42 @@ class Xml2Dung implements DungBang
         $luong = $lan === null ? (float) $ss->amount : $lan['amount'];
         $tien = $this->tien($d, $ss, $dt, $lan, $luong, $ch);
 
-        $nhanVien = $this->co($ss->request_loginname) ? $dm->nhanVien($ss->request_loginname) : null;
+        $nhanVien = GiaTriBang::co($ss->request_loginname) ? $dm->nhanVien($ss->request_loginname) : null;
 
         return [
-            'MA_LK' => $this->chu($d->hoSo->treatment_code),
+            'MA_LK' => GiaTriBang::chu($d->hoSo->treatment_code),
             'STT' => (string) $stt,
-            'MA_THUOC' => (in_array($loai, self::LOAI_MAU, true) || !$this->co($ss->medicine_id))
-                ? $this->chu($ss->tdl_hein_service_bhyt_code) : $this->chu($ss->active_ingr_bhyt_code),
-            'MA_PP_CHEBIEN' => $this->noi([$ss->preprocessing_code, $ss->processing_code]),
-            'MA_CSKCB_THUOC' => $this->chu($ss->transfer_medi_org_code),
-            'MA_NHOM' => $this->chu($ss->hst_bhyt_code),
-            'TEN_THUOC' => $this->chu($ss->tdl_hein_service_bhyt_name),
-            'DON_VI_TINH' => $tien['quy_doi'] ? $this->chu($ss->convert_unit_name) : $this->chu($ss->service_unit_name),
-            'HAM_LUONG' => $this->chu($ss->concentra),
-            'DUONG_DUNG' => $this->chu($ss->medicine_use_form_code),
-            'DANG_BAO_CHE' => $this->chu($ss->dosage_form),
+            'MA_THUOC' => (in_array($loai, self::LOAI_MAU, true) || !GiaTriBang::co($ss->medicine_id))
+                ? GiaTriBang::chu($ss->tdl_hein_service_bhyt_code) : GiaTriBang::chu($ss->active_ingr_bhyt_code),
+            'MA_PP_CHEBIEN' => GiaTriBang::noi([$ss->preprocessing_code, $ss->processing_code]),
+            'MA_CSKCB_THUOC' => GiaTriBang::chu($ss->transfer_medi_org_code),
+            'MA_NHOM' => GiaTriBang::chu($ss->hst_bhyt_code),
+            'TEN_THUOC' => GiaTriBang::chu($ss->tdl_hein_service_bhyt_name),
+            'DON_VI_TINH' => $tien['quy_doi'] ? GiaTriBang::chu($ss->convert_unit_name) : GiaTriBang::chu($ss->service_unit_name),
+            'HAM_LUONG' => GiaTriBang::chu($ss->concentra),
+            'DUONG_DUNG' => GiaTriBang::chu($ss->medicine_use_form_code),
+            'DANG_BAO_CHE' => GiaTriBang::chu($ss->dosage_form),
             'LIEU_DUNG' => $this->lieuDung($ss, $ch['huong_dan']),
-            'CACH_DUNG' => $this->chu($ss->medicine_htu_text) !== '' ? $this->chu($ss->medicine_htu_text) : $this->chu($ss->advise),
-            'SO_DANG_KY' => $this->chu($ss->medicine_register_number),
+            'CACH_DUNG' => GiaTriBang::chu($ss->medicine_htu_text) !== '' ? GiaTriBang::chu($ss->medicine_htu_text) : GiaTriBang::chu($ss->advise),
+            'SO_DANG_KY' => GiaTriBang::chu($ss->medicine_register_number),
             'TT_THAU' => $this->ttThau($ss),
             'PHAM_VI' => $this->phamVi($ss, $tien['ty_le'], $loai),
-            'TYLE_TT_BH' => $this->soGon($tien['ty_le'], 0),
-            'SO_LUONG' => $this->soGon($tien['sl'], 3),
-            'DON_GIA' => $this->soGon($tien['dg'], 3),
-            'THANH_TIEN_BV' => $this->tienChu($tien['bv']),
-            'THANH_TIEN_BH' => $this->tienChu($tien['bh']),
-            'T_NGUONKHAC_NSNN' => $this->tienChu($tien['nguon'] === 1 ? $tien['nk'] : 0),
-            'T_NGUONKHAC_VTNN' => $this->tienChu($tien['nguon'] === 2 ? $tien['nk'] : 0),
-            'T_NGUONKHAC_VTTN' => $this->tienChu($tien['nguon'] === 3 ? $tien['nk'] : 0),
-            'T_NGUONKHAC_CL' => $this->tienChu($tien['cl']),
-            'T_NGUONKHAC' => $this->tienChu($tien['nk']),
-            'MUC_HUONG' => $this->co($ss->hein_ratio) ? $this->soGon((float) $ss->hein_ratio * 100, 6) : '0',
-            'T_BHTT' => $this->tienChu($tien['bhtt']),
-            'T_BNCCT' => $this->tienChu($tien['bncct']),
-            'T_BNTT' => $this->tienChu($tien['bntt']),
-            'MA_KHOA' => $this->chu($ss->request_bhyt_code),
-            'MA_BAC_SI' => $nhanVien !== null ? $this->chu($nhanVien->diploma) : '',
+            'TYLE_TT_BH' => GiaTriBang::so($tien['ty_le'], 0),
+            'SO_LUONG' => GiaTriBang::so($tien['sl'], 3),
+            'DON_GIA' => GiaTriBang::so($tien['dg'], 3),
+            'THANH_TIEN_BV' => GiaTriBang::tien($tien['bv']),
+            'THANH_TIEN_BH' => GiaTriBang::tien($tien['bh']),
+            'T_NGUONKHAC_NSNN' => GiaTriBang::tien($tien['nguon'] === 1 ? $tien['nk'] : 0),
+            'T_NGUONKHAC_VTNN' => GiaTriBang::tien($tien['nguon'] === 2 ? $tien['nk'] : 0),
+            'T_NGUONKHAC_VTTN' => GiaTriBang::tien($tien['nguon'] === 3 ? $tien['nk'] : 0),
+            'T_NGUONKHAC_CL' => GiaTriBang::tien($tien['cl']),
+            'T_NGUONKHAC' => GiaTriBang::tien($tien['nk']),
+            'MUC_HUONG' => GiaTriBang::co($ss->hein_ratio) ? GiaTriBang::so((float) $ss->hein_ratio * 100, 6) : '0',
+            'T_BHTT' => GiaTriBang::tien($tien['bhtt']),
+            'T_BNCCT' => GiaTriBang::tien($tien['bncct']),
+            'T_BNTT' => GiaTriBang::tien($tien['bntt']),
+            'MA_KHOA' => GiaTriBang::chu($ss->request_bhyt_code),
+            'MA_BAC_SI' => $nhanVien !== null ? GiaTriBang::chu($nhanVien->diploma) : '',
             'MA_DICH_VU' => $maDichVu,
             'NGAY_YL' => $ngayYl,
             'NGAY_TH_YL' => $this->ngayThYl($d, $ss, $lan, $ch),
@@ -268,20 +268,19 @@ class Xml2Dung implements DungBang
     private function tien(DuLieuHoSo $d, $ss, $dt, $lan, $luong, array $ch)
     {
         $goc = (float) $ss->original_price;
-        $vat = $this->co($ss->vat_ratio) ? (float) $ss->vat_ratio : 0.0;
+        $vat = GiaTriBang::co($ss->vat_ratio) ? (float) $ss->vat_ratio : 0.0;
 
         $tyLe = 0.0;
         if (trim((string) $dt->patient_type_code) === $ch['ma_bhyt'] && $goc > 0) {
-            $tyLe = $this->co($ss->hein_limit_price)
+            $tyLe = GiaTriBang::co($ss->hein_limit_price)
                 ? (float) $ss->hein_limit_price / ($goc * (1 + $vat)) * 100
                 : (float) $ss->price / $goc * 100;
-            // [AX]:594: so nguyen half-up (round 6 truoc de bo nhieu float, vd 32.4999999 -> 32.5 -> 33)
-            $tyLe = round(round($tyLe, 6), 0, PHP_ROUND_HALF_UP);
+            $tyLe = GiaTriBang::tyLeNguyen($tyLe); // [AX]:594
         }
 
         $sl = round($luong, 3);
         $dg = round($goc * (1 + $vat), 3);
-        $quyDoi = $this->co($ss->convert_ratio) && (float) $ss->convert_ratio != 0 && (int) $ss->use_original_unit_for_pres !== 1;
+        $quyDoi = GiaTriBang::co($ss->convert_ratio) && (float) $ss->convert_ratio != 0 && (int) $ss->use_original_unit_for_pres !== 1;
         if ($quyDoi) {
             $tyLeQd = (float) $ss->convert_ratio;
             $sl = round($luong * $tyLeQd, 3);
@@ -295,10 +294,10 @@ class Xml2Dung implements DungBang
                 $bh = round($sl * $dg * $tyLe / 100, 2);
             }
         }
-        if ($bh > 0 && $this->co($ss->hein_ratio)) {
+        if ($bh > 0 && GiaTriBang::co($ss->hein_ratio)) {
             $bhtt = round($bh * (float) $ss->hein_ratio, 2);
         }
-        if ($this->co($ss->other_source_price)) {
+        if (GiaTriBang::co($ss->other_source_price)) {
             $nk = round(round((float) $ss->other_source_price, 3) * round($luong, 3), 2);
         }
 
@@ -325,7 +324,7 @@ class Xml2Dung implements DungBang
             }
         }
 
-        $nguon = $this->co($ss->hein_pay_source_type_id) ? (int) $ss->hein_pay_source_type_id : null;
+        $nguon = GiaTriBang::co($ss->hein_pay_source_type_id) ? (int) $ss->hein_pay_source_type_id : null;
         $cl = in_array($nguon, [1, 2, 3], true) ? 0.0 : $nk;
 
         // Buoc 6: tinh lai BNCCT/BNTT theo nguon khac con lai
@@ -363,7 +362,7 @@ class Xml2Dung implements DungBang
     {
         if ($tyLe > 0) {
             $dau = substr((string) $ss->hein_card_number, 0, 2);
-            if (in_array($dau, ['CA', 'CY', 'QN'], true) && $this->co($ss->medicine_id) && $loai === 9) {
+            if (in_array($dau, ['CA', 'CY', 'QN'], true) && GiaTriBang::co($ss->medicine_id) && $loai === 9) {
                 return '3';
             }
 
@@ -396,18 +395,18 @@ class Xml2Dung implements DungBang
         if (trim($tut) === '') {
             return '';
         }
-        if ($this->co($ss->remedy_count) && (float) $ss->remedy_count != 0) {
+        if (GiaTriBang::co($ss->remedy_count) && (float) $ss->remedy_count != 0) {
             return $tut;
         }
-        $hd = $this->chu($ss->medicine_tutorial);
+        $hd = GiaTriBang::chu($ss->medicine_tutorial);
         if ($dinhDang === '6' && $hd !== '') {
             return $hd;
         }
 
         $ld = $this->xuLyHuongDan($tut, $dinhDang, $hd);
-        $donVi = $this->chu($ss->service_unit_name);
-        $den = ThoiGianHis::ngay($this->co($ss->use_time_to) ? $ss->use_time_to : 0);
-        $tu = $this->co($ss->use_time) ? ThoiGianHis::ngay($ss->use_time) : null;
+        $donVi = GiaTriBang::chu($ss->service_unit_name);
+        $den = ThoiGianHis::ngay(GiaTriBang::co($ss->use_time_to) ? $ss->use_time_to : 0);
+        $tu = GiaTriBang::co($ss->use_time) ? ThoiGianHis::ngay($ss->use_time) : null;
         $chiDinh = ThoiGianHis::ngay($ss->tdl_intruction_date);
         if ($den !== null && ($tu !== null || $chiDinh !== null)) {
             // co USE_TIME: chia 3 chu so; khong co: tinh tu ngay chi dinh, chia 1 chu so (giu nhu DLL)
@@ -417,7 +416,7 @@ class Xml2Dung implements DungBang
                 $soNgay = 1;
             }
             $cs = $tu !== null ? 3 : 1;
-            $moiNgay = $this->soGon(round((float) $ss->amount / $soNgay, $cs), $cs);
+            $moiNgay = GiaTriBang::so(round((float) $ss->amount / $soNgay, $cs), $cs);
             $ld .= ' * ' . $soNgay . ' ngày [' . $moiNgay . ' ' . $donVi . '/ngày]';
         }
 
@@ -515,71 +514,5 @@ class Xml2Dung implements DungBang
         }
 
         return ThoiGianHis::phut($chiDinh);
-    }
-
-    /** Sap xep on dinh (LINQ OrderBy on dinh, usort PHP 7 thi khong). */
-    private function sapOnDinh(array $mang, callable $ss)
-    {
-        $kem = [];
-        foreach (array_values($mang) as $i => $v) {
-            $kem[] = [$i, $v];
-        }
-        usort($kem, function ($a, $b) use ($ss) {
-            $c = $ss($a[1], $b[1]);
-
-            return $c !== 0 ? $c : $a[0] - $b[0];
-        });
-
-        return array_map(function ($x) {
-            return $x[1];
-        }, $kem);
-    }
-
-    private function soSanh($a, $b)
-    {
-        return $a < $b ? -1 : ($a > $b ? 1 : 0);
-    }
-
-    private function noi(array $phan)
-    {
-        $ra = [];
-        foreach ($phan as $p) {
-            if ($p !== null && (string) $p !== '') {
-                $ra[] = (string) $p;
-            }
-        }
-
-        return implode(';', $ra);
-    }
-
-    /** Tien: chuoi 2 chu so thap phan. */
-    private function tienChu($x)
-    {
-        $v = round((float) $x, 2);
-
-        return sprintf('%.2f', $v == 0 ? 0.0 : $v);
-    }
-
-    /** So lam tron $cs chu so, bo so 0 thua cuoi. */
-    private function soGon($x, $cs)
-    {
-        $v = round((float) $x, $cs);
-        $s = sprintf('%.' . $cs . 'f', $v == 0 ? 0.0 : $v);
-        if ($cs > 0) {
-            $s = rtrim(rtrim($s, '0'), '.');
-        }
-
-        return $s;
-    }
-
-    private function chu($v)
-    {
-        return $v === null ? '' : (string) $v;
-    }
-
-    /** Nullable.HasValue: Oracle tra null, SQLite co the tra chuoi rong. */
-    private function co($v)
-    {
-        return $v !== null && $v !== '';
     }
 }
