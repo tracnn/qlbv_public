@@ -14,7 +14,8 @@ use App\Services\SinhXml3176\Nguon\HisDanhMuc;
  * Sua loi DLL [AX]:589: co quy doi don vi thi SO_LUONG, DON_GIA lam tron 3 chu so (DLL khong lam tron).
  * Sua loi DLL [AX]:590: tach dong theo lan dung + quy doi thi SO_LUONG = used.AMOUNT * CONVERT_RATIO.
  * Sua loi DLL [AX]:591: THANH_TIEN_BV/BH tinh tu SO_LUONG, DON_GIA da lam tron (khop gia tri xuat ra).
- * Sua loi DLL [AX]:594: ty le TYLE_TT_BH dung nguyen gia tri khi nhan tien (DLL round banker 0 chu so truoc).
+ * Sua loi DLL [AX]:594: TYLE_TT_BH lam tron so nguyen HALF-UP (DLL round banker); moi phep tinh tien dung dung
+ *   ty le xuat ra nay de tep tu nhat quan (THANH_TIEN_BH = SL*DG*TYLE_TT_BH/100).
  * Sua loi DLL [AX]:596: buoc can doi khong de T_NGUONKHAC am; am thi NK=0 va T_BNCCT bu phan chenh.
  * Sua loi DLL [AX]:598: moi key cau hinh doc qua HisDanhMuc::config() (DLL doc 5 key tu cache may tram).
  * Sua loi DLL [AX]:602: MEDICINE_TT_THAU rong ("" hoac khoang trang) coi nhu null => ghep cac truong thau.
@@ -234,7 +235,7 @@ class Xml2Dung implements DungBang
             'SO_DANG_KY' => $this->chu($ss->medicine_register_number),
             'TT_THAU' => $this->ttThau($ss),
             'PHAM_VI' => $this->phamVi($ss, $tien['ty_le'], $loai),
-            'TYLE_TT_BH' => $this->soGon(round($tien['ty_le'], 0, PHP_ROUND_HALF_EVEN), 0),
+            'TYLE_TT_BH' => $this->soGon($tien['ty_le'], 0),
             'SO_LUONG' => $this->soGon($tien['sl'], 3),
             'DON_GIA' => $this->soGon($tien['dg'], 3),
             'THANH_TIEN_BV' => $this->tienChu($tien['bv']),
@@ -262,7 +263,7 @@ class Xml2Dung implements DungBang
     }
 
     /**
-     * Tien L:577-728 ([AX]:421-428). Tra so (float) da lam tron 2 chu so; ty_le chua lam tron.
+     * Tien L:577-728 ([AX]:421-428). Tra so (float) da lam tron 2 chu so; ty_le la so nguyen da xuat.
      */
     private function tien(DuLieuHoSo $d, $ss, $dt, $lan, $luong, array $ch)
     {
@@ -274,6 +275,8 @@ class Xml2Dung implements DungBang
             $tyLe = $this->co($ss->hein_limit_price)
                 ? (float) $ss->hein_limit_price / ($goc * (1 + $vat)) * 100
                 : (float) $ss->price / $goc * 100;
+            // [AX]:594: so nguyen half-up (round 6 truoc de bo nhieu float, vd 32.4999999 -> 32.5 -> 33)
+            $tyLe = round(round($tyLe, 6), 0, PHP_ROUND_HALF_UP);
         }
 
         $sl = round($luong, 3);
@@ -355,7 +358,7 @@ class Xml2Dung implements DungBang
         return trim($v) !== '';
     }
 
-    /** PHAM_VI dua tren ty le chua lam tron (cung gia tri dung de tinh THANH_TIEN_BH). */
+    /** PHAM_VI dua tren ty le so nguyen da xuat (cung gia tri dung de tinh THANH_TIEN_BH). */
     private function phamVi($ss, $tyLe, $loai)
     {
         if ($tyLe > 0) {

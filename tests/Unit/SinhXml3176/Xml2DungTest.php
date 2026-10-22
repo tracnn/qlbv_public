@@ -101,16 +101,37 @@ class Xml2DungTest extends TestCase
         $this->assertSame('202610020830', $r['NGAY_TH_YL']);
     }
 
-    public function test_ty_le_le_khong_lam_tron_truoc()
+    public function test_ty_le_le_lam_tron_half_up_va_tien_dung_ty_le_xuat()
     {
-        // PRICE/ORIGINAL_PRICE = 0,3333 -> DLL lam tron 33% truoc khi nhan
+        // PRICE/ORIGINAL_PRICE = 33,33% -> TYLE_TT_BH 33, tien tinh dung theo 33
         $r = $this->dung($this->du([$this->thuoc(['price' => 499.95])]))[0];
 
-        $this->assertSame('15000.00', $r['THANH_TIEN_BV']);
-        $this->assertSame(sprintf('%.2f', round(15000 * 0.3333, 2)), $r['THANH_TIEN_BH']);
-        $this->assertSame('4999.50', $r['THANH_TIEN_BH']);
-        $this->assertSame('3999.60', $r['T_BHTT']);
         $this->assertSame('33', $r['TYLE_TT_BH']);
+        $this->assertSame('15000.00', $r['THANH_TIEN_BV']);
+        $this->assertSame(sprintf('%.2f', round(15000 * 0.33, 2)), $r['THANH_TIEN_BH']);
+        $this->assertSame('4950.00', $r['THANH_TIEN_BH']);
+        $this->assertSame('3960.00', $r['T_BHTT']);
+        $this->assertSame('990.00', $r['T_BNCCT']);
+        $this->assertSame('10050.00', $r['T_BNTT']);
+
+        // 32,5% -> half-up 33 (DLL round banker ra 32)
+        $r = $this->dung($this->du([$this->thuoc(['price' => 487.5])]))[0];
+        $this->assertSame('33', $r['TYLE_TT_BH']);
+        $this->assertSame('4950.00', $r['THANH_TIEN_BH']);
+
+        // 12,5% qua HEIN_LIMIT_PRICE -> 13
+        $r = $this->dung($this->du([$this->thuoc(['hein_limit_price' => 187.5])]))[0];
+        $this->assertSame('13', $r['TYLE_TT_BH']);
+        $this->assertSame('1950.00', $r['THANH_TIEN_BH']);
+    }
+
+    public function test_ty_le_duoi_0_5_lam_tron_ve_0_pham_vi_2()
+    {
+        $r = $this->dung($this->du([$this->thuoc(['price' => 6])]))[0]; // 0,4%
+
+        $this->assertSame('0', $r['TYLE_TT_BH']);
+        $this->assertSame('2', $r['PHAM_VI']);
+        $this->assertSame('0.00', $r['THANH_TIEN_BH']);
     }
 
     public function test_quy_doi_don_vi_lam_tron()
