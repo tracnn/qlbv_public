@@ -47,7 +47,7 @@ class SinhXml3176Quet extends Command
 
         $cauHinh = CauHinhSinhXml3176::tuConfig();
         if (PHP_SAPI === 'cli') {
-            ini_set('memory_limit', $cauHinh->memoryLimit());
+            $this->nangMemoryLimit($cauHinh->memoryLimit());
         }
         if (!$cauHinh->batBat()) {
             $this->info('Module sinh XML3176 dang tat');
@@ -121,6 +121,24 @@ class SinhXml3176Quet extends Command
             return $this->vongLap($cauHinh, $chay);
         } finally {
             Cache::forget(self::KHOA_LUOT);
+        }
+    }
+
+    /** Chi NANG memory_limit, khong bao gio ha (ha se loi khi bo nho dang dung vuot muc moi). */
+    private function nangMemoryLimit($canDat)
+    {
+        $can = CauHinhSinhXml3176::memoryLimitRaByte($canDat);
+        if ($can === null || $can < 0) {
+            Log::warning('sinhxml3176:quet memory_limit cau hinh khong hop le: ' . $canDat . ', giu nguyen.');
+
+            return;
+        }
+        $hienTai = CauHinhSinhXml3176::memoryLimitRaByte(ini_get('memory_limit'));
+        if ($hienTai === -1 || ($hienTai !== null && $hienTai >= $can)) {
+            return;
+        }
+        if (@ini_set('memory_limit', $canDat) === false) {
+            Log::warning('sinhxml3176:quet khong nang duoc memory_limit len ' . $canDat . ', tiep tuc voi ' . ini_get('memory_limit'));
         }
     }
 

@@ -213,6 +213,34 @@ class CauHinhSinhXml3176
         return $gt !== '' ? $gt : '512M';
     }
 
+    /**
+     * Doi gia tri memory_limit ("512M", "1G", "2048K", "1048576", "-1") ra so byte.
+     * -1 = khong gioi han; khong hop le => null.
+     */
+    public static function memoryLimitRaByte($gt)
+    {
+        $gt = strtolower(trim((string) $gt));
+        if ($gt === '-1') {
+            return -1;
+        }
+        if (!preg_match('/^(\d+)([kmg]?)$/', $gt, $m)) {
+            return null;
+        }
+        $so = (int) $m[1];
+        switch ($m[2]) {
+            case 'g':
+                $so *= 1024;
+                // no break
+            case 'm':
+                $so *= 1024;
+                // no break
+            case 'k':
+                $so *= 1024;
+        }
+
+        return $so;
+    }
+
     public function nghiGiay()
     {
         return (int) $this->kyThuat('nghi_giay', 60);

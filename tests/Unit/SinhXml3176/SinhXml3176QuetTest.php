@@ -313,11 +313,56 @@ class SinhXml3176QuetTest extends TestCase
 
     public function test_dat_memory_limit_tu_config()
     {
-        $this->cauHinh(['enabled' => false], ['memory_limit' => '777M']);
+        ini_set('memory_limit', '3G');
+        $this->cauHinh(['enabled' => false], ['memory_limit' => '4G']);
 
         $this->chay();
 
-        $this->assertSame('777M', ini_get('memory_limit'));
+        $this->assertSame('4G', ini_get('memory_limit'));
+    }
+
+    public function test_memory_limit_hien_tai_cao_hon_thi_giu_nguyen()
+    {
+        ini_set('memory_limit', '4G');
+        $this->cauHinh(['enabled' => false], ['memory_limit' => '777M']);
+
+        list($ma) = $this->chay();
+
+        $this->assertSame(0, $ma);
+        $this->assertSame('4G', ini_get('memory_limit'));
+    }
+
+    public function test_memory_limit_hien_tai_khong_gioi_han_thi_giu_nguyen()
+    {
+        ini_set('memory_limit', '-1');
+        $this->cauHinh(['enabled' => false], ['memory_limit' => '777M']);
+
+        list($ma) = $this->chay();
+
+        $this->assertSame(0, $ma);
+        $this->assertSame('-1', ini_get('memory_limit'));
+    }
+
+    public function test_memory_limit_cau_hinh_khong_hop_le_thi_giu_nguyen_khong_loi()
+    {
+        ini_set('memory_limit', '3G');
+        $this->cauHinh(['enabled' => false], ['memory_limit' => 'abc']);
+
+        list($ma) = $this->chay();
+
+        $this->assertSame(0, $ma);
+        $this->assertSame('3G', ini_get('memory_limit'));
+    }
+
+    public function test_memory_limit_ra_byte()
+    {
+        $this->assertSame(-1, CauHinhSinhXml3176::memoryLimitRaByte('-1'));
+        $this->assertSame(1048576, CauHinhSinhXml3176::memoryLimitRaByte('1M'));
+        $this->assertSame(1073741824, CauHinhSinhXml3176::memoryLimitRaByte(' 1g '));
+        $this->assertSame(2048 * 1024, CauHinhSinhXml3176::memoryLimitRaByte('2048K'));
+        $this->assertSame(12345, CauHinhSinhXml3176::memoryLimitRaByte('12345'));
+        $this->assertNull(CauHinhSinhXml3176::memoryLimitRaByte('abc'));
+        $this->assertNull(CauHinhSinhXml3176::memoryLimitRaByte(''));
     }
 
     public function test_thu_muc_thu_nam_trong_thu_muc_quet_thi_loi_cau_hinh()
