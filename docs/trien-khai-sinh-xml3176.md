@@ -64,3 +64,194 @@ Lưu ý: `HIS_CONFIG` có `BRANCH_ID`, nên một key có thể có nhiều dòn
 và chưa xét theo cơ sở.
 
 Giới hạn của `HIS_EXP_MEDIMATE_USED` (kiểm `all_tab_columns` lần hai, 22/10/2026): bảng chỉ có 16 cột và **không có** `SERE_SERV_ID`, `MEDICINE_ID`, `MATERIAL_ID`. DLL khớp bản ghi dùng thuốc với dòng thuốc theo thứ tự EXP_MEST_MEDICINE_ID → EXP_MEST_MATERIAL_ID → SERE_SERV_ID → MEDICINE_ID → MATERIAL_ID, qua reflection, nên ba bước sau là nhánh chết trên HIS này. Task XML2 chỉ khớp được theo `EXP_MEST_MEDICINE_ID`, rồi `EXP_MEST_MATERIAL_ID`, đối chiếu với các cột cùng tên của `V_HIS_SERE_SERV_2`.
+
+## Cấu hình mẫu
+
+Khối mới trong `config/organization.php` (tệp này nằm trong `.gitignore`, mỗi máy một bản). Thiếu cả khối,
+hoặc `enabled = false`, thì module coi như tắt và lệnh thoát êm. Tham số kỹ thuật không phụ thuộc đơn vị
+(`kich_thuoc_lo`, `nghi_giay`, `chong_lan_phut`, `khoa_luot_phut`) nằm ở `config/sinh_xml3176.php` (đi theo git).
+
+```php
+'sinh_xml3176' => [
+    'enabled'        => false,           // tắt sẵn
+    'ghi_thu_muc_that' => false,         // false: chỉ ghi vào thu_muc_thu; chỉ nhận boolean true
+    'thong_tuyen'    => false,
+    'ket_noi_his'    => 'HISPro',
+    'co_so'          => ['01929'],       // HIS_BRANCH.HEIN_MEDI_ORG_CODE
+    'doi_tuong_bn'   => ['BHYT'],        // HIS_PATIENT_TYPE.PATIENT_TYPE_CODE
+    'doi_tuong_tt'   => ['BHYT'],        // lọc từng dòng dịch vụ (XML2/XML3)
+    'dien_dieu_tri'  => [],              // HIS_TREATMENT_TYPE.TREATMENT_TYPE_CODE; rỗng = tất cả
+    'thu_muc'        => 'D:\XML\3176',
+    'thu_muc_tt'     => 'D:\XML\3176TT',
+    'thu_muc_thu'    => 'D:\XML\SinhXml3176Thu',
+],
+```
+
+Cấu hình ghi bằng **mã**, không dùng ID HIS; module tự đổi sang ID. Mã không tồn tại trong HIS thì lệnh
+báo lỗi cấu hình và dừng, không lặng lẽ thành "không lọc".
+
+## Đối chiếu bộ lọc với máy trạm HIS (bắt buộc trước khi bật)
+
+Giá trị trong khối mẫu chỉ là ví dụ. Phải khai **giống bộ lọc đồng bộ tự động đang đặt trên máy trạm HIS**
+(màn "Thiết lập đồng bộ" của plugin ExportXmlQD130). Khai hẹp hơn thì module không thay được HIS khi máy
+trạm ngừng.
+
+1. Mở màn "Thiết lập đồng bộ" trên máy trạm HIS, chép lại: cơ sở (branch), đối tượng bệnh nhân,
+   đối tượng thanh toán, diện điều trị.
+2. Đổi từng giá trị sang **mã** (cơ sở: `HIS_BRANCH.HEIN_MEDI_ORG_CODE`; đối tượng: `HIS_PATIENT_TYPE.PATIENT_TYPE_CODE`;
+   diện điều trị: `HIS_TREATMENT_TYPE.TREATMENT_TYPE_CODE`) rồi điền vào `co_so`, `doi_tuong_bn`, `doi_tuong_tt`,
+   `dien_dieu_tri`.
+3. Ghi lại ngày đối chiếu và người đối chiếu vào biên bản triển khai.
+
+## Cài dịch vụ
+
+`install_service.bat` đã có dịch vụ NSSM `QLBV SinhXml3176`, chạy `php artisan sinhxml3176:quet --lien-tuc`
+(tự thoát sau `--so-vong` vòng, NSSM tự khởi động lại). Chỉ cài khi đã qua bước đối chiếu bộ lọc và
+`enabled = true`. Cài riêng một dịch vụ:
+
+```bat
+nssm install "QLBV SinhXml3176" php.exe "<thư mục dự án>\artisan sinhxml3176:quet --lien-tuc"
+nssm set "QLBV SinhXml3176" AppDirectory <thư mục dự án>
+nssm set "QLBV SinhXml3176" AppExit Default Restart
+nssm set "QLBV SinhXml3176" AppRestartDelay 10000
+nssm start "QLBV SinhXml3176"
+```
+
+Đợt 1 chỉ có XML1–XML3 nên lệnh **từ chối** ghi vào thư mục thật (`thu_muc`, `thu_muc_tt`) khi
+`ghi_thu_muc_that = true` mà chưa đủ 14 bảng; mọi tệp chỉ vào `thu_muc_thu`.
+
+## Lưu ý vận hành
+
+- **PHP phải 64-bit.** Mốc quét là số nguyên 14 chữ số (`yyyyMMddHHmmss`); PHP 32-bit tràn số.
+- **Chỉ chạy đúng MỘT bản dịch vụ.** Việc cập nhật mốc không nguyên tử; khoá lượt chỉ chống chồng lượt
+  trong cùng một tiến trình, không thay cho việc chạy một bản.
+- **Tệp mồ côi:** nếu CSDL qlbv lỗi ngay sau khi ghi tệp, tệp đó không được ghi nhận. Lượt sau hồ sơ được
+  sinh lại với tên mới (dấu thời gian khác); tiền giám định giữ bản cuối cùng.
+- **Lỗi IO** (đĩa đầy, thư mục không ghi được) dừng lượt; mốc đứng yên cho tới khi sửa xong. Xem log.
+- **`is_delete` NULL trên Oracle** làm loại hồ sơ khỏi điều kiện lọc. Kiểm một lần khi triển khai:
+  `select count(*) from v_his_treatment_12 where is_delete is null`. Kết quả khác 0 thì phải xử lý trước khi bật.
+- **`ghi_thu_muc_that`** chỉ nhận boolean `true` (chuỗi `"true"`, `1`, `"1"` đều không tính).
+- **Module từ chối ghi thư mục thật** cho tới khi đủ 14 bảng. Đợt 1 chỉ có XML1–XML3.
+- **Mỗi hồ sơ thường được nạp và kiểm 2 lần**, 3 lần nếu bật thông tuyến. Tải hàng đợi kiểm của tiền giám
+  định tăng tương ứng.
+- **Bản nào vào sau cũng có thể bị gửi cổng.** Nếu tiền giám định đang bật xuất, ký, gửi
+  (`export_xml3176_enabled`, `exportable_tt`) thì bản nào nạp sau cũng đi tiếp, kể cả bản do module sinh.
+  Bật hay tắt các công tắc đó là việc của module tiền giám định.
+- **Bản của module có thể bị bản HIS ghi đè.** Module sinh ngay khi có ngày thanh toán, còn HIS thường sinh
+  muộn hơn, sau khi duyệt giám định. Vì vậy trong vận hành bình thường, bản HIS (còn lỗi DLL) thường là bản
+  cuối cùng. Module phát huy tác dụng khi HIS không sinh được.
+
+## Quy trình nghiệm thu
+
+1. Chọn một ngày có đủ loại hồ sơ. Trong ngày đó, chủ dự án đổi thư mục lưu của HIS sang một thư mục phụ để
+   giữ file gốc, rồi tự chép file sang thư mục quét.
+2. Cho module sinh lại toàn bộ hồ sơ ngày đó vào `thu_muc_thu` (lệnh chạy bù
+   `php artisan sinhxml3176:quet --tu-ngay=<ngày> --den-ngay=<ngày>`).
+3. So từng trường:
+
+   ```
+   php artisan sinhxml3176:so-sanh --his=<thư mục phụ của HIS> --qlbv=D:\XML\SinhXml3176Thu --ra=D:\so-sanh.csv
+   ```
+
+   - Ghép hồ sơ theo `MA_LK` của XML1. Khoá dòng: XML1 `MA_LK`; XML2 `MA_LK|MA_THUOC|NGAY_YL`;
+     XML3 `MA_LK|MA_DICH_VU|MA_VAT_TU|NGAY_YL`. Khoá trùng trong một bên thì thêm hậu tố `#1`, `#2`.
+   - Một thư mục có nhiều tệp cùng `MA_LK` (sinh lại) thì lấy tệp mới nhất theo thời gian sửa tệp.
+   - Chuẩn hoá trước khi so: cắt khoảng trắng; số so theo giá trị (`15000` = `15000.00`); thẻ rỗng = thiếu thẻ.
+   - CSV (UTF-8 có BOM, mở bằng Excel) gồm `ma_lk, bang, khoa_dong, truong, gia_tri_his, gia_tri_qlbv`;
+     dòng chỉ có một bên có `truong` là `chi_co_his` hoặc `chi_co_qlbv`.
+4. **Đạt** khi mọi chỗ lệch thuộc một trong hai loại:
+   - lỗi DLL đã liệt kê trong `docs/hisnguonmo-xml3176-anh-xa.md`;
+   - quy tắc cố ý khác HIS, ghi trong bảng "Khác biệt với HIS" dưới đây.
+
+   Chỗ lệch nào ngoài hai loại đó là lỗi của module.
+5. Nạp thử một lô tệp vào tiền giám định ở môi trường test. Lô phải nạp được hết và chuỗi kiểm tra chạy bình thường.
+
+## Khác biệt với HIS
+
+Trạng thái: **đã sửa** = module cố ý làm khác DLL; **cần xác nhận** = đang giữ như DLL hoặc chưa chắc căn cứ,
+chờ chủ dự án/đối chiếu dữ liệu thật. `[AX]:n` là mục n trong `docs/hisnguonmo-xml3176-anh-xa.md`.
+
+Quy tắc chung cho cả ba bảng: trường tiền luôn 2 chữ số thập phân (`15000.00`; DLL in `G27`, giữ scale decimal);
+hồ sơ không dựng được một bảng mà theo điều kiện phải có thì bị **loại cả hồ sơ** với lý do rõ ràng
+(`LoiDungBang`), không ném lỗi làm hỏng lượt.
+
+### XML1 (tổng hợp)
+
+| Bảng/trường | HIS làm gì | Module làm gì | Căn cứ | Trạng thái |
+|---|---|---|---|---|
+| XML1 HO_TEN, DIA_CHI | Không cắt | Cắt theo ký tự UTF-8, tối đa 255 / 1024 | [AX]:296, QĐ130 bảng 1 | đã sửa |
+| XML1 MA_BENH_KT | 12 mã đầu, không giới hạn ký tự | 12 mã đầu, tối đa 100 ký tự; bỏ các mã cuối không vừa, không cắt đôi một mã | [AX]:296, QĐ130 | đã sửa |
+| XML1 MA_BENH_YHCT | Bản 3176 thêm nguyên chuỗi `TRADITIONAL_ICD_CODE` (không tách) | Tách cả hai trường theo `;`, distinct, lấy 13 mã đầu, tối đa 255 ký tự (cắt ở ranh giới mã). Không loại mã trùng ICD_CODE | [AX]:296, [AX]:311 | đã sửa |
+| XML1 độ dài các trường còn lại (CHAN_DOAN_*, LY_DO_*, PP_DIEU_TRI, GHI_CHU, MA_PTTT_QT, MA_KHOA, mã đơn lẻ…) | Không cắt | Không cắt (mã đơn lẻ cắt ra thành mã sai) | [AX]:296 | cần xác nhận |
+| XML1 CHAN_DOAN_RV | `ICD_NAME + ";" + ICD_TEXT`, luôn có `;` | Bỏ `;` và khoảng trắng hai đầu mỗi phần, chỉ nối khi cả hai khác rỗng | [AX]:297 | đã sửa |
+| XML1 SO_CCCD, DIEN_THOAI, MA_KHOA, MA_DOITUONG_KCB, GIAY_CHUYEN_TUYEN, MA_TAI_NAN, loginname (phó) GĐ (toán tử `??`) | `??` gặp chuỗi rỗng thì không rơi sang giá trị sau | Chuỗi rỗng/khoảng trắng coi như null | [AX]:298 | đã sửa |
+| XML1 ICD chính/phụ không có trong danh mục | Không vỡ, coi như không lao/COVID | Giữ như DLL; riêng dòng danh mục có `ICD_CODE` null (DLL vỡ) thì module không vỡ | [AX]:300 | đã sửa (chỉ ca ICD_CODE null) |
+| XML1 HEIN_MEDI_ORG_CODE 1 ký tự | `Substring(0,2)` vỡ | `substr` an toàn | [AX]:301 | đã sửa |
+| XML1 PTA chính không có số thẻ (nhánh TT) | `StartsWith("HN")` trên null vỡ | Coi như chuỗi rỗng | [AX]:302 | đã sửa |
+| XML1 SO_NGAY_DTRI_OPTION=1, TREATMENT_DAY_COUNT null | `.Value` vỡ | Loại hồ sơ (`LoiDungBang`) | [AX]:303 | đã sửa |
+| XML1 IN_TIME/ngày sinh thiếu; OUT_TIME thiếu khi tính SO_NGAY_DTRI | Vỡ, hoặc dùng `DateTime.Now` | Loại hồ sơ có mô tả | [AX]:300–304 | đã sửa |
+| XML1 MA_THE_BHYT, MA_DKBD, GT_THE_TU, GT_THE_DEN | Mỗi danh sách bỏ phần tử rỗng riêng nên lệch hàng | Theo từng thẻ, giữ vị trí, phần tử thiếu để rỗng (`01929;`); rỗng hết thì rơi về PTA chính như DLL | [AX]:305 | đã sửa |
+| XML1 DU_PHONG | `HEIGHT.ToString()` không làm tròn | Làm tròn 2 chữ số, bỏ số 0 thừa | [AX]:314 | đã sửa |
+| XML1 MA_TTDV | IS_3176: luôn DIPLOMA, bỏ qua key | Key `MA_TTDV_FROM_PROFILE_XML` có giá trị: đi trọn nhánh 130 (chứa `1` → mã BHXH của (phó) GĐ, không có loginname → REPRESENTATIVE_HEIN_CODE; không chứa `1` → REPRESENTATIVE_HEIN_CODE). Key rỗng: DIPLOMA | spec 5.6 | đã sửa |
+| XML1 MA_LOAI_KCB khám sức khỏe | `"100"` | Giữ `"100"`; bộ mã QĐ130 là 01–10, mã đúng cho KSK chưa rõ | [AX]:308–309 | cần xác nhận |
+| XML1 MA_LOAI_KCB mãn tính, không có dịch vụ | `"10"` | Giữ `"10"` | [AX]:308 | cần xác nhận |
+| XML1 SO_NGAY_DTRI | NGAY_RA − NGAY_VAO + 1 theo ngày, từ IN_TIME | Giữ như DLL | [AX]:313 | cần xác nhận |
+| XML1 danh mục tuyến nơi ĐKBĐ | `ListHeinMediOrg`, rỗng thì dùng danh mục cứng `ConfigHeinMediOrg` | Chỉ dùng `his_medi_org`; không thấy thì tuyến rỗng | brief Task 8 | cần xác nhận (HIS rỗng danh mục thì kết quả khác DLL) |
+| XML1 định dạng tiền (T_*), T_BHTT_GDV thẻ CA/QN/CY | `G27` (`15000`, `0`) | `%.2f` (`15000.00`, `0.00`) | đồng nhất 3 bảng | đã sửa |
+
+### XML2 (thuốc)
+
+| Bảng/trường | HIS làm gì | Module làm gì | Căn cứ | Trạng thái |
+|---|---|---|---|---|
+| XML2 bộ lọc dòng (ID đối tượng BHYT) | `long.TryParse(mã BHYT)` dùng làm ID | Đổi mã sang ID qua danh mục; không có thì loại hồ sơ | [AX]:586 | đã sửa |
+| XML2 toàn bảng khi thiếu danh mục đối tượng thanh toán của dòng | NullReference, mất cả XML2 | Loại hồ sơ với mô tả "không có danh mục đối tượng thanh toán ID …" | [AX]:588 | đã sửa |
+| XML2 SO_LUONG, DON_GIA khi có quy đổi | `AMOUNT*CONVERT_RATIO`, `ORIGINAL_PRICE*(1+VAT)/CONVERT_RATIO`, không làm tròn | Làm tròn 3 chữ số | [AX]:589, QĐ130 | đã sửa |
+| XML2 SO_LUONG khi tách dòng có quy đổi | `used.AMOUNT` (không nhân tỷ lệ) | `round(used.AMOUNT*CONVERT_RATIO, 3)` | [AX]:590 | đã sửa |
+| XML2 THANH_TIEN_BV/BH khi có quy đổi | Nhân SL×DG chưa làm tròn | Nhân SL×DG đã làm tròn 3, khớp giá trị xuất ra (có thể lệch vài đồng lẻ so với tiền HIS) | [AX]:591 | đã sửa |
+| XML2 TYLE_TT_BH, THANH_TIEN_BH, T_BHTT… (tỷ lệ lẻ) | TYLE làm tròn banker 0 chữ số (32,5→32) | **Phán quyết:** tỷ lệ xuất ra là **số nguyên làm tròn half-up** (32,5→33, 12,5→13); mọi phép tính tiền dùng đúng tỷ lệ đã xuất (BH = SL×DG×TYLE_TT_BH/100). DLL: banker's rounding | [AX]:594; định dạng QĐ130; tệp tự nhất quán | đã sửa |
+| XML2 PHAM_VI | Xét `TYLE>0` trên tỷ lệ banker | Xét trên tỷ lệ nguyên half-up đã xuất (tỷ lệ < 0,5% → 0 → "2", BH = 0) | hệ quả [AX]:594 | đã sửa |
+| XML2 T_NGUONKHAC (cân đối) | `BV − tổng + NK`, có thể âm | Âm thì NK = 0, `T_BNCCT = max(0, BV−BHTT−BNTT)`, các trường NK con = 0 | [AX]:596 | đã sửa |
+| XML2 đọc cấu hình | 4 key từ HIS_CONFIG, 5 key từ cache máy trạm | Cả 9 key qua `HisDanhMuc::config()` (dòng có id lớn nhất; value rỗng thì lấy default_value) | [AX]:598 | đã sửa |
+| XML2 TT_THAU | `MEDICINE_TT_THAU==""` vẫn dùng, ra rỗng | Rỗng/khoảng trắng coi như null, ghép EXTRA;PACKAGE;GROUP;YEAR | [AX]:602 | đã sửa |
+| XML2 PHAM_VI "3" | `HEIN_CARD_NUMBER.Substring(0,2)` vỡ khi thẻ 1 ký tự | `substr` an toàn | chống lỗi | đã sửa |
+| XML2 NGAY_YL | `INTRUCTION_TIME.ToString().Substring(0,12)` vỡ nếu ngắn | Loại hồ sơ có mô tả | Review Focus | đã sửa |
+| XML2 trường tiền (định dạng) | `G27` (`15000`, `0`) | Luôn 2 chữ số (`15000.00`) | QĐ130 | đã sửa |
+| XML2 LIEU_DUNG `[X …/ngày]` | `decimal.ToString()` theo culture máy (vi-VN có thể ra `2,5`) | Dấu chấm, bỏ số 0 thừa | không rõ culture máy trạm | cần xác nhận |
+| XML2 LIEU_DUNG khi `USE_TIME` không hợp lệ | Ném lỗi (mất cả bảng) | Rơi về `TDL_INTRUCTION_DATE` | review | đã sửa |
+| XML2 LIEU_DUNG (đơn vị) | AMOUNT và SERVICE_UNIT_NAME gốc, có thể lệch DON_VI_TINH đã quy đổi | Giữ như DLL | [AX]:592 | cần xác nhận |
+| XML2 NGAY_TH_YL_OPTION | Phút lẻ (phân số) | Phân số phút được làm tròn | review | cần xác nhận |
+| XML2 so mã đối tượng (patient-type code) | So chuỗi nguyên văn | So sau khi `trim` | review | đã sửa |
+| XML2 độ dài trường | Không cắt | Không cắt | QĐ130 (chưa chắc giới hạn từng trường) | cần xác nhận |
+| XML2 MA_DICH_VU `_GT` | Cần danh sách PTTT khác rỗng kể cả khi `MEDICINE_IS_ANAESTHESIA=1` | Giữ như DLL | [AX]:599 | cần xác nhận |
+| XML2 MA_NHOM | Không xét OLD_HST_BHYT_CODE | Giữ như DLL | [AX]:600 | cần xác nhận |
+| XML2 bước "BNCCT < 1 đồng → 0" | Chênh đúng 1 thì giữ nguyên | Giữ như DLL | [AX]:595 | cần xác nhận |
+| XML2 MUC_HUONG | `HEIN_RATIO*100`, không làm tròn | Giữ (bỏ nhiễu float bằng round 6) | QĐ130 | cần xác nhận |
+
+### XML3 (DVKT + VTYT)
+
+| Bảng/trường | HIS làm gì | Module làm gì | Căn cứ | Trạng thái |
+|---|---|---|---|---|
+| XML3 chọn dòng giá 0 | Nhánh B lấy hết, key `LAY_CA_DVU_0_DONG` vô tác dụng | Dòng đã thực hiện có PRICE=0 bị bỏ, trừ khi key = `1`; PRICE<0 luôn bị bỏ. Dòng `_TB` không xét giá | [AX]:605 | đã sửa |
+| XML3 dòng BHYT có giá nhưng HEIN=0 và NK=0 | Nhánh C/D (chết) định loại | Không áp (DVKT ngoài phạm vi vẫn phải có trong XML3 với PHAM_VI=2) | [AX]:605 | cần xác nhận |
+| XML3 ID đối tượng BHYT | `Convert.ToInt64(mã)`, vỡ cả XML3 | Đổi mã sang ID qua danh mục; null thì loại hồ sơ | [AX]:606 | đã sửa |
+| XML3 thiếu danh mục đối tượng của dòng | NullReference, mất cả XML3 | Loại hồ sơ (có ID dịch vụ trong mô tả) | [AX]:607 | đã sửa |
+| XML3 NGAY_KQ giường cuối chưa có giờ ra | `long.Parse(""+"00")` vỡ cả XML3 | Rơi về `OUT_TIME`; vẫn rỗng hoặc ngày không hợp lệ thì loại hồ sơ | [AX]:608 | đã sửa |
+| XML3 THANH_TIEN_BH VTYT | `SL*DG_BH`, bỏ qua TYLE_BH | `round(SL*DG_BH*TYLE_DV/100*TYLE_BH/100, 2)` | [AX]:609 | đã sửa |
+| XML3 T_BHTT VTYT | Giá trị tạm hoặc VIR, không theo BH mới | `round(BH*HEIN_RATIO, 2)`; chỉ thay bằng `VIR_TOTAL_HEIN_PRICE` khi VIR **thấp hơn** quá 1 đồng (HIS đã áp trần); khi đó BNCCT ≤ `VIR_TOTAL_PATIENT_PRICE_BHYT`, phần còn lại vào BNTT | [AX]:611 | cần xác nhận (DLL lấy VIR cả khi VIR cao hơn) |
+| XML3 T_BNCCT VTYT | x = max(0, BH−BHTT−NK), y = VIR_TOTAL_PATIENT_PRICE_BHYT; \|x−y\|>1 thì lấy y | Ngoài trần: giữ x. Trong trần: lấy min(x, y) | [AX]:611 | cần xác nhận |
+| XML3 T_NGUONKHAC_* con | Gán từ NK cũ, lệch tổng sau chặn âm | Gán từ NK cuối cùng | [AX]:612 | đã sửa |
+| XML3 T_NGUONKHAC dòng `_TB` | `SL*OTHER_SOURCE_PRICE` dù BV=0 | 0 | [AX]:613 | đã sửa |
+| XML3 cân đối DVKT | `BNTT=(BV−BH−NK<=0)?0:BV−BH`, tổng có thể ≠ BV | BNTT = BV−BHTT−BNCCT−NK (số dư), chặn âm; BHTT>BV thì loại hồ sơ | [AX]:615 | cần xác nhận (XML2 chỉnh NK, XML3 giữ NK và chỉnh BNTT) |
+| XML3 TYLE_TT_DV / TYLE_TT_BH | Banker 0 chữ số | **Half-up số nguyên**; tiền dùng đúng tỷ lệ đã xuất | [AX]:616 | đã sửa |
+| XML3 TYLE_TT_BH VTYT stent | Ép 100 cả khi dòng không BHYT | Chỉ ép khi dòng là BHYT | [AX]:610 | đã sửa |
+| XML3 MA_DICH_VU `_GT`/`_TB` | Loại 7/22 kiểm `_GT` lần hai sau `_TB` → `X_GT_TB_GT` | `_GT` tính một lần rồi mới thêm `_TB` | [AX]:474 | đã sửa |
+| XML3 TT_THAU VTYT | `MATERIAL_TT_THAU==""` vẫn dùng; thừa `;` cuối | Rỗng/khoảng trắng coi như null; ghép các phần khác rỗng bằng `;` | [AX]:622–623 | đã sửa |
+| XML3 bỏ trùng | Không | Bỏ trùng theo `sere_serv.id`, giữ dòng đầu | [AX]:624 | đã sửa |
+| XML3 NGUOI_THUC_HIEN giường | Chỉ DIPLOMA | Không ai có DIPLOMA thì lấy CCCD của người đầu tiên có | QĐ3176 | đã sửa |
+| XML3 DON_GIA_BV từ VIR_PRICE | Không làm tròn | Làm tròn 3 chữ số; BV tính từ chính giá trị này | QĐ130 | đã sửa |
+| XML3 T_TRANTT stent, ORIGINAL_PRICE=0 | Chia cho 0, vỡ | Dùng CONFIG_HEIN_LIMIT_PRICE | chống lỗi | đã sửa |
+| XML3 trường tiền (định dạng) | `G27` | `%.2f` | đồng nhất | đã sửa |
+| XML3 độ dài trường | Không cắt | Không cắt | QĐ130 (chưa chắc giới hạn từng trường) | cần xác nhận |
+
+Quy tắc làm tròn tỷ lệ (áp cho XML2 và XML3): tỷ lệ xuất ra là số nguyên làm tròn half-up, tiền tính
+theo đúng tỷ lệ đã xuất. DLL dùng `Math.Round` mặc định (banker's rounding, 32,5 → 32).

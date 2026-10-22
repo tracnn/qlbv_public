@@ -96,6 +96,17 @@ set LARAVEL_PATH=%~dp0
 %NSSM_PATH%\nssm set "QLBV CtdtImport" AppExit Default Restart
 %NSSM_PATH%\nssm set "QLBV CtdtImport" AppRestartDelay 10000
 
+:: Tao dich vu cho sinhxml3176:quet (sinh XML3176 truc tiep tu HIS, nguon du phong cho HIS desktop)
+::
+:: CHI CHAY DUNG MOT BAN. Mac dinh module tat (organization.sinh_xml3176.enabled=false) va chi ghi
+:: vao thu_muc_thu; chi ghi thu muc that khi ghi_thu_muc_that=true VA du 14 bang. Xem
+:: docs/trien-khai-sinh-xml3176.md truoc khi cai.
+:: AppExit Default Restart la BAT BUOC: lenh tu thoat sau --so-vong vong de nssm dung lai tien trinh sach.
+%NSSM_PATH%\nssm install "QLBV SinhXml3176" %PHP_PATH% "%LARAVEL_PATH%artisan sinhxml3176:quet --lien-tuc"
+%NSSM_PATH%\nssm set "QLBV SinhXml3176" AppDirectory %LARAVEL_PATH%
+%NSSM_PATH%\nssm set "QLBV SinhXml3176" AppExit Default Restart
+%NSSM_PATH%\nssm set "QLBV SinhXml3176" AppRestartDelay 10000
+
 :: Tạo dịch vụ cho kiemtraylenh:scan (Kiểm tra sai sót y lệnh - quét HIS định kỳ)
 %NSSM_PATH%\nssm install "QLBV KiemTraYLenh" %PHP_PATH% "%LARAVEL_PATH%artisan kiemtraylenh:scan"
 %NSSM_PATH%\nssm set "QLBV KiemTraYLenh" AppDirectory %LARAVEL_PATH%
@@ -121,6 +132,7 @@ set LARAVEL_PATH=%~dp0
 %NSSM_PATH%\nssm start "QLBV JobExportXml3176"
 %NSSM_PATH%\nssm start "QLBV JobSignXml3176"
 %NSSM_PATH%\nssm start "QLBV JobXuatTepXml3176"
+%NSSM_PATH%\nssm start "QLBV SinhXml3176"
 %NSSM_PATH%\nssm start "QLBV KiemTraYLenh"
 %NSSM_PATH%\nssm start "QLBV KiemTraYLenhNotify"
 
