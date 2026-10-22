@@ -217,7 +217,8 @@ ghi và `OUT_TIME` (ví dụ so `MODIFY_TIME` với `OUT_TIME` của hồ sơ ra
 ## Khác biệt với HIS
 
 Trạng thái: **đã sửa** = module cố ý làm khác DLL; **cần xác nhận** = đang giữ như DLL hoặc chưa chắc căn cứ,
-chờ chủ dự án/đối chiếu dữ liệu thật. `[AX]:n` là mục n trong `docs/hisnguonmo-xml3176-anh-xa.md`.
+chờ chủ dự án/đối chiếu dữ liệu thật; **giữ như DLL** = bản HIS đang chạy cho kết quả khác mã DLL dịch ngược,
+chủ dự án đã quyết module theo mã DLL (lệch này là chấp nhận khi so file). `[AX]:n` là mục n trong `docs/hisnguonmo-xml3176-anh-xa.md`.
 
 Quy tắc chung cho cả ba bảng: trường tiền luôn 2 chữ số thập phân (`15000.00`; DLL in `G27`, giữ scale decimal);
 hồ sơ không dựng được một bảng mà theo điều kiện phải có thì bị **loại cả hồ sơ** với lý do rõ ràng
@@ -302,6 +303,7 @@ hồ sơ không dựng được một bảng mà theo điều kiện phải có 
 | XML3 T_TRANTT stent, ORIGINAL_PRICE=0 | Chia cho 0, vỡ | Dùng CONFIG_HEIN_LIMIT_PRICE | chống lỗi | đã sửa |
 | XML3 trường tiền (định dạng) | `G27` | `%.2f` | đồng nhất | đã sửa |
 | XML3 độ dài trường | Không cắt | Không cắt | QĐ130 (chưa chắc giới hạn từng trường) | cần xác nhận |
+| XML3 NGAY_TH_YL khi START_TIME sớm hơn giờ y lệnh | Bản HIS đang chạy ghi giờ y lệnh: không để giờ thực hiện sớm hơn NGAY_YL. Đo trên hồ sơ 000007130131: 10/10 dòng loại 18 có START_TIME < y lệnh thì ghi y lệnh, 1.113 dòng START_TIME > y lệnh thì ghi START_TIME. Mã DLL dịch ngược (`Xml3Processor.cs:866`) không có bước chặn này. | Theo đúng mã DLL: USED_TIME → BEGIN_TIME → START_TIME/USE_TIME/giờ y lệnh theo `NGAY_TH_YL_OPTION`, nên ra START_TIME (sớm hơn NGAY_YL vài phút) | Chủ dự án quyết giữ như mã DLL (22/10/2026) | giữ như DLL |
 
 Quy tắc làm tròn tỷ lệ (áp cho XML2 và XML3): tỷ lệ xuất ra là số nguyên làm tròn half-up, tiền tính
 theo đúng tỷ lệ đã xuất. DLL dùng `Math.Round` mặc định (banker's rounding, 32,5 → 32).
