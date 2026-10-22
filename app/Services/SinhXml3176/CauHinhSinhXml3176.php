@@ -54,9 +54,13 @@ class CauHinhSinhXml3176
         return (bool) $this->khoi['thong_tuyen'];
     }
 
+    /**
+     * Cong tac duy nhat cho ghi vao thu muc tien giam dinh quet that: chi bat khi gia tri dung la true
+     * (chuoi 'false', 1, '1' ... deu coi nhu tat).
+     */
     public function ghiThuMucThat()
     {
-        return (bool) $this->khoi['ghi_thu_muc_that'];
+        return $this->khoi['ghi_thu_muc_that'] === true;
     }
 
     public function ketNoiHis()

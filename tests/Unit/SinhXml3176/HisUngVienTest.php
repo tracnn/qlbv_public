@@ -165,4 +165,62 @@ class HisUngVienTest extends TestCase
         $this->assertSame(['CON'], $this->maLo($h->layLo(CauHinhSinhXml3176::CHINH_THUC, 0, 10)));
         $this->assertSame([], $this->maLo($h->layLo(CauHinhSinhXml3176::THONG_TUYEN, 0, 10)));
     }
+    public function test_lay_lo_keyset_cung_moc_theo_id()
+    {
+        $t = 20260103000000;
+        foreach (['K1', 'K2', 'K3', 'K4', 'K5'] as $ma) {
+            $this->them(['treatment_code' => $ma, 'fee_lock_time' => $t, 'out_time' => $t]);
+        }
+        $this->them(['treatment_code' => 'SAU', 'fee_lock_time' => $t + 1, 'out_time' => $t]);
+        $this->them(['treatment_code' => 'TRUOC', 'fee_lock_time' => $t - 1, 'out_time' => $t]);
+
+        $h = $this->datCauHinh([]);
+        $h->doiMa();
+
+        // sauId = 0: lay ca dong dung bang moc
+        $trang1 = $h->layLo(CauHinhSinhXml3176::CHINH_THUC, $t, 2);
+        $this->assertSame(['K1', 'K2'], $this->maLo($trang1));
+
+        $trang2 = $h->layLo(CauHinhSinhXml3176::CHINH_THUC, $t, 2, (int) $trang1[1]->id);
+        $this->assertSame(['K3', 'K4'], $this->maLo($trang2));
+
+        $trang3 = $h->layLo(CauHinhSinhXml3176::CHINH_THUC, $t, 2, (int) $trang2[1]->id);
+        $this->assertSame(['K5', 'SAU'], $this->maLo($trang3));
+
+        $trang4 = $h->layLo(CauHinhSinhXml3176::CHINH_THUC, (int) $trang3[1]->fee_lock_time, 2, (int) $trang3[1]->id);
+        $this->assertSame([], $this->maLo($trang4));
+    }
+
+    public function test_lay_lo_keyset_thong_tuyen_va_den_moc()
+    {
+        $this->them(['treatment_code' => 'T1', 'out_time' => 20260103000000]);
+        $this->them(['treatment_code' => 'T2', 'out_time' => 20260103000000]);
+        $this->them(['treatment_code' => 'T3', 'out_time' => 20260104000000]);
+        $this->them(['treatment_code' => 'T4', 'out_time' => 20260105000000]);
+
+        $h = $this->datCauHinh([]);
+        $h->doiMa();
+
+        $tt = CauHinhSinhXml3176::THONG_TUYEN;
+        $dau = $h->layLo($tt, 20260103000000, 1);
+        $this->assertSame(['T1'], $this->maLo($dau));
+        $this->assertSame(['T2', 'T3'], $this->maLo($h->layLo($tt, 20260103000000, 10, (int) $dau[0]->id, 20260104000000)));
+    }
+
+    public function test_lay_theo_ma_va_ma_cskcb()
+    {
+        $t = 20260103000000;
+        $this->them(['treatment_code' => 'M1', 'fee_lock_time' => $t, 'out_time' => $t]);
+        $this->them(['treatment_code' => 'M2', 'branch_id' => 2, 'fee_lock_time' => $t, 'out_time' => $t]);
+        $this->them(['treatment_code' => 'M3', 'fee_lock_time' => $t, 'out_time' => $t, 'is_delete' => 1]);
+
+        $h = $this->datCauHinh(['co_so' => ['01001']]);
+        $h->doiMa();
+
+        $this->assertSame(['M1'], $this->maLo($h->layTheoMa(CauHinhSinhXml3176::CHINH_THUC, ['M1', 'M2', 'M3', 'KHONG'])));
+        $this->assertSame([], $h->layTheoMa(CauHinhSinhXml3176::CHINH_THUC, []));
+        $this->assertSame('01002', $h->maCskcb(2));
+        $this->assertNull($h->maCskcb(99));
+        $this->assertNull($h->maCskcb(null));
+    }
 }

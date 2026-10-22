@@ -69,4 +69,17 @@ class CauHinhSinhXml3176Test extends TestCase
         $this->assertSame(60, $ch->nghiGiay());
         $this->assertSame(10, $ch->chongLanPhut());
     }
+    /** @test */
+    public function test_ghi_thu_muc_that_chi_bat_khi_dung_true()
+    {
+        foreach (['false', 1, '1', 'true', 'yes', [true]] as $gt) {
+            config(['organization.sinh_xml3176' => ['enabled' => true, 'ghi_thu_muc_that' => $gt, 'thu_muc' => 'X']]);
+            $ch = CauHinhSinhXml3176::tuConfig();
+            $this->assertFalse($ch->ghiThuMucThat(), 'Gia tri ' . var_export($gt, true) . ' khong duoc bat ghi that');
+            $this->assertSame('D:\XML\SinhXml3176Thu', $ch->thuMuc('chinh_thuc'));
+        }
+
+        config(['organization.sinh_xml3176' => ['enabled' => true, 'ghi_thu_muc_that' => true]]);
+        $this->assertTrue(CauHinhSinhXml3176::tuConfig()->ghiThuMucThat());
+    }
 }
