@@ -298,7 +298,7 @@ Key lõi liên quan: `MOS.HIS_PATIENT_TYPE.PATIENT_TYPE_CODE.BHYT` (lọc dịch
 19. `??` không bắt chuỗi rỗng: SO_CCCD (3176), DIEN_THOAI, MA_KHOA, MA_DOITUONG_KCB (`HEIN_PATIENT_TYPE_CODE=""` → xuất rỗng thay vì mã tự suy), GIAY_CHUYEN_TUYEN.
 20. MA_DOITUONG_KCB: nếu `HEIN_PATIENT_TYPE_CODE` khác null thì toàn bộ logic suy mã (X1P:256–353) bị bỏ. Nhánh `RIGHT_ROUTE_CODE=="DT"` không khớp điều kiện con nào → giữ "9".
 21. Ngoại lệ làm mất cả XML1 (rồi lõi bỏ qua im lặng, xem mục 8):
-    - `data.TotalIcdData.FirstOrDefault(...)` không kiểm null (X1P:266, 271).
+    - `data.TotalIcdData.FirstOrDefault(o => o.ICD_CODE.Equals(...))` (X1P:266) vỡ khi danh mục có dòng `ICD_CODE` null. Kết quả `FirstOrDefault` rỗng thì **không** vỡ, vì X1P:285 và X1P:293 đã kiểm `val3/val4 != null`: ICD không có trong danh mục được coi là không lao, không COVID.
     - `PatientTypeAlter.HEIN_MEDI_ORG_CODE.Substring(0,2)` khi mã dài 1 ký tự (X1P:241).
     - `PatientTypeAlter.HEIN_CARD_NUMBER.StartsWith("HN")` khi MA_THE_BHYT lấy từ PTA khác còn PTA chính không có số thẻ (X1P:312).
     - `TREATMENT_DAY_COUNT.Value` khi `SO_NGAY_DTRI_OPTION=1` mà giá trị null (X1P:642); ép `(long)` cắt phần thập phân.

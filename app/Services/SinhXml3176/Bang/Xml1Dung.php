@@ -17,14 +17,17 @@ use App\Services\SinhXml3176\Nguon\HisDanhMuc;
  * Sua loi DLL [AX]:297: CHAN_DOAN_RV ghep ICD_NAME, ICD_TEXT (da bo ';' o hai dau) bang ';' chi khi ca hai khac rong.
  * Sua loi DLL [AX]:298: chuoi rong/khoang trang coi nhu null trong cac chuoi '??': SO_CCCD, DIEN_THOAI, MA_KHOA,
  *   MA_DOITUONG_KCB, GIAY_CHUYEN_TUYEN, MA_TAI_NAN, loginname (pho) giam doc cua MA_TTDV.
- * Sua loi DLL [AX]:300-304: khong nem loi null; thieu IN_TIME, ngay sinh, OUT_TIME (khi can tinh SO_NGAY_DTRI) hoac
- *   TREATMENT_DAY_COUNT (SO_NGAY_DTRI_OPTION=1) => nem LoiDungBang co mo ta (xem them DoiTuongKcbXml1).
+ * Sua loi DLL [AX]:301-304: khong nem loi null; thieu IN_TIME, ngay sinh, OUT_TIME (khi can tinh SO_NGAY_DTRI) hoac
+ *   TREATMENT_DAY_COUNT (SO_NGAY_DTRI_OPTION=1) => nem LoiDungBang co mo ta. ICD khong co trong danh muc: giu DLL
+ *   (coi nhu null, xem DoiTuongKcbXml1).
  * Sua loi DLL [AX]:305: MA_THE_BHYT, MA_DKBD, GT_THE_TU, GT_THE_DEN dung theo tung the (PTA co so the), vi tri thu i
  *   cua bon truong cung mot the; gia tri thieu de rong (vd "01929;"). PTA khong co so the khong chiem vi tri.
  * Sua loi DLL [AX]:311: MA_BENH_YHCT tach ca TRADITIONAL_ICD_CODE theo ';' (DLL them nguyen chuoi), bo ma trung, toi da 13.
  * Sua loi DLL [AX]:314: DU_PHONG (chieu cao) lam tron 2 chu so.
- * MA_TTDV (spec 5.6): key MA_TTDV_FROM_PROFILE_XML chua "1" (lua chon benh vien) => nhanh 130 cua DLL (ma BHXH cua
- *   (pho) giam doc; khong co loginname => REPRESENTATIVE_HEIN_CODE); khong thi DIPLOMA cua (pho) giam doc (khoi 3176).
+ * MA_TTDV (spec 5.6): key MA_TTDV_FROM_PROFILE_XML co gia tri (lua chon benh vien) => tron nhanh 130 cua DLL (chua "1":
+ *   ma BHXH cua (pho) giam doc, khong co loginname => REPRESENTATIVE_HEIN_CODE; khong chua "1": REPRESENTATIVE_HEIN_CODE);
+ *   key rong => DIPLOMA cua (pho) giam doc (khoi 3176).
+ * CHAN_DOAN_VAO: PROVISIONAL_DIAGNOSIS null/"" (IsNullOrEmpty nhu DLL) => ICD_NAME.
  * Can xac nhan [AX]:308-309: MA_LOAI_KCB "100" cho KSK giu nhu DLL. Can xac nhan [AX]:313: SO_NGAY_DTRI giu nhu DLL
  *   (NGAY_RA - NGAY_VAO + 1 theo ngay).
  * Dinh dang: tien "%.2f" nhu Xml2Dung (DLL G27); can nang/chieu cao bo so 0 thua.
@@ -129,7 +132,7 @@ class Xml1Dung implements DungBang
             'LY_DO_VV' => GiaTriBang::chu($hs->hospitalization_reason),
             'LY_DO_VNT' => GiaTriBang::chu($hs->hospitalize_reason_name),
             'MA_LY_DO_VNT' => GiaTriBang::chu($hs->hospitalize_reason_code),
-            'CHAN_DOAN_VAO' => GiaTriBang::dauTien([$hs->provisional_diagnosis, $hs->icd_name]),
+            'CHAN_DOAN_VAO' => GiaTriBang::co($hs->provisional_diagnosis) ? (string) $hs->provisional_diagnosis : GiaTriBang::chu($hs->icd_name),
             'CHAN_DOAN_RV' => GiaTriBang::noi([trim(GiaTriBang::chu($hs->icd_name), " ;"), trim(GiaTriBang::chu($hs->icd_text), " ;")]),
             'MA_BENH_CHINH' => GiaTriBang::chu($hs->icd_code),
             'MA_BENH_KT' => GiaTriBang::catMa(array_slice(GiaTriBang::tachMa($hs->icd_sub_code), 0, 12), self::DAI_MA_BENH_KT),
@@ -487,8 +490,8 @@ class Xml1Dung implements DungBang
     {
         $login = GiaTriBang::dauTien([$hs->hosp_subs_director_loginname, $hs->hospital_director_loginname]);
         $nv = $login !== '' ? $dm->nhanVien($login) : null;
-        if (in_array('1', preg_split('/[,; ]+/', $cauHinh, -1, PREG_SPLIT_NO_EMPTY), true)) {
-            if ($login === '') {
+        if ($cauHinh !== '') {
+            if (!in_array('1', preg_split('/[,; ]+/', $cauHinh, -1, PREG_SPLIT_NO_EMPTY), true) || $login === '') {
                 return GiaTriBang::chu($hs->representative_hein_code);
             }
 

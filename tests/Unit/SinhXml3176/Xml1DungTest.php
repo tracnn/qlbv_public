@@ -215,16 +215,16 @@ class Xml1DungTest extends TestCase
 
     public function test_thieu_icd_danh_muc_nem_loi_dung_bang_khong_nem_null()
     {
-        // Can suy MA_DOITUONG_KCB (HEIN_PATIENT_TYPE_CODE rong), dung tuyen, ICD chinh khong co trong danh muc
+        // ICD chinh khong co trong danh muc: DLL coi nhu null (X1P:285, 293), khong nem, van suy ma
         $d = $this->du(['hein_patient_type_code' => '', 'icd_code' => 'Z99', 'hein_medi_org_code' => '01001'],
             [$this->the(['hein_medi_org_code' => '01929'])]);
-        try {
-            $this->dung($d);
-            $this->fail('Phai nem LoiDungBang');
-        } catch (LoiDungBang $e) {
-            $this->assertSame('XML1', $e->loaiBang());
-            $this->assertContains('Z99', $e->getMessage());
-        }
+        $this->assertSame('9', $this->dung($d)['MA_DOITUONG_KCB']);
+
+        // Danh muc co dong ICD_CODE null khong lam vo
+        DB::connection('HISPro')->table('his_icd')->insert(['id' => 3, 'icd_code' => null, 'icd_name' => 'Rong', 'is_latent_tuberculosis' => 1]);
+        $d = $this->du(['hein_patient_type_code' => '', 'icd_code' => 'Z99', 'icd_sub_code' => 'Z98', 'hein_medi_org_code' => '01001'],
+            [$this->the(['hein_medi_org_code' => '01929'])]);
+        $this->assertSame('9', $this->dung($d)['MA_DOITUONG_KCB']);
 
         // Thieu thoi gian vao vien
         try {
@@ -288,6 +288,17 @@ class Xml1DungTest extends TestCase
         $this->assertSame('BHXH-PGD', $this->dung($d, $this->dm([Xml1Dung::KEY_MA_TTDV => '2,1']))['MA_TTDV']);
     }
 
+    public function test_ma_ttdv_key_khac_1_lay_representative_hein_code()
+    {
+        $d = $this->du(['hosp_subs_director_loginname' => 'pgd', 'representative_hein_code' => 'RHC']);
+        $this->assertSame('RHC', $this->dung($d, $this->dm([Xml1Dung::KEY_MA_TTDV => '2']))['MA_TTDV']);
+
+        // Key chua "1" ma khong co loginname giam doc => REPRESENTATIVE_HEIN_CODE
+        DB::connection('HISPro')->table('his_config')->delete();
+        $d = $this->du(['representative_hein_code' => 'RHC']);
+        $this->assertSame('RHC', $this->dung($d, $this->dm([Xml1Dung::KEY_MA_TTDV => '1']))['MA_TTDV']);
+    }
+
     public function test_doi_tuong_kcb_suy_khi_ma_rong()
     {
         // HEIN_PATIENT_TYPE_CODE rong => suy; dung noi DKBD => 1.1
@@ -303,6 +314,31 @@ class Xml1DungTest extends TestCase
         $r = $this->dung($this->du(['hein_patient_type_code' => null],
             [$this->the(['right_route_code' => 'TT', 'hein_card_number' => 'HN4010000000002'])]));
         $this->assertSame('3.6', $r['MA_DOITUONG_KCB']);
+    }
+
+    public function test_doi_tuong_kcb_cac_nhanh_con_lai()
+    {
+        $suy = function (array $hs, array $the) {
+            $hs = array_merge(['hein_patient_type_code' => null, 'hein_medi_org_code' => '01001'], $hs);
+
+            return $this->dung($this->du($hs, [$this->the($the)]))['MA_DOITUONG_KCB'];
+        };
+        $this->assertSame('2', $suy([], ['right_route_type_code' => 'CC']));
+        $this->assertSame('1.2', $suy([], ['has_birth_certificate' => 'C']));
+        $this->assertSame('1.4', $suy([], ['has_working_letter' => 1]));
+        $this->assertSame('9', $suy([], []));
+        $this->assertSame('3.1', $suy(['hein_level_code' => '1', 'tdl_treatment_type_id' => 3], ['right_route_code' => 'TT']));
+        $this->assertSame('1.15', $suy(['hein_level_code' => '2', 'tdl_treatment_type_id' => 3], ['right_route_code' => 'TT']));
+        $this->assertSame('3.3', $suy(['hein_level_code' => '3', 'hein_medi_org_code' => '02001'], ['right_route_code' => 'TT']));
+        $this->assertSame('7.1', $suy(['tdl_treatment_type_id' => 6], ['right_route_code' => null]));
+        // Nhu DLL: DKBD "" (khac null) == ma co so "" => dung tuyen 1.1
+        $this->assertSame('1.1', $suy(['hein_medi_org_code' => ''], ['hein_medi_org_code' => '']));
+    }
+
+    public function test_chan_doan_vao_so_bo_rong_lay_icd_name()
+    {
+        $this->assertSame('Viem phoi', $this->dung($this->du(['provisional_diagnosis' => '']))['CHAN_DOAN_VAO']);
+        $this->assertSame('Sot', $this->dung($this->du(['provisional_diagnosis' => 'Sot']))['CHAN_DOAN_VAO']);
     }
 
     public function test_loai_kcb_noi_tru_va_so_ngay()

@@ -8,10 +8,14 @@ use App\Services\SinhXml3176\Nguon\HisDanhMuc;
  * XML1 #31 MA_DOITUONG_KCB tu suy khi HEIN_PATIENT_TYPE_CODE rong (DLL X1P:238-353). Giu nguyen thu tu
  * nhanh cua DLL; chi sua cac cho DLL nem loi.
  *
- * Sua loi DLL [AX]:300: ICD chinh khong co trong danh muc HIS => nem LoiDungBang co mo ta (DLL FirstOrDefault
- *   khong kiem null, va khong biet duoc ma do co phai lao/COVID). ICD phu khong co trong danh muc thi bo qua nhu DLL.
+ * Giu DLL (X1P:285, 293 co kiem val3/val4 != null): ICD chinh/phu khong co trong danh muc coi nhu null (khong lao
+ *   tiem an, khong COVID), van suy tiep. Sua loi DLL [AX]:300: dong danh muc co ICD_CODE null khong lam vo
+ *   o.ICD_CODE.Equals (HisDanhMuc da bo ma rong khi danh chi muc).
  * Sua loi DLL [AX]:301: HEIN_MEDI_ORG_CODE 1 ky tu khong lam vo Substring(0,2).
  * Sua loi DLL [AX]:302: PTA chinh khong co so the (the lay tu PTA khac) khong lam vo StartsWith("HN").
+ * Tuyen noi DKBD chi tra HisDanhMuc::noiKcb (his_medi_org), khong co danh muc cung ConfigHeinMediOrg du phong
+ *   khi danh muc HIS rong - can xac nhan.
+ * So khop DKBD == ma co so nhu DLL: PTA HEIN_MEDI_ORG_CODE "" (khac null) va ma co so rong van tinh la khop.
  * Giu DLL: ICD phu chon ban ghi danh muc dau tien (ID nho nhat) co ma nam trong ICD_SUB_CODE, chi xet co cua ban ghi do.
  */
 class DoiTuongKcbXml1
@@ -23,7 +27,6 @@ class DoiTuongKcbXml1
      * @param object $pta dien dieu tri chinh
      * @param string $maThe MA_THE_BHYT da dung
      * @return string
-     * @throws LoiDungBang
      */
     public static function suy($hs, $pta, $maThe, HisDanhMuc $dm)
     {
@@ -70,7 +73,7 @@ class DoiTuongKcbXml1
             if (self::co($icd, 'is_covid') || self::co($icdPhu, 'is_covid')) {
                 return '1.1';
             }
-            if ((GiaTriBang::co($pta->hein_medi_org_code) && $dkbd === $maCs)
+            if (($pta->hein_medi_org_code !== null && (string) $pta->hein_medi_org_code === $maCs)
                 || self::chapNhan($dkbd, $hs->accept_hein_medi_org_code) || self::chapNhan($dkbd, $hs->sys_medi_org_code)) {
                 return '1.1';
             }
@@ -114,16 +117,12 @@ class DoiTuongKcbXml1
         return $loaiDt === 6 ? '7.1' : '9';
     }
 
-    /** [ICD chinh, ICD phu dau tien trong danh muc] (X1P:262-272). */
+    /** [ICD chinh, ICD phu dau tien trong danh muc] (X1P:262-272); khong co => null nhu DLL. */
     private static function icd($hs, HisDanhMuc $dm)
     {
         $icd = null;
         if (GiaTriBang::co($hs->icd_code)) {
             $icd = $dm->icd($hs->icd_code);
-            if ($icd === null) {
-                throw new LoiDungBang(self::LOAI, 'Mã bệnh chính ' . $hs->icd_code
-                    . ' không có trong danh mục ICD của HIS, không xác định được MA_DOITUONG_KCB');
-            }
         }
         $phu = null;
         foreach (GiaTriBang::tachMa($hs->icd_sub_code) as $ma) {
