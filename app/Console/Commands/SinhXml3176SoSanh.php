@@ -73,6 +73,21 @@ class SinhXml3176SoSanh extends Command
             }
         }
 
+        $this->coBang = [];
+        if ($csdl) {
+            if (!$this->coBang('xml3176_informations')) {
+                $this->error('Khong co bang xml3176_informations trong CSDL (chua migrate?): khong co gi de so voi --csdl.');
+
+                return 1;
+            }
+            foreach ($dsBang as $b) {
+                $ten = 'xml3176_' . strtolower($b) . 's';
+                if (!$this->coBang($ten)) {
+                    $this->warn('Khong co bang ' . $ten . ': coi nhu 0 dong o phia HIS (csdl).');
+                }
+            }
+        }
+
         $ra = (string) $this->option('ra');
         if ($ra === '') {
             $ra = storage_path('app/sinhxml3176_so_sanh_' . date('YmdHis') . '.csv');
@@ -255,12 +270,20 @@ class SinhXml3176SoSanh extends Command
         return $kq;
     }
 
-    private function coHoSoCsdl($maLk)
+    /** @var array ten bang => co/khong, nho trong mot lan chay */
+    private $coBang = [];
+
+    private function coBang($ten)
     {
-        if (!Schema::hasTable('xml3176_informations')) {
-            return false;
+        if (!isset($this->coBang[$ten])) {
+            $this->coBang[$ten] = Schema::hasTable($ten);
         }
 
+        return $this->coBang[$ten];
+    }
+
+    private function coHoSoCsdl($maLk)
+    {
         return DB::table('xml3176_informations')->where('ma_lk', $maLk)->exists();
     }
 
@@ -275,7 +298,7 @@ class SinhXml3176SoSanh extends Command
         $kq = [];
         foreach ($dsBang as $loai) {
             $bang = 'xml3176_' . strtolower($loai) . 's';
-            if (!Schema::hasTable($bang)) {
+            if (!$this->coBang($bang)) {
                 $kq[$loai] = [];
                 continue;
             }

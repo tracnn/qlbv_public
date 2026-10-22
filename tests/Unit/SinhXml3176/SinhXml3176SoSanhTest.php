@@ -356,4 +356,33 @@ class SinhXml3176SoSanhTest extends TestCase
         $this->assertSame(1, Artisan::call('sinhxml3176:so-sanh', ['--his' => $this->his, '--csdl' => true, '--qlbv' => $this->qlbv, '--ra' => $this->csv]));
         $this->assertSame(1, Artisan::call('sinhxml3176:so-sanh', ['--qlbv' => $this->qlbv, '--ra' => $this->csv]));
     }
+
+    public function test_csdl_thieu_bang_informations_thi_loi()
+    {
+        config([
+            'database.default' => 'mysql',
+            'database.connections.mysql' => ['driver' => 'sqlite', 'database' => ':memory:', 'prefix' => ''],
+        ]);
+        \Illuminate\Support\Facades\DB::purge('mysql');
+        $this->ghi($this->qlbv, 'QLBV_1.xml', ['XML1' => XmlCon::chuoi('XML1', $this->xml1('LK1'))]);
+
+        $ma = Artisan::call('sinhxml3176:so-sanh', ['--csdl' => true, '--qlbv' => $this->qlbv, '--ra' => $this->csv]);
+        $this->assertSame(1, $ma);
+        $this->assertContains('xml3176_informations', Artisan::output());
+    }
+
+    public function test_csdl_thieu_bang_xml4s_canh_bao_dung_mot_lan()
+    {
+        $this->dungCsdl();
+        \Illuminate\Support\Facades\Schema::connection('mysql')->drop('xml3176_xml4s');
+        $db = \Illuminate\Support\Facades\DB::connection('mysql');
+        $db->table('xml3176_informations')->insert([['ma_lk' => 'LK1'], ['ma_lk' => 'LK2']]);
+        foreach (['LK1', 'LK2'] as $lk) {
+            $this->ghi($this->qlbv, 'QLBV_' . $lk . '.xml', ['XML4' => XmlCon::chuoi('XML4', $this->xml4($lk, [[]]))]);
+        }
+
+        $ma = Artisan::call('sinhxml3176:so-sanh', ['--csdl' => true, '--qlbv' => $this->qlbv, '--ra' => $this->csv, '--bang' => 'XML4']);
+        $this->assertSame(0, $ma);
+        $this->assertSame(1, substr_count(Artisan::output(), 'xml3176_xml4s'));
+    }
 }
