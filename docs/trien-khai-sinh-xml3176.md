@@ -82,8 +82,8 @@ Giá trị `null` trong khối cấu hình không đè lên mặc định; riên
     'thong_tuyen'    => false,
     'ket_noi_his'    => 'HISPro',
     'co_so'          => ['01929'],       // HIS_BRANCH.HEIN_MEDI_ORG_CODE
-    'doi_tuong_bn'   => ['BHYT'],        // HIS_PATIENT_TYPE.PATIENT_TYPE_CODE
-    'doi_tuong_tt'   => ['BHYT'],        // lọc từng dòng dịch vụ (XML2/XML3)
+    'doi_tuong_bn'   => ['01'],          // HIS_PATIENT_TYPE.PATIENT_TYPE_CODE (01 = BHYT; ghi MÃ, không ghi tên)
+    'doi_tuong_tt'   => ['01'],          // lọc từng dòng dịch vụ (XML2/XML3)
     'dien_dieu_tri'  => [],              // HIS_TREATMENT_TYPE.TREATMENT_TYPE_CODE; rỗng = tất cả
     'thu_muc'        => 'D:\XML\3176',
     'thu_muc_tt'     => 'D:\XML\3176TT',

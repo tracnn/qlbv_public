@@ -195,4 +195,31 @@ return [
         // patient_type_code KHÔNG tính vào thống kê KCB của dashboard Home (KSK đoàn/từ thiện...)
         'exclude_patient_type_codes' => [], // 03 = KSK
     ],
+
+    /*
+     * Module sinh hồ sơ XML3176 trực tiếp từ HIS (nguồn dự phòng thay HIS desktop).
+     * Chi tiết: docs/trien-khai-sinh-xml3176.md. Thiếu cả khối này thì module tắt.
+     *
+     * Mẫu dưới đây để CHẠY THỬ: ghi_thu_muc_that = false nên chỉ ghi vào thu_muc_thu,
+     * tiền giám định không nạp gì. Lần đầu bật, module chỉ đặt mốc = thời điểm hiện tại;
+     * hồ sơ cũ lấy bằng: php artisan sinhxml3176:quet --ma-dieu-tri=<ma> (hoặc --tu-ngay/--den-ngay).
+     *
+     * Bộ lọc ghi bằng MÃ (không phải ID HIS); mã không có trong HIS thì lệnh báo lỗi và dừng.
+     * Mảng rỗng = không lọc. Khi triển khai thật phải khai GIỐNG màn "Thiết lập đồng bộ"
+     * của plugin ExportXmlQD130 trên máy trạm HIS.
+     */
+    'sinh_xml3176' => [
+        'enabled'          => true,   // false = tắt module
+        'ghi_thu_muc_that' => false,  // CHỈ nhận đúng true; Đợt 1 (XML1-3) lệnh từ chối ghi thư mục thật dù có bật
+        'thong_tuyen'      => false,  // true = sinh thêm bản thông tuyến (đã ra viện, chưa có ngày thanh toán)
+        'ket_noi_his'      => 'HISPro', // tên connection Oracle HIS trong config/database.php, không được rỗng
+        'co_so'            => [],     // mã cơ sở HIS_BRANCH.HEIN_MEDI_ORG_CODE, ví dụ ['01929']
+        'doi_tuong_bn'     => [],     // MÃ đối tượng bệnh nhân (HIS_PATIENT_TYPE.PATIENT_TYPE_CODE), ví dụ ['01'] = BHYT; không ghi tên 'BHYT'
+        'doi_tuong_tt'     => [],     // MÃ đối tượng thanh toán của từng dòng dịch vụ, ví dụ ['01']
+        'dien_dieu_tri'    => [],     // mã diện điều trị (HIS_TREATMENT_TYPE.TREATMENT_TYPE_CODE)
+        'thu_muc'          => 'D:\XML\3176',            // thư mục tiền giám định quét (bản chính thức)
+        'thu_muc_tt'       => 'D:\XML\3176TT',          // thư mục tiền giám định quét (bản thông tuyến)
+        'thu_muc_thu'      => 'D:\XML\SinhXml3176Thu',  // thư mục thử; PHẢI nằm ngoài thu_muc và thu_muc_tt
+        'thu_muc_tam'      => null,   // null = <cha của thư mục đích>\.sinh_xml3176_tmp; phải cùng ổ đĩa, ngoài cây quét
+    ],
 ];

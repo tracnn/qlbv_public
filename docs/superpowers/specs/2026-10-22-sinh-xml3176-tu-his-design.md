@@ -238,8 +238,8 @@ Khối mới trong `config/organization.php`:
     'thong_tuyen'    => false,
     'ket_noi_his'    => 'HISPro',
     'co_so'          => ['01929'],
-    'doi_tuong_bn'   => ['BHYT'],
-    'doi_tuong_tt'   => ['BHYT'],
+    'doi_tuong_bn'   => ['01'], // mã HIS (01 = BHYT), không phải tên
+    'doi_tuong_tt'   => ['01'],
     'dien_dieu_tri'  => [],
     'thu_muc'        => 'D:\XML\3176',
     'thu_muc_tt'     => 'D:\XML\3176TT',
