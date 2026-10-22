@@ -24,6 +24,11 @@ class HisDanhMuc
     const COT_LOAI_VAT_TU = ['id', 'service_id', 'is_reusable'];
     /** XML3 10 MA_XANG_DAU: V_HIS_SERVICE(ID).PETROLEUM_CODE - chi nap dich vu co ma */
     const COT_DICH_VU = ['id', 'petroleum_code'];
+    /**
+     * XML4 MA_CHI_SO/TEN_CHI_SO khoi B, C [AX]:668-669: V_HIS_SERVICE.SUIM_INDEX_CODE/NAME (HIS_SERVICE chi co
+     * SUIM_INDEX_ID). Chi nap dich vu co suim_index_id: dich vu khong gan chi so co SUIM_INDEX_* null, nhu khong tim thay.
+     */
+    const COT_DICH_VU_CHI_SO = ['id', 'suim_index_id', 'suim_index_code', 'suim_index_name'];
     /** XML1 57 MA_KHOA (MA_KHOA_OPTION=1): BHYT_CODE cac khoa trong DEPARTMENT_IDS */
     const COT_KHOA = ['id', 'department_code', 'bhyt_code'];
 
@@ -36,6 +41,7 @@ class HisDanhMuc
     private $loaiVatTu = [];
     private $maXangDau = [];
     private $khoa = [];
+    private $dichVuChiSo = [];
 
     private function __construct()
     {
@@ -53,6 +59,7 @@ class HisDanhMuc
             'his_material_type' => ['cot' => self::COT_LOAI_VAT_TU, 'cot_loc' => []],
             'his_service'       => ['cot' => self::COT_DICH_VU, 'cot_loc' => []],
             'his_department'    => ['cot' => self::COT_KHOA, 'cot_loc' => []],
+            'v_his_service'     => ['cot' => self::COT_DICH_VU_CHI_SO, 'cot_loc' => []],
         ];
     }
 
@@ -83,6 +90,8 @@ class HisDanhMuc
             $dm->maXangDau[(string) (int) $d->id] = (string) $d->petroleum_code;
         }
         $dm->khoa = self::theoKhoa($db->table('his_department')->select(self::COT_KHOA)->orderBy('id')->get(), 'id');
+        $dm->dichVuChiSo = self::theoKhoa($db->table('v_his_service')->select(self::COT_DICH_VU_CHI_SO)
+            ->whereNotNull('suim_index_id')->orderBy('id')->get(), 'id');
 
         return $dm;
     }
@@ -130,6 +139,19 @@ class HisDanhMuc
     public function khoa($id)
     {
         return $this->lay($this->khoa, (int) $id);
+    }
+
+    /**
+     * Dong V_HIS_SERVICE (suim_index_code, suim_index_name) theo SERVICE_ID cua dong dich vu;
+     * dich vu khong gan chi so hoac khong co => null.
+     */
+    public function dichVuDanhMuc($serviceId)
+    {
+        if ($serviceId === null || $serviceId === '') {
+            return null;
+        }
+
+        return $this->lay($this->dichVuChiSo, (int) $serviceId);
     }
 
     /**

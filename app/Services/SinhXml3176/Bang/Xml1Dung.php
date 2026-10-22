@@ -351,7 +351,10 @@ class Xml1Dung implements DungBang
         return $ma;
     }
 
-    /** Bo loc dich vu cua loi (HoSoProcessor L:325-355, list2) - XML1 chi dung cho MA_LOAI_KCB man tinh. */
+    /**
+     * Bo loc dich vu cua loi (HoSoProcessor L:325-355, list2) - XML1 chi dung cho MA_LOAI_KCB man tinh.
+     * Dieu kien dau (loai BHYT, AMOUNT, IS_EXPEND) o day; dieu kien tien/thuc hien o DichVuTongHop::thoa.
+     */
     private function dichVuLoi(array $dichVu, $idBhyt)
     {
         $ra = [];
@@ -361,15 +364,7 @@ class Xml1Dung implements DungBang
             if (!$coLoai || (float) $o->amount <= 0 || (int) $o->is_expend === 1) {
                 continue;
             }
-            $lay = (int) $o->is_no_execute === 1;
-            if ((int) $o->is_no_execute !== 1 && (float) $o->price > 0) {
-                $hein = $o->vir_total_hein_price;
-                $lay = $idBhyt === null || (int) $o->patient_type_id !== $idBhyt
-                    || (GiaTriBang::co($hein) && (float) $hein > 0)
-                    || (GiaTriBang::co($hein) && (float) $hein == 0 && GiaTriBang::co($o->other_source_price) && (float) $o->other_source_price > 0)
-                    || $lay;
-            }
-            if ($lay) {
+            if (DichVuTongHop::thoa($o, $idBhyt)) {
                 $ra[] = $o;
             }
         }

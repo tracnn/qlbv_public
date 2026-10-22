@@ -44,6 +44,26 @@ class PhongBiTest extends TestCase
         $this->assertStringStartsWith('<?xml version="1.0" encoding="utf-8"?>', $xml1);
     }
 
+    public function test_xml4_xml5_cau_truc_importer_doc_duoc()
+    {
+        $xml4 = XmlCon::chuoi('XML4', [['MA_LK' => '1', 'STT' => 1, 'MA_CHI_SO' => 'GLU', 'TEN_CHI_SO' => 'Glu', 'GIA_TRI' => '5,5', 'MO_TA' => "a]]>b", 'KET_LUAN' => 'ok', 'NGAY_KQ' => '202610010930']]);
+        $xml5 = XmlCon::chuoi('XML5', [['MA_LK' => '1', 'STT' => 1, 'DIEN_BIEN_LS' => "x]]>y <z>", 'GIAI_DOAN_BENH' => 'On', 'HOI_CHAN' => '', 'PHAU_THUAT' => 'PT', 'THOI_DIEM_DBLS' => '202610010900']]);
+
+        $a = simplexml_load_string($xml4);
+        $this->assertSame('CHITIEU_CHITIET_DICHVUCANLAMSANG', $a->getName());
+        $this->assertSame('a]]>b', (string) $a->DSACH_CHI_TIET_CLS->CHI_TIET_CLS->MO_TA);
+        $this->assertSame('GLU', (string) $a->DSACH_CHI_TIET_CLS->CHI_TIET_CLS->MA_CHI_SO);
+        $this->assertContains('<![CDATA[', $xml4);
+        $this->assertNotContains('<![CDATA[GLU', $xml4);
+        $b = simplexml_load_string($xml5);
+        $this->assertSame('CHITIEU_CHITIET_DIENBIENLAMSANG', $b->getName());
+        $this->assertSame('x]]>y <z>', (string) $b->DSACH_CHI_TIET_DIEN_BIEN_BENH->CHI_TIET_DIEN_BIEN_BENH->DIEN_BIEN_LS);
+        $this->assertSame('PT', (string) $b->DSACH_CHI_TIET_DIEN_BIEN_BENH->CHI_TIET_DIEN_BIEN_BENH->PHAU_THUAT);
+
+        $s = PhongBi::chuoi('01234', ['XML4' => $xml4, 'XML5' => $xml5], new \DateTime('2026-10-22'));
+        $this->assertCount(2, simplexml_load_string($s)->THONGTINHOSO->DANHSACHHOSO->HOSO->FILEHOSO);
+    }
+
     public function test_sap_thu_tu_theo_so_bang()
     {
         $s = PhongBi::chuoi('01234', ['XML3' => XmlCon::chuoi('XML3', [['MA_LK' => '1']]), 'XML1' => XmlCon::chuoi('XML1', [['MA_LK' => '1']])], new \DateTime('2026-10-22'));

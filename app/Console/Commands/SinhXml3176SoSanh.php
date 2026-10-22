@@ -3,27 +3,31 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 /**
- * Nghiem thu: so tung truong giua tep GIAMDINHHS do HIS sinh va tep do module sinh.
- * Chi doc tep, khong dung CSDL.
+ * Nghiem thu: so tung truong giua tep GIAMDINHHS do HIS sinh (hoac bang xml3176_* cua tien giam dinh, --csdl)
+ * va tep do module sinh. Voi --csdl chi `select` bang query builder theo ten bang; khong dung model/service tien giam dinh.
  *
  * - Mot thu muc co the co nhieu tep cung MA_LK (sinh lai): lay tep co thoi gian sua (mtime) moi nhat.
  * - Khoa dong: XML1 = MA_LK; XML2 = MA_LK|MA_THUOC|NGAY_YL; XML3 = MA_LK|MA_DICH_VU|MA_VAT_TU|NGAY_YL.
  *   Neu mot khoa xuat hien nhieu lan o mot ben thi them hau to #1, #2... cho moi lan xuat hien (o ca hai ben)
  *   de cac dong van ghep duoc theo thu tu.
- * - Chuan hoa truoc khi so: cat khoang trang; so thi so theo gia tri ("15000" == "15000.00");
- *   the rong == khong co the.
+ * - XML4 = MA_LK|MA_DICH_VU|MA_CHI_SO|NGAY_KQ; XML5 = MA_LK|THOI_DIEM_DBLS.
+ * - Chuan hoa truoc khi so: cat khoang trang; so thi so theo gia tri ("15000" == "15000.00", chi cat so 0 o phan
+ *   thap phan, "17000" != "17"); the rong == khong co the; rong == "0" chi o cot so (tien/so luong/ty le).
  */
 class SinhXml3176SoSanh extends Command
 {
     protected $signature = 'sinhxml3176:so-sanh
-        {--his= : Thu muc tep HIS goc}
+        {--his= : Thu muc tep HIS goc (loai tru voi --csdl)}
+        {--csdl : Phia HIS lay tu bang xml3176_* cua CSDL tien giam dinh (chi doc)}
         {--qlbv= : Thu muc tep module sinh}
         {--ra= : Tep CSV ket qua (mac dinh storage/app/sinhxml3176_so_sanh_<thoi gian>.csv)}
-        {--bang=XML1,XML2,XML3 : Cac bang can so}';
+        {--bang=XML1,XML2,XML3,XML4,XML5 : Cac bang can so}';
 
-    protected $description = 'So sanh tung truong giua tep GIAMDINHHS cua HIS va cua module sinh (chi doc tep). '
+    protected $description = 'So sanh tung truong giua tep GIAMDINHHS cua HIS va cua module sinh (chi doc tep; --csdl doc them cac bang tien giam dinh xml3176_* o che do chi doc). '
         . 'Nhieu tep cung MA_LK trong mot thu muc: lay tep moi nhat theo mtime. '
         . 'Khoa dong trung trong mot ben: them hau to #1, #2.';
 
@@ -32,14 +36,30 @@ class SinhXml3176SoSanh extends Command
         'XML1' => [null, ['MA_LK']],
         'XML2' => [['CHITIEU_CHITIET_THUOC', 'CHI_TIET_THUOC'], ['MA_LK', 'MA_THUOC', 'NGAY_YL']],
         'XML3' => [['CHITIEU_CHITIET_DVKT_VTYT', 'CHI_TIET_DVKT'], ['MA_LK', 'MA_DICH_VU', 'MA_VAT_TU', 'NGAY_YL']],
+        'XML4' => [['CHITIEU_CHITIET_DICHVUCANLAMSANG', 'CHI_TIET_CLS'], ['MA_LK', 'MA_DICH_VU', 'MA_CHI_SO', 'NGAY_KQ']],
+        'XML5' => [['CHITIEU_CHITIET_DIENBIENLAMSANG', 'CHI_TIET_DIEN_BIEN_BENH'], ['MA_LK', 'THOI_DIEM_DBLS']],
     ];
+
+    /** Cot bo qua khi doc bang tien giam dinh. */
+    private static $cotKyThuat = ['id', 'created_at', 'updated_at'];
 
     public function handle()
     {
         $his = (string) $this->option('his');
         $qlbv = (string) $this->option('qlbv');
-        if (!is_dir($his) || !is_dir($qlbv)) {
-            $this->error('Can --his va --qlbv tro toi thu muc co that.');
+        $csdl = (bool) $this->option('csdl');
+        if ($csdl && $his !== '') {
+            $this->error('--his va --csdl loai tru nhau.');
+
+            return 1;
+        }
+        if (!$csdl && !is_dir($his)) {
+            $this->error('Can mot trong hai: --his tro toi thu muc co that, hoac --csdl.');
+
+            return 1;
+        }
+        if (!is_dir($qlbv)) {
+            $this->error('Can --qlbv tro toi thu muc co that.');
 
             return 1;
         }
@@ -47,9 +67,24 @@ class SinhXml3176SoSanh extends Command
         $dsBang = array_values(array_filter(array_map('trim', explode(',', strtoupper((string) $this->option('bang'))))));
         foreach ($dsBang as $b) {
             if (!isset(self::$bang[$b])) {
-                $this->error('Chua ho tro bang ' . $b . ' (chi XML1, XML2, XML3).');
+                $this->error('Chua ho tro bang ' . $b . ' (chi XML1..XML5).');
 
                 return 1;
+            }
+        }
+
+        $this->coBang = [];
+        if ($csdl) {
+            if (!$this->coBang('xml3176_informations')) {
+                $this->error('Khong co bang xml3176_informations trong CSDL (chua migrate?): khong co gi de so voi --csdl.');
+
+                return 1;
+            }
+            foreach ($dsBang as $b) {
+                $ten = 'xml3176_' . strtolower($b) . 's';
+                if (!$this->coBang($ten)) {
+                    $this->warn('Khong co bang ' . $ten . ': coi nhu 0 dong o phia HIS (csdl).');
+                }
             }
         }
 
@@ -66,9 +101,11 @@ class SinhXml3176SoSanh extends Command
         fwrite($h, "\xEF\xBB\xBF");
         fputcsv($h, ['ma_lk', 'bang', 'khoa_dong', 'truong', 'gia_tri_his', 'gia_tri_qlbv']);
 
-        $chiMucHis = $this->chiMuc($his);
+        $chiMucHis = $csdl ? [] : $this->chiMuc($his);
         $chiMucQl = $this->chiMuc($qlbv);
-        $tatCa = array_unique(array_merge(array_keys($chiMucHis), array_keys($chiMucQl)));
+        $tatCa = $csdl
+            ? array_keys($chiMucQl)
+            : array_unique(array_merge(array_keys($chiMucHis), array_keys($chiMucQl)));
         sort($tatCa, SORT_STRING);
 
         $soLech = 0;
@@ -79,20 +116,29 @@ class SinhXml3176SoSanh extends Command
                 $soLech++;
                 continue;
             }
-            if (!isset($chiMucHis[$maLk])) {
-                fputcsv($h, [$maLk, 'XML1', $maLk, 'chi_co_qlbv', '', '']);
-                $soLech++;
-                continue;
+            $b = $this->dongTatCa($this->docTep($chiMucQl[$maLk]));
+            if ($csdl) {
+                if (!$this->coHoSoCsdl($maLk)) {
+                    fputcsv($h, [$maLk, 'XML1', $maLk, 'chi_co_qlbv', '', '']);
+                    $soLech++;
+                    continue;
+                }
+                $a = $this->docCsdl($maLk, $dsBang, $b);
+            } else {
+                if (!isset($chiMucHis[$maLk])) {
+                    fputcsv($h, [$maLk, 'XML1', $maLk, 'chi_co_qlbv', '', '']);
+                    $soLech++;
+                    continue;
+                }
+                $a = $this->dongTatCa($this->docTep($chiMucHis[$maLk]));
             }
-            $a = $this->docTep($chiMucHis[$maLk]);
-            $b = $this->docTep($chiMucQl[$maLk]);
             foreach ($dsBang as $loai) {
                 $soLech += $this->soBang($h, $maLk, $loai, $a, $b);
             }
         }
         fclose($h);
 
-        $this->info('Ho so HIS: ' . count($chiMucHis) . ', ho so module: ' . count($chiMucQl) . ', cho lech: ' . $soLech);
+        $this->info('Ho so HIS' . ($csdl ? ' (csdl)' : '') . ': ' . ($csdl ? 'theo --qlbv' : count($chiMucHis)) . ', ho so module: ' . count($chiMucQl) . ', cho lech: ' . $soLech);
         $this->info('Ket qua: ' . $ra);
 
         return 0;
@@ -211,11 +257,86 @@ class SinhXml3176SoSanh extends Command
         return $d;
     }
 
+    /** @return array loai => danh sach dong, tu map loai => chuoi XML con */
+    private function dongTatCa(array $xml)
+    {
+        $kq = [];
+        foreach ($xml as $loai => $chuoi) {
+            if (isset(self::$bang[$loai])) {
+                $kq[$loai] = $this->dong($loai, $chuoi);
+            }
+        }
+
+        return $kq;
+    }
+
+    /** @var array ten bang => co/khong, nho trong mot lan chay */
+    private $coBang = [];
+
+    private function coBang($ten)
+    {
+        if (!isset($this->coBang[$ten])) {
+            $this->coBang[$ten] = Schema::hasTable($ten);
+        }
+
+        return $this->coBang[$ten];
+    }
+
+    private function coHoSoCsdl($maLk)
+    {
+        return DB::table('xml3176_informations')->where('ma_lk', $maLk)->exists();
+    }
+
+    /**
+     * Phia HIS lay tu bang tien giam dinh: chi `select`, theo id; cot -> TEN THE VIET HOA;
+     * bo cot ky thuat va cot khong co trong dong cua module.
+     *
+     * @return array loai => danh sach dong
+     */
+    private function docCsdl($maLk, array $dsBang, array $b)
+    {
+        $kq = [];
+        foreach ($dsBang as $loai) {
+            $bang = 'xml3176_' . strtolower($loai) . 's';
+            if (!$this->coBang($bang)) {
+                $kq[$loai] = [];
+                continue;
+            }
+            $truong = null;
+            if (!empty($b[$loai])) {
+                $truong = [];
+                foreach ($b[$loai] as $d) {
+                    foreach (array_keys($d) as $t) {
+                        $truong[$t] = true;
+                    }
+                }
+            }
+            $dong = [];
+            foreach (DB::table($bang)->where('ma_lk', $maLk)->orderBy('id')->get() as $r) {
+                $d = [];
+                foreach ((array) $r as $cot => $giaTri) {
+                    if (in_array($cot, self::$cotKyThuat, true)) {
+                        continue;
+                    }
+                    $t = strtoupper($cot);
+                    if ($truong !== null && !isset($truong[$t])) {
+                        continue;
+                    }
+                    $d[$t] = $giaTri === null ? '' : (string) $giaTri;
+                }
+                $dong[] = $d;
+            }
+            $kq[$loai] = $dong;
+        }
+
+        return $kq;
+    }
+
     /** Ghi cac cho lech cua mot bang; tra ve so dong lech da ghi. */
     private function soBang($h, $maLk, $loai, array $a, array $b)
     {
-        $dongA = isset($a[$loai]) ? $this->dong($loai, $a[$loai]) : [];
-        $dongB = isset($b[$loai]) ? $this->dong($loai, $b[$loai]) : [];
+        $dongA = isset($a[$loai]) ? $a[$loai] : [];
+        $dongB = isset($b[$loai]) ? $b[$loai] : [];
         $khoaA = $this->danhKhoa($loai, $dongA);
         $khoaB = $this->danhKhoa($loai, $dongB);
         // khoa trung o mot ben thi danh so ca hai ben
@@ -246,7 +367,7 @@ class SinhXml3176SoSanh extends Command
             foreach (array_unique(array_merge(array_keys($mA[$khoa]), array_keys($mB[$khoa]))) as $t) {
                 $x = isset($mA[$khoa][$t]) ? trim($mA[$khoa][$t]) : '';
                 $y = isset($mB[$khoa][$t]) ? trim($mB[$khoa][$t]) : '';
-                if ($this->chuanHoa($x) !== $this->chuanHoa($y)) {
+                if (!$this->bang($x, $y, $this->laCotSo($t))) {
                     fputcsv($h, [$maLk, $loai, $khoa, $t, $x, $y]);
                     $n++;
                 }
@@ -286,14 +407,31 @@ class SinhXml3176SoSanh extends Command
         return $kq;
     }
 
-    /** So thi dua ve dang thap phan chuan ("15000.00" -> "15000"); khong dung float. Ma co so 0 dau giu nguyen. */
+    /** Cot so: tien, so luong, ty le... Chi o cot nay rong == 0. */
+    private function laCotSo($truong)
+    {
+        return (bool) preg_match('/^(T_|THANH_TIEN|DON_GIA|SO_LUONG|TYLE|MUC_HUONG|SO_NGAY|CAN_NANG)/', $truong);
+    }
+
+    private function bang($x, $y, $cotSo)
+    {
+        $x = $this->chuanHoa($x);
+        $y = $this->chuanHoa($y);
+        if ($x === $y) {
+            return true;
+        }
+
+        return $cotSo && in_array($x, ['', '0'], true) && in_array($y, ['', '0'], true);
+    }
+
+    /** So thi dua ve dang thap phan chuan ("15000.00" -> "15000"); chi cat so 0 sau dau thap phan; khong dung float. */
     private function chuanHoa($v)
     {
         if (preg_match('/^(-?)(0|[1-9][0-9]*)(?:\.([0-9]+))?$/', $v, $m)) {
             $le = isset($m[3]) ? rtrim($m[3], '0') : '';
             $so = $m[2] . ($le !== '' ? '.' . $le : '');
 
-            return ($so === '0' ? '' : $m[1]) . $so;
+            return $so === '0' ? '0' : $m[1] . $so;
         }
 
         return $v;

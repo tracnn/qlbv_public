@@ -65,6 +65,32 @@ và chưa xét theo cơ sở.
 
 Giới hạn của `HIS_EXP_MEDIMATE_USED` (kiểm `all_tab_columns` lần hai, 22/10/2026): bảng chỉ có 16 cột và **không có** `SERE_SERV_ID`, `MEDICINE_ID`, `MATERIAL_ID`. DLL khớp bản ghi dùng thuốc với dòng thuốc theo thứ tự EXP_MEST_MEDICINE_ID → EXP_MEST_MATERIAL_ID → SERE_SERV_ID → MEDICINE_ID → MATERIAL_ID, qua reflection, nên ba bước sau là nhánh chết trên HIS này. Task XML2 chỉ khớp được theo `EXP_MEST_MEDICINE_ID`, rồi `EXP_MEST_MATERIAL_ID`, đối chiếu với các cột cùng tên của `V_HIS_SERE_SERV_2`.
 
+### Nguồn cho XML4/XML5 (Đợt 2, xác minh 22/10/2026)
+
+Chỉ đọc metadata (`all_objects`, `all_tab_columns`, `all_ind_columns`, owner `HIS_RS`), không đọc dòng dữ liệu nào.
+Sau khi cài đặt, đã đối chiếu lại **mọi** cột trong các hằng `COT_*` của `HisNapHoSo` và `HisDanhMuc`
+(22 bảng/view) với `all_tab_columns`: không thiếu cột nào.
+
+| Dữ liệu | Đối tượng dùng | Loại | Số cột | Gắn hồ sơ qua | Ghi chú |
+|---|---|---|---|---|---|
+| Tờ điều trị (`theoDoi`) | `HIS_TRACKING` | TABLE | 56 | `TREATMENT_ID` (chỉ mục `HIS_TRACKING_INDEX1`) | `CONTENT` là **CLOB** (driver oci8 trả chuỗi); `CARE_INSTRUCTION`, `DISEASE_STAGE`, `CREATOR`, `MODIFIER`, `TRACKING_TIME` có. Sắp `TRACKING_TIME, ID`. Còn có `V_HIS_TRACKING` 71 cột, chưa cần |
+| Hội chẩn (`hoiChan`) | `HIS_DEBATE` | TABLE | 56 | `TREATMENT_ID` (`HIS_DEBATE_INDEX1`) | có `TRACKING_ID`, `CONCLUSION`. Còn có `V_HIS_DEBATE` 79 cột, chưa cần |
+| Chỉ số CĐHA/TDCN (`chiSoCdha`) | `V_HIS_SERE_SERV_SUIN` | VIEW | 19 | `TDL_TREATMENT_ID` (bảng gốc có `HIS_SERE_SERV_SUIN_INDEX1`) | view **có** `TDL_TREATMENT_ID`, nên gắn thẳng theo hồ sơ, không cần đi qua `SERE_SERV_ID`. Bảng gốc `HIS_SERE_SERV_SUIN` (15 cột) không có `SUIM_INDEX_CODE/NAME/UNIT_NAME` |
+| Mã/tên chỉ số theo dịch vụ | `V_HIS_SERVICE` | VIEW | 140 | `ID` = `SERVICE_ID` của dòng dịch vụ | `SUIM_INDEX_CODE`, `SUIM_INDEX_NAME` **chỉ có trên view**; `HIS_SERVICE` (114 cột) chỉ có `SUIM_INDEX_ID`. Danh mục chỉ nạp dịch vụ có `SUIM_INDEX_ID` (`HisDanhMuc::dichVuDanhMuc`) |
+
+Cột thêm vào các nguồn sẵn có, đều đã có trên đối tượng mà plan chỉ định:
+
+- `V_HIS_SERE_SERV_2`: `DESCRIPTION` (**CLOB**), `CONCLUDE`, `RESULT_READ_TIME`, `TRACKING_ID` và các trường khám
+  nhánh 2 XML5 (`HOSPITALIZATION_REASON`, `PATHOLOGICAL_PROCESS`, `PATHOLOGICAL_HISTORY`, `PATHOLOGICAL_HISTORY_FAMILY`,
+  `FULL_EXAM`, `PART_EXAM`, `SUBCLINICAL`, `TREATMENT_INSTRUCTION`). DLL đọc các trường khám thẳng trên
+  `V_HIS_SERE_SERV_2` (`ProcessDataExam(V_HIS_SERE_SERV_2 ...)`), view có đủ, nên **không** cần nạp `HIS_SERVICE_REQ`.
+  Các cột `SUBCLINICAL_RESULT_LOGINNAME`, `EXECUTE_LOGINNAME`, `END_TIME`, `FINISH_TIME`, `START_TIME`, `DHST_ID`,
+  `TDL_IS_MAIN_EXAM`, `TDL_SERVICE_TYPE_ID`, `TDL_INTRUCTION_TIME`, `SERVICE_ID` đã có từ Đợt 1.
+- `V_HIS_SERE_SERV_TEIN`: `BHYT_CODE`, `BHYT_NAME`, `ANTIBIOTIC_RESISTANCE_CODE`, `ANTIBIOTIC_RESISTANCE_NAME`, `VALUE`,
+  `TEST_INDEX_UNIT_NAME`, `RESULT_DESCRIPTION`.
+- `HIS_DHST`: `TRACKING_ID`, `PULSE`, `TEMPERATURE`, `BREATH_RATE`, `SPO2`, `BELLY`, `CHEST`, `URINE`,
+  `BLOOD_PRESSURE_MAX`, `BLOOD_PRESSURE_MIN`, `CAPILLARY_BLOOD_GLUCOSE` (`WEIGHT`, `HEIGHT` đã có).
+
 ## Cấu hình mẫu
 
 Khối mới trong `config/organization.php` (tệp này nằm trong `.gitignore`, mỗi máy một bản). Thiếu cả khối,
@@ -118,6 +144,12 @@ trạm ngừng.
    diện điều trị: `HIS_TREATMENT_TYPE.TREATMENT_TYPE_CODE`) rồi điền vào `co_so`, `doi_tuong_bn`, `doi_tuong_tt`,
    `dien_dieu_tri`.
 3. Ghi lại ngày đối chiếu và người đối chiếu vào biên bản triển khai.
+4. Key `HIS.QD_130_BYT.XML4.LAY_DVU_PTTT` (XML4 có lấy dịch vụ PTTT loại 7/22 hay không: `0` không, `1` chỉ dòng
+   không gắn tờ điều trị, `2` tất cả). Trong DLL key này đọc từ **cấu hình toàn cục của máy trạm**
+   (`HisConfigs.Get`); module **đọc từ `HIS_CONFIG`** qua `HisDanhMuc::config()` (dòng `IS_ACTIVE=1` có `ID` lớn nhất;
+   `VALUE` rỗng thì lấy `DEFAULT_VALUE`; không phải số thì coi là `0`). Đối chiếu giá trị trên máy trạm với
+   `HIS_CONFIG`; khác nhau thì sửa `HIS_CONFIG` cho khớp máy trạm. Ngày 22/10/2026 trên `HISPro`: `VALUE` và
+   `DEFAULT_VALUE` đều rỗng, nên module dùng `0`; XML4 của 3 hồ sơ nghiệm thu khớp HIS 100%.
 
 ## Cài dịch vụ
 
@@ -202,9 +234,16 @@ ghi và `OUT_TIME` (ví dụ so `MODIFY_TIME` với `OUT_TIME` của hồ sơ ra
    ```
 
    - Ghép hồ sơ theo `MA_LK` của XML1. Khoá dòng: XML1 `MA_LK`; XML2 `MA_LK|MA_THUOC|NGAY_YL`;
-     XML3 `MA_LK|MA_DICH_VU|MA_VAT_TU|NGAY_YL`. Khoá trùng trong một bên thì thêm hậu tố `#1`, `#2`.
+     XML3 `MA_LK|MA_DICH_VU|MA_VAT_TU|NGAY_YL`; XML4 `MA_LK|MA_DICH_VU|MA_CHI_SO|NGAY_KQ`;
+     XML5 `MA_LK|THOI_DIEM_DBLS`. Khoá trùng trong một bên thì thêm hậu tố `#1`, `#2` theo thứ tự dòng, nên hai dòng
+     cùng khoá mà thứ tự khác nhau hiện thành lệch "đổi chỗ" ở mọi trường (xem "Thứ tự dòng" bên dưới).
+   - Không có thư mục gốc của HIS thì so với tiền giám định: `--csdl` thay cho `--his` (chỉ `select` các bảng
+     `xml3176_*`, theo `MA_LK` của tệp module).
    - Một thư mục có nhiều tệp cùng `MA_LK` (sinh lại) thì lấy tệp mới nhất theo thời gian sửa tệp.
-   - Chuẩn hoá trước khi so: cắt khoảng trắng; số so theo giá trị (`15000` = `15000.00`); thẻ rỗng = thiếu thẻ.
+   - Chuẩn hoá trước khi so: cắt khoảng trắng; số so theo giá trị (`15000` = `15000.00`; chỉ bỏ số 0 thập phân, số nguyên giữ nguyên số 0 cuối); thẻ rỗng = thiếu thẻ.
+     Rỗng == `0` chỉ áp cho cột số (nhận theo tiền tố tên thẻ như `SinhXml3176SoSanh::laCotSo`: `T_`, `THANH_TIEN`, `DON_GIA`,
+     `SO_LUONG`, `TYLE`, `MUC_HUONG`, `SO_NGAY`, `CAN_NANG`); cột chữ thì `""` ≠ `"0"`. Điểm mù: `--csdl` chỉ kiểm các `MA_LK`
+     có trong tệp `--qlbv`.
    - CSV (UTF-8 có BOM, mở bằng Excel) gồm `ma_lk, bang, khoa_dong, truong, gia_tri_his, gia_tri_qlbv`;
      dòng chỉ có một bên có `truong` là `chi_co_his` hoặc `chi_co_qlbv`.
 4. **Đạt** khi mọi chỗ lệch thuộc một trong hai loại:
@@ -315,3 +354,100 @@ vậy). Các dòng XML3 về `_TB`/giá 0 bên dưới chỉ còn đúng khi m�
 
 Quy tắc làm tròn tỷ lệ (áp cho XML2 và XML3): tỷ lệ xuất ra là số nguyên làm tròn half-up, tiền tính
 theo đúng tỷ lệ đã xuất. DLL dùng `Math.Round` mặc định (banker's rounding, 32,5 → 32).
+
+### XML4 (chỉ số cận lâm sàng)
+
+| Bảng/trường | HIS làm gì | Module làm gì | Căn cứ | Trạng thái |
+|---|---|---|---|---|
+| XML4 MA_BS_DOC_KQ | `SUBCLINICAL_RESULT_LOGINNAME == ""` không rơi về `EXECUTE_LOGINNAME`, ra login thô | Chuỗi rỗng coi như null, tra DIPLOMA theo `EXECUTE_LOGINNAME` | [AX]:695 | đã sửa |
+| XML4 (cả bảng) | `MapADOToXml` dùng `&&`, danh sách null thì NullReference | Danh sách rỗng trả `[]` (không có `FILEHOSO` XML4), không ném lỗi | [AX]:699 | đã sửa |
+| XML4 MA_BS_DOC_KQ không có DIPLOMA | Ra login name thô | Giữ như DLL | [AX]:694 | cần xác nhận |
+| XML4 MA_CHI_SO/TEN_CHI_SO khối A | Mã (`BHYT_CODE` → `ANTIBIOTIC_RESISTANCE_CODE`) và tên chọn độc lập, có thể lệch cặp | Giữ như DLL | [AX]:696 | cần xác nhận |
+| XML4 NGAY_KQ | CĐHA/TDCN (loại BHYT 1, 8): mọi khối theo `RESULT_READ_TIME → END_TIME → FINISH_TIME → START_TIME → INTRUCTION_TIME`; loại khác (XN, PTTT): khối A/C theo `FINISH_TIME`, khối B theo `END_TIME` | Giữ như DLL | [AX]:697 | cần xác nhận |
+| XML4 LAY_DVU_PTTT | Cấu hình toàn cục máy trạm (`HisConfigs.Get`) | Đọc `HIS_CONFIG` qua `HisDanhMuc::config()`; rỗng/không phải số = `0` (xem "Đối chiếu bộ lọc", bước 4) | Global Constraints Đợt 2 | đã thống nhất |
+| XML4 tra nhân viên theo loginname (MA_BS_DOC_KQ) | So `==` chính xác; trùng loginname thì `FirstOrDefault` theo thứ tự danh mục | `HisDanhMuc::nhanVien` trim khoá; trùng loginname giữ dòng `ID` nhỏ nhất. Chỉ khác khi login trong chuỗi tách `;` có khoảng trắng, hoặc danh mục có loginname trùng | review Task 3 | cần xác nhận |
+| XML4 STT | Thứ tự đầu vào của plugin (xem "Thứ tự dòng") | Thứ tự theo `ID` | đo Đợt 2 | cần xác nhận |
+
+Đo Đợt 2: 7.038 dòng XML4 trên 3 hồ sơ, **0 trường lệch**; chỉ 2 dòng đổi STT (khối B, hai dịch vụ cùng giờ y lệnh).
+
+### XML5 (diễn biến lâm sàng)
+
+| Bảng/trường | HIS làm gì | Module làm gì | Căn cứ | Trạng thái |
+|---|---|---|---|---|
+| XML5 NGUOI_THUC_HIEN (nhánh khám) | Danh mục có nhân viên `LOGINNAME` null thì `o.LOGINNAME.Equals` ném NullReference, mất cả XML5 | Tra qua `HisDanhMuc::nhanVien`, bỏ dòng loginname rỗng, vẫn ra CCHN đúng | [AX]:759 | đã sửa |
+| XML5 PHAU_THUAT | Nối `;` mọi `DESCRIPTION`. **Đo trên HIS thật:** DESCRIPTION rỗng đứng trước mục có nội dung đầu tiên thì không sinh gì; đứng sau thì sinh `;;` (cả `;` cuối chuỗi). [AX]:761 ghi "`;` thừa ở đầu" là chưa đúng | Bỏ DESCRIPTION null/rỗng (`GiaTriBang::noi`), không còn `;;`. Hệ quả: chuỗi ngắn hơn nên phần bị cắt ở 1024 ký tự khác HIS | [AX]:761; đo 000007130131: 13/81 tờ có PTTT lệch vì lý do này | đã sửa |
+| XML5 (cả bảng) | `MapADOToXml` dùng `&&`, `ListSereServ` null thì NullReference | Danh sách rỗng/null trả `[]` | [AX]:764 | đã sửa |
+| XML5 HOI_CHAN | Distinct giữ CONCLUSION null/rỗng, Join ra `"; X"` (Xml5Processor.cs:135) | Bỏ CONCLUSION null/rỗng trước khi nối | [AX]:725, phán quyết controller Task 4 | đã sửa |
+| XML5 (cả bảng) có tờ điều trị nhưng mọi tờ rỗng `CONTENT` | 0 dòng, không rơi về dữ liệu khám | Như DLL: `[]`, không có `FILEHOSO` XML5 | [AX]:755–756 | cần xác nhận |
+| XML5 NGUOI_THUC_HIEN (nhánh tờ điều trị) | DIPLOMA của MODIFIER trước, rồi CREATOR | Như DLL. Đo Đợt 2: 471/471 dòng khớp | [AX]:757 | cần xác nhận |
+| XML5 NGUOI_THUC_HIEN (nhánh khám) | `DIPLOMA ?? IDENTIFICATION_NUMBER`, chuỗi rỗng không rơi về CCCD | Như DLL (Oracle coi `''` là NULL nên thực tế không gặp) | [AX]:758 | cần xác nhận |
+| XML5 NGUOI_THUC_HIEN (nhánh khám) cả hai null | Giá trị null, XmlSerializer bỏ hẳn phần tử | Phần tử rỗng `<NGUOI_THUC_HIEN/>` | ghi chú Task 4 | cần xác nhận |
+| XML5 THOI_DIEM_DBLS (nhánh khám), option `2`, `START_TIME` null | Giá trị null, bỏ hẳn phần tử | Phần tử rỗng | [AX]:760 | cần xác nhận |
+| XML5 khám chính | `TDL_IS_MAIN_EXAM == 1`, không xét `IS_NO_EXECUTE` | Như DLL (đầu vào đã lọc `IS_NO_EXECUTE` như plugin) | [AX]:762 | cần xác nhận |
+| XML5 DIEN_BIEN_LS, số trong `CSST<…>` | **Đo trên HIS thật:** trường decimal (T, NT, SP, W, H, B, C, U, CBG) in theo culture vi-VN, dấu `,`; giá trị nguyên in `,0` (`W45,0`, `H155,0`, `T37,0`), giá trị lẻ in 2 chữ số (`T36,50`, `SP0,99`, `CBG6,50`). Trường số nguyên (M, HA) in không phần lẻ (`M80`, `HA129/87`). Mẫu 30.000 dòng XML5 trong tiền giám định không có ngoại lệ | Dạng ngắn nhất, dấu `.` (`W45`, `T36.5`) | ghi chú Task 4; đo Đợt 2: 2/2 hồ sơ nhánh khám có CSST lệch | cần xác nhận (cùng nguyên nhân với XML2 LIEU_DUNG `[1,0 …/ngày]`) |
+| XML5 tra nhân viên theo loginname | So `==` chính xác | `HisDanhMuc::nhanVien` trim khoá (như XML4) | review Task 3–4 | cần xác nhận |
+| XML5 HOI_CHAN thứ tự cắt/kiểm rỗng | Kiểm `IsNullOrWhiteSpace` sau Join, rồi cắt | Như DLL; chỉ khác ở ca phi thực tế (chuỗi toàn khoảng trắng dài hơn 1024) | review Task 4 | cần xác nhận |
+| XML5 DHST cùng `TRACKING_ID` | Bản ghi đầu tiên theo thứ tự plugin truyền vào | Bản ghi `ID` nhỏ nhất | Task 4 | cần xác nhận (Đợt 2 không gặp lệch) |
+| XML5 PHAU_THUAT thứ tự các mục | Thứ tự đầu vào của plugin (xem "Thứ tự dòng") | Thứ tự theo `ID` | đo Đợt 2: 17/81 tờ có PTTT lệch chỉ vì thứ tự | cần xác nhận |
+
+### Thứ tự dòng và thứ tự trong chuỗi (mọi bảng)
+
+**Đo trên HIS thật (Đợt 2):** plugin truyền danh sách dịch vụ (`V_HIS_SERE_SERV_2`) và ekip (`HIS_EKIP_USER`) cho DLL
+theo **thứ tự vật lý của Oracle (ROWID)**, không theo `ID`. Module sắp theo `ID`. Hệ quả:
+
+- `STT` của XML2, XML3, XML4 khác HIS khi nhiều dòng cùng giờ y lệnh (DLL chỉ sắp ổn định theo `INTRUCTION_TIME`,
+  khi trùng giờ thì giữ thứ tự đầu vào). Hai dòng cùng khoá so sánh thì hiện thành lệch "đổi chỗ" ở mọi trường.
+- XML3 `NGUOI_THUC_HIEN` của dịch vụ có ekip: cùng tập CCHN nhưng thứ tự nối khác.
+- XML5 `PHAU_THUAT`: thứ tự nối các DESCRIPTION khác, và phần bị cắt ở 1024 ký tự khác.
+
+Bằng chứng: thử dựng lại bằng mã module, chỉ đổi thứ tự `dichVu` sang ROWID (không sửa mã). Kết quả: lệch vị trí
+STT về **0** ở XML2, XML3, XML4 trên cả 3 hồ sơ (trước đó 258 + 672 + 2 vị trí). XML5 `PHAU_THUAT` dựng theo ROWID và
+giữ DESCRIPTION rỗng như HIS thì khớp **81/81** tờ có PTTT. Hai ekip lệch đã kiểm đều đúng thứ tự ROWID.
+
+| Bảng/trường | HIS làm gì | Module làm gì | Căn cứ | Trạng thái |
+|---|---|---|---|---|
+| STT (XML2, XML3, XML4); XML3 NGUOI_THUC_HIEN có ekip; XML5 PHAU_THUAT | Theo thứ tự ROWID của câu truy vấn không `ORDER BY` | Theo `ID` (ổn định, không phụ thuộc cách Oracle lưu dòng) | đo Đợt 2 | cần xác nhận (muốn khớp HIS thì sắp `dichVu` và `ekip` theo ROWID khi nạp; ROWID có thể đổi khi DBA tổ chức lại bảng) |
+
+## Nghiệm thu Đợt 2 (22/10/2026)
+
+Máy dev, `ghi_thu_muc_that = false`, tệp ghi vào `D:\XML\SinhXml3176Thu`. Phía HIS là bảng tiền giám định
+`xml3176_*` (đã nạp tệp thật của plugin + DLL), so bằng `--csdl`.
+
+```
+php artisan sinhxml3176:quet --ma-dieu-tri=000007130131 --ma-dieu-tri=000007436231
+  chinh_thuc: ung_vien=2 da_ghi=2 bi_loai=0 loi=0 bo_qua=0
+php artisan sinhxml3176:quet --ma-dieu-tri=000007453924   (sinh lại tệp cũ chưa có XML4/XML5)
+  chinh_thuc: ung_vien=1 da_ghi=1 bi_loai=0 loi=0 bo_qua=0
+php artisan sinhxml3176:so-sanh --csdl --qlbv=D:\XML\SinhXml3176Thu --ra=storage\app\so-sanh-dot2.csv --bang=XML1,XML2,XML3,XML4,XML5
+  ho so module: 3, cho lech: 1934
+```
+
+Cả 3 tệp có `FILEHOSO` XML1–XML5. Số dòng hai bên bằng nhau ở mọi bảng:
+
+| Bảng | 000007130131 | 000007436231 | 000007453924 | Tổng |
+|---|---|---|---|---|
+| XML1 | 1 | 1 | 1 | 3 |
+| XML2 | 849 | 1 | 0 | 850 |
+| XML3 | 2.305 | 19 | 26 | 2.350 |
+| XML4 | 6.987 | 16 | 35 | 7.038 |
+| XML5 | 471 | 1 | 1 | 473 |
+
+1.934 dòng lệch trong CSV, xếp loại:
+
+| Loại | Bảng/trường | Số dòng | Ghi chú |
+|---|---|---|---|
+| 1. Lỗi DLL đã biết (module đã sửa) | XML1 CHAN_DOAN_RV `;;` | 3 | [AX]:297 |
+| 1 | XML5 PHAU_THUAT `;;` do DESCRIPTION rỗng | 13 | [AX]:761 |
+| 2. Có trong bảng khác biệt | XML1 MA_TTDV theo key | 3 | đã sửa |
+| 2 | XML2 LIEU_DUNG `[1,0 …]` / `[1 …]` | 801 | cần xác nhận (culture) |
+| 2 | XML3 NGAY_TH_YL khi START_TIME sớm hơn y lệnh | 10 | giữ như DLL |
+| 2 | XML5 DIEN_BIEN_LS số trong CSST | 2 | cần xác nhận (culture) |
+| 2 | Thứ tự dòng: STT XML2/XML3/XML4 | 939 | cần xác nhận (ROWID) |
+| 2 | Thứ tự dòng: lệch "đổi chỗ" giữa hai dòng cùng khoá (XML2, XML3) | 134 | cùng nguyên nhân; ghép lại theo nội dung thì không còn lệch |
+| 2 | Thứ tự trong chuỗi: XML3 NGUOI_THUC_HIEN có ekip | 12 | cùng tập CCHN |
+| 2 | Thứ tự trong chuỗi: XML5 PHAU_THUAT | 17 | |
+| 3. Lỗi module | | **0** | |
+
+Kết luận: **đạt**, không còn lệch loại 3. XML4 khớp mọi trường. Các dòng cần xác nhận mới gom về hai câu hỏi:
+(1) in số thập phân theo culture vi-VN như HIS (XML2 LIEU_DUNG, XML5 CSST) hay giữ dấu `.`;
+(2) sắp dịch vụ và ekip theo ROWID như plugin hay giữ `ID`.

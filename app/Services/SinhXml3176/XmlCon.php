@@ -13,8 +13,17 @@ class XmlCon
         'CHAN_DOAN_VAO', 'CHAN_DOAN_RV', 'DIA_CHI', 'LIEU_DUNG', 'KET_LUAN', 'GHI_CHU', 'PP_DIEU_TRI',
     ];
 
+    /** Truong CDATA rieng tung loai (cac loai khong co o day dung danh sach chung). */
+    private static $cdataTheoLoai = [
+        'XML4' => ['TEN_CHI_SO', 'GIA_TRI', 'DON_VI_DO', 'MO_TA', 'KET_LUAN'],
+        'XML5' => ['DIEN_BIEN_LS', 'GIAI_DOAN_BENH', 'HOI_CHAN', 'PHAU_THUAT'],
+    ];
+
+    private static $cdataHienTai = null;
+
     public static function chuoi($loai, array $dong)
     {
+        self::$cdataHienTai = isset(self::$cdataTheoLoai[$loai]) ? self::$cdataTheoLoai[$loai] : self::$cdata;
         $w = new \XMLWriter();
         $w->openMemory();
         $w->setIndent(true);
@@ -33,6 +42,12 @@ class XmlCon
                 break;
             case 'XML3':
                 self::ghiDanhSach($w, $dong, 'CHITIEU_CHITIET_DVKT_VTYT', 'DSACH_CHI_TIET_DVKT', 'CHI_TIET_DVKT');
+                break;
+            case 'XML4':
+                self::ghiDanhSach($w, $dong, 'CHITIEU_CHITIET_DICHVUCANLAMSANG', 'DSACH_CHI_TIET_CLS', 'CHI_TIET_CLS');
+                break;
+            case 'XML5':
+                self::ghiDanhSach($w, $dong, 'CHITIEU_CHITIET_DIENBIENLAMSANG', 'DSACH_CHI_TIET_DIEN_BIEN_BENH', 'CHI_TIET_DIEN_BIEN_BENH');
                 break;
             default:
                 throw new \InvalidArgumentException('Chua ho tro loai bang ' . $loai);
@@ -63,7 +78,7 @@ class XmlCon
             $giaTri = self::lamSach($giaTri);
             $w->startElement($ten);
             if ($giaTri !== '') {
-                if (in_array($ten, self::$cdata, true)) {
+                if (in_array($ten, self::$cdataHienTai, true)) {
                     self::ghiCdata($w, $giaTri);
                 } else {
                     $w->text($giaTri);

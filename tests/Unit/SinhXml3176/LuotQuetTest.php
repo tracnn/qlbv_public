@@ -97,8 +97,8 @@ class LuotQuetTest extends TestCase
             $con = simplexml_load_string(base64_decode((string) $f->NOIDUNGFILE));
             $this->assertNotFalse($con);
         }
-        // Ho so khong co thuoc: khong co XML2 trong phong bi
-        $this->assertSame(['XML1', 'XML3'], $loai);
+        // Ho so khong co thuoc: khong co XML2; dich vu mac dinh la XN (CLS) => co XML4; khong co to dieu tri/kham chinh => khong XML5
+        $this->assertSame(['XML1', 'XML3', 'XML4'], $loai);
         // Ten tep cung moc voi NGAYLAP
         $this->assertSame(substr($tep[0], 5, 8), (string) $xml->THONGTINHOSO->NGAYLAP);
 
@@ -111,11 +111,33 @@ class LuotQuetTest extends TestCase
         $this->assertEquals(20261001100000, $dong[0]->out_time);
         $this->assertSame($tep[0], $dong[0]->ten_tep);
         $this->assertSame($this->thuMuc, $dong[0]->thu_muc);
-        $this->assertSame('XML1,XML3', $dong[0]->cac_bang);
+        $this->assertSame('XML1,XML3,XML4', $dong[0]->cac_bang);
         $this->assertNull($dong[0]->ly_do);
 
         $this->assertSame(20261001110000, (new TheoDoiSinh())->docMoc(self::CT));
         $this->assertSame(self::MOC_GOC, (new TheoDoiSinh())->docMoc(self::TT));
+    }
+
+    public function test_ho_so_co_cls_va_to_dieu_tri_ghi_xml4_xml5()
+    {
+        $this->themHoSoLuot(1);
+        $this->themToDieuTriLuot(1, 'Benh nhan on dinh');
+        $this->themChiSoXnLuot(1, 1);
+
+        $this->luot()->chay(self::CT);
+
+        // Khong gieo thuoc nen khong co XML2
+        $this->assertSame('XML1,XML3,XML4,XML5', LanSinh::first()->cac_bang);
+    }
+
+    public function test_ho_so_khong_co_cls_khong_co_xml4()
+    {
+        // Dich vu loai BHYT 3 (khong thuoc CLS/PTTT) => khong co XML4
+        $this->themHoSoLuot(1, [], ['tdl_hein_service_type_id' => 3]);
+
+        $this->luot()->chay(self::CT);
+
+        $this->assertSame('XML1,XML3', LanSinh::first()->cac_bang);
     }
 
     public function test_luot_chong_lan_khong_sinh_lai()
@@ -399,7 +421,7 @@ class LuotQuetTest extends TestCase
                 $this->fail($ham . ' phai tu choi');
             } catch (\RuntimeException $e) {
                 $this->assertContains('chua du 14 bang', $e->getMessage());
-                $this->assertContains('XML4', $e->getMessage());
+                $this->assertContains('XML6', $e->getMessage());
             }
         }
         $this->assertFalse(is_dir($that));

@@ -758,7 +758,7 @@ Gốc XML: `CHITIEU_CHITIET_DIENBIENLAMSANG/DSACH_CHI_TIET_DIEN_BIEN_BENH/CHI_TI
 4. IS_3176 `DIPLOMA ?? IDENTIFICATION_NUMBER`: dùng `??` nên DIPLOMA là chuỗi rỗng sẽ **không** rơi về IDENTIFICATION_NUMBER.
 5. Nhánh 2: `o.LOGINNAME.Equals(...)` → nhân viên có LOGINNAME null gây NRE, cả XML5 thất bại (Success=false).
 6. `NGAY_YL_OPTION = "2"` và START_TIME null → THOI_DIEM_DBLS = null (phần tử rỗng/thiếu).
-7. PHAU_THUAT: dịch vụ đầu tiên có DESCRIPTION null làm `text = null`, các mục sau ghép thành `";mô tả"` (thừa dấu `;` đầu). Loại `2` trong {7,22,2} không có trong danh sách loại XML4 dùng → cần đối chiếu nghĩa ID 2.
+7. PHAU_THUAT: DESCRIPTION rỗng/null đứng đầu thì bị nuốt (không có `;` đầu), nhưng mục rỗng ở giữa hoặc cuối sinh `;;` (đã đối chiếu 81/81 tờ PTTT trên HIS thật; module bỏ hết mục rỗng). Loại `2` trong {7,22,2} không có trong danh sách loại XML4 dùng → cần đối chiếu nghĩa ID 2.
 8. `TDL_IS_MAIN_EXAM == 1` không kiểm `IS_NO_EXECUTE`.
 9. GIAI_DOAN_BENH không cắt độ dài.
 10. `MapADOToXml` cùng lỗi `&&` như XML4. `ListSereServ` null → NRE ngay đầu.
