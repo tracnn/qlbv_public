@@ -14,7 +14,8 @@ use App\Services\SinhXml3176\Nguon\HisDanhMuc;
  *   cua chinh ban ghi; hai so tinh co trung thi bo im lang); [AX]:833 MA_CSKCB = HEIN_MEDI_ORG_CODE;
  *   [AX]:836 DIA_CHI khong cat do dai; ma tinh/huyen/xa lay thang ma HIS.
  * IS_3176: SO_CCCD = CCCD ?? CMND ?? ho chieu ?? "" ([AX]:782); chuoi rong coi nhu null nhu Xml1Dung.
- * Sua loi DLL [AX]:777: ngay sinh null / ngay HIV ngan hon 8 chu so khong lam vo (DLL Substring nem loi, mat ca bang);
+ * Sua phong ngua ([AX]:783 NGAY_SINH, [AX]:789 NGAYKD_HIV, [AX]:793 BDDT_ARV, [AX]:816 NGAY_BAT_DAU_DT_CTX; [AX] khong
+ *   liet ke loi nay): ngay sinh null / ngay HIV ngan hon 8 chu so khong lam vo (DLL Substring nem loi, mat ca bang);
  *   ngay sinh thieu => rong, ngay ngan => lay het chuoi co.
  * Phan tu null (4 so long? khi null) xuat rong, xem ghi chu chung ve phan tu null.
  */

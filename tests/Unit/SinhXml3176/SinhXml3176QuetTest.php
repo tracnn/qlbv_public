@@ -313,6 +313,23 @@ class SinhXml3176QuetTest extends TestCase
         $this->assertSame([], self::$daNgu);
     }
 
+    public function test_khoa_dang_giu_lien_tuc_thi_nghi_truoc_khi_thoat()
+    {
+        $this->cauHinh([], ['nghi_giay' => 30]);
+        $this->dangKyLenhNguGia();
+        Cache::add(SinhXml3176Quet::KHOA_LUOT, true, 5);
+
+        list($ma, $ra) = $this->chay(['--lien-tuc' => true]);
+        $this->assertSame(0, $ma);
+        $this->assertContains('dang chay', $ra);
+        $this->assertSame([30], self::$daNgu);
+
+        // Khong --lien-tuc thi khong nghi
+        self::$daNgu = [];
+        $this->chay();
+        $this->assertSame([], self::$daNgu);
+    }
+
     public function test_lien_tuc_nghi_giua_cac_vong_qua_ngu()
     {
         $this->cauHinh();

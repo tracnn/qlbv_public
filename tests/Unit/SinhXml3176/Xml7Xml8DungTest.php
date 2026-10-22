@@ -413,6 +413,13 @@ class Xml7Xml8DungTest extends TestCase
         $this->assertSame('Cha', $this->ghiChuXml8(20101023000000, $bayGio));
     }
 
+    public function test_xml8_tuoi_sinh_29_02_nam_khong_nhuan_khong_can_ext_calendar()
+    {
+        // 29/02/2012 + 17 nam = 2029 khong nhuan: ngay kep ve 28/02, khong nem loi
+        $this->assertSame('', $this->ghiChuXml8(20120229000000, new \DateTime('2029-02-28 10:00:00')));
+        $this->assertSame('', $this->ghiChuXml8(20120229000000, new \DateTime('2029-02-27 10:00:00')));
+    }
+
     public function test_so_chuoi_giu_thap_phan()
     {
         $this->assertSame('38.5', GiaTriBang::soChuoi(38.5));

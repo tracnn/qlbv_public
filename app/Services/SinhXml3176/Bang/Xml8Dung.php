@@ -191,7 +191,7 @@ class Xml8Dung implements DungBang
         $tuoi = (int) $homNay->format('Y') - (int) $sinh->format('Y');
         $nam = (int) $sinh->format('Y') + $tuoi;
         $thang = (int) $sinh->format('n');
-        $ngay = min((int) $sinh->format('j'), cal_days_in_month(CAL_GREGORIAN, $thang, $nam));
+        $ngay = min((int) $sinh->format('j'), (int) (new \DateTime(sprintf('%04d-%02d-01', $nam, $thang)))->format('t'));
         $moc = clone $sinh;
         $moc->setDate($nam, $thang, $ngay);
 

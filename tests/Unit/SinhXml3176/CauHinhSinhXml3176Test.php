@@ -65,8 +65,8 @@ class CauHinhSinhXml3176Test extends TestCase
         config(['organization.sinh_xml3176' => ['enabled' => true]]);
         $ch = CauHinhSinhXml3176::tuConfig();
 
-        $this->assertSame(20, $ch->kichThuocLo());
-        $this->assertSame('512M', $ch->memoryLimit());
+        $this->assertSame(5, $ch->kichThuocLo());
+        $this->assertSame('1024M', $ch->memoryLimit());
         $this->assertSame(60, $ch->nghiGiay());
         $this->assertSame(10, $ch->chongLanPhut());
     }

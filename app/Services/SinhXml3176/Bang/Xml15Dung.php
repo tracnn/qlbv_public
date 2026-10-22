@@ -11,10 +11,11 @@ use App\Services\SinhXml3176\Nguon\HisDanhMuc;
  * Dau vao $d->dieuTriLao: ban ghi his_tuberculosis_treat cuoi theo id tang (plugin ghi de theo thu tu tra ve).
  * Dieu kien sinh: co ban ghi lao va ID != 0.
  *
- * Sua loi DLL [AX]:1370: DLL them cung mot ban ghi hai lan (new List { x, x }) => file co 2 dong giong het;
+ * Sua loi DLL [AX]:1379: DLL them cung mot ban ghi hai lan (new List { x, x }) => file co 2 dong giong het;
  *   module chi sinh DUNG 1 dong.
- * Sua loi DLL [AX]:1371: STT DLL gan cung "15" (so hieu bang, khong phai so thu tu); module dat STT = 1.
- * Sua loi DLL [AX]:1377: ngay ngan hon 8 chu so khong lam vo (DLL Substring nem loi, mat ca bang); lay het chuoi co.
+ * Sua loi DLL [AX]:1380: STT DLL gan cung "15" (so hieu bang, khong phai so thu tu); module dat STT = 1.
+ * Sua phong ngua ([AX]:1366-1373, cac hang truong ngay; [AX] khong liet ke loi nay): ngay ngan hon 8 chu so khong lam vo
+ *   (neu DLL Substring thi nem loi, mat ca bang); lay het chuoi co.
  * IS_3176: SO_CCCD = CCCD ?? CMND ?? ho chieu ?? "" (bo bac cuoi ma BHXH); chuoi rong coi nhu null nhu Xml1Dung.
  * Giu nhu DLL (can xac nhan): chi ho tro mot dot dieu tri lao/ho so; MA_CSKCB = HEIN_MEDI_ORG_CODE.
  * Phan tu null xuat rong, xem ghi chu chung ve phan tu null.
