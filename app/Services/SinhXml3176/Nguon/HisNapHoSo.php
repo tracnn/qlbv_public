@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\DB;
 /**
  * Nap du lieu HIS (chi doc) cho mot lo ho so: ho so + cac bang con ma XML1-3 can.
  * Moi nguon chi mot truy van cho ca lo (chia nhom NHOM_ID id moi lan); luon select cot tuong minh.
- * Danh sach cot = hop cac cot ma ban do [AX] XML1-5 tham chieu + khoa; dot sau mo rong cac hang so nay.
+ * Danh sach cot = hop cac cot ma ban do [AX] XML1-11, 13-15 tham chieu + khoa.
  */
 class HisNapHoSo
 {
@@ -41,6 +41,24 @@ class HisNapHoSo
         'hospital_director_loginname',
         // KiemDieuKien (Check/CheckCollinearXml)
         'end_department_id', 'treatment_result_id', 'tuberculosis_issued_org_name', 'tuberculosis_issued_date',
+        // Dot 3 XML6-15 (kiem all_tab_columns 22/10/2026; bang cot -> truong trong docs/trien-khai-sinh-xml3176.md muc "Nguon HIS")
+        // the BHYT, ma BHXH
+        'tdl_hein_card_number', 'tdl_social_insurance_number', 'sick_hein_card_number',
+        // so giay, ngay
+        'end_code', 'extra_end_code', 'in_date', 'out_date', 'treatment_end_type_ext_id',
+        // thai san, nghi duong thai, nghi viec
+        'is_pregnancy_termination', 'pregnancy_termination_reason', 'pregnancy_termination_time', 'gestational_age',
+        'outpatient_date_from', 'outpatient_date_to', 'sick_leave_day', 'sick_leave_from', 'sick_leave_to',
+        'sick_loginname', 'sick_username',
+        // cha me, nguoi than, noi lam viec
+        'father_name', 'mother_name', 'father_social_insurance_number', 'mother_social_insurance_number',
+        'tdl_patient_relative_name', 'tdl_patient_relative_type', 'tdl_patient_work_place', 'tdl_patient_work_place_name',
+        // nguoi ky, bac si
+        'end_head_loginname', 'end_dept_subs_head_loginname', 'end_department_head_loginname', 'end_loginname',
+        'doctor_loginname',
+        // lam sang, chuyen tuyen
+        'clinical_note', 'clinical_signs', 'subclinical_result', 'used_medicine', 'treatment_direction',
+        'transport_vehicle', 'transporter', 'transporter_loginnames',
     ];
 
     /** v_his_patient_type_alter - XML1 17-21, 31, 59, 62 + PTA chinh */
@@ -123,8 +141,50 @@ class HisNapHoSo
         'capillary_blood_glucose',
     ];
 
-    /** v_his_baby - XML1 61 CAN_NANG_CON */
-    const COT_SO_SINH = ['id', 'treatment_id', 'weight', 'hein_card_number_tmp'];
+    /**
+     * v_his_baby - XML1 61 CAN_NANG_CON; Dot 3: XML9 [AX]:1048-1100 (giay chung sinh, cac 'item.' cua DLL)
+     * va XML8 [AX]:900-983 (born_result_id/born_time/death_date cho NGAY_SINHCON, SO_CONCHET).
+     */
+    const COT_SO_SINH = [
+        'id', 'treatment_id', 'weight', 'hein_card_number_tmp',
+        'baby_name', 'gender_id', 'born_time', 'born_result_id', 'born_result_name', 'death_date', 'father_name',
+        'number_children_birth', 'number_of_birth', 'current_alive', 'is_surgery', 'week_count',
+        'birthplace_type', 'birth_hospital_name', 'birthplace', 'birth_commune_name', 'birth_district_name',
+        'birth_province_name', 'note', 'midwife', 'issuer_username', 'issued_date', 'birth_cert_num',
+        'birth_cert_book_name', 'tdl_hein_card_number', 'tdl_patient_name', 'tdl_patient_dob',
+        'tdl_patient_ethnic_code', 'tdl_patient_address', 'tdl_patient_province_code', 'tdl_patient_district_code',
+        'tdl_patient_commune_code', 'tdl_patient_cccd_number', 'tdl_patient_cccd_date', 'tdl_patient_cccd_place',
+        'tdl_patient_cmnd_number', 'tdl_patient_cmnd_date', 'tdl_patient_cmnd_place', 'tdl_patient_passport_number',
+        'tdl_patient_passport_date', 'tdl_patient_passport_place',
+    ];
+
+    /**
+     * his_hiv_treatment (bang goc, co is_delete) - XML6 [AX]:768-840; treatment_id la khoa ngoai (id la khoa chinh).
+     * Moi ho so lay ban ghi ID lon nhat (plugin sap theo ID roi ghi de vao tu dien theo TREATMENT_ID).
+     */
+    const COT_HIV = [
+        'id', 'treatment_id', 'hiv_infection_date', 'test_sample_place', 'test_place_kd', 'arv_patient_begin_place',
+        'arv_patient_begin', 'begin_regimen_hiv_code', 'begin_regimen_level', 'hiv_treatment_reason',
+        'tuberculosis_treatment_type', 'tuberculosis_screening', 'tuberculosis_regimen',
+        'tuberculosis_treatment_begin', 'tuberculosis_treatment_end', 'tuberculosis_treatment_result',
+        'test_pcr_rna_reason', 'test_pcr_rna_date', 'test_pcr_rna_result', 'test_pcr_rna_result_date',
+        'hiv_patient_type', 'clinical_stage', 'group_patient', 'hiv_patient_status', 'test_pcr_times',
+        'test_pcr_date', 'test_pcr_result_date', 'test_pcr_result', 'date_of_pregnancy', 'ctx_treatment_begin',
+        'hiv_treatment_code', 'arv_treatmen_begin', 'arv_treatmen_end', 'regimen_hiv_code', 'regimen_level',
+        'prescription_arv_day', 'regimen_hiv_date', 'regimen_hiv_reason',
+    ];
+
+    /**
+     * his_tuberculosis_treat (bang goc, co is_delete) - XML15 [AX]:1347-1386.
+     * Moi ho so lay ban ghi cuoi theo id tang (plugin ghi de theo thu tu tra ve).
+     * Ten cot that: tuberculosis_treatmen_result (thieu chu 't').
+     */
+    const COT_LAO = [
+        'id', 'treatment_id', 'tuberculosis_classify_location', 'tuberculosis_classify_ts',
+        'tuberculosis_classify_hiv', 'tuberculosis_classify_vk', 'tuberculosis_classify_kt',
+        'tuberculosis_treatment_type', 'begin_time', 'regimen_tuberculosis_code', 'end_time',
+        'tuberculosis_treatmen_result', 'hiv_kd_date', 'arv_begin_time', 'ctx_begin_time',
+    ];
 
     /**
      * his_exp_medimate_used - XML2 tach dong (NGAY_TH_YL_CUA_THUOC_OPTION).
@@ -181,6 +241,9 @@ class HisNapHoSo
             ['thuoc_tinh' => 'theoDoi', 'bang' => 'his_tracking', 'cot' => self::COT_THEO_DOI, 'cot_loc' => ['is_delete'], 'khoa' => 'treatment_id'],
             ['thuoc_tinh' => 'hoiChan', 'bang' => 'his_debate', 'cot' => self::COT_HOI_CHAN, 'cot_loc' => ['is_delete'], 'khoa' => 'treatment_id'],
             ['thuoc_tinh' => 'chiSoCdha', 'bang' => 'v_his_sere_serv_suin', 'cot' => self::COT_CHI_SO_CDHA, 'cot_loc' => ['is_delete'], 'khoa' => 'tdl_treatment_id'],
+            // Dot 3: mot ban ghi / ho so ('mot' => true): sap id tang, dong sau (id lon nhat) ghi de dong truoc
+            ['thuoc_tinh' => 'hivTreatment', 'bang' => 'his_hiv_treatment', 'cot' => self::COT_HIV, 'cot_loc' => ['is_delete'], 'khoa' => 'treatment_id', 'mot' => true],
+            ['thuoc_tinh' => 'dieuTriLao', 'bang' => 'his_tuberculosis_treat', 'cot' => self::COT_LAO, 'cot_loc' => ['is_delete'], 'khoa' => 'treatment_id', 'mot' => true],
         ];
     }
 
@@ -211,8 +274,14 @@ class HisNapHoSo
             if ($n['thuoc_tinh'] === 'ekip') {
                 continue;
             }
+            $mot = !empty($n['mot']);
             foreach ($this->doc($n, $ids) as $dong) {
-                $kq[(int) $dong->{$n['khoa']}]->{$n['thuoc_tinh']}[] = $dong;
+                if ($mot) {
+                    // nhu tu dien theo TREATMENT_ID cua plugin HIS: dong sau ghi de dong truoc
+                    $kq[(int) $dong->{$n['khoa']}]->{$n['thuoc_tinh']} = $dong;
+                } else {
+                    $kq[(int) $dong->{$n['khoa']}]->{$n['thuoc_tinh']}[] = $dong;
+                }
             }
         }
 

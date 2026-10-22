@@ -91,6 +91,76 @@ Cột thêm vào các nguồn sẵn có, đều đã có trên đối tượng m
 - `HIS_DHST`: `TRACKING_ID`, `PULSE`, `TEMPERATURE`, `BREATH_RATE`, `SPO2`, `BELLY`, `CHEST`, `URINE`,
   `BLOOD_PRESSURE_MAX`, `BLOOD_PRESSURE_MIN`, `CAPILLARY_BLOOD_GLUCOSE` (`WEIGHT`, `HEIGHT` đã có).
 
+### Nguồn cho XML6–XML15 (Đợt 3, xác minh 22/10/2026)
+
+Chỉ đọc metadata (`all_tab_columns`, owner `HIS_RS`), không đọc dòng dữ liệu nào. Sau khi cài đặt, đối chiếu lại mọi cột
+trong `COT_HO_SO` (115), `COT_DIEN_DIEU_TRI` (24), `COT_SO_SINH` (45), `COT_HIV` (38), `COT_LAO` (15) và
+`HisDanhMuc::COT_NHAN_VIEN` (7) với `all_tab_columns`: không thiếu cột nào.
+
+| Dữ liệu | Đối tượng | Loại | Số cột | Gắn hồ sơ qua | Ghi chú |
+|---|---|---|---|---|---|
+| HIV (`hivTreatment`, XML6) | `HIS_HIV_TREATMENT` | TABLE | 47 | `TREATMENT_ID` (NUMBER; `ID` là khoá chính) | có `IS_DELETE`. Mỗi hồ sơ lấy **ID lớn nhất** (plugin `OrderBy(ID)` rồi ghi đè từ điển theo `TREATMENT_ID`, `UCExportXml.cs:1285-1290`). Plugin nạp qua `api/HisHivTreatment/Get` với `TREATMENT_IDs` (`UCExportXml.cs:2358`) |
+| Điều trị lao (`dieuTriLao`, XML15) | `HIS_TUBERCULOSIS_TREAT` | TABLE | 24 | `TREATMENT_ID` (NUMBER) | có `IS_DELETE`. Mỗi hồ sơ lấy **bản ghi cuối theo `ID` tăng** (plugin ghi đè từ điển theo thứ tự trả về, `UCExportXml.cs:1193-1199`). Tên cột kết quả thật là `TUBERCULOSIS_TREATMEN_RESULT` (thiếu chữ `T`) |
+
+Cả hai nguồn là **một truy vấn mỗi nguồn cho cả lô** như các bảng con khác (`whereIn treatment_id`, `is_delete = 0`, `orderBy id`);
+khi gắn vào `DuLieuHoSo` dòng sau ghi đè dòng trước nên thuộc tính là một `stdClass` hoặc `null`, không bao giờ là danh sách.
+
+Cột `V_HIS_TREATMENT_12` thêm vào `COT_HO_SO` (40 cột; `V_HIS_PATIENT_TYPE_ALTER` không cần thêm cột nào). `CLOB`: `CLINICAL_NOTE`, `SUBCLINICAL_RESULT` (driver oci8 trả chuỗi).
+
+| Cột | Trường [AX] đọc cột |
+|---|---|
+| `TDL_HEIN_CARD_NUMBER` | XML6 #2 MA_THE_BHYT; XML7 #20 MA_THE_TAM; XML8 #21; XML9 #2 (10 ký tự cuối); XML11 #6, #7, #21 |
+| `TDL_SOCIAL_INSURANCE_NUMBER` | XML9 #2 MA_BHXH_NND; XML11 #6 MA_BHXH; XML15 #5 SO_CCCD (bậc cuối nhánh QĐ 130; 3176 bỏ) |
+| `SICK_HEIN_CARD_NUMBER` | XML11 #6, #7 |
+| `END_CODE` | XML7 #2 SO_LUU_TRU; XML14 #2 SO_GIAYHEN_KL |
+| `EXTRA_END_CODE` | XML10 #2 SO_SERI, #3 SO_CT; XML11 #2, #3 |
+| `IN_DATE` | XML9 #31 NGAY_CT; XML11 #20 NGAY_CT |
+| `OUT_DATE` | XML8 #20, XML10 #12, XML14 #21 NGAY_CT |
+| `TREATMENT_END_TYPE_EXT_ID` | điều kiện sinh XML10 (`== 2`) và XML11 (`== 1`) |
+| `IS_PREGNANCY_TERMINATION`, `PREGNANCY_TERMINATION_REASON`, `PREGNANCY_TERMINATION_TIME`, `GESTATIONAL_AGE` | XML7 #7–#10; XML11 #10–#12 (không có TIME) |
+| `OUTPATIENT_DATE_FROM`, `OUTPATIENT_DATE_TO` | XML7 #23–#25 SO_NGAY_NGHI, NGOAITRU_TUNGAY, NGOAITRU_DENNGAY |
+| `SICK_LEAVE_DAY` | XML10 #4 SO_NGAY |
+| `SICK_LEAVE_FROM`, `SICK_LEAVE_TO` | XML10 #7, #8; XML11 #13–#15 |
+| `SICK_LOGINNAME`, `SICK_USERNAME` | XML10 #10 TEN_BS, #11 MA_BS; XML11 #19 MA_BS |
+| `FATHER_NAME`, `MOTHER_NAME` | XML7 #21, #22; XML8 #3, #4, #18; XML11 #16, #17 |
+| `FATHER_SOCIAL_INSURANCE_NUMBER`, `MOTHER_SOCIAL_INSURANCE_NUMBER` | XML7 #18 MA_CHA, #19 MA_ME |
+| `TDL_PATIENT_RELATIVE_NAME`, `TDL_PATIENT_RELATIVE_TYPE` | XML7 #21, #22; XML8 #5, #18; XML11 #16, #17 |
+| `TDL_PATIENT_WORK_PLACE`, `TDL_PATIENT_WORK_PLACE_NAME` | XML8 #6; XML10 #5; XML11 #5 DON_VI |
+| `END_HEAD_LOGINNAME` | XML7 #15, #16 (nhánh QĐ 130 và nhánh 3176 khi hai ưu tiên trước rỗng) |
+| `END_DEPT_SUBS_HEAD_LOGINNAME`, `END_DEPARTMENT_HEAD_LOGINNAME` | XML7 #15, #16; XML10 #11; XML11 #19 (nhánh 3176) |
+| `END_LOGINNAME`, `DOCTOR_LOGINNAME` | XML13 #37 MA_BAC_SI; XML14 #19 MA_BAC_SI |
+| `CLINICAL_NOTE` | XML8 #11 QT_BENHLY; XML13 #20, #22 |
+| `CLINICAL_SIGNS` | XML13 #20 DAU_HIEU_LS |
+| `SUBCLINICAL_RESULT` | XML8 #12, XML13 #23 TOMTAT_KQ |
+| `USED_MEDICINE` | XML13 (`list8` nhánh 3176, dựng rồi không dùng; nạp để giữ đủ đầu vào) |
+| `TREATMENT_DIRECTION`, `TRANSPORT_VEHICLE`, `TRANSPORTER`, `TRANSPORTER_LOGINNAMES` | XML13 #33–#36 |
+
+Các cột sau đã có sẵn trên `COT_HO_SO` và được XML7–XML15 dùng tiếp: `TREATMENT_END_TYPE_ID`, `TRAN_PATI_REASON_ID`
+(XML13 #31, #32), `OUT_CODE` (XML13 #3, #4), `APPOINTMENT_TIME` (XML14 #13), `CLINICAL_IN_TIME`, `IS_CHRONIC`
+(điều kiện XML8), `ICD_*`, `TREATMENT_METHOD`, `ADVISE`, `HOSP_SUBS_DIRECTOR_LOGINNAME`, `HOSPITAL_DIRECTOR_LOGINNAME`,
+`REPRESENTATIVE_HEIN_CODE`, `TRANSFER_IN_MEDI_ORG_CODE`, `MEDI_ORG_CODE`.
+
+`V_HIS_BABY` thêm 41 cột (`COT_SO_SINH`). XML9 đọc đúng các cột này trên **bản ghi bé** (`item.` của DLL), không đọc từ hồ sơ mẹ:
+
+| Cột | Trường [AX] |
+|---|---|
+| `TDL_HEIN_CARD_NUMBER`, `TDL_PATIENT_NAME`, `TDL_PATIENT_DOB`, `TDL_PATIENT_ETHNIC_CODE` | XML9 #3, #4, #5, #6 (người nuôi dưỡng) |
+| `TDL_PATIENT_CCCD_NUMBER/DATE/PLACE`, `…_CMND_…`, `…_PASSPORT_…` | XML9 #7, #8, #9 |
+| `TDL_PATIENT_ADDRESS`, `…_PROVINCE_CODE`, `…_DISTRICT_CODE`, `…_COMMUNE_CODE` | XML9 #10, #12–#14 |
+| `FATHER_NAME`, `BABY_NAME`, `GENDER_ID` | XML9 #15, #17, #18 |
+| `NUMBER_CHILDREN_BIRTH`, `NUMBER_OF_BIRTH`, `CURRENT_ALIVE`, `WEIGHT` (đã có) | XML9 #19–#22 |
+| `BORN_TIME` | XML9 #23; XML8 #14 NGAY_SINHCON |
+| `BIRTHPLACE_TYPE`, `BIRTH_HOSPITAL_NAME`, `BIRTHPLACE`, `BIRTH_COMMUNE_NAME`, `BIRTH_DISTRICT_NAME`, `BIRTH_PROVINCE_NAME` | XML9 #24 NOI_SINH_CON |
+| `BORN_RESULT_NAME` | XML9 #25 TINH_TRANG_CON |
+| `BORN_RESULT_ID`, `DEATH_DATE` | XML8 #14–#16 (bé có `BORN_RESULT_ID == 2`) |
+| `IS_SURGERY`, `WEEK_COUNT` | XML9 #26, #27 |
+| `NOTE`, `MIDWIFE`, `ISSUER_USERNAME`, `ISSUED_DATE`, `BIRTH_CERT_NUM`, `BIRTH_CERT_BOOK_NAME` | XML9 #28–#33 (`ISSUED_DATE` được gán rồi bị ghi đè bằng `IN_DATE`, vẫn nạp) |
+
+`HIS_EMPLOYEE` (danh mục): thêm `TITLE` cho XML13 #36 CHUCDANH_NGUOI_HT (`DIPLOMA`, `SOCIAL_INSURANCE_NUMBER`, `TDL_USERNAME` đã có).
+
+Kiểm `all_tab_columns`: `V_HIS_BABY` có đủ cột `TDL_PATIENT_*` và `IS_DELETE` nên gắn thẳng theo `TREATMENT_ID`, không cần nạp bệnh nhân riêng.
+`V_HIS_PATIENT_TYPE_ALTER` đã đủ cho XML8, 11, 13, 14 (`HAS_BIRTH_CERTIFICATE`, `HEIN_CARD_*`, `RIGHT_ROUTE_*`, `IS_TT46`, `IS_NEWBORN`, `LEVEL_CODE`, `LIVE_AREA_CODE`…).
+
 ## Cấu hình mẫu
 
 Khối mới trong `config/organization.php` (tệp này nằm trong `.gitignore`, mỗi máy một bản). Thiếu cả khối,

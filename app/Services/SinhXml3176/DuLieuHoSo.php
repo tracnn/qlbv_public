@@ -4,7 +4,7 @@ namespace App\Services\SinhXml3176;
 
 /**
  * Goi du lieu HIS cua mot ho so (mot treatment). Moi dong la stdClass, ten cot viet thuong.
- * Cac bang con mac dinh la mang rong, khong bao gio null.
+ * Cac bang con mac dinh la mang rong, khong bao gio null (tru hivTreatment/dieuTriLao: mot ban ghi hoac null).
  */
 class DuLieuHoSo
 {
@@ -46,6 +46,12 @@ class DuLieuHoSo
 
     /** v_his_sere_serv_suin (chi so CDHA/TDCN, XML4 khoi C), gan theo tdl_treatment_id, chua loc theo $dichVu */
     public $chiSoCdha = [];
+
+    /** his_hiv_treatment: ban ghi ID lon nhat cua ho so (XML6); khong co => null */
+    public $hivTreatment;
+
+    /** his_tuberculosis_treat: ban ghi cuoi theo id tang cua ho so (XML15); khong co => null */
+    public $dieuTriLao;
 
     public function __construct($hoSo)
     {
