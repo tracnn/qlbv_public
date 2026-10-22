@@ -27,7 +27,7 @@ class SinhXml3176SoSanh extends Command
         {--ra= : Tep CSV ket qua (mac dinh storage/app/sinhxml3176_so_sanh_<thoi gian>.csv)}
         {--bang=XML1,XML2,XML3,XML4,XML5 : Cac bang can so}';
 
-    protected $description = 'So sanh tung truong giua tep GIAMDINHHS cua HIS va cua module sinh (chi doc tep). '
+    protected $description = 'So sanh tung truong giua tep GIAMDINHHS cua HIS va cua module sinh (chi doc tep; --csdl doc them cac bang tien giam dinh xml3176_* o che do chi doc). '
         . 'Nhieu tep cung MA_LK trong mot thu muc: lay tep moi nhat theo mtime. '
         . 'Khoa dong trung trong mot ben: them hau to #1, #2.';
 

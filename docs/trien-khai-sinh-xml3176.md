@@ -240,7 +240,10 @@ ghi và `OUT_TIME` (ví dụ so `MODIFY_TIME` với `OUT_TIME` của hồ sơ ra
    - Không có thư mục gốc của HIS thì so với tiền giám định: `--csdl` thay cho `--his` (chỉ `select` các bảng
      `xml3176_*`, theo `MA_LK` của tệp module).
    - Một thư mục có nhiều tệp cùng `MA_LK` (sinh lại) thì lấy tệp mới nhất theo thời gian sửa tệp.
-   - Chuẩn hoá trước khi so: cắt khoảng trắng; số so theo giá trị (`15000` = `15000.00`); thẻ rỗng = thiếu thẻ.
+   - Chuẩn hoá trước khi so: cắt khoảng trắng; số so theo giá trị (`15000` = `15000.00`; chỉ bỏ số 0 thập phân, số nguyên giữ nguyên số 0 cuối); thẻ rỗng = thiếu thẻ.
+     Rỗng == `0` chỉ áp cho cột số (nhận theo tiền tố tên thẻ như `SinhXml3176SoSanh::laCotSo`: `T_`, `THANH_TIEN`, `DON_GIA`,
+     `SO_LUONG`, `TYLE`, `MUC_HUONG`, `SO_NGAY`, `CAN_NANG`); cột chữ thì `""` ≠ `"0"`. Điểm mù: `--csdl` chỉ kiểm các `MA_LK`
+     có trong tệp `--qlbv`.
    - CSV (UTF-8 có BOM, mở bằng Excel) gồm `ma_lk, bang, khoa_dong, truong, gia_tri_his, gia_tri_qlbv`;
      dòng chỉ có một bên có `truong` là `chi_co_his` hoặc `chi_co_qlbv`.
 4. **Đạt** khi mọi chỗ lệch thuộc một trong hai loại:
@@ -360,7 +363,7 @@ theo đúng tỷ lệ đã xuất. DLL dùng `Math.Round` mặc định (banker'
 | XML4 (cả bảng) | `MapADOToXml` dùng `&&`, danh sách null thì NullReference | Danh sách rỗng trả `[]` (không có `FILEHOSO` XML4), không ném lỗi | [AX]:699 | đã sửa |
 | XML4 MA_BS_DOC_KQ không có DIPLOMA | Ra login name thô | Giữ như DLL | [AX]:694 | cần xác nhận |
 | XML4 MA_CHI_SO/TEN_CHI_SO khối A | Mã (`BHYT_CODE` → `ANTIBIOTIC_RESISTANCE_CODE`) và tên chọn độc lập, có thể lệch cặp | Giữ như DLL | [AX]:696 | cần xác nhận |
-| XML4 NGAY_KQ | XN/PTTT: khối A/C theo `RESULT_READ_TIME → END_TIME → FINISH_TIME…`, khối B theo `END_TIME` | Giữ như DLL | [AX]:697 | cần xác nhận |
+| XML4 NGAY_KQ | CĐHA/TDCN (loại BHYT 1, 8): mọi khối theo `RESULT_READ_TIME → END_TIME → FINISH_TIME → START_TIME → INTRUCTION_TIME`; loại khác (XN, PTTT): khối A/C theo `FINISH_TIME`, khối B theo `END_TIME` | Giữ như DLL | [AX]:697 | cần xác nhận |
 | XML4 LAY_DVU_PTTT | Cấu hình toàn cục máy trạm (`HisConfigs.Get`) | Đọc `HIS_CONFIG` qua `HisDanhMuc::config()`; rỗng/không phải số = `0` (xem "Đối chiếu bộ lọc", bước 4) | Global Constraints Đợt 2 | đã thống nhất |
 | XML4 tra nhân viên theo loginname (MA_BS_DOC_KQ) | So `==` chính xác; trùng loginname thì `FirstOrDefault` theo thứ tự danh mục | `HisDanhMuc::nhanVien` trim khoá; trùng loginname giữ dòng `ID` nhỏ nhất. Chỉ khác khi login trong chuỗi tách `;` có khoảng trắng, hoặc danh mục có loginname trùng | review Task 3 | cần xác nhận |
 | XML4 STT | Thứ tự đầu vào của plugin (xem "Thứ tự dòng") | Thứ tự theo `ID` | đo Đợt 2 | cần xác nhận |
