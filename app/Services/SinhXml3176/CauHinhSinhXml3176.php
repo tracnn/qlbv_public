@@ -202,15 +202,15 @@ class CauHinhSinhXml3176
 
     public function kichThuocLo()
     {
-        return (int) $this->kyThuat('kich_thuoc_lo', 20);
+        return (int) $this->kyThuat('kich_thuoc_lo', 5);
     }
 
     /** memory_limit dat cho lenh CLI. */
     public function memoryLimit()
     {
-        $gt = trim((string) $this->kyThuat('memory_limit', '512M'));
+        $gt = trim((string) $this->kyThuat('memory_limit', '1024M'));
 
-        return $gt !== '' ? $gt : '512M';
+        return $gt !== '' ? $gt : '1024M';
     }
 
     /**

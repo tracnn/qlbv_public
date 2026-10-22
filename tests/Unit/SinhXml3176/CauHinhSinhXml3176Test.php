@@ -90,8 +90,8 @@ class CauHinhSinhXml3176Test extends TestCase
         config(['organization.sinh_xml3176' => ['enabled' => true], 'sinh_xml3176' => ['memory_limit' => null, 'kich_thuoc_lo' => null]]);
         $ch = CauHinhSinhXml3176::tuConfig();
 
-        $this->assertSame(20, $ch->kichThuocLo());
-        $this->assertSame('512M', $ch->memoryLimit());
+        $this->assertSame(5, $ch->kichThuocLo());
+        $this->assertSame('1024M', $ch->memoryLimit());
 
         config(['sinh_xml3176' => ['memory_limit' => '1G', 'kich_thuoc_lo' => 5]]);
         $ch = CauHinhSinhXml3176::tuConfig();
