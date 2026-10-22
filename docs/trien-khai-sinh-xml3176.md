@@ -224,6 +224,14 @@ Quy tắc chung cho cả ba bảng: trường tiền luôn 2 chữ số thập p
 hồ sơ không dựng được một bảng mà theo điều kiện phải có thì bị **loại cả hồ sơ** với lý do rõ ràng
 (`LoiDungBang`), không ném lỗi làm hỏng lượt.
 
+**Đầu vào dịch vụ lọc như plugin HIS** (chủ dự án quyết 22/10/2026): trước khi kiểm điều kiện và dựng bảng,
+`HisNapHoSo` chỉ giữ dòng dịch vụ có loại dịch vụ BHYT, `AMOUNT > 0`, `PRICE > 0`, không hao phí (`IS_EXPEND`),
+không phải dịch vụ không thực hiện (`IS_NO_EXECUTE`) — đúng bộ lọc `UCExportXml.cs:1217/3868` mà plugin chạy
+trước khi gọi DLL. Ekip vẫn gắn từ danh sách chưa lọc như plugin. Hệ quả: **không xuất dòng `_TB`** và **không xuất
+dòng giá 0**, nên key `XML3.KHONG_LAY_DVU_KHONG_THUC_HIEN` và `LAY_CA_DVU_0_DONG` không còn tác dụng (ở HIS cũng
+vậy). Các dòng XML3 về `_TB`/giá 0 bên dưới chỉ còn đúng khi một lớp dựng được gọi với dữ liệu chưa lọc.
+Đo trên hồ sơ 000007436231: trước sửa module dư 1 dòng `02.0085.1778_TB`, sau sửa 19/19 dòng XML3 khớp HIS.
+
 ### XML1 (tổng hợp)
 
 | Bảng/trường | HIS làm gì | Module làm gì | Căn cứ | Trạng thái |

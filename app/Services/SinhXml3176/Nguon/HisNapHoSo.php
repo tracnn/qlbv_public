@@ -186,9 +186,25 @@ class HisNapHoSo
             }
         }
 
+        // Ekip gan tu danh sach CHUA loc, nhu plugin HIS (UCExportXml.cs:1224 nam ngoai khoi loc).
         $this->ganEkip($kq);
+        foreach ($kq as $dl) {
+            $dl->dichVu = array_values(array_filter($dl->dichVu, [self::class, 'thanhToanNhuHis']));
+        }
 
         return $kq;
+    }
+
+    /**
+     * Bo loc dau vao cua plugin HIS truoc khi goi DLL (UCExportXml.cs:1217, 3868): co loai dich vu BHYT,
+     * AMOUNT > 0, PRICE > 0, khong hao phi, khong phai dich vu khong thuc hien. Moi bang (va KiemDieuKien)
+     * nhan cung dau vao nhu HIS: khong co dong _TB, khong co dong gia 0 (key LAY_CA_DVU_0_DONG het tac dung).
+     */
+    public static function thanhToanNhuHis($dv)
+    {
+        return $dv->tdl_hein_service_type_id !== null && $dv->tdl_hein_service_type_id !== ''
+            && (float) $dv->amount > 0 && (float) $dv->price > 0
+            && (int) $dv->is_expend !== 1 && (int) $dv->is_no_execute !== 1;
     }
 
     /** Ekip khong co treatment_id: gan qua ekip_id cua cac dich vu da nap. */

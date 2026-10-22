@@ -52,7 +52,7 @@ class HisNapHoSoTest extends TestCase
             $this->idDichVu++;
             $his->table('v_his_sere_serv_2')->insert([
                 'id' => $this->idDichVu, 'tdl_treatment_id' => $id, 'patient_type_id' => $doiTuong,
-                'ekip_id' => $id, 'is_delete' => 0,
+                'ekip_id' => $id, 'is_delete' => 0, 'tdl_hein_service_type_id' => 1, 'amount' => 1, 'price' => 1000,
             ]);
         }
         $his->table('his_ekip_user')->insert(['id' => $id, 'ekip_id' => $id, 'loginname' => 'bs' . $id, 'is_delete' => 0]);
@@ -134,6 +134,30 @@ class HisNapHoSoTest extends TestCase
         $tatCa = $this->napHoSo()->nap([201, 202]);
         $this->assertCount(2, $tatCa[201]->dichVu);
         $this->assertCount(2, $tatCa[202]->dichVu);
+    }
+
+    public function test_loc_dau_vao_nhu_plugin_his()
+    {
+        $this->themHoSo(301, 1, 1);
+        $his = DB::connection('HISPro');
+        $mau = ['tdl_treatment_id' => 301, 'patient_type_id' => 1, 'is_delete' => 0, 'tdl_hein_service_type_id' => 1,
+            'amount' => 1, 'price' => 1000, 'ekip_id' => 777];
+        $his->table('v_his_sere_serv_2')->insert([
+            array_merge($mau, ['id' => 901, 'is_no_execute' => 1]),
+            array_merge($mau, ['id' => 902, 'is_expend' => 1]),
+            array_merge($mau, ['id' => 903, 'price' => 0]),
+            array_merge($mau, ['id' => 904, 'amount' => 0]),
+            array_merge($mau, ['id' => 905, 'tdl_hein_service_type_id' => null]),
+        ]);
+        $his->table('his_ekip_user')->insert(['id' => 777, 'ekip_id' => 777, 'loginname' => 'bs777', 'is_delete' => 0]);
+
+        $kq = $this->napHoSo()->nap([301]);
+
+        $this->assertSame([$this->idDichVu], $this->idCac($kq[301]->dichVu)); // chi con dong hop le cua themHoSo
+        $loginEkip = array_map(function ($e) {
+            return $e->loginname;
+        }, $kq[301]->ekip);
+        $this->assertContains('bs777', $loginEkip); // ekip gan tu danh sach chua loc, nhu plugin HIS
     }
 
     public function test_ma_doi_tuong_bhyt_khong_phai_so()
