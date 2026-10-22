@@ -108,7 +108,11 @@ class HisNapHoSo
     /** v_his_baby - XML1 61 CAN_NANG_CON */
     const COT_SO_SINH = ['id', 'treatment_id', 'weight'];
 
-    /** his_exp_medimate_used - XML2 tach dong (NGAY_TH_YL_CUA_THUOC_OPTION) */
+    /**
+     * his_exp_medimate_used - XML2 tach dong (NGAY_TH_YL_CUA_THUOC_OPTION).
+     * Bang Oracle KHONG co sere_serv_id/medicine_id/material_id (kiem all_tab_columns 22/10/2026):
+     * chi khop duoc theo exp_mest_medicine_id -> exp_mest_material_id.
+     */
     const COT_SU_DUNG_THUOC = [
         'id', 'tdl_treatment_id', 'exp_mest_medicine_id', 'exp_mest_material_id', 'use_time', 'amount',
         'medication_session',

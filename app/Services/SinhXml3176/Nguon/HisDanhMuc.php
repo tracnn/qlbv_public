@@ -154,6 +154,7 @@ class HisDanhMuc
         return isset($mang[$k]) ? $mang[$k] : null;
     }
 
+    // Co y dung hai quy tac trung khoa: theoKhoa giu dong DAU (id nho nhat), con cauHinh giu id LON nhat.
     private static function theoKhoa($dong, $cot)
     {
         $ra = [];

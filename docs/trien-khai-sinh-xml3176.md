@@ -62,3 +62,5 @@ với `all_tab_columns`: không thiếu cột nào.
 
 Lưu ý: `HIS_CONFIG` có `BRANCH_ID`, nên một key có thể có nhiều dòng `IS_ACTIVE=1`. Module lấy dòng `ID` lớn nhất
 và chưa xét theo cơ sở.
+
+Giới hạn của `HIS_EXP_MEDIMATE_USED` (kiểm `all_tab_columns` lần hai, 22/10/2026): bảng chỉ có 16 cột và **không có** `SERE_SERV_ID`, `MEDICINE_ID`, `MATERIAL_ID`. DLL khớp bản ghi dùng thuốc với dòng thuốc theo thứ tự EXP_MEST_MEDICINE_ID → EXP_MEST_MATERIAL_ID → SERE_SERV_ID → MEDICINE_ID → MATERIAL_ID, qua reflection, nên ba bước sau là nhánh chết trên HIS này. Task XML2 chỉ khớp được theo `EXP_MEST_MEDICINE_ID`, rồi `EXP_MEST_MATERIAL_ID`, đối chiếu với các cột cùng tên của `V_HIS_SERE_SERV_2`.
