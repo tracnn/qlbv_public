@@ -48,6 +48,13 @@ class TheoDoiSinh
         LanSinh::create($ketQua);
     }
 
+    /** Da co dong moc cho loai ban chua (phan biet "chua co" voi moc da luu = 0). */
+    public function coMoc($loaiBan)
+    {
+        return Moc::find($loaiBan) !== null;
+    }
+
+    /** Moc da luu; chua co dong thi 0 (dung coMoc() de phan biet). */
     public function docMoc($loaiBan)
     {
         $dong = Moc::find($loaiBan);

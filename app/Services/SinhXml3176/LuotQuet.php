@@ -56,12 +56,27 @@ class LuotQuet
      * Luot quet theo moc.
      *
      * @param string $loaiBan CauHinhSinhXml3176::CHINH_THUC | THONG_TUYEN
-     * @return array ['ung_vien','da_ghi','bi_loai','loi','bo_qua'] => int
+     * @return array ['ung_vien','da_ghi','bi_loai','loi','bo_qua'] => int; lan dau (chua co moc)
+     *               them 'khoi_tao_moc' => moc vua dat, khong quet gi
      */
     public function chay($loaiBan)
     {
-        $this->batDauLuot();
+        $this->kiemThuMucThat();
         $kq = self::ketQuaRong();
+
+        // Lan dau (chua co dong moc): KHONG quet lich su. Dat moc = bay gio roi thoat;
+        // hoan tat ton dong bang chay bu --tu-ngay/--den-ngay.
+        if (!$this->theoDoi->coMoc($loaiBan)) {
+            $bayGio = (int) (new \DateTime())->format('YmdHis');
+            $this->theoDoi->datMoc($loaiBan, $bayGio);
+            Log::info('sinhxml3176 ' . $loaiBan . ': chua co moc, khoi tao moc = ' . $bayGio
+                . ' (khong quet lich su; ton dong dung --tu-ngay/--den-ngay)');
+            $kq['khoi_tao_moc'] = $bayGio;
+
+            return $kq;
+        }
+
+        $this->batDauLuot();
 
         $mocCu = (int) $this->theoDoi->docMoc($loaiBan);
         $mocMax = $mocCu;
@@ -96,6 +111,7 @@ class LuotQuet
      */
     public function chayChoMa(array $treatmentCodes, $loaiBan)
     {
+        $this->kiemThuMucThat();
         $this->batDauLuot();
         $kq = self::ketQuaRong();
 
@@ -116,6 +132,7 @@ class LuotQuet
 
         foreach (array_chunk($lo, max(1, $this->cauHinh->kichThuocLo())) as $phan) {
             $this->xuLyLo($phan, $loaiBan, $kq);
+            self::ghiBoNho('sau trang');
         }
         $kq['khong_tim_thay'] = $khongThay;
 
@@ -128,6 +145,7 @@ class LuotQuet
      */
     public function chayChoKhoangNgay($tu, $den, $loaiBan)
     {
+        $this->kiemThuMucThat();
         $this->batDauLuot();
         $kq = self::ketQuaRong();
 
@@ -170,11 +188,29 @@ class LuotQuet
         return (int) $u->$cot;
     }
 
+    /**
+     * Chot an toan thu hai (ngoai lenh): ghi_thu_muc_that = true ma chua du bang thi tu choi,
+     * de moi duong goi LuotQuet deu khong the ghi thu muc that khi thieu bang.
+     */
+    private function kiemThuMucThat()
+    {
+        if ($this->cauHinh->ghiThuMucThat() && !$this->dangKy->daDu()) {
+            throw new \RuntimeException('Tu choi ghi vao thu muc that: chua du 14 bang. Thieu: '
+                . implode(', ', $this->dangKy->thieu()));
+        }
+    }
+
     /** Danh muc + doi ma cau hinh mot lan dau luot. */
     private function batDauLuot()
     {
         $this->danhMuc = HisDanhMuc::napChoLuot($this->cauHinh->ketNoiHis());
+        self::ghiBoNho('sau nap danh muc');
         $this->ungVien->doiMa();
+    }
+
+    private static function ghiBoNho($luc)
+    {
+        Log::info('sinhxml3176 bo nho dinh ' . $luc . ': ' . round(memory_get_peak_usage(true) / 1048576, 1) . 'MB');
     }
 
     /** Duyet cac trang keyset tu (tuMoc, id 0) den khi trang ngan hon kichThuocLo. */
@@ -187,6 +223,7 @@ class LuotQuet
             $kq['ung_vien'] += count($lo);
             if (count($lo) > 0) {
                 $xuLy($lo);
+                self::ghiBoNho('sau trang');
                 $cuoi = $lo[count($lo) - 1];
                 $tuMoc = self::mocCua($cuoi, $loaiBan);
                 $sauId = (int) $cuoi->id;
@@ -210,11 +247,14 @@ class LuotQuet
             $id = (int) $u->id;
             $ketQua = $this->motHoSo($u, $loaiBan, isset($duLieu[$id]) ? $duLieu[$id] : null);
             $kq[$ketQua['trang_thai']]++;
+            // Giai phong du lieu ho so ngay sau khi xu ly (khong giu ca lo trong bo nho)
+            unset($duLieu[$id]);
             $this->theoDoi->ghi($ketQua);
             if ($ketQua['trang_thai'] === self::LOI) {
                 Log::warning('sinhxml3176 ' . $loaiBan . ' ho so ' . $ketQua['treatment_code'] . ' loi: ' . $ketQua['ly_do']);
             }
         }
+        unset($duLieu);
     }
 
     /** @return array dong sinh_xml3176_lan_sinh */
@@ -271,7 +311,7 @@ class LuotQuet
             $luc = new \DateTime();
             $thuMuc = $this->cauHinh->thuMuc($loaiBan);
             $ten = GhiTep::ghi($thuMuc, $ketQua['treatment_code'], $loaiBan,
-                PhongBi::chuoi($maCskcb, $xmlCon, $luc), $luc);
+                PhongBi::chuoi($maCskcb, $xmlCon, $luc), $luc, $this->cauHinh->thuMucTam($thuMuc));
 
             $ketQua['trang_thai'] = self::DA_GHI;
             $ketQua['ten_tep'] = $ten;

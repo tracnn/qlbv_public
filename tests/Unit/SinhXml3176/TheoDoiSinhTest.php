@@ -94,4 +94,14 @@ class TheoDoiSinhTest extends TestCase
         $this->assertSame(20261022120000, $this->td->docMoc(CauHinhSinhXml3176::CHINH_THUC));
         $this->assertSame(0, $this->td->docMoc(CauHinhSinhXml3176::THONG_TUYEN));
     }
+
+    public function test_co_moc_phan_biet_chua_co_dong_voi_moc_0()
+    {
+        $ct = CauHinhSinhXml3176::CHINH_THUC;
+        $this->assertFalse($this->td->coMoc($ct));
+        $this->td->datMoc($ct, 0);
+        $this->assertTrue($this->td->coMoc($ct));
+        $this->assertSame(0, $this->td->docMoc($ct));
+        $this->assertFalse($this->td->coMoc(CauHinhSinhXml3176::THONG_TUYEN));
+    }
 }

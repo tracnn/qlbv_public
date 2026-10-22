@@ -9,21 +9,53 @@ use PHPUnit\Framework\TestCase;
 
 class GhiTepTest extends TestCase
 {
+    private $goc;
     private $thuMuc;
+    private $tam;
 
     protected function setUp()
     {
         parent::setUp();
-        $this->thuMuc = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'sinhxml3176_ghitep_' . uniqid();
+        $this->goc = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'sinhxml3176_ghitep_' . uniqid();
+        mkdir($this->goc, 0775, true);
+        $this->thuMuc = $this->goc . DIRECTORY_SEPARATOR . 'dich';
+        $this->tam = $this->goc . DIRECTORY_SEPARATOR . GhiTep::TEN_THU_MUC_TAM;
     }
 
     protected function tearDown()
     {
-        foreach ((array) glob($this->thuMuc . DIRECTORY_SEPARATOR . '*') as $f) {
-            is_dir($f) ? $this->xoaThuMucCon($f) : @unlink($f);
-        }
-        is_dir($this->thuMuc) ? @rmdir($this->thuMuc) : @unlink($this->thuMuc);
+        $this->xoa($this->goc);
         parent::tearDown();
+    }
+
+    private function xoa($p)
+    {
+        if (is_dir($p)) {
+            foreach (scandir($p) as $f) {
+                if ($f !== '.' && $f !== '..') {
+                    $this->xoa($p . DIRECTORY_SEPARATOR . $f);
+                }
+            }
+            @rmdir($p);
+        } elseif (file_exists($p)) {
+            @unlink($p);
+        }
+    }
+
+    /** Moi tep (de quy) trong thu muc dich, ten tuong doi. */
+    private function tepTrongDich()
+    {
+        if (!is_dir($this->thuMuc)) {
+            return [];
+        }
+        $ra = [];
+        $it = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($this->thuMuc, \FilesystemIterator::SKIP_DOTS));
+        foreach ($it as $f) {
+            $ra[] = substr($f->getPathname(), strlen($this->thuMuc) + 1);
+        }
+        sort($ra);
+
+        return $ra;
     }
 
     public function test_ten_tep_chinh_thuc_va_tt()
@@ -38,7 +70,7 @@ class GhiTepTest extends TestCase
         $luc = new \DateTime('2026-10-22 15:30:00');
         $nd = str_repeat('<a>x</a>', 1000);
         $ten = GhiTep::ghi($this->thuMuc, '000123', CauHinhSinhXml3176::CHINH_THUC, $nd, $luc);
-        $this->assertSame([$ten], array_map('basename', glob($this->thuMuc . DIRECTORY_SEPARATOR . '*')));
+        $this->assertSame([$ten], $this->tepTrongDich());
         $this->assertSame($nd, file_get_contents($this->thuMuc . DIRECTORY_SEPARATOR . $ten));
 
         // ghi de len tep da co
@@ -51,13 +83,6 @@ class GhiTepTest extends TestCase
     {
         $this->expectException(\InvalidArgumentException::class);
         GhiTep::ghi($this->thuMuc, '000123', 'TT', 'a', new \DateTime('2026-10-22 15:30:00'));
-    }
-    private function xoaThuMucCon($d)
-    {
-        foreach ((array) glob($d . DIRECTORY_SEPARATOR . '*') as $f) {
-            @unlink($f);
-        }
-        @rmdir($d);
     }
 
     private function nemLoiGhiTep(callable $f, $chua)
@@ -81,10 +106,51 @@ class GhiTepTest extends TestCase
 
     public function test_khong_ghi_duoc_tep_tam_nem_loi_ghi_tep()
     {
-        mkdir($this->thuMuc . DIRECTORY_SEPARATOR . 'QLBV_20261022153000_000123.tmp', 0775, true);
+        mkdir($this->tam . DIRECTORY_SEPARATOR . 'QLBV_20261022153000_000123.tmp', 0775, true);
         $this->nemLoiGhiTep(function () {
             GhiTep::ghi($this->thuMuc, '000123', CauHinhSinhXml3176::CHINH_THUC, 'a', new \DateTime('2026-10-22 15:30:00'));
         }, '.tmp');
+        $this->assertSame([], $this->tepTrongDich());
+    }
+
+    public function test_khong_tao_duoc_thu_muc_tam_nem_loi_ghi_tep()
+    {
+        file_put_contents($this->tam, 'chan');
+        $this->nemLoiGhiTep(function () {
+            GhiTep::ghi($this->thuMuc, '000123', CauHinhSinhXml3176::CHINH_THUC, 'a', new \DateTime('2026-10-22 15:30:00'));
+        }, 'thu muc tam');
+        $this->assertSame([], $this->tepTrongDich());
+    }
+
+    public function test_tep_tam_ghi_ngoai_thu_muc_dich()
+    {
+        $this->assertSame($this->tam, GhiTep::thuMucTamMacDinh($this->thuMuc));
+        $this->assertSame($this->tam, GhiTep::thuMucTamMacDinh($this->thuMuc . DIRECTORY_SEPARATOR));
+
+        $ten = GhiTep::ghi($this->thuMuc, '000123', CauHinhSinhXml3176::CHINH_THUC, 'a', new \DateTime('2026-10-22 15:30:00'));
+
+        $this->assertSame([$ten], $this->tepTrongDich());
+        $this->assertTrue(is_dir($this->tam));
+        $this->assertSame([], glob($this->tam . DIRECTORY_SEPARATOR . '*'));
+    }
+
+    public function test_thu_muc_tam_khai_rieng()
+    {
+        $rieng = $this->goc . DIRECTORY_SEPARATOR . 'tam_rieng';
+        $ten = GhiTep::ghi($this->thuMuc, '000123', CauHinhSinhXml3176::CHINH_THUC, 'a', new \DateTime('2026-10-22 15:30:00'), $rieng);
+
+        $this->assertSame([$ten], $this->tepTrongDich());
+        $this->assertTrue(is_dir($rieng));
+        $this->assertFalse(file_exists($this->tam));
+    }
+
+    public function test_thu_muc_tam_nam_trong_dich_bi_tu_choi()
+    {
+        $this->nemLoiGhiTep(function () {
+            GhiTep::ghi($this->thuMuc, '000123', CauHinhSinhXml3176::CHINH_THUC, 'a', new \DateTime('2026-10-22 15:30:00'),
+                $this->thuMuc . DIRECTORY_SEPARATOR . 'tam');
+        }, 'nam trong thu muc dich');
+        $this->assertSame([], $this->tepTrongDich());
     }
 
     public function test_khong_doi_ten_duoc_nem_loi_ghi_tep_va_xoa_tmp()
@@ -95,6 +161,8 @@ class GhiTepTest extends TestCase
         $this->nemLoiGhiTep(function () {
             GhiTep::ghi($this->thuMuc, '000123', CauHinhSinhXml3176::CHINH_THUC, 'a', new \DateTime('2026-10-22 15:30:00'));
         }, 'doi ten');
-        $this->assertFileNotExists($this->thuMuc . DIRECTORY_SEPARATOR . 'QLBV_20261022153000_000123.tmp');
+        $this->assertFileNotExists($this->tam . DIRECTORY_SEPARATOR . 'QLBV_20261022153000_000123.tmp');
+        // Trong thu muc dich chi con thu muc chan san co, khong co tep tam nao
+        $this->assertSame(['QLBV_20261022153000_000123.xml' . DIRECTORY_SEPARATOR . 'chan'], $this->tepTrongDich());
     }
 }

@@ -46,10 +46,30 @@ class SinhXml3176Quet extends Command
         }
 
         $cauHinh = CauHinhSinhXml3176::tuConfig();
+        if (PHP_SAPI === 'cli') {
+            ini_set('memory_limit', $cauHinh->memoryLimit());
+        }
         if (!$cauHinh->batBat()) {
             $this->info('Module sinh XML3176 dang tat');
+            if ($this->option('lien-tuc')) {
+                // Nghi truoc khi thoat de NSSM (AppRestartDelay 10s) khong khoi dong lai Laravel moi 10 giay mai mai
+                $nghi = $this->soGiayNghi($cauHinh);
+                if ($nghi > 0) {
+                    $this->ngu($nghi);
+                }
+            }
 
             return 0;
+        }
+
+        $loiCauHinh = $cauHinh->loiCauHinh();
+        if (!empty($loiCauHinh)) {
+            foreach ($loiCauHinh as $loi) {
+                $this->error('Loi cau hinh sinh_xml3176: ' . $loi);
+                Log::error('sinhxml3176:quet loi cau hinh: ' . $loi);
+            }
+
+            return 1;
         }
 
         $dangKy = DangKyBang::macDinh();
@@ -112,6 +132,20 @@ class SinhXml3176Quet extends Command
             $dangKy, new KiemDieuKien());
     }
 
+    /** Nghi giua hai vong (tach ra de test thay duoc). */
+    protected function ngu($giay)
+    {
+        sleep($giay);
+    }
+
+    private function soGiayNghi(CauHinhSinhXml3176 $cauHinh)
+    {
+        $nghi = $this->option('nghi');
+        $nghi = $nghi === null || $nghi === '' ? $cauHinh->nghiGiay() : (int) $nghi;
+
+        return max(0, $nghi);
+    }
+
     /** Chay chinh thuc, them thong tuyen neu bat. Loi luot (cau hinh, mat ket noi) => 1. */
     private function motVong(CauHinhSinhXml3176 $cauHinh, callable $chay)
     {
@@ -132,6 +166,10 @@ class SinhXml3176Quet extends Command
                 $ma = 1;
                 continue;
             }
+            if (isset($kq['khoi_tao_moc'])) {
+                $this->info($loai . ': chua co moc, da khoi tao moc = ' . $kq['khoi_tao_moc']
+                    . ' (khong quet lich su; ton dong chay bu --tu-ngay/--den-ngay)');
+            }
             $this->line($loai . ': ung_vien=' . $kq['ung_vien'] . ' da_ghi=' . $kq['da_ghi']
                 . ' bi_loai=' . $kq['bi_loai'] . ' loi=' . $kq['loi'] . ' bo_qua=' . $kq['bo_qua']);
             if (isset($kq['khong_tim_thay'])) {
@@ -150,9 +188,7 @@ class SinhXml3176Quet extends Command
     private function vongLap(CauHinhSinhXml3176 $cauHinh, callable $chay)
     {
         $soVong = max(1, (int) $this->option('so-vong'));
-        $nghi = $this->option('nghi');
-        $nghi = $nghi === null || $nghi === '' ? $cauHinh->nghiGiay() : (int) $nghi;
-        $nghi = max(0, $nghi);
+        $nghi = $this->soGiayNghi($cauHinh);
 
         $this->info('Chay lien tuc: nghi ' . $nghi . ' giay giua hai vong, tu thoat sau ' . $soVong . ' vong.');
 
@@ -165,7 +201,7 @@ class SinhXml3176Quet extends Command
                 $soVongHong++;
             }
             if ($i < $soVong && $nghi > 0) {
-                sleep($nghi);
+                $this->ngu($nghi);
             }
         }
 

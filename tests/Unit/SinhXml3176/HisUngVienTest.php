@@ -131,6 +131,22 @@ class HisUngVienTest extends TestCase
         $this->assertSame([12], $h->idDoiTuongTt());
     }
 
+    public function test_mot_ma_nhieu_id_lay_hop()
+    {
+        // Hai his_branch cung HEIN_MEDI_ORG_CODE: ca hai ID deu phai vao bo loc
+        DB::connection('HISPro')->table('his_branch')->insert(['id' => 3, 'hein_medi_org_code' => '01001']);
+        $t = 20260103000000;
+        $this->them(['treatment_code' => 'B1', 'branch_id' => 1, 'fee_lock_time' => $t, 'out_time' => $t]);
+        $this->them(['treatment_code' => 'B2', 'branch_id' => 2, 'fee_lock_time' => $t, 'out_time' => $t]);
+        $this->them(['treatment_code' => 'B3', 'branch_id' => 3, 'fee_lock_time' => $t, 'out_time' => $t]);
+
+        $h = $this->datCauHinh(['co_so' => ['01001']]);
+        $h->doiMa();
+
+        $this->assertSame(['B1', 'B3'], $this->maLo($h->layLo(CauHinhSinhXml3176::CHINH_THUC, 0, 10)));
+        $this->assertSame('01001', $h->maCskcb(3));
+    }
+
     public function test_ma_sai_thi_nem_loi_cau_hinh()
     {
         $h = $this->datCauHinh(['doi_tuong_bn' => ['BHYT', 'GOSAI']]);

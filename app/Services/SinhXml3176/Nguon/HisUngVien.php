@@ -162,17 +162,24 @@ class HisUngVien
             ->select('id', $cotMa . ' as ma')
             ->get();
 
+        // Mot ma co the ung nhieu ID (vd hai his_branch cung hein_medi_org_code): giu het, lay hop
         $theoMa = [];
         foreach ($hang as $h) {
-            $theoMa[trim((string) $h->ma)] = (int) $h->id;
+            $theoMa[trim((string) $h->ma)][] = (int) $h->id;
         }
 
+        $ids = [];
         foreach ($maDs as $ma) {
             if (!isset($theoMa[$ma])) {
                 throw new \InvalidArgumentException('Ma cau hinh khong ton tai trong HIS: ' . $khoa . '=' . $ma);
             }
+            foreach ($theoMa[$ma] as $id) {
+                $ids[] = $id;
+            }
         }
+        $ids = array_values(array_unique($ids));
+        sort($ids);
 
-        return array_values(array_unique(array_values($theoMa)));
+        return $ids;
     }
 }

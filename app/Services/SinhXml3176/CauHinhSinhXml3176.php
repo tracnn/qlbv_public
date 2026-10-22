@@ -5,6 +5,8 @@ namespace App\Services\SinhXml3176;
 /**
  * Cau hinh bat bien cua module sinh XML3176 truc tiep tu HIS.
  * Gop khoi organization.sinh_xml3176 voi gia tri mac dinh; thieu khoi thi module tat.
+ * Gia tri null trong khoi KHONG de len mac dinh (tru ket_noi_his: null/rong la loi cau hinh,
+ * khong bao gio roi ve ket noi mac dinh). loiCauHinh() liet ke loi; lenh kiem truoc khi chay.
  */
 class CauHinhSinhXml3176
 {
@@ -19,6 +21,8 @@ class CauHinhSinhXml3176
         'thu_muc'          => 'D:\XML\3176',
         'thu_muc_tt'       => 'D:\XML\3176TT',
         'thu_muc_thu'      => 'D:\XML\SinhXml3176Thu',
+        // null = thu muc anh em cua thu muc dich: <cha cua dich>\.sinh_xml3176_tmp (xem GhiTep)
+        'thu_muc_tam'      => null,
     ];
 
     private $khoi;
@@ -41,7 +45,99 @@ class CauHinhSinhXml3176
             $kyThuat = [];
         }
 
-        return new self(array_merge(self::$macDinh, $khoi), $kyThuat);
+        $ketNoiRong = array_key_exists('ket_noi_his', $khoi) && trim((string) $khoi['ket_noi_his']) === '';
+        $khoi = array_filter($khoi, function ($gt) {
+            return $gt !== null;
+        });
+        $kyThuat = array_filter($kyThuat, function ($gt) {
+            return $gt !== null;
+        });
+        $gop = array_merge(self::$macDinh, $khoi);
+        if ($ketNoiRong) {
+            $gop['ket_noi_his'] = '';
+        }
+
+        return new self($gop, $kyThuat);
+    }
+
+    /**
+     * Loi cau hinh chan chay lenh (rong = hop le).
+     * - ket_noi_his rong/null.
+     * - thu_muc_thu trung hoac nam trong thu_muc/thu_muc_tt (tien giam dinh quet de quy).
+     * - thu muc tam cua bat ky thu muc dich nao nam trong thu_muc/thu_muc_tt, hoac khac o dia voi dich.
+     *
+     * @return string[]
+     */
+    public function loiCauHinh()
+    {
+        $loi = [];
+        if (trim((string) $this->khoi['ket_noi_his']) === '') {
+            $loi[] = 'ket_noi_his rong: phai khai ten ket noi HIS (vd HISPro), khong dung ket noi mac dinh';
+        }
+
+        $quet = [
+            'thu_muc'    => (string) $this->khoi['thu_muc'],
+            'thu_muc_tt' => (string) $this->khoi['thu_muc_tt'],
+        ];
+        $thu = (string) $this->khoi['thu_muc_thu'];
+        foreach ($quet as $khoa => $goc) {
+            if (self::namTrong($thu, $goc)) {
+                $loi[] = 'thu_muc_thu (' . $thu . ') trung hoac nam trong ' . $khoa . ' (' . $goc
+                    . '): tien giam dinh quet de quy se nap tep thu';
+            }
+        }
+
+        foreach (array_unique(array_merge(array_values($quet), [$thu])) as $dich) {
+            $tam = $this->thuMucTam($dich);
+            foreach ($quet as $khoa => $goc) {
+                if (self::namTrong($tam, $goc)) {
+                    $loi[] = 'Thu muc tam (' . $tam . ') nam trong ' . $khoa . ' (' . $goc
+                        . '): khai thu_muc_tam ra ngoai cay thu muc quet';
+                }
+            }
+            if (self::oDia($tam) !== self::oDia($dich)) {
+                $loi[] = 'Thu muc tam (' . $tam . ') khac o dia voi ' . $dich . ': rename khong con nguyen tu';
+            }
+        }
+
+        return array_values(array_unique($loi));
+    }
+
+    /** Thu muc ghi tep tam cho thu muc dich: thu_muc_tam neu khai, nguoc lai thu muc anh em (GhiTep). */
+    public function thuMucTam($thuMucDich)
+    {
+        $khai = trim((string) $this->khoi['thu_muc_tam']);
+
+        return $khai !== '' ? $khai : GhiTep::thuMucTamMacDinh($thuMucDich);
+    }
+
+    /** Chuan hoa duong dan de so sanh: '/' thanh '\\', bo '\\' cuoi, chu thuong (Windows khong phan biet hoa thuong). */
+    public static function chuanHoaDuongDan($duongDan)
+    {
+        $p = str_replace('/', '\\', trim((string) $duongDan));
+        $p = preg_replace('#\\\\+#', '\\', $p);
+        $p = rtrim($p, '\\');
+
+        return strtolower($p);
+    }
+
+    /** $con trung hoac nam trong $cha (sau chuan hoa). Duong dan rong khong nam trong gi. */
+    public static function namTrong($con, $cha)
+    {
+        $con = self::chuanHoaDuongDan($con);
+        $cha = self::chuanHoaDuongDan($cha);
+        if ($con === '' || $cha === '') {
+            return false;
+        }
+
+        return $con === $cha || strpos($con . '\\', $cha . '\\') === 0;
+    }
+
+    private static function oDia($duongDan)
+    {
+        $p = self::chuanHoaDuongDan($duongDan);
+
+        return preg_match('/^([a-z]):/', $p, $m) ? $m[1] : '';
     }
 
     public function batBat()
@@ -63,9 +159,15 @@ class CauHinhSinhXml3176
         return $this->khoi['ghi_thu_muc_that'] === true;
     }
 
+    /** Ten ket noi HIS; rong/null => loi cau hinh (khong roi ve ket noi mac dinh cua Laravel). */
     public function ketNoiHis()
     {
-        return (string) $this->khoi['ket_noi_his'];
+        $ten = trim((string) $this->khoi['ket_noi_his']);
+        if ($ten === '') {
+            throw new \InvalidArgumentException('Cau hinh sinh_xml3176.ket_noi_his rong: phai khai ten ket noi HIS');
+        }
+
+        return $ten;
     }
 
     public function coSo()
@@ -100,7 +202,15 @@ class CauHinhSinhXml3176
 
     public function kichThuocLo()
     {
-        return (int) $this->kyThuat('kich_thuoc_lo', 50);
+        return (int) $this->kyThuat('kich_thuoc_lo', 20);
+    }
+
+    /** memory_limit dat cho lenh CLI. */
+    public function memoryLimit()
+    {
+        $gt = trim((string) $this->kyThuat('memory_limit', '512M'));
+
+        return $gt !== '' ? $gt : '512M';
     }
 
     public function nghiGiay()

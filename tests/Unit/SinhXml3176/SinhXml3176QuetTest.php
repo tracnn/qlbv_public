@@ -22,6 +22,9 @@ class SinhXml3176QuetTest extends TestCase
     use DungBangHisSinhXml3176Sqlite;
     use HoSoHisSinhXml3176;
 
+    const MOC_GOC = 20260101000000;
+
+    private $goc;
     private $thuMuc;
 
     protected function setUp()
@@ -30,24 +33,32 @@ class SinhXml3176QuetTest extends TestCase
         $this->dungBangTheoDoi();
         $this->dungBangHis();
         $this->themDanhMucLuot();
-        $this->thuMuc = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'sinhxml3176_lenh_' . uniqid();
+        $this->goc = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'sinhxml3176_lenh_' . uniqid();
+        mkdir($this->goc, 0775, true);
+        $this->thuMuc = $this->goc . DIRECTORY_SEPARATOR . 'thu';
         Cache::forget(SinhXml3176Quet::KHOA_LUOT);
+        (new TheoDoiSinh())->datMoc(CauHinhSinhXml3176::CHINH_THUC, self::MOC_GOC);
+        (new TheoDoiSinh())->datMoc(CauHinhSinhXml3176::THONG_TUYEN, self::MOC_GOC);
+        $this->memoryLimitCu = ini_get('memory_limit');
     }
+
+    private $memoryLimitCu;
 
     protected function tearDown()
     {
+        ini_set('memory_limit', $this->memoryLimitCu);
         Cache::forget(SinhXml3176Quet::KHOA_LUOT);
-        $this->xoaThuMuc($this->thuMuc);
+        $this->xoaThuMuc($this->goc);
         parent::tearDown();
     }
 
-    private function cauHinh(array $khoi = [])
+    private function cauHinh(array $khoi = [], array $kyThuat = [])
     {
         config([
             'organization.sinh_xml3176' => array_merge([
                 'enabled' => true, 'ket_noi_his' => 'HISPro', 'thu_muc_thu' => $this->thuMuc,
             ], $khoi),
-            'sinh_xml3176' => ['kich_thuoc_lo' => 50, 'chong_lan_phut' => 10, 'khoa_luot_phut' => 120],
+            'sinh_xml3176' => array_merge(['kich_thuoc_lo' => 50, 'chong_lan_phut' => 10, 'khoa_luot_phut' => 120], $kyThuat),
         ]);
     }
 
@@ -174,7 +185,7 @@ class SinhXml3176QuetTest extends TestCase
         $this->assertSame(0, $ma);
         $this->assertSame(['HS2'], LanSinh::pluck('treatment_code')->all());
         $this->assertContains('KHONGCO', $ra);
-        $this->assertSame(0, (new TheoDoiSinh())->docMoc(CauHinhSinhXml3176::CHINH_THUC));
+        $this->assertSame(self::MOC_GOC, (new TheoDoiSinh())->docMoc(CauHinhSinhXml3176::CHINH_THUC));
     }
 
     public function test_chay_bu_theo_khoang_ngay()
@@ -187,7 +198,7 @@ class SinhXml3176QuetTest extends TestCase
 
         $this->assertSame(0, $ma);
         $this->assertSame(['HS2'], LanSinh::pluck('treatment_code')->all());
-        $this->assertSame(0, (new TheoDoiSinh())->docMoc(CauHinhSinhXml3176::CHINH_THUC));
+        $this->assertSame(self::MOC_GOC, (new TheoDoiSinh())->docMoc(CauHinhSinhXml3176::CHINH_THUC));
     }
 
     public function test_khoang_ngay_sai_dinh_dang_thi_loi()
@@ -253,5 +264,105 @@ class SinhXml3176QuetTest extends TestCase
         $this->assertContains('KHONGCO', $ra);
         $this->assertNotContains('HS1', $ra);
         $this->assertNotContains('HS2', $ra);
+    }
+
+    public static $daNgu = [];
+
+    private function dangKyLenhNguGia()
+    {
+        $lenh = new class extends SinhXml3176Quet {
+            protected function ngu($giay)
+            {
+                SinhXml3176QuetTest::$daNgu[] = $giay;
+            }
+        };
+        $this->app->make(\Illuminate\Contracts\Console\Kernel::class)->registerCommand($lenh);
+        self::$daNgu = [];
+    }
+
+    public function test_module_tat_lien_tuc_thi_nghi_truoc_khi_thoat()
+    {
+        $this->cauHinh(['enabled' => false], ['nghi_giay' => 45]);
+        $this->dangKyLenhNguGia();
+
+        list($ma, $ra) = $this->chay(['--lien-tuc' => true]);
+
+        $this->assertSame(0, $ma);
+        $this->assertContains('dang tat', $ra);
+        $this->assertSame([45], self::$daNgu);
+
+        // --nghi ghi de; khong --lien-tuc thi khong nghi
+        self::$daNgu = [];
+        $this->chay(['--lien-tuc' => true, '--nghi' => 7]);
+        $this->assertSame([7], self::$daNgu);
+        self::$daNgu = [];
+        $this->chay();
+        $this->assertSame([], self::$daNgu);
+    }
+
+    public function test_lien_tuc_nghi_giua_cac_vong_qua_ngu()
+    {
+        $this->cauHinh();
+        $this->dangKyLenhNguGia();
+
+        list($ma, $ra) = $this->chay(['--lien-tuc' => true, '--so-vong' => 3, '--nghi' => 5]);
+
+        $this->assertSame(0, $ma);
+        $this->assertSame([5, 5], self::$daNgu);
+    }
+
+    public function test_dat_memory_limit_tu_config()
+    {
+        $this->cauHinh(['enabled' => false], ['memory_limit' => '777M']);
+
+        $this->chay();
+
+        $this->assertSame('777M', ini_get('memory_limit'));
+    }
+
+    public function test_thu_muc_thu_nam_trong_thu_muc_quet_thi_loi_cau_hinh()
+    {
+        $quet = $this->goc . DIRECTORY_SEPARATOR . 'Quet';
+        // Khac hoa thuong + dau phan cach van bi bat
+        $this->cauHinh(['thu_muc' => $quet, 'thu_muc_tt' => $quet . 'TT',
+            'thu_muc_thu' => str_replace('\\', '/', strtolower($quet)) . '/thu/']);
+        $this->themHoSoLuot(1);
+
+        list($ma, $ra) = $this->chay();
+
+        $this->assertSame(1, $ma);
+        $this->assertContains('thu_muc_thu', $ra);
+        $this->assertContains('nam trong thu_muc', $ra);
+        $this->assertSame(0, LanSinh::count());
+        $this->assertFalse(is_dir($quet));
+        $this->assertFalse(Cache::has(SinhXml3176Quet::KHOA_LUOT));
+    }
+
+    public function test_ket_noi_his_rong_thi_loi_cau_hinh()
+    {
+        foreach ([null, '', '  '] as $gt) {
+            $this->cauHinh(['ket_noi_his' => $gt]);
+
+            list($ma, $ra) = $this->chay();
+
+            $this->assertSame(1, $ma, var_export($gt, true));
+            $this->assertContains('ket_noi_his', $ra);
+        }
+        $this->assertSame(0, LanSinh::count());
+    }
+
+    public function test_luot_dau_chua_co_moc_in_khoi_tao()
+    {
+        \App\Models\SinhXml3176\Moc::query()->delete();
+        $this->cauHinh();
+        $this->themHoSoLuot(1);
+
+        list($ma, $ra) = $this->chay();
+
+        $this->assertSame(0, $ma);
+        $this->assertContains('da khoi tao moc', $ra);
+        $this->assertSame(0, $this->soTep());
+        $this->assertSame(0, LanSinh::count());
+        $this->assertTrue((new TheoDoiSinh())->coMoc(CauHinhSinhXml3176::CHINH_THUC));
     }
 }

@@ -3,6 +3,7 @@
 namespace Tests\Unit\SinhXml3176;
 
 use App\Models\SinhXml3176\LanSinh;
+use App\Models\SinhXml3176\Moc;
 use App\Services\SinhXml3176\Bang\DangKyBang;
 use App\Services\SinhXml3176\CauHinhSinhXml3176;
 use App\Services\SinhXml3176\KiemDieuKien;
@@ -23,7 +24,10 @@ class LuotQuetTest extends TestCase
 
     const CT = CauHinhSinhXml3176::CHINH_THUC;
     const TT = CauHinhSinhXml3176::THONG_TUYEN;
+    /** Moc gieo san cho ca hai loai ban (luot dau khi chua co moc chi khoi tao, khong quet) */
+    const MOC_GOC = 20260101000000;
 
+    private $goc;
     private $thuMuc;
 
     protected function setUp()
@@ -32,21 +36,26 @@ class LuotQuetTest extends TestCase
         $this->dungBangTheoDoi();
         $this->dungBangHis();
         $this->themDanhMucLuot();
-        $this->thuMuc = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'sinhxml3176_luot_' . uniqid();
+        // Thu muc dich nam trong $goc de thu muc tam anh em (.sinh_xml3176_tmp) cung duoc don
+        $this->goc = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'sinhxml3176_luot_' . uniqid();
+        mkdir($this->goc, 0775, true);
+        $this->thuMuc = $this->goc . DIRECTORY_SEPARATOR . 'thu';
+        (new TheoDoiSinh())->datMoc(self::CT, self::MOC_GOC);
+        (new TheoDoiSinh())->datMoc(self::TT, self::MOC_GOC);
     }
 
     protected function tearDown()
     {
-        $this->xoaThuMuc($this->thuMuc);
+        $this->xoaThuMuc($this->goc);
         parent::tearDown();
     }
 
-    private function luot(array $kyThuat = [], TheoDoiSinh $theoDoi = null)
+    private function luot(array $kyThuat = [], TheoDoiSinh $theoDoi = null, array $khoi = [])
     {
         config([
-            'organization.sinh_xml3176' => [
+            'organization.sinh_xml3176' => array_merge([
                 'enabled' => true, 'ket_noi_his' => 'HISPro', 'thu_muc_thu' => $this->thuMuc,
-            ],
+            ], $khoi),
             'sinh_xml3176' => array_merge(['kich_thuoc_lo' => 50, 'chong_lan_phut' => 10], $kyThuat),
         ]);
         $cauHinh = CauHinhSinhXml3176::tuConfig();
@@ -106,7 +115,7 @@ class LuotQuetTest extends TestCase
         $this->assertNull($dong[0]->ly_do);
 
         $this->assertSame(20261001110000, (new TheoDoiSinh())->docMoc(self::CT));
-        $this->assertSame(0, (new TheoDoiSinh())->docMoc(self::TT));
+        $this->assertSame(self::MOC_GOC, (new TheoDoiSinh())->docMoc(self::TT));
     }
 
     public function test_luot_chong_lan_khong_sinh_lai()
@@ -206,7 +215,7 @@ class LuotQuetTest extends TestCase
         } catch (\RuntimeException $e) {
             $this->assertSame('mat ket noi', $e->getMessage());
         }
-        $this->assertSame(0, (new TheoDoiSinh())->docMoc(self::CT));
+        $this->assertSame(self::MOC_GOC, (new TheoDoiSinh())->docMoc(self::CT));
 
         // Luot sau: ho so 1 bo qua, ho so 2 sinh; moc = lon nhat cua lo
         $kq = $this->luot()->chay(self::CT);
@@ -260,7 +269,7 @@ class LuotQuetTest extends TestCase
         $tep = $this->tep();
         $this->assertRegExp('/^QLBV_\d{14}_HS1_TT\.xml$/', $tep[0]);
         $this->assertSame(20261001100000, (new TheoDoiSinh())->docMoc(self::TT));
-        $this->assertSame(0, (new TheoDoiSinh())->docMoc(self::CT));
+        $this->assertSame(self::MOC_GOC, (new TheoDoiSinh())->docMoc(self::CT));
     }
 
     public function test_chay_cho_ma_bo_qua_can_sinh_khong_dung_moc()
@@ -292,7 +301,7 @@ class LuotQuetTest extends TestCase
 
         $this->assertSame($this->kq(3, 3, 0, 0, 0), $kq);
         $this->assertSame(['HS2', 'HS3', 'HS4'], LanSinh::orderBy('treatment_code')->pluck('treatment_code')->all());
-        $this->assertSame(0, (new TheoDoiSinh())->docMoc(self::CT));
+        $this->assertSame(self::MOC_GOC, (new TheoDoiSinh())->docMoc(self::CT));
     }
 
     public function test_loi_ghi_tep_dung_luot_khong_ghi_theo_doi_khong_tien_moc()
@@ -309,7 +318,7 @@ class LuotQuetTest extends TestCase
             $this->assertContains($this->thuMuc, $e->getMessage());
         }
         $this->assertSame(0, LanSinh::count());
-        $this->assertSame(0, (new TheoDoiSinh())->docMoc(self::CT));
+        $this->assertSame(self::MOC_GOC, (new TheoDoiSinh())->docMoc(self::CT));
 
         // Sua xong moi truong: luot sau sinh lai ca hai
         unlink($this->thuMuc);
@@ -322,10 +331,98 @@ class LuotQuetTest extends TestCase
         $this->themHoSoLuot(1, ['tdl_patient_dob' => null]);
         $this->themHoSoLuot(2, ['fee_lock_time' => 20261001120000]);
 
+        Log::shouldReceive('info');
         Log::shouldReceive('warning')->once()->with(\Mockery::on(function ($thongDiep) {
             return strpos($thongDiep, 'HS1') !== false && strpos($thongDiep, 'XML1: ') !== false;
         }));
 
         $this->assertSame($this->kq(2, 1, 0, 1, 0), $this->luot()->chay(self::CT));
+    }
+
+    public function test_luot_dau_chua_co_moc_chi_khoi_tao_moc_khong_quet_lich_su()
+    {
+        Moc::query()->delete();
+        $this->themHoSoLuot(1, ['fee_lock_time' => 20261001110000]);
+
+        $truoc = (int) (new \DateTime())->format('YmdHis');
+        $kq = $this->luot()->chay(self::CT);
+        $sau = (int) (new \DateTime())->format('YmdHis');
+
+        $this->assertSame(0, $kq['ung_vien']);
+        $this->assertSame(0, $kq['da_ghi']);
+        $this->assertSame([], $this->tep());
+        $this->assertFalse(is_dir($this->thuMuc));
+        $this->assertSame(0, LanSinh::count());
+        $this->assertTrue((new TheoDoiSinh())->coMoc(self::CT));
+        $moc = (new TheoDoiSinh())->docMoc(self::CT);
+        $this->assertGreaterThanOrEqual($truoc, $moc);
+        $this->assertLessThanOrEqual($sau, $moc);
+        $this->assertSame($moc, $kq['khoi_tao_moc']);
+        // Loai ban kia khong bi dong cham
+        $this->assertFalse((new TheoDoiSinh())->coMoc(self::TT));
+
+        // Luot sau: chi ho so moi hon moc (ho so cu nam ngoai cua so chong lan 10 phut)
+        $moi = (int) (new \DateTime('+1 hour'))->format('YmdHis');
+        $this->themHoSoLuot(2, ['fee_lock_time' => $moi]);
+        $kq = $this->luot()->chay(self::CT);
+
+        $this->assertSame($this->kq(1, 1, 0, 0, 0), $kq);
+        $this->assertSame(['HS2'], LanSinh::pluck('treatment_code')->all());
+        $this->assertSame($moi, (new TheoDoiSinh())->docMoc(self::CT));
+    }
+
+    public function test_moc_da_luu_bang_0_van_quet_tu_dau()
+    {
+        // Dong moc = 0 (khac voi chua co dong): quet binh thuong tu dau
+        (new TheoDoiSinh())->datMoc(self::CT, 0);
+        $this->themHoSoLuot(1);
+
+        $this->assertSame($this->kq(1, 1, 0, 0, 0), $this->luot()->chay(self::CT));
+    }
+
+    public function test_tu_choi_thu_muc_that_khi_chua_du_bang()
+    {
+        $that = $this->goc . DIRECTORY_SEPARATOR . 'that';
+        $this->themHoSoLuot(1);
+        $khoi = ['ghi_thu_muc_that' => true, 'thu_muc' => $that, 'thu_muc_tt' => $that . 'TT'];
+
+        foreach (['chay', 'chayChoMa', 'chayChoKhoangNgay'] as $ham) {
+            try {
+                $luot = $this->luot([], null, $khoi);
+                if ($ham === 'chay') {
+                    $luot->chay(self::CT);
+                } elseif ($ham === 'chayChoMa') {
+                    $luot->chayChoMa(['HS1'], self::CT);
+                } else {
+                    $luot->chayChoKhoangNgay(20260101000000, 20261231235959, self::CT);
+                }
+                $this->fail($ham . ' phai tu choi');
+            } catch (\RuntimeException $e) {
+                $this->assertContains('chua du 14 bang', $e->getMessage());
+                $this->assertContains('XML4', $e->getMessage());
+            }
+        }
+        $this->assertFalse(is_dir($that));
+        $this->assertSame(0, LanSinh::count());
+    }
+
+    public function test_thu_muc_dich_chi_co_tep_xml()
+    {
+        $this->themHoSoLuot(1);
+        $this->themHoSoLuot(2, ['fee_lock_time' => 20261001120000]);
+
+        $this->luot()->chay(self::CT);
+
+        $tatCa = [];
+        $it = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($this->thuMuc, \FilesystemIterator::SKIP_DOTS));
+        foreach ($it as $f) {
+            $tatCa[] = $f->getFilename();
+        }
+        $this->assertCount(2, $tatCa);
+        foreach ($tatCa as $ten) {
+            $this->assertRegExp('/^QLBV_\d{14}_HS\d\.xml$/', $ten);
+        }
+        // Tep tam o thu muc anh em, da rename het
+        $this->assertSame([], glob($this->goc . DIRECTORY_SEPARATOR . '.sinh_xml3176_tmp' . DIRECTORY_SEPARATOR . '*'));
     }
 }
