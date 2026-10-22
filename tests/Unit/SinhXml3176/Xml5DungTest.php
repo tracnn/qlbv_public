@@ -182,6 +182,16 @@ class Xml5DungTest extends TestCase
         $this->assertSame('', $ra[1]['HOI_CHAN']); // IsNullOrWhiteSpace => ""
     }
 
+    public function test_content_utf8_loi_khong_mat_noi_dung()
+    {
+        $loi = 'Tinh ' . chr(0xC3) . chr(0x28) . ' tot'; // UTF-8 sai
+        $ra = $this->dung($this->du([$this->kham()], [$this->to(['content' => $loi])]));
+
+        $this->assertCount(1, $ra);
+        $this->assertContains('Tinh', $ra[0]['DIEN_BIEN_LS']);
+        $this->assertContains('tot', $ra[0]['DIEN_BIEN_LS']);
+    }
+
     public function test_hoi_chan_bo_ket_luan_null_rong()
     {
         $ra = $this->dung($this->du([$this->kham()], [$this->to()], [], [

@@ -322,7 +322,10 @@ class Xml5Dung implements DungBang
     /** String.Trim() cua C#: bo khoang trang Unicode hai dau. */
     private static function trimCs($v)
     {
-        return preg_replace('/^[\s\p{Z}]+|[\s\p{Z}]+$/u', '', (string) $v);
+        // /u tra null khi chuoi khong phai UTF-8 hop le: giu nguyen chuoi goc, khong lam mat noi dung
+        $r = preg_replace('/^[\s\p{Z}]+|[\s\p{Z}]+$/u', '', (string) $v);
+
+        return $r === null ? (string) $v : $r;
     }
 
     /**
