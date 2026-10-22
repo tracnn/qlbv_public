@@ -108,6 +108,43 @@ class GiaTriBang
         }));
     }
 
+    /** Thoi gian HIS: $n chu so dau cua so yyyyMMddHHmmss; null/khong hop le => ''. */
+    public static function thoiGian($v, $n)
+    {
+        $s = ThoiGianHis::chuoi($v);
+
+        return $s === null ? '' : substr($s, 0, $n);
+    }
+
+    /** Cot so Oracle (NUMBER) thanh chuoi nhu ToString(); null => ''. */
+    public static function soChuoi($v)
+    {
+        if ($v === null || $v === '') {
+            return '';
+        }
+        $s = is_float($v) ? sprintf('%.0f', $v) : trim((string) $v);
+        if (preg_match('/^-?\d+\.\d+$/', $s)) {
+            $s = rtrim(rtrim($s, '0'), '.');
+        }
+
+        return $s;
+    }
+
+    /**
+     * Noi dung truong CDATA: bo ky tu khong hop le trong XML 1.0; chi toan khoang trang => ''
+     * (RemoveXmlCharError cua DLL).
+     */
+    public static function kyTuXml($s)
+    {
+        $s = (string) $s;
+        if (trim($s) === '') {
+            return '';
+        }
+        $ra = preg_replace('/[^\x{9}\x{A}\x{D}\x{20}-\x{D7FF}\x{E000}-\x{FFFD}\x{10000}-\x{10FFFF}]/u', '', $s);
+
+        return $ra === null ? '' : $ra;
+    }
+
     /** Cat van ban toi da $n KY TU (UTF-8), khong cat theo byte. */
     public static function catChu($s, $n)
     {

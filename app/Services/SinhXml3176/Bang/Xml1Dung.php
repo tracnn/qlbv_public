@@ -188,15 +188,9 @@ class Xml1Dung implements DungBang
             return $ra;
         }
         $giam = function ($a, $b) {
-            $c = GiaTriBang::soSanh((float) $b->log_time, (float) $a->log_time);
-
-            return $c !== 0 ? $c : GiaTriBang::soSanh((int) $b->id, (int) $a->id);
+            return PtaChinh::giamDan($a, $b);
         };
-        $chinh = GiaTriBang::sapOnDinh($ptas, function ($a, $b) use ($keyBhyt, $giam) {
-            $c = GiaTriBang::soSanh((string) $b->patient_type_code === $keyBhyt ? 1 : 0, (string) $a->patient_type_code === $keyBhyt ? 1 : 0);
-
-            return $c !== 0 ? $c : $giam($a, $b);
-        })[0];
+        $chinh = PtaChinh::chon($ptas, $keyBhyt);
 
         $sap = $sapThe === '1' ? GiaTriBang::sapOnDinh($ptas, $giam) : GiaTriBang::sapOnDinh($ptas, function ($a, $b) {
             $c = self::soSanhNull($a->hein_card_from_time, $b->hein_card_from_time);
