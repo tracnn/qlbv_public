@@ -133,13 +133,17 @@ class KiemDieuKien
             return 'Hồ sơ không có dịch vụ thanh toán'; // 549-553
         }
         // 554-589
+        $dichVuLoc = [];
         foreach ($d->dichVu as $dv) {
             if ($this->dongThongTuyenHopLe($dv, $idBhyt)) {
-                return null;
+                $dichVuLoc[] = $dv;
             }
         }
+        if (count($dichVuLoc) === 0) {
+            return 'Hồ sơ không có dịch vụ thanh toán'; // 585-589
+        }
 
-        return 'Hồ sơ không có dịch vụ thanh toán';
+        return $this->kiemChiTiet($d, $dm, $dichVuLoc); // 590-594
     }
 
     /** Dong 554-584: bo loc dich vu cua ban thong tuyen */
@@ -195,7 +199,7 @@ class KiemDieuKien
             return 'Không xác định được thông tin diện điều trị';
         }
         $dienCuoi = reset($d->dienDieuTri);
-        if (trim((string) $dienCuoi->hein_treatment_type_code) === 'DT' && $this->khongCo($d->hoSo->clinical_in_time)) {
+        if ((string) $dienCuoi->hein_treatment_type_code === 'DT' && $this->khongCo($d->hoSo->clinical_in_time)) {
             return 'Hồ sơ điều trị nội trú nhưng không có thời gian vào điều trị';
         }
         $idBhyt = $dm->idDoiTuongBhyt();

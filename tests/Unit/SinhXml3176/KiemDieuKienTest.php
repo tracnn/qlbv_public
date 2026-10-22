@@ -261,8 +261,8 @@ class KiemDieuKienTest extends TestCase
         // khong tinh dong khong thuc hien loai 5
         $d = $this->du([], ['icd_code' => '', 'is_no_execute' => 1, 'tdl_hein_service_type_id' => 5]);
         $this->assertNull($this->ly($d));
-        // ban thong tuyen khong kiem chi tiet
-        $this->assertNull($this->ly($this->du([], ['icd_code' => '']), self::TT));
+        // ban thong tuyen cung goi CheckDetailData (dong 590)
+        $this->assertSame('thiếu thông tin mã bệnh(Mã y lệnh: YL1)', $this->ly($this->du([], ['icd_code' => '']), self::TT));
     }
 
     public function test_chi_dinh_truoc_vao_vien_va_sau_thanh_toan()
@@ -271,7 +271,10 @@ class KiemDieuKienTest extends TestCase
             $this->ly($this->du([], ['tdl_intruction_time' => 20260901000000])));
         $this->assertSame('thời gian chỉ định sau thời gian thanh toán(Mã y lệnh: YL1)',
             $this->ly($this->du([], ['tdl_intruction_time' => 20261101000000])));
-        $this->assertNull($this->ly($this->du([], ['tdl_intruction_time' => 20261101000000]), self::TT));
+        $this->assertSame('thời gian chỉ định sau thời gian thanh toán(Mã y lệnh: YL1)',
+            $this->ly($this->du([], ['tdl_intruction_time' => 20261101000000]), self::TT));
+        // thong tuyen khong can fee_lock: null = +vo cuc
+        $this->assertNull($this->ly($this->du(['fee_lock_time' => null], ['tdl_intruction_time' => 20261101000000]), self::TT));
     }
 
     public function test_thieu_chung_chi_hanh_nghe()
@@ -295,5 +298,13 @@ class KiemDieuKienTest extends TestCase
         $this->dm = HisDanhMuc::napChoLuot('HISPro');
         $this->assertNull($this->ly($this->du([], $thuoc + ['active_ingr_bhyt_code' => 'CD'])));
         $this->assertSame($m, $this->ly($this->du([], $thuoc + ['active_ingr_bhyt_code' => 'XX'])));
+    }
+
+    public function test_thong_tuyen_thieu_lieu_dung_va_chung_chi()
+    {
+        $this->assertSame('thiếu thông tin liều dùng(Mã y lệnh: YL1)',
+            $this->ly($this->du([], ['tdl_hein_service_type_id' => 9]), self::TT));
+        $this->assertSame('thiếu thông tin chứng chỉ hành nghề (Mã y lệnh: YL1)',
+            $this->ly($this->du([], ['execute_loginname' => null]), self::TT));
     }
 }
