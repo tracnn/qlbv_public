@@ -69,7 +69,11 @@ Giới hạn của `HIS_EXP_MEDIMATE_USED` (kiểm `all_tab_columns` lần hai, 
 
 Khối mới trong `config/organization.php` (tệp này nằm trong `.gitignore`, mỗi máy một bản). Thiếu cả khối,
 hoặc `enabled = false`, thì module coi như tắt và lệnh thoát êm. Tham số kỹ thuật không phụ thuộc đơn vị
-(`kich_thuoc_lo`, `nghi_giay`, `chong_lan_phut`, `khoa_luot_phut`) nằm ở `config/sinh_xml3176.php` (đi theo git).
+(`kich_thuoc_lo`, `nghi_giay`, `chong_lan_phut`, `khoa_luot_phut`, `memory_limit`) nằm ở `config/sinh_xml3176.php`
+(đi theo git). Mặc định `kich_thuoc_lo = 20` (số hồ sơ nạp một lần) và `memory_limit = '512M'`: lệnh CLI tự
+`ini_set('memory_limit', …)` khi khởi động vì máy chủ đặt PHP 128MB. Đổi tham số thì chạy lại `php artisan config:cache`.
+Giá trị `null` trong khối cấu hình không đè lên mặc định; riêng `ket_noi_his` để `null`/rỗng là **lỗi cấu hình**
+(lệnh thoát mã 1), không bao giờ rơi về kết nối mặc định của Laravel.
 
 ```php
 'sinh_xml3176' => [
@@ -83,9 +87,21 @@ hoặc `enabled = false`, thì module coi như tắt và lệnh thoát êm. Tham
     'dien_dieu_tri'  => [],              // HIS_TREATMENT_TYPE.TREATMENT_TYPE_CODE; rỗng = tất cả
     'thu_muc'        => 'D:\XML\3176',
     'thu_muc_tt'     => 'D:\XML\3176TT',
-    'thu_muc_thu'    => 'D:\XML\SinhXml3176Thu',
+    'thu_muc_thu'    => 'D:\XML\SinhXml3176Thu', // PHẢI nằm ngoài thu_muc và thu_muc_tt
+    'thu_muc_tam'    => null,            // null = <thư mục cha của thư mục đích>\.sinh_xml3176_tmp
 ],
 ```
+
+**Thư mục thử phải nằm ngoài cây quét.** Tiền giám định quét **đệ quy** `thu_muc`/`thu_muc_tt`, nên
+`thu_muc_thu` trùng hoặc nằm trong một trong hai thư mục đó là lỗi cấu hình: lệnh in lỗi và thoát mã 1.
+So sánh không phân biệt hoa thường, coi `/` và `\` như nhau, bỏ `\` cuối.
+
+**Tệp tạm nằm ngoài thư mục đích.** Tiền giám định lọc tệp theo mime đoán từ **nội dung**, nên một tệp `.tmp`
+trong thư mục quét vẫn bị coi là `text/xml`. Module ghi tệp tạm vào thư mục anh em
+`<cha của thư mục đích>\.sinh_xml3176_tmp` (ví dụ `D:\XML\.sinh_xml3176_tmp` cho `D:\XML\3176`), cùng ổ đĩa,
+rồi `rename` vào thư mục đích; trong thư mục đích chỉ bao giờ có tệp `.xml` hoàn chỉnh. Khai `thu_muc_tam`
+để dùng thư mục khác: phải **cùng ổ đĩa** với thư mục đích và **ngoài** `thu_muc`/`thu_muc_tt` (lệnh kiểm,
+sai thì thoát mã 1). Không khai `thu_muc_tt` nằm trong `thu_muc` (thư mục tạm mặc định của nó sẽ rơi vào cây quét).
 
 Cấu hình ghi bằng **mã**, không dùng ID HIS; module tự đổi sang ID. Mã không tồn tại trong HIS thì lệnh
 báo lỗi cấu hình và dừng, không lặng lẽ thành "không lọc".
@@ -117,8 +133,27 @@ nssm set "QLBV SinhXml3176" AppRestartDelay 10000
 nssm start "QLBV SinhXml3176"
 ```
 
-Đợt 1 chỉ có XML1–XML3 nên lệnh **từ chối** ghi vào thư mục thật (`thu_muc`, `thu_muc_tt`) khi
-`ghi_thu_muc_that = true` mà chưa đủ 14 bảng; mọi tệp chỉ vào `thu_muc_thu`.
+Đợt 1 chỉ có XML1–XML3 nên module **từ chối** ghi vào thư mục thật (`thu_muc`, `thu_muc_tt`) khi
+`ghi_thu_muc_that = true` mà chưa đủ 14 bảng (chặn cả ở lệnh lẫn trong `LuotQuet`); mọi tệp chỉ vào `thu_muc_thu`.
+
+Khi `enabled = false` mà dịch vụ vẫn chạy `--lien-tuc`, lệnh nghỉ `nghi_giay` giây (hoặc `--nghi`) rồi mới thoát,
+để NSSM không khởi động lại Laravel mỗi 10 giây.
+
+### Lần chạy đầu: khởi tạo mốc, không quét lịch sử
+
+Khi bảng mốc chưa có dòng cho một loại bản (lần đầu bật, hoặc lần đầu bật `thong_tuyen`), lượt quét **không**
+quét lịch sử: nó đặt mốc = thời điểm hiện tại (`yyyyMMddHHmmss`), ghi `Log::info`, in
+`chua co moc, da khoi tao moc = …` rồi thoát lượt. Từ lượt sau mới sinh các hồ sơ có mốc mới hơn
+(trừ cửa sổ chồng lấn `chong_lan_phut`). Dòng mốc đã lưu bằng 0 thì vẫn quét từ đầu như cũ.
+
+Tồn đọng trước thời điểm bật lấy bằng chạy bù, chia theo ngày hoặc vài ngày để kiểm soát tải:
+
+```
+php artisan sinhxml3176:quet --tu-ngay=2026-10-01 --den-ngay=2026-10-07
+```
+
+Chạy bù bỏ qua theo dõi đã sinh và không đụng mốc; chạy khi dịch vụ đang chạy thì lệnh chờ khoá lượt
+(báo "dang chay" và bỏ qua), chạy lại sau.
 
 ## Lưu ý vận hành
 
@@ -131,7 +166,11 @@ nssm start "QLBV SinhXml3176"
 - **`is_delete` NULL trên Oracle** làm loại hồ sơ khỏi điều kiện lọc. Kiểm một lần khi triển khai:
   `select count(*) from v_his_treatment_12 where is_delete is null`. Kết quả khác 0 thì phải xử lý trước khi bật.
 - **`ghi_thu_muc_that`** chỉ nhận boolean `true` (chuỗi `"true"`, `1`, `"1"` đều không tính).
-- **Module từ chối ghi thư mục thật** cho tới khi đủ 14 bảng. Đợt 1 chỉ có XML1–XML3.
+- **`CACHE_DRIVER` không được là `array` trên prod.** Khoá lượt (`Cache::add`) chỉ chống chồng lượt khi cache
+  dùng chung giữa các tiến trình (`file`, `redis`, `database`…); `array` chỉ sống trong một tiến trình nên
+  dịch vụ và lệnh chạy bù tay sẽ chạy chồng nhau.
+- **Bộ nhớ:** lệnh ghi `Log::info` mức đỉnh bộ nhớ (`memory_get_peak_usage(true)`) sau khi nạp danh mục và sau
+  mỗi trang. Xem log khi nạp lô lớn; gần chạm `memory_limit` thì hạ `kich_thuoc_lo`.
 - **Mỗi hồ sơ thường được nạp và kiểm 2 lần**, 3 lần nếu bật thông tuyến. Tải hàng đợi kiểm của tiền giám
   định tăng tương ứng.
 - **Bản nào vào sau cũng có thể bị gửi cổng.** Nếu tiền giám định đang bật xuất, ký, gửi
@@ -140,6 +179,15 @@ nssm start "QLBV SinhXml3176"
 - **Bản của module có thể bị bản HIS ghi đè.** Module sinh ngay khi có ngày thanh toán, còn HIS thường sinh
   muộn hơn, sau khi duyệt giám định. Vì vậy trong vận hành bình thường, bản HIS (còn lỗi DLL) thường là bản
   cuối cùng. Module phát huy tác dụng khi HIS không sinh được.
+
+## Kiểm trước khi bật thông tuyến
+
+Bản thông tuyến quét theo mốc `OUT_TIME` với cửa sổ chồng lấn `chong_lan_phut` (10 phút). Người dùng có thể
+nhập `OUT_TIME` **muộn** (ra viện được ghi lùi giờ sau khi đã qua mốc), khi đó hồ sơ có `OUT_TIME` nhỏ hơn
+mốc trừ 10 phút và lượt quét **bỏ sót**. Trước khi bật `thong_tuyen`, đo trên dữ liệu thật độ trễ giữa thời điểm
+ghi và `OUT_TIME` (ví dụ so `MODIFY_TIME` với `OUT_TIME` của hồ sơ ra viện vài tuần gần nhất); trễ vượt
+`chong_lan_phut` thường xuyên thì tăng `chong_lan_phut` cho phù hợp hoặc lên lịch chạy bù định kỳ
+`--tu-ngay/--den-ngay` cho thông tuyến. Ghi kết quả đo vào biên bản triển khai.
 
 ## Quy trình nghiệm thu
 
@@ -197,6 +245,7 @@ hồ sơ không dựng được một bảng mà theo điều kiện phải có 
 | XML1 MA_LOAI_KCB mãn tính, không có dịch vụ | `"10"` | Giữ `"10"` | [AX]:308 | cần xác nhận |
 | XML1 SO_NGAY_DTRI | NGAY_RA − NGAY_VAO + 1 theo ngày, từ IN_TIME | Giữ như DLL | [AX]:313 | cần xác nhận |
 | XML1 danh mục tuyến nơi ĐKBĐ | `ListHeinMediOrg`, rỗng thì dùng danh mục cứng `ConfigHeinMediOrg` | Chỉ dùng `his_medi_org`; không thấy thì tuyến rỗng | brief Task 8 | cần xác nhận (HIS rỗng danh mục thì kết quả khác DLL) |
+| Thời gian (NGAY_* mọi bảng) | `TimeNumberToSystemDateTimeUTC` / `TimeNumberToSystemDateTime` của Inventec (có thể đổi múi giờ) | Port `ThoiGianHis`: đọc số `yyyyMMddHHmmss` như giờ địa phương, không đổi múi giờ | [AX] định dạng thời gian; chưa đọc mã gốc phần UTC | cần xác nhận (so giờ trên tệp HIS thật) |
 | XML1 định dạng tiền (T_*), T_BHTT_GDV thẻ CA/QN/CY | `G27` (`15000`, `0`) | `%.2f` (`15000.00`, `0.00`) | đồng nhất 3 bảng | đã sửa |
 
 ### XML2 (thuốc)
@@ -226,6 +275,7 @@ hồ sơ không dựng được một bảng mà theo điều kiện phải có 
 | XML2 MA_NHOM | Không xét OLD_HST_BHYT_CODE | Giữ như DLL | [AX]:600 | cần xác nhận |
 | XML2 bước "BNCCT < 1 đồng → 0" | Chênh đúng 1 thì giữ nguyên | Giữ như DLL | [AX]:595 | cần xác nhận |
 | XML2 MUC_HUONG | `HEIN_RATIO*100`, không làm tròn | Giữ (bỏ nhiễu float bằng round 6) | QĐ130 | cần xác nhận |
+| XML2 dòng tách theo `HIS_EXP_MEDIMATE_USED` | `used.AMOUNT` | Coi `HIS_EXP_MEDIMATE_USED.AMOUNT` là **đơn vị cơ sở** (chưa quy đổi) rồi nhân `CONVERT_RATIO` | giả định, chưa kiểm trên dữ liệu thật | cần xác nhận (đối chiếu tệp HIS thật có quy đổi) |
 
 ### XML3 (DVKT + VTYT)
 
