@@ -4,7 +4,12 @@ namespace Tests\Unit\SinhXml3176;
 
 use App\Console\Commands\SinhXml3176Quet;
 use App\Models\SinhXml3176\LanSinh;
+use App\Services\SinhXml3176\Bang\DangKyBang;
 use App\Services\SinhXml3176\CauHinhSinhXml3176;
+use App\Services\SinhXml3176\KiemDieuKien;
+use App\Services\SinhXml3176\LuotQuet;
+use App\Services\SinhXml3176\Nguon\HisNapHoSo;
+use App\Services\SinhXml3176\Nguon\HisUngVien;
 use App\Services\SinhXml3176\TheoDoiSinh;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
@@ -193,5 +198,60 @@ class SinhXml3176QuetTest extends TestCase
 
         $this->assertSame(1, $ma);
         $this->assertContains('--tu-ngay', $ra);
+    }
+
+    public static $khoaMoiVong = [];
+
+    /** Goi tu luot gia: ghi nhan khoa co ton tai khong, roi go khoa nhu khi het han khoa_luot_phut. */
+    public static function ghiNhanKhoa()
+    {
+        self::$khoaMoiVong[] = Cache::has(SinhXml3176Quet::KHOA_LUOT);
+        Cache::forget(SinhXml3176Quet::KHOA_LUOT);
+    }
+
+    public function test_lien_tuc_lam_moi_khoa_moi_vong()
+    {
+        $this->cauHinh();
+        $this->themHoSoLuot(1);
+
+        $lenh = new class extends SinhXml3176Quet {
+            protected function taoLuot(CauHinhSinhXml3176 $cauHinh, DangKyBang $dangKy)
+            {
+                $ungVien = new HisUngVien($cauHinh);
+
+                return new class($cauHinh, $ungVien, new HisNapHoSo($cauHinh, $ungVien), new TheoDoiSinh(), $dangKy, new KiemDieuKien()) extends LuotQuet {
+                    public function chay($loaiBan)
+                    {
+                        SinhXml3176QuetTest::ghiNhanKhoa();
+
+                        return parent::chay($loaiBan);
+                    }
+                };
+            }
+        };
+        $this->app->make(\Illuminate\Contracts\Console\Kernel::class)->registerCommand($lenh);
+        self::$khoaMoiVong = [];
+
+        list($ma, $ra) = $this->chay(['--lien-tuc' => true, '--so-vong' => 2, '--nghi' => 0]);
+
+        $this->assertSame(0, $ma);
+        // Vong 1 co khoa (roi bi go nhu het han); vong 2 khoa da duoc dat lai
+        $this->assertSame([true, true], self::$khoaMoiVong);
+        $this->assertFalse(Cache::has(SinhXml3176Quet::KHOA_LUOT));
+    }
+
+    public function test_chay_bu_hai_loai_ban_chi_canh_bao_ma_khong_co_o_loai_nao()
+    {
+        $this->cauHinh(['thong_tuyen' => true]);
+        $this->themHoSoLuot(1);
+        $this->themHoSoLuot(2, ['fee_lock_time' => null]);
+
+        list($ma, $ra) = $this->chay(['--ma-dieu-tri' => ['HS1', 'HS2', 'KHONGCO']]);
+
+        $this->assertSame(0, $ma);
+        $this->assertSame(2, LanSinh::count());
+        $this->assertContains('KHONGCO', $ra);
+        $this->assertNotContains('HS1', $ra);
+        $this->assertNotContains('HS2', $ra);
     }
 }

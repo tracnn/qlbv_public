@@ -87,6 +87,11 @@ trait HoSoHisSinhXml3176
     /** Xoa de quy thu muc tam cua test. */
     protected function xoaThuMuc($thuMuc)
     {
+        if (is_file($thuMuc)) {
+            @unlink($thuMuc);
+
+            return;
+        }
         if (!is_dir($thuMuc)) {
             return;
         }

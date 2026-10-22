@@ -121,6 +121,8 @@ class SinhXml3176Quet extends Command
         }
 
         $ma = 0;
+        // Chay bu theo ma: chi canh bao ma khong co o loai ban NAO (giao cac danh sach khong tim thay)
+        $khongThay = null;
         foreach ($cacBan as $loai) {
             try {
                 $kq = $chay($loai);
@@ -132,9 +134,14 @@ class SinhXml3176Quet extends Command
             }
             $this->line($loai . ': ung_vien=' . $kq['ung_vien'] . ' da_ghi=' . $kq['da_ghi']
                 . ' bi_loai=' . $kq['bi_loai'] . ' loi=' . $kq['loi'] . ' bo_qua=' . $kq['bo_qua']);
-            if (!empty($kq['khong_tim_thay'])) {
-                $this->warn($loai . ': khong tim thay (hoac khong qua bo loc): ' . implode(', ', $kq['khong_tim_thay']));
+            if (isset($kq['khong_tim_thay'])) {
+                $khongThay = $khongThay === null
+                    ? $kq['khong_tim_thay']
+                    : array_values(array_intersect($khongThay, $kq['khong_tim_thay']));
             }
+        }
+        if (!empty($khongThay)) {
+            $this->warn('Khong tim thay o loai ban nao (hoac khong qua bo loc): ' . implode(', ', $khongThay));
         }
 
         return $ma;
@@ -151,6 +158,9 @@ class SinhXml3176Quet extends Command
 
         $soVongHong = 0;
         for ($i = 1; $i <= $soVong; $i++) {
+            // Lam moi khoa moi vong: khoa_luot_phut = thoi gian toi da MOT vong duoc treo,
+            // khong phai ca tien trinh --lien-tuc (1000 vong x 60s > 16 gio)
+            Cache::put(self::KHOA_LUOT, true, max(1, $cauHinh->khoaLuotPhut()));
             if ($this->motVong($cauHinh, $chay) !== 0) {
                 $soVongHong++;
             }

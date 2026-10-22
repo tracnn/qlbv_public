@@ -7,6 +7,7 @@ use App\Services\SinhXml3176\Bang\LoiDungBang;
 use App\Services\SinhXml3176\Nguon\HisDanhMuc;
 use App\Services\SinhXml3176\Nguon\HisNapHoSo;
 use App\Services\SinhXml3176\Nguon\HisUngVien;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Dieu phoi mot luot sinh XML3176: chon ung vien -> loc da sinh -> nap lo -> kiem dieu kien ->
@@ -16,7 +17,8 @@ use App\Services\SinhXml3176\Nguon\HisUngVien;
  * nhieu ho so da sinh; neu chi lay kichThuocLo dong moi luot thi khi so ho so trong cua so chong lan
  * vuot kichThuocLo, moc khong bao gio tien. Moi trang xu ly xong moi doc trang sau; moc dat MOT lan
  * sau khi het trang (gia tri lon nhat da gap, khong bao gio lui).
- * Loi cua mot ho so (LoiDungBang hay bat ky \Throwable nao) ghi trang thai 'loi', khong dung luot.
+ * Loi cua mot ho so (LoiDungBang hay bat ky \Throwable nao) ghi trang thai 'loi' + Log::warning, khong dung luot.
+ * Rieng loi moi truong (LoiGhiTep, loi TheoDoiSinh::ghi) dung ca luot, khong ghi theo doi, khong tien moc.
  */
 class LuotQuet
 {
@@ -209,6 +211,9 @@ class LuotQuet
             $ketQua = $this->motHoSo($u, $loaiBan, isset($duLieu[$id]) ? $duLieu[$id] : null);
             $kq[$ketQua['trang_thai']]++;
             $this->theoDoi->ghi($ketQua);
+            if ($ketQua['trang_thai'] === self::LOI) {
+                Log::warning('sinhxml3176 ' . $loaiBan . ' ho so ' . $ketQua['treatment_code'] . ' loi: ' . $ketQua['ly_do']);
+            }
         }
     }
 
@@ -272,6 +277,9 @@ class LuotQuet
             $ketQua['ten_tep'] = $ten;
             $ketQua['thu_muc'] = $thuMuc;
             $ketQua['cac_bang'] = implode(',', $cacBang);
+        } catch (LoiGhiTep $e) {
+            // Loi moi truong: khong danh dau ho so, dung ca luot (moc khong tien), luot sau thu lai
+            throw $e;
         } catch (LoiDungBang $e) {
             $ketQua['trang_thai'] = self::LOI;
             $ketQua['ly_do'] = $e->loaiBang() . ': ' . $e->getMessage();

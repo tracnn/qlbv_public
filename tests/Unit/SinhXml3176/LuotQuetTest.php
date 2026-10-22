@@ -6,10 +6,12 @@ use App\Models\SinhXml3176\LanSinh;
 use App\Services\SinhXml3176\Bang\DangKyBang;
 use App\Services\SinhXml3176\CauHinhSinhXml3176;
 use App\Services\SinhXml3176\KiemDieuKien;
+use App\Services\SinhXml3176\LoiGhiTep;
 use App\Services\SinhXml3176\LuotQuet;
 use App\Services\SinhXml3176\Nguon\HisNapHoSo;
 use App\Services\SinhXml3176\Nguon\HisUngVien;
 use App\Services\SinhXml3176\TheoDoiSinh;
+use Illuminate\Support\Facades\Log;
 use Tests\Support\DungBangHisSinhXml3176Sqlite;
 use Tests\Support\HoSoHisSinhXml3176;
 use Tests\TestCase;
@@ -291,5 +293,39 @@ class LuotQuetTest extends TestCase
         $this->assertSame($this->kq(3, 3, 0, 0, 0), $kq);
         $this->assertSame(['HS2', 'HS3', 'HS4'], LanSinh::orderBy('treatment_code')->pluck('treatment_code')->all());
         $this->assertSame(0, (new TheoDoiSinh())->docMoc(self::CT));
+    }
+
+    public function test_loi_ghi_tep_dung_luot_khong_ghi_theo_doi_khong_tien_moc()
+    {
+        $this->themHoSoLuot(1, ['fee_lock_time' => 20261001110000]);
+        $this->themHoSoLuot(2, ['fee_lock_time' => 20261001120000]);
+        // Thu muc dich la mot TEP => khong tao duoc thu muc (giong o day / mat quyen ghi)
+        file_put_contents($this->thuMuc, 'chan');
+
+        try {
+            $this->luot()->chay(self::CT);
+            $this->fail('Phai nem LoiGhiTep');
+        } catch (LoiGhiTep $e) {
+            $this->assertContains($this->thuMuc, $e->getMessage());
+        }
+        $this->assertSame(0, LanSinh::count());
+        $this->assertSame(0, (new TheoDoiSinh())->docMoc(self::CT));
+
+        // Sua xong moi truong: luot sau sinh lai ca hai
+        unlink($this->thuMuc);
+        $this->assertSame($this->kq(2, 2, 0, 0, 0), $this->luot()->chay(self::CT));
+        $this->assertSame(20261001120000, (new TheoDoiSinh())->docMoc(self::CT));
+    }
+
+    public function test_ho_so_loi_ghi_log_canh_bao()
+    {
+        $this->themHoSoLuot(1, ['tdl_patient_dob' => null]);
+        $this->themHoSoLuot(2, ['fee_lock_time' => 20261001120000]);
+
+        Log::shouldReceive('warning')->once()->with(\Mockery::on(function ($thongDiep) {
+            return strpos($thongDiep, 'HS1') !== false && strpos($thongDiep, 'XML1: ') !== false;
+        }));
+
+        $this->assertSame($this->kq(2, 1, 0, 1, 0), $this->luot()->chay(self::CT));
     }
 }
