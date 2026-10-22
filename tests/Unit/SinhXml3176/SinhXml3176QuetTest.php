@@ -87,20 +87,33 @@ class SinhXml3176QuetTest extends TestCase
         $this->assertFalse(is_dir($this->thuMuc));
     }
 
-    public function test_tu_choi_ghi_thu_muc_that_khi_thieu_bang()
+    public function test_ghi_thu_muc_that_cho_phep_khi_du_bang()
     {
-        $that = $this->thuMuc . DIRECTORY_SEPARATOR . 'that';
-        $this->cauHinh(['ghi_thu_muc_that' => true, 'thu_muc' => $that, 'thu_muc_tt' => $that]);
+        // Thu muc "that" o day la thu muc tam cua test, khong bao gio tro toi thu muc that cua may chu
+        $that = $this->goc . DIRECTORY_SEPARATOR . 'that';
+        $this->cauHinh(['ghi_thu_muc_that' => true, 'thu_muc' => $that, 'thu_muc_tt' => $that . 'TT']);
         $this->themHoSoLuot(1);
 
         list($ma, $ra) = $this->chay();
 
-        $this->assertSame(1, $ma);
-        $this->assertContains('XML6', $ra);
-        $this->assertContains('XML15', $ra);
-        $this->assertSame(0, LanSinh::count());
+        $this->assertSame(0, $ma, $ra);
+        $this->assertSame(1, count(glob($that . DIRECTORY_SEPARATOR . '*.xml') ?: []));
+        $this->assertSame(0, $this->soTep());
+        $this->assertSame($that, LanSinh::first()->thu_muc);
+    }
+
+    public function test_ghi_thu_muc_that_khac_true_thi_ghi_thu_muc_thu()
+    {
+        $that = $this->goc . DIRECTORY_SEPARATOR . 'that';
+        foreach ([false, 'true', 1] as $i => $gia) {
+            $this->cauHinh(['ghi_thu_muc_that' => $gia, 'thu_muc' => $that, 'thu_muc_tt' => $that . 'TT']);
+            $this->themHoSoLuot($i + 1, ['fee_lock_time' => 20261001110000 + $i * 10000]);
+            list($ma, $ra) = $this->chay();
+            $this->assertSame(0, $ma, $ra);
+            $this->assertSame($i + 1, $this->soTep());
+        }
         $this->assertFalse(is_dir($that));
-        $this->assertFalse(Cache::has(SinhXml3176Quet::KHOA_LUOT));
+        $this->assertGreaterThanOrEqual(1, $this->soTep());
     }
 
     public function test_quet_mot_vong_ghi_tep_va_in_tong_ket()

@@ -250,6 +250,47 @@ class SinhXml3176SoSanhTest extends TestCase
         ], $tap);
     }
 
+    public function test_xml9_xml13_ghep_dung_khoa()
+    {
+        $xml9 = function ($maLk, array $dong) {
+            $kq = [];
+            foreach ($dong as $d) {
+                $kq[] = array_merge(['MA_LK' => $maLk, 'SO' => 'S1', 'NGAY_SINH_CON' => '202610200800', 'HO_TEN_CON' => 'A', 'CAN_NANG_CON' => '3000'], $d);
+            }
+
+            return $kq;
+        };
+        $xml13 = function ($maLk, $so) {
+            return [['MA_LK' => $maLk, 'SO_HOSO' => 'HS', 'MA_THE_BHYT' => 'DN4', 'TOMTAT_KQ' => $so]];
+        };
+        $this->cap([
+            'XML9' => XmlCon::chuoi('XML9', $xml9('LK1', [
+                [], ['SO' => 'S2', 'HO_TEN_CON' => 'B'],
+                ['SO' => '', 'NGAY_SINH_CON' => '202610210900', 'HO_TEN_CON' => 'C'],
+            ])),
+            'XML13' => XmlCon::chuoi('XML13', $xml13('LK1', 'x')),
+        ], [
+            'XML9' => XmlCon::chuoi('XML9', $xml9('LK1', [
+                ['HO_TEN_CON' => 'A2'], ['SO' => 'S3'],
+                ['SO' => '', 'NGAY_SINH_CON' => '202610210900', 'HO_TEN_CON' => 'C'],
+            ])),
+            'XML13' => XmlCon::chuoi('XML13', $xml13('LK1', 'y')),
+        ]);
+
+        $dong = $this->chayBang('XML9,XML13');
+        $tap = [];
+        foreach (array_slice($dong, 1) as $r) {
+            $tap[] = implode('/', array_slice($r, 1, 3));
+        }
+        sort($tap);
+        $this->assertSame([
+            'XML13/LK1/TOMTAT_KQ',
+            'XML9/LK1|S1/HO_TEN_CON',
+            'XML9/LK1|S2/chi_co_his',
+            'XML9/LK1|S3/chi_co_qlbv',
+        ], $tap);
+    }
+
     public function test_so_nguyen_khong_bi_cat_so_0()
     {
         $xml = function ($tien) {
