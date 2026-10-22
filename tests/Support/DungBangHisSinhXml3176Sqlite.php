@@ -42,4 +42,46 @@ trait DungBangHisSinhXml3176Sqlite
             (new $lop())->up();
         }
     }
+
+    /** Dung bang HIS (ket noi HISPro, SQLite bo nho). Khong doi database.default. */
+    protected function dungBangHis()
+    {
+        config([
+            'database.connections.HISPro' => [
+                'driver'   => 'sqlite',
+                'database' => ':memory:',
+                'prefix'   => '',
+            ],
+        ]);
+
+        \Illuminate\Support\Facades\DB::purge('HISPro');
+
+        $s = \Illuminate\Support\Facades\Schema::connection('HISPro');
+
+        $s->create('his_treatment', function ($t) {
+            $t->increments('id');
+            $t->string('treatment_code', 50);
+            $t->unsignedInteger('branch_id')->nullable();
+            $t->unsignedInteger('tdl_patient_type_id')->nullable();
+            $t->unsignedInteger('tdl_treatment_type_id')->nullable();
+            $t->unsignedBigInteger('fee_lock_time')->nullable();
+            $t->unsignedBigInteger('out_time')->nullable();
+            $t->unsignedTinyInteger('is_delete')->default(0);
+        });
+
+        $s->create('his_branch', function ($t) {
+            $t->increments('id');
+            $t->string('hein_medi_org_code', 20)->nullable();
+        });
+
+        $s->create('his_patient_type', function ($t) {
+            $t->increments('id');
+            $t->string('patient_type_code', 20);
+        });
+
+        $s->create('his_treatment_type', function ($t) {
+            $t->increments('id');
+            $t->string('treatment_type_code', 20);
+        });
+    }
 }
