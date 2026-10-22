@@ -241,7 +241,7 @@ hồ sơ không dựng được một bảng mà theo điều kiện phải có 
 | XML1 IN_TIME/ngày sinh thiếu; OUT_TIME thiếu khi tính SO_NGAY_DTRI | Vỡ, hoặc dùng `DateTime.Now` | Loại hồ sơ có mô tả | [AX]:300–304 | đã sửa |
 | XML1 MA_THE_BHYT, MA_DKBD, GT_THE_TU, GT_THE_DEN | Mỗi danh sách bỏ phần tử rỗng riêng nên lệch hàng | Theo từng thẻ, giữ vị trí, phần tử thiếu để rỗng (`01929;`); rỗng hết thì rơi về PTA chính như DLL | [AX]:305 | đã sửa |
 | XML1 DU_PHONG | `HEIGHT.ToString()` không làm tròn | Làm tròn 2 chữ số, bỏ số 0 thừa | [AX]:314 | đã sửa |
-| XML1 MA_TTDV | IS_3176: luôn DIPLOMA, bỏ qua key | Key `MA_TTDV_FROM_PROFILE_XML` có giá trị: đi trọn nhánh 130 (chứa `1` → mã BHXH của (phó) GĐ, không có loginname → REPRESENTATIVE_HEIN_CODE; không chứa `1` → REPRESENTATIVE_HEIN_CODE). Key rỗng: DIPLOMA | spec 5.6 | đã sửa |
+| XML1 MA_TTDV | IS_3176: luôn DIPLOMA, bỏ qua key | Key `MA_TTDV_FROM_PROFILE_XML` có giá trị: đi trọn nhánh 130 (chứa `1` → mã BHXH của (phó) GĐ, không có loginname → REPRESENTATIVE_HEIN_CODE; không chứa `1` → REPRESENTATIVE_HEIN_CODE). Key rỗng: DIPLOMA. Đo trên hồ sơ 000007130131 (đơn vị có đặt key): module `7203285000` (mã BHXH), HIS `002220/BYT-CCHN` (CCHN) | spec 5.6; chủ dự án quyết giữ theo key (22/10/2026) | đã sửa |
 | XML1 MA_LOAI_KCB khám sức khỏe | `"100"` | Giữ `"100"`; bộ mã QĐ130 là 01–10, mã đúng cho KSK chưa rõ | [AX]:308–309 | cần xác nhận |
 | XML1 MA_LOAI_KCB mãn tính, không có dịch vụ | `"10"` | Giữ `"10"` | [AX]:308 | cần xác nhận |
 | XML1 SO_NGAY_DTRI | NGAY_RA − NGAY_VAO + 1 theo ngày, từ IN_TIME | Giữ như DLL | [AX]:313 | cần xác nhận |
