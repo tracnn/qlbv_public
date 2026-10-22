@@ -161,13 +161,15 @@ class Xml13Xml14DungTest extends TestCase
     public function test_xml13_out_code_ngan_khong_vo()
     {
         // Review Focus 5: OUT_CODE < 6 ky tu hoac 6 ky tu dau khong phai so, DLL int.Parse(Substring) nem loi
-        $this->cauHinh(['HIS.QD_130_BYT.GIAY_CHUYEN_TUYEN_FORMAT' => '<#OUT_CODE_NUM_000000;>/<#OUT_YEAR;>']);
-        $r = $this->x13(['out_code' => '123', 'out_time' => 20260105101500]);
-        $this->assertSame('<#OUT_CODE_NUM_000000;>/2026', $r['GIAY_CHUYEN_TUYEN']);
-        $r = $this->x13(['out_code' => 'AB12CD34', 'out_time' => 20260105101500]);
-        $this->assertSame('<#OUT_CODE_NUM_000000;>/2026', $r['GIAY_CHUYEN_TUYEN']);
+        // Module thay placeholder bang OUT_CODE nguyen, khong de lai van ban mau.
+        $this->cauHinh(['HIS.QD_130_BYT.GIAY_CHUYEN_TUYEN_FORMAT' => 'CT<#OUT_CODE_NUM_000000;>/<#OUT_YEAR;>']);
+        foreach (['123' => 'CT123/2026', 'AB12CD34' => 'CTAB12CD34/2026', 'AB12' => 'CTAB12/2026'] as $ma => $mong) {
+            $r = $this->x13(['out_code' => $ma, 'out_time' => 20260105101500]);
+            $this->assertSame($mong, $r['GIAY_CHUYEN_TUYEN']);
+            $this->assertNotContains('<#', $r['GIAY_CHUYEN_TUYEN']);
+        }
         $r = $this->x13(['out_code' => null, 'out_time' => 20260105101500]);
-        $this->assertSame('<#OUT_CODE_NUM_000000;>/2026', $r['GIAY_CHUYEN_TUYEN']);
+        $this->assertSame('CT/2026', $r['GIAY_CHUYEN_TUYEN']);
     }
 
     public function test_xml13_so_chuyen_tuyen_va_giay_chuyen_tuyen()
@@ -396,14 +398,54 @@ class Xml13Xml14DungTest extends TestCase
         $this->assertCount(13, explode(';', $r['MA_BENH_YHCT']));
     }
 
-    public function test_xml14_ma_doituong_kcb_dung_lai_logic_xml1()
+    public function test_xml14_doituong_kcb_gt_hk_truoc_newborn()
+    {
+        // DLL XML14: GT, HK xet truoc IS_NEWBORN (DLL XML1 xet newborn truoc)
+        $base = ['hein_card_number' => 'DN4010000000001', 'right_route_code' => 'DT', 'is_newborn' => 1];
+        $gt = [$this->pta($base + ['right_route_type_code' => 'GT'])];
+        $this->assertSame('1.3', $this->x14([], $gt)['MA_DOITUONG_KCB']);
+        $hk = [$this->pta($base + ['right_route_type_code' => 'HK'])];
+        $this->assertSame('1.5', $this->x14([], $hk)['MA_DOITUONG_KCB']);
+        $nb = [$this->pta($base + ['right_route_type_code' => 'KH'])];
+        $this->assertSame('1.7', $this->x14([], $nb)['MA_DOITUONG_KCB']);
+        // XML1 giu nguyen: newborn truoc
+        $hs = $this->hoSo(['hein_patient_type_code' => null]);
+        $this->assertSame('1.7', DoiTuongKcbXml1::suy($hs, $gt[0], 'DN4010000000001', $this->dm()));
+        $this->assertSame('1.3', DoiTuongKcbXml1::suy($hs, $gt[0], 'DN4010000000001', $this->dm(), true));
+    }
+
+    public function test_xml14_doituong_kcb_noi_tru_chi_loai_3()
+    {
+        $pta = [$this->pta(['hein_card_number' => 'DN4010000000001', 'right_route_code' => 'TT'])];
+        $this->assertSame('3.1', $this->x14(['hein_level_code' => '1', 'tdl_treatment_type_id' => 3], $pta)['MA_DOITUONG_KCB']);
+        // loai 4 khong tinh la noi tru => roi xuong nhanh mac dinh
+        $this->assertSame('3.3', $this->x14(['hein_level_code' => '1', 'tdl_treatment_type_id' => 4], $pta)['MA_DOITUONG_KCB']);
+        $this->assertSame('1.15', $this->x14(['hein_level_code' => '2', 'tdl_treatment_type_id' => 3], $pta)['MA_DOITUONG_KCB']);
+        // XML1 giu nguyen: loai 4 tinh la noi tru
+        $hs = $this->hoSo(['hein_patient_type_code' => null, 'hein_level_code' => '1', 'tdl_treatment_type_id' => 4]);
+        $this->assertSame('3.1', DoiTuongKcbXml1::suy($hs, $pta[0], 'DN4010000000001', $this->dm()));
+        $this->assertSame('3.3', DoiTuongKcbXml1::suy($hs, $pta[0], 'DN4010000000001', $this->dm(), true));
+    }
+
+    public function test_xml14_doituong_kcb_khong_khop_thi_rong()
+    {
+        // DT khong khop nhanh nao: DLL XML14 de rong (XML1 tra "9")
+        $pta = [$this->pta(['hein_card_number' => 'DN4010000000001', 'right_route_code' => 'DT', 'right_route_type_code' => 'KH', 'hein_medi_org_code' => '99999'])];
+        $this->assertSame('', $this->x14([], $pta)['MA_DOITUONG_KCB']);
+        // khong DT, khong TT: loai 6 => 7.1, khac => rong
+        $pta = [$this->pta(['hein_card_number' => 'DN4010000000001', 'right_route_code' => null])];
+        $this->assertSame('', $this->x14(['tdl_treatment_type_id' => 1], $pta)['MA_DOITUONG_KCB']);
+        $this->assertSame('7.1', $this->x14(['tdl_treatment_type_id' => 6], $pta)['MA_DOITUONG_KCB']);
+        // XML1 giu nguyen: "9"
+        $hs = $this->hoSo(['hein_patient_type_code' => null, 'tdl_treatment_type_id' => 1]);
+        $this->assertSame('9', DoiTuongKcbXml1::suy($hs, $pta[0], 'DN4010000000001', $this->dm()));
+    }
+
+    public function test_xml14_ma_doituong_kcb_cac_nhanh_chung()
     {
         // co HEIN_PATIENT_TYPE_CODE thi lay nguyen
         $pta = [$this->pta(['hein_card_number' => 'DN4010000000001', 'right_route_code' => 'DT', 'right_route_type_code' => 'CC'])];
         $this->assertSame('1.9', $this->x14(['hein_patient_type_code' => '1.9'], $pta)['MA_DOITUONG_KCB']);
-        // tu suy: ket qua trung DoiTuongKcbXml1 voi cung ho so, PTA chinh va ma the
-        $hs = $this->hoSo(['treatment_end_type_id' => 3, 'hein_patient_type_code' => null]);
-        $this->assertSame('2', DoiTuongKcbXml1::suy($hs, $pta[0], 'DN4010000000001', $this->dm()));
         $this->assertSame('2', $this->x14([], $pta)['MA_DOITUONG_KCB']);
         // GT -> 1.3
         $pta = [$this->pta(['hein_card_number' => 'DN4010000000001', 'right_route_code' => 'DT', 'right_route_type_code' => 'GT'])];

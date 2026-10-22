@@ -13,14 +13,13 @@ use App\Services\SinhXml3176\Nguon\HisDanhMuc;
  * Dieu kien (loi, [AX]:113-134): TREATMENT_END_TYPE_ID == 3 (hen kham lai). Khac => khong co XML14.
  * Nhanh IS_3176: NGAY_HEN_KL 8 ky tu (yyyyMMdd), MA_BENH_YHCT toi da 13 ma, MA_TTDV = MaTtdv::cua(.., 14).
  * MA_DOITUONG_KCB: HEIN_PATIENT_TYPE_CODE; rong thi tu suy bang DoiTuongKcbXml1 (cung luat va cung danh muc his_medi_org
- * voi XML1, khong chep), voi PTA dai dien = PTA cua ho so (TREATMENT_ID == ID) theo thu tu BHYT, LOG_TIME, ID moi nhat.
+ * voi XML1, khong chep, co tham so cho luat rieng cua XML14), voi PTA dai dien = PTA cua ho so (TREATMENT_ID == ID) theo thu tu BHYT, LOG_TIME, ID moi nhat.
  * The BHYT: TheBhyt (dung chung voi XML1), KHONG loc theo TREATMENT_ID nhu DLL ([AX]:1343).
  *
+ * MA_DOITUONG_KCB theo dung luat DLL XML14 (DoiTuongKcbXml1::suy voi $kieuXml14 = true): DT xet GT, HK truoc IS_NEWBORN; noi tru
+ *   TT chi tinh TDL_TREATMENT_TYPE_ID == 3; khong khop nhanh nao thi rong.
  * Giu nhu DLL (can xac nhan): [AX]:1338 chi tu suy khi HEIN_PATIENT_TYPE_CODE rong; module coi chuoi toan khoang trang
- *   nhu null (nhu XML1). Bo luat dung chung voi XML1 lech DLL XML14 o ba cho: (a) DT: DLL XML14 xet GT, HK truoc
- *   IS_NEWBORN, DLL XML1 xet IS_NEWBORN truoc; (b) TT: DLL XML14 chi tinh dieu tri noi tru la TDL_TREATMENT_TYPE_ID == 3,
- *   DLL XML1 tinh ca 4; (c) khong khop nhanh nao: DLL XML14 de rong, luat chung tra "9". [AX]:1342 MA_BAC_SI rong khi
- *   khong co nhan vien (DLL bo phan tu).
+ *   nhu null (nhu XML1). [AX]:1342 MA_BAC_SI rong khi khong co nhan vien (DLL bo phan tu).
  * Sua loi DLL [AX]:1337: khong co PTA nao cua ho so thi .First() nem loi va mat XML14; module van sinh, MA_DOITUONG_KCB rong
  *   khi HEIN_PATIENT_TYPE_CODE rong.
  * Sua loi DLL [AX]:1339: ICD_CODE danh muc null, HEIN_MEDI_ORG_CODE ngan hon 2 ky tu, PTA khong co so the khong lam vo
@@ -103,6 +102,6 @@ class Xml14Dung implements DungBang
         }
         $pta = PtaChinh::chon($ptas, GiaTriBang::chu($dm->config(PtaChinh::KEY_BHYT)));
 
-        return $pta === null ? '' : DoiTuongKcbXml1::suy($hs, $pta, $maThe, $dm);
+        return $pta === null ? '' : DoiTuongKcbXml1::suy($hs, $pta, $maThe, $dm, true);
     }
 }

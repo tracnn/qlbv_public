@@ -26,8 +26,8 @@ use App\Services\SinhXml3176\Nguon\HisDanhMuc;
  * Sua loi DLL [AX]:1286: vSereServ2 (list2) rong thi source = null va LINQ nem ArgumentNullException, mat ca XML13;
  *   module van sinh XML13 (TEN_DICH_VU/TEN_THUOC vua xuat rong o IS_3176 nen khong doc dich vu).
  * Sua loi DLL [AX]:1287: placeholder <#OUT_CODE_NUM_xxx;> can int.Parse(OUT_CODE.Substring(0, 6)); OUT_CODE ngan hon 6 ky
- *   tu hoac 6 ky tu dau khong phai so thi DLL nem loi va mat XML13; module giu nguyen chuoi sau khi thay cac placeholder khac
- *   (placeholder NUM khong duoc thay), khong nem loi.
+ *   tu hoac 6 ky tu dau khong phai so thi DLL nem loi va mat XML13; module thay placeholder NUM bang OUT_CODE nguyen
+ *   (khong de lai van ban mau), khong nem loi.
  * Sua loi DLL [AX]:1289: MA_THE_BHYT va GT_THE_DEN giu khop vi tri tung the (xem TheBhyt).
  * Sua loi DLL [AX]:1290: cat TOMTAT_KQ 4000 byte khong dut giua ky tu UTF-8 (DLL sinh ky tu thay the U+FFFD).
  * Sua loi DLL [AX]:1293: CHAN_DOAN_RV khong con ';' thua khi ICD_TEXT rong (RaVienChung::chanDoanRv, nhu XML7).
@@ -123,7 +123,7 @@ class Xml13Dung implements DungBang
 
     /**
      * GIAY_CHUYEN_TUYEN: OUT_CODE; co mau cau hinh thi thay nhu tren, them <#OUT_CODE_NUM_xxx;> => so nguyen cua 6 ky tu dau
-     * OUT_CODE, dem '0' ben trai cho du so ky tu cua xxx (Sua loi DLL [AX]:1287: khong int.Parse duoc thi giu nguyen).
+     * OUT_CODE, dem '0' ben trai cho du so ky tu cua xxx (Sua loi DLL [AX]:1287: khong int.Parse duoc thi thay placeholder bang OUT_CODE nguyen, khong nem loi).
      */
     private function giayChuyenTuyen($hs, $mau)
     {
@@ -132,13 +132,16 @@ class Xml13Dung implements DungBang
             return $text;
         }
         $text = self::thayMau($hs, $mau);
-        if (preg_match('/<#OUT_CODE_NUM_.*;>/', $text, $kq) !== 1 || !GiaTriBang::co($hs->out_code)) {
+        if (preg_match('/<#OUT_CODE_NUM_.*;>/', $text, $kq) !== 1) {
             return $text;
         }
+        if (!GiaTriBang::co($hs->out_code)) {
+            return str_replace($kq[0], '', $text); // khong co OUT_CODE: bo placeholder, khong de van ban mau
+        }
         $dau = mb_substr((string) $hs->out_code, 0, 6, 'UTF-8');
-        // int.Parse: du 6 ky tu, cho phep khoang trang hai dau va dau +/-
+        // int.Parse: du 6 ky tu, cho phep khoang trang hai dau va dau +/-; khong parse duoc => thay bang OUT_CODE nguyen
         if (mb_strlen($dau, 'UTF-8') < 6 || preg_match('/^\s*[+-]?\d+\s*$/', $dau) !== 1) {
-            return $text;
+            return str_replace($kq[0], (string) $hs->out_code, $text);
         }
         $so = (string) (int) trim($dau);
         $dem = mb_strlen(str_replace(['<#OUT_CODE_NUM_', ';>'], '', $kq[0]), 'UTF-8');

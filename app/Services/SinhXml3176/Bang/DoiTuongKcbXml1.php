@@ -26,9 +26,11 @@ class DoiTuongKcbXml1
      * @param object $hs ho so (v_his_treatment_12)
      * @param object $pta dien dieu tri chinh
      * @param string $maThe MA_THE_BHYT da dung
+     * @param bool $kieuXml14 true => luat cua DLL XML14 (khac DLL XML1 o ba cho): DT xet GT, HK truoc IS_NEWBORN;
+     *   noi tru TT chi tinh TDL_TREATMENT_TYPE_ID == 3; khong khop nhanh nao thi rong (khong phai "9"). Mac dinh la XML1.
      * @return string
      */
-    public static function suy($hs, $pta, $maThe, HisDanhMuc $dm)
+    public static function suy($hs, $pta, $maThe, HisDanhMuc $dm, $kieuXml14 = false)
     {
         if ($maThe === '') {
             return '9';
@@ -53,7 +55,7 @@ class DoiTuongKcbXml1
             return '2';
         }
         if ($tuyen === 'DT') {
-            if (self::bang($pta->is_newborn, 1)) {
+            if (!$kieuXml14 && self::bang($pta->is_newborn, 1)) {
                 return '1.7';
             }
             if ($loaiTuyen === 'GT') {
@@ -61,6 +63,9 @@ class DoiTuongKcbXml1
             }
             if ($loaiTuyen === 'HK') {
                 return '1.5';
+            }
+            if ($kieuXml14 && self::bang($pta->is_newborn, 1)) {
+                return '1.7';
             }
             list($icd, $icdPhu) = self::icd($hs, $dm);
             if (self::co($icd, 'is_latent_tuberculosis') || self::co($icdPhu, 'is_latent_tuberculosis')
@@ -87,10 +92,10 @@ class DoiTuongKcbXml1
                 return '1.4';
             }
 
-            return '9';
+            return $kieuXml14 ? '' : '9';
         }
         if ($tuyen === 'TT') {
-            $noiTru = $loaiDt === 3 || $loaiDt === 4;
+            $noiTru = $loaiDt === 3 || (!$kieuXml14 && $loaiDt === 4);
             $khuVuc = GiaTriBang::chu($pta->live_area_code);
             if (strpos(GiaTriBang::chu($pta->hein_card_number), 'HN') === 0 || in_array($khuVuc, ['K1', 'K2', 'K3'], true)) {
                 return '3.6';
@@ -114,7 +119,7 @@ class DoiTuongKcbXml1
             return $cap === '2' ? '1.15' : '3.3';
         }
 
-        return $loaiDt === 6 ? '7.1' : '9';
+        return $loaiDt === 6 ? '7.1' : ($kieuXml14 ? '' : '9');
     }
 
     /** [ICD chinh, ICD phu dau tien trong danh muc] (X1P:262-272); khong co => null nhu DLL. */
