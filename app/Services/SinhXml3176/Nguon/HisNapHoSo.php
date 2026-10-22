@@ -52,13 +52,16 @@ class HisNapHoSo
         'ksk_contract_id', 'hein_treatment_type_code',
     ];
 
-    /** v_his_sere_serv_2 (224 cot) - cac cot XML2 [AX]:319-445 va XML3 [AX]:447-570 dung */
+    /**
+     * v_his_sere_serv_2 (224 cot) - cac cot XML2 [AX]:319-445 va XML3 [AX]:447-570 dung.
+     * tdl_service_req_type_id: XML1 56 MA_LOAI_KCB ngoai tru man tinh (kiem all_tab_columns 22/10/2026, NUMBER).
+     */
     const COT_DICH_VU = [
         'id', 'tdl_treatment_id', 'service_id', 'service_req_id', 'parent_id', 'parent_service_req_id',
         'patient_type_id', 'primary_patient_type_id', 'hein_card_number', 'json_patient_type_alter',
         'tdl_service_type_id', 'tdl_hein_service_type_id', 'tdl_is_main_exam', 'tdl_hein_service_bhyt_code',
         'tdl_hein_service_bhyt_name', 'hst_bhyt_code', 'old_hst_bhyt_code', 'hst_bhyt_code_in_time',
-        'is_no_execute', 'is_expend', 'tdl_service_req_code',
+        'is_no_execute', 'is_expend', 'tdl_service_req_code', 'tdl_service_req_type_id',
         // gia, tien
         'amount', 'price', 'original_price', 'primary_price', 'limit_price', 'vat_ratio', 'hein_ratio',
         'hein_limit_price', 'hein_limit_ratio', 'config_hein_limit_price', 'other_source_price', 'hein_pay_source_type_id',

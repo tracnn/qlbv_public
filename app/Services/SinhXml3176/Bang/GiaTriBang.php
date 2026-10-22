@@ -75,6 +75,53 @@ class GiaTriBang
         return implode(';', $ra);
     }
 
+    /** Gia tri dau tien khac null/rong/khoang trang (chuoi '??' cua DLL nhung bat ca chuoi rong); khong co => ''. */
+    public static function dauTien(array $phan)
+    {
+        foreach ($phan as $p) {
+            if ($p !== null && trim((string) $p) !== '') {
+                return (string) $p;
+            }
+        }
+
+        return '';
+    }
+
+    /** Tach chuoi ma theo ';', bo phan tu rong (Split RemoveEmptyEntries). */
+    public static function tachMa($chuoi)
+    {
+        if ($chuoi === null || $chuoi === '') {
+            return [];
+        }
+
+        return array_values(array_filter(explode(';', (string) $chuoi), function ($x) {
+            return $x !== '';
+        }));
+    }
+
+    /** Cat van ban toi da $n KY TU (UTF-8), khong cat theo byte. */
+    public static function catChu($s, $n)
+    {
+        $s = (string) $s;
+
+        return mb_strlen($s, 'UTF-8') > $n ? mb_substr($s, 0, $n, 'UTF-8') : $s;
+    }
+
+    /** Noi danh sach ma bang ';' toi da $n ky tu; bo cac ma cuoi khong vua (khong cat doi mot ma). */
+    public static function catMa(array $ma, $n)
+    {
+        $ra = '';
+        foreach ($ma as $m) {
+            $thu = $ra === '' ? (string) $m : $ra . ';' . $m;
+            if (mb_strlen($thu, 'UTF-8') > $n) {
+                break;
+            }
+            $ra = $thu;
+        }
+
+        return $ra;
+    }
+
     /** Sap xep on dinh (LINQ OrderBy on dinh, usort PHP 7 thi khong). */
     public static function sapOnDinh(array $mang, callable $ss)
     {
