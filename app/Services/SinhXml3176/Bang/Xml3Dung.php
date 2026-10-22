@@ -6,7 +6,7 @@ use App\Services\SinhXml3176\DuLieuHoSo;
 use App\Services\SinhXml3176\Nguon\HisDanhMuc;
 
 /**
- * XML3 - chi tiet DVKT va VTYT. Port Xml3Processor.ProcessDetailsData (DLL QD130/3176, ban do [AX]:448-582),
+ * XML3 - chi tiet DVKT va VTYT. Port Xml3Processor.ProcessDetailsData (DLL QD 130/3176, ban do [AX]:448-582),
  * ban IS_3176. Tien o TienXml3, NGAY_KQ/MA_GIUONG o NgayKqXml3, MA_BAC_SI/NGUOI_THUC_HIEN o NguoiXml3.
  * Chi sua cac loi DLL duoi day (va trong ba lop tren); con lai giu nguyen hanh vi DLL.
  *

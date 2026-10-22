@@ -40,7 +40,7 @@ class GiaTriBang
     }
 
     /**
-     * Ty le phan tram ve so nguyen HALF-UP (QD130: So, do dai 3). Round 6 truoc de bo nhieu float
+     * Ty le phan tram ve so nguyen HALF-UP (QD 130: So, do dai 3). Round 6 truoc de bo nhieu float
      * (vd 32.4999999 -> 32.5 -> 33). DLL dung Math.Round banker.
      */
     public static function tyLeNguyen($x)

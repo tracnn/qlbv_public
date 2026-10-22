@@ -6,12 +6,12 @@ use App\Services\SinhXml3176\DuLieuHoSo;
 use App\Services\SinhXml3176\Nguon\HisDanhMuc;
 
 /**
- * XML1 - tong hop. Port Xml1Processor.GenerateXml1Data (DLL QD130/3176, ban do [AX]:167-249, key [AX]:250-269),
+ * XML1 - tong hop. Port Xml1Processor.GenerateXml1Data (DLL QD 130/3176, ban do [AX]:167-249, key [AX]:250-269),
  * ap vo dieu kien khoi IS_3176 ([AX]:25: SO_CCCD, MA_NGHE_NGHIEP, CHAN_DOAN_VAO, MA_BENH_YHCT, MA_TTDV, DU_PHONG).
  * Tong tien la tong cac dong XML2/XML3 da dung ($daDung) nhu loi DLL (HoSoProcessor L:400-537). MA_DOITUONG_KCB tu
  * suy o DoiTuongKcbXml1. Chi sua cac loi DLL duoi day; con lai giu nguyen hanh vi DLL.
  *
- * Sua loi DLL [AX]:296: cat do dai theo QD130 cho cac truong chac chan gioi han (theo KY TU UTF-8): HO_TEN 255,
+ * Sua loi DLL [AX]:296: cat do dai theo QD 130 cho cac truong chac chan gioi han (theo KY TU UTF-8): HO_TEN 255,
  *   DIA_CHI 1024; danh sach ma MA_BENH_KT 100, MA_BENH_YHCT 255 bo ma cuoi khong vua (khong cat doi ma). Cac truong
  *   khac giu nhu DLL (khong cat) - can xac nhan.
  * Sua loi DLL [AX]:297: CHAN_DOAN_RV ghep ICD_NAME, ICD_TEXT (da bo ';' o hai dau) bang ';' chi khi ca hai khac rong.
@@ -47,7 +47,7 @@ class Xml1Dung implements DungBang
     const KEY_GIAY_CT = 'HIS.QD_130_BYT.GIAY_CHUYEN_TUYEN_XML1_FORMAT';
     const KEY_MA_TTDV = 'HIS.QD_130_BYT.MA_TTDV_FROM_PROFILE_XML';
 
-    /** QD130 bang 1: do dai toi da (ky tu) cac truong module cat */
+    /** QD 130 bang 1: do dai toi da (ky tu) cac truong module cat */
     const DAI_HO_TEN = 255;
     const DAI_DIA_CHI = 1024;
     const DAI_MA_BENH_KT = 100;

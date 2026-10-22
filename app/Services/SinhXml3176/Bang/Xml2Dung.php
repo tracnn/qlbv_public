@@ -6,7 +6,7 @@ use App\Services\SinhXml3176\DuLieuHoSo;
 use App\Services\SinhXml3176\Nguon\HisDanhMuc;
 
 /**
- * XML2 - chi tiet thuoc. Port Xml2Processor.GenerateXml2ADO (DLL QD130/3176, ban do [AX]:350-445),
+ * XML2 - chi tiet thuoc. Port Xml2Processor.GenerateXml2ADO (DLL QD 130/3176, ban do [AX]:350-445),
  * ban IS_3176. Chi sua cac loi DLL duoi day; con lai giu nguyen hanh vi DLL.
  *
  * Sua loi DLL [AX]:586: ID doi tuong BHYT lay qua HisDanhMuc::idDoiTuongBhyt() (DLL lay MA lam ID).
