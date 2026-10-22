@@ -77,11 +77,45 @@ trait DungBangHisSinhXml3176Sqlite
         $s->create('his_patient_type', function ($t) {
             $t->increments('id');
             $t->string('patient_type_code', 20);
+            $t->string('patient_type_name', 200)->nullable();
         });
 
         $s->create('his_treatment_type', function ($t) {
             $t->increments('id');
             $t->string('treatment_type_code', 20);
         });
+
+        $this->dungBangNapHoSo($s);
+    }
+
+    /**
+     * Bang/view HIS ma HisNapHoSo va HisDanhMuc doc: tao tu chinh hang so cot cua hai lop
+     * (chi cac cot duoc select + cot loc), ten viet thuong. Bang da co thi bo qua.
+     */
+    protected function dungBangNapHoSo($s)
+    {
+        $bang = [];
+        foreach (\App\Services\SinhXml3176\Nguon\HisNapHoSo::cacNguon() as $n) {
+            $bang[$n['bang']] = array_merge($n['cot'], $n['cot_loc']);
+        }
+        foreach (\App\Services\SinhXml3176\Nguon\HisDanhMuc::cacBang() as $ten => $n) {
+            $bang[$ten] = array_merge($n['cot'], $n['cot_loc']);
+        }
+
+        foreach ($bang as $ten => $cot) {
+            if ($s->hasTable($ten)) {
+                continue;
+            }
+            $cot = array_values(array_unique($cot));
+            $s->create($ten, function ($t) use ($cot) {
+                foreach ($cot as $c) {
+                    if ($c === 'id' || preg_match('/(_id|_time|_date)$|^is_/', $c)) {
+                        $t->bigInteger($c)->nullable();
+                    } else {
+                        $t->string($c, 500)->nullable();
+                    }
+                }
+            });
+        }
     }
 }
