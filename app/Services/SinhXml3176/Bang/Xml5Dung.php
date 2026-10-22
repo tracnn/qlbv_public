@@ -15,10 +15,11 @@ use App\Services\SinhXml3176\Nguon\HisDanhMuc;
  *   tra nhan vien qua HisDanhMuc::nhanVien (bo dong loginname rong).
  * Sua loi DLL [AX]:761: PHAU_THUAT bo DESCRIPTION null/rong, khong co ';' thua.
  * Sua loi DLL [AX]:764: danh sach null/rong khong nem loi; tra [].
+ * Sua loi DLL [AX]:725 (Xml5Processor.cs:135): HOI_CHAN bo CONCLUSION null/rong, khong co "; " thua.
  * Giu nhu DLL (can xac nhan): [AX]:755-756 co to dieu tri ma moi to rong CONTENT => 0 dong (khong roi ve kham);
  *   [AX]:757 NGUOI_THUC_HIEN uu tien MODIFIER truoc CREATOR; [AX]:758 DIPLOMA ?? IDENTIFICATION_NUMBER
  *   (chuoi rong khong roi); [AX]:760 NGAY_YL_OPTION "2" va START_TIME null => rong (DLL null); [AX]:762
- *   TDL_IS_MAIN_EXAM khong xet IS_NO_EXECUTE; HOI_CHAN Distinct giu CONCLUSION null (noi thanh chuoi rong).
+ *   TDL_IS_MAIN_EXAM khong xet IS_NO_EXECUTE.
  */
 class Xml5Dung implements DungBang
 {
@@ -220,19 +221,23 @@ class Xml5Dung implements DungBang
         return count($phan) > 0 ? 'CSST<' . implode('_', $phan) . '>' : '';
     }
 
-    /** string.Join("; ", CONCLUSION.Distinct()) theo TRACKING_ID; IsNullOrWhiteSpace => "". */
+    /**
+     * string.Join("; ", CONCLUSION.Distinct()) theo TRACKING_ID; IsNullOrWhiteSpace => "".
+     * Sua loi DLL [AX]:725 (Xml5Processor.cs:135): bo CONCLUSION null/rong truoc khi noi (DLL ra "; X" thua dau phan cach).
+     */
     private function hoiChan(array $hoiChan, $idTo)
     {
         $ket = [];
         foreach ($hoiChan as $h) {
-            if (GiaTriBang::co($h->tracking_id) && (string) (int) $h->tracking_id === $idTo) {
-                $c = $h->conclusion === null ? null : (string) $h->conclusion;
+            if (GiaTriBang::co($h->tracking_id) && (string) (int) $h->tracking_id === $idTo
+                && GiaTriBang::co($h->conclusion)) {
+                $c = (string) $h->conclusion;
                 if (!in_array($c, $ket, true)) {
                     $ket[] = $c;
                 }
             }
         }
-        $s = implode('; ', array_map([GiaTriBang::class, 'chu'], $ket));
+        $s = implode('; ', $ket);
 
         return self::rongHoacTrang($s) ? '' : GiaTriBang::catChu($s, self::DAI_TOI_DA);
     }

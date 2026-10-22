@@ -182,6 +182,18 @@ class Xml5DungTest extends TestCase
         $this->assertSame('', $ra[1]['HOI_CHAN']); // IsNullOrWhiteSpace => ""
     }
 
+    public function test_hoi_chan_bo_ket_luan_null_rong()
+    {
+        $ra = $this->dung($this->du([$this->kham()], [$this->to()], [], [
+            $this->hc(['conclusion' => null]),
+            $this->hc(['id' => 2, 'conclusion' => 'X']),
+            $this->hc(['id' => 3, 'conclusion' => '']),
+        ]));
+
+        // Sua loi DLL [AX]:725: DLL ra "; X"
+        $this->assertSame('X', $ra[0]['HOI_CHAN']);
+    }
+
     public function test_phau_thuat_chi_dich_vu_co_pttt_bo_mo_ta_null()
     {
         $ra = $this->dung($this->du([
