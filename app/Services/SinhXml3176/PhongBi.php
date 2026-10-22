@@ -7,9 +7,11 @@ class PhongBi
 {
     /**
      * @param string $maCskcb
-     * @param array  $xmlCon ['XML1' => '<...>', ...]; duoc sap theo so bang
+     * @param array  $xmlCon ['XML1' => '<...>', ...]; duoc sap theo so bang. Khong dua vao bang
+     *                       ma lop dung tra ve [] (ho so khong co bang do).
+     * @param \DateTimeInterface $luc moc lap (NGAYLAP)
      */
-    public static function chuoi($maCskcb, array $xmlCon)
+    public static function chuoi($maCskcb, array $xmlCon, \DateTimeInterface $luc)
     {
         uksort($xmlCon, function ($a, $b) {
             return (int) substr($a, 3) - (int) substr($b, 3);
@@ -26,7 +28,7 @@ class PhongBi
         $w->endElement();
 
         $w->startElement('THONGTINHOSO');
-        $w->writeElement('NGAYLAP', date('Ymd'));
+        $w->writeElement('NGAYLAP', $luc->format('Ymd'));
         $w->writeElement('SOLUONGHOSO', '1');
         $w->startElement('DANHSACHHOSO');
         $w->startElement('HOSO');

@@ -12,11 +12,15 @@ class GhiTep
 {
     public static function ghi($thuMuc, $treatmentCode, $loaiBan, $noiDung, \DateTimeInterface $luc)
     {
+        if ($loaiBan !== CauHinhSinhXml3176::CHINH_THUC && $loaiBan !== CauHinhSinhXml3176::THONG_TUYEN) {
+            throw new \InvalidArgumentException('Loai ban khong hop le: ' . $loaiBan);
+        }
+
         if (!is_dir($thuMuc) && !@mkdir($thuMuc, 0775, true) && !is_dir($thuMuc)) {
             throw new \RuntimeException('Khong tao duoc thu muc ' . $thuMuc);
         }
 
-        $ten = 'QLBV_' . $luc->format('YmdHis') . '_' . $treatmentCode . ($loaiBan === 'TT' ? '_TT' : '') . '.xml';
+        $ten = 'QLBV_' . $luc->format('YmdHis') . '_' . $treatmentCode . ($loaiBan === CauHinhSinhXml3176::THONG_TUYEN ? '_TT' : '') . '.xml';
         $dich = rtrim($thuMuc, '/\\') . DIRECTORY_SEPARATOR . $ten;
         $tam = substr($dich, 0, -4) . '.tmp';
 

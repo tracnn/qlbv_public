@@ -14,12 +14,12 @@ class PhongBiTest extends TestCase
         $xml2 = XmlCon::chuoi('XML2', [['MA_LK' => '000123', 'LIEU_DUNG' => "1 vien]]>x", 'MA_THUOC' => "a\x01b"]]);
         $xml3 = XmlCon::chuoi('XML3', [['MA_LK' => '000123', 'MA_DICH_VU' => 'K01']]);
 
-        $s = PhongBi::chuoi('01234', ['XML1' => $xml1, 'XML2' => $xml2, 'XML3' => $xml3]);
+        $s = PhongBi::chuoi('01234', ['XML1' => $xml1, 'XML2' => $xml2, 'XML3' => $xml3], new \DateTime('2026-10-22 15:30:00'));
         $x = simplexml_load_string($s);
 
         $this->assertNotFalse($x);
         $this->assertSame('01234', (string) $x->THONGTINDONVI->MACSKCB);
-        $this->assertSame(date('Ymd'), (string) $x->THONGTINHOSO->NGAYLAP);
+        $this->assertSame('20261022', (string) $x->THONGTINHOSO->NGAYLAP);
         $this->assertSame('1', (string) $x->THONGTINHOSO->SOLUONGHOSO);
         $this->assertCount(3, $x->THONGTINHOSO->DANHSACHHOSO->HOSO->FILEHOSO);
         $this->assertSame('', trim((string) $x->CHUKYDONVI));
@@ -46,7 +46,7 @@ class PhongBiTest extends TestCase
 
     public function test_sap_thu_tu_theo_so_bang()
     {
-        $s = PhongBi::chuoi('01234', ['XML3' => XmlCon::chuoi('XML3', []), 'XML1' => XmlCon::chuoi('XML1', [['MA_LK' => '1']])]);
+        $s = PhongBi::chuoi('01234', ['XML3' => XmlCon::chuoi('XML3', [['MA_LK' => '1']]), 'XML1' => XmlCon::chuoi('XML1', [['MA_LK' => '1']])], new \DateTime('2026-10-22'));
         $x = simplexml_load_string($s);
         $this->assertSame('XML1', (string) $x->THONGTINHOSO->DANHSACHHOSO->HOSO->FILEHOSO[0]->LOAIHOSO);
     }
