@@ -235,8 +235,10 @@ nssm set "QLBV SinhXml3176" AppRestartDelay 10000
 nssm start "QLBV SinhXml3176"
 ```
 
-Đợt 1 chỉ có XML1–XML3 nên module **từ chối** ghi vào thư mục thật (`thu_muc`, `thu_muc_tt`) khi
-`ghi_thu_muc_that = true` mà chưa đủ 14 bảng (chặn cả ở lệnh lẫn trong `LuotQuet`); mọi tệp chỉ vào `thu_muc_thu`.
+Module **từ chối** ghi vào thư mục thật (`thu_muc`, `thu_muc_tt`) khi `ghi_thu_muc_that = true` mà chưa đủ
+14 bảng (chặn cả ở lệnh lẫn trong `LuotQuet`). Từ Đợt 3 đã đăng ký đủ 14 bảng (trừ XML12, tiền giám định không nạp),
+nên chốt này không còn chặn: bật `ghi_thu_muc_that` chỉ sau khi qua "Danh sách kiểm trước khi bật `ghi_thu_muc_that`"
+ở cuối tài liệu.
 
 Khi `enabled = false` mà dịch vụ vẫn chạy `--lien-tuc`, lệnh nghỉ `nghi_giay` giây (hoặc `--nghi`) rồi mới thoát,
 để NSSM không khởi động lại Laravel mỗi 10 giây.
@@ -460,6 +462,124 @@ theo đúng tỷ lệ đã xuất. DLL dùng `Math.Round` mặc định (banker'
 | XML5 DHST cùng `TRACKING_ID` | Bản ghi đầu tiên theo thứ tự plugin truyền vào | Bản ghi `ID` nhỏ nhất | Task 4 | cần xác nhận (Đợt 2 không gặp lệch) |
 | XML5 PHAU_THUAT thứ tự các mục | Thứ tự đầu vào của plugin (xem "Thứ tự dòng") | Thứ tự theo `ID` | đo Đợt 2: 17/81 tờ có PTTT lệch chỉ vì thứ tự | cần xác nhận |
 
+### Chung cho XML6–XML15
+
+| Bảng/trường | HIS làm gì | Module làm gì | Căn cứ | Trạng thái |
+|---|---|---|---|---|
+| Phần tử DLL gán `null` (mọi bảng XML6–15) | XmlSerializer bỏ hẳn phần tử | Xuất phần tử rỗng; `so-sanh` coi thẻ rỗng = thiếu thẻ | Global Constraints Đợt 3 | cần xác nhận |
+| MA_TTDV (XML7, 8, 9, 10, 11, 13, 14; XML6/XML15 không có trường này) | IS_3176: DIPLOMA của (phó) giám đốc, bỏ qua key | Như XML1: key `MA_TTDV_FROM_PROFILE_XML` có giá trị thì đi trọn nhánh 130, kiểm "chứa số hiệu bảng" theo đúng cách DLL từng bảng (XML7 không trim, XML13 chuỗi con, còn lại tách `,` + trim). Đo 22/10/2026 (key `1,7,8,9,10,11,13`): XML7/8/9/11/13 ra mã BHXH của (phó) GĐ, XML14 không có `14` nên ra `REPRESENTATIVE_HEIN_CODE` | spec 5.6; chủ dự án quyết cho XML1, Đợt 3 áp cho mọi bảng | đã sửa |
+| Trường văn bản thường (không CDATA) có xuống dòng (XML7 GHI_CHU, XML8 QT_BENHLY…) | Ghi CRLF nguyên văn; bộ đọc XML đổi thành LF nên tiền giám định lưu LF | Đổi CRLF/CR thành LF trước khi ghi (XMLWriter thoát CR thành `&#13;`, CR sẽ còn nguyên sau khi nạp) | đo Đợt 3, sửa 08a0147c | đã sửa |
+| Tra nhân viên theo loginname | So `==` chính xác; trùng loginname thì liệt kê đủ | `HisDanhMuc` trim khoá, trùng loginname giữ một dòng (cả CHUCDANH_NGUOI_HT XML13) | review Task 5 | cần xác nhận |
+| Mã/loginname toán tử `??` (SO_CCCD XML6/9/15, MA_BS/TEN_BS XML7/10/11, MA_DOITUONG_KCB XML14) | `??` chỉ bắt null | Chuỗi rỗng/toàn khoảng trắng coi như null (Oracle không lưu `''`, nên thực tế như nhau) | như XML1 [AX]:298 | cần xác nhận |
+| Chọn bản ghi HIV/lao | Plugin lấy `HIS_HIV_TREATMENT` ID lớn nhất, `HIS_TUBERCULOSIS_TREAT` bản cuối theo thứ tự API trả về | HIV: ID lớn nhất; lao: bản cuối theo `id` tăng (giả định thứ tự API, mã MOS API không có trong repo). Chỉ lấy dòng `is_delete = 0` | Task 1 | cần xác nhận |
+
+### XML6 (HIV/AIDS)
+
+| Bảng/trường | HIS làm gì | Module làm gì | Căn cứ | Trạng thái |
+|---|---|---|---|---|
+| XML6 ngày sinh null, ngày HIV ngắn hơn 8 chữ số | `Substring` ném lỗi, mất cả XML6 | Ngày sinh thiếu thì rỗng; ngày ngắn lấy hết chuỗi có (phòng ngừa, chưa gặp trên dữ liệu thật) | [AX]:782–790 | đã sửa |
+| XML6 điều kiện sinh dòng | `TREATMENT_ID != ID` (so khoá ngoại với khoá chính của chính bản ghi) | Như DLL | [AX]:832 | cần xác nhận |
+| XML6 MA_CSKCB | `HEIN_MEDI_ORG_CODE` của hồ sơ | Như DLL | [AX]:833 | cần xác nhận |
+| XML6 DIA_CHI | Không cắt độ dài | Không cắt | [AX]:836 | cần xác nhận |
+| XML6 khoá so sánh | Bảng không có STT | `so-sanh` dùng khoá `MA_LK\|` (rỗng STT); mỗi hồ sơ tối đa một dòng nên vẫn đúng | review Task 6 | cần xác nhận |
+
+### XML7 (giấy ra viện)
+
+| Bảng/trường | HIS làm gì | Module làm gì | Căn cứ | Trạng thái |
+|---|---|---|---|---|
+| XML7 CHAN_DOAN_RV | `ICD_NAME + ";" + ICD_TEXT`, ICD_TEXT rỗng thì thừa `;` cuối | Không thêm `;` thừa (`RaVienChung::chanDoanRv`). Đo Đợt 3: 4/25 hồ sơ lệch đúng chỗ này | [AX]:892 | đã sửa |
+| XML7 SO_NGAY_NGHI khi ngày nghỉ ngoại trú không hợp lệ | `.Value` trên null ném lỗi, mất cả XML7 | `0` | [AX]:875 | đã sửa |
+| XML7 SO_NGAY_NGHI | `(đến − từ)` theo ngày, không cộng 1 | Như DLL | [AX]:891 | cần xác nhận |
+| XML7 phạm vi | `TDL_TREATMENT_TYPE_ID` ∈ {2, 3, 4}, gồm cả ngoại trú mạn tính (rộng hơn XML8) | Như DLL | [AX]:894 | cần xác nhận |
+| XML7 MA_TTDV | So config `"7"` không trim (`"1, 7"` không khớp) | Như DLL | [AX]:887 | cần xác nhận |
+| XML7 CHAN_DOAN_RV, GHI_CHU | Không lọc ký tự điều khiển; GHI_CHU cắt 1500 ký tự | Như DLL | [AX]:893, [AX]:865 | cần xác nhận |
+
+### XML8 (tóm tắt hồ sơ bệnh án)
+
+| Bảng/trường | HIS làm gì | Module làm gì | Căn cứ | Trạng thái |
+|---|---|---|---|---|
+| XML8 HO_TEN_CHA / HO_TEN_ME | Sai ưu tiên toán tử: có tên cha/mẹ mà quan hệ là "cha"/"mẹ" thì ghi đè bằng người thân; tên rỗng thì bỏ trống | Như XML7: tên cha/mẹ có thì lấy, không thì người thân khi quan hệ khớp. Đo Đợt 3: 000007317766 HIS để trống HO_TEN_ME, module điền đúng người thân quan hệ "mẹ" | [AX]:971 | đã sửa |
+| XML8 TOMTAT_KQ | Cắt 2000 **byte** UTF-8, để lại ký tự bị cắt dở | Cắt 2000 **ký tự** | [AX]:973 | đã sửa |
+| XML8 TOMTAT_KQ điều kiện cắt | Kích hoạt khi độ dài sau `Normalize(FormKD)` > 2000 (chữ có dấu nở ra gần gấp đôi) | Cắt khi quá 2000 ký tự. Văn bản 1000–2000 ký tự có dấu: DLL cắt, module không | [AX]:973; review Task 3 M5 | cần xác nhận |
+| XML8 CHAN_DOAN_RV | Thừa `;` cuối khi ICD_TEXT rỗng | Không thừa. Đo Đợt 3: 4/25 hồ sơ | [AX]:979 | đã sửa |
+| XML8 MA_LOAI_KCB `09` khi `CLINICAL_IN_TIME` không đọc được | `DifferenceTime` trả −1 < 4 nên ra `09` (nếu hiệu số `OUT − IN` dương) | Ra `03` | review Task 3 M1 (dữ liệu hỏng) | cần xác nhận |
+| XML8 MA_LOAI_KCB `09` | Nội trú < 4 giờ tính từ `CLINICAL_IN_TIME`, không áp cho ban ngày | Như DLL | [AX]:908 | cần xác nhận |
+| XML8 NGUOI_GIAM_HO, GHI_CHU | NGUOI_GIAM_HO luôn là người thân; GHI_CHU điền tên cha/mẹ cho trẻ < 16 tuổi (`Calculation.Age`, ngày sinh hỏng = −1 nên vẫn điền) | Như DLL | [AX]:978 | cần xác nhận |
+| XML8 NGAY_SINHCON / NGAY_CONCHET | Chỉ bé đầu tiên có `BORN_RESULT_ID = 2`, không sắp | Như DLL | [AX]:977 | cần xác nhận |
+| XML8 KET_QUA_DTRI, NGAY_CT | Ký tự cuối mã kết quả; NGAY_CT = OUT_DATE (XML7 dùng OUT_TIME) | Như DLL | [AX]:976 | cần xác nhận |
+
+### XML9 (giấy chứng sinh)
+
+| Bảng/trường | HIS làm gì | Module làm gì | Căn cứ | Trạng thái |
+|---|---|---|---|---|
+| XML9 NOI_SINH_CON, `BIRTHPLACE_TYPE = 1` mà `BIRTH_HOSPITAL_NAME` null | `Replace` trên null ném NullReference, **mất cả XML9** | Rỗng. Đo Đợt 3: 000007409432 đúng ca này, tiền giám định không có XML9, module sinh đủ | [AX]:1079 (chưa liệt kê trong mục "Điểm đáng ngờ") | đã sửa |
+| XML9 MA_BHXH_NND thẻ mẹ ngắn hơn 10 ký tự | `Substring(Length−10)` ném lỗi, mất cả XML9 | Lấy hết chuỗi thẻ | [AX]:1094 | đã sửa |
+| XML9 NGAY_CT | IN_DATE của mẹ, đè lên ISSUED_DATE | Như DLL | [AX]:1093 | cần xác nhận |
+| XML9 ngày/nơi cấp giấy tờ | Chọn "trường nào có giá trị", độc lập với số giấy ở SO_CCCD_NND (có thể ra số CMND kèm ngày cấp CCCD) | Như DLL | [AX]:1096 | cần xác nhận |
+| XML9 khoá so sánh | — | `MA_LK\|SO` (SO rỗng thì NGAY_SINH_CON); trường `SO_CHUNG_SINH` của plan không tồn tại | Task 6 | đã thống nhất |
+
+### XML10 (giấy nghỉ dưỡng thai)
+
+| Bảng/trường | HIS làm gì | Module làm gì | Căn cứ | Trạng thái |
+|---|---|---|---|---|
+| XML10 tra nhân viên | `LOGINNAME.Equals` ném NullReference nếu danh mục có nhân viên loginname null đứng trước | Tra theo loginname qua `HisDanhMuc`, không vỡ | [AX]:1127 | đã sửa |
+| XML10 CHAN_DOAN_RV | IS_3176 gán cứng `"dưỡng thai"`, bỏ ICD_NAME/ICD_TEXT | Như DLL | [AX]:1124 | cần xác nhận |
+| XML10 MA_BS / TEN_BS | MA_BS ưu tiên trưởng/phó khoa, TEN_BS là SICK_USERNAME, có thể là hai người | Như DLL | [AX]:1125 | cần xác nhận |
+| XML10 SO_SERI, SO_CT | Cùng lấy EXTRA_END_CODE | Như DLL | [AX]:1129 | cần xác nhận |
+
+### XML11 (giấy chứng nhận nghỉ việc hưởng BHXH)
+
+| Bảng/trường | HIS làm gì | Module làm gì | Căn cứ | Trạng thái |
+|---|---|---|---|---|
+| XML11 CHAN_DOAN_RV khi ICD_TEXT ít phần tử hơn ICD_SUB_CODE | `array2[i]` ném IndexOutOfRange, **mất cả XML11** | Ghép đến đâu được đến đó, tên thiếu để trống (`MA:`). Đo Đợt 3: 000007371437 (5 mã phụ, 4 tên) tiền giám định không có XML11, module sinh đủ | [AX]:1167 | đã sửa |
+| XML11 MA_BHXH thẻ ngắn hơn 10 ký tự | `Substring` ném lỗi, mất XML11 | Lấy hết chuỗi thẻ | [AX]:1170 | đã sửa |
+| XML11 MA_THE_TAM khi hồ sơ không có PTA | `.First()` ném lỗi, mất XML11 | Rỗng | [AX]:1169 | đã sửa |
+| XML11 tra nhân viên | `LOGINNAME.Equals` có thể NullReference (giá trị bị nhánh IS_3176 ghi đè) | Không vỡ | Xml11Processor dòng 159 | đã sửa |
+| XML11 NGAY_CT | Ngày vào viện (IN_DATE) | Như DLL | [AX]:1166 | cần xác nhận |
+| XML11 DON_VI | Chỉ kiểm `!= null` (XML10 kiểm rỗng/khoảng trắng) | Như DLL | [AX]:1145 | cần xác nhận |
+| XML11 CHAN_DOAN_RV chỉ có ICD_SUB_CODE hoặc chỉ có ICD_TEXT | Kết thúc bằng `;`; phần dư của ICD_TEXT bị bỏ | Như DLL | [AX]:1168 | cần xác nhận |
+| XML11 MA_BS | Ưu tiên trưởng khoa ra viện, không phải bác sĩ ký giấy | Như DLL | [AX]:1171 | cần xác nhận |
+| XML11 MA_DINH_CHI_THAI = `0` | — | Xuất `0` như DLL. Tiền giám định lưu `intval(..) ?: null` nên `so-sanh --csdl` báo `""` ≠ `0` (không phải lệch tệp) | Xml3176Service:781 | ghi nhận |
+
+### XML13 (giấy chuyển tuyến)
+
+| Bảng/trường | HIS làm gì | Module làm gì | Căn cứ | Trạng thái |
+|---|---|---|---|---|
+| XML13 hồ sơ chuyển viện không có dòng dịch vụ nào (list2 rỗng) | LINQ ném ArgumentNullException, **mất cả XML13** | Vẫn sinh; TEN_DICH_VU/TEN_THUOC rỗng như nhánh IS_3176 | [AX]:1286 | đã sửa |
+| XML13 GIAY_CHUYEN_TUYEN, placeholder `<#OUT_CODE_NUM_…;>` khi OUT_CODE < 6 ký tự hoặc không phải số | `int.Parse(Substring(0,6))` ném lỗi, mất XML13 | Thay placeholder bằng OUT_CODE nguyên, không ném | [AX]:1287; phán quyết controller Task 5 | đã sửa |
+| XML13 GIAY_CHUYEN_TUYEN khi OUT_CODE rỗng | DLL bỏ qua khối, **giữ nguyên** văn bản mẫu `<#OUT_CODE_NUM_…;>` | Bỏ placeholder (không để văn bản mẫu) | review lại Task 5 | đã sửa |
+| XML13 MA_THE_BHYT, GT_THE_DEN | Lọc riêng từng danh sách nên lệch vị trí | Khớp vị trí từng thẻ (`TheBhyt`, như XML1) | [AX]:1289 | đã sửa |
+| XML13 TOMTAT_KQ cắt 4000 byte | Cắt giữa ký tự UTF-8, sinh U+FFFD | Cắt bằng `mb_strcut`, không đứt ký tự | [AX]:1290 | đã sửa |
+| XML13 TOMTAT_KQ điều kiện cắt | NFKD > 2000 ký tự rồi cắt 4000 byte (khác XML8: cắt 2000 ký tự) | Như DLL. Máy không có `ext-intl` thì đếm NFKD bằng bảng nguyên âm tiếng Việt (thiếu các ký tự tương thích khác như `…`) | [AX]:1290; review Task 5 | cần xác nhận |
+| XML13 CHAN_DOAN_RV | Luôn có `;` | `RaVienChung::chanDoanRv` | [AX]:1293 | đã sửa |
+| XML13 5 trường IS_3176 | MA_NOI_DI, MA_NOI_DEN, TEN_DICH_VU, TEN_THUOC, PP_DIEU_TRI = null; MA_CSKCB_DI/DEN, TINH_TRANG_CT sau DU_PHONG | Xuất phần tử rỗng, cùng thứ tự lớp XML13Data | [AX]:1283 | cần xác nhận |
+| XML13 USED_MEDICINE, TINH_TRANG_CT | USED_MEDICINE không lên bảng; TINH_TRANG_CT = TREATMENT_METHOD | Như DLL | [AX]:1285 | cần xác nhận |
+| XML13 MA_CSKCB_DI | TRANSFER_IN_MEDI_ORG_CODE (nơi chuyển bệnh nhân đến, chưa chắc là nơi đi) | Như DLL | [AX]:1294 | cần xác nhận |
+| XML13 MA_BAC_SI | Có DOCTOR_LOGINNAME mà không tìm thấy nhân viên thì rỗng, không lùi về END_LOGINNAME | Như DLL | [AX]:1292 | cần xác nhận |
+| XML13 MA_TTDV | Kiểm key bằng chuỗi con (`Contains("13")`) | Như DLL | [AX]:1291 | cần xác nhận |
+| XML13/XML14 NGAY_SINH, IN_TIME thiếu | `Substring` vỡ | Xuất rỗng, không ném (XML1 đã loại hồ sơ trước đó) | Task 5 | đã sửa |
+
+### XML14 (giấy hẹn khám lại)
+
+| Bảng/trường | HIS làm gì | Module làm gì | Căn cứ | Trạng thái |
+|---|---|---|---|---|
+| XML14 hồ sơ không có PTA | `.First()` ném lỗi, mất XML14 | Vẫn sinh, MA_DOITUONG_KCB rỗng khi HEIN_PATIENT_TYPE_CODE rỗng | [AX]:1337 | đã sửa |
+| XML14 MA_DOITUONG_KCB tự suy | Luật riêng XML14: GT/HK xét trước IS_NEWBORN; nội trú chỉ loại 3; không khớp nhánh nào thì rỗng | Đúng luật DLL XML14 (`DoiTuongKcbXml1::suy(.., true)`); ICD danh mục null, HEIN_MEDI_ORG_CODE < 2 ký tự, PTA không số thẻ không làm vỡ | [AX]:1338–1339; phán quyết controller Task 5 | đã sửa (chỉ phần chống vỡ) |
+| XML14 MA_DOITUONG_KCB | Chỉ tự suy khi HEIN_PATIENT_TYPE_CODE rỗng (`??`) | Như DLL, chuỗi toàn khoảng trắng coi như null | [AX]:1338 | cần xác nhận |
+| XML14 MA_THE_BHYT, GT_THE_DEN | Lệch vị trí | Khớp vị trí (`TheBhyt`) | [AX]:1343 | đã sửa |
+| XML14 CHAN_DOAN_RV | Thừa `;` | Không thừa. Đo Đợt 3: 2/12 hồ sơ | [AX]:1293 (cùng kiểu XML13) | đã sửa |
+| XML14 MA_BAC_SI | Không có nhân viên thì null (bỏ phần tử) | Phần tử rỗng | [AX]:1342 | cần xác nhận |
+
+### XML15 (điều trị lao)
+
+| Bảng/trường | HIS làm gì | Module làm gì | Căn cứ | Trạng thái |
+|---|---|---|---|---|
+| XML15 số dòng | `new List { x, x }`: tệp có 2 dòng giống hệt | Đúng 1 dòng | [AX]:1379 | đã sửa |
+| XML15 STT | Gán cứng `"15"` (số hiệu bảng) | `1` | [AX]:1380 | đã sửa |
+| XML15 ngày ngắn hơn 8 chữ số | `Substring` ném lỗi, mất XML15 | Lấy hết chuỗi có (phòng ngừa) | [AX]:1347–1386 | đã sửa |
+| XML15 số đợt | Một đợt điều trị lao/hồ sơ | Như DLL | [AX]:1347–1386 | cần xác nhận |
+| XML15 MA_CSKCB | HEIN_MEDI_ORG_CODE | Như DLL | [AX]:1347–1386 | cần xác nhận |
+
 ### Thứ tự dòng và thứ tự trong chuỗi (mọi bảng)
 
 **Đo trên HIS thật (Đợt 2):** plugin truyền danh sách dịch vụ (`V_HIS_SERE_SERV_2`) và ekip (`HIS_EKIP_USER`) cho DLL
@@ -521,3 +641,133 @@ Cả 3 tệp có `FILEHOSO` XML1–XML5. Số dòng hai bên bằng nhau ở m�
 Kết luận: **đạt**, không còn lệch loại 3. XML4 khớp mọi trường. Các dòng cần xác nhận mới gom về hai câu hỏi:
 (1) in số thập phân theo culture vi-VN như HIS (XML2 LIEU_DUNG, XML5 CSST) hay giữ dấu `.`;
 (2) sắp dịch vụ và ekip theo ROWID như plugin hay giữ `ID`.
+
+## Nghiệm thu Đợt 3 (22/10/2026)
+
+Máy dev, `ghi_thu_muc_that = false`, tệp ghi vào `D:\XML\SinhXml3176Thu`. Phía HIS là bảng tiền giám định
+`xml3176_*`, so bằng `--csdl` cho cả 14 bảng.
+
+### Chọn hồ sơ
+
+`SELECT` chỉ lấy `treatment_code`: 30 ngày gần đây, có `FEE_LOCK_TIME`, đối tượng `01`, đã có trong `xml3176_informations`.
+
+| Loại | Hồ sơ | Ghi chú |
+|---|---|---|
+| chuyển viện (XML13) | 000007222963, 000007130131 | HIS có 3.956 hồ sơ trong 30 ngày |
+| hẹn khám (XML14) | 000007362006, 000007487205 | 000007487205: tiền giám định có hồ sơ nhưng không có XML14 |
+| có sơ sinh (XML9) | 000007216166, 000007409432 | 000007409432: tiền giám định không có XML9 |
+| nghỉ việc (XML11) | 000007299419, 000007371437 | 000007371437: tiền giám định không có XML11 |
+| nội trú (XML7, XML8) | 000007284514, 000007317766 | |
+| nghỉ dưỡng thai (XML10) | **không tìm được** | Cả HIS chỉ có 5 hồ sơ `TREATMENT_END_TYPE_EXT_ID = 2`, hồ sơ cuối khoá viện phí tháng 10/2024; `xml3176_xml10s` trống. Chạy thử 000002262527 (BHYT, 2024, chưa nạp tiền giám định): sinh XML10 không lỗi, không có gì để so |
+| HIV (XML6) | **không tìm được** | Cả HIS chỉ có 1 bản ghi `HIS_HIV_TREATMENT`, thuộc hồ sơ đối tượng `03` (ngoài bộ lọc). Dựng thử trực tiếp (không ghi tệp): 1 dòng, 47 trường, đọc lại được. `xml3176_xml6s` trống |
+| lao (XML15) | **không tìm được** | `HIS_TUBERCULOSIS_TREAT` không có dòng nào; `xml3176_xml15s` trống |
+
+Cộng 3 hồ sơ Đợt 2 (000007130131, 000007436231, 000007453924) và lô đo bộ nhớ: 20 hồ sơ nội trú có nhiều dòng
+`HIS_SERE_SERV` nhất, khoá viện phí trong 7 ngày gần đây (000007179118, 000007130131, 000007192981, 000007086417,
+000007208797, 000007182252, 000007242312, 000007284652, 000007275493, 000007135773, 000007215762, 000007244287,
+000007318784, 000007172645, 000007311719, 000006897028, 000007156397, 000007187894, 000007258626, 000007135404).
+
+```
+php artisan sinhxml3176:quet --ma-dieu-tri=<12 hồ sơ trên + 000002262527 + 000004438408>
+  chinh_thuc: ung_vien=13 da_ghi=13 bi_loai=0 loi=0 bo_qua=0
+  Khong tim thay o loai ban nao (hoac khong qua bo loc): 000004438408   (hồ sơ HIV, đối tượng 03)
+php -d memory_limit=4G artisan sinhxml3176:quet --ma-dieu-tri=<20 hồ sơ lô lớn>
+  chinh_thuc: ung_vien=20 da_ghi=20 bi_loai=0 loi=0 bo_qua=0
+php artisan sinhxml3176:so-sanh --csdl --qlbv=D:\XML\SinhXml3176Thu --ra=storage\app\so-sanh-dot3.csv --bang=XML1,XML2,XML3,XML4,XML5,XML6,XML7,XML8,XML9,XML10,XML11,XML13,XML14,XML15
+  ho so module: 32, cho lech: 29011
+```
+
+### Bộ nhớ và thời gian
+
+Đo bằng log `sinhxml3176 bo nho dinh …` (`memory_get_peak_usage(true)`) và đồng hồ quanh lệnh. PHP 7.4.33 64-bit,
+`CACHE_DRIVER=file`, Oracle `HISPro` thật. Nạp danh mục: 78MB, khoảng 15 giây.
+
+| Lượt | Số hồ sơ trong lô | Đỉnh bộ nhớ | Thời gian |
+|---|---|---|---|
+| 13 hồ sơ hỗn hợp (ngoại trú, nội trú, chuyển viện, sơ sinh) | 13 | 232MB | 17 giây cho lô (sau nạp danh mục) |
+| 20 hồ sơ nội trú lớn nhất 7 ngày, `memory_limit = 512M` (mặc định) | 20 | **vượt 512MB, PHP Fatal error** | chết sau 33 giây |
+| như trên, `php -d memory_limit=4G` | 20 | **948MB** | 92 giây cả lệnh (75 giây cho lô) |
+| 10 hồ sơ lớn nhất | 10 | 622MB | 67 giây (56 giây cho lô) |
+| 5 hồ sơ lớn nhất | 5 | 432MB | 44 giây (34 giây cho lô) |
+| `so-sanh --csdl`, 32 hồ sơ, 14 bảng | | | 149 giây |
+
+Hồ sơ nội trú lớn tốn khoảng 40–70MB mỗi hồ sơ. **Mặc định hiện tại (`kich_thuoc_lo = 20`, `memory_limit = 512M`)
+không chịu được một lô gồm toàn hồ sơ nội trú lớn.** PHP Fatal error không chạy khối `finally`, nên khoá lượt
+(`Cache`, `khoa_luot_phut = 120`) còn nguyên và mốc không tiến: dịch vụ `--lien-tuc` bỏ qua mọi lượt trong 120 phút,
+rồi gặp lại đúng lô đó và chết tiếp. Gỡ tay bằng `php artisan sinhxml3176:quet --go-khoa` (chỉ khi chắc không còn
+tiến trình nào), sau khi đã hạ lô hoặc nâng bộ nhớ. Xem mục 7 của danh sách kiểm bên dưới.
+
+### Số dòng
+
+30 hồ sơ có trong tiền giám định (000002262527 và 000007187894 chưa nạp, chỉ có ở module):
+
+| Bảng | Hồ sơ có bảng (HIS / module) | Dòng HIS | Dòng module | Ghi chú |
+|---|---|---|---|---|
+| XML1 | 30 / 30 | 30 | 30 | |
+| XML2 | 28 / 28 | 13.483 | 13.450 | 000007208797 −31, 000007487205 −2: tệp HIS cũ |
+| XML3 | 30 / 30 | 26.799 | 26.797 | 000007208797 −2: tệp HIS cũ |
+| XML4 | 30 / 30 | 71.607 | 71.605 | 000007208797 −2: tệp HIS cũ |
+| XML5 | 30 / 30 | 4.814 | 4.814 | |
+| XML6 | 0 / 0 | 0 | 0 | không có hồ sơ |
+| XML7 | 25 / 25 | 25 | 25 | |
+| XML8 | 25 / 25 | 25 | 25 | |
+| XML9 | 1 / 2 | 1 | 2 | 000007409432: DLL vỡ ở NOI_SINH_CON |
+| XML10 | 0 / 0 | 0 | 0 | không có hồ sơ |
+| XML11 | 1 / 2 | 1 | 2 | 000007371437: DLL vỡ ở ICD_TEXT |
+| XML13 | 10 / 10 | 10 | 10 | |
+| XML14 | 12 / 13 | 12 | 13 | 000007487205: tệp HIS cũ |
+| XML15 | 0 / 0 | 0 | 0 | không có hồ sơ |
+
+### Xếp loại 29.011 dòng lệch
+
+Lượt so đầu (13 hồ sơ) còn có XML7 GHI_CHU và XML8 QT_BENHLY lệch chỉ vì CR (module giữ CRLF, tiền giám định lưu LF
+với tệp HIS): **lỗi module**, sửa ở 08a0147c (có test). Sinh lại và so lại thì hết.
+
+| Loại | Bảng/trường | Số dòng | Ghi chú |
+|---|---|---|---|
+| 1. Lỗi DLL đã biết (module đã sửa) | XML1 CHAN_DOAN_RV `;;` | 29 | [AX]:297 |
+| 1 | XML7, XML8, XML14 CHAN_DOAN_RV `;` thừa cuối | 10 | [AX]:892, 979, 1293 |
+| 1 | XML8 HO_TEN_ME (sai ưu tiên toán tử) | 1 | [AX]:971 |
+| 1 | XML9 chỉ module có (000007409432, NOI_SINH_CON NullReference) | 1 | [AX]:1079 |
+| 1 | XML11 chỉ module có (000007371437, IndexOutOfRange) | 1 | [AX]:1167 |
+| 2. Có trong bảng khác biệt | MA_TTDV theo key (XML1 30, XML7 25, XML8 25, XML9 1, XML11 1, XML13 10, XML14 12) | 104 | đã sửa |
+| 2 | XML2 LIEU_DUNG, XML5 DIEN_BIEN_LS: số thập phân culture vi-VN (kể cả chỗ cắt 1000 ký tự lệch theo) | 11.491 | cần xác nhận (culture) |
+| 2 | Thứ tự dòng: STT XML2/XML3/XML4 | 13.574 | cần xác nhận (ROWID) |
+| 2 | Thứ tự dòng: đổi chỗ hai dòng cùng khoá (XML2, XML3, XML4, XML5) | 3.213 | cùng nguyên nhân |
+| 2 | Thứ tự trong chuỗi: XML3 NGUOI_THUC_HIEN có ekip (cùng tập CCHN) | 119 | |
+| 2 | XML5 PHAU_THUAT (`;;` rỗng, thứ tự, phần cắt 1024 ký tự) | 191 | dựng lại theo ROWID + giữ DESCRIPTION rỗng: 000007179118, 000007242312, 000007275493, 000007311719 khớp 185/185 tờ; 000007192981 khớp 69/70 tờ |
+| 2 | XML3 NGAY_TH_YL khi START_TIME sớm hơn y lệnh | 36 | giữ như DLL |
+| 4. Tệp HIS cũ hơn dữ liệu HIS | NGAY_TTOAN rỗng ở 6 hồ sơ (tiền giám định đang giữ bản thông tuyến, khoá viện phí sau khi nạp); 000007487205 (ngày ra, tiền, loại ra viện đổi sau khi nạp); 000007208797, 000007284652 (dịch vụ đổi sau khi nạp); 000007258626, 000007179118 (kết quả/PTTT nhập sau khi nạp); 000007216166 XML9 NGAY_SINH_CON (sửa giờ sinh sau khi nạp) | 236 | so `xml3176_informations.updated_at` với `FEE_LOCK_TIME`, `OUT_TIME`, `HIS_SERE_SERV_EXT.CREATE_TIME`, `V_HIS_BABY.MODIFY_TIME` |
+| 5. Do cách so `--csdl` | XML9 SINHCON_PHAUTHUAT, XML11 MA_DINH_CHI_THAI: tiền giám định lưu `0` thành `null` | 2 | Xml3176Service:687, 781 |
+| 5 | Hồ sơ chưa nạp tiền giám định (000002262527, 000007187894) | 2 | |
+| Chưa giải thích | XML5 PHAU_THUAT, 1 tờ của 000007192981 (lệch ngay mục đầu tiên cả khi dựng theo ROWID) | 1 | nghi dữ liệu dịch vụ đổi sau khi nạp (hồ sơ sửa 22/10, nạp 17/10) |
+| 3. Lỗi module | | **0** (sau 08a0147c) | |
+
+Kết luận: **đạt có điều kiện**. XML7, XML8, XML13 khớp mọi trường trên 25/25/10 hồ sơ, ngoài MA_TTDV và `;` thừa; XML9, XML11
+có hai hồ sơ HIS mất bảng do lỗi DLL mà module sinh đủ. XML6, XML10, XML15 **chưa nghiệm thu được** vì không có dữ liệu
+(chỉ chạy thử không vỡ). Điều kiện: chọn lại `kich_thuoc_lo` / `memory_limit` theo số đo trên trước khi bật.
+
+## Danh sách kiểm trước khi bật `ghi_thu_muc_that`
+
+Chủ dự án làm trên máy chủ, ghi ngày và người kiểm vào biên bản triển khai.
+
+1. **Bộ lọc:** đối chiếu `co_so`, `doi_tuong_bn`, `doi_tuong_tt`, `dien_dieu_tri` với màn "Thiết lập đồng bộ" của máy trạm HIS
+   (mục "Đối chiếu bộ lọc với máy trạm HIS"), kể cả key `XML4.LAY_DVU_PTTT`.
+2. **`CACHE_DRIVER` không phải `array`** (`file`, `redis`, `database`…); nếu không, khoá lượt không chống chồng lượt.
+3. **PHP 64-bit:** `php -r "echo PHP_INT_SIZE;"` ra `8`.
+4. **`is_delete` NULL:** `select count(*) from v_his_treatment_12 where is_delete is null` ra `0`.
+5. **Migration bảng theo dõi** đã chạy trên máy chủ (các bảng `sinh_xml3176_*`).
+6. **`php artisan config:cache`** sau mọi thay đổi `config/organization.php` / `config/sinh_xml3176.php`.
+7. **`memory_limit` và kích thước lô** theo số đo Đợt 3 (lô 20 hồ sơ nội trú lớn 948MB; 10 hồ sơ 622MB; 5 hồ sơ 432MB).
+   Chọn một trong hai, dư ít nhất 1,5 lần mức đo:
+   - `kich_thuoc_lo = 10`, `memory_limit = '1024M'`; hoặc
+   - giữ `kich_thuoc_lo = 20`, `memory_limit = '1536M'`.
+
+   Máy chủ phải còn đủ RAM trống cho mức đó. Giữ mặc định 512M/20 thì một lô nội trú lớn làm lệnh chết và dịch vụ kẹt
+   (xem "Bộ nhớ và thời gian" ở trên). Máy chủ nên có `ext-intl` (XML13 TOMTAT_KQ đếm NFKD chính xác).
+8. **Thông tuyến tắt** (`thong_tuyen = false`) cho tới khi đo xong độ trễ nhập `OUT_TIME` (mục "Kiểm trước khi bật thông tuyến").
+9. **Chạy song song với HIS:** máy trạm HIS vẫn đồng bộ như cũ. Tiền giám định giữ bản nạp sau cùng (bản vào sau thắng),
+   nên thường bản HIS (sinh sau duyệt) đè bản module. Không tắt máy trạm HIS khi chưa có quyết định riêng.
+10. **Cách tắt nhanh:** đặt `enabled = false` trong khối `sinh_xml3176` rồi `php artisan config:cache`; dịch vụ thoát êm ở
+    lượt kế tiếp. Nếu lệnh từng chết (Fatal error) thì gỡ khoá bằng `php artisan sinhxml3176:quet --go-khoa` khi chắc
+    không còn tiến trình `sinhxml3176:quet` nào.
