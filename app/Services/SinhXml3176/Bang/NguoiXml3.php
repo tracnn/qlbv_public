@@ -49,7 +49,7 @@ class NguoiXml3
             $ma[] = self::cchn($dm, $l);
         }
 
-        return self::noiKhacNhau($ma);
+        return GiaTriBang::noiKhacNhau($ma);
     }
 
     /**
@@ -132,7 +132,7 @@ class NguoiXml3
             }
         }
 
-        return self::noiKhacNhau($ra);
+        return GiaTriBang::noiKhacNhau($ra);
     }
 
     private static function cchn(HisDanhMuc $dm, $login)
@@ -147,17 +147,5 @@ class NguoiXml3
         $nv = $dm->nhanVien($login);
 
         return $nv !== null ? GiaTriBang::chu($nv->identification_number) : '';
-    }
-
-    private static function noiKhacNhau(array $ma)
-    {
-        $ra = [];
-        foreach ($ma as $m) {
-            if (trim($m) !== '' && !in_array($m, $ra, true)) {
-                $ra[] = $m;
-            }
-        }
-
-        return implode(';', $ra);
     }
 }

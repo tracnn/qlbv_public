@@ -10,12 +10,12 @@ use App\Services\SinhXml3176\Nguon\HisDanhMuc;
  * ban IS_3176. Tien o TienXml3, NGAY_KQ/MA_GIUONG o NgayKqXml3, MA_BAC_SI/NGUOI_THUC_HIEN o NguoiXml3.
  * Chi sua cac loi DLL duoi day (va trong ba lop tren); con lai giu nguyen hanh vi DLL.
  *
- * Sua loi DLL [AX]:605: dong da thuc hien co PRICE = 0 bi bo, tru khi HIS.QD_130_BYT.LAY_CA_DVU_0_DONG == "1"
- *   (DLL: nhanh B lay het, key khong co tac dung). Dong da loc doi tuong thanh toan o HisNapHoSo (idDoiTuongTt).
+ * Sua loi DLL [AX]:605: dong da thuc hien co PRICE = 0 bi bo, tru khi HIS.QD_130_BYT.LAY_CA_DVU_0_DONG == "1";
+ *   PRICE < 0 luon bo (nhanh C/D chi nhan PRICE > 0 hoac == 0, nhu Xml2Dung). DLL: nhanh B lay het, key khong co tac dung. Dong da loc doi tuong thanh toan o HisNapHoSo (idDoiTuongTt).
  * Sua loi DLL [AX]:606: ID doi tuong BHYT lay qua HisDanhMuc::idDoiTuongBhyt(); khong co => nem LoiDungBang
  *   (DLL Convert.ToInt64(ma) vo ca XML3).
  * Sua loi DLL [AX]:607: thieu danh muc doi tuong cua dong => nem LoiDungBang (DLL NullReference mat ca XML3).
- * Sua loi DLL [AX]:617 (phu): hau to _GT tinh mot lan roi moi them _TB (DLL kiem _GT lan hai cho loai 7/22 sau
+ * Sua loi DLL [AX]:474 + DLL L:1007: hau to _GT tinh mot lan roi moi them _TB (DLL kiem _GT lan hai cho loai 7/22 sau
  *   khi da them _TB nen ra "X_GT_TB_GT").
  * Sua loi DLL [AX]:622: MATERIAL_TT_THAU rong ("" hoac khoang trang) coi nhu null => ghep cac truong thau.
  * Sua loi DLL [AX]:623: TT_THAU ghep cac phan khac rong bang ';', khong du ';' cuoi khi BID_YEAR rong.
@@ -141,7 +141,7 @@ class Xml3Dung implements DungBang
                 $lay = in_array($loai, self::LOAI_KHONG_TH, true) && $khongLayKhongTh !== '1';
             } else {
                 $lay = (in_array($loai, self::LOAI_DVKT, true) || in_array($loai, self::LOAI_VAT_TU, true))
-                    && ((float) $dv->price != 0 || $layGia0 === '1');
+                    && ((float) $dv->price > 0 || ((float) $dv->price == 0 && $layGia0 === '1'));
             }
             $k = (string) $dv->id;
             if ($lay && !isset($ra[$k])) {
@@ -318,14 +318,8 @@ class Xml3Dung implements DungBang
         if (count($ds) === 1) {
             return $ds[0];
         }
-        $ra = [];
-        foreach ($ds as $m) {
-            if (trim($m) !== '' && !in_array($m, $ra, true)) {
-                $ra[] = $m;
-            }
-        }
 
-        return implode(';', $ra);
+        return GiaTriBang::noiKhacNhau($ds);
     }
 
     /** PP_VO_CAM #42: loai 7/22 co PTTT: EMME_HEIN_CODE -> EMME_SECOND_HEIN_CODE -> "4". */

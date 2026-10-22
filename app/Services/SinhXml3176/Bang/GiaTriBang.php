@@ -61,6 +61,20 @@ class GiaTriBang
         return implode(';', $ra);
     }
 
+    /** Noi cac phan khac rong (sau trim), khac nhau (giu thu tu gap dau) bang ';' (LINQ Where+Distinct+Join). */
+    public static function noiKhacNhau(array $phan)
+    {
+        $ra = [];
+        foreach ($phan as $p) {
+            $p = (string) $p;
+            if (trim($p) !== '' && !in_array($p, $ra, true)) {
+                $ra[] = $p;
+            }
+        }
+
+        return implode(';', $ra);
+    }
+
     /** Sap xep on dinh (LINQ OrderBy on dinh, usort PHP 7 thi khong). */
     public static function sapOnDinh(array $mang, callable $ss)
     {

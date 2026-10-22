@@ -12,6 +12,9 @@ namespace App\Services\SinhXml3176\Bang;
  * Sua loi DLL [AX]:609: VTYT THANH_TIEN_BH nhan TYLE_TT_BH (DLL BH = SL*DG_BH khi TYLE_BH != 0).
  * Sua loi DLL [AX]:611: T_BHTT VTYT tinh lai tu THANH_TIEN_BH moi; chi thay bang VIR_TOTAL_HEIN_PRICE khi VIR
  *   THAP hon qua 1 dong (HIS da ap tran), khong bao gio lon hon BH*HEIN_RATIO.
+ * Sua loi DLL [AX]:611 (T_BNCCT VTYT, DLL L:1121-1130): DLL tinh x = max(0,BH-BHTT-NK), y = VIR_TOTAL_PATIENT_PRICE_BHYT
+ *   va lay y khi |x-y| > 1 bat ke co tran hay khong. Module: ngoai tran (BHTT khong thay bang VIR) giu x, khong
+ *   thay bang VIR; trong tran (BHTT da lay VIR) lay min(x, y) de BNCCT khong vuot BH-BHTT-NK. Can xac nhan.
  * Sua loi DLL [AX]:612: T_NGUONKHAC_* con gan tu T_NGUONKHAC cuoi cung (sau chan am) nen tong con = T_NGUONKHAC.
  * Sua loi DLL [AX]:613: dong khong thuc hien (_TB) co T_NGUONKHAC = 0 (BV = 0).
  * Sua loi DLL [AX]:615: DVKT can doi T_BHTT+T_BNCCT+T_BNTT+T_NGUONKHAC = THANH_TIEN_BV (BNTT la so du);

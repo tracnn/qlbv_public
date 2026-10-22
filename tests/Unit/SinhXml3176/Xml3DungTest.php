@@ -222,6 +222,41 @@ class Xml3DungTest extends TestCase
         $this->assertSame((float) $r['THANH_TIEN_BV'], $this->tong($r));
     }
 
+    public function test_vtyt_vir_cao_hon_giu_gia_tri_tinh()
+    {
+        $r = $this->dung($this->du([$this->vt(['vir_total_hein_price' => 200000, 'vir_total_patient_price_bhyt' => 50000])]))[0];
+
+        $this->assertSame('80000.00', $r['T_BHTT']);
+        $this->assertSame('20000.00', $r['T_BNCCT']);
+        $this->assertSame('0.00', $r['T_BNTT']);
+    }
+
+    public function test_bhtt_lon_hon_bv_nem_loi_dung_bang()
+    {
+        // DG_BV = VIR_PRICE 50.000 < DG_BH 100.000 => BHTT 80.000 > BV 50.000
+        $this->expectException(LoiDungBang::class);
+
+        $this->dung($this->du([$this->dv(['vir_price' => 50000])]));
+    }
+
+    public function test_gay_te_khong_thuc_hien_khong_ra_gt_tb_gt()
+    {
+        $d = $this->du([$this->dv(['tdl_hein_service_type_id' => 7, 'is_no_execute' => 1])]);
+        $d->pttt = [(object) ['id' => 1, 'sere_serv_id' => 21, 'icd_cm_code' => null, 'icd_cm_sub_code' => null,
+            'is_anaesthesia' => 1, 'emme_hein_code' => null, 'emme_second_hein_code' => null]];
+        $r = $this->dung($d, $this->dm(['XML.EXPORT.4210.GAY_TE_OPTION' => '1']))[0];
+
+        $this->assertSame('23.0001.1000_GT_TB', $r['MA_DICH_VU']);
+        $this->assertSame('4', $r['PP_VO_CAM']);
+    }
+
+    public function test_gia_am_khong_vao_xml3()
+    {
+        $dm = $this->dm(['HIS.QD_130_BYT.LAY_CA_DVU_0_DONG' => '1']);
+
+        $this->assertSame([], $this->dung($this->du([$this->dv(['price' => -1000])]), $dm));
+    }
+
     public function test_vtyt_kem_dich_vu_cha_goi_va_ma_khoa()
     {
         $cha = $this->dv(['id' => 21, 'tdl_hein_service_type_id' => 8, 'request_bhyt_code' => 'K02',
