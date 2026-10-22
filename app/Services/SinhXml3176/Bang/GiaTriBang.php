@@ -14,6 +14,15 @@ class GiaTriBang
         return $v !== null && $v !== '';
     }
 
+    /**
+     * Dong dich vu duoc dua vao bang thanh toan: so luong > 0 va khong phai hao phi.
+     * DLL loc ca danh sach o CreateXmlProcessor.Check() L:344 (AMOUNT > 0 && IS_EXPEND != 1) truoc khi dung bang.
+     */
+    public static function tinhTien($dv)
+    {
+        return (float) $dv->amount > 0 && (int) $dv->is_expend !== 1;
+    }
+
     public static function chu($v)
     {
         return $v === null ? '' : (string) $v;

@@ -128,12 +128,12 @@ class Xml3Dung implements DungBang
         return $ra;
     }
 
-    /** Chon dong ([AX]:450-467 + sua [AX]:605, 624). */
+    /** Chon dong ([AX]:450-467 + sua [AX]:605, 624). Bo dong hao phi / so luong 0 nhu DLL Check() L:344. */
     private function chonDong(array $dichVu, $layGia0, $khongLayKhongTh)
     {
         $ra = [];
         foreach ($dichVu as $dv) {
-            if (!GiaTriBang::co($dv->tdl_hein_service_type_id)) {
+            if (!GiaTriBang::co($dv->tdl_hein_service_type_id) || !GiaTriBang::tinhTien($dv)) {
                 continue;
             }
             $loai = (int) $dv->tdl_hein_service_type_id;

@@ -289,6 +289,18 @@ class Xml2DungTest extends TestCase
             $this->dm(['HIS.QD_130_BYT.XML3.KHONG_LAY_DVU_KHONG_THUC_HIEN' => '1'])));
     }
 
+    public function test_hao_phi_va_so_luong_0_khong_vao_xml2()
+    {
+        $chiTiet = $this->dung($this->du([
+            $this->thuoc(['id' => 11, 'is_expend' => 1]),
+            $this->thuoc(['id' => 12, 'amount' => 0]),
+            $this->thuoc(['id' => 13]),
+        ]));
+
+        $this->assertCount(1, $chiTiet);
+        $this->assertFalse((new Xml2Dung())->coTrongHoSo($this->du([$this->thuoc(['is_expend' => 1])])));
+    }
+
     public function test_co_trong_ho_so()
     {
         $x = new Xml2Dung();

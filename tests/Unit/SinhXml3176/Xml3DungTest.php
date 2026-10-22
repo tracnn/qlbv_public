@@ -257,6 +257,19 @@ class Xml3DungTest extends TestCase
         $this->assertSame([], $this->dung($this->du([$this->dv(['price' => -1000])]), $dm));
     }
 
+    public function test_hao_phi_va_so_luong_0_khong_vao_xml3()
+    {
+        $chiTiet = $this->dung($this->du([
+            $this->vt(['id' => 31, 'is_expend' => 1]),
+            $this->dv(['id' => 32, 'is_expend' => 1]),
+            $this->vt(['id' => 33, 'amount' => 0]),
+            $this->vt(['id' => 34]),
+        ]));
+
+        $this->assertCount(1, $chiTiet);
+        $this->assertFalse((new Xml3Dung())->coTrongHoSo($this->du([$this->vt(['is_expend' => 1])])));
+    }
+
     public function test_vtyt_kem_dich_vu_cha_goi_va_ma_khoa()
     {
         $cha = $this->dv(['id' => 21, 'tdl_hein_service_type_id' => 8, 'request_bhyt_code' => 'K02',

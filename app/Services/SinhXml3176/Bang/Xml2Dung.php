@@ -138,12 +138,12 @@ class Xml2Dung implements DungBang
         return $ra;
     }
 
-    /** L:350-400 dieu kien 1-3: loai thuoc/mau, da thuc hien, PRICE > 0. */
+    /** L:350-400 dieu kien 1-3: loai thuoc/mau, da thuc hien, PRICE > 0. Bo dong hao phi / so luong 0 nhu DLL Check() L:344. */
     private function locSoBo(array $dichVu)
     {
         $ra = [];
         foreach ($dichVu as $dv) {
-            if (!GiaTriBang::co($dv->tdl_hein_service_type_id)) {
+            if (!GiaTriBang::co($dv->tdl_hein_service_type_id) || !GiaTriBang::tinhTien($dv)) {
                 continue;
             }
             $loai = (int) $dv->tdl_hein_service_type_id;
