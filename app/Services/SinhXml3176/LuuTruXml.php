@@ -131,15 +131,35 @@ class LuuTruXml
 
     /**
      * Xoa tep ban sao, ghi xoa_luu_luc/xoa_luu_boi, xoa thu muc ngay neu da rong.
-     * False khi duong khong hop le, tep khong con, hoac khong xoa duoc.
+     * Ghi dau xoa vao CSDL TRUOC khi xoa tep: loi CSDL nem ra ngoai va tep con nguyen; xoa tep that bai thi
+     * hoan lai dau. Tep da bi go tay van duoc danh dau (tra true). False khi dong chua co tep luu,
+     * da danh dau xoa, duong khong hop le (ke ca ra ngoai goc) hoac khong xoa duoc tep.
      */
     public function xoa(LanSinh $dong, $userId)
     {
-        $duong = $this->duongTep($dong);
+        if ($dong->xoa_luu_luc !== null || trim((string) $dong->tep_luu) === '') {
+            return false;
+        }
+        $duong = $this->duongTuyetDoi($dong->tep_luu);
         if ($duong === null) {
             return false;
         }
-        if (!@unlink($duong)) {
+
+        $dong->xoa_luu_luc = date('Y-m-d H:i:s');
+        $dong->xoa_luu_boi = (int) $userId;
+        try {
+            $dong->save();
+        } catch (\Throwable $e) {
+            $dong->xoa_luu_luc = null;
+            $dong->xoa_luu_boi = null;
+            throw $e;
+        }
+
+        if (is_file($duong) && !@unlink($duong)) {
+            $dong->xoa_luu_luc = null;
+            $dong->xoa_luu_boi = null;
+            $dong->save();
+
             return false;
         }
 
@@ -148,10 +168,6 @@ class LuuTruXml
         if ($ds !== false && count(array_diff($ds, ['.', '..'])) === 0) {
             @rmdir($thuMuc);
         }
-
-        $dong->xoa_luu_luc = date('Y-m-d H:i:s');
-        $dong->xoa_luu_boi = (int) $userId;
-        $dong->save();
 
         return true;
     }

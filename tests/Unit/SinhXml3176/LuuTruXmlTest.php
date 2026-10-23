@@ -141,6 +141,30 @@ class LuuTruXmlTest extends TestCase
         $this->assertDirectoryNotExists($ngay);
     }
 
+    public function test_xoa_tep_da_mat_tay_van_ghi_dau_xoa()
+    {
+        $d = $this->dong(1);
+        $this->capNhatTepLuu($d, $this->luuTru()->luu($d, '<a/>'));
+        @unlink($this->goc . DIRECTORY_SEPARATOR . $d->tep_luu);
+
+        $this->assertTrue($this->luuTru()->xoa($d, 9));
+
+        $d = LanSinh::find($d->id);
+        $this->assertSame(9, (int) $d->xoa_luu_boi);
+        $this->assertNotNull($d->xoa_luu_luc);
+    }
+
+    public function test_xoa_dong_da_danh_dau_hoac_khong_co_tep_tra_false()
+    {
+        $d = $this->dong(1);
+        $this->assertFalse($this->luuTru()->xoa($d, 9));
+
+        $this->capNhatTepLuu($d, $this->luuTru()->luu($d, '<a/>'));
+        $this->assertTrue($this->luuTru()->xoa($d, 9));
+        $this->assertFalse($this->luuTru()->xoa(LanSinh::find($d->id), 10));
+        $this->assertSame(9, (int) LanSinh::find($d->id)->xoa_luu_boi);
+    }
+
     public function test_doc_tep_mat_tra_null()
     {
         $d = $this->dong(1);

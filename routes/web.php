@@ -574,6 +574,12 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('lan/{id}/tai', 'BHYT\SinhXml3176Controller@tai')
             ->where('id', '[0-9]+')->name('bhyt.sinh-xml3176.tai');
         Route::get('so-sanh', 'BHYT\SinhXml3176Controller@soSanh')->name('bhyt.sinh-xml3176.so-sanh');
+        Route::get('dem-theo-ngay', 'BHYT\SinhXml3176Controller@demTheoNgay')->name('bhyt.sinh-xml3176.dem-theo-ngay');
+        // Xoa ban luu tru: chi superadministrator
+        Route::group(['middleware' => ['checkrole:superadministrator']], function () {
+            Route::post('xoa', 'BHYT\SinhXml3176Controller@xoa')->name('bhyt.sinh-xml3176.xoa');
+            Route::post('xoa-theo-ngay', 'BHYT\SinhXml3176Controller@xoaTheoNgay')->name('bhyt.sinh-xml3176.xoa-theo-ngay');
+        });
     });
 
     /* Hồ sơ BHYT */

@@ -5,6 +5,8 @@ namespace Tests\Feature\SinhXml3176;
 use App\Models\SinhXml3176\LanSinh;
 use App\Models\SinhXml3176\Moc;
 use Tests\Support\DungBangHisSinhXml3176Sqlite;
+use Illuminate\Support\Facades\Log;
+use Tests\Support\UserChiXmlMan;
 use Tests\Support\UserGiaCoQuyen;
 use Tests\TestCase;
 
@@ -486,5 +488,158 @@ class SinhXml3176ControllerTest extends TestCase
         }
         $this->assertContains('T999', $html);
         $this->assertSame(5, substr_count($html, 'data-nhom-ngay='));
+    }
+
+    private function dongCoTep($treatmentId, $ngay = '20261020', $luc = '2026-10-20 10:00:00')
+    {
+        $d = $this->dong($treatmentId, ['created_at' => $luc, 'updated_at' => $luc]);
+        $tuongDoi = $ngay . DIRECTORY_SEPARATOR . $d->id . '_' . $d->ten_tep;
+        @mkdir($this->goc . DIRECTORY_SEPARATOR . $ngay);
+        file_put_contents($this->goc . DIRECTORY_SEPARATOR . $tuongDoi, '<x/>');
+        $d->tep_luu = $tuongDoi;
+        $d->save();
+
+        return $d;
+    }
+
+    private function tepTrenDia(LanSinh $d)
+    {
+        return is_file($this->goc . DIRECTORY_SEPARATOR . $d->tep_luu);
+    }
+
+    /** @test */
+    public function test_xoa_dien_nguoi_xoa_giu_dong()
+    {
+        $a = $this->dongCoTep(70);
+        $b = $this->dongCoTep(71);
+        $c = $this->dongCoTep(72);
+
+        $res = $this->actingAs(UserGiaCoQuyen::tao(5))
+            ->postJson('/bhyt/sinh-xml3176/xoa', ['ids' => [$a->id, $b->id, 99999]]);
+
+        $res->assertStatus(200)->assertJson(['xoa' => 2, 'bo_qua' => 1]);
+        $this->assertFalse($this->tepTrenDia($a));
+        $this->assertFalse($this->tepTrenDia($b));
+        $this->assertTrue($this->tepTrenDia($c));
+        $a = LanSinh::find($a->id);
+        $this->assertNotNull($a);
+        $this->assertSame(5, (int) $a->xoa_luu_boi);
+        $this->assertNotNull($a->xoa_luu_luc);
+        $this->assertNull(LanSinh::find($c->id)->xoa_luu_luc);
+
+        // Xoa lai dong da xoa: bo qua
+        $this->actingAs(UserGiaCoQuyen::tao(5))
+            ->postJson('/bhyt/sinh-xml3176/xoa', ['ids' => [$a->id]])
+            ->assertStatus(200)->assertJson(['xoa' => 0, 'bo_qua' => 1]);
+    }
+
+    /** @test */
+    public function test_xoa_ghi_log_info_kem_user_va_so_tep()
+    {
+        $a = $this->dongCoTep(74);
+        Log::shouldReceive('info')->once()->with(\Mockery::on(function ($m) {
+            return strpos($m, '#8') !== false && strpos($m, '1 tep') !== false;
+        }));
+
+        $this->actingAs(UserGiaCoQuyen::tao(8))
+            ->postJson('/bhyt/sinh-xml3176/xoa', ['ids' => [$a->id]])->assertStatus(200);
+    }
+
+    /** @test */
+    public function test_xoa_khong_co_ids_422_va_duong_bi_sua_khong_xoa_ngoai_goc()
+    {
+        $this->actingAs(UserGiaCoQuyen::tao())->postJson('/bhyt/sinh-xml3176/xoa', [])->assertStatus(422);
+
+        $ngoai = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'ngoai_goc_' . uniqid() . '.xml';
+        file_put_contents($ngoai, '<x/>');
+        try {
+            $d = $this->dong(73, ['tep_luu' => '..\\' . basename($ngoai)]);
+            $this->actingAs(UserGiaCoQuyen::tao())
+                ->postJson('/bhyt/sinh-xml3176/xoa', ['ids' => [$d->id]])
+                ->assertStatus(200)->assertJson(['xoa' => 0, 'bo_qua' => 1]);
+            $this->assertFileExists($ngoai);
+            $this->assertNull(LanSinh::find($d->id)->xoa_luu_luc);
+        } finally {
+            @unlink($ngoai);
+        }
+    }
+
+    /** @test */
+    public function test_xoa_theo_ngay_chi_ngay_do()
+    {
+        $a = $this->dongCoTep(80, '20261020', '2026-10-20 08:00:00');
+        $b = $this->dongCoTep(81, '20261020', '2026-10-20 23:59:59');
+        $c = $this->dongCoTep(82, '20261021', '2026-10-21 00:00:00');
+        $d = $this->dongCoTep(83, '20261019', '2026-10-19 23:59:59');
+
+        $dem = $this->actingAs(UserChiXmlMan::tao())->getJson('/bhyt/sinh-xml3176/dem-theo-ngay?ngay=2026-10-20');
+        $dem->assertStatus(200)->assertJson(['so_tep' => 2]);
+
+        $res = $this->actingAs(UserGiaCoQuyen::tao(6))
+            ->postJson('/bhyt/sinh-xml3176/xoa-theo-ngay', ['ngay' => '2026-10-20']);
+
+        $res->assertStatus(200)->assertJson(['xoa' => 2]);
+        $this->assertFalse($this->tepTrenDia($a));
+        $this->assertFalse($this->tepTrenDia($b));
+        $this->assertTrue($this->tepTrenDia($c));
+        $this->assertTrue($this->tepTrenDia($d));
+        $this->assertSame(6, (int) LanSinh::find($a->id)->xoa_luu_boi);
+        $this->assertNull(LanSinh::find($c->id)->xoa_luu_luc);
+        $this->assertDirectoryNotExists($this->goc . DIRECTORY_SEPARATOR . '20261020');
+        $this->assertDirectoryExists($this->goc . DIRECTORY_SEPARATOR . '20261021');
+    }
+
+    /** @test */
+    public function test_ngay_sai_422()
+    {
+        $d = $this->dongCoTep(90);
+        foreach (['', 'abc', '2026-13-40', '20261020', '2026-10-20 10:00'] as $ngay) {
+            $this->actingAs(UserGiaCoQuyen::tao())
+                ->postJson('/bhyt/sinh-xml3176/xoa-theo-ngay', ['ngay' => $ngay])->assertStatus(422);
+            $this->actingAs(UserGiaCoQuyen::tao())
+                ->getJson('/bhyt/sinh-xml3176/dem-theo-ngay?ngay=' . urlencode($ngay))->assertStatus(422);
+        }
+        $this->actingAs(UserGiaCoQuyen::tao())->postJson('/bhyt/sinh-xml3176/xoa-theo-ngay', [])->assertStatus(422);
+        $this->assertTrue($this->tepTrenDia($d));
+    }
+
+    /** @test */
+    public function test_ngay_cham_cham_422()
+    {
+        $d = $this->dongCoTep(91);
+        foreach (['..\\..\\x', '../../x', '..', '2026-10-20/../..'] as $ngay) {
+            $this->actingAs(UserGiaCoQuyen::tao())
+                ->postJson('/bhyt/sinh-xml3176/xoa-theo-ngay', ['ngay' => $ngay])->assertStatus(422);
+        }
+        $this->assertTrue($this->tepTrenDia($d));
+        $this->assertNull(LanSinh::find($d->id)->xoa_luu_luc);
+    }
+
+    /** @test */
+    public function test_xml_man_khong_xoa_duoc_403()
+    {
+        $d = $this->dongCoTep(92);
+        $user = UserChiXmlMan::tao();
+
+        $this->actingAs($user)->postJson('/bhyt/sinh-xml3176/xoa', ['ids' => [$d->id]])->assertStatus(403);
+        $this->actingAs($user)->postJson('/bhyt/sinh-xml3176/xoa-theo-ngay', ['ngay' => '2026-10-20'])->assertStatus(403);
+        $this->assertTrue($this->tepTrenDia($d));
+        $this->assertNull(LanSinh::find($d->id)->xoa_luu_luc);
+
+        // xml-man van xem duoc
+        $this->actingAs($user)->get('/bhyt/sinh-xml3176/ho-so/92')->assertStatus(200);
+    }
+
+    /** @test */
+    public function test_nut_xoa_chi_hien_voi_superadministrator()
+    {
+        $this->dongCoTep(93);
+        $this->actingAs(UserGiaCoQuyen::tao());
+        $this->assertContains('id="ssx-xoa-ngay"', $this->get('/bhyt/sinh-xml3176')->getContent());
+        $this->assertContains('ssx-chon-xoa', $this->get('/bhyt/sinh-xml3176/ho-so/93')->getContent());
+
+        $this->actingAs(UserChiXmlMan::tao());
+        $this->assertNotContains('ssx-xoa-ngay', $this->get('/bhyt/sinh-xml3176')->getContent());
+        $this->assertNotContains('ssx-chon-xoa', $this->get('/bhyt/sinh-xml3176/ho-so/93')->getContent());
     }
 }

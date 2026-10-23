@@ -26,9 +26,19 @@
         </a>
     </div>
     <div class="panel-body table-responsive">
+        @if (!empty($duocXoa))
+            <p>
+                <button type="button" id="ssx-xoa-chon" class="btn btn-danger btn-sm"><i class="fa fa-trash"></i> Xoá XML đã chọn</button>
+                <span class="text-muted">Chỉ xoá tệp lưu trữ của các lần sinh đã tích; dòng lịch sử vẫn giữ.</span>
+            </p>
+            <div id="ssx-xoa-kq" class="alert" style="display:none;"></div>
+        @endif
         <table class="table table-hover table-bordered" id="ssx-lich-su">
             <thead>
                 <tr>
+                    @if (!empty($duocXoa))
+                        <th></th>
+                    @endif
                     <th>#</th>
                     <th>Giờ</th>
                     <th>Loại bản</th>
@@ -44,6 +54,13 @@
                 @foreach ($hang as $h)
                     @php($d = $h['dong'])
                     <tr data-id="{{ $d->id }}">
+                        @if (!empty($duocXoa))
+                            <td>
+                                @if ($h['tinh_trang'] === 'co' || $h['tinh_trang'] === 'mat_tep')
+                                    <input type="checkbox" class="ssx-chon-xoa" value="{{ $d->id }}">
+                                @endif
+                            </td>
+                        @endif
                         <td>{{ $h['stt'] }}</td>
                         <td>{{ $d->created_at ? $d->created_at->format('d/m/Y H:i:s') : '' }}</td>
                         <td>{{ $d->loai_ban }}</td>
@@ -87,3 +104,29 @@
     </div>
 </div>
 @stop
+
+@if (!empty($duocXoa))
+@push('after-scripts')
+<script>
+(function () {
+    $('#ssx-xoa-chon').on('click', function () {
+        var ids = $('.ssx-chon-xoa:checked').map(function () { return this.value; }).get();
+        var $kq = $('#ssx-xoa-kq');
+        if (!ids.length) {
+            $kq.removeClass('alert-success alert-danger').addClass('alert-warning').text('Hãy tích ít nhất một lần sinh.').show();
+            return;
+        }
+        if (!window.confirm('Xoá ' + ids.length + ' tệp XML lưu trữ đã chọn? Thao tác không hoàn tác được; dòng lịch sử vẫn giữ.')) { return; }
+        var $nut = $(this).prop('disabled', true);
+        $.post("{{ route('bhyt.sinh-xml3176.xoa') }}", { _token: "{{ csrf_token() }}", ids: ids }).done(function () {
+            window.location.reload();
+        }).fail(function (x) {
+            $kq.removeClass('alert-success alert-warning').addClass('alert-danger')
+                .text((x.responseJSON && x.responseJSON.thong_diep) || 'Không xoá được (lỗi ' + x.status + ').').show();
+            $nut.prop('disabled', false);
+        });
+    });
+})();
+</script>
+@endpush
+@endif

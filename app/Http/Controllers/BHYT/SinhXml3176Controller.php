@@ -10,7 +10,9 @@ use App\Services\SinhXml3176\LuuTruXml;
 use App\Services\SinhXml3176\SoSanh\DocTepGiamDinh;
 use App\Services\SinhXml3176\SoSanh\SoSanhBang;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Man theo doi sinh XML3176 truc tiep tu HIS: danh sach (mot dong mot ho so) va lich su cac lan sinh.
@@ -35,7 +37,8 @@ class SinhXml3176Controller extends Controller
     public function index()
     {
         return view('bhyt.sinh-xml3176.index', [
-            'homNay' => date('Y-m-d'),
+            'homNay'  => date('Y-m-d'),
+            'duocXoa' => $this->duocXoa(),
         ]);
     }
 
@@ -164,6 +167,7 @@ class SinhXml3176Controller extends Controller
             'treatmentId'   => (int) $treatmentId,
             'treatmentCode' => $cacDong->last()->treatment_code,
             'hang'          => $hang,
+            'duocXoa'       => $this->duocXoa(),
         ]);
     }
 
@@ -208,6 +212,105 @@ class SinhXml3176Controller extends Controller
         }
 
         return response()->download($duong, $ten, ['Content-Type' => 'application/xml']);
+    }
+
+    /**
+     * Xoa ban luu tru cua cac lan sinh da chon (chi superadministrator, chan o route).
+     * Tra {xoa, bo_qua}: bo_qua gom dong khong ton tai, chua co tep, da xoa hoac duong khong hop le.
+     */
+    public function xoa(Request $request)
+    {
+        $ids = $request->input('ids');
+        if (!is_array($ids) || empty($ids)) {
+            return response()->json(['thanh_cong' => false, 'thong_diep' => 'Chưa chọn lần sinh nào.'], 422);
+        }
+        $sach = [];
+        foreach ($ids as $id) {
+            if (is_scalar($id) && ctype_digit((string) $id)) {
+                $sach[(int) $id] = true;
+            }
+        }
+        $ids = array_keys($sach);
+        if (empty($ids)) {
+            return response()->json(['thanh_cong' => false, 'thong_diep' => 'Mã lần sinh không hợp lệ.'], 422);
+        }
+
+        $luuTru = new LuuTruXml(CauHinhSinhXml3176::tuConfig()->thuMucLuu());
+        $userId = (int) Auth::id();
+        $xoa = 0;
+        foreach (LanSinh::whereIn('id', $ids)->get() as $dong) {
+            if ($luuTru->xoa($dong, $userId)) {
+                $xoa++;
+            }
+        }
+        Log::info('sinhxml3176 xoa ban luu tru: nguoi dung #' . $userId . ' xoa ' . $xoa . ' tep (da chon ' . count($ids) . ' lan sinh)');
+
+        return response()->json(['xoa' => $xoa, 'bo_qua' => count($ids) - $xoa]);
+    }
+
+    /** So tep luu tru con lai cua cac lan sinh sinh ra trong mot ngay (de hop xac nhan hien con so). */
+    public function demTheoNgay(Request $request)
+    {
+        $ngay = $this->docNgayXoa($request->query('ngay'));
+        if ($ngay === null) {
+            return response()->json(['thanh_cong' => false, 'thong_diep' => 'Ngày phải có dạng Y-m-d và hợp lệ.'], 422);
+        }
+
+        return response()->json(['ngay' => $ngay, 'so_tep' => $this->truyVanTheoNgay($ngay)->count()]);
+    }
+
+    /** Xoa moi ban luu tru cua cac lan sinh co created_at trong ngay (thu muc ngay luu tru). */
+    public function xoaTheoNgay(Request $request)
+    {
+        $ngay = $this->docNgayXoa($request->input('ngay'));
+        if ($ngay === null) {
+            return response()->json(['thanh_cong' => false, 'thong_diep' => 'Ngày phải có dạng Y-m-d và hợp lệ.'], 422);
+        }
+
+        $luuTru = new LuuTruXml(CauHinhSinhXml3176::tuConfig()->thuMucLuu());
+        $userId = (int) Auth::id();
+        $xoa = 0;
+        $boQua = 0;
+        $truyVan = $this->truyVanTheoNgay($ngay);
+        // Doi trang theo id: dong da xoa roi khoi tap loc nen khong dung offset.
+        $idCuoi = 0;
+        do {
+            $lo = (clone $truyVan)->where('id', '>', $idCuoi)->orderBy('id')->take(200)->get();
+            foreach ($lo as $dong) {
+                $idCuoi = $dong->id;
+                $luuTru->xoa($dong, $userId) ? $xoa++ : $boQua++;
+            }
+        } while (!$lo->isEmpty());
+        Log::info('sinhxml3176 xoa ban luu tru theo ngay ' . $ngay . ': nguoi dung #' . $userId . ' xoa ' . $xoa . ' tep, bo qua ' . $boQua);
+
+        return response()->json(['ngay' => $ngay, 'xoa' => $xoa, 'bo_qua' => $boQua]);
+    }
+
+    /** Cac dong con ban luu tru chua danh dau xoa, sinh ra trong ngay Y-m-d. */
+    private function truyVanTheoNgay($ngay)
+    {
+        return LanSinh::query()
+            ->where('created_at', '>=', $ngay . ' 00:00:00')
+            ->where('created_at', '<=', $ngay . ' 23:59:59')
+            ->whereNotNull('tep_luu')
+            ->where('tep_luu', '<>', '')
+            ->whereNull('xoa_luu_luc');
+    }
+
+    /** Ngay Y-m-d hop le (chan "..", ky tu la), nguoc lai null. */
+    private function docNgayXoa($ngay)
+    {
+        $ngay = is_string($ngay) ? $ngay : '';
+
+        return $this->ngayHopLe($ngay) ? $ngay : null;
+    }
+
+    /** Nguoi dung hien tai co quyen xoa (cung kiem tra voi middleware CheckRole). */
+    private function duocXoa()
+    {
+        $user = Auth::user();
+
+        return $user !== null && ($user->hasRole('superadministrator') || $user->can('superadministrator'));
     }
 
     /** So hai lan sinh cung ho so, theo tung bang. */

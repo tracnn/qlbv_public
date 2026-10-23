@@ -71,6 +71,27 @@
     </div>
 </div>
 
+@if (!empty($duocXoa))
+{{-- Chi superadministrator. Doc lap voi bo loc: chon ngay SINH TEP (thu muc ngay luu tru). --}}
+<div class="panel panel-danger">
+    <div class="panel-heading"><strong>Xoá XML lưu trữ của ngày</strong></div>
+    <div class="panel-body">
+        <div class="row">
+            <div class="col-sm-3">
+                <label for="ssx-xoa-ngay-gt">Ngày sinh tệp</label>
+                <input type="date" id="ssx-xoa-ngay-gt" class="form-control" value="{{ $homNay }}">
+            </div>
+            <div class="col-sm-9">
+                <label>&nbsp;</label><br>
+                <button type="button" id="ssx-xoa-ngay" class="btn btn-danger"><i class="fa fa-trash"></i> Xoá XML lưu trữ của ngày</button>
+                <span class="text-muted">Chỉ xoá tệp lưu trữ; dòng theo dõi vẫn giữ. Không phụ thuộc bộ lọc ở trên.</span>
+            </div>
+        </div>
+        <div id="ssx-xoa-ngay-kq" class="alert" style="display:none; margin:10px 0 0;"></div>
+    </div>
+</div>
+@endif
+
 <div class="panel panel-default">
     <div class="panel-body" id="ssx-tong-hop">
         <span class="text-muted">Chưa có dữ liệu.</span>
@@ -203,6 +224,27 @@
     });
 
     $('#ssx-loc').on('click', function () { bang.ajax.reload(); });
+    @if (!empty($duocXoa))
+    $('#ssx-xoa-ngay').on('click', function () {
+        var ngay = $('#ssx-xoa-ngay-gt').val();
+        var $kq = $('#ssx-xoa-ngay-kq');
+        function bao(loai, nd) { $kq.removeClass('alert-success alert-danger alert-warning').addClass('alert-' + loai).text(nd).show(); }
+        if (!ngay) { bao('warning', 'Hãy chọn ngày sinh tệp.'); return; }
+        $.get("{{ route('bhyt.sinh-xml3176.dem-theo-ngay') }}", { ngay: ngay }).done(function (r) {
+            if (!r.so_tep) { bao('warning', 'Ngày ' + ngay + ' không có XML lưu trữ nào để xoá.'); return; }
+            if (!window.confirm('Xoá ' + r.so_tep + ' tệp XML lưu trữ sinh ngày ' + ngay + '? Thao tác không hoàn tác được; dòng theo dõi vẫn giữ.')) { return; }
+            var $nut = $('#ssx-xoa-ngay').prop('disabled', true);
+            $.post("{{ route('bhyt.sinh-xml3176.xoa-theo-ngay') }}", { _token: "{{ csrf_token() }}", ngay: ngay }).done(function (k) {
+                bao('success', 'Đã xoá ' + k.xoa + ' tệp' + (k.bo_qua ? ' (bỏ qua ' + k.bo_qua + ')' : '') + '.');
+                bang.ajax.reload(null, false);
+            }).fail(function (x) {
+                bao('danger', (x.responseJSON && x.responseJSON.thong_diep) || 'Không xoá được (lỗi ' + x.status + ').');
+            }).always(function () { $nut.prop('disabled', false); });
+        }).fail(function (x) {
+            bao('danger', (x.responseJSON && x.responseJSON.thong_diep) || 'Không đếm được số tệp (lỗi ' + x.status + ').');
+        });
+    });
+    @endif
     $('#ssx-ma').on('keypress', function (e) { if (e.which === 13) { bang.ajax.reload(); } });
 })();
 </script>

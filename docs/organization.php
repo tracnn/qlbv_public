@@ -220,6 +220,7 @@ return [
         'thu_muc'          => 'D:\XML\3176',            // thư mục tiền giám định quét (bản chính thức)
         'thu_muc_tt'       => 'D:\XML\3176TT',          // thư mục tiền giám định quét (bản thông tuyến)
         'thu_muc_thu'      => 'D:\XML\SinhXml3176Thu',  // thư mục thử; PHẢI nằm ngoài thu_muc và thu_muc_tt
+        'thu_muc_luu'      => 'D:\XML\SinhXml3176LuuTru',  // bản sao XML mỗi lần sinh (màn Theo dõi sinh XML3176), mỗi ngày một thư mục con; null = không lưu; PHẢI nằm ngoài thu_muc, thu_muc_tt, thu_muc_thu; không tự xoá
         'thu_muc_tam'      => null,   // null = <cha của thư mục đích>\.sinh_xml3176_tmp; phải cùng ổ đĩa, ngoài cây quét
     ],
 ];
