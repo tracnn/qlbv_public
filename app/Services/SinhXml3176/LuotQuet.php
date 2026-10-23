@@ -366,14 +366,17 @@ class LuotQuet
         return $ketQua;
     }
 
-    /** sha1 cua ma CSKCB + cac cap (loai, XML con) cua bang khac rong, theo so bang tang dan. */
-    private static function dauVanTay($maCskcb, array $xmlCon, array $cacBang)
+    /**
+     * sha1 cua ma CSKCB + cac cap (loai, XML con) cua bang khac rong, theo so bang tang dan.
+     * Dung serialize de ranh gioi giua cac bang khong the mo ho (ghep chuoi tran co the trung khi doi cho cat).
+     */
+    public static function dauVanTay($maCskcb, array $xmlCon, array $cacBang)
     {
-        $chuoi = (string) $maCskcb;
+        $cap = [];
         foreach ($cacBang as $loai) {
-            $chuoi .= $loai . $xmlCon[$loai];
+            $cap[] = [(string) $loai, (string) $xmlCon[$loai]];
         }
 
-        return sha1($chuoi);
+        return sha1(serialize([(string) $maCskcb, $cap]));
     }
 }

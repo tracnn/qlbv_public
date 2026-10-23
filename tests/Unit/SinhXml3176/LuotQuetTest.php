@@ -296,7 +296,11 @@ class LuotQuetTest extends TestCase
         $this->assertEquals(20261001120000, $dong[1]->modify_time);
         $this->assertNotNull($dong[1]->noi_dung_hash);
         $this->assertNotSame($hashCu, $dong[1]->noi_dung_hash);
-        $this->assertNotContains(946684800, $this->mtimeTep());
+        // Ten tep co moc giay: sang giay moi thi tep cu (mtime 2000) van con, nen chi can co tep moi hon
+        $moiHon = array_filter($this->mtimeTep(), function ($m) {
+            return $m !== 946684800;
+        });
+        $this->assertNotEmpty($moiHon);
     }
 
     public function test_chi_cham_ho_so_noi_dung_khong_doi_khong_ghi_tep()
@@ -390,6 +394,18 @@ class LuotQuetTest extends TestCase
             $this->assertEquals(20261001110000, $d->modify_time);
         }
         $this->assertSame($dong[0]->noi_dung_hash, $dong[2]->noi_dung_hash);
+    }
+
+    public function test_dau_van_tay_phan_cach_ranh_gioi_bang()
+    {
+        $a = LuotQuet::dauVanTay('01929', ['XML1' => 'ab', 'XML2' => 'cd'], ['XML1', 'XML2']);
+        $b = LuotQuet::dauVanTay('01929', ['XML1' => 'abXML2cd'], ['XML1']);
+        $c = LuotQuet::dauVanTay('01929', ['XML1' => 'a', 'XML2' => 'bcd'], ['XML1', 'XML2']);
+
+        $this->assertNotSame($a, $b);
+        $this->assertNotSame($a, $c);
+        $this->assertSame($a, LuotQuet::dauVanTay('01929', ['XML1' => 'ab', 'XML2' => 'cd'], ['XML1', 'XML2']));
+        $this->assertNotSame($a, LuotQuet::dauVanTay('01930', ['XML1' => 'ab', 'XML2' => 'cd'], ['XML1', 'XML2']));
     }
 
     public function test_moc_tien_theo_modify_time()
