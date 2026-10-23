@@ -47,11 +47,18 @@ trait HoSoHisSinhXml3176
             'treatment_result_code' => '01', 'hein_patient_type_code' => '1.1',
         ], $ghiHoSo);
 
+        // modify_time mac dinh = moc khoa vien phi (hoac ra vien neu chua khoa): luot quet di theo modify_time
+        if (!array_key_exists('modify_time', $hs)) {
+            $hs['modify_time'] = $hs['fee_lock_time'] !== null ? $hs['fee_lock_time'] : $hs['out_time'];
+        }
+        $modifyTime = $hs['modify_time'];
+        unset($hs['modify_time']);
+
         $his = DB::connection('HISPro');
         $his->table('his_treatment')->insert([
             'id' => $id, 'treatment_code' => $hs['treatment_code'], 'branch_id' => $hs['branch_id'],
             'tdl_patient_type_id' => $hs['tdl_patient_type_id'], 'tdl_treatment_type_id' => $hs['tdl_treatment_type_id'],
-            'fee_lock_time' => $hs['fee_lock_time'], 'out_time' => $hs['out_time'], 'is_delete' => 0,
+            'fee_lock_time' => $hs['fee_lock_time'], 'out_time' => $hs['out_time'], 'modify_time' => $modifyTime, 'is_delete' => 0,
         ]);
         $his->table('v_his_treatment_12')->insert($hs);
         $his->table('v_his_patient_type_alter')->insert([
@@ -99,7 +106,7 @@ trait HoSoHisSinhXml3176
     protected function khoaLaiHoSo($id, $feeLockTime)
     {
         $his = DB::connection('HISPro');
-        $his->table('his_treatment')->where('id', $id)->update(['fee_lock_time' => $feeLockTime]);
+        $his->table('his_treatment')->where('id', $id)->update(['fee_lock_time' => $feeLockTime, 'modify_time' => $feeLockTime]);
         $his->table('v_his_treatment_12')->where('id', $id)->update(['fee_lock_time' => $feeLockTime]);
     }
 

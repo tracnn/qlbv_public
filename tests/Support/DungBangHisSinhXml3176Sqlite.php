@@ -14,6 +14,7 @@ trait DungBangHisSinhXml3176Sqlite
         return [
             '2026_10_22_100001_create_sinh_xml3176_lan_sinh_table' => 'CreateSinhXml3176LanSinhTable',
             '2026_10_22_100002_create_sinh_xml3176_moc_table'      => 'CreateSinhXml3176MocTable',
+            '2026_10_23_100003_add_modify_time_hash_to_sinh_xml3176_lan_sinh' => 'AddModifyTimeHashToSinhXml3176LanSinh',
         ];
     }
 
@@ -66,6 +67,7 @@ trait DungBangHisSinhXml3176Sqlite
             $t->unsignedInteger('tdl_treatment_type_id')->nullable();
             $t->unsignedBigInteger('fee_lock_time')->nullable();
             $t->unsignedBigInteger('out_time')->nullable();
+            $t->unsignedBigInteger('modify_time')->nullable();
             $t->unsignedTinyInteger('is_delete')->default(0);
         });
 

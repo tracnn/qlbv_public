@@ -165,10 +165,24 @@ Kiểm `all_tab_columns`: `V_HIS_BABY` có đủ cột `TDL_PATIENT_*` và `IS_D
 
 Khối mới trong `config/organization.php` (tệp này nằm trong `.gitignore`, mỗi máy một bản). Thiếu cả khối,
 hoặc `enabled = false`, thì module coi như tắt và lệnh thoát êm. Tham số kỹ thuật không phụ thuộc đơn vị
-(`kich_thuoc_lo`, `nghi_giay`, `chong_lan_phut`, `khoa_luot_phut`, `memory_limit`) nằm ở `config/sinh_xml3176.php`
+(`kich_thuoc_lo`, `nghi_giay`, `chong_lan_phut`, `khoa_luot_phut`, `cua_so_ra_vien_ngay`, `memory_limit`) nằm ở `config/sinh_xml3176.php`
 (đi theo git). Mặc định `kich_thuoc_lo = 5` (số hồ sơ nạp một lần) và `memory_limit = '1024M'` (theo số đo Đợt 3: 5 hồ sơ nội trú
 lớn đỉnh 432MB; 20 hồ sơ 948MB và Fatal ở 512M; xem "Bộ nhớ và thời gian" ở mục nghiệm thu Đợt 3 và mục 7 của danh sách
-kiểm trước khi bật): lệnh CLI tự `ini_set('memory_limit', …)` khi khởi động vì máy chủ đặt PHP 128MB. Đổi tham số thì chạy lại `php artisan config:cache`.
+kiểm trước khi bật): lệnh CLI tự `ini_set('memory_limit', …)` khi khởi động vì máy chủ đặt PHP 128MB. Mặc định `cua_so_ra_vien_ngay = 60`
+(số ngày ra viện gần nhất mà lượt quét xét, xem "Quét theo MODIFY_TIME"). Đổi tham số thì chạy lại `php artisan config:cache`.
+
+Phần tham số kỹ thuật trong `config/sinh_xml3176.php` (mặc định hiện hành):
+
+```php
+'kich_thuoc_lo'       => 5,
+'nghi_giay'           => 60,
+'chong_lan_phut'      => 10,
+'khoa_luot_phut'      => 120,
+'cua_so_ra_vien_ngay' => 60,      // lượt quét chỉ xét hồ sơ có OUT_TIME >= hôm nay - 60 ngày
+'memory_limit'        => '1024M',
+```
+
+`docs/organization.php` chỉ là mẫu khối cấu hình theo đơn vị, không liệt kê khoá kỹ thuật nên không cần sửa.
 Giá trị `null` trong khối cấu hình không đè lên mặc định; riêng `ket_noi_his` để `null`/rỗng là **lỗi cấu hình**
 (lệnh thoát mã 1), không bao giờ rơi về kết nối mặc định của Laravel.
 
@@ -244,12 +258,59 @@ nên chốt này không còn chặn: bật `ghi_thu_muc_that` chỉ sau khi qua 
 Khi `enabled = false` mà dịch vụ vẫn chạy `--lien-tuc`, lệnh nghỉ `nghi_giay` giây (hoặc `--nghi`) rồi mới thoát,
 để NSSM không khởi động lại Laravel mỗi 10 giây.
 
+### Quét theo MODIFY_TIME (23/10/2026)
+
+**Vì sao.** Khoa phòng hay mở hồ sơ đã khoá để sửa rồi khoá lại mà `FEE_LOCK_TIME` giữ nguyên, nên mốc cũ
+(`FEE_LOCK_TIME` / `OUT_TIME`) bỏ sót. Đo trên HIS thật 23/10: 1.009 trong 12.114 hồ sơ BHYT khoá viện phí 15–22/10
+có dịch vụ sửa sau `FEE_LOCK_TIME` mà `FEE_LOCK_TIME` không đổi; 0 trong 354.845 hồ sơ ra viện 60 ngày gần nhất có
+`MODIFY_TIME` NULL.
+
+**Cơ chế.**
+
+- Lượt quét dùng `HIS_TREATMENT.MODIFY_TIME` làm mốc cho cả `chinh_thuc` lẫn `thong_tuyen` (mỗi loại giữ mốc riêng,
+  keyset `(modify_time, id)` và cửa sổ chồng lấn `chong_lan_phut` như cũ), trong cửa sổ
+  `OUT_TIME >= hôm nay - cua_so_ra_vien_ngay` ngày (mặc định 60). Lý do: `HIS_TREATMENT` có chỉ mục trên `OUT_TIME` và
+  `FEE_LOCK_TIME`, không có chỉ mục trên `MODIFY_TIME`; lọc `OUT_TIME` trước rồi lọc `MODIFY_TIME` đo được khoảng 0,5 giây
+  mỗi truy vấn.
+- **Bỏ qua sớm:** bảng theo dõi lưu `modify_time` của lần xét cuối. Ứng viên có `MODIFY_TIME` không đổi thì tính vào
+  `bo_qua`, không nạp từ HIS (để cửa sổ chồng lấn không làm mỗi hồ sơ bị dựng lại nhiều lần).
+- **Dấu vân tay nội dung:** `sha1` của `serialize` (mã CSKCB + các cặp loại bảng/XML con của bảng khác rỗng, theo số bảng
+  tăng dần), không gồm `NGAYLAP` và tên tệp. Bằng lần `da_ghi` cuối của cùng loại bản thì trạng thái `khong_doi`:
+  **không ghi tệp, không thêm dòng theo dõi**, chỉ cập nhật `modify_time` của dòng cuối. Khác hoặc dòng cuối chưa có
+  hash thì ghi tệp và thêm dòng có `noi_dung_hash`, `modify_time`.
+- `bi_loai` lặp lại cùng `ly_do` không thêm dòng mới (chỉ cập nhật `modify_time`). `loi` vẫn luôn ghi dòng.
+- Dòng tổng kết của lệnh có thêm `khong_doi=`.
+- **Chạy bù** (`--ma-dieu-tri`, `--tu-ngay/--den-ngay`) giữ nguyên: `--tu-ngay/--den-ngay` vẫn chọn theo `FEE_LOCK_TIME`
+  (chính thức) / `OUT_TIME` (thông tuyến), luôn ghi tệp, nhưng có ghi `noi_dung_hash` và `modify_time` để lượt quét sau so được.
+
+**Chuyển tiếp khi triển khai.** Giá trị mốc đã lưu (cũ theo `FEE_LOCK_TIME` / `OUT_TIME`, cùng dạng `yyyyMMddHHmmss`) được dùng
+thẳng làm mốc `MODIFY_TIME`. Các dòng theo dõi cũ chưa có hash, nên lượt đầu sau triển khai ghi lại **một lần** những hồ sơ có
+`MODIFY_TIME` sau mốc đó. Đây là chủ ý (bắt luôn hồ sơ đã bị bỏ sót), không phải lỗi.
+
+**Giới hạn cần biết.**
+
+- Hồ sơ ra viện quá `cua_so_ra_vien_ngay` ngày mà bị sửa thì lượt quét không thấy: lấy bằng chạy bù.
+- Hash có thể đổi mà HIS không sửa gì: mỗi tháng một lần (XML1 `NAM_QT`/`THANG_QT` khi chọn phương án 2) và khi bệnh nhân
+  tròn 16 tuổi (XML8 xét tuổi). Mỗi trường hợp ghi lại một lần.
+- Không theo dõi riêng thay đổi danh mục (nhân viên, ICD…): danh mục đổi không làm `MODIFY_TIME` hồ sơ đổi.
+- Chỉ phát hiện thay đổi làm `HIS_TREATMENT.MODIFY_TIME` đổi. Thay đổi ở bảng con mà không chạm `HIS_TREATMENT` có thể bị
+  bỏ sót: kết quả/PTTT sửa trong `HIS_SERE_SERV_EXT`, `V_HIS_BABY` sửa sau khi khoá, dịch vụ thêm vào hồ sơ thông tuyến đang
+  mở. Với bản chính thức thì sửa buộc phải mở khoá rồi khoá lại nên thường vẫn thấy; các trường hợp còn lại lấy bằng chạy bù.
+  Chưa có số đo đối chiếu `max(HIS_SERE_SERV.MODIFY_TIME)` với `HIS_TREATMENT.MODIFY_TIME`.
+- `khong_doi` chỉ khi bản `da_ghi` cuối cùng nội dung và **thư mục đích hiện tại** đều trùng: đổi `thu_muc`/`thu_muc_tt`/
+  `thu_muc_thu` (ví dụ bật `ghi_thu_muc_that`) thì lần chạm tiếp theo của hồ sơ ghi lại vào thư mục mới.
+- Bản chính thức chỉ `khong_doi` khi không có bản `thong_tuyen` `da_ghi` mới hơn (id lớn hơn) bản chính thức đang so; nếu có thì
+  ghi lại để bản chính thức là bản vào sau cùng (hồ sơ bị mở khoá, `FEE_LOCK_TIME` bị xoá, rồi khoá lại).
+- Mốc quét không tiến qua `bây giờ + 1 ngày`: ứng viên có `MODIFY_TIME` lớn hơn vẫn được xử lý nhưng bị bỏ qua khi tính mốc
+  và có `Log::warning` kèm id hồ sơ (chống lệch đồng hồ/dữ liệu hỏng làm mốc nhảy xa).
+
 ### Lần chạy đầu: khởi tạo mốc, không quét lịch sử
 
 Khi bảng mốc chưa có dòng cho một loại bản (lần đầu bật, hoặc lần đầu bật `thong_tuyen`), lượt quét **không**
 quét lịch sử: nó đặt mốc = thời điểm hiện tại (`yyyyMMddHHmmss`), ghi `Log::info`, in
-`chua co moc, da khoi tao moc = …` rồi thoát lượt. Từ lượt sau mới sinh các hồ sơ có mốc mới hơn
-(trừ cửa sổ chồng lấn `chong_lan_phut`). Dòng mốc đã lưu bằng 0 thì vẫn quét từ đầu như cũ.
+`chua co moc, da khoi tao moc = …` rồi thoát lượt. Từ lượt sau mới sinh các hồ sơ có `MODIFY_TIME` mới hơn mốc
+(trừ cửa sổ chồng lấn `chong_lan_phut`, và chỉ trong cửa sổ `cua_so_ra_vien_ngay`). Dòng mốc đã lưu bằng 0 thì vẫn quét từ đầu như cũ
+(trong cửa sổ ra viện).
 
 Tồn đọng trước thời điểm bật lấy bằng chạy bù, chia theo ngày hoặc vài ngày để kiểm soát tải:
 
@@ -257,7 +318,7 @@ Tồn đọng trước thời điểm bật lấy bằng chạy bù, chia theo n
 php artisan sinhxml3176:quet --tu-ngay=2026-10-01 --den-ngay=2026-10-07
 ```
 
-Chạy bù bỏ qua theo dõi đã sinh và không đụng mốc; chạy khi dịch vụ đang chạy thì lệnh chờ khoá lượt
+Chạy bù bỏ qua theo dõi đã sinh (luôn ghi tệp) và không đụng mốc; chạy khi dịch vụ đang chạy thì lệnh chờ khoá lượt
 (báo "dang chay" và bỏ qua), chạy lại sau.
 
 ## Lưu ý vận hành
@@ -276,6 +337,10 @@ Chạy bù bỏ qua theo dõi đã sinh và không đụng mốc; chạy khi d�
   dịch vụ và lệnh chạy bù tay sẽ chạy chồng nhau.
 - **Bộ nhớ:** lệnh ghi `Log::info` mức đỉnh bộ nhớ (`memory_get_peak_usage(true)`) sau khi nạp danh mục và sau
   mỗi trang. Xem log khi nạp lô lớn; gần chạm `memory_limit` thì hạ `kich_thuoc_lo` NGAY (Fatal không kịp cảnh báo; hàm shutdown chỉ nhả khoá và ghi `Log::critical` kèm treatment id đang nạp).
+- **Quét theo `MODIFY_TIME`** (mục "Quét theo MODIFY_TIME"): hồ sơ ra viện quá `cua_so_ra_vien_ngay` (60) ngày mà bị sửa
+  phải lấy bằng chạy bù; trạng thái `khong_doi` nghĩa là nội dung sinh ra giống bản đã ghi, nên không ghi tệp và không thêm
+  dòng theo dõi. Sau triển khai lượt đầu ghi lại một lần các hồ sơ chưa có hash (chủ ý). Hash đổi một lần mỗi tháng (XML1 phương án 2)
+  và khi bệnh nhân tròn 16 tuổi (XML8).
 - **Mỗi hồ sơ thường được nạp và kiểm 2 lần**, 3 lần nếu bật thông tuyến. Tải hàng đợi kiểm của tiền giám
   định tăng tương ứng.
 - **Bản nào vào sau cũng có thể bị gửi cổng.** Nếu tiền giám định đang bật xuất, ký, gửi
@@ -287,7 +352,10 @@ Chạy bù bỏ qua theo dõi đã sinh và không đụng mốc; chạy khi d�
 
 ## Kiểm trước khi bật thông tuyến
 
-Bản thông tuyến quét theo mốc `OUT_TIME` với cửa sổ chồng lấn `chong_lan_phut` (10 phút). Người dùng có thể
+Từ 23/10/2026 bản thông tuyến cũng quét theo mốc `MODIFY_TIME` (mục "Quét theo MODIFY_TIME"), nên nhập `OUT_TIME` muộn
+phần lớn không còn gây bỏ sót vì việc nhập làm `MODIFY_TIME` đổi; hồ sơ chỉ bị bỏ sót khi `OUT_TIME` lùi quá
+`cua_so_ra_vien_ngay` ngày. Phần đo độ trễ dưới đây vẫn nên làm. Trước đây, khi quét theo `OUT_TIME` với cửa sổ chồng lấn
+`chong_lan_phut` (10 phút), người dùng có thể
 nhập `OUT_TIME` **muộn** (ra viện được ghi lùi giờ sau khi đã qua mốc), khi đó hồ sơ có `OUT_TIME` nhỏ hơn
 mốc trừ 10 phút và lượt quét **bỏ sót**. Trước khi bật `thong_tuyen`, đo trên dữ liệu thật độ trễ giữa thời điểm
 ghi và `OUT_TIME` (ví dụ so `MODIFY_TIME` với `OUT_TIME` của hồ sơ ra viện vài tuần gần nhất); trễ vượt
@@ -750,6 +818,25 @@ Kết luận: **đạt có điều kiện**. XML7, XML8, XML13 khớp mọi trư
 có hai hồ sơ HIS mất bảng do lỗi DLL mà module sinh đủ. XML6, XML10, XML15 **chưa nghiệm thu được** vì không có dữ liệu
 (chỉ chạy thử không vỡ). Điều kiện: chọn lại `kich_thuoc_lo` / `memory_limit` theo số đo trên trước khi bật.
 
+### Kiểm thật quét MODIFY_TIME (23/10/2026, dev)
+
+Máy dev, `ghi_thu_muc_that = false`, HIS chỉ `SELECT`, tệp ghi vào thư mục thử. Không ghi dữ liệu bệnh nhân vào tài liệu.
+
+- Migration `2026_10_23_100003_add_modify_time_hash_to_sinh_xml3176_lan_sinh` đã chạy trên CSDL dev.
+- Chọn 3 hồ sơ khoá viện phí 16–22/10 nhưng bị sửa ngày 23/10 lúc 11:55–11:59 mà `FEE_LOCK_TIME` không đổi; chạy bù
+  `--ma-dieu-tri` để có dòng theo dõi kèm hash. Đặt tạm mốc chính thức = 23/10 11:55:00.
+- Lượt 1: khoảng 123 hồ sơ `chinh_thuc` `da_ghi` (lần ghi đầu, chưa có hash trước đó), 32 giây.
+- Lượt 2 (ngay sau): 19 ứng viên, cả 19 `bo_qua` (bỏ qua sớm vì `MODIFY_TIME` không đổi), 17 giây.
+- Lượt 3: 20 ứng viên, gồm 18 `bo_qua`, 1 `khong_doi`, 1 `da_ghi`, 11 giây.
+- Bộ nhớ đỉnh 152MB.
+- Mốc `thong_tuyen` được khởi tạo rồi xoá cùng mốc `chinh_thuc`: bảng `sinh_xml3176_moc` trở lại rỗng.
+
+Đã chứng minh: bỏ qua sớm khi `MODIFY_TIME` không đổi (lượt 2), `khong_doi` có thật (lượt 3), chuyển từ chưa có hash sang ghi
+lần đầu có hash (lượt 1), và các số đo thời gian/bộ nhớ ở trên. **Chưa** chứng minh: sinh lại **qua lượt quét** cho đường
+mở khoá, sửa, khoá lại. 3 hồ sơ đã được chạy bù **sau** khi bị sửa nên lượt quét không phải là đường sinh lại chúng; đường này
+chỉ được chứng minh bằng test đơn vị. Khoảng 145 dòng `sinh_xml3176_lan_sinh` của lần chạy dev vẫn còn trong CSDL `qlbv` dùng
+chung (chỉ bảng mốc đã dọn).
+
 ## Danh sách kiểm trước khi bật `ghi_thu_muc_that`
 
 Chủ dự án làm trên máy chủ, ghi ngày và người kiểm vào biên bản triển khai.
@@ -759,7 +846,8 @@ Chủ dự án làm trên máy chủ, ghi ngày và người kiểm vào biên b
 2. **`CACHE_DRIVER` không phải `array`** (`file`, `redis`, `database`…); nếu không, khoá lượt không chống chồng lượt.
 3. **PHP 64-bit:** `php -r "echo PHP_INT_SIZE;"` ra `8`.
 4. **`is_delete` NULL:** `select count(*) from v_his_treatment_12 where is_delete is null` ra `0`.
-5. **Migration bảng theo dõi** đã chạy trên máy chủ (các bảng `sinh_xml3176_*`).
+5. **Migration bảng theo dõi** đã chạy trên máy chủ (các bảng `sinh_xml3176_*`, gồm cả
+   `2026_10_23_100003_add_modify_time_hash_to_sinh_xml3176_lan_sinh`).
 6. **`php artisan config:cache`** sau mọi thay đổi `config/organization.php` / `config/sinh_xml3176.php`.
 7. **`memory_limit` và kích thước lô:** giữ mặc định `kich_thuoc_lo = 5`, `memory_limit = '1024M'` trong
    `config/sinh_xml3176.php` (5 hồ sơ nội trú lớn đo được 432MB, dư ~2,4 lần). Máy chủ phải còn đủ RAM trống cho mức đó.
@@ -788,7 +876,11 @@ Chủ dự án làm trên máy chủ, ghi ngày và người kiểm vào biên b
 14. **Chạy thử trên máy chủ trước khi bật:** để `ghi_thu_muc_that = false` vài giờ cho dịch vụ ghi vào `thu_muc_thu`,
     rồi `php artisan sinhxml3176:so-sanh --csdl --qlbv=<thu_muc_thu> --bang=XML1,…,XML15` với các hồ sơ HIS đã nạp vào
     tiền giám định cùng thời gian; lệch phải nằm trong bảng "Khác biệt với HIS" thì mới chuyển sang `true`.
-15. **Thứ tự triển khai:** `git pull` → `php artisan migrate` (chỉ 2 bảng `sinh_xml3176_lan_sinh`, `sinh_xml3176_moc`)
+    Sau khi chuyển `ghi_thu_muc_that = true`, hồ sơ đã sinh lúc thử sẽ được ghi lại vào thư mục thật ở lần HIS chạm tiếp theo
+    (`khong_doi` có xét thư mục đích). Muốn đẩy ngay: `php artisan sinhxml3176:quet --tu-ngay=… --den-ngay=…` (chạy bù) cho
+    khoảng thời gian thử.
+15. **Thứ tự triển khai:** `git pull` → `php artisan migrate` (2 bảng `sinh_xml3176_lan_sinh`, `sinh_xml3176_moc`, và migration
+    `2026_10_23_100003_add_modify_time_hash_to_sinh_xml3176_lan_sinh`, chỉ thêm 2 cột nullable)
     → sửa khối `sinh_xml3176` trong `config/organization.php` → `php artisan config:cache` → cài hoặc khởi động lại
     dịch vụ NSSM (mục "Cài dịch vụ"). Chỉ chạy đúng MỘT bản dịch vụ.
 16. **Quyền ghi:** tài khoản chạy dịch vụ NSSM phải ghi được vào `thu_muc` (`D:\XML\3176`), `thu_muc_tt`

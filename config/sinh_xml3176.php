@@ -11,6 +11,8 @@ return [
     'nghi_giay'      => 60,
     'chong_lan_phut' => 10,
     'khoa_luot_phut' => 120,
+    // Luot quet theo MODIFY_TIME chi xet ho so co OUT_TIME trong N ngay gan nhat (HIS chi co chi muc OUT_TIME/FEE_LOCK_TIME)
+    'cua_so_ra_vien_ngay' => 60,
     // Lenh CLI tu dat ini memory_limit (may chu mac dinh 128M). 1024M du ~2,4 lan dinh 432MB cua lo 5 ho so lon (Dot 3).
     'memory_limit'   => '1024M',
 ];

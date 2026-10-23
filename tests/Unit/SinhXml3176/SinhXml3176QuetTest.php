@@ -40,12 +40,15 @@ class SinhXml3176QuetTest extends TestCase
         (new TheoDoiSinh())->datMoc(CauHinhSinhXml3176::CHINH_THUC, self::MOC_GOC);
         (new TheoDoiSinh())->datMoc(CauHinhSinhXml3176::THONG_TUYEN, self::MOC_GOC);
         $this->memoryLimitCu = ini_get('memory_limit');
+        // Duong lenh tu tao HisUngVien: ghim hom nay de cua so out_time khong troi theo dong ho that
+        HisUngVien::$homNayChung = new \DateTime('2026-10-10 12:00:00');
     }
 
     private $memoryLimitCu;
 
     protected function tearDown()
     {
+        HisUngVien::$homNayChung = null;
         ini_set('memory_limit', $this->memoryLimitCu);
         Cache::forget(SinhXml3176Quet::KHOA_LUOT);
         $this->xoaThuMuc($this->goc);
@@ -183,7 +186,7 @@ class SinhXml3176QuetTest extends TestCase
         $this->assertSame(0, $ma);
         $this->assertSame(1, $this->soTep());
         // Vong 2 doc lai trong cua so chong lan, bo qua
-        $this->assertContains('bo_qua=1', $ra);
+        $this->assertContains('bo_qua=1 khong_doi=0', $ra);
         $this->assertSame(1, LanSinh::count());
     }
 
@@ -242,6 +245,7 @@ class SinhXml3176QuetTest extends TestCase
             protected function taoLuot(CauHinhSinhXml3176 $cauHinh, DangKyBang $dangKy)
             {
                 $ungVien = new HisUngVien($cauHinh);
+                $ungVien->datHomNay(new \DateTime('2026-10-10'));
 
                 return new class($cauHinh, $ungVien, new HisNapHoSo($cauHinh, $ungVien), new TheoDoiSinh(), $dangKy, new KiemDieuKien()) extends LuotQuet {
                     public function chay($loaiBan)
