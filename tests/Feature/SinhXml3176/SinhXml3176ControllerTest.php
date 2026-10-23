@@ -242,7 +242,7 @@ class SinhXml3176ControllerTest extends TestCase
         $this->assertContains('HS7', $html);
         $this->assertNotContains('HS8', $html);
         $this->assertContains('LYDO_CHAN_ABC', $html);
-        $this->assertContains('thong_tuyen', $html);
+        $this->assertContains('Thông tuyến', $html);
         $this->assertContains('không có XML lưu trữ', $html);
         $this->assertContains('đã xoá', $html);
         $this->assertContains('khong_doi', $html);
@@ -601,6 +601,112 @@ class SinhXml3176ControllerTest extends TestCase
         }
         $this->actingAs(UserGiaCoQuyen::tao())->postJson('/bhyt/sinh-xml3176/xoa-theo-ngay', [])->assertStatus(422);
         $this->assertTrue($this->tepTrenDia($d));
+    }
+
+    /** @test */
+    public function test_lich_su_o_chon_so_chi_o_dong_co_xml_va_hien_voi_xml_man()
+    {
+        $co1 = $this->dong(100, ['tep_luu' => $this->tepLuu('c1.xml', '<x/>')]);
+        $co2 = $this->dong(100, ['loai_ban' => 'thong_tuyen', 'tep_luu' => $this->tepLuu('c2.xml', '<x/>')]);
+        $daXoa = $this->dong(100, ['xoa_luu_luc' => '2026-10-21 08:00:00', 'tep_luu' => $this->tepLuu('c3.xml')]);
+        $mat = $this->dong(100, ['tep_luu' => $this->tepLuu('c4.xml')]);
+        $khong = $this->dong(100);
+
+        $html = $this->actingAs(UserChiXmlMan::tao())->get('/bhyt/sinh-xml3176/ho-so/100')->getContent();
+        $this->assertSame(2, substr_count($html, 'class="ssx-chon-so"'));
+        $this->assertContains('class="ssx-chon-so" value="' . $co1->id . '"', $html);
+        $this->assertContains('class="ssx-chon-so" value="' . $co2->id . '"', $html);
+        foreach ([$daXoa, $mat, $khong] as $d) {
+            $this->assertNotContains('class="ssx-chon-so" value="' . $d->id . '"', $html);
+        }
+        $this->assertContains('id="ssx-so-hai"', $html);
+        $this->assertContains('So hai lần đã chọn', $html);
+        $this->assertNotContains('class="ssx-chon-xoa"', $html);
+    }
+
+    /** @test */
+    public function test_so_sanh_hai_lan_khac_loai_ban_khong_lien_nhau()
+    {
+        $a = $this->dong(101, ['tep_luu' => $this->tepLuu('d1.xml', $this->giamDinh(['XML1' => '<XML1><MA_LK>LK101</MA_LK><HO_TEN>CuA</HO_TEN></XML1>']))]);
+        $this->dong(101, ['tep_luu' => $this->tepLuu('d2.xml', '<x/>')]);
+        $b = $this->dong(101, ['loai_ban' => 'thong_tuyen', 'tep_luu' => $this->tepLuu('d3.xml', $this->giamDinh(['XML1' => '<XML1><MA_LK>LK101</MA_LK><HO_TEN>CuB</HO_TEN></XML1>']))]);
+
+        $html = $this->actingAs(UserChiXmlMan::tao())
+            ->get('/bhyt/sinh-xml3176/so-sanh?a=' . $a->id . '&b=' . $b->id)->assertStatus(200)->getContent();
+        $this->assertContains('khác loại bản', $html);
+        $this->assertContains('Chính thức', $html);
+        $this->assertContains('Thông tuyến', $html);
+        $this->assertContains('CuA', $html);
+        $this->assertContains('CuB', $html);
+    }
+
+    /** @test */
+    public function test_nhan_tieng_viet_o_lich_su_xem_so_sanh_khong_hien_ma_tho()
+    {
+        $nd = $this->giamDinh(['XML1' => '<XML1><MA_LK>LK102</MA_LK></XML1>']);
+        $a = $this->dong(102, ['tep_luu' => $this->tepLuu('e1.xml', $nd)]);
+        $b = $this->dong(102, ['loai_ban' => 'thong_tuyen', 'trang_thai' => 'bi_loai', 'tep_luu' => $this->tepLuu('e2.xml', $nd)]);
+        $user = UserGiaCoQuyen::tao();
+
+        $html = $this->actingAs($user)->get('/bhyt/sinh-xml3176/ho-so/102')->getContent();
+        $this->assertContains('Đã ghi', $html);
+        $this->assertContains('Bị loại', $html);
+        $this->assertContains('Chính thức', $html);
+        $this->assertContains('Thông tuyến', $html);
+        $this->assertNotRegExp('/>\s*(da_ghi|bi_loai|chinh_thuc|thong_tuyen)\s*</', $html);
+
+        $html = $this->xem($a->id)->getContent();
+        $this->assertContains('Chính thức - Đã ghi', $html);
+        $this->assertNotContains('chinh_thuc', $html);
+        $html = $this->xem($b->id)->getContent();
+        $this->assertContains('Thông tuyến - Bị loại', $html);
+
+        $html = $this->actingAs($user)->get('/bhyt/sinh-xml3176/so-sanh?a=' . $a->id . '&b=' . $b->id)->getContent();
+        $this->assertContains('(Chính thức)', $html);
+        $this->assertContains('(Thông tuyến)', $html);
+        $this->assertNotContains('thong_tuyen', $html);
+    }
+
+    /** @test */
+    public function test_chua_cau_hinh_thu_muc_luu_khong_bao_tep_mat()
+    {
+        $d = $this->dong(103, ['tep_luu' => $this->tepLuu('f1.xml', '<x/>')]);
+        config(['organization.sinh_xml3176.thu_muc_luu' => '']);
+        $user = UserGiaCoQuyen::tao();
+
+        $html = $this->actingAs($user)->get('/bhyt/sinh-xml3176/ho-so/103')->getContent();
+        $this->assertContains('Chưa cấu hình thư mục lưu trữ (thu_muc_luu)', $html);
+        $this->assertNotContains('tệp không còn trên đĩa', $html);
+        $this->assertNotContains('class="ssx-chon-xoa"', $html);
+        $this->assertNotContains('class="ssx-chon-so"', $html);
+
+        $html = $this->xem($d->id)->getContent();
+        $this->assertContains('Chưa cấu hình thư mục lưu trữ (thu_muc_luu)', $html);
+        $this->assertNotContains('tệp không còn trên đĩa', $html);
+    }
+
+    /** @test */
+    public function test_tham_so_dang_mang_422_khong_500()
+    {
+        $user = UserGiaCoQuyen::tao();
+        foreach (['tu', 'den', 'kieu_ngay', 'trang_thai', 'loai_ban', 'ma'] as $khoa) {
+            $this->actingAs($user)->getJson('/bhyt/sinh-xml3176/fetch-data?' . $khoa . '[]=x')->assertStatus(422);
+        }
+        $this->actingAs($user)->get('/bhyt/sinh-xml3176/so-sanh?a[]=1&b=2')->assertStatus(422);
+        $this->actingAs($user)->get('/bhyt/sinh-xml3176/so-sanh?a=1&b[]=2')->assertStatus(422);
+        $this->actingAs($user)->getJson('/bhyt/sinh-xml3176/dem-theo-ngay?ngay[]=2026-10-20')->assertStatus(422);
+    }
+
+    /** @test */
+    public function test_ngay_hop_le_chan_xuong_dong_cuoi()
+    {
+        // TrimStrings cat ky tu trang o tang HTTP, nen kiem truc tiep validator (phong thu chieu sau).
+        $m = new \ReflectionMethod(\App\Http\Controllers\BHYT\SinhXml3176Controller::class, 'ngayHopLe');
+        $m->setAccessible(true);
+        $c = new \App\Http\Controllers\BHYT\SinhXml3176Controller();
+        $this->assertTrue($m->invoke($c, '2026-10-23'));
+        $this->assertFalse($m->invoke($c, "2026-10-23\n"));
+        $this->assertFalse($m->invoke($c, "2026-10-23\r\n"));
     }
 
     /** @test */

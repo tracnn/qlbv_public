@@ -26,6 +26,10 @@
         </a>
     </div>
     <div class="panel-body table-responsive">
+        <p>
+            <button type="button" id="ssx-so-hai" class="btn btn-default btn-sm" disabled><i class="fa fa-exchange"></i> So hai lần đã chọn</button>
+            <span class="text-muted">Tích đúng hai lần sinh có XML ở cột "So" (được so cả khác loại bản).</span>
+        </p>
         @if (!empty($duocXoa))
             <p>
                 <button type="button" id="ssx-xoa-chon" class="btn btn-danger btn-sm"><i class="fa fa-trash"></i> Xoá XML đã chọn</button>
@@ -39,6 +43,7 @@
                     @if (!empty($duocXoa))
                         <th></th>
                     @endif
+                    <th>So</th>
                     <th>#</th>
                     <th>Giờ</th>
                     <th>Loại bản</th>
@@ -61,21 +66,26 @@
                                 @endif
                             </td>
                         @endif
+                        <td>
+                            @if (!empty($h['chon_so']))
+                                <input type="checkbox" class="ssx-chon-so" value="{{ $d->id }}">
+                            @endif
+                        </td>
                         <td>{{ $h['stt'] }}</td>
                         <td>{{ $d->created_at ? $d->created_at->format('d/m/Y H:i:s') : '' }}</td>
-                        <td>{{ $d->loai_ban }}</td>
+                        <td>{{ \App\Services\SinhXml3176\NhanHienThi::loaiBan($d->loai_ban) }}</td>
                         <td>
                             @if ($d->trang_thai === 'loi')
-                                <span class="text-danger"><strong>{{ $d->trang_thai }}</strong></span>
+                                <span class="text-danger"><strong>{{ \App\Services\SinhXml3176\NhanHienThi::trangThai($d->trang_thai) }}</strong></span>
                             @else
-                                {{ $d->trang_thai }}
+                                {{ \App\Services\SinhXml3176\NhanHienThi::trangThai($d->trang_thai) }}
                             @endif
                         </td>
                         <td>{{ $d->ly_do }}</td>
                         <td>{{ $d->cac_bang }}</td>
                         <td>
                             <span title="{{ $d->thu_muc }}">
-                                {{ ['that' => 'Thật', 'thu' => 'Thử', 'khac' => 'Khác'][$h['thu_muc_loai']] }}
+                                {{ \App\Services\SinhXml3176\NhanHienThi::thuMuc($h['thu_muc_loai']) }}
                             </span>
                         </td>
                         <td>
@@ -83,6 +93,8 @@
                                 có
                             @elseif ($h['tinh_trang'] === 'da_xoa')
                                 đã xoá lúc {{ $d->xoa_luu_luc }}{{ $d->xoa_luu_boi ? ' bởi người dùng #' . $d->xoa_luu_boi : '' }}
+                            @elseif ($h['tinh_trang'] === 'chua_cau_hinh')
+                                <span class="text-warning">Chưa cấu hình thư mục lưu trữ (thu_muc_luu)</span>
                             @elseif ($h['tinh_trang'] === 'mat_tep')
                                 <span class="text-warning">tệp không còn trên đĩa</span>
                             @else
@@ -105,10 +117,20 @@
 </div>
 @stop
 
-@if (!empty($duocXoa))
 @push('after-scripts')
 <script>
 (function () {
+    // Chon tay hai lan de so (cho phep khac loai ban): id nho la A, id lon la B.
+    $('.ssx-chon-so').on('change', function () {
+        $('#ssx-so-hai').prop('disabled', $('.ssx-chon-so:checked').length !== 2);
+    });
+    $('#ssx-so-hai').on('click', function () {
+        var ids = $('.ssx-chon-so:checked').map(function () { return parseInt(this.value, 10); }).get();
+        if (ids.length !== 2) { return; }
+        ids.sort(function (x, y) { return x - y; });
+        window.location.href = "{{ route('bhyt.sinh-xml3176.so-sanh') }}?a=" + ids[0] + "&b=" + ids[1];
+    });
+@if (!empty($duocXoa))
     $('#ssx-xoa-chon').on('click', function () {
         var ids = $('.ssx-chon-xoa:checked').map(function () { return this.value; }).get();
         var $kq = $('#ssx-xoa-kq');
@@ -126,7 +148,7 @@
             $nut.prop('disabled', false);
         });
     });
+@endif
 })();
 </script>
 @endpush
-@endif

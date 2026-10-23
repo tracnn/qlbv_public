@@ -125,9 +125,9 @@
 <script>
 (function () {
     var URL_DATA = "{{ route('bhyt.sinh-xml3176.fetch-data') }}";
-    var NHAN_TRANG_THAI = { da_ghi: 'Đã ghi', bi_loai: 'Bị loại', loi: 'Lỗi' };
-    var NHAN_LOAI_BAN = { chinh_thuc: 'Chính thức', thong_tuyen: 'Thông tuyến' };
-    var NHAN_THU_MUC = { that: 'Thật', thu: 'Thử', khac: 'Khác' };
+    var NHAN_TRANG_THAI = @json(\App\Services\SinhXml3176\NhanHienThi::TRANG_THAI);
+    var NHAN_LOAI_BAN = @json(\App\Services\SinhXml3176\NhanHienThi::LOAI_BAN);
+    var NHAN_THU_MUC = @json(\App\Services\SinhXml3176\NhanHienThi::THU_MUC);
 
     // yyyyMMddHHmmss -> dd/MM/yyyy HH:mm:ss; khong du 14 so thi giu nguyen.
     function gio14(s) {

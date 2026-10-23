@@ -81,6 +81,10 @@ class LuuTruXml
         if (trim($tuongDoi) === '' || strpos($tuongDoi, "\0") !== false) {
             return null;
         }
+        // Chi nhan dung hinh dang da ghi: yyyyMMdd<phan cach><ten tep>. Chan 'x.xml' (thu muc cha se la chinh goc).
+        if (!preg_match('#^\d{8}[\\\\/][^\\\\/\x00-\x1f]+\z#', $tuongDoi)) {
+            return null;
+        }
         $chuan = str_replace('\\', '/', $tuongDoi);
         if ($chuan[0] === '/' || preg_match('#^[A-Za-z]:#', $chuan)) {
             return null;
@@ -135,7 +139,7 @@ class LuuTruXml
      * hoan lai dau. Tep da bi go tay van duoc danh dau (tra true). False khi dong chua co tep luu,
      * da danh dau xoa, duong khong hop le (ke ca ra ngoai goc) hoac khong xoa duoc tep.
      */
-    public function xoa(LanSinh $dong, $userId)
+    public function xoa(LanSinh $dong, $userId, $donThuMuc = true)
     {
         if ($dong->xoa_luu_luc !== null || trim((string) $dong->tep_luu) === '') {
             return false;
@@ -163,13 +167,42 @@ class LuuTruXml
             return false;
         }
 
-        $thuMuc = dirname($duong);
-        $ds = @scandir($thuMuc);
-        if ($ds !== false && count(array_diff($ds, ['.', '..'])) === 0) {
-            @rmdir($thuMuc);
+        if ($donThuMuc) {
+            $this->donThuMucRong(dirname($duong));
         }
 
         return true;
+    }
+
+    /** Da khai bao thu muc goc luu tru hay chua. */
+    public function daCauHinh()
+    {
+        return $this->goc !== null;
+    }
+
+    /** Xoa thu muc ngay (yyyyMMdd) neu da rong; dung sau khi xoa hang loat voi xoa(..., false). */
+    public function donThuMucNgay($yyyymmdd)
+    {
+        if ($this->goc === null || !preg_match('/^\d{8}\z/', (string) $yyyymmdd)) {
+            return;
+        }
+        $this->donThuMucRong($this->goc . DIRECTORY_SEPARATOR . $yyyymmdd);
+    }
+
+    /** rmdir thu muc neu rong; khong bao gio xoa chinh thu muc goc. */
+    private function donThuMucRong($thuMuc)
+    {
+        $that = @realpath($thuMuc);
+        $gocThat = @realpath($this->goc);
+        if ($that === false || $gocThat === false
+            || CauHinhSinhXml3176::chuanHoaDuongDan($that) === CauHinhSinhXml3176::chuanHoaDuongDan($gocThat)
+            || !CauHinhSinhXml3176::namTrong($that, $gocThat)) {
+            return;
+        }
+        $ds = @scandir($that);
+        if ($ds !== false && count(array_diff($ds, ['.', '..'])) === 0) {
+            @rmdir($that);
+        }
     }
 
     /** Duong tuyet doi cua tep ban sao neu hop le va dang co tren dia, nguoc lai null. */

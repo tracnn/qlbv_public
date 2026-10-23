@@ -157,6 +157,7 @@ class SinhXml3176Controller extends Controller
                 'dong'         => $d,
                 'tinh_trang'   => $trangThaiXml,
                 'thu_muc_loai' => $this->loaiThuMuc($cauHinh, $d->thu_muc),
+                'chon_so'      => $coXem,
                 'url_xem'      => $coXem ? route('bhyt.sinh-xml3176.xem', ['id' => $d->id]) : null,
                 'url_so_sanh'  => $soSanh !== null
                     ? route('bhyt.sinh-xml3176.so-sanh', ['a' => $soSanh, 'b' => $d->id]) : null,
@@ -267,6 +268,7 @@ class SinhXml3176Controller extends Controller
             return response()->json(['thanh_cong' => false, 'thong_diep' => 'Ngày phải có dạng Y-m-d và hợp lệ.'], 422);
         }
 
+        @set_time_limit(0);
         $luuTru = new LuuTruXml(CauHinhSinhXml3176::tuConfig()->thuMucLuu());
         $userId = (int) Auth::id();
         $xoa = 0;
@@ -278,9 +280,11 @@ class SinhXml3176Controller extends Controller
             $lo = (clone $truyVan)->where('id', '>', $idCuoi)->orderBy('id')->take(200)->get();
             foreach ($lo as $dong) {
                 $idCuoi = $dong->id;
-                $luuTru->xoa($dong, $userId) ? $xoa++ : $boQua++;
+                $luuTru->xoa($dong, $userId, false) ? $xoa++ : $boQua++;
             }
         } while (!$lo->isEmpty());
+        // Don thu muc ngay mot lan o cuoi thay vi quet lai sau tung tep.
+        $luuTru->donThuMucNgay(str_replace('-', '', $ngay));
         Log::info('sinhxml3176 xoa ban luu tru theo ngay ' . $ngay . ': nguoi dung #' . $userId . ' xoa ' . $xoa . ' tep, bo qua ' . $boQua);
 
         return response()->json(['ngay' => $ngay, 'xoa' => $xoa, 'bo_qua' => $boQua]);
@@ -316,8 +320,8 @@ class SinhXml3176Controller extends Controller
     /** So hai lan sinh cung ho so, theo tung bang. */
     public function soSanh(Request $request)
     {
-        $a = (string) $request->query('a', '');
-        $b = (string) $request->query('b', '');
+        $a = $this->thamSoChuoi($request, 'a', '');
+        $b = $this->thamSoChuoi($request, 'b', '');
         if (!ctype_digit($a) || !ctype_digit($b)) {
             abort(422, 'Tham số a và b phải là mã hai lần sinh.');
         }
@@ -474,7 +478,7 @@ class SinhXml3176Controller extends Controller
             : 'XML con của bảng này không đọc được.';
     }
 
-    /** 'co' | 'da_xoa' | 'mat_tep' | 'khong_co' theo ban sao luu tru cua dong. */
+    /** 'co' | 'da_xoa' | 'mat_tep' | 'khong_co' | 'chua_cau_hinh' theo ban sao luu tru cua dong. */
     private function tinhTrangXml(LanSinh $d, LuuTruXml $luuTru)
     {
         if ($d->xoa_luu_luc !== null) {
@@ -482,6 +486,9 @@ class SinhXml3176Controller extends Controller
         }
         if ($d->tep_luu === null || trim((string) $d->tep_luu) === '') {
             return 'khong_co';
+        }
+        if (!$luuTru->daCauHinh()) {
+            return 'chua_cau_hinh';
         }
 
         return $luuTru->coTep($d) ? 'co' : 'mat_tep';
@@ -558,13 +565,20 @@ class SinhXml3176Controller extends Controller
     {
         $loi = null;
         $homNay = date('Y-m-d');
-        $tu = trim((string) $request->input('tu', $homNay));
-        $den = trim((string) $request->input('den', $homNay));
-        $kieuNgay = (string) $request->input('kieu_ngay', 'sinh');
-        $trangThai = (string) $request->input('trang_thai', '');
-        $loaiBan = (string) $request->input('loai_ban', '');
+        $tu = $this->thamSoChuoi($request, 'tu', $homNay);
+        $den = $this->thamSoChuoi($request, 'den', $homNay);
+        $kieuNgay = $this->thamSoChuoi($request, 'kieu_ngay', 'sinh');
+        $trangThai = $this->thamSoChuoi($request, 'trang_thai', '');
+        $loaiBan = $this->thamSoChuoi($request, 'loai_ban', '');
 
-        if (!$this->ngayHopLe($tu) || !$this->ngayHopLe($den)) {
+        $dangMang = false;
+        foreach (['tu', 'den', 'kieu_ngay', 'trang_thai', 'loai_ban', 'ma'] as $khoa) {
+            $dangMang = $dangMang || is_array($request->input($khoa));
+        }
+
+        if ($dangMang) {
+            $loi = 'Tham số lọc phải là chuỗi.';
+        } elseif (!$this->ngayHopLe($tu) || !$this->ngayHopLe($den)) {
             $loi = 'Ngày lọc phải có dạng Y-m-d và hợp lệ.';
         } elseif ($den < $tu) {
             $loi = 'Đến ngày phải không nhỏ hơn Từ ngày.';
@@ -587,13 +601,21 @@ class SinhXml3176Controller extends Controller
             'kieu_ngay'  => $kieuNgay,
             'trang_thai' => $trangThai,
             'loai_ban'   => $loaiBan,
-            'ma'         => trim((string) $request->input('ma', '')),
+            'ma'         => $this->thamSoChuoi($request, 'ma', ''),
         ];
+    }
+
+    /** Tham so dang chuoi da trim; tham so dang mang (tu[]=x) coi nhu rong de bo loc tra 422 thay vi 500. */
+    private function thamSoChuoi(Request $request, $khoa, $macDinh)
+    {
+        $v = $request->input($khoa, $macDinh);
+
+        return is_scalar($v) ? trim((string) $v) : '';
     }
 
     private function ngayHopLe($ngay)
     {
-        if (!preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $ngay, $m)) {
+        if (!preg_match('/^(\d{4})-(\d{2})-(\d{2})\z/', $ngay, $m)) {
             return false;
         }
 

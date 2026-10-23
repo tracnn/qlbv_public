@@ -15,7 +15,7 @@
     <div class="panel-heading clearfix">
         <strong>{{ $dong->ten_tep }}</strong>
         <span class="text-muted">
-            {{ $dong->created_at ? $dong->created_at->format('d/m/Y H:i:s') : '' }} - {{ $dong->loai_ban }} - {{ $dong->trang_thai }}
+            {{ $dong->created_at ? $dong->created_at->format('d/m/Y H:i:s') : '' }} - {{ \App\Services\SinhXml3176\NhanHienThi::loaiBan($dong->loai_ban) }} - {{ \App\Services\SinhXml3176\NhanHienThi::trangThai($dong->trang_thai) }}
         </span>
         <span class="pull-right">
             @if ($urlTai)
@@ -27,6 +27,8 @@
     <div class="panel-body">
         @if ($tinhTrang === 'da_xoa')
             <div class="alert alert-warning">XML lưu trữ đã xoá lúc {{ $dong->xoa_luu_luc }}.</div>
+        @elseif ($tinhTrang === 'chua_cau_hinh')
+            <div class="alert alert-warning">Chưa cấu hình thư mục lưu trữ (thu_muc_luu).</div>
         @elseif ($tinhTrang === 'mat_tep')
             <div class="alert alert-warning">Lưu trữ: tệp không còn trên đĩa. Dòng theo dõi vẫn giữ nguyên, không tự sửa.</div>
         @elseif ($tinhTrang === 'khong_co')

@@ -15,19 +15,20 @@
     $chuTinhTrang = [
         'da_xoa'   => 'XML lưu trữ đã xoá',
         'mat_tep'  => 'tệp không còn trên đĩa',
+        'chua_cau_hinh' => 'chưa cấu hình thư mục lưu trữ (thu_muc_luu)',
         'khong_co' => 'không có XML lưu trữ',
     ];
 @endphp
 <div class="panel panel-default">
     <div class="panel-heading clearfix">
-        <strong>A:</strong> #{{ $lanA->id }} {{ $lanA->created_at ? $lanA->created_at->format('d/m/Y H:i:s') : '' }} ({{ $lanA->loai_ban }})
+        <strong>A:</strong> #{{ $lanA->id }} {{ $lanA->created_at ? $lanA->created_at->format('d/m/Y H:i:s') : '' }} ({{ \App\Services\SinhXml3176\NhanHienThi::loaiBan($lanA->loai_ban) }})
         &nbsp;&rarr;&nbsp;
-        <strong>B:</strong> #{{ $lanB->id }} {{ $lanB->created_at ? $lanB->created_at->format('d/m/Y H:i:s') : '' }} ({{ $lanB->loai_ban }})
+        <strong>B:</strong> #{{ $lanB->id }} {{ $lanB->created_at ? $lanB->created_at->format('d/m/Y H:i:s') : '' }} ({{ \App\Services\SinhXml3176\NhanHienThi::loaiBan($lanB->loai_ban) }})
         <a href="{{ $urlLichSu }}" class="btn btn-default btn-xs pull-right"><i class="fa fa-arrow-left"></i> Về lịch sử</a>
     </div>
     <div class="panel-body">
         @if ($khacLoai)
-            <div class="alert alert-warning">Hai lần sinh khác loại bản ({{ $lanA->loai_ban }} và {{ $lanB->loai_ban }}): khác loại bản nên chênh lệch có thể là bình thường.</div>
+            <div class="alert alert-warning">Hai lần sinh khác loại bản ({{ \App\Services\SinhXml3176\NhanHienThi::loaiBan($lanA->loai_ban) }} và {{ \App\Services\SinhXml3176\NhanHienThi::loaiBan($lanB->loai_ban) }}): khác loại bản nên chênh lệch có thể là bình thường.</div>
         @endif
 
         @if ($tinhTrangA !== 'co' || $tinhTrangB !== 'co')

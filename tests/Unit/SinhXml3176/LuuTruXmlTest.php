@@ -141,6 +141,42 @@ class LuuTruXmlTest extends TestCase
         $this->assertDirectoryNotExists($ngay);
     }
 
+    public function test_tep_luu_khong_co_thu_muc_ngay_khong_bao_gio_rmdir_goc()
+    {
+        $d = $this->dong(1);
+        $this->capNhatTepLuu($d, 'x.xml');
+        $luu = $this->luuTru();
+
+        $this->assertNull($luu->duongTuyetDoi('x.xml'));
+        $this->assertNull($luu->duongTuyetDoi('20261001'));
+        $this->assertNull($luu->duongTuyetDoi('20261001/a/b.xml'));
+        $this->assertNull($luu->duongTuyetDoi("20261001/a.xml\n"));
+        $this->assertFalse($luu->xoa($d, 3));
+        $this->assertDirectoryExists($this->goc);
+        $this->assertNull(LanSinh::find($d->id)->xoa_luu_luc);
+
+        $luu->donThuMucNgay('20261001');
+        $luu->donThuMucNgay('..');
+        $this->assertDirectoryExists($this->goc);
+    }
+
+    public function test_xoa_khong_don_thu_muc_roi_don_mot_lan_o_cuoi()
+    {
+        $d1 = $this->dong(1);
+        $d2 = $this->dong(2, 'b.xml');
+        $this->capNhatTepLuu($d1, $this->luuTru()->luu($d1, '<a/>'));
+        $this->capNhatTepLuu($d2, $this->luuTru()->luu($d2, '<b/>'));
+        $ngay = $this->goc . DIRECTORY_SEPARATOR . '20261001';
+
+        $this->assertTrue($this->luuTru()->xoa($d1, 7, false));
+        $this->assertTrue($this->luuTru()->xoa($d2, 7, false));
+        $this->assertDirectoryExists($ngay);
+
+        $this->luuTru()->donThuMucNgay('20261001');
+        $this->assertDirectoryNotExists($ngay);
+        $this->assertDirectoryExists($this->goc);
+    }
+
     public function test_xoa_tep_da_mat_tay_van_ghi_dau_xoa()
     {
         $d = $this->dong(1);

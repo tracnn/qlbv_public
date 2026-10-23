@@ -334,7 +334,10 @@ Chạy bù bỏ qua theo dõi đã sinh (luôn ghi tệp) và không đụng m�
   `thu_muc_thu` (trùng hoặc nằm trong là lỗi cấu hình). Tài khoản chạy dịch vụ NSSM phải ghi được vào đó, và tài khoản chạy
   web phải đọc/xoá được.
 - **Dung lượng:** khoảng 300MB mỗi ngày với 1.800 hồ sơ, chưa kể lần sinh lại (mỗi lần sinh lại thêm một bản).
-  Theo dõi dung lượng ổ đĩa.
+  Tăng trưởng với khối lượng hiện tại: khoảng 9GB mỗi tháng, khoảng 110GB mỗi năm, chưa tính các lần sinh lại.
+  Khuyến nghị đặt `thu_muc_luu` trên một ổ đĩa riêng (không dùng chung ổ với `thu_muc` ghi tệp chính), hoặc đặt cảnh báo
+  dung lượng trống của ổ chứa nó. Ổ đầy thì việc ghi tệp chính (`GhiTep::ghi`) lỗi và cả lượt sinh dừng lại; chỉ riêng
+  bản sao lưu trữ ghi lỗi thì không làm hỏng lần sinh, nhưng chung ổ thì ổ đầy do lưu trữ vẫn chặn đường sinh chính.
 - **Không tự xoá.** Chỉ xoá tay trên màn. Xoá chỉ gỡ tệp lưu trữ; dòng theo dõi giữ nguyên, điền `xoa_luu_luc` và `xoa_luu_boi`,
   thư mục ngày rỗng thì gỡ luôn. Dấu xoá được ghi vào CSDL trước khi xoá tệp; tệp đã bị gỡ tay vẫn được đánh dấu.
 - **Lần sinh trước khi có tính năng thì không có XML lưu trữ** (cột `tep_luu` rỗng; màn hiện "không có XML lưu trữ"), không khôi phục được.
