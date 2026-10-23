@@ -10,39 +10,6 @@ use App\Models\SinhXml3176\Moc;
  */
 class TheoDoiSinh
 {
-    /**
-     * Quy tac: lay dong MOI NHAT (id lon nhat) cua (treatment_id, loai_ban).
-     * Neu co dong do va moc cua no bang moc dang xet thi tra false, BAT KE trang_thai
-     * (da_ghi thi da co tep; bi_loai/loi cung moc thi khong thu lai). Con lai tra true:
-     * chua tung sinh, hoac moc doi (mo khoa roi khoa lai thi fee_lock_time doi).
-     * Moc la fee_lock_time voi ban chinh thuc, out_time voi ban thong tuyen; so sanh so nguyen.
-     */
-    public function canSinh($treatmentId, $loaiBan, $feeLockTime, $outTime)
-    {
-        $dong = LanSinh::where('treatment_id', $treatmentId)
-            ->where('loai_ban', $loaiBan)
-            ->orderBy('id', 'desc')
-            ->first();
-
-        if ($dong === null) {
-            return true;
-        }
-
-        if ($loaiBan === CauHinhSinhXml3176::THONG_TUYEN) {
-            $cu = $dong->out_time;
-            $moi = $outTime;
-        } else {
-            $cu = $dong->fee_lock_time;
-            $moi = $feeLockTime;
-        }
-
-        if ($cu === null || $moi === null) {
-            return true;
-        }
-
-        return (int) $cu !== (int) $moi;
-    }
-
     /** Dong theo doi moi nhat (id lon nhat) cua (treatment_id, loai_ban); chua co thi null. */
     public function dongCuoi($treatmentId, $loaiBan)
     {

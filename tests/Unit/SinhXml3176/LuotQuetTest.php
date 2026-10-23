@@ -15,6 +15,7 @@ use App\Services\SinhXml3176\LuotQuet;
 use App\Services\SinhXml3176\Nguon\HisNapHoSo;
 use App\Services\SinhXml3176\Nguon\HisUngVien;
 use App\Services\SinhXml3176\TheoDoiSinh;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Tests\Support\DungBangHisSinhXml3176Sqlite;
 use Tests\Support\HoSoHisSinhXml3176;
@@ -53,7 +54,7 @@ class LuotQuetTest extends TestCase
         parent::tearDown();
     }
 
-    private function luot(array $kyThuat = [], TheoDoiSinh $theoDoi = null, array $khoi = [], DangKyBang $dangKy = null)
+    private function luot(array $kyThuat = [], TheoDoiSinh $theoDoi = null, array $khoi = [], DangKyBang $dangKy = null, $demNap = false)
     {
         config([
             'organization.sinh_xml3176' => array_merge([
@@ -65,7 +66,9 @@ class LuotQuetTest extends TestCase
         $ungVien = new HisUngVien($cauHinh);
         $ungVien->datHomNay(new \DateTime('2026-10-10'));
 
-        return new LuotQuet($cauHinh, $ungVien, new HisNapHoSo($cauHinh, $ungVien),
+        $nap = $demNap ? new HisNapHoSoDemLuotQuet($cauHinh, $ungVien) : new HisNapHoSo($cauHinh, $ungVien);
+
+        return new LuotQuet($cauHinh, $ungVien, $nap,
             $theoDoi ?: new TheoDoiSinh(), $dangKy ?: DangKyBang::macDinh(), new KiemDieuKien());
     }
 
@@ -77,9 +80,10 @@ class LuotQuetTest extends TestCase
         return array_map('basename', $ds);
     }
 
-    private function kq($ungVien, $daGhi, $biLoai, $loi, $boQua)
+    private function kq($ungVien, $daGhi, $biLoai, $loi, $boQua, $khongDoi = 0)
     {
-        return ['ung_vien' => $ungVien, 'da_ghi' => $daGhi, 'bi_loai' => $biLoai, 'loi' => $loi, 'bo_qua' => $boQua];
+        return ['ung_vien' => $ungVien, 'da_ghi' => $daGhi, 'bi_loai' => $biLoai, 'loi' => $loi, 'bo_qua' => $boQua,
+            'khong_doi' => $khongDoi];
     }
 
     public function test_luot_ghi_tep_va_theo_doi()
@@ -220,6 +224,183 @@ class LuotQuetTest extends TestCase
         $this->assertEquals(20261002090000, $dong[1]->fee_lock_time);
         $this->assertSame('da_ghi', $dong[1]->trang_thai);
         $this->assertSame(20261002090000, (new TheoDoiSinh())->docMoc(self::CT));
+    }
+
+    /** Doi noi dung ho so nhung giu nguyen fee_lock_time: doi ten dich vu + nang modify_time (mo khoa, sua, khoa lai). */
+    private function suaVaNangModify($id, $modifyTime, $tenDv = 'Xet nghiem da sua')
+    {
+        $his = DB::connection('HISPro');
+        $his->table('v_his_sere_serv_2')->where('tdl_treatment_id', $id)->update(['tdl_hein_service_bhyt_name' => $tenDv]);
+        $his->table('his_treatment')->where('id', $id)->update(['modify_time' => $modifyTime]);
+    }
+
+    /** HIS chi cham ho so: nang modify_time, noi dung khong doi. */
+    private function chamHoSo($id, $modifyTime)
+    {
+        DB::connection('HISPro')->table('his_treatment')->where('id', $id)->update(['modify_time' => $modifyTime]);
+    }
+
+    /** Dat mtime cu cho moi tep trong thu muc dich de nhan ra tep bi ghi lai (ten tep cung giay se bi ghi de). */
+    private function lamCuTep()
+    {
+        foreach (glob($this->thuMuc . DIRECTORY_SEPARATOR . '*') as $f) {
+            touch($f, 946684800);
+        }
+        clearstatcache();
+    }
+
+    private function mtimeTep()
+    {
+        clearstatcache();
+        $kq = [];
+        foreach (glob($this->thuMuc . DIRECTORY_SEPARATOR . '*') as $f) {
+            $kq[basename($f)] = filemtime($f);
+        }
+
+        return $kq;
+    }
+
+    public function test_modify_time_khong_doi_khong_nap_lai()
+    {
+        // Review Focus 1: ho so nam lai trong cua so chong lan, modify_time khong doi => khong nap, khong dung
+        $this->themHoSoLuot(1);
+        HisNapHoSoDemLuotQuet::$soHoSo = 0;
+        $this->assertSame($this->kq(1, 1, 0, 0, 0), $this->luot([], null, [], null, true)->chay(self::CT));
+        $this->assertSame(1, HisNapHoSoDemLuotQuet::$soHoSo);
+
+        HisNapHoSoDemLuotQuet::$soHoSo = 0;
+        $kq = $this->luot([], null, [], null, true)->chay(self::CT);
+        $kq2 = $this->luot([], null, [], null, true)->chay(self::CT);
+
+        $this->assertSame($this->kq(1, 0, 0, 0, 1), $kq);
+        $this->assertSame($this->kq(1, 0, 0, 0, 1), $kq2);
+        $this->assertSame(0, HisNapHoSoDemLuotQuet::$soHoSo);
+        $this->assertSame(1, LanSinh::count());
+    }
+
+    public function test_mo_khoa_sua_khoa_lai_giu_fee_lock_time_van_sinh_lai()
+    {
+        // Review Focus 2
+        $this->themHoSoLuot(1);
+        $this->luot()->chay(self::CT);
+        $this->lamCuTep();
+        $hashCu = LanSinh::first()->noi_dung_hash;
+
+        $this->suaVaNangModify(1, 20261001120000);
+        $kq = $this->luot()->chay(self::CT);
+
+        $this->assertSame($this->kq(1, 1, 0, 0, 0), $kq);
+        $dong = LanSinh::orderBy('id')->get();
+        $this->assertCount(2, $dong);
+        $this->assertEquals(20261001110000, $dong[1]->fee_lock_time);
+        $this->assertEquals(20261001120000, $dong[1]->modify_time);
+        $this->assertNotNull($dong[1]->noi_dung_hash);
+        $this->assertNotSame($hashCu, $dong[1]->noi_dung_hash);
+        $this->assertNotContains(946684800, $this->mtimeTep());
+    }
+
+    public function test_chi_cham_ho_so_noi_dung_khong_doi_khong_ghi_tep()
+    {
+        // Review Focus 3
+        $this->themHoSoLuot(1);
+        $this->luot()->chay(self::CT);
+        $this->lamCuTep();
+        $tepTruoc = $this->tep();
+
+        $this->chamHoSo(1, 20261001120000);
+        $kq = $this->luot()->chay(self::CT);
+
+        $this->assertSame($this->kq(1, 0, 0, 0, 0, 1), $kq);
+        $this->assertSame($tepTruoc, $this->tep());
+        $this->assertSame([946684800], array_values($this->mtimeTep()));
+        $this->assertSame(1, LanSinh::count());
+        $this->assertEquals(20261001120000, LanSinh::first()->modify_time);
+        $this->assertSame(20261001120000, (new TheoDoiSinh())->docMoc(self::CT));
+
+        // Lan quet tiep theo cung modify_time: bo qua som
+        $this->assertSame($this->kq(1, 0, 0, 0, 1), $this->luot()->chay(self::CT));
+    }
+
+    public function test_dong_cu_khong_hash_thi_ghi()
+    {
+        // Review Focus 4: dong truoc trien khai (khong modify_time, khong hash) => dung lai, khong nem loi
+        $this->themHoSoLuot(1);
+        (new TheoDoiSinh())->ghi([
+            'treatment_id' => 1, 'treatment_code' => 'HS1', 'loai_ban' => self::CT,
+            'fee_lock_time' => 20261001110000, 'out_time' => 20261001100000, 'trang_thai' => 'da_ghi',
+            'ten_tep' => 'cu.xml', 'thu_muc' => $this->thuMuc, 'cac_bang' => 'XML1',
+        ]);
+
+        $kq = $this->luot()->chay(self::CT);
+
+        $this->assertSame($this->kq(1, 1, 0, 0, 0), $kq);
+        $dong = LanSinh::orderBy('id')->get();
+        $this->assertCount(2, $dong);
+        $this->assertNotNull($dong[1]->noi_dung_hash);
+        $this->assertEquals(20261001110000, $dong[1]->modify_time);
+    }
+
+    public function test_thong_tuyen_sang_chinh_thuc_van_ghi()
+    {
+        // Review Focus 5: hai loai ban theo doi rieng; ban chinh thuc dau tien luon duoc ghi
+        $this->themHoSoLuot(1, ['fee_lock_time' => null, 'out_time' => 20261001100000]);
+        $this->luot()->chay(self::TT);
+        $this->assertSame(1, LanSinh::where('loai_ban', self::TT)->count());
+
+        $this->khoaLaiHoSo(1, 20261001110000);
+        $kq = $this->luot()->chay(self::CT);
+
+        $this->assertSame($this->kq(1, 1, 0, 0, 0), $kq);
+        $this->assertSame(1, LanSinh::where('loai_ban', self::CT)->count());
+        $this->assertSame(1, LanSinh::where('loai_ban', self::CT)->where('trang_thai', 'da_ghi')->count());
+        $this->assertCount(2, $this->tep());
+    }
+
+    public function test_bi_loai_cung_ly_do_khong_them_dong()
+    {
+        $this->themHoSoLuot(1, ['tdl_patient_commune_code' => null]);
+        $this->luot()->chay(self::CT);
+        $this->assertSame(1, LanSinh::count());
+
+        $this->chamHoSo(1, 20261001120000);
+        $kq = $this->luot()->chay(self::CT);
+
+        $this->assertSame($this->kq(1, 0, 1, 0, 0), $kq);
+        $this->assertSame(1, LanSinh::count());
+        $this->assertEquals(20261001120000, LanSinh::first()->modify_time);
+        $this->assertSame('bi_loai', LanSinh::first()->trang_thai);
+    }
+
+    public function test_chay_bu_luon_ghi_va_luu_hash()
+    {
+        $this->themHoSoLuot(1);
+        $this->luot()->chay(self::CT);
+
+        $kq = $this->luot()->chayChoMa(['HS1'], self::CT);
+        $this->assertSame(1, $kq['da_ghi']);
+        $this->assertSame(0, $kq['khong_doi']);
+
+        $kq = $this->luot()->chayChoKhoangNgay(20261001000000, 20261001235959, self::CT);
+        $this->assertSame($this->kq(1, 1, 0, 0, 0), $kq);
+
+        $dong = LanSinh::orderBy('id')->get();
+        $this->assertCount(3, $dong);
+        foreach ($dong as $d) {
+            $this->assertRegExp('/^[0-9a-f]{40}$/', $d->noi_dung_hash);
+            $this->assertEquals(20261001110000, $d->modify_time);
+        }
+        $this->assertSame($dong[0]->noi_dung_hash, $dong[2]->noi_dung_hash);
+    }
+
+    public function test_moc_tien_theo_modify_time()
+    {
+        // modify_time khac fee_lock_time: moc theo modify_time
+        $this->themHoSoLuot(1, ['modify_time' => 20261003090000]);
+        $this->themHoSoLuot(2, ['fee_lock_time' => 20261001120000, 'modify_time' => 20261004090000]);
+
+        $this->luot()->chay(self::CT);
+
+        $this->assertSame(20261004090000, (new TheoDoiSinh())->docMoc(self::CT));
     }
 
     public function test_mot_ho_so_loi_khong_dung_luot()
@@ -498,5 +679,18 @@ class LuotQuetTest extends TestCase
         }
         // Tep tam o thu muc anh em, da rename het
         $this->assertSame([], glob($this->goc . DIRECTORY_SEPARATOR . '.sinh_xml3176_tmp' . DIRECTORY_SEPARATOR . '*'));
+    }
+}
+
+/** Dem so ho so duoc nap tu HIS (chung minh ho so modify_time khong doi khong bi nap lai). */
+class HisNapHoSoDemLuotQuet extends HisNapHoSo
+{
+    public static $soHoSo = 0;
+
+    public function nap(array $treatmentIds)
+    {
+        self::$soHoSo += count($treatmentIds);
+
+        return parent::nap($treatmentIds);
     }
 }

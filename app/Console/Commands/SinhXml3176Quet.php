@@ -200,7 +200,8 @@ class SinhXml3176Quet extends Command
                     . ' (khong quet lich su; ton dong chay bu --tu-ngay/--den-ngay)');
             }
             $this->line($loai . ': ung_vien=' . $kq['ung_vien'] . ' da_ghi=' . $kq['da_ghi']
-                . ' bi_loai=' . $kq['bi_loai'] . ' loi=' . $kq['loi'] . ' bo_qua=' . $kq['bo_qua']);
+                . ' bi_loai=' . $kq['bi_loai'] . ' loi=' . $kq['loi'] . ' bo_qua=' . $kq['bo_qua']
+                . ' khong_doi=' . $kq['khong_doi']);
             if (isset($kq['khong_tim_thay'])) {
                 $khongThay = $khongThay === null
                     ? $kq['khong_tim_thay']

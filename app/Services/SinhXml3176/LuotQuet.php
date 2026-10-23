@@ -25,6 +25,7 @@ class LuotQuet
     const DA_GHI = 'da_ghi';
     const BI_LOAI = 'bi_loai';
     const LOI = 'loi';
+    const KHONG_DOI = 'khong_doi';
 
     private $cauHinh;
     private $ungVien;
@@ -56,7 +57,7 @@ class LuotQuet
      * Luot quet theo moc.
      *
      * @param string $loaiBan CauHinhSinhXml3176::CHINH_THUC | THONG_TUYEN
-     * @return array ['ung_vien','da_ghi','bi_loai','loi','bo_qua'] => int; lan dau (chua co moc)
+     * @return array ['ung_vien','da_ghi','bi_loai','loi','bo_qua','khong_doi'] => int; lan dau (chua co moc)
      *               them 'khoi_tao_moc' => moc vua dat, khong quet gi
      */
     public function chay($loaiBan)
@@ -86,13 +87,13 @@ class LuotQuet
             function (array $lo) use ($loaiBan, $theoDoi, &$kq, &$mocMax) {
                 $can = [];
                 foreach ($lo as $u) {
-                    if ($theoDoi->canSinh((int) $u->id, $loaiBan, $u->fee_lock_time, $u->out_time)) {
+                    if ($theoDoi->canXet((int) $u->id, $loaiBan, $u->modify_time)) {
                         $can[] = $u;
                     } else {
                         $kq['bo_qua']++;
                     }
                 }
-                $this->xuLyLo($can, $loaiBan, $kq);
+                $this->xuLyLo($can, $loaiBan, $kq, false);
                 foreach ($lo as $u) {
                     $mocMax = max($mocMax, self::mocCua($u, $loaiBan, false));
                 }
@@ -106,7 +107,7 @@ class LuotQuet
     }
 
     /**
-     * Chay bu theo TREATMENT_CODE: bo qua canSinh, khong dung moc.
+     * Chay bu theo TREATMENT_CODE: bo qua canXet (luon dung lai + ghi tep), khong dung moc.
      * Ket qua co them 'khong_tim_thay' (ma khong co trong HIS hoac khong qua bo loc/dieu kien loai ban).
      */
     public function chayChoMa(array $treatmentCodes, $loaiBan)
@@ -131,7 +132,7 @@ class LuotQuet
         }
 
         foreach (array_chunk($lo, max(1, $this->cauHinh->kichThuocLo())) as $phan) {
-            $this->xuLyLo($phan, $loaiBan, $kq);
+            $this->xuLyLo($phan, $loaiBan, $kq, true);
             self::ghiBoNho('sau trang');
         }
         $kq['khong_tim_thay'] = $khongThay;
@@ -141,7 +142,7 @@ class LuotQuet
 
     /**
      * Chay bu theo khoang moc (yyyyMMddHHmmss, gom hai dau) tren cot moc cua loai ban:
-     * bo qua canSinh, khong dung moc. Phan trang keyset nhu chay().
+     * luon dung lai + ghi tep, khong dung moc. Phan trang keyset nhu chay() nhung theo cot ngay cua loai ban.
      */
     public function chayChoKhoangNgay($tu, $den, $loaiBan)
     {
@@ -150,7 +151,7 @@ class LuotQuet
         $kq = self::ketQuaRong();
 
         $this->duyetTrang($loaiBan, (int) $tu, (int) $den, true, function (array $lo) use ($loaiBan, &$kq) {
-            $this->xuLyLo($lo, $loaiBan, $kq);
+            $this->xuLyLo($lo, $loaiBan, $kq, true);
         }, $kq);
 
         return $kq;
@@ -178,7 +179,7 @@ class LuotQuet
 
     private static function ketQuaRong()
     {
-        return ['ung_vien' => 0, 'da_ghi' => 0, 'bi_loai' => 0, 'loi' => 0, 'bo_qua' => 0];
+        return ['ung_vien' => 0, 'da_ghi' => 0, 'bi_loai' => 0, 'loi' => 0, 'bo_qua' => 0, 'khong_doi' => 0];
     }
 
     /** Moc cua dong ung vien theo cot ma layLo da dung: modify_time (quet) hoac cot ngay cua loai ban (chay bu). */
@@ -232,8 +233,12 @@ class LuotQuet
         } while (count($lo) >= $gioiHan);
     }
 
-    /** Nap ca lo roi xu ly tung ho so theo thu tu ung vien. */
-    private function xuLyLo(array $ungVien, $loaiBan, array &$kq)
+    /**
+     * Nap ca lo roi xu ly tung ho so theo thu tu ung vien.
+     * Luot quet ($chayBu = false): noi dung trung ban da ghi => khong_doi, ho so bi loai cung ly do => chi
+     * cap nhat modify_time cua dong cuoi, khong ghi dong moi. Chay bu ($chayBu = true) luon ghi.
+     */
+    private function xuLyLo(array $ungVien, $loaiBan, array &$kq, $chayBu)
     {
         if (empty($ungVien)) {
             return;
@@ -247,11 +252,18 @@ class LuotQuet
 
         foreach ($ungVien as $u) {
             $id = (int) $u->id;
-            $ketQua = $this->motHoSo($u, $loaiBan, isset($duLieu[$id]) ? $duLieu[$id] : null);
+            $dongCuoi = $chayBu ? null : $this->theoDoi->dongCuoi($id, $loaiBan);
+            $ketQua = $this->motHoSo($u, $loaiBan, isset($duLieu[$id]) ? $duLieu[$id] : null, $dongCuoi);
             $kq[$ketQua['trang_thai']]++;
             // Giai phong du lieu ho so ngay sau khi xu ly (khong giu ca lo trong bo nho)
             unset($duLieu[$id]);
-            $this->theoDoi->ghi($ketQua);
+            if ($ketQua['trang_thai'] === self::KHONG_DOI
+                || ($dongCuoi !== null && $ketQua['trang_thai'] === self::BI_LOAI
+                    && $dongCuoi->trang_thai === self::BI_LOAI && (string) $dongCuoi->ly_do === (string) $ketQua['ly_do'])) {
+                $this->theoDoi->capNhatModify($dongCuoi, $ketQua['modify_time']);
+            } else {
+                $this->theoDoi->ghi($ketQua);
+            }
             if ($ketQua['trang_thai'] === self::LOI) {
                 Log::warning('sinhxml3176 ' . $loaiBan . ' ho so ' . $ketQua['treatment_code'] . ' loi: ' . $ketQua['ly_do']);
             }
@@ -259,8 +271,12 @@ class LuotQuet
         unset($duLieu);
     }
 
-    /** @return array dong sinh_xml3176_lan_sinh */
-    private function motHoSo($u, $loaiBan, DuLieuHoSo $d = null)
+    /**
+     * @param \App\Models\SinhXml3176\LanSinh|null $dongCuoi dong theo doi cuoi cua loai ban (null khi chay bu):
+     *        noi dung trung ban da_ghi cuoi => trang_thai khong_doi, khong ghi tep
+     * @return array dong sinh_xml3176_lan_sinh (kem modify_time, noi_dung_hash)
+     */
+    private function motHoSo($u, $loaiBan, DuLieuHoSo $d = null, $dongCuoi = null)
     {
         $ketQua = [
             'treatment_id'   => (int) $u->id,
@@ -273,6 +289,8 @@ class LuotQuet
             'ten_tep'        => null,
             'thu_muc'        => null,
             'cac_bang'       => null,
+            'modify_time'    => $u->modify_time === null || $u->modify_time === '' ? null : (int) $u->modify_time,
+            'noi_dung_hash'  => null,
         ];
 
         try {
@@ -309,6 +327,16 @@ class LuotQuet
                 return (int) substr($a, 3) - (int) substr($b, 3);
             });
 
+            // Dau van tay tinh tu CHINH $xmlCon se ghi (truoc phong bi: khong gom NGAYLAP va ten tep)
+            $hash = self::dauVanTay($maCskcb, $xmlCon, $cacBang);
+            $ketQua['noi_dung_hash'] = $hash;
+            if ($dongCuoi !== null && $dongCuoi->trang_thai === self::DA_GHI && $dongCuoi->noi_dung_hash !== null
+                && $dongCuoi->noi_dung_hash === $hash) {
+                $ketQua['trang_thai'] = self::KHONG_DOI;
+
+                return $ketQua;
+            }
+
             // Mot moc cho ca NGAYLAP va ten tep
             $luc = new \DateTime();
             $thuMuc = $this->cauHinh->thuMuc($loaiBan);
@@ -330,6 +358,22 @@ class LuotQuet
             $ketQua['ly_do'] = $e->getMessage() !== '' ? $e->getMessage() : get_class($e);
         }
 
+        // Hash chi co nghia voi ban da ghi (loi/bi_loai khong co noi dung de so sanh)
+        if ($ketQua['trang_thai'] !== self::DA_GHI && $ketQua['trang_thai'] !== self::KHONG_DOI) {
+            $ketQua['noi_dung_hash'] = null;
+        }
+
         return $ketQua;
+    }
+
+    /** sha1 cua ma CSKCB + cac cap (loai, XML con) cua bang khac rong, theo so bang tang dan. */
+    private static function dauVanTay($maCskcb, array $xmlCon, array $cacBang)
+    {
+        $chuoi = (string) $maCskcb;
+        foreach ($cacBang as $loai) {
+            $chuoi .= $loai . $xmlCon[$loai];
+        }
+
+        return sha1($chuoi);
     }
 }

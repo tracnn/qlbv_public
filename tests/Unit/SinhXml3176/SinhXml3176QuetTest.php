@@ -186,7 +186,7 @@ class SinhXml3176QuetTest extends TestCase
         $this->assertSame(0, $ma);
         $this->assertSame(1, $this->soTep());
         // Vong 2 doc lai trong cua so chong lan, bo qua
-        $this->assertContains('bo_qua=1', $ra);
+        $this->assertContains('bo_qua=1 khong_doi=0', $ra);
         $this->assertSame(1, LanSinh::count());
     }
 
