@@ -67,6 +67,7 @@ trait DungBangHisSinhXml3176Sqlite
             $t->unsignedInteger('tdl_treatment_type_id')->nullable();
             $t->unsignedBigInteger('fee_lock_time')->nullable();
             $t->unsignedBigInteger('out_time')->nullable();
+            $t->unsignedBigInteger('modify_time')->nullable();
             $t->unsignedTinyInteger('is_delete')->default(0);
         });
 

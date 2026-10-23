@@ -11,6 +11,10 @@ use Illuminate\Support\Facades\DB;
  */
 class HisUngVien
 {
+    /** Cot moc cua luot quet (chay bu theo ngay dung cotMoc). */
+    const COT_QUET = 'modify_time';
+
+    private $homNay;
     private $cauHinh;
     private $daDoiMa = false;
     private $idCoSo = [];
@@ -47,14 +51,17 @@ class HisUngVien
 
     /**
      * Mot trang ung vien theo keyset (moc, id): moc > tuMoc HOAC (moc = tuMoc VA id > sauId), sap (moc, id).
-     * Moc la fee_lock_time (chinh thuc) hoac out_time (thong tuyen). sauId = 0 => lay ca dong dung bang tuMoc.
+     * - $theoNgay = false (luot quet): moc la modify_time, kem cua so out_time >= (hom nay 00:00 - cuaSoRaVienNgay)
+     *   vi HIS_TREATMENT co chi muc OUT_TIME va FEE_LOCK_TIME, khong co chi muc MODIFY_TIME.
+     * - $theoNgay = true (chay bu --tu-ngay): moc la fee_lock_time (chinh thuc) hoac out_time (thong tuyen), khong cua so.
+     * sauId = 0 => lay ca dong dung bang tuMoc.
      *
      * @param int|null $denMoc chan tren (gom ca bang), null = khong chan
-     * @return \stdClass[] {id, treatment_code, fee_lock_time, out_time}
+     * @return \stdClass[] {id, treatment_code, fee_lock_time, out_time, modify_time}
      */
-    public function layLo($loaiBan, $tuMoc, $gioiHan, $sauId = 0, $denMoc = null)
+    public function layLo($loaiBan, $tuMoc, $gioiHan, $sauId = 0, $denMoc = null, $theoNgay = false)
     {
-        $cot = self::cotMoc($loaiBan);
+        $cot = $theoNgay ? self::cotMoc($loaiBan) : self::COT_QUET;
         $tuMoc = (int) $tuMoc;
         $sauId = (int) $sauId;
 
@@ -67,11 +74,30 @@ class HisUngVien
             })
             ->orderBy($cot)->orderBy('id');
 
+        if (!$theoNgay) {
+            $q->where('out_time', '>=', $this->mocCuaSoRaVien());
+        }
         if ($denMoc !== null) {
             $q->where($cot, '<=', (int) $denMoc);
         }
 
         return $q->limit((int) $gioiHan)->get()->all();
+    }
+
+    /** Ghi de "hom nay" (test); null = dung gio he thong. */
+    public function datHomNay(\DateTime $homNay = null)
+    {
+        $this->homNay = $homNay;
+    }
+
+    /** out_time nho nhat con quet: hom nay 00:00 tru cuaSoRaVienNgay ngay, dang yyyyMMddHHmmss. */
+    private function mocCuaSoRaVien()
+    {
+        $t = $this->homNay !== null ? clone $this->homNay : new \DateTime();
+        $t->setTime(0, 0, 0);
+        $t->modify('-' . $this->cauHinh->cuaSoRaVienNgay() . ' days');
+
+        return (int) $t->format('YmdHis');
     }
 
     /**
@@ -109,7 +135,7 @@ class HisUngVien
         return isset($this->maCoSo[$k]) && $this->maCoSo[$k] !== '' ? $this->maCoSo[$k] : null;
     }
 
-    /** Cot moc cua loai ban. */
+    /** Cot ngay cua loai ban, dung cho chay bu theo ngay (khong phai cot quet). */
     public static function cotMoc($loaiBan)
     {
         return $loaiBan === CauHinhSinhXml3176::THONG_TUYEN ? 'out_time' : 'fee_lock_time';
@@ -121,7 +147,7 @@ class HisUngVien
         $this->canDaDoiMa();
 
         $q = DB::connection($this->cauHinh->ketNoiHis())->table('his_treatment')
-            ->select('id', 'treatment_code', 'fee_lock_time', 'out_time')
+            ->select('id', 'treatment_code', 'fee_lock_time', 'out_time', 'modify_time')
             ->where('is_delete', 0);
 
         if ($loaiBan === CauHinhSinhXml3176::THONG_TUYEN) {

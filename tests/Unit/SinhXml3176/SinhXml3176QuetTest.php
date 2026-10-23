@@ -242,6 +242,7 @@ class SinhXml3176QuetTest extends TestCase
             protected function taoLuot(CauHinhSinhXml3176 $cauHinh, DangKyBang $dangKy)
             {
                 $ungVien = new HisUngVien($cauHinh);
+                $ungVien->datHomNay(new \DateTime('2026-10-10'));
 
                 return new class($cauHinh, $ungVien, new HisNapHoSo($cauHinh, $ungVien), new TheoDoiSinh(), $dangKy, new KiemDieuKien()) extends LuotQuet {
                     public function chay($loaiBan)

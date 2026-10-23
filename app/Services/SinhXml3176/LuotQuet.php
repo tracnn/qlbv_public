@@ -82,7 +82,7 @@ class LuotQuet
         $mocMax = $mocCu;
         $theoDoi = $this->theoDoi;
 
-        $this->duyetTrang($loaiBan, self::luiMoc($mocCu, $this->cauHinh->chongLanPhut()), null,
+        $this->duyetTrang($loaiBan, self::luiMoc($mocCu, $this->cauHinh->chongLanPhut()), null, false,
             function (array $lo) use ($loaiBan, $theoDoi, &$kq, &$mocMax) {
                 $can = [];
                 foreach ($lo as $u) {
@@ -94,7 +94,7 @@ class LuotQuet
                 }
                 $this->xuLyLo($can, $loaiBan, $kq);
                 foreach ($lo as $u) {
-                    $mocMax = max($mocMax, self::mocCua($u, $loaiBan));
+                    $mocMax = max($mocMax, self::mocCua($u, $loaiBan, false));
                 }
             }, $kq);
 
@@ -149,7 +149,7 @@ class LuotQuet
         $this->batDauLuot();
         $kq = self::ketQuaRong();
 
-        $this->duyetTrang($loaiBan, (int) $tu, (int) $den, function (array $lo) use ($loaiBan, &$kq) {
+        $this->duyetTrang($loaiBan, (int) $tu, (int) $den, true, function (array $lo) use ($loaiBan, &$kq) {
             $this->xuLyLo($lo, $loaiBan, $kq);
         }, $kq);
 
@@ -181,9 +181,10 @@ class LuotQuet
         return ['ung_vien' => 0, 'da_ghi' => 0, 'bi_loai' => 0, 'loi' => 0, 'bo_qua' => 0];
     }
 
-    private static function mocCua($u, $loaiBan)
+    /** Moc cua dong ung vien theo cot ma layLo da dung: modify_time (quet) hoac cot ngay cua loai ban (chay bu). */
+    private static function mocCua($u, $loaiBan, $theoNgay)
     {
-        $cot = HisUngVien::cotMoc($loaiBan);
+        $cot = $theoNgay ? HisUngVien::cotMoc($loaiBan) : HisUngVien::COT_QUET;
 
         return (int) $u->$cot;
     }
@@ -214,18 +215,18 @@ class LuotQuet
     }
 
     /** Duyet cac trang keyset tu (tuMoc, id 0) den khi trang ngan hon kichThuocLo. */
-    private function duyetTrang($loaiBan, $tuMoc, $denMoc, callable $xuLy, array &$kq)
+    private function duyetTrang($loaiBan, $tuMoc, $denMoc, $theoNgay, callable $xuLy, array &$kq)
     {
         $gioiHan = max(1, $this->cauHinh->kichThuocLo());
         $sauId = 0;
         do {
-            $lo = $this->ungVien->layLo($loaiBan, $tuMoc, $gioiHan, $sauId, $denMoc);
+            $lo = $this->ungVien->layLo($loaiBan, $tuMoc, $gioiHan, $sauId, $denMoc, $theoNgay);
             $kq['ung_vien'] += count($lo);
             if (count($lo) > 0) {
                 $xuLy($lo);
                 self::ghiBoNho('sau trang');
                 $cuoi = $lo[count($lo) - 1];
-                $tuMoc = self::mocCua($cuoi, $loaiBan);
+                $tuMoc = self::mocCua($cuoi, $loaiBan, $theoNgay);
                 $sauId = (int) $cuoi->id;
             }
         } while (count($lo) >= $gioiHan);

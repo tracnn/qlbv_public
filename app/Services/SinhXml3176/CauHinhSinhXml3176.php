@@ -251,6 +251,12 @@ class CauHinhSinhXml3176
         return (int) $this->kyThuat('chong_lan_phut', 10);
     }
 
+    /** So ngay lui tu hom nay 00:00 cho cua so out_time cua luot quet; nho hon 1 thi dung 1. */
+    public function cuaSoRaVienNgay()
+    {
+        return max(1, (int) $this->kyThuat('cua_so_ra_vien_ngay', 60));
+    }
+
     public function khoaLuotPhut()
     {
         return (int) $this->kyThuat('khoa_luot_phut', 120);

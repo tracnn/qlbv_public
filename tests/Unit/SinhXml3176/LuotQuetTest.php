@@ -63,6 +63,7 @@ class LuotQuetTest extends TestCase
         ]);
         $cauHinh = CauHinhSinhXml3176::tuConfig();
         $ungVien = new HisUngVien($cauHinh);
+        $ungVien->datHomNay(new \DateTime('2026-10-10'));
 
         return new LuotQuet($cauHinh, $ungVien, new HisNapHoSo($cauHinh, $ungVien),
             $theoDoi ?: new TheoDoiSinh(), $dangKy ?: DangKyBang::macDinh(), new KiemDieuKien());

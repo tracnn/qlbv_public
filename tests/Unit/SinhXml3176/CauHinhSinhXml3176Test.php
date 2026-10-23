@@ -70,6 +70,18 @@ class CauHinhSinhXml3176Test extends TestCase
         $this->assertSame(60, $ch->nghiGiay());
         $this->assertSame(10, $ch->chongLanPhut());
     }
+    public function test_cua_so_ra_vien_mac_dinh_60()
+    {
+        config(['organization.sinh_xml3176' => ['enabled' => true], 'sinh_xml3176' => []]);
+        $this->assertSame(60, CauHinhSinhXml3176::tuConfig()->cuaSoRaVienNgay());
+
+        config(['sinh_xml3176' => ['cua_so_ra_vien_ngay' => 30]]);
+        $this->assertSame(30, CauHinhSinhXml3176::tuConfig()->cuaSoRaVienNgay());
+
+        config(['sinh_xml3176' => ['cua_so_ra_vien_ngay' => 0]]);
+        $this->assertSame(1, CauHinhSinhXml3176::tuConfig()->cuaSoRaVienNgay());
+    }
+
     /** @test */
     public function test_ghi_thu_muc_that_chi_bat_khi_dung_true()
     {
