@@ -99,6 +99,8 @@ class HisNapHoSoTest extends TestCase
             $this->assertCount(1, $kq[$id]->dhst);
             $this->assertCount(1, $kq[$id]->soSinh);
             $this->assertCount(1, $kq[$id]->suDungThuoc);
+            $this->assertNull($kq[$id]->hivTreatment);
+            $this->assertNull($kq[$id]->dieuTriLao);
         }
     }
 
@@ -332,8 +334,8 @@ class HisNapHoSoTest extends TestCase
 
     public function test_moi_bang_con_mot_truy_van()
     {
-        // 10 nguon Dot 1 + theoDoi, hoiChan, chiSoCdha
-        $this->assertCount(13, HisNapHoSo::cacNguon());
+        // 10 nguon Dot 1 + theoDoi, hoiChan, chiSoCdha + hivTreatment, dieuTriLao (Dot 3)
+        $this->assertCount(15, HisNapHoSo::cacNguon());
 
         foreach ([1, 2, 3, 4, 5] as $id) {
             $this->themHoSo($id);
@@ -399,5 +401,76 @@ class HisNapHoSoTest extends TestCase
         foreach ($log as $q) {
             $this->assertNotRegExp('/select \*/i', $q['query']);
         }
+    }
+
+    public function test_hiv_lay_id_lon_nhat()
+    {
+        $this->themHoSo(601, 1);
+        $this->themHoSo(602, 1);
+        $his = DB::connection('HISPro');
+        // Chen khong theo thu tu id; ban ghi is_delete=1 (id lon nhat) bi bo
+        foreach ([
+            ['id' => 12, 'treatment_id' => 601, 'hiv_treatment_code' => 'B', 'is_delete' => 0],
+            ['id' => 31, 'treatment_id' => 601, 'hiv_treatment_code' => 'XOA', 'is_delete' => 1],
+            ['id' => 20, 'treatment_id' => 601, 'hiv_treatment_code' => 'C', 'is_delete' => 0],
+            ['id' => 7, 'treatment_id' => 601, 'hiv_treatment_code' => 'A', 'is_delete' => 0],
+            ['id' => 8, 'treatment_id' => 602, 'hiv_treatment_code' => 'Z', 'is_delete' => 0],
+        ] as $d) {
+            $his->table('his_hiv_treatment')->insert($d);
+        }
+
+        $kq = $this->napHoSo()->nap([601, 602]);
+
+        $this->assertInstanceOf(\stdClass::class, $kq[601]->hivTreatment);
+        $this->assertEquals(20, $kq[601]->hivTreatment->id);
+        $this->assertSame('C', $kq[601]->hivTreatment->hiv_treatment_code);
+        $this->assertEquals(8, $kq[602]->hivTreatment->id);
+        $this->assertNull($kq[601]->dieuTriLao);
+    }
+
+    public function test_lao_lay_ban_cuoi()
+    {
+        $this->themHoSo(701, 1);
+        $his = DB::connection('HISPro');
+        foreach ([
+            ['id' => 5, 'treatment_id' => 701, 'regimen_tuberculosis_code' => 'R5', 'is_delete' => 0],
+            ['id' => 3, 'treatment_id' => 701, 'regimen_tuberculosis_code' => 'R3', 'is_delete' => 0],
+            ['id' => 9, 'treatment_id' => 701, 'regimen_tuberculosis_code' => 'R9', 'is_delete' => 0],
+            ['id' => 11, 'treatment_id' => 701, 'regimen_tuberculosis_code' => 'XOA', 'is_delete' => 1],
+        ] as $d) {
+            $his->table('his_tuberculosis_treat')->insert($d);
+        }
+
+        $kq = $this->napHoSo()->nap([701]);
+
+        $this->assertEquals(9, $kq[701]->dieuTriLao->id);
+        $this->assertSame('R9', $kq[701]->dieuTriLao->regimen_tuberculosis_code);
+        $this->assertNull($kq[701]->hivTreatment);
+    }
+
+    public function test_khong_co_hiv_lao_la_null()
+    {
+        DB::connection('HISPro')->table('v_his_treatment_12')->insert(['id' => 801, 'treatment_code' => 'HS801']);
+
+        $kq = $this->napHoSo()->nap([801]);
+
+        $this->assertNull($kq[801]->hivTreatment);
+        $this->assertNull($kq[801]->dieuTriLao);
+        $this->assertNull((new DuLieuHoSo((object) []))->hivTreatment);
+        $this->assertNull((new DuLieuHoSo((object) []))->dieuTriLao);
+    }
+
+    public function test_cot_dot_3_co_tren_hang_so()
+    {
+        foreach (['father_name', 'mother_name', 'end_code', 'extra_end_code', 'treatment_end_type_ext_id', 'sick_leave_from',
+            'end_dept_subs_head_loginname', 'transporter_loginnames', 'used_medicine', 'clinical_note'] as $c) {
+            $this->assertContains($c, HisNapHoSo::COT_HO_SO);
+        }
+        foreach (['baby_name', 'born_result_id', 'birthplace_type', 'tdl_patient_passport_place'] as $c) {
+            $this->assertContains($c, HisNapHoSo::COT_SO_SINH);
+        }
+        $this->assertContains('treatment_id', HisNapHoSo::COT_HIV);
+        $this->assertContains('tuberculosis_treatmen_result', HisNapHoSo::COT_LAO);
+        $this->assertContains('title', HisDanhMuc::COT_NHAN_VIEN);
     }
 }

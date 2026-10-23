@@ -108,6 +108,60 @@ class GiaTriBang
         }));
     }
 
+    /** Thoi gian HIS: $n chu so dau cua so yyyyMMddHHmmss; null/khong hop le => ''. */
+    public static function thoiGian($v, $n)
+    {
+        $s = ThoiGianHis::chuoi($v);
+
+        return $s === null ? '' : substr($s, 0, $n);
+    }
+
+    /** Cot so Oracle (NUMBER) thanh chuoi nhu ToString(); null => ''. */
+    public static function soChuoi($v)
+    {
+        if ($v === null || $v === '') {
+            return '';
+        }
+        if (is_float($v)) {
+            // so nguyen (12.0) => '12'; co phan le (38.5) giu nguyen, khong lam tron
+            $s = $v == floor($v) ? sprintf('%.0f', $v) : rtrim(sprintf('%.15g', $v), '0');
+        } else {
+            $s = trim((string) $v);
+        }
+        if (preg_match('/^-?\d+\.\d+$/', $s)) {
+            $s = rtrim(rtrim($s, '0'), '.');
+        }
+
+        return $s;
+    }
+
+    /**
+     * Noi dung truong CDATA: bo ky tu khong hop le trong XML 1.0; chi toan khoang trang => ''
+     * (RemoveXmlCharError cua DLL).
+     */
+    public static function kyTuXml($s)
+    {
+        $s = (string) $s;
+        if (trim($s) === '') {
+            return '';
+        }
+        $ra = preg_replace('/[^\x{9}\x{A}\x{D}\x{20}-\x{D7FF}\x{E000}-\x{FFFD}\x{10000}-\x{10FFFF}]/u', '', $s);
+
+        return $ra === null ? '' : $ra;
+    }
+
+    /**
+     * $n ky tu cuoi cua chuoi (Substring(Length - n, n) cua DLL); chuoi ngan hon $n thi tra ca chuoi
+     * (DLL nem loi o day va mat ca bang).
+     */
+    public static function cuoi($s, $n)
+    {
+        $s = (string) $s;
+        $dai = mb_strlen($s, 'UTF-8');
+
+        return $dai <= $n ? $s : mb_substr($s, $dai - $n, $n, 'UTF-8');
+    }
+
     /** Cat van ban toi da $n KY TU (UTF-8), khong cat theo byte. */
     public static function catChu($s, $n)
     {

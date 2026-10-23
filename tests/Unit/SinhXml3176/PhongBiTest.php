@@ -64,10 +64,65 @@ class PhongBiTest extends TestCase
         $this->assertCount(2, simplexml_load_string($s)->THONGTINHOSO->DANHSACHHOSO->HOSO->FILEHOSO);
     }
 
+    public function test_xml6_den_15_cau_truc_importer_doc_duoc()
+    {
+        // [loai => [the goc, the danh sach|null, the ban ghi|null, truong CDATA, truong thuong]]
+        $mau = [
+            'XML6' => ['CHI_TIEU_HO_SO_BENH_AN_CHAM_SOC_VA_DIEU_TRI_HIV_AIDS', 'DSACH_HO_SO_BENH_AN_CHAM_SOC_VA_DIEU_TRI_HIV_AIDS', 'HO_SO_BENH_AN_CHAM_SOC_VA_DIEU_TRI_HIV_AIDS', 'DIA_CHI', 'SO_CCCD'],
+            'XML7' => ['CHI_TIEU_DU_LIEU_GIAY_RA_VIEN', null, null, 'PP_DIEUTRI', 'CHAN_DOAN_RV'],
+            'XML8' => ['CHI_TIEU_DU_LIEU_TOM_TAT_HO_SO_BENH_AN', null, null, 'KET_QUA_DTRI', 'GHI_CHU'],
+            'XML9' => ['CHI_TIEU_DU_LIEU_GIAY_CHUNG_SINH', 'DSACH_GIAYCHUNGSINH', 'DU_LIEU_GIAY_CHUNG_SINH', 'HO_TEN_CON', 'SO'],
+            'XML10' => ['CHI_TIEU_DU_LIEU_GIAY_NGHI_DUONG_THAI', null, null, 'DON_VI', 'SO_CT'],
+            'XML11' => ['CHI_TIEU_DU_LIEU_GIAY_CHUNG_NHAN_NGHI_VIEC_HUONG_BAO_HIEM_XA_HOI', null, null, 'HO_TEN_ME', 'SO_CT'],
+            'XML13' => ['CHI_TIEU_GIAYCHUYENTUYEN', null, null, 'HOTEN_NGUOI_HT', 'MA_THE_BHYT'],
+            'XML14' => ['CHI_TIEU_GIAYHEN_KHAMLAI', null, null, 'CHAN_DOAN_RV', 'MA_THE_BHYT'],
+            'XML15' => ['CHI_TIEU_DIEUTRI_BENHLAO', 'DSACH_CHITIET_DIEUTRI_BENHLAO', 'CHITIET_DIEUTRI_BENHLAO', 'HO_TEN', 'SO_CCCD'],
+        ];
+        $con = [];
+        foreach ($mau as $loai => $m) {
+            $dong = ['MA_LK' => 'LK1', $m[3] => 'a]]>b <x>', $m[4] => '123'];
+            $xml = XmlCon::chuoi($loai, [$dong]);
+            $con[$loai] = $xml;
+            $x = simplexml_load_string($xml);
+            $this->assertNotFalse($x, $loai);
+            $this->assertSame($m[0], $x->getName(), $loai);
+            $r = $m[1] === null ? $x : $x->{$m[1]}->{$m[2]};
+            $this->assertSame('LK1', (string) $r->MA_LK, $loai);
+            $this->assertSame('a]]>b <x>', (string) $r->{$m[3]}, $loai);
+            $this->assertSame('123', (string) $r->{$m[4]}, $loai);
+            $this->assertContains('<![CDATA[', $xml, $loai);
+            $this->assertNotContains('<![CDATA[123', $xml, $loai);
+        }
+        // CDATA theo tung loai: XML7/XML8 khong boc CHAN_DOAN_RV, GHI_CHU nhu danh sach chung cua XML1-3
+        $this->assertNotContains('CDATA', XmlCon::chuoi('XML7', [['MA_LK' => 'L', 'CHAN_DOAN_RV' => 'x']]));
+        $this->assertNotContains('CDATA', XmlCon::chuoi('XML8', [['MA_LK' => 'L', 'GHI_CHU' => 'x']]));
+        $this->assertContains('CDATA', XmlCon::chuoi('XML1', [['MA_LK' => 'L', 'GHI_CHU' => 'x']]));
+        // Hai ban ghi o bang danh sach
+        $hai = simplexml_load_string(XmlCon::chuoi('XML9', [['MA_LK' => '1'], ['MA_LK' => '2']]));
+        $this->assertCount(2, $hai->DSACH_GIAYCHUNGSINH->DU_LIEU_GIAY_CHUNG_SINH);
+
+        $s = PhongBi::chuoi('01234', $con, new \DateTime('2026-10-22'));
+        $this->assertCount(9, simplexml_load_string($s)->THONGTINHOSO->DANHSACHHOSO->HOSO->FILEHOSO);
+    }
+
     public function test_sap_thu_tu_theo_so_bang()
     {
         $s = PhongBi::chuoi('01234', ['XML3' => XmlCon::chuoi('XML3', [['MA_LK' => '1']]), 'XML1' => XmlCon::chuoi('XML1', [['MA_LK' => '1']])], new \DateTime('2026-10-22'));
         $x = simplexml_load_string($s);
         $this->assertSame('XML1', (string) $x->THONGTINHOSO->DANHSACHHOSO->HOSO->FILEHOSO[0]->LOAIHOSO);
+    }
+
+    /**
+     * HIS ghi xuong dong nguyen van nen bo doc XML doi CRLF/CR thanh LF; XMLWriter::text lai thoat CR thanh &#13;
+     * nen CR con nguyen sau khi nap. Nghiem thu Dot 3: XML7 GHI_CHU, XML8 QT_BENHLY lech chi vi CR.
+     */
+    public function test_xuong_dong_doc_lai_giong_his()
+    {
+        $xml8 = XmlCon::chuoi('XML8', [['MA_LK' => '1', 'QT_BENHLY' => "a\r\nb\rc\nd", 'TOMTAT_KQ' => "x\r\ny"]]);
+        $x = simplexml_load_string($xml8);
+
+        $this->assertNotContains('&#13;', $xml8);
+        $this->assertSame("a\nb\nc\nd", (string) $x->QT_BENHLY);
+        $this->assertSame("x\ny", (string) $x->TOMTAT_KQ);
     }
 }

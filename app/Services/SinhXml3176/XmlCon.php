@@ -17,6 +17,28 @@ class XmlCon
     private static $cdataTheoLoai = [
         'XML4' => ['TEN_CHI_SO', 'GIA_TRI', 'DON_VI_DO', 'MO_TA', 'KET_LUAN'],
         'XML5' => ['DIEN_BIEN_LS', 'GIAI_DOAN_BENH', 'HOI_CHAN', 'PHAU_THUAT'],
+        // XML6-15 theo cac truong XmlCDataSection cua lop XML<n>Data / XML<n>DetailData trong DLL
+        'XML6' => ['DIA_CHI', 'NOI_LAY_MAU_XN', 'NOI_BDDT_ARV', 'LOAI_DTRI_LAO', 'PHACDO_DTRI_LAO', 'KQ_XNTL_VR'],
+        'XML7' => ['PP_DIEUTRI'],
+        'XML8' => ['TOMTAT_KQ', 'PP_DIEUTRI', 'KET_QUA_DTRI'],
+        'XML9' => ['HO_TEN_NND', 'NOICAP_CCCD_NND', 'NOI_CU_TRU_NND', 'HO_TEN_CHA', 'HO_TEN_CON', 'NOI_SINH_CON',
+            'TINH_TRANG_CON', 'GHI_CHU', 'NGUOI_DO_DE', 'NGUOI_GHI_PHIEU', 'QUYEN_SO'],
+        'XML10' => ['DON_VI', 'CHAN_DOAN_RV', 'TEN_BS'],
+        'XML11' => ['DON_VI', 'CHAN_DOAN_RV', 'PP_DIEUTRI', 'NGUYENNHAN_DINHCHI', 'HO_TEN_CHA', 'HO_TEN_ME'],
+        'XML13' => ['HO_TEN', 'DIA_CHI', 'DAU_HIEU_LS', 'CHAN_DOAN_RV', 'QT_BENHLY', 'TOMTAT_KQ', 'PP_DIEUTRI', 'TEN_DICH_VU',
+            'TEN_THUOC', 'PP_DIEU_TRI', 'HUONG_DIEU_TRI', 'PHUONGTIEN_VC', 'HOTEN_NGUOI_HT'],
+        'XML14' => ['HO_TEN', 'DIA_CHI', 'CHAN_DOAN_RV'],
+        'XML15' => ['HO_TEN'],
+    ];
+
+    /** The goc cua cac bang phang (mot ban ghi). */
+    private static $goc = [
+        'XML7' => 'CHI_TIEU_DU_LIEU_GIAY_RA_VIEN',
+        'XML8' => 'CHI_TIEU_DU_LIEU_TOM_TAT_HO_SO_BENH_AN',
+        'XML10' => 'CHI_TIEU_DU_LIEU_GIAY_NGHI_DUONG_THAI',
+        'XML11' => 'CHI_TIEU_DU_LIEU_GIAY_CHUNG_NHAN_NGHI_VIEC_HUONG_BAO_HIEM_XA_HOI',
+        'XML13' => 'CHI_TIEU_GIAYCHUYENTUYEN',
+        'XML14' => 'CHI_TIEU_GIAYHEN_KHAMLAI',
     ];
 
     private static $cdataHienTai = null;
@@ -48,6 +70,29 @@ class XmlCon
                 break;
             case 'XML5':
                 self::ghiDanhSach($w, $dong, 'CHITIEU_CHITIET_DIENBIENLAMSANG', 'DSACH_CHI_TIET_DIEN_BIEN_BENH', 'CHI_TIET_DIEN_BIEN_BENH');
+                break;
+            case 'XML6':
+                self::ghiDanhSach($w, $dong, 'CHI_TIEU_HO_SO_BENH_AN_CHAM_SOC_VA_DIEU_TRI_HIV_AIDS',
+                    'DSACH_HO_SO_BENH_AN_CHAM_SOC_VA_DIEU_TRI_HIV_AIDS', 'HO_SO_BENH_AN_CHAM_SOC_VA_DIEU_TRI_HIV_AIDS');
+                break;
+            case 'XML9':
+                self::ghiDanhSach($w, $dong, 'CHI_TIEU_DU_LIEU_GIAY_CHUNG_SINH', 'DSACH_GIAYCHUNGSINH', 'DU_LIEU_GIAY_CHUNG_SINH');
+                break;
+            case 'XML15':
+                self::ghiDanhSach($w, $dong, 'CHI_TIEU_DIEUTRI_BENHLAO', 'DSACH_CHITIET_DIEUTRI_BENHLAO', 'CHITIET_DIEUTRI_BENHLAO');
+                break;
+            case 'XML7':
+            case 'XML8':
+            case 'XML10':
+            case 'XML11':
+            case 'XML13':
+            case 'XML14':
+                // Bang phang: mot ban ghi, the goc chinh la ban ghi
+                $w->startElement(self::$goc[$loai]);
+                if (isset($dong[0])) {
+                    self::ghiDong($w, $dong[0]);
+                }
+                $w->endElement();
                 break;
             default:
                 throw new \InvalidArgumentException('Chua ho tro loai bang ' . $loai);
@@ -81,7 +126,9 @@ class XmlCon
                 if (in_array($ten, self::$cdataHienTai, true)) {
                     self::ghiCdata($w, $giaTri);
                 } else {
-                    $w->text($giaTri);
+                    // HIS ghi xuong dong nguyen van, bo doc XML doi CRLF/CR thanh LF. XMLWriter::text lai thoat CR
+                    // thanh &#13; (CR con nguyen sau khi nap) => doi truoc cho khop HIS. CDATA thi bo doc tu doi.
+                    $w->text(str_replace(["\r\n", "\r"], "\n", $giaTri));
                 }
             }
             $w->endElement();

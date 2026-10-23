@@ -5,6 +5,9 @@ namespace Tests\Unit\SinhXml3176;
 use App\Models\SinhXml3176\LanSinh;
 use App\Models\SinhXml3176\Moc;
 use App\Services\SinhXml3176\Bang\DangKyBang;
+use App\Services\SinhXml3176\Bang\Xml1Dung;
+use App\Services\SinhXml3176\Bang\Xml2Dung;
+use App\Services\SinhXml3176\Bang\Xml3Dung;
 use App\Services\SinhXml3176\CauHinhSinhXml3176;
 use App\Services\SinhXml3176\KiemDieuKien;
 use App\Services\SinhXml3176\LoiGhiTep;
@@ -50,7 +53,7 @@ class LuotQuetTest extends TestCase
         parent::tearDown();
     }
 
-    private function luot(array $kyThuat = [], TheoDoiSinh $theoDoi = null, array $khoi = [])
+    private function luot(array $kyThuat = [], TheoDoiSinh $theoDoi = null, array $khoi = [], DangKyBang $dangKy = null)
     {
         config([
             'organization.sinh_xml3176' => array_merge([
@@ -62,7 +65,7 @@ class LuotQuetTest extends TestCase
         $ungVien = new HisUngVien($cauHinh);
 
         return new LuotQuet($cauHinh, $ungVien, new HisNapHoSo($cauHinh, $ungVien),
-            $theoDoi ?: new TheoDoiSinh(), DangKyBang::macDinh(), new KiemDieuKien());
+            $theoDoi ?: new TheoDoiSinh(), $dangKy ?: DangKyBang::macDinh(), new KiemDieuKien());
     }
 
     private function tep()
@@ -138,6 +141,54 @@ class LuotQuetTest extends TestCase
         $this->luot()->chay(self::CT);
 
         $this->assertSame('XML1,XML3', LanSinh::first()->cac_bang);
+    }
+
+    private function loaiTrongTep($ten)
+    {
+        $xml = simplexml_load_file($this->thuMuc . DIRECTORY_SEPARATOR . $ten);
+        $loai = [];
+        foreach ($xml->THONGTINHOSO->DANHSACHHOSO->HOSO->FILEHOSO as $f) {
+            $loai[] = (string) $f->LOAIHOSO;
+        }
+
+        return $loai;
+    }
+
+    public function test_ho_so_kham_thuong_chi_xml1_den_5()
+    {
+        // Review Focus 4: kham ngoai tru binh thuong (khong sinh, khong chuyen, khong hen) => cac lop XML6-15 tra []
+        $this->themHoSoLuot(1);
+        $this->themToDieuTriLuot(1, 'Benh nhan on dinh');
+        $this->themChiSoXnLuot(1, 1);
+
+        $this->luot()->chay(self::CT);
+
+        $tep = $this->tep();
+        $this->assertCount(1, $tep);
+        $this->assertSame(['XML1', 'XML3', 'XML4', 'XML5'], $this->loaiTrongTep($tep[0]));
+        $this->assertSame('XML1,XML3,XML4,XML5', LanSinh::first()->cac_bang);
+    }
+
+    public function test_ho_so_chuyen_vien_co_xml13()
+    {
+        $this->themHoSoLuot(1, ['treatment_end_type_id' => 2, 'out_code' => 'CV12']);
+
+        $this->luot()->chay(self::CT);
+
+        $this->assertSame('da_ghi', LanSinh::first()->trang_thai, (string) LanSinh::first()->ly_do);
+        $tep = $this->tep();
+        $loai = $this->loaiTrongTep($tep[0]);
+        $this->assertContains('XML13', $loai);
+        $this->assertNotContains('XML14', $loai);
+        $this->assertContains('XML13', explode(',', LanSinh::first()->cac_bang));
+        $xml = simplexml_load_file($this->thuMuc . DIRECTORY_SEPARATOR . $tep[0]);
+        foreach ($xml->THONGTINHOSO->DANHSACHHOSO->HOSO->FILEHOSO as $f) {
+            if ((string) $f->LOAIHOSO === 'XML13') {
+                $con = simplexml_load_string(base64_decode((string) $f->NOIDUNGFILE));
+                $this->assertSame('CHI_TIEU_GIAYCHUYENTUYEN', $con->getName());
+                $this->assertSame('HS1', (string) $con->MA_LK);
+            }
+        }
     }
 
     public function test_luot_chong_lan_khong_sinh_lai()
@@ -410,7 +461,7 @@ class LuotQuetTest extends TestCase
 
         foreach (['chay', 'chayChoMa', 'chayChoKhoangNgay'] as $ham) {
             try {
-                $luot = $this->luot([], null, $khoi);
+                $luot = $this->luot([], null, $khoi, new DangKyBang([new Xml2Dung(), new Xml3Dung(), new Xml1Dung()]));
                 if ($ham === 'chay') {
                     $luot->chay(self::CT);
                 } elseif ($ham === 'chayChoMa') {

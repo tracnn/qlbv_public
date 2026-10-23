@@ -24,9 +24,7 @@ use App\Services\SinhXml3176\Nguon\HisDanhMuc;
  *   cua bon truong cung mot the; gia tri thieu de rong (vd "01929;"). PTA khong co so the khong chiem vi tri.
  * Sua loi DLL [AX]:311: MA_BENH_YHCT tach ca TRADITIONAL_ICD_CODE theo ';' (DLL them nguyen chuoi), bo ma trung, toi da 13.
  * Sua loi DLL [AX]:314: DU_PHONG (chieu cao) lam tron 2 chu so.
- * MA_TTDV (spec 5.6): key MA_TTDV_FROM_PROFILE_XML co gia tri (lua chon benh vien) => tron nhanh 130 cua DLL (chua "1":
- *   ma BHXH cua (pho) giam doc, khong co loginname => REPRESENTATIVE_HEIN_CODE; khong chua "1": REPRESENTATIVE_HEIN_CODE);
- *   key rong => DIPLOMA cua (pho) giam doc (khoi 3176).
+ * MA_TTDV (spec 5.6): dung chung MaTtdv::cua(.., 1) (key chua "1" => nhanh 130 cua DLL; key rong => DIPLOMA (pho) giam doc).
  * CHAN_DOAN_VAO: PROVISIONAL_DIAGNOSIS null/"" (IsNullOrEmpty nhu DLL) => ICD_NAME.
  * Can xac nhan [AX]:308-309: MA_LOAI_KCB "100" cho KSK giu nhu DLL. Can xac nhan [AX]:313: SO_NGAY_DTRI giu nhu DLL
  *   (NGAY_RA - NGAY_VAO + 1 theo ngay).
@@ -45,7 +43,7 @@ class Xml1Dung implements DungBang
     const KEY_SO_NGAY = 'HIS.QD_130_BYT.XML1.SO_NGAY_DTRI_OPTION';
     const KEY_NGAY_VAO_NT = 'HIS.QD_130_BYT.XML1.NGAY_VAO_NOI_TRU_OPTION';
     const KEY_GIAY_CT = 'HIS.QD_130_BYT.GIAY_CHUYEN_TUYEN_XML1_FORMAT';
-    const KEY_MA_TTDV = 'HIS.QD_130_BYT.MA_TTDV_FROM_PROFILE_XML';
+    const KEY_MA_TTDV = MaTtdv::KEY;
 
     /** QD 130 bang 1: do dai toi da (ky tu) cac truong module cat */
     const DAI_HO_TEN = 255;
@@ -173,7 +171,7 @@ class Xml1Dung implements DungBang
             'NAM_NAM_LIEN_TUC' => $the['NAM_NAM_LIEN_TUC'],
             'NGAY_TAI_KHAM' => self::tg($hs->appointment_time, 8),
             'MA_HSBA' => GiaTriBang::chu($hs->treatment_code),
-            'MA_TTDV' => $this->maTtdv($hs, $dm, $ch(self::KEY_MA_TTDV)),
+            'MA_TTDV' => MaTtdv::cua($d, $dm, 1),
             'DU_PHONG' => $this->dhstMoiNhat($d->dhst, 'height', false),
         ]];
     }
@@ -189,39 +187,12 @@ class Xml1Dung implements DungBang
         if (count($ptas) === 0) {
             return $ra;
         }
-        $giam = function ($a, $b) {
-            $c = GiaTriBang::soSanh((float) $b->log_time, (float) $a->log_time);
+        $chinh = PtaChinh::chon($ptas, $keyBhyt);
+        $nhom = TheBhyt::nhom($ptas, $sapThe);
 
-            return $c !== 0 ? $c : GiaTriBang::soSanh((int) $b->id, (int) $a->id);
-        };
-        $chinh = GiaTriBang::sapOnDinh($ptas, function ($a, $b) use ($keyBhyt, $giam) {
-            $c = GiaTriBang::soSanh((string) $b->patient_type_code === $keyBhyt ? 1 : 0, (string) $a->patient_type_code === $keyBhyt ? 1 : 0);
-
-            return $c !== 0 ? $c : $giam($a, $b);
-        })[0];
-
-        $sap = $sapThe === '1' ? GiaTriBang::sapOnDinh($ptas, $giam) : GiaTriBang::sapOnDinh($ptas, function ($a, $b) {
-            $c = self::soSanhNull($a->hein_card_from_time, $b->hein_card_from_time);
-
-            return $c !== 0 ? $c : self::soSanhNull($a->hein_card_to_time, $b->hein_card_to_time);
-        });
-        $nhom = [];
-        foreach ($sap as $p) {
-            $k = json_encode([$p->hein_card_number, $p->hein_medi_org_code, $p->hein_card_from_time, $p->hein_card_to_time]);
-            if (!isset($nhom[$k])) {
-                $nhom[$k] = $p;
-            }
-        }
-
-        $cot = ['MA_THE_BHYT' => [], 'MA_DKBD' => [], 'GT_THE_TU' => [], 'GT_THE_DEN' => []];
+        $cot = TheBhyt::cot($nhom);
         $mot = ['NGAY_MIEN_CCT' => [], 'MA_KHUVUC' => [], 'NAM_NAM_LIEN_TUC' => []];
         foreach ($nhom as $p) {
-            if (trim(GiaTriBang::chu($p->hein_card_number)) !== '') {
-                $cot['MA_THE_BHYT'][] = (string) $p->hein_card_number;
-                $cot['MA_DKBD'][] = trim(GiaTriBang::chu($p->hein_medi_org_code)) !== '' ? (string) $p->hein_medi_org_code : '';
-                $cot['GT_THE_TU'][] = self::tg($p->hein_card_from_time, 8);
-                $cot['GT_THE_DEN'][] = self::tg($p->hein_card_to_time, 8);
-            }
             if (GiaTriBang::co($p->free_co_paid_time)) {
                 $mot['NGAY_MIEN_CCT'][] = self::tg($p->free_co_paid_time, 8);
             }
@@ -233,7 +204,7 @@ class Xml1Dung implements DungBang
             }
         }
         foreach ($cot as $k => $gt) {
-            $ra[$k] = implode('', $gt) === '' ? '' : implode(';', $gt);
+            $ra[$k] = TheBhyt::noi($gt);
         }
         foreach ($mot as $k => $gt) {
             $ra[$k] = count($gt) === 1 ? $gt[0] : '';
@@ -397,7 +368,8 @@ class Xml1Dung implements DungBang
         return (string) (($kc->invert ? -1 : 1) * $kc->days + 1);
     }
 
-    private function maLoaiRv($hs)
+    /** Dung chung voi XML13 (cung bang MA_LOAI_RV). */
+    public static function maLoaiRv($hs)
     {
         $ket = GiaTriBang::co($hs->treatment_end_type_id) ? (int) $hs->treatment_end_type_id : 0;
         if ($ket === 7) {
@@ -480,22 +452,6 @@ class Xml1Dung implements DungBang
         return implode(';', array_values(array_unique($ma)));
     }
 
-    /** MA_TTDV (spec 5.6, X1P:661-684 va 707). */
-    private function maTtdv($hs, HisDanhMuc $dm, $cauHinh)
-    {
-        $login = GiaTriBang::dauTien([$hs->hosp_subs_director_loginname, $hs->hospital_director_loginname]);
-        $nv = $login !== '' ? $dm->nhanVien($login) : null;
-        if ($cauHinh !== '') {
-            if (!in_array('1', preg_split('/[,; ]+/', $cauHinh, -1, PREG_SPLIT_NO_EMPTY), true) || $login === '') {
-                return GiaTriBang::chu($hs->representative_hein_code);
-            }
-
-            return $nv !== null ? GiaTriBang::chu($nv->social_insurance_number) : '';
-        }
-
-        return $nv !== null ? GiaTriBang::chu($nv->diploma) : '';
-    }
-
     /**
      * Gia tri DHST moi nhat. CAN_NANG (X1P:37-69): WEIGHT > 0, EXECUTE_TIME giam dan.
      * DU_PHONG (X1P:708-718): HEIGHT co gia tri, EXECUTE_TIME, ID giam dan. Lam tron 2 chu so.
@@ -535,18 +491,6 @@ class Xml1Dung implements DungBang
         $s = ThoiGianHis::chuoi($v);
 
         return $s === null ? '' : substr($s, 0, $n);
-    }
-
-    /** Nullable<long> OrderBy: null dung truoc. */
-    private static function soSanhNull($a, $b)
-    {
-        $coA = GiaTriBang::co($a);
-        $coB = GiaTriBang::co($b);
-        if (!$coA || !$coB) {
-            return ($coA ? 1 : 0) - ($coB ? 1 : 0);
-        }
-
-        return GiaTriBang::soSanh((float) $a, (float) $b);
     }
 
     private static function bang($v, $so)

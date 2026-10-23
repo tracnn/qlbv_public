@@ -7,14 +7,15 @@ use PHPUnit\Framework\TestCase;
 
 class DangKyBangTest extends TestCase
 {
-    public function test_dot_2_chua_du()
+    public function test_dot_3_du_14_bang()
     {
         $dk = DangKyBang::macDinh();
-        $this->assertFalse($dk->daDu());
-        $this->assertSame(['XML6', 'XML7', 'XML8', 'XML9', 'XML10', 'XML11', 'XML13', 'XML14', 'XML15'], $dk->thieu());
-        $this->assertCount(9, $dk->thieu());
+        $this->assertTrue($dk->daDu());
+        $this->assertSame([], $dk->thieu());
         $loai = array_map(function ($d) { return $d->loai(); }, $dk->cacDung());
-        $this->assertSame(['XML2', 'XML3', 'XML4', 'XML5', 'XML1'], $loai);
+        $this->assertCount(14, $loai);
+        $this->assertSame('XML1', end($loai));
+        $this->assertSame(['XML2', 'XML3', 'XML4', 'XML5', 'XML6', 'XML7', 'XML8', 'XML9', 'XML10', 'XML11', 'XML13', 'XML14', 'XML15', 'XML1'], $loai);
     }
 
     public function test_du_14_bang()

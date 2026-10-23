@@ -9,6 +9,7 @@ use App\Services\SinhXml3176\LuotQuet;
 use App\Services\SinhXml3176\Nguon\HisNapHoSo;
 use App\Services\SinhXml3176\Nguon\HisUngVien;
 use App\Services\SinhXml3176\TheoDoiSinh;
+use App\Services\SinhXml3176\XuLyChetLuot;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
@@ -93,9 +94,18 @@ class SinhXml3176Quet extends Command
 
         if (!Cache::add(self::KHOA_LUOT, true, max(1, $cauHinh->khoaLuotPhut()))) {
             $this->warn('Mot luot sinhxml3176:quet khac dang chay. Bo qua luot nay.');
+            if ($this->option('lien-tuc')) {
+                // Nghi truoc khi thoat de NSSM khong khoi dong lai Laravel moi 10 giay trong luc khoa con giu
+                $nghi = $this->soGiayNghi($cauHinh);
+                if ($nghi > 0) {
+                    $this->ngu($nghi);
+                }
+            }
 
             return 0;
         }
+
+        XuLyChetLuot::dangKy(self::KHOA_LUOT);
 
         try {
             $luot = $this->taoLuot($cauHinh, $dangKy);
@@ -120,6 +130,7 @@ class SinhXml3176Quet extends Command
 
             return $this->vongLap($cauHinh, $chay);
         } finally {
+            XuLyChetLuot::ketThuc();
             Cache::forget(self::KHOA_LUOT);
         }
     }

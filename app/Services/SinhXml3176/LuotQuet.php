@@ -241,6 +241,7 @@ class LuotQuet
         foreach ($ungVien as $u) {
             $ids[] = (int) $u->id;
         }
+        XuLyChetLuot::datDangNap($ids);
         $duLieu = $this->napHoSo->nap($ids);
 
         foreach ($ungVien as $u) {

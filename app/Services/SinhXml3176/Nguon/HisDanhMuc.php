@@ -12,8 +12,8 @@ class HisDanhMuc
     const KEY_MA_DOI_TUONG_BHYT = 'MOS.HIS_PATIENT_TYPE.PATIENT_TYPE_CODE.BHYT';
 
     const COT_CAU_HINH = ['id', 'key', 'value', 'default_value'];
-    /** XML1 65 MA_TTDV (social_insurance_number, diploma), XML2 32 / XML3 33-34 (diploma, identification_number) */
-    const COT_NHAN_VIEN = ['id', 'loginname', 'tdl_username', 'diploma', 'social_insurance_number', 'identification_number'];
+    /** XML1 65 MA_TTDV (social_insurance_number, diploma), XML13 36 CHUCDANH_NGUOI_HT (title), XML2 32 / XML3 33-34 (diploma, identification_number) */
+    const COT_NHAN_VIEN = ['id', 'loginname', 'tdl_username', 'diploma', 'social_insurance_number', 'identification_number', 'title'];
     /** XML1 31 MA_DOITUONG_KCB: ICD lao tiem an / COVID */
     const COT_ICD = ['id', 'icd_code', 'icd_name', 'is_latent_tuberculosis', 'is_covid', 'is_traditional', 'do_not_use_hein'];
     /** XML2 17 / XML3 18: so PATIENT_TYPE_CODE voi ma BHYT */
@@ -105,6 +105,26 @@ class HisDanhMuc
     public function nhanVien($loginname)
     {
         return $this->lay($this->nhanVien, $loginname);
+    }
+
+    /**
+     * Nhan vien co loginname nam trong danh sach, theo thu tu danh sach nhan vien (id tang), moi nguoi mot lan
+     * (Employee.Where(o => set.Contains(o.LOGINNAME)) cua DLL XML13 CHUCDANH_NGUOI_HT).
+     *
+     * @param string[] $loginnames
+     * @return \stdClass[]
+     */
+    public function nhanVienTheoDanhSach(array $loginnames)
+    {
+        $tap = array_flip(array_map('trim', $loginnames));
+        $ra = [];
+        foreach ($this->nhanVien as $login => $nv) {
+            if (isset($tap[$login])) {
+                $ra[] = $nv;
+            }
+        }
+
+        return $ra;
     }
 
     public function icd($ma)
