@@ -94,8 +94,16 @@ class LuotQuet
                     }
                 }
                 $this->xuLyLo($can, $loaiBan, $kq, false);
+                // Chan moc: modify_time o tuong lai (lech dong ho/du lieu hong) khong duoc keo moc di qua gio that
+                $tran = self::tranMoc();
                 foreach ($lo as $u) {
-                    $mocMax = max($mocMax, self::mocCua($u, $loaiBan, false));
+                    $m = self::mocCua($u, $loaiBan, false);
+                    if ($m > $tran) {
+                        Log::warning('sinhxml3176 ' . $loaiBan . ' ho so id ' . (int) $u->id
+                            . ' co modify_time ' . $m . ' o tuong lai (> ' . $tran . '), khong tien moc theo gia tri nay');
+                        continue;
+                    }
+                    $mocMax = max($mocMax, $m);
                 }
             }, $kq);
 
@@ -183,6 +191,15 @@ class LuotQuet
     }
 
     /** Moc cua dong ung vien theo cot ma layLo da dung: modify_time (quet) hoac cot ngay cua loai ban (chay bu). */
+    /** Tran cua moc quet: bay gio + 1 ngay (dang yyyyMMddHHmmss); bay gio lay tu HisUngVien::$homNayChung khi test dat. */
+    private static function tranMoc()
+    {
+        $t = HisUngVien::$homNayChung !== null ? clone HisUngVien::$homNayChung : new \DateTime();
+        $t->modify('+1 day');
+
+        return (int) $t->format('YmdHis');
+    }
+
     private static function mocCua($u, $loaiBan, $theoNgay)
     {
         $cot = $theoNgay ? HisUngVien::cotMoc($loaiBan) : HisUngVien::COT_QUET;
@@ -330,8 +347,15 @@ class LuotQuet
             // Dau van tay tinh tu CHINH $xmlCon se ghi (truoc phong bi: khong gom NGAYLAP va ten tep)
             $hash = self::dauVanTay($maCskcb, $xmlCon, $cacBang);
             $ketQua['noi_dung_hash'] = $hash;
+            $thuMuc = $this->cauHinh->thuMuc($loaiBan);
+            // khong_doi chi khi ban da ghi cuoi co CUNG noi dung VA nam o CUNG thu muc dich hien tai
+            // (doi thu muc, vd thu -> that sau khi bat ghi_thu_muc_that, thi phai ghi lai vao thu muc moi)
+            // va, voi ban chinh thuc, khong co ban thong tuyen da ghi moi hon (ban vao sau thang: phai ghi de len).
             if ($dongCuoi !== null && $dongCuoi->trang_thai === self::DA_GHI && $dongCuoi->noi_dung_hash !== null
-                && $dongCuoi->noi_dung_hash === $hash) {
+                && $dongCuoi->noi_dung_hash === $hash
+                && (string) $dongCuoi->thu_muc === (string) $thuMuc
+                && !($loaiBan === CauHinhSinhXml3176::CHINH_THUC
+                    && $this->theoDoi->coThongTuyenDaGhiMoiHon((int) $u->id, (int) $dongCuoi->id))) {
                 $ketQua['trang_thai'] = self::KHONG_DOI;
 
                 return $ketQua;
@@ -339,7 +363,6 @@ class LuotQuet
 
             // Mot moc cho ca NGAYLAP va ten tep
             $luc = new \DateTime();
-            $thuMuc = $this->cauHinh->thuMuc($loaiBan);
             $ten = GhiTep::ghi($thuMuc, $ketQua['treatment_code'], $loaiBan,
                 PhongBi::chuoi($maCskcb, $xmlCon, $luc), $luc, $this->cauHinh->thuMucTam($thuMuc));
 

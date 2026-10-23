@@ -19,6 +19,16 @@ class TheoDoiSinh
             ->first();
     }
 
+    /** Co dong thong_tuyen da_ghi cua ho so nay moi hon (id lon hon) $idDong khong. */
+    public function coThongTuyenDaGhiMoiHon($treatmentId, $idDong)
+    {
+        return LanSinh::where('treatment_id', $treatmentId)
+            ->where('loai_ban', CauHinhSinhXml3176::THONG_TUYEN)
+            ->where('trang_thai', 'da_ghi')
+            ->where('id', '>', $idDong)
+            ->exists();
+    }
+
     /**
      * Co can nap va dung lai ho so khong: false CHI khi dong cuoi co modify_time (khac null)
      * bang modify_time hien tai. Chua co dong, dong cu chua luu modify_time, hoac khac thi true.

@@ -360,6 +360,66 @@ class LuotQuetTest extends TestCase
         $this->assertCount(2, $this->tep());
     }
 
+    public function test_doi_thu_muc_dich_thi_ghi_lai_du_noi_dung_khong_doi()
+    {
+        // Ban da ghi o thu muc thu, cau hinh nay tro sang thu muc khac (thu -> that): khong duoc coi la khong_doi
+        $this->themHoSoLuot(1);
+        $this->luot()->chay(self::CT);
+        $this->assertSame($this->thuMuc, LanSinh::first()->thu_muc);
+
+        $thuMuc2 = $this->goc . DIRECTORY_SEPARATOR . 'that';
+        $this->chamHoSo(1, 20261001120000);
+        $kq = $this->luot([], null, ['thu_muc_thu' => $thuMuc2])->chay(self::CT);
+
+        $this->assertSame($this->kq(1, 1, 0, 0, 0), $kq);
+        $dong = LanSinh::orderBy('id')->get();
+        $this->assertCount(2, $dong);
+        $this->assertSame($thuMuc2, $dong[1]->thu_muc);
+        $this->assertCount(1, glob($thuMuc2 . DIRECTORY_SEPARATOR . '*'));
+    }
+
+    public function test_ban_thong_tuyen_moi_hon_thi_ban_chinh_thuc_ghi_lai()
+    {
+        $this->themHoSoLuot(1);
+        $this->luot()->chay(self::CT);
+        // Mot ban thong tuyen da ghi SAU ban chinh thuc cuoi
+        (new TheoDoiSinh())->ghi([
+            'treatment_id' => 1, 'treatment_code' => 'HS1', 'loai_ban' => self::TT, 'trang_thai' => 'da_ghi',
+            'ten_tep' => 'tt.xml', 'thu_muc' => $this->thuMuc, 'cac_bang' => 'XML1',
+        ]);
+
+        $this->chamHoSo(1, 20261001120000);
+        $kq = $this->luot()->chay(self::CT);
+
+        $this->assertSame($this->kq(1, 1, 0, 0, 0), $kq);
+        $this->assertSame(2, LanSinh::where('loai_ban', self::CT)->where('trang_thai', 'da_ghi')->count());
+
+        // Ban chinh thuc moi nhat da vao sau TT => lan cham tiep theo la khong_doi
+        $this->chamHoSo(1, 20261001130000);
+        $this->assertSame($this->kq(1, 0, 0, 0, 0, 1), $this->luot()->chay(self::CT));
+    }
+
+    public function test_modify_time_tuong_lai_khong_keo_moc_nhung_ho_so_van_xu_ly()
+    {
+        HisUngVien::$homNayChung = new \DateTime('2026-10-10');
+        try {
+            $this->themHoSoLuot(1, ['modify_time' => 29991231000000]);
+            $this->themHoSoLuot(2, ['modify_time' => 20261002090000]);
+
+            Log::shouldReceive('info');
+            Log::shouldReceive('warning')->once()->with(\Mockery::on(function ($thongDiep) {
+                return strpos($thongDiep, 'ho so id 1 ') !== false && strpos($thongDiep, '29991231000000') !== false;
+            }));
+
+            $kq = $this->luot()->chay(self::CT);
+        } finally {
+            HisUngVien::$homNayChung = null;
+        }
+
+        $this->assertSame($this->kq(2, 2, 0, 0, 0), $kq);
+        $this->assertSame(20261002090000, (new TheoDoiSinh())->docMoc(self::CT));
+    }
+
     public function test_bi_loai_cung_ly_do_khong_them_dong()
     {
         $this->themHoSoLuot(1, ['tdl_patient_commune_code' => null]);
