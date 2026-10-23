@@ -43,6 +43,38 @@ class TheoDoiSinh
         return (int) $cu !== (int) $moi;
     }
 
+    /** Dong theo doi moi nhat (id lon nhat) cua (treatment_id, loai_ban); chua co thi null. */
+    public function dongCuoi($treatmentId, $loaiBan)
+    {
+        return LanSinh::where('treatment_id', $treatmentId)
+            ->where('loai_ban', $loaiBan)
+            ->orderBy('id', 'desc')
+            ->first();
+    }
+
+    /**
+     * Co can nap va dung lai ho so khong: false CHI khi dong cuoi co modify_time (khac null)
+     * bang modify_time hien tai. Chua co dong, dong cu chua luu modify_time, hoac khac thi true.
+     */
+    public function canXet($treatmentId, $loaiBan, $modifyTime)
+    {
+        $dong = $this->dongCuoi($treatmentId, $loaiBan);
+
+        if ($dong === null || $dong->modify_time === null || $modifyTime === null) {
+            return true;
+        }
+
+        return (int) $dong->modify_time !== (int) $modifyTime;
+    }
+
+    /** Chi cap nhat modify_time cua dong do (noi dung khong doi), khong them dong moi. */
+    public function capNhatModify(LanSinh $dong, $modifyTime)
+    {
+        $dong->modify_time = $modifyTime === null ? null : (int) $modifyTime;
+        $dong->save();
+    }
+
+    /** $ketQua co the kem khoa modify_time va noi_dung_hash (null duoc). */
     public function ghi(array $ketQua)
     {
         LanSinh::create($ketQua);
