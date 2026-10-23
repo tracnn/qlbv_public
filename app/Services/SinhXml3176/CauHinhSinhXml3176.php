@@ -23,6 +23,8 @@ class CauHinhSinhXml3176
         'thu_muc_thu'      => 'D:\XML\SinhXml3176Thu',
         // null = thu muc anh em cua thu muc dich: <cha cua dich>\.sinh_xml3176_tmp (xem GhiTep)
         'thu_muc_tam'      => null,
+        // null = khong luu ban sao XML moi lan sinh (xem LuuTruXml)
+        'thu_muc_luu'      => null,
     ];
 
     private $khoi;
@@ -64,6 +66,7 @@ class CauHinhSinhXml3176
      * Loi cau hinh chan chay lenh (rong = hop le).
      * - ket_noi_his rong/null.
      * - thu_muc_thu trung hoac nam trong thu_muc/thu_muc_tt (tien giam dinh quet de quy).
+     * - thu_muc_luu (neu khai) trung hoac nam trong thu_muc/thu_muc_tt/thu_muc_thu.
      * - thu muc tam cua bat ky thu muc dich nao nam trong thu_muc/thu_muc_tt, hoac khac o dia voi dich.
      *
      * @return string[]
@@ -84,6 +87,16 @@ class CauHinhSinhXml3176
             if (self::namTrong($thu, $goc)) {
                 $loi[] = 'thu_muc_thu (' . $thu . ') trung hoac nam trong ' . $khoa . ' (' . $goc
                     . '): tien giam dinh quet de quy se nap tep thu';
+            }
+        }
+
+        $luu = $this->thuMucLuu();
+        if ($luu !== null) {
+            foreach ($quet + ['thu_muc_thu' => $thu] as $khoa => $goc) {
+                if (self::namTrong($luu, $goc)) {
+                    $loi[] = 'thu_muc_luu (' . $luu . ') trung hoac nam trong ' . $khoa . ' (' . $goc
+                        . '): tien giam dinh quet de quy se nap ban sao luu tru';
+                }
             }
         }
 
@@ -109,6 +122,14 @@ class CauHinhSinhXml3176
         $khai = trim((string) $this->khoi['thu_muc_tam']);
 
         return $khai !== '' ? $khai : GhiTep::thuMucTamMacDinh($thuMucDich);
+    }
+
+    /** Thu muc goc luu ban sao XML moi lan sinh; rong/khoang trang/khong khai thi null (khong luu). */
+    public function thuMucLuu()
+    {
+        $luu = trim((string) $this->khoi['thu_muc_luu']);
+
+        return $luu !== '' ? $luu : null;
     }
 
     /** Chuan hoa duong dan de so sanh: '/' thanh '\\', bo '\\' cuoi, chu thuong (Windows khong phan biet hoa thuong). */
@@ -198,6 +219,18 @@ class CauHinhSinhXml3176
         }
 
         return (string) ($loaiBan === self::THONG_TUYEN ? $this->khoi['thu_muc_tt'] : $this->khoi['thu_muc']);
+    }
+
+    /** Thu muc dich that (thu_muc / thu_muc_tt) cua loai ban, bat ke cong tac ghi_thu_muc_that. */
+    public function thuMucThat($loaiBan)
+    {
+        return (string) ($loaiBan === self::THONG_TUYEN ? $this->khoi['thu_muc_tt'] : $this->khoi['thu_muc']);
+    }
+
+    /** Thu muc thu (khong phai thu muc tien giam dinh quet). */
+    public function thuMucThu()
+    {
+        return (string) $this->khoi['thu_muc_thu'];
     }
 
     public function kichThuocLo()

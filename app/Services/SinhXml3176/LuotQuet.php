@@ -2,6 +2,7 @@
 
 namespace App\Services\SinhXml3176;
 
+use App\Models\SinhXml3176\LanSinh;
 use App\Services\SinhXml3176\Bang\DangKyBang;
 use App\Services\SinhXml3176\Bang\LoiDungBang;
 use App\Services\SinhXml3176\Nguon\HisDanhMuc;
@@ -271,6 +272,9 @@ class LuotQuet
             $id = (int) $u->id;
             $dongCuoi = $chayBu ? null : $this->theoDoi->dongCuoi($id, $loaiBan);
             $ketQua = $this->motHoSo($u, $loaiBan, isset($duLieu[$id]) ? $duLieu[$id] : null, $dongCuoi);
+            // Phong bi da ghi (chi co voi ban da_ghi): chi dung de luu ban sao, khong phai cot cua bang theo doi
+            $noiDung = isset($ketQua['_noi_dung']) ? $ketQua['_noi_dung'] : null;
+            unset($ketQua['_noi_dung']);
             $kq[$ketQua['trang_thai']]++;
             // Giai phong du lieu ho so ngay sau khi xu ly (khong giu ca lo trong bo nho)
             unset($duLieu[$id]);
@@ -279,8 +283,12 @@ class LuotQuet
                     && $dongCuoi->trang_thai === self::BI_LOAI && (string) $dongCuoi->ly_do === (string) $ketQua['ly_do'])) {
                 $this->theoDoi->capNhatModify($dongCuoi, $ketQua['modify_time']);
             } else {
-                $this->theoDoi->ghi($ketQua);
+                $dongMoi = $this->theoDoi->ghi($ketQua);
+                if ($ketQua['trang_thai'] === self::DA_GHI && $noiDung !== null && $dongMoi instanceof LanSinh) {
+                    $this->luuBanSao($dongMoi, $noiDung);
+                }
             }
+            $noiDung = null;
             if ($ketQua['trang_thai'] === self::LOI) {
                 Log::warning('sinhxml3176 ' . $loaiBan . ' ho so ' . $ketQua['treatment_code'] . ' loi: ' . $ketQua['ly_do']);
             }
@@ -363,13 +371,14 @@ class LuotQuet
 
             // Mot moc cho ca NGAYLAP va ten tep
             $luc = new \DateTime();
-            $ten = GhiTep::ghi($thuMuc, $ketQua['treatment_code'], $loaiBan,
-                PhongBi::chuoi($maCskcb, $xmlCon, $luc), $luc, $this->cauHinh->thuMucTam($thuMuc));
+            $noiDung = PhongBi::chuoi($maCskcb, $xmlCon, $luc);
+            $ten = GhiTep::ghi($thuMuc, $ketQua['treatment_code'], $loaiBan, $noiDung, $luc, $this->cauHinh->thuMucTam($thuMuc));
 
             $ketQua['trang_thai'] = self::DA_GHI;
             $ketQua['ten_tep'] = $ten;
             $ketQua['thu_muc'] = $thuMuc;
             $ketQua['cac_bang'] = implode(',', $cacBang);
+            $ketQua['_noi_dung'] = $noiDung;
         } catch (LoiGhiTep $e) {
             // Loi moi truong: khong danh dau ho so, dung ca luot (moc khong tien), luot sau thu lai
             throw $e;
@@ -387,6 +396,24 @@ class LuotQuet
         }
 
         return $ketQua;
+    }
+
+    /**
+     * Luu ban sao phong bi cua dong da_ghi vua tao; co duong thi cap nhat tep_luu. Khong bao gio nem:
+     * luu tru loi (LuuTruXml da Log::warning) thi lan sinh van la da_ghi, tep_luu de trong.
+     */
+    private function luuBanSao($dong, $noiDung)
+    {
+        $tuongDoi = (new LuuTruXml($this->cauHinh->thuMucLuu()))->luu($dong, $noiDung);
+        if ($tuongDoi === null) {
+            return;
+        }
+        try {
+            $dong->tep_luu = $tuongDoi;
+            $dong->save();
+        } catch (\Throwable $e) {
+            Log::warning('sinhxml3176 luu tru ban sao dong ' . $dong->id . ': khong cap nhat duoc tep_luu: ' . $e->getMessage());
+        }
     }
 
     /**

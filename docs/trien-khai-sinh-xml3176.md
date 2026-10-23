@@ -321,6 +321,29 @@ php artisan sinhxml3176:quet --tu-ngay=2026-10-01 --den-ngay=2026-10-07
 Chạy bù bỏ qua theo dõi đã sinh (luôn ghi tệp) và không đụng mốc; chạy khi dịch vụ đang chạy thì lệnh chờ khoá lượt
 (báo "dang chay" và bỏ qua), chạy lại sau.
 
+## Màn theo dõi sinh XML3176
+
+- **Đường vào:** menu XML3176 → "Theo dõi sinh XML3176" (`/bhyt/sinh-xml3176`). Danh sách mỗi dòng một hồ sơ, bấm "Lịch sử"
+  để thấy từng lần sinh; từ đó xem XML dạng bảng, tải tệp gốc, so hai lần sinh. Màn chỉ đọc bảng `sinh_xml3176_lan_sinh`,
+  `sinh_xml3176_moc` và tệp lưu trữ, không đọc HIS.
+- **Quyền:** `xml-man` xem và so sánh. Chỉ `superadministrator` thấy và dùng được nút xoá ("Xoá XML đã chọn" ở lịch sử hồ sơ,
+  "Xoá XML lưu trữ của ngày" ở danh sách); người khác gọi thẳng route xoá nhận 403. Mỗi lần xoá ghi `Log::info` kèm user id và số tệp.
+- **Khoá `thu_muc_luu`** (khối `sinh_xml3176` trong `config/organization.php`, mẫu ở `docs/organization.php`):
+  `null` hoặc không khai = không lưu bản sao. Khi khai, mỗi lần module ghi tệp (`da_ghi`) giữ thêm một bản sao tại
+  `<thu_muc_luu>\<yyyyMMdd theo created_at>\<id dòng>_<tên tệp>`. Thư mục này PHẢI nằm ngoài `thu_muc`, `thu_muc_tt`,
+  `thu_muc_thu` (trùng hoặc nằm trong là lỗi cấu hình). Tài khoản chạy dịch vụ NSSM phải ghi được vào đó, và tài khoản chạy
+  web phải đọc/xoá được.
+- **Dung lượng:** khoảng 300MB mỗi ngày với 1.800 hồ sơ, chưa kể lần sinh lại (mỗi lần sinh lại thêm một bản).
+  Tăng trưởng với khối lượng hiện tại: khoảng 9GB mỗi tháng, khoảng 110GB mỗi năm, chưa tính các lần sinh lại.
+  Khuyến nghị đặt `thu_muc_luu` trên một ổ đĩa riêng (không dùng chung ổ với `thu_muc` ghi tệp chính), hoặc đặt cảnh báo
+  dung lượng trống của ổ chứa nó. Ổ đầy thì việc ghi tệp chính (`GhiTep::ghi`) lỗi và cả lượt sinh dừng lại; chỉ riêng
+  bản sao lưu trữ ghi lỗi thì không làm hỏng lần sinh, nhưng chung ổ thì ổ đầy do lưu trữ vẫn chặn đường sinh chính.
+- **Không tự xoá.** Chỉ xoá tay trên màn. Xoá chỉ gỡ tệp lưu trữ; dòng theo dõi giữ nguyên, điền `xoa_luu_luc` và `xoa_luu_boi`,
+  thư mục ngày rỗng thì gỡ luôn. Dấu xoá được ghi vào CSDL trước khi xoá tệp; tệp đã bị gỡ tay vẫn được đánh dấu.
+- **Lần sinh trước khi có tính năng thì không có XML lưu trữ** (cột `tep_luu` rỗng; màn hiện "không có XML lưu trữ"), không khôi phục được.
+- **Triển khai:** chạy migration `2026_10_23_100004_add_luu_tru_to_sinh_xml3176_lan_sinh` (đã thêm vào danh sách ở mục
+  "Kiểm trước khi bật thông tuyến", bước "Thứ tự triển khai"), khai `thu_muc_luu`, `php artisan config:cache`, khởi động lại dịch vụ.
+
 ## Lưu ý vận hành
 
 - **PHP phải 64-bit.** Mốc quét là số nguyên 14 chữ số (`yyyyMMddHHmmss`); PHP 32-bit tràn số.
@@ -880,7 +903,8 @@ Chủ dự án làm trên máy chủ, ghi ngày và người kiểm vào biên b
     (`khong_doi` có xét thư mục đích). Muốn đẩy ngay: `php artisan sinhxml3176:quet --tu-ngay=… --den-ngay=…` (chạy bù) cho
     khoảng thời gian thử.
 15. **Thứ tự triển khai:** `git pull` → `php artisan migrate` (2 bảng `sinh_xml3176_lan_sinh`, `sinh_xml3176_moc`, và migration
-    `2026_10_23_100003_add_modify_time_hash_to_sinh_xml3176_lan_sinh`, chỉ thêm 2 cột nullable)
+    `2026_10_23_100003_add_modify_time_hash_to_sinh_xml3176_lan_sinh`, chỉ thêm 2 cột nullable, và
+    `2026_10_23_100004_add_luu_tru_to_sinh_xml3176_lan_sinh`, thêm `tep_luu`, `xoa_luu_luc`, `xoa_luu_boi` nullable và chỉ mục `created_at`)
     → sửa khối `sinh_xml3176` trong `config/organization.php` → `php artisan config:cache` → cài hoặc khởi động lại
     dịch vụ NSSM (mục "Cài dịch vụ"). Chỉ chạy đúng MỘT bản dịch vụ.
 16. **Quyền ghi:** tài khoản chạy dịch vụ NSSM phải ghi được vào `thu_muc` (`D:\XML\3176`), `thu_muc_tt`

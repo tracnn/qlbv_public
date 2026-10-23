@@ -168,6 +168,38 @@ class CauHinhSinhXml3176Test extends TestCase
     }
 
     /** @test */
+    public function test_thu_muc_luu_trong_thu_muc_quet_la_loi()
+    {
+        config(['organization.sinh_xml3176' => ['enabled' => true]]);
+        $this->assertNull(CauHinhSinhXml3176::tuConfig()->thuMucLuu());
+        foreach (['', '   ', null] as $rong) {
+            config(['organization.sinh_xml3176' => ['enabled' => true, 'thu_muc_luu' => $rong]]);
+            $this->assertNull(CauHinhSinhXml3176::tuConfig()->thuMucLuu());
+        }
+        config(['organization.sinh_xml3176' => ['enabled' => true, 'thu_muc_luu' => ' D:\XML\Luu ']]);
+        $this->assertSame('D:\XML\Luu', CauHinhSinhXml3176::tuConfig()->thuMucLuu());
+
+        $truongHop = [
+            'D:\XML\3176'                => 'thu_muc',
+            'd:/xml/3176/ngay'           => 'thu_muc',
+            'D:\XML\3176TT\a'            => 'thu_muc_tt',
+            'D:\XML\SinhXml3176Thu'      => 'thu_muc_thu',
+            'D:\XML\SinhXml3176Thu\x'    => 'thu_muc_thu',
+        ];
+        foreach ($truongHop as $luu => $khoa) {
+            config(['organization.sinh_xml3176' => ['enabled' => true, 'thu_muc_luu' => $luu]]);
+            $loi = implode("\n", CauHinhSinhXml3176::tuConfig()->loiCauHinh());
+            $this->assertContains('thu_muc_luu', $loi, $luu);
+            $this->assertContains('nam trong ' . $khoa . ' (', $loi, $luu);
+        }
+
+        foreach (['D:\XML\SinhXml3176LuuTru', 'D:\XML\3176Luu'] as $luu) {
+            config(['organization.sinh_xml3176' => ['enabled' => true, 'thu_muc_luu' => $luu]]);
+            $this->assertSame([], CauHinhSinhXml3176::tuConfig()->loiCauHinh(), $luu);
+        }
+    }
+
+    /** @test */
     public function test_thu_muc_tam()
     {
         config(['organization.sinh_xml3176' => ['enabled' => true]]);

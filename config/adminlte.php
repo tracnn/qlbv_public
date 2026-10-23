@@ -555,6 +555,12 @@ return [
                             'route'     => 'dashboard.xml3176.index',
                             'active'    => ['dashboard/xml3176*'],
                         ],
+                        [
+                            'text'      => 'Theo dõi sinh XML3176',
+                            'icon'      => 'history',
+                            'route'     => 'bhyt.sinh-xml3176.index',
+                            'active'    => ['bhyt/sinh-xml3176*'],
+                        ],
                     ],
                 ],
                 [

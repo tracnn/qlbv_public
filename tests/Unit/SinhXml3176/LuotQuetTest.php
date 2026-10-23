@@ -498,6 +498,86 @@ class LuotQuetTest extends TestCase
         $this->assertSame(20261001130000, (new TheoDoiSinh())->docMoc(self::CT));
     }
 
+    private function luuTruDir()
+    {
+        return $this->goc . DIRECTORY_SEPARATOR . 'luu';
+    }
+
+    public function test_da_ghi_co_ban_luu_tru()
+    {
+        $this->themHoSoLuot(1);
+
+        $this->luot([], null, ['thu_muc_luu' => $this->luuTruDir()])->chay(self::CT);
+
+        $dong = LanSinh::first();
+        $this->assertNotEmpty($dong->tep_luu);
+        $this->assertSame(
+            date('Ymd') . DIRECTORY_SEPARATOR . $dong->id . '_' . $dong->ten_tep,
+            $dong->tep_luu
+        );
+        $ban = $this->luuTruDir() . DIRECTORY_SEPARATOR . $dong->tep_luu;
+        $this->assertFileExists($ban);
+        $this->assertSame(
+            file_get_contents($this->thuMuc . DIRECTORY_SEPARATOR . $dong->ten_tep),
+            file_get_contents($ban)
+        );
+
+        // Chay bu theo ma va theo khoang ngay cung luu tru, moi lan mot ban rieng
+        $this->luot([], null, ['thu_muc_luu' => $this->luuTruDir()])->chayChoMa(['HS1'], self::CT);
+        $this->luot([], null, ['thu_muc_luu' => $this->luuTruDir()])
+            ->chayChoKhoangNgay(20261001000000, 20261001235959, self::CT);
+        $dong = LanSinh::orderBy('id')->get();
+        $this->assertCount(3, $dong);
+        $tep = [];
+        foreach ($dong as $d) {
+            $this->assertNotEmpty($d->tep_luu);
+            $this->assertFileExists($this->luuTruDir() . DIRECTORY_SEPARATOR . $d->tep_luu);
+            $tep[$d->tep_luu] = true;
+        }
+        $this->assertCount(3, $tep);
+    }
+
+    public function test_khong_khai_thu_muc_luu_thi_khong_luu()
+    {
+        $this->themHoSoLuot(1);
+
+        $this->luot()->chay(self::CT);
+
+        $this->assertNull(LanSinh::first()->tep_luu);
+        $this->assertDirectoryNotExists($this->luuTruDir());
+    }
+
+    public function test_luu_tru_loi_van_da_ghi()
+    {
+        $this->themHoSoLuot(1);
+        // Thu muc goc luu tru la mot TEP => khong tao duoc thu muc ngay
+        file_put_contents($this->luuTruDir(), 'x');
+        Log::shouldReceive('info');
+        Log::shouldReceive('warning')->once()->with(\Mockery::on(function ($thongDiep) {
+            return strpos($thongDiep, 'luu tru') !== false;
+        }));
+
+        $kq = $this->luot([], null, ['thu_muc_luu' => $this->luuTruDir()])->chay(self::CT);
+
+        $this->assertSame($this->kq(1, 1, 0, 0, 0), $kq);
+        $dong = LanSinh::first();
+        $this->assertSame('da_ghi', $dong->trang_thai);
+        $this->assertNull($dong->tep_luu);
+        $this->assertCount(1, $this->tep());
+    }
+
+    public function test_bi_loai_khong_luu()
+    {
+        $this->themHoSoLuot(1, ['tdl_patient_commune_code' => null]);
+
+        $this->luot([], null, ['thu_muc_luu' => $this->luuTruDir()])->chay(self::CT);
+
+        $dong = LanSinh::first();
+        $this->assertSame('bi_loai', $dong->trang_thai);
+        $this->assertNull($dong->tep_luu);
+        $this->assertDirectoryNotExists($this->luuTruDir());
+    }
+
     public function test_ho_so_bi_loai_ghi_ly_do()
     {
         $this->themHoSoLuot(1, ['tdl_patient_commune_code' => null]);

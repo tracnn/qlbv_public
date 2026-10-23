@@ -51,10 +51,10 @@ class TheoDoiSinh
         $dong->save();
     }
 
-    /** $ketQua co the kem khoa modify_time va noi_dung_hash (null duoc). */
+    /** $ketQua co the kem khoa modify_time va noi_dung_hash (null duoc). Tra ve dong vua tao. */
     public function ghi(array $ketQua)
     {
-        LanSinh::create($ketQua);
+        return LanSinh::create($ketQua);
     }
 
     /** Da co dong moc cho loai ban chua (phan biet "chua co" voi moc da luu = 0). */
