@@ -22,6 +22,10 @@ class TheBhyt
      */
     public static function nhom(array $ptas, $sapThe)
     {
+        // DLL nhan PTA theo ID tang (nguon nap theo LOG_TIME giam dan); OrderBy on dinh nen the trung giu dong ID nho
+        $ptas = GiaTriBang::sapOnDinh($ptas, function ($a, $b) {
+            return (int) $a->id - (int) $b->id;
+        });
         $sap = (string) $sapThe === '1' ? GiaTriBang::sapOnDinh($ptas, function ($a, $b) {
             return PtaChinh::giamDan($a, $b);
         }) : GiaTriBang::sapOnDinh($ptas, function ($a, $b) {

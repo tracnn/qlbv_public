@@ -184,6 +184,19 @@ class Xml1DungTest extends TestCase
         $this->assertSame('20260601;20260101', $r['GT_THE_TU']);
     }
 
+    public function test_the_trung_giu_dong_id_nho_nhu_dll()
+    {
+        // Hai PTA cung the: nguon nap theo LOG_TIME giam dan, DLL nhan theo ID tang roi g.First()
+        $the = [
+            $this->the(['id' => 6, 'log_time' => 20261005153600, 'join_5_year_time' => null]),
+            $this->the(['id' => 5, 'log_time' => 20261005151300, 'join_5_year_time' => 20210126000000]),
+        ];
+        $r = $this->dung($this->du([], $the));
+
+        $this->assertSame('20210126', $r['NAM_NAM_LIEN_TUC']);
+        $this->assertSame('DN4010000000001', $r['MA_THE_BHYT']);
+    }
+
     public function test_ma_benh_yhct_tach_va_bo_trung()
     {
         $r = $this->dung($this->du([
