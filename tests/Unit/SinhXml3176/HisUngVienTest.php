@@ -276,12 +276,28 @@ class HisUngVienTest extends TestCase
         $this->assertSame([], $this->maLo($h->layLo(CauHinhSinhXml3176::THONG_TUYEN, 0, 10)));
 
         // Cua so rong hon (cau hinh) thi lay them ho so cu
-        $h2 = $this->datCauHinh([]);
         config(['sinh_xml3176.cua_so_ra_vien_ngay' => 1000]);
         $h2 = new HisUngVien(CauHinhSinhXml3176::tuConfig());
         $h2->datHomNay($this->homNay('2026-03-10'));
         $h2->doiMa();
         $this->assertSame(['TRONG', 'NGOAI'], $this->maLo($h2->layLo(CauHinhSinhXml3176::CHINH_THUC, 0, 10)));
+    }
+
+    public function test_hom_nay_chung_ap_cho_instance_khong_ghi_de()
+    {
+        $this->them(['treatment_code' => 'X', 'fee_lock_time' => 20261001110000, 'out_time' => 20261001100000, 'modify_time' => 20261001110000]);
+        try {
+            HisUngVien::$homNayChung = new \DateTime('2026-10-10');
+            $h = $this->datCauHinh([]);
+            $h->doiMa();
+            $this->assertSame(['X'], $this->maLo($h->layLo(CauHinhSinhXml3176::CHINH_THUC, 0, 10)));
+
+            // Ngay 2027-01-01: ho so ra vien 01/10/2026 nam ngoai cua so 60 ngay
+            HisUngVien::$homNayChung = new \DateTime('2027-01-01');
+            $this->assertSame([], $this->maLo($h->layLo(CauHinhSinhXml3176::CHINH_THUC, 0, 10)));
+        } finally {
+            HisUngVien::$homNayChung = null;
+        }
     }
 
     public function test_chay_bu_theo_ngay_van_dung_fee_lock_time()

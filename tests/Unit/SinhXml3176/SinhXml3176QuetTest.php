@@ -40,12 +40,15 @@ class SinhXml3176QuetTest extends TestCase
         (new TheoDoiSinh())->datMoc(CauHinhSinhXml3176::CHINH_THUC, self::MOC_GOC);
         (new TheoDoiSinh())->datMoc(CauHinhSinhXml3176::THONG_TUYEN, self::MOC_GOC);
         $this->memoryLimitCu = ini_get('memory_limit');
+        // Duong lenh tu tao HisUngVien: ghim hom nay de cua so out_time khong troi theo dong ho that
+        HisUngVien::$homNayChung = new \DateTime('2026-10-10 12:00:00');
     }
 
     private $memoryLimitCu;
 
     protected function tearDown()
     {
+        HisUngVien::$homNayChung = null;
         ini_set('memory_limit', $this->memoryLimitCu);
         Cache::forget(SinhXml3176Quet::KHOA_LUOT);
         $this->xoaThuMuc($this->goc);

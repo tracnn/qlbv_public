@@ -14,6 +14,9 @@ class HisUngVien
     /** Cot moc cua luot quet (chay bu theo ngay dung cotMoc). */
     const COT_QUET = 'modify_time';
 
+    /** Moc "hom nay" dung chung (chi test dat; null = gio he thong). Phuc vu duong lenh tu tao HisUngVien. */
+    public static $homNayChung;
+
     private $homNay;
     private $cauHinh;
     private $daDoiMa = false;
@@ -55,6 +58,7 @@ class HisUngVien
      *   vi HIS_TREATMENT co chi muc OUT_TIME va FEE_LOCK_TIME, khong co chi muc MODIFY_TIME.
      * - $theoNgay = true (chay bu --tu-ngay): moc la fee_lock_time (chinh thuc) hoac out_time (thong tuyen), khong cua so.
      * sauId = 0 => lay ca dong dung bang tuMoc.
+     * Ghi chu: khong COALESCE modify_time; da kiem tren HIS that 23/10/2026: 0/354.845 ho so ra vien 60 ngay gan nhat co MODIFY_TIME NULL.
      *
      * @param int|null $denMoc chan tren (gom ca bang), null = khong chan
      * @return \stdClass[] {id, treatment_code, fee_lock_time, out_time, modify_time}
@@ -93,7 +97,8 @@ class HisUngVien
     /** out_time nho nhat con quet: hom nay 00:00 tru cuaSoRaVienNgay ngay, dang yyyyMMddHHmmss. */
     private function mocCuaSoRaVien()
     {
-        $t = $this->homNay !== null ? clone $this->homNay : new \DateTime();
+        $goc = $this->homNay !== null ? $this->homNay : self::$homNayChung;
+        $t = $goc !== null ? clone $goc : new \DateTime();
         $t->setTime(0, 0, 0);
         $t->modify('-' . $this->cauHinh->cuaSoRaVienNgay() . ' days');
 
