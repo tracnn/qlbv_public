@@ -323,6 +323,10 @@ class Xml7Xml8DungTest extends TestCase
         $this->assertSame('Viem phoi;kem', $this->x8(['icd_name' => 'Viem phoi', 'icd_text' => 'kem'])['CHAN_DOAN_RV']);
         $this->assertSame('kem', $this->x7(['icd_name' => null, 'icd_text' => 'kem'])['CHAN_DOAN_RV']);
         $this->assertSame('', $this->x7(['icd_name' => null, 'icd_text' => null])['CHAN_DOAN_RV']);
+        // ICD_TEXT co ';' o dau/cuoi (nhu du lieu that): khong ra ';;', cung cach XML1
+        $this->assertSame('Viem phoi;kem;ho', $this->x7(['icd_name' => 'Viem phoi;', 'icd_text' => ';kem;ho;'])['CHAN_DOAN_RV']);
+        $this->assertSame('Viem phoi;kem', $this->x8(['icd_name' => 'Viem phoi', 'icd_text' => ' ; kem'])['CHAN_DOAN_RV']);
+        $this->assertSame('', $this->x7(['icd_name' => ';', 'icd_text' => ';'])['CHAN_DOAN_RV']);
     }
 
     public function test_xml8_cac_truong_con_lai()

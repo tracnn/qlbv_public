@@ -15,10 +15,11 @@ class RaVienChung
      * ICD_NAME + ";" + ICD_TEXT.
      * Sua loi DLL [AX]:892 (XML7), [AX]:979 (XML8): ICD_TEXT null/rong thi khong them ';' thua o cuoi
      * (DLL them ';' sau ICD_NAME roi noi ICD_TEXT null). ICD_NAME rong chi con ICD_TEXT, khong ';' dau.
+     * Hai phan bo ' ;' o hai dau truoc khi noi (nhu XML1 [AX]:297): ICD_TEXT bat dau bang ';' khong ra ';;'.
      */
     public static function chanDoanRv($icdName, $icdText)
     {
-        return GiaTriBang::noi([$icdName === null || trim((string) $icdName) === '' ? null : $icdName, $icdText]);
+        return GiaTriBang::noi([trim(GiaTriBang::chu($icdName), ' ;'), trim(GiaTriBang::chu($icdText), ' ;')]);
     }
 
     /** FATHER_NAME co gia tri (khong chi khoang trang) thi lay, khong thi nguoi than khi quan he la cha/bo. */

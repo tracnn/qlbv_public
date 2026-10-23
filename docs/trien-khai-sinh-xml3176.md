@@ -488,6 +488,7 @@ theo đúng tỷ lệ đã xuất. DLL dùng `Math.Round` mặc định (banker'
 
 | Bảng/trường | HIS làm gì | Module làm gì | Căn cứ | Trạng thái |
 |---|---|---|---|---|
+| XML7, XML8, XML13, XML14 CHAN_DOAN_RV khi ICD_NAME/ICD_TEXT có `;` ở đầu hoặc cuối | Nối nguyên văn, ra `;;` | Bỏ `;` và khoảng trắng hai đầu mỗi phần rồi mới nối, như XML1 (`RaVienChung::chanDoanRv`); trước bản sửa này module cũng ra `;;` | đo 23/10 (hồ sơ ra viện 22/10) | đã sửa |
 | XML7 CHAN_DOAN_RV | `ICD_NAME + ";" + ICD_TEXT`, ICD_TEXT rỗng thì thừa `;` cuối | Không thêm `;` thừa (`RaVienChung::chanDoanRv`). Đo Đợt 3: 4/25 hồ sơ lệch đúng chỗ này | [AX]:892 | đã sửa |
 | XML7 SO_NGAY_NGHI khi ngày nghỉ ngoại trú không hợp lệ | `.Value` trên null ném lỗi, mất cả XML7 | `0` | [AX]:875 | đã sửa |
 | XML7 SO_NGAY_NGHI | `(đến − từ)` theo ngày, không cộng 1 | Như DLL | [AX]:891 | cần xác nhận |
@@ -598,6 +599,7 @@ giữ DESCRIPTION rỗng như HIS thì khớp **81/81** tờ có PTTT. Hai ekip 
 | Bảng/trường | HIS làm gì | Module làm gì | Căn cứ | Trạng thái |
 |---|---|---|---|---|
 | STT (XML2, XML3, XML4); XML3 NGUOI_THUC_HIEN có ekip; XML5 PHAU_THUAT | Theo thứ tự ROWID của câu truy vấn không `ORDER BY` | Theo `ID` (ổn định, không phụ thuộc cách Oracle lưu dòng) | đo Đợt 2 | cần xác nhận (muốn khớp HIS thì sắp `dichVu` và `ekip` theo ROWID khi nạp; ROWID có thể đổi khi DBA tổ chức lại bảng) |
+| XML1 NAM_NAM_LIEN_TUC, NGAY_MIEN_CCT, MA_KHUVUC khi có nhiều PTA cùng thẻ (cùng số thẻ, nơi ĐKBĐ, từ ngày, đến ngày); cùng cách gộp ở XML13, XML14 | Sắp theo HEIN_CARD_FROM_TIME/TO_TIME (ổn định) rồi `g.First()` mỗi thẻ; thứ tự PTA đầu vào không theo `ID`, `LOG_TIME` hay `MODIFY_TIME` (giống ROWID) | Sắp PTA theo `ID` tăng trước khi gộp (`TheBhyt::nhom`, 39fd5506), nên giữ dòng `ID` nhỏ | đo 23/10 trên 1814 hồ sơ ra viện 22/10: 5 hồ sơ có hai PTA cùng thẻ, chỉ dòng `ID` nhỏ có JOIN_5_YEAR_TIME; HIS có ngày ở 3 hồ sơ, để trống ở 2; module có ngày ở cả 5 | cần xác nhận |
 
 ## Nghiệm thu Đợt 2 (22/10/2026)
 
