@@ -569,6 +569,11 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('fetch-data', 'BHYT\SinhXml3176Controller@fetchData')->name('bhyt.sinh-xml3176.fetch-data');
         Route::get('ho-so/{treatmentId}', 'BHYT\SinhXml3176Controller@lichSu')
             ->where('treatmentId', '[0-9]+')->name('bhyt.sinh-xml3176.lich-su');
+        Route::get('lan/{id}/xem', 'BHYT\SinhXml3176Controller@xem')
+            ->where('id', '[0-9]+')->name('bhyt.sinh-xml3176.xem');
+        Route::get('lan/{id}/tai', 'BHYT\SinhXml3176Controller@tai')
+            ->where('id', '[0-9]+')->name('bhyt.sinh-xml3176.tai');
+        Route::get('so-sanh', 'BHYT\SinhXml3176Controller@soSanh')->name('bhyt.sinh-xml3176.so-sanh');
     });
 
     /* Hồ sơ BHYT */

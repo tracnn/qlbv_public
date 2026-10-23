@@ -50,9 +50,26 @@ class DocTepGiamDinhTest extends TestCase
         $this->assertArrayNotHasKey('XML1', $kq['loi']);
     }
 
-    public function test_tep_hong_khong_nem()
+    public function test_tep_hong_khong_nem_va_bao_loi_tep()
     {
         $kq = (new DocTepGiamDinh())->doc('khong phai xml');
-        $this->assertSame(['bang' => [], 'loi' => []], $kq);
+        $this->assertSame([], $kq['bang']);
+        $this->assertSame([], $kq['tho']);
+        $this->assertSame(['TEP'], array_keys($kq['loi']));
+        $this->assertNotSame('', $kq['loi']['TEP']);
+    }
+
+    public function test_tep_rong_cung_bao_loi_tep()
+    {
+        $kq = (new DocTepGiamDinh())->doc('');
+        $this->assertArrayHasKey('TEP', $kq['loi']);
+    }
+
+    public function test_tra_xml_tho_tung_bang()
+    {
+        $xml1 = '<XML1><MA_LK>LK1</MA_LK></XML1>';
+        $kq = (new DocTepGiamDinh())->doc($this->tep([$this->fileHoSo('XML1', base64_encode($xml1))]));
+        $this->assertSame($xml1, $kq['tho']['XML1']);
+        $this->assertArrayNotHasKey('TEP', $kq['loi']);
     }
 }

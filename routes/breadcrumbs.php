@@ -29,6 +29,18 @@ Breadcrumbs::register('bhyt.sinh-xml3176.lich-su', function ($breadcrumbs, $maDi
     $breadcrumbs->push('Hồ sơ ' . $maDieuTri, route('bhyt.sinh-xml3176.lich-su', ['treatmentId' => $treatmentId]));
 });
 
+// Home > Theo dõi sinh XML3176 > Hồ sơ > Xem XML
+Breadcrumbs::register('bhyt.sinh-xml3176.xem', function ($breadcrumbs, $maDieuTri, $treatmentId, $id) {
+    $breadcrumbs->parent('bhyt.sinh-xml3176.lich-su', $maDieuTri, $treatmentId);
+    $breadcrumbs->push('Xem XML', route('bhyt.sinh-xml3176.xem', ['id' => $id]));
+});
+
+// Home > Theo dõi sinh XML3176 > Hồ sơ > So hai lần sinh
+Breadcrumbs::register('bhyt.sinh-xml3176.so-sanh', function ($breadcrumbs, $maDieuTri, $treatmentId) {
+    $breadcrumbs->parent('bhyt.sinh-xml3176.lich-su', $maDieuTri, $treatmentId);
+    $breadcrumbs->push('So hai lần sinh', url()->full());
+});
+
 // Home > Nhập thẻ BHYT
 Breadcrumbs::register('insurance-card.add-new', function ($breadcrumbs) {
 	$breadcrumbs->parent('home');

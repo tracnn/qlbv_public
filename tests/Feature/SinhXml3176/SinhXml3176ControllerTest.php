@@ -270,4 +270,221 @@ class SinhXml3176ControllerTest extends TestCase
     {
         $this->actingAs(UserGiaCoQuyen::tao())->get('/bhyt/sinh-xml3176/ho-so/999')->assertStatus(404);
     }
+
+    /** Tep GIAMDINHHS tu map loai => XML con (chuoi); $hong: loai => chuoi tho dung lam NOIDUNGFILE (hong). */
+    private function giamDinh(array $bang, array $hong = [])
+    {
+        $f = '';
+        foreach ($bang as $loai => $xml) {
+            $f .= '<FILEHOSO><LOAIHOSO>' . $loai . '</LOAIHOSO><NOIDUNGFILE>' . base64_encode($xml) . '</NOIDUNGFILE></FILEHOSO>';
+        }
+        foreach ($hong as $loai => $raw) {
+            $f .= '<FILEHOSO><LOAIHOSO>' . $loai . '</LOAIHOSO><NOIDUNGFILE>' . $raw . '</NOIDUNGFILE></FILEHOSO>';
+        }
+
+        return '<?xml version="1.0" encoding="utf-8"?><GIAMDINHHS><THONGTINHOSO><DANHSACHHOSO><HOSO>' . $f
+            . '</HOSO></DANHSACHHOSO></THONGTINHOSO></GIAMDINHHS>';
+    }
+
+    private function xml2(array $dong)
+    {
+        $x = '<CHITIEU_CHITIET_THUOC>';
+        foreach ($dong as $d) {
+            $x .= '<CHI_TIET_THUOC>';
+            foreach ($d as $k => $v) {
+                $x .= '<' . $k . '>' . htmlspecialchars($v, ENT_XML1) . '</' . $k . '>';
+            }
+            $x .= '</CHI_TIET_THUOC>';
+        }
+
+        return $x . '</CHITIEU_CHITIET_THUOC>';
+    }
+
+    private function xem($id)
+    {
+        return $this->actingAs(UserGiaCoQuyen::tao())->get('/bhyt/sinh-xml3176/lan/' . $id . '/xem');
+    }
+
+    /** @test */
+    public function test_xem_hien_cac_bang_va_xml_tho()
+    {
+        $noiDung = $this->giamDinh([
+            'XML1' => '<XML1><MA_LK>LK1</MA_LK><HO_TEN>Nguyen &lt;b&gt;Van&lt;/b&gt; A</HO_TEN></XML1>',
+            'XML2' => $this->xml2([
+                ['MA_LK' => 'LK1', 'MA_THUOC' => 'T1', 'NGAY_YL' => '202610200800'],
+                ['MA_LK' => 'LK1', 'MA_THUOC' => 'T2', 'NGAY_YL' => '202610210800'],
+            ]),
+        ]);
+        $d = $this->dong(5, ['tep_luu' => $this->tepLuu('5_a.xml', $noiDung)]);
+
+        $html = $this->xem($d->id)->assertStatus(200)->getContent();
+        $this->assertContains('XML1', $html);
+        $this->assertContains('XML2', $html);
+        $this->assertContains('MA_THUOC', $html);
+        $this->assertContains('T2', $html);
+        // Nhom theo 8 ky tu dau NGAY_YL: mot tab con moi ngay
+        $this->assertContains('20261020', $html);
+        $this->assertContains('20261021', $html);
+        // Gia tri va XML tho deu duoc thoat
+        $this->assertContains('XML thô', $html);
+        $this->assertNotContains('<b>Van</b>', $html);
+        $this->assertNotContains('<XML1>', $html);
+        $this->assertContains('&lt;XML1&gt;', $html);
+        $this->assertContains('/bhyt/sinh-xml3176/lan/' . $d->id . '/tai', $html);
+    }
+
+    /** @test */
+    public function test_xem_tep_mat_bao_khong_con_tren_dia()
+    {
+        $d = $this->dong(6, ['tep_luu' => $this->tepLuu('khong_co.xml')]);
+        $this->assertContains('tệp không còn trên đĩa', $this->xem($d->id)->assertStatus(200)->getContent());
+
+        $d2 = $this->dong(7);
+        $this->assertContains('không có XML lưu trữ', $this->xem($d2->id)->assertStatus(200)->getContent());
+
+        $d3 = $this->dong(8, ['tep_luu' => '..\\..\\x.xml']);
+        $this->xem($d3->id)->assertStatus(200);
+
+        $d4 = $this->dong(9, ['tep_luu' => $this->tepLuu('y.xml', '<x/>'), 'xoa_luu_luc' => '2026-10-21 00:00:00']);
+        $this->assertContains('đã xoá', $this->xem($d4->id)->assertStatus(200)->getContent());
+    }
+
+    /** @test */
+    public function test_xem_bang_hong_bao_loi_tab_do_cac_tab_khac_van_hien()
+    {
+        $noiDung = $this->giamDinh(
+            ['XML1' => '<XML1><MA_LK>LKOK</MA_LK></XML1>'],
+            ['XML2' => '!!!khong phai base64!!!']
+        );
+        $d = $this->dong(10, ['tep_luu' => $this->tepLuu('10.xml', $noiDung)]);
+
+        $html = $this->xem($d->id)->assertStatus(200)->getContent();
+        $this->assertContains('LKOK', $html);
+        $this->assertContains('Không giải mã được', $html);
+        $this->assertContains('tab-loi', $html);
+
+        $d2 = $this->dong(11, ['tep_luu' => $this->tepLuu('11.xml', 'khong phai xml')]);
+        $this->assertContains('Tệp lưu trữ không đọc được', $this->xem($d2->id)->assertStatus(200)->getContent());
+    }
+
+    /** @test */
+    public function test_tai_tep_ten_goc()
+    {
+        $d = $this->dong(12, ['tep_luu' => $this->tepLuu('12_QLBV_HS12.xml', '<x/>')]);
+        $res = $this->actingAs(UserGiaCoQuyen::tao())->get('/bhyt/sinh-xml3176/lan/' . $d->id . '/tai');
+        $res->assertStatus(200);
+        $cd = $res->baseResponse->headers->get('content-disposition');
+        $this->assertContains('QLBV_HS12.xml', $cd);
+        $this->assertNotContains('12_QLBV_HS12.xml', $cd);
+        $this->assertContains('attachment', $cd);
+    }
+
+    /** @test */
+    public function test_tai_tep_luu_bi_sua_duong_404()
+    {
+        $ngoai = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'ngoai_goc_' . uniqid() . '.xml';
+        file_put_contents($ngoai, '<x/>');
+        try {
+            foreach (['..\\' . basename($ngoai), '../' . basename($ngoai), $ngoai, 'khong_co\\x.xml'] as $i => $tepLuu) {
+                $d = $this->dong(20 + $i, ['tep_luu' => $tepLuu]);
+                $this->actingAs(UserGiaCoQuyen::tao())
+                    ->get('/bhyt/sinh-xml3176/lan/' . $d->id . '/tai')->assertStatus(404);
+            }
+            $this->actingAs(UserGiaCoQuyen::tao())->get('/bhyt/sinh-xml3176/lan/99999/tai')->assertStatus(404);
+            $da = $this->dong(30, ['tep_luu' => $this->tepLuu('x.xml', '<x/>'), 'xoa_luu_luc' => '2026-10-21 00:00:00']);
+            $this->actingAs(UserGiaCoQuyen::tao())->get('/bhyt/sinh-xml3176/lan/' . $da->id . '/tai')->assertStatus(404);
+        } finally {
+            @unlink($ngoai);
+        }
+    }
+
+    /** @test */
+    public function test_so_sanh_chi_ra_truong_khac()
+    {
+        $a = $this->dong(40, ['tep_luu' => $this->tepLuu('40a.xml', $this->giamDinh([
+            'XML1' => '<XML1><MA_LK>LK40</MA_LK><HO_TEN>CuA</HO_TEN></XML1>',
+            'XML2' => $this->xml2([
+                ['MA_LK' => 'LK40', 'MA_THUOC' => 'T1', 'NGAY_YL' => '20261020', 'SO_LUONG' => '1'],
+                ['MA_LK' => 'LK40', 'MA_THUOC' => 'T9', 'NGAY_YL' => '20261020', 'SO_LUONG' => '1'],
+            ]),
+        ]))]);
+        $b = $this->dong(40, ['tep_luu' => $this->tepLuu('40b.xml', $this->giamDinh([
+            'XML1' => '<XML1><MA_LK>LK40</MA_LK><HO_TEN>CuB</HO_TEN></XML1>',
+            'XML2' => $this->xml2([
+                ['MA_LK' => 'LK40', 'MA_THUOC' => 'T1', 'NGAY_YL' => '20261020', 'SO_LUONG' => '1'],
+                ['MA_LK' => 'LK40', 'MA_THUOC' => 'T5', 'NGAY_YL' => '20261020', 'SO_LUONG' => '1'],
+            ]),
+            'XML3' => '<CHITIEU_CHITIET_DVKT_VTYT><CHI_TIET_DVKT><MA_LK>LK40</MA_LK><MA_DICH_VU>D1</MA_DICH_VU></CHI_TIET_DVKT></CHITIEU_CHITIET_DVKT_VTYT>',
+        ]))]);
+
+        $res = $this->actingAs(UserGiaCoQuyen::tao())->get('/bhyt/sinh-xml3176/so-sanh?a=' . $a->id . '&b=' . $b->id);
+        $html = $res->assertStatus(200)->getContent();
+        $this->assertContains('HO_TEN', $html);
+        $this->assertContains('CuA', $html);
+        $this->assertContains('CuB', $html);
+        $this->assertContains('chỉ có ở lần A', $html);
+        $this->assertContains('chỉ có ở lần B', $html);
+        $this->assertContains('LK40|T9|20261020', $html);
+        $this->assertContains('LK40|T5|20261020', $html);
+        // XML3 chi co o B: dong cua no la chi_co_b
+        $this->assertContains('LK40|D1||', $html);
+        $this->assertNotContains('khác loại bản', $html);
+    }
+
+    /** @test */
+    public function test_so_sanh_bang_giong_nhau_va_khac_loai_ban()
+    {
+        $nd = $this->giamDinh(['XML1' => '<XML1><MA_LK>LK41</MA_LK></XML1>']);
+        $a = $this->dong(41, ['tep_luu' => $this->tepLuu('41a.xml', $nd)]);
+        $b = $this->dong(41, ['loai_ban' => 'thong_tuyen', 'tep_luu' => $this->tepLuu('41b.xml', $nd)]);
+        $html = $this->actingAs(UserGiaCoQuyen::tao())
+            ->get('/bhyt/sinh-xml3176/so-sanh?a=' . $a->id . '&b=' . $b->id)->assertStatus(200)->getContent();
+        $this->assertContains('giống nhau', $html);
+        $this->assertContains('khác loại bản', $html);
+    }
+
+    /** @test */
+    public function test_so_sanh_khac_ho_so_422()
+    {
+        $a = $this->dong(50, ['tep_luu' => $this->tepLuu('50.xml', '<x/>')]);
+        $b = $this->dong(51, ['tep_luu' => $this->tepLuu('51.xml', '<x/>')]);
+        $this->actingAs(UserGiaCoQuyen::tao())
+            ->get('/bhyt/sinh-xml3176/so-sanh?a=' . $a->id . '&b=' . $b->id)->assertStatus(422);
+        $this->actingAs(UserGiaCoQuyen::tao())->get('/bhyt/sinh-xml3176/so-sanh?a=abc&b=1')->assertStatus(422);
+        $this->actingAs(UserGiaCoQuyen::tao())->get('/bhyt/sinh-xml3176/so-sanh?a=99998&b=99999')->assertStatus(404);
+    }
+
+    /** @test */
+    public function test_so_sanh_tep_mat_hien_thong_bao()
+    {
+        $a = $this->dong(52, ['tep_luu' => $this->tepLuu('52a.xml', '<x/>')]);
+        $b = $this->dong(52, ['tep_luu' => $this->tepLuu('52b.xml')]);
+        $res = $this->actingAs(UserGiaCoQuyen::tao())->get('/bhyt/sinh-xml3176/so-sanh?a=' . $a->id . '&b=' . $b->id);
+        $this->assertContains('tệp không còn trên đĩa', $res->assertStatus(200)->getContent());
+    }
+
+    /** @test */
+    public function test_xem_xml2_1000_dong_nhom_theo_ngay_duoi_3_giay()
+    {
+        $dong = [];
+        for ($i = 0; $i < 1000; $i++) {
+            $dong[] = [
+                'MA_LK' => 'LK60', 'MA_THUOC' => 'T' . $i,
+                'NGAY_YL' => '2026102' . ($i % 5) . '0800', 'SO_LUONG' => '1',
+            ];
+        }
+        $d = $this->dong(60, ['tep_luu' => $this->tepLuu('60.xml', $this->giamDinh(['XML2' => $this->xml2($dong)]))]);
+
+        $t0 = microtime(true);
+        $res = $this->xem($d->id)->assertStatus(200);
+        $giay = microtime(true) - $t0;
+
+        $html = $res->getContent();
+        $this->assertLessThan(3.0, $giay, 'Trang xem 1000 dong phai duoi 3 giay, thuc te ' . $giay);
+        for ($n = 0; $n < 5; $n++) {
+            $this->assertContains('2026102' . $n, $html);
+        }
+        $this->assertContains('T999', $html);
+        $this->assertSame(5, substr_count($html, 'data-nhom-ngay='));
+    }
 }

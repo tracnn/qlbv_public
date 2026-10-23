@@ -7,6 +7,8 @@ use App\Models\SinhXml3176\LanSinh;
 use App\Models\SinhXml3176\Moc;
 use App\Services\SinhXml3176\CauHinhSinhXml3176;
 use App\Services\SinhXml3176\LuuTruXml;
+use App\Services\SinhXml3176\SoSanh\DocTepGiamDinh;
+use App\Services\SinhXml3176\SoSanh\SoSanhBang;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -26,6 +28,9 @@ class SinhXml3176Controller extends Controller
     private static $cacKieuNgay = ['sinh', 'ra_vien', 'khoa_vp'];
     private static $cacTrangThai = ['da_ghi', 'bi_loai', 'loi'];
     private static $cacLoaiBan = [CauHinhSinhXml3176::CHINH_THUC, CauHinhSinhXml3176::THONG_TUYEN];
+
+    /** Bang nhieu dong chia tab con theo 8 ky tu dau cua truong ngay nay. */
+    private static $truongNgayNhom = ['XML2' => 'NGAY_YL', 'XML3' => 'NGAY_YL', 'XML4' => 'NGAY_KQ'];
 
     public function index()
     {
@@ -149,9 +154,9 @@ class SinhXml3176Controller extends Controller
                 'dong'         => $d,
                 'tinh_trang'   => $trangThaiXml,
                 'thu_muc_loai' => $this->loaiThuMuc($cauHinh, $d->thu_muc),
-                'url_xem'      => $coXem ? url('bhyt/sinh-xml3176/lan/' . $d->id . '/xem') : null,
+                'url_xem'      => $coXem ? route('bhyt.sinh-xml3176.xem', ['id' => $d->id]) : null,
                 'url_so_sanh'  => $soSanh !== null
-                    ? url('bhyt/sinh-xml3176/so-sanh') . '?a=' . $soSanh . '&b=' . $d->id : null,
+                    ? route('bhyt.sinh-xml3176.so-sanh', ['a' => $soSanh, 'b' => $d->id]) : null,
             ];
         }
 
@@ -160,6 +165,210 @@ class SinhXml3176Controller extends Controller
             'treatmentCode' => $cacDong->last()->treatment_code,
             'hang'          => $hang,
         ]);
+    }
+
+    /** Xem XML luu tru cua mot lan sinh: moi bang mot tab (bang co cot), them tab XML tho. */
+    public function xem($id)
+    {
+        $dong = LanSinh::find((int) $id);
+        if ($dong === null) {
+            abort(404);
+        }
+        $luuTru = new LuuTruXml(CauHinhSinhXml3176::tuConfig()->thuMucLuu());
+        $nap = $this->napLan($dong, $luuTru);
+
+        return view('bhyt.sinh-xml3176.xem', [
+            'dong'      => $dong,
+            'tinhTrang' => $nap['tinh_trang'],
+            'loiTep'    => $nap['loi_tep'],
+            'cacTab'    => $nap['tab'],
+            'urlTai'    => $nap['tinh_trang'] === 'co' ? route('bhyt.sinh-xml3176.tai', ['id' => $dong->id]) : null,
+            'urlLichSu' => route('bhyt.sinh-xml3176.lich-su', ['treatmentId' => $dong->treatment_id]),
+        ]);
+    }
+
+    /** Tai tep luu tru voi ten goc ten_tep; duong khong hop le, tep mat, da xoa -> 404. */
+    public function tai($id)
+    {
+        $dong = LanSinh::find((int) $id);
+        if ($dong === null) {
+            abort(404);
+        }
+        $luuTru = new LuuTruXml(CauHinhSinhXml3176::tuConfig()->thuMucLuu());
+        if ($this->tinhTrangXml($dong, $luuTru) !== 'co') {
+            abort(404);
+        }
+        $duong = $luuTru->duongTuyetDoi($dong->tep_luu);
+        if ($duong === null || !is_file($duong)) {
+            abort(404);
+        }
+        $ten = basename(str_replace('\\', '/', (string) $dong->ten_tep));
+        if ($ten === '' || $ten === '.' || $ten === '..') {
+            $ten = 'sinh_xml3176_' . $dong->id . '.xml';
+        }
+
+        return response()->download($duong, $ten, ['Content-Type' => 'application/xml']);
+    }
+
+    /** So hai lan sinh cung ho so, theo tung bang. */
+    public function soSanh(Request $request)
+    {
+        $a = (string) $request->query('a', '');
+        $b = (string) $request->query('b', '');
+        if (!ctype_digit($a) || !ctype_digit($b)) {
+            abort(422, 'Tham số a và b phải là mã hai lần sinh.');
+        }
+        $lanA = LanSinh::find((int) $a);
+        $lanB = LanSinh::find((int) $b);
+        if ($lanA === null || $lanB === null) {
+            abort(404);
+        }
+        if ((int) $lanA->treatment_id !== (int) $lanB->treatment_id) {
+            abort(422, 'Hai lần sinh phải thuộc cùng một hồ sơ.');
+        }
+        if ((int) $lanA->id === (int) $lanB->id) {
+            abort(422, 'Hãy chọn hai lần sinh khác nhau.');
+        }
+
+        $luuTru = new LuuTruXml(CauHinhSinhXml3176::tuConfig()->thuMucLuu());
+        $napA = $this->napLan($lanA, $luuTru);
+        $napB = $this->napLan($lanB, $luuTru);
+
+        $ketQua = [];
+        if ($napA['doc'] !== null && $napB['doc'] !== null && $napA['loi_tep'] === null && $napB['loi_tep'] === null) {
+            $coMat = array_merge(array_keys($napA['doc']['bang']), array_keys($napA['doc']['loi']),
+                array_keys($napB['doc']['bang']), array_keys($napB['doc']['loi']));
+            foreach (array_keys(SoSanhBang::CAC_BANG) as $loai) {
+                if (!in_array($loai, $coMat, true)) {
+                    continue;
+                }
+                $loiA = isset($napA['doc']['loi'][$loai]) ? $this->chuLoiBang($napA['doc']['loi'][$loai]) : null;
+                $loiB = isset($napB['doc']['loi'][$loai]) ? $this->chuLoiBang($napB['doc']['loi'][$loai]) : null;
+                $dongA = isset($napA['doc']['bang'][$loai]) ? $napA['doc']['bang'][$loai] : [];
+                $dongB = isset($napB['doc']['bang'][$loai]) ? $napB['doc']['bang'][$loai] : [];
+                $muc = [];
+                if ($loiA === null && $loiB === null) {
+                    // Bang chi co o mot ben: so voi ben kia rong thi moi dong la chi_co_*
+                    $muc = SoSanhBang::so($loai, $dongA, $dongB);
+                }
+                $ketQua[$loai] = [
+                    'loi_a' => $loiA,
+                    'loi_b' => $loiB,
+                    'chi_a' => !isset($napB['doc']['bang'][$loai]) && $loiB === null,
+                    'chi_b' => !isset($napA['doc']['bang'][$loai]) && $loiA === null,
+                    'nhom'  => $this->nhomTheoKhoa($muc),
+                ];
+            }
+        }
+
+        return view('bhyt.sinh-xml3176.so-sanh', [
+            'lanA'       => $lanA,
+            'lanB'       => $lanB,
+            'khacLoai'   => $lanA->loai_ban !== $lanB->loai_ban,
+            'tinhTrangA' => $napA['tinh_trang'],
+            'tinhTrangB' => $napB['tinh_trang'],
+            'loiTepA'    => $napA['loi_tep'],
+            'loiTepB'    => $napB['loi_tep'],
+            'ketQua'     => $ketQua,
+            'urlLichSu'  => route('bhyt.sinh-xml3176.lich-su', ['treatmentId' => $lanA->treatment_id]),
+        ]);
+    }
+
+    /**
+     * Doc ban sao cua mot lan sinh. 'tinh_trang' co|da_xoa|mat_tep|khong_co; 'doc' ket qua DocTepGiamDinh (khi doc duoc);
+     * 'loi_tep' thong diep neu chinh tep ngoai khong doc duoc; 'tab' du lieu tung bang cho view xem.
+     */
+    private function napLan(LanSinh $dong, LuuTruXml $luuTru)
+    {
+        $kq = ['tinh_trang' => $this->tinhTrangXml($dong, $luuTru), 'doc' => null, 'loi_tep' => null, 'tab' => []];
+        if ($kq['tinh_trang'] !== 'co') {
+            return $kq;
+        }
+        $noiDung = $luuTru->doc($dong);
+        if ($noiDung === null) {
+            // tep vua mat giua hai lan kiem tra
+            $kq['tinh_trang'] = 'mat_tep';
+
+            return $kq;
+        }
+        $doc = (new DocTepGiamDinh())->doc($noiDung);
+        $kq['doc'] = $doc;
+        if (isset($doc['loi']['TEP'])) {
+            $kq['loi_tep'] = 'Tệp lưu trữ không đọc được (không phải XML GIAMDINHHS hợp lệ).';
+
+            return $kq;
+        }
+        $kq['tab'] = $this->dungTab($doc);
+
+        return $kq;
+    }
+
+    /** Du lieu hien thi tung bang theo thu tu XML1..XML15: cot, dong (nhom theo ngay), XML tho, loi. */
+    private function dungTab(array $doc)
+    {
+        $cacTab = [];
+        foreach (array_keys(SoSanhBang::CAC_BANG) as $loai) {
+            $coBang = isset($doc['bang'][$loai]);
+            $coLoi = isset($doc['loi'][$loai]);
+            if (!$coBang && !$coLoi) {
+                continue;
+            }
+            $tab = [
+                'loai'    => $loai,
+                'loi'     => $coLoi ? $this->chuLoiBang($doc['loi'][$loai]) : null,
+                'phang'   => SoSanhBang::CAC_BANG[$loai][0] === null,
+                'cot'     => [],
+                'nhom'    => [],
+                'so_dong' => 0,
+                'tho'     => isset($doc['tho'][$loai]) ? $doc['tho'][$loai] : null,
+            ];
+            if ($coBang) {
+                $dong = $doc['bang'][$loai];
+                $tab['so_dong'] = count($dong);
+                $cot = [];
+                foreach ($dong as $d) {
+                    foreach (array_keys($d) as $k) {
+                        $cot[$k] = true;
+                    }
+                }
+                $tab['cot'] = array_keys($cot);
+                if (!$tab['phang'] && isset(self::$truongNgayNhom[$loai])) {
+                    $truong = self::$truongNgayNhom[$loai];
+                    foreach ($dong as $d) {
+                        $ngay = isset($d[$truong]) ? substr(trim($d[$truong]), 0, 8) : '';
+                        $tab['nhom'][$ngay][] = $d;
+                    }
+                    ksort($tab['nhom'], SORT_STRING);
+                } else {
+                    $tab['nhom'] = ['' => $dong];
+                }
+            }
+            $cacTab[] = $tab;
+        }
+
+        return $cacTab;
+    }
+
+    /** Cac muc so sanh gom theo khoa dong (giu thu tu): kieu va (neu khac) danh sach truong A -> B. */
+    private function nhomTheoKhoa(array $muc)
+    {
+        $nhom = [];
+        foreach ($muc as $m) {
+            $nhom[$m['khoa']]['kieu'] = $m['kieu'];
+            if ($m['kieu'] === 'khac') {
+                $nhom[$m['khoa']]['truong'][] = ['ten' => $m['truong'], 'a' => $m['a'], 'b' => $m['b']];
+            }
+        }
+
+        return $nhom;
+    }
+
+    /** Thong diep loi cua mot bang (DocTepGiamDinh khong dau) sang tieng Viet. */
+    private function chuLoiBang($loi)
+    {
+        return strpos((string) $loi, 'Khong giai ma') === 0
+            ? 'Không giải mã được NOIDUNGFILE của bảng này (base64 hỏng).'
+            : 'XML con của bảng này không đọc được.';
     }
 
     /** 'co' | 'da_xoa' | 'mat_tep' | 'khong_co' theo ban sao luu tru cua dong. */

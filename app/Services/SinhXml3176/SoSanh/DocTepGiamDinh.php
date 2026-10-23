@@ -13,13 +13,15 @@ class DocTepGiamDinh
     /**
      * @param string $noiDung noi dung tep GIAMDINHHS
      *
-     * @return array ['bang' => [loai => dong[]], 'loi' => [loai => thong diep]]
+     * @return array ['bang' => [loai => dong[]], 'loi' => [loai => thong diep], 'tho' => [loai => XML con nguyen van]]; loi['TEP'] khi chinh tep ngoai khong doc duoc
      */
     public function doc($noiDung)
     {
-        $kq = ['bang' => [], 'loi' => []];
+        $kq = ['bang' => [], 'loi' => [], 'tho' => []];
         $doc = new \DOMDocument();
         if (!is_string($noiDung) || $noiDung === '' || !@$doc->loadXML($noiDung, LIBXML_NONET)) {
+            $kq['loi']['TEP'] = 'Tep GIAMDINHHS rong hoac khong doc duoc.';
+
             return $kq;
         }
         foreach ($doc->getElementsByTagName('FILEHOSO') as $f) {
@@ -44,6 +46,7 @@ class DocTepGiamDinh
                 continue;
             }
             $kq['bang'][$loai] = $dong;
+            $kq['tho'][$loai] = $xml;
         }
 
         return $kq;
