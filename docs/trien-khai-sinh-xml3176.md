@@ -759,23 +759,42 @@ Chủ dự án làm trên máy chủ, ghi ngày và người kiểm vào biên b
 4. **`is_delete` NULL:** `select count(*) from v_his_treatment_12 where is_delete is null` ra `0`.
 5. **Migration bảng theo dõi** đã chạy trên máy chủ (các bảng `sinh_xml3176_*`).
 6. **`php artisan config:cache`** sau mọi thay đổi `config/organization.php` / `config/sinh_xml3176.php`.
-7. **`memory_limit` và kích thước lô** theo số đo Đợt 3 (lô 20 hồ sơ nội trú lớn 948MB; 10 hồ sơ 622MB; 5 hồ sơ 432MB).
-   Chọn một trong hai, dư ít nhất 1,5 lần mức đo:
-   - `kich_thuoc_lo = 10`, `memory_limit = '1024M'`; hoặc
-   - giữ `kich_thuoc_lo = 20`, `memory_limit = '1536M'`.
-
-   Mặc định trong `config/sinh_xml3176.php` nay là `kich_thuoc_lo = 5`, `memory_limit = '1024M'` (432MB đo được, dư ~2,4 lần).
-   Máy chủ phải còn đủ RAM trống cho mức đó. Quay lại 512M/20 thì một lô nội trú lớn làm lệnh chết và dịch vụ kẹt
-   (xem "Bộ nhớ và thời gian" ở trên). Máy chủ nên có `ext-intl` (XML13 TOMTAT_KQ đếm NFKD chính xác).
+7. **`memory_limit` và kích thước lô:** giữ mặc định `kich_thuoc_lo = 5`, `memory_limit = '1024M'` trong
+   `config/sinh_xml3176.php` (5 hồ sơ nội trú lớn đo được 432MB, dư ~2,4 lần). Máy chủ phải còn đủ RAM trống cho mức đó.
+   Chỉ nâng khi RAM cho phép, tính theo số đo Đợt 3 và dư ít nhất 1,5 lần: 10 hồ sơ 622MB (cần ≥ `'1024M'`),
+   20 hồ sơ 948MB (cần ≥ `'1536M'`). Quay lại 512M/20 thì một lô nội trú lớn làm lệnh chết và dịch vụ kẹt
+   (xem "Bộ nhớ và thời gian" ở trên). `ext-intl` chỉ là nên có: thiếu thì XML13 TOMTAT_KQ dùng cách đếm thay thế
+   (đã có test), không chặn việc bật.
 8. **Thông tuyến tắt** (`thong_tuyen = false`) cho tới khi đo xong độ trễ nhập `OUT_TIME` (mục "Kiểm trước khi bật thông tuyến").
 9. **Chạy song song với HIS:** máy trạm HIS vẫn đồng bộ như cũ. Tiền giám định giữ bản nạp sau cùng (bản vào sau thắng),
    nên thường bản HIS (sinh sau duyệt) đè bản module. Không tắt máy trạm HIS khi chưa có quyết định riêng.
 10. **Cách tắt nhanh:** đặt `enabled = false` trong khối `sinh_xml3176` rồi `php artisan config:cache`; dịch vụ thoát êm ở
     lượt kế tiếp. Nếu lệnh từng chết (Fatal error) thì gỡ khoá bằng `php artisan sinhxml3176:quet --go-khoa` khi chắc
     không còn tiến trình `sinhxml3176:quet` nào.
-11. **(Chưa làm, bắt buộc trước khi bật trên prod) B1 — tách `kich_thuoc_nap` khỏi cỡ trang:** `LuotQuet::xuLyLo` đang nạp
-    cả trang một lần (~35–40MB mỗi hồ sơ nội trú lớn). Thêm `kich_thuoc_nap` (mặc định 5), chia trang thành từng phần để
-    nạp; cỡ trang keyset giữ nguyên.
-12. **(Chưa làm, bắt buộc trước khi bật trên prod) B2 — hồ sơ chết một mình:** một hồ sơ nằm viện rất dài có thể tự vượt
-    giới hạn dù lô bằng 1, và hiện mốc không tiến nên lượt sau chết lại ở đúng hồ sơ đó. Cần ghi trạng thái `loi`
-    ("hết bộ nhớ") cho hồ sơ chết khi đứng một mình để mốc tiến; đến lúc đó phải theo dõi `Log::critical` của hàm shutdown.
+11. **(Tuỳ chọn, chưa làm) B1 — tách `kich_thuoc_nap` khỏi cỡ trang:** cỡ trang keyset và cỡ lô nạp hiện là một
+    (`duyetTrang` lấy đúng `kich_thuoc_lo` dòng, `xuLyLo` nạp cả trang), nên với mặc định 5 mỗi lần chỉ nạp 5 hồ sơ
+    (~35–40MB mỗi hồ sơ nội trú lớn). Chỉ cần B1 khi muốn trang keyset lớn để chạy nhanh hơn mà vẫn nạp từng phần nhỏ.
+12. **(Chưa làm) B2 — hồ sơ chết một mình:** một hồ sơ nằm viện rất dài có thể tự vượt `memory_limit` dù lô bằng 1
+    (với 1024M hiếm gặp). Khi đó mốc không tiến nên lượt sau chết lại đúng hồ sơ đó và dịch vụ kẹt lặp. Cần ghi trạng
+    thái `loi` ("hết bộ nhớ") cho hồ sơ chết khi đứng một mình để mốc tiến. **Chưa làm B2 thì tuần đầu sau khi bật phải
+    xem log hằng ngày**: có `Log::critical` của hàm shutdown thì đọc treatment id trong dòng log, xử lý hồ sơ đó
+    (nâng `memory_limit` hoặc chạy riêng) rồi `--go-khoa` nếu khoá còn.
+13. **Thử gỡ khoá khi chết ngay trên máy chủ:** hàm shutdown của Laravel chạy trước hàm của module và không có bộ nhớ
+    dự phòng, nên phải thử một lần. Đặt tạm `memory_limit` rất thấp (ví dụ `'64M'`) rồi `config:cache`, chạy
+    `php artisan sinhxml3176:quet --ma-dieu-tri=<một hồ sơ nội trú lớn>`; kiểm lệnh chết, có dòng `Log::critical` kèm
+    treatment id, và khoá đã nhả (lệnh chạy lại không báo "Mot luot sinhxml3176:quet khac dang chay"). Xong trả `memory_limit` về rồi `config:cache`.
+14. **Chạy thử trên máy chủ trước khi bật:** để `ghi_thu_muc_that = false` vài giờ cho dịch vụ ghi vào `thu_muc_thu`,
+    rồi `php artisan sinhxml3176:so-sanh --csdl --qlbv=<thu_muc_thu> --bang=XML1,…,XML15` với các hồ sơ HIS đã nạp vào
+    tiền giám định cùng thời gian; lệch phải nằm trong bảng "Khác biệt với HIS" thì mới chuyển sang `true`.
+15. **Thứ tự triển khai:** `git pull` → `php artisan migrate` (chỉ 2 bảng `sinh_xml3176_lan_sinh`, `sinh_xml3176_moc`)
+    → sửa khối `sinh_xml3176` trong `config/organization.php` → `php artisan config:cache` → cài hoặc khởi động lại
+    dịch vụ NSSM (mục "Cài dịch vụ"). Chỉ chạy đúng MỘT bản dịch vụ.
+16. **Quyền ghi:** tài khoản chạy dịch vụ NSSM phải ghi được vào `thu_muc` (`D:\XML\3176`), `thu_muc_tt`
+    (`D:\XML\3176TT`), `thu_muc_thu` và thư mục tạm `.sinh_xml3176_tmp` cạnh chúng.
+17. **Mốc đầu và chạy bù:** lần chạy đầu mốc đặt bằng thời điểm hiện tại (mục "Lần chạy đầu"), hồ sơ trước lúc bật
+    không được sinh. Quyết trước khoảng ngày cần chạy bù `--tu-ngay/--den-ngay` và ghi vào biên bản.
+18. **XML6, XML10, XML15 chưa nghiệm thu bằng dữ liệu thật** (lúc nghiệm thu HIS không có hồ sơ phù hợp). Hồ sơ thật
+    đầu tiên của mỗi loại phải soát tay với bản HIS (`so-sanh --csdl --bang=XML6,XML10,XML15`).
+
+Không chặn việc bật (còn chờ chủ dự án quyết từ Đợt 2): số thập phân theo culture vi-VN ("36,50") và thứ tự STT theo
+ROWID của HIS.
