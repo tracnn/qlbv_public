@@ -3,7 +3,10 @@
 @section('title', 'So hai lần sinh XML3176')
 
 @section('content_header')
-<h1>So hai lần sinh <small>hồ sơ {{ $lanA->treatment_code }}</small></h1>
+  <h1>
+    So hai lần sinh
+    <small>hồ sơ {{ $lanA->treatment_code }}</small>
+  </h1>
 {{ Breadcrumbs::render('bhyt.sinh-xml3176.so-sanh', $lanA->treatment_code, $lanA->treatment_id) }}
 @stop
 

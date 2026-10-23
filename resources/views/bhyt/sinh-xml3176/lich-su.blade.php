@@ -3,9 +3,19 @@
 @section('title', 'Lịch sử sinh XML3176')
 
 @section('content_header')
-<h1>Lịch sử sinh XML3176 <small>hồ sơ {{ $treatmentCode }}</small></h1>
+  <h1>
+    Lịch sử sinh
+    <small>hồ sơ {{ $treatmentCode }}</small>
+  </h1>
 {{ Breadcrumbs::render('bhyt.sinh-xml3176.lich-su', $treatmentCode, $treatmentId) }}
 @stop
+
+@push('after-styles')
+<style>
+    .table-responsive { display: block; width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    #ssx-lich-su th, #ssx-lich-su td { white-space: nowrap; }
+</style>
+@endpush
 
 @section('content')
 @include('includes.message')
@@ -37,7 +47,7 @@
             </p>
             <div id="ssx-xoa-kq" class="alert" style="display:none;"></div>
         @endif
-        <table class="table table-hover table-bordered" id="ssx-lich-su">
+        <table class="table display table-hover table-bordered nowrap" id="ssx-lich-su" width="100%">
             <thead>
                 <tr>
                     @if (!empty($duocXoa))

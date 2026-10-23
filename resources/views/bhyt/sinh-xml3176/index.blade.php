@@ -3,91 +3,108 @@
 @section('title', 'Theo dõi sinh XML3176')
 
 @section('content_header')
-<h1>Theo dõi sinh XML3176 <small>mỗi dòng một hồ sơ, theo lần sinh mới nhất</small></h1>
+  <h1>
+    Theo dõi sinh
+    <small>hồ sơ XML3176</small>
+  </h1>
 {{ Breadcrumbs::render('bhyt.sinh-xml3176.index') }}
 @stop
 
 @push('after-styles')
 <style>
-    .table-responsive { display: block; width: 100%; overflow-x: auto; }
+    .table-responsive {
+        display: block;
+        width: 100%;
+        overflow-x: auto;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
     .nhan-loi { color: #b94a48; font-weight: bold; }
     #ssx-tong-hop .ssx-o { display: inline-block; margin-right: 18px; }
 </style>
 @endpush
 
 @section('content')
+<!-- Messages -->
 @include('includes.message')
+<!-- /Messages -->
 
-{{-- Bien vao: $homNay (Y-m-d). Du lieu lay tu route fetch-data (server-side DataTables). --}}
+{{-- Bien vao: $homNay (Y-m-d), $duocXoa. Bo cuc theo man Danh sach ho so XML3176 (bhyt/xml3176/index):
+     panel loc dung partial dung chung, nut "Tai du lieu" goi fetchData(startDate, endDate). --}}
 <div class="panel panel-default">
-    <div class="panel-heading"><strong>Bộ lọc</strong></div>
     <div class="panel-body">
-        <div class="row">
-            <div class="col-sm-2">
-                <label for="ssx-tu">Từ ngày</label>
-                <input type="date" id="ssx-tu" class="form-control" value="{{ $homNay }}">
-            </div>
-            <div class="col-sm-2">
-                <label for="ssx-den">Đến ngày</label>
-                <input type="date" id="ssx-den" class="form-control" value="{{ $homNay }}">
-            </div>
-            <div class="col-sm-2">
-                <label for="ssx-kieu-ngay">Kiểu ngày</label>
-                <select id="ssx-kieu-ngay" class="form-control">
-                    <option value="sinh">Ngày sinh tệp</option>
-                    <option value="ra_vien">Ngày ra viện</option>
-                    <option value="khoa_vp">Ngày khoá viện phí</option>
-                </select>
-            </div>
-            <div class="col-sm-2">
-                <label for="ssx-trang-thai">Trạng thái mới nhất</label>
-                <select id="ssx-trang-thai" class="form-control">
-                    <option value="">Tất cả</option>
-                    <option value="da_ghi">Đã ghi</option>
-                    <option value="bi_loai">Bị loại</option>
-                    <option value="loi">Lỗi</option>
-                </select>
-            </div>
-            <div class="col-sm-2">
-                <label for="ssx-loai-ban">Loại bản</label>
-                <select id="ssx-loai-ban" class="form-control">
-                    <option value="">Tất cả</option>
-                    <option value="chinh_thuc">Chính thức</option>
-                    <option value="thong_tuyen">Thông tuyến</option>
-                </select>
-            </div>
-            <div class="col-sm-2">
-                <label for="ssx-ma">Mã điều trị</label>
-                <input type="text" id="ssx-ma" class="form-control" maxlength="50" placeholder="Nhập đủ mã">
+        @include('partials.date_range', ['showDateType' => false, 'showExport' => false])
+        <div class="col-sm-12">
+            <div class="form-group row">
+                <div class="col-sm-2">
+                    <div class="form-group row">
+                        <label for="ssx-kieu-ngay">Lọc theo</label>
+                        <select id="ssx-kieu-ngay" class="form-control select2">
+                            <option value="sinh">Ngày sinh tệp</option>
+                            <option value="ra_vien">Ngày ra viện</option>
+                            <option value="khoa_vp">Ngày khoá viện phí</option>
+                        </select>
+                    </div>
+                </div>
+                @include('partials.treatment_code')
+                <div class="col-sm-2">
+                    <div class="form-group row">
+                        <label for="ssx-trang-thai" title="Trạng thái của lần sinh mới nhất">Trạng thái</label>
+                        <select id="ssx-trang-thai" class="form-control select2">
+                            <option value="">Tất cả</option>
+                            <option value="da_ghi">Đã ghi</option>
+                            <option value="bi_loai">Bị loại</option>
+                            <option value="loi">Lỗi</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-sm-2">
+                    <div class="form-group row">
+                        <label for="ssx-loai-ban">Loại bản</label>
+                        <select id="ssx-loai-ban" class="form-control select2">
+                            <option value="">Tất cả</option>
+                            <option value="chinh_thuc">Chính thức</option>
+                            <option value="thong_tuyen">Thông tuyến</option>
+                        </select>
+                    </div>
+                </div>
             </div>
         </div>
-        <div class="row" style="margin-top:10px;">
-            <div class="col-sm-12">
-                <button type="button" id="ssx-loc" class="btn btn-primary"><i class="fa fa-search"></i> Lọc</button>
-                <span class="text-muted">Khoảng ngày tối đa 31 ngày.</span>
-            </div>
+        @include('partials.load_data_button')
+        <div class="col-sm-12">
+            <div id="ssx-thong-bao" class="alert alert-warning" style="display:none; margin:0;"></div>
         </div>
-        <div id="ssx-thong-bao" class="alert alert-warning" style="display:none; margin:10px 0 0;"></div>
     </div>
 </div>
 
 @if (!empty($duocXoa))
 {{-- Chi superadministrator. Doc lap voi bo loc: chon ngay SINH TEP (thu muc ngay luu tru). --}}
-<div class="panel panel-danger">
-    <div class="panel-heading"><strong>Xoá XML lưu trữ của ngày</strong></div>
-    <div class="panel-body">
-        <div class="row">
-            <div class="col-sm-3">
-                <label for="ssx-xoa-ngay-gt">Ngày sinh tệp</label>
-                <input type="date" id="ssx-xoa-ngay-gt" class="form-control" value="{{ $homNay }}">
+<button id="ssx-xoa-ngay-mo" type="button" class="btn btn-danger">
+    <i class="fa fa-trash" aria-hidden="true"></i> Xoá XML lưu trữ của ngày
+</button>
+
+<div class="modal fade" id="ssx-xoa-ngay-modal" tabindex="-1" role="dialog" aria-labelledby="ssx-xoa-ngay-tieu-de" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="ssx-xoa-ngay-tieu-de">Xoá XML lưu trữ của ngày</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
             </div>
-            <div class="col-sm-9">
-                <label>&nbsp;</label><br>
-                <button type="button" id="ssx-xoa-ngay" class="btn btn-danger"><i class="fa fa-trash"></i> Xoá XML lưu trữ của ngày</button>
-                <span class="text-muted">Chỉ xoá tệp lưu trữ; dòng theo dõi vẫn giữ. Không phụ thuộc bộ lọc ở trên.</span>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="ssx-xoa-ngay-gt">Ngày sinh tệp</label>
+                    <input type="date" id="ssx-xoa-ngay-gt" class="form-control" value="{{ $homNay }}">
+                </div>
+                <p class="text-muted">Chỉ xoá tệp lưu trữ; dòng theo dõi vẫn giữ. Không phụ thuộc bộ lọc ở trên.</p>
+                <div id="ssx-xoa-ngay-kq" class="alert" style="display:none; margin:0;"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
+                <button type="button" id="ssx-xoa-ngay" class="btn btn-danger"><i class="fa fa-trash"></i> Xoá</button>
             </div>
         </div>
-        <div id="ssx-xoa-ngay-kq" class="alert" style="display:none; margin:10px 0 0;"></div>
     </div>
 </div>
 @endif
@@ -100,7 +117,7 @@
 
 <div class="panel panel-default">
     <div class="panel-body table-responsive">
-        <table class="table display table-hover wrap" width="100%" id="ssx-list" style="width:100%">
+        <table id="ssx-list" class="table display table-hover responsive nowrap datatable dtr-inline" width="100%">
             <thead>
                 <tr>
                     <th>Mã điều trị</th>
@@ -122,12 +139,18 @@
 @stop
 
 @push('after-scripts')
+    @stack('after-scripts-date-range')
+    @stack('after-scripts-treatment-code')
+    @stack('after-scripts-load-data-button')
 <script>
-(function () {
     var URL_DATA = "{{ route('bhyt.sinh-xml3176.fetch-data') }}";
     var NHAN_TRANG_THAI = @json(\App\Services\SinhXml3176\NhanHienThi::TRANG_THAI);
     var NHAN_LOAI_BAN = @json(\App\Services\SinhXml3176\NhanHienThi::LOAI_BAN);
     var NHAN_THU_MUC = @json(\App\Services\SinhXml3176\NhanHienThi::THU_MUC);
+    var ssxBang = null;
+    // Khoang ngay do partials.date_range dat (YYYY-MM-DD HH:mm:ss); may chu chi nhan Y-m-d.
+    var ssxTu = '{{ $homNay }}';
+    var ssxDen = '{{ $homNay }}';
 
     // yyyyMMddHHmmss -> dd/MM/yyyy HH:mm:ss; khong du 14 so thi giu nguyen.
     function gio14(s) {
@@ -137,12 +160,12 @@
     }
 
     function thamSo(d) {
-        d.tu = $('#ssx-tu').val();
-        d.den = $('#ssx-den').val();
+        d.tu = ssxTu;
+        d.den = ssxDen;
         d.kieu_ngay = $('#ssx-kieu-ngay').val();
         d.trang_thai = $('#ssx-trang-thai').val();
         d.loai_ban = $('#ssx-loai-ban').val();
-        d.ma = $.trim($('#ssx-ma').val());
+        d.ma = $.trim($('#treatment_code').val());
     }
 
     function veTongHop(t) {
@@ -160,92 +183,112 @@
         });
     }
 
-    var bang = $('#ssx-list').DataTable({
-        processing: true,
-        serverSide: true,
-        searching: false,
-        ordering: false,
-        scrollX: true,
-        lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
-        ajax: {
-            url: URL_DATA,
-            data: thamSo,
-            dataSrc: function (json) {
-                $('#ssx-thong-bao').hide();
-                if (json.tong_hop) { veTongHop(json.tong_hop); }
-                return json.data;
-            },
-            error: function (xhr) {
-                var kq = xhr.responseJSON;
-                $('#ssx-thong-bao').text(kq && kq.thong_diep ? kq.thong_diep : 'Máy chủ báo lỗi (HTTP ' + xhr.status + ').').show();
-            }
-        },
-        columns: [
-            {
-                data: 'treatment_code',
-                render: function (d, t, row) {
-                    if (t !== 'display') { return d; }
-                    return $('<a>').attr('href', row.url_lich_su).text(d)[0].outerHTML;
+    function taoBang() {
+        return $('#ssx-list').DataTable({
+            processing: true,
+            serverSide: true,
+            searching: false,
+            ordering: false,
+            scrollX: true,
+            lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
+            ajax: {
+                url: URL_DATA,
+                data: thamSo,
+                dataSrc: function (json) {
+                    $('#ssx-thong-bao').hide();
+                    if (json.tong_hop) { veTongHop(json.tong_hop); }
+                    return json.data;
+                },
+                error: function (xhr) {
+                    var kq = xhr.responseJSON;
+                    $('#ssx-thong-bao').text(kq && kq.thong_diep ? kq.thong_diep : 'Máy chủ báo lỗi (HTTP ' + xhr.status + ').').show();
                 }
             },
-            { data: 'created_at', render: $.fn.dataTable.render.text() },
-            { data: 'loai_ban', render: function (d) { return $('<div>').text(NHAN_LOAI_BAN[d] || d).html(); } },
-            {
-                data: 'trang_thai',
-                render: function (d, t) {
-                    if (t !== 'display') { return d; }
-                    var $s = $('<span>').text(NHAN_TRANG_THAI[d] || d);
-                    if (d === 'loi') { $s.addClass('nhan-loi'); }
-                    return $s[0].outerHTML;
+            columns: [
+                {
+                    data: 'treatment_code',
+                    render: function (d, t, row) {
+                        if (t !== 'display') { return d; }
+                        return $('<a>').attr('href', row.url_lich_su).text(d)[0].outerHTML;
+                    }
+                },
+                { data: 'created_at', render: $.fn.dataTable.render.text() },
+                { data: 'loai_ban', render: function (d) { return $('<div>').text(NHAN_LOAI_BAN[d] || d).html(); } },
+                {
+                    data: 'trang_thai',
+                    render: function (d, t) {
+                        if (t !== 'display') { return d; }
+                        var $s = $('<span>').text(NHAN_TRANG_THAI[d] || d);
+                        if (d === 'loi') { $s.addClass('nhan-loi'); }
+                        return $s[0].outerHTML;
+                    }
+                },
+                { data: 'ly_do', render: $.fn.dataTable.render.text() },
+                { data: 'cac_bang', render: $.fn.dataTable.render.text() },
+                {
+                    data: 'thu_muc_loai',
+                    render: function (d, t, row) {
+                        if (t !== 'display') { return d; }
+                        return $('<span>').attr('title', row.thu_muc || '').text(NHAN_THU_MUC[d] || d)[0].outerHTML;
+                    }
+                },
+                { data: 'so_lan_sinh' },
+                { data: 'out_time', render: function (d) { return $('<div>').text(gio14(d)).html(); } },
+                { data: 'fee_lock_time', render: function (d) { return $('<div>').text(gio14(d)).html(); } },
+                {
+                    data: null,
+                    render: function (d, t, row) {
+                        if (t !== 'display') { return ''; }
+                        return $('<a>').addClass('btn btn-xs btn-default').attr('href', row.url_lich_su)
+                            .append($('<i>').addClass('fa fa-history')).append(' Lịch sử')[0].outerHTML;
+                    }
                 }
-            },
-            { data: 'ly_do', render: $.fn.dataTable.render.text() },
-            { data: 'cac_bang', render: $.fn.dataTable.render.text() },
-            {
-                data: 'thu_muc_loai',
-                render: function (d, t, row) {
-                    if (t !== 'display') { return d; }
-                    return $('<span>').attr('title', row.thu_muc || '').text(NHAN_THU_MUC[d] || d)[0].outerHTML;
-                }
-            },
-            { data: 'so_lan_sinh' },
-            { data: 'out_time', render: function (d) { return $('<div>').text(gio14(d)).html(); } },
-            { data: 'fee_lock_time', render: function (d) { return $('<div>').text(gio14(d)).html(); } },
-            {
-                data: null,
-                render: function (d, t, row) {
-                    if (t !== 'display') { return ''; }
-                    return $('<a>').addClass('btn btn-xs btn-default').attr('href', row.url_lich_su)
-                        .append($('<i>').addClass('fa fa-history')).append(' Lịch sử')[0].outerHTML;
-                }
-            }
-        ],
-        columnDefs: [{ targets: '_all', defaultContent: '' }]
-    });
-
-    $('#ssx-loc').on('click', function () { bang.ajax.reload(); });
-    @if (!empty($duocXoa))
-    $('#ssx-xoa-ngay').on('click', function () {
-        var ngay = $('#ssx-xoa-ngay-gt').val();
-        var $kq = $('#ssx-xoa-ngay-kq');
-        function bao(loai, nd) { $kq.removeClass('alert-success alert-danger alert-warning').addClass('alert-' + loai).text(nd).show(); }
-        if (!ngay) { bao('warning', 'Hãy chọn ngày sinh tệp.'); return; }
-        $.get("{{ route('bhyt.sinh-xml3176.dem-theo-ngay') }}", { ngay: ngay }).done(function (r) {
-            if (!r.so_tep) { bao('warning', 'Ngày ' + ngay + ' không có XML lưu trữ nào để xoá.'); return; }
-            if (!window.confirm('Xoá ' + r.so_tep + ' tệp XML lưu trữ sinh ngày ' + ngay + '? Thao tác không hoàn tác được; dòng theo dõi vẫn giữ.')) { return; }
-            var $nut = $('#ssx-xoa-ngay').prop('disabled', true);
-            $.post("{{ route('bhyt.sinh-xml3176.xoa-theo-ngay') }}", { _token: "{{ csrf_token() }}", ngay: ngay }).done(function (k) {
-                bao('success', 'Đã xoá ' + k.xoa + ' tệp' + (k.bo_qua ? ' (bỏ qua ' + k.bo_qua + ')' : '') + '.');
-                bang.ajax.reload(null, false);
-            }).fail(function (x) {
-                bao('danger', (x.responseJSON && x.responseJSON.thong_diep) || 'Không xoá được (lỗi ' + x.status + ').');
-            }).always(function () { $nut.prop('disabled', false); });
-        }).fail(function (x) {
-            bao('danger', (x.responseJSON && x.responseJSON.thong_diep) || 'Không đếm được số tệp (lỗi ' + x.status + ').');
+            ],
+            columnDefs: [{ targets: '_all', defaultContent: '' }]
         });
+    }
+
+    // partials.load_data_button goi fetchData(startDate, endDate) khi nap trang va khi bam "Tai du lieu".
+    function fetchData(startDate, endDate) {
+        ssxTu = String(startDate).substr(0, 10);
+        ssxDen = String(endDate).substr(0, 10);
+        if (ssxBang === null) {
+            ssxBang = taoBang();
+        } else {
+            ssxBang.ajax.reload();
+        }
+    }
+
+    $(document).ready(function () {
+        $('.select2').select2({
+            width: '100%'
+        });
+
+        @if (!empty($duocXoa))
+        $('#ssx-xoa-ngay-mo').on('click', function () {
+            $('#ssx-xoa-ngay-kq').hide();
+            $('#ssx-xoa-ngay-modal').modal('show');
+        });
+        $('#ssx-xoa-ngay').on('click', function () {
+            var ngay = $('#ssx-xoa-ngay-gt').val();
+            var $kq = $('#ssx-xoa-ngay-kq');
+            function bao(loai, nd) { $kq.removeClass('alert-success alert-danger alert-warning').addClass('alert-' + loai).text(nd).show(); }
+            if (!ngay) { bao('warning', 'Hãy chọn ngày sinh tệp.'); return; }
+            $.get("{{ route('bhyt.sinh-xml3176.dem-theo-ngay') }}", { ngay: ngay }).done(function (r) {
+                if (!r.so_tep) { bao('warning', 'Ngày ' + ngay + ' không có XML lưu trữ nào để xoá.'); return; }
+                if (!window.confirm('Xoá ' + r.so_tep + ' tệp XML lưu trữ sinh ngày ' + ngay + '? Thao tác không hoàn tác được; dòng theo dõi vẫn giữ.')) { return; }
+                var $nut = $('#ssx-xoa-ngay').prop('disabled', true);
+                $.post("{{ route('bhyt.sinh-xml3176.xoa-theo-ngay') }}", { _token: "{{ csrf_token() }}", ngay: ngay }).done(function (k) {
+                    bao('success', 'Đã xoá ' + k.xoa + ' tệp' + (k.bo_qua ? ' (bỏ qua ' + k.bo_qua + ')' : '') + '.');
+                    if (ssxBang !== null) { ssxBang.ajax.reload(null, false); }
+                }).fail(function (x) {
+                    bao('danger', (x.responseJSON && x.responseJSON.thong_diep) || 'Không xoá được (lỗi ' + x.status + ').');
+                }).always(function () { $nut.prop('disabled', false); });
+            }).fail(function (x) {
+                bao('danger', (x.responseJSON && x.responseJSON.thong_diep) || 'Không đếm được số tệp (lỗi ' + x.status + ').');
+            });
+        });
+        @endif
     });
-    @endif
-    $('#ssx-ma').on('keypress', function (e) { if (e.which === 13) { bang.ajax.reload(); } });
-})();
 </script>
 @endpush

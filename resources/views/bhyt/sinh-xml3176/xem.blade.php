@@ -3,7 +3,10 @@
 @section('title', 'Xem XML3176 đã lưu')
 
 @section('content_header')
-<h1>Xem XML đã lưu <small>hồ sơ {{ $dong->treatment_code }}, lần sinh #{{ $dong->id }}</small></h1>
+  <h1>
+    Xem XML đã lưu
+    <small>hồ sơ {{ $dong->treatment_code }}, lần sinh #{{ $dong->id }}</small>
+  </h1>
 {{ Breadcrumbs::render('bhyt.sinh-xml3176.xem', $dong->treatment_code, $dong->treatment_id, $dong->id) }}
 @stop
 
