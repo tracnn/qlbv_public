@@ -17,6 +17,18 @@ Breadcrumbs::register('bhyt.xml3176.index', function ($breadcrumbs) {
     $breadcrumbs->push('Hồ sơ XML3176', route('bhyt.xml3176.index'));
 });
 
+// Home > Theo dõi sinh XML3176
+Breadcrumbs::register('bhyt.sinh-xml3176.index', function ($breadcrumbs) {
+    $breadcrumbs->parent('home');
+    $breadcrumbs->push('Theo dõi sinh XML3176', route('bhyt.sinh-xml3176.index'));
+});
+
+// Home > Theo dõi sinh XML3176 > Hồ sơ
+Breadcrumbs::register('bhyt.sinh-xml3176.lich-su', function ($breadcrumbs, $maDieuTri, $treatmentId) {
+    $breadcrumbs->parent('bhyt.sinh-xml3176.index');
+    $breadcrumbs->push('Hồ sơ ' . $maDieuTri, route('bhyt.sinh-xml3176.lich-su', ['treatmentId' => $treatmentId]));
+});
+
 // Home > Nhập thẻ BHYT
 Breadcrumbs::register('insurance-card.add-new', function ($breadcrumbs) {
 	$breadcrumbs->parent('home');

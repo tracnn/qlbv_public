@@ -221,6 +221,18 @@ class CauHinhSinhXml3176
         return (string) ($loaiBan === self::THONG_TUYEN ? $this->khoi['thu_muc_tt'] : $this->khoi['thu_muc']);
     }
 
+    /** Thu muc dich that (thu_muc / thu_muc_tt) cua loai ban, bat ke cong tac ghi_thu_muc_that. */
+    public function thuMucThat($loaiBan)
+    {
+        return (string) ($loaiBan === self::THONG_TUYEN ? $this->khoi['thu_muc_tt'] : $this->khoi['thu_muc']);
+    }
+
+    /** Thu muc thu (khong phai thu muc tien giam dinh quet). */
+    public function thuMucThu()
+    {
+        return (string) $this->khoi['thu_muc_thu'];
+    }
+
     public function kichThuocLo()
     {
         return (int) $this->kyThuat('kich_thuoc_lo', 5);

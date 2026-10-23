@@ -563,6 +563,14 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('sys-man', 'System\SystemController@sysMan')->name('system.sys-man');
     });
 
+    /* Theo dõi sinh XML3176 trực tiếp từ HIS (module SinhXml3176): chỉ đọc bảng theo dõi và tệp lưu trữ */
+    Route::group(['prefix' => 'bhyt/sinh-xml3176', 'middleware' => ['checkrole:xml-man']], function () {
+        Route::get('/', 'BHYT\SinhXml3176Controller@index')->name('bhyt.sinh-xml3176.index');
+        Route::get('fetch-data', 'BHYT\SinhXml3176Controller@fetchData')->name('bhyt.sinh-xml3176.fetch-data');
+        Route::get('ho-so/{treatmentId}', 'BHYT\SinhXml3176Controller@lichSu')
+            ->where('treatmentId', '[0-9]+')->name('bhyt.sinh-xml3176.lich-su');
+    });
+
     /* Hồ sơ BHYT */
     Route::group(['prefix' => 'bhyt/', 'middleware' => ['checkrole:xml-man']], function () {
         Route::get('index/category-imported-by', 'Category\CategoryHISController@fetchImportedBy')
