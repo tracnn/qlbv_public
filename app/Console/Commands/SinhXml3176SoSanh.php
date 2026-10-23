@@ -2,6 +2,8 @@
 
 namespace App\Console\Commands;
 
+use App\Services\SinhXml3176\SoSanh\DocTepGiamDinh;
+use App\Services\SinhXml3176\SoSanh\SoSanhBang;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -32,30 +34,6 @@ class SinhXml3176SoSanh extends Command
         . 'Nhieu tep cung MA_LK trong mot thu muc: lay tep moi nhat theo mtime. '
         . 'Khoa dong trung trong mot ben: them hau to #1, #2.';
 
-    /** loai => [[the goc, the dong], danh sach khoa] */
-    private static $bang = [
-        'XML1' => [null, ['MA_LK']],
-        'XML2' => [['CHITIEU_CHITIET_THUOC', 'CHI_TIET_THUOC'], ['MA_LK', 'MA_THUOC', 'NGAY_YL']],
-        'XML3' => [['CHITIEU_CHITIET_DVKT_VTYT', 'CHI_TIET_DVKT'], ['MA_LK', 'MA_DICH_VU', 'MA_VAT_TU', 'NGAY_YL']],
-        'XML4' => [['CHITIEU_CHITIET_DICHVUCANLAMSANG', 'CHI_TIET_CLS'], ['MA_LK', 'MA_DICH_VU', 'MA_CHI_SO', 'NGAY_KQ']],
-        'XML5' => [['CHITIEU_CHITIET_DIENBIENLAMSANG', 'CHI_TIET_DIEN_BIEN_BENH'], ['MA_LK', 'THOI_DIEM_DBLS']],
-        'XML6' => [['CHI_TIEU_HO_SO_BENH_AN_CHAM_SOC_VA_DIEU_TRI_HIV_AIDS', 'HO_SO_BENH_AN_CHAM_SOC_VA_DIEU_TRI_HIV_AIDS'], ['MA_LK', 'STT']],
-        'XML7' => [null, ['MA_LK']],
-        'XML8' => [null, ['MA_LK']],
-        // XML9: MA_LK + SO (so giay chung sinh); SO rong thi MA_LK + NGAY_SINH_CON
-        'XML9' => [['CHI_TIEU_DU_LIEU_GIAY_CHUNG_SINH', 'DU_LIEU_GIAY_CHUNG_SINH'], ['MA_LK', 'SO']],
-        'XML10' => [null, ['MA_LK']],
-        'XML11' => [null, ['MA_LK']],
-        'XML13' => [null, ['MA_LK']],
-        'XML14' => [null, ['MA_LK']],
-        'XML15' => [['CHI_TIEU_DIEUTRI_BENHLAO', 'CHITIET_DIEUTRI_BENHLAO'], ['MA_LK', 'STT']],
-    ];
-
-    /** Truong khoa du phong: khi truong khoa rong thi lay truong nay thay vao (loai => [truong => truong thay]). */
-    private static $khoaDuPhong = [
-        'XML9' => ['SO' => 'NGAY_SINH_CON'],
-    ];
-
     /** Cot bo qua khi doc bang tien giam dinh. */
     private static $cotKyThuat = ['id', 'created_at', 'updated_at'];
 
@@ -82,7 +60,7 @@ class SinhXml3176SoSanh extends Command
 
         $dsBang = array_values(array_filter(array_map('trim', explode(',', strtoupper((string) $this->option('bang'))))));
         foreach ($dsBang as $b) {
-            if (!isset(self::$bang[$b])) {
+            if (!isset(SoSanhBang::CAC_BANG[$b])) {
                 $this->error('Chua ho tro bang ' . $b . ' (chi XML1..XML11, XML13..XML15).');
 
                 return 1;
@@ -132,7 +110,7 @@ class SinhXml3176SoSanh extends Command
                 $soLech++;
                 continue;
             }
-            $b = $this->dongTatCa($this->docTep($chiMucQl[$maLk]));
+            $b = $this->docBang($chiMucQl[$maLk]);
             if ($csdl) {
                 if (!$this->coHoSoCsdl($maLk)) {
                     fputcsv($h, [$maLk, 'XML1', $maLk, 'chi_co_qlbv', '', '']);
@@ -146,7 +124,7 @@ class SinhXml3176SoSanh extends Command
                     $soLech++;
                     continue;
                 }
-                $a = $this->dongTatCa($this->docTep($chiMucHis[$maLk]));
+                $a = $this->docBang($chiMucHis[$maLk]);
             }
             foreach ($dsBang as $loai) {
                 $soLech += $this->soBang($h, $maLk, $loai, $a, $b);
@@ -170,7 +148,7 @@ class SinhXml3176SoSanh extends Command
             if (!is_file($p) || strtolower(pathinfo($ten, PATHINFO_EXTENSION)) !== 'xml') {
                 continue;
             }
-            $maLk = $this->maLk($this->docTep($p));
+            $maLk = $this->maLk($this->docBang($p));
             if ($maLk === null) {
                 $this->warn('Bo qua tep khong doc duoc MA_LK: ' . $ten);
                 continue;
@@ -185,39 +163,13 @@ class SinhXml3176SoSanh extends Command
         return $kq;
     }
 
-    /** @return array loai => chuoi XML con (da bo BOM) */
-    private function docTep($duongDan)
+    /** @return array loai => danh sach dong cua mot tep GIAMDINHHS (tep khong doc duoc thi rong) */
+    private function docBang($duongDan)
     {
-        $kq = [];
-        $doc = new \DOMDocument();
         $noiDung = @file_get_contents($duongDan);
-        if ($noiDung === false || !@$doc->loadXML($noiDung, LIBXML_NONET)) {
-            return $kq;
-        }
-        foreach ($doc->getElementsByTagName('FILEHOSO') as $f) {
-            $loai = $this->noiDungThe($f, 'LOAIHOSO');
-            $xml = base64_decode(preg_replace('/\s+/', '', $this->noiDungThe($f, 'NOIDUNGFILE')), true);
-            if (trim($loai) === '' || $xml === false) {
-                continue;
-            }
-            if (substr($xml, 0, 3) === "\xEF\xBB\xBF") {
-                $xml = substr($xml, 3);
-            }
-            $kq[strtoupper(trim($loai))] = $xml;
-        }
+        $kq = (new DocTepGiamDinh())->doc($noiDung === false ? '' : $noiDung);
 
-        return $kq;
-    }
-
-    private function noiDungThe(\DOMElement $cha, $ten)
-    {
-        foreach ($cha->childNodes as $n) {
-            if ($n instanceof \DOMElement && $n->nodeName === $ten) {
-                return $n->textContent;
-            }
-        }
-
-        return '';
+        return $kq['bang'];
     }
 
     /** MA_LK cua XML1; neu khong co XML1 thi lay cua dong dau tien o bang bat ky. */
@@ -225,10 +177,10 @@ class SinhXml3176SoSanh extends Command
     {
         $thuTu = array_merge(['XML1'], array_diff(array_keys($bang), ['XML1']));
         foreach ($thuTu as $loai) {
-            if (!isset($bang[$loai]) || !isset(self::$bang[$loai])) {
+            if (!isset($bang[$loai]) || !isset(SoSanhBang::CAC_BANG[$loai])) {
                 continue;
             }
-            foreach ($this->dong($loai, $bang[$loai]) as $d) {
+            foreach ($bang[$loai] as $d) {
                 if (isset($d['MA_LK']) && trim($d['MA_LK']) !== '') {
                     return trim($d['MA_LK']);
                 }
@@ -236,54 +188,6 @@ class SinhXml3176SoSanh extends Command
         }
 
         return null;
-    }
-
-    /** @return array[] danh sach dong (ten the => noi dung) */
-    private function dong($loai, $xml)
-    {
-        $doc = new \DOMDocument();
-        if (!@$doc->loadXML($xml, LIBXML_NONET)) {
-            return [];
-        }
-        $kq = [];
-        $goc = self::$bang[$loai][0];
-        if ($goc === null) {
-            if ($doc->documentElement !== null) {
-                $kq[] = $this->truong($doc->documentElement);
-            }
-
-            return $kq;
-        }
-        foreach ($doc->getElementsByTagName($goc[1]) as $e) {
-            $kq[] = $this->truong($e);
-        }
-
-        return $kq;
-    }
-
-    private function truong(\DOMElement $e)
-    {
-        $d = [];
-        foreach ($e->childNodes as $n) {
-            if ($n instanceof \DOMElement) {
-                $d[$n->nodeName] = $n->textContent;
-            }
-        }
-
-        return $d;
-    }
-
-    /** @return array loai => danh sach dong, tu map loai => chuoi XML con */
-    private function dongTatCa(array $xml)
-    {
-        $kq = [];
-        foreach ($xml as $loai => $chuoi) {
-            if (isset(self::$bang[$loai])) {
-                $kq[$loai] = $this->dong($loai, $chuoi);
-            }
-        }
-
-        return $kq;
     }
 
     /** @var array ten bang => co/khong, nho trong mot lan chay */
@@ -353,108 +257,18 @@ class SinhXml3176SoSanh extends Command
     {
         $dongA = isset($a[$loai]) ? $a[$loai] : [];
         $dongB = isset($b[$loai]) ? $b[$loai] : [];
-        $khoaA = $this->danhKhoa($loai, $dongA);
-        $khoaB = $this->danhKhoa($loai, $dongB);
-        // khoa trung o mot ben thi danh so ca hai ben
-        $trung = [];
-        foreach ([$khoaA, $khoaB] as $ds) {
-            foreach (array_count_values($ds) as $k => $n) {
-                if ($n > 1) {
-                    $trung[(string) $k] = true;
-                }
-            }
-        }
-        $mA = $this->gan($khoaA, $dongA, $trung);
-        $mB = $this->gan($khoaB, $dongB, $trung);
-
         $n = 0;
-        foreach (array_unique(array_merge(array_keys($mA), array_keys($mB))) as $khoa) {
-            $khoa = (string) $khoa;
-            if (!isset($mB[$khoa])) {
-                fputcsv($h, [$maLk, $loai, $khoa, 'chi_co_his', '', '']);
-                $n++;
-                continue;
+        foreach (SoSanhBang::so($loai, $dongA, $dongB) as $m) {
+            if ($m['kieu'] === 'chi_co_a') {
+                fputcsv($h, [$maLk, $loai, $m['khoa'], 'chi_co_his', '', '']);
+            } elseif ($m['kieu'] === 'chi_co_b') {
+                fputcsv($h, [$maLk, $loai, $m['khoa'], 'chi_co_qlbv', '', '']);
+            } else {
+                fputcsv($h, [$maLk, $loai, $m['khoa'], $m['truong'], $m['a'], $m['b']]);
             }
-            if (!isset($mA[$khoa])) {
-                fputcsv($h, [$maLk, $loai, $khoa, 'chi_co_qlbv', '', '']);
-                $n++;
-                continue;
-            }
-            foreach (array_unique(array_merge(array_keys($mA[$khoa]), array_keys($mB[$khoa]))) as $t) {
-                $x = isset($mA[$khoa][$t]) ? trim($mA[$khoa][$t]) : '';
-                $y = isset($mB[$khoa][$t]) ? trim($mB[$khoa][$t]) : '';
-                if (!$this->bang($x, $y, $this->laCotSo($t))) {
-                    fputcsv($h, [$maLk, $loai, $khoa, $t, $x, $y]);
-                    $n++;
-                }
-            }
+            $n++;
         }
 
         return $n;
-    }
-
-    private function danhKhoa($loai, array $dong)
-    {
-        $kq = [];
-        foreach ($dong as $d) {
-            $p = [];
-            foreach (self::$bang[$loai][1] as $t) {
-                $v = isset($d[$t]) ? trim($d[$t]) : '';
-                if ($v === '' && isset(self::$khoaDuPhong[$loai][$t])) {
-                    $tt = self::$khoaDuPhong[$loai][$t];
-                    $v = isset($d[$tt]) ? trim($d[$tt]) : '';
-                }
-                $p[] = $v;
-            }
-            $kq[] = implode('|', $p);
-        }
-
-        return $kq;
-    }
-
-    /** khoa (co hau to #n neu trung) => dong */
-    private function gan(array $khoa, array $dong, array $trung)
-    {
-        $kq = [];
-        $dem = [];
-        foreach ($khoa as $i => $k) {
-            if (isset($trung[$k])) {
-                $dem[$k] = isset($dem[$k]) ? $dem[$k] + 1 : 1;
-                $k .= '#' . $dem[$k];
-            }
-            $kq[$k] = $dong[$i];
-        }
-
-        return $kq;
-    }
-
-    /** Cot so: tien, so luong, ty le... Chi o cot nay rong == 0. */
-    private function laCotSo($truong)
-    {
-        return (bool) preg_match('/^(T_|THANH_TIEN|DON_GIA|SO_LUONG|TYLE|MUC_HUONG|SO_NGAY|CAN_NANG)/', $truong);
-    }
-
-    private function bang($x, $y, $cotSo)
-    {
-        $x = $this->chuanHoa($x);
-        $y = $this->chuanHoa($y);
-        if ($x === $y) {
-            return true;
-        }
-
-        return $cotSo && in_array($x, ['', '0'], true) && in_array($y, ['', '0'], true);
-    }
-
-    /** So thi dua ve dang thap phan chuan ("15000.00" -> "15000"); chi cat so 0 sau dau thap phan; khong dung float. */
-    private function chuanHoa($v)
-    {
-        if (preg_match('/^(-?)(0|[1-9][0-9]*)(?:\.([0-9]+))?$/', $v, $m)) {
-            $le = isset($m[3]) ? rtrim($m[3], '0') : '';
-            $so = $m[2] . ($le !== '' ? '.' . $le : '');
-
-            return $so === '0' ? '0' : $m[1] . $so;
-        }
-
-        return $v;
     }
 }
