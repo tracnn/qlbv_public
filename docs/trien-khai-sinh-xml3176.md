@@ -293,6 +293,16 @@ thẳng làm mốc `MODIFY_TIME`. Các dòng theo dõi cũ chưa có hash, nên 
 - Hash có thể đổi mà HIS không sửa gì: mỗi tháng một lần (XML1 `NAM_QT`/`THANG_QT` khi chọn phương án 2) và khi bệnh nhân
   tròn 16 tuổi (XML8 xét tuổi). Mỗi trường hợp ghi lại một lần.
 - Không theo dõi riêng thay đổi danh mục (nhân viên, ICD…): danh mục đổi không làm `MODIFY_TIME` hồ sơ đổi.
+- Chỉ phát hiện thay đổi làm `HIS_TREATMENT.MODIFY_TIME` đổi. Thay đổi ở bảng con mà không chạm `HIS_TREATMENT` có thể bị
+  bỏ sót: kết quả/PTTT sửa trong `HIS_SERE_SERV_EXT`, `V_HIS_BABY` sửa sau khi khoá, dịch vụ thêm vào hồ sơ thông tuyến đang
+  mở. Với bản chính thức thì sửa buộc phải mở khoá rồi khoá lại nên thường vẫn thấy; các trường hợp còn lại lấy bằng chạy bù.
+  Chưa có số đo đối chiếu `max(HIS_SERE_SERV.MODIFY_TIME)` với `HIS_TREATMENT.MODIFY_TIME`.
+- `khong_doi` chỉ khi bản `da_ghi` cuối cùng nội dung và **thư mục đích hiện tại** đều trùng: đổi `thu_muc`/`thu_muc_tt`/
+  `thu_muc_thu` (ví dụ bật `ghi_thu_muc_that`) thì lần chạm tiếp theo của hồ sơ ghi lại vào thư mục mới.
+- Bản chính thức chỉ `khong_doi` khi không có bản `thong_tuyen` `da_ghi` mới hơn (id lớn hơn) bản chính thức đang so; nếu có thì
+  ghi lại để bản chính thức là bản vào sau cùng (hồ sơ bị mở khoá, `FEE_LOCK_TIME` bị xoá, rồi khoá lại).
+- Mốc quét không tiến qua `bây giờ + 1 ngày`: ứng viên có `MODIFY_TIME` lớn hơn vẫn được xử lý nhưng bị bỏ qua khi tính mốc
+  và có `Log::warning` kèm id hồ sơ (chống lệch đồng hồ/dữ liệu hỏng làm mốc nhảy xa).
 
 ### Lần chạy đầu: khởi tạo mốc, không quét lịch sử
 
@@ -821,6 +831,12 @@ Máy dev, `ghi_thu_muc_that = false`, HIS chỉ `SELECT`, tệp ghi vào thư m�
 - Bộ nhớ đỉnh 152MB.
 - Mốc `thong_tuyen` được khởi tạo rồi xoá cùng mốc `chinh_thuc`: bảng `sinh_xml3176_moc` trở lại rỗng.
 
+Đã chứng minh: bỏ qua sớm khi `MODIFY_TIME` không đổi (lượt 2), `khong_doi` có thật (lượt 3), chuyển từ chưa có hash sang ghi
+lần đầu có hash (lượt 1), và các số đo thời gian/bộ nhớ ở trên. **Chưa** chứng minh: sinh lại **qua lượt quét** cho đường
+mở khoá, sửa, khoá lại. 3 hồ sơ đã được chạy bù **sau** khi bị sửa nên lượt quét không phải là đường sinh lại chúng; đường này
+chỉ được chứng minh bằng test đơn vị. Khoảng 145 dòng `sinh_xml3176_lan_sinh` của lần chạy dev vẫn còn trong CSDL `qlbv` dùng
+chung (chỉ bảng mốc đã dọn).
+
 ## Danh sách kiểm trước khi bật `ghi_thu_muc_that`
 
 Chủ dự án làm trên máy chủ, ghi ngày và người kiểm vào biên bản triển khai.
@@ -860,6 +876,9 @@ Chủ dự án làm trên máy chủ, ghi ngày và người kiểm vào biên b
 14. **Chạy thử trên máy chủ trước khi bật:** để `ghi_thu_muc_that = false` vài giờ cho dịch vụ ghi vào `thu_muc_thu`,
     rồi `php artisan sinhxml3176:so-sanh --csdl --qlbv=<thu_muc_thu> --bang=XML1,…,XML15` với các hồ sơ HIS đã nạp vào
     tiền giám định cùng thời gian; lệch phải nằm trong bảng "Khác biệt với HIS" thì mới chuyển sang `true`.
+    Sau khi chuyển `ghi_thu_muc_that = true`, hồ sơ đã sinh lúc thử sẽ được ghi lại vào thư mục thật ở lần HIS chạm tiếp theo
+    (`khong_doi` có xét thư mục đích). Muốn đẩy ngay: `php artisan sinhxml3176:quet --tu-ngay=… --den-ngay=…` (chạy bù) cho
+    khoảng thời gian thử.
 15. **Thứ tự triển khai:** `git pull` → `php artisan migrate` (2 bảng `sinh_xml3176_lan_sinh`, `sinh_xml3176_moc`, và migration
     `2026_10_23_100003_add_modify_time_hash_to_sinh_xml3176_lan_sinh`, chỉ thêm 2 cột nullable)
     → sửa khối `sinh_xml3176` trong `config/organization.php` → `php artisan config:cache` → cài hoặc khởi động lại
