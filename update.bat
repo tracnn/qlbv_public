@@ -223,6 +223,21 @@ if errorlevel 1 (
 %NSSM_PATH%\nssm set "QLBV KiemTraYLenhNotify" AppParameters "%LARAVEL_PATH%artisan kiemtraylenh:notify"
 %NSSM_PATH%\nssm set "QLBV KiemTraYLenhNotify" AppDirectory %LARAVEL_PATH%
 
+:: Sinh XML3176 truc tiep tu HIS (sinhxml3176:quet), nguon du phong cho HIS desktop (23/10/2026).
+:: Truoc day chi install_service.bat cai dich vu nay nen update.bat khong tu cai: prod chi chay
+:: khi co nguoi go lenh tay. CHI CHAY DUNG MOT BAN - khong chay tay lenh quet khi dich vu dang chay.
+:: Bat/tat bang organization.sinh_xml3176.enabled (tat thi lenh nghi roi thoat, khong quet).
+:: AppExit Default Restart la BAT BUOC: --lien-tuc tu thoat sau --so-vong vong.
+%NSSM_PATH%\nssm status "QLBV SinhXml3176" >nul 2>&1
+if errorlevel 1 (
+    echo Installing service QLBV SinhXml3176...
+    %NSSM_PATH%\nssm install "QLBV SinhXml3176" %PHP_PATH% "%LARAVEL_PATH%artisan sinhxml3176:quet --lien-tuc"
+    %NSSM_PATH%\nssm set "QLBV SinhXml3176" AppDirectory %LARAVEL_PATH%
+)
+:: Luon sua cau hinh: dich vu cai o lan truoc co the thieu AppExit Restart
+%NSSM_PATH%\nssm set "QLBV SinhXml3176" AppExit Default Restart
+%NSSM_PATH%\nssm set "QLBV SinhXml3176" AppRestartDelay 10000
+
 :: Stop từng dịch vụ
 %NSSM_PATH%\nssm stop "QLBV JobXml3176"
 %NSSM_PATH%\nssm stop "QLBV JobKtTheBHYT"
@@ -242,6 +257,11 @@ if errorlevel 1 (
 %NSSM_PATH%\nssm stop "QLBV JobXuatTepXml3176"
 %NSSM_PATH%\nssm stop "QLBV KiemTraYLenh"
 %NSSM_PATH%\nssm stop "QLBV KiemTraYLenhNotify"
+%NSSM_PATH%\nssm stop "QLBV SinhXml3176"
+:: nssm stop giet tien trinh giua luot thi khoa luot (Cache) con giu toi khoa_luot_phut, dich vu
+:: khoi dong lai se nghi-thoat lien tuc den khi khoa het han. Dich vu vua dung va chi chay mot ban
+:: nen go khoa o day la an toan.
+php artisan sinhxml3176:quet --go-khoa
 
 :: Dọn dẹp cache
 echo Clearing cache...
@@ -283,6 +303,7 @@ echo Restarting services...
 %NSSM_PATH%\nssm start "QLBV JobXuatTepXml3176"
 %NSSM_PATH%\nssm start "QLBV KiemTraYLenh"
 %NSSM_PATH%\nssm start "QLBV KiemTraYLenhNotify"
+%NSSM_PATH%\nssm start "QLBV SinhXml3176"
 
 :: Đưa ứng dụng ra khỏi chế độ bảo trì
 echo Bringing the application out of maintenance mode...
