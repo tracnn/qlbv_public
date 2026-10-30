@@ -8,7 +8,7 @@
 $bhxhBaseUrl = 'https://egw.baohiemxahoi.gov.vn';
 
 return [
-    'correct_facility_code' => ['01013'], //Mã nơi đkbd đúng tuyến
+    'correct_facility_code' => [''], //Mã nơi đkbd đúng tuyến
     'exclude_department' => ['K02'], //Mã khoa không cần kiểm tra chỉ định giường trong Xml7450
     'BHYT' => [
         'username' => '',
@@ -29,7 +29,7 @@ return [
         'submit_xml_url' => $bhxhBaseUrl . '/api/qd130/guiHoSoXmlQD4750',
         'loai_ho_so_4750' => '130',
         'ma_tinh' => '01', // Mã tỉnh (2 ký tự đầu của mã CSKCB)
-        'ma_cskcb' => '01013', // Mã cơ sở khám chữa bệnh (có thể lấy từ correct_facility_code)
+        'ma_cskcb' => '', // Mã cơ sở khám chữa bệnh (có thể lấy từ correct_facility_code)
         'submit_xml_3176_enabled' => false, //Bật/tắt chức năng gửi XML lên cổng BHXH
         'submit_xml_3176_url' => $bhxhBaseUrl . '/api/qd130/guiHoSoXmlQD3176',
         'loai_ho_so_3176' => '130',
@@ -111,7 +111,7 @@ return [
         'emr_document_group_ids' => [1, 2, 3, 4, 5, 6, 7, 8, 9, 21, 22, 61],
     ],
     'api' => [
-        'access_token' => '8f14e45fceea167a5a36dedd4bea2543',
+        'access_token' => '',
         'token_name' => 'HIS-API-Token',
         'description' => 'Token for Ministry of Health API access',
         'created_at' => '2024-01-15',
@@ -122,13 +122,13 @@ return [
     ],
     'export_xml_not_check' => true,
     'login_acs' => [
-        'username' => 'tracnn',
-        'password' => 'tracnn',
+        'username' => '',
+        'password' => '',
         'application_code' => 'HIS',
-        'login_url' => 'http://192.168.7.200:1401/api/Token/Login',
+        'login_url' => 'http://x.x.x.x:1401/api/Token/Login',
     ],
     'xml_sign' => [
-        'endpoint' => 'http://192.168.7.239:1415/api/EmrSign/SignXmlBhyt',
+        'endpoint' => 'http://x.x.x.x:1415/api/EmrSign/SignXmlBhyt',
         'application_code' => 'EMR',
         'hsm_type' => '2',
         'hsm_user_code' => '35c891bdb41d4745b1e4b62a3af33ecf',
@@ -185,7 +185,7 @@ return [
         'scan_sleep_interval' => 300, // Thời gian sleep giữa các lần quét (giây)
     ],
     'fss_config' => [
-        'baseUrl' => 'http://10.0.0.27:1435',
+        'baseUrl' => 'http://x.x.x.x:1435',
     ],
     'patient_type_code_evenue' => [
         '01',
